@@ -1,5 +1,5 @@
-import React, { useCallback, useRef, useState } from "react";
 import "./week1.react.css";
+import { useCallback, useState } from "react";
 
 function CopyButton({ targetId }: { targetId: string }) {
   const [copied, setCopied] = useState(false);
