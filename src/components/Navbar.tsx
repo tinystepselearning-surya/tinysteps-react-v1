@@ -3,7 +3,7 @@ import { useState } from "react";
 const links = [
   { label: "Teachers", href: "#" },
   { label: "Kids", href: "#" },
-  { label: "Relationship Manager", href: "#" },
+  { label: "Learning Manager", href: "#" },
   { label: "Parents", href: "#" },
   { label: "Blog", href: "#" },
 ];

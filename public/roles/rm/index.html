@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TPT04CQRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+  
+    gtag('config', 'G-4TPT04CQRL');
+  </script>
+
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Tiny Steps — Relationship Manager</title>
+
+  <!-- This portal is private -->
+  <meta name="robots" content="noindex,nofollow"/>
+
+  <!-- Favicon -->
+  <link rel="icon" href="../../assets/images/logo.png" type="image/png"/>
+
+  <!-- CSS (preload shared for faster paint) -->
+  <link rel="preload" href="../../shared/ui.css" as="style">
+  <link rel="stylesheet" href="../../shared/ui.css"/>
+  <link rel="stylesheet" href="./rm.css"/>
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#111"/>
+</head>
+<body>
+  <noscript>
+    <div style="padding:12px;background:#fee;border:1px solid #fbb;color:#900;margin:12px;border-radius:8px;">
+      JavaScript is required for the RM portal. Please enable it to continue.
+    </div>
+  </noscript>
+
+  <!-- Top bar -->
+  <header class="topbar" role="banner">
+    <div class="topbar-left">
+      <div class="portal-brand">
+        <a class="portal-brand__link" href="/" aria-label="Tiny Steps home">
+          <img src="../../assets/images/logo.png" alt="Tiny Steps" class="portal-brand__logo" width="36" height="36" loading="lazy">
+          <span class="portal-brand__name">Tiny<span class="portal-brand__gap"></span>Steps</span>
+        </a>
+        <span class="portal-brand__label">Relationship Manager</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <form class="search-wrap" role="search" aria-label="Global search" onsubmit="return false">
+        <input id="globalSearch" class="input" type="search" placeholder="Search students, parents, teachers…" aria-label="Search"/>
+      </form>
+
+      <div class="profile-menu" id="profileMenu" data-open="false">
+        <button id="profileTrigger" class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="profile-avatar" id="profileAvatar" aria-hidden="true">TS</span>
+          <span class="profile-name" id="profileName">Loading…</span>
+          <svg class="profile-chevron" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.084l3.71-3.854a.75.75 0 0 1 1.08 1.04l-4.24 4.4a.75.75 0 0 1-1.08 0l-4.24-4.4a.75.75 0 0 1 .02-1.06z"/>
+          </svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown" role="menu" hidden>
+          <div class="profile-info">
+            <div class="profile-display" id="profileDisplay">Tiny Steps</div>
+            <div class="profile-email" id="profileEmail">—</div>
+            <div class="profile-role" id="profileRole">Relationship Manager</div>
+          </div>
+          <button id="signOutBtn" class="profile-action" type="button">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap" role="main">
+    <aside class="filters" aria-label="Filters">
+      <div class="card">
+        <h2 class="card-title">Filters</h2>
+        <div class="stack sm">
+          <label class="label" for="filterTeacher">Teacher</label>
+          <select id="filterTeacher" class="select" multiple aria-label="Filter by teacher"></select>
+
+          <label class="label" for="filterStatus">Status</label>
+          <select id="filterStatus" class="select" aria-label="Filter by status">
+            <option value="all">All</option>
+            <option value="active" selected>Active</option>
+            <option value="paused">Paused</option>
+            <option value="ended">Ended</option>
+          </select>
+
+          <label class="label" for="filterArea">Area</label>
+          <select id="filterArea" class="select" aria-label="Filter by area">
+            <option value="all" selected>All</option>
+            <option value="phonics">Phonics</option>
+            <option value="grammar">Grammar</option>
+            <option value="speaking">Public Speaking</option>
+          </select>
+
+          <label class="label" for="filterFrom">Date Range</label>
+          <input id="filterFrom" class="input" type="date" aria-label="From date"/>
+          <input id="filterTo" class="input" type="date" aria-label="To date"/>
+
+          <button id="clearFiltersBtn" class="btn ghost" type="button">Clear filters</button>
+        </div>
+      </div>
+
+      <div class="card kpis" aria-live="polite">
+        <h2 class="card-title">Today</h2>
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-value" id="kpiClasses">0</div>
+            <div class="kpi-label">Classes</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-value" id="kpiMinutes">0</div>
+            <div class="kpi-label">Minutes taught</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-value" id="kpiActiveTeachers">0</div>
+            <div class="kpi-label">Active teachers</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <!-- Tabs -->
+      <nav class="tabs" role="tablist" aria-label="Primary">
+        <button class="tab active" role="tab" aria-selected="true" aria-controls="panel-assignments" id="tab-assignments">Assignments</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="panel-monitor" id="tab-monitor">Daily Monitor</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="panel-students" id="tab-students">Students</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="panel-comm" id="tab-comm">Communication</button>
+      </nav>
+
+      <!-- Assignments -->
+      <section id="panel-assignments" class="panel active" role="tabpanel" aria-labelledby="tab-assignments">
+        <div class="panel-head">
+          <h2>Assignments</h2>
+          <div class="panel-actions">
+            <button id="btnAssign" class="btn" type="button">New Assignment</button>
+            <label for="csvUpload" class="btn ghost" role="button" aria-label="Bulk import CSV">Bulk import CSV</label>
+            <input id="csvUpload" type="file" accept=".csv" hidden />
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-wrap">
+            <table class="table" aria-describedby="assignTableCaption">
+              <caption id="assignTableCaption" class="sr-only">Parent-Kid-Teacher assignments</caption>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Parent</th>
+                  <th>Teacher</th>
+                  <th>Status</th>
+                  <th>Updated</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="assignmentsTbody">
+                <!-- JS will render rows -->
+              </tbody>
+            </table>
+          </div>
+          <div class="table-footer">
+            <button id="assignPrev" class="btn ghost" type="button" disabled>Prev</button>
+            <span id="assignPageInfo" class="muted">Page 1</span>
+            <button id="assignNext" class="btn ghost" type="button" disabled>Next</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Daily Monitor -->
+      <section id="panel-monitor" class="panel" role="tabpanel" aria-labelledby="tab-monitor" hidden>
+        <div class="panel-head">
+          <h2>Daily Monitor</h2>
+          <div class="panel-actions">
+            <button id="refreshMonitor" class="btn ghost" type="button">Refresh</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 class="card-title">Teachers today</h3>
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Teacher</th>
+                    <th>Classes</th>
+                    <th>Minutes</th>
+                    <th>Students</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody id="monitorTeachersTbody">
+                  <!-- JS render -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Alerts</h3>
+            <ul id="monitorAlerts" class="list">
+              <!-- e.g., “No class marked for 3 days” -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Students -->
+      <section id="panel-students" class="panel" role="tabpanel" aria-labelledby="tab-students" hidden>
+        <div class="panel-head">
+          <h2>Students</h2>
+          <div class="panel-actions">
+            <input id="studentSearch" class="input" type="search" placeholder="Search students…" aria-label="Search students"/>
+          </div>
+        </div>
+
+        <div id="studentsGrid" class="cards-grid">
+          <!-- JS renders student cards -->
+        </div>
+
+        <!-- Drawer for Student Detail -->
+        <aside id="studentDrawer" class="drawer" aria-hidden="true" aria-labelledby="studentDrawerTitle" role="dialog">
+          <div class="drawer-panel">
+            <header class="drawer-head">
+              <h3 id="studentDrawerTitle">Student detail</h3>
+              <button id="closeStudentDrawer" class="icon-btn" aria-label="Close drawer" type="button">✕</button>
+            </header>
+
+            <section class="drawer-body">
+              <form id="studentPlanForm" class="stack lg" novalidate>
+                <div id="studentDetailSummary" class="stack lg">
+                  <article class="card relationships-card">
+                    <header class="card-head">
+                      <div>
+                        <h4 class="card-title">Relationships</h4>
+                        <p id="studentMappingMeta" class="muted">Loading…</p>
+                      </div>
+                      <span id="studentIdBadge" class="badge">—</span>
+                    </header>
+                    <div class="stack md">
+                      <div>
+                        <div class="label muted">Parent(s)</div>
+                        <div id="studentParentList" class="chips muted">Loading…</div>
+                      </div>
+                      <div class="stack sm">
+                        <label class="label" for="studentTeacherSelect">Teacher</label>
+                        <select id="studentTeacherSelect" class="select">
+                          <option value="">Select teacher</option>
+                        </select>
+                        <p id="studentTeacherStatus" class="muted"></p>
+                      </div>
+                      <div>
+                        <div class="label muted">Enrollments</div>
+                        <div id="studentEnrollmentList" class="chips muted">Loading…</div>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article class="card" id="studentCoursesCard">
+                    <header class="card-head">
+                      <div>
+                        <h4 class="card-title">Courses &amp; Tracks</h4>
+                        <p class="muted">Toggle tracks to manage enrollments. Paused tracks remain visible to parents.</p>
+                      </div>
+                    </header>
+                    <div id="courseTrackContainer" class="course-grid"></div>
+                  </article>
+
+                  <article class="card" id="studentProgressCard">
+                    <header class="card-head">
+                      <div>
+                        <h4 class="card-title">Progress snapshot</h4>
+                        <p id="studentProgressMeta" class="muted">Pulling latest progress…</p>
+                      </div>
+                    </header>
+                    <div id="studentProgressCards" class="progress-grid"></div>
+                  </article>
+
+                  <article class="card" id="studentSubscriptionCard">
+                    <header class="card-head">
+                      <h4 class="card-title">Subscription</h4>
+                    </header>
+                    <div class="stack md">
+                      <div class="field">
+                        <label class="label" for="subscriptionPlan">Plan</label>
+                        <input id="subscriptionPlan" class="input" type="text" placeholder="Optional plan name" />
+                      </div>
+                      <div class="field">
+                        <label class="label" for="subscriptionExpiry">Expiry date</label>
+                        <input id="subscriptionExpiry" class="input" type="date" />
+                      </div>
+                      <div class="checkbox-group">
+                        <label class="checkbox">
+                          <input type="checkbox" id="subscriptionFlagPlan" />
+                          <span>Show plan on parent dashboard</span>
+                        </label>
+                        <label class="checkbox">
+                          <input type="checkbox" id="subscriptionFlagExpiry" />
+                          <span>Show expiry on parent dashboard</span>
+                        </label>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+              </form>
+
+              <div class="tabs sm" role="tablist" aria-label="Student details">
+                <button class="tab sm active" type="button" role="tab" aria-selected="true" aria-controls="sd-progress" id="sd-tab-progress">Progress</button>
+                <button class="tab sm" type="button" role="tab" aria-selected="false" aria-controls="sd-curriculum" id="sd-tab-curriculum">Curriculum</button>
+                <button class="tab sm" type="button" role="tab" aria-selected="false" aria-controls="sd-attendance" id="sd-tab-attendance">Attendance</button>
+              </div>
+
+              <section id="sd-progress" class="subpanel active" role="tabpanel" aria-labelledby="sd-tab-progress">
+                <div id="sdProgressList" class="stack md"></div>
+              </section>
+
+              <section id="sd-curriculum" class="subpanel" role="tabpanel" aria-labelledby="sd-tab-curriculum" hidden>
+                <div id="sdCurriculumList" class="stack md"></div>
+              </section>
+
+              <section id="sd-attendance" class="subpanel" role="tabpanel" aria-labelledby="sd-tab-attendance" hidden>
+                <div class="table-wrap">
+                  <table class="table">
+                    <thead>
+                      <tr><th>Date</th><th>Type</th><th>Minutes</th><th>Marked by</th></tr>
+                    </thead>
+                    <tbody id="sdAttendanceTbody"></tbody>
+                  </table>
+                </div>
+              </section>
+            </section>
+
+            <footer class="drawer-foot">
+              <p id="studentSaveStatus" class="save-status muted"></p>
+              <button type="submit" form="studentPlanForm" class="btn" id="studentSaveBtn">Save changes</button>
+            </footer>
+          </div>
+          <div class="drawer-mask" id="studentDrawerMask" tabindex="-1"></div>
+        </aside>
+      </section>
+
+      <!-- Communication -->
+      <section id="panel-comm" class="panel" role="tabpanel" aria-labelledby="tab-comm" hidden>
+        <div class="panel-head">
+          <h2>Communication</h2>
+          <div class="panel-actions">
+            <button id="btnNewTicket" class="btn" type="button">New Ticket</button>
+            <label class="sr-only" for="ticketStatusFilter">Ticket status</label>
+            <select id="ticketStatusFilter" class="select">
+              <option value="all">All</option>
+              <option value="open" selected>Open</option>
+              <option value="pending-teacher">Pending Teacher</option>
+              <option value="pending-parent">Pending Parent</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3 class="card-title">Inbox</h3>
+            <ul id="ticketsList" class="tickets">
+              <!-- JS render tickets -->
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3 class="card-title">Thread</h3>
+            <div id="ticketThread" class="thread" aria-live="polite">
+              <div class="muted">Select a ticket to view messages.</div>
+            </div>
+            <form id="ticketComposer" class="composer" aria-label="Send message" hidden>
+              <textarea id="ticketMsg" class="input" rows="3" placeholder="Type a message…" aria-label="Message"></textarea>
+              <div class="composer-actions">
+                <input id="ticketFile" type="file" hidden multiple />
+                <button type="button" id="btnAttach" class="btn ghost">Attach</button>
+                <button type="submit" class="btn">Send</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Assignment Modal -->
+  <dialog id="assignModal" class="modal" aria-labelledby="assignTitle" aria-modal="true">
+    <form method="dialog" class="modal-panel" id="assignForm">
+      <header class="modal-head">
+        <h3 id="assignTitle">New Assignment</h3>
+        <button type="button" class="icon-btn" id="assignClose" aria-label="Close">✕</button>
+      </header>
+
+      <section class="modal-body">
+        <div class="grid-2">
+          <div class="stack sm">
+            <label class="label" for="assignParent">Parent</label>
+            <select id="assignParent" class="select" required></select>
+          </div>
+          <div class="stack sm">
+            <label class="label" for="assignStudent">Student</label>
+            <select id="assignStudent" class="select" required></select>
+          </div>
+          <div class="stack sm">
+            <label class="label" for="assignTeacher">Teacher</label>
+            <select id="assignTeacher" class="select" required></select>
+          </div>
+          <div class="stack sm">
+            <label class="label" for="assignStatus">Status</label>
+            <select id="assignStatus" class="select">
+              <option value="active" selected>Active</option>
+              <option value="paused">Paused</option>
+              <option value="ended">Ended</option>
+            </select>
+          </div>
+        </div>
+        <p class="muted">This will update the student’s assignment and mirror links for parent/teacher.</p>
+      </section>
+
+      <footer class="modal-foot">
+        <button type="submit" class="btn">Save</button>
+        <button type="button" class="btn ghost" id="assignCancel">Cancel</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- App script (ESM) -->
+  <script type="module" src="./rm.js"></script>
+</body>
+</html>

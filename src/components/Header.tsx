@@ -1,18 +1,26 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, NavLink } from "react-router-dom";
 
 const courseLinks = [
-  { label: "All Courses Overview", href: "/main/courses/" },
-  { label: "Phonics Foundations", href: "/main/courses/phonics/" },
-  { label: "Grammar & Writing", href: "/main/courses/grammar/" },
-  { label: "Public Speaking", href: "/main/courses/public-speaking/" },
+  { label: "All Courses Overview", to: "/courses" },
+  { label: "Phonics Foundations", to: "/courses/phonics" },
+  { label: "Grammar & Writing", to: "/courses/grammar" },
+  { label: "Public Speaking", to: "/courses/public-speaking" },
 ];
 
-const mainLinks = [
-  { label: "Teachers", href: "/roles/teacher/" },
+// External / legacy (static) pages stay as <a href="...">
+const legacyLinks: Array<{ label: string; to: string } | { label: string; href: string }> = [
+  { label: "Teachers", to: "/roles/teacher" },
   { label: "Kids", href: "/roles/kid/" },
-  { label: "Relationship Manager", href: "/roles/rm/" },
+  { label: "Learning Manager", to: "/roles/rm" },
   { label: "Parents", href: "/main/parents/" },
-  { label: "Blog", href: "/blog/" },
+  { label: "Blog", to: "/blog" },
+];
+
+// SPA internal pages you just added
+const appLinks = [
+  { label: "Pricing", to: "/pricing" },
+  { label: "FAQ", to: "/faq" },
 ];
 
 export default function Header() {
@@ -37,61 +45,120 @@ export default function Header() {
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
+  // Close popovers/drawer when navigating (mobile)
+  const onNavigate = () => {
+    setOpen(false);
+    setMobileOpen(false);
+  };
+
   return (
     <header
       className={`sticky top-0 z-50 border-b border-gray-100 transition-colors ${
-        scrolled ? "bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70" : "bg-white/80 backdrop-blur"
+        scrolled
+          ? "bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/70"
+          : "bg-white/80 backdrop-blur"
       }`}
       role="banner"
     >
       <div className="mx-auto max-w-6xl px-4 h-16 flex items-center gap-4">
         {/* Brand */}
-        <a href="/" className="flex items-center gap-2" aria-label="Tiny Steps Home">
+        <Link to="/" className="flex items-center gap-2.5" aria-label="Tiny Steps Home" onClick={onNavigate}>
           <img src="/assets/images/logo.png" alt="" width={40} height={40} className="h-10 w-10" />
-          <span className="text-xl font-extrabold text-[#e05c0a]">Tiny<span className="mx-0.5" />Steps</span>
-        </a>
+          <span className="text-2xl font-extrabold tracking-tight text-[#e05c0a]">
+            Tiny<span className="mx-0.5" />Steps
+          </span>
+        </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-2 ml-auto" aria-label="Primary">
+        <nav
+          className="ml-auto hidden lg:flex items-center gap-1.5 text-sm font-semibold tracking-tight text-gray-700"
+          aria-label="Primary"
+        >
+          {/* Courses dropdown */}
           <div className="relative" ref={menuRef}>
             <button
-              className="inline-flex items-center gap-1 px-3 py-2 font-semibold text-gray-800 hover:text-[#e05c0a]"
+              className="inline-flex items-center gap-1 rounded-full px-3.5 py-2 transition-colors hover:bg-[#fff4ec] hover:text-[#e05c0a]"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
+              aria-haspopup="menu"
             >
               Courses
               <svg width="16" height="16" viewBox="0 0 20 20" className="opacity-70">
-                <path fill="currentColor" d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z" />
+                <path
+                  fill="currentColor"
+                  d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+                />
               </svg>
             </button>
             {open && (
               <div
-                className="absolute left-0 mt-2 w-64 rounded-2xl border border-gray-100 bg-white shadow-xl p-2"
+                className="absolute left-0 mt-3 w-64 rounded-2xl border border-gray-100 bg-white shadow-xl p-2"
                 role="menu"
               >
                 {courseLinks.map((l) => (
-                  <a
+                  <NavLink
                     key={l.label}
-                    href={l.href}
-                    className="block rounded-xl px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-50"
+                    to={l.to}
+                    className={({ isActive }) =>
+                      `block rounded-xl px-3 py-2 text-sm font-semibold ${
+                        isActive ? "bg-[#fff3ec] text-[#e05c0a]" : "text-gray-800 hover:bg-gray-50"
+                      }`
+                    }
                     role="menuitem"
+                    onClick={onNavigate}
                   >
                     {l.label}
-                  </a>
+                  </NavLink>
                 ))}
               </div>
             )}
           </div>
 
-          {mainLinks.map((l) => (
-            <a key={l.label} href={l.href} className="px-3 py-2 font-semibold text-gray-800 hover:text-[#e05c0a]">
+          {/* Internal SPA links */}
+          {appLinks.map((l) => (
+            <NavLink
+              key={l.label}
+              to={l.to}
+              className={({ isActive }) =>
+                `inline-flex items-center rounded-full px-3.5 py-2 transition-colors ${
+                  isActive ? "bg-[#fff4ec] text-[#e05c0a]" : "hover:bg-[#fff4ec] text-gray-700 hover:text-[#e05c0a]"
+                }`
+              }
+              onClick={onNavigate}
+            >
               {l.label}
-            </a>
+            </NavLink>
           ))}
+
+          {/* Legacy/static links */}
+          {legacyLinks.map((l) =>
+            "to" in l ? (
+              <NavLink
+                key={l.label}
+                to={l.to}
+                className={({ isActive }) =>
+                  `inline-flex items-center rounded-full px-3.5 py-2 transition-colors ${
+                    isActive ? "bg-[#fff4ec] text-[#e05c0a]" : "hover:bg-[#fff4ec] hover:text-[#e05c0a]"
+                  }`
+                }
+                onClick={onNavigate}
+              >
+                {l.label}
+              </NavLink>
+            ) : (
+              <a
+                key={l.label}
+                href={l.href}
+                className="inline-flex items-center rounded-full px-3.5 py-2 transition-colors hover:bg-[#fff4ec] hover:text-[#e05c0a]"
+              >
+                {l.label}
+              </a>
+            ),
+          )}
 
           <a
             href="/main/book-demo/"
-            className="ml-1 rounded-full px-4 py-2 text-white font-extrabold shadow"
+            className="ml-2 inline-flex items-center rounded-full px-4 py-2 text-sm font-extrabold text-white shadow-lg shadow-[#ff8a4c]/40 transition hover:-translate-y-0.5"
             style={{ backgroundImage: "linear-gradient(135deg,#ff751f,#e05c0a)" }}
           >
             Book Trial
@@ -100,7 +167,7 @@ export default function Header() {
           <a
             id="authBtn"
             href="/auth.html"
-            className="ml-2 rounded-full px-4 py-2 border font-bold text-[#e05c0a] border-gray-200"
+            className="ml-2 inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-[#e05c0a] transition hover:border-[#e05c0a]/40 hover:text-[#c94a07]"
             aria-live="polite"
           >
             Sign in
@@ -109,7 +176,7 @@ export default function Header() {
 
         {/* Mobile menu button */}
         <button
-          className="md:hidden ml-auto p-2 rounded-xl border border-gray-200"
+          className="ml-auto rounded-xl border border-gray-200 p-2 text-xl text-gray-700 lg:hidden"
           aria-label="Menu"
           onClick={() => setMobileOpen((v) => !v)}
         >
@@ -125,17 +192,43 @@ export default function Header() {
               <summary className="cursor-pointer font-semibold text-gray-800">Courses</summary>
               <div className="mt-2 grid">
                 {courseLinks.map((l) => (
-                  <a key={l.label} href={l.href} className="py-2 text-gray-700 border-b last:border-0">
+                  <Link
+                    key={l.label}
+                    to={l.to}
+                    className="py-2 text-gray-700 border-b last:border-0"
+                    onClick={onNavigate}
+                  >
                     {l.label}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </details>
-            {mainLinks.map((l) => (
-              <a key={l.label} href={l.href} className="py-2 text-gray-700 border-b last:border-0">
+
+            {/* Internal SPA links */}
+            {appLinks.map((l) => (
+              <Link key={l.label} to={l.to} className="py-2 text-gray-700 border-b last:border-0" onClick={onNavigate}>
                 {l.label}
-              </a>
+              </Link>
             ))}
+
+            {/* Legacy/static links */}
+            {legacyLinks.map((l) =>
+              "to" in l ? (
+                <Link
+                  key={l.label}
+                  to={l.to}
+                  className="py-2 text-gray-700 border-b last:border-0"
+                  onClick={onNavigate}
+                >
+                  {l.label}
+                </Link>
+              ) : (
+                <a key={l.label} href={l.href} className="py-2 text-gray-700 border-b last:border-0">
+                  {l.label}
+                </a>
+              ),
+            )}
+
             <div className="flex gap-3 pt-2">
               <a
                 href="/main/book-demo/"

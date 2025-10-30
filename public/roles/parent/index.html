@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TPT04CQRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+  
+    gtag('config', 'G-4TPT04CQRL');
+  </script>
+
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Tiny Steps — Parent</title>
+  <meta name="robots" content="noindex,nofollow"/>
+
+  <!-- Base UI -->
+<link rel="stylesheet" href="/roles/parent/parent.css">
+<link rel="stylesheet" href="/roles/parent/glimpse.css">
+
+  <!-- Optional: Chart.js (safe to keep even if unused yet) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- HEADER -->
+  <header class="topbar" role="banner">
+    <div class="topbar-left">
+      <div class="portal-brand">
+        <a class="portal-brand__link" href="/" aria-label="Tiny Steps home">
+          <img src="/assets/images/logo.png" alt="Tiny Steps" class="portal-brand__logo" width="36" height="36" loading="lazy">
+          <span class="portal-brand__name">Tiny<span class="portal-brand__gap"></span>Steps</span>
+        </a>
+        <div class="portal-brand__meta">
+          <strong>Parent Portal</strong>
+          <span class="portal-brand__note" id="portalSubtitle">Live dashboard</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <label for="kidsSelect" class="muted topbar-label">Child</label>
+      <select id="kidsSelect" class="input topbar-select"></select>
+      <button id="addKidBtn" class="btn">Add Kid</button>
+
+      <div class="profile-menu" id="profileMenu" data-open="false">
+        <button id="profileTrigger" class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="profile-avatar" id="profileAvatar" aria-hidden="true">TS</span>
+          <span class="profile-name" id="profileName">Loading…</span>
+          <svg class="profile-chevron" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.084l3.71-3.854a.75.75 0 0 1 1.08 1.04l-4.24 4.4a.75.75 0 0 1-1.08 0l-4.24-4.4a.75.75 0 0 1 .02-1.06z"/>
+          </svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown" role="menu" hidden>
+          <div class="profile-info">
+            <div class="profile-display" id="profileDisplay">Tiny Steps</div>
+            <div class="profile-email" id="profileEmail">—</div>
+            <div class="profile-role" id="profileRole">Parent</div>
+          </div>
+          <button id="signOutBtn" class="profile-action" type="button">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="container" style="max-width:1100px;">
+    <!-- Kid header / welcome -->
+    <section class="card" style="margin-top:16px;">
+      <div style="display:flex; align-items:center; gap:16px;">
+       
+        <div>
+          <h1 id="kidName" style="margin:0;">Welcome, Parent</h1>
+          <p class="muted" id="welcome" style="margin:4px 0 0;">Loading…</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick stats -->
+    <section class="grid" style="margin-top:16px;">
+      <article class="card">
+        <h2 style="margin-bottom:6px;">Quick Stats</h2>
+        <div class="grid-3">
+          <div class="stat">
+            <div class="stat-value" id="statPhonics">—</div>
+            <div class="stat-label">Phonics Mastery</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="statGrammar">—</div>
+            <div class="stat-label">Grammar Score</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="statSpeaking">—</div>
+            <div class="stat-label">Speaking (10)</div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-bottom:6px;">Upcoming Classes</h2>
+        <ul id="scheduleList" class="muted mini-list">Loading…</ul>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-bottom:6px;">Fees</h2>
+        <ul id="feesList" class="muted mini-list"><li class="muted">Loading…</li></ul>
+      </article>
+    </section>
+
+    <!-- Charts row -->
+    <section class="grid" style="margin-top:16px;">
+      <article class="card">
+        <header class="card-header">
+          <h2>Phonics Progress</h2>
+          <span class="chip">Reading</span>
+        </header>
+        <canvas id="chartPhonicsLive" height="200"></canvas>
+        <ul id="progressList" class="mini-list" style="margin-top:10px;">Loading…</ul>
+      </article>
+
+      <article class="card">
+        <header class="card-header">
+          <h2>Grammar Growth</h2>
+          <span class="chip">Writing</span>
+        </header>
+        <canvas id="chartGrammarLive" height="200"></canvas>
+        <ul id="grammarList" class="mini-list" style="margin-top:10px;">
+          <li class="muted">Loading…</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <header class="card-header">
+          <h2>Public Speaking Confidence</h2>
+          <span class="chip">Speaking</span>
+        </header>
+        <canvas id="chartSpeakingLive" height="200"></canvas>
+        <ul id="speakingList" class="mini-list" style="margin-top:10px;">
+          <li class="muted">Loading…</li>
+        </ul>
+      </article>
+    </section>
+
+    <!-- Attendance -->
+    <section class="card" style="margin-top:16px;">
+      <h2>Attendance</h2>
+      <ul id="attendanceList" class="mini-list">
+        <li class="muted">Loading…</li>
+      </ul>
+    </section>
+
+    <!-- Notes -->
+    <section class="card note" style="margin-top:16px;">
+      <p class="muted">Tip: This page updates in real time. Switch children from the selector above.</p>
+    </section>
+  </main>
+
+  <!-- Scripts -->
+  <script type="module" src="/shared/firebase-init.js"></script>
+  <script type="module" src="/shared/guard.js"></script>
+<script type="module" src="/roles/parent/parent.js"></script>
+<script type="module" src="/roles/parent/glimpse.js"></script>
+
+  <!-- Inline minimal CSS helpers used above (optional if already in parent.css) -->
+  <style>
+    .container{ padding:0 16px; }
+    .grid{ display:grid; grid-template-columns:1fr; gap:16px; }
+    .grid-3{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    @media (min-width: 960px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+    .card{ background:#fff; border:1px solid #f1efe9; border-radius:16px; padding:16px; }
+    .card-header{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+    .mini-list{ padding-left:18px; }
+    .chip{ font-size:12px; border:1px solid #eee; border-radius:999px; padding:3px 8px; background:#fafafa; }
+    .stat-value{ font-size:20px; font-weight:700; }
+    .stat-label{ color:#6b7280; font-size:12px; }
+  </style>
+</body>
+</html>

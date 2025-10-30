@@ -190,7 +190,7 @@ export default function Week1Native() {
             <h2 id="progress-title">Progress You Can Celebrate</h2>
             <p>
               Notice your child spotting SATPIN letters around the house, naming nouns in full sentences, and greeting
-              others with a smile. Share these wins with your Relationship Manager so we can plan the next stretch goals
+              others with a smile. Share these wins with your Learning Manager so we can plan the next stretch goals
               together.
             </p>
           </div>

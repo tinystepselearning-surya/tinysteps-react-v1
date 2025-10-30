@@ -2,33 +2,71 @@ import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useScrollReveal } from "../hooks/useScrollReveal";
 
-const stories = [
+type Story = {
+  program: string;
+  lead: string;
+  name: string;
+  place: string;
+  body: string;
+};
+
+const stories: Story[] = [
   {
-    lead: "“Within a month of joining, Kavya started blending sounds on her own. The weekly notes helped us practise exactly what she learnt in class.”",
+    program: "Phonics Foundations",
+    lead: "“Within four weeks Kavya was decoding storybooks independently.”",
     name: "Anita Rao",
     place: "Bengaluru · Kavya, Grade 1",
     body:
-      "When we enrolled in Phonics Foundations, Kavya recognised only a few sounds. The teacher’s diagnostic report mapped her starting point clearly. Every week we receive a short WhatsApp summary, and Kavya loves repeating the playful drills that arrive in our parent portal. We now see her picking up library books without prompting.",
+      "Kavya recognised only a handful of sounds when we joined. The diagnostic report outlined exactly where to begin, and the weekly WhatsApp notes tell us how to practise at home. Kavya now reaches for her library bag every evening and reads aloud with confidence.",
   },
   {
-    lead: "“The grammar roadmap gave us clarity on milestones. Aarav’s teacher keeps us in the loop after every project, so we know exactly where he shines and where to support.”",
+    program: "Phonics Foundations",
+    lead: "“The SATPIN routine made reading feel like playtime for Vihaan.”",
+    name: "Siddharth & Nisha Patel",
+    place: "Ahmedabad · Vihaan, Senior KG",
+    body:
+      "Tiny Steps keeps the sessions joyful, but also methodical. The teacher shares short video clips so we can mirror the pronunciation at home. Vihaan blends new words daily and we receive a crisp progress email every Friday. It’s the structure we were looking for.",
+  },
+  {
+    program: "Grammar & Writing Lab",
+    lead: "“Aarav finally understands grammar rules and applies them in stories.”",
     name: "Rahul & Sneha Sharma",
     place: "Pune · Aarav, Grade 4",
     body:
-      "Grammar & Writing Lab has a mix of creative and analytical tasks. Aarav uploads his drafts, receives voice notes, and we see the rubric scores update in real time. The personalised homework suggestions are realistic, which makes practising at home actually doable.",
+      "The roadmap made milestones crystal clear. Aarav submits drafts through the parent portal, receives voice notes highlighting wins, and gets two actionable points to work on. His school essays are now organised and his teacher has noticed the difference.",
   },
   {
-    lead: "“Riya went from whispering her speeches to presenting confidently in two terms. The speaking rubrics and videos on the portal make progress visible.”",
+    program: "Grammar & Writing Lab",
+    lead: "“The rubrics and mini-deadlines made writing enjoyable for Diya.”",
+    name: "Priyanka Menon",
+    place: "Chennai · Diya, Grade 5",
+    body:
+      "Weekly writing studios combine imagination with technique. We can see rubric scores update instantly, and the mentor shares a 5-minute debrief call after every project. Diya now drafts without fear of red marks because she understands the ‘why’ behind every edit.",
+  },
+  {
+    program: "Public Speaking Studio",
+    lead: "“Riya now walks on stage with a smile and clear voice.”",
     name: "Meera Joshi",
     place: "Mumbai · Riya, Grade 5",
     body:
-      "Public Speaking Studio gave Riya a safe environment to experiment. Teachers share annotated videos and coaching notes after every session. Watching her growth on the portal has been the best motivation for our family.",
+      "The studio gave Riya a safe space to experiment. Coaches upload annotated videos, mark delivery on a speaking rubric, and set a ‘spotlight goal’ for the next week. We can literally watch her posture, pace, and confidence evolve.",
+  },
+  {
+    program: "Public Speaking Studio",
+    lead: "“Arnav hosted his school assembly after two terms in the studio.”",
+    name: "Vikram Kulkarni",
+    place: "Hyderabad · Arnav, Grade 6",
+    body:
+      "Sessions blend breathing drills, storytelling games, and audience feedback. Coaches send concise debriefs and recommend practice cues we try during dinner conversations. Arnav now projects clearly and enjoys presenting — a huge shift from where we started.",
   },
 ];
 
+const GROUP_SIZE = 3;
+
 export default function Testimonials() {
   const [open, setOpen] = useState(false);
-  const [i, setI] = useState(0);
+  const [activeStory, setActiveStory] = useState(0);
+  const [slide, setSlide] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
   const sectionRef = useScrollReveal<HTMLElement>({ variant: "right" });
 
@@ -37,41 +75,115 @@ export default function Testimonials() {
     contentRef.current?.focus();
   }, [open]);
 
+  const totalSlides = Math.ceil(stories.length / GROUP_SIZE);
+
+  const goTo = (next: number) => {
+    setSlide((next + totalSlides) % totalSlides);
+  };
+
   return (
-    <section ref={sectionRef} id="testimonials" className="mx-auto max-w-6xl px-4 my-16">
-      <div className="text-center mx-auto max-w-2xl">
-        <h2 data-reveal-child className="text-[#e05c0a] text-2xl md:text-3xl font-extrabold">What parents are saying</h2>
-        <p data-reveal-child style={{ "--reveal-child-delay": "80ms" } as CSSProperties} className="text-gray-600 mt-1">
-          Families across India trust Tiny Steps to make literacy joyful. Hear how our teachers, routines, and parent updates build
-          lasting confidence.
+    <section ref={sectionRef} id="testimonials" className="mx-auto max-w-6xl px-4 my-20">
+      <div className="mx-auto max-w-3xl text-center">
+        <p data-reveal-child className="text-sm font-semibold uppercase tracking-[0.2em] text-[#ff7a45]">
+          Parent Voices
+        </p>
+        <h2
+          data-reveal-child
+          style={{ "--reveal-child-delay": "60ms" } as CSSProperties}
+          className="mt-2 text-3xl md:text-4xl font-extrabold text-gray-900"
+        >
+          Families see measurable progress and lasting confidence
+        </h2>
+        <p
+          data-reveal-child
+          style={{ "--reveal-child-delay": "120ms" } as CSSProperties}
+          className="mt-3 text-gray-600 text-lg"
+        >
+          Hear how Tiny Steps learning managers, teachers, and parent updates work together across phonics,
+          writing, and public speaking programs.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mt-8" role="list">
-        {stories.map((s, idx) => (
-          <article
-            key={idx}
-            role="listitem"
-            data-reveal-child
-            style={{ "--reveal-child-delay": `${160 + idx * 90}ms` } as CSSProperties}
-            className="bg-white rounded-2xl shadow p-6 flex flex-col gap-4"
+      <div className="relative mt-10">
+        <div className="overflow-hidden">
+          <div
+            className="flex transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${slide * 100}%)` }}
           >
-            <blockquote className="m-0 text-[1.05rem] font-semibold leading-7 text-gray-900">{s.lead}</blockquote>
-            <footer className="mt-auto">
-              <cite className="not-italic font-extrabold text-[#e05c0a]">{s.name}</cite>
-              <span className="block text-gray-600 text-sm mt-0.5">{s.place}</span>
-            </footer>
+            {Array.from({ length: totalSlides }, (_, slideIndex) => {
+              const start = slideIndex * GROUP_SIZE;
+              const slice = stories.slice(start, start + GROUP_SIZE);
+              return (
+                <div key={slideIndex} className="w-full shrink-0 px-0 md:px-1">
+                  <div className="grid gap-6 md:grid-cols-3" role="list">
+                    {slice.map((story, idx) => {
+                      const absoluteIndex = start + idx;
+                      return (
+                        <article
+                          key={story.lead}
+                          role="listitem"
+                          className="flex h-full flex-col gap-4 rounded-2xl bg-white p-6 shadow shadow-gray-200 transition hover:-translate-y-1 hover:shadow-lg"
+                        >
+                          <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[#4f46e5]">
+                            {story.program}
+                          </span>
+                          <blockquote className="m-0 text-[1.05rem] font-semibold leading-7 text-gray-900">
+                            {story.lead}
+                          </blockquote>
+                          <footer className="mt-auto">
+                            <cite className="not-italic font-extrabold text-[#e05c0a]">{story.name}</cite>
+                            <span className="mt-0.5 block text-sm text-gray-600">{story.place}</span>
+                          </footer>
+                          <button
+                            onClick={() => {
+                              setActiveStory(absoluteIndex);
+                              setOpen(true);
+                            }}
+                            className="self-start rounded-full bg-[#ffefe6] px-3 py-2 text-sm font-extrabold text-[#e05c0a] transition hover:bg-[#ffd9c6]"
+                          >
+                            Read full story
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {totalSlides > 1 && (
+          <div className="mt-6 flex items-center justify-between">
             <button
-              onClick={() => {
-                setI(idx);
-                setOpen(true);
-              }}
-              className="self-start rounded-full px-3 py-2 text-sm font-extrabold bg-[#ffefe6] text-[#e05c0a]"
+              onClick={() => goTo(slide - 1)}
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-[#ff751f] hover:text-[#e05c0a]"
             >
-              Read full story
+              ‹ Prev
             </button>
-          </article>
-        ))}
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalSlides }, (_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => goTo(idx)}
+                  className={`h-2.5 w-8 rounded-full transition ${
+                    slide === idx ? "bg-[#ff751f]" : "bg-gray-200 hover:bg-gray-300"
+                  }`}
+                  aria-label={`Show parent stories ${idx * GROUP_SIZE + 1} to ${Math.min(
+                    (idx + 1) * GROUP_SIZE,
+                    stories.length,
+                  )}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => goTo(slide + 1)}
+              className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition hover:border-[#ff751f] hover:text-[#e05c0a]"
+            >
+              Next ›
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Modal */}
@@ -81,7 +193,7 @@ export default function Testimonials() {
           <div
             ref={contentRef}
             tabIndex={-1}
-            className="relative bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-[min(720px,92vw)] max-h-[90svh] overflow-auto"
+            className="relative max-h-[90svh] w-[min(720px,92vw)] overflow-auto rounded-3xl bg-white p-6 shadow-2xl md:p-8"
             role="dialog"
             aria-modal="true"
           >
@@ -89,24 +201,27 @@ export default function Testimonials() {
               <h3 className="text-xl font-extrabold text-[#e05c0a]">Parent stories</h3>
               <button
                 onClick={() => setOpen(false)}
-                className="text-2xl leading-none px-2 rounded-lg text-gray-500 hover:bg-[#fff3ec]"
+                className="rounded-lg px-2 text-2xl leading-none text-gray-500 transition hover:bg-[#fff3ec]"
                 aria-label="Close testimonials"
               >
                 &times;
               </button>
             </div>
 
-            <p className="mt-4 text-lg font-semibold text-gray-900">{stories[i].lead}</p>
-            <p className="mt-3 text-gray-700">{stories[i].body}</p>
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.2em] text-[#4f46e5]">
+              {stories[activeStory].program}
+            </p>
+            <p className="mt-2 text-lg font-semibold text-gray-900">{stories[activeStory].lead}</p>
+            <p className="mt-3 text-gray-700">{stories[activeStory].body}</p>
             <footer className="mt-4 text-gray-600">
-              <strong className="block text-[#e05c0a]">{stories[i].name}</strong>
-              <span className="text-sm">{stories[i].place}</span>
+              <strong className="block text-[#e05c0a]">{stories[activeStory].name}</strong>
+              <span className="text-sm">{stories[activeStory].place}</span>
             </footer>
 
             <div className="mt-6 flex items-center justify-between">
               <button
-                className="rounded-full px-4 py-2 bg-[#ffd9c6] text-[#e05c0a] font-extrabold disabled:opacity-50"
-                onClick={() => setI((p) => (p - 1 + stories.length) % stories.length)}
+                className="rounded-full bg-[#ffd9c6] px-4 py-2 font-extrabold text-[#e05c0a] transition hover:bg-[#ffc9aa]"
+                onClick={() => setActiveStory((prev) => (prev - 1 + stories.length) % stories.length)}
               >
                 ‹ Prev
               </button>
@@ -114,15 +229,15 @@ export default function Testimonials() {
                 {stories.map((_, idx) => (
                   <button
                     key={idx}
-                    onClick={() => setI(idx)}
-                    className={`w-3 h-3 rounded-full ${i === idx ? "bg-[#ff751f]" : "bg-gray-200"}`}
-                    aria-label={`Story ${idx + 1}`}
+                    onClick={() => setActiveStory(idx)}
+                    className={`h-2.5 w-2.5 rounded-full ${activeStory === idx ? "bg-[#ff751f]" : "bg-gray-200"}`}
+                    aria-label={`Show parent story ${idx + 1}`}
                   />
                 ))}
               </div>
               <button
-                className="rounded-full px-4 py-2 bg-[#ffd9c6] text-[#e05c0a] font-extrabold disabled:opacity-50"
-                onClick={() => setI((p) => (p + 1) % stories.length)}
+                className="rounded-full bg-[#ffd9c6] px-4 py-2 font-extrabold text-[#e05c0a] transition hover:bg-[#ffc9aa]"
+                onClick={() => setActiveStory((prev) => (prev + 1) % stories.length)}
               >
                 Next ›
               </button>
