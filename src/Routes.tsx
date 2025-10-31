@@ -11,6 +11,7 @@ import FAQ from "./pages/FAQ";
 import Parents from "./pages/Parents";
 import TeacherPortal from "./pages/roles/TeacherPortal";
 import LearningManagerPortal from "./pages/roles/LearningManagerPortal";
+import KidsPortal from "./pages/roles/KidsPortal";
 import BlogIndex from "./pages/blog/BlogIndex";
 import BlogArticle from "./pages/blog/BlogArticle";
 
@@ -43,6 +44,10 @@ export default function AppRoutes() {
         <Route path="/roles/rm/" element={<LearningManagerPortal />} />
         <Route path="/roles/learning-manager" element={<LearningManagerPortal />} />
         <Route path="/roles/learning-manager/" element={<LearningManagerPortal />} />
+        <Route path="/roles/kids" element={<KidsPortal />} />
+        <Route path="/roles/kids/" element={<KidsPortal />} />
+        <Route path="/roles/kids" element={<KidsPortal />} />
+        <Route path="/roles/kids/" element={<KidsPortal />} />
 
         {/* Back-compat if you had /main/courses/... */}
         <Route path="/main/courses" element={<Navigate to="/courses" replace />} />

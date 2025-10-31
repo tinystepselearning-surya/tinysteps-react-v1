@@ -1,42 +1,112 @@
-import { useMemo, useState } from "react";
-import { CURRICULUM, type CurriculumAreaId } from "../../data/curriculum";
-import {
-  SAMPLE_PROGRESS_DB,
-  attachCurriculumToProgress,
-  getStudentProgress,
-  type ProgressEntry,
-} from "../../data/progress-db";
+import { useCallback, useMemo, useState } from "react";
+import DashboardShell from "../../components/dashboard/DashboardShell";
+import { buildNavItems } from "../../components/dashboard/navItems";
 
-const CLASSES = [
+type ReportStatus = "pending" | "reviewed" | "draft";
+
+const REPORT_QUEUE: Array<{
+  id: string;
+  name: string;
+  age: string;
+  subject: string;
+  strand: string;
+  lastUpdated: string;
+  status: ReportStatus;
+  accent: string;
+  lessonType: "1:1 CLASS" | "GROUP CLASS";
+}> = [
+  {
+    id: "viraj",
+    name: "Viraj Dinesh",
+    age: "9 yrs",
+    subject: "English",
+    strand: "Pronunciation",
+    lastUpdated: "6 August 2024 · 8:16 pm",
+    status: "pending",
+    accent: "from-[#fee2b6] to-[#fbbf24]",
+    lessonType: "1:1 CLASS",
+  },
+  {
+    id: "vedaa",
+    name: "Vedaaryann",
+    age: "6 yrs",
+    subject: "English",
+    strand: "Pronunciation",
+    lastUpdated: "31 July 2024 · 5:50 pm",
+    status: "pending",
+    accent: "from-[#d9e9ff] to-[#60a5fa]",
+    lessonType: "1:1 CLASS",
+  },
+  {
+    id: "dev",
+    name: "Dev Ishan",
+    age: "7 yrs",
+    subject: "Phonics",
+    strand: "Blends",
+    lastUpdated: "30 July 2024 · 1:45 pm",
+    status: "draft",
+    accent: "from-[#ffe5f4] to-[#f472b6]",
+    lessonType: "1:1 CLASS",
+  },
+  {
+    id: "aadvika",
+    name: "Aadvika Singla",
+    age: "6 yrs",
+    subject: "English",
+    strand: "Pronunciation",
+    lastUpdated: "25 July 2024 · 3:50 pm",
+    status: "reviewed",
+    accent: "from-[#dcfce7] to-[#34d399]",
+    lessonType: "1:1 CLASS",
+  },
+  {
+    id: "nikhil",
+    name: "Nikhil Rao",
+    age: "8 yrs",
+    subject: "Grammar",
+    strand: "Dialogue punctuation",
+    lastUpdated: "22 July 2024 · 4:05 pm",
+    status: "reviewed",
+    accent: "from-[#fef3c7] to-[#f59e0b]",
+    lessonType: "GROUP CLASS",
+  },
+  {
+    id: "aarav",
+    name: "Aarav Sharma",
+    age: "8 yrs",
+    subject: "Writing",
+    strand: "Draft feedback",
+    lastUpdated: "20 July 2024 · 6:10 pm",
+    status: "draft",
+    accent: "from-[#e0e7ff] to-[#6366f1]",
+    lessonType: "1:1 CLASS",
+  },
+];
+
+const DAY_CLASSES = [
   {
     time: "3:00 PM",
-    kid: "Kavya Rao",
+    learner: "Kavya Rao",
     programme: "Phonics Foundations 1:1",
     focus: "Digraph blending · sh/ch",
-    attendance: "Present",
-    rating: 5,
-    feedback: "Cracked the new digraph set—assign picture sort for homework.",
-    progress: ["Completed reader: The Fish Shop", "+8% phonics mastery"],
+    status: "Present",
+    actions: ["Log stars", "Share homework"],
   },
   {
     time: "4:15 PM",
-    kid: "Aarav Sharma",
+    learner: "Aarav Sharma",
     programme: "Grammar Lab 1:1",
     focus: "Dialogue punctuation",
-    attendance: "Present",
-    rating: 4,
-    feedback: "Understands dialogue tags; needs more pause practice.",
-    progress: ["Uploaded draft II", "+6% writing rubric"],
+    status: "Present",
+    actions: ["Update draft", "Record note"],
   },
   {
     time: "6:00 PM",
-    kid: "Riya Joshi",
-    programme: "Public Speaking Studio 1:1",
+    learner: "Riya Joshi",
+    programme: "Speaking Studio 1:1",
     focus: "Showcase rehearsal",
-    attendance: "Present",
-    rating: 5,
-    feedback: "Confident delivery; practise transitions before Sunday rehearsal.",
-    progress: ["Video uploaded", "+5% confidence score"],
+    status: "Present",
+    actions: ["Upload clip", "Notify LM"],
   },
 ];
 
@@ -53,468 +123,292 @@ const EARNINGS = {
   nextPayout: "28 Oct",
 };
 
-const FEEDBACK_LIBRARY: Record<"phonics" | "grammar" | "speaking", string[]> = {
-  phonics: [
-    "Blended independently — continue home read-aloud.",
-    "Needed prompts on middle sounds — reteach next session.",
-    "Great expression while reading decodable text.",
-  ],
-  grammar: [
-    "Applied the rule accurately in guided practice.",
-    "Needs another pass on punctuation for questions.",
-    "Excellent editing — ready for an extended draft.",
-  ],
-  speaking: [
-    "Confident voice projection — practise pauses at home.",
-    "Great storytelling structure — work on eye contact.",
-    "Handled impromptu prompt well — add more descriptive words.",
-  ],
-};
+const SNAPSHOT = [
+  { label: "Pending reports", value: "7", helper: "Due before 9 pm today" },
+  { label: "Draft voice notes", value: "4", helper: "Waiting to upload" },
+  { label: "Attendance this week", value: "96%", helper: "23 / 24 students present" },
+];
+
+const TAB_ORDER: Array<{ key: "all" | ReportStatus; label: string }> = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "draft", label: "Drafts" },
+  { key: "reviewed", label: "Reviewed" },
+];
+
+function StatusBadge({ status }: { status: ReportStatus }) {
+  const tone =
+    status === "pending"
+      ? "bg-[#fee2b6] text-[#b45309]"
+      : status === "draft"
+        ? "bg-[#e0e7ff] text-[#4338ca]"
+        : "bg-[#dcfce7] text-[#047857]";
+  const label = status === "pending" ? "Pending" : status === "draft" ? "Draft" : "Reviewed";
+  return <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone}`}>{label}</span>;
+}
 
 export default function TeacherPortal() {
-  const phonicsTrack = CURRICULUM.find((track) => track.id === "phonics");
-  const grammarTrack = CURRICULUM.find((track) => track.id === "grammar");
-  const speakingTrack = CURRICULUM.find((track) => track.id === "speaking");
+  const [activeTab, setActiveTab] = useState<(typeof TAB_ORDER)[number]["key"]>("pending");
+  const [query, setQuery] = useState("");
 
-  const skillLookup = useMemo(() => {
-    const map = new Map<string, { levelTitle: string; unitTitle: string; skillTitle: string }>();
-    CURRICULUM.forEach((track) => {
-      track.levels.forEach((level) => {
-        level.units.forEach((unit) => {
-          unit.skills.forEach((skill) => {
-            map.set(skill.id, {
-              levelTitle: level.title,
-              unitTitle: unit.title,
-              skillTitle: skill.title,
-            });
-          });
-        });
-      });
-    });
-    return map;
-  }, []);
-
-  const teacherDb = attachCurriculumToProgress(SAMPLE_PROGRESS_DB, CURRICULUM);
-  const kavyaProgress = getStudentProgress(teacherDb, "stu-phonics-kavya");
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [draftLogs, setDraftLogs] = useState<
-    Record<string, { date: string; skillId: string; rating: string; note: string; saved?: boolean }>
-  >({});
-
-  const rosterByProgramme = useMemo(() => {
-    const base = new Map<
-      typeof teacherDb.progress[number]["programmeId"],
-      Map<string, typeof teacherDb.progress[number]>
-    >();
-
-    teacherDb.progress.forEach((entry) => {
-      if (!base.has(entry.programmeId)) {
-        base.set(entry.programmeId, new Map());
-      }
-      const programmeMap = base.get(entry.programmeId)!;
-      const existing = programmeMap.get(entry.studentId);
-      if (!existing || existing.updatedAt < entry.updatedAt) {
-        programmeMap.set(entry.studentId, entry);
-      }
-    });
-
-    return new Map(
-      Array.from(base.entries()).map(([programmeId, studentMap]) => [
-        programmeId,
-        Array.from(studentMap.values()).sort((a, b) => a.studentName.localeCompare(b.studentName)),
-      ]),
+  const reportCounts = useMemo(() => {
+    return REPORT_QUEUE.reduce(
+      (acc, report) => {
+        acc.all += 1;
+        acc[report.status] += 1;
+        return acc;
+      },
+      { all: 0, pending: 0, reviewed: 0, draft: 0 } as Record<(typeof TAB_ORDER)[number]["key"], number>,
     );
-  }, [teacherDb.progress]);
-
-  const filteredRosterEntries = useMemo<[CurriculumAreaId, ProgressEntry[]][]>(() => {
-    const term = searchTerm.trim().toLowerCase();
-    if (!term) {
-      return Array.from(rosterByProgramme.entries());
-    }
-    return Array.from(rosterByProgramme.entries())
-      .map(([programmeId, students]) => {
-        const filteredStudents = students.filter(
-          (entry) =>
-            entry.studentName.toLowerCase().includes(term) ||
-            entry.admissionNumber.toLowerCase().includes(term),
-        );
-        return [programmeId, filteredStudents] as [CurriculumAreaId, ProgressEntry[]];
-      })
-      .filter(([, students]) => students.length > 0);
-  }, [rosterByProgramme, searchTerm]);
-
-  const skillOptionsByProgramme = useMemo(() => {
-    const map = new Map<string, Array<{ value: string; label: string }>>();
-    CURRICULUM.forEach((track) => {
-      const options: Array<{ value: string; label: string }> = [];
-      track.levels.forEach((level) => {
-        level.units.forEach((unit) => {
-          unit.skills.forEach((skill) => {
-            options.push({
-              value: skill.id,
-              label: `${unit.title}: ${skill.title}`,
-            });
-          });
-        });
-      });
-      map.set(track.id, options);
-    });
-    return map;
   }, []);
 
-  const updateDraft = (studentId: string, patch: Partial<{ date: string; skillId: string; rating: string; note: string }>) => {
-    setDraftLogs((prev) => {
-      const prevDraft = prev[studentId] ?? { date: "", skillId: "", rating: "5", note: "" };
-      return { ...prev, [studentId]: { ...prevDraft, ...patch, saved: false } };
+  const filteredReports = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    return REPORT_QUEUE.filter((report) => {
+      const matchesTab = activeTab === "all" ? true : report.status === activeTab;
+      const matchesQuery =
+        !term ||
+        report.name.toLowerCase().includes(term) ||
+        report.subject.toLowerCase().includes(term) ||
+        report.strand.toLowerCase().includes(term);
+      return matchesTab && matchesQuery;
     });
-  };
+  }, [activeTab, query]);
 
-  const markSaved = (studentId: string) => {
-    setDraftLogs((prev) => {
-      const prevDraft = prev[studentId];
-      if (!prevDraft) return prev;
-      return { ...prev, [studentId]: { ...prevDraft, saved: true } };
-    });
-  };
+  const scrollToId = useCallback((id: string) => {
+    return () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+  }, []);
 
-  return (
-    <div className="bg-slate-950 text-slate-100">
-      <section className="border-b border-white/10 bg-gradient-to-br from-[#1d1b60] via-[#151137] to-[#0f172a]">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-indigo-200">
-            Teacher workspace preview
-          </p>
-          <h1 className="mt-6 text-4xl font-black tracking-tight text-white sm:text-5xl">
-            One-to-one classes, updated in one place
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg text-slate-300">
-            Your class diary, daily feedback stars, and earnings snapshots are open for review while the new workflow goes
-            live. Learning Managers remain the bridge for every parent message.
-          </p>
+  const navItems = useMemo(
+    () =>
+      buildNavItems("classes", {
+        includeKeys: ["classes", "homework"],
+        overrides: {
+          classes: {
+            label: "Teacher workspace",
+            badge: `${EARNINGS.today.classes}`,
+            onSelect: scrollToId("report-queue"),
+          },
+          homework: {
+            label: "Class flow",
+            badge: `${reportCounts.pending}`,
+            onSelect: scrollToId("class-flow"),
+          },
+        },
+      }),
+    [reportCounts.pending, scrollToId],
+  );
+
+  const headerToolbar = (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <button className="inline-flex items-center justify-center rounded-full border border-[#7c2d58]/30 bg-white/90 px-4 py-2 text-sm font-semibold text-[#7c2d58] shadow-sm shadow-[#7c2d58]/15 transition hover:bg-[#7c2d58]/10">
+        Download day sheet
+      </button>
+      <button className="inline-flex items-center justify-center rounded-full bg-[#2563eb] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#2563eb]/30 transition hover:bg-[#1d4ed8]">
+        Start new report
+      </button>
+    </div>
+  );
+
+  const rightRail = (
+    <>
+      <section className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Earnings snapshot</h2>
+        <div className="mt-4 space-y-3 text-sm text-slate-600">
+          <div className="flex items-center justify-between rounded-2xl bg-white/80 px-4 py-3">
+            <span>Today · {EARNINGS.today.classes} classes</span>
+            <span className="text-base font-semibold text-slate-900">{EARNINGS.today.amount}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-white/80 px-4 py-3">
+            <span>This month · {EARNINGS.month.classes} classes</span>
+            <span className="text-base font-semibold text-slate-900">{EARNINGS.month.amount}</span>
+          </div>
+          <div className="flex items-center justify-between rounded-2xl bg-white/80 px-4 py-3">
+            <span>Till date · {EARNINGS.total.classes} classes</span>
+            <span className="text-base font-semibold text-slate-900">{EARNINGS.total.amount}</span>
+          </div>
         </div>
+        <p className="mt-4 text-xs font-semibold uppercase tracking-[0.28em] text-[#0b7ad7]">
+          Next payout · {EARNINGS.nextPayout}
+        </p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <article className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-black/30">
-            <header className="flex items-center justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-semibold text-white">Today&apos;s one-to-one classes</h2>
-                <p className="text-sm text-indigo-200">Mark attendance, rate the session, and log curriculum wins.</p>
-              </div>
-              <span className="rounded-full bg-indigo-500/30 px-3 py-1 text-xs font-semibold text-indigo-200">
-                Demo data
-              </span>
-            </header>
-            <div className="mt-6 space-y-4">
-              {CLASSES.map((session) => (
-                <div
-                  key={`${session.time}-${session.kid}`}
-                  className="rounded-2xl border border-white/5 bg-white/[0.08] p-5 backdrop-blur-sm transition hover:-translate-y-1 hover:bg-white/[0.12]"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-slate-200">
-                    <span>{session.kid}</span>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-indigo-200">
-                      {session.time}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs uppercase tracking-wide text-slate-400">{session.programme}</p>
-                  <p className="mt-2 text-sm text-slate-300">Focus: {session.focus}</p>
+      <section className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Follow-ups</h2>
+        <ul className="mt-4 space-y-3">
+          {FOLLOW_UPS.map((item) => (
+            <li key={item.student} className="rounded-2xl border border-white/50 bg-white/80 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-900">{item.student}</p>
+              <p className="mt-1 text-xs text-slate-600">{item.action}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-300">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 font-semibold text-emerald-200">
-                      Attendance · {session.attendance}
-                    </span>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 font-semibold text-amber-200">
-                      Rating · {"★".repeat(session.rating)}
-                    </span>
-                  </div>
-
-                  <p className="mt-3 text-sm text-slate-200">{session.feedback}</p>
-                  <ul className="mt-3 space-y-1 text-xs text-indigo-100">
-                    {session.progress.map((note) => (
-                      <li key={note}>• {note}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+      <section className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Quick stats</h2>
+        <div className="mt-4 space-y-3">
+          {SNAPSHOT.map((item) => (
+            <div key={item.label} className="rounded-2xl border border-white/60 bg-white/80 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0b7ad7]">{item.label}</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
+              <p className="mt-1 text-xs text-slate-600">{item.helper}</p>
             </div>
-          </article>
-
-          <aside className="space-y-6">
-            <div className="rounded-3xl border border-indigo-500/20 bg-indigo-500/10 p-6">
-              <h3 className="text-lg font-semibold text-white">Quick attendance pulse</h3>
-              <p className="mt-4 text-4xl font-black text-white">96%</p>
-              <p className="mt-2 text-sm text-indigo-100">
-                23/24 students present · one make-up flagged · export opens in Sheets soon.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <h3 className="text-lg font-semibold text-white">Earnings dashboard</h3>
-              <div className="mt-4 grid gap-4 rounded-2xl bg-white/10 p-4 text-sm">
-                <div className="flex items-center justify-between text-indigo-100">
-                  <span>Today ({EARNINGS.today.classes} classes)</span>
-                  <span className="font-semibold text-white">{EARNINGS.today.amount}</span>
-                </div>
-                <div className="flex items-center justify-between text-indigo-100">
-                  <span>Month ({EARNINGS.month.classes} classes)</span>
-                  <span className="font-semibold text-white">{EARNINGS.month.amount}</span>
-                </div>
-                <div className="flex items-center justify-between text-indigo-100">
-                  <span>Till date ({EARNINGS.total.classes} classes)</span>
-                  <span className="font-semibold text-white">{EARNINGS.total.amount}</span>
-                </div>
-              </div>
-              <p className="mt-3 text-xs uppercase tracking-wide text-slate-300">
-                Next payout · {EARNINGS.nextPayout} · Learning Manager will confirm.
-              </p>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <h3 className="text-lg font-semibold text-white">Follow-ups for the day</h3>
-              <ul className="mt-4 space-y-3">
-                {FOLLOW_UPS.map((item) => (
-                  <li key={item.student} className="rounded-2xl border border-white/5 bg-white/[0.08] p-4">
-                    <p className="text-sm font-semibold text-slate-200">{item.student}</p>
-                    <p className="mt-1 text-sm text-slate-400">{item.action}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
+          ))}
         </div>
+      </section>
+    </>
+  );
 
-        <div className="mt-12 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
-          <h2 className="text-lg font-semibold text-white">What&apos;s coming next</h2>
-          <p className="mt-3 text-sm text-slate-300">
-            Daily class submissions will sync automatically with the parent dashboards and pay calculations. Until then, log
-            each one-to-one session here and coordinate parent updates only through the Learning Manager.
-          </p>
-        </div>
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-lg font-semibold text-white">Curriculum blueprint</h2>
-            <p className="mt-2 text-sm text-indigo-100">
-              Plan your sequence confidently—each area moves from foundations to mastery inside one-to-one sessions.
+  return (
+    <DashboardShell
+      navItems={navItems}
+      header={{
+        title: "Teacher workspace",
+        subtitle:
+          "Track reports, classes, and parent follow-ups in one clean view. Learning Managers remain the bridge for every update.",
+        toolbar: headerToolbar,
+      }}
+      rightRail={rightRail}
+    >
+      <section id="report-queue" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Students report queue</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Fill pending notes before parents receive the nightly digest.
             </p>
-            <div className="mt-6 space-y-6">
-              {[phonicsTrack, grammarTrack, speakingTrack]
-                .filter(Boolean)
-                .map((track) => (
-                  <article key={track!.id} className="rounded-2xl border border-white/10 bg-white/[0.08] p-4">
-                    <header className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-white">{track!.title}</h3>
-                        <p className="text-xs text-sky-100">{track!.ageRange}</p>
-                      </div>
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-sky-100">
-                        {track!.pathway.length} phases
-                      </span>
-                    </header>
-                    <p className="mt-3 text-xs text-slate-200">{track!.focus}</p>
-                    <ul className="mt-4 flex flex-wrap gap-2 text-[11px] font-semibold text-sky-100">
-                      {track!.pathway.slice(0, 4).map((phase) => (
-                        <li key={phase} className="rounded-full border border-white/10 px-3 py-1">
-                          {phase}
-                        </li>
-                      ))}
-                      {track!.pathway.length > 4 && (
-                        <li className="rounded-full border border-white/10 px-3 py-1 text-sky-50">+{track!.pathway.length - 4} more</li>
-                      )}
-                    </ul>
-                  </article>
-                ))}
-            </div>
-          </section>
+          </div>
 
-          <section className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <h2 className="text-lg font-semibold text-white">Sample progress log (Kavya Rao)</h2>
-            <p className="mt-2 text-sm text-indigo-100">
-              Each entry stores mastery status, latest evidence, and the next action your Learning Manager shares with parents.
-            </p>
-            <div className="mt-5 space-y-4">
-              {kavyaProgress.map((entry) => {
-                const meta = skillLookup.get(entry.skillId);
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex rounded-full bg-white/70 p-1 shadow-inner shadow-slate-900/5">
+              {TAB_ORDER.map((tab) => {
+                const count = reportCounts[tab.key];
+                const selected = activeTab === tab.key;
                 return (
-                  <article key={entry.skillId} className="rounded-2xl border border-white/10 bg-white/[0.08] p-4">
-                    <header className="flex flex-wrap items-center justify-between gap-3 text-xs uppercase tracking-wide text-sky-200">
-                      <span>{meta?.levelTitle ?? entry.levelId}</span>
-                      <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold text-white">{entry.status}</span>
-                    </header>
-                    {meta?.unitTitle && (
-                      <p className="mt-1 text-[11px] uppercase tracking-wide text-sky-100">{meta.unitTitle}</p>
-                    )}
-                    <p className="mt-2 text-sm font-semibold text-white">{meta?.skillTitle ?? entry.skillId}</p>
-                    {entry.remarks && <p className="mt-2 text-xs text-slate-200">{entry.remarks}</p>}
-                    {entry.lastEvidence && (
-                      <p className="mt-3 text-[11px] text-sky-100">
-                        Evidence: {entry.lastEvidence.type} · {entry.lastEvidence.loggedAt.slice(0, 10)}
-                      </p>
-                    )}
-                    {entry.nextAction && (
-                      <p className="mt-1 text-[11px] uppercase tracking-wide text-sky-200">Next action: {entry.nextAction}</p>
-                    )}
-                  </article>
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                      selected ? "bg-white text-[#0b7ad7] shadow" : "text-slate-500"
+                    }`}
+                    type="button"
+                  >
+                    {tab.label}
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-[#0b7ad7]">
+                      {count}
+                    </span>
+                  </button>
                 );
               })}
             </div>
-          </section>
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+              <label className="flex w-full max-w-xs items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-500 shadow-inner">
+                <span className="whitespace-nowrap text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">
+                  Search
+                </span>
+                <input
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Student or focus"
+                  className="w-full bg-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                />
+              </label>
+              <button className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100">
+                Filter
+              </button>
+            </div>
+          </div>
         </div>
 
-        <section className="mt-12 rounded-3xl border border-white/10 bg-white/5 p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-white">Student roster preview</h2>
-              <p className="mt-2 text-sm text-indigo-100">
-                Ten students across phonics, grammar, and public speaking are listed here with their current mastery focus and next action.
-              </p>
-            </div>
-            <label className="flex w-full max-w-sm items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm text-indigo-100">
-              <span className="text-indigo-200">Search</span>
-              <input
-                value={searchTerm}
-                onChange={(ev) => setSearchTerm(ev.target.value)}
-                placeholder="Name or admission #"
-                className="w-full bg-transparent text-white placeholder:text-indigo-200/60 focus:outline-none"
-              />
-            </label>
-          </div>
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            {filteredRosterEntries.length === 0 && (
-              <p className="rounded-2xl border border-white/10 bg-white/[0.06] p-6 text-sm text-indigo-100">
-                No students match “{searchTerm}”. Try another name or admission number.
-              </p>
-            )}
-            {filteredRosterEntries.map(([programmeId, students]) => {
-              const track =
-                programmeId === "phonics" ? phonicsTrack : programmeId === "grammar" ? grammarTrack : speakingTrack;
-              const programmeName = track?.title ?? programmeId;
-              return (
-                <div key={programmeId} className="rounded-2xl border border-white/10 bg-white/[0.08] p-5 shadow-inner shadow-black/30">
-                  <header className="flex items-center justify-between gap-3">
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {filteredReports.map((report) => (
+            <article
+              key={report.id}
+              className="flex flex-col justify-between rounded-3xl border border-white/70 bg-white/80 p-5 shadow-sm shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <div className="flex items-start gap-4">
+                <div className={`h-20 w-24 shrink-0 rounded-2xl bg-gradient-to-br ${report.accent}`} />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-indigo-200">{programmeName}</p>
-                      <p className="text-sm text-slate-200">{students.length} students</p>
+                      <h3 className="text-lg font-semibold text-slate-900">{report.name}</h3>
+                      <p className="text-xs text-slate-500">
+                        {report.age} · {report.subject}
+                      </p>
                     </div>
-                  </header>
-                  <ul className="mt-4 space-y-3 max-h-80 overflow-y-auto pr-1">
-                    {students.map((entry) => {
-                      const meta = skillLookup.get(entry.skillId);
-                      const draft = draftLogs[entry.studentId] ?? {
-                        date: "",
-                        skillId: entry.skillId,
-                        rating: "5",
-                        note: FEEDBACK_LIBRARY[entry.programmeId as "phonics" | "grammar" | "speaking"][0] ?? "",
-                        saved: false,
-                      };
-                      const skillOptions =
-                        skillOptionsByProgramme.get(entry.programmeId) ?? [
-                          { value: entry.skillId, label: meta?.skillTitle ?? entry.skillId },
-                        ];
-                      const feedbackLibrary = FEEDBACK_LIBRARY[entry.programmeId as "phonics" | "grammar" | "speaking"] ?? [];
-                      return (
-                        <li key={entry.studentId} className="rounded-xl border border-white/10 bg-white/[0.12] p-4 space-y-3">
-                          <p className="text-sm font-semibold text-white">
-                            {entry.studentName}
-                            <span className="ml-2 text-[11px] font-normal text-indigo-200">
-                              #{entry.admissionNumber}
-                            </span>
-                          </p>
-                          <p className="text-xs uppercase tracking-wide text-indigo-200">
-                            {meta?.levelTitle ?? entry.levelId}
-                          </p>
-                          <p className="mt-1 text-xs text-slate-200">{meta?.skillTitle ?? entry.skillId}</p>
-                          <div className="mt-2 flex items-center justify-between text-xs text-slate-300">
-                            <span>Status: {entry.status}</span>
-                            {entry.nextAction && <span>Next: {entry.nextAction}</span>}
-                          </div>
-                          <form
-                            className="space-y-2 text-xs text-slate-200"
-                            onSubmit={(ev) => {
-                              ev.preventDefault();
-                              if (!draft.date || !draft.skillId) {
-                                alert("Pick a date and curriculum focus before saving.");
-                                return;
-                              }
-                              markSaved(entry.studentId);
-                            }}
-                          >
-                            <label className="flex flex-col gap-1">
-                              <span>Date</span>
-                              <input
-                                type="date"
-                                value={draft.date}
-                                onChange={(ev) => updateDraft(entry.studentId, { date: ev.target.value })}
-                                className="rounded-lg border border-white/10 bg-white/90 px-2 py-1 text-slate-900"
-                              />
-                            </label>
-                            <label className="flex flex-col gap-1">
-                              <span>Curriculum focus</span>
-                              <select
-                                value={draft.skillId}
-                                onChange={(ev) => updateDraft(entry.studentId, { skillId: ev.target.value })}
-                                className="rounded-lg border border-white/10 bg-white/90 px-2 py-1 text-slate-900"
-                              >
-                                <option value="">Select module</option>
-                                {skillOptions.map((option) => (
-                                  <option key={option.value} value={option.value}>
-                                    {option.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="flex flex-col gap-1">
-                              <span>Rating (0-5 stars)</span>
-                              <input
-                                type="range"
-                                min="0"
-                                max="5"
-                                value={draft.rating}
-                                onChange={(ev) => updateDraft(entry.studentId, { rating: ev.target.value })}
-                              />
-                              <span>{draft.rating} ★</span>
-                            </label>
-                            <label className="flex flex-col gap-1">
-                              <span>Feedback snippet</span>
-                              <select
-                                value={draft.note}
-                                onChange={(ev) => updateDraft(entry.studentId, { note: ev.target.value })}
-                                className="rounded-lg border border-white/10 bg-white/90 px-2 py-1 text-slate-900"
-                              >
-                                {feedbackLibrary.length === 0 ? (
-                                  <option value="">Preset feedback coming soon</option>
-                                ) : (
-                                  feedbackLibrary.map((statement) => (
-                                    <option key={statement} value={statement}>
-                                      {statement}
-                                    </option>
-                                  ))
-                                )}
-                              </select>
-                            </label>
-                            <button
-                              type="submit"
-                              className="w-full rounded-full bg-indigo-500/80 px-3 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-white transition hover:bg-indigo-400"
-                            >
-                              Save log
-                            </button>
-                            {draft.saved && (
-                              <p className="text-[11px] uppercase tracking-wide text-emerald-300">Saved locally · synced soon</p>
-                            )}
-                          </form>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                    <StatusBadge status={report.status} />
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-[#0b7ad7]">
+                      {report.lessonType}
+                    </span>
+                    <span>{report.strand}</span>
+                  </div>
+                  <p className="mt-3 text-sm text-slate-600">Last class: {report.lastUpdated}</p>
                 </div>
-              );
-            })}
+              </div>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                <button className="rounded-full bg-[#0b7ad7] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#0b7ad7]/30 transition hover:bg-[#0b6ac0]">
+                  {report.status === "reviewed" ? "View report" : "Fill report"}
+                </button>
+                <p className="text-xs text-slate-500">Updated via Learning Manager</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {filteredReports.length === 0 && (
+          <div className="mt-6 rounded-3xl border border-dashed border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">
+            Nothing in this state right now. Try another filter or clear the search.
           </div>
-        </section>
+        )}
       </section>
-    </div>
+
+      <section id="class-flow" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xl font-semibold text-slate-900">Today&apos;s class flow</h2>
+          <p className="text-sm text-slate-600">
+            Attendance, focus, and quick actions stream straight into Learning Manager updates.
+          </p>
+        </div>
+        <div className="mt-6 space-y-4">
+          {DAY_CLASSES.map((lesson) => (
+            <article
+              key={`${lesson.learner}-${lesson.time}`}
+              className="rounded-3xl border border-white/60 bg-white/70 p-5 shadow-sm"
+            >
+              <header className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900">{lesson.learner}</h3>
+                  <p className="text-xs uppercase tracking-[0.22em] text-[#0b7ad7]">{lesson.programme}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0b7ad7]">{lesson.time}</span>
+                  <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">{lesson.status}</span>
+                </div>
+              </header>
+              <p className="mt-3 text-sm text-slate-600">Focus: {lesson.focus}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {lesson.actions.map((action) => (
+                  <button
+                    key={action}
+                    className="rounded-full border border-[#0b7ad7]/30 bg-white px-4 py-2 text-xs font-semibold text-[#0b7ad7] shadow-sm transition hover:bg-[#0b7ad7]/10"
+                    type="button"
+                  >
+                    {action}
+                  </button>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </DashboardShell>
   );
 }

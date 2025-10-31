@@ -1,3 +1,9 @@
+import { useCallback, useMemo, useState } from "react";
+import DashboardShell from "../../components/dashboard/DashboardShell";
+import { buildNavItems } from "../../components/dashboard/navItems";
+
+type OperationsTab = "pipeline" | "teachers" | "parents";
+
 const SNAPSHOTS = [
   { label: "Active 1:1 families", value: "86", helper: "+4 this week" },
   { label: "Teacher sessions today", value: "48", helper: "Across phonics, grammar, speaking" },
@@ -38,112 +44,228 @@ const TEACHER_SUMMARY = [
 ];
 
 const PARENT_FEES = [
-  { family: "Rao", programme: "Phonics", balance: "₹1,050 due (3 classes remain)", type: "Installment" },
-  { family: "Sharma", programme: "Grammar", balance: "₹2,100 credit (top-up)", type: "Advance" },
-  { family: "Joshi", programme: "Speaking", balance: "₹1,400 credit · auto top-up 28 Oct", type: "Auto debit" },
+  { family: "Rao", programme: "Phonics", balance: "₹1,050 due · 3 classes remain", type: "Installment" },
+  { family: "Sharma", programme: "Grammar", balance: "₹2,100 credit · top-up", type: "Advance" },
+  { family: "Joshi", programme: "Speaking", balance: "₹1,400 credit · auto debit 28 Oct", type: "Auto debit" },
+];
+
+const CHECKLIST = [
+  { title: "Send phonics reading log to Rao family", owner: "Learning Manager" },
+  { title: "Confirm showcase rehearsal logistics", owner: "Teacher · Riya", highlight: true },
+  { title: "Share fee reminder draft with finance", owner: "Learning Manager" },
 ];
 
 export default function LearningManagerPortal() {
-  return (
-    <div className="bg-gradient-to-b from-[#0d1b2a] via-[#102941] to-[#061624] text-white">
-      <section className="border-b border-white/10 bg-black/20 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-24">
-          <p className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-sky-200">
-            Learning manager view
-          </p>
-          <h1 className="mt-6 text-4xl font-black tracking-tight text-white sm:text-5xl">
-            Coordinate teachers, parents, and payments—without logging in
-          </h1>
-          <p className="mt-4 max-w-3xl text-lg text-sky-100">
-            Teachers focus on one-to-one classes; parents connect only through you. Use this open dashboard to confirm
-            reschedules, log feedback, and track fees while the new automations roll out.
-          </p>
-        </div>
-      </section>
+  const [activeTab, setActiveTab] = useState<OperationsTab>("pipeline");
 
-      <section className="mx-auto max-w-6xl px-4 py-16">
-        <div className="grid gap-6 md:grid-cols-3">
+  const scrollToId = useCallback((id: string) => {
+    return () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    };
+  }, []);
+
+  const navItems = useMemo(
+    () =>
+      buildNavItems("groups", {
+        includeKeys: ["groups", "homework", "payouts"],
+        overrides: {
+          groups: {
+            label: "Learning manager hub",
+            badge: `${SNAPSHOTS[1].value}`,
+            onSelect: scrollToId("operations-board"),
+          },
+          homework: {
+            label: "Daily checklist",
+            badge: `${COMMUNICATION.length}`,
+            onSelect: scrollToId("daily-checklist"),
+          },
+          payouts: {
+            label: "Fee overview",
+            onSelect: scrollToId("family-fee"),
+          },
+        },
+      }),
+    [scrollToId],
+  );
+
+  const headerToolbar = (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <button className="inline-flex items-center justify-center rounded-full border border-[#0b7ad7]/20 bg-white px-4 py-2 text-sm font-semibold text-[#0b7ad7] shadow-sm shadow-[#0b7ad7]/10 transition hover:bg-[#0b7ad7]/10">
+        Export daily sheet
+      </button>
+      <button className="inline-flex items-center justify-center rounded-full bg-[#0b7ad7] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#0b7ad7]/30 transition hover:bg-[#0b6ac0]">
+        Create parent update
+      </button>
+    </div>
+  );
+
+  const rightRail = (
+    <>
+      <section className="rounded-3xl border border-[#0b7ad7]/10 bg-white p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Today&apos;s snapshot</h2>
+        <div className="mt-4 space-y-3">
           {SNAPSHOTS.map((item) => (
-            <div key={item.label} className="rounded-3xl border border-white/10 bg-white/10 p-6 shadow-xl shadow-black/30">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200">{item.label}</p>
-              <p className="mt-3 text-3xl font-black">{item.value}</p>
-              <p className="mt-2 text-sm text-sky-100">{item.helper}</p>
+            <div key={item.label} className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0b7ad7]">{item.label}</p>
+              <p className="mt-2 text-2xl font-bold text-slate-900">{item.value}</p>
+              <p className="mt-1 text-xs text-slate-600">{item.helper}</p>
             </div>
           ))}
         </div>
+      </section>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-[1.3fr,1fr]">
-          <article className="rounded-3xl border border-white/10 bg-white/5 p-6">
-            <header className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-semibold text-white">Family relationship flow</h2>
-                <p className="text-sm text-sky-200">Stage updates feed the parent dashboards automatically.</p>
-              </div>
-              <span className="rounded-full bg-sky-500/20 px-3 py-1 text-xs font-semibold text-sky-100">Demo</span>
-            </header>
-            <div className="mt-6 space-y-4">
-              {PIPELINE.map((item) => (
-                <div key={item.stage} className="rounded-2xl border border-white/10 bg-white/[0.07] p-5">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-sky-100">{item.stage}</p>
-                    <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white">
-                      {item.families} families
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-200">{item.notes}</p>
-                </div>
-              ))}
+      <section className="rounded-3xl border border-[#0b7ad7]/10 bg-white p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Fee alerts</h2>
+        <div className="mt-4 space-y-3">
+          {PARENT_FEES.map((family) => (
+            <div key={family.family} className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3">
+              <p className="text-sm font-semibold text-slate-900">{family.family} family</p>
+              <p className="text-xs uppercase tracking-[0.22em] text-[#0b7ad7]">{family.programme}</p>
+              <p className="mt-2 text-sm text-slate-600">{family.balance}</p>
+              <p className="mt-1 text-xs text-slate-500">{family.type}</p>
             </div>
-          </article>
-
-          <aside className="space-y-6">
-            <div className="rounded-3xl border border-sky-500/20 bg-sky-500/10 p-6">
-              <h3 className="text-lg font-semibold text-white">Today&apos;s coordination</h3>
-              <ul className="mt-4 space-y-3">
-                {COMMUNICATION.map((item) => (
-                  <li key={`${item.parent}-${item.slot}`} className="rounded-2xl border border-white/10 bg-white/[0.12] p-4">
-                    <p className="text-sm font-semibold text-white">
-                      {item.parent} · <span className="text-sky-200">{item.slot}</span>
-                    </p>
-                    <p className="mt-1 text-sm text-sky-100">{item.topic}</p>
-                    <p className="mt-2 text-xs uppercase tracking-wide text-sky-200">{item.action}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-              <h3 className="text-lg font-semibold text-white">Teacher pay tracker</h3>
-              <ul className="mt-4 space-y-3">
-                {TEACHER_SUMMARY.map((row) => (
-                  <li key={row.teacher} className="rounded-2xl border border-white/10 bg-white/[0.08] p-4">
-                    <p className="text-sm font-semibold text-white">{row.teacher}</p>
-                    <p className="mt-1 text-sm text-sky-100">{row.classes} classes · {row.pay}</p>
-                    <p className="mt-2 text-xs uppercase tracking-wide text-sky-200">{row.status}</p>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-        </div>
-
-        <div className="mt-12 rounded-3xl border border-white/10 bg-white/[0.06] p-6">
-          <h2 className="text-lg font-semibold text-white">Family fee overview</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {PARENT_FEES.map((family) => (
-              <div key={family.family} className="rounded-2xl border border-white/10 bg-white/[0.08] p-4">
-                <p className="text-sm font-semibold text-white">{family.family} family</p>
-                <p className="mt-1 text-sm text-sky-100">{family.programme}</p>
-                <p className="mt-3 text-lg font-bold text-white">{family.balance}</p>
-                <p className="mt-2 text-xs uppercase tracking-wide text-sky-200">{family.type}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 text-xs uppercase tracking-wide text-slate-200">
-            Learning Managers relay all balance updates to parents and teachers—no direct messaging.
-          </p>
+          ))}
         </div>
       </section>
-    </div>
+    </>
+  );
+
+  return (
+    <DashboardShell
+      navItems={navItems}
+      header={{
+        title: "Learning manager control room",
+        subtitle:
+          "Coordinate teachers, parents, and payments without switching tools. Draft updates and confirm reschedules in seconds.",
+        toolbar: headerToolbar,
+      }}
+      rightRail={rightRail}
+    >
+      <section id="operations-board" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Operations board</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Switch between family pipeline, teacher payouts, and parent communication.
+            </p>
+          </div>
+          <div className="flex rounded-full bg-white/70 p-1 shadow-inner shadow-slate-900/5">
+            {(["pipeline", "teachers", "parents"] as OperationsTab[]).map((tab) => {
+              const label = tab === "pipeline" ? "Family pipeline" : tab === "teachers" ? "Teacher payouts" : "Parent calls";
+              const selected = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    selected ? "bg-white text-[#0b7ad7] shadow" : "text-slate-500"
+                  }`}
+                  type="button"
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {activeTab === "pipeline" && (
+          <div className="mt-6 space-y-4">
+            {PIPELINE.map((item) => (
+              <article key={item.stage} className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-lg font-semibold text-slate-900">{item.stage}</p>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0b7ad7]">
+                    {item.families} families
+                  </span>
+                </div>
+                <p className="mt-3 text-sm text-slate-600">{item.notes}</p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "teachers" && (
+          <div className="mt-6 space-y-4">
+            {TEACHER_SUMMARY.map((row) => (
+              <article key={row.teacher} className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-semibold text-slate-900">{row.teacher}</p>
+                    <p className="text-sm text-slate-600">{row.classes} classes today</p>
+                  </div>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0b7ad7]">
+                    {row.pay}
+                  </span>
+                </div>
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#0b7ad7]">{row.status}</p>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "parents" && (
+          <div className="mt-6 space-y-4">
+            {COMMUNICATION.map((item) => (
+              <article key={`${item.parent}-${item.slot}`} className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-lg font-semibold text-slate-900">{item.parent}</p>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[#0b7ad7]">{item.slot}</span>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">{item.topic}</p>
+                <p className="mt-3 text-xs uppercase tracking-[0.22em] text-[#0b7ad7]">{item.action}</p>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section id="family-fee" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Family fee overview</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Track balances before nightly parent updates go out.
+            </p>
+          </div>
+          <button className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:bg-slate-100">
+            Download CSV
+          </button>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          {PARENT_FEES.map((family) => (
+            <article key={family.family} className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm">
+              <p className="text-lg font-semibold text-slate-900">{family.family} family</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-[#0b7ad7]">{family.programme}</p>
+              <p className="mt-3 text-sm text-slate-600">{family.balance}</p>
+              <p className="mt-2 text-xs text-slate-500">{family.type}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="daily-checklist" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-xl font-semibold text-slate-900">Daily checklist</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          Confirm these items before the evening parent digest.
+        </p>
+        <div className="mt-6 space-y-3">
+          {CHECKLIST.map((item) => (
+            <div
+              key={item.title}
+              className={`rounded-3xl border border-white/60 px-5 py-4 text-sm text-slate-600 ${
+                item.highlight ? "bg-[#e0f2fe]" : "bg-white/80"
+              }`}
+            >
+              <p className="font-semibold text-slate-900">{item.title}</p>
+              <p className="mt-1 text-xs uppercase tracking-[0.22em] text-[#0b7ad7]">{item.owner}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+    </DashboardShell>
   );
 }

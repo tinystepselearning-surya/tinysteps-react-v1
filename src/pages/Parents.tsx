@@ -1,663 +1,396 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { CURRICULUM } from "../data/curriculum";
-import { SAMPLE_PROGRESS_DB } from "../data/progress-db";
+import { useCallback, useMemo, useState } from "react";
+import DashboardShell from "../components/dashboard/DashboardShell";
+import { buildNavItems } from "../components/dashboard/navItems";
 
-type DashboardCourse = {
-  id: "phonics" | "grammar" | "speaking";
-  name: string;
-  summary: string;
-  accent: { from: string; to: string; text: string; bg: string };
-  quickStats: Array<{ label: string; value: string; helper?: string }>;
-  progress: Array<{ label: string; value: number; description?: string }>;
-  attendance: { percent: number; streak: string; helper: string };
-  milestones: Array<{ status: "complete" | "active"; label: string; detail?: string }>;
-  upcoming: Array<{ title: string; date: string; focus: string }>;
-  dayFeedback: { rating: number; summary: string; notes: string };
-  feeStatus: { badge: "Due soon" | "On track" | "Credit"; amount: string; detail: string };
-};
+type ParentTab = "progress" | "homework" | "updates";
 
-const DASHBOARD: DashboardCourse[] = [
+const PROGRAMME_SUMMARIES = [
   {
     id: "phonics",
     name: "Phonics Foundations",
-    summary:
-      "Systematic phonics that takes children from letter-sound mastery to expressive, confident reading with daily home practice nudges.",
-    accent: { from: "#ff9a5c", to: "#f97316", text: "#9a3412", bg: "#fff6f0" },
+    accent: "from-[#fee2b6] to-[#fbbf24]",
+    summary: "Letter-sound mastery, blending fluency, and expressive reading.",
     quickStats: [
-      { label: "Sound Mastery", value: "92%", helper: "Completed 24/26 focus sounds" },
-      { label: "Blending Fluency", value: "4.6/5", helper: "Reads CVC words in 24s" },
-      { label: "Practice Consistency", value: "5 days", helper: "Weekly home activity streak" },
+      { label: "Sound mastery", value: "92%", helper: "Completed 24 / 26 focus sounds" },
+      { label: "Practice streak", value: "5 days", helper: "Home activity streak" },
     ],
     progress: [
-      { label: "SATPIN + next sets", value: 95, description: "Solid decoding accuracy" },
-      { label: "Digraph discovery", value: 72, description: "sh, ch, th introduced" },
-      { label: "Story retell", value: 80, description: "Sequencing with prompts" },
+      { label: "SATPIN + next sets", value: 95 },
+      { label: "Digraph discovery", value: 72 },
+      { label: "Story retell", value: 80 },
     ],
-    attendance: {
-      percent: 96,
-      streak: "8 classes on-time",
-      helper: "One make-up session scheduled next week",
-    },
-    dayFeedback: {
-      rating: 5,
-      summary: "Coach note: Kavya mastered the sh/ch digraphs today.",
-      notes: "Please use picture sort pack shared on WhatsApp by your Learning Manager.",
-    },
-    feeStatus: {
-      badge: "Due soon",
-      amount: "₹1,050 due (3 classes left)",
-      detail: "Learning Manager will confirm the top-up reminder on Thursday.",
-    },
-    milestones: [
-      { status: "complete", label: "Reads consonant blends smoothly" },
-      { status: "complete", label: "Spots silent-e patterns independently" },
-      { status: "active", label: "Expressive reading with punctuation cues", detail: "Coach feedback: practise voice modulation" },
-    ],
-    upcoming: [
-      { title: "Blending games circle", date: "Tue · 5:00 PM (online)", focus: "Reinforce digraph decoding" },
-      { title: "Library read-aloud upload", date: "Fri · 7:00 PM (home task)", focus: "Share favourite page recording" },
-    ],
+    milestone: "Practise voice modulation for expressive reading",
   },
   {
     id: "grammar",
     name: "Grammar & Writing Lab",
-    summary:
-      "Sentence craft, punctuation practice, and creative writing labs that turn young writers into confident communicators.",
-    accent: { from: "#7dd3fc", to: "#0ea5e9", text: "#0c4a6e", bg: "#f0f9ff" },
+    accent: "from-[#d9e9ff] to-[#60a5fa]",
+    summary: "Sentence craft, punctuation practice, and confident drafting.",
     quickStats: [
-      { label: "Grammar Accuracy", value: "87%", helper: "Last 5 submissions" },
-      { label: "Draft Feedback", value: "4 notes", helper: "Teacher voice notes this week" },
-      { label: "Writing Portfolio", value: "12 pieces", helper: "Stories, reports & poems" },
+      { label: "Grammar accuracy", value: "87%", helper: "Last 5 submissions" },
+      { label: "Draft feedback", value: "4 notes", helper: "Voice notes this week" },
     ],
     progress: [
-      { label: "Sentence expansion", value: 84, description: "Uses vivid adjectives" },
-      { label: "Punctuation mastery", value: 68, description: "Practising commas & dialogue" },
-      { label: "Editing skills", value: 76, description: "Self-edits with rubric" },
+      { label: "Sentence expansion", value: 84 },
+      { label: "Punctuation mastery", value: 68 },
+      { label: "Editing skills", value: 76 },
     ],
-    attendance: {
-      percent: 94,
-      streak: "6 classes on-time",
-      helper: "Project day swap approved for next week",
-    },
-    dayFeedback: {
-      rating: 4,
-      summary: "Teacher note: Aarav edited dialogue tags accurately.",
-      notes: "Revision worksheet emailed to you—Learning Manager will check in on Friday.",
-    },
-    feeStatus: {
-      badge: "On track",
-      amount: "₹2,100 credit (6 classes prepaid)",
-      detail: "We will alert you when balance reaches two classes.",
-    },
-    milestones: [
-      { status: "complete", label: "Labels parts of speech in context" },
-      { status: "complete", label: "Publishes a descriptive paragraph with feedback applied" },
-      { status: "active", label: "Writes persuasive letter draft #1", detail: "Draft ready for teacher comments" },
-    ],
-    upcoming: [
-      { title: "Grammar lab—dialogue writing", date: "Wed · 6:30 PM (studio)", focus: "Punctuating speech" },
-      { title: "Portfolio review call", date: "Sat · 4:00 PM (virtual)", focus: "Share rubric insights" },
-    ],
+    milestone: "Draft persuasive letter #1 ready for teacher comments",
   },
   {
     id: "speaking",
     name: "Public Speaking Studio",
-    summary:
-      "Structured storytelling, vocal training, and stage etiquette that nurture confident presenters ready for any audience.",
-    accent: { from: "#a5b4fc", to: "#6366f1", text: "#312e81", bg: "#eef2ff" },
+    accent: "from-[#e0e7ff] to-[#6366f1]",
+    summary: "Storytelling, voice modulation, and stage confidence drills.",
     quickStats: [
-      { label: "Confidence Score", value: "4.8/5", helper: "Self & coach rating" },
-      { label: "Stage Presence", value: "91%", helper: "Eye contact • Posture" },
-      { label: "Video Library", value: "9 clips", helper: "Feedback tagged recordings" },
+      { label: "Confidence score", value: "4.8 / 5", helper: "Self + coach rating" },
+      { label: "Video library", value: "9 clips", helper: "Feedback tagged recordings" },
     ],
     progress: [
-      { label: "Voice modulation", value: 78, description: "Practising power + pauses" },
-      { label: "Story structure", value: 88, description: "Uses hook-body-close" },
-      { label: "Audience Q&A", value: 65, description: "Building spontaneous replies" },
+      { label: "Voice modulation", value: 78 },
+      { label: "Story structure", value: 88 },
+      { label: "Audience Q&A", value: 65 },
     ],
-    attendance: {
-      percent: 98,
-      streak: "10 classes on-time",
-      helper: "Invited to monthly showcase",
-    },
-    dayFeedback: {
-      rating: 5,
-      summary: "Coach note: Riya’s voice projection improved in rehearsal.",
-      notes: "Watch the uploaded clip—Learning Manager will share the showcase timeline.",
-    },
-    feeStatus: {
-      badge: "Credit",
-      amount: "₹1,400 credit · auto top-up 28 Oct",
-      detail: "Advance balance covers the next 4 classes.",
-    },
-    milestones: [
-      { status: "complete", label: "Delivers 3-minute keynote with gestures" },
-      { status: "complete", label: "Uploads self-reflection after each speech" },
-      { status: "active", label: "Handles panel questions confidently", detail: "Coach tip: practise bridging statements" },
-    ],
-    upcoming: [
-      { title: "Confidence circle—debate", date: "Thu · 7:30 PM (online)", focus: "Quick rebuttal rounds" },
-      { title: "Showcase evening rehearsal", date: "Sun · 11:00 AM (studio)", focus: "Stage blocking & mic cues" },
-    ],
+    milestone: "Practise quick bridging statements for Q&A",
   },
 ];
 
-const PROGRAMMES = [
+const HOMEWORK_QUEUE = [
   {
-    title: "Phonics Foundations",
-    description: "Systematic phonics that moves from letter-sound mastery to blending and expressive reading.",
-    cta: "Book Phonics Demo",
-    href: "/main/courses/phonics/",
+    id: "class-19",
+    title: "Class #19",
+    subject: "English · Pronunciation",
+    duration: "30 mins",
+    date: "6 February 2024 · 6:15 pm — 7:00 pm",
+    coach: "Aaminah Khan",
+    status: "Completed",
   },
   {
-    title: "Grammar & Writing Lab",
-    description: "Sentence craft, punctuation practice, and creative writing workshops for budding authors.",
-    cta: "Schedule Grammar Trial",
-    href: "/main/courses/grammar/",
+    id: "class-27",
+    title: "Class #27",
+    subject: "English · Pronunciation",
+    duration: "30 mins",
+    date: "9 February 2024 · 5:30 pm — 6:00 pm",
+    coach: "Aaminah Khan",
+    status: "Pending review",
   },
   {
-    title: "Public Speaking Studio",
-    description: "Structured storytelling, vocal training, and stage etiquette that boost presentation confidence.",
-    cta: "Reserve Speaking Session",
-    href: "/main/courses/public-speaking/",
-  },
-];
-
-const WHY_POINTS = [
-  {
-    title: "Personalised journeys",
-    description:
-      "Initial diagnostics help us place your child on the right level. Weekly feedback loops explain both academic progress and how confidently your child is communicating during class.",
-  },
-  {
-    title: "Outcome-first teaching",
-    description:
-      "Our teachers align every session to measurable outcomes—reading fluency, writing accuracy, or confident presentation—so you know exactly how your child is gearing up to express ideas in a competitive world.",
-  },
-  {
-    title: "Flexible schedules",
-    description:
-      "Choose after-school or weekend slots. One-to-one sessions run 35 minutes and recordings are shared for quick catch-up.",
-  },
-  {
-    title: "Guidance for every step",
-    description:
-      "You receive curated practice packs, WhatsApp nudges, and termly review calls. The Learning Manager makes communication effortless so parents, teachers, and children stay aligned.",
+    id: "class-29",
+    title: "Class #29",
+    subject: "English · Pronunciation",
+    duration: "30 mins",
+    date: "13 February 2024 · 5:30 pm — 6:00 pm",
+    coach: "Aaminah Khan",
+    status: "Uploaded",
   },
 ];
 
-const ENROLMENT_STEPS = [
+const UPCOMING_EVENTS = [
   {
-    title: "1. Book a free programme demo",
-    detail: "Meet the teacher, experience a mini lesson, and confirm the right level.",
+    id: "debate",
+    title: "Confidence circle — debate",
+    timing: "Thu · 7:30 PM · Online",
+    focus: "Quick rebuttal rounds",
   },
   {
-    title: "2. Receive personalised roadmap",
-    detail: "We send a written plan with goals, schedule options, and transparent pricing.",
+    id: "showcase",
+    title: "Showcase rehearsal",
+    timing: "Sun · 11:00 AM · Studio",
+    focus: "Stage blocking & mic cues",
   },
   {
-    title: "3. Complete enrolment online",
-    detail: "Secure payment link, digital receipts, and instant parent portal access.",
+    id: "portfolio",
+    title: "Portfolio review call",
+    timing: "Sat · 4:00 PM · Virtual",
+    focus: "Share rubric insights",
   },
 ];
 
-const TESTIMONIALS = [
-  {
-    quote:
-      "Within a month of joining, Kavya started blending sounds on her own. The weekly notes helped us practise exactly what she learnt in class.",
-    name: "Anita Rao",
-    meta: "Bengaluru · Kavya, Grade 1",
-  },
-  {
-    quote:
-      "The grammar roadmap gave us clarity on milestones. Aarav’s teacher keeps us in the loop after every project, so we know exactly where he shines and where to support.",
-    name: "Rahul & Sneha Sharma",
-    meta: "Pune · Aarav, Grade 4",
-  },
-  {
-    quote:
-      "Riya went from whispering her speeches to presenting confidently in two terms. The speaking rubrics and videos on the portal make progress visible.",
-    name: "Meera Joshi",
-    meta: "Mumbai · Riya, Grade 5",
-  },
+const FEE_STATUS = {
+  badge: "Due soon",
+  amount: "₹1,050 · 3 classes left",
+  detail: "Learning Manager will confirm the top-up reminder on Thursday.",
+};
+
+const MONTHLY_HIGHLIGHTS = [
+  "Kavya mastered sh/ch digraphs and can explain tricky words independently.",
+  "Aarav edited dialogue tags accurately using question mark pause practice.",
+  "Riya’s voice projection improved; showcase clip shared with you on portal.",
 ];
+
+const CONTACT_INFO = [
+  { label: "Learning Manager", value: "Saanvi Gupta · +91 98200 11234" },
+  { label: "WhatsApp updates", value: "Weekdays · 9 AM to 7 PM" },
+  { label: "Email", value: "support@tinysteps.in" },
+];
+
+function ProgressBar({ value }: { value: number }) {
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-full rounded-full bg-[#0b7ad7]" style={{ width: `${value}%` }} />
+    </div>
+  );
+}
 
 export default function Parents() {
-  const [active, setActive] = useState<DashboardCourse>(DASHBOARD[0]);
+  const [activeTab, setActiveTab] = useState<ParentTab>("progress");
+  const [programmeFilter, setProgrammeFilter] = useState<string>("all");
 
-  const skillLookup = useMemo(() => {
-    const map = new Map<string, { levelTitle: string; unitTitle: string; skillTitle: string }>();
-    CURRICULUM.forEach((track) => {
-      track.levels.forEach((level) => {
-        level.units.forEach((unit) => {
-          unit.skills.forEach((skill) => {
-            map.set(skill.id, {
-              levelTitle: level.title,
-              unitTitle: unit.title,
-              skillTitle: skill.title,
-            });
-          });
-        });
-      });
-    });
-    return map;
-  }, []);
+  const pendingHomework = HOMEWORK_QUEUE.filter((item) => item.status !== "Completed").length;
 
-  const sampleFamilySnapshots = useMemo(() => {
-    const limitPerProgramme = 3;
-    const collected = new Map<
-      string,
-      typeof SAMPLE_PROGRESS_DB.progress[number][]
-    >();
-    SAMPLE_PROGRESS_DB.progress.forEach((entry) => {
-      const list = collected.get(entry.programmeId) ?? [];
-      if (list.length < limitPerProgramme) {
-        list.push(entry);
-        collected.set(entry.programmeId, list);
+  const scrollToId = useCallback((id: string) => {
+    return () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    });
-    return Array.from(collected.entries());
+    };
   }, []);
+
+  const navItems = useMemo(
+    () =>
+      buildNavItems("parents", {
+        includeKeys: ["parents", "homework", "kids"],
+        overrides: {
+          parents: {
+            label: "Family dashboard",
+            badge: `${PROGRAMME_SUMMARIES.length}`,
+            onSelect: scrollToId("learning-overview"),
+          },
+          homework: {
+            label: "Homework log",
+            badge: pendingHomework ? `${pendingHomework}` : undefined,
+            onSelect: scrollToId("daily-updates"),
+          },
+          kids: { label: "Kids arena", href: "/roles/kids" },
+        },
+      }),
+    [pendingHomework, scrollToId],
+  );
+
+  const filteredProgrammes = useMemo(() => {
+    if (programmeFilter === "all") return PROGRAMME_SUMMARIES;
+    return PROGRAMME_SUMMARIES.filter((programme) => programme.id === programmeFilter);
+  }, [programmeFilter]);
+
+  const headerToolbar = (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <button className="inline-flex items-center justify-center rounded-full border border-[#0b7ad7]/20 bg-white px-4 py-2 text-sm font-semibold text-[#0b7ad7] shadow-sm shadow-[#0b7ad7]/10 transition hover:bg-[#0b7ad7]/10">
+        Download monthly summary
+      </button>
+      <button className="inline-flex items-center justify-center rounded-full bg-[#0b7ad7] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#0b7ad7]/30 transition hover:bg-[#0b6ac0]">
+        Message Learning Manager
+      </button>
+    </div>
+  );
+
+  const rightRail = (
+    <>
+      <section className="rounded-3xl border border-[#0b7ad7]/10 bg-white p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Fee status</h2>
+        <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#fee2b6] px-3 py-1 text-xs font-semibold text-[#b45309]">
+            {FEE_STATUS.badge}
+          </span>
+          <p className="mt-3 text-base font-semibold text-slate-900">{FEE_STATUS.amount}</p>
+          <p className="mt-2 text-xs text-slate-500">{FEE_STATUS.detail}</p>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-[#0b7ad7]/10 bg-white p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Monthly highlights</h2>
+        <ul className="mt-4 space-y-3 text-sm text-slate-600">
+          {MONTHLY_HIGHLIGHTS.map((item) => (
+            <li key={item} className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="rounded-3xl border border-[#0b7ad7]/10 bg-white p-6 shadow-xl shadow-slate-900/8">
+        <h2 className="text-base font-semibold text-slate-900">Need help?</h2>
+        <ul className="mt-4 space-y-3 text-sm text-slate-600">
+          {CONTACT_INFO.map((row) => (
+            <li key={row.label} className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0b7ad7]">{row.label}</p>
+              <p className="mt-1 text-sm text-slate-600">{row.value}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </>
+  );
 
   return (
-    <div className="bg-white text-gray-900">
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#fff3ea] via-white to-[#ffe6d4]">
-        <div className="absolute inset-0 opacity-10 mix-blend-multiply bg-[radial-gradient(circle_at_top,_rgba(255,237,213,0.9),_rgba(255,124,47,0.45))]" />
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-6 px-4 py-24 text-center md:py-32">
-          <p className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#fca76d] bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-[#d94b03]">
-            Parents
-          </p>
-          <h1 className="text-4xl font-black tracking-tight text-[#d94b03] sm:text-5xl">
-            Free Resources for Parents
-          </h1>
-          <p className="mx-auto max-w-3xl text-lg leading-relaxed text-gray-700 sm:text-xl">
-            Discover research-backed programmes that grow reading, writing, and speaking confidence—then keep an eye on
-            progress with dashboards, snapshots, and milestone timelines while we continue building the portal. Learning Managers
-            coordinate every teacher-parent check-in so your updates stay clear and timely, and we keep communication at the
-            heart of every milestone so children learn to voice ideas in the classroom and beyond.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a
-              href="#programmes"
-              className="rounded-full bg-[#ff7c2f] px-6 py-3 text-sm font-extrabold uppercase tracking-wide text-white shadow-lg shadow-[#ff8a4c]/30 transition hover:-translate-y-0.5"
-            >
-              Explore Programmes
-            </a>
-            <a
-              href="/main/book-demo/"
-              className="rounded-full border border-[#ff7c2f33] px-6 py-3 text-sm font-semibold text-[#d94b03] transition hover:border-[#ff7c2f] hover:bg-[#fff6ef]"
-            >
-              Book a Free Demo
-            </a>
+    <DashboardShell
+      navItems={navItems}
+      header={{
+        title: "Family dashboard",
+        subtitle:
+          "Track progress, homework, and upcoming events. Learning Managers coordinate every update so you never miss a milestone.",
+        toolbar: headerToolbar,
+      }}
+      rightRail={rightRail}
+    >
+      <section id="learning-overview" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Learning overview</h2>
+            <p className="mt-1 text-sm text-slate-600">Choose a programme to view detailed progress and milestones.</p>
           </div>
-        </div>
-      </section>
-
-      {/* Why choose */}
-      <section className="bg-white py-20" id="promise">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Why parents choose Tiny Steps</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Lessons are designed by educators, powered by data, and delivered with warmth—so you see real progress at
-              home and in school.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
-            {WHY_POINTS.map((point) => (
-              <article
-                key={point.title}
-                className="rounded-3xl border border-gray-100 bg-[#fafafa] p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setProgrammeFilter("all")}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                programmeFilter === "all" ? "bg-[#0b7ad7] text-white shadow" : "bg-slate-100 text-slate-600"
+              }`}
+              type="button"
+            >
+              All programmes
+            </button>
+            {PROGRAMME_SUMMARIES.map((programme) => (
+              <button
+                key={programme.id}
+                onClick={() => setProgrammeFilter(programme.id)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  programmeFilter === programme.id ? "bg-[#0b7ad7] text-white shadow" : "bg-slate-100 text-slate-600"
+                }`}
+                type="button"
               >
-                <h3 className="text-xl font-semibold text-[#d94b03]">{point.title}</h3>
-                <p className="mt-3 text-base leading-relaxed text-gray-600">{point.description}</p>
-              </article>
+                {programme.name}
+              </button>
             ))}
           </div>
         </div>
-      </section>
 
-      {/* Programmes */}
-      <section className="bg-[#fef6f1] py-20" id="programmes">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Programmes open for enrolment</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Explore the curriculum, schedules, and outcomes before you book a free demo. We keep value and student progress
-              transparent so you can enrol with confidence, and we show how every milestone strengthens your child’s voice and
-              communication skills.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {PROGRAMMES.map((programme) => (
-              <article
-                key={programme.title}
-                className="flex h-full flex-col rounded-3xl border border-[#ffd8bd] bg-white p-8 shadow-md shadow-[#ffede0]/60"
-              >
-                <h3 className="text-2xl font-semibold text-[#d94b03]">{programme.title}</h3>
-                <p className="mt-3 flex-1 text-base leading-relaxed text-gray-600">{programme.description}</p>
-                <a
-                  href={programme.href}
-                  className="mt-6 inline-flex items-center justify-center rounded-full bg-[#ff7c2f] px-5 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:-translate-y-0.5"
-                >
-                  {programme.cta}
-                </a>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Dashboards */}
-      <section className="bg-white py-24" id="dashboards">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Sample dashboards parents will see</h2>
-              <p className="mt-4 text-lg text-gray-600">
-                These mockups preview the curriculum progress, attendance history, and milestone trackers we are building.
-                Every course shows quick stats, detailed mastery bars, and what is coming up next for your child.
-              </p>
-            </div>
-            <div className="inline-flex shrink-0 rounded-full border border-gray-200 bg-white p-2">
-              {DASHBOARD.map((course) => (
-                <button
-                  key={course.id}
-                  type="button"
-                  onClick={() => setActive(course)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    active.id === course.id
-                      ? "bg-[#ff7c2f] text-white shadow-[0_8px_18px_-12px_rgba(240,112,24,1)]"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                  aria-pressed={active.id === course.id}
-                >
-                  {course.name.split(" ")[0]}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-[3fr,2fr]">
-            <div className="relative overflow-hidden rounded-[32px] border border-gray-100 bg-white p-8 shadow-xl shadow-gray-200/40">
-              <div
-                className="absolute inset-x-0 top-0 h-2"
-                style={{ backgroundImage: `linear-gradient(90deg, ${active.accent.from}, ${active.accent.to})` }}
-                aria-hidden="true"
-              />
-              <div className="space-y-6">
-                <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.28em]" style={{ color: active.accent.text }}>
-                    {active.name}
-                  </p>
-                  <p className="mt-3 text-base text-gray-600">{active.summary}</p>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {filteredProgrammes.map((programme) => (
+            <article
+              key={programme.id}
+              className="flex flex-col gap-4 rounded-3xl border border-white/70 bg-white/85 p-5 shadow-sm shadow-slate-900/10 transition hover:-translate-y-0.5 hover:shadow-lg"
+            >
+              <div className="flex items-start gap-4">
+                <div className={`h-20 w-24 shrink-0 rounded-2xl bg-gradient-to-br ${programme.accent}`} />
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-slate-900">{programme.name}</h3>
+                  <p className="mt-1 text-sm text-slate-600">{programme.summary}</p>
                 </div>
-
-                <div className="grid gap-4 rounded-3xl bg-gray-50/70 p-5 sm:grid-cols-3">
-                  {active.quickStats.map((stat) => (
-                    <div key={stat.label} className="rounded-2xl bg-white/70 p-4 text-center shadow-sm">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{stat.label}</p>
-                      <p className="mt-2 text-2xl font-black text-[#0f172a]">{stat.value}</p>
-                      {stat.helper && <p className="mt-1 text-xs text-gray-500">{stat.helper}</p>}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="space-y-5">
-                  <h3 className="text-lg font-semibold text-[#0f172a]">Curriculum progress</h3>
-                  <div className="space-y-4">
-                    {active.progress.map((metric) => (
-                      <div key={metric.label}>
-                        <div className="flex items-center justify-between text-sm font-semibold text-gray-700">
-                          <span>{metric.label}</span>
-                          <span>{metric.value}%</span>
-                        </div>
-                        <div className="mt-2 h-2 rounded-full bg-gray-100">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${metric.value}%`,
-                              backgroundImage: `linear-gradient(90deg, ${active.accent.from}, ${active.accent.to})`,
-                            }}
-                          />
-                        </div>
-                        {metric.description && (
-                          <p className="mt-1 text-xs text-gray-500">{metric.description}</p>
-                        )}
-                      </div>
-                    ))}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {programme.quickStats.map((stat) => (
+                  <div key={stat.label} className="rounded-2xl border border-white/60 bg-white/70 px-4 py-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0b7ad7]">{stat.label}</p>
+                    <p className="mt-2 text-lg font-semibold text-slate-900">{stat.value}</p>
+                    <p className="mt-1 text-xs text-slate-500">{stat.helper}</p>
                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-[#0f172a]">Milestones</h3>
-                  <ul className="space-y-3">
-                    {active.milestones.map((milestone) => (
-                      <li
-                        key={milestone.label}
-                        className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-[#fafafa] p-4"
-                      >
-                        <span
-                          className={`mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-                            milestone.status === "complete"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}
-                        >
-                          {milestone.status === "complete" ? "✓" : "•"}
-                        </span>
-                        <div className="text-sm text-gray-700">
-                          <p className="font-semibold text-[#0f172a]">{milestone.label}</p>
-                          {milestone.detail && <p className="mt-1 text-xs text-gray-500">{milestone.detail}</p>}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                ))}
               </div>
-            </div>
-
-            <div className="flex flex-col gap-6">
-              <div
-                className="rounded-[28px] border border-gray-100 p-6 shadow-lg"
-                style={{ backgroundColor: active.accent.bg }}
-              >
-                <h3 className="text-lg font-semibold text-[#0f172a]">Attendance snapshot</h3>
-                <p className="mt-4 text-4xl font-black text-[#0f172a]">{active.attendance.percent}%</p>
-                <p className="mt-1 text-sm font-semibold text-gray-600">{active.attendance.streak}</p>
-                <p className="mt-2 text-sm text-gray-600">{active.attendance.helper}</p>
+              <div className="space-y-3">
+                {programme.progress.map((skill) => (
+                  <div key={skill.label}>
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>{skill.label}</span>
+                      <span className="font-semibold text-slate-700">{skill.value}%</span>
+                    </div>
+                    <ProgressBar value={skill.value} />
+                  </div>
+                ))}
               </div>
-
-              <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-[#0f172a]">Up next</h3>
-                <ul className="mt-4 space-y-4">
-                  {active.upcoming.map((item) => (
-                    <li key={item.title} className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
-                      <p className="text-sm font-semibold text-[#0f172a]">{item.title}</p>
-                      <p className="mt-1 text-xs text-gray-500 uppercase tracking-wide">{item.date}</p>
-                      <p className="mt-2 text-sm text-gray-600">{item.focus}</p>
-                    </li>
-                  ))}
-                </ul>
+              <div className="rounded-2xl bg-white/70 px-4 py-3 text-sm text-slate-600">
+                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0b7ad7]">Current focus</span>
+                <p className="mt-1">{programme.milestone}</p>
               </div>
-
-              <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-[#0f172a]">Today&apos;s class recap</h3>
-                <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-[#fff6ef] px-3 py-1 text-xs font-semibold text-[#d94b03]">
-                  {"★".repeat(active.dayFeedback.rating)} rating
-                </div>
-                <p className="mt-3 text-sm font-semibold text-[#0f172a]">{active.dayFeedback.summary}</p>
-                <p className="mt-2 text-sm text-gray-600">{active.dayFeedback.notes}</p>
-                <p className="mt-4 text-xs uppercase tracking-wide text-gray-500">
-                  Shared by your Learning Manager after the teacher logs the session.
-                </p>
-              </div>
-
-              <div className="rounded-[28px] border border-gray-100 bg-white p-6 shadow-lg">
-                <h3 className="text-lg font-semibold text-[#0f172a]">Fees & credits</h3>
-                <span className="mt-2 inline-flex items-center gap-2 rounded-full bg-gray-900/5 px-3 py-1 text-xs font-semibold text-gray-700">
-                  {active.feeStatus.badge}
-                </span>
-                <p className="mt-3 text-2xl font-black text-[#0f172a]">{active.feeStatus.amount}</p>
-                <p className="mt-2 text-sm text-gray-600">{active.feeStatus.detail}</p>
-                <p className="mt-4 text-xs uppercase tracking-wide text-gray-500">
-                  Learning Manager handles all payment nudges—reply to their message for clarifications.
-                </p>
-              </div>
-            </div>
-          </div>
+            </article>
+          ))}
         </div>
       </section>
 
-      {/* Enrolment steps */}
-      <section className="bg-[#0f172a] py-24 text-white" id="enrolment">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl font-bold sm:text-4xl">How enrolment works</h2>
-            <p className="mt-4 text-lg text-slate-300">
-              From discovery call to first class, the experience stays transparent and parent-friendly.
+      <section id="daily-updates" className="rounded-3xl border border-white/70 bg-white/85 p-6 shadow-xl shadow-slate-900/8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-900">Daily updates</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Switch between progress notes, homework timelines, and upcoming events.
             </p>
           </div>
-          <ul className="mt-12 grid gap-6 md:grid-cols-3">
-            {ENROLMENT_STEPS.map((step) => (
-              <li key={step.title} className="rounded-3xl bg-white/5 p-8">
-                <p className="text-xl font-semibold text-white">{step.title}</p>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">{step.detail}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="bg-[#f7f3ff] py-24" id="testimonials">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">What parents are saying</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Families across India trust Tiny Steps to make literacy joyful. Hear how our teachers, routines, and parent
-              updates build lasting confidence.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {TESTIMONIALS.map((item) => (
-              <article key={item.name} className="flex h-full flex-col rounded-3xl bg-white p-8 shadow-lg shadow-[#d4d2ff]/50">
-                <p className="text-lg font-semibold text-[#0f172a] leading-relaxed">“{item.quote}”</p>
-                <div className="mt-6 border-t border-gray-100 pt-4 text-sm text-gray-600">
-                  <p className="font-semibold text-[#0f172a]">{item.name}</p>
-                  <p>{item.meta}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Support */}
-      <section className="bg-[#f9f7ff] py-24">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Sample family insights</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Here’s how progress, evidence, and “next actions” appear per child. Learning Managers share this after every cycle.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-6 lg:grid-cols-3">
-            {sampleFamilySnapshots.map(([programmeId, entries]) => {
-              const trackTitle =
-                programmeId === "phonics"
-                  ? "Phonics Foundations"
-                  : programmeId === "grammar"
-                  ? "Grammar & Writing Lab"
-                  : "Public Speaking Studio";
+          <div className="flex rounded-full bg-white/70 p-1 shadow-inner shadow-slate-900/5">
+            {(["progress", "homework", "updates"] as ParentTab[]).map((tab) => {
+              const selected = activeTab === tab;
+              const label = tab === "progress" ? "Progress" : tab === "homework" ? "Homework" : "Updates";
               return (
-                <div key={programmeId} className="rounded-3xl border border-[#e2ddff] bg-white p-6 shadow-lg shadow-[#d4ccff]/40">
-                  <header className="mb-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#7c3aed]">{trackTitle}</p>
-                    <p className="text-sm text-gray-500">{entries.length} sample students</p>
-                  </header>
-                  <ul className="space-y-3">
-                    {entries.map((entry) => {
-                      const meta = skillLookup.get(entry.skillId);
-                      return (
-                        <li key={entry.studentId} className="rounded-2xl border border-[#efeaff] bg-[#f9f7ff] p-4">
-                          <p className="text-sm font-semibold text-[#0f172a]">
-                            {entry.studentName}
-                            <span className="ml-2 text-[11px] font-normal text-[#7c3aed]">
-                              #{entry.admissionNumber}
-                            </span>
-                          </p>
-                          <p className="text-xs uppercase tracking-wide text-[#7c3aed]">
-                            {meta?.levelTitle ?? entry.levelId}
-                          </p>
-                          <p className="mt-1 text-xs text-gray-600">{meta?.skillTitle ?? entry.skillId}</p>
-                          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-                            <span>Status: {entry.status}</span>
-                            {entry.nextAction && <span>Next: {entry.nextAction}</span>}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+                    selected ? "bg-white text-[#0b7ad7] shadow" : "text-slate-500"
+                  }`}
+                  type="button"
+                >
+                  {label}
+                </button>
               );
             })}
           </div>
         </div>
-      </section>
 
-      <section className="bg-white py-24" id="support">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Support that continues after sign-up</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Stay updated through progress snapshots, monthly learning tips, and anytime messaging. We are building the unified
-              parent portal in the open—no passwords required while development is underway.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2">
-            <article className="rounded-3xl border border-gray-100 bg-[#f8fafc] p-8">
-              <h3 className="text-xl font-semibold text-[#0f172a]">Progress snapshots</h3>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
-                Track attendance, mastered skills, and upcoming goals from the sample dashboards above. Each snapshot also calls
-                out how clearly your child is communicating ideas so you see confidence grow alongside academics.
-              </p>
-            </article>
-            <article className="rounded-3xl border border-gray-100 bg-[#fff7ed] p-8">
-              <h3 className="text-xl font-semibold text-[#0f172a]">Home practice toolkit</h3>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
-                Downloadable worksheets, reading lists, and speaking prompts are shared weekly after class, so parents can keep
-                momentum going between sessions and spark everyday conversations that make communication second nature.
-              </p>
-            </article>
-          </div>
-          <div className="mt-16 flex flex-col items-center rounded-3xl border border-dashed border-[#ff7c2f] bg-[#fff7f0] p-10 text-center">
-            <span className="rounded-full bg-white px-4 py-1 text-xs font-semibold uppercase tracking-[0.32em] text-[#d94b03]">
-              Next steps
-            </span>
-            <p className="mt-4 max-w-xl text-lg text-gray-600">
-              Already enrolled? Access stays open—just pick the dashboard you need. Have a question about schedules or adding a
-              sibling? Your learning manager is a message away.
-            </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <a
-                href="/main/book-demo/"
-                className="rounded-full bg-[#ff7c2f] px-6 py-3 text-sm font-extrabold uppercase tracking-wide text-white shadow-md transition hover:-translate-y-0.5"
+        {activeTab === "progress" && (
+          <div className="mt-6 space-y-4 text-sm text-slate-600">
+            {MONTHLY_HIGHLIGHTS.map((highlight) => (
+              <div
+                key={highlight}
+                className="rounded-3xl border border-white/60 bg-white/75 px-5 py-4 text-slate-700 shadow-sm"
               >
-                Book a Trial Call
-              </a>
-              <Link
-                to="/roles/rm"
-                className="rounded-full border border-[#ff7c2f33] px-6 py-3 text-sm font-semibold text-[#d94b03] transition hover:border-[#ff7c2f] hover:bg-[#fff6ef]"
-              >
-                Meet a Learning Manager
-              </Link>
-            </div>
+                {highlight}
+              </div>
+            ))}
           </div>
-        </div>
+        )}
+
+        {activeTab === "homework" && (
+          <div className="mt-6 space-y-4">
+            {HOMEWORK_QUEUE.map((task) => (
+              <article key={task.id} className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm">
+                <header className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-slate-900">{task.title}</h3>
+                    <p className="text-sm text-slate-600">{task.subject}</p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      task.status === "Completed"
+                        ? "bg-[#dcfce7] text-[#047857]"
+                        : task.status === "Uploaded"
+                          ? "bg-[#e0e7ff] text-[#4338ca]"
+                          : "bg-[#fee2b6] text-[#b45309]"
+                    }`}
+                  >
+                    {task.status}
+                  </span>
+                </header>
+                <p className="mt-3 text-sm text-slate-600">{task.date}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <span className="rounded-full bg-white px-3 py-1 font-semibold text-[#0b7ad7]">{task.duration}</span>
+                  <span>Coach · {task.coach}</span>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "updates" && (
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {UPCOMING_EVENTS.map((event) => (
+              <article key={event.id} className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">{event.title}</h3>
+                <p className="mt-2 text-sm text-slate-600">{event.timing}</p>
+                <p className="mt-2 text-xs uppercase tracking-[0.22em] text-[#7c2d58]">Focus</p>
+                <p className="mt-1 text-sm text-slate-600">{event.focus}</p>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
-    </div>
+    </DashboardShell>
   );
 }

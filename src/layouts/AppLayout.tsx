@@ -7,7 +7,9 @@ import BackToTop from "../components/BackToTop";
 
 export default function AppLayout() {
   const location = useLocation();
-  const widgetHiddenRoutes = ["/roles/teacher", "/roles/rm", "/roles/learning-manager"];
+  const dashboardRoutes = ["/roles/teacher", "/roles/rm", "/roles/learning-manager", "/roles/kids", "/parents"];
+  const isDashboardRoute = dashboardRoutes.some((path) => location.pathname.startsWith(path));
+  const widgetHiddenRoutes = dashboardRoutes;
   const hideWidget = widgetHiddenRoutes.some((path) => location.pathname.startsWith(path));
 
   useEffect(() => {
@@ -15,13 +17,13 @@ export default function AppLayout() {
   }, [location.pathname, location.search, location.hash]);
 
   return (
-    <div className="bg-white min-h-screen flex flex-col">
-      <Header />
+    <div className={`min-h-screen flex flex-col ${isDashboardRoute ? "bg-[#f4f7fb]" : "bg-white"}`}>
+      {!isDashboardRoute && <Header />}
       <main className="flex-1">
         <Outlet />
       </main>
-      <Footer />
-      {!hideWidget && <WhatsAppWidget />}
+      {!isDashboardRoute && <Footer />}
+      {!hideWidget && !isDashboardRoute && <WhatsAppWidget />}
       <BackToTop />
     </div>
   );

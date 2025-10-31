@@ -12,8 +12,8 @@ const courseLinks = [
 const legacyLinks: Array<{ label: string; to: string } | { label: string; href: string }> = [
   { label: "Blog", to: "/blog" },
   { label: "Teachers", to: "/roles/teacher" },
-  { label: "Relationship Managers", to: "/roles/rm" },
-  { label: "Kids", href: "/roles/kid/" },
+  { label: "Learning Managers", to: "/roles/rm" },
+  { label: "Kids", to: "/roles/kids" },
 ];
 
 // SPA internal pages
