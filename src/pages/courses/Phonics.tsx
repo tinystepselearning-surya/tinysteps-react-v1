@@ -58,6 +58,7 @@ export default function Phonics() {
             "SATPIN → digraphs → long vowels",
             "Fluency runs & comprehension prompts",
             "Weekly parent summary",
+            "Digital worksheets • Wordwall & web games • Minimal parent prep",
           ]}
           ctaText="Book Phonics Demo"
           ctaHref="/main/book-demo/?programme=phonics"
@@ -71,6 +72,16 @@ export default function Phonics() {
         <Accordion
           items={[
             {
+              question: "What batch size options do you offer?",
+              answer:
+                "Families can choose the best fit—1:1 coaching, paired batches (1 teacher : 2 learners), small groups of 4, or collaborative pods of 6. Even in shared batches we use breakout rooms and individual feedback so every child gets personal attention.",
+            },
+            {
+              question: "Do you share digital worksheets or will I need to print homework?",
+              answer:
+                "We share interactive worksheets, Wordwall games, and web-based blends so children practise on screens with joyful activities. Printing is optional; most families complete homework digitally within minutes.",
+            },
+            {
               question: "Will 35-minute one-to-one sessions clash with school homework?",
               answer:
                 "We schedule around your child’s school day and keep each session laser-focused. The teacher recaps the school phonics list, reinforces tricky sounds, and closes with a two-minute plan so your child finishes homework faster, not slower.",
@@ -79,6 +90,11 @@ export default function Phonics() {
               question: "My child is in a CBSE/ICSE board. Will this align with the school sequence?",
               answer:
                 "Yes. We follow the Jolly Phonics order to build decoding muscle and then align weekly lists with the school reader. Teachers flag tricky spellings on your dashboard so you can communicate with class teachers confidently.",
+            },
+            {
+              question: "How much support do you need from parents between sessions?",
+              answer:
+                "Very little. Teachers send a two-minute activity with digital worksheets or a Wordwall link. Children can complete it independently with a quick emoji-style check-in so busy parents stay in the loop without printing or manual effort.",
             },
             {
               question: "How do you involve parents between classes?",

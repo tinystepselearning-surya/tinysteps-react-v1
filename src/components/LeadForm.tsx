@@ -45,7 +45,7 @@ export default function LeadForm() {
   }
 
   return (
-    <section ref={sectionRef} id="parents" className="relative py-20">
+    <section ref={sectionRef} id="book-trial" className="relative py-20">
       <div
         aria-hidden
         className="absolute inset-0 bg-gradient-to-br from-[#fff4ec] via-white to-[#e8f9f0]/70"

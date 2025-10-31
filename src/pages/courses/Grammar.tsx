@@ -51,6 +51,7 @@ export default function Grammar() {
             "Parts of speech, tenses, punctuation",
             "Sentence craft & editing drills",
             "Weekly writing sprint + feedback",
+            "Interactive digital worksheets & games",
           ]}
           ctaText="Schedule Grammar Trial"
           ctaHref="/main/book-demo/?programme=grammar"
@@ -64,6 +65,16 @@ export default function Grammar() {
         <Accordion
           items={[
             {
+              question: "What batch size options do you offer?",
+              answer:
+                "You can opt for 1:1 mentoring, a paired batch (1 teacher : 2 learners), focused groups of 4, or collaborative pods of 6. Regardless of size, we keep live editing and feedback tailored to each child’s writing goals.",
+            },
+            {
+              question: "Do you provide digital resources or do we need to print worksheets?",
+              answer:
+                "Everything is digital-first. Children receive grammar games, Wordwall drills, and editable worksheets they can complete on any device. Parents appreciate that there’s no printing prep—just tap, practise, and upload.",
+            },
+            {
               question: "Will grammar drills help with school exams and Olympiads?",
               answer:
                 "Absolutely. We blend board-specific question styles with concept-first teaching so children know the rule and how to present it in exams. Weekly writing sprints mimic comprehension, creative writing, and grammar worksheets used by CBSE, ICSE, and Cambridge schools.",
@@ -72,6 +83,11 @@ export default function Grammar() {
               question: "Do you share feedback quickly enough for parents to guide revision?",
               answer:
                 "After every class you’ll receive a short note with a 5-star focus rating and two action points. Parents tell us this ongoing communication helps them feel in control of English progress without micro-managing homework.",
+            },
+            {
+              question: "How much parent involvement is needed for home practice?",
+              answer:
+                "Very little. Teachers send a quick summary with digital worksheets or Wordwall links that children complete independently. You simply review the dashboard snapshot or listen to the 30-second voice note.",
             },
             {
               question: "My child finds grammar boring. How will you keep them engaged?",

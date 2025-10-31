@@ -51,6 +51,7 @@ export default function PublicSpeaking() {
             "Voice & diction drills",
             "Story frameworks & delivery",
             "Monthly showcase with feedback",
+            "Pronunciation lab + digital practice hub",
           ]}
           ctaText="Reserve Speaking Session"
           ctaHref="/main/book-demo/?programme=speaking"
@@ -63,6 +64,11 @@ export default function PublicSpeaking() {
         <h2 className="text-2xl font-semibold mb-3">Speaking FAQs</h2>
         <Accordion
           items={[
+            {
+              question: "What batch size options are available?",
+              answer:
+                "Select what suits your child—1:1 spotlight coaching, dynamic pairs (1 teacher : 2 learners), intimate groups of 4, or collaborative pods of 6. Even in shared batches, each child records solo clips and receives individual feedback.",
+            },
             {
               question: "My child is shy. How do you draw them out in a 35-minute session?",
               answer:
@@ -92,6 +98,11 @@ export default function PublicSpeaking() {
               question: "Will public speaking also help everyday English communication?",
               answer:
                 "Definitely. Students build vocabulary ladders, conversation scaffolds, and quick-thinking drills so they can communicate ideas clearly in class discussions, group projects, and future workplaces.",
+            },
+            {
+              question: "How much parent support is required between classes?",
+              answer:
+                "Homework is lightweight: a digital worksheet or Wordwall challenge plus a short reflection prompt. Most children complete it independently in 5–7 minutes; parents simply watch the progress clip or respond with a quick emoji update.",
             },
           ]}
         />

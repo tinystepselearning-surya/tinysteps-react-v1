@@ -156,13 +156,14 @@ export default function Header() {
             ),
           )}
 
-          <a
-            href="/main/book-demo/"
+          <Link
+            to="/#book-trial"
             className="ml-2 inline-flex items-center rounded-full px-4 py-2 text-sm font-extrabold text-white shadow-lg shadow-[#ff8a4c]/40 transition hover:-translate-y-0.5"
             style={{ backgroundImage: "linear-gradient(135deg,#ff751f,#e05c0a)" }}
+            onClick={onNavigate}
           >
             Book Trial
-          </a>
+          </Link>
 
         </nav>
 
@@ -222,13 +223,14 @@ export default function Header() {
             )}
 
             <div className="flex gap-3 pt-2">
-              <a
-                href="/main/book-demo/"
+              <Link
+                to="/#book-trial"
                 className="flex-1 text-center rounded-full px-4 py-2 text-white font-extrabold"
                 style={{ backgroundImage: "linear-gradient(135deg,#ff751f,#e05c0a)" }}
+                onClick={onNavigate}
               >
                 Book Trial
-              </a>
+              </Link>
             </div>
           </nav>
         </div>
