@@ -10,16 +10,16 @@ const courseLinks = [
 
 // External / legacy (static) pages stay as <a href="...">
 const legacyLinks: Array<{ label: string; to: string } | { label: string; href: string }> = [
-  { label: "Teachers", to: "/roles/teacher" },
-  { label: "Kids", href: "/roles/kid/" },
-  { label: "Learning Manager", to: "/roles/rm" },
   { label: "Blog", to: "/blog" },
+  { label: "Teachers", to: "/roles/teacher" },
+  { label: "Relationship Managers", to: "/roles/rm" },
+  { label: "Kids", href: "/roles/kid/" },
 ];
 
 // SPA internal pages
 const appLinks = [
-  { label: "Curriculum", to: "/curriculum" },
   { label: "Parents", to: "/parents" },
+  { label: "Curriculum", to: "/curriculum" },
   { label: "FAQ", to: "/faq" },
 ];
 

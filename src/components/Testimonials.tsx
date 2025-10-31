@@ -8,6 +8,7 @@ type Story = {
   name: string;
   place: string;
   body: string;
+  photo: string;
 };
 
 const stories: Story[] = [
@@ -18,6 +19,7 @@ const stories: Story[] = [
     place: "Bengaluru · Kavya, Grade 1",
     body:
       "Kavya recognised only a handful of sounds when we joined. The diagnostic report outlined exactly where to begin, and the weekly WhatsApp notes tell us how to practise at home. Kavya now reaches for her library bag every evening and reads aloud with confidence.",
+    photo: "/assets/images/joyfullearning.jpg",
   },
   {
     program: "Phonics Foundations",
@@ -26,6 +28,7 @@ const stories: Story[] = [
     place: "Ahmedabad · Vihaan, Senior KG",
     body:
       "Tiny Steps keeps the sessions joyful, but also methodical. The teacher shares short video clips so we can mirror the pronunciation at home. Vihaan blends new words daily and we receive a crisp progress email every Friday. It’s the structure we were looking for.",
+    photo: "/assets/images/phonics.jpg",
   },
   {
     program: "Grammar & Writing Lab",
@@ -34,6 +37,7 @@ const stories: Story[] = [
     place: "Pune · Aarav, Grade 4",
     body:
       "The roadmap made milestones crystal clear. Aarav submits drafts through the parent portal, receives voice notes highlighting wins, and gets two actionable points to work on. His school essays are now organised and his teacher has noticed the difference.",
+    photo: "/assets/images/grammar.jpg",
   },
   {
     program: "Grammar & Writing Lab",
@@ -42,6 +46,7 @@ const stories: Story[] = [
     place: "Chennai · Diya, Grade 5",
     body:
       "Weekly writing studios combine imagination with technique. We can see rubric scores update instantly, and the mentor shares a 5-minute debrief call after every project. Diya now drafts without fear of red marks because she understands the ‘why’ behind every edit.",
+    photo: "/assets/images/resources/tenses-cheatsheet.webp",
   },
   {
     program: "Public Speaking Studio",
@@ -50,6 +55,7 @@ const stories: Story[] = [
     place: "Mumbai · Riya, Grade 5",
     body:
       "The studio gave Riya a safe space to experiment. Coaches upload annotated videos, mark delivery on a speaking rubric, and set a ‘spotlight goal’ for the next week. We can literally watch her posture, pace, and confidence evolve.",
+    photo: "/assets/images/speaking.jpg",
   },
   {
     program: "Public Speaking Studio",
@@ -58,6 +64,7 @@ const stories: Story[] = [
     place: "Hyderabad · Arnav, Grade 6",
     body:
       "Sessions blend breathing drills, storytelling games, and audience feedback. Coaches send concise debriefs and recommend practice cues we try during dinner conversations. Arnav now projects clearly and enjoys presenting — a huge shift from where we started.",
+    photo: "/assets/images/onetoone.jpg",
   },
 ];
 
@@ -124,6 +131,12 @@ export default function Testimonials() {
                           role="listitem"
                           className="flex h-full flex-col gap-4 rounded-2xl bg-white p-6 shadow shadow-gray-200 transition hover:-translate-y-1 hover:shadow-lg"
                         >
+                          <img
+                            src={story.photo}
+                            alt={`${story.name} testimonial`}
+                            loading="lazy"
+                            className="h-40 w-full rounded-2xl object-cover"
+                          />
                           <span className="text-xs font-semibold uppercase tracking-[0.24em] text-[#4f46e5]">
                             {story.program}
                           </span>
