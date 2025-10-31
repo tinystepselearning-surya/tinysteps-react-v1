@@ -24,9 +24,9 @@ export default function Grammar() {
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-3">Age groups & schedules</h2>
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl border">Grade 2–3 — 45 mins × 2 / week</div>
-          <div className="p-4 rounded-xl border">Grade 4–5 — 60 mins × 1 / week + lab</div>
-          <div className="p-4 rounded-xl border">Grade 6+ — 60 mins × 2 / week</div>
+          <div className="p-4 rounded-xl border">Grade 2–3 · 35 mins × 3 / week</div>
+          <div className="p-4 rounded-xl border">Grade 4–5 · 35 mins × 3 / week</div>
+          <div className="p-4 rounded-xl border">Grade 6+ · 35 mins × 3 / week + writing lab</div>
         </div>
       </section>
 
@@ -35,8 +35,8 @@ export default function Grammar() {
         <h2 className="text-2xl font-semibold mb-3">Pricing</h2>
         <PricingCard
           title="Grammar"
-          price="₹3,199"
-          blurb="Live classes, writing labs, rubric-based feedback, digital journal."
+          price="₹4,200"
+          blurb="12 one-to-one writing studios · 35 mins · ₹350 per session (weekly 3 classes)."
           features={[
             "Parts of speech, tenses, punctuation",
             "Sentence craft & editing drills",

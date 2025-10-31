@@ -13,13 +13,13 @@ const legacyLinks: Array<{ label: string; to: string } | { label: string; href: 
   { label: "Teachers", to: "/roles/teacher" },
   { label: "Kids", href: "/roles/kid/" },
   { label: "Learning Manager", to: "/roles/rm" },
-  { label: "Parents", href: "/main/parents/" },
   { label: "Blog", to: "/blog" },
 ];
 
-// SPA internal pages you just added
+// SPA internal pages
 const appLinks = [
-  { label: "Pricing", to: "/pricing" },
+  { label: "Curriculum", to: "/curriculum" },
+  { label: "Parents", to: "/parents" },
   { label: "FAQ", to: "/faq" },
 ];
 
@@ -164,14 +164,6 @@ export default function Header() {
             Book Trial
           </a>
 
-          <a
-            id="authBtn"
-            href="/auth.html"
-            className="ml-2 inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-[#e05c0a] transition hover:border-[#e05c0a]/40 hover:text-[#c94a07]"
-            aria-live="polite"
-          >
-            Sign in
-          </a>
         </nav>
 
         {/* Mobile menu button */}
@@ -236,9 +228,6 @@ export default function Header() {
                 style={{ backgroundImage: "linear-gradient(135deg,#ff751f,#e05c0a)" }}
               >
                 Book Trial
-              </a>
-              <a href="/auth.html" className="flex-1 text-center rounded-full px-4 py-2 border font-semibold">
-                Sign in
               </a>
             </div>
           </nav>

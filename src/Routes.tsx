@@ -6,7 +6,9 @@ import Phonics from "./pages/courses/Phonics";
 import Grammar from "./pages/courses/Grammar";
 import PublicSpeaking from "./pages/courses/PublicSpeaking";
 import Pricing from "./pages/Pricing";
+import Curriculum from "./pages/Curriculum";
 import FAQ from "./pages/FAQ";
+import Parents from "./pages/Parents";
 import TeacherPortal from "./pages/roles/TeacherPortal";
 import LearningManagerPortal from "./pages/roles/LearningManagerPortal";
 import BlogIndex from "./pages/blog/BlogIndex";
@@ -26,6 +28,8 @@ export default function AppRoutes() {
         <Route path="/courses/public-speaking" element={<PublicSpeaking />} />
 
         {/* Extras */}
+        <Route path="/parents" element={<Parents />} />
+        <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/blog" element={<BlogIndex />} />

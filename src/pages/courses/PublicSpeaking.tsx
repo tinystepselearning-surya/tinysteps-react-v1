@@ -24,9 +24,9 @@ export default function PublicSpeaking() {
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-3">Age groups & schedules</h2>
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl border">Age 6–8 — 45 mins × 1 / week</div>
-          <div className="p-4 rounded-xl border">Age 9–11 — 60 mins × 1 / week</div>
-          <div className="p-4 rounded-xl border">Age 12+ — 60 mins × 2 / week</div>
+          <div className="p-4 rounded-xl border">Age 6–8 · 35 mins × 3 / week</div>
+          <div className="p-4 rounded-xl border">Age 9–11 · 35 mins × 3 / week</div>
+          <div className="p-4 rounded-xl border">Age 12+ · 35 mins × 3 / week + showcase prep</div>
         </div>
       </section>
 
@@ -35,8 +35,8 @@ export default function PublicSpeaking() {
         <h2 className="text-2xl font-semibold mb-3">Pricing</h2>
         <PricingCard
           title="Public Speaking"
-          price="₹3,499"
-          blurb="Coaching + rehearsal recordings + showcases + scorecards."
+          price="₹4,200"
+          blurb="12 coached sessions · 35 mins · ₹350 per session (weekly 3 classes)."
           features={[
             "Voice & diction drills",
             "Story frameworks & delivery",

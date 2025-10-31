@@ -31,9 +31,9 @@ export default function Phonics() {
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-3">Age groups & schedules</h2>
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl border">3.5–5 yrs — 40 mins × 2 / week</div>
-          <div className="p-4 rounded-xl border">Grade 1–2 — 45 mins × 2 / week</div>
-          <div className="p-4 rounded-xl border">Grade 3+ — 60 mins × 1 / week + guided reading</div>
+          <div className="p-4 rounded-xl border">Early readers (3.5–5 yrs) · 35 mins × 3 / week</div>
+          <div className="p-4 rounded-xl border">Grade 1–2 · 35 mins × 3 / week</div>
+          <div className="p-4 rounded-xl border">Grade 3+ · 35 mins × 3 / week + reading journal</div>
         </div>
       </section>
 
@@ -42,8 +42,8 @@ export default function Phonics() {
         <h2 className="text-2xl font-semibold mb-3">Pricing</h2>
         <PricingCard
           title="Phonics"
-          price="₹2,999"
-          blurb="8 live sessions, decodable e-books, printable packs, progress snapshots."
+          price="₹4,200"
+          blurb="12 one-to-one sessions · 35 mins · ₹350 per session (weekly 3 classes)."
           features={[
             "SATPIN → digraphs → long vowels",
             "Fluency runs & comprehension prompts",

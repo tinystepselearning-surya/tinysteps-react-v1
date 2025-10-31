@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { coursePrograms } from "../../data/courses";
+import PricingCard from "../../components/PricingCard";
+import { pricingPlans } from "../../data/pricing";
 
 export default function AllCourses() {
   return (
@@ -67,6 +69,34 @@ export default function AllCourses() {
           </Link>
         ))}
       </div>
+
+      <section id="pricing" className="mt-16 rounded-3xl bg-[#fff6ef] p-8 shadow-inner shadow-[#ffddb5]/70">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold text-[#d94b03]">1:1 program pricing</h2>
+          <p className="mt-3 text-lg text-gray-700">
+            Choose the pathway that suits your child. Every plan includes personalised Learning Manager support, weekly feedback
+            loops, and dashboard updates for parents.
+          </p>
+          <p className="mt-2 text-sm uppercase tracking-[0.26em] text-gray-500">
+            35-minute classes · 3 sessions every week · ₹350 per session
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
+          {pricingPlans.map((plan) => (
+            <PricingCard
+              key={plan.id}
+              title={plan.title}
+              price={plan.price}
+              blurb={plan.blurb}
+              features={plan.features}
+              ctaText={plan.ctaText}
+              ctaHref={plan.ctaHref}
+              accent={plan.accent}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
