@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Create Vite env file
+        run: |
+          echo "VITE_APPCHECK_KEY=${{ secrets.VITE_APPCHECK_KEY }}" > .env.production
       - run: npm ci && npm run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
