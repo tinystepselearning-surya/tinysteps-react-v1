@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PricingCard from "../../components/PricingCard";
 import Accordion from "../../components/ui/Accordion"; // ✅ use shared component
 
@@ -5,8 +6,12 @@ export default function Grammar() {
   return (
     <div className="px-4 py-10 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">Grammar Classes for Kids (Online)</h1>
-      <p className="text-gray-700 mb-8">
+      <p className="text-gray-700 mb-3">
         Parts of speech, tenses, punctuation and sentence building—taught with mini-lessons and writing studios.
+      </p>
+      <p className="text-base text-gray-600 mb-8">
+        Every workshop sharpens written and spoken communication so learners can articulate ideas, tackle competitive exams,
+        and collaborate across classrooms.
       </p>
 
       {/* Curriculum */}
@@ -18,6 +23,11 @@ export default function Grammar() {
           <li className="p-4 rounded-xl bg-gray-50">Weekly writing sprints (narrative/info/opinion).</li>
           <li className="p-4 rounded-xl bg-gray-50">Targeted feedback loops with rubrics.</li>
         </ul>
+        <p className="mt-4 text-sm text-[#6366f1]">
+          <Link to="/curriculum#grammar" className="font-semibold hover:underline">
+            Explore the Grammar mastery levels →
+          </Link>
+        </p>
       </section>
 
       {/* Age groups */}
@@ -54,19 +64,34 @@ export default function Grammar() {
         <Accordion
           items={[
             {
-              question: "Is grammar taught with actual writing?",
+              question: "Will grammar drills help with school exams and Olympiads?",
               answer:
-                "Yes—mini-lessons lead into writing labs (narrative/info/opinion) with short drafts and edits.",
+                "Absolutely. We blend board-specific question styles with concept-first teaching so children know the rule and how to present it in exams. Weekly writing sprints mimic comprehension, creative writing, and grammar worksheets used by CBSE, ICSE, and Cambridge schools.",
             },
             {
-              question: "Do you share feedback?",
+              question: "Do you share feedback quickly enough for parents to guide revision?",
               answer:
-                "Yes—rubric-based comments and simple action points the child can fix next session.",
+                "After every class you’ll receive a short note with a 5-star focus rating and two action points. Parents tell us this ongoing communication helps them feel in control of English progress without micro-managing homework.",
             },
             {
-              question: "What if my child finds grammar boring?",
+              question: "My child finds grammar boring. How will you keep them engaged?",
               answer:
-                "We keep it active: sentence races, fix-it challenges, and peer review moments.",
+                "We gamify sentence building, editing races, and peer review moments so grammar feels like a puzzle. Because sessions are one-to-one, your child’s interests drive the prompts—sports, coding, comics—whatever gets them talking and writing.",
+            },
+            {
+              question: "How does writing support long-term communication skills?",
+              answer:
+                "Every lesson follows our Listening-Reading-Writing-Speaking loop. Children first hear a model, read a mentor text, write a draft, and close with a quick verbal reflection. This loop ensures better articulation in class debates, interviews, and everyday communication.",
+            },
+            {
+              question: "Do you help with school essays and projects?",
+              answer:
+                "Yes. Students bring school assignments into class. Teachers break the task into a simple outline, help with drafting, and upload annotated feedback to the dashboard so parents can see the journey from idea to polished submission.",
+            },
+            {
+              question: "What if we cannot attend one of the three weekly sessions?",
+              answer:
+                "We reschedule easily. Because you get three touchpoints a week, we can flex around PTMs or tuition. The teacher recaps the concept in the following class so there’s no gap.",
             },
           ]}
         />

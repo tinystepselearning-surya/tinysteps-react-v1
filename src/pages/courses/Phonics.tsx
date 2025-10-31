@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PricingCard from "../../components/PricingCard";
 import Accordion from "../../components/ui/Accordion"; // ✅ shared Accordion component
 
@@ -5,16 +6,20 @@ export default function Phonics() {
   return (
     <div className="px-4 py-10 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">Phonics Classes for Kids (Online)</h1>
-      <p className="text-gray-700 mb-8">
+      <p className="text-gray-700 mb-3">
         Systematic phonics that connects letter–sound mastery to confident, expressive reading.
         SATPIN, Magic-E, digraphs and more.
+      </p>
+      <p className="text-base text-gray-600 mb-8">
+        Communication sits at the centre of every lesson—children learn to decode, discuss stories, and share reflections so
+        they can compete and collaborate with confidence in school.
       </p>
 
       <section className="mb-10">
         <h2 className="text-2xl font-semibold mb-3">Curriculum & methodology</h2>
         <ul className="grid md:grid-cols-2 gap-4 text-gray-700">
           <li className="p-4 rounded-xl bg-gray-50">
-            Sound-to-symbol mastery: multi-sensory drills, actions, and stories.
+            Sound-to-symbol mastery: Jolly Phonics sequencing with multi-sensory drills, actions, and stories.
           </li>
           <li className="p-4 rounded-xl bg-gray-50">
             Guided blending labs with decodable readers and fluency runs.
@@ -26,6 +31,11 @@ export default function Phonics() {
             Fluency & comprehension with weekly retell prompts.
           </li>
         </ul>
+        <p className="mt-4 text-sm text-[#6366f1]">
+          <Link to="/curriculum#phonics" className="font-semibold hover:underline">
+            View the full Phonics mastery roadmap →
+          </Link>
+        </p>
       </section>
 
       <section className="mb-10">
@@ -61,19 +71,34 @@ export default function Phonics() {
         <Accordion
           items={[
             {
-              question: "How do you teach blending?",
+              question: "Will 35-minute one-to-one sessions clash with school homework?",
               answer:
-                "With sound-tapping, word ladders, and decodable readers for fluent blending.",
+                "We schedule around your child’s school day and keep each session laser-focused. The teacher recaps the school phonics list, reinforces tricky sounds, and closes with a two-minute plan so your child finishes homework faster, not slower.",
             },
             {
-              question: "Do you give home practice?",
+              question: "My child is in a CBSE/ICSE board. Will this align with the school sequence?",
               answer:
-                "Yes — 2 short, fun tasks per week with audio guidance and a quick parent note.",
+                "Yes. We follow the Jolly Phonics order to build decoding muscle and then align weekly lists with the school reader. Teachers flag tricky spellings on your dashboard so you can communicate with class teachers confidently.",
             },
             {
-              question: "What if my child is a beginner?",
+              question: "How do you involve parents between classes?",
               answer:
-                "We begin with sound awareness and scaffold up gradually to reading sentences.",
+                "Communication is the cornerstone. After every session you’ll receive a WhatsApp voice note, the skill covered, and a 5-star focus indicator. A quick two-minute activity keeps the momentum without overwhelming working parents.",
+            },
+            {
+              question: "What if my child already recognises letters?",
+              answer:
+                "We begin with a diagnostic. If letter-sound recall is strong, we jump straight into digraphs, Magic-E, and vocabulary building. The idea is to respect existing mastery and move toward fluent reading and expressive communication.",
+            },
+            {
+              question: "How soon will we see a change in reading fluency?",
+              answer:
+                "Most families notice smoother blending by week three because we meet thrice a week. You’ll see the growth on the dashboard through recorded reading clips and the mastery bar that moves from emerging to proficient.",
+            },
+            {
+              question: "What happens if we miss a class due to school events?",
+              answer:
+                "Just pick a new slot in the calendar—make-ups are part of your plan. We refresh the previous concept during the next class so your child never feels left behind.",
             },
           ]}
         />

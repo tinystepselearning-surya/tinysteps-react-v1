@@ -14,30 +14,31 @@ export default function Hero() {
       aria-labelledby="hero-title"
     >
       <div
-        className="absolute inset-0 bg-center bg-cover brightness-75 will-change-transform"
+        className="absolute inset-0 bg-center bg-cover will-change-transform"
         style={{ backgroundImage: "url('/assets/images/mainbg.jpg')" }}
         aria-hidden="true"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/35 to-black/65" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/45 to-black/70" aria-hidden="true" />
       <div className="relative mx-auto max-w-6xl px-4 pb-16 pt-28 md:py-20 lg:py-24 w-full">
         <div className="max-w-2xl">
           <h1
             id="hero-title"
             data-reveal-child
             style={titleDelay}
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.04] tracking-tight drop-shadow-[0_12px_32px_rgba(0,0,0,0.32)]"
+            className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.04] tracking-tight drop-shadow-[0_12px_32px_rgba(0,0,0,0.32)]"
           >
             <span className="block text-balance">Phonics, Grammar &amp; Public Speaking</span>
-            <span className="block mt-2 text-balance text-2xl sm:text-3xl lg:text-4xl font-semibold text-white/95">
-              for Kids <span className="font-extrabold text-white">Ages 3–10</span>
+            <span className="block mt-3 text-balance text-2xl sm:text-3xl lg:text-4xl font-semibold text-white/95">
+              Crafted for <span className="font-extrabold text-white">Ages 3–10</span>
             </span>
           </h1>
           <p
             data-reveal-child
             style={bodyDelay}
-            className="mt-6 max-w-[42ch] text-white/95 text-xl sm:text-2xl leading-relaxed font-medium drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
+            className="mt-6 max-w-[46ch] text-white/95 text-xl sm:text-2xl leading-relaxed font-medium drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]"
           >
-            Fun, engaging phonics, grammar, and speaking lessons that help every child shine with confidence.
+            Fun, engaging lessons that help every child communicate powerfully—on the page, on stage, and in everyday
+            conversations.
           </p>
         </div>
       </div>

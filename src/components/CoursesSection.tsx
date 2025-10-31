@@ -4,13 +4,15 @@ import { coursePrograms } from "../data/courses";
 export default function CoursesSection() {
   return (
     <section className="px-4 py-16 sm:py-20">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#ff7a45]">Our Courses</p>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">Beautifully Crafted Learning Tracks</h2>
-          <p className="mt-2 max-w-xl text-gray-600">
-            Each pathway blends research-backed curriculum, joyful teaching, and measurable progress so your child
-            can thrive from day one.
+          <p className="text-sm md:text-base font-semibold uppercase tracking-[0.2em] text-[#7c3aed]">Our Courses</p>
+          <h2 className="mt-2 text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 tracking-tight">
+            Beautifully crafted learning tracks
+          </h2>
+          <p className="mt-3 max-w-xl text-lg text-gray-600 leading-relaxed">
+            Every track fuses curriculum expertise, joyful teaching, and real-time communication so your child keeps
+            pace with global standards while staying emotionally invested in learning.
           </p>
         </div>
         <Link

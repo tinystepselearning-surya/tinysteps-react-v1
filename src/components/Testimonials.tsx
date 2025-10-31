@@ -84,7 +84,7 @@ export default function Testimonials() {
   return (
     <section ref={sectionRef} id="testimonials" className="mx-auto max-w-6xl px-4 my-20">
       <div className="mx-auto max-w-3xl text-center">
-        <p data-reveal-child className="text-sm font-semibold uppercase tracking-[0.2em] text-[#ff7a45]">
+        <p data-reveal-child className="text-sm md:text-base font-semibold uppercase tracking-[0.24em] text-[#7c3aed]">
           Parent Voices
         </p>
         <h2

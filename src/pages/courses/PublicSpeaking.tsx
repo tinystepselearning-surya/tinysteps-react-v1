@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PricingCard from "../../components/PricingCard";
 import Accordion from "../../components/ui/Accordion"; // ✅ shared component
 
@@ -5,8 +6,12 @@ export default function PublicSpeaking() {
   return (
     <div className="px-4 py-10 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-4">Public Speaking for Kids (Online)</h1>
-      <p className="text-gray-700 mb-8">
+      <p className="text-gray-700 mb-3">
         Coaching that transforms hesitant speakers into storytellers with presence and poise.
+      </p>
+      <p className="text-base text-gray-600 mb-8">
+        Communication is a career superpower—these sessions help children hold a room today and stand out tomorrow in
+        interviews, leadership roles, and global teams.
       </p>
 
       {/* Curriculum */}
@@ -18,6 +23,11 @@ export default function PublicSpeaking() {
           <li className="p-4 rounded-xl bg-gray-50">Body language coaching (stance, gestures, eye contact).</li>
           <li className="p-4 rounded-xl bg-gray-50">Audience engagement labs (Q&A, impromptu, debates).</li>
         </ul>
+        <p className="mt-4 text-sm text-[#6366f1]">
+          <Link to="/curriculum#speaking" className="font-semibold hover:underline">
+            See the full Public Speaking progression →
+          </Link>
+        </p>
       </section>
 
       {/* Age groups */}
@@ -53,9 +63,36 @@ export default function PublicSpeaking() {
         <h2 className="text-2xl font-semibold mb-3">Speaking FAQs</h2>
         <Accordion
           items={[
-            { question: "Will my child speak every class?", answer: "Yes—rotating spotlight + impromptu warm-ups ensure everyone speaks." },
-            { question: "Do you fix stage fear?", answer: "We build comfort with micro-tasks, supportive peer feedback, and gradual challenge." },
-            { question: "Do you correct pronunciation?", answer: "We coach clarity, diction, pace, and expression with focused drills." },
+            {
+              question: "My child is shy. How do you draw them out in a 35-minute session?",
+              answer:
+                "We start with micro speaking tasks—hello circle, prop show-and-tell, and guided sentence builders. As confidence grows we add storytelling, debate, and showcase rehearsals. Because classes are one-to-one, the entire session is your child’s spotlight.",
+            },
+            {
+              question: "How does public speaking coaching help with school competitions and interviews?",
+              answer:
+                "Every unit covers hooks, transitions, voice modulation, and audience connection. We record clips, critique them together, and share pointers with parents so children can represent themselves powerfully in assemblies, MUNs, and scholarship interviews.",
+            },
+            {
+              question: "Will you also focus on pronunciation for Indian English speakers?",
+              answer:
+                "Yes, we run a dedicated pronunciation lab. Teachers correct common Indian English sound slips (v/w, silent letters, stress patterns) so communication stays authentic yet clear internationally.",
+            },
+            {
+              question: "How do parents stay updated about progress?",
+              answer:
+                "After each class, you get a video snippet, a 5-star confidence score, and the next action. Strong communication between teacher, parent, and learner ensures skills move from the Zoom room to real life.",
+            },
+            {
+              question: "What if my child misses a session due to exams or events?",
+              answer:
+                "We reschedule without fuss. The Learning Manager sends a calendar link, and the teacher posts a short catch-up video so your child can rehearse before the next class.",
+            },
+            {
+              question: "Will public speaking also help everyday English communication?",
+              answer:
+                "Definitely. Students build vocabulary ladders, conversation scaffolds, and quick-thinking drills so they can communicate ideas clearly in class discussions, group projects, and future workplaces.",
+            },
           ]}
         />
       </section>

@@ -92,7 +92,7 @@ export default function Curriculum() {
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-lg text-gray-700 sm:text-xl">
             Every one-to-one journey maps foundations, fluency, and mastery through clear levels, teacher logging, and parent
-            dashboards.
+            dashboards—with a communication-first mindset so children speak, write, and present confidently in a competitive world.
           </p>
           <p className="mx-auto mt-3 max-w-3xl text-sm uppercase tracking-[0.28em] text-gray-500">
             Ages 3–12 · Listening · Reading · Writing · Speaking

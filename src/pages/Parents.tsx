@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { CURRICULUM } from "../data/curriculum";
+import { SAMPLE_PROGRESS_DB } from "../data/progress-db";
 
 type DashboardCourse = {
   id: "phonics" | "grammar" | "speaking";
@@ -166,12 +168,12 @@ const WHY_POINTS = [
   {
     title: "Personalised journeys",
     description:
-      "Initial diagnostics help us place your child on the right level. Weekly feedback loops keep you informed about wins and focus areas.",
+      "Initial diagnostics help us place your child on the right level. Weekly feedback loops explain both academic progress and how confidently your child is communicating during class.",
   },
   {
     title: "Outcome-first teaching",
     description:
-      "Our teachers align every session to measurable outcomes—reading fluency, writing accuracy, or confident presentation—so you know what improves.",
+      "Our teachers align every session to measurable outcomes—reading fluency, writing accuracy, or confident presentation—so you know exactly how your child is gearing up to express ideas in a competitive world.",
   },
   {
     title: "Flexible schedules",
@@ -181,7 +183,7 @@ const WHY_POINTS = [
   {
     title: "Guidance for every step",
     description:
-      "You receive curated practice packs, WhatsApp nudges, and termly review calls to keep momentum going at home.",
+      "You receive curated practice packs, WhatsApp nudges, and termly review calls. The Learning Manager makes communication effortless so parents, teachers, and children stay aligned.",
   },
 ];
 
@@ -224,6 +226,40 @@ const TESTIMONIALS = [
 export default function Parents() {
   const [active, setActive] = useState<DashboardCourse>(DASHBOARD[0]);
 
+  const skillLookup = useMemo(() => {
+    const map = new Map<string, { levelTitle: string; unitTitle: string; skillTitle: string }>();
+    CURRICULUM.forEach((track) => {
+      track.levels.forEach((level) => {
+        level.units.forEach((unit) => {
+          unit.skills.forEach((skill) => {
+            map.set(skill.id, {
+              levelTitle: level.title,
+              unitTitle: unit.title,
+              skillTitle: skill.title,
+            });
+          });
+        });
+      });
+    });
+    return map;
+  }, []);
+
+  const sampleFamilySnapshots = useMemo(() => {
+    const limitPerProgramme = 3;
+    const collected = new Map<
+      string,
+      typeof SAMPLE_PROGRESS_DB.progress[number][]
+    >();
+    SAMPLE_PROGRESS_DB.progress.forEach((entry) => {
+      const list = collected.get(entry.programmeId) ?? [];
+      if (list.length < limitPerProgramme) {
+        list.push(entry);
+        collected.set(entry.programmeId, list);
+      }
+    });
+    return Array.from(collected.entries());
+  }, []);
+
   return (
     <div className="bg-white text-gray-900">
       {/* Hero */}
@@ -239,7 +275,8 @@ export default function Parents() {
           <p className="mx-auto max-w-3xl text-lg leading-relaxed text-gray-700 sm:text-xl">
             Discover research-backed programmes that grow reading, writing, and speaking confidence—then keep an eye on
             progress with dashboards, snapshots, and milestone timelines while we continue building the portal. Learning Managers
-            coordinate every teacher-parent check-in so your updates stay clear and timely.
+            coordinate every teacher-parent check-in so your updates stay clear and timely, and we keep communication at the
+            heart of every milestone so children learn to voice ideas in the classroom and beyond.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <a
@@ -289,7 +326,8 @@ export default function Parents() {
             <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Programmes open for enrolment</h2>
             <p className="mt-4 text-lg text-gray-600">
               Explore the curriculum, schedules, and outcomes before you book a free demo. We keep value and student progress
-              transparent so you can enrol with confidence.
+              transparent so you can enrol with confidence, and we show how every milestone strengthens your child’s voice and
+              communication skills.
             </p>
           </div>
           <div className="mt-12 grid gap-6 md:grid-cols-3">
@@ -518,6 +556,58 @@ export default function Parents() {
       </section>
 
       {/* Support */}
+      <section className="bg-[#f9f7ff] py-24">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="text-3xl font-bold text-[#0f172a] sm:text-4xl">Sample family insights</h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Here’s how progress, evidence, and “next actions” appear per child. Learning Managers share this after every cycle.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 lg:grid-cols-3">
+            {sampleFamilySnapshots.map(([programmeId, entries]) => {
+              const trackTitle =
+                programmeId === "phonics"
+                  ? "Phonics Foundations"
+                  : programmeId === "grammar"
+                  ? "Grammar & Writing Lab"
+                  : "Public Speaking Studio";
+              return (
+                <div key={programmeId} className="rounded-3xl border border-[#e2ddff] bg-white p-6 shadow-lg shadow-[#d4ccff]/40">
+                  <header className="mb-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#7c3aed]">{trackTitle}</p>
+                    <p className="text-sm text-gray-500">{entries.length} sample students</p>
+                  </header>
+                  <ul className="space-y-3">
+                    {entries.map((entry) => {
+                      const meta = skillLookup.get(entry.skillId);
+                      return (
+                        <li key={entry.studentId} className="rounded-2xl border border-[#efeaff] bg-[#f9f7ff] p-4">
+                          <p className="text-sm font-semibold text-[#0f172a]">
+                            {entry.studentName}
+                            <span className="ml-2 text-[11px] font-normal text-[#7c3aed]">
+                              #{entry.admissionNumber}
+                            </span>
+                          </p>
+                          <p className="text-xs uppercase tracking-wide text-[#7c3aed]">
+                            {meta?.levelTitle ?? entry.levelId}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-600">{meta?.skillTitle ?? entry.skillId}</p>
+                          <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                            <span>Status: {entry.status}</span>
+                            {entry.nextAction && <span>Next: {entry.nextAction}</span>}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       <section className="bg-white py-24" id="support">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mx-auto max-w-3xl text-center">
@@ -531,15 +621,15 @@ export default function Parents() {
             <article className="rounded-3xl border border-gray-100 bg-[#f8fafc] p-8">
               <h3 className="text-xl font-semibold text-[#0f172a]">Progress snapshots</h3>
               <p className="mt-3 text-base leading-relaxed text-gray-600">
-                Track attendance, mastered skills, and upcoming goals from the sample dashboards above. We will keep improving
-                the experience with your feedback.
+                Track attendance, mastered skills, and upcoming goals from the sample dashboards above. Each snapshot also calls
+                out how clearly your child is communicating ideas so you see confidence grow alongside academics.
               </p>
             </article>
             <article className="rounded-3xl border border-gray-100 bg-[#fff7ed] p-8">
               <h3 className="text-xl font-semibold text-[#0f172a]">Home practice toolkit</h3>
               <p className="mt-3 text-base leading-relaxed text-gray-600">
                 Downloadable worksheets, reading lists, and speaking prompts are shared weekly after class, so parents can keep
-                momentum going between sessions.
+                momentum going between sessions and spark everyday conversations that make communication second nature.
               </p>
             </article>
           </div>

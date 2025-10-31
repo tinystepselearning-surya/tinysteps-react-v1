@@ -31,23 +31,26 @@ export default function Why() {
   return (
     <section ref={sectionRef} id="why" className="mx-auto max-w-6xl px-4 my-20">
       <div className="mx-auto max-w-3xl text-center">
-        <p data-reveal-child className="uppercase tracking-[0.2em] text-xs font-semibold text-[#ff7a45]">
+        <p
+          data-reveal-child
+          className="uppercase tracking-[0.26em] text-sm md:text-base font-semibold text-[#7c3aed]"
+        >
           Why Tiny Steps Works
         </p>
         <h2
           data-reveal-child
           style={{ "--reveal-child-delay": "60ms" } as CSSProperties}
-          className="mt-2 text-3xl md:text-4xl font-extrabold text-gray-900"
+          className="mt-2 text-4xl md:text-5xl font-black text-gray-900 tracking-tight"
         >
           Purposeful teaching, playful classrooms, measurable progress
         </h2>
         <p
           data-reveal-child
           style={{ "--reveal-child-delay": "120ms" } as CSSProperties}
-          className="mt-3 text-gray-600 text-lg"
+          className="mt-4 text-lg sm:text-xl text-gray-600 leading-relaxed"
         >
-          Every Tiny Steps session blends research-backed pedagogy with joyful rituals so kids feel energised and parents
-          stay informed.
+          Every Tiny Steps session blends research-backed pedagogy with joyful rituals so kids feel energised, parents stay
+          informed, and communication skills grow term after term.
         </p>
       </div>
 
@@ -57,7 +60,7 @@ export default function Why() {
             key={x.h}
             data-reveal-child
             style={{ "--reveal-child-delay": `${160 + idx * 80}ms` } as CSSProperties}
-            className="group relative isolate overflow-hidden rounded-3xl border border-white/60 bg-white/90 shadow-xl shadow-gray-200/60 transition hover:-translate-y-2 hover:shadow-2xl"
+            className="group relative isolate overflow-hidden rounded-3xl border border-white/60 bg-white/95 shadow-xl shadow-gray-200/60 transition hover:-translate-y-2 hover:shadow-2xl"
           >
             <span
               aria-hidden
