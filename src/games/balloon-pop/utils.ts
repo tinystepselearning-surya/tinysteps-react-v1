@@ -6,6 +6,7 @@ import type { Word } from "./data";
 
 const COINS_KEY = "spellbee-coins-v1";
 const STATS_KEY = "balloon-pop-stats-v1";
+const SOUND_ENABLED_KEY = "balloon-pop-sound-enabled";
 
 /**
  * Game stats interface
@@ -250,4 +251,98 @@ export function randomInt(min: number, max: number): number {
  */
 export function randomFloat(min: number, max: number): number {
   return Math.random() * (max - min) + min;
+}
+
+/**
+ * Audio pre-warming and management
+ */
+let correctAudio: HTMLAudioElement | null = null;
+let wrongAudio: HTMLAudioElement | null = null;
+let popAudio: HTMLAudioElement | null = null;
+
+export function primeAudioElements(): void {
+  if (correctAudio) return; // Already primed
+
+  // Create silent base64 audio elements to pre-warm
+  const silentMP3 =
+    "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADhAC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAA4RS+V8QAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAExBTL8AAANIKjGn4AAABH0BVv0AAEQAAAM0gAAABE1FRU1FMUwxMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+
+  try {
+    correctAudio = new Audio(silentMP3);
+    wrongAudio = new Audio(silentMP3);
+    popAudio = new Audio(silentMP3);
+
+    // Attempt to play silently to warm up
+    [correctAudio, wrongAudio, popAudio].forEach((audio) => {
+      audio.volume = 0;
+      audio.play().catch(() => {
+        // Autoplay blocked - will handle with user gesture
+      });
+    });
+  } catch (error) {
+    console.warn("Audio priming failed:", error);
+  }
+}
+
+export function playCorrectSound(): void {
+  if (!correctAudio) return;
+  correctAudio.volume = 0.3;
+  correctAudio.currentTime = 0;
+  correctAudio.play().catch(() => {});
+}
+
+export function playWrongSound(): void {
+  if (!wrongAudio) return;
+  wrongAudio.volume = 0.2;
+  wrongAudio.currentTime = 0;
+  wrongAudio.play().catch(() => {});
+}
+
+export function playPopSound(): void {
+  if (!popAudio) return;
+  popAudio.volume = 0.25;
+  popAudio.currentTime = 0;
+  popAudio.play().catch(() => {});
+}
+
+/**
+ * Sound permission management
+ */
+export function getSoundEnabled(): boolean {
+  try {
+    const stored = localStorage.getItem(SOUND_ENABLED_KEY);
+    return stored === "true";
+  } catch {
+    return false;
+  }
+}
+
+export function setSoundEnabled(enabled: boolean): void {
+  try {
+    localStorage.setItem(SOUND_ENABLED_KEY, enabled.toString());
+  } catch {
+    console.warn("Failed to save sound preference");
+  }
+}
+
+/**
+ * Get minimal-pair hint text
+ */
+export function getMinimalPairHint(correctIPA: string, wrongIPA: string): string {
+  const correctPhoneme = extractMainPhoneme(correctIPA);
+  const wrongPhoneme = extractMainPhoneme(wrongIPA);
+  
+  if (correctPhoneme === wrongPhoneme) {
+    return "Listen carefully to the word!";
+  }
+  
+  return `Hint: ${correctPhoneme} vs ${wrongPhoneme}`;
+}
+
+/**
+ * Delta time utilities for rAF
+ */
+export function clampDelta(delta: number, maxDelta: number = 100): number {
+  // Prevent huge jumps when tab is hidden/resumed
+  return Math.min(delta, maxDelta);
 }

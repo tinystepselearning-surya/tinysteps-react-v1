@@ -1,5 +1,5 @@
 /**
- * Balloon component - Individual balloon with pop animation
+ * Balloon component - Individual balloon with glossy visuals and pop animation
  */
 
 import { useState } from "react";
@@ -12,16 +12,17 @@ interface BalloonProps {
   color: string;
   onPop: (id: string, ipa: string) => void;
   isPopped: boolean;
+  shake?: boolean;
 }
 
 const BALLOON_COLORS = [
-  "from-red-400 to-red-600",
-  "from-blue-400 to-blue-600",
-  "from-green-400 to-green-600",
-  "from-yellow-400 to-yellow-600",
-  "from-purple-400 to-purple-600",
-  "from-pink-400 to-pink-600",
-  "from-orange-400 to-orange-600",
+  { gradient: "from-red-400 via-red-500 to-red-700", hex: "#f87171" },
+  { gradient: "from-blue-400 via-blue-500 to-blue-700", hex: "#60a5fa" },
+  { gradient: "from-green-400 via-green-500 to-green-700", hex: "#4ade80" },
+  { gradient: "from-yellow-400 via-yellow-500 to-yellow-600", hex: "#facc15" },
+  { gradient: "from-purple-400 via-purple-500 to-purple-700", hex: "#c084fc" },
+  { gradient: "from-pink-400 via-pink-500 to-pink-700", hex: "#f472b6" },
+  { gradient: "from-orange-400 via-orange-500 to-orange-700", hex: "#fb923c" },
 ];
 
 export function Balloon({
@@ -32,6 +33,7 @@ export function Balloon({
   color,
   onPop,
   isPopped,
+  shake = false,
 }: BalloonProps) {
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -48,73 +50,88 @@ export function Balloon({
     }
   };
 
-  if (isPopped) {
-    return (
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          left: `${x}%`,
-          top: `${y}%`,
-          transform: "translate(-50%, -50%)",
-        }}
-      >
-        {showConfetti && (
-          <div className="relative">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-2 h-2 rounded-full animate-ping"
-                style={{
-                  backgroundColor: ["#ff6b6b", "#4ecdc4", "#ffe66d", "#a8e6cf"][
-                    i % 4
-                  ],
-                  left: `${Math.cos((i * Math.PI) / 4) * 30}px`,
-                  top: `${Math.sin((i * Math.PI) / 4) * 30}px`,
-                  animationDelay: `${i * 0.05}s`,
-                }}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
+  if (isPopped && !showConfetti) {
+    return null; // Fully removed after confetti
   }
 
-  const colorClass = BALLOON_COLORS[color as unknown as number] || BALLOON_COLORS[0];
+  const colorIndex = parseInt(color, 10) || 0;
+  const { gradient, hex } = BALLOON_COLORS[colorIndex % BALLOON_COLORS.length];
 
   return (
     <button
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       aria-label={`IPA ${ipa} balloon`}
-      className="absolute transition-transform hover:scale-110 active:scale-95 focus:outline-none focus:ring-4 focus:ring-yellow-400"
+      className={`
+        absolute transition-transform hover:scale-110 active:scale-95 
+        focus:outline-none focus:ring-4 focus:ring-yellow-400 focus:ring-offset-2
+        ${shake ? "animate-shake" : ""}
+      `}
       style={{
         left: `${x}%`,
         top: `${y}%`,
         transform: "translate(-50%, -50%)",
-        width: "80px",
-        height: "100px",
+        width: "90px",
+        height: "110px",
+        minWidth: "64px", // Accessibility hit target
+        minHeight: "64px",
       }}
     >
-      {/* Balloon body */}
+      {/* Balloon body with glossy gradient */}
       <div
         className={`
-          relative w-full h-full rounded-full bg-gradient-to-br ${colorClass}
+          relative w-full h-full bg-gradient-to-br ${gradient}
           shadow-2xl flex items-center justify-center
-          before:absolute before:inset-2 before:rounded-full
-          before:bg-white/20 before:blur-sm
         `}
         style={{
-          borderRadius: "50% 50% 45% 45%",
+          borderRadius: "50% 50% 47% 47%",
+          boxShadow: `
+            inset -8px -8px 20px rgba(0,0,0,0.3),
+            inset 8px 8px 20px rgba(255,255,255,0.4),
+            0 20px 40px rgba(0,0,0,0.3)
+          `,
         }}
       >
-        <span className="text-white font-bold text-lg drop-shadow-lg z-10">
+        {/* Glossy highlight shine */}
+        <div
+          className="absolute top-3 left-3 w-7 h-10 bg-white/60 rounded-full blur-sm"
+          style={{
+            transform: "rotate(-25deg)",
+          }}
+        />
+
+        {/* IPA text */}
+        <span className="text-white font-bold text-xl drop-shadow-lg z-10 select-none">
           {ipa}
         </span>
+
+        {/* Balloon knot */}
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-3 h-4 rounded-full"
+          style={{
+            backgroundColor: hex,
+            filter: "brightness(0.7)",
+          }}
+        />
       </div>
 
       {/* Balloon string */}
-      <div className="absolute left-1/2 top-full w-0.5 h-12 bg-gray-400 -translate-x-1/2" />
+      <div
+        className="absolute left-1/2 top-full w-0.5 h-16 bg-gradient-to-b from-gray-400 to-transparent -translate-x-1/2"
+        style={{ transformOrigin: "top" }}
+      />
+
+      {/* Shake animation keyframes */}
+      <style>{`
+        @keyframes shake {
+          0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+          25% { transform: translate(-50%, -50%) rotate(-8deg); }
+          75% { transform: translate(-50%, -50%) rotate(8deg); }
+        }
+        .animate-shake {
+          animation: shake 0.4s ease-in-out;
+        }
+      `}</style>
     </button>
   );
 }

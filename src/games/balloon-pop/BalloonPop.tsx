@@ -1,5 +1,5 @@
 /**
- * BalloonPop - Main game component with requestAnimationFrame loop
+ * BalloonPop - Main game component with delta-time rAF loop, audio, and enhanced UX
  */
 
 import { useState, useEffect, useRef, useMemo } from "react";
@@ -17,22 +17,47 @@ import {
   speakWord,
   randomInt,
   randomFloat,
+  primeAudioElements,
+  playCorrectSound,
+  playWrongSound,
+  playPopSound,
+  getSoundEnabled,
+  setSoundEnabled,
+  getMinimalPairHint,
+  clampDelta,
 } from "./utils";
 import { Balloon, BALLOON_COLORS } from "./Balloon";
 import { HUD } from "./HUD";
 import { EndSummary } from "./EndSummary";
+import { CloudLayer } from "./CloudLayer";
+import { Toast } from "./Toast";
+import { Confetti } from "./Confetti";
 
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
+
+// Precise rise speeds in px/s
+const LEVEL_CONFIGS = {
+  1: { balloonCount: 3, riseSpeed: 110, hasSway: false },
+  2: { balloonCount: 4, riseSpeed: 150, hasSway: false },
+  3: { balloonCount: 5, riseSpeed: 190, hasSway: true },
+};
 
 interface BalloonState {
   id: string;
   ipa: string;
   x: number; // 0-100 percentage
-  y: number; // 0-100 percentage
+  y: number; // px from bottom
   colorIndex: number;
-  swayOffset: number; // for horizontal sway
+  swayOffset: number;
   isPopped: boolean;
+  shake: boolean;
+}
+
+interface ToastMessage {
+  id: number;
+  message: string;
+  type: "success" | "error" | "info";
 }
 
 type GameMode = "playing" | "practice" | "summary" | "parent-view";
@@ -49,40 +74,85 @@ export default function BalloonPop() {
   const [bestStreak, setBestStreak] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
-  const [riseSpeed, setRiseSpeed] = useState(0.015); // % per frame
-  const [missCount, setMissCount] = useState(0);
+  const [consecutiveMisses, setConsecutiveMisses] = useState(0);
   const [quickHits, setQuickHits] = useState(0);
+  const [firstTryStreak, setFirstTryStreak] = useState(0);
   const [newBadges, setNewBadges] = useState<string[]>([]);
   const [liveMessage, setLiveMessage] = useState("");
   const [roundStartTime, setRoundStartTime] = useState(0);
   const [coinsEarnedThisSession, setCoinsEarnedThisSession] = useState(0);
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [confetti, setConfetti] = useState<{ id: number; x: number; y: number } | null>(null);
+  const [hintText, setHintText] = useState("");
+  const [soundEnabled, setSoundEnabledState] = useState(false);
+  const [showSoundTip, setShowSoundTip] = useState(false);
+  const [skyHue, setSkyHue] = useState(200); // Animated sky hue
+  const [focusedBalloonIndex, setFocusedBalloonIndex] = useState(0);
 
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
+  const viewportHeightRef = useRef(window.innerHeight);
+  const adaptiveSpeedRef = useRef(1.0); // Speed multiplier
+  const adaptiveDistractorCountRef = useRef(0); // Distractor reduction
 
-  // Load coins on mount
+  // Load coins and sound preference on mount
   useEffect(() => {
     setCoins(getCoins());
+    const enabled = getSoundEnabled();
+    setSoundEnabledState(enabled);
+    if (!enabled) {
+      setShowSoundTip(true);
+    }
   }, []);
 
-  // Get level config
+  // Prime audio on first user interaction
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      if (!soundEnabled) {
+        primeAudioElements();
+        setSoundEnabledState(true);
+        setSoundEnabled(true);
+        setShowSoundTip(false);
+      }
+    };
+
+    window.addEventListener("click", handleFirstInteraction, { once: true });
+    window.addEventListener("keydown", handleFirstInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener("click", handleFirstInteraction);
+      window.removeEventListener("keydown", handleFirstInteraction);
+    };
+  }, [soundEnabled]);
+
+  // Animated sky gradient
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSkyHue((prev) => (prev + 0.5) % 360);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Get level config with adaptive adjustments
   const levelConfig = useMemo(() => {
-    switch (currentLevel) {
-      case 1:
-        return { balloonCount: 3, baseSpeed: 0.015, hasSway: false };
-      case 2:
-        return { balloonCount: 4, baseSpeed: 0.022, hasSway: false };
-      case 3:
-        return { balloonCount: 5, baseSpeed: 0.03, hasSway: true };
-      default:
-        return { balloonCount: 3, baseSpeed: 0.015, hasSway: false };
-    }
-  }, [currentLevel]);
+    const base = LEVEL_CONFIGS[currentLevel as keyof typeof LEVEL_CONFIGS] || LEVEL_CONFIGS[1];
+    const adjustedSpeed = Math.max(90, base.riseSpeed * adaptiveSpeedRef.current);
+    const adjustedBalloons = Math.max(
+      3,
+      base.balloonCount - adaptiveDistractorCountRef.current
+    );
+
+    return {
+      ...base,
+      riseSpeed: adjustedSpeed,
+      balloonCount: adjustedBalloons,
+    };
+  }, [currentLevel, consecutiveMisses, streak]);
 
   // Initialize round
   const initializeRound = (practiceMode = false) => {
     let word: Word;
-    
+
     if (practiceMode) {
       const trickyPhonemes = getTrickyPhonemes();
       const trickyWords = WORDS.filter((w) =>
@@ -97,32 +167,32 @@ export default function BalloonPop() {
     }
 
     setTargetWord(word);
-    setRoundStartTime(Date.now());
+    setRoundStartTime(performance.now());
+    setHintText("");
+    setTotalAttempts(0);
+    setFocusedBalloonIndex(0);
 
     // Generate IPA choices
     const allIPAs = WORDS.map((w) => w.ipa);
     const balloonCount = practiceMode ? 3 : levelConfig.balloonCount;
-    const distractors = generateIPADistractors(
-      word.ipa,
-      allIPAs,
-      balloonCount - 1
-    );
+    const distractorCount = balloonCount - 1;
+    const distractors = generateIPADistractors(word.ipa, allIPAs, distractorCount);
     const choices = [word.ipa, ...distractors];
 
     // Shuffle and create balloon states
     const shuffled = [...choices].sort(() => Math.random() - 0.5);
     const newBalloons: BalloonState[] = shuffled.map((ipa, i) => ({
-      id: `balloon-${i}`,
+      id: `balloon-${Date.now()}-${i}`,
       ipa,
       x: randomFloat(15, 85),
-      y: 110, // Start below viewport
+      y: viewportHeightRef.current + 50, // Start below viewport
       colorIndex: i % BALLOON_COLORS.length,
       swayOffset: randomFloat(0, Math.PI * 2),
       isPopped: false,
+      shake: false,
     }));
 
     setBalloons(newBalloons);
-    setTotalAttempts(0);
   };
 
   // Start new game/round
@@ -132,7 +202,7 @@ export default function BalloonPop() {
     }
   }, [currentRound, currentLevel, gameMode]);
 
-  // Game loop with requestAnimationFrame
+  // Game loop with delta-time requestAnimationFrame
   useEffect(() => {
     if (gameMode !== "playing" && gameMode !== "practice") return;
     if (!targetWord) return;
@@ -144,29 +214,34 @@ export default function BalloonPop() {
         lastTimeRef.current = timestamp;
       }
 
-      const deltaTime = timestamp - lastTimeRef.current;
+      const deltaTime = clampDelta(timestamp - lastTimeRef.current);
       lastTimeRef.current = timestamp;
+
+      // Convert px/s to px per frame
+      const pixelsPerSecond = levelConfig.riseSpeed;
+      const pixelsPerFrame = (pixelsPerSecond / 1000) * deltaTime;
 
       // Update balloon positions
       setBalloons((prevBalloons) => {
         const updated = prevBalloons.map((balloon) => {
           if (balloon.isPopped) return balloon;
 
-          // Move up
-          let newY = balloon.y - riseSpeed * (deltaTime / 16); // normalized to 60fps
+          // Move up (decrease y from bottom)
+          let newY = balloon.y - pixelsPerFrame;
 
           // Add sway for level 3
           let newX = balloon.x;
           if (levelConfig.hasSway) {
-            const swayAmount = Math.sin(timestamp / 500 + balloon.swayOffset) * 3;
-            newX = Math.max(10, Math.min(90, balloon.x + swayAmount * 0.1));
+            const swayAmount = Math.sin(timestamp / 500 + balloon.swayOffset);
+            const swayDelta = swayAmount * 0.15; // Percentage shift
+            newX = Math.max(10, Math.min(90, balloon.x + swayDelta));
           }
 
-          return { ...balloon, y: newY, x: newX };
+          return { ...balloon, y: newY, x: newX, shake: false };
         });
 
         // Check if any balloon reached top (game over for this round)
-        const reachedTop = updated.some((b) => !b.isPopped && b.y <= -10);
+        const reachedTop = updated.some((b) => !b.isPopped && b.y <= -50);
         if (reachedTop) {
           cancelAnimationFrame(animationId);
           handleRoundEnd(false);
@@ -184,8 +259,72 @@ export default function BalloonPop() {
 
     return () => {
       if (animationId) cancelAnimationFrame(animationId);
+      rafIdRef.current = null;
+      lastTimeRef.current = 0;
     };
-  }, [gameMode, targetWord, riseSpeed, levelConfig.hasSway]);
+  }, [gameMode, targetWord, levelConfig]);
+
+  // Pause/resume on visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Pause: cancel rAF
+        if (rafIdRef.current) {
+          cancelAnimationFrame(rafIdRef.current);
+          rafIdRef.current = null;
+        }
+      } else {
+        // Resume: reset lastTime to avoid huge delta jump
+        lastTimeRef.current = 0;
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, []);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (gameMode !== "playing" && gameMode !== "practice") return;
+      if (balloons.length === 0) return;
+
+      const activeBalloons = balloons.filter((b) => !b.isPopped);
+      if (activeBalloons.length === 0) return;
+
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setFocusedBalloonIndex((prev) =>
+          prev > 0 ? prev - 1 : activeBalloons.length - 1
+        );
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setFocusedBalloonIndex((prev) =>
+          prev < activeBalloons.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        const focusedBalloon = activeBalloons[focusedBalloonIndex];
+        if (focusedBalloon) {
+          handlePop(focusedBalloon.id, focusedBalloon.ipa);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [gameMode, balloons, focusedBalloonIndex]);
+
+  // Helper: Add toast
+  const addToast = (message: string, type: ToastMessage["type"]) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  };
+
+  // Helper: Remove toast
+  const removeToast = (id: number) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
 
   // Handle balloon pop
   const handlePop = (id: string, ipa: string) => {
@@ -201,14 +340,22 @@ export default function BalloonPop() {
     );
 
     if (isCorrect) {
-      const elapsedTime = (Date.now() - roundStartTime) / 1000;
+      const elapsedTime = (performance.now() - roundStartTime) / 1000;
+
+      // Play sounds
+      playCorrectSound();
+      playPopSound();
 
       // Award coins
       let coinReward = 0;
       if (currentAttempts === 1) {
         coinReward = 5;
+        setFirstTryStreak((prev) => prev + 1);
       } else if (currentAttempts === 2) {
         coinReward = 2;
+        setFirstTryStreak(0);
+      } else {
+        setFirstTryStreak(0);
       }
 
       if (coinReward > 0) {
@@ -221,6 +368,7 @@ export default function BalloonPop() {
       const newStreak = streak + 1;
       setStreak(newStreak);
       setBestStreak(Math.max(bestStreak, newStreak));
+      setConsecutiveMisses(0);
 
       // Quick hit tracking (within 3s)
       if (elapsedTime <= 3) {
@@ -230,25 +378,65 @@ export default function BalloonPop() {
       // Update stats
       setCorrectCount((prev) => prev + 1);
 
-      setLiveMessage("Correct pop! 🎈");
+      // Confetti
+      const balloon = balloons.find((b) => b.id === id);
+      if (balloon) {
+        const confettiId = Date.now();
+        setConfetti({ id: confettiId, x: balloon.x, y: (balloon.y / viewportHeightRef.current) * 100 });
+        setTimeout(() => setConfetti(null), 800);
+      }
+
+      // Toast
+      addToast("Correct pop! 🎈", "success");
+      setLiveMessage("Correct pop!");
       setTimeout(() => setLiveMessage(""), 2000);
 
-      // Check for badges
-      if (newStreak === 10) {
-        const awarded = awardBadge("sharpshooter");
-        if (awarded) setNewBadges((prev) => [...prev, "sharpshooter"]);
+      // Check for Sharpshooter badge (10 first-try in a row)
+      if (currentAttempts === 1) {
+        const newFirstTryStreak = firstTryStreak + 1;
+        if (newFirstTryStreak === 10) {
+          const awarded = awardBadge("sharpshooter");
+          if (awarded) setNewBadges((prev) => [...prev, "sharpshooter"]);
+        }
+      }
+
+      // Adaptive: Speed up on streak ≥5
+      if (newStreak >= 5 && newStreak % 5 === 0) {
+        adaptiveSpeedRef.current = Math.min(1.3, adaptiveSpeedRef.current * 1.1);
       }
 
       // Proceed to next round after delay
       setTimeout(() => handleRoundEnd(true), 800);
     } else {
       // Wrong pop
+      playWrongSound();
       recordWrongPhoneme(ipa);
       setStreak(0);
-      setMissCount((prev) => prev + 1);
+      setFirstTryStreak(0);
 
-      setLiveMessage("Try again! 🎯");
+      const missCount = consecutiveMisses + 1;
+      setConsecutiveMisses(missCount);
+
+      // Shake balloon
+      setBalloons((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, shake: true } : b))
+      );
+
+      // Show hint
+      const hint = getMinimalPairHint(targetWord.ipa, ipa);
+      setHintText(hint);
+      setTimeout(() => setHintText(""), 3000);
+
+      // Toast
+      addToast("Oops! Incorrect", "error");
+      setLiveMessage("Try again");
       setTimeout(() => setLiveMessage(""), 2000);
+
+      // Adaptive: Slow down after 2 misses in a row
+      if (missCount >= 2) {
+        adaptiveSpeedRef.current = Math.max(0.7, adaptiveSpeedRef.current * 0.85);
+        adaptiveDistractorCountRef.current = Math.min(2, adaptiveDistractorCountRef.current + 1);
+      }
 
       // Don't end round, allow retry
     }
@@ -261,18 +449,11 @@ export default function BalloonPop() {
       rafIdRef.current = null;
     }
 
-    // Adaptive difficulty
-    if (!success) {
-      setMissCount((prev) => prev + 1);
-      if (missCount >= 1) {
-        // Slow down after 2 misses in a row
-        setRiseSpeed((prev) => prev * 0.85);
-      }
-    } else {
-      // Speed up on streak
-      if (streak >= 5) {
-        setRiseSpeed((prev) => prev * 1.1);
-      }
+    // Reset adaptive on round end
+    if (success) {
+      adaptiveSpeedRef.current = 1.0;
+      adaptiveDistractorCountRef.current = 0;
+      setConsecutiveMisses(0);
     }
 
     // Move to next round or level
@@ -288,7 +469,8 @@ export default function BalloonPop() {
         // Level complete
         if (currentLevel === 3) {
           // Check Wind Tamer badge
-          const accuracy = (correctCount / Math.max(1, correctCount + (totalRounds - correctCount))) * 100;
+          const accuracy =
+            (correctCount / Math.max(1, correctCount + (totalRounds - correctCount))) * 100;
           if (accuracy >= 80) {
             const awarded = awardBadge("wind-tamer");
             if (awarded) setNewBadges((prev) => [...prev, "wind-tamer"]);
@@ -300,11 +482,12 @@ export default function BalloonPop() {
           const bonusCoins = addCoins(10);
           setCoins(bonusCoins);
           setCoinsEarnedThisSession((prev) => prev + 10);
-          
+
           setTimeout(() => {
             setCurrentLevel((prev) => prev + 1);
             setCurrentRound(1);
-            setRiseSpeed(0.015); // Reset speed
+            adaptiveSpeedRef.current = 1.0;
+            adaptiveDistractorCountRef.current = 0;
           }, 1500);
         } else {
           // Game complete
@@ -360,12 +543,14 @@ export default function BalloonPop() {
     setStreak(0);
     setBestStreak(0);
     setCorrectCount(0);
-    setMissCount(0);
+    setConsecutiveMisses(0);
     setQuickHits(0);
+    setFirstTryStreak(0);
     setNewBadges([]);
     setCoinsEarnedThisSession(0);
     setRecentWordIds(new Set());
-    setRiseSpeed(0.015);
+    adaptiveSpeedRef.current = 1.0;
+    adaptiveDistractorCountRef.current = 0;
     setGameMode("playing");
   };
 
@@ -388,8 +573,19 @@ export default function BalloonPop() {
   };
 
   const stats = getStats();
-  const accuracy = correctCount > 0 ? (correctCount / (correctCount + (currentRound - correctCount))) * 100 : 0;
+  const accuracy =
+    correctCount > 0
+      ? (correctCount / (correctCount + totalAttempts - correctCount)) * 100
+      : 0;
   const trickyPhonemes = getTrickyPhonemes();
+
+  // Calculate round progress (0-1) based on balloon positions
+  const roundProgress = useMemo(() => {
+    if (balloons.length === 0) return 0;
+    const avgY = balloons.reduce((sum, b) => sum + b.y, 0) / balloons.length;
+    const viewportHeight = viewportHeightRef.current;
+    return Math.max(0, Math.min(1, 1 - avgY / viewportHeight));
+  }, [balloons]);
 
   // Parent View
   if (gameMode === "parent-view") {
@@ -476,7 +672,20 @@ export default function BalloonPop() {
 
   // Main game view
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-sky-200 via-blue-200 to-purple-200 overflow-hidden">
+    <div
+      className="relative min-h-screen overflow-hidden"
+      style={{
+        background: `linear-gradient(135deg, 
+          hsl(${skyHue}, 70%, 85%), 
+          hsl(${(skyHue + 40) % 360}, 65%, 80%), 
+          hsl(${(skyHue + 80) % 360}, 60%, 85%)
+        )`,
+      }}
+    >
+      {/* Parallax clouds */}
+      <CloudLayer layer={1} />
+      <CloudLayer layer={2} />
+
       {/* HUD */}
       <HUD
         coins={coins}
@@ -484,10 +693,13 @@ export default function BalloonPop() {
         level={gameMode === "practice" ? 0 : currentLevel}
         round={currentRound}
         totalRounds={gameMode === "practice" ? 6 : ROUNDS_PER_LEVEL * currentLevel}
+        accuracy={accuracy}
+        roundProgress={roundProgress}
       />
 
-      {/* Live region */}
+      {/* SR-only live region */}
       <div
+        id="sr-announcer"
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -495,6 +707,42 @@ export default function BalloonPop() {
       >
         {liveMessage}
       </div>
+
+      {/* Sound tip */}
+      {showSoundTip && (
+        <div className="fixed top-32 right-6 z-50 bg-blue-500 text-white px-6 py-4 rounded-2xl shadow-2xl max-w-xs">
+          <p className="font-bold mb-2">🔊 Enable Sound?</p>
+          <p className="text-sm mb-3">
+            Tap anywhere to hear word pronunciations and sound effects!
+          </p>
+          <button
+            onClick={() => setShowSoundTip(false)}
+            className="text-xs underline"
+          >
+            Got it
+          </button>
+        </div>
+      )}
+
+      {/* Toasts */}
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+
+      {/* Confetti */}
+      {confetti && <Confetti x={confetti.x} y={confetti.y} />}
+
+      {/* Hint text */}
+      {hintText && (
+        <div className="fixed top-32 left-1/2 -translate-x-1/2 z-40 bg-yellow-400 text-gray-900 px-6 py-3 rounded-2xl shadow-2xl font-semibold">
+          {hintText}
+        </div>
+      )}
 
       {/* Target word */}
       {targetWord && (
@@ -521,18 +769,26 @@ export default function BalloonPop() {
 
       {/* Balloons */}
       <div className="absolute inset-0 pt-24">
-        {balloons.map((balloon) => (
-          <Balloon
-            key={balloon.id}
-            id={balloon.id}
-            ipa={balloon.ipa}
-            x={balloon.x}
-            y={balloon.y}
-            color={String(balloon.colorIndex)}
-            onPop={handlePop}
-            isPopped={balloon.isPopped}
-          />
-        ))}
+        {balloons.map((balloon) => {
+          if (balloon.isPopped) return null;
+
+          // Convert y from px to percentage for component
+          const yPercent = (balloon.y / viewportHeightRef.current) * 100;
+
+          return (
+            <Balloon
+              key={balloon.id}
+              id={balloon.id}
+              ipa={balloon.ipa}
+              x={balloon.x}
+              y={yPercent}
+              color={String(balloon.colorIndex)}
+              onPop={handlePop}
+              isPopped={false}
+              shake={balloon.shake}
+            />
+          );
+        })}
       </div>
 
       {/* Streak burst */}
