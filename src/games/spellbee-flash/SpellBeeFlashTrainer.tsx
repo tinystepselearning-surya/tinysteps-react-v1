@@ -4,10 +4,21 @@
  */
 
 import { useState, useMemo, useEffect } from "react";
-import { WORDS } from "./data";
+import { WORDS, type Word } from "./data";
 import WordCard from "./WordCard";
 import SummaryScreen from "./SummaryScreen";
-import { shuffle, generateMCQOptions, saveProgress, initializeSpeech } from "./utils";
+import { 
+  shuffle, 
+  generateMCQOptions, 
+  saveProgress, 
+  initializeSpeech,
+  getTotalCoins,
+  addCoins,
+  getMasteryData,
+  updateMastery,
+  checkBadges,
+  calculateCoins
+} from "./utils";
 
 export const gameMeta = {
   slug: "spellbee-flash",
@@ -24,6 +35,10 @@ export default function SpellBeeFlashTrainer() {
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [totalCoins, setTotalCoins] = useState(getTotalCoins());
+  const [newBadge, setNewBadge] = useState<string | null>(null);
+  const [showBrainBreak, setShowBrainBreak] = useState(false);
+  const [sparkEffect, setSparkEffect] = useState(false);
 
   // Shuffle words once on mount
   const shuffledWords = useMemo(() => shuffle(WORDS), []);
@@ -34,16 +49,30 @@ export default function SpellBeeFlashTrainer() {
   }, []);
 
   // Current word
-  const currentWord = shuffledWords[currentWordIndex];
+  const currentWord = shuffledWords[currentWordIndex] as Word;
+
+  // Get mastery level for current word
+  const currentWordMastery = useMemo(() => {
+    const wordIndex = WORDS.findIndex((w: { word: string }) => w.word === currentWord.word);
+    if (wordIndex === -1) return null;
+    
+    const masteryData = getMasteryData();
+    const mastery = masteryData.get(wordIndex);
+    
+    if (!mastery || mastery.correct === 0) return "Learning 📚";
+    if (mastery.mastered) return "Mastered 🏆";
+    if (mastery.correct >= 1) return "Getting Better 💪";
+    return "Learning 📚";
+  }, [currentWord.word]);
 
   // Generate MCQ options for current word
   const meaningMCQ = useMemo(() => {
-    const allMeanings = WORDS.map((w) => w.meaning);
+    const allMeanings = WORDS.map((w: Word) => w.meaning);
     return generateMCQOptions(allMeanings, currentWord.meaning, 4);
   }, [currentWord]);
 
   const ipaMCQ = useMemo(() => {
-    const allIPAs = WORDS.map((w) => w.ipa);
+    const allIPAs = WORDS.map((w: Word) => w.ipa);
     return generateMCQOptions(allIPAs, currentWord.ipa, 3);
   }, [currentWord]);
 
@@ -51,23 +80,57 @@ export default function SpellBeeFlashTrainer() {
   const handleWordComplete = (correctMeaning: boolean, correctIPA: boolean) => {
     // Update score
     let newScore = score;
-    if (correctMeaning) newScore++;
-    if (correctIPA) newScore++;
+    const correctCount = (correctMeaning ? 1 : 0) + (correctIPA ? 1 : 0);
+    newScore += correctCount;
     setScore(newScore);
 
     // Update streak
     const bothCorrect = correctMeaning && correctIPA;
     let newStreak = streak;
+    let newMaxStreak = maxStreak;
     if (bothCorrect) {
       newStreak = streak + 1;
       setStreak(newStreak);
-      setMaxStreak(Math.max(maxStreak, newStreak));
+      newMaxStreak = Math.max(maxStreak, newStreak);
+      setMaxStreak(newMaxStreak);
+      
+      // Spark effect for streak milestones
+      if (newStreak === 5 || newStreak === 10 || newStreak === 15) {
+        setSparkEffect(true);
+        setTimeout(() => setSparkEffect(false), 2000);
+      }
     } else {
       setStreak(0);
     }
 
-    // Move to next word or finish
+    // Calculate and award coins (10 coins per correct answer + streak bonus)
+    const earnedCoins = calculateCoins(correctCount, newStreak);
+    if (earnedCoins > 0) {
+      const newTotal = addCoins(earnedCoins);
+      setTotalCoins(newTotal);
+    }
+
+    // Update mastery for this word
+    const wordIndex = WORDS.findIndex((w: { word: string }) => w.word === currentWord.word);
+    if (wordIndex !== -1) {
+      const masteryData = getMasteryData();
+      updateMastery(wordIndex, bothCorrect, masteryData);
+    }
+
+    // Check for new badges
+    const newlyEarned = checkBadges(newScore, currentWordIndex + 1, newStreak, newMaxStreak);
+    if (newlyEarned.length > 0) {
+      setNewBadge(`${newlyEarned[0].icon} ${newlyEarned[0].name}`);
+      setTimeout(() => setNewBadge(null), 3000);
+    }
+
+    // Brain break every 12 words
     const nextIndex = currentWordIndex + 1;
+    if (nextIndex % 12 === 0 && nextIndex < shuffledWords.length) {
+      setShowBrainBreak(true);
+    }
+
+    // Move to next word or finish
     if (nextIndex >= shuffledWords.length) {
       // Game completed
       setCompleted(true);
@@ -78,7 +141,7 @@ export default function SpellBeeFlashTrainer() {
         score: newScore,
         totalWords: shuffledWords.length,
         accuracy,
-        streak: maxStreak,
+        streak: newMaxStreak,
         completedAt: new Date().toISOString(),
       });
     } else {
@@ -136,6 +199,11 @@ export default function SpellBeeFlashTrainer() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Coin Counter with Bounce */}
+            <div className="bg-yellow-400 text-yellow-900 px-5 py-3 rounded-full font-bold text-xl shadow-lg animate-bounce">
+              🪙 {totalCoins}
+            </div>
+
             {/* Streak Badge */}
             {streak > 0 && (
               <div className="bg-orange-400 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse">
@@ -164,6 +232,44 @@ export default function SpellBeeFlashTrainer() {
         </p>
       </div>
 
+      {/* Spark Effect for Streak Milestones */}
+      {sparkEffect && (
+        <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-50">
+          <div className="text-9xl animate-ping">✨</div>
+          <div className="text-6xl absolute animate-spin">🌟</div>
+        </div>
+      )}
+
+      {/* New Badge Notification */}
+      {newBadge && (
+        <div className="fixed top-24 right-8 z-50 bg-gradient-to-r from-yellow-300 to-orange-400 text-white px-8 py-4 rounded-2xl shadow-2xl transform animate-bounce">
+          <p className="text-2xl font-black">New Badge!</p>
+          <p className="text-3xl mt-2">{newBadge}</p>
+        </div>
+      )}
+
+      {/* Brain Break Modal */}
+      {showBrainBreak && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-12 max-w-2xl text-center shadow-2xl transform animate-bounce">
+            <div className="text-8xl mb-6">🧘‍♀️</div>
+            <h2 className="text-5xl font-black text-purple-600 mb-4">Brain Break!</h2>
+            <p className="text-2xl text-purple-700 mb-8">
+              Great job! Take a deep breath and stretch your arms up high! 🙌
+            </p>
+            <p className="text-xl text-purple-600 mb-8">
+              You've learned 12 words! Ready to continue?
+            </p>
+            <button
+              onClick={() => setShowBrainBreak(false)}
+              className="px-12 py-6 bg-gradient-to-r from-green-400 to-blue-400 text-white text-2xl font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400"
+            >
+              Let's Go! 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Word Card */}
       <WordCard
         key={currentWord.word}
@@ -172,6 +278,7 @@ export default function SpellBeeFlashTrainer() {
         ipaOptions={ipaMCQ.options}
         correctMeaningIndex={meaningMCQ.correctIndex}
         correctIPAIndex={ipaMCQ.correctIndex}
+        masteryLevel={currentWordMastery}
         onComplete={handleWordComplete}
       />
 

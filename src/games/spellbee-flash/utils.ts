@@ -254,3 +254,216 @@ export function loadProgress(): Array<{
     return [];
   }
 }
+
+/**
+ * SRS (Spaced Repetition System) - Track word mastery levels
+ */
+export interface WordMastery {
+  wordIndex: number;
+  correct: number; // consecutive correct answers
+  wrong: number; // total wrong answers
+  lastSeen: number; // timestamp
+  mastered: boolean;
+}
+
+/**
+ * Get mastery data from localStorage
+ */
+export function getMasteryData(): Map<number, WordMastery> {
+  try {
+    const data = localStorage.getItem("spellbee-mastery-v1");
+    if (!data) return new Map();
+    
+    const obj = JSON.parse(data);
+    return new Map(Object.entries(obj).map(([k, v]) => [Number(k), v as WordMastery]));
+  } catch (err) {
+    console.warn("Failed to load mastery data:", err);
+    return new Map();
+  }
+}
+
+/**
+ * Save mastery data to localStorage
+ */
+export function saveMasteryData(masteryMap: Map<number, WordMastery>): void {
+  try {
+    const obj = Object.fromEntries(masteryMap);
+    localStorage.setItem("spellbee-mastery-v1", JSON.stringify(obj));
+  } catch (err) {
+    console.warn("Failed to save mastery data:", err);
+  }
+}
+
+/**
+ * Update mastery for a word (correct or wrong answer)
+ */
+export function updateMastery(
+  wordIndex: number,
+  isCorrect: boolean,
+  masteryMap: Map<number, WordMastery>
+): Map<number, WordMastery> {
+  const newMap = new Map(masteryMap);
+  const current = newMap.get(wordIndex) || {
+    wordIndex,
+    correct: 0,
+    wrong: 0,
+    lastSeen: Date.now(),
+    mastered: false,
+  };
+
+  if (isCorrect) {
+    current.correct++;
+    // Mark as mastered after 3 consecutive correct answers
+    if (current.correct >= 3) {
+      current.mastered = true;
+    }
+  } else {
+    current.wrong++;
+    current.correct = 0; // Reset streak on wrong answer
+    current.mastered = false;
+  }
+
+  current.lastSeen = Date.now();
+  newMap.set(wordIndex, current);
+  saveMasteryData(newMap);
+  
+  return newMap;
+}
+
+/**
+ * Get words that need review (wrong answers, not mastered)
+ */
+export function getWordsNeedingReview(
+  totalWords: number,
+  masteryMap: Map<number, WordMastery>
+): number[] {
+  const needReview: number[] = [];
+  
+  for (let i = 0; i < totalWords; i++) {
+    const mastery = masteryMap.get(i);
+    
+    // Include if: never seen, has wrong answers, or not mastered
+    if (!mastery || mastery.wrong > 0 || !mastery.mastered) {
+      needReview.push(i);
+    }
+  }
+  
+  return needReview;
+}
+
+/**
+ * Adaptive difficulty: Generate easier/harder distractors based on performance
+ */
+export function generateAdaptiveMCQOptions<T>(
+  allOptions: T[],
+  correctOption: T,
+  totalOptions: number,
+  _difficulty: "easy" | "medium" | "hard" // Prefix with _ to indicate unused
+): { options: T[]; correctIndex: number } {
+  // For now, same as regular MCQ (can enhance later with semantic similarity)
+  return generateMCQOptions(allOptions, correctOption, totalOptions);
+}
+
+/**
+ * Determine difficulty level based on streak
+ */
+export function getDifficultyFromStreak(streak: number): "easy" | "medium" | "hard" {
+  if (streak >= 5) return "hard";
+  if (streak >= 3) return "medium";
+  return "easy";
+}
+
+/**
+ * Badge system - Get badge for achievement
+ */
+export interface Badge {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+}
+
+export function checkBadges(
+  score: number,
+  totalWords: number,
+  _streak: number, // Prefix with _ to indicate intentionally unused for now
+  maxStreak: number
+): Badge[] {
+  const badges: Badge[] = [];
+  
+  const accuracy = calculateAccuracy(score, totalWords * 2);
+  
+  // Meaning Master
+  if (accuracy === 100) {
+    badges.push({
+      id: "perfect",
+      name: "Perfect Score",
+      icon: "🏆",
+      description: "Got everything right!"
+    });
+  }
+  
+  // IPA Hero
+  if (maxStreak >= 10) {
+    badges.push({
+      id: "streak-hero",
+      name: "Streak Hero",
+      icon: "🔥",
+      description: "10+ correct in a row!"
+    });
+  }
+  
+  // First 5 words
+  if (totalWords >= 5 && score >= 8) {
+    badges.push({
+      id: "quick-learner",
+      name: "Quick Learner",
+      icon: "⭐",
+      description: "Mastered first 5 words!"
+    });
+  }
+  
+  return badges;
+}
+
+/**
+ * Coin system - Calculate coins earned
+ */
+export function calculateCoins(
+  correctAnswers: number,
+  streak: number
+): number {
+  let coins = correctAnswers * 10; // 10 coins per correct answer
+  
+  // Bonus for streak
+  if (streak >= 5) coins += streak * 5;
+  
+  return coins;
+}
+
+/**
+ * Get total coins from localStorage
+ */
+export function getTotalCoins(): number {
+  try {
+    const coins = localStorage.getItem("spellbee-coins-v1");
+    return coins ? parseInt(coins, 10) : 0;
+  } catch (err) {
+    return 0;
+  }
+}
+
+/**
+ * Add coins to total
+ */
+export function addCoins(amount: number): number {
+  const current = getTotalCoins();
+  const newTotal = current + amount;
+  try {
+    localStorage.setItem("spellbee-coins-v1", newTotal.toString());
+  } catch (err) {
+    console.warn("Failed to save coins:", err);
+  }
+  return newTotal;
+}
+

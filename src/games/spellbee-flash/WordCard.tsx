@@ -15,6 +15,7 @@ interface WordCardProps {
   ipaOptions: string[];
   correctMeaningIndex: number;
   correctIPAIndex: number;
+  masteryLevel?: string | null;
   onComplete: (correctMeaning: boolean, correctIPA: boolean) => void;
 }
 
@@ -24,6 +25,7 @@ export default function WordCard({
   ipaOptions,
   correctMeaningIndex,
   correctIPAIndex,
+  masteryLevel,
   onComplete,
 }: WordCardProps) {
   const [phase, setPhase] = useState<GamePhase>("meaning");
@@ -97,8 +99,9 @@ export default function WordCard({
     selectedIndex: number | null,
     correctIndex: number
   ): string => {
+    // Bigger tap targets for kids (py-5 instead of py-4, min-h-16)
     const baseClass =
-      "w-full px-6 py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-400";
+      "w-full px-8 py-5 min-h-[64px] rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-400";
 
     if (selectedIndex === null) {
       return `${baseClass} bg-gradient-to-r from-blue-400 to-purple-400 text-white hover:from-blue-500 hover:to-purple-500 shadow-lg`;
@@ -108,7 +111,7 @@ export default function WordCard({
       const isCorrect = index === correctIndex;
       return isCorrect
         ? `${baseClass} bg-gradient-to-r from-green-400 to-green-500 text-white shadow-xl animate-bounce`
-        : `${baseClass} bg-gradient-to-r from-red-400 to-red-500 text-white shadow-xl animate-shake`;
+        : `${baseClass} bg-gradient-to-r from-red-400 to-red-500 text-white shadow-xl animate-gentle-shake`;
     }
 
     if (index === correctIndex) {
@@ -120,6 +123,15 @@ export default function WordCard({
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4">
+      {/* Mastery Tier Display */}
+      {masteryLevel && (
+        <div className="mb-4 text-center">
+          <div className="inline-block bg-white px-6 py-3 rounded-full shadow-lg">
+            <span className="text-xl font-bold text-purple-600">{masteryLevel}</span>
+          </div>
+        </div>
+      )}
+
       {/* Card Container with Flip Effect */}
       <div className="relative w-full min-h-[500px] perspective-1000">
         <div
@@ -135,6 +147,7 @@ export default function WordCard({
           >
             {/* Word Display */}
             <div className="text-center mb-8">
+              <div className="text-8xl mb-3 animate-bounce">{word.icon}</div>
               <h2 className="text-6xl font-black text-purple-600 mb-4 animate-pulse">
                 {word.word}
               </h2>
@@ -189,6 +202,7 @@ export default function WordCard({
           >
             <div className="text-center space-y-6">
               <div className="flex items-center justify-center gap-3">
+                <span className="text-6xl">{word.icon}</span>
                 <h2 className="text-5xl font-black text-green-600">
                   {word.word}
                 </h2>
@@ -220,14 +234,14 @@ export default function WordCard({
               </div>
 
               <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xl text-gray-700 flex-1">
-                    <span className="font-bold text-purple-600">Meaning:</span>{" "}
-                    {word.meaning}
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl flex-shrink-0">{word.icon}</span>
+                  <p className="text-2xl text-gray-700 flex-1 font-semibold">
+                    {word.simpleMeaning}
                   </p>
                   <button
-                    onClick={() => speakMeaning(word.meaning)}
-                    className="p-2 bg-green-400 text-white rounded-full hover:bg-green-500 transition-colors focus:outline-none focus:ring-4 focus:ring-green-300"
+                    onClick={() => speakMeaning(word.simpleMeaning)}
+                    className="p-2 bg-green-400 text-white rounded-full hover:bg-green-500 transition-colors focus:outline-none focus:ring-4 focus:ring-green-300 flex-shrink-0"
                     aria-label="Read meaning"
                     title="Hear meaning"
                   >
@@ -252,10 +266,11 @@ export default function WordCard({
 
               <button
                 onClick={handleNextWord}
-                className="mt-6 px-10 py-4 bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold text-2xl rounded-full shadow-xl hover:from-green-500 hover:to-blue-500 transform hover:scale-110 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400"
+                className="mt-6 px-10 py-4 bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold text-2xl rounded-full shadow-xl hover:from-green-500 hover:to-blue-500 transform hover:scale-110 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400 flex items-center justify-center gap-3 mx-auto"
                 aria-label="Next word"
               >
-                Next Word! 🚀
+                Next Word!
+                <span className="animate-arrow-bounce inline-block">⏭️</span>
               </button>
             </div>
           </div>
@@ -276,13 +291,21 @@ export default function WordCard({
         .rotate-y-180 {
           transform: rotateY(180deg);
         }
-        @keyframes shake {
+        @keyframes gentle-shake {
           0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-10px); }
-          75% { transform: translateX(10px); }
+          25% { transform: translateX(-5px); }
+          50% { transform: translateX(5px); }
+          75% { transform: translateX(-3px); }
         }
-        .animate-shake {
-          animation: shake 0.5s ease-in-out;
+        .animate-gentle-shake {
+          animation: gentle-shake 0.4s ease-in-out;
+        }
+        @keyframes arrow-bounce {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(5px); }
+        }
+        .animate-arrow-bounce {
+          animation: arrow-bounce 1s ease-in-out infinite;
         }
       `}</style>
     </div>
