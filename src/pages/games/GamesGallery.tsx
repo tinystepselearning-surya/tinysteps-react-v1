@@ -3,6 +3,7 @@ import DashboardShell from "../../components/dashboard/DashboardShell";
 import type { ReactNode } from "react";
 import { gameMeta as spellBeeGameMeta } from "../../games/spellbee-flash";
 import { gameMeta as meaningMatchGameMeta } from "../../games/meaning-match";
+import { gameMeta as balloonPopGameMeta } from "../../games/balloon-pop";
 
 const iconClass = "h-5 w-5";
 const bookIcon: ReactNode = (
@@ -39,12 +40,21 @@ const GAME_LIBRARY: GameCard[] = [
     description: "Race against time to find rhyming word pairs. Fun with word families!",
   },
   {
+    id: balloonPopGameMeta.slug,
+    title: balloonPopGameMeta.title,
+    level: "Grade 1-2",
+    duration: "8 mins",
+    description: balloonPopGameMeta.description,
+    badge: "New!",
+    launchHref: `/kids/games/${balloonPopGameMeta.slug}`,
+    launchLabel: "Play"
+  },
+  {
     id: meaningMatchGameMeta.slug,
     title: meaningMatchGameMeta.title,
     level: "Grade 1-2",
     duration: "10 mins",
     description: meaningMatchGameMeta.description,
-    badge: "New!",
     launchHref: `/kids/games/${meaningMatchGameMeta.slug}`,
     launchLabel: "Play"
   },
