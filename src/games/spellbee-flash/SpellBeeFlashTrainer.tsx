@@ -3,10 +3,15 @@
  * State machine for word learning with MCQ and card flip
  */
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { WORDS, type Word } from "./data";
 import WordCard from "./WordCard";
 import SummaryScreen from "./SummaryScreen";
+import SoundGate from "../shared/SoundGate";
+import SoundControl from "../shared/SoundControl";
+import DyslexiaToggle from "../shared/DyslexiaToggle";
+import { createAnnouncer, announce } from "../shared/accessibility";
+import { flushPending } from "../shared/storage";
 import { 
   shuffle, 
   generateMCQOptions, 
@@ -52,6 +57,9 @@ export default function SpellBeeFlashTrainer() {
   // Check for debug mode from URL
   const isDebugMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
   
+  // Accessibility announcer
+  const announcerRef = useRef<HTMLDivElement | null>(null);
+  
   // Game state
   const [gameMode, setGameMode] = useState<GameMode>("normal");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -81,6 +89,10 @@ export default function SpellBeeFlashTrainer() {
 
   // Initialize speech synthesis and audio on mount + cleanup on unmount
   useEffect(() => {
+    // Create announcer
+    announcerRef.current = createAnnouncer();
+    document.body.appendChild(announcerRef.current);
+    
     initializeSpeech();
     
     // Pre-warm audio after first user gesture
@@ -97,7 +109,11 @@ export default function SpellBeeFlashTrainer() {
     
     // Cleanup: flush debounced writes and clear timers
     return () => {
+      if (announcerRef.current) {
+        document.body.removeChild(announcerRef.current);
+      }
       flushDebouncedWrites();
+      flushPending();
       clearAllTimers();
       document.removeEventListener("click", handleFirstClick);
     };
@@ -182,8 +198,10 @@ export default function SpellBeeFlashTrainer() {
     // Log correct/wrong
     if (correctMeaning && correctIPA) {
       logEvent("correct", { word: currentWord.word, bothCorrect: true });
+      announce(announcerRef.current, "Correct! Well done!");
     } else {
       logEvent("wrong", { word: currentWord.word, correctMeaning, correctIPA });
+      announce(announcerRef.current, "Not quite. Keep trying!");
     }
 
     // Update streak
@@ -362,6 +380,9 @@ export default function SpellBeeFlashTrainer() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 py-8 px-4">
+      {/* Sound Gate */}
+      <SoundGate gameSlug="spellbee-flash" />
+      
       {/* Quests Panel */}
       <QuestsPanel quests={questsState.quests} />
 
@@ -383,44 +404,49 @@ export default function SpellBeeFlashTrainer() {
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={handleExit}
-            className="px-6 py-3 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-purple-400"
+            className="min-h-[64px] min-w-[64px] px-6 py-3 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-purple-400"
             aria-label="Exit game"
           >
             ← Back
           </button>
 
-          <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-black text-purple-600 mb-2">
-              {gameMode === "fixup" ? "🩹 Fix-Up Mode" : "🐝 SpellBee Flash Trainer"}
-            </h1>
-            <p className="text-xl text-purple-700 font-semibold">
-              {gameMode === "fixup"
-                ? "Let's master tricky words!"
-                : (currentWordIndex + 1) % 5 === 0
-                ? "⚡ SPEED ROUND - Be Quick!"
-                : (currentWordIndex + 1) % 3 === 0 
-                ? "🔊 Ear-Training Round!" 
-                : "Learn words, meanings & IPA symbols!"}
-            </p>
+          <div className="flex items-center gap-2">
+            <DyslexiaToggle />
+            <SoundControl gameSlug="spellbee-flash" />
+          </div>
+        </div>
+
+        <div className="text-center mb-4">
+          <h1 className="text-4xl md:text-5xl font-black text-purple-600 mb-2">
+            {gameMode === "fixup" ? "🩹 Fix-Up Mode" : "🐝 SpellBee Flash Trainer"}
+          </h1>
+          <p className="text-xl text-purple-700 font-semibold">
+            {gameMode === "fixup"
+              ? "Let's master tricky words!"
+              : (currentWordIndex + 1) % 5 === 0
+              ? "⚡ SPEED ROUND - Be Quick!"
+              : (currentWordIndex + 1) % 3 === 0 
+              ? "🔊 Ear-Training Round!" 
+              : "Learn words, meanings & IPA symbols!"}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-center gap-4 mb-4">
+          {/* Coin Counter with Bounce */}
+          <div className="bg-yellow-400 text-yellow-900 px-5 py-3 rounded-full font-bold text-xl shadow-lg animate-bounce">
+            🪙 {totalCoins}
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Coin Counter with Bounce */}
-            <div className="bg-yellow-400 text-yellow-900 px-5 py-3 rounded-full font-bold text-xl shadow-lg animate-bounce">
-              🪙 {totalCoins}
+          {/* Streak Badge */}
+          {streak > 0 && (
+            <div className="bg-orange-400 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse">
+              🔥 {streak}
             </div>
+          )}
 
-            {/* Streak Badge */}
-            {streak > 0 && (
-              <div className="bg-orange-400 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse">
-                🔥 {streak}
-              </div>
-            )}
-
-            {/* Score Display */}
-            <div className="bg-white text-purple-600 px-6 py-3 rounded-full font-bold text-xl shadow-lg">
-              Score: {score}
-            </div>
+          {/* Score Display */}
+          <div className="bg-white text-purple-600 px-6 py-3 rounded-full font-bold text-xl shadow-lg">
+            Score: {score}
           </div>
         </div>
 
