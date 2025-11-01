@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { SPELLBEE_GRADE1 } from "../../data/spellbee-grade1";
 import type { SpellbeeEntry } from "../../data/spellbee-grade1";
 
-type Phase = "hub" | "learn" | "practice" | "assessment" | "summary";
+type Phase = "learn" | "practice" | "assessment" | "summary";
 
 type AssessmentQuestion = {
   id: string;
@@ -15,8 +15,6 @@ type AssessmentQuestion = {
   word: SpellbeeEntry;
   round: 1 | 2;
 };
-
-type RawAssessmentQuestion = Omit<AssessmentQuestion, "round">;
 
 type AssessmentResult = {
   questionId: string;
@@ -30,7 +28,7 @@ const SESSION_GROUPS = 3;
 const QUIZ_ROUNDS = 2;
 const QUESTIONS_PER_ROUND = 4;
 const QUIZ_QUESTIONS = QUIZ_ROUNDS * QUESTIONS_PER_ROUND;
-const STORAGE_VERSION = 3;
+const STORAGE_VERSION = 2;
 const SPEECH_WORD_RATE = 0.85;
 const SPEECH_MEANING_RATE = 0.81;
 const SPEECH_WORD_PITCH = 1.05;
@@ -134,12 +132,14 @@ function createSessionWords(): SpellbeeEntry[] {
 }
 
 function tryBuildMeaningQuestion(word: SpellbeeEntry): RawAssessmentQuestion | null {
+  if (!word.meaning) return null;
   const exclude = new Set<string>([word.id]);
-  const distractors = sampleEntries(SPELLBEE_GRADE1, 3, exclude)
+  const distractors = sampleEntries(SPELLBEE_GRADE1, 8, exclude)
     .map((entry) => entry.meaning)
-    .filter((meaning) => meaning && meaning !== word.meaning);
-  if (distractors.length < 3 || !word.meaning) return null;
-  const choices = shuffle([word.meaning, ...distractors]);
+    .filter((meaning): meaning is string => Boolean(meaning) && meaning !== word.meaning);
+  const unique = Array.from(new Set(distractors)).slice(0, 3);
+  if (unique.length < 3) return null;
+  const choices = shuffle([word.meaning, ...unique]);
   return {
     id: `${word.id}-meaning`,
     promptType: "meaning",
@@ -154,11 +154,12 @@ function tryBuildMeaningQuestion(word: SpellbeeEntry): RawAssessmentQuestion | n
 function tryBuildIPAQuestion(word: SpellbeeEntry): RawAssessmentQuestion | null {
   if (!word.ipa) return null;
   const exclude = new Set<string>([word.id]);
-  const distractors = sampleEntries(SPELLBEE_GRADE1, 3, exclude)
+  const distractors = sampleEntries(SPELLBEE_GRADE1, 8, exclude)
     .map((entry) => entry.ipa)
-    .filter((ipa) => ipa && ipa !== word.ipa);
-  if (distractors.length < 3) return null;
-  const choices = shuffle([word.ipa, ...distractors]);
+    .filter((ipa): ipa is string => Boolean(ipa) && ipa !== word.ipa);
+  const unique = Array.from(new Set(distractors)).slice(0, 3);
+  if (unique.length < 3) return null;
+  const choices = shuffle([word.ipa, ...unique]);
   return {
     id: `${word.id}-ipa`,
     promptType: "ipa",
@@ -206,7 +207,7 @@ function buildAssessmentQuestions(words: SpellbeeEntry[], emphasiseIds: string[]
 
   const collectRoundQuestions = (
     candidates: SpellbeeEntry[],
-    builder: (word: SpellbeeEntry) => RawAssessmentQuestion | null,
+    builder: (word: SpellbeeEntry) => AssessmentQuestion | null,
     round: 1 | 2,
     targetCount: number,
   ) => {
@@ -322,7 +323,7 @@ function launchConfetti() {
 }
 
 export default function SpellbeeGrade1Game() {
-  const [phase, setPhase] = useState<Phase>("hub");
+  const [phase, setPhase] = useState<Phase>("learn");
   const [sessionWords, setSessionWords] = useState<SpellbeeEntry[]>(() => createSessionWords());
   const sessionInitRef = useRef(false);
   const [sessionVersion, setSessionVersion] = useState(0);
@@ -425,24 +426,6 @@ export default function SpellbeeGrade1Game() {
       window.speechSynthesis.speak(utter);
     },
     [speechReady, stopSpeaking],
-  );
-
-  const speakClue = useCallback(
-    (question: AssessmentQuestion | null | undefined) => {
-      if (!question) return;
-      const { promptType, correctAnswer, word, prompt } = question;
-      const isMeaning = promptType === "meaning";
-      const text =
-        isMeaning || promptType === "word"
-          ? correctAnswer
-          : promptType === "ipa"
-            ? correctAnswer || word.ipa || word.word
-            : correctAnswer || prompt;
-      const rate = isMeaning ? SPEECH_MEANING_RATE : SPEECH_WORD_RATE;
-      const pitch = isMeaning ? SPEECH_MEANING_PITCH : SPEECH_WORD_PITCH;
-      handleSpeak(text, { rate, pitch });
-    },
-    [handleSpeak],
   );
 
   useEffect(() => {
@@ -550,8 +533,8 @@ export default function SpellbeeGrade1Game() {
         (result) => wordLookup.has(result.wordId) && validQuestionIds.has(result.questionId),
       );
 
-      const allowablePhases: Phase[] = ["hub", "learn", "practice", "assessment", "summary"];
-      const storedPhase = allowablePhases.includes(parsed.phase) ? parsed.phase : "hub";
+      const allowablePhases: Phase[] = ["learn", "practice", "assessment", "summary"];
+      const storedPhase = allowablePhases.includes(parsed.phase) ? parsed.phase : "learn";
       const derivedPhase =
         storedPhase === "assessment" && storedQuestions.length === 0 ? "practice" : storedPhase;
 
@@ -559,7 +542,7 @@ export default function SpellbeeGrade1Game() {
       setSessionWords(resumedWords);
       setPhase(derivedPhase);
       setLearnIndex(clampIndex(parsed.learnIndex ?? 0, resumedWords.length - 1));
-      setLearnedIds(safeLearned);
+      setLearnedIds(safeLearned.length ? safeLearned : resumedWords[0] ? [resumedWords[0].id] : []);
       setPracticeQueue(practiceQueueEntries.length ? practiceQueueEntries : resumedWords.slice());
       setPracticeReveal(Boolean(parsed.practiceReveal));
       setPracticeAttempts(parsed.practiceAttempts ?? 0);
@@ -590,9 +573,9 @@ export default function SpellbeeGrade1Game() {
       sessionInitRef.current = false;
       return;
     }
-    setPhase("hub");
+    setPhase("learn");
     setLearnIndex(0);
-    setLearnedIds([]);
+    setLearnedIds(sessionWords[0] ? [sessionWords[0].id] : []);
     setPracticeQueue(sessionWords.slice());
     setPracticeReveal(false);
     setPracticeAttempts(0);
@@ -752,257 +735,13 @@ export default function SpellbeeGrade1Game() {
       label: "Practice",
       badge: `${masteredIds.length}/${sessionWords.length || 1}`,
     },
-  {
-    key: "assessment" as const,
-    label: "Quick quiz",
-    badge: `${quizScore}/${assessmentQuestions.length || QUIZ_QUESTIONS}`,
-    disabled: !canStartAssessment,
-  },
-];
-
-  const renderHubPhase = () => {
-    type WordStatus = "mastered" | "review" | "learned" | "new";
-    const masteredSet = new Set(masteredIds);
-    const reviewSet = new Set(needsReviewIds);
-    const learnedSet = new Set(learnedIds);
-    const wordItems = sessionWords.map((word) => {
-      let status: WordStatus;
-      if (masteredSet.has(word.id)) status = "mastered";
-      else if (reviewSet.has(word.id)) status = "review";
-      else if (learnedSet.has(word.id)) status = "learned";
-      else status = "new";
-      return { word, status };
-    });
-
-    const masteredCount = wordItems.filter((item) => item.status === "mastered").length;
-    const reviewCount = wordItems.filter((item) => item.status === "review").length;
-    const inProgressCount = wordItems.filter((item) => item.status === "learned").length;
-    const newCount = wordItems.filter((item) => item.status === "new").length;
-
-    const activityCards = [
-      {
-        id: "spellbee",
-        title: "Spell Galaxy",
-        description: "Explore, practise, and quiz today’s Grade 1 words with IPA and meanings.",
-        badge: practiceCompleted ? "Continue" : "Featured",
-        footer: `${sessionWords.length} words · ${sessionGroupSummary.map((group) => group.letter).join(", ") || "No groups yet"}`,
-        actionLabel: practiceCompleted ? "Resume session" : "Start mission",
-        onAction: () => handlePhaseChange(practiceCompleted ? "practice" : "learn"),
-        disabled: false,
-      },
-      {
-        id: "flash-cards",
-        title: "Flash Cards",
-        description: "Flip through your deck in rapid-fire mode to boost recall.",
-        badge: "Coming soon",
-        footer: "Timed practice · streak tracker",
-        actionLabel: "Coming soon",
-        onAction: null,
-        disabled: true,
-      },
-      {
-        id: "letter-word",
-        title: "Letter → Word Match",
-        description: "Match starting letters to word cards to sharpen phonics.",
-        badge: "Coming soon",
-        footer: "Alphabet sorting · speed play",
-        actionLabel: "Coming soon",
-        onAction: null,
-        disabled: true,
-      },
-      {
-        id: "letter-image",
-        title: "Letter → Image Match",
-        description: "Link letters to illustrations for instant visual cues.",
-        badge: "Coming soon",
-        footer: "Visual memory · phonics link",
-        actionLabel: "Coming soon",
-        onAction: null,
-        disabled: true,
-      },
-      {
-        id: "word-meaning",
-        title: "Word → Meaning Match",
-        description: "Pair words with their meanings in a quick-fire challenge.",
-        badge: "Coming soon",
-        footer: "Vocabulary race · accuracy bonus",
-        actionLabel: "Coming soon",
-        onAction: null,
-        disabled: true,
-      },
-      {
-        id: "future-games",
-        title: "Galaxy Labs",
-        description: "Peek at prototype games and vote on what should launch next.",
-        badge: "Future drop",
-        footer: "Community picks · beta invites",
-        actionLabel: "Coming soon",
-        onAction: null,
-        disabled: true,
-      },
-    ];
-
-    const statusStyles: Record<WordStatus, string> = {
-      mastered: "border-emerald-300/40 bg-emerald-400/10 text-emerald-100",
-      review: "border-rose-300/40 bg-rose-400/10 text-rose-100",
-      learned: "border-sky-300/40 bg-sky-400/10 text-sky-100",
-      new: "border-white/15 bg-white/[0.05] text-slate-200",
-    };
-
-    const statusLabels: Record<WordStatus, string> = {
-      mastered: "Mastered",
-      review: "Needs review",
-      learned: "In progress",
-      new: "New today",
-    };
-
-    return (
-      <div className="flex h-full flex-col gap-5">
-        <div className="rounded-3xl border border-white/15 bg-white/[0.04] p-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Spell Galaxy Hub</p>
-              <h2 className="mt-2 text-2xl font-semibold text-white">Choose your training mission</h2>
-              <p className="mt-2 max-w-2xl text-sm text-slate-200">
-                Track what you’ve learned so far, review tricky words, and launch into the next activity. Your deck
-                refreshes every session, so keep the streak glowing!
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-slate-200">
-              <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1">
-                Total words {sessionWords.length}
-              </span>
-              <span className="rounded-full border border-emerald-300/40 bg-emerald-400/10 px-3 py-1 text-emerald-100">
-                Mastered {masteredCount}
-              </span>
-              <span className="rounded-full border border-rose-300/40 bg-rose-400/10 px-3 py-1 text-rose-100">
-                Review {reviewCount}
-              </span>
-            </div>
-          </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {activityCards.map((card) => (
-              <div
-                key={card.id}
-                className="flex h-full flex-col justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/40 p-4 shadow-lg shadow-slate-950/30"
-              >
-                <div>
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-semibold text-white">{card.title}</h3>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                        card.badge === "Featured"
-                          ? "bg-gradient-to-r from-sky-400 via-violet-400 to-rose-400 text-slate-900"
-                          : "bg-white/10 text-slate-200"
-                      }`}
-                    >
-                      {card.badge}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-slate-200">{card.description}</p>
-                </div>
-                <div className="mt-auto space-y-3">
-                  <p className="text-xs text-slate-300">{card.footer}</p>
-                  <button
-                    type="button"
-                    onClick={card.onAction ?? undefined}
-                    disabled={card.disabled}
-                    className={`w-full rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      card.disabled
-                        ? "border border-white/10 bg-white/[0.02] text-slate-400"
-                        : "bg-gradient-to-r from-sky-400 via-violet-400 to-rose-400 text-slate-900 shadow-lg shadow-slate-900/40 hover:scale-[1.01]"
-                    }`}
-                  >
-                    {card.actionLabel}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid flex-1 gap-5 lg:grid-cols-[2fr,1fr]">
-          <div className="flex h-full flex-col rounded-3xl border border-white/12 bg-white/[0.04] p-5">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-200">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Mastered</p>
-                <p className="mt-2 text-xl font-semibold text-white">{masteredCount}</p>
-                <p>Confident words</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-200">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Needs review</p>
-                <p className="mt-2 text-xl font-semibold text-white">{reviewCount}</p>
-                <p>Flagged for extra practise</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-200">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">In progress</p>
-                <p className="mt-2 text-xl font-semibold text-white">{inProgressCount}</p>
-                <p>Still learning</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.05] p-4 text-sm text-slate-200">
-                <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">New today</p>
-                <p className="mt-2 text-xl font-semibold text-white">{newCount}</p>
-                <p>Fresh cards waiting</p>
-              </div>
-            </div>
-            <div className="mt-4 min-h-0 flex-1 overflow-y-auto pr-1">
-              {wordItems.length ? (
-                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {wordItems.map(({ word, status }) => (
-                    <li
-                      key={word.id}
-                      className={`rounded-2xl border px-4 py-3 text-sm transition ${statusStyles[status]}`}
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-base font-semibold text-white">{word.word}</span>
-                        <span className="rounded-full px-2 py-0.5 text-xs font-semibold">{statusLabels[status]}</span>
-                      </div>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-300">{word.ipa}</p>
-                      <p className="mt-2 text-sm text-slate-100">{word.meaning}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-slate-200">
-                  Your deck is forming now. Tap <strong>Start mission</strong> to begin exploring today’s words.
-                </p>
-              )}
-            </div>
-          </div>
-          <aside className="flex h-full flex-col gap-4 rounded-3xl border border-white/12 bg-white/[0.04] p-5 text-sm text-slate-200">
-            <div>
-              <h3 className="text-base font-semibold text-white">Deck overview</h3>
-              {sessionGroupSummary.length ? (
-                <ul className="mt-3 space-y-2 text-sm">
-                  {sessionGroupSummary.map((group) => (
-                    <li key={group.letter} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
-                      <span className="font-semibold text-white">Group {group.letter}</span>
-                      <span className="text-xs text-slate-300">{group.count} words</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-sm text-slate-300">Letter groups will appear when the deck is ready.</p>
-              )}
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-white">Recent quiz streak</h3>
-              <p className="mt-2 text-sm text-slate-200">
-                Best score: <strong>{quizScore}</strong> · Accuracy: <strong>{quizAccuracy}%</strong>
-              </p>
-              <p className="mt-1 text-xs text-slate-300">
-                Phonics questions answered: <strong>{assessmentRoundCounts[1] ?? 0}</strong> · Meanings tackled:{" "}
-                <strong>{assessmentRoundCounts[2] ?? 0}</strong>
-              </p>
-            </div>
-            <div className="mt-auto text-xs text-slate-400">
-              Tip: Bookmark tricky words from the learn tab so the quiz focusses on what needs a boost.
-            </div>
-          </aside>
-        </div>
-      </div>
-    );
-  };
+    {
+      key: "assessment" as const,
+      label: "Quick quiz",
+      badge: `${quizScore}/${assessmentQuestions.length || QUIZ_QUESTIONS}`,
+      disabled: !canStartAssessment,
+    },
+  ];
 
   const renderLearnPhase = () => {
     if (!currentLearnWord) {
@@ -1284,7 +1023,9 @@ export default function SpellbeeGrade1Game() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => speakClue(currentQuestion)}
+                  onClick={() =>
+                    handleSpeak(currentQuestion.prompt, { rate: SPEECH_MEANING_RATE, pitch: SPEECH_MEANING_PITCH })
+                  }
                   className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 font-semibold transition hover:bg-white/20 disabled:opacity-50"
                   disabled={!speechReady}
                 >
@@ -1447,7 +1188,7 @@ export default function SpellbeeGrade1Game() {
     <div className="relative min-h-screen overflow-hidden bg-slate-950 text-slate-100">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(91,170,255,0.25),transparent_55%),radial-gradient(circle_at_80%_10%,rgba(202,103,184,0.2),transparent_45%),radial-gradient(circle_at_50%_80%,rgba(255,188,137,0.18),transparent_50%)]" />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-4 py-8 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-10 sm:px-6 lg:px-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <Link
             to="/kids"
@@ -1455,24 +1196,13 @@ export default function SpellbeeGrade1Game() {
           >
             ← Back to Kids Zone
           </Link>
-          <div className="flex flex-wrap items-center gap-2">
-            {phase !== "hub" && (
-              <button
-                type="button"
-                onClick={() => handlePhaseChange("hub")}
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:bg-white/10"
-              >
-                Browse activities
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={handleRestartSession}
-              className="inline-flex items-center gap-2 rounded-full border border-sky-300/40 bg-sky-400/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-400/20"
-            >
-              Restart with new words
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleRestartSession}
+            className="inline-flex items-center gap-2 rounded-full border border-sky-300/40 bg-sky-400/10 px-4 py-2 text-sm font-semibold text-sky-200 transition hover:bg-sky-400/20"
+          >
+            Restart with new words
+          </button>
         </div>
 
         <header className="rounded-3xl border border-white/10 bg-white/[0.05] p-5 backdrop-blur">
@@ -1484,99 +1214,90 @@ export default function SpellbeeGrade1Game() {
           </p>
         </header>
 
-        <section className="flex flex-1 flex-col overflow-hidden rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur">
-          {phase !== "hub" && (
-            <>
-              <div className="flex flex-wrap items-center gap-3">
-                {phaseButtons.map((button) => {
-                  const isActive = phase === button.key || (button.key === "assessment" && phase === "summary");
-                  return (
-                    <button
-                      key={button.key}
-                      type="button"
-                      onClick={() => handlePhaseChange(button.key)}
-                      disabled={button.disabled}
-                      className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
-                        isActive
-                          ? "bg-gradient-to-r from-sky-400 via-violet-400 to-rose-400 text-slate-900 shadow-lg shadow-slate-900/40"
-                          : "border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+        <section className="rounded-3xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur">
+          <div className="flex flex-wrap items-center gap-3">
+            {phaseButtons.map((button) => {
+              const isActive = phase === button.key || (button.key === "assessment" && phase === "summary");
+              return (
+                <button
+                  key={button.key}
+                  type="button"
+                  onClick={() => handlePhaseChange(button.key)}
+                  disabled={button.disabled}
+                  className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    isActive
+                      ? "bg-gradient-to-r from-sky-400 via-violet-400 to-rose-400 text-slate-900 shadow-lg shadow-slate-900/40"
+                      : "border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
+                  }`}
+                  title={button.disabled ? "Master at least half of the deck in practice to unlock the quiz." : undefined}
+                >
+                  {button.label}
+                  {button.badge && (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        isActive ? "bg-white/40 text-slate-900" : "bg-white/15 text-white"
                       }`}
-                      title={
-                        button.disabled ? "Master at least half of the deck in practice to unlock the quiz." : undefined
-                      }
                     >
-                      {button.label}
-                      {button.badge && (
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            isActive ? "bg-white/40 text-slate-900" : "bg-white/15 text-white"
-                          }`}
-                        >
-                          {button.badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-                {phase === "summary" && (
-                  <span className="inline-flex items-center rounded-full border border-emerald-300/40 bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-100">
-                    Summary
-                  </span>
-                )}
-              </div>
-
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Learn</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{learnProgress}%</p>
-                  <p className="text-sm text-slate-200">{learnedIds.length} of {sessionWords.length} cards visited</p>
-                  {sessionGroupSummary.length > 0 && (
-                    <p className="mt-2 text-xs text-slate-300">
-                      Groups:{" "}
-                      {sessionGroupSummary.map((group, index) => (
-                        <span key={group.letter}>
-                          {group.letter} ({group.count})
-                          {index < sessionGroupSummary.length - 1 ? " · " : ""}
-                        </span>
-                      ))}
-                    </p>
+                      {button.badge}
+                    </span>
                   )}
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Practice</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{practiceProgress}%</p>
-                  <p className="text-sm text-slate-200">
-                    {masteredIds.length} confident · {practiceCompleted ? "Deck clear" : `${practiceQueue.length} left`}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-                  <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Quick quiz</p>
-                  <p className="mt-2 text-2xl font-semibold text-white">{quizScore}/{assessmentQuestions.length || QUIZ_QUESTIONS}</p>
-                  <p className="text-sm text-slate-200">{quizAccuracy}% accuracy so far</p>
-                  <p className="mt-2 text-xs text-slate-300">
-                    Phonics: {assessmentRoundCounts[1] ?? 0} · Meaning: {assessmentRoundCounts[2] ?? 0}
-                  </p>
-                </div>
-              </div>
+                </button>
+              );
+            })}
+            {phase === "summary" && (
+              <span className="inline-flex items-center rounded-full border border-emerald-300/40 bg-emerald-400/15 px-3 py-1 text-xs font-semibold text-emerald-100">
+                Summary
+              </span>
+            )}
+          </div>
 
-              <p className="mt-3 text-xs text-slate-300">
-                {speechReady
-                  ? isSpeaking
-                    ? "Audio playing… wait for the clip to finish before answering."
-                    : "Audio ready — tap the speaker buttons to hear each word or clue."
-                  : "Audio playback is not available in this browser."}
-              </p>
-            </>
-          )}
-
-          <div className={`${phase === "hub" ? "" : "mt-5"} flex-1 overflow-hidden`}>
-            <div className="h-full overflow-y-auto pr-1">
-              {phase === "hub" && renderHubPhase()}
-              {phase === "learn" && renderLearnPhase()}
-              {phase === "practice" && renderPracticePhase()}
-              {phase === "assessment" && renderAssessmentPhase()}
-              {phase === "summary" && renderSummaryPhase()}
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Learn</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{learnProgress}%</p>
+              <p className="text-sm text-slate-200">{learnedIds.length} of {sessionWords.length} cards visited</p>
+              {sessionGroupSummary.length > 0 && (
+                <p className="mt-2 text-xs text-slate-300">
+                  Groups:{" "}
+                  {sessionGroupSummary.map((group, index) => (
+                    <span key={group.letter}>
+                      {group.letter} ({group.count})
+                      {index < sessionGroupSummary.length - 1 ? " · " : ""}
+                    </span>
+                  ))}
+                </p>
+              )}
             </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Practice</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{practiceProgress}%</p>
+              <p className="text-sm text-slate-200">
+                {masteredIds.length} confident · {practiceCompleted ? "Deck clear" : `${practiceQueue.length} left`}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs uppercase tracking-[0.28em] text-slate-200/70">Quick quiz</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{quizScore}/{assessmentQuestions.length || QUIZ_QUESTIONS}</p>
+              <p className="text-sm text-slate-200">{quizAccuracy}% accuracy so far</p>
+              <p className="mt-2 text-xs text-slate-300">
+                Phonics: {assessmentRoundCounts[1] ?? 0} · Meaning: {assessmentRoundCounts[2] ?? 0}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-3 text-xs text-slate-300">
+            {speechReady
+              ? isSpeaking
+                ? "Audio playing… wait for the clip to finish before answering."
+                : "Audio ready — tap the speaker buttons to hear each word or clue."
+              : "Audio playback is not available in this browser."}
+          </p>
+
+          <div className="mt-5">
+            {phase === "learn" && renderLearnPhase()}
+            {phase === "practice" && renderPracticePhase()}
+            {phase === "assessment" && renderAssessmentPhase()}
+            {phase === "summary" && renderSummaryPhase()}
           </div>
         </section>
       </div>
