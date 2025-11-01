@@ -3,11 +3,11 @@
  * Interactive flash card with flip animation, MCQ, and feedback
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Word } from "./data";
-import { playAudio, speakWord, speakMeaning, speakIPA } from "./utils";
+import { playAudio, speakWord, speakMeaning, speakIPA, updatePhonemeStats, getMinimalPairHint } from "./utils";
 
-export type GamePhase = "meaning" | "ipa" | "reveal";
+export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed" | "reveal";
 
 interface WordCardProps {
   word: Word;
@@ -16,7 +16,10 @@ interface WordCardProps {
   correctMeaningIndex: number;
   correctIPAIndex: number;
   masteryLevel?: string | null;
-  onComplete: (correctMeaning: boolean, correctIPA: boolean) => void;
+  isEarTrainingRound?: boolean;
+  isSpeedRound?: boolean;
+  onComplete: (correctMeaning: boolean, correctIPA: boolean, earTrainingBonus?: boolean, speedBonus?: number) => void;
+  onTimeout?: () => void;
 }
 
 export default function WordCard({
@@ -26,24 +29,142 @@ export default function WordCard({
   correctMeaningIndex,
   correctIPAIndex,
   masteryLevel,
+  isEarTrainingRound = false,
+  isSpeedRound = false,
   onComplete,
+  onTimeout,
 }: WordCardProps) {
-  const [phase, setPhase] = useState<GamePhase>("meaning");
+  const [phase, setPhase] = useState<GamePhase>(
+    isSpeedRound ? "speed" : isEarTrainingRound ? "ear-training" : "meaning"
+  );
   const [selectedMeaningIndex, setSelectedMeaningIndex] = useState<number | null>(null);
   const [selectedIPAIndex, setSelectedIPAIndex] = useState<number | null>(null);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [audioPlayed, setAudioPlayed] = useState(false);
+  const [minimalPairHint, setMinimalPairHint] = useState<string | null>(null);
+  const [earTrainingCorrect, setEarTrainingCorrect] = useState<boolean | null>(null);
+  const [timeLeft, setTimeLeft] = useState(10);
+  const [timerStartTime, setTimerStartTime] = useState<number | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const beepTimesRef = useRef<Set<number>>(new Set());
 
   // Reset state when word changes
   useEffect(() => {
-    setPhase("meaning");
+    setPhase(isSpeedRound ? "speed" : isEarTrainingRound ? "ear-training" : "meaning");
     setSelectedMeaningIndex(null);
     setSelectedIPAIndex(null);
     setIsFlipped(false);
+    setAudioPlayed(false);
+    setMinimalPairHint(null);
+    setEarTrainingCorrect(null);
+    setTimeLeft(10);
+    setTimerStartTime(null);
+    beepTimesRef.current = new Set();
     
-    // Speak the word when a new card appears
-    const cleanup = speakWord(word.word);
-    return cleanup;
-  }, [word.word]);
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Speak the word when a new card appears (only if not ear-training or speed)
+    if (!isEarTrainingRound && !isSpeedRound) {
+      const cleanup = speakWord(word.word);
+      return cleanup;
+    }
+  }, [word.word, isEarTrainingRound, isSpeedRound]);
+
+  // Speed round timer effect
+  useEffect(() => {
+    if (phase !== "speed" || selectedMeaningIndex !== null) return;
+
+    // Start timer
+    setTimerStartTime(Date.now());
+    beepTimesRef.current = new Set();
+
+    timerRef.current = window.setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 0) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          
+          // Play timeout beep
+          playBeep();
+          
+          // Handle timeout
+          setTimeout(() => {
+            if (onTimeout) onTimeout();
+            // Auto-advance with incorrect answer
+            onComplete(false, false, false, 0);
+          }, 1000);
+          
+          return 0;
+        }
+
+        // Play beep at 7s, 4s, 1s remaining
+        if ((prev === 7 || prev === 4 || prev === 1) && !beepTimesRef.current.has(prev)) {
+          beepTimesRef.current.add(prev);
+          playBeep();
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [phase, selectedMeaningIndex, onComplete, onTimeout]);
+
+  // Play beep sound
+  const playBeep = () => {
+    try {
+      const audio = new Audio();
+      audio.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKnn77RgGwU7k9n0yXUqBSh+zPLaizsKGGS56+mnUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBQ==";
+      audio.volume = 0.3;
+      audio.play().catch(() => {
+        // Silent fail if audio blocked
+      });
+    } catch {
+      // Fallback: silent
+    }
+  };
+
+  // Handler for "Hear it" button in ear-training mode
+  const handlePlayAudio = () => {
+    setAudioPlayed(true);
+    speakWord(word.word);
+  };
+
+  // Handler for ear-training IPA selection
+  const handleEarTrainingSelect = (index: number) => {
+    if (earTrainingCorrect !== null) return;
+    
+    const isCorrect = index === correctIPAIndex;
+    setEarTrainingCorrect(isCorrect);
+    
+    // Track phoneme difficulty
+    updatePhonemeStats(word.ipa, isCorrect);
+    
+    // Show minimal-pair hint if wrong
+    if (!isCorrect) {
+      const hint = getMinimalPairHint(word.ipa, ipaOptions[index]);
+      setMinimalPairHint(hint);
+    }
+    
+    // Play audio feedback
+    const cleanup = playAudio(
+      isCorrect ? "/audio/correct.mp3" : "/audio/wrong.mp3"
+    );
+
+    // Move to meaning phase after delay
+    setTimeout(() => {
+      cleanup();
+      setPhase("meaning");
+    }, isCorrect ? 1000 : 2500);
+  };
 
   const handleMeaningSelect = (index: number) => {
     if (selectedMeaningIndex !== null) return;
@@ -51,7 +172,35 @@ export default function WordCard({
     setSelectedMeaningIndex(index);
     const isCorrect = index === correctMeaningIndex;
     
-    // Speak the selected meaning
+    // For speed round, calculate bonus and complete immediately
+    if (phase === "speed") {
+      // Clear timer
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      const elapsedTime = timerStartTime ? (Date.now() - timerStartTime) / 1000 : 10;
+      let speedBonus = 0;
+      if (isCorrect) {
+        if (elapsedTime <= 4) speedBonus = 3;
+        else if (elapsedTime <= 10) speedBonus = 1;
+      }
+
+      // Play audio feedback
+      const cleanup = playAudio(
+        isCorrect ? "/audio/correct.mp3" : "/audio/wrong.mp3"
+      );
+
+      // Complete with speed bonus
+      setTimeout(() => {
+        cleanup();
+        onComplete(isCorrect, true, false, speedBonus); // Speed rounds skip IPA
+      }, 1000);
+      return;
+    }
+    
+    // Normal flow: speak meaning
     speakMeaning(meaningOptions[index]);
     
     // Play audio feedback
@@ -91,7 +240,8 @@ export default function WordCard({
   const handleNextWord = () => {
     const correctMeaning = selectedMeaningIndex === correctMeaningIndex;
     const correctIPA = selectedIPAIndex === correctIPAIndex;
-    onComplete(correctMeaning, correctIPA);
+    const earTrainingFirstTry = isEarTrainingRound && earTrainingCorrect === true;
+    onComplete(correctMeaning, correctIPA, earTrainingFirstTry);
   };
 
   const getButtonClass = (
@@ -145,19 +295,110 @@ export default function WordCard({
               isFlipped ? "invisible" : "visible"
             }`}
           >
+            {/* Speed Round Timer Bar */}
+            {phase === "speed" && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-2xl font-black text-orange-600 animate-pulse">
+                    ⏱️ SPEED ROUND!
+                  </span>
+                  <span className="text-2xl font-bold text-orange-600">
+                    {timeLeft}s
+                  </span>
+                </div>
+                <div className="w-full bg-gray-300 rounded-full h-4 shadow-inner overflow-hidden">
+                  <div
+                    className="bg-gradient-to-r from-orange-400 to-red-500 h-full transition-all duration-1000 ease-linear rounded-full"
+                    style={{
+                      width: `${(timeLeft / 10) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Word Display */}
             <div className="text-center mb-8">
               <div className="text-8xl mb-3 animate-bounce">{word.icon}</div>
               <h2 className="text-6xl font-black text-purple-600 mb-4 animate-pulse">
-                {word.word}
+                {phase === "ear-training" ? "???" : word.word}
               </h2>
               <p className="text-2xl text-gray-600 font-semibold">
-                {phase === "meaning" ? "What does it mean?" : "What's the IPA?"}
+                {phase === "speed"
+                  ? "⚡ Quick! What does it mean?"
+                  : phase === "ear-training" 
+                  ? "🔊 Listen and pick the IPA!" 
+                  : phase === "meaning" 
+                  ? "What does it mean?" 
+                  : "What's the IPA?"}
               </p>
             </div>
 
+            {/* Ear-Training: Hear It Button */}
+            {phase === "ear-training" && !audioPlayed && (
+              <div className="text-center mb-8">
+                <button
+                  onClick={handlePlayAudio}
+                  className="px-12 py-6 bg-gradient-to-r from-blue-400 to-purple-400 text-white text-3xl font-black rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400"
+                  aria-label="Play audio"
+                >
+                  🔊 Hear it!
+                </button>
+              </div>
+            )}
+
+            {/* Ear-Training: IPA Options (shown after audio plays) */}
+            {phase === "ear-training" && audioPlayed && (
+              <div className="space-y-4">
+                {ipaOptions.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleEarTrainingSelect(index)}
+                    disabled={earTrainingCorrect !== null}
+                    className={getButtonClass(
+                      index,
+                      earTrainingCorrect === null ? null : (earTrainingCorrect && index === correctIPAIndex ? index : earTrainingCorrect === false && index !== correctIPAIndex ? null : index),
+                      correctIPAIndex
+                    )}
+                    aria-label={`Option ${index + 1}: ${option}`}
+                    aria-pressed={earTrainingCorrect === null ? undefined : index === correctIPAIndex}
+                  >
+                    {option}
+                  </button>
+                ))}
+                
+                {/* Minimal-Pair Hint */}
+                {minimalPairHint && earTrainingCorrect === false && (
+                  <div className="mt-4 p-4 bg-yellow-100 rounded-xl border-2 border-yellow-400">
+                    <p className="text-lg font-bold text-yellow-800">
+                      💡 Hint: {minimalPairHint}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* MCQ Options */}
             <div className="space-y-4">
+              {/* Speed Round: Meaning Only */}
+              {phase === "speed" &&
+                meaningOptions.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleMeaningSelect(index)}
+                    disabled={selectedMeaningIndex !== null || timeLeft === 0}
+                    className={getButtonClass(
+                      index,
+                      selectedMeaningIndex,
+                      correctMeaningIndex
+                    )}
+                    aria-label={`Option ${index + 1}: ${option}`}
+                  >
+                    {option}
+                  </button>
+                ))}
+
+              {/* Normal: Meaning Phase */}
               {phase === "meaning" &&
                 meaningOptions.map((option, index) => (
                   <button

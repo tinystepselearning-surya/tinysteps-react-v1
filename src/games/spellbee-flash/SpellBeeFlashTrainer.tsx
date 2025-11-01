@@ -17,8 +17,26 @@ import {
   getMasteryData,
   updateMastery,
   checkBadges,
-  calculateCoins
+  calculateCoins,
+  getFixUpWords,
+  saveFixUpReport,
+  type FixUpReport,
+  loadQuests,
+  saveQuests,
+  updateQuestProgress,
+  type QuestsState,
+  saveMasteryDataDebounced,
+  saveCoinsDebounced,
+  logEvent
 } from "./utils";
+import QuestsPanel from "./QuestsPanel";
+import DebugPanel from "./DebugPanel";
+import { 
+  clearAllTimers, 
+  primeAudio, 
+  primeSpeech,
+  flushDebouncedWrites 
+} from "./helpers";
 
 export const gameMeta = {
   slug: "spellbee-flash",
@@ -28,24 +46,61 @@ export const gameMeta = {
   icon: "🧠"
 };
 
+type GameMode = "normal" | "fixup";
+
 export default function SpellBeeFlashTrainer() {
+  // Check for debug mode from URL
+  const isDebugMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "1";
+  
   // Game state
+  const [gameMode, setGameMode] = useState<GameMode>("normal");
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [totalCoins, setTotalCoins] = useState(getTotalCoins());
+  const [sessionStartCoins] = useState(getTotalCoins()); // Track coins at start
   const [newBadge, setNewBadge] = useState<string | null>(null);
   const [showBrainBreak, setShowBrainBreak] = useState(false);
   const [sparkEffect, setSparkEffect] = useState(false);
+  const [recentMistakes, setRecentMistakes] = useState<number[]>([]);
+  const [fixUpReport, setFixUpReport] = useState<FixUpReport | null>(null);
+  const [questsState, setQuestsState] = useState<QuestsState>(() => loadQuests());
+  const [questCelebration, setQuestCelebration] = useState<string | null>(null);
 
-  // Shuffle words once on mount
-  const shuffledWords = useMemo(() => shuffle(WORDS), []);
+  // Shuffle words once on mount (or use fix-up words)
+  const shuffledWords = useMemo(() => {
+    if (gameMode === "fixup") {
+      const fixUpIndices = getFixUpWords(recentMistakes, WORDS.length);
+      logEvent("fixup_start", { wordCount: fixUpIndices.length });
+      return fixUpIndices.map((idx) => WORDS[idx]);
+    }
+    return shuffle(WORDS);
+  }, [gameMode, recentMistakes]);
 
-  // Initialize speech synthesis on mount
+  // Initialize speech synthesis and audio on mount + cleanup on unmount
   useEffect(() => {
     initializeSpeech();
+    
+    // Pre-warm audio after first user gesture
+    const handleFirstClick = () => {
+      primeAudio();
+      const result = primeSpeech();
+      if (!result.success && result.message) {
+        // Could show a toast here if needed
+        console.info(result.message);
+      }
+      document.removeEventListener("click", handleFirstClick);
+    };
+    document.addEventListener("click", handleFirstClick, { once: true });
+    
+    // Cleanup: flush debounced writes and clear timers
+    return () => {
+      flushDebouncedWrites();
+      clearAllTimers();
+      document.removeEventListener("click", handleFirstClick);
+    };
   }, []);
 
   // Current word
@@ -76,13 +131,60 @@ export default function SpellBeeFlashTrainer() {
     return generateMCQOptions(allIPAs, currentWord.ipa, 3);
   }, [currentWord]);
 
+  // Helper to update quests
+  const updateQuest = (questId: string, increment: number) => {
+    setQuestsState((prev) => {
+      const updatedQuests = updateQuestProgress(prev.quests, questId, increment);
+      const newState = { ...prev, quests: updatedQuests };
+      
+      // Check if quest just completed
+      const justCompleted = updatedQuests.find(
+        (q) => q.id === questId && q.done && prev.quests.find((pq) => pq.id === questId && !pq.done)
+      );
+      if (justCompleted) {
+        setQuestCelebration(justCompleted.icon);
+        setTimeout(() => setQuestCelebration(null), 3000);
+        logEvent("quest_progress", { questId, completed: true });
+      } else {
+        const quest = updatedQuests.find((q) => q.id === questId);
+        if (quest) {
+          logEvent("quest_progress", { questId, progress: quest.progress, target: quest.target });
+        }
+      }
+      
+      saveQuests(newState);
+      return newState;
+    });
+  };
+
   // Handle word completion
-  const handleWordComplete = (correctMeaning: boolean, correctIPA: boolean) => {
+  const handleWordComplete = (
+    correctMeaning: boolean, 
+    correctIPA: boolean, 
+    earTrainingBonus = false, 
+    speedBonus = 0
+  ) => {
+    // Log answer event
+    logEvent("answered", { 
+      word: currentWord.word,
+      correctMeaning, 
+      correctIPA,
+      earTrainingBonus,
+      speedBonus
+    });
+    
     // Update score
     let newScore = score;
     const correctCount = (correctMeaning ? 1 : 0) + (correctIPA ? 1 : 0);
     newScore += correctCount;
     setScore(newScore);
+
+    // Log correct/wrong
+    if (correctMeaning && correctIPA) {
+      logEvent("correct", { word: currentWord.word, bothCorrect: true });
+    } else {
+      logEvent("wrong", { word: currentWord.word, correctMeaning, correctIPA });
+    }
 
     // Update streak
     const bothCorrect = correctMeaning && correctIPA;
@@ -94,8 +196,8 @@ export default function SpellBeeFlashTrainer() {
       newMaxStreak = Math.max(maxStreak, newStreak);
       setMaxStreak(newMaxStreak);
       
-      // Spark effect for streak milestones
-      if (newStreak === 5 || newStreak === 10 || newStreak === 15) {
+      // Spark effect for streak milestones (including speed bonus)
+      if (newStreak === 5 || newStreak === 10 || newStreak === 15 || speedBonus === 3) {
         setSparkEffect(true);
         setTimeout(() => setSparkEffect(false), 2000);
       }
@@ -103,18 +205,54 @@ export default function SpellBeeFlashTrainer() {
       setStreak(0);
     }
 
-    // Calculate and award coins (10 coins per correct answer + streak bonus)
-    const earnedCoins = calculateCoins(correctCount, newStreak);
+    // Calculate and award coins (10 coins per correct + streak bonus + ear-training + speed bonus)
+    let earnedCoins = calculateCoins(correctCount, newStreak);
+    if (earTrainingBonus) {
+      earnedCoins += 5; // Bonus 5 coins for first-try ear-training success
+    }
+    earnedCoins += speedBonus; // Speed bonus: 0, 1, or 3 coins
     if (earnedCoins > 0) {
       const newTotal = addCoins(earnedCoins);
       setTotalCoins(newTotal);
+      saveCoinsDebounced(newTotal); // Debounced save
+      
+      // Update coin quest
+      updateQuest("coins_25", earnedCoins);
+    }
+
+    // Update quests based on performance
+    if (newStreak >= 5) {
+      updateQuest("streak_5", 1);
+    }
+    if (speedBonus === 3) {
+      logEvent("speed_bonus", { word: currentWord.word, bonus: speedBonus });
+      updateQuest("speed_2", 1);
+    }
+    if (correctIPA) {
+      updateQuest("ipa_3", 1);
     }
 
     // Update mastery for this word
     const wordIndex = WORDS.findIndex((w: { word: string }) => w.word === currentWord.word);
     if (wordIndex !== -1) {
       const masteryData = getMasteryData();
-      updateMastery(wordIndex, bothCorrect, masteryData);
+      const prevMastery = masteryData.get(wordIndex);
+      const updatedMastery = updateMastery(wordIndex, bothCorrect, masteryData);
+      saveMasteryDataDebounced(updatedMastery); // Debounced save
+      
+      // Check if word was just mastered
+      const mastery = updatedMastery.get(wordIndex);
+      if (mastery && mastery.mastered && mastery.correct === 3) {
+        logEvent("bucket_up", { word: currentWord.word, bucket: "mastered" });
+        updateQuest("master_3", 1);
+      } else if (mastery && prevMastery && mastery.correct < prevMastery.correct) {
+        logEvent("bucket_down", { word: currentWord.word, correct: mastery.correct });
+      }
+      
+      // Track mistakes for fix-up mode (only in normal mode)
+      if (!bothCorrect && gameMode === "normal") {
+        setRecentMistakes((prev) => [...prev, wordIndex]);
+      }
     }
 
     // Check for new badges
@@ -135,15 +273,38 @@ export default function SpellBeeFlashTrainer() {
       // Game completed
       setCompleted(true);
       
-      // Save progress
-      const accuracy = Math.round((newScore / (shuffledWords.length * 2)) * 100);
-      saveProgress({
-        score: newScore,
-        totalWords: shuffledWords.length,
-        accuracy,
-        streak: newMaxStreak,
-        completedAt: new Date().toISOString(),
-      });
+      // Save progress (normal mode)
+      if (gameMode === "normal") {
+        const accuracy = Math.round((newScore / (shuffledWords.length * 2)) * 100);
+        saveProgress({
+          score: newScore,
+          totalWords: shuffledWords.length,
+          accuracy,
+          streak: newMaxStreak,
+          completedAt: new Date().toISOString(),
+        });
+      } else if (gameMode === "fixup") {
+        // Save fix-up report
+        const fixUpIndices = getFixUpWords(recentMistakes, WORDS.length);
+        const report: FixUpReport = {
+          wordIds: fixUpIndices,
+          correct: newScore,
+          wrong: shuffledWords.length * 2 - newScore,
+          timestamp: new Date().toISOString(),
+        };
+        saveFixUpReport(report);
+        setFixUpReport(report);
+        
+        // Award badge if 4/5 correct
+        if (newScore >= 8) { // 4 out of 5 words (2 questions each)
+          setNewBadge("🩹 Fix-Up Hero!");
+          setTimeout(() => setNewBadge(null), 3000);
+        }
+        
+        // Update fix-up quest
+        updateQuest("fixup_1", 1);
+        logEvent("fixup_finish", { correct: newScore, wrong: shuffledWords.length * 2 - newScore });
+      }
     } else {
       setCurrentWordIndex(nextIndex);
     }
@@ -151,6 +312,19 @@ export default function SpellBeeFlashTrainer() {
 
   // Handle play again
   const handlePlayAgain = () => {
+    setGameMode("normal");
+    setCurrentWordIndex(0);
+    setScore(0);
+    setStreak(0);
+    setMaxStreak(0);
+    setCompleted(false);
+    setRecentMistakes([]);
+    setFixUpReport(null);
+  };
+
+  // Handle fix-up mode start
+  const handleStartFixUp = () => {
+    setGameMode("fixup");
     setCurrentWordIndex(0);
     setScore(0);
     setStreak(0);
@@ -165,19 +339,45 @@ export default function SpellBeeFlashTrainer() {
 
   // Render summary screen if completed
   if (completed) {
+    const coinsEarned = totalCoins - sessionStartCoins;
+    const sessionWordsList = shuffledWords.map((w) => w.word);
+    
     return (
       <SummaryScreen
         score={score}
         totalWords={shuffledWords.length}
         streak={maxStreak}
+        mistakeCount={gameMode === "normal" ? recentMistakes.length : 0}
+        fixUpReport={gameMode === "fixup" ? fixUpReport : null}
+        sessionWords={sessionWordsList}
+        coinsEarned={coinsEarned}
+        totalCoins={totalCoins}
         onPlayAgain={handlePlayAgain}
         onExit={handleExit}
+        onStartFixUp={gameMode === "normal" && recentMistakes.length > 0 ? handleStartFixUp : undefined}
+        onCoinsUpdate={setTotalCoins}
       />
     );
   }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 py-8 px-4">
+      {/* Quests Panel */}
+      <QuestsPanel quests={questsState.quests} />
+
+      {/* Quest Celebration Toast */}
+      {questCelebration && (
+        <div 
+          className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 animate-bounce"
+          role="alert"
+          aria-live="polite"
+        >
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full shadow-2xl text-2xl font-bold">
+            {questCelebration} Quest Complete!
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -191,10 +391,16 @@ export default function SpellBeeFlashTrainer() {
 
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-black text-purple-600 mb-2">
-              🐝 SpellBee Flash Trainer
+              {gameMode === "fixup" ? "🩹 Fix-Up Mode" : "🐝 SpellBee Flash Trainer"}
             </h1>
             <p className="text-xl text-purple-700 font-semibold">
-              Learn words, meanings & IPA symbols!
+              {gameMode === "fixup"
+                ? "Let's master tricky words!"
+                : (currentWordIndex + 1) % 5 === 0
+                ? "⚡ SPEED ROUND - Be Quick!"
+                : (currentWordIndex + 1) % 3 === 0 
+                ? "🔊 Ear-Training Round!" 
+                : "Learn words, meanings & IPA symbols!"}
             </p>
           </div>
 
@@ -221,14 +427,20 @@ export default function SpellBeeFlashTrainer() {
         {/* Progress Bar */}
         <div className="bg-white rounded-full h-4 shadow-inner overflow-hidden">
           <div
-            className="bg-gradient-to-r from-green-400 to-blue-400 h-full transition-all duration-500 rounded-full"
+            className={`h-full transition-all duration-500 rounded-full ${
+              gameMode === "fixup" 
+                ? "bg-gradient-to-r from-yellow-400 to-orange-400" 
+                : "bg-gradient-to-r from-green-400 to-blue-400"
+            }`}
             style={{
               width: `${((currentWordIndex + 1) / shuffledWords.length) * 100}%`,
             }}
           />
         </div>
         <p className="text-center text-purple-700 font-bold mt-2">
-          Word {currentWordIndex + 1} of {shuffledWords.length}
+          {gameMode === "fixup" 
+            ? `Practice ${currentWordIndex + 1} of ${shuffledWords.length}`
+            : `Word ${currentWordIndex + 1} of ${shuffledWords.length}`}
         </p>
       </div>
 
@@ -242,7 +454,11 @@ export default function SpellBeeFlashTrainer() {
 
       {/* New Badge Notification */}
       {newBadge && (
-        <div className="fixed top-24 right-8 z-50 bg-gradient-to-r from-yellow-300 to-orange-400 text-white px-8 py-4 rounded-2xl shadow-2xl transform animate-bounce">
+        <div 
+          className="fixed top-24 right-8 z-50 bg-gradient-to-r from-yellow-300 to-orange-400 text-white px-8 py-4 rounded-2xl shadow-2xl transform animate-bounce"
+          role="alert"
+          aria-live="polite"
+        >
           <p className="text-2xl font-black">New Badge!</p>
           <p className="text-3xl mt-2">{newBadge}</p>
         </div>
@@ -250,19 +466,25 @@ export default function SpellBeeFlashTrainer() {
 
       {/* Brain Break Modal */}
       {showBrainBreak && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="brain-break-title"
+        >
           <div className="bg-white rounded-3xl p-12 max-w-2xl text-center shadow-2xl transform animate-bounce">
-            <div className="text-8xl mb-6">🧘‍♀️</div>
-            <h2 className="text-5xl font-black text-purple-600 mb-4">Brain Break!</h2>
+            <div className="text-8xl mb-6" aria-hidden="true">🧘‍♀️</div>
+            <h2 id="brain-break-title" className="text-5xl font-black text-purple-600 mb-4">Brain Break!</h2>
             <p className="text-2xl text-purple-700 mb-8">
               Great job! Take a deep breath and stretch your arms up high! 🙌
             </p>
-            <p className="text-xl text-purple-600 mb-8">
+            <p className="text-xl text-purple-600 mb-8" aria-live="polite">
               You've learned 12 words! Ready to continue?
             </p>
             <button
               onClick={() => setShowBrainBreak(false)}
               className="px-12 py-6 bg-gradient-to-r from-green-400 to-blue-400 text-white text-2xl font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400"
+              aria-label="Continue to next word"
             >
               Let's Go! 🚀
             </button>
@@ -279,7 +501,14 @@ export default function SpellBeeFlashTrainer() {
         correctMeaningIndex={meaningMCQ.correctIndex}
         correctIPAIndex={ipaMCQ.correctIndex}
         masteryLevel={currentWordMastery}
+        isSpeedRound={gameMode === "normal" && (currentWordIndex + 1) % 5 === 0}
+        isEarTrainingRound={gameMode === "normal" && (currentWordIndex + 1) % 3 === 0 && (currentWordIndex + 1) % 5 !== 0}
         onComplete={handleWordComplete}
+        onTimeout={() => {
+          // Speed round timeout - show brief message
+          setNewBadge("⏱️ Time's Up!");
+          setTimeout(() => setNewBadge(null), 2000);
+        }}
       />
 
       {/* Fun Motivational Messages */}
@@ -294,6 +523,9 @@ export default function SpellBeeFlashTrainer() {
           </p>
         </div>
       </div>
+
+      {/* Debug Panel (only in debug mode) */}
+      {isDebugMode && <DebugPanel />}
     </div>
   );
 }
