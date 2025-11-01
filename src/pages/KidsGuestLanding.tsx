@@ -11,16 +11,8 @@ type PlanetLink = {
   orbit: string;
   color: 'blue' | 'purple' | 'pink';
   animation: 'bounce' | 'pulse' | 'float';
-} & (
-  | {
-      to: string;
-      href?: never;
-    }
-  | {
-      href: string;
-      to?: never;
-    }
-);
+  to: string;
+};
 
 export default function KidsGuestLanding() {
   const speechRef = useRef<HTMLDivElement | null>(null);
@@ -214,39 +206,29 @@ export default function KidsGuestLanding() {
           </div>
           
           <div className="kids-atlas">
-            {planetLinks.map((planet) => {
-              const LinkComponent = "to" in planet ? Link : "a";
-              const linkProps = "to" in planet 
-                ? { to: planet.to } 
-                : { href: planet.href, target: "_blank", rel: "noreferrer" };
-
-              return (
-                <LinkComponent
-                  key={planet.label}
-                  {...linkProps}
-                  className={`kids-planet kids-planet--${planet.color} kids-planet--${planet.animation} ${planet.orbit}`}
-                >
-                  <div className="kids-planet__content">
-                    <div className="kids-planet__inner">
-                      <span className="kids-planet__emoji" role="img" aria-hidden="true">
-                        {planet.emoji}
-                      </span>
-                      <h2 className="kids-planet__label">{planet.label}</h2>
-                      <p className="kids-planet__description">{planet.description}</p>
-                      {planet.label === "Play Games!" && (
-                        <span className="kids-planet__badge">Free!</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="kids-planet__effects">
-                    <span className="kids-planet__glow" aria-hidden />
-                    <span className="kids-planet__sparkles" aria-hidden />
-                    <span className="kids-planet__rings" aria-hidden />
-                    <span className="kids-planet__orbit" aria-hidden />
-                  </div>
-                </LinkComponent>
-              );
-            })}
+            {planetLinks.map((planet) => (
+              <Link
+                key={planet.label}
+                to={planet.to}
+                className={`kids-planet kids-planet--${planet.color} kids-planet--${planet.animation} ${planet.orbit}`}
+              >
+                <div className="kids-planet__content">
+                  <span className="kids-planet__emoji" role="img" aria-hidden="true">
+                    {planet.emoji}
+                  </span>
+                  <h2 className="kids-planet__label">{planet.label}</h2>
+                  <p className="kids-planet__description">{planet.description}</p>
+                  {planet.label === "Play Games!" && (
+                    <span className="kids-planet__badge">Free!</span>
+                  )}
+                </div>
+                <div className="kids-planet__effects">
+                  <span className="kids-planet__glow" aria-hidden />
+                  <span className="kids-planet__sparkles" aria-hidden />
+                  <span className="kids-planet__rings" aria-hidden />
+                </div>
+              </Link>
+            ))}
           </div>
         </section>
       </main>
