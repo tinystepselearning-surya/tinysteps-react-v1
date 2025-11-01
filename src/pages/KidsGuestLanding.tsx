@@ -1,18 +1,26 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import "../styles/kids.css";
+import "../styles/kids-landing.css";
+import "../styles/kids-planets.css";
 
-type PlanetLink =
+type PlanetLink = {
+  label: string;
+  description: string;
+  emoji: string;
+  orbit: string;
+  color: 'blue' | 'purple' | 'pink';
+  animation: 'bounce' | 'pulse' | 'float';
+} & (
   | {
-      label: string;
-      orbit: string;
       to: string;
+      href?: never;
     }
   | {
-      label: string;
-      orbit: string;
       href: string;
-    };
+      to?: never;
+    }
+);
 
 export default function KidsGuestLanding() {
   const speechRef = useRef<HTMLDivElement | null>(null);
@@ -157,19 +165,31 @@ export default function KidsGuestLanding() {
 
   const planetLinks: PlanetLink[] = [
     {
-      label: "Play Games",
+      label: "Play Games!",
+      description: "🎮 Fun learning games",
+      emoji: "🎮",
       orbit: "orbit-one",
-      to: "/games/spellbee-grade1",
+      to: "/kids/games",
+      color: "blue",
+      animation: "bounce"
     },
     {
-      label: "Listen & Read Stories",
+      label: "Member Login",
+      description: "👋 Welcome back!",
+      emoji: "🌟",
       orbit: "orbit-two",
-      href: "https://tinystepslearning.com/resources/story-prompts.pdf",
+      to: "/login/kids",
+      color: "purple",
+      animation: "pulse"
     },
     {
-      label: "Digital Worksheets",
+      label: "Parent Zone",
+      description: "👥 For parents",
+      emoji: "🏠",
       orbit: "orbit-three",
-      href: "https://tinystepslearning.com/resources/blend-busters.pdf",
+      to: "/login/parents",
+      color: "pink",
+      animation: "float"
     },
   ];
 
@@ -188,28 +208,43 @@ export default function KidsGuestLanding() {
 
       <main>
         <section className="kids-hero" aria-label="Welcome">
-          <h1>Welcome to the Kids Zone 🚀</h1>
+          <div className="kids-welcome">
+            <h1 className="text-4xl font-bold text-white mb-4">Welcome to Tiny Steps! 🚀</h1>
+            <p className="text-xl text-blue-200 mb-8">Start your learning adventure!</p>
+          </div>
+          
           <div className="kids-atlas">
             {planetLinks.map((planet) => {
-              if ("to" in planet) {
-                return (
-                  <Link key={planet.label} to={planet.to} className={`kids-planet ${planet.orbit}`}>
-                    <span className="kids-planet__glow" aria-hidden />
-                    <span className="kids-planet__label">{planet.label}</span>
-                  </Link>
-                );
-              }
+              const LinkComponent = "to" in planet ? Link : "a";
+              const linkProps = "to" in planet 
+                ? { to: planet.to } 
+                : { href: planet.href, target: "_blank", rel: "noreferrer" };
+
               return (
-                <a
+                <LinkComponent
                   key={planet.label}
-                  href={planet.href}
-                  className={`kids-planet ${planet.orbit}`}
-                  target="_blank"
-                  rel="noreferrer"
+                  {...linkProps}
+                  className={`kids-planet kids-planet--${planet.color} kids-planet--${planet.animation} ${planet.orbit}`}
                 >
-                  <span className="kids-planet__glow" aria-hidden />
-                  <span className="kids-planet__label">{planet.label}</span>
-                </a>
+                  <div className="kids-planet__content">
+                    <div className="kids-planet__inner">
+                      <span className="kids-planet__emoji" role="img" aria-hidden="true">
+                        {planet.emoji}
+                      </span>
+                      <h2 className="kids-planet__label">{planet.label}</h2>
+                      <p className="kids-planet__description">{planet.description}</p>
+                      {planet.label === "Play Games!" && (
+                        <span className="kids-planet__badge">Free!</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="kids-planet__effects">
+                    <span className="kids-planet__glow" aria-hidden />
+                    <span className="kids-planet__sparkles" aria-hidden />
+                    <span className="kids-planet__rings" aria-hidden />
+                    <span className="kids-planet__orbit" aria-hidden />
+                  </div>
+                </LinkComponent>
               );
             })}
           </div>

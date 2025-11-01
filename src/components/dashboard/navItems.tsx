@@ -74,7 +74,7 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavBaseItem[] = [
   { key: "classes", label: "Teacher view", icon: calendarIcon, href: "/roles/teacher" },
   { key: "groups", label: "Learning managers", icon: usersIcon, href: "/roles/rm" },
   { key: "parents", label: "Parents", icon: reportIcon, href: "/parents" },
-  { key: "kids", label: "Kids arena", icon: bookIcon, href: "/roles/kids" },
+  { key: "kids", label: "Kids Zone", icon: bookIcon, href: "/kids" },
   { key: "homework", label: "Homework", icon: clipboardIcon, badge: "7" },
   { key: "payouts", label: "Payouts", icon: walletIcon },
   { key: "faqs", label: "FAQs", icon: helpIcon },

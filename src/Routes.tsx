@@ -15,8 +15,8 @@ import LearningManagerPortal from "./pages/roles/LearningManagerPortal";
 import KidsPortal from "./pages/roles/KidsPortal";
 import BlogIndex from "./pages/blog/BlogIndex";
 import BlogArticle from "./pages/blog/BlogArticle";
+import GamesGallery from "./pages/games/GamesGallery";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
-import SpellbeeGrade1Game from "./pages/games/SpellbeeGrade1";
 
 export default function AppRoutes() {
   return (
@@ -32,13 +32,13 @@ export default function AppRoutes() {
         <Route path="/courses/public-speaking" element={<PublicSpeaking />} />
 
         {/* Extras */}
+        {/* Kids Zone Routes */}
         <Route path="/kids" element={<KidsGuestLanding />} />
+        <Route path="/kids/games" element={<GamesGallery />} />
         <Route path="/parents" element={<Navigate to="/guest/parents" replace />} />
         <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
-        <Route path="/games/spellbee-grade1" element={<SpellbeeGrade1Game />} />
-        <Route path="/games/spellbee-grade1/" element={<SpellbeeGrade1Game />} />
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogArticle />} />
         <Route path="/blog/:slug/" element={<BlogArticle />} />
