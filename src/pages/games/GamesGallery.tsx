@@ -5,6 +5,7 @@ import { gameMeta as spellBeeGameMeta } from "../../games/spellbee-flash";
 import { gameMeta as meaningMatchGameMeta } from "../../games/meaning-match";
 import { gameMeta as balloonPopGameMeta } from "../../games/balloon-pop";
 import { gameMeta as quickMeaningMeta } from "../../games/quick-meaning-quiz";
+import { gameMeta as bossLevelMeta } from "../../games/boss-level";
 
 const iconClass = "h-5 w-5";
 const bookIcon: ReactNode = (
@@ -39,6 +40,16 @@ const GAME_LIBRARY: GameCard[] = [
     level: "Grade 1-2",
     duration: "5 mins",
     description: "Race against time to find rhyming word pairs. Fun with word families!",
+  },
+  {
+    id: bossLevelMeta.slug,
+    title: bossLevelMeta.title,
+    level: "Grade 1-2",
+    duration: "7 mins",
+    description: bossLevelMeta.description,
+    badge: "Boss!",
+    launchHref: `/kids/games/${bossLevelMeta.slug}`,
+    launchLabel: "Play"
   },
   {
     id: quickMeaningMeta.slug,
