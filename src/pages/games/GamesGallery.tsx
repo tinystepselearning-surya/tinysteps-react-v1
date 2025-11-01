@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import DashboardShell from "../../components/dashboard/DashboardShell";
 import type { ReactNode } from "react";
+import { gameMeta } from "../../games/spellbee-flash";
 
 const iconClass = "h-5 w-5";
 const bookIcon: ReactNode = (
@@ -35,6 +36,16 @@ const GAME_LIBRARY: GameCard[] = [
     level: "Grade 1-2",
     duration: "5 mins",
     description: "Race against time to find rhyming word pairs. Fun with word families!",
+  },
+  {
+    id: gameMeta.slug,
+    title: gameMeta.title,
+    level: "Grade 1-3",
+    duration: "15 mins",
+    description: gameMeta.description,
+    badge: "New!",
+    launchHref: `/kids/games/${gameMeta.slug}`,
+    launchLabel: "Play"
   }
 ];
 

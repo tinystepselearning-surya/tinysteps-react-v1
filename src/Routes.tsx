@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import AppLayout from "./layouts/AppLayout";
 import Home from "./pages/Home";
 import AllCourses from "./pages/courses/All";
@@ -18,6 +19,8 @@ import BlogArticle from "./pages/blog/BlogArticle";
 import GamesGallery from "./pages/games/GamesGallery";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
 
+const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -35,6 +38,14 @@ export default function AppRoutes() {
         {/* Kids Zone Routes */}
         <Route path="/kids" element={<KidsGuestLanding />} />
         <Route path="/kids/games" element={<GamesGallery />} />
+        <Route 
+          path="/kids/games/spellbee-flash" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading game…</div>}>
+              <SpellBeeFlashTrainer />
+            </Suspense>
+          } 
+        />
         <Route path="/parents" element={<Navigate to="/guest/parents" replace />} />
         <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/pricing" element={<Pricing />} />
