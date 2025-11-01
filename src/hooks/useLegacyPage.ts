@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type LegacyScript = {
   src: string;
@@ -79,6 +79,7 @@ export function useLegacyPage(options: LegacyOptions): LegacyState {
   const [state, setState] = useState<LegacyState>({ html: "", error: null, loading: true });
   const scriptsCleanupRef = useRef<() => void>(() => undefined);
   const bodyClassRef = useRef<string>("");
+  const stylesKey = useMemo(() => styles.join("|"), [styles]);
 
   useEffect(() => {
     const cleanup = ensureStyles(styles);
@@ -87,9 +88,16 @@ export function useLegacyPage(options: LegacyOptions): LegacyState {
       scriptsCleanupRef.current?.();
       scriptsCleanupRef.current = () => undefined;
     };
-  }, [styles.join("|")]);
+  }, [stylesKey, styles]);
 
   useEffect(() => {
+    if (!path) {
+      setState({ html: "", error: null, loading: false });
+      return () => {
+        scriptsCleanupRef.current?.();
+        scriptsCleanupRef.current = () => undefined;
+      };
+    }
     let cancelled = false;
     const controller = new AbortController();
 
@@ -127,7 +135,7 @@ export function useLegacyPage(options: LegacyOptions): LegacyState {
       scriptsCleanupRef.current?.();
       scriptsCleanupRef.current = () => undefined;
     };
-  }, [path, titleFallback]);
+  }, [path, titleFallback, transform]);
 
   useEffect(() => {
     if (!state.html || state.error) return;

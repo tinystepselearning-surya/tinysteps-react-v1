@@ -41,27 +41,13 @@ export default function Hero() {
             Live online classes for ages 3–10 • Phonics • Grammar • Public speaking • Free trial with digital worksheets and
             joyful Wordwall practice.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 inline-flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/#book-trial"
-              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-extrabold uppercase tracking-[0.18em] text-[#e05c0a] shadow-lg shadow-black/30 transition hover:-translate-y-0.5"
+              to="/login/parents"
+              className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-extrabold uppercase tracking-[0.18em] text-[#e05c0a] shadow-lg shadow-black/30 transition hover:-translate-y-0.5 text-center"
             >
-              I’m a Parent – Book Free Trial
+              Book a parent trial
             </Link>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <Link
-                to="/roles/teacher"
-                className="inline-flex items-center justify-center rounded-full border border-white/70 px-6 py-3 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
-              >
-                I’m a Teacher
-              </Link>
-              <Link
-                to="/roles/rm"
-                className="inline-flex items-center justify-center rounded-full border border-white/70 px-6 py-3 text-base font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/10"
-              >
-                I’m an RM
-              </Link>
-            </div>
           </div>
         </div>
       </div>

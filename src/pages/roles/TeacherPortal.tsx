@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardShell from "../../components/dashboard/DashboardShell";
 import { buildNavItems } from "../../components/dashboard/navItems";
 
@@ -148,6 +149,16 @@ function StatusBadge({ status }: { status: ReportStatus }) {
 }
 
 export default function TeacherPortal() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const role = window.sessionStorage.getItem("tinysteps-role");
+    if (role !== "teachers") {
+      navigate("/login/teachers", { replace: true });
+    }
+  }, [navigate]);
+
   const [activeTab, setActiveTab] = useState<(typeof TAB_ORDER)[number]["key"]>("pending");
   const [query, setQuery] = useState("");
 

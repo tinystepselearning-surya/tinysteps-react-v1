@@ -8,12 +8,15 @@ import PublicSpeaking from "./pages/courses/PublicSpeaking";
 import Pricing from "./pages/Pricing";
 import Curriculum from "./pages/Curriculum";
 import FAQ from "./pages/FAQ";
-import Parents from "./pages/Parents";
+import RoleLoginPage from "./pages/auth/RoleLogin";
+import GuestPortalPage from "./pages/auth/GuestPortal";
 import TeacherPortal from "./pages/roles/TeacherPortal";
 import LearningManagerPortal from "./pages/roles/LearningManagerPortal";
 import KidsPortal from "./pages/roles/KidsPortal";
 import BlogIndex from "./pages/blog/BlogIndex";
 import BlogArticle from "./pages/blog/BlogArticle";
+import KidsGuestLanding from "./pages/KidsGuestLanding";
+import SpellbeeGrade1Game from "./pages/games/SpellbeeGrade1";
 
 export default function AppRoutes() {
   return (
@@ -29,10 +32,13 @@ export default function AppRoutes() {
         <Route path="/courses/public-speaking" element={<PublicSpeaking />} />
 
         {/* Extras */}
-        <Route path="/parents" element={<Parents />} />
+        <Route path="/kids" element={<KidsGuestLanding />} />
+        <Route path="/parents" element={<Navigate to="/guest/parents" replace />} />
         <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/games/spellbee-grade1" element={<SpellbeeGrade1Game />} />
+        <Route path="/games/spellbee-grade1/" element={<SpellbeeGrade1Game />} />
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogArticle />} />
         <Route path="/blog/:slug/" element={<BlogArticle />} />
@@ -46,8 +52,12 @@ export default function AppRoutes() {
         <Route path="/roles/learning-manager/" element={<LearningManagerPortal />} />
         <Route path="/roles/kids" element={<KidsPortal />} />
         <Route path="/roles/kids/" element={<KidsPortal />} />
-        <Route path="/roles/kids" element={<KidsPortal />} />
-        <Route path="/roles/kids/" element={<KidsPortal />} />
+
+        {/* Auth */}
+        <Route path="/login" element={<Navigate to="/login/parents" replace />} />
+        <Route path="/login/:role" element={<RoleLoginPage />} />
+        <Route path="/guest" element={<Navigate to="/guest/parents" replace />} />
+        <Route path="/guest/:role" element={<GuestPortalPage />} />
 
         {/* Back-compat if you had /main/courses/... */}
         <Route path="/main/courses" element={<Navigate to="/courses" replace />} />

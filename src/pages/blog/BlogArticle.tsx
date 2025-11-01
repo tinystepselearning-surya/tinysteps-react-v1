@@ -92,11 +92,8 @@ export default function BlogArticle() {
   const params = useParams();
   const slugParam = params.slug ?? "";
   const slug = slugParam.replace(/\.html$/i, "");
-  const config = BLOG_PAGES[slug];
-
-  if (!config) {
-    return <Navigate to="/blog" replace />;
-  }
+  const hasConfig = Object.prototype.hasOwnProperty.call(BLOG_PAGES, slug);
+  const config = hasConfig ? BLOG_PAGES[slug as keyof typeof BLOG_PAGES] : null;
 
   const transform = (doc: Document) => {
     doc.querySelector("header.site-header")?.remove();
@@ -107,8 +104,14 @@ export default function BlogArticle() {
       "/main/courses/phonics/": "/courses/phonics",
       "/main/courses/grammar/": "/courses/grammar",
       "/main/courses/public-speaking/": "/courses/public-speaking",
-      "/roles/teacher/": "/roles/teacher",
-      "/roles/rm/": "/roles/rm",
+      "/roles/teacher/": "/login/teachers",
+      "/roles/teacher": "/login/teachers",
+      "/roles/rm/": "/login/learning-managers",
+      "/roles/rm": "/login/learning-managers",
+      "/roles/kids/": "/login/kids",
+      "/roles/kids": "/login/kids",
+      "/roles/parent/": "/login/parents",
+      "/roles/parent": "/login/parents",
       "/blog/": "/blog",
     };
 
@@ -120,13 +123,27 @@ export default function BlogArticle() {
     });
   };
 
-  const { html, loading, error } = useLegacyPage({
-    path: config.path,
-    styles: config.styles,
-    scripts: config.scripts,
-    titleFallback: config.fallbackTitle,
-    transform,
-  });
+  const { html, loading, error } = useLegacyPage(
+    config
+      ? {
+          path: config.path,
+          styles: config.styles,
+          scripts: config.scripts,
+          titleFallback: config.fallbackTitle,
+          transform,
+        }
+      : {
+          path: "",
+          styles: [],
+          scripts: [],
+          titleFallback: "",
+          transform,
+        },
+  );
+
+  if (!hasConfig) {
+    return <Navigate to="/blog" replace />;
+  }
 
   if (loading) {
     return (

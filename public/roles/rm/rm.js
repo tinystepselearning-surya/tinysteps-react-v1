@@ -495,14 +495,15 @@ async function openAssignModal(sid=null, data=null) {
     });
   }
 
+  const assignTitleEl = $("#assignTitle");
   if (sid && data) {
     sSel.value = sid;
     if (data.parentUid) pSel.value = data.parentUid;
     if (data.teacherId) tSel.value = data.teacherId;
     if (statusSel) statusSel.value = data.status || "active";
-    $("#assignTitle")?.textContent = "Reassign";
+    if (assignTitleEl) assignTitleEl.textContent = "Reassign";
   } else {
-    $("#assignTitle")?.textContent = "New Assignment";
+    if (assignTitleEl) assignTitleEl.textContent = "New Assignment";
   }
 
   if (assignModal?.showModal) assignModal.showModal();

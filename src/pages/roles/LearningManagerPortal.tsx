@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardShell from "../../components/dashboard/DashboardShell";
 import { buildNavItems } from "../../components/dashboard/navItems";
 
@@ -56,6 +57,16 @@ const CHECKLIST = [
 ];
 
 export default function LearningManagerPortal() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const role = window.sessionStorage.getItem("tinysteps-role");
+    if (role !== "learning-managers") {
+      navigate("/login/learning-managers", { replace: true });
+    }
+  }, [navigate]);
+
   const [activeTab, setActiveTab] = useState<OperationsTab>("pipeline");
 
   const scrollToId = useCallback((id: string) => {

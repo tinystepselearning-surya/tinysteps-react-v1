@@ -10,8 +10,14 @@ export default function BlogIndex() {
       "/main/courses/phonics/": "/courses/phonics",
       "/main/courses/grammar/": "/courses/grammar",
       "/main/courses/public-speaking/": "/courses/public-speaking",
-      "/roles/teacher/": "/roles/teacher",
-      "/roles/rm/": "/roles/rm",
+      "/roles/teacher/": "/login/teachers",
+      "/roles/teacher": "/login/teachers",
+      "/roles/rm/": "/login/learning-managers",
+      "/roles/rm": "/login/learning-managers",
+      "/roles/kids/": "/login/kids",
+      "/roles/kids": "/login/kids",
+      "/roles/parent/": "/login/parents",
+      "/roles/parent": "/login/parents",
       "/blog/": "/blog",
     };
 

@@ -7,9 +7,9 @@ import BackToTop from "../components/BackToTop";
 
 export default function AppLayout() {
   const location = useLocation();
-  const dashboardRoutes = ["/roles/teacher", "/roles/rm", "/roles/learning-manager", "/roles/kids", "/parents"];
+  const dashboardRoutes = ["/roles/teacher", "/roles/rm", "/roles/learning-manager", "/roles/kids"];
   const isDashboardRoute = dashboardRoutes.some((path) => location.pathname.startsWith(path));
-  const widgetHiddenRoutes = dashboardRoutes;
+  const widgetHiddenRoutes = [...dashboardRoutes, "/kids"];
   const hideWidget = widgetHiddenRoutes.some((path) => location.pathname.startsWith(path));
 
   useEffect(() => {
