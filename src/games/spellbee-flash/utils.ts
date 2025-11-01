@@ -164,6 +164,24 @@ export function speakIPA(ipa: string): () => void {
 }
 
 /**
+ * Speak positive feedback (replaces correct.mp3)
+ */
+export function speakCorrect(): () => void {
+  const phrases = ["Great job!", "Excellent!", "Perfect!", "Well done!", "Amazing!"];
+  const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+  return speakText(randomPhrase, { rate: 1.0, pitch: 1.2, volume: 0.9 });
+}
+
+/**
+ * Speak encouraging feedback (replaces wrong.mp3)
+ */
+export function speakWrong(): () => void {
+  const phrases = ["Try again!", "Almost there!", "Keep trying!", "You can do it!"];
+  const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+  return speakText(randomPhrase, { rate: 0.9, pitch: 1.1, volume: 0.8 });
+}
+
+/**
  * Initialize voices (call this on app mount)
  */
 export function initializeSpeech(): void {

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { Word } from "./data";
-import { playAudio, speakWord, speakMeaning, speakIPA, updatePhonemeStats, getMinimalPairHint } from "./utils";
+import { speakWord, speakMeaning, speakIPA, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPairHint } from "./utils";
 
 export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed" | "reveal";
 
@@ -154,10 +154,8 @@ export default function WordCard({
       setMinimalPairHint(hint);
     }
     
-    // Play audio feedback
-    const cleanup = playAudio(
-      isCorrect ? "/audio/correct.mp3" : "/audio/wrong.mp3"
-    );
+    // Play audio feedback with speech
+    const cleanup = isCorrect ? speakCorrect() : speakWrong();
 
     // Move to meaning phase after delay
     setTimeout(() => {
@@ -187,10 +185,8 @@ export default function WordCard({
         else if (elapsedTime <= 10) speedBonus = 1;
       }
 
-      // Play audio feedback
-      const cleanup = playAudio(
-        isCorrect ? "/audio/correct.mp3" : "/audio/wrong.mp3"
-      );
+      // Play audio feedback with speech
+      const cleanup = isCorrect ? speakCorrect() : speakWrong();
 
       // Complete with speed bonus
       setTimeout(() => {
@@ -203,10 +199,8 @@ export default function WordCard({
     // Normal flow: speak meaning
     speakMeaning(meaningOptions[index]);
     
-    // Play audio feedback
-    const cleanup = playAudio(
-      isCorrect ? "/audio/correct.mp3" : "/audio/wrong.mp3"
-    );
+    // Play audio feedback with speech
+    const cleanup = isCorrect ? speakCorrect() : speakWrong();
 
     // Move to IPA phase after delay
     setTimeout(() => {
@@ -224,10 +218,8 @@ export default function WordCard({
     // Speak the selected IPA
     speakIPA(ipaOptions[index]);
     
-    // Play audio feedback
-    const cleanup = playAudio(
-      isCorrect ? "/audio/correct.mp3" : "/audio/wrong.mp3"
-    );
+    // Play audio feedback with speech
+    const cleanup = isCorrect ? speakCorrect() : speakWrong();
 
     // Move to reveal phase after delay
     setTimeout(() => {
