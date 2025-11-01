@@ -20,6 +20,7 @@ import GamesGallery from "./pages/games/GamesGallery";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
 
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
+const MeaningMatchGame = lazy(() => import("./games/meaning-match"));
 
 export default function AppRoutes() {
   return (
@@ -43,6 +44,14 @@ export default function AppRoutes() {
           element={
             <Suspense fallback={<div className="p-6">Loading game…</div>}>
               <SpellBeeFlashTrainer />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/kids/games/meaning-match" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading game…</div>}>
+              <MeaningMatchGame />
             </Suspense>
           } 
         />
