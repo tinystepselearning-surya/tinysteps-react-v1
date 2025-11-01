@@ -21,6 +21,11 @@ import {
 import { OptionButton } from "./OptionButton";
 import { HUD } from "./HUD";
 import { EndSummary } from "./EndSummary";
+import SoundGate from "../shared/SoundGate";
+import SoundControl from "../shared/SoundControl";
+import DyslexiaToggle from "../shared/DyslexiaToggle";
+import { createAnnouncer, announce } from "../shared/accessibility";
+import { flushPending } from "../shared/storage";
 
 const TOTAL_ROUNDS = 10;
 const BASE_TIME_LIMIT = 15;
@@ -57,10 +62,24 @@ export default function QuickMeaningQuiz() {
 
   const timerRef = useRef<number | null>(null);
   const bonusTimerRef = useRef<number | null>(null);
+  const announcerRef = useRef<HTMLDivElement | null>(null);
 
   // Load coins on mount
   useEffect(() => {
+    // Create announcer
+    announcerRef.current = createAnnouncer();
+    document.body.appendChild(announcerRef.current);
+
     setCoins(getCoins());
+
+    return () => {
+      if (announcerRef.current) {
+        document.body.removeChild(announcerRef.current);
+      }
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
+      flushPending();
+    };
   }, []);
 
   // Initialize round
@@ -215,6 +234,7 @@ export default function QuickMeaningQuiz() {
       setConsecutiveMisses(0);
       setTotalCorrectTime((prev) => prev + elapsedTime);
 
+      announce(announcerRef.current, "Correct! Great job!");
       setLiveMessage("Correct! Great job! 🎉");
       setTimeout(() => setLiveMessage(""), 2000);
 
@@ -229,6 +249,7 @@ export default function QuickMeaningQuiz() {
       setConsecutiveMisses((prev) => prev + 1);
       recordTrickyWord(roundState.word.word);
 
+      announce(announcerRef.current, "Try again!");
       setLiveMessage("Try again! 🎯");
       setTimeout(() => setLiveMessage(""), 2000);
 
@@ -251,6 +272,7 @@ export default function QuickMeaningQuiz() {
     setStreak(0);
     setConsecutiveMisses((prev) => prev + 1);
 
+    announce(announcerRef.current, "Time's up! Moving to next round");
     setLiveMessage("Time's up! Moving to next round...");
     setTimeout(() => setLiveMessage(""), 2000);
 
@@ -403,8 +425,14 @@ export default function QuickMeaningQuiz() {
   if (gameMode === "bonus-typing" && roundState) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 p-8 pt-24">
+        <SoundGate gameSlug="quick-meaning" />
+        
         <div className="max-w-4xl mx-auto">
           {/* HUD */}
+          <div className="flex items-center justify-end gap-2 mb-4">
+            <DyslexiaToggle />
+            <SoundControl gameSlug="quick-meaning" />
+          </div>
           <HUD
             coins={coins}
             streak={streak}
@@ -492,8 +520,14 @@ export default function QuickMeaningQuiz() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 p-8 pt-24">
+      <SoundGate gameSlug="quick-meaning" />
+      
       <div className="max-w-4xl mx-auto">
         {/* HUD */}
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <DyslexiaToggle />
+          <SoundControl gameSlug="quick-meaning" />
+        </div>
         <HUD
           coins={coins}
           streak={streak}

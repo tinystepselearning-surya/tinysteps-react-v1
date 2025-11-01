@@ -3,7 +3,7 @@
  * Drag words to their meanings and IPA symbols
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { WORDS, type Word } from "./data";
 import {
   pickWords,
@@ -19,6 +19,11 @@ import {
 import { DraggableTile } from "./DraggableTile";
 import { DropZone } from "./DropZone";
 import { RoundSummary } from "./RoundSummary";
+import SoundGate from "../shared/SoundGate";
+import SoundControl from "../shared/SoundControl";
+import DyslexiaToggle from "../shared/DyslexiaToggle";
+import { createAnnouncer, announce } from "../shared/accessibility";
+import { flushPending } from "../shared/storage";
 
 const TOTAL_ROUNDS = 5;
 const WORDS_PER_ROUND = 3;
@@ -52,6 +57,8 @@ export default function MeaningMatch() {
     {}
   );
 
+  const announcerRef = useRef<HTMLDivElement | null>(null);
+
   // Initialize round
   useEffect(() => {
     if (gameMode === "playing" || gameMode === "practice") {
@@ -84,7 +91,18 @@ export default function MeaningMatch() {
 
   // Load coins on mount
   useEffect(() => {
+    // Create announcer
+    announcerRef.current = createAnnouncer();
+    document.body.appendChild(announcerRef.current);
+
     setTotalCoins(getCoins());
+
+    return () => {
+      if (announcerRef.current) {
+        document.body.removeChild(announcerRef.current);
+      }
+      flushPending();
+    };
   }, []);
 
   // Shuffled meanings and IPAs
@@ -131,6 +149,7 @@ export default function MeaningMatch() {
       setMatchesThisRound((prev) => prev + 1);
       setTotalMatches((prev) => prev + 1);
 
+      announce(announcerRef.current, "Correct match!");
       setLiveMessage("Correct match!");
       setTimeout(() => setLiveMessage(""), 2000);
 
@@ -139,9 +158,11 @@ export default function MeaningMatch() {
         (targetType === "meaning" &&updatedState.ipaCorrect) ||
         (targetType === "ipa" && updatedState.meaningCorrect)
       ) {
+        announce(announcerRef.current, `Nice! ${word.word} complete!`);
         setLiveMessage(`⭐ Nice! ${word.word} complete!`);
       }
     } else {
+      announce(announcerRef.current, "Not quite. Try again!");
       setLiveMessage("Try again!");
       setTimeout(() => setLiveMessage(""), 2000);
 
@@ -272,6 +293,8 @@ export default function MeaningMatch() {
   // Main game UI
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 p-8">
+      <SoundGate gameSlug="meaning-match" />
+      
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-3xl shadow-2xl p-6 mb-6">
@@ -287,6 +310,8 @@ export default function MeaningMatch() {
               </p>
             </div>
             <div className="flex gap-4 items-center">
+              <DyslexiaToggle />
+              <SoundControl gameSlug="meaning-match" />
               <div className="bg-gradient-to-r from-yellow-300 to-orange-300 px-6 py-3 rounded-2xl shadow-lg">
                 <p className="text-2xl font-bold text-white">
                   💰 {totalCoins}
@@ -295,7 +320,7 @@ export default function MeaningMatch() {
               {shouldShowHintButton && (
                 <button
                   onClick={handleShowHint}
-                  className="px-6 py-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-blue-400"
+                  className="min-h-[64px] min-w-[64px] px-6 py-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-blue-400"
                   aria-label="Show hint for next match"
                 >
                   💡 Hint

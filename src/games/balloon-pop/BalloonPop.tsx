@@ -32,6 +32,11 @@ import { EndSummary } from "./EndSummary";
 import { CloudLayer } from "./CloudLayer";
 import { Toast } from "./Toast";
 import { Confetti } from "./Confetti";
+import SoundGate from "../shared/SoundGate";
+import SoundControl from "../shared/SoundControl";
+import DyslexiaToggle from "../shared/DyslexiaToggle";
+import { createAnnouncer, announce as announceToSR } from "../shared/accessibility";
+import { flushPending } from "../shared/storage";
 
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
@@ -94,15 +99,30 @@ export default function BalloonPop() {
   const viewportHeightRef = useRef(window.innerHeight);
   const adaptiveSpeedRef = useRef(1.0); // Speed multiplier
   const adaptiveDistractorCountRef = useRef(0); // Distractor reduction
+  const announcerRef = useRef<HTMLDivElement | null>(null);
 
   // Load coins and sound preference on mount
   useEffect(() => {
+    // Create announcer
+    announcerRef.current = createAnnouncer();
+    document.body.appendChild(announcerRef.current);
+
     setCoins(getCoins());
     const enabled = getSoundEnabled();
     setSoundEnabledState(enabled);
     if (!enabled) {
       setShowSoundTip(true);
     }
+
+    return () => {
+      if (announcerRef.current) {
+        document.body.removeChild(announcerRef.current);
+      }
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
+      flushPending();
+    };
   }, []);
 
   // Prime audio on first user interaction
@@ -388,6 +408,7 @@ export default function BalloonPop() {
 
       // Toast
       addToast("Correct pop! 🎈", "success");
+      announceToSR(announcerRef.current, "Correct pop!");
       setLiveMessage("Correct pop!");
       setTimeout(() => setLiveMessage(""), 2000);
 
@@ -429,6 +450,7 @@ export default function BalloonPop() {
 
       // Toast
       addToast("Oops! Incorrect", "error");
+      announceToSR(announcerRef.current, "Not quite. Try again!");
       setLiveMessage("Try again");
       setTimeout(() => setLiveMessage(""), 2000);
 
@@ -682,20 +704,28 @@ export default function BalloonPop() {
         )`,
       }}
     >
+      <SoundGate gameSlug="balloon-pop" />
+      
       {/* Parallax clouds */}
       <CloudLayer layer={1} />
       <CloudLayer layer={2} />
 
       {/* HUD */}
-      <HUD
-        coins={coins}
-        streak={streak}
-        level={gameMode === "practice" ? 0 : currentLevel}
-        round={currentRound}
-        totalRounds={gameMode === "practice" ? 6 : ROUNDS_PER_LEVEL * currentLevel}
-        accuracy={accuracy}
-        roundProgress={roundProgress}
-      />
+      <div className="relative z-20">
+        <div className="flex items-center justify-end gap-2 px-6 pt-4">
+          <DyslexiaToggle />
+          <SoundControl gameSlug="balloon-pop" />
+        </div>
+        <HUD
+          coins={coins}
+          streak={streak}
+          level={gameMode === "practice" ? 0 : currentLevel}
+          round={currentRound}
+          totalRounds={gameMode === "practice" ? 6 : ROUNDS_PER_LEVEL * currentLevel}
+          accuracy={accuracy}
+          roundProgress={roundProgress}
+        />
+      </div>
 
       {/* SR-only live region */}
       <div

@@ -25,6 +25,11 @@ import {
   FixupLite,
 } from "./rounds";
 import EndSummary from "./EndSummary";
+import SoundGate from "../shared/SoundGate";
+import SoundControl from "../shared/SoundControl";
+import DyslexiaToggle from "../shared/DyslexiaToggle";
+import { createAnnouncer, announce as announceToSR } from "../shared/accessibility";
+import { flushPending } from "../shared/storage";
 
 // ==================== Types ====================
 
@@ -81,9 +86,21 @@ export default function BossLevel() {
   const [showConfetti, setShowConfetti] = useState(false);
   
   const announceRef = useRef<HTMLDivElement>(null);
+  const srAnnouncerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    // Create announcer
+    srAnnouncerRef.current = createAnnouncer();
+    document.body.appendChild(srAnnouncerRef.current);
+
     setTotalCoins(getCoins());
+
+    return () => {
+      if (srAnnouncerRef.current) {
+        document.body.removeChild(srAnnouncerRef.current);
+      }
+      flushPending();
+    };
   }, []);
 
   // ==================== Start Game ====================
@@ -193,6 +210,7 @@ export default function BossLevel() {
     if (announceRef.current) {
       announceRef.current.textContent = message;
     }
+    announceToSR(srAnnouncerRef.current, message);
   };
 
   // ==================== Render ====================
@@ -200,6 +218,8 @@ export default function BossLevel() {
   if (phase === "intro") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center p-6">
+        <SoundGate gameSlug="boss-level" />
+        
         <div className="max-w-md text-center space-y-6">
           <div className="text-8xl">👑</div>
           <h1 className="text-4xl font-bold text-slate-800">Boss Level</h1>
@@ -213,7 +233,7 @@ export default function BossLevel() {
           
           <button
             onClick={handleStart}
-            className="min-h-[64px] px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-xl font-bold shadow-lg hover:scale-105 transition-transform"
+            className="min-h-[64px] min-w-[64px] px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-xl font-bold shadow-lg hover:scale-105 transition-transform focus:outline-none focus:ring-4 focus:ring-purple-400"
           >
             Start Gauntlet 🚀
           </button>
@@ -257,6 +277,13 @@ export default function BossLevel() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+      <SoundGate gameSlug="boss-level" />
+      
+      <div className="flex items-center justify-end gap-2 px-6 pt-4">
+        <DyslexiaToggle />
+        <SoundControl gameSlug="boss-level" />
+      </div>
+      
       <HUD
         coins={totalCoins}
         streak={streak}
