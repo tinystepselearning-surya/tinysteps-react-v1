@@ -6,7 +6,7 @@
 import { useState, useEffect, useRef } from "react";
 import type { Word } from "./data";
 import { speakWord, speakMeaning, speakIPA, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPairHint } from "./utils";
-import { getImage, setImage, removeImage, type WordImage } from "./imageStore";
+import { getWordImageUrl } from "./spellbeeImages";
 import ConfettiBurst from "./Confetti";
 
 export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed" | "reveal";
@@ -50,16 +50,14 @@ export default function WordCard({
   const timerRef = useRef<number | null>(null);
   const beepTimesRef = useRef<Set<number>>(new Set());
   
-  // Image upload state
-  const [wordImage, setWordImage] = useState<WordImage | null>(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  
   // Celebration state
   const [showConfetti, setShowConfetti] = useState(false);
   const [cheerMessage, setCheerMessage] = useState<string | null>(null);
   
   const CHEER_MESSAGES = ["You did it! 🎉", "Great job! 🌟", "Congratulations! 🥳"];
+  
+  // Get local image URL for this word
+  const wordImageUrl = getWordImageUrl(word.word);
 
   // Reset state when word changes
   useEffect(() => {
@@ -73,10 +71,6 @@ export default function WordCard({
     setTimeLeft(10);
     setTimerStartTime(null);
     beepTimesRef.current = new Set();
-    
-    // Load image for this word
-    const savedImage = getImage(word.word);
-    setWordImage(savedImage);
     
     // Clear any existing timer
     if (timerRef.current) {
@@ -159,39 +153,6 @@ export default function WordCard({
     const randomCheer = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
     setCheerMessage(randomCheer);
     setTimeout(() => setCheerMessage(null), 1200);
-  };
-  
-  // Image upload handler
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      alert("Please select an image file");
-      return;
-    }
-    
-    setIsUploadingImage(true);
-    try {
-      const savedImage = await setImage(word.word, file);
-      setWordImage(savedImage);
-    } catch (err) {
-      console.error("Failed to upload image:", err);
-      alert("Failed to upload image");
-    } finally {
-      setIsUploadingImage(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    }
-  };
-  
-  // Remove image handler
-  const handleRemoveImage = () => {
-    removeImage(word.word);
-    setWordImage(null);
   };
 
   // Handler for "Hear it" button in ear-training mode
@@ -416,66 +377,18 @@ export default function WordCard({
 
             {/* Picture Area (only show after ear-training phase) */}
             {phase !== "ear-training" && (
-              <div className="mb-8">
-                <div className="relative w-full aspect-video rounded-2xl border-2 border-dashed border-purple-300/60 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 overflow-hidden">
-                  {wordImage ? (
-                    <>
-                      <img 
-                        src={wordImage.url} 
-                        alt={`Visual for ${word.word}`}
-                        className="object-cover w-full h-full rounded-2xl shadow-inner"
-                      />
-                      <div className="absolute top-2 right-2 flex gap-2">
-                        <label className="cursor-pointer px-3 py-1 bg-blue-500/90 hover:bg-blue-600/90 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus-within:ring-4 focus-within:ring-blue-300">
-                          Replace
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".png,.jpg,.jpeg,.webp"
-                            onChange={handleImageUpload}
-                            className="sr-only"
-                            disabled={isUploadingImage}
-                          />
-                        </label>
-                        <button
-                          onClick={handleRemoveImage}
-                          className="px-3 py-1 bg-red-500/90 hover:bg-red-600/90 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus:outline-none focus:ring-4 focus:ring-red-300"
-                          disabled={isUploadingImage}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center h-full text-purple-400">
-                      <svg
-                        className="w-16 h-16 mb-2"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                      <p className="text-sm font-medium mb-3">Add picture (optional)</p>
-                      <label className="cursor-pointer px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus-within:ring-4 focus-within:ring-purple-300">
-                        {isUploadingImage ? "Uploading..." : "Upload image"}
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".png,.jpg,.jpeg,.webp"
-                          onChange={handleImageUpload}
-                          className="sr-only"
-                          disabled={isUploadingImage}
-                        />
-                      </label>
-                    </div>
-                  )}
-                </div>
+              <div className="shrink-0">
+                {wordImageUrl ? (
+                  <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/60 max-h-[38svh]">
+                    <img 
+                      src={wordImageUrl} 
+                      alt={`Visual for ${word.word}`}
+                      className="h-full w-full object-cover rounded-2xl shadow-inner"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full rounded-2xl border border-slate-200/40 bg-slate-50/40 max-h-[38svh] h-[26svh]" />
+                )}
               </div>
             )}
 

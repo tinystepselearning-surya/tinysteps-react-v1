@@ -10,6 +10,7 @@ import SummaryScreen from "./SummaryScreen";
 import SoundGate from "../shared/SoundGate";
 import SoundControl from "../shared/SoundControl";
 import DyslexiaToggle from "../shared/DyslexiaToggle";
+import GameViewport from "./GameViewport";
 import { createAnnouncer, announce } from "../shared/accessibility";
 import { flushPending } from "../shared/storage";
 import { 
@@ -379,7 +380,7 @@ export default function SpellBeeFlashTrainer() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200 py-8 px-4">
+    <GameViewport>
       {/* Sound Gate */}
       <SoundGate gameSlug="spellbee-flash" />
       
@@ -552,6 +553,6 @@ export default function SpellBeeFlashTrainer() {
 
       {/* Debug Panel (only in debug mode) */}
       {isDebugMode && <DebugPanel />}
-    </div>
+    </GameViewport>
   );
 }
