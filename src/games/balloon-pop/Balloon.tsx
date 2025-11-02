@@ -36,11 +36,15 @@ export function Balloon({
   shake = false,
 }: BalloonProps) {
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isPopping, setIsPopping] = useState(false);
 
   const handleClick = () => {
-    if (isPopped) return;
+    if (isPopped || isPopping) return;
+    setIsPopping(true);
     setShowConfetti(true);
-    onPop(id, ipa);
+    setTimeout(() => {
+      onPop(id, ipa);
+    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -66,13 +70,14 @@ export function Balloon({
         absolute transition-transform hover:scale-110 active:scale-95 
         focus:outline-none focus:ring-4 focus:ring-yellow-400 focus:ring-offset-2
         ${shake ? "animate-shake" : ""}
+        ${isPopping ? "animate-pop" : ""}
       `}
       style={{
         left: `${x}%`,
         top: `${y}%`,
         transform: "translate(-50%, -50%)",
-        width: "90px",
-        height: "110px",
+        width: "140px",
+        height: "170px",
         minWidth: "64px", // Accessibility hit target
         minHeight: "64px",
       }}
@@ -86,22 +91,23 @@ export function Balloon({
         style={{
           borderRadius: "50% 50% 47% 47%",
           boxShadow: `
-            inset -8px -8px 20px rgba(0,0,0,0.3),
-            inset 8px 8px 20px rgba(255,255,255,0.4),
-            0 20px 40px rgba(0,0,0,0.3)
+            inset -12px -12px 24px rgba(0,0,0,0.35),
+            inset 10px 10px 24px rgba(255,255,255,0.5),
+            0 25px 50px rgba(0,0,0,0.4),
+            0 10px 20px rgba(0,0,0,0.2)
           `,
         }}
       >
         {/* Glossy highlight shine */}
         <div
-          className="absolute top-3 left-3 w-7 h-10 bg-white/60 rounded-full blur-sm"
+          className="absolute top-4 left-4 w-10 h-14 bg-white/70 rounded-full blur-sm"
           style={{
             transform: "rotate(-25deg)",
           }}
         />
 
         {/* IPA text */}
-        <span className="text-white font-bold text-xl drop-shadow-lg z-10 select-none">
+        <span className="text-white font-bold text-2xl drop-shadow-lg z-10 select-none">
           {ipa}
         </span>
 
@@ -130,6 +136,15 @@ export function Balloon({
         }
         .animate-shake {
           animation: shake 0.4s ease-in-out;
+        }
+        
+        @keyframes pop {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
+          100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+        }
+        .animate-pop {
+          animation: pop 0.3s ease-out forwards;
         }
       `}</style>
     </button>

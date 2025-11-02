@@ -44,11 +44,11 @@ import { flushPending } from "../shared/storage";
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
 
-// Precise rise speeds in px/s
+// Precise rise speeds in px/s - REDUCED for slower, more playable gameplay
 const LEVEL_CONFIGS = {
-  1: { balloonCount: 3, riseSpeed: 110, hasSway: false },
-  2: { balloonCount: 4, riseSpeed: 150, hasSway: false },
-  3: { balloonCount: 5, riseSpeed: 190, hasSway: true },
+  1: { balloonCount: 3, riseSpeed: 50, hasSway: false },
+  2: { balloonCount: 4, riseSpeed: 70, hasSway: false },
+  3: { balloonCount: 5, riseSpeed: 90, hasSway: true },
 };
 
 interface BalloonState {
@@ -94,10 +94,10 @@ export default function BalloonPop() {
   const [hintText, setHintText] = useState("");
   const [soundEnabled, setSoundEnabledState] = useState(false);
   const [showSoundTip, setShowSoundTip] = useState(false);
-  const [skyHue, setSkyHue] = useState(200); // Animated sky hue
   const [focusedBalloonIndex, setFocusedBalloonIndex] = useState(0);
   const [achievementBadge, setAchievementBadge] = useState<string | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [isPaused, setIsPaused] = useState(false); // For freezing during confetti
 
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -105,6 +105,78 @@ export default function BalloonPop() {
   const adaptiveSpeedRef = useRef(1.0); // Speed multiplier
   const adaptiveDistractorCountRef = useRef(0); // Distractor reduction
   const announcerRef = useRef<HTMLDivElement | null>(null);
+
+  // Get sky background based on round (changes every 5 rounds)
+  const getSkyBackground = () => {
+    const skyIndex = Math.floor((currentRound - 1) / 5) % 5;
+    
+    switch (skyIndex) {
+      case 0: // Sunny day
+        return {
+          gradient: "linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #FFFACD 100%)",
+          elements: (
+            <>
+              <div className="absolute top-20 right-20 w-24 h-24 bg-yellow-300 rounded-full shadow-2xl animate-pulse" />
+              <div className="absolute top-32 left-1/4 text-4xl animate-bounce" style={{animationDuration: '3s'}}>🕊️</div>
+              <div className="absolute top-40 right-1/3 text-3xl animate-bounce" style={{animationDuration: '4s'}}>🕊️</div>
+            </>
+          ),
+        };
+      case 1: // Cloudy
+        return {
+          gradient: "linear-gradient(180deg, #B0C4DE 0%, #D3D3D3 50%, #E8E8E8 100%)",
+          elements: (
+            <>
+              <div className="absolute top-16 left-1/4 text-6xl opacity-70">☁️</div>
+              <div className="absolute top-24 right-1/4 text-7xl opacity-80">☁️</div>
+              <div className="absolute top-40 left-1/2 text-5xl opacity-60">☁️</div>
+            </>
+          ),
+        };
+      case 2: // Sunset
+        return {
+          gradient: "linear-gradient(180deg, #FF6B6B 0%, #FFB347 40%, #FFA07A 70%, #FFD700 100%)",
+          elements: (
+            <>
+              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-32 h-32 bg-orange-500 rounded-full shadow-2xl opacity-80" />
+              <div className="absolute top-32 left-1/3 text-5xl opacity-50">☁️</div>
+              <div className="absolute top-40 right-1/3 text-6xl opacity-40">☁️</div>
+            </>
+          ),
+        };
+      case 3: // Sunrise
+        return {
+          gradient: "linear-gradient(180deg, #FFB6C1 0%, #FFA07A 40%, #FFDAB9 70%, #FFFACD 100%)",
+          elements: (
+            <>
+              <div className="absolute bottom-10 right-20 w-28 h-28 bg-yellow-400 rounded-full shadow-2xl" />
+              <div className="absolute top-28 left-1/4 text-4xl opacity-60">☁️</div>
+            </>
+          ),
+        };
+      case 4: // Night
+        return {
+          gradient: "linear-gradient(180deg, #000428 0%, #004e92 50%, #1a1a2e 100%)",
+          elements: (
+            <>
+              <div className="absolute top-16 right-24 text-6xl">🌙</div>
+              <div className="absolute top-20 left-1/4 text-2xl animate-pulse">⭐</div>
+              <div className="absolute top-32 right-1/3 text-xl animate-pulse" style={{animationDuration: '2s'}}>⭐</div>
+              <div className="absolute top-48 left-1/2 text-2xl animate-pulse" style={{animationDuration: '3s'}}>⭐</div>
+              <div className="absolute top-28 right-1/4 text-xl animate-pulse" style={{animationDuration: '2.5s'}}>⭐</div>
+              <div className="absolute top-56 left-1/3 text-xl animate-pulse" style={{animationDuration: '3.5s'}}>⭐</div>
+            </>
+          ),
+        };
+      default:
+        return {
+          gradient: "linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #FFFACD 100%)",
+          elements: null,
+        };
+    }
+  };
+
+  const skyBackground = getSkyBackground();
 
   // Load coins and sound preference on mount
   useEffect(() => {
@@ -149,14 +221,6 @@ export default function BalloonPop() {
       window.removeEventListener("keydown", handleFirstInteraction);
     };
   }, [soundEnabled]);
-
-  // Animated sky gradient
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSkyHue((prev) => (prev + 0.5) % 360);
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
 
   // Get level config with adaptive adjustments
   const levelConfig = useMemo(() => {
@@ -235,6 +299,12 @@ export default function BalloonPop() {
     let animationId: number;
 
     const gameLoop = (timestamp: number) => {
+      // Skip movement updates if paused (during confetti)
+      if (isPaused) {
+        animationId = requestAnimationFrame(gameLoop);
+        return;
+      }
+
       if (lastTimeRef.current === 0) {
         lastTimeRef.current = timestamp;
       }
@@ -373,6 +443,9 @@ export default function BalloonPop() {
       playPopSound();
       playCelebrationSound();
 
+      // Freeze balloons during confetti
+      setIsPaused(true);
+
       // Track mastery (first-try correct)
       updateMasteryRecord(targetWord.word, isFirstTry);
 
@@ -426,7 +499,12 @@ export default function BalloonPop() {
       if (balloon) {
         const confettiId = Date.now();
         setConfetti({ id: confettiId, x: balloon.x, y: (balloon.y / viewportHeightRef.current) * 100 });
-        setTimeout(() => setConfetti(null), 800);
+        setTimeout(() => {
+          setConfetti(null);
+          setIsPaused(false); // Resume balloon movement
+        }, 1200);
+      } else {
+        setIsPaused(false);
       }
 
       // Toast
@@ -720,15 +798,16 @@ export default function BalloonPop() {
     <div
       className="relative min-h-screen overflow-hidden"
       style={{
-        background: `linear-gradient(135deg, 
-          hsl(${skyHue}, 70%, 85%), 
-          hsl(${(skyHue + 40) % 360}, 65%, 80%), 
-          hsl(${(skyHue + 80) % 360}, 60%, 85%)
-        )`,
+        background: skyBackground.gradient,
       }}
     >
       <SoundGate gameSlug="balloon-pop" />
       
+      {/* Sky background elements */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {skyBackground.elements}
+      </div>
+
       {/* Parallax clouds */}
       <CloudLayer layer={1} />
       <CloudLayer layer={2} />

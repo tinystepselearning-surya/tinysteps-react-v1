@@ -19,7 +19,7 @@ const CONFETTI_COLORS = [
 ];
 
 export function Confetti({ x, y }: ConfettiProps) {
-  const particleCount = 20;
+  const particleCount = 40; // Increased from 20
 
   return (
     <div
@@ -30,12 +30,14 @@ export function Confetti({ x, y }: ConfettiProps) {
         transform: "translate(-50%, -50%)",
       }}
     >
+      {/* Main burst particles */}
       {[...Array(particleCount)].map((_, i) => {
         const angle = (i * 360) / particleCount;
-        const distance = 40 + Math.random() * 40;
+        const distance = 60 + Math.random() * 80; // Increased spread
         const color = CONFETTI_COLORS[i % CONFETTI_COLORS.length];
-        const size = 6 + Math.random() * 6;
+        const size = 8 + Math.random() * 10; // Larger particles
         const rotation = Math.random() * 360;
+        const shape = Math.random();
 
         return (
           <div
@@ -45,18 +47,36 @@ export function Confetti({ x, y }: ConfettiProps) {
               width: `${size}px`,
               height: `${size}px`,
               backgroundColor: color,
-              borderRadius: Math.random() > 0.5 ? "50%" : "0%",
+              borderRadius: shape > 0.66 ? "50%" : shape > 0.33 ? "0%" : "20%",
               transform: `rotate(${rotation}deg)`,
-              animation: `confettiBurst 0.8s ease-out forwards`,
-              animationDelay: `${i * 0.02}s`,
+              animation: `confettiBurst 1.2s ease-out forwards`,
+              animationDelay: `${i * 0.015}s`,
               left: "0",
               top: "0",
               "--angle": `${angle}deg`,
               "--distance": `${distance}px`,
+              boxShadow: `0 0 4px ${color}`,
             } as React.CSSProperties}
           />
         );
       })}
+
+      {/* Star burst effect */}
+      {[...Array(8)].map((_, i) => (
+        <div
+          key={`star-${i}`}
+          className="absolute text-4xl animate-starBurst"
+          style={{
+            animation: `starBurst 1s ease-out forwards`,
+            animationDelay: `${i * 0.05}s`,
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+        >
+          ✨
+        </div>
+      ))}
 
       <style>{`
         @keyframes confettiBurst {
@@ -68,10 +88,25 @@ export function Confetti({ x, y }: ConfettiProps) {
             transform: 
               translate(
                 calc(cos(var(--angle)) * var(--distance)),
-                calc(sin(var(--angle)) * var(--distance))
+                calc(sin(var(--angle)) * var(--distance) + 50px)
               )
               scale(0)
               rotate(720deg);
+            opacity: 0;
+          }
+        }
+        
+        @keyframes starBurst {
+          0% {
+            transform: translate(-50%, -50%) scale(0.5);
+            opacity: 1;
+          }
+          50% {
+            transform: translate(-50%, -50%) scale(1.5);
+            opacity: 0.8;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(0);
             opacity: 0;
           }
         }
