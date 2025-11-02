@@ -88,5 +88,3 @@ export function Confetti({ x, y }: ConfettiProps) {
     </div>
   );
 }
-
-export default Confetti;
