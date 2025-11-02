@@ -43,11 +43,11 @@ import { flushPending } from "../shared/storage";
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
 
-// Optimized rise speeds for better visibility and engaging gameplay (px/s)
+// Slower rise speeds for better visibility and kid-friendly gameplay (px/s)
 const LEVEL_CONFIGS = {
-  1: { balloonCount: 3, riseSpeed: 50, hasSway: false },
-  2: { balloonCount: 4, riseSpeed: 70, hasSway: false },
-  3: { balloonCount: 5, riseSpeed: 90, hasSway: true },
+  1: { balloonCount: 3, riseSpeed: 30, hasSway: false },
+  2: { balloonCount: 4, riseSpeed: 40, hasSway: false },
+  3: { balloonCount: 5, riseSpeed: 50, hasSway: true },
 };
 
 interface BalloonState {
@@ -195,7 +195,7 @@ export default function BalloonPop() {
 
     // Shuffle and create balloon states with randomized starting positions
     const shuffled = [...choices].sort(() => Math.random() - 0.5);
-    const minSpacing = 35; // Increased minimum horizontal spacing to prevent overlap
+    const minSpacing = 20; // Minimum horizontal spacing to prevent overlap (wider for larger balloons)
     const usedXPositions: number[] = [];
     
     const newBalloons: BalloonState[] = shuffled.map((ipa, i) => {
@@ -203,10 +203,10 @@ export default function BalloonPop() {
       let x: number;
       let attempts = 0;
       do {
-        x = randomFloat(15, 85);
+        x = randomFloat(20, 80); // Narrower range to keep balloons more centered
         attempts++;
       } while (
-        attempts < 50 && 
+        attempts < 100 && 
         usedXPositions.some(usedX => Math.abs(usedX - x) < minSpacing)
       );
       usedXPositions.push(x);
@@ -748,7 +748,7 @@ export default function BalloonPop() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden"
+      className="fixed inset-0 w-full h-full overflow-hidden z-50"
       style={{
         background: skyBackgrounds[skyTheme],
         transition: "background 2s ease-in-out",

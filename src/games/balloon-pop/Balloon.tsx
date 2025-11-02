@@ -76,8 +76,8 @@ export function Balloon({
         left: `${x}%`,
         top: `${y}%`,
         transform: "translate(-50%, -50%)",
-        width: "130px",
-        height: "155px",
+        width: "160px",
+        height: "190px",
         minWidth: "64px", // Accessibility hit target
         minHeight: "64px",
       }}
@@ -102,7 +102,7 @@ export function Balloon({
       >
         {/* Primary glossy highlight */}
         <div
-          className="absolute top-4 left-4 w-9 h-12 bg-white/70 rounded-full blur-sm"
+          className="absolute top-5 left-5 w-12 h-16 bg-white/70 rounded-full blur-sm"
           style={{
             transform: "rotate(-30deg)",
           }}
@@ -110,7 +110,7 @@ export function Balloon({
         
         {/* Secondary smaller highlight */}
         <div
-          className="absolute top-6 left-3 w-4 h-6 bg-white/50 rounded-full blur-xs"
+          className="absolute top-8 left-4 w-6 h-8 bg-white/50 rounded-full blur-xs"
           style={{
             transform: "rotate(-20deg)",
           }}
@@ -118,20 +118,20 @@ export function Balloon({
 
         {/* Subtle bottom reflection */}
         <div
-          className="absolute bottom-6 right-5 w-6 h-4 bg-white/20 rounded-full blur-sm"
+          className="absolute bottom-8 right-6 w-8 h-5 bg-white/20 rounded-full blur-sm"
           style={{
             transform: "rotate(15deg)",
           }}
         />
 
         {/* IPA text */}
-        <span className="text-white font-bold text-2xl drop-shadow-lg z-10 select-none">
+        <span className="text-white font-bold text-4xl drop-shadow-lg z-10 select-none">
           {ipa}
         </span>
 
         {/* Balloon knot - larger and more realistic */}
         <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-4 h-6 rounded-full"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-5 h-7 rounded-full"
           style={{
             backgroundColor: hex,
             filter: "brightness(0.6)",
@@ -142,7 +142,7 @@ export function Balloon({
 
       {/* Balloon string - longer and more visible */}
       <div
-        className="absolute left-1/2 top-full w-0.5 h-24 bg-gradient-to-b from-gray-500 via-gray-400 to-transparent -translate-x-1/2"
+        className="absolute left-1/2 top-full w-0.5 h-28 bg-gradient-to-b from-gray-500 via-gray-400 to-transparent -translate-x-1/2"
         style={{ transformOrigin: "top" }}
       />
 
