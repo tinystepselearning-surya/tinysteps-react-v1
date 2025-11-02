@@ -400,12 +400,12 @@ export default function SpellBeeFlashTrainer() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center justify-between mb-4">
+      {/* HUD: Compact header with coins/streak - shrink-0 */}
+      <div className="shrink-0">
+        <div className="flex items-center justify-between mb-2">
           <button
             onClick={handleExit}
-            className="min-h-[64px] min-w-[64px] px-6 py-3 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-purple-400"
+            className="min-h-[48px] min-w-[48px] px-4 py-2 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-purple-400 text-sm sm:text-base"
             aria-label="Exit game"
           >
             ← Back
@@ -417,42 +417,27 @@ export default function SpellBeeFlashTrainer() {
           </div>
         </div>
 
-        <div className="text-center mb-4">
-          <h1 className="text-4xl md:text-5xl font-black text-purple-600 mb-2">
-            {gameMode === "fixup" ? "🩹 Fix-Up Mode" : "🐝 SpellBee Flash Trainer"}
-          </h1>
-          <p className="text-xl text-purple-700 font-semibold">
-            {gameMode === "fixup"
-              ? "Let's master tricky words!"
-              : (currentWordIndex + 1) % 5 === 0
-              ? "⚡ SPEED ROUND - Be Quick!"
-              : (currentWordIndex + 1) % 3 === 0 
-              ? "🔊 Ear-Training Round!" 
-              : "Learn words, meanings & IPA symbols!"}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-center gap-4 mb-4">
-          {/* Coin Counter with Bounce */}
-          <div className="bg-yellow-400 text-yellow-900 px-5 py-3 rounded-full font-bold text-xl shadow-lg animate-bounce">
+        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+          {/* Coin Counter */}
+          <div className="bg-yellow-400 text-yellow-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
             🪙 {totalCoins}
           </div>
 
           {/* Streak Badge */}
           {streak > 0 && (
-            <div className="bg-orange-400 text-white px-4 py-2 rounded-full font-bold shadow-lg animate-pulse">
+            <div className="bg-orange-400 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-md text-sm sm:text-base">
               🔥 {streak}
             </div>
           )}
 
           {/* Score Display */}
-          <div className="bg-white text-purple-600 px-6 py-3 rounded-full font-bold text-xl shadow-lg">
+          <div className="bg-white text-purple-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
             Score: {score}
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="bg-white rounded-full h-4 shadow-inner overflow-hidden">
+        <div className="bg-white rounded-full h-3 shadow-inner overflow-hidden">
           <div
             className={`h-full transition-all duration-500 rounded-full ${
               gameMode === "fixup" 
@@ -470,6 +455,28 @@ export default function SpellBeeFlashTrainer() {
             : `Word ${currentWordIndex + 1} of ${shuffledWords.length}`}
         </p>
       </div>
+
+      {/* Main content area - flex-1 min-h-0 for proper flex shrinking */}
+      <main className="flex-1 min-h-0 flex flex-col">
+        {/* Word Card */}
+        <WordCard
+          key={currentWord.word}
+          word={currentWord}
+          meaningOptions={meaningMCQ.options}
+          ipaOptions={ipaMCQ.options}
+          correctMeaningIndex={meaningMCQ.correctIndex}
+          correctIPAIndex={ipaMCQ.correctIndex}
+          masteryLevel={currentWordMastery}
+          isSpeedRound={gameMode === "normal" && (currentWordIndex + 1) % 5 === 0}
+          isEarTrainingRound={gameMode === "normal" && (currentWordIndex + 1) % 3 === 0 && (currentWordIndex + 1) % 5 !== 0}
+          onComplete={handleWordComplete}
+          onTimeout={() => {
+            // Speed round timeout - show brief message
+            setNewBadge("⏱️ Time's Up!");
+            setTimeout(() => setNewBadge(null), 2000);
+          }}
+        />
+      </main>
 
       {/* Spark Effect for Streak Milestones */}
       {sparkEffect && (
@@ -518,38 +525,6 @@ export default function SpellBeeFlashTrainer() {
           </div>
         </div>
       )}
-
-      {/* Word Card */}
-      <WordCard
-        key={currentWord.word}
-        word={currentWord}
-        meaningOptions={meaningMCQ.options}
-        ipaOptions={ipaMCQ.options}
-        correctMeaningIndex={meaningMCQ.correctIndex}
-        correctIPAIndex={ipaMCQ.correctIndex}
-        masteryLevel={currentWordMastery}
-        isSpeedRound={gameMode === "normal" && (currentWordIndex + 1) % 5 === 0}
-        isEarTrainingRound={gameMode === "normal" && (currentWordIndex + 1) % 3 === 0 && (currentWordIndex + 1) % 5 !== 0}
-        onComplete={handleWordComplete}
-        onTimeout={() => {
-          // Speed round timeout - show brief message
-          setNewBadge("⏱️ Time's Up!");
-          setTimeout(() => setNewBadge(null), 2000);
-        }}
-      />
-
-      {/* Fun Motivational Messages */}
-      <div className="max-w-3xl mx-auto mt-8 text-center">
-        <div className="bg-white/80 rounded-2xl p-6 shadow-lg">
-          <p className="text-2xl font-bold text-purple-600">
-            {streak >= 5
-              ? "🌟 Amazing streak! Keep going!"
-              : streak >= 3
-              ? "✨ You're on a roll!"
-              : "💪 You've got this!"}
-          </p>
-        </div>
-      </div>
 
       {/* Debug Panel (only in debug mode) */}
       {isDebugMode && <DebugPanel />}

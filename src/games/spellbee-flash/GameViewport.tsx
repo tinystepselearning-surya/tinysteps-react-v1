@@ -1,8 +1,9 @@
 /**
- * GameViewport - Compact viewport wrapper for SpellBee Flash
+ * GameViewport - Mobile-safe viewport wrapper for SpellBee Flash
  * 
- * Prevents page scrolling by fitting everything in one screen view.
- * Uses h-dvh (dynamic viewport height) to handle iOS Safari's collapsing URL bar.
+ * Fits content in one screen view on mobile devices.
+ * Uses svh on mobile (handles iOS Safari URL bar) and dvh on desktop.
+ * Allows minimal internal scroll as fallback for very small devices.
  */
 
 import type { ReactNode } from "react";
@@ -14,7 +15,7 @@ interface GameViewportProps {
 export default function GameViewport({ children }: GameViewportProps) {
   return (
     <div
-      className="relative mx-auto max-w-[980px] h-dvh overflow-hidden px-3 sm:px-4 py-3 sm:py-4 bg-white rounded-none sm:rounded-3xl"
+      className="relative mx-auto max-w-[980px] h-[100svh] md:h-dvh overflow-x-hidden overflow-y-auto px-3 sm:px-4 py-3 sm:py-4 bg-white rounded-none sm:rounded-3xl"
     >
       <div className="flex h-full flex-col gap-2 sm:gap-3">
         {children}
