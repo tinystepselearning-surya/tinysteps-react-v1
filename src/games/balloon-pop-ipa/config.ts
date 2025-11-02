@@ -73,3 +73,28 @@ export const A11Y = {
   /** Minimum touch target size in pixels */
   minTouchTarget: 44,
 };
+
+// ========== CATEGORY MODE ==========
+
+export const CATEGORY_MODE = {
+  /** Use progressive category advancement by default (no manual dropdown for kids) */
+  progressiveDefault: true,
+};
+
+export const TEACHER_MODE = {
+  /** Enable teacher override to show manual category selection */
+  enabled: false, // Set to true to reveal manual dropdown
+};
+
+// ========== UI SIZES & ANIMATION ==========
+
+export const UI_SIZES = {
+  /** Balloon size on mobile (px) */
+  balloonSm: 96,
+  /** Balloon size on desktop (px) */
+  balloonLg: 136,
+  /** Minimum rise duration (seconds) */
+  minRiseSec: 6,
+  /** Maximum rise duration (seconds) */
+  maxRiseSec: 14,
+};

@@ -9,8 +9,6 @@ import { Howl, Howler } from 'howler';
 
 // ========== STATE ==========
 
-let audioContext: AudioContext | null = null;
-let isInitialized = false;
 let volumeLevel = 1.0;
 let isMutedState = false;
 const warnedMissing = new Set<string>();
@@ -24,16 +22,19 @@ const createSafeHowl = (src: string, volume = 1.0): Howl | null => {
       volume: volume * volumeLevel,
       preload: true,
       html5: false,
-      onloaderror: (_id: number, error: unknown) => {
+      onloaderror: () => {
         if (!warnedMissing.has(src)) {
-          console.warn(`[Audio] Failed to load: ${src}`, error);
+          console.debug(`[Audio] Audio file not yet available: ${src} (will be added later)`);
           warnedMissing.add(src);
         }
+      },
+      onplayerror: () => {
+        // Silently handle playback errors when files are missing
       },
     });
   } catch (error) {
     if (!warnedMissing.has(src)) {
-      console.warn(`[Audio] Error creating Howl for ${src}:`, error);
+      console.debug(`[Audio] Audio file not yet available: ${src} (will be added later)`);
       warnedMissing.add(src);
     }
     return null;
@@ -58,7 +59,7 @@ export const sfx = {
       try {
         popHowl.play();
       } catch (error) {
-        console.warn('[Audio] Error playing pop:', error);
+        // Silently fail when audio not available
       }
     }
   },
@@ -68,7 +69,7 @@ export const sfx = {
       try {
         correctHowl.play();
       } catch (error) {
-        console.warn('[Audio] Error playing correct:', error);
+        // Silently fail when audio not available
       }
     }
   },
@@ -78,7 +79,7 @@ export const sfx = {
       try {
         wrongHowl.play();
       } catch (error) {
-        console.warn('[Audio] Error playing wrong:', error);
+        // Silently fail when audio not available
       }
     }
   },
@@ -89,37 +90,11 @@ export const sfx = {
 /**
  * Initialize audio context on first user interaction.
  * Required for iOS to enable audio playback.
+ * This is a no-op - Howler.js handles AudioContext automatically on first play.
  */
 export const initAudioContext = (): void => {
-  if (isInitialized) return;
-
-  try {
-    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContextClass) {
-      console.warn('[Audio] AudioContext not supported');
-      return;
-    }
-
-    if (!audioContext) {
-      audioContext = new AudioContextClass();
-    }
-
-    if (audioContext.state === 'suspended') {
-      audioContext.resume().then(() => {
-        console.log('[Audio] AudioContext resumed');
-        isInitialized = true;
-      }).catch((error) => {
-        console.warn('[Audio] Failed to resume AudioContext:', error);
-      });
-    } else {
-      isInitialized = true;
-    }
-
-    // Initialize SFX on first interaction
-    initSFX();
-  } catch (error) {
-    console.warn('[Audio] Error initializing AudioContext:', error);
-  }
+  // Silent no-op to avoid autoplay warnings
+  // Howler.js will initialize audio context automatically on first user interaction
 };
 
 // ========== PROMPT AUDIO ==========
@@ -148,17 +123,20 @@ export const loadPromptAudio = async (src: string): Promise<Howl | null> => {
           promptAudioCache.set(src, howl);
           resolve(howl);
         },
-        onloaderror: (_id: number, error: unknown) => {
+        onloaderror: () => {
           if (!warnedMissing.has(src)) {
-            console.warn(`[Audio] Failed to preload prompt audio: ${src}`, error);
+            console.debug(`[Audio] Prompt audio not yet available: ${src} (will be added later)`);
             warnedMissing.add(src);
           }
           resolve(null);
         },
+        onplayerror: () => {
+          // Silently handle playback errors when files are missing
+        },
       });
     } catch (error) {
       if (!warnedMissing.has(src)) {
-        console.warn(`[Audio] Error creating prompt audio for ${src}:`, error);
+        console.debug(`[Audio] Prompt audio not yet available: ${src} (will be added later)`);
         warnedMissing.add(src);
       }
       resolve(null);
@@ -180,7 +158,7 @@ export const playPromptAudio = (howl?: Howl | null): void => {
     }
     howl.play();
   } catch (error) {
-    console.warn('[Audio] Error playing prompt audio:', error);
+    // Silently fail when audio not available
   }
 };
 

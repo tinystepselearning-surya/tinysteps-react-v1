@@ -25,7 +25,7 @@ const MeaningMatchGame = lazy(() => import("./games/meaning-match"));
 const MeaningMatchDashboard = lazy(() => import("./games/meaning-match/Dashboard"));
 const BalloonPopGame = lazy(() => import("./games/balloon-pop"));
 const BalloonPopDashboard = lazy(() => import("./games/balloon-pop/Dashboard"));
-const BalloonPopIPAGame = lazy(() => import("./games/balloon-pop-ipa/BalloonPopIPA"));
+const BalloonPopIPAGame = lazy(() => import("./games/balloon-pop-ipa"));
 const QuickMeaningGame = lazy(() => import("./games/quick-meaning-quiz"));
 const QuickMeaningDashboard = lazy(() => import("./games/quick-meaning-quiz/Dashboard"));
 const BossLevelGame = lazy(() => import("./games/boss-level"));

@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "test": "vitest run --reporter=dot",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test -c playwright.config.ts",
+    "test:e2e:ui": "playwright test -c playwright.config.ts --ui"
   },
   "dependencies": {
     "@types/howler": "^2.2.12",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4.1.16",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",

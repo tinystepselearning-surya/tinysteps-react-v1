@@ -60,7 +60,7 @@ export function playCelebrationSound() {
     });
   } catch (error) {
     // Fallback: silent fail if Web Audio API not available
-    console.warn('Web Audio API not available:', error);
+    
   }
 }
 
@@ -87,7 +87,7 @@ export function playErrorSound() {
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.2);
   } catch (error) {
-    console.warn('Web Audio API not available:', error);
+    
   }
 }
 
@@ -114,6 +114,6 @@ export function playClickSound() {
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.05);
   } catch (error) {
-    console.warn('Web Audio API not available:', error);
+    
   }
 }

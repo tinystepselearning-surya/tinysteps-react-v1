@@ -14,20 +14,29 @@ export type SoundType = 'pop' | 'correct' | 'wrong' | 'celebrate' | 'levelUp';
 
 let audioContext: AudioContext | null = null;
 let audioEnabled = true;
+let isInitialized = false;
 
 /**
- * Initialize audio context (lazy loading)
+ * Initialize audio context (lazy loading - only on user interaction)
  */
 function getAudioContext(): AudioContext | null {
   if (!audioEnabled) return null;
   
+  // Don't create AudioContext until actually needed (user interaction)
+  if (!isInitialized) return null;
+  
   try {
     if (!audioContext) {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      if (audioContext.state === 'suspended') {
+        audioContext.resume().catch(() => {
+          // Silent fail - audio will work on next interaction
+        });
+      }
     }
     return audioContext;
   } catch (error) {
-    console.warn('Audio not supported:', error);
+    // Silent - no console warnings for missing audio
     audioEnabled = false;
     return null;
   }
@@ -56,7 +65,7 @@ function playBeep(frequency: number, duration: number, volume: number = 0.3): vo
     oscillator.start(ctx.currentTime);
     oscillator.stop(ctx.currentTime + duration);
   } catch (error) {
-    console.warn('Failed to play beep:', error);
+    // Silent fail when audio not available
   }
 }
 
@@ -115,7 +124,8 @@ function playLevelUpSound(): void {
  * Initialize the sound system
  */
 export function initSounds(): void {
-  getAudioContext();
+  // Mark as initialized so audio can be created on first user interaction
+  isInitialized = true;
 }
 
 /**
@@ -123,6 +133,9 @@ export function initSounds(): void {
  */
 export function playSound(type: SoundType): void {
   if (!audioEnabled) return;
+  
+  // Initialize on first play (user interaction)
+  isInitialized = true;
   
   try {
     switch (type) {
@@ -143,7 +156,7 @@ export function playSound(type: SoundType): void {
         break;
     }
   } catch (error) {
-    console.warn('Failed to play sound:', error);
+    // Silent fail when audio not available
   }
 }
 

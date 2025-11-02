@@ -281,7 +281,7 @@ export default function BalloonPop() {
           if (balloon.isPopped) return balloon;
 
           // Move up (decrease y from bottom)
-          let newY = balloon.y - pixelsPerFrame;
+          const newY = balloon.y - pixelsPerFrame;
 
           // Add sway for level 3
           let newX = balloon.x;

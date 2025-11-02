@@ -9,16 +9,17 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import confetti from 'canvas-confetti';
 import type { PhonemeCategory } from './phoneme-data';
 import { useSession } from './useSession';
 import { resetQuestionCounter } from './engine';
 import type { Phase, RoundSpec } from './types';
 import { initSounds } from './sfx';
-import { PromptDisplay, PhaseTabs, Confetti, HUD } from './ui';
+import { PromptDisplay, PhaseTabs } from './ui';
 import BackgroundStage, { THEME_NAMES } from './ui/BackgroundStage';
 import { sfx, initAudioContext } from './audio';
 import { getHint } from './phoneme-hints';
-import { CATEGORY_MODE, TEACHER_MODE } from './config';
+import { CATEGORY_MODE, TEACHER_MODE, CONFETTI_CONFIG, CELEBRATION_DURATION_MS } from './config';
 import { useReducedMotionPref } from './hooks/useReducedMotionPref';
 import { computeDifficulty, getRandomRiseSpeed, type AgeBand, DIFFICULTY } from './config.difficulty';
 import * as Fullscreen from '../../utils/fullscreen';
@@ -86,9 +87,6 @@ export default function BalloonPopIPA() {
   const [audioStatus, setAudioStatus] = useState<'idle' | 'loading' | 'ready' | 'missing' | 'error'>('idle');
   const [usingFallback, setUsingFallback] = useState(false);
 
-  // Confetti effect
-  const [confetti, setConfetti] = useState<{ id: number; x: number; y: number } | null>(null);
-
   // Game state
   const [phase, setPhase] = useState<Phase>(1);
   const [category, setCategory] = useState<PhonemeCategory | 'mixed'>('mixed');
@@ -155,6 +153,9 @@ export default function BalloonPopIPA() {
   const balloonPositions = useMemo(() => {
     if (!round || ui.freezeRound) return [];
 
+    const laneWidth = window.innerWidth / laneCount;
+    const usedLanes: number[] = [];
+
     // Limit choices to difficulty optionCount
     let choices = round.choices;
     if (choices.length > difficulty.optionCount) {
@@ -173,12 +174,21 @@ export default function BalloonPopIPA() {
       }
     }
 
-    return choices.map((choiceId, idx) => {
-      // Distribute balloons evenly across lanes with some randomness
-      // Each balloon gets a base lane position plus random offset
-      const basePercentage = (idx / choices.length) * 100;
-      const randomOffset = (Math.random() - 0.5) * (100 / choices.length) * 0.6;
-      const lanePercentage = Math.max(5, Math.min(95, basePercentage + randomOffset));
+    return choices.map((choiceId) => {
+      // Pick lane without immediate collision
+      let laneIndex: number;
+      const attempts = 20;
+      for (let i = 0; i < attempts; i++) {
+        laneIndex = Math.floor(Math.random() * laneCount);
+        // Avoid consecutive duplicates
+        if (usedLanes.length === 0 || usedLanes[usedLanes.length - 1] !== laneIndex) {
+          break;
+        }
+      }
+      laneIndex = laneIndex!;
+      usedLanes.push(laneIndex);
+
+      const laneX = laneIndex * laneWidth + laneWidth / 2;
 
       // Get random rise speed from difficulty range
       const riseSec = getRandomRiseSpeed(difficulty.speedRange);
@@ -191,7 +201,7 @@ export default function BalloonPopIPA() {
 
       return {
         id: choiceId,
-        laneX: lanePercentage,
+        laneX,
         riseSec,
         labelIPA: choiceId,
         hint,
@@ -208,28 +218,10 @@ export default function BalloonPopIPA() {
     initAudioContext();
     resetQuestionCounter();
     
-    // Start first round
-    if (!round) {
-      const fb = createFallbackRound(1);
-      setRound(fb);
-      setUsingFallback(true);
-    }
-    
-    // Unlock AudioContext on first user interaction (browser autoplay policy)
-    const unlockAudio = () => {
-      initAudioContext();
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
-    };
-    document.addEventListener('click', unlockAudio);
-    document.addEventListener('touchstart', unlockAudio);
-    
     return () => {
       console.debug('[BalloonPopIPA] Component unmounted');
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
     };
-  }, [round]);
+  }, []);
 
   // Debug HUD keyboard toggle ('d' key)
   useEffect(() => {
@@ -288,7 +280,8 @@ export default function BalloonPopIPA() {
     // Reset wrong attempts for new round
     setWrongAttempts(0);
 
-    // Always use fallback to ensure game starts immediately
+    // For now, always use fallback to ensure game starts immediately
+    console.log('[BalloonPopIPA] Starting with fallback round for reliable gameplay');
     const fb = createFallbackRound(phase);
     setUsingFallback(true);
     setRound(fb);
@@ -399,7 +392,7 @@ export default function BalloonPopIPA() {
       congratsTimerRef.current = window.setTimeout(() => {
         setUI(prev => ({ ...prev, showCongrats: false, celebrating: false }));
         startNewRound();
-      }, 2500);
+      }, CELEBRATION_DURATION_MS);
 
     } else {
       // WRONG - Keep trying (don't end round)
@@ -442,16 +435,21 @@ export default function BalloonPopIPA() {
 
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
+    const duration = CELEBRATION_DURATION_MS;
+    const end = Date.now() + duration;
 
-    // Trigger confetti component
-    setConfetti({ 
-      id: Date.now(),
-      x: (cx / window.innerWidth) * 100,
-      y: (cy / window.innerHeight) * 100,
-    });
+    const frame = () => {
+      confetti({
+        ...CONFETTI_CONFIG,
+        origin: { x: cx / window.innerWidth, y: cy / window.innerHeight },
+      });
 
-    // Clear confetti after animation
-    setTimeout(() => setConfetti(null), 1200);
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+
+    frame();
   };
 
   // Determine if multi-select mode
@@ -473,19 +471,8 @@ export default function BalloonPopIPA() {
         aria-atomic="true"
       />
 
-      {/* HUD - Enhanced score display */}
-      <HUD
-        score={session.score}
-        streak={session.streak}
-        level={session.level}
-        round={roundCounter + 1}
-        totalRounds={100}
-        accuracy={session.recent.length > 0 ? (session.recent.filter(r => r).length / session.recent.length) * 100 : 0}
-        roundProgress={roundCounter % 5 / 5}
-      />
-
       {/* Header */}
-      <header className="fixed top-20 left-0 right-0 bg-white/90 backdrop-blur shadow-md p-4 z-20">
+      <header className="bg-white/90 backdrop-blur shadow-md p-4 relative z-10">
         <div className="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-4">
           <button
             onClick={() => navigate('/games')}
@@ -496,62 +483,80 @@ export default function BalloonPopIPA() {
             <span className="font-semibold">Back</span>
           </button>
 
-          {/* Age band selector - TEACHER MODE only */}
-          {TEACHER_MODE.enabled && (
-            <select
-              value={ageBand}
-              onChange={(e) => setAgeBand(e.target.value as AgeBand)}
-              className="px-3 py-2 bg-white border-2 border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2"
-              aria-label="Select age band"
-              title="Age-based difficulty adjustment"
-            >
-              <option value="3-4">Age 3-4</option>
-              <option value="5-6">Age 5-6</option>
-              <option value="7-8">Age 7-8</option>
-            </select>
-          )}
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="text-center min-w-[80px]">
+              <div className="text-xs text-gray-600">Score</div>
+              <div className="text-xl font-bold text-blue-600">{session.score}</div>
+            </div>
 
-          {/* Category selector - hidden in progressive mode unless TEACHER_MODE */}
-          {(!CATEGORY_MODE.progressiveDefault || TEACHER_MODE.enabled) && (
-            <div className="relative">
+            <div className="text-center min-w-[80px]">
+              <div className="text-xs text-gray-600">Streak</div>
+              <div className="text-xl font-bold text-orange-500">
+                {session.streak > 0 && '🔥'} {session.streak}
+              </div>
+            </div>
+
+            <div className="px-4 py-2 bg-purple-100 rounded-lg">
+              <div className="text-sm font-semibold text-purple-700">Level {session.level}</div>
+            </div>
+
+            {/* Age band selector - TEACHER MODE only */}
+            {TEACHER_MODE.enabled && (
               <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value as PhonemeCategory | 'mixed')}
+                value={ageBand}
+                onChange={(e) => setAgeBand(e.target.value as AgeBand)}
                 className="px-3 py-2 bg-white border-2 border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2"
-                aria-label="Select phoneme category"
-                title={TEACHER_MODE.enabled ? "Teacher override—learner progression unaffected" : undefined}
+                aria-label="Select age band"
+                title="Age-based difficulty adjustment"
               >
-                <option value="mixed">Mixed</option>
-                <option value="monophthongs">Monophthongs</option>
-                <option value="diphthongs">Diphthongs</option>
-                <option value="consonants">Consonants</option>
+                <option value="3-4">Age 3-4</option>
+                <option value="5-6">Age 5-6</option>
+                <option value="7-8">Age 7-8</option>
               </select>
-              {TEACHER_MODE.enabled && (
-                <span className="absolute -top-2 -right-2 bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                  Teacher
-                </span>
-              )}
-            </div>
-          )}
+            )}
 
-          {/* Progressive badge when category is auto-selected */}
-          {CATEGORY_MODE.progressiveDefault && !TEACHER_MODE.enabled && (
-            <div className="px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-bold border-2 border-green-300">
-              Progressive
-            </div>
-          )}
+            {/* Category selector - hidden in progressive mode unless TEACHER_MODE */}
+            {(!CATEGORY_MODE.progressiveDefault || TEACHER_MODE.enabled) && (
+              <div className="relative">
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as PhonemeCategory | 'mixed')}
+                  className="px-3 py-2 bg-white border-2 border-gray-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2"
+                  aria-label="Select phoneme category"
+                  title={TEACHER_MODE.enabled ? "Teacher override—learner progression unaffected" : undefined}
+                >
+                  <option value="mixed">Mixed</option>
+                  <option value="monophthongs">Monophthongs</option>
+                  <option value="diphthongs">Diphthongs</option>
+                  <option value="consonants">Consonants</option>
+                </select>
+                {TEACHER_MODE.enabled && (
+                  <span className="absolute -top-2 -right-2 bg-purple-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
+                    Teacher
+                  </span>
+                )}
+              </div>
+            )}
 
-          {/* Theme name chip */}
-          <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
-            🎨 {THEME_NAMES[themeId]}
+            {/* Progressive badge when category is auto-selected */}
+            {CATEGORY_MODE.progressiveDefault && !TEACHER_MODE.enabled && (
+              <div className="px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-bold border-2 border-green-300">
+                Progressive
+              </div>
+            )}
+
+            {/* Theme name chip */}
+            <div className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold border border-blue-200">
+              🎨 {THEME_NAMES[themeId]}
+            </div>
+
+            {/* Fallback badge when using starter set */}
+            {usingFallback && (
+              <div className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-bold border-2 border-orange-300">
+                Using starter set
+              </div>
+            )}
           </div>
-
-          {/* Fallback badge when using starter set */}
-          {usingFallback && (
-            <div className="px-3 py-1.5 bg-orange-100 text-orange-700 rounded-full text-xs font-bold border-2 border-orange-300">
-              Using starter set
-            </div>
-          )}
         </div>
       </header>
 
@@ -663,9 +668,6 @@ export default function BalloonPopIPA() {
         </motion.div>
       )}
 
-      {/* Confetti Effect */}
-      {confetti && <Confetti x={confetti.x} y={confetti.y} />}
-
       {/* Debug HUD - Toggle with 'd' key */}
       {showDebugHUD && (
         <div className="fixed top-4 left-4 z-[100] bg-black/80 text-white text-xs font-mono p-3 rounded-lg backdrop-blur-sm max-w-xs">
@@ -682,10 +684,18 @@ export default function BalloonPopIPA() {
               audioStatus === 'error' ? 'text-red-400' : 'text-gray-400'
             }>{audioStatus}</span></div>
             <div><span className="text-gray-400">Wrong:</span> {wrongAttempts}</div>
-            <div><span className="text-gray-400">Hint Glow:</span> {wrongAttempts >= DIFFICULTY.glowAfterWrongAttempts ? 'YES' : 'NO'}</div>
+                        <div><span className="text-gray-400">Hint Glow:</span> {wrongAttempts >= DIFFICULTY.glowAfterWrongAttempts ? 'YES' : 'NO'}</div>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+export const gameMeta = {
+  slug: "balloon-pop-ipa",
+  title: "Balloon-Pop IPA",
+  description: "Pop balloons with the correct IPA phonemes! Listen with 🦉 for pronunciation help.",
+  tags: ["ipa", "phonics", "phonemes", "speech", "balloons"],
+  icon: "🎈",
+};

@@ -253,7 +253,7 @@ export interface AdaptiveConfig {
 }
 
 export function getAdaptiveConfig(streak: number, wrongStreak: number): AdaptiveConfig {
-  let config: AdaptiveConfig = {
+  const config: AdaptiveConfig = {
     timerDuration: 10,
     distractorCount: 3,
     balloonSpeed: 1.0,

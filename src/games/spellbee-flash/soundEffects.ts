@@ -31,6 +31,14 @@ export function playCelebrationSound() {
   try {
     // Create a pleasant success chime using Web Audio API
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Resume if suspended (handles autoplay policy)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {
+        // Silent fail - audio will work on next interaction
+      });
+    }
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
@@ -59,8 +67,7 @@ export function playCelebrationSound() {
       osc.stop(startTime + noteDuration);
     });
   } catch (error) {
-    // Fallback: silent fail if Web Audio API not available
-    console.warn('Web Audio API not available:', error);
+    // Silent fail if Web Audio API not available
   }
 }
 
@@ -72,6 +79,12 @@ export function playErrorSound() {
   
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Resume if suspended (handles autoplay policy)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
@@ -87,7 +100,7 @@ export function playErrorSound() {
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.2);
   } catch (error) {
-    console.warn('Web Audio API not available:', error);
+    // Silent fail
   }
 }
 
@@ -99,6 +112,12 @@ export function playClickSound() {
   
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Resume if suspended (handles autoplay policy)
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+    
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
     
@@ -114,6 +133,6 @@ export function playClickSound() {
     oscillator.start();
     oscillator.stop(audioContext.currentTime + 0.05);
   } catch (error) {
-    console.warn('Web Audio API not available:', error);
+    // Silent fail
   }
 }
