@@ -197,18 +197,38 @@ export default function BalloonPop() {
     const distractors = generateIPADistractors(word.ipa, allIPAs, distractorCount);
     const choices = [word.ipa, ...distractors];
 
-    // Shuffle and create balloon states
+    // Shuffle and create balloon states with randomized starting positions
     const shuffled = [...choices].sort(() => Math.random() - 0.5);
-    const newBalloons: BalloonState[] = shuffled.map((ipa, i) => ({
-      id: `balloon-${Date.now()}-${i}`,
-      ipa,
-      x: randomFloat(15, 85),
-      y: viewportHeightRef.current + 50, // Start below viewport
-      colorIndex: i % BALLOON_COLORS.length,
-      swayOffset: randomFloat(0, Math.PI * 2),
-      isPopped: false,
-      shake: false,
-    }));
+    const minSpacing = 25; // Minimum horizontal spacing between balloons
+    const usedXPositions: number[] = [];
+    
+    const newBalloons: BalloonState[] = shuffled.map((ipa, i) => {
+      // Generate X position with minimum spacing from other balloons
+      let x: number;
+      let attempts = 0;
+      do {
+        x = randomFloat(15, 85);
+        attempts++;
+      } while (
+        attempts < 50 && 
+        usedXPositions.some(usedX => Math.abs(usedX - x) < minSpacing)
+      );
+      usedXPositions.push(x);
+      
+      // Randomize starting Y position for staggered rise
+      const yOffset = randomFloat(100, 400); // Balloons start at different heights below viewport
+      
+      return {
+        id: `balloon-${Date.now()}-${i}`,
+        ipa,
+        x,
+        y: viewportHeightRef.current + yOffset,
+        colorIndex: i % BALLOON_COLORS.length,
+        swayOffset: randomFloat(0, Math.PI * 2),
+        isPopped: false,
+        shake: false,
+      };
+    });
 
     setBalloons(newBalloons);
   };
@@ -859,15 +879,18 @@ export default function BalloonPop() {
         </div>
       )}
 
-      {/* Toasts */}
-      {toasts.map((toast) => (
-        <Toast
-          key={toast.id}
-          message={toast.message}
-          type={toast.type}
-          onClose={() => removeToast(toast.id)}
-        />
-      ))}
+      {/* Toasts - stacked vertically with spacing */}
+      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 pointer-events-none">
+        {toasts.map((toast, index) => (
+          <div key={toast.id} style={{ marginTop: `${index * 0}px` }} className="pointer-events-auto">
+            <Toast
+              message={toast.message}
+              type={toast.type}
+              onClose={() => removeToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
 
       {/* Confetti */}
       {confetti && <Confetti x={confetti.x} y={confetti.y} />}

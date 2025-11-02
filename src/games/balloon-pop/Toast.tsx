@@ -34,7 +34,7 @@ export function Toast({ message, type, duration = 1800, onClose }: ToastProps) {
       role="alert"
       aria-live="assertive"
       className={`
-        fixed top-24 right-6 z-50 px-6 py-4 rounded-2xl shadow-2xl
+        px-6 py-4 rounded-2xl shadow-2xl
         ${bgColor} text-white font-bold text-lg
         transform transition-all duration-300
         ${visible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}
