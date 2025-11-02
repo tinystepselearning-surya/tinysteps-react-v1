@@ -22,6 +22,7 @@ import {
   getMasteryData,
   updateMastery,
   checkBadges,
+  checkAchievements,
   calculateCoins,
   getFixUpWords,
   saveFixUpReport,
@@ -301,6 +302,24 @@ export default function SpellBeeFlashTrainer() {
     if (newlyEarned.length > 0) {
       setNewBadge(`${newlyEarned[0].icon} ${newlyEarned[0].name}`);
       setTimeout(() => setNewBadge(null), 3000);
+    }
+
+    // Check for achievement milestones (10, 25, 50, 100, all mastered)
+    const newAchievements = checkAchievements();
+    if (newAchievements.length > 0) {
+      // Show first achievement earned
+      setNewBadge(`${newAchievements[0].icon} ${newAchievements[0].name}!`);
+      setTimeout(() => setNewBadge(null), 4000);
+      
+      // Award bonus coins for achievements
+      const achievementBonus = 50; // 50 coins per achievement
+      const bonusTotal = addCoins(achievementBonus);
+      setTotalCoins(bonusTotal);
+      saveCoinsDebounced(bonusTotal);
+      
+      // Spark effect for achievement
+      setSparkEffect(true);
+      setTimeout(() => setSparkEffect(false), 2000);
     }
 
     // Brain break every 12 words

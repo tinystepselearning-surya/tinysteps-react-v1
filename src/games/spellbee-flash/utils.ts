@@ -402,6 +402,135 @@ export interface Badge {
   name: string;
   icon: string;
   description: string;
+  earned?: boolean;
+  earnedAt?: number; // timestamp
+}
+
+/**
+ * Achievement tracking - comprehensive milestone system
+ */
+export interface Achievement {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  earned: boolean;
+  earnedAt?: number;
+}
+
+/**
+ * Get earned achievements from localStorage
+ */
+export function getEarnedAchievements(): Set<string> {
+  try {
+    const data = localStorage.getItem('spellbee-achievements-v1');
+    if (!data) return new Set();
+    const obj = JSON.parse(data);
+    return new Set(obj);
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Save earned achievements to localStorage
+ */
+export function saveEarnedAchievements(achievements: Set<string>): void {
+  try {
+    localStorage.setItem('spellbee-achievements-v1', JSON.stringify(Array.from(achievements)));
+  } catch (err) {
+    console.warn('Failed to save achievements:', err);
+  }
+}
+
+/**
+ * Check for new achievements and return newly earned ones
+ */
+export function checkAchievements(): Achievement[] {
+  const earnedIds = getEarnedAchievements();
+  const masteryData = getMasteryData();
+  const newAchievements: Achievement[] = [];
+
+  // Count mastered words
+  let masteredCount = 0;
+  Array.from(masteryData.values()).forEach((m) => {
+    if (m.mastered) masteredCount++;
+  });
+
+  // Define all possible achievements
+  const allAchievements: Omit<Achievement, 'earned' | 'earnedAt'>[] = [
+    {
+      id: 'first_10_mastered',
+      name: 'Rising Star',
+      icon: '⭐',
+      description: 'Master your first 10 words',
+    },
+    {
+      id: 'first_25_mastered',
+      name: 'Word Warrior',
+      icon: '⚔️',
+      description: 'Master 25 words',
+    },
+    {
+      id: 'first_50_mastered',
+      name: 'Vocabulary Victor',
+      icon: '👑',
+      description: 'Master 50 words',
+    },
+    {
+      id: 'first_100_mastered',
+      name: 'Language Legend',
+      icon: '🏅',
+      description: 'Master 100 words',
+    },
+    {
+      id: 'all_mastered',
+      name: 'Ultimate Master',
+      icon: '🎖️',
+      description: 'Master all words!',
+    },
+  ];
+
+  // Check milestone achievements
+  allAchievements.forEach((achievement) => {
+    if (earnedIds.has(achievement.id)) return; // Already earned
+
+    let shouldEarn = false;
+
+    switch (achievement.id) {
+      case 'first_10_mastered':
+        shouldEarn = masteredCount >= 10;
+        break;
+      case 'first_25_mastered':
+        shouldEarn = masteredCount >= 25;
+        break;
+      case 'first_50_mastered':
+        shouldEarn = masteredCount >= 50;
+        break;
+      case 'first_100_mastered':
+        shouldEarn = masteredCount >= 100;
+        break;
+      case 'all_mastered':
+        shouldEarn = masteredCount >= 148; // Total words
+        break;
+    }
+
+    if (shouldEarn) {
+      newAchievements.push({
+        ...achievement,
+        earned: true,
+        earnedAt: Date.now(),
+      });
+      earnedIds.add(achievement.id);
+    }
+  });
+
+  // Save updated achievements
+  if (newAchievements.length > 0) {
+    saveEarnedAchievements(earnedIds);
+  }
+
+  return newAchievements;
 }
 
 export function checkBadges(
