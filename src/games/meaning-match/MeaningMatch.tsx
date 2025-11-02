@@ -15,6 +15,8 @@ import {
   clearStrugglingWords,
   speakWord,
   getMinimalPairHint,
+  updateMasteryRecord,
+  checkAchievements,
 } from "./utils";
 import { DraggableTile } from "./DraggableTile";
 import { DropZone } from "./DropZone";
@@ -24,6 +26,7 @@ import SoundControl from "../shared/SoundControl";
 import DyslexiaToggle from "../shared/DyslexiaToggle";
 import { createAnnouncer, announce } from "../shared/accessibility";
 import { flushPending } from "../shared/storage";
+import { playCelebrationSound, areSoundsEnabled, toggleSounds } from "./soundEffects";
 
 const TOTAL_ROUNDS = 5;
 const WORDS_PER_ROUND = 3;
@@ -56,6 +59,8 @@ export default function MeaningMatch() {
   const [matchStates, setMatchStates] = useState<Record<string, MatchState>>(
     {}
   );
+  const [newBadge, setNewBadge] = useState<string | null>(null);
+  const [soundsEnabled, setSoundsEnabled] = useState(areSoundsEnabled());
 
   const announcerRef = useRef<HTMLDivElement | null>(null);
 
@@ -141,6 +146,9 @@ export default function MeaningMatch() {
     setMatchStates((prev) => ({ ...prev, [wordId]: updatedState }));
 
     if (isCorrect) {
+      // Play celebration sound
+      playCelebrationSound();
+      
       // Award coins
       const coinValue = updatedState.meaningAttempts === 1 || updatedState.ipaAttempts === 1 ? 5 : 2;
       const newCoins = addCoins(coinValue);
@@ -154,12 +162,31 @@ export default function MeaningMatch() {
       setTimeout(() => setLiveMessage(""), 2000);
 
       // Check for word completion (both meaning and IPA correct)
-      if (
-        (targetType === "meaning" &&updatedState.ipaCorrect) ||
-        (targetType === "ipa" && updatedState.meaningCorrect)
-      ) {
+      const bothComplete =
+        (targetType === "meaning" && updatedState.ipaCorrect) ||
+        (targetType === "ipa" && updatedState.meaningCorrect);
+        
+      if (bothComplete) {
         announce(announcerRef.current, `Nice! ${word.word} complete!`);
         setLiveMessage(`⭐ Nice! ${word.word} complete!`);
+        
+        // Update mastery tracking
+        const meaningCorrectFirst = updatedState.meaningAttempts === 1;
+        const ipaCorrectFirst = updatedState.ipaAttempts === 1;
+        updateMasteryRecord(wordId, meaningCorrectFirst, ipaCorrectFirst, true);
+        
+        // Check for new achievements
+        const newAchievements = checkAchievements();
+        if (newAchievements.length > 0) {
+          const ach = newAchievements[0];
+          setNewBadge(`${ach.icon} ${ach.name}!`);
+          setTimeout(() => setNewBadge(null), 4000);
+          
+          // Bonus coins for achievement
+          const bonusCoins = addCoins(50);
+          setTotalCoins(bonusCoins);
+          setCoinsThisRound((prev) => prev + 50);
+        }
       }
     } else {
       announce(announcerRef.current, "Not quite. Try again!");
@@ -292,35 +319,79 @@ export default function MeaningMatch() {
 
   // Main game UI
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 p-4 sm:p-8 relative">
       <SoundGate gameSlug="meaning-match" />
+      
+      {/* Floating Back Button */}
+      <button
+        onClick={() => window.history.back()}
+        className="fixed bottom-4 left-4 z-40 min-h-[64px] min-w-[64px] px-5 py-3 bg-purple-600 text-white font-bold rounded-full shadow-2xl hover:shadow-3xl hover:bg-purple-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 text-base sm:text-lg"
+        aria-label="Go back"
+      >
+        ← Back
+      </button>
+
+      {/* View Progress Button */}
+      <button
+        onClick={() => window.location.href = '/kids/games/meaning-match/dashboard'}
+        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 min-h-[64px] px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2 text-base sm:text-lg"
+        aria-label="View progress dashboard"
+      >
+        <span>📊</span>
+        <span className="hidden sm:inline">Progress</span>
+      </button>
+
+      {/* Achievement Badge Notification */}
+      {newBadge && (
+        <div 
+          className="pointer-events-none fixed bottom-24 right-4 md:bottom-20 md:right-8 z-50 bg-gradient-to-r from-yellow-300 to-orange-400 text-white px-6 py-3 md:px-8 md:py-4 rounded-2xl shadow-2xl animate-bounce"
+          role="alert"
+          aria-live="polite"
+        >
+          <p className="text-lg md:text-2xl font-black">Achievement!</p>
+          <p className="text-2xl md:text-3xl mt-1 md:mt-2">{newBadge}</p>
+        </div>
+      )}
       
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-3xl shadow-2xl p-6 mb-6">
+        <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-6 mb-6">
           <div className="flex justify-between items-center flex-wrap gap-4">
             <div>
-              <h1 className="text-4xl font-black text-purple-600">
+              <h1 className="text-3xl sm:text-4xl font-black text-purple-600">
                 🧩 Meaning-Match
               </h1>
-              <p className="text-lg text-gray-600">
+              <p className="text-base sm:text-lg text-gray-600">
                 {gameMode === "practice"
                   ? "Practice Mode"
                   : `Round ${currentRound} of ${TOTAL_ROUNDS}`}
               </p>
             </div>
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-2 sm:gap-4 items-center flex-wrap">
+              {/* Sound Mute Toggle */}
+              <button
+                onClick={() => {
+                  const newValue = toggleSounds();
+                  setSoundsEnabled(newValue);
+                }}
+                className="min-h-[56px] min-w-[56px] px-3 py-2 bg-white rounded-xl shadow-lg hover:bg-slate-50 text-2xl focus:outline-none focus:ring-[3px] focus:ring-purple-500"
+                aria-label={soundsEnabled ? "Mute sounds" : "Unmute sounds"}
+                aria-pressed={soundsEnabled}
+              >
+                {soundsEnabled ? "🔔" : "🔕"}
+              </button>
+              
               <DyslexiaToggle />
               <SoundControl gameSlug="meaning-match" />
-              <div className="bg-gradient-to-r from-yellow-300 to-orange-300 px-6 py-3 rounded-2xl shadow-lg">
-                <p className="text-2xl font-bold text-white">
+              <div className="bg-gradient-to-r from-yellow-300 to-orange-300 px-4 sm:px-6 py-2 sm:py-3 rounded-2xl shadow-lg">
+                <p className="text-xl sm:text-2xl font-bold text-white">
                   💰 {totalCoins}
                 </p>
               </div>
               {shouldShowHintButton && (
                 <button
                   onClick={handleShowHint}
-                  className="min-h-[64px] min-w-[64px] px-6 py-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-blue-400"
+                  className="min-h-[64px] px-4 sm:px-6 py-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold rounded-2xl shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-blue-400"
                   aria-label="Show hint for next match"
                 >
                   💡 Hint

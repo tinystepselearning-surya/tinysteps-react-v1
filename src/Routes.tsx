@@ -22,6 +22,7 @@ import KidsGuestLanding from "./pages/KidsGuestLanding";
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
 const SpellBeeGroupDashboard = lazy(() => import("./games/spellbee-flash/GroupDashboard"));
 const MeaningMatchGame = lazy(() => import("./games/meaning-match"));
+const MeaningMatchDashboard = lazy(() => import("./games/meaning-match/Dashboard"));
 const BalloonPopGame = lazy(() => import("./games/balloon-pop"));
 const QuickMeaningGame = lazy(() => import("./games/quick-meaning-quiz"));
 const BossLevelGame = lazy(() => import("./games/boss-level"));
@@ -64,6 +65,14 @@ export default function AppRoutes() {
           element={
             <Suspense fallback={<div className="p-6">Loading game…</div>}>
               <MeaningMatchGame />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/kids/games/meaning-match/dashboard" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading dashboard…</div>}>
+              <MeaningMatchDashboard />
             </Suspense>
           } 
         />
