@@ -25,11 +25,11 @@ export default function DyslexiaToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="p-2 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="p-3 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
       aria-label={enabled ? "Disable dyslexia-friendly font" : "Enable dyslexia-friendly font"}
       title={enabled ? "Dyslexia Font: ON" : "Dyslexia Font: OFF"}
     >
-      <span className={`text-lg ${enabled ? "opacity-100" : "opacity-40"}`}>
+      <span className={`text-3xl ${enabled ? "opacity-100" : "opacity-40"}`}>
         {enabled ? "📖✓" : "📖"}
       </span>
     </button>

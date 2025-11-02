@@ -13,6 +13,8 @@ interface BalloonProps {
   onPop: (id: string, ipa: string) => void;
   isPopped: boolean;
   shake?: boolean;
+  isWrong?: boolean;
+  shouldPulse?: boolean;
 }
 
 const BALLOON_COLORS = [
@@ -34,6 +36,8 @@ export function Balloon({
   onPop,
   isPopped,
   shake = false,
+  isWrong = false,
+  shouldPulse = false,
 }: BalloonProps) {
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -66,6 +70,7 @@ export function Balloon({
         absolute transition-transform hover:scale-110 active:scale-95 
         focus:outline-none focus:ring-4 focus:ring-yellow-400 focus:ring-offset-2
         ${shake ? "animate-shake" : ""}
+        ${shouldPulse ? "animate-pulse" : ""}
       `}
       style={{
         left: `${x}%`,
@@ -82,6 +87,8 @@ export function Balloon({
         className={`
           relative w-full h-full bg-gradient-to-br ${gradient}
           shadow-2xl flex items-center justify-center
+          ${isWrong ? "ring-4 ring-red-500 ring-opacity-80" : ""}
+          ${shouldPulse ? "ring-4 ring-green-400 ring-opacity-90" : ""}
         `}
         style={{
           borderRadius: "50% 50% 47% 47%",

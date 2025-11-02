@@ -41,11 +41,13 @@ export default function SoundControl({ gameSlug, onConfigChange }: SoundControlP
     <div className="relative flex items-center gap-2">
       <button
         onClick={handleMuteToggle}
-        className="p-2 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="p-3 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
         aria-label={config.muted ? "Unmute sound" : "Mute sound"}
         title={config.muted ? "Unmute" : "Mute"}
       >
-        {config.muted ? "🔇" : config.volume > 0.5 ? "🔊" : "🔉"}
+        <span className="text-3xl">
+          {config.muted ? "🔇" : config.volume > 0.5 ? "🔊" : "🔉"}
+        </span>
       </button>
 
       <button

@@ -33,7 +33,6 @@ import { Balloon, BALLOON_COLORS } from "./Balloon";
 import { HUD } from "./HUD";
 import { EndSummary } from "./EndSummary";
 import { CloudLayer } from "./CloudLayer";
-import { Toast } from "./Toast";
 import { Confetti } from "./Confetti";
 import SoundGate from "../shared/SoundGate";
 import SoundControl from "../shared/SoundControl";
@@ -62,12 +61,6 @@ interface BalloonState {
   shake: boolean;
 }
 
-interface ToastMessage {
-  id: number;
-  message: string;
-  type: "success" | "error" | "info";
-}
-
 type GameMode = "playing" | "practice" | "summary" | "parent-view";
 
 export default function BalloonPop() {
@@ -89,7 +82,6 @@ export default function BalloonPop() {
   const [liveMessage, setLiveMessage] = useState("");
   const [roundStartTime, setRoundStartTime] = useState(0);
   const [coinsEarnedThisSession, setCoinsEarnedThisSession] = useState(0);
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [confetti, setConfetti] = useState<{ id: number; x: number; y: number } | null>(null);
   const [hintText, setHintText] = useState("");
   const [soundEnabled, setSoundEnabledState] = useState(false);
@@ -99,6 +91,8 @@ export default function BalloonPop() {
   const [showCelebration, setShowCelebration] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [skyTheme, setSkyTheme] = useState<'sunny' | 'cloudy' | 'sunset' | 'sunrise' | 'night'>('sunny');
+  const [wrongBalloonIds, setWrongBalloonIds] = useState<Set<string>>(new Set());
+  const [showCorrectHint, setShowCorrectHint] = useState(false);
 
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -189,6 +183,8 @@ export default function BalloonPop() {
     setHintText("");
     setTotalAttempts(0);
     setFocusedBalloonIndex(0);
+    setWrongBalloonIds(new Set());
+    setShowCorrectHint(false);
 
     // Generate IPA choices
     const allIPAs = WORDS.map((w) => w.ipa);
@@ -199,7 +195,7 @@ export default function BalloonPop() {
 
     // Shuffle and create balloon states with randomized starting positions
     const shuffled = [...choices].sort(() => Math.random() - 0.5);
-    const minSpacing = 25; // Minimum horizontal spacing between balloons
+    const minSpacing = 35; // Increased minimum horizontal spacing to prevent overlap
     const usedXPositions: number[] = [];
     
     const newBalloons: BalloonState[] = shuffled.map((ipa, i) => {
@@ -368,17 +364,6 @@ export default function BalloonPop() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [gameMode, balloons, focusedBalloonIndex]);
 
-  // Helper: Add toast
-  const addToast = (message: string, type: ToastMessage["type"]) => {
-    const id = Date.now();
-    setToasts((prev) => [...prev, { id, message, type }]);
-  };
-
-  // Helper: Remove toast
-  const removeToast = (id: number) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
-
   // Handle balloon pop
   const handlePop = (id: string, ipa: string) => {
     if (!targetWord) return;
@@ -461,8 +446,7 @@ export default function BalloonPop() {
         setTimeout(() => setConfetti(null), 1500); // Match pause duration
       }
 
-      // Toast
-      addToast("Correct pop! 🎈", "success");
+      // Screen reader announcement only (no toast)
       announceToSR(announcerRef.current, "Correct pop!");
       setLiveMessage("Correct pop!");
       setTimeout(() => setLiveMessage(""), 2000);
@@ -490,6 +474,9 @@ export default function BalloonPop() {
       setStreak(0);
       setFirstTryStreak(0);
 
+      // Track wrong balloon for highlighting
+      setWrongBalloonIds((prev) => new Set([...prev, id]));
+
       const missCount = consecutiveMisses + 1;
       setConsecutiveMisses(missCount);
 
@@ -498,13 +485,16 @@ export default function BalloonPop() {
         prev.map((b) => (b.id === id ? { ...b, shake: true } : b))
       );
 
-      // Show hint
+      // Show hint after 2 wrong attempts
+      if (currentAttempts >= 2) {
+        setShowCorrectHint(true);
+      }
+
       const hint = getMinimalPairHint(targetWord.ipa, ipa);
       setHintText(hint);
       setTimeout(() => setHintText(""), 3000);
 
-      // Toast
-      addToast("Oops! Incorrect", "error");
+      // Screen reader announcement only (no toast)
       announceToSR(announcerRef.current, "Not quite. Try again!");
       setLiveMessage("Try again");
       setTimeout(() => setLiveMessage(""), 2000);
@@ -879,19 +869,6 @@ export default function BalloonPop() {
         </div>
       )}
 
-      {/* Toasts - stacked vertically with spacing */}
-      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 pointer-events-none">
-        {toasts.map((toast, index) => (
-          <div key={toast.id} style={{ marginTop: `${index * 0}px` }} className="pointer-events-auto">
-            <Toast
-              message={toast.message}
-              type={toast.type}
-              onClose={() => removeToast(toast.id)}
-            />
-          </div>
-        ))}
-      </div>
-
       {/* Confetti */}
       {confetti && <Confetti x={confetti.x} y={confetti.y} />}
 
@@ -932,6 +909,10 @@ export default function BalloonPop() {
 
           // Convert y from px to percentage for component
           const yPercent = (balloon.y / viewportHeightRef.current) * 100;
+          
+          const isWrong = wrongBalloonIds.has(balloon.id);
+          const isCorrect = targetWord && balloon.ipa === targetWord.ipa;
+          const shouldPulse = showCorrectHint && isCorrect ? true : false;
 
           return (
             <Balloon
@@ -944,6 +925,8 @@ export default function BalloonPop() {
               onPop={handlePop}
               isPopped={false}
               shake={balloon.shake}
+              isWrong={isWrong}
+              shouldPulse={shouldPulse}
             />
           );
         })}
