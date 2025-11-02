@@ -281,16 +281,16 @@ export default function WordCard({
         {phase === "speed" && (
           <div className="shrink-0">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm sm:text-base font-bold text-orange-600 animate-pulse">
-                ⏱️ SPEED!
+              <span className="text-sm sm:text-base font-bold text-orange-700 animate-pulse" aria-label="Speed round">
+                SPEED ROUND!
               </span>
-              <span className="text-sm sm:text-base font-bold text-orange-600">
+              <span className="text-sm sm:text-base font-bold text-orange-700" aria-live="polite" aria-atomic="true">
                 {timeLeft}s
               </span>
             </div>
-            <div className="w-full bg-gray-300 rounded-full h-2 sm:h-3 shadow-inner overflow-hidden">
+            <div className="w-full bg-gray-300 rounded-full h-2 sm:h-3 shadow-inner overflow-hidden" role="progressbar" aria-valuenow={timeLeft} aria-valuemin={0} aria-valuemax={10} aria-label="Time remaining">
               <div
-                className="bg-gradient-to-r from-orange-400 to-red-500 h-full transition-all duration-1000 ease-linear rounded-full"
+                className="bg-gradient-to-r from-orange-500 to-red-600 h-full transition-all duration-1000 ease-linear rounded-full"
                 style={{
                   width: `${(timeLeft / 10) * 100}%`,
                 }}
@@ -328,11 +328,11 @@ export default function WordCard({
         <section className="flex-1 min-h-0 flex flex-col justify-center gap-2">
           
           {/* Question Line - responsive text */}
-          <h3 className="text-center px-2 leading-snug font-semibold text-[clamp(16px,3.8vw,22px)] sm:text-xl text-slate-700">
+          <h3 className="text-center px-2 leading-snug font-semibold text-[clamp(16px,3.8vw,22px)] sm:text-xl text-slate-800">
             {phase === "speed"
-              ? "⚡ Quick! What does it mean?"
+              ? "Quick! What does it mean?"
               : phase === "ear-training" 
-              ? "🔊 Listen and pick the IPA!" 
+              ? "Listen and pick the IPA!" 
               : phase === "meaning" 
               ? "What does it mean?" 
               : "What's the IPA?"}
@@ -343,8 +343,8 @@ export default function WordCard({
             <div className="text-center shrink-0">
               <button
                 onClick={handlePlayAudio}
-                className="px-8 sm:px-12 py-4 sm:py-6 bg-gradient-to-r from-blue-400 to-purple-400 text-white text-xl sm:text-2xl font-black rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400"
-                aria-label="Play audio"
+                className="min-h-[64px] min-w-[180px] px-8 sm:px-12 py-4 sm:py-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl sm:text-2xl font-black rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2"
+                aria-label="Play audio to hear the word"
               >
                 🔊 Hear it!
               </button>
@@ -360,7 +360,7 @@ export default function WordCard({
                     key={index}
                     onClick={() => handleEarTrainingSelect(index)}
                     disabled={earTrainingCorrect !== null}
-                    className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                    className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
                       earTrainingCorrect === null
                         ? ""
                         : earTrainingCorrect && index === correctIPAIndex
@@ -379,9 +379,9 @@ export default function WordCard({
               
               {/* Minimal-Pair Hint */}
               {minimalPairHint && earTrainingCorrect === false && (
-                <div className="mt-3 p-3 bg-yellow-100 rounded-xl border-2 border-yellow-400">
-                  <p className="text-sm sm:text-base font-bold text-yellow-800">
-                    💡 Hint: {minimalPairHint}
+                <div className="mt-3 p-3 bg-yellow-50 rounded-xl border-2 border-yellow-500" role="alert">
+                  <p className="text-sm sm:text-base font-bold text-yellow-900">
+                    Hint: {minimalPairHint}
                   </p>
                 </div>
               )}
@@ -397,7 +397,7 @@ export default function WordCard({
                   key={index}
                   onClick={() => handleMeaningSelect(index)}
                   disabled={selectedMeaningIndex !== null || timeLeft === 0}
-                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
                     selectedMeaningIndex === null
                       ? ""
                       : selectedMeaningIndex === index
@@ -416,7 +416,7 @@ export default function WordCard({
             </div>
           )}
 
-          {/* Normal: Meaning Phase */}
+          {/* Normal Mode: Meaning Round */}
           {phase === "meaning" && (
             <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
               {meaningOptions.map((option, index) => (
@@ -424,7 +424,7 @@ export default function WordCard({
                   key={index}
                   onClick={() => handleMeaningSelect(index)}
                   disabled={selectedMeaningIndex !== null}
-                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
                     selectedMeaningIndex === null
                       ? ""
                       : selectedMeaningIndex === index
@@ -451,7 +451,7 @@ export default function WordCard({
                   key={index}
                   onClick={() => handleIPASelect(index)}
                   disabled={selectedIPAIndex !== null}
-                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
                     selectedIPAIndex === null
                       ? ""
                       : selectedIPAIndex === index

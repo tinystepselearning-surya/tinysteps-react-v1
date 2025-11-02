@@ -28,7 +28,7 @@ export default function TopToolbar({
         <button
           onClick={onOpenWordList}
           disabled={disabled}
-          className="rounded-xl bg-white/90 hover:bg-white px-2.5 py-1.5 shadow ring-1 ring-slate-200 text-slate-700 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl bg-white/90 hover:bg-white min-h-[56px] min-w-[56px] px-3 py-2 shadow ring-1 ring-slate-200 text-slate-700 text-base font-semibold focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Open word list"
           title="Word List"
         >
@@ -41,7 +41,7 @@ export default function TopToolbar({
         <button
           onClick={onToggleSpeak}
           disabled={disabled}
-          className="rounded-xl bg-white/90 hover:bg-white px-2.5 py-1.5 shadow ring-1 ring-slate-200 text-slate-700 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl bg-white/90 hover:bg-white min-h-[56px] min-w-[56px] px-3 py-2 shadow ring-1 ring-slate-200 text-slate-700 text-base font-semibold focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Play or pause audio"
           title="Toggle Audio"
         >
@@ -54,7 +54,7 @@ export default function TopToolbar({
         <button
           onClick={onOpenAudioSettings}
           disabled={disabled}
-          className="rounded-xl bg-white/90 hover:bg-white px-2.5 py-1.5 shadow ring-1 ring-slate-200 text-slate-700 text-sm font-semibold focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl bg-white/90 hover:bg-white min-h-[56px] min-w-[56px] px-3 py-2 shadow ring-1 ring-slate-200 text-slate-700 text-base font-semibold focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           aria-label="Audio settings"
           title="Audio Settings"
         >

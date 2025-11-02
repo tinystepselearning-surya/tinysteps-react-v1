@@ -17,10 +17,10 @@ export interface LeftOverlayProps {
 export default function LeftOverlay({ 
   coins, 
   score, 
-  quests,
-  hiddenOnMobile = true 
-}: LeftOverlayProps) {
-  const hiddenClass = hiddenOnMobile ? "hidden md:flex" : "flex";
+  quests
+}: Omit<LeftOverlayProps, 'hiddenOnMobile'>) {
+  // Always hide on small/medium screens for layout overflow fix (only show on large+ screens)
+  const hiddenClass = "hidden lg:flex";
 
   return (
     <div 
@@ -35,21 +35,21 @@ export default function LeftOverlay({
       {/* Coins + Score Chips Row */}
       <div className="pointer-events-auto flex flex-col gap-2 w-[180px]">
         <div className="flex items-center gap-2">
-          {/* Coins Chip */}
+          {/* Coins Chip - improved contrast */}
           <div 
-            className="rounded-full bg-white/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold shadow ring-1 ring-slate-200 flex items-center gap-1.5"
+            className="rounded-full bg-yellow-500 text-gray-900 px-3 py-1.5 text-sm font-bold shadow ring-1 ring-slate-300 flex items-center gap-1.5"
             aria-label={`Coins: ${coins}`}
           >
-            <span aria-hidden="true">🪙</span>
-            <span className="text-yellow-700">{coins}</span>
+            <span className="text-base" aria-hidden="true">🪙</span>
+            <span>{coins}</span>
           </div>
 
-          {/* Score Chip */}
+          {/* Score Chip - improved contrast */}
           <div 
-            className="rounded-full bg-white/90 backdrop-blur-sm px-3 py-1.5 text-sm font-semibold shadow ring-1 ring-slate-200 flex items-center gap-1.5"
+            className="rounded-full bg-purple-600 text-white px-3 py-1.5 text-sm font-bold shadow ring-1 ring-purple-700 flex items-center gap-1.5"
             aria-label={`Score: ${score}`}
           >
-            <span className="text-purple-600">Score: {score}</span>
+            <span>Score: {score}</span>
           </div>
         </div>
       </div>

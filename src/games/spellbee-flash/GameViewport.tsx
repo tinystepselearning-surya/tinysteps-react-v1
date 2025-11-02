@@ -15,7 +15,7 @@ interface GameViewportProps {
 export default function GameViewport({ children }: GameViewportProps) {
   return (
     <div
-      className="relative mx-auto max-w-[980px] h-[100svh] md:h-dvh overflow-x-hidden overflow-y-auto px-3 sm:px-4 pt-2 pb-3 sm:pt-2 sm:pb-4 bg-white rounded-none sm:rounded-3xl"
+      className="relative mx-auto max-w-[980px] h-[100svh] md:h-dvh overflow-x-hidden overflow-y-auto px-3 sm:px-4 pt-0 pb-3 sm:pb-4 bg-white rounded-none sm:rounded-3xl"
     >
       <div className="flex h-full flex-col gap-2 sm:gap-3">
         {children}

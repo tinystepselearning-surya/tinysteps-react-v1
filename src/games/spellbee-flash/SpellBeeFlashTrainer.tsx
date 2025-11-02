@@ -389,7 +389,6 @@ export default function SpellBeeFlashTrainer() {
           coins={totalCoins}
           score={score}
           quests={questsState.quests}
-          hiddenOnMobile
         />
 
         {/* Quest Celebration Toast */}
@@ -408,38 +407,34 @@ export default function SpellBeeFlashTrainer() {
         {/* HUD: Compact header with coins/streak - shrink-0 */}
         {/* Hidden on md+ since LeftOverlay shows Coins/Score */}
         <div className="shrink-0">
-          {/* Back button - always visible */}
-          <div className="flex items-center justify-between mb-2">
-            <button
-              onClick={handleExit}
-              className="min-h-[48px] min-w-[48px] px-4 py-2 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-purple-400 text-sm sm:text-base"
-              aria-label="Exit game"
-            >
-              ← Back
-            </button>
-          </div>
+          {/* Back button - moved to bottom-left floating for better UX */}
+          <button
+            onClick={handleExit}
+            className="fixed bottom-4 left-4 z-40 min-h-[64px] min-w-[64px] px-5 py-3 bg-purple-600 text-white font-bold rounded-full shadow-2xl hover:shadow-3xl hover:bg-purple-700 transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 text-base sm:text-lg"
+            aria-label="Go back to game selection"
+          >
+            ← Back
+          </button>
 
-          {/* Coins/Score/Streak badges - hidden on md+ (shown in LeftOverlay instead) */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 md:hidden">
-          {/* Coin Counter */}
-          <div className="bg-yellow-400 text-yellow-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
-            🪙 {totalCoins}
-          </div>
-
-          {/* Streak Badge */}
-          {streak > 0 && (
-            <div className="bg-orange-400 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-md text-sm sm:text-base">
-              🔥 {streak}
+          {/* Coins/Score/Streak badges - hidden on lg+ (shown in LeftOverlay instead) */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 lg:hidden">
+            {/* Coin Counter - improved contrast */}
+            <div className="bg-yellow-500 text-gray-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
+              🪙 {totalCoins}
             </div>
-          )}
 
-          {/* Score Display */}
-          <div className="bg-white text-purple-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
-            Score: {score}
-          </div>
-        </div>
+            {/* Streak Badge */}
+            {streak > 0 && (
+              <div className="bg-orange-500 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold shadow-md text-sm sm:text-base">
+                🔥 {streak}
+              </div>
+            )}
 
-        {/* Progress Bar */}
+            {/* Score Display - improved contrast */}
+            <div className="bg-purple-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
+              Score: {score}
+            </div>
+          </div>        {/* Progress Bar */}
         <div className="bg-white rounded-full h-3 shadow-inner overflow-hidden">
           <div
             className={`h-full transition-all duration-500 rounded-full ${
@@ -489,15 +484,15 @@ export default function SpellBeeFlashTrainer() {
         </div>
       )}
 
-      {/* New Badge Notification */}
+      {/* New Badge Notification - moved to bottom-right, non-interactive */}
       {newBadge && (
         <div 
-          className="fixed top-24 right-8 z-50 bg-gradient-to-r from-yellow-300 to-orange-400 text-white px-8 py-4 rounded-2xl shadow-2xl transform animate-bounce"
+          className="pointer-events-none fixed bottom-20 right-4 md:bottom-8 md:right-8 z-50 bg-gradient-to-r from-yellow-300 to-orange-400 text-white px-6 py-3 md:px-8 md:py-4 rounded-2xl shadow-2xl"
           role="alert"
           aria-live="polite"
         >
-          <p className="text-2xl font-black">New Badge!</p>
-          <p className="text-3xl mt-2">{newBadge}</p>
+          <p className="text-lg md:text-2xl font-black">New Badge!</p>
+          <p className="text-2xl md:text-3xl mt-1 md:mt-2">{newBadge}</p>
         </div>
       )}
 
@@ -509,21 +504,20 @@ export default function SpellBeeFlashTrainer() {
           aria-modal="true"
           aria-labelledby="brain-break-title"
         >
-          <div className="bg-white rounded-3xl p-12 max-w-2xl text-center shadow-2xl transform animate-bounce">
-            <div className="text-8xl mb-6" aria-hidden="true">🧘‍♀️</div>
-            <h2 id="brain-break-title" className="text-5xl font-black text-purple-600 mb-4">Brain Break!</h2>
-            <p className="text-2xl text-purple-700 mb-8">
-              Great job! Take a deep breath and stretch your arms up high! 🙌
+          <div className="bg-white rounded-3xl p-8 sm:p-12 max-w-2xl text-center shadow-2xl">
+            <h2 id="brain-break-title" className="text-4xl sm:text-5xl font-black text-purple-600 mb-4">Brain Break!</h2>
+            <p className="text-xl sm:text-2xl text-purple-700 mb-6 sm:mb-8">
+              Great job! Take a deep breath and stretch your arms up high!
             </p>
-            <p className="text-xl text-purple-600 mb-8" aria-live="polite">
+            <p className="text-lg sm:text-xl text-purple-600 mb-6 sm:mb-8" aria-live="polite">
               You've learned 12 words! Ready to continue?
             </p>
             <button
               onClick={() => setShowBrainBreak(false)}
-              className="px-12 py-6 bg-gradient-to-r from-green-400 to-blue-400 text-white text-2xl font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400"
+              className="min-h-[64px] min-w-[200px] px-8 sm:px-12 py-4 sm:py-6 bg-gradient-to-r from-green-500 to-blue-500 text-white text-xl sm:text-2xl font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-[3px] focus:ring-green-500 focus:ring-offset-2"
               aria-label="Continue to next word"
             >
-              Let's Go! 🚀
+              Let's Go!
             </button>
           </div>
         </div>
