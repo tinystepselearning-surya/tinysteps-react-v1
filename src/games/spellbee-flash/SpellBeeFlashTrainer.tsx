@@ -66,6 +66,7 @@ export default function SpellBeeFlashTrainer() {
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
   const [maxStreak, setMaxStreak] = useState(0);
+  const [ipaStreak, setIpaStreak] = useState(0); // Track consecutive IPA correct answers
   const [completed, setCompleted] = useState(false);
   const [totalCoins, setTotalCoins] = useState(getTotalCoins());
   const [sessionStartCoins] = useState(getTotalCoins()); // Track coins at start
@@ -248,6 +249,28 @@ export default function SpellBeeFlashTrainer() {
     }
     if (correctIPA) {
       updateQuest("ipa_3", 1);
+      
+      // Track IPA streak for recurring rewards (every 3 correct)
+      const newIpaStreak = ipaStreak + 1;
+      setIpaStreak(newIpaStreak);
+      
+      // Award bonus coins and badge every 3 IPA correct
+      if (newIpaStreak % 3 === 0) {
+        const ipaBonus = 15; // 15 bonus coins for every 3 IPA correct
+        const bonusTotal = addCoins(ipaBonus);
+        setTotalCoins(bonusTotal);
+        saveCoinsDebounced(bonusTotal);
+        
+        setNewBadge(`🔊 IPA Master +${ipaBonus} coins!`);
+        setTimeout(() => setNewBadge(null), 3000);
+        
+        // Spark effect for celebration
+        setSparkEffect(true);
+        setTimeout(() => setSparkEffect(false), 2000);
+      }
+    } else {
+      // Reset IPA streak on incorrect
+      setIpaStreak(0);
     }
 
     // Update mastery for this word

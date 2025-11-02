@@ -61,8 +61,9 @@ export default function GroupDashboard() {
   const handleStart = (groupId: string) => {
     // Save to localStorage
     localStorage.setItem('spellbee-last-group-v1', groupId);
-    // User will wire router navigation separately
-    console.log(`[GroupDashboard] Start group: ${groupId}`);
+    
+    // Navigate back to game
+    window.location.href = '/kids/games/spellbee-flash';
   };
 
   const handleView = (groupId: string) => {
@@ -131,6 +132,16 @@ export default function GroupDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 p-4 sm:p-6">
       <div className="max-w-[1280px] mx-auto">
+        {/* Back Button */}
+        <button
+          onClick={() => window.history.back()}
+          className="mb-4 flex items-center gap-2 rounded-xl bg-white hover:bg-slate-50 px-4 py-2 text-sm font-semibold shadow ring-1 ring-slate-200 focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition text-slate-700 min-h-[56px]"
+          aria-label="Go back to game"
+        >
+          <span aria-hidden="true">←</span>
+          <span>Back to Game</span>
+        </button>
+
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-800 mb-2">
