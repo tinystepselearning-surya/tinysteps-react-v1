@@ -36,15 +36,11 @@ export function Balloon({
   shake = false,
 }: BalloonProps) {
   const [showConfetti, setShowConfetti] = useState(false);
-  const [isPopping, setIsPopping] = useState(false);
 
   const handleClick = () => {
-    if (isPopped || isPopping) return;
-    setIsPopping(true);
+    if (isPopped) return;
     setShowConfetti(true);
-    setTimeout(() => {
-      onPop(id, ipa);
-    }, 100);
+    onPop(id, ipa);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -70,19 +66,18 @@ export function Balloon({
         absolute transition-transform hover:scale-110 active:scale-95 
         focus:outline-none focus:ring-4 focus:ring-yellow-400 focus:ring-offset-2
         ${shake ? "animate-shake" : ""}
-        ${isPopping ? "animate-pop" : ""}
       `}
       style={{
         left: `${x}%`,
         top: `${y}%`,
         transform: "translate(-50%, -50%)",
-        width: "140px",
-        height: "170px",
+        width: "130px",
+        height: "155px",
         minWidth: "64px", // Accessibility hit target
         minHeight: "64px",
       }}
     >
-      {/* Balloon body with glossy gradient */}
+      {/* Balloon body with ultra-glossy gradient and realistic shadows */}
       <div
         className={`
           relative w-full h-full bg-gradient-to-br ${gradient}
@@ -91,18 +86,34 @@ export function Balloon({
         style={{
           borderRadius: "50% 50% 47% 47%",
           boxShadow: `
-            inset -12px -12px 24px rgba(0,0,0,0.35),
-            inset 10px 10px 24px rgba(255,255,255,0.5),
+            inset -10px -12px 25px rgba(0,0,0,0.35),
+            inset 12px 12px 30px rgba(255,255,255,0.5),
             0 25px 50px rgba(0,0,0,0.4),
-            0 10px 20px rgba(0,0,0,0.2)
+            0 5px 15px rgba(0,0,0,0.3)
           `,
         }}
       >
-        {/* Glossy highlight shine */}
+        {/* Primary glossy highlight */}
         <div
-          className="absolute top-4 left-4 w-10 h-14 bg-white/70 rounded-full blur-sm"
+          className="absolute top-4 left-4 w-9 h-12 bg-white/70 rounded-full blur-sm"
           style={{
-            transform: "rotate(-25deg)",
+            transform: "rotate(-30deg)",
+          }}
+        />
+        
+        {/* Secondary smaller highlight */}
+        <div
+          className="absolute top-6 left-3 w-4 h-6 bg-white/50 rounded-full blur-xs"
+          style={{
+            transform: "rotate(-20deg)",
+          }}
+        />
+
+        {/* Subtle bottom reflection */}
+        <div
+          className="absolute bottom-6 right-5 w-6 h-4 bg-white/20 rounded-full blur-sm"
+          style={{
+            transform: "rotate(15deg)",
           }}
         />
 
@@ -111,19 +122,20 @@ export function Balloon({
           {ipa}
         </span>
 
-        {/* Balloon knot */}
+        {/* Balloon knot - larger and more realistic */}
         <div
-          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-3 h-4 rounded-full"
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-4 h-6 rounded-full"
           style={{
             backgroundColor: hex,
-            filter: "brightness(0.7)",
+            filter: "brightness(0.6)",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
           }}
         />
       </div>
 
-      {/* Balloon string */}
+      {/* Balloon string - longer and more visible */}
       <div
-        className="absolute left-1/2 top-full w-0.5 h-16 bg-gradient-to-b from-gray-400 to-transparent -translate-x-1/2"
+        className="absolute left-1/2 top-full w-0.5 h-24 bg-gradient-to-b from-gray-500 via-gray-400 to-transparent -translate-x-1/2"
         style={{ transformOrigin: "top" }}
       />
 
@@ -136,15 +148,6 @@ export function Balloon({
         }
         .animate-shake {
           animation: shake 0.4s ease-in-out;
-        }
-        
-        @keyframes pop {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-          50% { transform: translate(-50%, -50%) scale(1.3); opacity: 0.8; }
-          100% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-        }
-        .animate-pop {
-          animation: pop 0.3s ease-out forwards;
         }
       `}</style>
     </button>

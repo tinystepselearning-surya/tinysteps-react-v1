@@ -44,7 +44,7 @@ import { flushPending } from "../shared/storage";
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
 
-// Precise rise speeds in px/s - REDUCED for slower, more playable gameplay
+// Slower rise speeds for better visibility and gameplay (px/s)
 const LEVEL_CONFIGS = {
   1: { balloonCount: 3, riseSpeed: 50, hasSway: false },
   2: { balloonCount: 4, riseSpeed: 70, hasSway: false },
@@ -97,7 +97,8 @@ export default function BalloonPop() {
   const [focusedBalloonIndex, setFocusedBalloonIndex] = useState(0);
   const [achievementBadge, setAchievementBadge] = useState<string | null>(null);
   const [showCelebration, setShowCelebration] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); // For freezing during confetti
+  const [isPaused, setIsPaused] = useState(false);
+  const [skyTheme, setSkyTheme] = useState<'sunny' | 'cloudy' | 'sunset' | 'sunrise' | 'night'>('sunny');
 
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -105,78 +106,6 @@ export default function BalloonPop() {
   const adaptiveSpeedRef = useRef(1.0); // Speed multiplier
   const adaptiveDistractorCountRef = useRef(0); // Distractor reduction
   const announcerRef = useRef<HTMLDivElement | null>(null);
-
-  // Get sky background based on round (changes every 5 rounds)
-  const getSkyBackground = () => {
-    const skyIndex = Math.floor((currentRound - 1) / 5) % 5;
-    
-    switch (skyIndex) {
-      case 0: // Sunny day
-        return {
-          gradient: "linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #FFFACD 100%)",
-          elements: (
-            <>
-              <div className="absolute top-20 right-20 w-24 h-24 bg-yellow-300 rounded-full shadow-2xl animate-pulse" />
-              <div className="absolute top-32 left-1/4 text-4xl animate-bounce" style={{animationDuration: '3s'}}>🕊️</div>
-              <div className="absolute top-40 right-1/3 text-3xl animate-bounce" style={{animationDuration: '4s'}}>🕊️</div>
-            </>
-          ),
-        };
-      case 1: // Cloudy
-        return {
-          gradient: "linear-gradient(180deg, #B0C4DE 0%, #D3D3D3 50%, #E8E8E8 100%)",
-          elements: (
-            <>
-              <div className="absolute top-16 left-1/4 text-6xl opacity-70">☁️</div>
-              <div className="absolute top-24 right-1/4 text-7xl opacity-80">☁️</div>
-              <div className="absolute top-40 left-1/2 text-5xl opacity-60">☁️</div>
-            </>
-          ),
-        };
-      case 2: // Sunset
-        return {
-          gradient: "linear-gradient(180deg, #FF6B6B 0%, #FFB347 40%, #FFA07A 70%, #FFD700 100%)",
-          elements: (
-            <>
-              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-32 h-32 bg-orange-500 rounded-full shadow-2xl opacity-80" />
-              <div className="absolute top-32 left-1/3 text-5xl opacity-50">☁️</div>
-              <div className="absolute top-40 right-1/3 text-6xl opacity-40">☁️</div>
-            </>
-          ),
-        };
-      case 3: // Sunrise
-        return {
-          gradient: "linear-gradient(180deg, #FFB6C1 0%, #FFA07A 40%, #FFDAB9 70%, #FFFACD 100%)",
-          elements: (
-            <>
-              <div className="absolute bottom-10 right-20 w-28 h-28 bg-yellow-400 rounded-full shadow-2xl" />
-              <div className="absolute top-28 left-1/4 text-4xl opacity-60">☁️</div>
-            </>
-          ),
-        };
-      case 4: // Night
-        return {
-          gradient: "linear-gradient(180deg, #000428 0%, #004e92 50%, #1a1a2e 100%)",
-          elements: (
-            <>
-              <div className="absolute top-16 right-24 text-6xl">🌙</div>
-              <div className="absolute top-20 left-1/4 text-2xl animate-pulse">⭐</div>
-              <div className="absolute top-32 right-1/3 text-xl animate-pulse" style={{animationDuration: '2s'}}>⭐</div>
-              <div className="absolute top-48 left-1/2 text-2xl animate-pulse" style={{animationDuration: '3s'}}>⭐</div>
-              <div className="absolute top-28 right-1/4 text-xl animate-pulse" style={{animationDuration: '2.5s'}}>⭐</div>
-              <div className="absolute top-56 left-1/3 text-xl animate-pulse" style={{animationDuration: '3.5s'}}>⭐</div>
-            </>
-          ),
-        };
-      default:
-        return {
-          gradient: "linear-gradient(180deg, #87CEEB 0%, #E0F6FF 50%, #FFFACD 100%)",
-          elements: null,
-        };
-    }
-  };
-
-  const skyBackground = getSkyBackground();
 
   // Load coins and sound preference on mount
   useEffect(() => {
@@ -291,6 +220,15 @@ export default function BalloonPop() {
     }
   }, [currentRound, currentLevel, gameMode]);
 
+  // Change sky theme every 5 rounds
+  useEffect(() => {
+    const themes: Array<'sunny' | 'cloudy' | 'sunset' | 'sunrise' | 'night'> = [
+      'sunny', 'cloudy', 'sunset', 'sunrise', 'night'
+    ];
+    const themeIndex = Math.floor((currentRound - 1) / 5) % themes.length;
+    setSkyTheme(themes[themeIndex]);
+  }, [currentRound]);
+
   // Game loop with delta-time requestAnimationFrame
   useEffect(() => {
     if (gameMode !== "playing" && gameMode !== "practice") return;
@@ -299,7 +237,7 @@ export default function BalloonPop() {
     let animationId: number;
 
     const gameLoop = (timestamp: number) => {
-      // Skip movement updates if paused (during confetti)
+      // Skip movement if paused (during confetti)
       if (isPaused) {
         animationId = requestAnimationFrame(gameLoop);
         return;
@@ -357,7 +295,7 @@ export default function BalloonPop() {
       rafIdRef.current = null;
       lastTimeRef.current = 0;
     };
-  }, [gameMode, targetWord, levelConfig]);
+  }, [gameMode, targetWord, levelConfig, isPaused]);
 
   // Pause/resume on visibility change
   useEffect(() => {
@@ -443,8 +381,9 @@ export default function BalloonPop() {
       playPopSound();
       playCelebrationSound();
 
-      // Freeze balloons during confetti
+      // Pause balloons during confetti celebration
       setIsPaused(true);
+      setTimeout(() => setIsPaused(false), 1500);
 
       // Track mastery (first-try correct)
       updateMasteryRecord(targetWord.word, isFirstTry);
@@ -494,17 +433,12 @@ export default function BalloonPop() {
       // Update stats
       setCorrectCount((prev) => prev + 1);
 
-      // Confetti
+      // Confetti - show for duration of pause
       const balloon = balloons.find((b) => b.id === id);
       if (balloon) {
         const confettiId = Date.now();
         setConfetti({ id: confettiId, x: balloon.x, y: (balloon.y / viewportHeightRef.current) * 100 });
-        setTimeout(() => {
-          setConfetti(null);
-          setIsPaused(false); // Resume balloon movement
-        }, 1200);
-      } else {
-        setIsPaused(false);
+        setTimeout(() => setConfetti(null), 1500); // Match pause duration
       }
 
       // Toast
@@ -794,20 +728,89 @@ export default function BalloonPop() {
   }
 
   // Main game view
+  const skyBackgrounds = {
+    sunny: "linear-gradient(to bottom, #87CEEB 0%, #E0F6FF 50%, #87CEEB 100%)",
+    cloudy: "linear-gradient(to bottom, #B0C4DE 0%, #D3D3D3 50%, #A9A9A9 100%)",
+    sunset: "linear-gradient(to bottom, #FF6B6B 0%, #FFB84D 30%, #FFA07A 60%, #FFE5B4 100%)",
+    sunrise: "linear-gradient(to bottom, #FFB6C1 0%, #FFD700 30%, #FFA07A 60%, #87CEEB 100%)",
+    night: "linear-gradient(to bottom, #0B1026 0%, #1A1F3A 50%, #2C3E50 100%)",
+  };
+
   return (
     <div
       className="relative min-h-screen overflow-hidden"
       style={{
-        background: skyBackground.gradient,
+        background: skyBackgrounds[skyTheme],
+        transition: "background 2s ease-in-out",
       }}
     >
       <SoundGate gameSlug="balloon-pop" />
       
-      {/* Sky background elements */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        {skyBackground.elements}
-      </div>
-
+      {/* Sky elements based on theme */}
+      {skyTheme === 'sunny' && (
+        <>
+          {/* Sun */}
+          <div className="absolute top-20 right-20 w-24 h-24 rounded-full bg-yellow-300 shadow-2xl z-0"
+            style={{
+              boxShadow: '0 0 60px 30px rgba(255, 223, 0, 0.4)'
+            }}
+          />
+          {/* Birds */}
+          <div className="absolute top-32 left-1/4 text-4xl animate-bounce" style={{animationDuration: '3s'}}>🐦</div>
+          <div className="absolute top-48 right-1/3 text-3xl animate-bounce" style={{animationDuration: '4s', animationDelay: '1s'}}>🐦</div>
+        </>
+      )}
+      
+      {skyTheme === 'cloudy' && (
+        <>
+          {/* Rain clouds */}
+          <div className="absolute top-16 left-1/4 text-6xl opacity-80">☁️</div>
+          <div className="absolute top-24 right-1/4 text-7xl opacity-70">☁️</div>
+          <div className="absolute top-32 left-1/2 text-6xl opacity-60">☁️</div>
+        </>
+      )}
+      
+      {skyTheme === 'sunset' && (
+        <>
+          {/* Setting sun */}
+          <div className="absolute bottom-40 right-32 w-32 h-32 rounded-full bg-orange-400 shadow-2xl z-0"
+            style={{
+              boxShadow: '0 0 80px 40px rgba(255, 140, 0, 0.5)'
+            }}
+          />
+          {/* Birds flying home */}
+          <div className="absolute top-40 left-1/4 text-3xl">🐦</div>
+          <div className="absolute top-56 left-1/3 text-2xl">🐦</div>
+        </>
+      )}
+      
+      {skyTheme === 'sunrise' && (
+        <>
+          {/* Rising sun */}
+          <div className="absolute top-32 left-32 w-28 h-28 rounded-full bg-yellow-200 shadow-2xl z-0"
+            style={{
+              boxShadow: '0 0 70px 35px rgba(255, 215, 0, 0.4)'
+            }}
+          />
+          {/* Morning birds */}
+          <div className="absolute top-44 right-1/4 text-4xl animate-bounce" style={{animationDuration: '3.5s'}}>🐦</div>
+        </>
+      )}
+      
+      {skyTheme === 'night' && (
+        <>
+          {/* Moon */}
+          <div className="absolute top-20 right-24 text-7xl">🌙</div>
+          {/* Stars */}
+          <div className="absolute top-16 left-1/4 text-2xl animate-pulse">⭐</div>
+          <div className="absolute top-32 left-1/3 text-xl animate-pulse" style={{animationDelay: '0.5s'}}>⭐</div>
+          <div className="absolute top-48 right-1/4 text-2xl animate-pulse" style={{animationDelay: '1s'}}>⭐</div>
+          <div className="absolute top-24 right-1/3 text-xl animate-pulse" style={{animationDelay: '1.5s'}}>⭐</div>
+          <div className="absolute top-40 left-1/2 text-2xl animate-pulse" style={{animationDelay: '2s'}}>✨</div>
+          <div className="absolute top-56 right-1/2 text-xl animate-pulse" style={{animationDelay: '2.5s'}}>✨</div>
+        </>
+      )}
+      
       {/* Parallax clouds */}
       <CloudLayer layer={1} />
       <CloudLayer layer={2} />
