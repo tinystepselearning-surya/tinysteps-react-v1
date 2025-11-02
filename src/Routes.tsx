@@ -24,6 +24,7 @@ const SpellBeeGroupDashboard = lazy(() => import("./games/spellbee-flash/GroupDa
 const MeaningMatchGame = lazy(() => import("./games/meaning-match"));
 const MeaningMatchDashboard = lazy(() => import("./games/meaning-match/Dashboard"));
 const BalloonPopGame = lazy(() => import("./games/balloon-pop"));
+const BalloonPopDashboard = lazy(() => import("./games/balloon-pop/Dashboard"));
 const QuickMeaningGame = lazy(() => import("./games/quick-meaning-quiz"));
 const QuickMeaningDashboard = lazy(() => import("./games/quick-meaning-quiz/Dashboard"));
 const BossLevelGame = lazy(() => import("./games/boss-level"));
@@ -82,6 +83,14 @@ export default function AppRoutes() {
           element={
             <Suspense fallback={<div className="p-6">Loading game…</div>}>
               <BalloonPopGame />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/kids/games/balloon-pop/dashboard" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading dashboard…</div>}>
+              <BalloonPopDashboard />
             </Suspense>
           } 
         />

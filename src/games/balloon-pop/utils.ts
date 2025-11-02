@@ -7,6 +7,8 @@ import type { Word } from "./data";
 const COINS_KEY = "spellbee-coins-v1";
 const STATS_KEY = "balloon-pop-stats-v1";
 const SOUND_ENABLED_KEY = "balloon-pop-sound-enabled";
+const MASTERY_KEY = "balloon-pop-mastery-v1";
+const ACHIEVEMENTS_KEY = "balloon-pop-achievements-v1";
 
 /**
  * Game stats interface
@@ -18,6 +20,45 @@ export interface GameStats {
   level3Clears: number;
   badges: string[];
   trickyPhonemes: Record<string, number>; // phoneme -> wrong count
+}
+
+/**
+ * Mastery tracking for individual words
+ * Tracks first-try accuracy to determine mastery (3 correct first-tries = mastered)
+ */
+export interface MasteryRecord {
+  correct: number; // First-try correct count
+  total: number; // Total attempts
+  lastPracticed: number; // Timestamp
+  mastered: boolean; // True if correct >= 3
+}
+
+/**
+ * Achievement definition
+ */
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  target: number; // Number of words to master
+  icon: string;
+  earned: boolean;
+  earnedAt?: number; // Timestamp
+}
+
+/**
+ * Progress statistics for dashboard
+ */
+export interface ProgressStats {
+  totalWords: number;
+  masteredWords: number;
+  masteryPercent: number;
+  groupProgress: {
+    group: string;
+    mastered: number;
+    total: number;
+    percent: number;
+  }[];
 }
 
 /**
@@ -345,4 +386,176 @@ export function getMinimalPairHint(correctIPA: string, wrongIPA: string): string
 export function clampDelta(delta: number, maxDelta: number = 100): number {
   // Prevent huge jumps when tab is hidden/resumed
   return Math.min(delta, maxDelta);
+}
+
+/**
+ * Mastery tracking functions
+ */
+export function getMasteryRecord(wordId: string): MasteryRecord {
+  try {
+    const stored = localStorage.getItem(MASTERY_KEY);
+    const allRecords: Record<string, MasteryRecord> = stored ? JSON.parse(stored) : {};
+    return allRecords[wordId] || { correct: 0, total: 0, lastPracticed: 0, mastered: false };
+  } catch {
+    return { correct: 0, total: 0, lastPracticed: 0, mastered: false };
+  }
+}
+
+export function updateMasteryRecord(wordId: string, wasCorrectFirstTry: boolean): void {
+  try {
+    const stored = localStorage.getItem(MASTERY_KEY);
+    const allRecords: Record<string, MasteryRecord> = stored ? JSON.parse(stored) : {};
+    
+    const current = allRecords[wordId] || { correct: 0, total: 0, lastPracticed: 0, mastered: false };
+    
+    if (wasCorrectFirstTry) {
+      current.correct += 1;
+    }
+    current.total += 1;
+    current.lastPracticed = Date.now();
+    current.mastered = current.correct >= 3;
+    
+    allRecords[wordId] = current;
+    localStorage.setItem(MASTERY_KEY, JSON.stringify(allRecords));
+    
+    // Trigger storage event for dashboard refresh
+    window.dispatchEvent(new StorageEvent('storage', {
+      key: MASTERY_KEY,
+      newValue: JSON.stringify(allRecords),
+    }));
+  } catch (error) {
+    console.warn('Failed to update mastery record:', error);
+  }
+}
+
+export function getAllMasteryRecords(): Record<string, MasteryRecord> {
+  try {
+    const stored = localStorage.getItem(MASTERY_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Achievement system
+ */
+const ALL_ACHIEVEMENTS: Omit<Achievement, 'earned' | 'earnedAt'>[] = [
+  {
+    id: 'first_word',
+    name: 'First Pop',
+    description: 'Master your first word!',
+    target: 1,
+    icon: '⭐',
+  },
+  {
+    id: 'master_10',
+    name: 'Rising Star',
+    description: 'Master 10 words',
+    target: 10,
+    icon: '🎯',
+  },
+  {
+    id: 'master_25',
+    name: 'Balloon Champion',
+    description: 'Master 25 words',
+    target: 25,
+    icon: '🏆',
+  },
+  {
+    id: 'master_50',
+    name: 'Phonics Expert',
+    description: 'Master 50 words',
+    target: 50,
+    icon: '👑',
+  },
+  {
+    id: 'master_all',
+    name: 'Ultimate Popper',
+    description: 'Master all 148 words!',
+    target: 148,
+    icon: '🎖️',
+  },
+];
+
+export function getAllAchievements(): Achievement[] {
+  try {
+    const stored = localStorage.getItem(ACHIEVEMENTS_KEY);
+    const earned: Record<string, number> = stored ? JSON.parse(stored) : {};
+    
+    return ALL_ACHIEVEMENTS.map(ach => ({
+      ...ach,
+      earned: !!earned[ach.id],
+      earnedAt: earned[ach.id],
+    }));
+  } catch {
+    return ALL_ACHIEVEMENTS.map(ach => ({ ...ach, earned: false }));
+  }
+}
+
+export function checkAchievements(): Achievement[] {
+  const masteryRecords = getAllMasteryRecords();
+  const masteredCount = Object.values(masteryRecords).filter(r => r.mastered).length;
+  
+  try {
+    const stored = localStorage.getItem(ACHIEVEMENTS_KEY);
+    const earned: Record<string, number> = stored ? JSON.parse(stored) : {};
+    
+    const newlyEarned: Achievement[] = [];
+    
+    for (const ach of ALL_ACHIEVEMENTS) {
+      if (!earned[ach.id] && masteredCount >= ach.target) {
+        earned[ach.id] = Date.now();
+        newlyEarned.push({ ...ach, earned: true, earnedAt: earned[ach.id] });
+      }
+    }
+    
+    if (newlyEarned.length > 0) {
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(earned));
+      
+      // Trigger storage event for dashboard refresh
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: ACHIEVEMENTS_KEY,
+        newValue: JSON.stringify(earned),
+      }));
+    }
+    
+    return newlyEarned;
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Progress statistics computation for dashboard
+ */
+export function computeProgressStats(words: typeof import('./data').WORDS): ProgressStats {
+  const masteryRecords = getAllMasteryRecords();
+  const totalWords = words.length;
+  const masteredWords = Object.values(masteryRecords).filter(r => r.mastered).length;
+  
+  // Group words by phoneme (vowels, consonants, diphthongs)
+  const groups = {
+    'Short Vowels': words.filter(w => /[æɪʌɛɒʊ]/.test(w.ipa)),
+    'Long Vowels': words.filter(w => /[iːɑːɔːuː]/.test(w.ipa)),
+    'Diphthongs': words.filter(w => /[aɪeɪɔɪaʊoʊ]/.test(w.ipa)),
+    'Consonants': words.filter(w => !/[æɪʌɛɒʊiːɑːɔːuːaɪeɪɔɪaʊoʊ]/.test(w.ipa)),
+  };
+  
+  const groupProgress = Object.entries(groups).map(([group, groupWords]) => {
+    const mastered = groupWords.filter(w => masteryRecords[w.word]?.mastered).length;
+    return {
+      group,
+      mastered,
+      total: groupWords.length,
+      percent: groupWords.length > 0 ? Math.round((mastered / groupWords.length) * 100) : 0,
+    };
+  });
+  
+  return {
+    totalWords,
+    masteredWords,
+    masteryPercent: totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0,
+    groupProgress,
+  };
 }

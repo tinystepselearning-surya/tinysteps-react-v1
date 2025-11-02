@@ -25,7 +25,10 @@ import {
   setSoundEnabled,
   getMinimalPairHint,
   clampDelta,
+  updateMasteryRecord,
+  checkAchievements,
 } from "./utils";
+import { playCelebrationSound } from "./soundEffects";
 import { Balloon, BALLOON_COLORS } from "./Balloon";
 import { HUD } from "./HUD";
 import { EndSummary } from "./EndSummary";
@@ -93,6 +96,8 @@ export default function BalloonPop() {
   const [showSoundTip, setShowSoundTip] = useState(false);
   const [skyHue, setSkyHue] = useState(200); // Animated sky hue
   const [focusedBalloonIndex, setFocusedBalloonIndex] = useState(0);
+  const [achievementBadge, setAchievementBadge] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
@@ -361,14 +366,32 @@ export default function BalloonPop() {
 
     if (isCorrect) {
       const elapsedTime = (performance.now() - roundStartTime) / 1000;
+      const isFirstTry = currentAttempts === 1;
 
       // Play sounds
       playCorrectSound();
       playPopSound();
+      playCelebrationSound();
+
+      // Track mastery (first-try correct)
+      updateMasteryRecord(targetWord.word, isFirstTry);
+
+      // Check achievements and award bonus coins
+      const newAchievements = checkAchievements();
+      if (newAchievements.length > 0) {
+        const ach = newAchievements[0];
+        setAchievementBadge(`${ach.icon} ${ach.name}!`);
+        addCoins(50); // Achievement bonus
+        setTimeout(() => setAchievementBadge(null), 5000);
+      }
+
+      // Show celebration effect
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 1500);
 
       // Award coins
       let coinReward = 0;
-      if (currentAttempts === 1) {
+      if (isFirstTry) {
         coinReward = 5;
         setFirstTryStreak((prev) => prev + 1);
       } else if (currentAttempts === 2) {
@@ -413,7 +436,7 @@ export default function BalloonPop() {
       setTimeout(() => setLiveMessage(""), 2000);
 
       // Check for Sharpshooter badge (10 first-try in a row)
-      if (currentAttempts === 1) {
+      if (isFirstTry) {
         const newFirstTryStreak = firstTryStreak + 1;
         if (newFirstTryStreak === 10) {
           const awarded = awardBadge("sharpshooter");
@@ -826,6 +849,39 @@ export default function BalloonPop() {
         <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-50">
           <div className="text-9xl animate-ping">✨</div>
         </div>
+      )}
+
+      {/* Achievement Badge Overlay */}
+      {achievementBadge && (
+        <div className="fixed bottom-24 right-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-2xl shadow-2xl animate-bounce z-50">
+          <p className="text-xl font-bold">{achievementBadge}</p>
+          <p className="text-sm">+50 coins!</p>
+        </div>
+      )}
+
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
+          <div className="text-9xl animate-ping">✨🌟✨</div>
+        </div>
+      )}
+
+      {/* Floating Navigation - Only show during gameplay */}
+      {(gameMode === "playing" || gameMode === "practice") && (
+        <>
+          <button
+            onClick={() => setGameMode("summary")}
+            className="fixed bottom-6 left-6 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-full shadow-lg transition-all z-30"
+          >
+            ← Back
+          </button>
+          <button
+            onClick={() => (window.location.href = "/kids/games/balloon-pop/dashboard")}
+            className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-full shadow-lg transition-all z-30"
+          >
+            📊 Progress
+          </button>
+        </>
       )}
     </div>
   );
