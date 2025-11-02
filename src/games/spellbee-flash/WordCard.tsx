@@ -50,6 +50,11 @@ export default function WordCard({
   const timerRef = useRef<number | null>(null);
   const beepTimesRef = useRef<Set<number>>(new Set());
   
+  // Adaptive learning - track wrong attempts and guide to correct answer
+  const [wrongMeaningAttempts, setWrongMeaningAttempts] = useState<Set<number>>(new Set());
+  const [wrongIPAAttempts, setWrongIPAAttempts] = useState<Set<number>>(new Set());
+  const [showCorrectHint, setShowCorrectHint] = useState(false);
+  
   // Celebration state
   const [showConfetti, setShowConfetti] = useState(false);
   const [cheerMessage, setCheerMessage] = useState<string | null>(null);
@@ -68,6 +73,11 @@ export default function WordCard({
     setTimeLeft(10);
     setTimerStartTime(null);
     beepTimesRef.current = new Set();
+    
+    // Reset adaptive learning states
+    setWrongMeaningAttempts(new Set());
+    setWrongIPAAttempts(new Set());
+    setShowCorrectHint(false);
     
     // Clear any existing timer
     if (timerRef.current) {
@@ -190,10 +200,26 @@ export default function WordCard({
   };
 
   const handleMeaningSelect = (index: number) => {
-    if (selectedMeaningIndex !== null) return;
+    // Adaptive learning: allow re-selection if wrong answer was chosen
+    if (selectedMeaningIndex !== null && index === selectedMeaningIndex) return;
     
-    setSelectedMeaningIndex(index);
     const isCorrect = index === correctMeaningIndex;
+    
+    // If wrong answer, mark it and guide to correct answer
+    if (!isCorrect) {
+      setWrongMeaningAttempts(prev => new Set([...prev, index]));
+      setShowCorrectHint(true);
+      
+      // Play wrong audio feedback
+      const cleanup = speakWrong();
+      setTimeout(() => cleanup(), 1000);
+      
+      // Don't proceed - wait for correct answer
+      return;
+    }
+    
+    // Correct answer selected!
+    setSelectedMeaningIndex(index);
     
     // For speed round, calculate bonus and complete immediately
     if (phase === "speed") {
@@ -206,10 +232,10 @@ export default function WordCard({
       const elapsed = timerStartTime ? (Date.now() - timerStartTime) / 1000 : 10;
       const speedBonus = isCorrect ? Math.max(0, Math.floor((10 - elapsed) * 10)) : 0;
       
-      if (isCorrect) triggerCelebration();
+      triggerCelebration();
       
       // Play audio feedback
-      const cleanup = isCorrect ? speakCorrect() : speakWrong();
+      const cleanup = speakCorrect();
       
       setTimeout(() => {
         cleanup();
@@ -219,10 +245,10 @@ export default function WordCard({
     }
     
     // Normal flow: proceed to IPA phase
-    if (isCorrect) triggerCelebration();
+    triggerCelebration();
     
     // Play audio feedback
-    const cleanup = isCorrect ? speakCorrect() : speakWrong();
+    const cleanup = speakCorrect();
     
     setTimeout(() => {
       cleanup();
@@ -231,15 +257,31 @@ export default function WordCard({
   };
 
   const handleIPASelect = (index: number) => {
-    if (selectedIPAIndex !== null) return;
+    // Adaptive learning: allow re-selection if wrong answer was chosen
+    if (selectedIPAIndex !== null && index === selectedIPAIndex) return;
     
-    setSelectedIPAIndex(index);
     const isCorrect = index === correctIPAIndex;
     
-    if (isCorrect) triggerCelebration();
+    // If wrong answer, mark it and guide to correct answer
+    if (!isCorrect) {
+      setWrongIPAAttempts(prev => new Set([...prev, index]));
+      setShowCorrectHint(true);
+      
+      // Play wrong audio feedback
+      const cleanup = speakWrong();
+      setTimeout(() => cleanup(), 1000);
+      
+      // Don't proceed - wait for correct answer
+      return;
+    }
+    
+    // Correct answer selected!
+    setSelectedIPAIndex(index);
+    
+    triggerCelebration();
     
     // Play audio feedback
-    const cleanup = isCorrect ? speakCorrect() : speakWrong();
+    const cleanup = speakCorrect();
 
     // Complete the word
     setTimeout(() => {
@@ -429,54 +471,62 @@ export default function WordCard({
           {/* Normal Mode: Meaning Round */}
           {phase === "meaning" && (
             <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
-              {meaningOptions.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleMeaningSelect(index)}
-                  disabled={selectedMeaningIndex !== null}
-                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
-                    selectedMeaningIndex === null
-                      ? ""
-                      : selectedMeaningIndex === index
-                      ? index === correctMeaningIndex
-                        ? "bg-green-50 ring-2 ring-green-300"
-                        : "bg-rose-50 ring-2 ring-rose-300"
-                      : index === correctMeaningIndex
-                      ? "bg-green-50 ring-2 ring-green-300"
-                      : ""
-                  }`}
-                  aria-label={`Option ${index + 1}: ${option}`}
-                >
-                  {option}
-                </button>
-              ))}
+              {meaningOptions.map((option, index) => {
+                const isWrong = wrongMeaningAttempts.has(index);
+                const isCorrect = index === correctMeaningIndex;
+                const showAsCorrect = isCorrect && (showCorrectHint || selectedMeaningIndex === index);
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleMeaningSelect(index)}
+                    disabled={selectedMeaningIndex !== null}
+                    className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
+                      isWrong
+                        ? "bg-rose-100 ring-2 ring-rose-400 opacity-60"
+                        : showAsCorrect
+                        ? "bg-green-100 ring-2 ring-green-400 animate-pulse"
+                        : ""
+                    }`}
+                    aria-label={`Option ${index + 1}: ${option}`}
+                  >
+                    {option}
+                    {isWrong && <span className="ml-1 text-rose-600">✗</span>}
+                    {showAsCorrect && <span className="ml-1 text-green-600">✓</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           {/* IPA Phase */}
           {phase === "ipa" && (
             <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
-              {ipaOptions.map((option, index) => (
-                <button
-                  key={index}
-                  onClick={() => handleIPASelect(index)}
-                  disabled={selectedIPAIndex !== null}
-                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
-                    selectedIPAIndex === null
-                      ? ""
-                      : selectedIPAIndex === index
-                      ? index === correctIPAIndex
-                        ? "bg-green-50 ring-2 ring-green-300"
-                        : "bg-rose-50 ring-2 ring-rose-300"
-                      : index === correctIPAIndex
-                      ? "bg-green-50 ring-2 ring-green-300"
-                      : ""
-                  }`}
-                  aria-label={`Option ${index + 1}: ${option}`}
-                >
-                  {option}
-                </button>
-              ))}
+              {ipaOptions.map((option, index) => {
+                const isWrong = wrongIPAAttempts.has(index);
+                const isCorrect = index === correctIPAIndex;
+                const showAsCorrect = isCorrect && (showCorrectHint || selectedIPAIndex === index);
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => handleIPASelect(index)}
+                    disabled={selectedIPAIndex !== null}
+                    className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[64px] sm:min-h-[64px] w-full text-[clamp(14px,3.2vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition ${
+                      isWrong
+                        ? "bg-rose-100 ring-2 ring-rose-400 opacity-60"
+                        : showAsCorrect
+                        ? "bg-green-100 ring-2 ring-green-400 animate-pulse"
+                        : ""
+                    }`}
+                    aria-label={`Option ${index + 1}: ${option}`}
+                  >
+                    {option}
+                    {isWrong && <span className="ml-1 text-rose-600">✗</span>}
+                    {showAsCorrect && <span className="ml-1 text-green-600">✓</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
         </section>

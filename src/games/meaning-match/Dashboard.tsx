@@ -8,11 +8,11 @@ import { WORDS } from './data';
 import { computeProgressStats, getAllAchievements } from './utils';
 
 export default function Dashboard() {
-  // Compute stats fresh on each mount to get latest mastery data from localStorage
+  // Force fresh computation on every render with polling
   const [stats, setStats] = useState(() => computeProgressStats(WORDS));
   const [achievements, setAchievements] = useState(() => getAllAchievements());
   
-  // Refresh data when component mounts or when user returns to dashboard
+  // Refresh data when component mounts or when localStorage changes
   useEffect(() => {
     // Immediately refresh on mount
     const refreshData = () => {
@@ -22,14 +22,27 @@ export default function Dashboard() {
     
     refreshData();
     
+    // Listen for storage changes (from other tabs or same tab updates)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key?.includes('meaning-match-mastery') || e.key?.includes('meaning-match-achievements')) {
+        refreshData();
+      }
+    };
+    
     // Also refresh when window gains focus (user navigates back)
     const handleFocus = () => {
       refreshData();
     };
     
+    // Set up an interval to refresh every 2 seconds while dashboard is visible
+    const intervalId = setInterval(refreshData, 2000);
+    
+    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('focus', handleFocus);
     
     return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('focus', handleFocus);
     };
   }, []);
