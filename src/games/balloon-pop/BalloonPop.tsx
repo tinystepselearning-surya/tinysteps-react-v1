@@ -44,7 +44,7 @@ import { flushPending } from "../shared/storage";
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
 
-// Slower rise speeds for better visibility and gameplay (px/s)
+// Optimized rise speeds for better visibility and engaging gameplay (px/s)
 const LEVEL_CONFIGS = {
   1: { balloonCount: 3, riseSpeed: 50, hasSway: false },
   2: { balloonCount: 4, riseSpeed: 70, hasSway: false },
