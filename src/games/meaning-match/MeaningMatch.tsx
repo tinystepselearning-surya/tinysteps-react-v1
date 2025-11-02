@@ -170,9 +170,9 @@ export default function MeaningMatch() {
         announce(announcerRef.current, `Nice! ${word.word} complete!`);
         setLiveMessage(`⭐ Nice! ${word.word} complete!`);
         
-        // Update mastery tracking
-        const meaningCorrectFirst = updatedState.meaningAttempts === 1;
-        const ipaCorrectFirst = updatedState.ipaAttempts === 1;
+        // Update mastery tracking - check if BOTH were correct on first try
+        const meaningCorrectFirst = updatedState.meaningAttempts === 1 && updatedState.meaningCorrect;
+        const ipaCorrectFirst = updatedState.ipaAttempts === 1 && updatedState.ipaCorrect;
         updateMasteryRecord(wordId, meaningCorrectFirst, ipaCorrectFirst, true);
         
         // Check for new achievements
@@ -331,10 +331,10 @@ export default function MeaningMatch() {
         ← Back
       </button>
 
-      {/* View Progress Button */}
+      {/* View Progress Button - positioned higher to avoid BackToTop overlap */}
       <button
         onClick={() => window.location.href = '/kids/games/meaning-match/dashboard'}
-        className="fixed bottom-4 right-4 z-40 flex items-center gap-2 min-h-[64px] px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2 text-base sm:text-lg"
+        className="fixed bottom-24 right-4 z-40 flex items-center gap-2 min-h-[64px] px-5 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-[3px] focus:ring-blue-500 focus:ring-offset-2 text-base sm:text-lg"
         aria-label="View progress dashboard"
       >
         <span>📊</span>
