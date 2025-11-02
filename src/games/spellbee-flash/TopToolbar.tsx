@@ -39,11 +39,12 @@ export default function TopToolbar({
         <button
           onClick={onOpenDashboard}
           disabled={disabled}
-          className="rounded-xl bg-white/90 hover:bg-white min-h-[56px] min-w-[56px] px-3 py-2 shadow ring-1 ring-slate-200 text-slate-700 text-base font-semibold focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="rounded-xl bg-white/90 hover:bg-white min-h-[56px] px-3 py-2 shadow ring-1 ring-slate-200 text-slate-700 text-sm font-semibold focus:outline-none focus:ring-[3px] focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           aria-label="Open progress dashboard"
           title="Progress Dashboard"
         >
-          <span aria-hidden="true">📊</span>
+          <span aria-hidden="true" className="text-base">📊</span>
+          <span className="hidden sm:inline">View Progress</span>
         </button>
       )}
       {/* Book Icon - Word List */}

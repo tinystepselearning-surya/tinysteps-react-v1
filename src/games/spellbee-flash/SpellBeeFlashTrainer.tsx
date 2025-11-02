@@ -9,7 +9,6 @@ import WordCard from "./WordCard";
 import SummaryScreen from "./SummaryScreen";
 import SoundGate from "../shared/SoundGate";
 import GameViewport from "./GameViewport";
-import LeftOverlay from "./LeftOverlay";
 import { createAnnouncer, announce } from "../shared/accessibility";
 import { flushPending } from "../shared/storage";
 import { 
@@ -76,7 +75,7 @@ export default function SpellBeeFlashTrainer() {
   const [sparkEffect, setSparkEffect] = useState(false);
   const [recentMistakes, setRecentMistakes] = useState<number[]>([]);
   const [fixUpReport, setFixUpReport] = useState<FixUpReport | null>(null);
-  const [questsState, setQuestsState] = useState<QuestsState>(() => loadQuests());
+  const [_questsState, setQuestsState] = useState<QuestsState>(() => loadQuests());
   const [questCelebration, setQuestCelebration] = useState<string | null>(null);
 
   // Shuffle words once on mount (or use fix-up words)
@@ -282,9 +281,12 @@ export default function SpellBeeFlashTrainer() {
       const updatedMastery = updateMastery(wordIndex, bothCorrect, masteryData);
       saveMasteryDataDebounced(updatedMastery); // Debounced save
       
-      // Check if word was just mastered
+      // Check if word was just mastered (went from not mastered to mastered)
       const mastery = updatedMastery.get(wordIndex);
-      if (mastery && mastery.mastered && mastery.correct === 3) {
+      const wasNotMastered = !prevMastery || !prevMastery.mastered;
+      const isNowMastered = mastery && mastery.mastered;
+      
+      if (wasNotMastered && isNowMastered) {
         logEvent("bucket_up", { word: currentWord.word, bucket: "mastered" });
         updateQuest("master_3", 1);
       } else if (mastery && prevMastery && mastery.correct < prevMastery.correct) {
@@ -427,12 +429,13 @@ export default function SpellBeeFlashTrainer() {
         {/* Sound Gate */}
         <SoundGate gameSlug="spellbee-flash" />
         
-        {/* Left Overlay: Quests + Coins/Score - absolute positioned, no layout impact */}
-        <LeftOverlay 
+        {/* Left Overlay removed to keep game screen clean for kids */}
+        {/* Quest panel moved out - answers should always be visible */}
+        {/* <LeftOverlay 
           coins={totalCoins}
           score={score}
           quests={questsState.quests}
-        />
+        /> */}
 
         {/* Quest Celebration Toast */}
         {questCelebration && (
@@ -459,8 +462,8 @@ export default function SpellBeeFlashTrainer() {
             ← Back
           </button>
 
-          {/* Coins/Score/Streak badges - hidden on lg+ (shown in LeftOverlay instead) */}
-          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 lg:hidden">
+          {/* Coins/Score/Streak badges - now always visible since quest panel removed */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
             {/* Coin Counter - improved contrast */}
             <div className="bg-yellow-500 text-gray-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
               🪙 {totalCoins}
