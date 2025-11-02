@@ -13,6 +13,8 @@ export interface WordsModalProps {
     word: string;
     mastery: number;
     accuracy: number;
+    attempts: number;
+    lastPracticed: string | null;
   }>;
   onClose: () => void;
 }
@@ -86,47 +88,71 @@ export default function WordsModal({
             No words in this group yet.
           </div>
         ) : (
-          <div className="divide-y divide-slate-100">
+          <div className="space-y-2">
             {words.map((word) => (
               <div
                 key={word.id}
-                className="py-3 flex items-center gap-3 hover:bg-slate-50 px-2 rounded transition"
+                className="p-3 bg-slate-50 hover:bg-slate-100 rounded-xl transition"
               >
-                {/* Mastery Dot */}
-                <div
-                  className={`h-3 w-3 rounded-full ${getMasteryColor(
-                    word.mastery
-                  )} shrink-0`}
-                  aria-label={`Mastery level: ${word.mastery}`}
-                  title={
-                    word.mastery >= 3
-                      ? 'Mastered'
-                      : word.mastery >= 2
-                      ? 'Good progress'
-                      : word.mastery >= 1
-                      ? 'Learning'
-                      : 'Not started'
-                  }
-                />
+                <div className="flex items-center gap-3 mb-2">
+                  {/* Mastery Dot */}
+                  <div
+                    className={`h-3 w-3 rounded-full ${getMasteryColor(
+                      word.mastery
+                    )} shrink-0`}
+                    aria-label={`Mastery level: ${word.mastery}`}
+                    title={
+                      word.mastery >= 3
+                        ? 'Mastered'
+                        : word.mastery >= 2
+                        ? 'Good progress'
+                        : word.mastery >= 1
+                        ? 'Learning'
+                        : 'Not started'
+                    }
+                  />
 
-                {/* Word */}
-                <div className="flex-1 font-semibold text-slate-800 text-base sm:text-lg">
-                  {word.word}
+                  {/* Word */}
+                  <div className="flex-1 font-bold text-slate-800 text-base sm:text-lg">
+                    {word.word}
+                  </div>
+
+                  {/* Accuracy Badge */}
+                  <div
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                      word.accuracy >= 80
+                        ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
+                        : word.accuracy >= 60
+                        ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
+                        : word.accuracy > 0
+                        ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200'
+                        : 'bg-slate-100 text-slate-600 ring-1 ring-slate-200'
+                    }`}
+                  >
+                    {word.accuracy > 0 ? `${word.accuracy}%` : 'New'}
+                  </div>
                 </div>
 
-                {/* Accuracy Badge */}
-                <div
-                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    word.accuracy >= 80
-                      ? 'bg-emerald-50 text-emerald-700'
-                      : word.accuracy >= 60
-                      ? 'bg-amber-50 text-amber-700'
-                      : word.accuracy > 0
-                      ? 'bg-rose-50 text-rose-700'
-                      : 'bg-slate-50 text-slate-600'
-                  }`}
-                >
-                  {word.accuracy > 0 ? `${word.accuracy}%` : 'New'}
+                {/* Stats Row */}
+                <div className="flex items-center gap-4 text-xs text-slate-600 ml-6">
+                  {/* Attempts */}
+                  <div className="flex items-center gap-1">
+                    <span className="font-semibold">Attempts:</span>
+                    <span>{word.attempts}</span>
+                  </div>
+
+                  {/* Last Practiced */}
+                  {word.lastPracticed && (
+                    <div className="flex items-center gap-1">
+                      <span className="font-semibold">Last:</span>
+                      <span>{word.lastPracticed}</span>
+                    </div>
+                  )}
+
+                  {/* Status */}
+                  {word.attempts === 0 && (
+                    <div className="text-slate-500 italic">Not practiced yet</div>
+                  )}
                 </div>
               </div>
             ))}

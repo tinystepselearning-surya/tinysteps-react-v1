@@ -9,6 +9,7 @@ import {
   listWordsForGroup,
   computeGroupStats,
   getWordMasteryAndAccuracy,
+  getMasteryData,
 } from './utils';
 import GroupCard from './GroupCard';
 import WordsModal from './WordsModal';
@@ -98,15 +99,32 @@ export default function GroupDashboard() {
     if (!selectedGroup) return [];
 
     const words = listWordsForGroup(WORDS, selectedGroup);
+    const masteryData = getMasteryData();
+
     return words.map((word) => {
       const wordIndex = WORDS.indexOf(word);
       const { mastery, accuracy } = getWordMasteryAndAccuracy(wordIndex);
+      const masteryInfo = masteryData.get(wordIndex);
+
+      // Calculate total attempts
+      const attempts = masteryInfo ? masteryInfo.correct + masteryInfo.wrong : 0;
+      
+      // Get last practiced date
+      const lastPracticed = masteryInfo?.lastSeen 
+        ? new Date(masteryInfo.lastSeen).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+          })
+        : null;
 
       return {
         id: `${wordIndex}-${word.word}`,
         word: word.word,
         mastery,
         accuracy,
+        attempts,
+        lastPracticed,
       };
     });
   }, [selectedGroup]);
