@@ -32,7 +32,8 @@ import {
   type QuestsState,
   saveMasteryDataDebounced,
   saveCoinsDebounced,
-  logEvent
+  logEvent,
+  listWordsForGroup
 } from "./utils";
 import DebugPanel from "./DebugPanel";
 import { 
@@ -528,4 +529,42 @@ export default function SpellBeeFlashTrainer() {
       </div> {/* End of relative wrapper */}
     </GameViewport>
   );
+}
+
+/**
+ * Hook to start a specific group from the GroupDashboard
+ * 
+ * Example usage in router:
+ * 
+ * // In your router component:
+ * import { useStartGroup } from './games/spellbee-flash/SpellBeeFlashTrainer';
+ * 
+ * function YourRouter() {
+ *   const startGroup = useStartGroup();
+ *   
+ *   // When user clicks "Start" in GroupDashboard:
+ *   const handleGroupStart = (groupId: string) => {
+ *     startGroup(groupId);
+ *     navigate('/games/spellbee-flash'); // or your route
+ *   };
+ * }
+ */
+export function useStartGroup(): (groupId: string) => void {
+  return (groupId: string) => {
+    // Save the selected group to localStorage
+    localStorage.setItem('spellbee-last-group-v1', groupId);
+    
+    // Get words for this group
+    const groupWords = listWordsForGroup(WORDS, groupId);
+    
+    // Log the start event
+    logEvent('group_start', { 
+      groupId, 
+      wordCount: groupWords.length 
+    });
+    
+    // Note: The SpellBeeFlashTrainer component will need to be updated
+    // to read this localStorage key and filter words on mount.
+    // This is left as a TODO for when router integration is ready.
+  };
 }

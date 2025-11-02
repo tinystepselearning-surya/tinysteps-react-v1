@@ -2,6 +2,8 @@
  * Utility functions for SpellBee Flash Trainer
  */
 
+import type { Word } from "./data";
+
 /**
  * Fisher-Yates shuffle algorithm
  * Shuffles an array in place and returns it
@@ -1025,3 +1027,108 @@ export function clearEventLog(): void {
     console.warn("Failed to clear event log:", err);
   }
 }
+
+/**
+ * GROUP DASHBOARD HELPERS
+ */
+
+/**
+ * Get group ID (letter) for a word
+ * Returns 'A'..'Z' or '#' for non-alpha
+ */
+export function getGroupId(word: string): string {
+  const first = word.charAt(0).toUpperCase();
+  return /[A-Z]/.test(first) ? first : '#';
+}
+
+/**
+ * List all words for a specific group
+ */
+export function listWordsForGroup(allWords: Word[], groupId: string): Word[] {
+  if (groupId === 'All') return allWords;
+  return allWords.filter(w => getGroupId(w.word) === groupId);
+}
+
+/**
+ * Check if a word is completed
+ * Completed = mastery bucket ≥ 2 OR mastered flag = true
+ */
+export function isWordCompleted(wordIndex: number): boolean {
+  const masteryData = getMasteryData();
+  const mastery = masteryData.get(wordIndex);
+  if (!mastery) return false;
+  return mastery.mastered || mastery.correct >= 2;
+}
+
+/**
+ * Get word mastery level and rolling accuracy
+ */
+export function getWordMasteryAndAccuracy(wordIndex: number): { mastery: number; accuracy: number } {
+  const masteryData = getMasteryData();
+  const mastery = masteryData.get(wordIndex);
+  
+  if (!mastery) {
+    return { mastery: 0, accuracy: 0 };
+  }
+  
+  // Mastery level is the correct count (0-3+)
+  const masteryLevel = mastery.correct;
+  
+  // Accuracy: correct / (correct + wrong) * 100
+  const total = mastery.correct + mastery.wrong;
+  const accuracy = total > 0 ? Math.round((mastery.correct / total) * 100) : 0;
+  
+  return { mastery: masteryLevel, accuracy };
+}
+
+/**
+ * Compute group statistics
+ */
+export function computeGroupStats(
+  allWords: Word[],
+  groupId: string
+): { 
+  total: number; 
+  completed: number; 
+  percent: number; 
+  confidence: 'Low' | 'Medium' | 'High' 
+} {
+  const words = listWordsForGroup(allWords, groupId);
+  const total = words.length;
+  
+  if (total === 0) {
+    return { total: 0, completed: 0, percent: 0, confidence: 'Low' };
+  }
+  
+  // Count completed words
+  let completed = 0;
+  let totalMastery = 0;
+  
+  words.forEach((word) => {
+    // Find global index
+    const globalIndex = allWords.findIndex(w => w.word === word.word);
+    if (globalIndex !== -1) {
+      if (isWordCompleted(globalIndex)) {
+        completed++;
+      }
+      const { mastery } = getWordMasteryAndAccuracy(globalIndex);
+      totalMastery += mastery;
+    }
+  });
+  
+  const percent = Math.round((completed / total) * 100);
+  const avgMastery = totalMastery / total;
+  
+  // Confidence calculation
+  let confidence: 'Low' | 'Medium' | 'High';
+  if (percent >= 70 || avgMastery >= 2.5) {
+    confidence = 'High';
+  } else if (percent >= 40) {
+    confidence = 'Medium';
+  } else {
+    confidence = 'Low';
+  }
+  
+  return { total, completed, percent, confidence };
+}
+
