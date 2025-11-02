@@ -1,15 +1,15 @@
 /**
- * WordCard Component
- * Interactive flash card with flip animation, MCQ, and feedback
+ * WordCard Component - Compact Mobile-First Layout
+ * Single-screen fit with responsive sizing for small devices
  */
 
 import { useState, useEffect, useRef } from "react";
 import type { Word } from "./data";
-import { speakWord, speakMeaning, speakIPA, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPairHint } from "./utils";
+import { speakWord, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPairHint } from "./utils";
 import { getWordImageUrl } from "./spellbeeImages";
 import ConfettiBurst from "./Confetti";
 
-export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed" | "reveal";
+export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed";
 
 interface WordCardProps {
   word: Word;
@@ -30,7 +30,6 @@ export default function WordCard({
   ipaOptions,
   correctMeaningIndex,
   correctIPAIndex,
-  masteryLevel,
   isEarTrainingRound = false,
   isSpeedRound = false,
   onComplete,
@@ -41,7 +40,6 @@ export default function WordCard({
   );
   const [selectedMeaningIndex, setSelectedMeaningIndex] = useState<number | null>(null);
   const [selectedIPAIndex, setSelectedIPAIndex] = useState<number | null>(null);
-  const [isFlipped, setIsFlipped] = useState(false);
   const [audioPlayed, setAudioPlayed] = useState(false);
   const [minimalPairHint, setMinimalPairHint] = useState<string | null>(null);
   const [earTrainingCorrect, setEarTrainingCorrect] = useState<boolean | null>(null);
@@ -64,7 +62,6 @@ export default function WordCard({
     setPhase(isSpeedRound ? "speed" : isEarTrainingRound ? "ear-training" : "meaning");
     setSelectedMeaningIndex(null);
     setSelectedIPAIndex(null);
-    setIsFlipped(false);
     setAudioPlayed(false);
     setMinimalPairHint(null);
     setEarTrainingCorrect(null);
@@ -129,11 +126,11 @@ export default function WordCard({
     };
   }, [phase, selectedMeaningIndex, onComplete, onTimeout]);
 
-    // Play beep sound
+  // Play beep sound
   const playBeep = () => {
     try {
       const audio = new Audio();
-      audio.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKnn77RgGwU7k9n0yXUqBSh+zPLaizsKGGS56+mnUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBQ==";
+      audio.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKnn77RgGwU7k9n0yXUqBSh+zPLaizsKGGS56+mnUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBQ==";
       audio.volume = 0.3;
       audio.play().catch(() => {
         // Silent fail if audio blocked
@@ -203,42 +200,32 @@ export default function WordCard({
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
-
-      const elapsedTime = timerStartTime ? (Date.now() - timerStartTime) / 1000 : 10;
-      let speedBonus = 0;
-      if (isCorrect) {
-        speedBonus = elapsedTime <= 4 ? 3 : elapsedTime <= 10 ? 1 : 0;
-        // Trigger celebration
-        triggerCelebration();
-      }
-
-      // Play audio feedback with speech
+      
+      const elapsed = timerStartTime ? (Date.now() - timerStartTime) / 1000 : 10;
+      const speedBonus = isCorrect ? Math.max(0, Math.floor((10 - elapsed) * 10)) : 0;
+      
+      if (isCorrect) triggerCelebration();
+      
+      // Play audio feedback
       const cleanup = isCorrect ? speakCorrect() : speakWrong();
-
-      // Complete with speed bonus
+      
       setTimeout(() => {
         cleanup();
-        onComplete(isCorrect, true, false, speedBonus); // Speed rounds skip IPA
+        onComplete(isCorrect, false, false, speedBonus);
       }, 1000);
       return;
     }
     
-    // Trigger celebration if correct
-    if (isCorrect) {
-      triggerCelebration();
-    }
+    // Normal flow: proceed to IPA phase
+    if (isCorrect) triggerCelebration();
     
-    // Normal flow: speak meaning
-    speakMeaning(meaningOptions[index]);
-    
-    // Play audio feedback with speech
+    // Play audio feedback
     const cleanup = isCorrect ? speakCorrect() : speakWrong();
-
-    // Move to IPA phase after delay
+    
     setTimeout(() => {
       cleanup();
       setPhase("ipa");
-    }, 1500);
+    }, 1000);
   };
 
   const handleIPASelect = (index: number) => {
@@ -247,378 +234,232 @@ export default function WordCard({
     setSelectedIPAIndex(index);
     const isCorrect = index === correctIPAIndex;
     
-    // Trigger celebration if correct
-    if (isCorrect) {
-      triggerCelebration();
-    }
+    if (isCorrect) triggerCelebration();
     
-    // Speak the selected IPA
-    speakIPA(ipaOptions[index]);
-    
-    // Play audio feedback with speech
+    // Play audio feedback
     const cleanup = isCorrect ? speakCorrect() : speakWrong();
 
-    // Move to reveal phase after delay
+    // Complete the word
     setTimeout(() => {
       cleanup();
-      setPhase("reveal");
-      setIsFlipped(true);
-    }, 1500);
-  };
-
-  const handleNextWord = () => {
-    const correctMeaning = selectedMeaningIndex === correctMeaningIndex;
-    const correctIPA = selectedIPAIndex === correctIPAIndex;
-    const earTrainingFirstTry = isEarTrainingRound && earTrainingCorrect === true;
-    onComplete(correctMeaning, correctIPA, earTrainingFirstTry);
-  };
-
-  const getButtonClass = (
-    index: number,
-    selectedIndex: number | null,
-    correctIndex: number
-  ): string => {
-    // Bigger tap targets for kids, responsive text size
-    const baseClass =
-      "px-4 py-4 min-h-[64px] rounded-2xl font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-400 active:scale-[0.99]";
-
-    if (selectedIndex === null) {
-      return `${baseClass} bg-gradient-to-r from-blue-400 to-purple-400 text-white hover:from-blue-500 hover:to-purple-500 shadow-lg`;
-    }
-
-    if (index === selectedIndex) {
-      const isCorrect = index === correctIndex;
-      return isCorrect
-        ? `${baseClass} bg-gradient-to-r from-green-400 to-green-500 text-white shadow-xl animate-bounce`
-        : `${baseClass} bg-gradient-to-r from-red-400 to-red-500 text-white shadow-xl animate-gentle-shake`;
-    }
-
-    if (index === correctIndex) {
-      return `${baseClass} bg-gradient-to-r from-green-400 to-green-500 text-white shadow-xl`;
-    }
-
-    return `${baseClass} bg-gray-300 text-gray-500 cursor-not-allowed`;
+      const correctMeaning = selectedMeaningIndex === correctMeaningIndex;
+      const correctIPA = isCorrect;
+      const earTrainingFirstTry = isEarTrainingRound && earTrainingCorrect === true;
+      onComplete(correctMeaning, correctIPA, earTrainingFirstTry);
+    }, 1000);
   };
 
   return (
-    <div className="w-full max-w-3xl mx-auto px-4">
-      {/* Confetti Burst */}
+    <div className="flex-1 min-h-0 flex flex-col">
+      {/* Confetti Burst - absolute overlay */}
       {showConfetti && <ConfettiBurst onDone={() => setShowConfetti(false)} />}
       
-      {/* Cheer Overlay */}
+      {/* Cheer Overlay - absolute, non-intrusive */}
       {cheerMessage && (
-        <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center">
-          <div className="rounded-2xl bg-white/70 backdrop-blur px-6 py-3 text-2xl sm:text-3xl font-bold text-purple-600 shadow-2xl animate-bounce">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-40">
+          <div className="rounded-2xl bg-white/70 backdrop-blur px-4 py-2 text-base sm:text-xl font-semibold text-slate-900 shadow">
             {cheerMessage}
           </div>
         </div>
       )}
-      
-      {/* Mastery Tier Display */}
-      {masteryLevel && (
-        <div className="mb-4 text-center">
-          <div className="inline-block bg-white px-6 py-3 rounded-full shadow-lg">
-            <span className="text-xl font-bold text-purple-600">{masteryLevel}</span>
+
+      {/* Card Container - flex-1 min-h-0 allows shrinking */}
+      <div className="flex-1 min-h-0 flex flex-col gap-2 sm:gap-3 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4">
+        
+        {/* Speed Round Timer Bar */}
+        {phase === "speed" && (
+          <div className="shrink-0">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm sm:text-base font-bold text-orange-600 animate-pulse">
+                ⏱️ SPEED!
+              </span>
+              <span className="text-sm sm:text-base font-bold text-orange-600">
+                {timeLeft}s
+              </span>
+            </div>
+            <div className="w-full bg-gray-300 rounded-full h-2 sm:h-3 shadow-inner overflow-hidden">
+              <div
+                className="bg-gradient-to-r from-orange-400 to-red-500 h-full transition-all duration-1000 ease-linear rounded-full"
+                style={{
+                  width: `${(timeLeft / 10) * 100}%`,
+                }}
+              />
+            </div>
           </div>
+        )}
+
+        {/* Word Display - compact */}
+        <div className="text-center shrink-0">
+          <div className="text-4xl sm:text-5xl mb-1">{word.icon}</div>
+          <h2 className="text-2xl sm:text-3xl font-black text-purple-600 mb-1">
+            {phase === "ear-training" ? "???" : word.word}
+          </h2>
         </div>
-      )}
 
-      {/* Card Container with Flip Effect */}
-      <div className="relative w-full min-h-[500px] perspective-1000">
-        <div
-          className={`w-full h-full transition-transform duration-700 transform-style-3d ${
-            isFlipped ? "rotate-y-180" : ""
-          }`}
-        >
-          {/* Front of Card (MCQ Phase) */}
-          <div
-            className={`absolute w-full bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-3xl shadow-2xl p-8 backface-hidden ${
-              isFlipped ? "invisible" : "visible"
-            }`}
-          >
-            {/* Speed Round Timer Bar */}
-            {phase === "speed" && (
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-2xl font-black text-orange-600 animate-pulse">
-                    ⏱️ SPEED ROUND!
-                  </span>
-                  <span className="text-2xl font-bold text-orange-600">
-                    {timeLeft}s
-                  </span>
-                </div>
-                <div className="w-full bg-gray-300 rounded-full h-4 shadow-inner overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-orange-400 to-red-500 h-full transition-all duration-1000 ease-linear rounded-full"
-                    style={{
-                      width: `${(timeLeft / 10) * 100}%`,
-                    }}
-                  />
-                </div>
+        {/* Picture Area - clamped height, only after ear-training */}
+        {phase !== "ear-training" && (
+          <div className="shrink-0">
+            {wordImageUrl ? (
+              <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/60 max-h-[34svh] sm:max-h-[32svh]">
+                <img 
+                  src={wordImageUrl} 
+                  alt=""
+                  className="h-full w-full object-cover rounded-2xl shadow-inner"
+                />
               </div>
+            ) : (
+              <div className="w-full rounded-2xl border border-slate-200/40 bg-slate-50/40 max-h-[34svh] sm:max-h-[32svh] h-[22svh]" />
             )}
-
-            {/* Word Display */}
-            <div className="text-center mb-8">
-              <div className="text-8xl mb-3 animate-bounce">{word.icon}</div>
-              <h2 className="text-6xl font-black text-purple-600 mb-4 animate-pulse">
-                {phase === "ear-training" ? "???" : word.word}
-              </h2>
-              <p className="text-2xl text-gray-600 font-semibold">
-                {phase === "speed"
-                  ? "⚡ Quick! What does it mean?"
-                  : phase === "ear-training" 
-                  ? "🔊 Listen and pick the IPA!" 
-                  : phase === "meaning" 
-                  ? "What does it mean?" 
-                  : "What's the IPA?"}
-              </p>
-            </div>
-
-            {/* Picture Area (only show after ear-training phase) */}
-            {phase !== "ear-training" && (
-              <div className="shrink-0">
-                {wordImageUrl ? (
-                  <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/60 max-h-[38svh]">
-                    <img 
-                      src={wordImageUrl} 
-                      alt={`Visual for ${word.word}`}
-                      className="h-full w-full object-cover rounded-2xl shadow-inner"
-                    />
-                  </div>
-                ) : (
-                  <div className="w-full rounded-2xl border border-slate-200/40 bg-slate-50/40 max-h-[38svh] h-[26svh]" />
-                )}
-              </div>
-            )}
-
-            {/* Ear-Training: Hear It Button */}
-            {phase === "ear-training" && !audioPlayed && (
-              <div className="text-center mb-8">
-                <button
-                  onClick={handlePlayAudio}
-                  className="px-12 py-6 bg-gradient-to-r from-blue-400 to-purple-400 text-white text-3xl font-black rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400"
-                  aria-label="Play audio"
-                >
-                  🔊 Hear it!
-                </button>
-              </div>
-            )}
-
-            {/* Ear-Training: IPA Options (shown after audio plays) */}
-            {phase === "ear-training" && audioPlayed && (
-              <div>
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  {ipaOptions.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleEarTrainingSelect(index)}
-                      disabled={earTrainingCorrect !== null}
-                      className={getButtonClass(
-                        index,
-                        earTrainingCorrect === null ? null : (earTrainingCorrect && index === correctIPAIndex ? index : earTrainingCorrect === false && index !== correctIPAIndex ? null : index),
-                        correctIPAIndex
-                      )}
-                      aria-label={`Option ${index + 1}: ${option}`}
-                      aria-pressed={earTrainingCorrect === null ? undefined : index === correctIPAIndex}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-                
-                {/* Minimal-Pair Hint */}
-                {minimalPairHint && earTrainingCorrect === false && (
-                  <div className="mt-4 p-4 bg-yellow-100 rounded-xl border-2 border-yellow-400">
-                    <p className="text-lg font-bold text-yellow-800">
-                      💡 Hint: {minimalPairHint}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* MCQ Options - Horizontal Layout */}
-            <div>
-              {/* Speed Round: Meaning Only */}
-              {phase === "speed" && (
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  {meaningOptions.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleMeaningSelect(index)}
-                      disabled={selectedMeaningIndex !== null || timeLeft === 0}
-                      className={getButtonClass(
-                        index,
-                        selectedMeaningIndex,
-                        correctMeaningIndex
-                      )}
-                      aria-label={`Option ${index + 1}: ${option}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* Normal: Meaning Phase */}
-              {phase === "meaning" && (
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  {meaningOptions.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleMeaningSelect(index)}
-                      disabled={selectedMeaningIndex !== null}
-                      className={getButtonClass(
-                        index,
-                        selectedMeaningIndex,
-                        correctMeaningIndex
-                      )}
-                      aria-label={`Option ${index + 1}: ${option}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* IPA Phase */}
-              {phase === "ipa" && (
-                <div className="grid grid-cols-3 gap-3 sm:gap-4">
-                  {ipaOptions.map((option, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleIPASelect(index)}
-                      disabled={selectedIPAIndex !== null}
-                      className={getButtonClass(
-                        index,
-                        selectedIPAIndex,
-                        correctIPAIndex
-                      )}
-                      aria-label={`Option ${index + 1}: ${option}`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
+        )}
 
-          {/* Back of Card (Reveal Phase) */}
-          <div
-            className={`absolute w-full bg-gradient-to-br from-green-100 via-teal-100 to-blue-100 rounded-3xl shadow-2xl p-8 backface-hidden rotate-y-180 ${
-              isFlipped ? "visible" : "invisible"
-            }`}
-          >
-            <div className="text-center space-y-6">
-              <div className="flex items-center justify-center gap-3">
-                <span className="text-6xl">{word.icon}</span>
-                <h2 className="text-5xl font-black text-green-600">
-                  {word.word}
-                </h2>
-                <button
-                  onClick={() => speakWord(word.word)}
-                  className="p-3 bg-blue-400 text-white rounded-full hover:bg-blue-500 transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300"
-                  aria-label="Pronounce word"
-                  title="Hear pronunciation"
-                >
-                  🔊
-                </button>
-              </div>
+        {/* Q&A Section - flex-1 min-h-0 allows it to grow/shrink */}
+        <section className="flex-1 min-h-0 flex flex-col justify-center gap-2">
+          
+          {/* Question Line - responsive text */}
+          <h3 className="text-center px-2 leading-snug font-semibold text-[clamp(16px,3.8vw,22px)] sm:text-xl text-slate-700">
+            {phase === "speed"
+              ? "⚡ Quick! What does it mean?"
+              : phase === "ear-training" 
+              ? "🔊 Listen and pick the IPA!" 
+              : phase === "meaning" 
+              ? "What does it mean?" 
+              : "What's the IPA?"}
+          </h3>
 
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xl text-gray-700 flex-1">
-                    <span className="font-bold text-purple-600">IPA:</span>{" "}
-                    <span className="font-mono text-2xl">{word.ipa}</span>
-                  </p>
-                  <button
-                    onClick={() => speakIPA(word.ipa)}
-                    className="p-2 bg-purple-400 text-white rounded-full hover:bg-purple-500 transition-colors focus:outline-none focus:ring-4 focus:ring-purple-300"
-                    aria-label="Pronounce IPA"
-                    title="Hear IPA sound"
-                  >
-                    🔊
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl flex-shrink-0">{word.icon}</span>
-                  <p className="text-2xl text-gray-700 flex-1 font-semibold">
-                    {word.simpleMeaning}
-                  </p>
-                  <button
-                    onClick={() => speakMeaning(word.simpleMeaning)}
-                    className="p-2 bg-green-400 text-white rounded-full hover:bg-green-500 transition-colors focus:outline-none focus:ring-4 focus:ring-green-300 flex-shrink-0"
-                    aria-label="Read meaning"
-                    title="Hear meaning"
-                  >
-                    🔊
-                  </button>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <p className="text-xl text-gray-700 mb-2">
-                  <span className="font-bold text-purple-600">Forms:</span>{" "}
-                  {word.forms}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-xl p-6 shadow-lg">
-                <p className="text-xl text-gray-700 italic">
-                  <span className="font-bold text-purple-600">Example:</span>{" "}
-                  "{word.example}"
-                </p>
-              </div>
-
+          {/* Ear-Training: Hear It Button */}
+          {phase === "ear-training" && !audioPlayed && (
+            <div className="text-center shrink-0">
               <button
-                onClick={handleNextWord}
-                className="mt-6 px-10 py-4 bg-gradient-to-r from-green-400 to-blue-400 text-white font-bold text-2xl rounded-full shadow-xl hover:from-green-500 hover:to-blue-500 transform hover:scale-110 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400 flex items-center justify-center gap-3 mx-auto"
-                aria-label="Next word"
+                onClick={handlePlayAudio}
+                className="px-8 sm:px-12 py-4 sm:py-6 bg-gradient-to-r from-blue-400 to-purple-400 text-white text-xl sm:text-2xl font-black rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400"
+                aria-label="Play audio"
               >
-                Next Word!
-                <span className="animate-arrow-bounce inline-block">⏭️</span>
+                🔊 Hear it!
               </button>
             </div>
-          </div>
-        </div>
-      </div>
+          )}
 
-      {/* Custom CSS for 3D flip effect */}
-      <style>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        .transform-style-3d {
-          transform-style: preserve-3d;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-        .rotate-y-180 {
-          transform: rotateY(180deg);
-        }
-        @keyframes gentle-shake {
-          0%, 100% { transform: translateX(0); }
-          25% { transform: translateX(-5px); }
-          50% { transform: translateX(5px); }
-          75% { transform: translateX(-3px); }
-        }
-        .animate-gentle-shake {
-          animation: gentle-shake 0.4s ease-in-out;
-        }
-        @keyframes arrow-bounce {
-          0%, 100% { transform: translateX(0); }
-          50% { transform: translateX(5px); }
-        }
-        .animate-arrow-bounce {
-          animation: arrow-bounce 1s ease-in-out infinite;
-        }
-      `}</style>
+          {/* Ear-Training: IPA Options (after audio plays) */}
+          {phase === "ear-training" && audioPlayed && (
+            <div className="shrink-0">
+              <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2">
+                {ipaOptions.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleEarTrainingSelect(index)}
+                    disabled={earTrainingCorrect !== null}
+                    className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                      earTrainingCorrect === null
+                        ? ""
+                        : earTrainingCorrect && index === correctIPAIndex
+                        ? "bg-green-50 ring-2 ring-green-300"
+                        : !earTrainingCorrect && index !== correctIPAIndex
+                        ? ""
+                        : "bg-rose-50 ring-2 ring-rose-300"
+                    }`}
+                    aria-label={`Option ${index + 1}: ${option}`}
+                    aria-pressed={earTrainingCorrect === null ? undefined : index === correctIPAIndex}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+              
+              {/* Minimal-Pair Hint */}
+              {minimalPairHint && earTrainingCorrect === false && (
+                <div className="mt-3 p-3 bg-yellow-100 rounded-xl border-2 border-yellow-400">
+                  <p className="text-sm sm:text-base font-bold text-yellow-800">
+                    💡 Hint: {minimalPairHint}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MCQ Options - 3 Horizontal Buttons */}
+          {/* Speed Round: Meaning Only */}
+          {phase === "speed" && (
+            <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
+              {meaningOptions.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleMeaningSelect(index)}
+                  disabled={selectedMeaningIndex !== null || timeLeft === 0}
+                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                    selectedMeaningIndex === null
+                      ? ""
+                      : selectedMeaningIndex === index
+                      ? index === correctMeaningIndex
+                        ? "bg-green-50 ring-2 ring-green-300"
+                        : "bg-rose-50 ring-2 ring-rose-300"
+                      : index === correctMeaningIndex
+                      ? "bg-green-50 ring-2 ring-green-300"
+                      : ""
+                  }`}
+                  aria-label={`Option ${index + 1}: ${option}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Normal: Meaning Phase */}
+          {phase === "meaning" && (
+            <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
+              {meaningOptions.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleMeaningSelect(index)}
+                  disabled={selectedMeaningIndex !== null}
+                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                    selectedMeaningIndex === null
+                      ? ""
+                      : selectedMeaningIndex === index
+                      ? index === correctMeaningIndex
+                        ? "bg-green-50 ring-2 ring-green-300"
+                        : "bg-rose-50 ring-2 ring-rose-300"
+                      : index === correctMeaningIndex
+                      ? "bg-green-50 ring-2 ring-green-300"
+                      : ""
+                  }`}
+                  aria-label={`Option ${index + 1}: ${option}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* IPA Phase */}
+          {phase === "ipa" && (
+            <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
+              {ipaOptions.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleIPASelect(index)}
+                  disabled={selectedIPAIndex !== null}
+                  className={`group rounded-2xl shadow-md px-3 sm:px-4 py-3 sm:py-4 min-h-[56px] sm:min-h-[64px] w-full text-[clamp(13px,2.9vw,18px)] sm:text-base font-semibold text-slate-800 bg-white hover:bg-slate-50 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-purple-300 transition ${
+                    selectedIPAIndex === null
+                      ? ""
+                      : selectedIPAIndex === index
+                      ? index === correctIPAIndex
+                        ? "bg-green-50 ring-2 ring-green-300"
+                        : "bg-rose-50 ring-2 ring-rose-300"
+                      : index === correctIPAIndex
+                      ? "bg-green-50 ring-2 ring-green-300"
+                      : ""
+                  }`}
+                  aria-label={`Option ${index + 1}: ${option}`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }
