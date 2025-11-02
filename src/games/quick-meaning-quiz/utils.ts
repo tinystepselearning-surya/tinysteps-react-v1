@@ -7,6 +7,8 @@ import type { WordEntry } from "./data";
 const COINS_KEY = "spellbee-coins-v1";
 const STATS_KEY = "quick-meaning-stats-v1";
 const REPORT_KEY = "quick-meaning-report-v1";
+const MASTERY_KEY = "quick-meaning-mastery-v1";
+const ACHIEVEMENTS_KEY = "quick-meaning-achievements-v1";
 
 /**
  * Game stats interface
@@ -322,4 +324,192 @@ export function formatTime(seconds: number): string {
  */
 export function randomInt(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+/**
+ * Mastery tracking - track how well student performs on each word
+ */
+export interface MasteryRecord {
+  correct: number; // Count of correct first-try answers
+  total: number; // Total attempts
+  lastPracticed: number; // Timestamp
+  mastered: boolean; // true if 3+ correct
+}
+
+export function getMasteryData(): Map<string, MasteryRecord> {
+  try {
+    const stored = localStorage.getItem(MASTERY_KEY);
+    if (!stored) return new Map();
+    
+    const parsed = JSON.parse(stored);
+    return new Map(Object.entries(parsed));
+  } catch {
+    return new Map();
+  }
+}
+
+export function saveMasteryData(data: Map<string, MasteryRecord>): void {
+  try {
+    const obj = Object.fromEntries(data);
+    localStorage.setItem(MASTERY_KEY, JSON.stringify(obj));
+  } catch {
+    console.warn("Failed to save mastery data");
+  }
+}
+
+export function updateMasteryRecord(
+  wordId: string,
+  correctFirstTry: boolean
+): void {
+  const data = getMasteryData();
+  const existing = data.get(wordId) || {
+    correct: 0,
+    total: 0,
+    lastPracticed: 0,
+    mastered: false,
+  };
+
+  existing.total += 1;
+  if (correctFirstTry) existing.correct += 1;
+  existing.lastPracticed = Date.now();
+  
+  // Mastered if 3+ correct first-try answers
+  existing.mastered = existing.correct >= 3;
+
+  data.set(wordId, existing);
+  saveMasteryData(data);
+}
+
+/**
+ * Achievement system
+ */
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  target: number;
+  earned: boolean;
+  earnedAt?: number;
+}
+
+const ALL_ACHIEVEMENTS: Omit<Achievement, 'earned' | 'earnedAt'>[] = [
+  { id: 'first_word', name: 'First Success', description: 'Master your first word', icon: '⭐', target: 1 },
+  { id: 'master_10', name: 'Word Expert', description: 'Master 10 words', icon: '🎯', target: 10 },
+  { id: 'master_25', name: 'Quiz Champion', description: 'Master 25 words', icon: '🏆', target: 25 },
+  { id: 'master_50', name: 'Meaning Master', description: 'Master 50 words', icon: '👑', target: 50 },
+  { id: 'master_all', name: 'Perfect Quiz', description: 'Master all 148 words', icon: '🎖️', target: 148 },
+];
+
+export function getEarnedAchievements(): Set<string> {
+  try {
+    const stored = localStorage.getItem(ACHIEVEMENTS_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+export function saveEarnedAchievements(earned: Set<string>): void {
+  try {
+    localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify([...earned]));
+  } catch {
+    console.warn("Failed to save achievements");
+  }
+}
+
+export function checkAchievements(): Achievement[] {
+  const mastery = getMasteryData();
+  const masteredCount = Array.from(mastery.values()).filter((m) => m.mastered).length;
+  const earned = getEarnedAchievements();
+  const newlyEarned: Achievement[] = [];
+
+  for (const ach of ALL_ACHIEVEMENTS) {
+    if (masteredCount >= ach.target && !earned.has(ach.id)) {
+      earned.add(ach.id);
+      newlyEarned.push({
+        ...ach,
+        earned: true,
+        earnedAt: Date.now(),
+      });
+    }
+  }
+
+  if (newlyEarned.length > 0) {
+    saveEarnedAchievements(earned);
+  }
+
+  return newlyEarned;
+}
+
+export function getAllAchievements(): Achievement[] {
+  const mastery = getMasteryData();
+  const masteredCount = Array.from(mastery.values()).filter((m) => m.mastered).length;
+  const earned = getEarnedAchievements();
+
+  return ALL_ACHIEVEMENTS.map((ach) => ({
+    ...ach,
+    earned: masteredCount >= ach.target || earned.has(ach.id),
+    earnedAt: earned.has(ach.id) ? Date.now() : undefined,
+  }));
+}
+
+/**
+ * Progress stats computation for dashboard
+ */
+export interface ProgressStats {
+  overall: {
+    mastered: number;
+    total: number;
+    percent: number;
+  };
+  groups: Record<string, {
+    mastered: number;
+    total: number;
+    percent: number;
+  }>;
+}
+
+export function computeProgressStats(words: WordEntry[]): ProgressStats {
+  const mastery = getMasteryData();
+  const groups: Record<string, { mastered: number; total: number }> = {};
+
+  // Group words by first letter
+  for (const word of words) {
+    const firstChar = word.word[0].toUpperCase();
+    const group = /[A-Z]/.test(firstChar) ? firstChar : '#';
+
+    if (!groups[group]) {
+      groups[group] = { mastered: 0, total: 0 };
+    }
+
+    groups[group].total += 1;
+
+    const record = mastery.get(word.id);
+    if (record?.mastered) {
+      groups[group].mastered += 1;
+    }
+  }
+
+  // Calculate overall stats
+  const totalMastered = Array.from(mastery.values()).filter((m) => m.mastered).length;
+  const totalWords = words.length;
+
+  // Build result with percentages
+  const groupsWithPercent: Record<string, { mastered: number; total: number; percent: number }> = {};
+  for (const [key, value] of Object.entries(groups)) {
+    groupsWithPercent[key] = {
+      ...value,
+      percent: value.total > 0 ? Math.round((value.mastered / value.total) * 100) : 0,
+    };
+  }
+
+  return {
+    overall: {
+      mastered: totalMastered,
+      total: totalWords,
+      percent: totalWords > 0 ? Math.round((totalMastered / totalWords) * 100) : 0,
+    },
+    groups: groupsWithPercent,
+  };
 }

@@ -16,9 +16,10 @@ import {
   getTrickyWords,
   saveSessionReport,
   speakText,
-  isTypingMatch,
+  updateMasteryRecord,
+  checkAchievements,
 } from "./utils";
-import { OptionButton } from "./OptionButton";
+import { playCelebrationSound } from "./soundEffects";
 import { HUD } from "./HUD";
 import { EndSummary } from "./EndSummary";
 import SoundGate from "../shared/SoundGate";
@@ -30,15 +31,17 @@ import { flushPending } from "../shared/storage";
 const TOTAL_ROUNDS = 10;
 const BASE_TIME_LIMIT = 15;
 
-type GameMode = "playing" | "bonus-typing" | "practice" | "summary";
+type GameMode = "playing" | "practice" | "summary";
 
 interface RoundState {
   word: WordEntry;
-  options: string[]; // 4 meanings (1 correct + 3 distractors)
+  options: string[]; // 3 meanings (1 correct + 2 distractors)
   correctIndex: number;
   selectedIndex: number | null;
   isCorrect: boolean | null;
   timeLimit: number;
+  wrongAttempts: Set<number>; // Track wrong answers for adaptive learning
+  showCorrectHint: boolean; // Guide to correct answer after wrong attempt
 }
 
 export default function QuickMeaningQuiz() {
@@ -56,12 +59,11 @@ export default function QuickMeaningQuiz() {
   const [totalCorrectTime, setTotalCorrectTime] = useState(0);
   const [coinsEarnedThisSession, setCoinsEarnedThisSession] = useState(0);
   const [liveMessage, setLiveMessage] = useState("");
-  const [typedWord, setTypedWord] = useState("");
-  const [bonusTimeLeft, setBonusTimeLeft] = useState(12);
-  const [showNextButton, setShowNextButton] = useState(false);
+  const [newBadge, setNewBadge] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [draggedOption, setDraggedOption] = useState<number | null>(null);
 
   const timerRef = useRef<number | null>(null);
-  const bonusTimerRef = useRef<number | null>(null);
   const announcerRef = useRef<HTMLDivElement | null>(null);
 
   // Load coins on mount
@@ -77,7 +79,6 @@ export default function QuickMeaningQuiz() {
         document.body.removeChild(announcerRef.current);
       }
       if (timerRef.current) clearInterval(timerRef.current);
-      if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
       flushPending();
     };
   }, []);
@@ -99,25 +100,25 @@ export default function QuickMeaningQuiz() {
       setRecentWordIds((prev) => new Set([...prev, word.id]));
     }
 
-    // Generate 3 distractors
+    // Generate 2 distractors (changed from 3 to make it 3 total options)
     const distractors = generateMeaningDistractors(
       word.meaning,
       WORDS,
       word.word,
-      3
+      2
     );
 
-    // Create 4 options and shuffle
+    // Create 3 options and shuffle
     const allOptions = [word.meaning, ...distractors];
     const shuffled = shuffle(allOptions);
     const correctIndex = shuffled.indexOf(word.meaning);
 
-    // Adaptive time limit
+    // Adaptive time limit (more generous than before)
     let timeLimit = BASE_TIME_LIMIT;
     if (consecutiveMisses >= 2) {
-      timeLimit = 18; // Easier
+      timeLimit = 18; // Give more time if struggling
     } else if (streak >= 5) {
-      timeLimit = 12; // Harder
+      timeLimit = 12; // Challenge mode
     }
 
     setRoundState({
@@ -127,11 +128,12 @@ export default function QuickMeaningQuiz() {
       selectedIndex: null,
       isCorrect: null,
       timeLimit,
+      wrongAttempts: new Set(),
+      showCorrectHint: false,
     });
 
     setTimeLeft(timeLimit);
     setRoundStartTime(performance.now());
-    setShowNextButton(false);
   };
 
   // Start game
@@ -163,55 +165,33 @@ export default function QuickMeaningQuiz() {
     };
   }, [gameMode, roundState]);
 
-  // Bonus typing timer
-  useEffect(() => {
-    if (gameMode !== "bonus-typing") {
-      if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
-      return;
-    }
-
-    bonusTimerRef.current = window.setInterval(() => {
-      setBonusTimeLeft((prev) => {
-        if (prev <= 0.1) {
-          handleBonusSkip();
-          return 0;
-        }
-        return prev - 0.1;
-      });
-    }, 100);
-
-    return () => {
-      if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
-    };
-  }, [gameMode]);
-
   // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      if (bonusTimerRef.current) clearInterval(bonusTimerRef.current);
     };
   }, []);
 
-  // Handle option selection
+  // Handle option selection (with adaptive learning)
   const handleOptionSelect = (index: number) => {
-    if (!roundState || roundState.isCorrect !== null) return;
+    if (!roundState || roundState.isCorrect === true) return;
 
     const isCorrect = index === roundState.correctIndex;
     const elapsedTime = (performance.now() - roundStartTime) / 1000;
 
-    setRoundState((prev) =>
-      prev
-        ? { ...prev, selectedIndex: index, isCorrect }
-        : null
-    );
-
     if (isCorrect) {
-      // Calculate coins
-      let coinReward = 2; // Base
+      // Correct answer!
+      setRoundState((prev) =>
+        prev ? { ...prev, selectedIndex: index, isCorrect: true } : null
+      );
+
+      // Calculate coins (increased rewards)
+      let coinReward = 3; // Base reward (increased from 2)
 
       // Time bonus
       if (elapsedTime <= 7) {
+        coinReward += 2;
+      } else if (elapsedTime <= 10) {
         coinReward += 1;
       }
 
@@ -234,33 +214,56 @@ export default function QuickMeaningQuiz() {
       setConsecutiveMisses(0);
       setTotalCorrectTime((prev) => prev + elapsedTime);
 
-      announce(announcerRef.current, "Correct! Great job!");
-      setLiveMessage("Correct! Great job! 🎉");
+      // Update mastery tracking
+      const firstTryCorrect = roundState.wrongAttempts.size === 0;
+      updateMasteryRecord(roundState.word.id, firstTryCorrect);
+
+      // Check for achievements
+      const newAchievements = checkAchievements();
+      if (newAchievements.length > 0) {
+        const ach = newAchievements[0];
+        setNewBadge(`${ach.icon} ${ach.name}!`);
+        setTimeout(() => setNewBadge(null), 4000);
+        
+        // Bonus coins for achievement
+        const bonusCoins = addCoins(50);
+        setCoins(bonusCoins);
+        setCoinsEarnedThisSession((prev) => prev + 50);
+      }
+
+      // Celebration effects
+      playCelebrationSound();
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 2000);
+
+      announce(announcerRef.current, "Correct! Well done!");
+      setLiveMessage(`Correct! +${coinReward} coins! �`);
       setTimeout(() => setLiveMessage(""), 2000);
 
-      // Offer bonus typing
+      // Auto-advance after celebration
       setTimeout(() => {
-        setGameMode("bonus-typing");
-        setBonusTimeLeft(12);
-      }, 1000);
+        handleNextRound();
+      }, 2000);
     } else {
-      // Wrong answer
-      setStreak(0);
+      // Wrong answer - adaptive learning!
+      setRoundState((prev) =>
+        prev
+          ? {
+              ...prev,
+              wrongAttempts: new Set([...prev.wrongAttempts, index]),
+              showCorrectHint: true,
+            }
+          : null
+      );
+
       setConsecutiveMisses((prev) => prev + 1);
       recordTrickyWord(roundState.word.word);
 
-      announce(announcerRef.current, "Try again!");
-      setLiveMessage("Try again! 🎯");
+      announce(announcerRef.current, "Try again! Look for the green hint.");
+      setLiveMessage("Not quite! Try again 🎯");
       setTimeout(() => setLiveMessage(""), 2000);
 
-      // Allow retry - reset selection after shake
-      setTimeout(() => {
-        setRoundState((prev) =>
-          prev
-            ? { ...prev, selectedIndex: null, isCorrect: null }
-            : null
-        );
-      }, 600);
+      // Don't proceed - wait for correct answer
     }
   };
 
@@ -272,67 +275,31 @@ export default function QuickMeaningQuiz() {
     setStreak(0);
     setConsecutiveMisses((prev) => prev + 1);
 
+    // Update mastery as incorrect
+    updateMasteryRecord(roundState.word.id, false);
+
     announce(announcerRef.current, "Time's up! Moving to next round");
-    setLiveMessage("Time's up! Moving to next round...");
+    setLiveMessage("Time's up! ⏰");
     setTimeout(() => setLiveMessage(""), 2000);
 
-    setShowNextButton(true);
-  };
-
-  // Handle bonus typing submission
-  const handleBonusSubmit = () => {
-    if (!roundState || !typedWord.trim()) return;
-
-    const isMatch = isTypingMatch(typedWord, roundState.word.word);
-    const bonusElapsed = 12 - bonusTimeLeft;
-
-    if (isMatch) {
-      let bonusCoins = 0;
-      if (bonusElapsed <= 6) {
-        bonusCoins = 2;
-      } else if (bonusElapsed <= 12) {
-        bonusCoins = 1;
-      }
-
-      if (bonusCoins > 0) {
-        const newTotal = addCoins(bonusCoins);
-        setCoins(newTotal);
-        setCoinsEarnedThisSession((prev) => prev + bonusCoins);
-      }
-
-      setLiveMessage(`Bonus typing correct! +${bonusCoins} coins! 🎉`);
-    } else {
-      setLiveMessage("Not quite right, but good try!");
-    }
-
     setTimeout(() => {
-      setLiveMessage("");
       handleNextRound();
-    }, 1500);
-  };
-
-  // Handle bonus skip
-  const handleBonusSkip = () => {
-    handleNextRound();
+    }, 2000);
   };
 
   // Handle next round
   const handleNextRound = () => {
-    setTypedWord("");
-
     if (gameMode === "practice") {
       if (currentRound >= 5) {
         finalizeGame();
       } else {
         setCurrentRound((prev) => prev + 1);
-        setGameMode("playing");
       }
     } else {
       if (currentRound >= TOTAL_ROUNDS) {
         finalizeGame();
       } else {
         setCurrentRound((prev) => prev + 1);
-        setGameMode("playing");
       }
     }
   };
@@ -399,6 +366,23 @@ export default function QuickMeaningQuiz() {
     setGameMode("practice");
   };
 
+  // Drag and drop handlers
+  const handleDragStart = (index: number) => {
+    setDraggedOption(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (draggedOption !== null) {
+      handleOptionSelect(draggedOption);
+      setDraggedOption(null);
+    }
+  };
+
   const stats = getStats();
   const accuracy = currentRound > 0 ? (correctCount / currentRound) * 100 : 0;
   const avgTime = correctCount > 0 ? totalCorrectTime / correctCount : 0;
@@ -418,94 +402,6 @@ export default function QuickMeaningQuiz() {
         onPlayAgain={handlePlayAgain}
         onPracticeTricky={handlePracticeTricky}
       />
-    );
-  }
-
-  // Bonus typing screen
-  if (gameMode === "bonus-typing" && roundState) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-200 via-pink-200 to-blue-200 p-8 pt-24">
-        <SoundGate gameSlug="quick-meaning" />
-        
-        <div className="max-w-4xl mx-auto">
-          {/* HUD */}
-          <div className="flex items-center justify-end gap-2 mb-4">
-            <DyslexiaToggle />
-            <SoundControl gameSlug="quick-meaning" />
-          </div>
-          <HUD
-            coins={coins}
-            streak={streak}
-            round={currentRound}
-            totalRounds={TOTAL_ROUNDS}
-            timeLeft={bonusTimeLeft}
-            maxTime={12}
-          />
-
-          {/* SR announcer */}
-          <div
-            id="sr-announcer"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-            className="sr-only"
-          >
-            {liveMessage}
-          </div>
-
-          <div className="bg-white rounded-3xl p-12 shadow-2xl mt-8">
-            <div className="text-center mb-8">
-              <h2 className="text-4xl font-black text-purple-600 mb-4">
-                💡 Bonus Challenge!
-              </h2>
-              <p className="text-xl text-gray-700 mb-6">
-                Type the word to earn extra coins!
-              </p>
-
-              <div className="bg-yellow-50 rounded-2xl p-6 mb-6">
-                <p className="text-2xl text-gray-800 leading-relaxed">
-                  {roundState.word.example.replace(
-                    new RegExp(`\\b${roundState.word.word}\\b`, "gi"),
-                    "_____"
-                  )}
-                </p>
-              </div>
-
-              <input
-                type="text"
-                value={typedWord}
-                onChange={(e) => setTypedWord(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleBonusSubmit();
-                  }
-                }}
-                placeholder="Type the word here..."
-                className="w-full max-w-md px-6 py-4 text-2xl font-bold text-center border-4 border-purple-400 rounded-2xl focus:outline-none focus:ring-4 focus:ring-purple-500"
-                autoFocus
-                aria-label="Type the missing word"
-              />
-
-              <div className="flex gap-4 justify-center mt-8">
-                <button
-                  onClick={handleBonusSubmit}
-                  className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white text-xl font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-green-400"
-                >
-                  Submit ✓
-                </button>
-
-                <button
-                  onClick={handleBonusSkip}
-                  className="px-8 py-4 bg-gray-300 text-gray-700 text-xl font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-gray-400"
-                >
-                  Skip →
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     );
   }
 
@@ -574,36 +470,96 @@ export default function QuickMeaningQuiz() {
             </div>
           </div>
 
-          {/* Options */}
-          <div className="space-y-4 mb-8">
-            {roundState.options.map((meaning, index) => (
-              <OptionButton
-                key={index}
-                meaning={meaning}
-                index={index}
-                isSelected={roundState.selectedIndex === index}
-                isCorrect={
-                  roundState.selectedIndex === index
-                    ? roundState.isCorrect
-                    : null
-                }
-                isDisabled={roundState.isCorrect !== null}
-                onClick={() => handleOptionSelect(index)}
-              />
-            ))}
+          {/* Drag & Drop Instructions */}
+          <div className="text-center mb-6">
+            <p className="text-lg font-semibold text-gray-700">
+              Drag the right meaning to the drop zone!
+            </p>
           </div>
 
-          {/* Next button (after time up or correct) */}
-          {showNextButton && (
-            <button
-              onClick={handleNextRound}
-              className="w-full px-8 py-6 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-2xl font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all focus:outline-none focus:ring-4 focus:ring-purple-400"
-            >
-              Next Round →
-            </button>
-          )}
+          {/* Drop Zone */}
+          <div
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            className="mb-8 p-8 border-4 border-dashed border-purple-300 bg-purple-50 rounded-2xl text-center transition-all hover:border-purple-400 hover:bg-purple-100"
+          >
+            <p className="text-xl font-bold text-purple-600">
+              {roundState.isCorrect === true
+                ? "✓ Correct!"
+                : "Drop your answer here"}
+            </p>
+          </div>
+
+          {/* Draggable Options */}
+          <div className="space-y-4 mb-8">
+            {roundState.options.map((meaning, index) => {
+              const isWrong = roundState.wrongAttempts.has(index);
+              const isCorrectHint =
+                roundState.showCorrectHint && index === roundState.correctIndex;
+              const isSelected = roundState.selectedIndex === index;
+
+              return (
+                <div
+                  key={index}
+                  draggable={!isSelected}
+                  onDragStart={() => handleDragStart(index)}
+                  onClick={() => handleOptionSelect(index)}
+                  className={`
+                    p-6 rounded-xl cursor-pointer transition-all duration-300 font-semibold text-lg
+                    ${
+                      isSelected && roundState.isCorrect === true
+                        ? "bg-green-500 text-white shadow-lg scale-105"
+                        : isWrong
+                        ? "bg-red-100 border-2 border-red-400 text-red-700 opacity-75"
+                        : isCorrectHint
+                        ? "bg-green-100 border-2 border-green-400 text-green-700 animate-pulse"
+                        : "bg-white border-2 border-gray-300 text-gray-800 hover:border-purple-400 hover:shadow-md"
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="flex-1 text-center">{meaning}</span>
+                    {isWrong && <span className="ml-4 text-2xl">✗</span>}
+                    {isCorrectHint && <span className="ml-4 text-2xl">✓</span>}
+                    {!isSelected && !isWrong && !isCorrectHint && (
+                      <span className="ml-4 text-gray-400">☰</span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      {/* Achievement Badge Overlay */}
+      {newBadge && (
+        <div className="fixed bottom-24 right-6 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-4 rounded-2xl shadow-2xl animate-bounce z-50">
+          <p className="text-xl font-bold">{newBadge}</p>
+          <p className="text-sm">+50 coins!</p>
+        </div>
+      )}
+
+      {/* Celebration Overlay */}
+      {showCelebration && (
+        <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-40">
+          <div className="text-9xl animate-ping">✨🌟✨</div>
+        </div>
+      )}
+
+      {/* Floating Navigation */}
+      <button
+        onClick={() => window.history.back()}
+        className="fixed bottom-6 left-6 bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-full shadow-lg transition-all z-30"
+      >
+        ← Back
+      </button>
+      <button
+        onClick={() => (window.location.href = "/kids/games/quick-meaning/dashboard")}
+        className="fixed bottom-6 right-6 bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-full shadow-lg transition-all z-30"
+      >
+        📊 Progress
+      </button>
     </div>
   );
 }
@@ -611,7 +567,7 @@ export default function QuickMeaningQuiz() {
 export const gameMeta = {
   slug: "quick-meaning",
   title: "Quick Meaning Quiz",
-  description: "Beat the timer—pick the right meaning, then type the word!",
-  tags: ["timed", "meanings", "cloze", "streak"],
+  description: "Drag the right meaning to match the sentence—beat the timer!",
+  tags: ["timed", "meanings", "drag-drop", "adaptive"],
   icon: "⏱️",
 };

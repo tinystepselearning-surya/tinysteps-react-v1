@@ -25,6 +25,7 @@ const MeaningMatchGame = lazy(() => import("./games/meaning-match"));
 const MeaningMatchDashboard = lazy(() => import("./games/meaning-match/Dashboard"));
 const BalloonPopGame = lazy(() => import("./games/balloon-pop"));
 const QuickMeaningGame = lazy(() => import("./games/quick-meaning-quiz"));
+const QuickMeaningDashboard = lazy(() => import("./games/quick-meaning-quiz/Dashboard"));
 const BossLevelGame = lazy(() => import("./games/boss-level"));
 
 export default function AppRoutes() {
@@ -89,6 +90,14 @@ export default function AppRoutes() {
           element={
             <Suspense fallback={<div className="p-6">Loading game…</div>}>
               <QuickMeaningGame />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/kids/games/quick-meaning/dashboard" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading…</div>}>
+              <QuickMeaningDashboard />
             </Suspense>
           } 
         />
