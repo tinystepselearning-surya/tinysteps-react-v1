@@ -126,12 +126,18 @@ export function RoundSummary({
             </div>
           )}
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
               onClick={onPlayAgain}
-              className="flex-1 px-8 py-6 bg-gradient-to-r from-green-400 to-blue-400 text-white text-2xl font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400"
+              className="flex-1 px-8 py-6 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl sm:text-2xl font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-400"
             >
-              Play Again 🔄
+              New Batch 🎲
+            </button>
+            <button
+              onClick={() => window.location.href = '/kids/games'}
+              className="flex-1 px-8 py-6 bg-gradient-to-r from-green-400 to-blue-400 text-white text-xl sm:text-2xl font-bold rounded-2xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-green-400"
+            >
+              More Games 🎮
             </button>
           </div>
         </div>

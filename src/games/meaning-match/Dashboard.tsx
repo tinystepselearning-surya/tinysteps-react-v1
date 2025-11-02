@@ -3,13 +3,20 @@
  * Shows progress across all words with group-based bar charts
  */
 
-import { useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { WORDS } from './data';
 import { computeProgressStats, getAllAchievements } from './utils';
 
 export default function Dashboard() {
-  const stats = useMemo(() => computeProgressStats(WORDS), []);
-  const achievements = useMemo(() => getAllAchievements(), []);
+  // Compute stats fresh on each mount to get latest mastery data from localStorage
+  const [stats, setStats] = useState(() => computeProgressStats(WORDS));
+  const [achievements, setAchievements] = useState(() => getAllAchievements());
+  
+  // Refresh data when component mounts (user navigates back to dashboard)
+  useEffect(() => {
+    setStats(computeProgressStats(WORDS));
+    setAchievements(getAllAchievements());
+  }, []);
 
   const groupOrder = useMemo(() => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
