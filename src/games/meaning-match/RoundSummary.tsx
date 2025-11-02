@@ -35,7 +35,18 @@ export function RoundSummary({
     // End of round (not final)
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-3xl p-12 max-w-2xl text-center shadow-2xl transform animate-bounce">
+        <div 
+          className="bg-white rounded-3xl p-12 max-w-2xl text-center shadow-2xl"
+          style={{
+            animation: 'gentle-bounce 2s ease-in-out infinite'
+          }}
+        >
+          <style>{`
+            @keyframes gentle-bounce {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-15px); }
+            }
+          `}</style>
           <div className="text-8xl mb-6">🎉</div>
           <h2 className="text-5xl font-black text-purple-600 mb-4">
             Round {currentRound} Complete!

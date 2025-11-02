@@ -12,10 +12,26 @@ export default function Dashboard() {
   const [stats, setStats] = useState(() => computeProgressStats(WORDS));
   const [achievements, setAchievements] = useState(() => getAllAchievements());
   
-  // Refresh data when component mounts (user navigates back to dashboard)
+  // Refresh data when component mounts or when user returns to dashboard
   useEffect(() => {
-    setStats(computeProgressStats(WORDS));
-    setAchievements(getAllAchievements());
+    // Immediately refresh on mount
+    const refreshData = () => {
+      setStats(computeProgressStats(WORDS));
+      setAchievements(getAllAchievements());
+    };
+    
+    refreshData();
+    
+    // Also refresh when window gains focus (user navigates back)
+    const handleFocus = () => {
+      refreshData();
+    };
+    
+    window.addEventListener('focus', handleFocus);
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
   }, []);
 
   const groupOrder = useMemo(() => {

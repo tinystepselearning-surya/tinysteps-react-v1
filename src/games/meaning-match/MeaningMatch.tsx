@@ -87,8 +87,7 @@ export default function MeaningMatch() {
         };
       });
       setMatchStates(states);
-      setCoinsThisRound(0);
-      setMatchesThisRound(0);
+      // Don't reset counters here - handleContinue does it before starting new round
       setShowHintTargets(new Set());
       setSelectedWordId(null);
     }
@@ -273,6 +272,9 @@ export default function MeaningMatch() {
   }, [isRoundComplete, roundWords, currentRound, gameMode]);
 
   const handleContinue = () => {
+    // Reset round counters BEFORE starting new round
+    setCoinsThisRound(0);
+    setMatchesThisRound(0);
     setCurrentRound((prev) => prev + 1);
     setGameMode("playing");
   };
