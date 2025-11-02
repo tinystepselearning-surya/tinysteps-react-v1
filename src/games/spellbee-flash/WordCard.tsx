@@ -6,6 +6,8 @@
 import { useState, useEffect, useRef } from "react";
 import type { Word } from "./data";
 import { speakWord, speakMeaning, speakIPA, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPairHint } from "./utils";
+import { getImage, setImage, removeImage, type WordImage } from "./imageStore";
+import ConfettiBurst from "./Confetti";
 
 export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed" | "reveal";
 
@@ -47,6 +49,17 @@ export default function WordCard({
   const [timerStartTime, setTimerStartTime] = useState<number | null>(null);
   const timerRef = useRef<number | null>(null);
   const beepTimesRef = useRef<Set<number>>(new Set());
+  
+  // Image upload state
+  const [wordImage, setWordImage] = useState<WordImage | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Celebration state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [cheerMessage, setCheerMessage] = useState<string | null>(null);
+  
+  const CHEER_MESSAGES = ["You did it! 🎉", "Great job! 🌟", "Congratulations! 🥳"];
 
   // Reset state when word changes
   useEffect(() => {
@@ -60,6 +73,10 @@ export default function WordCard({
     setTimeLeft(10);
     setTimerStartTime(null);
     beepTimesRef.current = new Set();
+    
+    // Load image for this word
+    const savedImage = getImage(word.word);
+    setWordImage(savedImage);
     
     // Clear any existing timer
     if (timerRef.current) {
@@ -118,11 +135,11 @@ export default function WordCard({
     };
   }, [phase, selectedMeaningIndex, onComplete, onTimeout]);
 
-  // Play beep sound
+    // Play beep sound
   const playBeep = () => {
     try {
       const audio = new Audio();
-      audio.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKnn77RgGwU7k9n0yXUqBSh+zPLaizsKGGS56+mnUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBQ==";
+      audio.src = "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZiTYIG2m98OScTgwOUKnn77RgGwU7k9n0yXUqBSh+zPLaizsKGGS56+mnUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBSh+zPDajTsJF2O269uqUxELTKXh8bllHAU2jdXzzn0vBQ==";
       audio.volume = 0.3;
       audio.play().catch(() => {
         // Silent fail if audio blocked
@@ -130,6 +147,51 @@ export default function WordCard({
     } catch {
       // Fallback: silent
     }
+  };
+  
+  // Celebration helper
+  const triggerCelebration = () => {
+    // Show confetti
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 1200);
+    
+    // Show random cheer message
+    const randomCheer = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
+    setCheerMessage(randomCheer);
+    setTimeout(() => setCheerMessage(null), 1200);
+  };
+  
+  // Image upload handler
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+    
+    setIsUploadingImage(true);
+    try {
+      const savedImage = await setImage(word.word, file);
+      setWordImage(savedImage);
+    } catch (err) {
+      console.error("Failed to upload image:", err);
+      alert("Failed to upload image");
+    } finally {
+      setIsUploadingImage(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+  
+  // Remove image handler
+  const handleRemoveImage = () => {
+    removeImage(word.word);
+    setWordImage(null);
   };
 
   // Handler for "Hear it" button in ear-training mode
@@ -152,6 +214,9 @@ export default function WordCard({
     if (!isCorrect) {
       const hint = getMinimalPairHint(word.ipa, ipaOptions[index]);
       setMinimalPairHint(hint);
+    } else {
+      // Trigger celebration on correct
+      triggerCelebration();
     }
     
     // Play audio feedback with speech
@@ -181,8 +246,9 @@ export default function WordCard({
       const elapsedTime = timerStartTime ? (Date.now() - timerStartTime) / 1000 : 10;
       let speedBonus = 0;
       if (isCorrect) {
-        if (elapsedTime <= 4) speedBonus = 3;
-        else if (elapsedTime <= 10) speedBonus = 1;
+        speedBonus = elapsedTime <= 4 ? 3 : elapsedTime <= 10 ? 1 : 0;
+        // Trigger celebration
+        triggerCelebration();
       }
 
       // Play audio feedback with speech
@@ -194,6 +260,11 @@ export default function WordCard({
         onComplete(isCorrect, true, false, speedBonus); // Speed rounds skip IPA
       }, 1000);
       return;
+    }
+    
+    // Trigger celebration if correct
+    if (isCorrect) {
+      triggerCelebration();
     }
     
     // Normal flow: speak meaning
@@ -214,6 +285,11 @@ export default function WordCard({
     
     setSelectedIPAIndex(index);
     const isCorrect = index === correctIPAIndex;
+    
+    // Trigger celebration if correct
+    if (isCorrect) {
+      triggerCelebration();
+    }
     
     // Speak the selected IPA
     speakIPA(ipaOptions[index]);
@@ -241,9 +317,9 @@ export default function WordCard({
     selectedIndex: number | null,
     correctIndex: number
   ): string => {
-    // Bigger tap targets for kids (py-5 instead of py-4, min-h-16)
+    // Bigger tap targets for kids, responsive text size
     const baseClass =
-      "w-full px-8 py-5 min-h-[64px] rounded-2xl font-bold text-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-400";
+      "px-4 py-4 min-h-[64px] rounded-2xl font-bold text-base sm:text-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-purple-400 active:scale-[0.99]";
 
     if (selectedIndex === null) {
       return `${baseClass} bg-gradient-to-r from-blue-400 to-purple-400 text-white hover:from-blue-500 hover:to-purple-500 shadow-lg`;
@@ -265,6 +341,18 @@ export default function WordCard({
 
   return (
     <div className="w-full max-w-3xl mx-auto px-4">
+      {/* Confetti Burst */}
+      {showConfetti && <ConfettiBurst onDone={() => setShowConfetti(false)} />}
+      
+      {/* Cheer Overlay */}
+      {cheerMessage && (
+        <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center">
+          <div className="rounded-2xl bg-white/70 backdrop-blur px-6 py-3 text-2xl sm:text-3xl font-bold text-purple-600 shadow-2xl animate-bounce">
+            {cheerMessage}
+          </div>
+        </div>
+      )}
+      
       {/* Mastery Tier Display */}
       {masteryLevel && (
         <div className="mb-4 text-center">
@@ -326,6 +414,71 @@ export default function WordCard({
               </p>
             </div>
 
+            {/* Picture Area (only show after ear-training phase) */}
+            {phase !== "ear-training" && (
+              <div className="mb-8">
+                <div className="relative w-full aspect-video rounded-2xl border-2 border-dashed border-purple-300/60 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 overflow-hidden">
+                  {wordImage ? (
+                    <>
+                      <img 
+                        src={wordImage.url} 
+                        alt={`Visual for ${word.word}`}
+                        className="object-cover w-full h-full rounded-2xl shadow-inner"
+                      />
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        <label className="cursor-pointer px-3 py-1 bg-blue-500/90 hover:bg-blue-600/90 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus-within:ring-4 focus-within:ring-blue-300">
+                          Replace
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.webp"
+                            onChange={handleImageUpload}
+                            className="sr-only"
+                            disabled={isUploadingImage}
+                          />
+                        </label>
+                        <button
+                          onClick={handleRemoveImage}
+                          className="px-3 py-1 bg-red-500/90 hover:bg-red-600/90 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus:outline-none focus:ring-4 focus:ring-red-300"
+                          disabled={isUploadingImage}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-purple-400">
+                      <svg
+                        className="w-16 h-16 mb-2"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                      <p className="text-sm font-medium mb-3">Add picture (optional)</p>
+                      <label className="cursor-pointer px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white text-sm font-semibold rounded-lg shadow-md transition-colors focus-within:ring-4 focus-within:ring-purple-300">
+                        {isUploadingImage ? "Uploading..." : "Upload image"}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept=".png,.jpg,.jpeg,.webp"
+                          onChange={handleImageUpload}
+                          className="sr-only"
+                          disabled={isUploadingImage}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Ear-Training: Hear It Button */}
             {phase === "ear-training" && !audioPlayed && (
               <div className="text-center mb-8">
@@ -341,23 +494,25 @@ export default function WordCard({
 
             {/* Ear-Training: IPA Options (shown after audio plays) */}
             {phase === "ear-training" && audioPlayed && (
-              <div className="space-y-4">
-                {ipaOptions.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleEarTrainingSelect(index)}
-                    disabled={earTrainingCorrect !== null}
-                    className={getButtonClass(
-                      index,
-                      earTrainingCorrect === null ? null : (earTrainingCorrect && index === correctIPAIndex ? index : earTrainingCorrect === false && index !== correctIPAIndex ? null : index),
-                      correctIPAIndex
-                    )}
-                    aria-label={`Option ${index + 1}: ${option}`}
-                    aria-pressed={earTrainingCorrect === null ? undefined : index === correctIPAIndex}
-                  >
-                    {option}
-                  </button>
-                ))}
+              <div>
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {ipaOptions.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleEarTrainingSelect(index)}
+                      disabled={earTrainingCorrect !== null}
+                      className={getButtonClass(
+                        index,
+                        earTrainingCorrect === null ? null : (earTrainingCorrect && index === correctIPAIndex ? index : earTrainingCorrect === false && index !== correctIPAIndex ? null : index),
+                        correctIPAIndex
+                      )}
+                      aria-label={`Option ${index + 1}: ${option}`}
+                      aria-pressed={earTrainingCorrect === null ? undefined : index === correctIPAIndex}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
                 
                 {/* Minimal-Pair Hint */}
                 {minimalPairHint && earTrainingCorrect === false && (
@@ -370,60 +525,70 @@ export default function WordCard({
               </div>
             )}
 
-            {/* MCQ Options */}
-            <div className="space-y-4">
+            {/* MCQ Options - Horizontal Layout */}
+            <div>
               {/* Speed Round: Meaning Only */}
-              {phase === "speed" &&
-                meaningOptions.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleMeaningSelect(index)}
-                    disabled={selectedMeaningIndex !== null || timeLeft === 0}
-                    className={getButtonClass(
-                      index,
-                      selectedMeaningIndex,
-                      correctMeaningIndex
-                    )}
-                    aria-label={`Option ${index + 1}: ${option}`}
-                  >
-                    {option}
-                  </button>
-                ))}
+              {phase === "speed" && (
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {meaningOptions.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleMeaningSelect(index)}
+                      disabled={selectedMeaningIndex !== null || timeLeft === 0}
+                      className={getButtonClass(
+                        index,
+                        selectedMeaningIndex,
+                        correctMeaningIndex
+                      )}
+                      aria-label={`Option ${index + 1}: ${option}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               {/* Normal: Meaning Phase */}
-              {phase === "meaning" &&
-                meaningOptions.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleMeaningSelect(index)}
-                    disabled={selectedMeaningIndex !== null}
-                    className={getButtonClass(
-                      index,
-                      selectedMeaningIndex,
-                      correctMeaningIndex
-                    )}
-                    aria-label={`Option ${index + 1}: ${option}`}
-                  >
-                    {option}
-                  </button>
-                ))}
+              {phase === "meaning" && (
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {meaningOptions.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleMeaningSelect(index)}
+                      disabled={selectedMeaningIndex !== null}
+                      className={getButtonClass(
+                        index,
+                        selectedMeaningIndex,
+                        correctMeaningIndex
+                      )}
+                      aria-label={`Option ${index + 1}: ${option}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
 
-              {phase === "ipa" &&
-                ipaOptions.map((option, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleIPASelect(index)}
-                    disabled={selectedIPAIndex !== null}
-                    className={getButtonClass(
-                      index,
-                      selectedIPAIndex,
-                      correctIPAIndex
-                    )}
-                    aria-label={`Option ${index + 1}: ${option}`}
-                  >
-                    {option}
-                  </button>
-                ))}
+              {/* IPA Phase */}
+              {phase === "ipa" && (
+                <div className="grid grid-cols-3 gap-3 sm:gap-4">
+                  {ipaOptions.map((option, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleIPASelect(index)}
+                      disabled={selectedIPAIndex !== null}
+                      className={getButtonClass(
+                        index,
+                        selectedIPAIndex,
+                        correctIPAIndex
+                      )}
+                      aria-label={`Option ${index + 1}: ${option}`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

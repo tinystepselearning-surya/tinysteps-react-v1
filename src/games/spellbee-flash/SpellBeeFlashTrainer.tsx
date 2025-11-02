@@ -136,10 +136,10 @@ export default function SpellBeeFlashTrainer() {
     return "Learning 📚";
   }, [currentWord.word]);
 
-  // Generate MCQ options for current word
+  // Generate MCQ options for current word (3 options each)
   const meaningMCQ = useMemo(() => {
     const allMeanings = WORDS.map((w: Word) => w.meaning);
-    return generateMCQOptions(allMeanings, currentWord.meaning, 4);
+    return generateMCQOptions(allMeanings, currentWord.meaning, 3);
   }, [currentWord]);
 
   const ipaMCQ = useMemo(() => {

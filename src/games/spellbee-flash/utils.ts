@@ -32,11 +32,12 @@ export function generateWrongOptions<T>(
 /**
  * Generate MCQ options with correct answer randomly positioned
  * Returns { options: T[], correctIndex: number }
+ * Updated to generate 3 options total (1 correct + 2 distractors)
  */
 export function generateMCQOptions<T>(
   allOptions: T[],
   correctOption: T,
-  totalOptions: number
+  totalOptions: number = 3 // Default to 3 options
 ): { options: T[]; correctIndex: number } {
   const wrongOptions = generateWrongOptions(
     allOptions,
