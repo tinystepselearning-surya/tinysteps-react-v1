@@ -27,6 +27,7 @@ export default function GroupDashboard() {
         completed: number;
         percent: number;
         confidence: 'Low' | 'Medium' | 'High';
+        trend: 'improving' | 'stable' | 'declining' | 'new';
       }
     > = {};
 

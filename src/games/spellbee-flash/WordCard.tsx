@@ -9,6 +9,7 @@ import { speakWord, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPair
 import { getWordImageUrl } from "./spellbeeImages";
 import ConfettiBurst from "./Confetti";
 import TopToolbar from "./TopToolbar";
+import { playCelebrationSound } from "./soundEffects";
 
 export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed";
 
@@ -141,6 +142,9 @@ export default function WordCard({
   
   // Celebration helper
   const triggerCelebration = () => {
+    // Play celebration sound
+    playCelebrationSound();
+    
     // Show confetti for 3 seconds (matches animation duration)
     setShowConfetti(true);
     setTimeout(() => setShowConfetti(false), 3000);

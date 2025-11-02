@@ -10,6 +10,7 @@ export interface GroupCardProps {
     completed: number;
     percent: number;
     confidence: 'Low' | 'Medium' | 'High';
+    trend: 'improving' | 'stable' | 'declining' | 'new';
   };
   onStart: (groupId: string) => void;
   onView: (groupId: string) => void;
@@ -29,6 +30,16 @@ export default function GroupCard({
     Medium: 'bg-amber-50 text-amber-800 ring-amber-200',
     High: 'bg-emerald-50 text-emerald-700 ring-emerald-200',
   };
+
+  // Trend indicators
+  const trendConfig = {
+    improving: { icon: '↗️', label: 'Improving', color: 'text-green-600' },
+    stable: { icon: '→', label: 'Stable', color: 'text-blue-600' },
+    declining: { icon: '↘️', label: 'Needs Practice', color: 'text-orange-600' },
+    new: { icon: '✨', label: 'New', color: 'text-purple-600' },
+  };
+  
+  const trend = trendConfig[stats.trend];
 
   return (
     <div className="rounded-2xl bg-white shadow ring-1 ring-slate-200 p-3 sm:p-4 flex flex-col gap-2">
@@ -65,7 +76,7 @@ export default function GroupCard({
         </span>
       </div>
 
-      {/* Confidence Pill */}
+      {/* Confidence Pill + Trend Indicator */}
       <div className="flex items-center gap-2">
         <span
           className={`rounded-full px-2 py-1 text-xs font-semibold ring-1 ${
@@ -73,6 +84,14 @@ export default function GroupCard({
           }`}
         >
           {stats.confidence}
+        </span>
+        <span 
+          className={`flex items-center gap-1 text-xs font-semibold ${trend.color}`}
+          title={trend.label}
+          aria-label={`Progress trend: ${trend.label}`}
+        >
+          <span aria-hidden="true">{trend.icon}</span>
+          <span className="hidden sm:inline">{trend.label}</span>
         </span>
       </div>
 

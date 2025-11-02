@@ -1082,7 +1082,7 @@ export function getWordMasteryAndAccuracy(wordIndex: number): { mastery: number;
 }
 
 /**
- * Compute group statistics
+ * Compute group statistics including trend
  */
 export function computeGroupStats(
   allWords: Word[],
@@ -1091,18 +1091,21 @@ export function computeGroupStats(
   total: number; 
   completed: number; 
   percent: number; 
-  confidence: 'Low' | 'Medium' | 'High' 
+  confidence: 'Low' | 'Medium' | 'High';
+  trend: 'improving' | 'stable' | 'declining' | 'new';
 } {
   const words = listWordsForGroup(allWords, groupId);
   const total = words.length;
   
   if (total === 0) {
-    return { total: 0, completed: 0, percent: 0, confidence: 'Low' };
+    return { total: 0, completed: 0, percent: 0, confidence: 'Low', trend: 'new' };
   }
   
-  // Count completed words
+  // Count completed words and track accuracy
   let completed = 0;
   let totalMastery = 0;
+  let totalAccuracy = 0;
+  let wordsWithAttempts = 0;
   
   words.forEach((word) => {
     // Find global index
@@ -1111,13 +1114,19 @@ export function computeGroupStats(
       if (isWordCompleted(globalIndex)) {
         completed++;
       }
-      const { mastery } = getWordMasteryAndAccuracy(globalIndex);
+      const { mastery, accuracy } = getWordMasteryAndAccuracy(globalIndex);
       totalMastery += mastery;
+      
+      if (accuracy > 0) {
+        totalAccuracy += accuracy;
+        wordsWithAttempts++;
+      }
     }
   });
   
   const percent = Math.round((completed / total) * 100);
   const avgMastery = totalMastery / total;
+  const avgAccuracy = wordsWithAttempts > 0 ? totalAccuracy / wordsWithAttempts : 0;
   
   // Confidence calculation
   let confidence: 'Low' | 'Medium' | 'High';
@@ -1129,6 +1138,23 @@ export function computeGroupStats(
     confidence = 'Low';
   }
   
-  return { total, completed, percent, confidence };
+  // Trend calculation based on accuracy vs completion
+  let trend: 'improving' | 'stable' | 'declining' | 'new';
+  
+  if (wordsWithAttempts < 3) {
+    trend = 'new'; // Not enough data
+  } else {
+    // If accuracy is high (>75%) and mastery is growing, improving
+    // If accuracy is low (<50%) or declining, declining
+    if (avgAccuracy >= 75 && avgMastery >= 1.5) {
+      trend = 'improving';
+    } else if (avgAccuracy < 50 && percent < 40) {
+      trend = 'declining';
+    } else {
+      trend = 'stable';
+    }
+  }
+  
+  return { total, completed, percent, confidence, trend };
 }
 
