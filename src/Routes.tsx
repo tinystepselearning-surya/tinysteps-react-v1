@@ -25,6 +25,7 @@ const MeaningMatchGame = lazy(() => import("./games/meaning-match"));
 const MeaningMatchDashboard = lazy(() => import("./games/meaning-match/Dashboard"));
 const BalloonPopGame = lazy(() => import("./games/balloon-pop"));
 const BalloonPopDashboard = lazy(() => import("./games/balloon-pop/Dashboard"));
+const BalloonPopIPAGame = lazy(() => import("./games/balloon-pop-ipa/BalloonPopIPA"));
 const QuickMeaningGame = lazy(() => import("./games/quick-meaning-quiz"));
 const QuickMeaningDashboard = lazy(() => import("./games/quick-meaning-quiz/Dashboard"));
 const BossLevelGame = lazy(() => import("./games/boss-level"));
@@ -46,6 +47,15 @@ export default function AppRoutes() {
         {/* Kids Zone Routes */}
         <Route path="/kids" element={<KidsGuestLanding />} />
         <Route path="/kids/games" element={<GamesGallery />} />
+        <Route path="/games" element={<GamesGallery />} />
+        <Route 
+          path="/games/balloon-pop-ipa" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading game…</div>}>
+              <BalloonPopIPAGame />
+            </Suspense>
+          } 
+        />
         <Route 
           path="/kids/games/spellbee-flash" 
           element={
@@ -91,6 +101,14 @@ export default function AppRoutes() {
           element={
             <Suspense fallback={<div className="p-6">Loading dashboard…</div>}>
               <BalloonPopDashboard />
+            </Suspense>
+          } 
+        />
+        <Route 
+          path="/kids/games/balloon-pop-ipa" 
+          element={
+            <Suspense fallback={<div className="p-6">Loading game…</div>}>
+              <BalloonPopIPAGame />
             </Suspense>
           } 
         />

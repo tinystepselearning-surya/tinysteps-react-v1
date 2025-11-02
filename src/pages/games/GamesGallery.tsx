@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { gameMeta as spellBeeGameMeta } from "../../games/spellbee-flash";
 import { gameMeta as meaningMatchGameMeta } from "../../games/meaning-match";
 import { gameMeta as balloonPopGameMeta } from "../../games/balloon-pop";
+import { gameMeta as balloonPopIPAMeta } from "../../games/balloon-pop-ipa";
 import { gameMeta as quickMeaningMeta } from "../../games/quick-meaning-quiz";
 import { gameMeta as bossLevelMeta } from "../../games/boss-level";
 
@@ -27,6 +28,17 @@ type GameCard = {
 };
 
 const GAME_LIBRARY: GameCard[] = [
+  {
+    id: balloonPopIPAMeta.slug,
+    title: balloonPopIPAMeta.title,
+    level: "Beginner",
+    duration: "6-10 mins",
+    description: balloonPopIPAMeta.description,
+    badge: "New!",
+    // Requirement: link to /games/balloon-pop-ipa
+    launchHref: `/games/${balloonPopIPAMeta.slug}`,
+    launchLabel: "Play"
+  },
   {
     id: "phonics-safari",
     title: "Phonics Safari Adventure",

@@ -52,15 +52,15 @@ export function HUD({
   }, [coins, displayCoins]);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-40">
+    <div className="fixed top-0 left-0 right-0 z-[100]">
       {/* Main HUD bar */}
       <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-blue-500 p-4 shadow-lg">
         <div className="max-w-6xl mx-auto flex justify-between items-center flex-wrap gap-4">
           {/* Left: Level & Round */}
           {level > 0 && (
-            <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-lg">
+            <div className="bg-white/90 backdrop-blur-sm rounded-2xl px-4 py-2 shadow-lg" title={`Level ${level}: ${level === 1 ? '3 balloons' : level === 2 ? '4 balloons' : '5 balloons'} - ${level === 1 ? '20 px/s' : level === 2 ? '25 px/s' : '30 px/s'} speed`}>
               <p className="text-sm font-semibold text-purple-600">
-                Level {level}
+                Level {level} {level === 1 ? '🎈' : level === 2 ? '🎈🎈' : '🎈🎈🎈'}
               </p>
               <p className="text-xs text-gray-600">
                 Round {round}/{totalRounds}

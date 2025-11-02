@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { getSoundConfig, setVolume, toggleMute, type SoundConfig } from "./sound";
+import { getSoundConfig, setVolume, toggleMute, enableSound, prewarmAudio, type SoundConfig } from "./sound";
 
 interface SoundControlProps {
   gameSlug: string;
@@ -35,31 +35,52 @@ export default function SoundControl({ gameSlug, onConfigChange }: SoundControlP
     if (onConfigChange) onConfigChange(updated);
   };
 
-  if (!config.enabled) return null;
+  const handleEnable = () => {
+    enableSound(gameSlug);
+    prewarmAudio();
+    const updated = getSoundConfig(gameSlug);
+    setConfig(updated);
+    setShowSlider(true);
+    if (onConfigChange) onConfigChange(updated);
+  };
 
+  // Always render a visible control so the player (or teacher/parent) can enable sound.
   return (
     <div className="relative flex items-center gap-2">
-      <button
-        onClick={handleMuteToggle}
-        className="p-3 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-label={config.muted ? "Unmute sound" : "Mute sound"}
-        title={config.muted ? "Unmute" : "Mute"}
-      >
-        <span className="text-3xl">
-          {config.muted ? "🔇" : config.volume > 0.5 ? "🔊" : "🔉"}
-        </span>
-      </button>
+      {!config.enabled ? (
+        <button
+          onClick={handleEnable}
+          className="p-3 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Enable sound"
+          title="Enable sound"
+        >
+          <span className="text-3xl">🔊</span>
+        </button>
+      ) : (
+        <>
+          <button
+            onClick={handleMuteToggle}
+            className="p-3 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label={config.muted ? "Unmute sound" : "Mute sound"}
+            title={config.muted ? "Unmute" : "Mute"}
+          >
+            <span className="text-3xl">
+              {config.muted ? "🔇" : config.volume > 0.5 ? "🔊" : "🔉"}
+            </span>
+          </button>
 
-      <button
-        onClick={() => setShowSlider(!showSlider)}
-        className="p-2 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-        aria-label="Volume control"
-        title="Volume"
-      >
-        🎚️
-      </button>
+          <button
+            onClick={() => setShowSlider(!showSlider)}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Volume control"
+            title="Volume"
+          >
+            🎚️
+          </button>
+        </>
+      )}
 
-      {showSlider && (
+      {config.enabled && showSlider && (
         <div className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-lg p-3 z-50 border border-slate-200">
           <label className="block text-xs text-slate-600 mb-2">
             Volume: {Math.round(config.volume * 100)}%

@@ -43,11 +43,11 @@ import { flushPending } from "../shared/storage";
 const ROUNDS_PER_LEVEL = 10;
 const TOTAL_LEVELS = 3;
 
-// Slower rise speeds for better visibility and kid-friendly gameplay (px/s)
+// Very slow rise speeds for young kids to have plenty of time (px/s)
 const LEVEL_CONFIGS = {
-  1: { balloonCount: 3, riseSpeed: 30, hasSway: false },
-  2: { balloonCount: 4, riseSpeed: 40, hasSway: false },
-  3: { balloonCount: 5, riseSpeed: 50, hasSway: true },
+  1: { balloonCount: 3, riseSpeed: 20, hasSway: false },
+  2: { balloonCount: 4, riseSpeed: 25, hasSway: false },
+  3: { balloonCount: 5, riseSpeed: 30, hasSway: true },
 };
 
 interface BalloonState {
@@ -97,6 +97,7 @@ export default function BalloonPop() {
   const rafIdRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number>(0);
   const viewportHeightRef = useRef(window.innerHeight);
+  const coinsBaselineRef = useRef<number>(0);
   const adaptiveSpeedRef = useRef(1.0); // Speed multiplier
   const adaptiveDistractorCountRef = useRef(0); // Distractor reduction
   const announcerRef = useRef<HTMLDivElement | null>(null);
@@ -107,7 +108,11 @@ export default function BalloonPop() {
     announcerRef.current = createAnnouncer();
     document.body.appendChild(announcerRef.current);
 
-    setCoins(getCoins());
+    // Initialize coins baseline to prevent duplicate/incremental adds on refresh
+    const storedCoins = getCoins();
+    coinsBaselineRef.current = storedCoins;
+    setCoins(storedCoins);
+    setCoinsEarnedThisSession(0);
     const enabled = getSoundEnabled();
     setSoundEnabledState(enabled);
     if (!enabled) {
@@ -289,12 +294,22 @@ export default function BalloonPop() {
           return { ...balloon, y: newY, x: newX, shake: false };
         });
 
-        // Check if any balloon reached top (game over for this round)
+        // Check if all balloons reached top - reset them to bottom instead of ending round
         const reachedTop = updated.some((b) => !b.isPopped && b.y <= -50);
         if (reachedTop) {
-          cancelAnimationFrame(animationId);
-          handleRoundEnd(false);
-          return updated;
+          // Reset balloons to bottom with new random positions
+          return updated.map((b) => {
+            if (b.isPopped) return b;
+            // If balloon reached top, send it back to bottom with new Y offset
+            if (b.y <= -50) {
+              return {
+                ...b,
+                y: viewportHeightRef.current + randomFloat(100, 400),
+                x: b.x, // Keep same X position to avoid overlap issues
+              };
+            }
+            return b;
+          });
         }
 
         return updated;
@@ -392,13 +407,17 @@ export default function BalloonPop() {
 
       // Track mastery (first-try correct)
       updateMasteryRecord(targetWord.word, isFirstTry);
+      
+      // Flush immediately so dashboard updates in real-time
+      setTimeout(() => flushPending(), 100);
 
       // Check achievements and award bonus coins
       const newAchievements = checkAchievements();
+      let achievementBonus = 0;
       if (newAchievements.length > 0) {
         const ach = newAchievements[0];
         setAchievementBadge(`${ach.icon} ${ach.name}!`);
-        addCoins(50); // Achievement bonus
+        achievementBonus = 50;
         setTimeout(() => setAchievementBadge(null), 5000);
       }
 
@@ -406,7 +425,7 @@ export default function BalloonPop() {
       setShowCelebration(true);
       setTimeout(() => setShowCelebration(false), 1500);
 
-      // Award coins
+      // Award coins - single call to prevent glitches
       let coinReward = 0;
       if (isFirstTry) {
         coinReward = 5;
@@ -418,10 +437,11 @@ export default function BalloonPop() {
         setFirstTryStreak(0);
       }
 
-      if (coinReward > 0) {
-        const newTotal = addCoins(coinReward);
+      const totalCoinsToAdd = coinReward + achievementBonus;
+      if (totalCoinsToAdd > 0) {
+        const newTotal = addCoins(totalCoinsToAdd);
         setCoins(newTotal);
-        setCoinsEarnedThisSession((prev) => prev + coinReward);
+        setCoinsEarnedThisSession((prev) => prev + totalCoinsToAdd);
       }
 
       // Update streak
@@ -581,6 +601,9 @@ export default function BalloonPop() {
     stats.correctPops += correctCount;
     stats.level3Clears += currentLevel === 3 ? 1 : 0;
     saveStats(stats);
+    
+    // Flush to ensure dashboard updates
+    flushPending();
 
     setGameMode("summary");
   };
@@ -592,6 +615,9 @@ export default function BalloonPop() {
       const awarded = awardBadge("tune-up");
       if (awarded) setNewBadges((prev) => [...prev, "tune-up"]);
     }
+
+    // Flush to ensure dashboard updates
+    flushPending();
 
     setGameMode("summary");
   };
@@ -640,9 +666,10 @@ export default function BalloonPop() {
   };
 
   const stats = getStats();
+  const totalRoundAttempts = correctCount + (totalAttempts - correctCount);
   const accuracy =
-    correctCount > 0
-      ? (correctCount / (correctCount + totalAttempts - correctCount)) * 100
+    totalRoundAttempts > 0
+      ? Math.round((correctCount / totalRoundAttempts) * 100)
       : 0;
   const trickyPhonemes = getTrickyPhonemes();
 
@@ -826,7 +853,7 @@ export default function BalloonPop() {
       <CloudLayer layer={2} />
 
       {/* HUD */}
-      <div className="relative z-20">
+      <div className="absolute top-0 left-0 right-0 z-10">
         <div className="flex items-center justify-end gap-2 px-6 pt-4">
           <DyslexiaToggle />
           <SoundControl gameSlug="balloon-pop" />
