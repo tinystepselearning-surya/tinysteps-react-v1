@@ -24,7 +24,7 @@ export default function LeftOverlay({
 
   return (
     <div 
-      className={`pointer-events-none absolute left-2 top-20 md:left-4 md:top-24 z-30 ${hiddenClass} flex-col gap-3`}
+      className={`pointer-events-none absolute left-0 top-20 md:left-0 md:top-24 z-30 ${hiddenClass} flex-col gap-3`}
       aria-label="Game stats overlay"
     >
       {/* Quests Panel - wrapped with pointer-events-auto */}
