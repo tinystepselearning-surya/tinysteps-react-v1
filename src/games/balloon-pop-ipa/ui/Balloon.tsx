@@ -51,39 +51,40 @@ const Balloon: React.FC<BalloonProps> = ({
 
   return (
     <>
-      <motion.button
-        onClick={handleClick}
-        onKeyDown={(e: React.KeyboardEvent) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            handleClick();
-          }
-        }}
-        aria-label={`IPA ${labelIPA} balloon`}
-        className={`
-          absolute
-          w-40 h-48
-          transition-transform
-          hover:scale-110
-          active:scale-95
-          focus:outline-none
-          focus:ring-4
-          focus:ring-yellow-400
-          focus:ring-offset-2
-          ${selected ? "ring-4 ring-green-400" : ""}
-        `}
-        style={{
-          left: `${laneX}%`,
-          transform: 'translateX(-50%)',
-          minWidth: "64px",
-          minHeight: "64px",
-        }}
-        initial={{ y: window.innerHeight + 100 }}
-        animate={{ y: -200 }}
-        transition={{
-          duration: riseSec,
-          ease: 'linear',
-        }}
+      <div data-test="balloon">
+        <motion.button
+          onClick={handleClick}
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleClick();
+            }
+          }}
+          aria-label={`IPA ${labelIPA} balloon`}
+          className={`
+            absolute
+            w-40 h-48
+            transition-transform
+            hover:scale-110
+            active:scale-95
+            focus:outline-none
+            focus:ring-4
+            focus:ring-yellow-400
+            focus:ring-offset-2
+            ${selected ? "ring-4 ring-green-400" : ""}
+          `}
+          style={{
+            left: `${laneX}%`,
+            transform: 'translateX(-50%)',
+            minWidth: "64px",
+            minHeight: "64px",
+          }}
+          initial={{ y: window.innerHeight + 100 }}
+          animate={{ y: -200 }}
+          exit={{ opacity: 0 }}
+          transition={{
+            y: { duration: riseSec, ease: 'linear' },
+          }}
       >
         {/* Balloon body with ultra-glossy gradient and realistic shadows */}
         <div
@@ -167,7 +168,8 @@ const Balloon: React.FC<BalloonProps> = ({
             75% { transform: translateX(-50%) rotate(8deg); }
           }
         `}</style>
-      </motion.button>
+        </motion.button>
+      </div>
     </>
   );
 };
