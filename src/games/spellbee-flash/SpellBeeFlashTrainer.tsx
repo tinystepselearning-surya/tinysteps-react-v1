@@ -8,9 +8,8 @@ import { WORDS, type Word } from "./data";
 import WordCard from "./WordCard";
 import SummaryScreen from "./SummaryScreen";
 import SoundGate from "../shared/SoundGate";
-import SoundControl from "../shared/SoundControl";
-import DyslexiaToggle from "../shared/DyslexiaToggle";
 import GameViewport from "./GameViewport";
+import LeftOverlay from "./LeftOverlay";
 import { createAnnouncer, announce } from "../shared/accessibility";
 import { flushPending } from "../shared/storage";
 import { 
@@ -35,7 +34,6 @@ import {
   saveCoinsDebounced,
   logEvent
 } from "./utils";
-import QuestsPanel from "./QuestsPanel";
 import DebugPanel from "./DebugPanel";
 import { 
   clearAllTimers, 
@@ -381,43 +379,48 @@ export default function SpellBeeFlashTrainer() {
 
   return (
     <GameViewport>
-      {/* Sound Gate */}
-      <SoundGate gameSlug="spellbee-flash" />
-      
-      {/* Quests Panel */}
-      <QuestsPanel quests={questsState.quests} />
+      {/* Relative wrapper for absolute positioning + scroll margin for navbar */}
+      <div className="relative h-full flex flex-col scroll-mt-[84px]">
+        {/* Sound Gate */}
+        <SoundGate gameSlug="spellbee-flash" />
+        
+        {/* Left Overlay: Quests + Coins/Score - absolute positioned, no layout impact */}
+        <LeftOverlay 
+          coins={totalCoins}
+          score={score}
+          quests={questsState.quests}
+          hiddenOnMobile
+        />
 
-      {/* Quest Celebration Toast */}
-      {questCelebration && (
-        <div 
-          className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 animate-bounce"
-          role="alert"
-          aria-live="polite"
-        >
-          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full shadow-2xl text-2xl font-bold">
-            {questCelebration} Quest Complete!
-          </div>
-        </div>
-      )}
-
-      {/* HUD: Compact header with coins/streak - shrink-0 */}
-      <div className="shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <button
-            onClick={handleExit}
-            className="min-h-[48px] min-w-[48px] px-4 py-2 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-purple-400 text-sm sm:text-base"
-            aria-label="Exit game"
+        {/* Quest Celebration Toast */}
+        {questCelebration && (
+          <div 
+            className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 animate-bounce"
+            role="alert"
+            aria-live="polite"
           >
-            ← Back
-          </button>
-
-          <div className="flex items-center gap-2">
-            <DyslexiaToggle />
-            <SoundControl gameSlug="spellbee-flash" />
+            <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full shadow-2xl text-2xl font-bold">
+              {questCelebration} Quest Complete!
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2">
+        {/* HUD: Compact header with coins/streak - shrink-0 */}
+        {/* Hidden on md+ since LeftOverlay shows Coins/Score */}
+        <div className="shrink-0">
+          {/* Back button - always visible */}
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={handleExit}
+              className="min-h-[48px] min-w-[48px] px-4 py-2 bg-white text-purple-600 font-bold rounded-full shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-purple-400 text-sm sm:text-base"
+              aria-label="Exit game"
+            >
+              ← Back
+            </button>
+          </div>
+
+          {/* Coins/Score/Streak badges - hidden on md+ (shown in LeftOverlay instead) */}
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 md:hidden">
           {/* Coin Counter */}
           <div className="bg-yellow-400 text-yellow-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-sm sm:text-base shadow-md">
             🪙 {totalCoins}
@@ -528,6 +531,7 @@ export default function SpellBeeFlashTrainer() {
 
       {/* Debug Panel (only in debug mode) */}
       {isDebugMode && <DebugPanel />}
+      </div> {/* End of relative wrapper */}
     </GameViewport>
   );
 }

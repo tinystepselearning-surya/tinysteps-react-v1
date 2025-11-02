@@ -8,6 +8,7 @@ import type { Word } from "./data";
 import { speakWord, speakCorrect, speakWrong, updatePhonemeStats, getMinimalPairHint } from "./utils";
 import { getWordImageUrl } from "./spellbeeImages";
 import ConfettiBurst from "./Confetti";
+import TopToolbar from "./TopToolbar";
 
 export type GamePhase = "meaning" | "ear-training" | "ipa" | "speed";
 
@@ -263,8 +264,18 @@ export default function WordCard({
         </div>
       )}
 
-      {/* Card Container - flex-1 min-h-0 allows shrinking */}
-      <div className="flex-1 min-h-0 flex flex-col gap-2 sm:gap-3 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4">
+      {/* Card Container - flex-1 min-h-0 allows shrinking, relative for toolbar positioning */}
+      <div className="relative flex-1 min-h-0 flex flex-col gap-2 sm:gap-3 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4">
+        
+        {/* Top Toolbar - book, speaker, volume icons */}
+        <TopToolbar 
+          onToggleSpeak={() => {
+            // Re-speak the current word
+            if (phase !== "ear-training") {
+              speakWord(word.word);
+            }
+          }}
+        />
         
         {/* Speed Round Timer Bar */}
         {phase === "speed" && (
@@ -289,9 +300,9 @@ export default function WordCard({
         )}
 
         {/* Word Display - compact */}
-        <div className="text-center shrink-0">
+        <div className="text-center shrink-0 mt-1 sm:mt-2">
           <div className="text-4xl sm:text-5xl mb-1">{word.icon}</div>
-          <h2 className="text-2xl sm:text-3xl font-black text-purple-600 mb-1">
+          <h2 className="text-[clamp(18px,4.2vw,28px)] sm:text-3xl font-black text-purple-600 mb-1 leading-tight">
             {phase === "ear-training" ? "???" : word.word}
           </h2>
         </div>
@@ -300,7 +311,7 @@ export default function WordCard({
         {phase !== "ear-training" && (
           <div className="shrink-0">
             {wordImageUrl ? (
-              <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/60 max-h-[34svh] sm:max-h-[32svh]">
+              <div className="relative w-full rounded-2xl overflow-hidden border border-slate-200/60 max-h-[30svh] sm:max-h-[28svh]">
                 <img 
                   src={wordImageUrl} 
                   alt=""
@@ -308,7 +319,7 @@ export default function WordCard({
                 />
               </div>
             ) : (
-              <div className="w-full rounded-2xl border border-slate-200/40 bg-slate-50/40 max-h-[34svh] sm:max-h-[32svh] h-[22svh]" />
+              <div className="w-full rounded-2xl border border-slate-200/40 bg-slate-50/40 max-h-[30svh] sm:max-h-[28svh] h-[22svh]" />
             )}
           </div>
         )}
@@ -343,7 +354,7 @@ export default function WordCard({
           {/* Ear-Training: IPA Options (after audio plays) */}
           {phase === "ear-training" && audioPlayed && (
             <div className="shrink-0">
-              <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2">
+              <div className="mt-3 grid grid-cols-3 gap-2.5 sm:gap-3 max-w-[880px] mx-auto px-2 shrink-0">
                 {ipaOptions.map((option, index) => (
                   <button
                     key={index}

@@ -16,7 +16,7 @@ export default function QuestsPanel({ quests }: QuestsPanelProps) {
   if (quests.length === 0) return null;
 
   return (
-    <div className="fixed top-4 left-4 z-40 max-w-xs">
+    <div className="w-[180px]">
       <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl shadow-2xl overflow-hidden border-2 border-purple-300">
         {/* Header */}
         <button
