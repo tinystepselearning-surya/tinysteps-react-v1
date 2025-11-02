@@ -53,8 +53,6 @@ export default function WordCard({
   const [showConfetti, setShowConfetti] = useState(false);
   const [cheerMessage, setCheerMessage] = useState<string | null>(null);
   
-  const CHEER_MESSAGES = ["You did it! 🎉", "Great job! 🌟", "Congratulations! 🥳"];
-  
   // Get local image URL for this word
   const wordImageUrl = getWordImageUrl(word.word);
 
@@ -143,14 +141,13 @@ export default function WordCard({
   
   // Celebration helper
   const triggerCelebration = () => {
-    // Show confetti
+    // Show confetti for 3 seconds (matches animation duration)
     setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 1200);
+    setTimeout(() => setShowConfetti(false), 3000);
     
-    // Show random cheer message
-    const randomCheer = CHEER_MESSAGES[Math.floor(Math.random() * CHEER_MESSAGES.length)];
-    setCheerMessage(randomCheer);
-    setTimeout(() => setCheerMessage(null), 1200);
+    // Show "Congratulations!" message for 2.5 seconds
+    setCheerMessage("Congratulations! 🥳");
+    setTimeout(() => setCheerMessage(null), 2500);
   };
 
   // Handler for "Hear it" button in ear-training mode
@@ -252,13 +249,18 @@ export default function WordCard({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
+      {/* Screen reader announcement region */}
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {cheerMessage}
+      </div>
+
       {/* Confetti Burst - absolute overlay */}
       {showConfetti && <ConfettiBurst onDone={() => setShowConfetti(false)} />}
       
-      {/* Cheer Overlay - absolute, non-intrusive */}
+      {/* Cheer Overlay - centered banner with larger text */}
       {cheerMessage && (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-40">
-          <div className="rounded-2xl bg-white/70 backdrop-blur px-4 py-2 text-base sm:text-xl font-semibold text-slate-900 shadow">
+          <div className="rounded-2xl bg-white/90 backdrop-blur px-6 py-4 text-2xl sm:text-3xl font-bold text-purple-600 shadow-2xl border-2 border-purple-300">
             {cheerMessage}
           </div>
         </div>
@@ -267,8 +269,12 @@ export default function WordCard({
       {/* Card Container - flex-1 min-h-0 allows shrinking, relative for toolbar positioning */}
       <div className="relative flex-1 min-h-0 flex flex-col gap-2 sm:gap-3 bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 rounded-2xl sm:rounded-3xl shadow-xl p-3 sm:p-4">
         
-        {/* Top Toolbar - book, speaker, volume icons */}
+        {/* Top Toolbar - dashboard, speaker icons */}
         <TopToolbar 
+          onOpenDashboard={() => {
+            // Navigate to dashboard
+            window.location.href = "/kids/games/spellbee-flash/dashboard";
+          }}
           onToggleSpeak={() => {
             // Re-speak the current word
             if (phase !== "ear-training") {
@@ -299,10 +305,10 @@ export default function WordCard({
           </div>
         )}
 
-        {/* Word Display - compact */}
+        {/* Word Display - compact with larger font */}
         <div className="text-center shrink-0 mt-1 sm:mt-2">
           <div className="text-4xl sm:text-5xl mb-1">{word.icon}</div>
-          <h2 className="text-[clamp(18px,4.2vw,28px)] sm:text-3xl font-black text-purple-600 mb-1 leading-tight">
+          <h2 className="text-[clamp(24px,5.5vw,36px)] sm:text-4xl font-black text-purple-600 mb-1 leading-tight">
             {phase === "ear-training" ? "???" : word.word}
           </h2>
         </div>
@@ -327,8 +333,8 @@ export default function WordCard({
         {/* Q&A Section - flex-1 min-h-0 allows it to grow/shrink */}
         <section className="flex-1 min-h-0 flex flex-col justify-center gap-2">
           
-          {/* Question Line - responsive text */}
-          <h3 className="text-center px-2 leading-snug font-semibold text-[clamp(16px,3.8vw,22px)] sm:text-xl text-slate-800">
+          {/* Question Line - responsive text with larger font */}
+          <h3 className="text-center px-2 leading-snug font-semibold text-[clamp(20px,4.5vw,28px)] sm:text-2xl text-slate-800">
             {phase === "speed"
               ? "Quick! What does it mean?"
               : phase === "ear-training" 

@@ -34,7 +34,7 @@ const COLORS = [
   "#BB8FCE", // Purple
 ];
 
-export default function ConfettiBurst({ x = 50, y = 50, onDone }: ConfettiBurstProps) {
+export default function ConfettiBurst({ x = 50, y = 10, onDone }: ConfettiBurstProps) {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [currentFrame, setCurrentFrame] = useState(0);
 
@@ -45,7 +45,7 @@ export default function ConfettiBurst({ x = 50, y = 50, onDone }: ConfettiBurstP
 
     for (let i = 0; i < particleCount; i++) {
       const angle = (Math.PI * 2 * i) / particleCount;
-      const speed = 3 + Math.random() * 4;
+      const speed = 2 + Math.random() * 3; // Reduced from 3-7 to 2-5 for gentler burst
       
       newParticles.push({
         id: i,
@@ -65,7 +65,7 @@ export default function ConfettiBurst({ x = 50, y = 50, onDone }: ConfettiBurstP
 
     // Animate particles
     let frame = 0;
-    const maxFrames = 60; // ~1 second at 60fps
+    const maxFrames = 180; // Changed from 60 to 180 for 3-second duration (60fps × 3s)
     
     const animate = () => {
       frame++;
@@ -82,9 +82,9 @@ export default function ConfettiBurst({ x = 50, y = 50, onDone }: ConfettiBurstP
           ...p,
           x: p.x + p.vx,
           y: p.y + p.vy,
-          vy: p.vy + 0.3, // Gravity
+          vy: p.vy + 0.15, // Reduced gravity from 0.3 to 0.15 for slower, more graceful fall
           rotation: p.rotation + p.rotationSpeed,
-          vx: p.vx * 0.98, // Air resistance
+          vx: p.vx * 0.99, // Reduced air resistance from 0.98 to 0.99 for gentler deceleration
         }))
       );
 
@@ -112,7 +112,7 @@ export default function ConfettiBurst({ x = 50, y = 50, onDone }: ConfettiBurstP
             backgroundColor: p.color,
             transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`,
             borderRadius: "2px",
-            opacity: Math.max(0, 1 - currentFrame / 60),
+            opacity: Math.max(0, 1 - currentFrame / 180), // Updated to match new maxFrames
           }}
         />
       ))}
