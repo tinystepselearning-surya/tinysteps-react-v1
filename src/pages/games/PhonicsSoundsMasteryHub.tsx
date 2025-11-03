@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import DashboardShell from "../../components/dashboard/DashboardShell";
-import { readProgress, type PsmProgress } from "../../lib/psmProgress";
+import { readProgress, readMeta, writeMeta, type PsmProgress } from "../../lib/psmProgress";
 
 const SERIES = [
   {
@@ -158,22 +158,24 @@ const bookIcon = (
 export default function PhonicsSoundsMasteryHub() {
   const [activeTab, setActiveTab] = useState("foundations");
   const [progress, setProgress] = useState<PsmProgress>({});
+  const [lastPlayedLevel, setLastPlayedLevel] = useState<string | undefined>();
 
   useEffect(() => {
     setProgress(readProgress());
+    const meta = readMeta();
+    setLastPlayedLevel(meta.lastPlayedLevel);
   }, []);
 
   const activeSeries = SERIES.find((s) => s.id === activeTab);
 
   const allLevels = SERIES.flatMap((s) => s.levels);
-  const firstIncomplete = allLevels.find((lvl) => !progress[lvl.id]?.completed);
+  
+  const resumeLevel = lastPlayedLevel 
+    ? allLevels.find((lvl) => lvl.id === lastPlayedLevel)
+    : allLevels.find((lvl) => !progress[lvl.id]?.completed);
 
-  function isLevelLocked(levelIndex: number): boolean {
-    if (!activeSeries) return false;
-    if (levelIndex === 0) return false;
-
-    const prevLevel = activeSeries.levels[levelIndex - 1];
-    return !progress[prevLevel.id]?.completed;
+  function handleLevelClick(levelId: string) {
+    writeMeta({ lastPlayedLevel: levelId });
   }
 
   return (
@@ -215,9 +217,10 @@ export default function PhonicsSoundsMasteryHub() {
             ))}
           </div>
 
-          {firstIncomplete && (
+          {resumeLevel && (
             <Link
-              to={firstIncomplete.route}
+              to={resumeLevel.route}
+              onClick={() => handleLevelClick(resumeLevel.id)}
               className="rounded-full bg-[#f472b6] px-4 py-2 text-sm font-semibold text-white shadow-md shadow-[#f472b6]/30 transition hover:bg-[#ec4899]"
             >
               Resume
@@ -235,18 +238,14 @@ export default function PhonicsSoundsMasteryHub() {
         )}
 
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {activeSeries?.levels.map((level, idx) => {
+          {activeSeries?.levels.map((level) => {
             const isCompleted = progress[level.id]?.completed;
-            const isLocked = isLevelLocked(idx);
+            const stars = progress[level.id]?.stars || 0;
 
             return (
               <article
                 key={level.id}
-                className={`rounded-3xl border p-5 shadow-sm transition ${
-                  isLocked
-                    ? "border-slate-200 bg-slate-50 opacity-60"
-                    : "border-white/60 bg-white/80 hover:border-[#2563eb]/30"
-                }`}
+                className="rounded-3xl border border-white/60 bg-white/80 p-5 shadow-sm transition hover:border-[#2563eb]/30"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1">
@@ -255,27 +254,29 @@ export default function PhonicsSoundsMasteryHub() {
                         Phase {level.phase}
                       </span>
                       {isCompleted && (
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="h-4 w-4 text-green-600"
-                        >
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                        </svg>
-                      )}
-                      {isLocked && (
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4 text-slate-400"
-                        >
-                          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                        </svg>
+                        <div className="flex items-center gap-1">
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="h-4 w-4 text-green-600"
+                          >
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                          </svg>
+                          {stars > 0 && (
+                            <div className="flex gap-0.5">
+                              {Array.from({ length: Math.min(stars, 3) }).map((_, i) => (
+                                <svg
+                                  key={i}
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="h-3 w-3 text-yellow-500"
+                                >
+                                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                                </svg>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                     <h3 className="mt-2 text-base font-semibold text-slate-900">
@@ -285,14 +286,13 @@ export default function PhonicsSoundsMasteryHub() {
                   </div>
                 </div>
 
-                {!isLocked && (
-                  <Link
-                    to={level.route}
-                    className="mt-4 inline-flex items-center justify-center rounded-full bg-[#2563eb] px-4 py-2 text-xs font-semibold text-white shadow-md shadow-[#2563eb]/30 transition hover:bg-[#1d4ed8]"
-                  >
-                    {isCompleted ? "Replay" : "Play"}
-                  </Link>
-                )}
+                <Link
+                  to={level.route}
+                  onClick={() => handleLevelClick(level.id)}
+                  className="mt-4 inline-flex items-center justify-center rounded-full bg-[#2563eb] px-4 py-2 text-xs font-semibold text-white shadow-md shadow-[#2563eb]/30 transition hover:bg-[#1d4ed8]"
+                >
+                  {isCompleted ? "Replay" : "Play"}
+                </Link>
               </article>
             );
           })}

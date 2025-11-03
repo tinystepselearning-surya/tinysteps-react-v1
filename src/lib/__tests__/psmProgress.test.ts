@@ -1,5 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { readProgress, writeProgress, PSM_PROGRESS_KEY } from "../psmProgress";
+import { 
+  readProgress, 
+  writeProgress, 
+  PSM_PROGRESS_KEY,
+  readMeta,
+  writeMeta,
+  PSM_META_KEY
+} from "../psmProgress";
 
 describe("psmProgress", () => {
   let mockStorage: { [key: string]: string };
@@ -92,5 +99,51 @@ describe("psmProgress", () => {
 
     mockStorage[PSM_PROGRESS_KEY] = JSON.stringify(null);
     expect(readProgress(storage)).toEqual({});
+  });
+});
+
+describe("psmMeta", () => {
+  let mockStorage: { [key: string]: string };
+
+  beforeEach(() => {
+    mockStorage = {};
+  });
+
+  const createMockStorage = () => ({
+    getItem: (key: string) => mockStorage[key] ?? null,
+    setItem: (key: string, value: string) => {
+      mockStorage[key] = value;
+    },
+  });
+
+  it("returns empty object when storage is empty", () => {
+    const storage = createMockStorage();
+    const result = readMeta(storage);
+    expect(result).toEqual({});
+  });
+
+  it("writes and reads back lastPlayedLevel", () => {
+    const storage = createMockStorage();
+    const meta = { lastPlayedLevel: "p2-bp-01" };
+
+    writeMeta(meta, storage);
+    const result = readMeta(storage);
+
+    expect(result).toEqual(meta);
+  });
+
+  it("does not touch progress key when writing meta", () => {
+    const storage = createMockStorage();
+    mockStorage[PSM_PROGRESS_KEY] = JSON.stringify({ "p1-el-01": { completed: true } });
+
+    writeMeta({ lastPlayedLevel: "p2-bp-01" }, storage);
+
+    expect(mockStorage[PSM_PROGRESS_KEY]).toBeDefined();
+    expect(mockStorage[PSM_META_KEY]).toBeDefined();
+  });
+
+  it("SSR safety: returns empty object when storage is undefined", () => {
+    const result = readMeta(undefined);
+    expect(result).toEqual({});
   });
 });
