@@ -16,7 +16,7 @@ const SERIES = [
         phase: 1,
         gameId: "elkonin",
         target: "segment 3 phonemes",
-        route: "/games/elkonin?boxes=3",
+        route: "/games/elkonin?boxes=3&rounds=3&levelId=p1-el-01",
       },
       {
         id: "p1-el-02",
@@ -24,7 +24,7 @@ const SERIES = [
         phase: 1,
         gameId: "elkonin",
         target: "segment 4 phonemes",
-        route: "/games/elkonin?boxes=4",
+        route: "/games/elkonin?boxes=4&rounds=4&levelId=p1-el-02",
       },
       {
         id: "p2-bp-01",
