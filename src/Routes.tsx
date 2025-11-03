@@ -18,6 +18,7 @@ import BlogIndex from "./pages/blog/BlogIndex";
 import BlogArticle from "./pages/blog/BlogArticle";
 import GamesGallery from "./pages/games/GamesGallery";
 import PhonicsSoundsMasteryHub from "./pages/games/PhonicsSoundsMasteryHub";
+import ElkoninGame from "./pages/games/ElkoninGame";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
 
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
@@ -50,6 +51,7 @@ export default function AppRoutes() {
         <Route path="/kids/games" element={<GamesGallery />} />
         <Route path="/games" element={<GamesGallery />} />
         <Route path="/games/phonics-sounds-mastery" element={<PhonicsSoundsMasteryHub />} />
+        <Route path="/games/elkonin" element={<ElkoninGame />} />
         <Route 
           path="/games/balloon-pop-ipa" 
           element={
