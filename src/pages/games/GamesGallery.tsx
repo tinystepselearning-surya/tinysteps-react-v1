@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import DashboardShell from "../../components/dashboard/DashboardShell";
 import type { ReactNode } from "react";
+import PhonicsSoundsMasteryTile from "../../components/tiles/PhonicsSoundsMasteryTile";
 import { gameMeta as spellBeeGameMeta } from "../../games/spellbee-flash";
 import { gameMeta as meaningMatchGameMeta } from "../../games/meaning-match";
 import { gameMeta as balloonPopGameMeta } from "../../games/balloon-pop";
@@ -127,6 +128,7 @@ export default function GamesGallery() {
     >
       <div className="p-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <PhonicsSoundsMasteryTile />
           {GAME_LIBRARY.map((game) => (
             <article 
               key={game.id}
