@@ -31,7 +31,16 @@ export default function StepNode({ phase, x, y, onClick, onFocus }: StepNodeProp
   const dashOffset = circumference * (1 - progress / 100);
 
   return (
-    <g transform={`translate(${x}, ${y})`}>
+    <g
+      transform={`translate(${x}, ${y})`}
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+      onFocus={() => {
+        setShowTooltip(true);
+        onFocus?.();
+      }}
+      onBlur={() => setShowTooltip(false)}
+    >
       {/* Circular phase node with progress ring (restored) */}
       <foreignObject x={-125} y={-125} width={250} height={250}>
         <motion.button
@@ -42,13 +51,6 @@ export default function StepNode({ phase, x, y, onClick, onFocus }: StepNodeProp
           aria-label={`${phase.name}, ${progress}% complete`}
           aria-current="step"
           tabIndex={0}
-          onMouseEnter={() => setShowTooltip(true)}
-          onMouseLeave={() => setShowTooltip(false)}
-          onFocus={() => {
-            setShowTooltip(true);
-            onFocus?.();
-          }}
-          onBlur={() => setShowTooltip(false)}
         >
           <svg viewBox="0 0 250 250" className="size-[250px]">
             {/* Background ring (faded) */}
@@ -92,43 +94,51 @@ export default function StepNode({ phase, x, y, onClick, onFocus }: StepNodeProp
       </foreignObject>
       
       {/* Phase label under the circle */}
-      <foreignObject x={-110} y={118} width={220} height={48}>
+      <foreignObject x={-110} y={118} width={220} height={50}>
         <div className="text-center">
-          <div className="text-base md:text-lg font-extrabold text-gray-800 leading-tight break-words">
+          <div className="text-base font-extrabold text-gray-800 leading-tight break-words">
             {phase.name}
           </div>
         </div>
       </foreignObject>
 
       {/* Labeled 'game' chips below the node (using milestones) */}
-      <foreignObject x={-160} y={155} width={320} height={190}>
+      <foreignObject x={-160} y={165} width={320} height={180}>
         <div className="mx-auto max-w-[300px] text-center">
           <div className="grid grid-cols-2 gap-2">
             {phase.milestones.slice(0, 6).map((m) => {
-              const text = m.status === 'done' ? 'text-emerald-900' : m.status === 'in_progress' ? 'text-amber-900' : 'text-gray-800';
+              const fillColor = m.status === 'done' ? '#10b981' : m.status === 'in_progress' ? '#f59e0b' : '#9ca3af';
+              const text = m.status === 'done' ? 'text-emerald-900' : m.status === 'in_progress' ? 'text-amber-900' : 'text-gray-700';
               const ring = m.status === 'done' ? 'ring-emerald-200' : m.status === 'in_progress' ? 'ring-amber-200' : 'ring-gray-200';
               return (
-                <span
+                <button
                   key={m.id}
-                  className={`relative inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold bg-white ring-1 ${ring} ${text} shadow-sm overflow-hidden w-full`}
-                  title={`${m.title} — ${m.progress}% • ${m.desc}`}
-                  style={{ minWidth: 0 }}
+                  className={`group relative flex flex-col items-start justify-center rounded-lg px-2.5 py-1.5 text-[11px] font-semibold bg-white ring-1 ${ring} ${text} shadow-sm overflow-hidden w-full text-left min-h-[2.5rem] hover:ring-2 hover:ring-blue-400 transition-all`}
+                  title={`${m.title} — ${m.progress}%`}
                 >
                   <span
-                    className="absolute inset-0 -z-10 rounded-full opacity-40"
-                    style={{
-                      width: `${Math.max(0, Math.min(100, m.progress))}%`,
-                      background: m.status === 'locked' ? '#9ca3af' : undefined,
-                      backgroundImage:
-                        m.status !== 'locked'
-                          ? `linear-gradient(90deg, ${m.status === 'done' ? '#10b981' : '#f59e0b'} 0%, ${m.status === 'done' ? '#065f46' : '#b45309'} 100%)`
-                          : undefined,
-                    }}
+                    className="absolute inset-0 -z-10 rounded-lg opacity-40"
+                    style={{ width: `${Math.max(0, Math.min(100, m.progress))}%`, background: fillColor }}
                     aria-hidden="true"
                   />
-                  <span className="whitespace-normal break-words leading-tight line-clamp-2">{m.title}</span>
-                  <span className="ml-1 text-[10px] opacity-80">{m.progress}%</span>
-                </span>
+                  <span className="line-clamp-2 leading-tight pr-1">{m.title}</span>
+                  <span className="absolute bottom-0.5 right-1 text-[9px] font-bold opacity-70">{m.progress}%</span>
+                  
+                  {/* Game insights tooltip on hover */}
+                  <span className="pointer-events-none absolute -top-16 left-1/2 -translate-x-1/2 w-48 rounded-lg bg-gray-800 px-3 py-2 text-[10px] text-white shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50">
+                    <div className="font-bold text-xs mb-1">{m.title}</div>
+                    <div className="text-gray-300">{m.desc}</div>
+                    <div className="mt-1 flex items-center justify-between text-[9px]">
+                      <span className="capitalize">{m.status.replace('_', ' ')}</span>
+                      <span className="font-semibold">{m.progress}%</span>
+                    </div>
+                    {m.kpi && m.kpi.length > 0 && (
+                      <div className="mt-1 text-[9px] text-blue-300">
+                        KPIs: {m.kpi.join(', ')}
+                      </div>
+                    )}
+                  </span>
+                </button>
               );
             })}
           </div>

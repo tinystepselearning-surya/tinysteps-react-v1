@@ -1,7 +1,8 @@
 /**
  * SubSkillList.tsx
- * Compact two-column list of sub-skills (milestones)
- * Shows tiny progress ring, label, and percentage
+ * Compact two-column grid of sub-skills (milestones)
+ * Shows tiny progress ring, truncated label, and percentage
+ * Refined styling with lighter backgrounds
  */
 
 import type { Milestone } from '../../data/phases';
@@ -14,8 +15,8 @@ interface SubSkillListProps {
 // Tiny progress ring component
 function ProgressRing({
   value,
-  size = 18,
-  strokeWidth = 3,
+  size = 16,
+  strokeWidth = 2,
 }: {
   value: number;
   size?: number;
@@ -39,7 +40,7 @@ function ProgressRing({
         cy={size / 2}
         r={radius}
         strokeWidth={strokeWidth}
-        className="fill-none stroke-gray-200"
+        className="fill-none stroke-slate-200"
       />
       <circle
         cx={size / 2}
@@ -56,24 +57,20 @@ function ProgressRing({
   );
 }
 
-export default function SubSkillList({ milestones, compact = false }: SubSkillListProps) {
+export default function SubSkillList({ milestones }: SubSkillListProps) {
   return (
-    <ul
-      className={`grid gap-2 ${
-        compact ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-2'
-      }`}
-    >
+    <ul className="grid grid-cols-2 gap-1.5">
       {milestones.map((milestone) => (
         <li
           key={milestone.id}
-          className="flex items-center gap-2 rounded-lg bg-white/60 px-2 py-1.5 text-sm transition-colors hover:bg-white/90"
+          className="flex items-center gap-1.5 rounded-md bg-slate-50/60 px-2 py-1 text-xs transition-colors hover:bg-slate-100/80"
           title={milestone.desc}
         >
-          <ProgressRing value={milestone.progress} size={18} strokeWidth={3} />
-          <span className="min-w-0 flex-1 truncate text-sm leading-tight">
+          <ProgressRing value={milestone.progress} size={16} strokeWidth={2} />
+          <span className="min-w-0 flex-1 truncate text-xs leading-snug text-slate-700">
             {milestone.title}
           </span>
-          <span className="shrink-0 text-xs font-semibold tabular-nums text-gray-600">
+          <span className="shrink-0 text-[10px] font-semibold tabular-nums text-slate-500">
             {milestone.progress}%
           </span>
         </li>

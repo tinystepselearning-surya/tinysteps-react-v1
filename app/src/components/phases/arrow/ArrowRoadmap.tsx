@@ -1,7 +1,6 @@
 /**
  * ArrowRoadmap.tsx
- * Serpentine arrow roadmap visualization with StepNodes
- * Features: scroll-snap sections, next recommended actions, legend
+ * Serpentine arrow roadmap visualization with StepNodes and milestone dots
  * Desktop: S-curve path with horizontal scrolling (3 phases per row)
  * Mobile: vertical zig-zag
  */
@@ -12,38 +11,25 @@ import { motion } from "framer-motion";
 import type { Phase } from "../../../data/phases";
 import { useWaypoints, createCurvedPath } from "./useWaypoints";
 import StepNode from "./StepNode";
-import SubSkillList from "../SubSkillList";
-import { useReducedMotion } from "../../../hooks/useReducedMotion";
 
 interface ArrowRoadmapProps {
   phases: Phase[];
   parentView: boolean;
 }
 
-// Helper: Find next recommended milestone (<80% progress)
-function getNextRecommended(phase: Phase) {
-  return phase.milestones.find((m) => m.progress < 80 && m.status !== 'locked');
-}
+// Milestone dots removed (now labeled chips rendered in StepNode)
 
-// Helper: Format phase header with name
-function formatPhaseHeader(phase: Phase) {
-  const code = phase.id.replace(/^P(\d+)([A-Z])?$/, (_m, n, s) => `P${n}${s ?? ""}`);
-  return `${code} — ${phase.name}`;
-}
-
-export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) {
-  const reducedMotion = useReducedMotion();
-  
+export default function ArrowRoadmap({ phases }: ArrowRoadmapProps) {
   // Compute a dynamic row gap based on the maximum number of labeled chips per phase
   // We render up to 6 chips and roughly fit 2 per row; adjust gap to avoid overlap between rows
   const maxChips = Math.max(0, ...phases.map(p => Math.min(6, p.milestones.length)));
   const estimatedChipRows = Math.ceil(maxChips / 2) || 1;
-  const dynamicRowGap = 450 + estimatedChipRows * 36; // increased base for sub-skill list
+  const dynamicRowGap = 380 + estimatedChipRows * 45; // increased base (300→380) and per-row (36→45)
   const { containerRef, waypoints, dimensions } = useWaypoints(phases.length, {
     // cols omitted → 1 on small phones, 2 otherwise (inside hook)
-    top: 160,
+    top: 140,
     rowGap: dynamicRowGap,
-    bottom: 400,
+    bottom: 360,
   });
   const navigate = useNavigate();
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -126,41 +112,14 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
         .arrow-roadmap-scroll::-webkit-scrollbar-thumb:hover {
           background: linear-gradient(to right, #ff9020, #5ab0d8);
         }
-        .phase-section {
-          scroll-snap-align: start;
-          scroll-margin-top: 2rem;
-        }
       `}</style>
-      
-      {/* Legend - shows progress thresholds */}
-      <div className="mb-4 flex flex-wrap items-center justify-center gap-3 rounded-xl bg-white/80 px-4 py-2 text-xs font-medium shadow-sm backdrop-blur">
-        <span className="text-gray-600">Progress:</span>
-        <span className="flex items-center gap-1">
-          <span className="size-3 rounded-full bg-red-500" />
-          0–39%
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="size-3 rounded-full bg-amber-500" />
-          40–69%
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="size-3 rounded-full bg-emerald-500" />
-          70–89%
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="size-3 rounded-full bg-blue-500" />
-          90–100%
-        </span>
-      </div>
-      
       <div
         ref={containerRef}
-        className="arrow-roadmap-scroll overflow-x-hidden overflow-y-visible rounded-2xl bg-gradient-to-br from-[#FFE8CC] via-[#E6F3FF] to-[#F7E8FF] p-8 shadow-md md:p-10 reveal-on-scroll animate-fadeIn"
+  className="arrow-roadmap-scroll overflow-x-hidden overflow-y-visible rounded-2xl bg-gradient-to-br from-[#FFE8CC] via-[#E6F3FF] to-[#F7E8FF] p-8 shadow-md md:p-10 reveal-on-scroll animate-fadeIn"
         style={{
           scrollBehavior: "smooth",
           scrollbarWidth: "thin",
           scrollbarColor: "#6ec1e4 #f0f0f0",
-          scrollSnapType: "y proximity",
         }}
       >
         <svg
@@ -178,31 +137,21 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
               <stop offset="100%" stopColor="#c084fc" stopOpacity={0.6} />
             </linearGradient>
             
-            {/* Arrow marker */}
+            {/* Animated arrow marker for directional flow */}
             <marker
               id="arrowhead"
-              markerWidth="10"
-              markerHeight="10"
-              refX="8"
-              refY="3"
-              orient="auto"
-            >
-              <polygon points="0 0, 10 3, 0 6" fill="#6ec1e4" />
-            </marker>
-            {/* Segment arrow marker for connectors between circles */}
-            <marker
-              id="arrowheadSegment"
               markerWidth="12"
               markerHeight="12"
               refX="10"
-              refY="3"
+              refY="6"
               orient="auto"
+              markerUnits="strokeWidth"
             >
-              <polygon points="0 0, 10 3, 0 6" fill="#5ab0d8" />
+              <path d="M 0 0 L 12 6 L 0 12 z" fill="#6ec1e4" />
             </marker>
           </defs>
           
-          {/* Main serpentine path */}
+          {/* Main serpentine path with flowing arrows between nodes */}
           <motion.path
             d={pathData}
             fill="none"
@@ -210,88 +159,47 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
             strokeWidth={9}
             strokeLinecap="round"
             strokeLinejoin="round"
-            markerMid="url(#arrowhead)"
-            initial={reducedMotion ? {} : { pathLength: 0, opacity: 0 }}
+            markerEnd="url(#arrowhead)"
+            initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
-            transition={reducedMotion ? { duration: 0 } : { duration: 1.5, ease: "easeInOut" }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
           />
           
-          {/* Step nodes wrapped in sections with data-phase */}
+          {/* Arrow markers between each consecutive pair of nodes */}
+          {waypoints.slice(0, -1).map((waypoint, i) => {
+            const next = waypoints[i + 1];
+            if (!next) return null;
+            const midX = (waypoint.x + next.x) / 2;
+            const midY = (waypoint.y + next.y) / 2;
+            const angle = Math.atan2(next.y - waypoint.y, next.x - waypoint.x) * (180 / Math.PI);
+            return (
+              <g key={`arrow-${i}`} transform={`translate(${midX}, ${midY}) rotate(${angle})`}>
+                <motion.path
+                  d="M -8 -6 L 8 0 L -8 6 Z"
+                  fill="#6ec1e4"
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 0.8, scale: 1 }}
+                  transition={{ delay: 0.5 + i * 0.1, duration: 0.4 }}
+                />
+              </g>
+            );
+          })}
+          
+          {/* Step nodes */}
           {waypoints.map((waypoint, index) => {
             const phase = phases[index];
             if (!phase) return null;
             
-            const nextRec = getNextRecommended(phase);
-            
             return (
-              <g key={phase.id}>
-                <StepNode
-                  phase={phase}
-                  x={waypoint.x}
-                  y={waypoint.y}
-                  index={index}
-                  onClick={() => openPhaseDetail(phase)}
-                  onFocus={() => setFocusedIndex(index)}
-                />
-                
-                {/* Phase detail card below node */}
-                <foreignObject
-                  x={waypoint.x - 200}
-                  y={waypoint.y + 200}
-                  width={400}
-                  height={300}
-                  data-phase={phase.id}
-                  className="phase-section"
-                >
-                  <section
-                    id={`phase-${phase.id}`}
-                    data-phase={phase.id}
-                    className="rounded-2xl bg-white/90 p-4 shadow-lg backdrop-blur"
-                  >
-                    {/* Phase header with renamed label */}
-                    <h3 className="mb-2 text-lg font-bold text-gray-900">
-                      {formatPhaseHeader(phase)}
-                    </h3>
-                    <p className="mb-3 text-sm text-gray-600">{phase.tagline}</p>
-                    
-                    {/* Next recommended action */}
-                    {nextRec && (
-                      <div className="mb-3 rounded-lg bg-gradient-to-r from-orange-50 to-sky-50 p-3">
-                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-600">
-                          Next Recommended
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <div className="truncate font-semibold text-gray-900">
-                              {nextRec.title}
-                            </div>
-                            <div className="text-xs text-gray-600">{nextRec.progress}% complete</div>
-                          </div>
-                          <button
-                            onClick={() => navigate(`/kids/game/${nextRec.id}`)}
-                            className="shrink-0 rounded-full bg-gradient-to-r from-orange-400 to-sky-400 px-4 py-2 text-sm font-bold text-white shadow-md transition-transform hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          >
-                            {nextRec.progress > 0 ? 'Resume' : 'Play'}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Sub-skills list */}
-                    {!parentView && phase.milestones.length > 0 && (
-                      <div className="max-h-40 overflow-y-auto">
-                        <SubSkillList milestones={phase.milestones} compact />
-                      </div>
-                    )}
-                    
-                    {parentView && (
-                      <div className="text-xs text-gray-500">
-                        {phase.milestones.length} skills • Ages {phase.age}
-                      </div>
-                    )}
-                  </section>
-                </foreignObject>
-              </g>
+              <StepNode
+                key={phase.id}
+                phase={phase}
+                x={waypoint.x}
+                y={waypoint.y}
+                index={index}
+                onClick={() => openPhaseDetail(phase)}
+                onFocus={() => setFocusedIndex(index)}
+              />
             );
           })}
           
