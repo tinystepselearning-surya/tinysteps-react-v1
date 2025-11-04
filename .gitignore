@@ -26,3 +26,11 @@ dist-ssr
 dist/
 node_modules/
 .DS_Store
+# ignore node modules and OS artifacts
+node_modules/
+*.log
+.DS_Store
+.env
+/dist
+/build
+public/build
