@@ -166,10 +166,19 @@ export default function KidsGuestLanding() {
       animation: "bounce"
     },
     {
+      label: "Games V1",
+      description: "🎯 All games gallery",
+      emoji: "🎯",
+      orbit: "orbit-two",
+      to: "/kids/games-gallery",
+      color: "purple",
+      animation: "pulse"
+    },
+    {
       label: "Member Login",
       description: "👋 Welcome back!",
       emoji: "🌟",
-      orbit: "orbit-two",
+      orbit: "orbit-three",
       to: "/login/kids",
       color: "purple",
       animation: "pulse"
@@ -178,7 +187,7 @@ export default function KidsGuestLanding() {
       label: "Parent Zone",
       description: "👥 For parents",
       emoji: "🏠",
-      orbit: "orbit-three",
+      orbit: "orbit-four",
       to: "/login/parents",
       color: "pink",
       animation: "float"

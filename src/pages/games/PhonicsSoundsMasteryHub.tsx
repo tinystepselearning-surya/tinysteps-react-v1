@@ -32,7 +32,7 @@ const SERIES = [
         phase: 2,
         gameId: "balloon-pop",
         target: "select matching letter",
-        route: "/games/balloon-pop-ipa?set=sat",
+        route: "/games/balloon-pop-ipa?phase=2&set=sat&n=3&speed=slow&adaptive=1&levelId=p2-bp-01",
       },
       {
         id: "p2-bp-02",
@@ -40,7 +40,7 @@ const SERIES = [
         phase: 2,
         gameId: "balloon-pop",
         target: "select matching letter",
-        route: "/games/balloon-pop-ipa?set=pin",
+        route: "/games/balloon-pop-ipa?phase=2&set=pin&n=3&speed=slow&adaptive=1&levelId=p2-bp-02",
       },
       {
         id: "p2-bl-01",
@@ -68,11 +68,11 @@ const SERIES = [
     levels: [
       {
         id: "p3-bp-01",
-        title: "/ʃ/ vs /tʃ/ vs /θ/",
+        title: "Digraphs: sh / ch / th",
         phase: 3,
         gameId: "balloon-pop",
-        target: "minimal pairs (digraphs)",
-        route: "/games/balloon-pop-ipa?set=sh-ch-th",
+        target: "select matching digraph",
+        route: "/games/balloon-pop-ipa?phase=3&set=sh-ch-th&n=3&speed=slow&adaptive=1&levelId=p3-bp-01",
       },
       {
         id: "p3-wt-01",

@@ -20,6 +20,7 @@ import GamesGallery from "./pages/games/GamesGallery";
 import PhonicsSoundsMasteryHub from "./pages/games/PhonicsSoundsMasteryHub";
 import ElkoninGame from "./pages/games/ElkoninGame";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
+import KidsGamesGallery from "./pages/KidsGamesGallery";
 
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
 const SpellBeeGroupDashboard = lazy(() => import("./games/spellbee-flash/GroupDashboard"));
@@ -49,7 +50,9 @@ export default function AppRoutes() {
         {/* Kids Zone Routes */}
         <Route path="/kids" element={<KidsGuestLanding />} />
         <Route path="/kids/games" element={<GamesGallery />} />
+        <Route path="/kids/games-gallery" element={<KidsGamesGallery />} />
         <Route path="/games" element={<GamesGallery />} />
+        <Route path="/games/games-gallery" element={<KidsGamesGallery />} />
         <Route path="/games/phonics-sounds-mastery" element={<PhonicsSoundsMasteryHub />} />
         <Route path="/games/elkonin" element={<ElkoninGame />} />
         <Route 
@@ -157,6 +160,7 @@ export default function AppRoutes() {
         <Route path="/roles/learning-manager/" element={<LearningManagerPortal />} />
         <Route path="/roles/kids" element={<KidsPortal />} />
         <Route path="/roles/kids/" element={<KidsPortal />} />
+        <Route path="/roles/kids/games-gallery" element={<KidsGamesGallery />} />
 
         {/* Auth */}
         <Route path="/login" element={<Navigate to="/login/parents" replace />} />

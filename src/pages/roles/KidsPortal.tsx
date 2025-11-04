@@ -156,6 +156,12 @@ export default function KidsPortal() {
 
   const headerToolbar = (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <Link
+        to="/roles/kids/games-gallery"
+        className="inline-flex items-center justify-center rounded-full border border-purple-600/30 bg-purple-50 px-4 py-2 text-sm font-semibold text-purple-700 shadow-sm shadow-purple-600/15 transition hover:bg-purple-100"
+      >
+        🎮 Games V1
+      </Link>
       <button className="inline-flex items-center justify-center rounded-full border border-[#7c2d58]/30 bg-white/90 px-4 py-2 text-sm font-semibold text-[#7c2d58] shadow-sm shadow-[#7c2d58]/15 transition hover:bg-[#7c2d58]/10">
         Download activity pack
       </button>

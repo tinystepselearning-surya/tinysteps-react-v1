@@ -17,6 +17,15 @@
 }
 
 @layer components {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   .scroll-reveal {
     --scroll-reveal-x: 0px;
     --scroll-reveal-y: 24px;
