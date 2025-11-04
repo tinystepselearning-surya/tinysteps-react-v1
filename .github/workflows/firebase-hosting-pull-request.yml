@@ -17,8 +17,8 @@ jobs:
         run: echo "VITE_APPCHECK_KEY=${{ secrets.VITE_APPCHECK_KEY }}" > app/.env.production
       - name: Install and build app
         run: |
-          npm ci -C app
-          npm run -C app build
+          npm -C app ci
+          npm -C app run build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
