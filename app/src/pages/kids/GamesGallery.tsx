@@ -1,32 +1,41 @@
 /**
  * GamesGallery.tsx (Kids Zone)
- * Phase 0-10 phonics journey with milestones, timeline, and parent view
+ * Phase 0-10 phonics journey with multiple view modes:
+ * - Cards: Grid of phase cards
+ * - Arrow Roadmap: Serpentine path with numbered nodes
+ * - Step List: Dot-leader style ordered list
  */
 
 import { useEffect } from "react";
 import { PHASES } from "../../data/phases";
 import type { Phase } from "../../data/phases";
 import PhaseRail from "../../components/phases/PhaseRail";
-import PhaseTimeline from "../../components/phases/PhaseTimeline";
 import PhaseGrid from "../../components/phases/PhaseGrid";
 import ParentViewToggle from "../../components/phases/ParentViewToggle";
+import ViewModeTabs, { type ViewMode } from "../../components/phases/ViewModeTabs";
+import { ArrowRoadmap } from "../../components/phases/arrow";
+import StepList from "../../components/phases/StepList";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 
 export default function GamesGallery() {
   const [filter, setFilter] = useLocalStorage<string>("phaseFilter", "All");
   const [parentView, setParentView] = useLocalStorage<boolean>("parentView", false);
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("viewMode", "cards");
 
   const visible: Phase[] = filter === "All" ? PHASES : PHASES.filter((p) => p.id === filter);
 
-  // Update localStorage when filter changes
+  // Update localStorage when states change
   useEffect(() => {
     localStorage.setItem("phaseFilter", filter);
   }, [filter]);
 
-  // Update localStorage when parentView changes
   useEffect(() => {
     localStorage.setItem("parentView", parentView.toString());
   }, [parentView]);
+
+  useEffect(() => {
+    localStorage.setItem("viewMode", viewMode);
+  }, [viewMode]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-sky-50 to-rose-50">
@@ -47,14 +56,24 @@ export default function GamesGallery() {
         {/* Phase rail navigation */}
         <PhaseRail value={filter} onChange={setFilter} />
 
-        {/* Timeline view */}
+        {/* View mode tabs */}
         <div className="mt-6">
-          <PhaseTimeline phases={visible} parentView={parentView} />
+          <ViewModeTabs value={viewMode} onChange={setViewMode} />
         </div>
 
-        {/* Grid view */}
-        <div className="mt-8">
-          <PhaseGrid phases={visible} parentView={parentView} />
+        {/* Conditional view rendering */}
+        <div className="mt-6" role="tabpanel" id={`panel-${viewMode}`}>
+          {viewMode === "cards" && (
+            <PhaseGrid phases={visible} parentView={parentView} />
+          )}
+          
+          {viewMode === "arrow" && (
+            <ArrowRoadmap phases={visible} parentView={parentView} />
+          )}
+          
+          {viewMode === "list" && (
+            <StepList phases={visible} parentView={parentView} />
+          )}
         </div>
       </div>
     </div>

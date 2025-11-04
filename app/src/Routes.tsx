@@ -20,8 +20,7 @@ import GamesGallery from "./pages/games/GamesGallery";
 import PhonicsSoundsMasteryHub from "./pages/games/PhonicsSoundsMasteryHub";
 import ElkoninGame from "./pages/games/ElkoninGame";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
-import KidsGamesGallery from "./pages/KidsGamesGallery";
-import KidsPhonicsJourney from "./pages/kids/GamesGallery"; // New Phase 0-10 journey
+import KidsPhonicsJourney from "./pages/kids/GamesGallery"; // Phase 0-10 journey
 
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
 const SpellBeeGroupDashboard = lazy(() => import("./games/spellbee-flash/GroupDashboard"));
@@ -51,10 +50,10 @@ export default function AppRoutes() {
         {/* Kids Zone Routes */}
         <Route path="/kids" element={<KidsGuestLanding />} />
         <Route path="/kids/games" element={<GamesGallery />} />
-        <Route path="/kids/games-gallery" element={<KidsGamesGallery />} />
-        <Route path="/kids/phonics-journey" element={<KidsPhonicsJourney />} /> {/* New Phase 0-10 */}
+        <Route path="/kids/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey */}
+        <Route path="/kids/phonics-journey" element={<KidsPhonicsJourney />} /> {/* Alias route */}
         <Route path="/games" element={<GamesGallery />} />
-        <Route path="/games/games-gallery" element={<KidsGamesGallery />} />
+        <Route path="/games/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey */}
         <Route path="/games/phonics-sounds-mastery" element={<PhonicsSoundsMasteryHub />} />
         <Route path="/games/elkonin" element={<ElkoninGame />} />
         <Route 
@@ -162,7 +161,7 @@ export default function AppRoutes() {
         <Route path="/roles/learning-manager/" element={<LearningManagerPortal />} />
         <Route path="/roles/kids" element={<KidsPortal />} />
         <Route path="/roles/kids/" element={<KidsPortal />} />
-        <Route path="/roles/kids/games-gallery" element={<KidsGamesGallery />} />
+        <Route path="/roles/kids/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey */}
 
         {/* Auth */}
         <Route path="/login" element={<Navigate to="/login/parents" replace />} />
