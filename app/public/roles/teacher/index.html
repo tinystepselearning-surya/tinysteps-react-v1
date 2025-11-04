@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-4TPT04CQRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+  
+    gtag('config', 'G-4TPT04CQRL');
+  </script>
+
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Tiny Steps — Teacher</title>
+  <meta name="robots" content="noindex,nofollow"/>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/shared/ui.css" />
+  <link rel="stylesheet" href="/roles/teacher/teacher.css" />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#111"/>
+</head>
+<body>
+  <!-- Top bar -->
+  <header class="topbar" role="banner">
+    <div class="topbar-left">
+      <div class="portal-brand">
+        <a class="portal-brand__link" href="/" aria-label="Tiny Steps home">
+          <img src="/assets/images/logo.png" alt="Tiny Steps" class="portal-brand__logo" width="36" height="36" loading="lazy">
+          <span class="portal-brand__name">Tiny<span class="portal-brand__gap"></span>Steps</span>
+        </a>
+        <span class="portal-brand__label">Teacher Portal</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div id="welcome" class="muted small">Loading…</div>
+      <div class="profile-menu" id="profileMenu" data-open="false">
+        <button id="profileTrigger" class="profile-trigger" type="button" aria-haspopup="true" aria-expanded="false">
+          <span class="profile-avatar" id="profileAvatar" aria-hidden="true">TS</span>
+          <span class="profile-name" id="profileName">Loading…</span>
+          <svg class="profile-chevron" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <path d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.084l3.71-3.854a.75.75 0 0 1 1.08 1.04l-4.24 4.4a.75.75 0 0 1-1.08 0l-4.24-4.4a.75.75 0 0 1 .02-1.06z"/>
+          </svg>
+        </button>
+        <div class="profile-dropdown" id="profileDropdown" role="menu" hidden>
+          <div class="profile-info">
+            <div class="profile-display" id="profileDisplay">Tiny Steps</div>
+            <div class="profile-email" id="profileEmail">—</div>
+            <div class="profile-role" id="profileRole">Teacher</div>
+          </div>
+          <button id="signOutBtn" class="profile-action" type="button">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Subheader -->
+  <div class="subbar" role="note" aria-live="polite">
+    <div class="title">Welcome back, <span id="welcomeName">Teacher</span> 👋</div>
+    <div class="hint" id="todayLabel">Loading today…</div>
+  </div>
+
+  <main class="wrap" role="main">
+    <!-- KPIs -->
+    <section class="card">
+      <h1>Teacher Dashboard</h1>
+      <ul class="stats" id="kpiStats" aria-label="Key stats">
+        <li><span class="label">Present</span><span id="statPresent">0</span></li>
+        <li><span class="label">Absent</span><span id="statAbsent">0</span></li>
+        <li><span class="label">Total</span><span id="statTotal">0</span></li>
+      </ul>
+
+      <div class="mt-12">
+        <div class="label muted small mb-6">Attendance Rate</div>
+        <div class="progress">
+          <div class="bar" id="overallProgressBar" style="width:0%" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Class + Today -->
+    <section class="grid-2">
+      <div class="card">
+        <div class="card-head">
+          <h2>Your Classes</h2>
+        </div>
+        <div id="classChips" class="chips">
+          <div class="muted">No classes assigned yet.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>Today’s Summary</h2>
+          <div class="btn-group">
+            <button class="btn ghost" id="btnMarkAllPresent">Mark all Present</button>
+            <button class="btn ghost" id="btnExport">Export CSV</button>
+          </div>
+        </div>
+        <ul class="stats">
+          <li><span class="label">Present</span><span id="tPresent">0</span></li>
+          <li><span class="label">Absent</span><span id="tAbsent">0</span></li>
+          <li><span class="label">Total</span><span id="tTotal">0</span></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search">
+        <label for="searchInput" class="sr-only">Search</label>
+        <input id="searchInput" class="input" placeholder="Search name or username…" autocomplete="off" />
+      </div>
+      <span class="spacer"></span>
+      <div class="chips" id="sessionChips" aria-label="Session selector"></div>
+      <input id="datePicker" class="input inline" type="date" aria-label="Date"/>
+      <button class="btn primary" id="btnAddNote" aria-haspopup="dialog" aria-controls="modalNote">Add Note</button>
+    </div>
+
+    <!-- Roster -->
+    <section class="card">
+      <div class="card-head">
+        <h2>Roster <span id="activeClass" class="muted"></span></h2>
+        <div class="hint small">Tip: press <span class="kbd">/</span> to focus search</div>
+      </div>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr><th>Name</th><th>Username</th><th>DOB</th><th>Parent</th><th>Attendance</th></tr>
+          </thead>
+          <tbody id="rosterTbody">
+            <tr><td colspan="5" class="muted">Select a class…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Unified Student Workspace -->
+    <section class="card" id="studentWorkspace" aria-label="Student Workspace">
+      <div class="card-head">
+        <h2>Student Workspace</h2>
+        <div class="btn-group">
+          <button class="btn primary" id="btnSaveAll">Save All</button>
+          <button class="btn ghost" id="btnRefreshStudent">Refresh</button>
+        </div>
+      </div>
+
+      <!-- Student picker -->
+      <div class="toolbar">
+        <div class="search">
+          <label class="sr-only" for="studentSelect">Select student</label>
+          <select id="studentSelect" class="input select" style="min-width:260px">
+            <option value="">Select a student…</option>
+          </select>
+        </div>
+        <span class="spacer"></span>
+        <div class="avatars">
+          <div class="avatar" id="avatarHdr">S</div>
+          <div class="strong" id="studentNameHdr">—</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- Column: Attendance + Curriculum -->
+        <div class="panel">
+          <h3>Attendance (Selected Date)</h3>
+          <div class="btn-group mb-8">
+            <button class="btn" id="btnStuPresent">Present</button>
+            <button class="btn ghost" id="btnStuAbsent">Absent</button>
+          </div>
+
+          <h3>Curriculum</h3>
+          <div class="row wrap">
+            <input id="curTopic" class="input" placeholder="Topic (e.g., SATPIN, Magic-E, Nouns…)" />
+            <select id="curStatus" class="input">
+              <option value="">Status…</option>
+              <option value="not_started">Not started</option>
+              <option value="in_progress">In progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          <textarea id="curNote" class="input mt-6" rows="2" placeholder="Teacher note (optional)"></textarea>
+        </div>
+
+        <!-- Column: Topic Progress -->
+        <div class="panel">
+          <h3>Topic Progress</h3>
+          <div class="row wrap">
+            <select id="progArea" class="input">
+              <option value="">Area…</option>
+              <option value="phonics">Phonics</option>
+              <option value="grammar">Grammar</option>
+              <option value="speaking">Public Speaking</option>
+            </select>
+            <input id="progTopic" class="input" placeholder="Topic"/>
+            <input id="progSubskill" class="input" placeholder="Subskill"/>
+            <select id="progMastery" class="input">
+              <option value="">Mastery…</option>
+              <option value="not_started">Not started</option>
+              <option value="emerging">Emerging</option>
+              <option value="developing">Developing</option>
+              <option value="proficient">Proficient</option>
+              <option value="mastered">Mastered</option>
+            </select>
+            <select id="progScore" class="input">
+              <option value="">Score band…</option>
+              <option value="0-20">0–20</option>
+              <option value="21-40">21–40</option>
+              <option value="41-60">41–60</option>
+              <option value="61-80">61–80</option>
+              <option value="81-100">81–100</option>
+            </select>
+            <select id="progEvidence" class="input">
+              <option value="">Evidence…</option>
+              <option value="worksheet">Worksheet</option>
+              <option value="game">Game</option>
+              <option value="oral">Oral</option>
+              <option value="assignment">Assignment</option>
+            </select>
+            <select id="progNext" class="input">
+              <option value="">Next action…</option>
+              <option value="practice">Practice</option>
+              <option value="reteach">Reteach</option>
+              <option value="advance">Advance</option>
+            </select>
+          </div>
+          <textarea id="progRemark" class="input mt-6" rows="2" placeholder="Teacher remark (optional)"></textarea>
+
+          <div class="mt-10">
+            <div class="muted small">Mastery quick bump (for fast updates)</div>
+            <input id="masteryDelta" type="range" min="0" max="25" value="10" style="width:100%"/>
+            <div class="chips mt-6" id="deltaChips">
+              <button class="chip" data-delta="5">+5%</button>
+              <button class="chip" data-delta="10">+10%</button>
+              <button class="chip" data-delta="20">+20%</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="grid-2 mt-12">
+        <div class="card soft">
+          <h3>Area Averages</h3>
+          <ul class="stats compact">
+            <li><span class="label">Phonics</span><span id="pPct">0%</span></li>
+            <li><span class="label">Grammar</span><span id="gPct">0%</span></li>
+            <li><span class="label">Speaking</span><span id="sPct">0%</span></li>
+          </ul>
+        </div>
+        <div class="card soft">
+          <h3>Recent Topic Updates</h3>
+          <div class="table-wrap">
+            <table class="table compact">
+              <thead>
+                <tr><th>Area</th><th>Topic</th><th>Mastery</th><th>Updated</th></tr>
+              </thead>
+              <tbody id="studentHistory">
+                <tr><td colspan="4" class="muted">Pick a student…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <!-- Modal: Add Teacher Note -->
+  <div class="modal" id="modalNote" role="dialog" aria-modal="true" aria-labelledby="modalNoteTitle" hidden>
+    <div class="panel">
+      <div class="card-head">
+        <h2 id="modalNoteTitle">Add Note</h2>
+        <button class="btn ghost" id="modalNoteClose" aria-label="Close">Close</button>
+      </div>
+      <label class="sr-only" for="noteText">Note</label>
+      <textarea id="noteText" class="input" rows="5" placeholder="Type your note about this class/student…" style="width:100%;"></textarea>
+      <div class="btn-group mt-8 end">
+        <button class="btn ghost" id="btnCancelNote">Cancel</button>
+        <button class="btn primary" id="btnSaveNote">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared init -->
+  <script type="module" src="/shared/firebase-init.js"></script>
+  <script type="module" src="/shared/guard.js"></script>
+
+  <!-- Page logic -->
+  <script type="module" src="/roles/teacher/teacher.js"></script>
+</body>
+</html>

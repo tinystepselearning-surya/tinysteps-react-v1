@@ -1,0 +1,117 @@
+/* Tailwind v4 entry */
+@import "tailwindcss";
+
+/* your tokens */
+:root {
+  --ts-orange: #ffa94d;
+  --ts-blue:   #6ec1e4;
+  --ts-mint:   #b8f5d0;
+  --ts-rose:   #ffd7d7;
+}
+
+/* optional: put global base tweaks in a base layer */
+@layer base {
+  html, body, #root { height: 100%; }
+  html { scroll-behavior: smooth; }
+  body { @apply bg-white text-gray-900 antialiased; }
+}
+
+@layer components {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scroll-reveal {
+    --scroll-reveal-x: 0px;
+    --scroll-reveal-y: 24px;
+    --scroll-reveal-scale: 1;
+    opacity: 0;
+    transform: translate3d(var(--scroll-reveal-x), var(--scroll-reveal-y), 0) scale(var(--scroll-reveal-scale));
+    transition-property: opacity, transform;
+    transition-duration: 0.7s;
+    transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+    transition-delay: var(--scroll-reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .scroll-reveal[data-reveal-variant="down"] {
+    --scroll-reveal-y: -24px;
+  }
+
+  .scroll-reveal[data-reveal-variant="left"] {
+    --scroll-reveal-x: 36px;
+    --scroll-reveal-y: 0px;
+  }
+
+  .scroll-reveal[data-reveal-variant="right"] {
+    --scroll-reveal-x: -36px;
+    --scroll-reveal-y: 0px;
+  }
+
+  .scroll-reveal[data-reveal-variant="zoom"] {
+    --scroll-reveal-y: 0px;
+    --scroll-reveal-scale: 0.94;
+  }
+
+  .scroll-reveal--visible {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  .scroll-reveal--visible [data-reveal-child] {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+
+  [data-reveal-child] {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition-delay: calc(var(--scroll-reveal-delay, 0ms) + var(--reveal-child-delay, 0ms));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal,
+    .scroll-reveal--visible,
+    [data-reveal-child] {
+      transition-duration: 0.01ms !important;
+      transition-delay: 0ms !important;
+      transform: none !important;
+      opacity: 1 !important;
+    }
+  }
+}
+
+/* Meaning-Match shake animation */
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+/* Sound gate slide-up animation */
+@keyframes slide-up {
+  from {
+    transform: translate(-50%, 20px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}

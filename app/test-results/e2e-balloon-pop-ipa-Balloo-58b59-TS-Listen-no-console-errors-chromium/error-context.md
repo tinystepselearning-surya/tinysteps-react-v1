@@ -1,0 +1,183 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e5]:
+        - link "Tiny Steps Home" [ref=e6] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e7]:
+            - text: Tiny
+            - text: Steps
+        - navigation "Primary" [ref=e8]:
+          - link "Kids" [ref=e9] [cursor=pointer]:
+            - /url: /kids
+          - link "Parents" [ref=e10] [cursor=pointer]:
+            - /url: /login/parents
+          - button "Courses" [ref=e12]:
+            - text: Courses
+            - img [ref=e13]
+          - link "Curriculum" [ref=e15] [cursor=pointer]:
+            - /url: /curriculum
+          - link "Blog" [ref=e16] [cursor=pointer]:
+            - /url: /blog
+          - link "FAQ" [ref=e17] [cursor=pointer]:
+            - /url: /faq
+          - button "Educators" [ref=e19]:
+            - text: Educators
+            - img [ref=e20]
+          - link "Book Trial" [ref=e22] [cursor=pointer]:
+            - /url: /#book-trial
+    - main [ref=e23]:
+      - generic [ref=e24]:
+        - status [ref=e25]
+        - generic [ref=e28]:
+          - generic "Level 1" [ref=e29]:
+            - paragraph [ref=e30]: Level 1
+            - paragraph [ref=e31]: Round 1/100
+          - generic [ref=e33]:
+            - generic [ref=e34]: ⭐
+            - paragraph [ref=e36]: "Streak: 0"
+          - generic [ref=e37]:
+            - paragraph [ref=e38]: 0%
+            - paragraph [ref=e39]: Accuracy
+          - generic [ref=e41]:
+            - generic [ref=e42]: ⭐
+            - paragraph [ref=e43]: "0"
+        - generic [ref=e46]:
+          - button "Back to games" [ref=e47]:
+            - generic [ref=e48]: ←
+            - generic [ref=e49]: Back
+          - generic [ref=e50]: Progressive
+          - generic [ref=e51]: 🎨 Sky Day
+          - generic [ref=e52]: Using starter set
+        - tablist "Learning phases" [ref=e54]:
+          - tab "P1" [selected] [ref=e55]:
+            - generic [ref=e57]: P1
+          - tab "P2" [disabled] [ref=e58]:
+            - generic [ref=e59]:
+              - img [ref=e60]
+              - generic [ref=e62]: P2
+          - tab "P3" [disabled] [ref=e63]:
+            - generic [ref=e64]:
+              - img [ref=e65]
+              - generic [ref=e67]: P3
+          - tab "P4" [disabled] [ref=e68]:
+            - generic [ref=e69]:
+              - img [ref=e70]
+              - generic [ref=e72]: P4
+          - tab "P5" [disabled] [ref=e73]:
+            - generic [ref=e74]:
+              - img [ref=e75]
+              - generic [ref=e77]: P5
+          - tab "P6" [disabled] [ref=e78]:
+            - generic [ref=e79]:
+              - img [ref=e80]
+              - generic [ref=e82]: P6
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - button "IPA /ɪ/ balloon" [ref=e86]:
+              - generic [ref=e91]: /ɪ/
+            - button "IPA /æ/ balloon" [ref=e94]:
+              - generic [ref=e99]: /æ/
+            - button "IPA /iː/ balloon" [ref=e102]:
+              - generic [ref=e107]: /iː/
+          - paragraph [ref=e111]: "💡 1–8: select • Enter: replay • F: fullscreen"
+          - generic [ref=e112]:
+            - button "Enter full screen (or press 'f')" [ref=e113]: ⤢ Full
+            - button "Play prompt audio" [ref=e114] [cursor=pointer]: 🦉 Listen
+            - generic [ref=e115]: ɪ — ih
+    - contentinfo [ref=e116]:
+      - generic [ref=e117]:
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - link "Tiny Steps" [ref=e120] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e121]: Tiny Steps
+            - paragraph [ref=e122]: Research-backed literacy, writing, and public speaking programs crafted by Cambridge-certified educators. Every class is joyful, personalised, and purposeful.
+            - generic [ref=e123]:
+              - generic [ref=e124]: Play
+              - generic [ref=e125]: Progress
+              - generic [ref=e126]: Confidence
+          - generic [ref=e127]:
+            - generic [ref=e128]:
+              - heading "Programs" [level=3] [ref=e129]
+              - list [ref=e130]:
+                - listitem [ref=e131]:
+                  - link "Phonics Foundations" [ref=e132] [cursor=pointer]:
+                    - /url: /courses/phonics
+                - listitem [ref=e133]:
+                  - link "Grammar & Writing Lab" [ref=e134] [cursor=pointer]:
+                    - /url: /courses/grammar
+                - listitem [ref=e135]:
+                  - link "Public Speaking Studio" [ref=e136] [cursor=pointer]:
+                    - /url: /courses/public-speaking
+                - listitem [ref=e137]:
+                  - link "All Courses Overview" [ref=e138] [cursor=pointer]:
+                    - /url: /courses
+            - generic [ref=e139]:
+              - heading "Explore" [level=3] [ref=e140]
+              - list [ref=e141]:
+                - listitem [ref=e142]:
+                  - link "Pricing" [ref=e143] [cursor=pointer]:
+                    - /url: /courses#pricing
+                - listitem [ref=e144]:
+                  - link "FAQ" [ref=e145] [cursor=pointer]:
+                    - /url: /faq
+                - listitem [ref=e146]:
+                  - link "Parents Sign-in / Guest" [ref=e147] [cursor=pointer]:
+                    - /url: /login/parents
+                - listitem [ref=e148]:
+                  - link "Parents Preview" [ref=e149] [cursor=pointer]:
+                    - /url: /parents
+                - listitem [ref=e150]:
+                  - link "Blog & Resources" [ref=e151] [cursor=pointer]:
+                    - /url: /blog/
+            - generic [ref=e152]:
+              - heading "Connect" [level=3] [ref=e153]
+              - list [ref=e154]:
+                - listitem [ref=e155]:
+                  - link "hello@tinystepslearning.com" [ref=e156] [cursor=pointer]:
+                    - /url: mailto:hello@tinystepslearning.com
+                - listitem [ref=e157]:
+                  - link "+91 96660 95553" [ref=e158] [cursor=pointer]:
+                    - /url: tel:+919666095553
+                - listitem [ref=e159]:
+                  - link "Book a Learning Call" [ref=e160] [cursor=pointer]:
+                    - /url: /main/book-demo/
+                - listitem [ref=e161]:
+                  - link "Learning Manager Login" [ref=e162] [cursor=pointer]:
+                    - /url: /login/learning-managers
+        - generic [ref=e163]:
+          - paragraph [ref=e164]: © 2025 Tiny Steps Learning. All rights reserved.
+          - generic [ref=e165]:
+            - link "Privacy" [ref=e166] [cursor=pointer]:
+              - /url: /privacy-policy/
+            - link "Terms" [ref=e167] [cursor=pointer]:
+              - /url: /terms/
+            - link "Sitemap" [ref=e168] [cursor=pointer]:
+              - /url: /sitemap.xml
+    - generic [ref=e169]:
+      - generic [ref=e170]:
+        - button "Close" [ref=e171]: ×
+        - paragraph [ref=e172]:
+          - strong [ref=e173]: 👋 Welcome to TinySteps!
+          - text: Need help choosing a course or booking a free trial? We reply fastest on WhatsApp (9am–9pm).
+        - link "Chat on WhatsApp" [ref=e174] [cursor=pointer]:
+          - /url: https://wa.me/919666095553
+      - button "Open WhatsApp Chat" [ref=e175]: 💬
+  - iframe [ref=e178]:
+    - generic [ref=f1e2]:
+      - generic [ref=f1e5]:
+        - link "Privacy" [ref=f1e6] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/privacy/
+        - text: "-"
+        - link "Terms" [ref=f1e7] [cursor=pointer]:
+          - /url: https://www.google.com/intl/en/policies/terms/
+      - generic [ref=f1e8]:
+        - generic [ref=f1e9]:
+          - text: protected by
+          - strong [ref=f1e10]: reCAPTCHA
+        - generic [ref=f1e11]: "-"
+```
