@@ -14,12 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Create Vite env file
-        working-directory: ./app
+        run: echo "VITE_APPCHECK_KEY=${{ secrets.VITE_APPCHECK_KEY }}" > app/.env.production
+      - name: Install and build app
         run: |
-          echo "VITE_APPCHECK_KEY=${{ secrets.VITE_APPCHECK_KEY }}" > .env.production
-      - name: Install and build
-        working-directory: ./app
-        run: npm ci && npm run build
+          npm ci -C app
+          npm run -C app build
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
