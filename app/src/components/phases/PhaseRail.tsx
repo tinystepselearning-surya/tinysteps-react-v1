@@ -1,17 +1,19 @@
 /**
  * PhaseRail.tsx
  * Horizontal sticky chip rail for phase navigation
- * Features: All + P0-P10, circular progress rings, keyboard nav, localStorage
+ * Features: All + P0-P10, circular progress rings, keyboard nav, active sync, auto-scroll
  */
 
 import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PHASES } from "../../data/phases";
 import { calculatePhaseProgress } from "../../utils/progress";
+import type { PhaseID } from "../../data/phases";
 
 interface PhaseRailProps {
   value: string; // "All" or PhaseID
   onChange: (value: string) => void;
+  activePhase?: PhaseID | null; // Track active phase from scroll
 }
 
 // Circular progress ring component
@@ -58,33 +60,41 @@ function PhaseChip({
   label,
   progress,
   isActive,
+  isHighlighted,
   onClick,
   color,
+  chipRef,
 }: {
   id: string;
   label: string;
   progress?: number;
   isActive: boolean;
+  isHighlighted?: boolean;
   onClick: () => void;
   color?: string;
+  chipRef?: React.RefObject<HTMLButtonElement | null>;
 }) {
   return (
     <motion.button
+      ref={chipRef}
       onClick={onClick}
       whileTap={{ scale: 0.97 }}
       className={`
         group relative flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold shadow-md
-        transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2
+        transition-all duration-200 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500 focus-visible:ring-offset-2
         ${
           isActive
             ? "bg-white text-gray-900 shadow-lg ring-2 ring-blue-400"
+            : isHighlighted
+            ? "bg-white text-gray-900 shadow-lg ring-2 ring-orange-400"
             : "bg-white/80 text-gray-700 hover:bg-white hover:shadow-lg"
         }
       `}
-      aria-pressed={isActive}
+      role="tab"
+      aria-selected={isActive || isHighlighted}
       aria-label={`${label}${progress !== undefined ? `, ${progress}% complete` : ""}`}
       style={
-        isActive && color && id !== "All"
+        (isActive || isHighlighted) && color && id !== "All"
           ? { borderLeft: `4px solid ${color}` }
           : {}
       }
@@ -104,8 +114,26 @@ function PhaseChip({
   );
 }
 
-export default function PhaseRail({ value, onChange }: PhaseRailProps) {
+export default function PhaseRail({ value, onChange, activePhase }: PhaseRailProps) {
   const railRef = useRef<HTMLDivElement>(null);
+  const activeChipRef = useRef<HTMLButtonElement>(null);
+
+  // Auto-scroll active chip into view
+  useEffect(() => {
+    if (activePhase && activeChipRef.current && railRef.current) {
+      const chip = activeChipRef.current;
+      const rail = railRef.current;
+      const chipLeft = chip.offsetLeft;
+      const chipWidth = chip.offsetWidth;
+      const railWidth = rail.offsetWidth;
+      const scrollLeft = chipLeft - railWidth / 2 + chipWidth / 2;
+      
+      rail.scrollTo({
+        left: scrollLeft,
+        behavior: 'smooth',
+      });
+    }
+  }, [activePhase]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -147,6 +175,8 @@ export default function PhaseRail({ value, onChange }: PhaseRailProps) {
         {/* Phase chips */}
         {PHASES.map((phase) => {
           const progress = calculatePhaseProgress(phase);
+          const isActiveChip = activePhase === phase.id;
+          
           return (
             <PhaseChip
               key={phase.id}
@@ -154,8 +184,10 @@ export default function PhaseRail({ value, onChange }: PhaseRailProps) {
               label={phase.id}
               progress={progress}
               isActive={value === phase.id}
+              isHighlighted={isActiveChip && value === "All"}
               onClick={() => onChange(phase.id)}
               color={phase.color}
+              chipRef={isActiveChip ? activeChipRef : undefined}
             />
           );
         })}

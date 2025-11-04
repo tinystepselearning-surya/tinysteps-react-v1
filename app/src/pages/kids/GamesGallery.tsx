@@ -2,11 +2,11 @@
  * GamesGallery.tsx (Kids Zone)
  * Phase 0-10 phonics journey with multiple view modes:
  * - Cards: Grid of phase cards
- * - Arrow Roadmap: Serpentine path with numbered nodes
+ * - Arrow Roadmap: Serpentine path with numbered nodes (scroll-snap, active sync)
  * - Step List: Dot-leader style ordered list
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { PHASES } from "../../data/phases";
 import type { Phase } from "../../data/phases";
 import PhaseRail from "../../components/phases/PhaseRail";
@@ -16,13 +16,37 @@ import ViewModeTabs, { type ViewMode } from "../../components/phases/ViewModeTab
 import { ArrowRoadmap } from "../../components/phases/arrow";
 import StepList from "../../components/phases/StepList";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
+import { useActivePhase } from "../../hooks/useActivePhase";
 
 export default function GamesGallery() {
   const [filter, setFilter] = useLocalStorage<string>("phaseFilter", "All");
   const [parentView, setParentView] = useLocalStorage<boolean>("parentView", false);
   const [viewMode, setViewMode] = useLocalStorage<ViewMode>("viewMode", "arrow");
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   const visible: Phase[] = filter === "All" ? PHASES : PHASES.filter((p) => p.id === filter);
+  const activePhase = useActivePhase(visible.map(p => p.id));
+
+  // Mobile fallback: auto-switch to list view on mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      if (window.matchMedia('(max-width: 768px)').matches && viewMode === 'arrow') {
+        setViewMode('list');
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [viewMode, setViewMode]);
+
+  // Show back-to-top button on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Update localStorage when states change
   useEffect(() => {
@@ -47,22 +71,22 @@ export default function GamesGallery() {
               🎮 Phonics Journey
             </h1>
             <p className="mt-1 text-sm text-gray-600 md:text-base">
-              Phases 0–10: Master phonics through engaging milestones
+              Phases 0–10 • Learn by doing • Auto-personalized next step
             </p>
           </div>
           <ParentViewToggle value={parentView} onChange={setParentView} />
         </div>
 
-        {/* Phase rail navigation */}
-        <PhaseRail value={filter} onChange={setFilter} />
+        {/* Phase rail navigation with active phase sync */}
+        <PhaseRail value={filter} onChange={setFilter} activePhase={activePhase} />
 
-        {/* View mode tabs */}
+        {/* View mode tabs with ARIA tablist */}
         <div className="mt-6">
           <ViewModeTabs value={viewMode} onChange={setViewMode} />
         </div>
 
         {/* Conditional view rendering */}
-  <div className="mt-6 animate-fadeIn" role="tabpanel" id={`panel-${viewMode}`}>
+        <div className="mt-6 animate-fadeIn" role="tabpanel" id={`panel-${viewMode}`} aria-labelledby={`tab-${viewMode}`}>
           {viewMode === "cards" && (
             <PhaseGrid phases={visible} parentView={parentView} />
           )}
@@ -76,6 +100,30 @@ export default function GamesGallery() {
           )}
         </div>
       </div>
+
+      {/* Back to top FAB - positioned bottom-left to avoid reCAPTCHA */}
+      {showBackToTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 left-6 z-50 flex size-12 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-400 text-white shadow-lg transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          aria-label="Back to top"
+          tabIndex={0}
+        >
+          <svg
+            className="size-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 10l7-7m0 0l7 7m-7-7v18"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }
