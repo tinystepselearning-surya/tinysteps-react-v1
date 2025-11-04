@@ -115,3 +115,12 @@
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
 }
+
+/* Simple fade-in animation utility for tab panels */
+@keyframes fade-in-ts {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fade-in-ts 300ms ease both;
+}

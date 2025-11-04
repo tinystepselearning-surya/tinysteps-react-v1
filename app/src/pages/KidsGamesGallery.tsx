@@ -399,8 +399,8 @@ function GameTile({ name, oneLiner, progress, difficulty, durationMin, parentVie
 }
 
 // Phase section with collapsible content ---------------------------------------
-function PhaseSection({ phase, parentView }: { phase: (typeof data.phases)[number]; parentView: boolean }) {
-  const [isExpanded, setIsExpanded] = React.useState(false);
+function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (typeof data.phases)[number]; parentView: boolean; expandByDefault?: boolean }) {
+  const [isExpanded, setIsExpanded] = React.useState(!!expandByDefault);
   
   // Color schemes using brand colors
   const phaseColors = [
@@ -548,43 +548,44 @@ function PhaseSection({ phase, parentView }: { phase: (typeof data.phases)[numbe
 }
 
 // Top chips navigation with smooth scroll ---------------------------------------
-function PhaseChips({ phases }: { phases: typeof data.phases }) {
-  const colors = [
-    'from-[#ffa94d] to-[#ff8833]',      // Sunset orange warm
-    'from-[#ff8833] to-[#ff6b6b]',      // Orange to coral
-    'from-[#6ec1e4] to-[#4a9fd8]',      // Sky blue cool
-    'from-[#4a9fd8] to-[#3b7fc4]',      // Deep sky blue
-    'from-[#b8f5d0] to-[#7de3ad]',      // Mint fresh
-    'from-[#ffa94d] to-[#6ec1e4]',      // Brand gradient (orange to blue)
-    'from-[#ff6b6b] to-[#ffa94d]',      // Coral to orange
-    'from-[#6ec1e4] to-[#b8f5d0]',      // Blue to mint
-    'from-[#ffd7d7] to-[#ffa94d]',      // Rose to orange
-    'from-[#b8f5d0] to-[#6ec1e4]',      // Mint to blue
-  ];
+// function PhaseChips was replaced by PhaseTabs for clearer organization
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, phaseId: string) => {
-    e.preventDefault();
-    const element = document.getElementById(phaseId);
-    if (element) {
-      const yOffset = -20;
-      const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
+// Tabs navigation (compact, accessible) ---------------------------------------
+function PhaseTabs({
+  phases,
+  activeId,
+  onChange,
+}: {
+  phases: typeof data.phases;
+  activeId: string;
+  onChange: (id: string) => void;
+}) {
+  const makeTab = (id: string, label: string) => {
+    const selected = activeId === id;
+    return (
+      <button
+        key={id}
+        role="tab"
+        aria-selected={selected}
+        aria-controls={`panel-${id}`}
+        id={`tab-${id}`}
+        onClick={() => onChange(id)}
+        className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          selected
+            ? 'bg-white text-[#2563eb] shadow-lg'
+            : 'bg-white/70 text-slate-600 hover:bg-white'
+        }`}
+      >
+        {label}
+      </button>
+    );
   };
 
   return (
     <div className="sticky top-0 z-10 bg-gradient-to-b from-sky-100/95 via-orange-50/90 to-transparent backdrop-blur-sm py-3 -mx-4 px-4 shadow-sm">
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" role="navigation" aria-label="Phase shortcuts">
-        {phases.map((p, idx) => (
-          <a
-            key={p.id}
-            href={`#${p.id}`}
-            onClick={(e) => handleClick(e, p.id)}
-            className={`whitespace-nowrap rounded-full bg-gradient-to-r ${colors[idx % colors.length]} text-white font-bold hover:scale-105 shadow-lg hover:shadow-xl px-4 py-2 text-sm transition-all duration-200`}
-          >
-            {p.title.replace("PHASE ", "P").split(":")[0]}<span className="opacity-90 hidden sm:inline"> · {p.ages}</span>
-          </a>
-        ))}
+      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" role="tablist" aria-label="Phase tabs">
+        {makeTab('all', 'All Phases')}
+        {phases.map((p) => makeTab(p.id, p.title.replace('PHASE ', 'P').split(':')[0]))}
       </div>
     </div>
   );
@@ -697,6 +698,7 @@ function useWeakestKPIs(_studentId: string) {
 // Page shell ----------------------------------------------------------------
 export default function KidsGamesGallery({ studentId = 'demo-student', parentDefault = false }: { studentId?: string; parentDefault?: boolean }) {
   const [parentView, setParentView] = React.useState(!!parentDefault);
+  const [activePhaseId, setActivePhaseId] = React.useState<string>('all');
   
   React.useEffect(() => {
     function handler(e: any) { setParentView(!!e.detail?.parentView); }
@@ -712,6 +714,23 @@ export default function KidsGamesGallery({ studentId = 'demo-student', parentDef
     };
   }, []);
 
+  // Deep link support (?phase=p1 | all)
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const q = params.get('phase');
+    if (q && (q === 'all' || data.phases.some((p) => p.id === q))) {
+      setActivePhaseId(q);
+    }
+  }, []);
+
+  const handleTabChange = (id: string) => {
+    setActivePhaseId(id);
+    const params = new URLSearchParams(window.location.search);
+    params.set('phase', id);
+    const url = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', url);
+  };
+
   return (
     <div id="top" className="min-h-screen bg-gradient-to-br from-sky-100 via-orange-50 to-rose-100">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
@@ -722,8 +741,8 @@ export default function KidsGamesGallery({ studentId = 'demo-student', parentDef
           <ParentToolbar studentId={studentId} parentDefault={parentDefault} />
         </header>
 
-        {/* Phase chips */}
-        <PhaseChips phases={data.phases} />
+  {/* Phase tabs */}
+  <PhaseTabs phases={data.phases} activeId={activePhaseId} onChange={handleTabChange} />
         {/* Smart Review (spaced retrieval) */}
         <div className="mt-4">
           <SmartReviewToday />
@@ -731,10 +750,27 @@ export default function KidsGamesGallery({ studentId = 'demo-student', parentDef
         </div>
 
         {/* Sections */}
-        <div className="mt-6 space-y-6">
-          {data.phases.map((ph) => (
-            <PhaseSection key={ph.id} phase={ph} parentView={parentView} />
-          ))}
+        <div className="mt-6">
+          {activePhaseId === 'all' ? (
+            <div className="space-y-6" role="region" aria-label="All phases">
+              {data.phases.map((ph) => (
+                <PhaseSection key={`${ph.id}-all`} phase={ph} parentView={parentView} />
+              ))}
+            </div>
+          ) : (
+            <div
+              role="tabpanel"
+              id={`panel-${activePhaseId}`}
+              aria-labelledby={`tab-${activePhaseId}`}
+              className="animate-fadeIn"
+            >
+              {data.phases
+                .filter((p) => p.id === activePhaseId)
+                .map((ph) => (
+                  <PhaseSection key={`${ph.id}-active`} phase={ph} parentView={parentView} expandByDefault />
+                ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
