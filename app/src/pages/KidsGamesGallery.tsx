@@ -551,7 +551,8 @@ function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (
 // function PhaseChips was replaced by PhaseTabs for clearer organization
 
 // Tabs navigation (compact, accessible) ---------------------------------------
-function PhaseTabs({
+// Progressive milestone path with arrow connectors -----------------------------
+function PhaseMilestonePath({
   phases,
   activeId,
   onChange,
@@ -560,32 +561,66 @@ function PhaseTabs({
   activeId: string;
   onChange: (id: string) => void;
 }) {
-  const makeTab = (id: string, label: string) => {
+  const getAvg = (p: (typeof data.phases)[number]) => {
+    const total = p.games.length || 1;
+    const sum = p.games.reduce((s: number, g: any) => s + (g.progress ?? 0), 0);
+    return Math.round(sum / total);
+  };
+
+  const Node = ({ id, label, progress }: { id: string; label: string; progress?: number }) => {
     const selected = activeId === id;
+    const completed = typeof progress === 'number' && progress >= 80;
     return (
       <button
-        key={id}
         role="tab"
         aria-selected={selected}
         aria-controls={`panel-${id}`}
         id={`tab-${id}`}
         onClick={() => onChange(id)}
-        className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-          selected
-            ? 'bg-white text-[#2563eb] shadow-lg'
-            : 'bg-white/70 text-slate-600 hover:bg-white'
+        className={`group relative flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-sm font-bold shadow-md ring-1 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+          selected ? 'text-[#2563eb] ring-sky-300' : 'text-slate-700 ring-slate-200 hover:bg-white'
         }`}
+        title={label}
       >
-        {label}
+        {typeof progress === 'number' ? (
+          <div className="shrink-0">
+            <ProgressRing size={28} stroke={5} value={progress} />
+          </div>
+        ) : (
+          <div className="shrink-0 grid place-items-center size-7 rounded-full bg-gradient-to-r from-[#ffa94d] to-[#6ec1e4] text-white text-xs shadow">
+            ★
+          </div>
+        )}
+        <span className="whitespace-nowrap">
+          {label}
+          {completed && <span className="ml-1 align-middle text-emerald-600">✓</span>}
+        </span>
       </button>
     );
   };
 
+  const Connector = ({ active }: { active: boolean }) => (
+    <div className="flex items-center gap-1">
+      <div className={`h-1 w-9 rounded-full ${active ? 'bg-gradient-to-r from-[#ffa94d] to-[#6ec1e4]' : 'bg-slate-300'}`} />
+      <span className={`${active ? 'text-[#6ec1e4]' : 'text-slate-400'}`}>→</span>
+    </div>
+  );
+
   return (
     <div className="sticky top-0 z-10 bg-gradient-to-b from-sky-100/95 via-orange-50/90 to-transparent backdrop-blur-sm py-3 -mx-4 px-4 shadow-sm">
-      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" role="tablist" aria-label="Phase tabs">
-        {makeTab('all', 'All Phases')}
-        {phases.map((p) => makeTab(p.id, p.title.replace('PHASE ', 'P').split(':')[0]))}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" role="tablist" aria-label="Phase journey">
+        <Node id="all" label="All" />
+        <Connector active={activeId !== 'all'} />
+        {phases.map((p, idx) => {
+          const avg = getAvg(p);
+          const isActiveAhead = activeId === p.id || (activeId !== 'all' && phases.findIndex(pp => pp.id === activeId) > idx);
+          return (
+            <React.Fragment key={p.id}>
+              <Node id={p.id} label={p.title.replace('PHASE ', 'P').split(':')[0]} progress={avg} />
+              {idx < phases.length - 1 && <Connector active={isActiveAhead} />}
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
@@ -741,8 +776,8 @@ export default function KidsGamesGallery({ studentId = 'demo-student', parentDef
           <ParentToolbar studentId={studentId} parentDefault={parentDefault} />
         </header>
 
-  {/* Phase tabs */}
-  <PhaseTabs phases={data.phases} activeId={activePhaseId} onChange={handleTabChange} />
+  {/* Phase journey path */}
+  <PhaseMilestonePath phases={data.phases} activeId={activePhaseId} onChange={handleTabChange} />
         {/* Smart Review (spaced retrieval) */}
         <div className="mt-4">
           <SmartReviewToday />
