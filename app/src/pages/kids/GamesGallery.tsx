@@ -20,7 +20,7 @@ import { useLocalStorage } from "../../hooks/useLocalStorage";
 export default function GamesGallery() {
   const [filter, setFilter] = useLocalStorage<string>("phaseFilter", "All");
   const [parentView, setParentView] = useLocalStorage<boolean>("parentView", false);
-  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("viewMode", "cards");
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("viewMode", "arrow");
 
   const visible: Phase[] = filter === "All" ? PHASES : PHASES.filter((p) => p.id === filter);
 
@@ -62,7 +62,7 @@ export default function GamesGallery() {
         </div>
 
         {/* Conditional view rendering */}
-        <div className="mt-6" role="tabpanel" id={`panel-${viewMode}`}>
+  <div className="mt-6 animate-fadeIn" role="tabpanel" id={`panel-${viewMode}`}>
           {viewMode === "cards" && (
             <PhaseGrid phases={visible} parentView={parentView} />
           )}

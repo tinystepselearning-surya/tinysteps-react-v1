@@ -19,41 +19,42 @@ export interface Waypoint {
 export function computeSerpentine(
   count: number,
   width: number,
-  height: number
+  cols: number,
+  top: number,
+  rowGap: number,
+  colPositions?: number[] // normalized [0..1] positions for columns, optional
 ): Waypoint[] {
-  // Calculate grid dimensions
-  // Fixed: 3 columns per row for horizontal scrolling
-  const cols = 3;
-  const rows = Math.ceil(count / cols);
-  
-  // Calculate spacing (leave margins)
   const hGap = width / (cols + 1);
-  const vGap = height / (rows + 1);
-  
+
   const waypoints: Waypoint[] = [];
-  
   for (let i = 0; i < count; i++) {
     const row = Math.floor(i / cols);
     const colInRow = i % cols;
-    
-    // Reverse direction on odd rows (creates serpentine)
     const reversed = row % 2 === 1;
     const col = reversed ? cols - 1 - colInRow : colInRow;
-    
+    const x = Array.isArray(colPositions) && colPositions[col] != null
+      ? colPositions[col] * width
+      : hGap * (col + 1);
     waypoints.push({
-      x: hGap * (col + 1),
-      y: vGap * (row + 1),
+      x,
+      y: top + row * rowGap,
       index: i,
     });
   }
-  
   return waypoints;
 }
 
 /**
  * Hook to compute responsive waypoints based on container size
  */
-export function useWaypoints(count: number) {
+export interface WaypointOptions {
+  cols?: number;
+  top?: number;
+  rowGap?: number;
+  bottom?: number;
+}
+
+export function useWaypoints(count: number, options: WaypointOptions = {}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -65,17 +66,22 @@ export function useWaypoints(count: number) {
       const container = containerRef.current;
       if (!container) return;
       
-      const rect = container.getBoundingClientRect();
-      // Fixed width for horizontal scrolling: 3 phases per row with larger spacing
-      const width = Math.max(rect.width, 1000); // Minimum width for 3 columns
-      
-      // Calculate height based on number of rows needed
-      const cols = 3;
+  const rect = container.getBoundingClientRect();
+      // Fit within container width to avoid horizontal scrolling
+  const width = rect.width;
+
+      // Use provided options or defaults
+  const cols = options.cols ?? (width < 480 ? 1 : 2); // 1 on small phones, else 2
+      const top = options.top ?? 100;
+      const rowGap = options.rowGap ?? 320;
+      const bottom = options.bottom ?? 300;
       const rows = Math.ceil(count / cols);
-      const height = Math.max(500, rows * 280); // Increased: 280px per row for larger circles
-      
+      const height = Math.max(top + (rows - 1) * rowGap + bottom, 500);
+
       setDimensions({ width, height });
-      setWaypoints(computeSerpentine(count, width, height));
+  // Slightly decrease horizontal gap between two columns (was [0.2, 0.8])
+  const colPositions = cols === 2 ? [0.27, 0.73] : undefined;
+  setWaypoints(computeSerpentine(count, width, cols, top, rowGap, colPositions));
     };
     
     updateWaypoints();
@@ -85,7 +91,7 @@ export function useWaypoints(count: number) {
     resizeObserver.observe(containerRef.current);
     
     return () => resizeObserver.disconnect();
-  }, [count]);
+  }, [count, options.cols, options.top, options.rowGap, options.bottom]);
   
   return { containerRef, waypoints, dimensions };
 }

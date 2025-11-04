@@ -14,7 +14,7 @@ import React from "react";
  */
 
 // Lightweight progress ring (SVG) -------------------------------------------
-function ProgressRing({ size = 60, stroke = 8, value = 0 }: { size?: number; stroke?: number; value?: number }) {
+function ProgressRing({ size = 120, stroke = 10, value = 0 }: { size?: number; stroke?: number; value?: number }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (value / 100) * circumference;
@@ -323,8 +323,8 @@ const data = {
 // Helpers -------------------------------------------------------------------
 function SkillTile({ name, oneLiner, viz }: { name: string; oneLiner: string; viz: any }) {
   return (
-    <div className="rounded-2xl bg-white/80 shadow-sm ring-1 ring-gray-100 p-4 flex items-center gap-4" role="listitem">
-      <div className="w-16">{
+    <div className="rounded-2xl bg-white/80 shadow-sm ring-1 ring-gray-100 p-5 flex items-center gap-6 reveal-on-scroll" role="listitem">
+      <div className="w-32 shrink-0">{
         viz?.type === "ring" ? (
           <ProgressRing value={viz.value ?? 0} />
         ) : viz?.type === "bars" ? (
@@ -344,7 +344,7 @@ function SkillTile({ name, oneLiner, viz }: { name: string; oneLiner: string; vi
         ) : viz?.type === "spark" ? (
           <div className="w-40"><Sparkline points={viz.points ?? [0]} /></div>
         ) : (
-          <div className="w-16 h-16 rounded-xl bg-gray-100" />
+          <div className="w-32 h-32 rounded-xl bg-gray-100" />
         )
       }</div>
       <div className="min-w-0">
@@ -366,7 +366,7 @@ function GameTile({ name, oneLiner, progress, difficulty, durationMin, parentVie
   };
   
   return (
-    <div className="rounded-2xl bg-white shadow-xl ring-2 ring-orange-200 p-4 hover:shadow-2xl hover:ring-orange-400 transition-all duration-200 border-t-4 border-t-[#6ec1e4]" role="listitem" aria-label={name}>
+    <div className="rounded-2xl bg-white shadow-xl ring-2 ring-orange-200 p-5 hover:shadow-2xl hover:ring-orange-400 transition-all duration-200 border-t-4 border-t-[#6ec1e4] reveal-on-scroll" role="listitem" aria-label={name}>
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h4 className="text-sm font-bold text-gray-900">{name}</h4>
@@ -379,7 +379,7 @@ function GameTile({ name, oneLiner, progress, difficulty, durationMin, parentVie
             ) : null}
           </div>
         </div>
-        <ProgressRing size={52} stroke={7} value={progress} />
+        <ProgressRing size={104} stroke={11} value={progress} />
       </div>
       <div className="mt-3 h-3 w-full bg-gray-200 rounded-full overflow-hidden border-2 border-gray-300" aria-label="progress bar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
         <div className="h-full bg-gradient-to-r from-[#ffa94d] to-[#6ec1e4]" style={{ width: `${progress}%` }} />
@@ -426,7 +426,7 @@ function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (
   const avgProgress = Math.round(phase.games.reduce((sum: number, g: any) => sum + (g.progress || 0), 0) / totalGames);
 
   return (
-    <section className="space-y-4 transition-all duration-300">
+    <section className="space-y-6 transition-all duration-300 reveal-on-scroll">
       {/* Header with toggle */}
       <div 
         id={phase.id} 
@@ -464,8 +464,8 @@ function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (
       </div>
 
       {/* Dashboard view - always visible */}
-      <div className={`rounded-2xl bg-gradient-to-br from-white ${colors.bg} shadow-xl ring-2 ${colors.ring} p-6`}>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+  <div className={`rounded-2xl bg-gradient-to-br from-white ${colors.bg} shadow-xl ring-2 ${colors.ring} p-6 reveal-on-scroll`}>
+  <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
           <div className="text-center bg-white rounded-xl p-3 shadow-md border-2 border-orange-200">
             <div className="text-3xl sm:text-4xl font-extrabold text-[#ffa94d]">{totalGames}</div>
             <div className="text-xs text-gray-600 mt-1 font-bold">Total Games</div>
@@ -495,7 +495,7 @@ function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (
         </div>
 
         {/* Key insights */}
-        <div className="mt-4 flex flex-wrap gap-2">
+  <div className="mt-4 flex flex-wrap gap-3">
           {phase.skills?.slice(0, 3).map((skill) => (
             <span 
               key={skill.name}
@@ -513,10 +513,10 @@ function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (
           isExpanded ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="space-y-4 pt-2">
+  <div className="space-y-6 pt-2">
           {/* Skills snapshot */}
           {phase.skills?.length ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" role="list">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="list">
               {phase.skills.map((s) => (
                 <SkillTile key={s.name} name={s.name} oneLiner={s.oneLiner} viz={(s as any).viz} />
               ))}
@@ -526,7 +526,7 @@ function PhaseSection({ phase, parentView, expandByDefault = false }: { phase: (
           {/* Games grid */}
           <div className="mt-2">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Games in this phase</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" role="list">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" role="list">
               {phase.games.map((g) => (
                 <GameTile
                   key={g.name}
@@ -561,6 +561,19 @@ function PhaseMilestonePath({
   activeId: string;
   onChange: (id: string) => void;
 }) {
+  const formatPhaseLabel = (id: string, title: string) => {
+    if (id === 'all') return 'All';
+    // id pattern: p0, p1, p2b, etc.
+    const m = id.match(/^p(\d+)([a-z])?$/i);
+    if (m) {
+      const num = m[1];
+      const suffix = m[2] ? m[2].toUpperCase() : '';
+      return `Phase ${num}${suffix}`;
+    }
+    // Fallback: derive from title
+    const t = title.match(/PHASE\s*(\S+)/i);
+    return t ? `Phase ${t[1]}` : title;
+  };
   const getAvg = (p: (typeof data.phases)[number]) => {
     const total = p.games.length || 1;
     const sum = p.games.reduce((s: number, g: any) => s + (g.progress ?? 0), 0);
@@ -584,7 +597,7 @@ function PhaseMilestonePath({
       >
         {typeof progress === 'number' ? (
           <div className="shrink-0">
-            <ProgressRing size={28} stroke={5} value={progress} />
+            <ProgressRing size={56} stroke={9} value={progress} />
           </div>
         ) : (
           <div className="shrink-0 grid place-items-center size-7 rounded-full bg-gradient-to-r from-[#ffa94d] to-[#6ec1e4] text-white text-xs shadow">
@@ -609,14 +622,14 @@ function PhaseMilestonePath({
   return (
     <div className="sticky top-0 z-10 bg-gradient-to-b from-sky-100/95 via-orange-50/90 to-transparent backdrop-blur-sm py-3 -mx-4 px-4 shadow-sm">
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide" role="tablist" aria-label="Phase journey">
-        <Node id="all" label="All" />
+        <Node id="all" label={formatPhaseLabel('all', '')} />
         <Connector active={activeId !== 'all'} />
         {phases.map((p, idx) => {
           const avg = getAvg(p);
           const isActiveAhead = activeId === p.id || (activeId !== 'all' && phases.findIndex(pp => pp.id === activeId) > idx);
           return (
             <React.Fragment key={p.id}>
-              <Node id={p.id} label={p.title.replace('PHASE ', 'P').split(':')[0]} progress={avg} />
+              <Node id={p.id} label={formatPhaseLabel(p.id, p.title)} progress={avg} />
               {idx < phases.length - 1 && <Connector active={isActiveAhead} />}
             </React.Fragment>
           );
@@ -635,14 +648,14 @@ function SmartReviewToday() {
     { label: "Tricky words", detail: "the, to", eta: "1–2 min" },
   ];
   return (
-    <section aria-labelledby="smart-review-title" className="rounded-3xl bg-gradient-to-br from-[#6ec1e4] to-[#4a9fd8] shadow-xl ring-2 ring-sky-300 p-6">
+    <section aria-labelledby="smart-review-title" className="rounded-3xl bg-gradient-to-br from-[#6ec1e4] to-[#4a9fd8] shadow-xl ring-2 ring-sky-300 p-6 reveal-on-scroll">
       <div className="flex items-center justify-between">
         <h3 id="smart-review-title" className="text-lg font-bold text-white drop-shadow">⚡ Today's Smart Review</h3>
         <span className="text-xs text-white/90 font-semibold">Short, spaced, brain-friendly</span>
       </div>
       <ul className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
         {items.map((it) => (
-          <li key={it.label} className="rounded-2xl bg-white backdrop-blur px-4 py-3 shadow-lg hover:shadow-xl transition-shadow border-2 border-sky-200" aria-label={`${it.label}: ${it.detail}, ${it.eta}`}>
+          <li key={it.label} className="rounded-2xl bg-white backdrop-blur px-4 py-3 shadow-lg hover:shadow-xl transition-shadow border-2 border-sky-200 reveal-on-scroll" aria-label={`${it.label}: ${it.detail}, ${it.eta}`}>
             <div className="text-sm font-bold text-gray-800">{it.label}</div>
             <div className="text-xs text-gray-600 mt-1">{it.detail} • {it.eta}</div>
           </li>
@@ -702,7 +715,7 @@ function ParentToolbar({ studentId, parentDefault }: { studentId: string; parent
 function GrandReviewCard({ studentId }: { studentId: string }) {
   const recs = useWeakestKPIs(studentId);
   return (
-    <section className="mt-4 rounded-3xl bg-gradient-to-br from-[#ffa94d] to-[#ff8833] shadow-xl ring-2 ring-orange-300 p-6" aria-labelledby="grand-review-title">
+    <section className="mt-4 rounded-3xl bg-gradient-to-br from-[#ffa94d] to-[#ff8833] shadow-xl ring-2 ring-orange-300 p-6 reveal-on-scroll" aria-labelledby="grand-review-title">
       <div className="flex items-center justify-between">
         <h3 id="grand-review-title" className="text-lg font-bold text-white drop-shadow">🎯 Personalized Grand Review</h3>
         <a href="#p9" className="text-xs text-white/90 font-semibold hover:underline">Go to Phase 9 →</a>
@@ -710,7 +723,7 @@ function GrandReviewCard({ studentId }: { studentId: string }) {
       <p className="mt-1 text-sm text-white/90 font-medium">Auto-selects weak skills from Firestore to build today's review.</p>
       <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {recs.map((r) => (
-          <li key={r.key} className="rounded-2xl bg-white backdrop-blur px-4 py-3 shadow-lg border-2 border-orange-200">
+          <li key={r.key} className="rounded-2xl bg-white backdrop-blur px-4 py-3 shadow-lg border-2 border-orange-200 reveal-on-scroll">
             <div className="text-sm font-bold text-gray-800">{r.title}</div>
             <div className="text-xs text-gray-600 mt-1">→ {r.suggestedGame} • {r.phase}</div>
           </li>
@@ -733,7 +746,7 @@ function useWeakestKPIs(_studentId: string) {
 // Page shell ----------------------------------------------------------------
 export default function KidsGamesGallery({ studentId = 'demo-student', parentDefault = false }: { studentId?: string; parentDefault?: boolean }) {
   const [parentView, setParentView] = React.useState(!!parentDefault);
-  const [activePhaseId, setActivePhaseId] = React.useState<string>('all');
+  const [activePhaseId, setActivePhaseId] = React.useState<string>('p0');
   
   React.useEffect(() => {
     function handler(e: any) { setParentView(!!e.detail?.parentView); }
@@ -747,6 +760,29 @@ export default function KidsGamesGallery({ studentId = 'demo-student', parentDef
     return () => {
       document.documentElement.style.scrollBehavior = 'auto';
     };
+  }, []);
+
+  // Reveal-on-scroll animations
+  React.useEffect(() => {
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.reveal-on-scroll'));
+    if (!('IntersectionObserver' in window)) {
+      els.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries, observer) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const el = entry.target as HTMLElement;
+            el.classList.add('is-visible');
+            observer.unobserve(el);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -10% 0px' }
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
   }, []);
 
   // Deep link support (?phase=p1 | all)

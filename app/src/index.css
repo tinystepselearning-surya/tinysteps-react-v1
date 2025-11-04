@@ -85,8 +85,27 @@
       opacity: 1 !important;
     }
   }
+
+  /* Lightweight reveal-on-scroll utility */
+  .reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    will-change: opacity, transform;
+  }
+  .reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: none;
+  }
 }
 
+      .line-clamp-2 {
+        display: -webkit-box;
+        line-clamp: 2;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
 /* Meaning-Match shake animation */
 @keyframes shake {
   0%, 100% {

@@ -6,71 +6,40 @@
  */
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import type { Phase, Milestone } from "../../../data/phases";
+import type { Phase } from "../../../data/phases";
 import { useWaypoints, createCurvedPath } from "./useWaypoints";
 import StepNode from "./StepNode";
-import MilestoneDialog from "../MilestoneDialog";
 
 interface ArrowRoadmapProps {
   phases: Phase[];
   parentView: boolean;
 }
 
-// Milestone dot component
-function MilestoneDot({
-  milestone,
-  x,
-  y,
-}: {
-  milestone: Milestone;
-  x: number;
-  y: number;
-}) {
-  const [showTooltip, setShowTooltip] = useState(false);
-  
-  const getColorClass = () => {
-    if (milestone.status === "done") return "fill-emerald-500";
-    if (milestone.status === "in_progress") return "fill-amber-400";
-    return "fill-gray-300";
-  };
-  
-  return (
-    <g
-      transform={`translate(${x}, ${y})`}
-      onMouseEnter={() => setShowTooltip(true)}
-      onMouseLeave={() => setShowTooltip(false)}
-    >
-      {/* Milestone dot */}
-      <circle
-        r={milestone.status === "in_progress" ? 5 : 4}
-        className={`${getColorClass()} ${
-          milestone.status === "in_progress" ? "animate-pulse" : ""
-        }`}
-        stroke={milestone.status === "locked" ? "#cbd5e1" : "none"}
-        strokeWidth={milestone.status === "locked" ? 2 : 0}
-      />
-      
-      {/* Tooltip */}
-      {showTooltip && (
-        <foreignObject x={-60} y={-50} width={120} height={40}>
-          <div className="rounded-lg bg-gray-900 px-2 py-1 text-[10px] text-white shadow-lg">
-            <div className="font-bold">{milestone.title}</div>
-            <div className="text-gray-300">{milestone.progress}%</div>
-          </div>
-        </foreignObject>
-      )}
-    </g>
-  );
-}
+// Milestone dots removed (now labeled chips rendered in StepNode)
 
-export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) {
-  const { containerRef, waypoints, dimensions } = useWaypoints(phases.length);
-  const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+export default function ArrowRoadmap({ phases }: ArrowRoadmapProps) {
+  // Compute a dynamic row gap based on the maximum number of labeled chips per phase
+  // We render up to 6 chips and roughly fit 2 per row; adjust gap to avoid overlap between rows
+  const maxChips = Math.max(0, ...phases.map(p => Math.min(6, p.milestones.length)));
+  const estimatedChipRows = Math.ceil(maxChips / 2) || 1;
+  const dynamicRowGap = 300 + estimatedChipRows * 36; // base + per-row increment
+  const { containerRef, waypoints, dimensions } = useWaypoints(phases.length, {
+    // cols omitted → 1 on small phones, 2 otherwise (inside hook)
+    top: 120,
+    rowGap: dynamicRowGap,
+    bottom: 340,
+  });
+  const navigate = useNavigate();
   const [focusedIndex, setFocusedIndex] = useState(0);
   
   const pathData = createCurvedPath(waypoints);
+  
+  // Navigate to phase detail page
+  const openPhaseDetail = (phase: Phase) => {
+    navigate(`/kids/phase/${phase.id}`);
+  };
   
   // Keyboard navigation
   useEffect(() => {
@@ -85,18 +54,35 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
         setFocusedIndex(focusedIndex - 1);
       } else if (e.key === "Enter") {
         e.preventDefault();
-        openDialog(phases[focusedIndex]);
+        openPhaseDetail(phases[focusedIndex]);
       }
     };
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [focusedIndex, phases, containerRef]);
-  
-  const openDialog = (phase: Phase) => {
-    setSelectedPhase(phase);
-    setIsDialogOpen(true);
-  };
+  }, [focusedIndex, phases, containerRef, navigate]);
+
+  // Scroll-reveal fade-in for roadmap container and child nodes
+  useEffect(() => {
+    const root = containerRef.current;
+    if (!root) return;
+    const els = Array.from(root.querySelectorAll<HTMLElement>('.reveal-on-scroll'));
+    if (!('IntersectionObserver' in window)) {
+      els.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const io = new IntersectionObserver((entries, obs) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const el = entry.target as HTMLElement;
+          el.classList.add('is-visible');
+          obs.unobserve(el);
+        }
+      });
+    }, { root, rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [containerRef, waypoints.length]);
   
   if (waypoints.length === 0) {
     return (
@@ -129,7 +115,7 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
       `}</style>
       <div
         ref={containerRef}
-        className="arrow-roadmap-scroll overflow-x-auto overflow-y-hidden rounded-2xl bg-gradient-to-br from-[#FFE8CC] via-[#E6F3FF] to-[#F7E8FF] p-6 shadow-md md:p-8"
+  className="arrow-roadmap-scroll overflow-x-hidden overflow-y-visible rounded-2xl bg-gradient-to-br from-[#FFE8CC] via-[#E6F3FF] to-[#F7E8FF] p-8 shadow-md md:p-10 reveal-on-scroll animate-fadeIn"
         style={{
           scrollBehavior: "smooth",
           scrollbarWidth: "thin",
@@ -162,6 +148,17 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
             >
               <polygon points="0 0, 10 3, 0 6" fill="#6ec1e4" />
             </marker>
+            {/* Segment arrow marker for connectors between circles */}
+            <marker
+              id="arrowheadSegment"
+              markerWidth="12"
+              markerHeight="12"
+              refX="10"
+              refY="3"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3, 0 6" fill="#5ab0d8" />
+            </marker>
           </defs>
           
           {/* Main serpentine path */}
@@ -169,7 +166,7 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
             d={pathData}
             fill="none"
             stroke="url(#pathGradient)"
-            strokeWidth={8}
+            strokeWidth={9}
             strokeLinecap="round"
             strokeLinejoin="round"
             markerMid="url(#arrowhead)"
@@ -178,6 +175,30 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
             transition={{ duration: 1.5, ease: "easeInOut" }}
           />
           
+          {/* Segment arrows between successive circles (flowing along curves) */}
+          {waypoints.map((wp, i) => {
+            if (i === waypoints.length - 1) return null;
+            const next = waypoints[i + 1];
+            const dx = next.x - wp.x;
+            const dy = next.y - wp.y;
+            const midX = (wp.x + next.x) / 2;
+            const midY = (wp.y + next.y) / 2;
+            const offsetX = -dy * 0.2;
+            const offsetY = dx * 0.2;
+            const d = `M ${wp.x} ${wp.y} Q ${midX + offsetX} ${midY + offsetY}, ${next.x} ${next.y}`;
+            return (
+              <path
+                key={`seg-${i}`}
+                d={d}
+                fill="none"
+                stroke="#6ec1e4"
+                strokeWidth={3}
+                markerEnd="url(#arrowheadSegment)"
+                opacity={0.6}
+              />
+            );
+          })}
+
           {/* Step nodes */}
           {waypoints.map((waypoint, index) => {
             const phase = phases[index];
@@ -190,41 +211,15 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
                 x={waypoint.x}
                 y={waypoint.y}
                 index={index}
-                onClick={() => openDialog(phase)}
+                onClick={() => openPhaseDetail(phase)}
                 onFocus={() => setFocusedIndex(index)}
               />
             );
           })}
           
-          {/* Milestone dots under each phase */}
-          {waypoints.map((waypoint, phaseIndex) => {
-            const phase = phases[phaseIndex];
-            if (!phase) return null;
-            
-            const milestoneCount = Math.min(6, phase.milestones.length);
-            const spacing = 16; // Increased spacing for larger layout
-            const startX = waypoint.x - ((milestoneCount - 1) * spacing) / 2;
-            const dotY = waypoint.y + 140; // Adjusted for larger circles
-            
-            return phase.milestones.slice(0, 6).map((milestone, mIndex) => (
-              <MilestoneDot
-                key={`${phase.id}-${milestone.id}`}
-                milestone={milestone}
-                x={startX + mIndex * spacing}
-                y={dotY}
-              />
-            ));
-          })}
+          {/* Labeled chips are now rendered below each node inside StepNode; SVG dots omitted to reduce clutter */}
         </svg>
       </div>
-      
-      {/* Milestone dialog */}
-      <MilestoneDialog
-        phase={selectedPhase}
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        parentView={parentView}
-      />
     </>
   );
 }
