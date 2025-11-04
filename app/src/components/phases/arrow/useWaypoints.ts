@@ -22,8 +22,8 @@ export function computeSerpentine(
   height: number
 ): Waypoint[] {
   // Calculate grid dimensions
-  // Desktop: aim for 6 columns max, mobile: 3 columns min
-  const cols = Math.min(6, Math.max(3, Math.ceil(count / 2)));
+  // Fixed: 3 columns per row for horizontal scrolling
+  const cols = 3;
   const rows = Math.ceil(count / cols);
   
   // Calculate spacing (leave margins)
@@ -66,12 +66,13 @@ export function useWaypoints(count: number) {
       if (!container) return;
       
       const rect = container.getBoundingClientRect();
-      const width = rect.width;
+      // Fixed width for horizontal scrolling: 3 phases per row with larger spacing
+      const width = Math.max(rect.width, 1000); // Minimum width for 3 columns
       
       // Calculate height based on number of rows needed
-      const cols = Math.min(6, Math.max(3, Math.ceil(count / 2)));
+      const cols = 3;
       const rows = Math.ceil(count / cols);
-      const height = Math.max(400, rows * 180); // Min 400px, 180px per row
+      const height = Math.max(500, rows * 280); // Increased: 280px per row for larger circles
       
       setDimensions({ width, height });
       setWaypoints(computeSerpentine(count, width, height));

@@ -1,7 +1,8 @@
 /**
  * ArrowRoadmap.tsx
  * Serpentine arrow roadmap visualization with StepNodes and milestone dots
- * Desktop: S-curve path; Mobile: vertical zig-zag
+ * Desktop: S-curve path with horizontal scrolling (3 phases per row)
+ * Mobile: vertical zig-zag
  */
 
 import { useState, useEffect } from "react";
@@ -101,7 +102,7 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
     return (
       <div
         ref={containerRef}
-        className="flex min-h-[400px] items-center justify-center rounded-2xl bg-white p-6 shadow-md"
+        className="flex min-h-[500px] items-center justify-center rounded-2xl bg-white p-6 shadow-md"
       >
         <div className="text-gray-500">Loading roadmap...</div>
       </div>
@@ -110,15 +111,37 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
   
   return (
     <>
+      <style>{`
+        .arrow-roadmap-scroll::-webkit-scrollbar {
+          height: 12px;
+        }
+        .arrow-roadmap-scroll::-webkit-scrollbar-track {
+          background: #f0f0f0;
+          border-radius: 10px;
+        }
+        .arrow-roadmap-scroll::-webkit-scrollbar-thumb {
+          background: linear-gradient(to right, #ffa94d, #6ec1e4);
+          border-radius: 10px;
+        }
+        .arrow-roadmap-scroll::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(to right, #ff9020, #5ab0d8);
+        }
+      `}</style>
       <div
         ref={containerRef}
-        className="rounded-2xl bg-gradient-to-br from-[#FFE8CC] via-[#E6F3FF] to-[#F7E8FF] p-4 shadow-md md:p-6"
+        className="arrow-roadmap-scroll overflow-x-auto overflow-y-hidden rounded-2xl bg-gradient-to-br from-[#FFE8CC] via-[#E6F3FF] to-[#F7E8FF] p-6 shadow-md md:p-8"
+        style={{
+          scrollBehavior: "smooth",
+          scrollbarWidth: "thin",
+          scrollbarColor: "#6ec1e4 #f0f0f0",
+        }}
       >
         <svg
-          width="100%"
+          width={dimensions.width}
           height={dimensions.height}
           viewBox={`0 0 ${dimensions.width} ${dimensions.height}`}
-          className="overflow-visible"
+          className="min-w-full"
+          style={{ display: "block" }}
         >
           {/* Gradient definition for path */}
           <defs>
@@ -179,9 +202,9 @@ export default function ArrowRoadmap({ phases, parentView }: ArrowRoadmapProps) 
             if (!phase) return null;
             
             const milestoneCount = Math.min(6, phase.milestones.length);
-            const spacing = 12;
+            const spacing = 16; // Increased spacing for larger layout
             const startX = waypoint.x - ((milestoneCount - 1) * spacing) / 2;
-            const dotY = waypoint.y + 100;
+            const dotY = waypoint.y + 140; // Adjusted for larger circles
             
             return phase.milestones.slice(0, 6).map((milestone, mIndex) => (
               <MilestoneDot
