@@ -10,6 +10,8 @@ export default function LearningPartnerManagement() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedLP, setSelectedLP] = useState<LearningPartner | null>(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [formData, setFormData] = useState<CreateUserFormData>({
     email: '',
     username: '',
@@ -45,7 +47,23 @@ export default function LearningPartnerManagement() {
   const handleCreateLP = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createUser(formData);
+      // Validate first and last name
+      if (!firstName || !lastName) {
+        alert("Please enter both first name and last name");
+        return;
+      }
+
+      // Combine first and last name
+      const displayName = `${firstName} ${lastName}`.trim();
+
+      const userData = { 
+        ...formData, 
+        displayName,
+        firstName,
+        lastName
+      };
+
+      await createUser(userData);
       alert('Learning Partner created successfully!');
       setShowCreateModal(false);
       resetForm();
@@ -92,6 +110,8 @@ export default function LearningPartnerManagement() {
   };
 
   const resetForm = () => {
+    setFirstName('');
+    setLastName('');
     setFormData({
       email: '',
       username: '',
@@ -203,13 +223,31 @@ export default function LearningPartnerManagement() {
             <form onSubmit={handleCreateLP}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    First Name *
+                    <span className="ml-2 text-xs text-gray-500">(Required)</span>
+                  </label>
                   <input
                     type="text"
                     required
-                    value={formData.displayName}
-                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+                    placeholder="Enter first name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Last Name *
+                    <span className="ml-2 text-xs text-gray-500">(Required)</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+                    placeholder="Enter last name"
                   />
                 </div>
                 <div>
@@ -223,13 +261,18 @@ export default function LearningPartnerManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Username</label>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Username *
+                    <span className="ml-2 text-xs text-gray-500">(Unique, no spaces)</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
+                    pattern="[a-z0-9_]+"
                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 px-3 py-2 border"
+                    placeholder="e.g., john_doe123"
                   />
                 </div>
                 <div>
