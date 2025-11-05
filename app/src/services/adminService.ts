@@ -13,21 +13,15 @@ import {
   where,
   writeBatch
 } from 'firebase/firestore';
-import {
-  createUserWithEmailAndPassword,
-  updateProfile
-} from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
-import { auth, db, functions } from '../firebase';
+import { db, functions } from '../firebase';
 import type { 
   CreateUserFormData, 
   User, 
   UserRole, 
   Parent, 
   Student,
-  Teacher,
-  LearningPartner,
-  Admin
+  LearningPartner
 } from '../types/admin';
 
 /**
@@ -99,172 +93,18 @@ export async function createUser(data: CreateUserFormData): Promise<User> {
   }
 }
 
-/**
+/*
  * DEPRECATED: Old createUser function that logs out admin
- * Kept for reference - DO NOT USE
- */
+ * This method is no longer used - we now use Cloud Function adminCreateUser
+ * Kept for reference only - DO NOT USE
+ *
 async function createUserOldMethod(data: CreateUserFormData): Promise<User> {
-  try {
-    // Validate student has parent
-    if (data.role === 'student' && !data.parentId) {
-      throw new Error('Students must have a parent ID');
-    }
-
-    // Check if username already exists
-    const usernameDoc = await getDoc(doc(db, 'usernames', data.username.toLowerCase()));
-    if (usernameDoc.exists()) {
-      throw new Error(`Username "${data.username}" is already taken`);
-    }
-
-    // Create Firebase Auth user
-    const userCredential = await createUserWithEmailAndPassword(
-      auth,
-      data.email,
-      data.password
-    );
-
-    const uid = userCredential.user.uid;
-
-    // Update auth profile
-    await updateProfile(userCredential.user, {
-      displayName: data.displayName
-    });
-
-    // Create base user data
-    const baseUserData = {
-      uid,
-      email: data.email,
-      username: data.username,
-      usernameLower: data.username.toLowerCase(),
-      displayName: data.displayName,
-      role: data.role,
-      status: 'active' as const,
-      createdAt: new Date().toISOString(),
-      createdBy: auth.currentUser?.uid || 'system',
-      phoneNumber: data.phoneNumber || ''
-    };
-
-    // Create role-specific data
-    let userData: User;
-    
-    switch (data.role) {
-      case 'student':
-        const studentData: Student = {
-          ...baseUserData,
-          role: 'student',
-          parentId: data.parentId!,
-          enrolledCourses: data.enrolledCourses || [],
-          learningPartnerId: data.learningPartnerId,
-          teacherId: data.teacherId
-        };
-        
-        // Add DOB and calculate age if provided
-        if (data.dateOfBirth) {
-          studentData.dateOfBirth = data.dateOfBirth;
-          studentData.age = calculateAge(data.dateOfBirth);
-        }
-        
-        userData = studentData;
-        break;
-
-      case 'parent':
-        userData = {
-          ...baseUserData,
-          role: 'parent',
-          children: [],
-          learningPartnerId: data.learningPartnerId
-        } as Parent;
-        break;
-
-      case 'teacher':
-        userData = {
-          ...baseUserData,
-          role: 'teacher',
-          students: [],
-          learningPartnerId: data.learningPartnerId,
-          subjects: []
-        } as Teacher;
-        break;
-
-      case 'learning-partner':
-        userData = {
-          ...baseUserData,
-          role: 'learning-partner',
-          assignedTeachers: [],
-          assignedParents: [],
-          assignedStudents: []
-        } as LearningPartner;
-        break;
-
-      case 'admin':
-        userData = {
-          ...baseUserData,
-          role: 'admin',
-          isSuperAdmin: false
-        } as Admin;
-        break;
-
-      default:
-        throw new Error(`Invalid role: ${data.role}`);
-    }
-
-    // Use batch write for atomic operations
-    const batch = writeBatch(db);
-
-    // 1. Create user document in /users/{uid}
-    batch.set(doc(db, 'users', uid), userData);
-
-    // 2. Create username mapping in /usernames/{username}
-    batch.set(doc(db, 'usernames', data.username.toLowerCase()), {
-      uid,
-      createdAt: new Date().toISOString()
-    });
-
-    // 3. If student, update parent's children array
-    if (data.role === 'student' && data.parentId) {
-      const parentRef = doc(db, 'users', data.parentId);
-      const parentDoc = await getDoc(parentRef);
-      
-      if (parentDoc.exists()) {
-        const parentData = parentDoc.data() as Parent;
-        batch.update(parentRef, {
-          children: [...(parentData.children || []), uid]
-        });
-      }
-    }
-
-    // 4. If teacher/parent assigned to learning partner, update LP
-    if (data.learningPartnerId && (data.role === 'teacher' || data.role === 'parent')) {
-      const lpRef = doc(db, 'users', data.learningPartnerId);
-      const lpDoc = await getDoc(lpRef);
-      
-      if (lpDoc.exists()) {
-        const lpData = lpDoc.data() as LearningPartner;
-        const field = data.role === 'teacher' ? 'assignedTeachers' : 'assignedParents';
-        batch.update(lpRef, {
-          [field]: [...(lpData[field] || []), uid]
-        });
-      }
-    }
-
-    // Commit all changes
-    await batch.commit();
-
-    // IMPORTANT: createUserWithEmailAndPassword signs in the new user,
-    // which logs out the admin. This is a Firebase limitation.
-    // Solution: Use Firebase Admin SDK via Cloud Function for production.
-    // For now, admin needs to log back in after creating a user.
-
-    console.log(`✅ User created successfully: ${userData.displayName} (${userData.role})`);
-    console.warn('⚠️  Admin has been logged out. Please log back in.');
-    
-    return userData;
-
-  } catch (error: any) {
-    console.error('Error creating user:', error);
-    throw new Error(error.message || 'Failed to create user');
-  }
+  ... (old implementation removed to fix build)
 }
+*/
+
+/**
+ * Get all users or filter by role
 
 /**
  * Get all users or filter by role
