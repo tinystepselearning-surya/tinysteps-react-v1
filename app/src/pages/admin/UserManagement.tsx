@@ -70,18 +70,23 @@ export default function UserManagement() {
         return;
       }
 
-      // For parents, combine first and last name
-      const displayName = formData.role === 'parent' 
-        ? `${firstName} ${lastName}`.trim() 
-        : formData.displayName;
-
-      if (formData.role === 'parent' && (!firstName || !lastName)) {
-        alert("Please enter both first name and last name for parent");
+      // Validate first and last name for ALL users
+      if (!firstName || !lastName) {
+        alert("Please enter both first name and last name");
         return;
       }
 
+      // Combine first and last name for ALL users
+      const displayName = `${firstName} ${lastName}`.trim();
+
       // Prepare form data with DOB for students
-      const userData = { ...formData, displayName };
+      const userData = { 
+        ...formData, 
+        displayName,
+        firstName,
+        lastName
+      };
+      
       if (formData.role === 'student' && dateOfBirth) {
         userData.dateOfBirth = dateOfBirth;
       }
@@ -333,67 +338,71 @@ export default function UserManagement() {
                 </select>
               </div>
               
-              {/* Parent-specific fields: First and Last Name */}
-              {formData.role === 'parent' ? (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">First Name *</label>
-                    <input
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
-                      placeholder="Enter first name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Last Name *</label>
-                    <input
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      required
-                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
-                      placeholder="Enter last name"
-                    />
-                  </div>
-                </>
-              ) : (
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    value={formData.displayName}
-                    onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                    required
-                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
-                  />
-                </div>
-              )}
+              {/* First Name and Last Name for ALL users */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  First Name *
+                  <span className="ml-2 text-xs text-gray-400">(Required)</span>
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
+                  placeholder="Enter first name"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Last Name *
+                  <span className="ml-2 text-xs text-gray-400">(Required)</span>
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
+                  placeholder="Enter last name"
+                />
+              </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Email *
+                  <span className="ml-2 text-xs text-gray-400">(Valid email required)</span>
+                </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
+                  placeholder="user@example.com"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Username *
+                  <span className="ml-2 text-xs text-gray-400">(Unique, no spaces)</span>
+                </label>
                 <input
                   type="text"
                   value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/\s/g, '') })}
                   required
+                  pattern="[a-z0-9_]+"
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
+                  placeholder="username123"
                 />
+                <p className="text-xs text-gray-400 mt-1">Only lowercase letters, numbers, and underscores</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Password *
+                  <span className="ml-2 text-xs text-gray-400">(Min 6 characters)</span>
+                </label>
                 <input
                   type="password"
                   value={formData.password}
@@ -405,13 +414,18 @@ export default function UserManagement() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Phone (Optional)</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Phone Number
+                  <span className="ml-2 text-xs text-gray-400">(Optional)</span>
+                </label>
                 <input
                   type="tel"
                   value={formData.phoneNumber}
                   onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
+                  placeholder="+1234567890"
                 />
+                <p className="text-xs text-gray-400 mt-1">Include country code if international</p>
               </div>
               
               {/* Student-specific fields */}
@@ -436,7 +450,10 @@ export default function UserManagement() {
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Date of Birth</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Date of Birth
+                      <span className="ml-2 text-xs text-gray-400">(Optional - for age tracking)</span>
+                    </label>
                     <input
                       type="date"
                       value={dateOfBirth}
@@ -445,12 +462,15 @@ export default function UserManagement() {
                       max={new Date().toISOString().split('T')[0]}
                     />
                     <p className="text-xs text-gray-400 mt-1">
-                      {dateOfBirth ? `Age: ${Math.floor((new Date().getTime() - new Date(dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years` : 'Optional - used to calculate age'}
+                      {dateOfBirth ? `Age: ${Math.floor((new Date().getTime() - new Date(dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))} years` : 'Optional - used to calculate and display student age'}
                     </p>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">Enrolled Courses</label>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Enrolled Courses
+                      <span className="ml-2 text-xs text-gray-400">(Select one or more)</span>
+                    </label>
                     <div className="bg-gray-700 border border-gray-600 rounded-lg p-3 max-h-48 overflow-y-auto">
                       {availableCourses.map(course => (
                         <label key={course.id} className="flex items-center gap-2 py-2 hover:bg-gray-600 px-2 rounded cursor-pointer">

@@ -17,7 +17,8 @@ import {
   createUserWithEmailAndPassword,
   updateProfile
 } from 'firebase/auth';
-import { auth, db } from '../firebase';
+import { httpsCallable } from 'firebase/functions';
+import { auth, db, functions } from '../firebase';
 import type { 
   CreateUserFormData, 
   User, 
@@ -30,9 +31,79 @@ import type {
 } from '../types/admin';
 
 /**
- * Create a new user (Admin, Teacher, Learning Partner, Parent, or Student)
+ * Create a new user (uses Cloud Function to avoid logging out admin)
  */
 export async function createUser(data: CreateUserFormData): Promise<User> {
+  try {
+    // Validate username format
+    if (!/^[a-z0-9_]+$/.test(data.username)) {
+      throw new Error('Username can only contain lowercase letters, numbers, and underscores');
+    }
+
+    // Validate student has parent
+    if (data.role === 'student' && !data.parentId) {
+      throw new Error('Students must have a parent ID');
+    }
+
+    // Use Cloud Function to create user (doesn't log out admin!)
+    const adminCreateUserFn = httpsCallable(functions, 'adminCreateUser');
+    
+    const result = await adminCreateUserFn({
+      email: data.email,
+      password: data.password,
+      displayName: data.displayName,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      username: data.username,
+      role: data.role,
+      phoneNumber: data.phoneNumber,
+      parentId: data.parentId,
+      learningPartnerId: data.learningPartnerId,
+      teacherId: data.teacherId,
+      enrolledCourses: data.enrolledCourses,
+      dateOfBirth: data.dateOfBirth
+    });
+
+    console.log('✅ User created via Cloud Function:', result.data);
+    
+    // Return a minimal user object (the actual data is in Firestore)
+    return {
+      uid: (result.data as any).uid,
+      email: data.email,
+      username: data.username,
+      usernameLower: data.username.toLowerCase(),
+      displayName: data.displayName,
+      role: data.role,
+      status: 'active',
+      createdAt: new Date().toISOString()
+    } as User;
+
+  } catch (error: any) {
+    console.error('Error creating user via Cloud Function:', error);
+    
+    // Extract readable error message
+    if (error.code === 'functions/already-exists') {
+      throw new Error(error.message || 'User already exists');
+    }
+    if (error.code === 'functions/invalid-argument') {
+      throw new Error(error.message || 'Invalid user data');
+    }
+    if (error.code === 'functions/permission-denied') {
+      throw new Error('You do not have permission to create users');
+    }
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be logged in to create users');
+    }
+    
+    throw new Error(error.message || 'Failed to create user');
+  }
+}
+
+/**
+ * DEPRECATED: Old createUser function that logs out admin
+ * Kept for reference - DO NOT USE
+ */
+async function createUserOldMethod(data: CreateUserFormData): Promise<User> {
   try {
     // Validate student has parent
     if (data.role === 'student' && !data.parentId) {
@@ -179,7 +250,14 @@ export async function createUser(data: CreateUserFormData): Promise<User> {
     // Commit all changes
     await batch.commit();
 
+    // IMPORTANT: createUserWithEmailAndPassword signs in the new user,
+    // which logs out the admin. This is a Firebase limitation.
+    // Solution: Use Firebase Admin SDK via Cloud Function for production.
+    // For now, admin needs to log back in after creating a user.
+
     console.log(`✅ User created successfully: ${userData.displayName} (${userData.role})`);
+    console.warn('⚠️  Admin has been logged out. Please log back in.');
+    
     return userData;
 
   } catch (error: any) {
