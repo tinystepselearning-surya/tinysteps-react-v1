@@ -9,7 +9,10 @@ exports.adminCreateUser = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const auth_1 = require("firebase-admin/auth");
 const firestore_1 = require("firebase-admin/firestore");
-exports.adminCreateUser = (0, https_1.onCall)(async (request) => {
+exports.adminCreateUser = (0, https_1.onCall)({
+    region: 'asia-south1',
+    cors: true
+}, async (request) => {
     // Verify user is authenticated
     if (!request.auth) {
         throw new https_1.HttpsError('unauthenticated', 'User must be authenticated');

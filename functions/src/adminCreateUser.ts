@@ -15,7 +15,7 @@ interface CreateUserData {
   firstName: string;
   lastName: string;
   username: string;
-  role: 'parent' | 'student' | 'teacher' | 'learning-partner' | 'admin';
+  role: 'student' | 'parent' | 'teacher' | 'learning-partner' | 'admin';
   phoneNumber?: string;
   parentId?: string;
   learningPartnerId?: string;
@@ -24,7 +24,10 @@ interface CreateUserData {
   dateOfBirth?: string;
 }
 
-export const adminCreateUser = onCall(async (request) => {
+export const adminCreateUser = onCall({
+  region: 'asia-south1',
+  cors: true
+}, async (request) => {
   // Verify user is authenticated
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'User must be authenticated');

@@ -29,8 +29,11 @@ import type {
  */
 export async function createUser(data: CreateUserFormData): Promise<User> {
   try {
+    // Normalize username (lowercase, remove spaces)
+    const normalizedUsername = data.username.toLowerCase().replace(/\s+/g, '');
+    
     // Validate username format
-    if (!/^[a-z0-9_]+$/.test(data.username)) {
+    if (!/^[a-z0-9_]+$/.test(normalizedUsername)) {
       throw new Error('Username can only contain lowercase letters, numbers, and underscores');
     }
 
@@ -48,7 +51,7 @@ export async function createUser(data: CreateUserFormData): Promise<User> {
       displayName: data.displayName,
       firstName: data.firstName,
       lastName: data.lastName,
-      username: data.username,
+      username: normalizedUsername,
       role: data.role,
       phoneNumber: data.phoneNumber,
       parentId: data.parentId,
@@ -64,8 +67,8 @@ export async function createUser(data: CreateUserFormData): Promise<User> {
     return {
       uid: (result.data as any).uid,
       email: data.email,
-      username: data.username,
-      usernameLower: data.username.toLowerCase(),
+      username: normalizedUsername,
+      usernameLower: normalizedUsername.toLowerCase(),
       displayName: data.displayName,
       role: data.role,
       status: 'active',
