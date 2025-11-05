@@ -110,8 +110,8 @@ export default function UserManagement() {
 
   const handleToggleStatus = async (uid: string, currentStatus: string) => {
     try {
-      const newStatus = currentStatus === "active" ? "suspended" : "active";
-      await updateUser(uid, { status: newStatus as any });
+      const newStatus: 'active' | 'suspended' = currentStatus === "active" ? "suspended" : "active";
+      await updateUser(uid, { status: newStatus });
       alert(`User ${newStatus}`);
       loadUsers();
     } catch (error) {
@@ -572,9 +572,9 @@ export default function UserManagement() {
                   onChange={(e) => setSelectedUser({ ...selectedUser, status: e.target.value } as User)}
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
                 >
-                  <option value="active">Active</option>
-                  <option value="suspended">Suspended</option>
-                  <option value="pending">Pending</option>
+                  <option key="active" value="active">Active</option>
+                  <option key="suspended" value="suspended">Suspended</option>
+                  <option key="pending" value="pending">Pending</option>
                 </select>
               </div>
               <div className="flex gap-4 pt-4">

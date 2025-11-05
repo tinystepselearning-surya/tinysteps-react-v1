@@ -15,9 +15,7 @@ import {
 } from 'firebase/firestore';
 import {
   createUserWithEmailAndPassword,
-  updateProfile,
-  updatePassword,
-  signInWithEmailAndPassword
+  updateProfile
 } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import type { 
@@ -229,8 +227,18 @@ export async function getUserById(uid: string): Promise<User | null> {
 export async function updateUser(uid: string, updates: Partial<User>): Promise<void> {
   try {
     const userRef = doc(db, 'users', uid);
+    
+    // Filter out undefined values to prevent Firestore errors
+    const cleanUpdates: Record<string, any> = {};
+    Object.keys(updates).forEach(key => {
+      const value = (updates as any)[key];
+      if (value !== undefined) {
+        cleanUpdates[key] = value;
+      }
+    });
+    
     await updateDoc(userRef, {
-      ...updates,
+      ...cleanUpdates,
       updatedAt: new Date().toISOString()
     });
     console.log(`✅ User updated: ${uid}`);
@@ -439,7 +447,7 @@ export async function removeCourseFromStudent(studentId: string, courseId: strin
  * Note: This requires Firebase Admin SDK on backend for production
  * For now, we'll update via Firebase Auth REST API or admin panel
  */
-export async function resetUserPassword(email: string, newPassword: string): Promise<void> {
+export async function resetUserPassword(email: string, _newPassword: string): Promise<void> {
   try {
     // Note: This is a simplified version. In production, you should use Firebase Admin SDK
     // on a Cloud Function to reset passwords for security reasons.
@@ -451,7 +459,7 @@ export async function resetUserPassword(email: string, newPassword: string): Pro
     
     // In a real implementation, you would call a Cloud Function:
     // const resetPasswordFunction = httpsCallable(functions, 'adminResetPassword');
-    // await resetPasswordFunction({ email, newPassword });
+    // await resetPasswordFunction({ email, _newPassword });
     
     throw new Error('Password reset must be implemented via Cloud Function for security. Use Firebase Console for now.');
   } catch (error) {
