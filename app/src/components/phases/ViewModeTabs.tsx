@@ -6,7 +6,7 @@
 
 import { motion } from "framer-motion";
 
-export type ViewMode = "cards" | "arrow" | "list";
+export type ViewMode = "cards" | "arrow" | "list" | "games";
 
 interface ViewModeTabsProps {
   value: ViewMode;
@@ -17,27 +17,27 @@ const MODES: { id: ViewMode; label: string; icon: string }[] = [
   { id: "cards", label: "Cards", icon: "▦" },
   { id: "arrow", label: "Arrow Roadmap", icon: "↝" },
   { id: "list", label: "Step List", icon: "☰" },
+  { id: "games", label: "Games Catalog", icon: "🎮" },
 ];
 
 export default function ViewModeTabs({ value, onChange }: ViewModeTabsProps) {
   return (
-    <div className="flex items-center justify-center gap-2 rounded-2xl bg-white p-2 shadow-md">
-      <div className="flex gap-2" role="tablist" aria-label="View mode selection">
+    <div className="flex items-center justify-start gap-1 border-b border-gray-200">
+      <div className="flex gap-6" role="tablist" aria-label="View mode selection">
         {MODES.map((mode) => {
           const isActive = value === mode.id;
           
           return (
-            <motion.button
+            <button
               key={mode.id}
               onClick={() => onChange(mode.id)}
-              whileTap={{ scale: 0.97 }}
               className={`
-                relative rounded-full px-4 py-2 text-sm font-bold shadow-sm transition-all duration-200
-                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500
+                relative pb-3 pt-2 px-1 text-sm transition-all duration-200
+                focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded-sm
                 ${
                   isActive
-                    ? "bg-gradient-to-r from-orange-400 to-sky-400 text-white shadow-md"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
+                    ? "font-bold text-gray-900"
+                    : "font-medium text-gray-500 hover:text-gray-700"
                 }
               `}
               role="tab"
@@ -49,7 +49,14 @@ export default function ViewModeTabs({ value, onChange }: ViewModeTabsProps) {
                 <span className="text-base">{mode.icon}</span>
                 <span className="whitespace-nowrap">{mode.label}</span>
               </span>
-            </motion.button>
+              {isActive && (
+                <motion.div
+                  layoutId="activeTab"
+                  className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-orange-400 to-sky-400"
+                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                />
+              )}
+            </button>
           );
         })}
       </div>

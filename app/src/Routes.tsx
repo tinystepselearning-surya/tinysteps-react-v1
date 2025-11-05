@@ -16,12 +16,24 @@ import LearningManagerPortal from "./pages/roles/LearningManagerPortal";
 import KidsPortal from "./pages/roles/KidsPortal";
 import BlogIndex from "./pages/blog/BlogIndex";
 import BlogArticle from "./pages/blog/BlogArticle";
-import GamesGallery from "./pages/games/GamesGallery";
+import OldGamesGallery from "./pages/games/GamesGallery"; // Old simple games library
 import PhonicsSoundsMasteryHub from "./pages/games/PhonicsSoundsMasteryHub";
 import ElkoninGame from "./pages/games/ElkoninGame";
 import KidsGuestLanding from "./pages/KidsGuestLanding";
-import KidsPhonicsJourney from "./pages/kids/GamesGallery"; // Phase 0-10 journey
+import KidsPhonicsJourney from "./pages/kids/GamesGallery"; // Phase 0-10 journey with 4 views
 import PhaseDetail from "./pages/kids/PhaseDetail"; // Phase detail page
+import GamesGalleryEnhanced from "./routes/kids/GamesGalleryEnhanced"; // New enhanced games gallery
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminOverview from "./pages/admin/AdminOverview";
+import UserManagement from "./pages/admin/UserManagement";
+import ParentManagement from "./pages/admin/ParentManagement";
+import StudentManagement from "./pages/admin/StudentManagement";
+import MembershipManagement from "./pages/admin/MembershipManagement";
+import TeacherManagement from "./pages/admin/TeacherManagement";
+import LearningPartnerManagement from "./pages/admin/LearningPartnerManagement";
+import RolesPermissions from "./pages/admin/RolesPermissions";
+import { AdminRoute } from "./components/admin/AdminRoute";
 
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
 const SpellBeeGroupDashboard = lazy(() => import("./games/spellbee-flash/GroupDashboard"));
@@ -50,11 +62,12 @@ export default function AppRoutes() {
         {/* Extras */}
         {/* Kids Zone Routes */}
         <Route path="/kids" element={<KidsGuestLanding />} />
-        <Route path="/kids/games" element={<GamesGallery />} />
-        <Route path="/kids/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey */}
+        <Route path="/kids/games" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey with 4 views */}
+        <Route path="/kids/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey with 4 views */}
+        <Route path="/kids/games-enhanced" element={<GamesGalleryEnhanced />} /> {/* New enhanced gallery with filters */}
         <Route path="/kids/phonics-journey" element={<KidsPhonicsJourney />} /> {/* Alias route */}
         <Route path="/kids/phase/:phaseId" element={<PhaseDetail />} /> {/* Phase detail page */}
-        <Route path="/games" element={<GamesGallery />} />
+        <Route path="/games" element={<OldGamesGallery />} /> {/* Simple games library */}
         <Route path="/games/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey */}
         <Route path="/games/phonics-sounds-mastery" element={<PhonicsSoundsMasteryHub />} />
         <Route path="/games/elkonin" element={<ElkoninGame />} />
@@ -153,6 +166,89 @@ export default function AppRoutes() {
         <Route path="/blog" element={<BlogIndex />} />
         <Route path="/blog/:slug" element={<BlogArticle />} />
         <Route path="/blog/:slug/" element={<BlogArticle />} />
+
+        {/* Admin Routes - Hidden, accessible only via /surya path */}
+        <Route path="/surya" element={<AdminLogin />} />
+        <Route 
+          path="/surya/dashboard" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<AdminOverview />} />
+        </Route>
+        <Route 
+          path="/surya/users" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<UserManagement />} />
+        </Route>
+        <Route 
+          path="/surya/parents" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<ParentManagement />} />
+        </Route>
+        <Route 
+          path="/surya/students" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<StudentManagement />} />
+        </Route>
+        <Route 
+          path="/surya/memberships" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<MembershipManagement />} />
+        </Route>
+        <Route 
+          path="/surya/teachers" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<TeacherManagement />} />
+        </Route>
+        <Route 
+          path="/surya/learning-partners" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<LearningPartnerManagement />} />
+        </Route>
+        <Route 
+          path="/surya/roles" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<RolesPermissions />} />
+        </Route>
 
         {/* Roles */}
         <Route path="/roles/teacher" element={<TeacherPortal />} />

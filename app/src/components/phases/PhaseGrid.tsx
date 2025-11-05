@@ -1,14 +1,16 @@
 /**
  * PhaseGrid.tsx
  * Responsive grid of phase cards with progress bars and quick actions
- * 3 columns desktop, 1-2 mobile
+ * Optimized with lazy loading, prefetch, and accessibility
  */
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import type { Phase } from "../../data/phases";
 import { calculatePhaseProgress, getMilestoneStatusCounts } from "../../utils/progress";
 import MilestoneDialog from "./MilestoneDialog";
+import EmptyState from "./EmptyState";
 
 interface PhaseGridProps {
   phases: Phase[];
@@ -18,15 +20,32 @@ interface PhaseGridProps {
 export default function PhaseGrid({ phases, parentView }: PhaseGridProps) {
   const [selectedPhase, setSelectedPhase] = useState<Phase | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   const openDialog = (phase: Phase) => {
     setSelectedPhase(phase);
     setIsDialogOpen(true);
   };
 
+  const handlePhaseClick = (phaseId: string) => {
+    navigate(`/kids/phase/${phaseId}`);
+  };
+
+  const prefetchPhase = (phaseId: string) => {
+    // Prefetch route on hover for faster navigation
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = `/kids/phase/${phaseId}`;
+    document.head.appendChild(link);
+  };
+
+  if (phases.length === 0) {
+    return <EmptyState message="No phases match your current filter" icon="🔍" />;
+  }
+
   return (
     <>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {phases.map((phase, index) => {
           const progress = calculatePhaseProgress(phase);
           const statusCounts = getMilestoneStatusCounts(phase);
@@ -37,47 +56,44 @@ export default function PhaseGrid({ phases, parentView }: PhaseGridProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
-              className="overflow-hidden rounded-2xl bg-white shadow-lg transition-shadow hover:shadow-xl"
+              onMouseEnter={() => prefetchPhase(phase.id)}
+              className="group relative overflow-hidden rounded-2xl bg-white shadow-sm border border-orange-100/50 transition-all hover:shadow-lg hover:-translate-y-0.5"
             >
+              {/* Phase badge - top left */}
+              <div className="absolute top-3 left-3 z-10">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-white/95 backdrop-blur-sm px-2.5 py-1 text-xs font-bold text-gray-900 shadow-sm border border-gray-200">
+                  {phase.id}
+                </span>
+              </div>
+
               {/* Header with phase color */}
               <div
-                className="p-4"
-                style={{ backgroundColor: phase.color }}
+                className="px-4 pt-12 pb-4 border-b border-gray-100"
+                style={{ backgroundColor: phase.color, opacity: 0.15 }}
               >
-                <h3 className="text-xl font-bold text-gray-900">{phase.id}</h3>
-                <p className="text-sm font-medium text-gray-700">{phase.name}</p>
-                <p className="mt-1 text-xs text-gray-600">{phase.age}</p>
+                <div className="relative" style={{ backgroundColor: phase.color }}>
+                  <h3 className="text-xl font-semibold tracking-tight text-gray-900">{phase.name}</h3>
+                  <p className="mt-0.5 text-sm text-gray-600 leading-relaxed">{phase.tagline}</p>
+                  <p className="mt-1 text-xs font-medium text-gray-500">Age {phase.age}</p>
+                </div>
               </div>
 
               {/* Card body */}
               <div className="p-4">
-                <p className="text-sm italic text-gray-600">{phase.tagline}</p>
-
                 {/* Stats badges */}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700 border-2 border-emerald-300">
-                    ✓ {statusCounts.done} done
+                <div className="flex flex-wrap gap-1.5">
+                  <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    {statusCounts.done}
                   </span>
-                  <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-700 border-2 border-blue-300">
-                    ⏳ {statusCounts.in_progress} active
+                  <span className="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
+                    <span className="size-1.5 rounded-full bg-blue-500" />
+                    {statusCounts.in_progress}
                   </span>
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-bold text-gray-600 border-2 border-gray-300">
-                    🔒 {statusCounts.locked} locked
+                  <span className="inline-flex items-center gap-1 rounded-md bg-gray-50 px-2 py-0.5 text-xs font-semibold text-gray-600 border border-gray-200">
+                    <span className="size-1.5 rounded-full bg-gray-400" />
+                    {statusCounts.locked}
                   </span>
-                </div>
-
-                {/* Progress bar */}
-                <div className="mt-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600">Overall Progress</span>
-                    <span className="text-sm font-bold text-gray-900">{progress}%</span>
-                  </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-gray-200 border-2 border-gray-300">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-orange-400 to-sky-400 transition-all duration-500"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
                 </div>
 
                 {/* Quick actions */}
@@ -86,12 +102,12 @@ export default function PhaseGrid({ phases, parentView }: PhaseGridProps) {
                     <>
                       <button
                         onClick={() => openDialog(phase)}
-                        className="w-full rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+                        className="w-full min-h-[56px] rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 transition-colors"
                       >
                         📊 View Evidence & Badges
                       </button>
                       <button
-                        className="w-full rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-md hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        className="w-full min-h-[56px] rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
                       >
                         📥 Download Progress Report
                       </button>
@@ -99,18 +115,33 @@ export default function PhaseGrid({ phases, parentView }: PhaseGridProps) {
                   ) : (
                     <>
                       <button
-                        className="w-full rounded-full bg-gradient-to-r from-orange-400 to-sky-400 px-4 py-2 text-sm font-bold text-white shadow-md hover:from-orange-500 hover:to-sky-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        onClick={() => handlePhaseClick(phase.id)}
+                        className="w-full min-h-[56px] rounded-xl bg-gradient-to-r from-orange-400 to-sky-400 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:from-orange-500 hover:to-sky-500 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-all"
                       >
                         🎮 {progress > 0 ? "Resume Learning" : "Start Phase"}
                       </button>
                       <button
                         onClick={() => openDialog(phase)}
-                        className="w-full rounded-full border-2 border-gray-300 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                        className="w-full min-h-[56px] rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors"
                       >
                         📋 View Milestones
                       </button>
                     </>
                   )}
+                </div>
+              </div>
+
+              {/* Bottom progress bar */}
+              <div className="px-4 pb-4">
+                <div className="flex items-center justify-between text-xs mb-1.5">
+                  <span className="font-medium text-gray-600">Progress</span>
+                  <span className="font-bold text-gray-900">{progress}%</span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-orange-400 to-sky-400 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
               </div>
             </motion.div>

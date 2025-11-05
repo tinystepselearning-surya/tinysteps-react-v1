@@ -1,14 +1,16 @@
-import * as functions from "firebase-functions";
+import { beforeUserCreated } from "firebase-functions/v2/identity";
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-export const onAuthCreate = functions
-  .region("asia-south1")
-  .auth.user()
-  .onCreate(async (user) => {
+export const onAuthCreate = beforeUserCreated(
+  { region: "asia-south1" },
+  async (event) => {
+    const user = event.data;
+    if (!user) return;
+    
     const now = admin.firestore.FieldValue.serverTimestamp();
     await admin.firestore().doc(`users/${user.uid}`).set(
       {
