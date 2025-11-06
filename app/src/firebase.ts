@@ -21,13 +21,18 @@ if (import.meta.env.DEV) {
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
 }
 
-if (typeof window !== "undefined") {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider(
-      import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY || "debug"
-    ),
-    isTokenAutoRefreshEnabled: true,
-  });
+// Only initialize App Check if we have a real reCAPTCHA key (not in dev mode)
+if (typeof window !== "undefined" && import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY) {
+  try {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaV3Provider(
+        import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY
+      ),
+      isTokenAutoRefreshEnabled: true,
+    });
+  } catch (error) {
+    console.warn("App Check initialization failed:", error);
+  }
 }
 
 export const auth = getAuth(app);
