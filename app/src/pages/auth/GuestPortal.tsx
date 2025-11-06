@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
 
 type GuestRole = "kids" | "parents";
 
@@ -31,6 +32,21 @@ export default function GuestPortalPage() {
   const params = useParams<{ role: GuestRole }>();
   const role = params.role ?? "parents";
   const config = GUEST_CONFIG[role] ?? GUEST_CONFIG.parents;
+  const { user, role: userRole } = useAuth();
+
+  // If user is logged in, redirect them to their actual dashboard
+  if (user && userRole) {
+    const dashboardRoutes: Record<string, string> = {
+      admin: "/surya/dashboard",
+      "learning-partner": "/rm/dashboard",
+      teacher: "/teacher/dashboard",
+      parent: "/parent/dashboard",
+      student: "/kids/home",
+    };
+    
+    const redirectTo = dashboardRoutes[userRole] || "/parent/dashboard";
+    return <Navigate to={redirectTo} replace />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#fff7ed] to-[#f1f5f9]">

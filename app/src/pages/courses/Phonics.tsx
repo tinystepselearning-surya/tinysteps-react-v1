@@ -99,7 +99,7 @@ export default function Phonics() {
             {
               question: "How do you involve parents between classes?",
               answer:
-                "Communication is the cornerstone. After every session you’ll receive a WhatsApp voice note, the skill covered, and a 5-star focus indicator. A quick two-minute activity keeps the momentum without overwhelming working parents.",
+                "Communication is the cornerstone. After every session you'll receive updates on the skill covered and a focus indicator. A quick two-minute activity keeps the momentum without overwhelming working parents.",
             },
             {
               question: "What if my child already recognises letters?",

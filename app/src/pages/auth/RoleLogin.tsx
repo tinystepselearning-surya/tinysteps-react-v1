@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../firebase";
+import { useAuth } from "../../contexts/AuthContext";
 
 type RoleKey = "kids" | "parents" | "teachers" | "learning-managers";
 
@@ -37,7 +40,6 @@ const ROLE_CONFIG: Record<RoleKey, RoleConfig> = {
       "Download premium worksheets and voice-note recaps",
       "Manage payments and upcoming schedule",
     ],
-    guestLink: { label: "Browse as guest", to: "/guest/parents" },
   },
   teachers: {
     title: "Tiny Steps Teacher Login",
@@ -64,43 +66,108 @@ const ROLE_CONFIG: Record<RoleKey, RoleConfig> = {
 };
 
 const TARGET_ROUTES: Record<RoleKey, string> = {
-  kids: "/roles/kids",
-  parents: "/parents",
-  teachers: "/roles/teacher",
-  "learning-managers": "/roles/rm",
+  kids: "/kids/home",
+  parents: "/parent/dashboard",
+  teachers: "/teacher/dashboard",
+  "learning-managers": "/rm/dashboard",
 };
 
 export default function RoleLoginPage() {
   const params = useParams<{ role: RoleKey }>();
   const role = params.role as RoleKey | undefined;
   const config = role ? ROLE_CONFIG[role] : undefined;
-  const [status, setStatus] = useState<"idle" | "submitting" | "success">("idle");
+  const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
+  const [error, setError] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const headline = useMemo(() => {
     if (!config) return "";
     return config.title;
   }, [config]);
 
+  // If already logged in, redirect to appropriate dashboard
+  if (user) {
+    const redirectTo = role ? TARGET_ROUTES[role] : TARGET_ROUTES.parents;
+    return <Navigate to={redirectTo} replace />;
+  }
+
   if (!config) {
     return <Navigate to="/login/parents" replace />;
   }
 
-  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (status === "submitting") return;
+    
     setStatus("submitting");
-    setTimeout(() => {
-      if (typeof window !== "undefined" && role) {
-        window.sessionStorage.setItem("tinysteps-role", role);
-      }
+    setError("");
+
+    try {
+      // Authenticate with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      console.log("✅ Login successful:", userCredential.user.email);
+      
+      // Force token refresh to get custom claims
+      await userCredential.user.getIdToken(true);
+      const idTokenResult = await userCredential.user.getIdTokenResult();
+      const userRole = idTokenResult.claims.role as string;
+      
+      console.log("User role from claims:", userRole);
+      
       setStatus("success");
-      const redirectTo = role ? TARGET_ROUTES[role] : TARGET_ROUTES.parents;
+      
+      // Determine redirect based on role from claims, not URL param
+      let redirectTo = "/parent/dashboard"; // default
+      
+      if (userRole === "admin") {
+        redirectTo = "/surya/dashboard";
+      } else if (userRole === "learning-partner") {
+        redirectTo = "/rm/dashboard";
+      } else if (userRole === "teacher") {
+        redirectTo = "/teacher/dashboard";
+      } else if (userRole === "parent") {
+        redirectTo = "/parent/dashboard";
+      } else if (userRole === "student") {
+        redirectTo = "/kids/home";
+      }
+      
+      console.log("Redirecting to:", redirectTo);
+      
+      // Small delay for success message, then navigate
+      setTimeout(() => {
+        navigate(redirectTo, { replace: true });
+      }, 1000);
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setStatus("error");
+      
+      // User-friendly error messages
+      let errorMessage = "Sign-in failed. Please check your credentials.";
+      if (err.code === "auth/wrong-password") {
+        errorMessage = "Incorrect password. Please try again.";
+      } else if (err.code === "auth/user-not-found") {
+        errorMessage = "No account found with this email.";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Please enter a valid email address.";
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage = "Too many failed attempts. Please try again later.";
+      } else if (err.code === "auth/network-request-failed") {
+        errorMessage = "Network error. Please check your connection.";
+      } else if (err.code === "auth/invalid-credential") {
+        errorMessage = "Invalid email or password. Please try again.";
+      }
+      
+      setError(errorMessage);
+      
+      // Reset status after error shown
       setTimeout(() => {
         setStatus("idle");
-        navigate(redirectTo, { replace: true });
-      }, 1200);
-    }, 900);
+      }, 3000);
+    }
   };
 
   return (
@@ -159,8 +226,11 @@ export default function RoleLoginPage() {
                 <input
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none ring-[#1d4ed8]/20 transition focus:ring-2"
+                  disabled={status === "submitting"}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none ring-[#1d4ed8]/20 transition focus:ring-2 disabled:opacity-50"
                 />
               </div>
               <div>
@@ -168,8 +238,11 @@ export default function RoleLoginPage() {
                 <input
                   type="password"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none ring-[#1d4ed8]/20 transition focus:ring-2"
+                  disabled={status === "submitting"}
+                  className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none ring-[#1d4ed8]/20 transition focus:ring-2 disabled:opacity-50"
                 />
               </div>
 
@@ -177,14 +250,21 @@ export default function RoleLoginPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#2563eb]/20 transition hover:-translate-y-0.5"
+                disabled={status === "submitting"}
+                className="w-full rounded-full bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#2563eb]/20 transition hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {status === "submitting" ? "Signing in…" : config.cta}
               </button>
 
               {status === "success" && (
                 <p className="rounded-2xl bg-[#dcfce7] px-4 py-3 text-sm font-semibold text-[#047857]">
-                  Sign-in verified! Redirecting you to your workspace…
+                  ✓ Sign-in verified! Redirecting you to your workspace…
+                </p>
+              )}
+
+              {status === "error" && error && (
+                <p className="rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm font-semibold text-red-700">
+                  {error}
                 </p>
               )}
             </form>

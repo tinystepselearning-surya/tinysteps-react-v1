@@ -21,12 +21,15 @@ export default function AdminDashboard() {
   const navigation = [
     { name: "Overview", href: "/surya/dashboard", icon: "📊" },
     { name: "User Management", href: "/surya/users", icon: "👥" },
+    { name: "Courses", href: "/surya/courses", icon: "📚" },
     { name: "Parents", href: "/surya/parents", icon: "👨‍👩‍👧‍👦" },
     { name: "Students", href: "/surya/students", icon: "🎓" },
     { name: "Teachers", href: "/surya/teachers", icon: "👨‍🏫" },
     { name: "Learning Partners", href: "/surya/learning-partners", icon: "🤝" },
     { name: "Memberships", href: "/surya/memberships", icon: "💳" },
     { name: "Roles & Permissions", href: "/surya/roles", icon: "🔐" },
+    { name: "Audit Logs", href: "/surya/audit-logs", icon: "📋" },
+    { name: "System Settings", href: "/surya/settings", icon: "⚙️" },
   ];
 
   return (

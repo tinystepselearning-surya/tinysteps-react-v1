@@ -1,6 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { getUsers, createUser, updateUser, deleteUser, calculateAge } from "../../services/adminService";
-import { USER_ROLES, USER_ROLE_OPTIONS, type User, type CreateUserFormData, type UserRole, type Student } from "../../types/admin";
+import { USER_ROLES, USER_ROLE_OPTIONS, type User, type CreateUserFormData, type UserRole, type Student, type UserStatus } from "../../types/admin";
+import {
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  UserPlusIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  PencilSquareIcon,
+  TrashIcon
+} from "@heroicons/react/24/outline";
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
@@ -12,6 +21,11 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [filter, setFilter] = useState<UserRole | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<UserStatus | 'all'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<'name' | 'email' | 'created' | 'role'>('created');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [formData, setFormData] = useState<CreateUserFormData>({
     email: "",
     username: "",
@@ -154,7 +168,137 @@ export default function UserManagement() {
     setDateOfBirth("");
   };
 
-  const filteredUsers = filter === 'all' ? users : users.filter(u => u.role === filter);
+  // Advanced filtering and sorting
+  const filteredAndSortedUsers = useMemo(() => {
+    let result = users;
+
+    // Role filter
+    if (filter !== 'all') {
+      result = result.filter(u => u.role === filter);
+    }
+
+    // Status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(u => u.status === statusFilter);
+    }
+
+    // Search filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(u =>
+        u.displayName.toLowerCase().includes(term) ||
+        u.email.toLowerCase().includes(term) ||
+        u.username.toLowerCase().includes(term) ||
+        (u.phoneNumber && u.phoneNumber.includes(term))
+      );
+    }
+
+    // Sort
+    result = [...result].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.displayName.localeCompare(b.displayName);
+          break;
+        case 'email':
+          comparison = a.email.localeCompare(b.email);
+          break;
+        case 'created':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'role':
+          comparison = a.role.localeCompare(b.role);
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [users, filter, statusFilter, searchTerm, sortBy, sortOrder]);
+
+  // Bulk actions
+  const handleSelectAll = () => {
+    if (selectedUsers.size === filteredAndSortedUsers.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(filteredAndSortedUsers.map(u => u.uid)));
+    }
+  };
+
+  const handleSelectUser = (uid: string) => {
+    const newSelected = new Set(selectedUsers);
+    if (newSelected.has(uid)) {
+      newSelected.delete(uid);
+    } else {
+      newSelected.add(uid);
+    }
+    setSelectedUsers(newSelected);
+  };
+
+  const handleBulkStatusChange = async (newStatus: UserStatus) => {
+    if (selectedUsers.size === 0) {
+      alert("Please select users first");
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to change status to "${newStatus}" for ${selectedUsers.size} user(s)?`)) {
+      return;
+    }
+
+    try {
+      await Promise.all(
+        Array.from(selectedUsers).map(uid => updateUser(uid, { status: newStatus }))
+      );
+      alert(`${selectedUsers.size} user(s) status updated to ${newStatus}`);
+      setSelectedUsers(new Set());
+      loadUsers();
+    } catch (error) {
+      console.error("Failed to update users:", error);
+      alert("Failed to update some users. Check console for details.");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUsers.size === 0) {
+      alert("Please select users first");
+      return;
+    }
+
+    if (!confirm(`⚠️ WARNING: You are about to DELETE ${selectedUsers.size} user(s). This action CANNOT be undone. Are you absolutely sure?`)) {
+      return;
+    }
+
+    const confirmText = prompt(`Type "DELETE" to confirm deletion of ${selectedUsers.size} user(s):`);
+    if (confirmText !== "DELETE") {
+      alert("Deletion cancelled");
+      return;
+    }
+
+    try {
+      const errors: string[] = [];
+      for (const uid of selectedUsers) {
+        try {
+          await deleteUser(uid);
+        } catch (error: any) {
+          errors.push(`${uid}: ${error.message}`);
+        }
+      }
+
+      if (errors.length === 0) {
+        alert(`${selectedUsers.size} user(s) deleted successfully`);
+      } else {
+        alert(`Deleted ${selectedUsers.size - errors.length} user(s). Failed: ${errors.length}\n\nErrors:\n${errors.join('\n')}`);
+      }
+
+      setSelectedUsers(new Set());
+      loadUsers();
+    } catch (error) {
+      console.error("Failed to delete users:", error);
+      alert("Failed to delete users. Check console for details.");
+    }
+  };
+
+  const filteredUsers = filteredAndSortedUsers;
 
   const roleColors: Record<UserRole, string> = {
     'admin': "bg-red-500/20 text-red-400 border-red-500",
@@ -182,18 +326,196 @@ export default function UserManagement() {
   return (
     <div className="p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">User Management</h1>
-          <p className="text-gray-400">{users.length} total users</p>
+          <p className="text-gray-400">
+            {filteredUsers.length} of {users.length} users
+            {selectedUsers.size > 0 && ` • ${selectedUsers.size} selected`}
+          </p>
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="px-6 py-3 bg-gradient-to-r from-orange-500 to-sky-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+          className="px-6 py-3 bg-gradient-to-r from-orange-500 to-sky-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all flex items-center gap-2"
         >
-          + Create User
+          <UserPlusIcon className="h-5 w-5" />
+          Create User
         </button>
       </div>
+
+      {/* Search and Filters */}
+      <div className="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6 space-y-4">
+        <div className="flex items-center gap-3 mb-2">
+          <FunnelIcon className="h-5 w-5 text-gray-400" />
+          <h2 className="text-lg font-semibold text-white">Search & Filters</h2>
+        </div>
+
+        {/* Search Bar */}
+        <div className="relative">
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by name, email, username, or phone..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+            >
+              <XCircleIcon className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
+            <span className="text-sm text-gray-400 py-2">Role:</span>
+            <button
+              onClick={() => setFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                filter === 'all' ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              All ({users.length})
+            </button>
+            {USER_ROLE_OPTIONS.map(option => {
+              const count = users.filter(u => u.role === option.value).length;
+              return (
+                <button
+                  key={option.value}
+                  onClick={() => setFilter(option.value as UserRole)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    filter === option.value ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                  }`}
+                >
+                  {option.label} ({count})
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2">
+            <span className="text-sm text-gray-400 py-2">Status:</span>
+            <button
+              onClick={() => setStatusFilter('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'all' ? 'bg-orange-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setStatusFilter('active')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'active' ? 'bg-green-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Active ({users.filter(u => u.status === 'active').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('suspended')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'suspended' ? 'bg-red-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Suspended ({users.filter(u => u.status === 'suspended').length})
+            </button>
+            <button
+              onClick={() => setStatusFilter('pending')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                statusFilter === 'pending' ? 'bg-yellow-500 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              Pending ({users.filter(u => u.status === 'pending').length})
+            </button>
+          </div>
+        </div>
+
+        {/* Sort Options */}
+        <div className="flex gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Sort by:</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm focus:ring-2 focus:ring-orange-500"
+            >
+              <option value="created">Created Date</option>
+              <option value="name">Name</option>
+              <option value="email">Email</option>
+              <option value="role">Role</option>
+            </select>
+          </div>
+          <button
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white text-sm hover:bg-gray-600 transition-colors"
+          >
+            {sortOrder === 'asc' ? '↑ Ascending' : '↓ Descending'}
+          </button>
+        </div>
+
+        {/* Clear Filters */}
+        {(searchTerm || filter !== 'all' || statusFilter !== 'all' || sortBy !== 'created' || sortOrder !== 'desc') && (
+          <button
+            onClick={() => {
+              setSearchTerm("");
+              setFilter('all');
+              setStatusFilter('all');
+              setSortBy('created');
+              setSortOrder('desc');
+            }}
+            className="text-sm text-orange-400 hover:text-orange-300 underline"
+          >
+            Clear all filters
+          </button>
+        )}
+      </div>
+
+      {/* Bulk Actions */}
+      {selectedUsers.size > 0 && (
+        <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <CheckCircleIcon className="h-6 w-6 text-orange-400" />
+              <span className="text-white font-medium">
+                {selectedUsers.size} user(s) selected
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleBulkStatusChange('active')}
+                className="px-4 py-2 bg-green-500/20 text-green-400 border border-green-500/50 rounded-lg hover:bg-green-500/30 transition-colors text-sm font-medium"
+              >
+                Activate
+              </button>
+              <button
+                onClick={() => handleBulkStatusChange('suspended')}
+                className="px-4 py-2 bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 rounded-lg hover:bg-yellow-500/30 transition-colors text-sm font-medium"
+              >
+                Suspend
+              </button>
+              <button
+                onClick={handleBulkDelete}
+                className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg hover:bg-red-500/30 transition-colors text-sm font-medium"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setSelectedUsers(new Set())}
+                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="mb-6 flex gap-2">
@@ -222,6 +544,14 @@ export default function UserManagement() {
         <table className="w-full">
           <thead className="bg-gray-900">
             <tr>
+              <th className="px-6 py-4">
+                <input
+                  type="checkbox"
+                  checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.length}
+                  onChange={handleSelectAll}
+                  className="w-4 h-4 text-orange-500 bg-gray-700 border-gray-600 rounded focus:ring-orange-500"
+                />
+              </th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">User</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Email</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Username</th>
@@ -234,13 +564,32 @@ export default function UserManagement() {
           <tbody className="divide-y divide-gray-700">
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-400">
-                  No users found
+                <td colSpan={8} className="px-6 py-12 text-center">
+                  <div className="flex flex-col items-center gap-3">
+                    <MagnifyingGlassIcon className="h-12 w-12 text-gray-600" />
+                    <p className="text-gray-400">No users found</p>
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="text-sm text-orange-400 hover:text-orange-300 underline"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ) : (
               filteredUsers.map((user) => (
                 <tr key={user.uid} className="hover:bg-gray-750 transition-colors">
+                  <td className="px-6 py-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.has(user.uid)}
+                      onChange={() => handleSelectUser(user.uid)}
+                      className="w-4 h-4 text-orange-500 bg-gray-700 border-gray-600 rounded focus:ring-orange-500"
+                    />
+                  </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-gradient-to-r from-orange-500 to-sky-500 flex items-center justify-center text-white font-bold">
@@ -291,24 +640,17 @@ export default function UserManagement() {
                           setSelectedUser(user);
                           setShowEditModal(true);
                         }}
-                        className="px-3 py-1 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                        className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"
+                        title="Edit user"
                       >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setShowPasswordModal(true);
-                        }}
-                        className="px-3 py-1 text-yellow-400 hover:bg-yellow-500/10 rounded-lg transition-colors"
-                      >
-                        Reset Password
+                        <PencilSquareIcon className="h-5 w-5" />
                       </button>
                       <button
                         onClick={() => handleDeleteUser(user.uid)}
-                        className="px-3 py-1 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                        className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                        title="Delete user"
                       >
-                        Delete
+                        <TrashIcon className="h-5 w-5" />
                       </button>
                     </div>
                   </td>

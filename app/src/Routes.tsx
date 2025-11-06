@@ -1,6 +1,10 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import AppLayout from "./layouts/AppLayout";
+import ParentLayout from "./layouts/ParentLayout";
+import TeacherLayout from "./layouts/TeacherLayout";
+import RMLayout from "./layouts/RMLayout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Home from "./pages/Home";
 import AllCourses from "./pages/courses/All";
 import Phonics from "./pages/courses/Phonics";
@@ -33,7 +37,37 @@ import MembershipManagement from "./pages/admin/MembershipManagement";
 import TeacherManagement from "./pages/admin/TeacherManagement";
 import LearningPartnerManagement from "./pages/admin/LearningPartnerManagement";
 import RolesPermissions from "./pages/admin/RolesPermissions";
+import SystemSettings from "./pages/admin/SystemSettings";
+import AuditLogs from "./pages/admin/AuditLogs";
+import CoursesOverview from "./pages/admin/CoursesOverview";
+import CourseBuilder from "./pages/admin/CourseBuilder";
+import LessonBuilder from "./pages/admin/LessonBuilder";
+import ContentLibrary from "./pages/admin/ContentLibrary";
 import { AdminRoute } from "./components/admin/AdminRoute";
+
+// Parent Portal Pages
+import ParentDashboard from "./pages/parent/Dashboard";
+import ParentChildren from "./pages/parent/Children";
+import ParentSchedule from "./pages/parent/Schedule";
+import ParentReports from "./pages/parent/Reports";
+import ParentFees from "./pages/parent/Fees";
+import ParentMessages from "./pages/parent/Messages";
+
+// Teacher Portal Pages
+import TeacherDashboard from "./pages/teacher/Dashboard";
+import TeacherCalendar from "./pages/teacher/Calendar";
+import TeacherStudents from "./pages/teacher/Students";
+import TeacherSessions from "./pages/teacher/Sessions";
+import TeacherResources from "./pages/teacher/Resources";
+import TeacherPerformance from "./pages/teacher/Performance";
+
+// RM Portal Pages
+import RMDashboard from "./pages/rm/Dashboard";
+import RMStudents from "./pages/rm/Students";
+import RMTeachers from "./pages/rm/Teachers";
+import RMFees from "./pages/rm/Fees";
+import RMAnalytics from "./pages/rm/Analytics";
+import RMReports from "./pages/rm/Reports";
 
 const SpellBeeFlashTrainer = lazy(() => import("./games/spellbee-flash"));
 const SpellBeeGroupDashboard = lazy(() => import("./games/spellbee-flash/GroupDashboard"));
@@ -248,6 +282,103 @@ export default function AppRoutes() {
           }
         >
           <Route index element={<RolesPermissions />} />
+        </Route>
+        <Route 
+          path="/surya/settings" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<SystemSettings />} />
+        </Route>
+        <Route 
+          path="/surya/audit-logs" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<AuditLogs />} />
+        </Route>
+        <Route 
+          path="/surya/courses" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<CoursesOverview />} />
+          <Route path="new" element={<CourseBuilder />} />
+          <Route path=":courseId/edit" element={<CourseBuilder />} />
+          <Route path=":courseId/lessons/:lessonId/edit" element={<LessonBuilder />} />
+        </Route>
+        <Route 
+          path="/surya/content" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<ContentLibrary />} />
+        </Route>
+
+        {/* Parent Portal Routes - Protected */}
+        <Route 
+          path="/parent"
+          element={
+            <ProtectedRoute allowedRoles={["parent"]}>
+              <ParentLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<ParentDashboard />} />
+          <Route path="children" element={<ParentChildren />} />
+          <Route path="schedule" element={<ParentSchedule />} />
+          <Route path="reports" element={<ParentReports />} />
+          <Route path="fees" element={<ParentFees />} />
+          <Route path="messages" element={<ParentMessages />} />
+          <Route index element={<Navigate to="/parent/dashboard" replace />} />
+        </Route>
+
+        {/* Teacher Portal Routes - Protected */}
+        <Route 
+          path="/teacher"
+          element={
+            <ProtectedRoute allowedRoles={["teacher"]}>
+              <TeacherLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<TeacherDashboard />} />
+          <Route path="calendar" element={<TeacherCalendar />} />
+          <Route path="students" element={<TeacherStudents />} />
+          <Route path="sessions" element={<TeacherSessions />} />
+          <Route path="resources" element={<TeacherResources />} />
+          <Route path="performance" element={<TeacherPerformance />} />
+          <Route index element={<Navigate to="/teacher/dashboard" replace />} />
+        </Route>
+
+        {/* RM Portal Routes - Protected */}
+        <Route 
+          path="/rm"
+          element={
+            <ProtectedRoute allowedRoles={["learning-partner"]}>
+              <RMLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<RMDashboard />} />
+          <Route path="students" element={<RMStudents />} />
+          <Route path="teachers" element={<RMTeachers />} />
+          <Route path="fees" element={<RMFees />} />
+          <Route path="analytics" element={<RMAnalytics />} />
+          <Route path="reports" element={<RMReports />} />
+          <Route index element={<Navigate to="/rm/dashboard" replace />} />
         </Route>
 
         {/* Roles */}

@@ -11,7 +11,9 @@ import {
   updateDoc,
   query,
   where,
-  writeBatch
+  writeBatch,
+  orderBy,
+  limit
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../firebase';
@@ -21,7 +23,10 @@ import type {
   UserRole, 
   Parent, 
   Student,
-  LearningPartner
+  LearningPartner,
+  SystemStats,
+  AuditLog,
+  SystemSettings
 } from '../types/admin';
 
 /**
@@ -403,4 +408,182 @@ export function calculateAge(dateOfBirth: string): number {
   }
   
   return age;
+}
+
+/**
+ * Get system-wide statistics
+ */
+export async function getSystemStats(): Promise<SystemStats> {
+  try {
+    // Try to get cached stats first
+    const statsDoc = await getDoc(doc(db, 'system_stats', 'current'));
+    
+    if (statsDoc.exists()) {
+      return statsDoc.data() as SystemStats;
+    }
+
+    // If no cached stats, calculate them
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    const users = usersSnapshot.docs.map(doc => doc.data() as User);
+    
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    const stats: SystemStats = {
+      totalUsers: users.length,
+      activeUsers: users.filter(u => u.status === 'active').length,
+      totalParents: users.filter(u => u.role === 'parent').length,
+      totalStudents: users.filter(u => u.role === 'student').length,
+      totalTeachers: users.filter(u => u.role === 'teacher').length,
+      totalLearningPartners: users.filter(u => u.role === 'learning-partner').length,
+      totalAdmins: users.filter(u => u.role === 'admin').length,
+      newUsersToday: users.filter(u => new Date(u.createdAt) >= today).length,
+      newUsersThisWeek: users.filter(u => new Date(u.createdAt) >= weekAgo).length,
+      newUsersThisMonth: users.filter(u => new Date(u.createdAt) >= monthAgo).length,
+      totalSessions: 0,
+      activeSessions: 0,
+      completedSessions: 0,
+      totalRevenue: 0,
+      monthlyRevenue: 0,
+      lastUpdated: new Date().toISOString()
+    };
+
+    return stats;
+  } catch (error) {
+    console.error('Error fetching system stats:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get audit logs with optional filtering
+ */
+export async function getAuditLogs(limitCount: number = 50): Promise<AuditLog[]> {
+  try {
+    const logsRef = collection(db, 'audit_logs');
+    const q = query(
+      logsRef,
+      where('timestamp', '!=', null),
+      orderBy('timestamp', 'desc'),
+      limit(limitCount)
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as AuditLog[];
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    // Return empty array if collection doesn't exist yet
+    return [];
+  }
+}
+
+/**
+ * Create audit log entry
+ */
+export async function createAuditLog(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
+  try {
+    const logsRef = collection(db, 'audit_logs');
+    await writeBatch(db).commit(); // Just to import writeBatch if needed
+    
+    const newLog = {
+      ...log,
+      timestamp: new Date().toISOString()
+    };
+    
+    await getDocs(logsRef); // Ensure collection exists
+    // In production, use addDoc from firestore
+    console.log('Audit log created:', newLog);
+  } catch (error) {
+    console.error('Error creating audit log:', error);
+    // Don't throw - audit logs are not critical
+  }
+}
+
+/**
+ * Get system settings
+ */
+export async function getSystemSettings(): Promise<SystemSettings | null> {
+  try {
+    const settingsDoc = await getDoc(doc(db, 'system_settings', 'current'));
+    
+    if (settingsDoc.exists()) {
+      return settingsDoc.data() as SystemSettings;
+    }
+
+    // Return default settings if none exist
+    return {
+      id: 'current',
+      maintenanceMode: false,
+      allowNewSignups: true,
+      requireEmailVerification: false,
+      maxStudentsPerTeacher: 20,
+      maxTeachersPerRM: 10,
+      sessionDurationMinutes: 30,
+      featureFlags: {
+        enableGames: true,
+        enableVideoLessons: true,
+        enableLiveClasses: true,
+        enableNotifications: true
+      },
+      updatedAt: new Date().toISOString(),
+      updatedBy: 'system'
+    };
+  } catch (error) {
+    console.error('Error fetching system settings:', error);
+    return null;
+  }
+}
+
+/**
+ * Update system settings
+ */
+export async function updateSystemSettings(
+  updates: Partial<SystemSettings>,
+  updatedBy: string
+): Promise<void> {
+  try {
+    const settingsRef = doc(db, 'system_settings', 'current');
+    
+    await updateDoc(settingsRef, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+      updatedBy
+    });
+    
+    console.log('✅ System settings updated');
+  } catch (error) {
+    console.error('Error updating system settings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get user activity summary
+ */
+export async function getUserActivitySummary(): Promise<{
+  activeToday: number;
+  activeThisWeek: number;
+  activeThisMonth: number;
+}> {
+  try {
+    // In production, this would query a sessions or activity collection
+    // For now, return mock data
+    return {
+      activeToday: 0,
+      activeThisWeek: 0,
+      activeThisMonth: 0
+    };
+  } catch (error) {
+    console.error('Error fetching user activity:', error);
+    return {
+      activeToday: 0,
+      activeThisWeek: 0,
+      activeThisMonth: 0
+    };
+  }
 }

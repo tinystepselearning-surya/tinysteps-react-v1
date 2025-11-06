@@ -166,6 +166,114 @@ export interface CreateUserFormData {
   lastName?: string; // For parents
 }
 
+// System Statistics
+export interface SystemStats {
+  totalUsers: number;
+  activeUsers: number;
+  totalParents: number;
+  totalStudents: number;
+  totalTeachers: number;
+  totalLearningPartners: number;
+  totalAdmins: number;
+  newUsersToday: number;
+  newUsersThisWeek: number;
+  newUsersThisMonth: number;
+  totalSessions: number;
+  activeSessions: number;
+  completedSessions: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  lastUpdated: string;
+}
+
+// User Analytics
+export interface UserAnalytics {
+  userId: string;
+  displayName: string;
+  role: UserRole;
+  lastLogin?: string;
+  loginCount: number;
+  sessionsCompleted?: number;
+  totalActivityTime?: number; // in minutes
+  averageSessionDuration?: number; // in minutes
+  createdAt: string;
+}
+
+// Audit Log Entry
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  action: AuditAction;
+  entityType: 'user' | 'student' | 'teacher' | 'parent' | 'session' | 'course' | 'system';
+  entityId?: string;
+  details: string;
+  ipAddress?: string;
+  metadata?: Record<string, any>;
+}
+
+// Audit Actions
+export type AuditAction = 
+  | 'user_created'
+  | 'user_updated'
+  | 'user_deleted'
+  | 'user_login'
+  | 'user_logout'
+  | 'role_changed'
+  | 'assignment_created'
+  | 'assignment_removed'
+  | 'course_assigned'
+  | 'course_removed'
+  | 'session_created'
+  | 'session_completed'
+  | 'session_cancelled'
+  | 'settings_updated'
+  | 'system_config_changed';
+
+// System Health
+export interface SystemHealth {
+  status: 'healthy' | 'degraded' | 'down';
+  uptime: number; // percentage
+  responseTime: number; // ms
+  errorRate: number; // percentage
+  activeConnections: number;
+  databaseStatus: 'connected' | 'disconnected' | 'error';
+  storageUsed: number; // GB
+  storageLimit: number; // GB
+  lastHealthCheck: string;
+}
+
+// Growth Metrics
+export interface GrowthMetrics {
+  period: 'day' | 'week' | 'month' | 'year';
+  userGrowth: number; // percentage
+  revenueGrowth: number; // percentage
+  engagementGrowth: number; // percentage
+  retentionRate: number; // percentage
+  churnRate: number; // percentage
+}
+
+// System Settings
+export interface SystemSettings {
+  id: string;
+  maintenanceMode: boolean;
+  allowNewSignups: boolean;
+  requireEmailVerification: boolean;
+  maxStudentsPerTeacher: number;
+  maxTeachersPerRM: number;
+  sessionDurationMinutes: number;
+  featureFlags: {
+    enableGames: boolean;
+    enableVideoLessons: boolean;
+    enableLiveClasses: boolean;
+    enableNotifications: boolean;
+  };
+  updatedAt: string;
+  updatedBy: string;
+}
+
 // Firestore Collection Names
 export const COLLECTIONS = {
   USERS: 'users',
@@ -177,5 +285,8 @@ export const COLLECTIONS = {
   ADMINS: 'admins',
   COURSES: 'courses',
   ENROLLMENTS: 'enrollments',
-  SESSIONS: 'sessions'
+  SESSIONS: 'sessions',
+  AUDIT_LOGS: 'audit_logs',
+  SYSTEM_STATS: 'system_stats',
+  SYSTEM_SETTINGS: 'system_settings'
 } as const;

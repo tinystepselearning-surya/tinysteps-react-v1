@@ -2,7 +2,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import WhatsAppWidget from "../components/WhatsAppWidget";
 import BackToTop from "../components/BackToTop";
 
 export default function AppLayout() {
@@ -11,8 +10,6 @@ export default function AppLayout() {
   const gameRoutes = ["/kids/games/balloon-pop", "/kids/games/spellbee-flash", "/kids/games/meaning-match", "/kids/games/quick-meaning", "/kids/games/boss-level"];
   const isDashboardRoute = dashboardRoutes.some((path) => location.pathname.startsWith(path));
   const isGameRoute = gameRoutes.some((path) => location.pathname.startsWith(path));
-  const widgetHiddenRoutes = [...dashboardRoutes, "/kids"];
-  const hideWidget = widgetHiddenRoutes.some((path) => location.pathname.startsWith(path));
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -25,7 +22,6 @@ export default function AppLayout() {
         <Outlet />
       </main>
       {!isDashboardRoute && !isGameRoute && <Footer />}
-      {!hideWidget && !isDashboardRoute && !isGameRoute && <WhatsAppWidget />}
       <BackToTop />
     </div>
   );

@@ -113,7 +113,6 @@ const MONTHLY_HIGHLIGHTS = [
 ];
 const CONTACT_INFO = [
     { label: "Learning Manager", value: "Saanvi Gupta · +91 98200 11234" },
-    { label: "WhatsApp updates", value: "Weekdays · 9 AM to 7 PM" },
     { label: "Email", value: "support@tinysteps.in" },
 ];
 function ProgressBar({ value }) {
