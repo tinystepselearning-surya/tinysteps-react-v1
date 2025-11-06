@@ -1,7 +1,8 @@
+import { useCallback } from "react";
 import { useLegacyPage } from "../../hooks/useLegacyPage";
 
 export default function BlogIndex() {
-  const transform = (doc: Document) => {
+  const transform = useCallback((doc: Document) => {
     doc.querySelector("header.site-header")?.remove();
     doc.querySelector("footer.footer")?.remove();
 
@@ -27,7 +28,7 @@ export default function BlogIndex() {
         anchor.setAttribute("href", replacement);
       }
     });
-  };
+  }, []);
 
   const { html, loading, error } = useLegacyPage({
     path: "/blog/index.html",

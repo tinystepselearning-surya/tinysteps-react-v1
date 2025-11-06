@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { useLegacyPage } from "../../hooks/useLegacyPage";
 
@@ -95,7 +96,7 @@ export default function BlogArticle() {
   const hasConfig = Object.prototype.hasOwnProperty.call(BLOG_PAGES, slug);
   const config = hasConfig ? BLOG_PAGES[slug as keyof typeof BLOG_PAGES] : null;
 
-  const transform = (doc: Document) => {
+  const transform = useCallback((doc: Document) => {
     doc.querySelector("header.site-header")?.remove();
     doc.querySelector("footer.footer")?.remove();
 
@@ -121,7 +122,7 @@ export default function BlogArticle() {
         anchor.setAttribute("href", replacement);
       }
     });
-  };
+  }, []);
 
   const { html, loading, error } = useLegacyPage(
     config
