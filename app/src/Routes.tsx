@@ -14,6 +14,8 @@ import Pricing from "./pages/Pricing";
 import Curriculum from "./pages/Curriculum";
 import FAQ from "./pages/FAQ";
 import RoleLoginPage from "./pages/auth/RoleLogin";
+import ParentLogin from "./pages/ParentLogin";
+import ParentLoginTest from "./pages/ParentLoginTest";
 import GuestPortalPage from "./pages/auth/GuestPortal";
 import TeacherPortal from "./pages/roles/TeacherPortal";
 import LearningManagerPortal from "./pages/roles/LearningManagerPortal";
@@ -43,6 +45,9 @@ import CoursesOverview from "./pages/admin/CoursesOverview";
 import CourseBuilder from "./pages/admin/CourseBuilder";
 import LessonBuilder from "./pages/admin/LessonBuilder";
 import ContentLibrary from "./pages/admin/ContentLibrary";
+import MigrateParents from "./pages/admin/MigrateParents";
+import SyncUserClaims from "./pages/admin/SyncUserClaims";
+import TestAuth from "./pages/admin/TestAuth";
 import { AdminRoute } from "./components/admin/AdminRoute";
 
 // Parent Portal Pages
@@ -61,7 +66,7 @@ import TeacherSessions from "./pages/teacher/Sessions";
 import TeacherResources from "./pages/teacher/Resources";
 import TeacherPerformance from "./pages/teacher/Performance";
 
-// RM Portal Pages
+// Learning Partner Portal Pages
 import RMDashboard from "./pages/rm/Dashboard";
 import RMStudents from "./pages/rm/Students";
 import RMTeachers from "./pages/rm/Teachers";
@@ -193,7 +198,7 @@ export default function AppRoutes() {
             </Suspense>
           } 
         />
-        <Route path="/parents" element={<Navigate to="/guest/parents" replace />} />
+        <Route path="/parents" element={<Navigate to="/login/parents" replace />} />
         <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
@@ -326,6 +331,27 @@ export default function AppRoutes() {
         >
           <Route index element={<ContentLibrary />} />
         </Route>
+        <Route 
+          path="/surya/migrate-parents" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<MigrateParents />} />
+        </Route>
+        <Route 
+          path="/surya/sync-claims" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<SyncUserClaims />} />
+        </Route>
+        <Route path="/test-auth" element={<TestAuth />} />
 
         {/* Parent Portal Routes - Protected */}
         <Route 
@@ -363,7 +389,7 @@ export default function AppRoutes() {
           <Route index element={<Navigate to="/teacher/dashboard" replace />} />
         </Route>
 
-        {/* RM Portal Routes - Protected */}
+        {/* Learning Partner Portal Routes - Protected */}
         <Route 
           path="/rm"
           element={
@@ -393,8 +419,10 @@ export default function AppRoutes() {
         <Route path="/roles/kids/games-gallery" element={<KidsPhonicsJourney />} /> {/* Phase 0-10 journey */}
 
         {/* Auth */}
-        <Route path="/login" element={<Navigate to="/login/parents" replace />} />
+        <Route path="/login" element={<Navigate to="/parent-login" replace />} />
+        <Route path="/parent-login" element={<ParentLogin />} />
         <Route path="/login/:role" element={<RoleLoginPage />} />
+        <Route path="/parent-login-test" element={<ParentLoginTest />} />
         <Route path="/guest" element={<Navigate to="/guest/parents" replace />} />
         <Route path="/guest/:role" element={<GuestPortalPage />} />
 

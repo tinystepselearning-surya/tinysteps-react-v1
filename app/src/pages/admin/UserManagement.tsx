@@ -140,6 +140,13 @@ export default function UserManagement() {
   };
 
   const handleDeleteUser = async (uid: string) => {
+    console.log('handleDeleteUser called with uid:', uid, 'type:', typeof uid);
+    
+    if (!uid) {
+      alert('Invalid user ID');
+      return;
+    }
+    
     if (!confirm("Are you sure you want to delete this user?")) return;
     
     try {

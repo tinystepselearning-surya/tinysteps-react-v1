@@ -43,7 +43,7 @@ export default function Hero() {
           </p>
           <div className="mt-8 inline-flex flex-col gap-3 sm:flex-row">
             <Link
-              to="/login/parents"
+              to="/parent-login"
               className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-base font-extrabold uppercase tracking-[0.18em] text-[#e05c0a] shadow-lg shadow-black/30 transition hover:-translate-y-0.5 text-center"
             >
               Book a parent trial

@@ -36,7 +36,7 @@ export default function RMLayout() {
             <div className="flex items-center">
               <Link to="/rm/dashboard" className="flex items-center">
                 <span className="text-2xl font-bold text-orange-600">TinySteps</span>
-                <span className="ml-2 text-sm text-gray-500">RM Portal</span>
+                <span className="ml-2 text-sm text-gray-500">Learning Partner Portal</span>
               </Link>
             </div>
             

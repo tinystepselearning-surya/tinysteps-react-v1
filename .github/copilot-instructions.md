@@ -4,7 +4,7 @@ Welcome to the Tinysteps Online School Web App! This document provides essential
 
 ## Project Overview
 
-This project is an online school web application designed to support multiple user roles and interactive learning experiences. The primary focus is on teaching kids phonics, grammar, and English through engaging web-based games. The platform also includes features for teachers, parents, learning managers, and administrators to manage user interactions and content.
+This project is an online school web application designed to support multiple user roles and interactive learning experiences. The primary focus is on teaching kids phonics, grammar, and English through engaging web-based games. The platform also includes features for teachers, parents, learning partners, and administrators to manage user interactions and content.
 
 ### Key Technologies
 - **React**: Frontend framework for building user interfaces.
@@ -17,7 +17,7 @@ This project is an online school web application designed to support multiple us
 - **Kids**: Access interactive games and learning activities.
 - **Teachers**: Manage lesson plans and track student progress.
 - **Parents**: Monitor their child's learning journey.
-- **Learning Managers**: Oversee curriculum and content creation.
+- **Learning Partners**: Oversee curriculum and content creation.
 - **Admins**: Handle user management and platform settings.
 
 ### Directory Structure

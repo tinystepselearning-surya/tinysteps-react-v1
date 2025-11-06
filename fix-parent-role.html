@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fix Parent Role</title>
+</head>
+<body>
+    <h1>Fix Parent Role</h1>
+    <button id="fixBtn">Fix Parent User Role</button>
+    <div id="output"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getAuth, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDajUl8nqO-FQbVg7rHNX9OcRPpzlGt2eQ",
+            authDomain: "tinysteps-react-v1.firebaseapp.com",
+            projectId: "tinysteps-react-v1",
+            storageBucket: "tinysteps-react-v1.firebasestorage.app",
+            messagingSenderId: "100882218395",
+            appId: "1:100882218395:web:3e4e22c2a33ea892dd70ee",
+            measurementId: "G-L7PBT9TE78"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        const output = document.getElementById('output');
+
+        document.getElementById('fixBtn').addEventListener('click', async () => {
+            try {
+                output.innerHTML = '<p>⏳ Fixing parent user...</p>';
+
+                // Update Firestore document to add role field
+                const uid = '2asSYwm7UkgOoegh6KQNPxfOZ3q1';
+                const userRef = doc(db, 'users', uid);
+                
+                await updateDoc(userRef, {
+                    role: 'parent'
+                });
+
+                output.innerHTML = `
+                    <p style="color: green;">✅ Successfully added role: 'parent' to Firestore document!</p>
+                    <p>UID: ${uid}</p>
+                    <p>Email: parentv1@tinysteps.com</p>
+                    <p><strong>Note:</strong> Custom claims can only be set via Cloud Functions.</p>
+                    <p>You may need to call the syncAllUserClaims function to sync the claims.</p>
+                `;
+            } catch (error) {
+                output.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

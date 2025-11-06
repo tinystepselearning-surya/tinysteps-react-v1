@@ -13,10 +13,11 @@ import {
   where,
   writeBatch,
   orderBy,
-  limit
+  limit,
+  serverTimestamp
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../firebase';
+import { db, functions, auth } from '../firebase';
 import type { 
   CreateUserFormData, 
   User, 
@@ -127,7 +128,10 @@ export async function getUsers(role?: UserRole): Promise<User[]> {
     }
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => doc.data() as User);
+    return snapshot.docs.map(doc => ({
+      uid: doc.id,
+      ...doc.data()
+    } as User));
   } catch (error) {
     console.error('Error fetching users:', error);
     throw error;
@@ -154,6 +158,12 @@ export async function updateUser(uid: string, updates: Partial<User>): Promise<v
   try {
     const userRef = doc(db, 'users', uid);
     
+    // Get current admin user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Must be authenticated to update users');
+    }
+    
     // Filter out undefined values to prevent Firestore errors
     const cleanUpdates: Record<string, any> = {};
     Object.keys(updates).forEach(key => {
@@ -165,7 +175,8 @@ export async function updateUser(uid: string, updates: Partial<User>): Promise<v
     
     await updateDoc(userRef, {
       ...cleanUpdates,
-      updatedAt: new Date().toISOString()
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser.uid
     });
     console.log(`✅ User updated: ${uid}`);
   } catch (error) {
@@ -176,44 +187,40 @@ export async function updateUser(uid: string, updates: Partial<User>): Promise<v
 
 /**
  * Delete a user (both Auth and Firestore)
+ * Uses Cloud Function to delete with Admin SDK
  */
 export async function deleteUser(uid: string): Promise<void> {
   try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    if (!userDoc.exists()) {
+    // Validate uid
+    if (!uid) {
+      throw new Error('User ID is required');
+    }
+
+    console.log('Deleting user with UID:', uid);
+    
+    const adminDeleteUserFn = httpsCallable(functions, 'adminDeleteUser');
+    
+    const result = await adminDeleteUserFn({ uid });
+    
+    console.log(`✅ User deleted:`, (result.data as any).displayName);
+  } catch (error: any) {
+    console.error('Error deleting user via Cloud Function:', error);
+    
+    // Extract readable error message
+    if (error.code === 'functions/not-found') {
       throw new Error('User not found');
     }
-
-    const userData = userDoc.data() as User;
-    const batch = writeBatch(db);
-
-    // 1. Delete user document
-    batch.delete(doc(db, 'users', uid));
-
-    // 2. Delete username mapping
-    batch.delete(doc(db, 'usernames', userData.usernameLower));
-
-    // 3. Handle role-specific cleanup
-    if (userData.role === 'student') {
-      const studentData = userData as Student;
-      // Remove from parent's children array
-      if (studentData.parentId) {
-        const parentRef = doc(db, 'users', studentData.parentId);
-        const parentDoc = await getDoc(parentRef);
-        if (parentDoc.exists()) {
-          const parentData = parentDoc.data() as Parent;
-          batch.update(parentRef, {
-            children: parentData.children.filter(id => id !== uid)
-          });
-        }
-      }
+    if (error.code === 'functions/invalid-argument') {
+      throw new Error(error.message || 'Invalid user data or cannot delete own account');
     }
-
-    await batch.commit();
-    console.log(`✅ User deleted: ${uid}`);
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    throw error;
+    if (error.code === 'functions/permission-denied') {
+      throw new Error('You do not have permission to delete users');
+    }
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be logged in to delete users');
+    }
+    
+    throw new Error(error.message || 'Failed to delete user');
   }
 }
 

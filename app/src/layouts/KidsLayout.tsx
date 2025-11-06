@@ -13,7 +13,7 @@ export default function KidsLayout() {
   const location = useLocation();
 
   const navigation = [
-    { name: "Home", href: "/kids/home", icon: HomeIcon, color: "bg-purple-500" },
+    { name: "Home", href: "/kids/games", icon: HomeIcon, color: "bg-purple-500" },
     { name: "Games", href: "/kids/games", icon: SparklesIcon, color: "bg-pink-500" },
     { name: "My Learning", href: "/kids/learning", icon: BookOpenIcon, color: "bg-blue-500" },
     { name: "Rewards", href: "/kids/rewards", icon: TrophyIcon, color: "bg-yellow-500" },
@@ -28,7 +28,7 @@ export default function KidsLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-20">
             <div className="flex items-center">
-              <Link to="/kids/home" className="flex items-center">
+              <Link to="/kids/games" className="flex items-center">
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                   <StarIcon className="h-7 w-7 text-white" />
                 </div>

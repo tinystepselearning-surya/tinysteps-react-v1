@@ -109,17 +109,17 @@ const UPCOMING_EVENTS = [
 const FEE_STATUS = {
   badge: "Due soon",
   amount: "₹1,050 · 3 classes left",
-  detail: "Learning Manager will confirm the top-up reminder on Thursday.",
+  detail: "Learning Partner will confirm the top-up reminder on Thursday.",
 };
 
 const MONTHLY_HIGHLIGHTS = [
   "Kavya mastered sh/ch digraphs and can explain tricky words independently.",
   "Aarav edited dialogue tags accurately using question mark pause practice.",
-  "Riya’s voice projection improved; showcase clip shared with you on portal.",
+  "Riya's voice projection improved; showcase clip shared with you on portal.",
 ];
 
-const CONTACT_INFO = [
-  { label: "Learning Manager", value: "Saanvi Gupta · +91 98200 11234" },
+const contacts = [
+  { label: "Learning Partner", value: "Saanvi Gupta · +91 98200 11234" },
   { label: "Email", value: "support@tinysteps.in" },
 ];
 
@@ -177,9 +177,9 @@ export default function Parents() {
       <button className="inline-flex items-center justify-center rounded-full border border-[#0b7ad7]/20 bg-white px-4 py-2 text-sm font-semibold text-[#0b7ad7] shadow-sm shadow-[#0b7ad7]/10 transition hover:bg-[#0b7ad7]/10">
         Download monthly summary
       </button>
-      <button className="inline-flex items-center justify-center rounded-full bg-[#0b7ad7] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#0b7ad7]/30 transition hover:bg-[#0b6ac0]">
-        Message Learning Manager
-      </button>
+                  <button className="inline-flex items-center justify-center rounded-full bg-[#0b7ad7] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#0b7ad7]/30 transition hover:bg-[#0b6ac0]">
+              Message Learning Partner
+            </button>
     </div>
   );
 
@@ -210,7 +210,7 @@ export default function Parents() {
       <section className="rounded-3xl border border-[#0b7ad7]/10 bg-white p-6 shadow-xl shadow-slate-900/8">
         <h2 className="text-base font-semibold text-slate-900">Need help?</h2>
         <ul className="mt-4 space-y-3 text-sm text-slate-600">
-          {CONTACT_INFO.map((row) => (
+          {contacts.map((row) => (
             <li key={row.label} className="rounded-2xl border border-slate-200/80 bg-slate-50 px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0b7ad7]">{row.label}</p>
               <p className="mt-1 text-sm text-slate-600">{row.value}</p>
@@ -227,7 +227,7 @@ export default function Parents() {
       header={{
         title: "Family dashboard",
         subtitle:
-          "Track progress, homework, and upcoming events. Learning Managers coordinate every update so you never miss a milestone.",
+          "Track progress, homework, and upcoming events. Learning Partners coordinate every update so you never miss a milestone.",
         toolbar: headerToolbar,
       }}
       rightRail={rightRail}

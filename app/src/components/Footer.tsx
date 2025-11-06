@@ -50,10 +50,7 @@ export default function Footer() {
                   <Link to="/faq" className="hover:text-white">FAQ</Link>
                 </li>
                 <li>
-                  <Link to="/login/parents" className="hover:text-white">Parents Sign-in / Guest</Link>
-                </li>
-                <li>
-                  <Link to="/parents" className="hover:text-white">Parents Preview</Link>
+                  <Link to="/parent-login" className="hover:text-white">Parents Sign-in</Link>
                 </li>
                 <li>
                   <a href="/blog/" className="hover:text-white">Blog &amp; Resources</a>
@@ -74,7 +71,7 @@ export default function Footer() {
                   <a href="/main/book-demo/" className="hover:text-white">Book a Learning Call</a>
                 </li>
                 <li>
-                  <Link to="/login/learning-managers" className="hover:text-white">Learning Manager Login</Link>
+                  <Link to="/login/learning-managers" className="hover:text-white">Learning Partner Login</Link>
                 </li>
               </ul>
             </div>

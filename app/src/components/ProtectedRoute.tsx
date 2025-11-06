@@ -47,7 +47,7 @@ export function ProtectedRoute({
     "learning-partner": "/rm/dashboard",
     teacher: "/teacher/dashboard",
     parent: "/parent/dashboard",
-    student: "/kids/home",
+    student: "/kids/games",
   };
 
   const userRedirect = role ? roleRedirects[role] : "/";

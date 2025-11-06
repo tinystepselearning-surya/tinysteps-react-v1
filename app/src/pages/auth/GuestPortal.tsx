@@ -38,10 +38,9 @@ export default function GuestPortalPage() {
   if (user && userRole) {
     const dashboardRoutes: Record<string, string> = {
       admin: "/surya/dashboard",
-      "learning-partner": "/rm/dashboard",
       teacher: "/teacher/dashboard",
       parent: "/parent/dashboard",
-      student: "/kids/home",
+      student: "/kids/games",
     };
     
     const redirectTo = dashboardRoutes[userRole] || "/parent/dashboard";

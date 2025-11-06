@@ -171,20 +171,154 @@ export const adminCreateUser = onCall({
       createdAt: new Date().toISOString()
     });
 
-    // 3. If student, update parent's children array
+    // 3. If parent, create parent document in parents collection
+    if (data.role === 'parent') {
+      const parentRef = db.collection('parents').doc(uid);
+      batch.set(parentRef, {
+        uid,
+        email: data.email,
+        displayName: data.displayName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber || '',
+        learningPartnerId: data.learningPartnerId || null,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: request.auth.uid,
+        updatedAt: new Date().toISOString(),
+        updatedBy: request.auth.uid
+      });
+    }
+
+    // 4. If student, create student document in students collection and link to parent
     if (data.role === 'student' && data.parentId) {
-      const parentRef = db.collection('users').doc(data.parentId);
-      const parentDoc = await parentRef.get();
+      // Create student document
+      const studentRef = db.collection('students').doc(uid);
+      batch.set(studentRef, {
+        uid,
+        email: data.email || '',
+        displayName: data.displayName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        parentId: data.parentId,
+        enrolledCourses: data.enrolledCourses || [],
+        learningPartnerId: data.learningPartnerId || null,
+        assignedTeacherId: data.teacherId || null,
+        assignedRmId: data.learningPartnerId || null,
+        status: 'active',
+        dateOfBirth: data.dateOfBirth || null,
+        age: userData.age || null,
+        createdAt: new Date().toISOString(),
+        createdBy: request.auth.uid,
+        updatedAt: new Date().toISOString(),
+        updatedBy: request.auth.uid,
+        summary: {
+          totalSessionsCompleted: 0,
+          streakDays: 0,
+          weeklyMinutes: 0,
+          phonicsMastery: 0,
+          grammarMastery: 0,
+          speakingMastery: 0
+        }
+      });
+
+      // Create child link in parent's children subcollection
+      const childLinkRef = db.collection('parents').doc(data.parentId).collection('children').doc(uid);
+      batch.set(childLinkRef, {
+        studentId: uid,
+        displayName: data.displayName,
+        isPrimary: false,
+        addedAt: new Date().toISOString(),
+        addedBy: request.auth.uid
+      });
+      
+      // Update parent's children array in users collection
+      const parentUserRef = db.collection('users').doc(data.parentId);
+      const parentDoc = await parentUserRef.get();
 
       if (parentDoc.exists) {
         const parentData = parentDoc.data();
-        batch.update(parentRef, {
+        batch.update(parentUserRef, {
           children: [...(parentData?.children || []), uid]
         });
       }
     }
 
-    // 4. If teacher/parent assigned to learning partner, update LP
+    // 5. If student without parent document creation above
+    if (data.role === 'student' && !data.parentId) {
+      // Create basic student document without parent link
+      const studentRef = db.collection('students').doc(uid);
+      batch.set(studentRef, {
+        uid,
+        email: data.email || '',
+        displayName: data.displayName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        parentId: null,
+        enrolledCourses: data.enrolledCourses || [],
+        learningPartnerId: data.learningPartnerId || null,
+        assignedTeacherId: data.teacherId || null,
+        assignedRmId: data.learningPartnerId || null,
+        status: 'active',
+        dateOfBirth: data.dateOfBirth || null,
+        age: userData.age || null,
+        createdAt: new Date().toISOString(),
+        createdBy: request.auth.uid,
+        updatedAt: new Date().toISOString(),
+        updatedBy: request.auth.uid,
+        summary: {
+          totalSessionsCompleted: 0,
+          streakDays: 0,
+          weeklyMinutes: 0,
+          phonicsMastery: 0,
+          grammarMastery: 0,
+          speakingMastery: 0
+        }
+      });
+    }
+
+    // 6. If teacher, create teacher document in teachers collection
+    if (data.role === 'teacher') {
+      const teacherRef = db.collection('teachers').doc(uid);
+      batch.set(teacherRef, {
+        uid,
+        email: data.email,
+        displayName: data.displayName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber || '',
+        learningPartnerId: data.learningPartnerId || null,
+        subjects: [],
+        students: [],
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: request.auth.uid,
+        updatedAt: new Date().toISOString(),
+        updatedBy: request.auth.uid
+      });
+    }
+
+    // 7. If learning partner, create RM document in rms collection
+    if (data.role === 'learning-partner') {
+      const rmRef = db.collection('rms').doc(uid);
+      batch.set(rmRef, {
+        uid,
+        email: data.email,
+        displayName: data.displayName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phoneNumber: data.phoneNumber || '',
+        assignedTeachers: [],
+        assignedParents: [],
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        createdBy: request.auth.uid,
+        updatedAt: new Date().toISOString(),
+        updatedBy: request.auth.uid
+      });
+    }
+
+    // 8. If teacher/parent assigned to learning partner, update LP
     if (data.learningPartnerId && (data.role === 'teacher' || data.role === 'parent')) {
       const lpRef = db.collection('users').doc(data.learningPartnerId);
       const lpDoc = await lpRef.get();

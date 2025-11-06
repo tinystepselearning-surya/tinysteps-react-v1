@@ -142,7 +142,7 @@ export default function KidsPortal() {
         includeKeys: ["kids", "parents", "homework"],
         overrides: {
           kids: { label: "Kids arena", badge: "Fun", onSelect: scrollToId("kids-adventure") },
-          parents: { label: "Family dashboard", href: "/parents" },
+          parents: { label: "Family dashboard", href: "/login/parents" },
           homework: { label: "Practice hub", onSelect: scrollToId("kids-adventure") },
         },
       }),
@@ -265,7 +265,7 @@ export default function KidsPortal() {
                   </p>
                   <p>
                     Complete the challenge in under {selectedGameData.duration}. Screenshots of your score go straight to
-                    your Learning Manager.
+                    your Learning Partner.
                   </p>
                   <p className="rounded-2xl bg-[#2563eb]/10 px-4 py-3 text-[#1d4ed8]">
                     Tip: replay the level to beat your personal best and unlock bonus stickers.

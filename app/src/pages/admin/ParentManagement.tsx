@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, updateDoc, doc, query, where } from "firebase/firestore";
 import { db } from "../../firebase";
+import { Link } from "react-router-dom";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 interface Parent {
   id: string;
@@ -188,18 +190,40 @@ export default function ParentManagement() {
 
   return (
     <div className="p-8">
+      {/* Deprecation Warning */}
+      <div className="mb-6 bg-yellow-500/10 border-2 border-yellow-500/50 rounded-xl p-6">
+        <div className="flex items-start gap-4">
+          <ExclamationTriangleIcon className="h-8 w-8 text-yellow-500 flex-shrink-0 mt-1" />
+          <div className="flex-1">
+            <h3 className="text-lg font-bold text-yellow-500 mb-2">
+              ⚠️ Important: Use User Management Instead
+            </h3>
+            <p className="text-yellow-200 mb-3">
+              This page is deprecated. To create new parents, please use the <strong>User Management</strong> page 
+              which properly creates Firebase Authentication accounts with login credentials.
+            </p>
+            <Link
+              to="/surya/users"
+              className="inline-flex items-center px-4 py-2 bg-yellow-500 text-gray-900 font-semibold rounded-lg hover:bg-yellow-400 transition-colors"
+            >
+              Go to User Management →
+            </Link>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">Parent Management</h1>
-          <p className="text-gray-400">{parents.length} parents</p>
+          <p className="text-gray-400">{parents.length} parents • View only (create in User Management)</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
+        <Link
+          to="/surya/users"
           className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
         >
-          + Add Parent
-        </button>
+          + Add Parent (in User Management)
+        </Link>
       </div>
 
       {/* Parents List */}

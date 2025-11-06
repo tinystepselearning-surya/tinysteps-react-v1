@@ -56,7 +56,7 @@ export default function RMDashboard() {
     return (
       <div className="p-6">
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-yellow-800">RM profile not found.</p>
+          <p className="text-yellow-800">Learning Partner profile not found.</p>
         </div>
       </div>
     );

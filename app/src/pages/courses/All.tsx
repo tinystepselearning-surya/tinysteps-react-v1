@@ -74,7 +74,7 @@ export default function AllCourses() {
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold text-[#d94b03]">1:1 program pricing</h2>
           <p className="mt-3 text-lg text-gray-700">
-            Choose the pathway that suits your child. Every plan includes personalised Learning Manager support, weekly feedback
+            Choose the pathway that suits your child. Every plan includes personalised Learning Partner support, weekly feedback
             loops, and dashboard updates for parents.
           </p>
           <p className="mt-2 text-sm uppercase tracking-[0.26em] text-gray-500">

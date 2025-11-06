@@ -92,7 +92,7 @@ export default function PublicSpeaking() {
             {
               question: "What if my child misses a session due to exams or events?",
               answer:
-                "We reschedule without fuss. The Learning Manager sends a calendar link, and the teacher posts a short catch-up video so your child can rehearse before the next class.",
+                "We reschedule without fuss. The Learning Partner sends a calendar link, and the teacher posts a short catch-up video so your child can rehearse before the next class.",
             },
             {
               question: "Will public speaking also help everyday English communication?",

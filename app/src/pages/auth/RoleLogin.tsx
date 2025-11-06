@@ -1,8 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import type { FormEvent } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../firebase";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
 type RoleKey = "kids" | "parents" | "teachers" | "learning-managers";
@@ -32,7 +30,7 @@ const ROLE_CONFIG: Record<RoleKey, RoleConfig> = {
   parents: {
     title: "Tiny Steps Parent Login",
     subtitle:
-      "Sign in to track class reports, download homework packs, and message your Learning Manager.",
+      "Sign in to track class reports, download homework packs, and message your Learning Partner.",
     cta: "Sign in to view dashboard",
     helper: "Use the email address you registered with Tiny Steps Learning",
     benefits: [
@@ -53,23 +51,16 @@ const ROLE_CONFIG: Record<RoleKey, RoleConfig> = {
     ],
   },
   "learning-managers": {
-    title: "Learning Manager Login",
+    title: "Learning Partner Login",
     subtitle: "Coordinate families, teachers, and payments from your control room.",
     cta: "Sign in to control room",
-    helper: "Learning Managers receive their credentials from Tiny Steps admin",
+    helper: "Learning Partners receive their credentials from Tiny Steps admin",
     benefits: [
       "Manage family pipelines and parent touchpoints",
       "Approve payouts and lesson changes",
       "Send branded reports and reminders in minutes",
     ],
   },
-};
-
-const TARGET_ROUTES: Record<RoleKey, string> = {
-  kids: "/kids/home",
-  parents: "/parent/dashboard",
-  teachers: "/teacher/dashboard",
-  "learning-managers": "/rm/dashboard",
 };
 
 export default function RoleLoginPage() {
@@ -80,17 +71,38 @@ export default function RoleLoginPage() {
   const [error, setError] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role: userRole, loading, signIn } = useAuth();
+  const [shouldRedirect, setShouldRedirect] = useState(false);
 
   const headline = useMemo(() => {
     if (!config) return "";
     return config.title;
   }, [config]);
 
-  // If already logged in, redirect to appropriate dashboard
-  if (user) {
-    const redirectTo = role ? TARGET_ROUTES[role] : TARGET_ROUTES.parents;
+  // Watch for successful login and trigger redirect
+  useEffect(() => {
+    if (user && userRole && status === "success") {
+      setShouldRedirect(true);
+    }
+  }, [user, userRole, status]);
+
+  // If already logged in OR just logged in successfully, redirect
+  if ((user && userRole && !loading) || shouldRedirect) {
+    let redirectTo = "/parent/dashboard"; // default
+    
+    if (userRole === "admin") {
+      redirectTo = "/surya/dashboard";
+    } else if (userRole === "learning-partner") {
+      redirectTo = "/rm/dashboard";
+    } else if (userRole === "teacher") {
+      redirectTo = "/teacher/dashboard";
+    } else if (userRole === "parent") {
+      redirectTo = "/parent/dashboard";
+    } else if (userRole === "student") {
+      redirectTo = "/kids/games";
+    }
+    
+    console.log("🚀 Redirecting to:", redirectTo);
     return <Navigate to={redirectTo} replace />;
   }
 
@@ -106,41 +118,15 @@ export default function RoleLoginPage() {
     setError("");
 
     try {
-      // Authenticate with Firebase
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Use AuthContext signIn method which updates role state
+      await signIn(email, password);
       
-      console.log("✅ Login successful:", userCredential.user.email);
-      
-      // Force token refresh to get custom claims
-      await userCredential.user.getIdToken(true);
-      const idTokenResult = await userCredential.user.getIdTokenResult();
-      const userRole = idTokenResult.claims.role as string;
-      
-      console.log("User role from claims:", userRole);
+      console.log("✅ Login successful");
       
       setStatus("success");
       
-      // Determine redirect based on role from claims, not URL param
-      let redirectTo = "/parent/dashboard"; // default
-      
-      if (userRole === "admin") {
-        redirectTo = "/surya/dashboard";
-      } else if (userRole === "learning-partner") {
-        redirectTo = "/rm/dashboard";
-      } else if (userRole === "teacher") {
-        redirectTo = "/teacher/dashboard";
-      } else if (userRole === "parent") {
-        redirectTo = "/parent/dashboard";
-      } else if (userRole === "student") {
-        redirectTo = "/kids/home";
-      }
-      
-      console.log("Redirecting to:", redirectTo);
-      
-      // Small delay for success message, then navigate
-      setTimeout(() => {
-        navigate(redirectTo, { replace: true });
-      }, 1000);
+      // The useEffect above will handle redirect once role is set
+      // Navigation happens automatically via the redirect check above
     } catch (err: any) {
       console.error("Login error:", err);
       setStatus("error");
@@ -289,5 +275,5 @@ const ROLE_OPTIONS: Array<{ value: RoleKey; label: string }> = [
   { value: "kids", label: "Kids" },
   { value: "parents", label: "Parents" },
   { value: "teachers", label: "Teachers" },
-  { value: "learning-managers", label: "Learning Managers" },
+  { value: "learning-managers", label: "Learning Partners" },
 ];
