@@ -229,7 +229,7 @@ export default function StudentProfile() {
 
   const calculateAverageScore = (metric: "accuracy" | "fluency" | "confidence") => {
     const completedSessions = sessions.filter((s) => s.rubric);
-    if (completedSessions.length === 0) return 0;
+    if (completedSessions.length === 0) return "0";
     const sum = completedSessions.reduce((acc, s) => acc + (s.rubric?.[metric] || 0), 0);
     return (sum / completedSessions.length).toFixed(1);
   };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { collection, query, getDocs, doc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase";
 import {
   CalendarIcon,
@@ -48,7 +48,6 @@ const ParentAttendance: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<string>("");
   const [rescheduleData, setRescheduleData] = useState<RescheduleRequest>({
     currentDate: "",
     newDate: "",
@@ -161,7 +160,6 @@ const ParentAttendance: React.FC = () => {
   };
 
   const handleRescheduleRequest = (dateKey: string) => {
-    setSelectedDate(dateKey);
     setRescheduleData({
       currentDate: dateKey,
       newDate: "",

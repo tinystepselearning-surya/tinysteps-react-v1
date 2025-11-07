@@ -6,7 +6,6 @@ import { collection, query, where, getDocs, updateDoc, doc } from "firebase/fire
 import { db } from "../../firebase";
 import { 
   UserGroupIcon,
-  ChartBarIcon,
   MagnifyingGlassIcon,
   UserPlusIcon,
   CalendarIcon,
@@ -79,12 +78,12 @@ export default function RMTeachers() {
   };
 
   // Calculate weekly sessions
-  const getWeeklySessions = (teacherId: string) => {
+  const getWeeklySessions = () => {
     // Mock calculation - in production, query sessions from last 7 days
     return Math.floor(Math.random() * 15) + 5; // 5-20 sessions
   };
 
-  const getMonthlySessions = (teacherId: string) => {
+  const getMonthlySessions = () => {
     // Mock calculation - in production, query sessions from last 30 days
     return Math.floor(Math.random() * 40) + 20; // 20-60 sessions
   };
@@ -121,10 +120,6 @@ export default function RMTeachers() {
     
     return slots;
   };
-
-  const filteredTeachers = teachers.filter(teacher =>
-    teacher.displayName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   if (loading) {
     return (
@@ -212,8 +207,8 @@ export default function RMTeachers() {
           {filteredTeachers.map((teacher) => {
             const workload = workloads.find(w => w.teacherId === teacher.id);
             const utilization = getUtilization(workload);
-            const weeklySessions = getWeeklySessions(teacher.id);
-            const monthlySessions = getMonthlySessions(teacher.id);
+            const weeklySessions = getWeeklySessions();
+            const monthlySessions = getMonthlySessions();
 
             return (
               <div key={teacher.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow p-6">

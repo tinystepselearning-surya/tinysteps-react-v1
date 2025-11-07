@@ -1,10 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
 import { 
   collection, 
-  query, 
-  where, 
   getDocs,
   doc,
   getDoc
@@ -41,7 +38,6 @@ interface Student {
 
 export default function Progress() {
   const { childId } = useParams<{ childId: string }>();
-  const { user } = useAuth();
   const [student, setStudent] = useState<Student | null>(null);
   const [topics, setTopics] = useState<CurriculumTopic[]>([]);
   const [loading, setLoading] = useState(true);

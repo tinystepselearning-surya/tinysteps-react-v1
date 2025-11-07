@@ -203,8 +203,9 @@
       opacity: 0.9;
     }
   }
-  
-  @layer components {
+}
+
+@layer components {
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
