@@ -1,4 +1,51 @@
+# Robots.txt for Tiny Steps Learning
+# https://tinystepslearning.com
+
+# Allow all crawlers
 User-agent: *
 Allow: /
 
+# Disallow admin/user portals
+Disallow: /parent/
+Disallow: /teacher/
+Disallow: /rm/
+Disallow: /admin/
+Disallow: /api/
+Disallow: /roles/
+
+# Disallow authentication pages
+Disallow: /login
+Disallow: /signup
+Disallow: /reset-password
+
+# Disallow game assets (heavy files)
+Disallow: /phonics-at-home-activities/
+Disallow: /week-1-learning-begins/
+
+# Allow specific important paths
+Allow: /blog/
+Allow: /courses/
+Allow: /assets/images/
+
+# Googlebot specific
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0
+
+# Googlebot for images
+User-agent: Googlebot-Image
+Allow: /assets/images/
+
+# Bingbot specific
+User-agent: Bingbot
+Crawl-delay: 1
+
+# Prevent scraping bots
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+# Sitemap location
 Sitemap: https://tinystepslearning.com/sitemap.xml

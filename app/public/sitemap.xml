@@ -1,48 +1,205 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+  
+  <!-- Homepage -->
   <url>
     <loc>https://tinystepslearning.com/</loc>
-    <changefreq>weekly</changefreq>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
+  
+  <!-- Main Course Pages -->
   <url>
     <loc>https://tinystepslearning.com/courses</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+  
   <url>
     <loc>https://tinystepslearning.com/courses/phonics</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+  
   <url>
     <loc>https://tinystepslearning.com/courses/grammar</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+  
   <url>
     <loc>https://tinystepslearning.com/courses/public-speaking</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+  
+  <!-- Information Pages -->
+  <url>
+    <loc>https://tinystepslearning.com/about</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
   <url>
     <loc>https://tinystepslearning.com/parents</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  
   <url>
     <loc>https://tinystepslearning.com/curriculum</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/teachers</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- Pricing & Plans -->
+  <url>
+    <loc>https://tinystepslearning.com/pricing</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Support Pages -->
   <url>
     <loc>https://tinystepslearning.com/faq</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/contact</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
+  
+  <!-- Blog Section -->
   <url>
     <loc>https://tinystepslearning.com/blog</loc>
+    <lastmod>2024-12-08</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <priority>0.7</priority>
   </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week1</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week2</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week3</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week4</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week5</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week6</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week7</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week8</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week9</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/blog/week10</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- Legal Pages -->
+  <url>
+    <loc>https://tinystepslearning.com/privacy-policy</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/terms-of-service</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  
+  <!-- Login/Signup Pages (noindex via meta tags, but listed for completeness) -->
+  <url>
+    <loc>https://tinystepslearning.com/login</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  
+  <url>
+    <loc>https://tinystepslearning.com/signup</loc>
+    <lastmod>2024-12-08</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  
 </urlset>

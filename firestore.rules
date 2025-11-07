@@ -3,6 +3,13 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============================================
+    // CONTACT INFORMATION
+    // ============================================
+    // Parent queries: info@tinystepslearning.com
+    // Partnerships: priya@tinystepslearning.com
+    // General messages: contact@tinystepslearning.com
+    
+    // ============================================
     // HELPER FUNCTIONS
     // ============================================
     
@@ -279,8 +286,8 @@ service cloud.firestore {
       
       allow read: if isRecipient() || isAdmin();
       
-      // System/Cloud Functions create notifications
-      allow create: if false;
+      // Staff (including RMs) can create notifications
+      allow create: if isStaff() && hasValidCreate();
       
       // Users can mark as read
       allow update: if isRecipient() && 
@@ -407,6 +414,23 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow update: if isAdmin();
       allow create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================
+    // /call_logs/{logId}
+    // ============================================
+    match /call_logs/{logId} {
+      // RMs and admins can read all call logs
+      allow read: if isAdminOrRM();
+      
+      // RMs can create call logs
+      allow create: if isRM() && hasValidCreate();
+      
+      // RMs can update their own logs, admins can update any
+      allow update: if (isRM() && resource.data.createdBy == request.auth.uid) || isAdmin();
+      
+      // Only admins can delete
       allow delete: if isAdmin();
     }
     

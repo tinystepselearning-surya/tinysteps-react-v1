@@ -5,7 +5,6 @@ import {
   ChevronRightIcon,
   VideoCameraIcon,
   ClockIcon,
-  UserGroupIcon,
   XMarkIcon,
   CheckCircleIcon
 } from "@heroicons/react/24/outline";
@@ -93,9 +92,60 @@ export default function TeacherCalendar() {
   const navigateMonth = (direction: "prev" | "next") => {
     setCurrentDate(prev => {
       const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + (direction === "next" ? 1 : -1));
+      if (viewMode === "month") {
+        newDate.setMonth(prev.getMonth() + (direction === "next" ? 1 : -1));
+      } else if (viewMode === "week") {
+        newDate.setDate(prev.getDate() + (direction === "next" ? 7 : -7));
+      } else {
+        newDate.setDate(prev.getDate() + (direction === "next" ? 1 : -1));
+      }
       return newDate;
     });
+  };
+
+  const getWeekDates = (date: Date) => {
+    const day = date.getDay();
+    const startOfWeek = new Date(date);
+    startOfWeek.setDate(date.getDate() - day);
+    
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(startOfWeek);
+      d.setDate(startOfWeek.getDate() + i);
+      return d;
+    });
+  };
+
+  const getTimeSlots = () => {
+    const slots = [];
+    for (let hour = 8; hour <= 20; hour++) {
+      slots.push(`${hour}:00`);
+    }
+    return slots;
+  };
+
+  const getSessionsForTimeSlot = (date: Date, timeSlot: string) => {
+    return sessions.filter(session => {
+      const sessionHour = parseInt(session.startTime.split(":")[0]);
+      const slotHour = parseInt(timeSlot.split(":")[0]);
+      
+      return (
+        session.date.getDate() === date.getDate() &&
+        session.date.getMonth() === date.getMonth() &&
+        session.date.getFullYear() === date.getFullYear() &&
+        sessionHour === slotHour
+      );
+    });
+  };
+
+  const formatWeekRange = () => {
+    const weekDates = getWeekDates(currentDate);
+    const start = weekDates[0];
+    const end = weekDates[6];
+    return `${monthNames[start.getMonth()]} ${start.getDate()} - ${monthNames[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+  };
+
+  const formatDayHeader = () => {
+    return `${dayNames[currentDate.getDay()]}, ${monthNames[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
   };
 
   const monthNames = ["January", "February", "March", "April", "May", "June",
@@ -164,7 +214,9 @@ export default function TeacherCalendar() {
           </button>
           
           <h2 className="text-xl font-bold text-gray-900">
-            {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+            {viewMode === "month" && `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`}
+            {viewMode === "week" && formatWeekRange()}
+            {viewMode === "day" && formatDayHeader()}
           </h2>
           
           <button
@@ -228,17 +280,180 @@ export default function TeacherCalendar() {
 
         {/* Week View */}
         {viewMode === "week" && (
-          <div className="text-center py-12 text-gray-500">
-            <UserGroupIcon className="h-12 w-12 mx-auto mb-2" />
-            <p>Week view coming soon</p>
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Week Headers */}
+              <div className="grid grid-cols-8 gap-2 mb-2">
+                <div className="text-sm font-semibold text-gray-600 py-2"></div>
+                {getWeekDates(currentDate).map((date, idx) => {
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  return (
+                    <div
+                      key={idx}
+                      className={`text-center py-2 rounded-lg ${
+                        isToday ? "bg-green-100 text-green-700 font-bold" : "text-gray-700"
+                      }`}
+                    >
+                      <div className="text-xs font-medium">{dayNames[date.getDay()]}</div>
+                      <div className="text-lg font-bold">{date.getDate()}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Time Slots Grid */}
+              <div className="border border-gray-200 rounded-lg overflow-hidden">
+                {getTimeSlots().map((timeSlot, slotIdx) => (
+                  <div key={slotIdx} className="grid grid-cols-8 gap-px bg-gray-200">
+                    {/* Time Label */}
+                    <div className="bg-gray-50 p-2 text-sm font-medium text-gray-600 flex items-center justify-center">
+                      {timeSlot}
+                    </div>
+
+                    {/* Day Cells */}
+                    {getWeekDates(currentDate).map((date, dayIdx) => {
+                      const sessionsInSlot = getSessionsForTimeSlot(date, timeSlot);
+                      const isToday = date.toDateString() === new Date().toDateString();
+
+                      return (
+                        <div
+                          key={dayIdx}
+                          className={`bg-white p-1 min-h-[60px] ${
+                            isToday ? "bg-green-50" : ""
+                          } hover:bg-gray-50 transition cursor-pointer`}
+                        >
+                          {sessionsInSlot.map(session => (
+                            <div
+                              key={session.id}
+                              onClick={() => setSelectedSession(session)}
+                              className={`text-xs rounded px-2 py-1 mb-1 ${
+                                session.status === "scheduled"
+                                  ? "bg-green-100 text-green-800 border border-green-300"
+                                  : session.status === "completed"
+                                  ? "bg-blue-100 text-blue-800 border border-blue-300"
+                                  : "bg-red-100 text-red-800 border border-red-300"
+                              } hover:shadow-md transition`}
+                            >
+                              <div className="font-semibold truncate">{session.studentName}</div>
+                              <div className="truncate text-xs opacity-75">{session.topic}</div>
+                              <div className="text-xs opacity-60">{session.duration}min</div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
         {/* Day View */}
         {viewMode === "day" && (
-          <div className="text-center py-12 text-gray-500">
-            <ClockIcon className="h-12 w-12 mx-auto mb-2" />
-            <p>Day view coming soon</p>
+          <div className="max-w-4xl mx-auto">
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              {/* Generate 30-minute intervals from 8 AM to 8 PM */}
+              {Array.from({ length: 25 }, (_, i) => {
+                const hour = Math.floor(i / 2) + 8;
+                const minute = i % 2 === 0 ? "00" : "30";
+                const displayTime = hour > 12 
+                  ? `${hour - 12}:${minute} PM` 
+                  : hour === 12 
+                  ? `12:${minute} PM`
+                  : `${hour}:${minute} AM`;
+
+                // Find sessions in this time slot
+                const sessionsInSlot = sessions.filter(session => {
+                  const sessionStart = session.startTime;
+                  const sessionHour = parseInt(sessionStart.split(":")[0]);
+                  const sessionMinute = parseInt(sessionStart.split(":")[1].split(" ")[0]);
+                  
+                  const slotHour = hour;
+                  const slotMinute = parseInt(minute);
+                  
+                  const isSameDay = 
+                    session.date.getDate() === currentDate.getDate() &&
+                    session.date.getMonth() === currentDate.getMonth() &&
+                    session.date.getFullYear() === currentDate.getFullYear();
+                  
+                  const sessionStartsInSlot = 
+                    sessionHour === slotHour && 
+                    sessionMinute >= slotMinute && 
+                    sessionMinute < slotMinute + 30;
+                  
+                  return isSameDay && sessionStartsInSlot;
+                });
+
+                return (
+                  <div key={i} className="grid grid-cols-12 border-b border-gray-200 hover:bg-gray-50 transition">
+                    {/* Time Label */}
+                    <div className="col-span-2 bg-gray-50 p-3 border-r border-gray-200">
+                      <div className="text-sm font-medium text-gray-700">{displayTime}</div>
+                    </div>
+
+                    {/* Session Content */}
+                    <div className="col-span-10 p-2 min-h-[60px]">
+                      {sessionsInSlot.length > 0 ? (
+                        sessionsInSlot.map(session => (
+                          <div
+                            key={session.id}
+                            onClick={() => setSelectedSession(session)}
+                            className={`p-3 rounded-lg border-l-4 mb-2 cursor-pointer hover:shadow-md transition ${
+                              session.status === "scheduled"
+                                ? "bg-green-50 border-green-500"
+                                : session.status === "completed"
+                                ? "bg-blue-50 border-blue-500"
+                                : "bg-red-50 border-red-500"
+                            }`}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-semibold text-gray-900">{session.studentName}</h4>
+                                  <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                                    session.status === "scheduled"
+                                      ? "bg-green-100 text-green-700"
+                                      : session.status === "completed"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-red-100 text-red-700"
+                                  }`}>
+                                    {session.status}
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-600 mb-1">{session.topic}</p>
+                                <div className="flex items-center gap-4 text-xs text-gray-500">
+                                  <span className="flex items-center gap-1">
+                                    <ClockIcon className="h-4 w-4" />
+                                    {session.startTime} - {session.endTime} ({session.duration}min)
+                                  </span>
+                                  {session.meetingLink && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleJoinSession(session);
+                                      }}
+                                      className="flex items-center gap-1 text-green-600 hover:text-green-700 font-medium"
+                                    >
+                                      <VideoCameraIcon className="h-4 w-4" />
+                                      Join
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+                          {/* Empty slot */}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
