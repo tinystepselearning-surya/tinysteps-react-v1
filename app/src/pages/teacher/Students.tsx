@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTeacherStudents } from "../../hooks/useTeacherStudents";
 import { getTeacher } from "../../services/teacherService";
@@ -12,6 +13,7 @@ import type { Teacher } from "../../types/teacher";
 
 export default function TeacherStudents() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [teacher, setTeacher] = useState<Teacher | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const { students, loading } = useTeacherStudents(teacher?.id || null);
@@ -163,7 +165,10 @@ export default function TeacherStudents() {
                 </div>
               )}
 
-              <button className="mt-4 w-full bg-green-50 hover:bg-green-100 text-green-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2">
+              <button 
+                onClick={() => navigate(`/teacher/student/${student.id}`)}
+                className="mt-4 w-full bg-green-50 hover:bg-green-100 text-green-700 font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+              >
                 <ChartBarIcon className="h-4 w-4" />
                 View Progress
               </button>

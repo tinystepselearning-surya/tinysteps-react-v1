@@ -48,12 +48,16 @@ import ContentLibrary from "./pages/admin/ContentLibrary";
 import MigrateParents from "./pages/admin/MigrateParents";
 import SyncUserClaims from "./pages/admin/SyncUserClaims";
 import TestAuth from "./pages/admin/TestAuth";
+import ForceTokenRefresh from "./pages/admin/ForceTokenRefresh";
 import { AdminRoute } from "./components/admin/AdminRoute";
 
 // Parent Portal Pages
 import ParentDashboard from "./pages/parent/Dashboard";
 import ParentChildren from "./pages/parent/Children";
 import ParentSchedule from "./pages/parent/Schedule";
+import ParentProgress from "./pages/parent/Progress";
+import ParentAttendance from "./pages/parent/Attendance";
+import ParentWorksheets from "./pages/parent/Worksheets";
 import ParentReports from "./pages/parent/Reports";
 import ParentFees from "./pages/parent/Fees";
 import ParentMessages from "./pages/parent/Messages";
@@ -61,6 +65,8 @@ import ParentMessages from "./pages/parent/Messages";
 // Teacher Portal Pages
 import TeacherDashboard from "./pages/teacher/Dashboard";
 import TeacherCalendar from "./pages/teacher/Calendar";
+import TeacherPostClassForm from "./pages/teacher/PostClassForm";
+import TeacherStudentProfile from "./pages/teacher/StudentProfile";
 import TeacherStudents from "./pages/teacher/Students";
 import TeacherSessions from "./pages/teacher/Sessions";
 import TeacherResources from "./pages/teacher/Resources";
@@ -351,6 +357,16 @@ export default function AppRoutes() {
         >
           <Route index element={<SyncUserClaims />} />
         </Route>
+        <Route 
+          path="/surya/refresh-token" 
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        >
+          <Route index element={<ForceTokenRefresh />} />
+        </Route>
         <Route path="/test-auth" element={<TestAuth />} />
 
         {/* Parent Portal Routes - Protected */}
@@ -364,6 +380,9 @@ export default function AppRoutes() {
         >
           <Route path="dashboard" element={<ParentDashboard />} />
           <Route path="children" element={<ParentChildren />} />
+          <Route path="child/:childId/progress" element={<ParentProgress />} />
+          <Route path="child/:childId/attendance" element={<ParentAttendance />} />
+          <Route path="child/:childId/worksheets" element={<ParentWorksheets />} />
           <Route path="schedule" element={<ParentSchedule />} />
           <Route path="reports" element={<ParentReports />} />
           <Route path="fees" element={<ParentFees />} />
@@ -382,7 +401,9 @@ export default function AppRoutes() {
         >
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="calendar" element={<TeacherCalendar />} />
+          <Route path="session/:sessionId/post-class" element={<TeacherPostClassForm />} />
           <Route path="students" element={<TeacherStudents />} />
+          <Route path="student/:studentId" element={<TeacherStudentProfile />} />
           <Route path="sessions" element={<TeacherSessions />} />
           <Route path="resources" element={<TeacherResources />} />
           <Route path="performance" element={<TeacherPerformance />} />
