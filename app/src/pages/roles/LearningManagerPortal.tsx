@@ -52,9 +52,9 @@ const PARENT_FEES = [
 ];
 
 const CHECKLIST = [
-  { title: "Send phonics reading log to Rao family", owner: "Learning Manager" },
+  { title: "Send phonics reading log to Rao family", owner: "Learning Partner" },
   { title: "Confirm showcase rehearsal logistics", owner: "Teacher · Riya", highlight: true },
-  { title: "Share fee reminder draft with finance", owner: "Learning Manager" },
+  { title: "Share fee reminder draft with finance", owner: "Learning Partner" },
 ];
 
 export default function LearningManagerPortal() {
@@ -112,7 +112,7 @@ export default function LearningManagerPortal() {
         includeKeys: ["groups", "homework", "payouts"],
         overrides: {
           groups: {
-            label: "Learning manager hub",
+            label: "Learning partner hub",
             badge: `${SNAPSHOTS[1].value}`,
             onSelect: scrollToId("operations-board"),
           },
@@ -182,7 +182,7 @@ export default function LearningManagerPortal() {
     <DashboardShell
       navItems={navItems}
       header={{
-        title: "Learning manager control room",
+        title: "Learning partner control room",
         subtitle:
           "Coordinate teachers, parents, and payments without switching tools. Draft updates and confirm reschedules in seconds.",
         toolbar: headerToolbar,
