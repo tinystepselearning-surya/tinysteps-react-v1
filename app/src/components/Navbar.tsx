@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logo from "../assets/images/logo.png";
 
 const courseLinks = [
   { label: "Phonics", href: "/courses/phonics" },
@@ -22,15 +23,7 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl px-4 h-16 flex items-center gap-4">
         {/* left: logo + brand */}
         <a href="/" className="flex items-center gap-2">
-          {/* sunrise dot as logo placeholder */}
-          <span
-            aria-hidden
-            className="h-8 w-8 rounded-full shrink-0"
-            style={{
-              background:
-                "conic-gradient(from 200deg, #ffd699, #ffa94d 40%, #ff8a4c 75%, #ffd699 100%)",
-            }}
-          />
+          <img src={logo} alt="Tiny Steps Logo" className="h-8 w-8" />
           <span className="text-xl font-semibold text-gray-900">Tiny Steps</span>
         </a>
 
@@ -38,7 +31,6 @@ export default function Navbar() {
         <nav className="ml-auto hidden lg:flex items-center gap-6 text-sm">
           <a href="/login/kids" className="text-gray-700 hover:text-gray-900">
             Kids
-          </a>
           </a>
 
           <div
@@ -52,7 +44,7 @@ export default function Navbar() {
             >
               Courses
               <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"/>
+                <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
               </svg>
             </button>
             {coursesOpen && (
@@ -76,42 +68,12 @@ export default function Navbar() {
             </a>
           ))}
 
-          <div
-            className="relative"
-            onMouseEnter={() => setEducatorsOpen(true)}
-            onMouseLeave={() => setEducatorsOpen(false)}
-          >
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 text-gray-700 hover:text-gray-900"
-              onClick={() => setEducatorsOpen((v) => !v)}
-            >
-              Educators
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" />
-              </svg>
-            </button>
-            {educatorsOpen && (
-              <div className="absolute left-0 mt-2 w-60 rounded-xl border border-gray-100 bg-white shadow-lg p-2">
-                </a>
-                <a
-                  href="/login/learning-managers"
-                  className="mt-1 block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                >
-                </a>
-              </div>
-            )}
-          </div>
-
           <a
             href="/#book-trial"
             className="inline-flex items-center rounded-full px-4 py-2 text-white text-sm font-medium"
             style={{ backgroundImage: "linear-gradient(90deg,#ffa94d,#ff8a4c)" }}
           >
             Book Trial
-          </a>
-
-            Sign in
           </a>
         </nav>
 
@@ -131,7 +93,6 @@ export default function Navbar() {
           <nav className="mx-auto max-w-7xl px-4 py-3 grid gap-2 text-sm">
             <a href="/kids" className="text-gray-700 py-2 border-b" onClick={() => setOpen(false)}>
               Kids
-            </a>
             </a>
 
             <details className="group">
@@ -158,17 +119,6 @@ export default function Navbar() {
               FAQ
             </a>
 
-            <details className="group">
-              <summary className="cursor-pointer text-gray-700 hover:text-gray-900 list-none flex items-center justify-between">
-                <span>Educators</span>
-                <span>▾</span>
-              </summary>
-              <div className="mt-2 grid">
-                </a>
-                <a href="/login/learning-managers" className="text-gray-700 py-2 border-b">
-                </a>
-              </div>
-            </details>
             <div className="flex gap-3 pt-2">
               <a
                 href="/#book-trial"
@@ -176,8 +126,6 @@ export default function Navbar() {
                 style={{ backgroundImage: "linear-gradient(90deg,#ffa94d,#ff8a4c)" }}
               >
                 Book Trial
-              </a>
-                Sign in
               </a>
             </div>
           </nav>
