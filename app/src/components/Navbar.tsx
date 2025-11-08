@@ -39,8 +39,6 @@ export default function Navbar() {
           <a href="/login/kids" className="text-gray-700 hover:text-gray-900">
             Kids
           </a>
-          <a href="/parent-login" className="text-gray-700 hover:text-gray-900">
-            Parents
           </a>
 
           <div
@@ -95,14 +93,11 @@ export default function Navbar() {
             </button>
             {educatorsOpen && (
               <div className="absolute left-0 mt-2 w-60 rounded-xl border border-gray-100 bg-white shadow-lg p-2">
-                <a href="/login/teachers" className="block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50">
-                  Teacher login
                 </a>
                 <a
                   href="/login/learning-managers"
                   className="mt-1 block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  Learning Partner login
                 </a>
               </div>
             )}
@@ -116,7 +111,6 @@ export default function Navbar() {
             Book Trial
           </a>
 
-          <a href="/parent-login" className="text-gray-700 hover:text-gray-900">
             Sign in
           </a>
         </nav>
@@ -138,8 +132,6 @@ export default function Navbar() {
             <a href="/kids" className="text-gray-700 py-2 border-b" onClick={() => setOpen(false)}>
               Kids
             </a>
-            <a href="/parent-login" className="text-gray-700 py-2 border-b" onClick={() => setOpen(false)}>
-              Parents
             </a>
 
             <details className="group">
@@ -172,11 +164,8 @@ export default function Navbar() {
                 <span>▾</span>
               </summary>
               <div className="mt-2 grid">
-                <a href="/login/teachers" className="text-gray-700 py-2 border-b">
-                  Teacher login
                 </a>
                 <a href="/login/learning-managers" className="text-gray-700 py-2 border-b">
-                  Learning Partner login
                 </a>
               </div>
             </details>
@@ -188,7 +177,6 @@ export default function Navbar() {
               >
                 Book Trial
               </a>
-              <a href="/parent-login" className="flex-1 text-center rounded-full px-4 py-2 border border-gray-200">
                 Sign in
               </a>
             </div>

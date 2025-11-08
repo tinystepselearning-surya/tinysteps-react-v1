@@ -3,7 +3,7 @@ import type { FormEvent } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 
-type RoleKey = "kids" | "parents" | "teachers" | "learning-managers";
+type RoleKey = "kids" | "parents" | "teachers" | "learning-partners";
 
 type RoleConfig = {
   title: string;
@@ -50,7 +50,7 @@ const ROLE_CONFIG: Record<RoleKey, RoleConfig> = {
       "Track payouts and follow-up actions for the day",
     ],
   },
-  "learning-managers": {
+  "learning-partners": {
     title: "Learning Partner Login",
     subtitle: "Coordinate families, teachers, and payments from your control room.",
     cta: "Sign in to control room",
@@ -275,5 +275,5 @@ const ROLE_OPTIONS: Array<{ value: RoleKey; label: string }> = [
   { value: "kids", label: "Kids" },
   { value: "parents", label: "Parents" },
   { value: "teachers", label: "Teachers" },
-  { value: "learning-managers", label: "Learning Partners" },
+  { value: "learning-partners", label: "Learning Partners" },
 ];
