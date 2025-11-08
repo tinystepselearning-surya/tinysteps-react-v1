@@ -4,5 +4,6 @@ export { onSessionCreate } from "./onSessionCreate";
 export { adminCreateUser } from "./adminCreateUser";
 export { adminDeleteUser } from "./adminDeleteUser";
 export { migrateParents } from "./migrateParents";
+export { migrateRMs } from "./migrateRMs";
 export { adminSetUserClaims } from "./adminSetUserClaims";
 export { syncAllUserClaims } from "./syncAllUserClaims";

@@ -15,6 +15,8 @@ import Curriculum from "./pages/Curriculum";
 import FAQ from "./pages/FAQ";
 import RoleLoginPage from "./pages/auth/RoleLogin";
 import ParentLogin from "./pages/ParentLogin";
+import LearningPartnerLogin from "./pages/LearningPartnerLogin";
+import ParentLoginTestSimple from "./pages/ParentLoginTestSimple";
 import ParentLoginTest from "./pages/ParentLoginTest";
 import GuestPortalPage from "./pages/auth/GuestPortal";
 import TeacherPortal from "./pages/roles/TeacherPortal";
@@ -41,7 +43,7 @@ import LearningPartnerManagement from "./pages/admin/LearningPartnerManagement";
 import RolesPermissions from "./pages/admin/RolesPermissions";
 import SystemSettings from "./pages/admin/SystemSettings";
 import AuditLogs from "./pages/admin/AuditLogs";
-import CoursesOverview from "./pages/admin/CoursesOverview";
+import AdminCoursesPage from "./pages/admin/AdminCoursesPage";
 import CourseBuilder from "./pages/admin/CourseBuilder";
 import LessonBuilder from "./pages/admin/LessonBuilder";
 import ContentLibrary from "./pages/admin/ContentLibrary";
@@ -50,6 +52,7 @@ import SyncUserClaims from "./pages/admin/SyncUserClaims";
 import TestAuth from "./pages/admin/TestAuth";
 import ForceTokenRefresh from "./pages/admin/ForceTokenRefresh";
 import { AdminRoute } from "./components/admin/AdminRoute";
+import AdminProvider from "./pages/admin/hooks/adminContext";
 
 // Parent Portal Pages
 import ParentDashboard from "./pages/parent/Dashboard";
@@ -204,7 +207,7 @@ export default function AppRoutes() {
             </Suspense>
           } 
         />
-        <Route path="/parents" element={<Navigate to="/login/parents" replace />} />
+        <Route path="/parents" element={<Navigate to="/parent-login" replace />} />
         <Route path="/curriculum" element={<Curriculum />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/faq" element={<FAQ />} />
@@ -227,9 +230,11 @@ export default function AppRoutes() {
         <Route 
           path="/surya/users" 
           element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            </AdminProvider>
           }
         >
           <Route index element={<UserManagement />} />
@@ -267,9 +272,11 @@ export default function AppRoutes() {
         <Route 
           path="/surya/teachers" 
           element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
+            <AdminProvider>
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            </AdminProvider>
           }
         >
           <Route index element={<TeacherManagement />} />
@@ -314,18 +321,42 @@ export default function AppRoutes() {
         >
           <Route index element={<AuditLogs />} />
         </Route>
-        <Route 
-          path="/surya/courses" 
+        <Route
+          path="/surya/courses"
           element={
-            <AdminRoute>
+            <ProtectedRoute allowedRoles={["admin","learning-partner"]}>
               <AdminDashboard />
-            </AdminRoute>
+            </ProtectedRoute>
           }
         >
-          <Route index element={<CoursesOverview />} />
-          <Route path="new" element={<CourseBuilder />} />
-          <Route path=":courseId/edit" element={<CourseBuilder />} />
-          <Route path=":courseId/lessons/:lessonId/edit" element={<LessonBuilder />} />
+          {/* Canonical admin courses catalog (admin: editable, rm: read-only) */}
+          <Route index element={<AdminCoursesPage />} />
+
+          {/* Admin-only pages: keep builder routes but guard them with AdminRoute so only admins can access */}
+          <Route
+            path="new"
+            element={
+              <AdminRoute>
+                <CourseBuilder />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path=":courseId/edit"
+            element={
+              <AdminRoute>
+                <CourseBuilder />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path=":courseId/lessons/:lessonId/edit"
+            element={
+              <AdminRoute>
+                <LessonBuilder />
+              </AdminRoute>
+            }
+          />
         </Route>
         <Route 
           path="/surya/content" 
@@ -442,8 +473,10 @@ export default function AppRoutes() {
         {/* Auth */}
         <Route path="/login" element={<Navigate to="/parent-login" replace />} />
         <Route path="/parent-login" element={<ParentLogin />} />
+        <Route path="/learning-partner-login" element={<LearningPartnerLogin />} />
         <Route path="/login/:role" element={<RoleLoginPage />} />
-        <Route path="/parent-login-test" element={<ParentLoginTest />} />
+  <Route path="/parent-login-test" element={<ParentLoginTest />} />
+  <Route path="/parent-login-test-simple" element={<ParentLoginTestSimple />} />
         <Route path="/guest" element={<Navigate to="/guest/parents" replace />} />
         <Route path="/guest/:role" element={<GuestPortalPage />} />
 

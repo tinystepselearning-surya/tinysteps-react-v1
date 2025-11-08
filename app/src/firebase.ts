@@ -55,13 +55,18 @@ export async function ensureAdminReady() {
   // Refresh token to get latest custom claims
   await currentUser.getIdToken(true);
   
-  // Inspect claims
+  // Inspect claims (stringify to avoid collapsed/object logs in some consoles)
   const tokenResult = await currentUser.getIdTokenResult();
-  console.log("User claims:", tokenResult.claims);
-  
+  try {
+    console.log("User claims:", JSON.stringify(tokenResult.claims));
+  } catch (e) {
+    // Fallback if circular structure
+    console.log("User claims (raw):", tokenResult.claims);
+  }
+
   if (tokenResult.claims.role !== "admin") {
     console.warn("User does not have admin role:", tokenResult.claims.role);
   }
-  
+
   return tokenResult.claims;
 }

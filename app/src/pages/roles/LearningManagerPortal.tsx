@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardShell from "../../components/dashboard/DashboardShell";
 import { buildNavItems } from "../../components/dashboard/navItems";
+import { useAuth } from "../../contexts/AuthContext";
 
 type OperationsTab = "pipeline" | "teachers" | "parents";
 
@@ -58,14 +59,41 @@ const CHECKLIST = [
 
 export default function LearningManagerPortal() {
   const navigate = useNavigate();
+  const { user, role, loading, signOut } = useAuth();
+
+  console.log('[LearningManagerPortal] User:', user?.email, 'Role:', role, 'Loading:', loading);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const role = window.sessionStorage.getItem("tinysteps-role");
-    if (role !== "learning-managers") {
+    if (loading) return; // Wait for auth to load
+
+    if (!user) {
+      navigate("/login/learning-managers", { replace: true });
+      return;
+    }
+
+    // Allow access for learning-partner role or admin (for testing)
+    if (role !== "learning-partner" && role !== "admin") {
+      console.log('[LearningManagerPortal] Access denied for role:', role);
       navigate("/login/learning-managers", { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, user, role, loading]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If not authorized, don't render anything (useEffect will redirect)
+  if (!user || (role !== "learning-partner" && role !== "admin")) {
+    return null;
+  }
 
   const [activeTab, setActiveTab] = useState<OperationsTab>("pipeline");
 
@@ -109,6 +137,12 @@ export default function LearningManagerPortal() {
       </button>
       <button className="inline-flex items-center justify-center rounded-full bg-[#0b7ad7] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[#0b7ad7]/30 transition hover:bg-[#0b6ac0]">
         Create parent update
+      </button>
+      <button
+        onClick={signOut}
+        className="inline-flex items-center justify-center rounded-full border border-red-500/20 bg-white px-4 py-2 text-sm font-semibold text-red-600 shadow-sm shadow-red-500/10 transition hover:bg-red-50"
+      >
+        Sign Out
       </button>
     </div>
   );

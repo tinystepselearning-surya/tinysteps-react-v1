@@ -18,11 +18,11 @@ export default function ParentLogin() {
 
     try {
       await signIn(email, password);
+      console.log("[ParentLogin] signIn success, navigating to /parent/dashboard");
       // Redirect to parent dashboard
       navigate("/parent/dashboard", { replace: true });
     } catch (err: any) {
-      console.error("Login error:", err);
-      
+      console.error("[ParentLogin] Login error:", err);
       // User-friendly error messages
       if (err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
         setError("Invalid email or password");

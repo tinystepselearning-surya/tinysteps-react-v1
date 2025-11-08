@@ -52,6 +52,12 @@ export async function getCourses(filters?: CourseFilters): Promise<Course[]> {
         q = query(q, where('createdBy', '==', filters.createdBy));
       }
     }
+    // Debug: log the filters so we can trace which query is executed in the client
+    try {
+      console.debug('[Courses] executing query with filters =', filters);
+    } catch (e) {
+      // ignore logging errors
+    }
 
     const snapshot = await getDocs(q);
     let courses = snapshot.docs.map(doc => ({

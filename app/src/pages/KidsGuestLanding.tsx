@@ -188,7 +188,7 @@ export default function KidsGuestLanding() {
       description: "👥 For parents",
       emoji: "🏠",
       orbit: "orbit-four",
-      to: "/login/parents",
+      to: "/parent-login",
       color: "pink",
       animation: "float"
     },

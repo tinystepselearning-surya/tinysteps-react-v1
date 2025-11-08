@@ -39,7 +39,7 @@ export default function Navbar() {
           <a href="/login/kids" className="text-gray-700 hover:text-gray-900">
             Kids
           </a>
-          <a href="/login/parents" className="text-gray-700 hover:text-gray-900">
+          <a href="/parent-login" className="text-gray-700 hover:text-gray-900">
             Parents
           </a>
 
@@ -102,7 +102,7 @@ export default function Navbar() {
                   href="/login/learning-managers"
                   className="mt-1 block rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
-                  Learning Manager login
+                  Learning Partner login
                 </a>
               </div>
             )}
@@ -116,7 +116,7 @@ export default function Navbar() {
             Book Trial
           </a>
 
-          <a href="/login/parents" className="text-gray-700 hover:text-gray-900">
+          <a href="/parent-login" className="text-gray-700 hover:text-gray-900">
             Sign in
           </a>
         </nav>
@@ -138,7 +138,7 @@ export default function Navbar() {
             <a href="/kids" className="text-gray-700 py-2 border-b" onClick={() => setOpen(false)}>
               Kids
             </a>
-            <a href="/login/parents" className="text-gray-700 py-2 border-b" onClick={() => setOpen(false)}>
+            <a href="/parent-login" className="text-gray-700 py-2 border-b" onClick={() => setOpen(false)}>
               Parents
             </a>
 
@@ -176,7 +176,7 @@ export default function Navbar() {
                   Teacher login
                 </a>
                 <a href="/login/learning-managers" className="text-gray-700 py-2 border-b">
-                  Learning Manager login
+                  Learning Partner login
                 </a>
               </div>
             </details>
@@ -188,7 +188,7 @@ export default function Navbar() {
               >
                 Book Trial
               </a>
-              <a href="/login/parents" className="flex-1 text-center rounded-full px-4 py-2 border border-gray-200">
+              <a href="/parent-login" className="flex-1 text-center rounded-full px-4 py-2 border border-gray-200">
                 Sign in
               </a>
             </div>

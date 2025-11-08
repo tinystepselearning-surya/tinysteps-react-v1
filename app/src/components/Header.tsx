@@ -198,7 +198,7 @@ export default function Header() {
                   Teacher login
                 </Link>
                                 <Link
-                  to="/login/learning-managers"
+                  to="/learning-partner-login"
                   className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                 >
                   Learning Partner login
@@ -271,7 +271,7 @@ export default function Header() {
                 <Link to="/login/teachers" className="py-2 text-gray-700 border-b last:border-0" onClick={onNavigate}>
                   Teacher login
                 </Link>
-                <Link to="/login/learning-managers" className="py-2 text-gray-700 border-b last:border-0" onClick={onNavigate}>
+                <Link to="/learning-partner-login" className="py-2 text-gray-700 border-b last:border-0" onClick={onNavigate}>
                   Learning Partner login
                 </Link>
               </div>

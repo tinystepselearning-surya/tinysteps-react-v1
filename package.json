@@ -2,5 +2,8 @@
   "dependencies": {
     "react-router-dom": "^7.9.5",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0"
   }
 }

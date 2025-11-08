@@ -17,8 +17,8 @@ export default function BlogIndex() {
       "/roles/rm": "/login/learning-managers",
       "/roles/kids/": "/login/kids",
       "/roles/kids": "/login/kids",
-      "/roles/parent/": "/login/parents",
-      "/roles/parent": "/login/parents",
+      "/roles/parent/": "/parent-login",
+      "/roles/parent": "/parent-login",
       "/blog/": "/blog",
     };
 

@@ -1,6 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
-import { getUsers, createUser, updateUser, deleteUser, calculateAge } from "../../services/adminService";
+import { useState, useMemo } from "react";
+import { calculateAge } from "../../services/adminService";
 import { USER_ROLES, USER_ROLE_OPTIONS, type User, type CreateUserFormData, type UserRole, type Student, type UserStatus } from "../../types/admin";
+import { AdminProvider, useAdmin } from "./hooks/adminContext";
+import { useToast } from '../../components/ToastContext';
+import { COURSES } from '../../data/phases';
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -10,14 +13,31 @@ import {
   PencilSquareIcon,
   TrashIcon
 } from "@heroicons/react/24/outline";
+import AssignStudentToTeacherModal from "./components/AssignStudentToTeacherModal";
+import AssignParentToPartnerModal from "./components/AssignParentToPartnerModal";
+import AssignTeacherToPartnerModal from "./components/AssignTeacherToPartnerModal";
+import AssignCourseToStudentModal from "./components/AssignCourseToStudentModal";
+import ConfirmModal from '../../components/ConfirmModal';
 
-export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [parents, setParents] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+function UserManagementInner() {
+  const { users, loading, createUser, updateUser, deleteUser } = useAdmin();
+  const { showToast } = useToast();
+  const parents = users.filter(u => u.role === 'parent');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAssignStudentToTeacherModal, setShowAssignStudentToTeacherModal] = useState(false);
+  const [assignStudentId, setAssignStudentId] = useState<string | null>(null);
+  const [showAssignParentToPartnerModal, setShowAssignParentToPartnerModal] = useState(false);
+  const [assignParentId, setAssignParentId] = useState<string | null>(null);
+  const [showAssignTeacherToPartnerModal, setShowAssignTeacherToPartnerModal] = useState(false);
+  const [assignTeacherId, setAssignTeacherId] = useState<string | null>(null);
+  const [showAssignCourseToStudentModal, setShowAssignCourseToStudentModal] = useState(false);
+  const [assignCourseStudentId, setAssignCourseStudentId] = useState<string | null>(null);
+  // ConfirmModal states
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteUserId, setPendingDeleteUserId] = useState<string | null>(null);
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [filter, setFilter] = useState<UserRole | 'all'>('all');
@@ -32,7 +52,7 @@ export default function UserManagement() {
     displayName: "",
     role: "parent",
     password: "",
-    phoneNumber: "",
+    phoneNumber: undefined,
     parentId: "",
     enrolledCourses: []
   });
@@ -41,38 +61,12 @@ export default function UserManagement() {
   const [dateOfBirth, setDateOfBirth] = useState("");
 
   // Available courses
-  const availableCourses = [
-    { id: "phonics-phase-0", name: "Phonics - Phase 0" },
-    { id: "phonics-phase-1", name: "Phonics - Phase 1" },
-    { id: "phonics-phase-2", name: "Phonics - Phase 2" },
-    { id: "phonics-phase-3", name: "Phonics - Phase 3" },
-    { id: "phonics-phase-4", name: "Phonics - Phase 4" },
-    { id: "phonics-phase-5", name: "Phonics - Phase 5" },
-    { id: "grammar-basics", name: "Grammar - Basics" },
-    { id: "grammar-advanced", name: "Grammar - Advanced" },
-    { id: "public-speaking", name: "Public Speaking" },
-  ];
+  const availableCourses = COURSES.map(course => ({
+    id: course.id,
+    name: course.name
+  }));
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
-    try {
-      setLoading(true);
-      const [allUsers, parentsData] = await Promise.all([
-        getUsers(),
-        getUsers('parent')
-      ]);
-      setUsers(allUsers);
-      setParents(parentsData);
-    } catch (error) {
-      console.error("Failed to load users:", error);
-      alert("Failed to load users");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Users are provided by AdminContext (realtime subscription)
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,13 +74,13 @@ export default function UserManagement() {
     try {
       // Validate student has parent
       if (formData.role === 'student' && !formData.parentId) {
-        alert("Students must be assigned to a parent");
+        showToast({ type: 'info', message: "Students must be assigned to a parent" });
         return;
       }
 
       // Validate first and last name for ALL users
       if (!firstName || !lastName) {
-        alert("Please enter both first name and last name");
+        showToast({ type: 'info', message: "Please enter both first name and last name" });
         return;
       }
 
@@ -105,25 +99,24 @@ export default function UserManagement() {
         userData.dateOfBirth = dateOfBirth;
       }
 
-      await createUser(userData);
-      alert(`${USER_ROLES[formData.role]} created successfully!`);
-      setShowCreateModal(false);
-      resetForm();
-      loadUsers();
+  await createUser(formData.role, userData);
+  showToast({ type: 'success', message: `${USER_ROLES[formData.role]} created successfully!` });
+  setShowCreateModal(false);
+  resetForm();
     } catch (error: any) {
       console.error("Failed to create user:", error);
-      alert(error.message || "Failed to create user");
+      showToast({ type: 'error', message: error.message || "Failed to create user" });
     }
   };
 
   const handleUpdateRole = async (uid: string, newRole: UserRole) => {
     try {
       await updateUser(uid, { role: newRole });
-      alert("Role updated successfully");
-      loadUsers();
+      showToast({ type: 'success', message: "Role updated successfully" });
+      // realtime subscription will update list
     } catch (error) {
       console.error("Failed to update role:", error);
-      alert("Failed to update role");
+      showToast({ type: 'error', message: "Failed to update role" });
     }
   };
 
@@ -131,32 +124,22 @@ export default function UserManagement() {
     try {
       const newStatus: 'active' | 'suspended' = currentStatus === "active" ? "suspended" : "active";
       await updateUser(uid, { status: newStatus });
-      alert(`User ${newStatus}`);
-      loadUsers();
+      showToast({ type: 'success', message: `User ${newStatus}` });
+      // realtime subscription will update list
     } catch (error) {
       console.error("Failed to toggle status:", error);
-      alert("Failed to update status");
+      showToast({ type: 'error', message: "Failed to update status" });
     }
   };
 
   const handleDeleteUser = async (uid: string) => {
-    console.log('handleDeleteUser called with uid:', uid, 'type:', typeof uid);
-    
+    // Use modal-based confirmation: open modal and hold uid in state
     if (!uid) {
-      alert('Invalid user ID');
+      showToast({ type: 'error', message: 'Invalid user ID' });
       return;
     }
-    
-    if (!confirm("Are you sure you want to delete this user?")) return;
-    
-    try {
-      await deleteUser(uid);
-      alert("User deleted successfully");
-      loadUsers();
-    } catch (error: any) {
-      console.error("Failed to delete user:", error);
-      alert(error.message || "Failed to delete user");
-    }
+    setPendingDeleteUserId(uid);
+    setConfirmDeleteOpen(true);
   };
 
   const resetForm = () => {
@@ -166,7 +149,7 @@ export default function UserManagement() {
       displayName: "",
       role: "parent",
       password: "",
-      phoneNumber: "",
+      phoneNumber: undefined,
       parentId: "",
       enrolledCourses: []
     });
@@ -244,7 +227,7 @@ export default function UserManagement() {
 
   const handleBulkStatusChange = async (newStatus: UserStatus) => {
     if (selectedUsers.size === 0) {
-      alert("Please select users first");
+      showToast({ type: 'info', message: "Please select users first" });
       return;
     }
 
@@ -256,31 +239,47 @@ export default function UserManagement() {
       await Promise.all(
         Array.from(selectedUsers).map(uid => updateUser(uid, { status: newStatus }))
       );
-      alert(`${selectedUsers.size} user(s) status updated to ${newStatus}`);
+      showToast({ type: 'success', message: `${selectedUsers.size} user(s) status updated to ${newStatus}` });
       setSelectedUsers(new Set());
-      loadUsers();
+      // realtime subscription will update list
     } catch (error) {
       console.error("Failed to update users:", error);
-      alert("Failed to update some users. Check console for details.");
+      showToast({ type: 'error', message: "Failed to update some users. Check console for details." });
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedUsers.size === 0) {
-      alert("Please select users first");
+      showToast({ type: 'info', message: "Please select users first" });
       return;
     }
 
-    if (!confirm(`⚠️ WARNING: You are about to DELETE ${selectedUsers.size} user(s). This action CANNOT be undone. Are you absolutely sure?`)) {
-      return;
-    }
+    // open confirm modal that requires typing DELETE
+    setConfirmBulkDeleteOpen(true);
+  };
 
-    const confirmText = prompt(`Type "DELETE" to confirm deletion of ${selectedUsers.size} user(s):`);
-    if (confirmText !== "DELETE") {
-      alert("Deletion cancelled");
-      return;
+  // Confirm modal handlers
+  const handleConfirmDelete = async () => {
+    const uid = pendingDeleteUserId;
+    setConfirmDeleteOpen(false);
+    setPendingDeleteUserId(null);
+    if (!uid) return;
+    try {
+      await deleteUser(uid);
+      showToast({ type: 'success', message: 'User deleted successfully' });
+    } catch (err: any) {
+      console.error('Failed to delete user:', err);
+      showToast({ type: 'error', message: err?.message || 'Failed to delete user' });
     }
+  };
 
+  const handleCancelDelete = () => {
+    setConfirmDeleteOpen(false);
+    setPendingDeleteUserId(null);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    setConfirmBulkDeleteOpen(false);
     try {
       const errors: string[] = [];
       for (const uid of selectedUsers) {
@@ -292,17 +291,21 @@ export default function UserManagement() {
       }
 
       if (errors.length === 0) {
-        alert(`${selectedUsers.size} user(s) deleted successfully`);
+        showToast({ type: 'success', message: `${selectedUsers.size} user(s) deleted successfully` });
       } else {
-        alert(`Deleted ${selectedUsers.size - errors.length} user(s). Failed: ${errors.length}\n\nErrors:\n${errors.join('\n')}`);
+        showToast({ type: 'error', message: `Deleted ${selectedUsers.size - errors.length} user(s). Failed: ${errors.length}` });
+        console.error('Bulk delete errors:', errors.join('\n'));
       }
 
       setSelectedUsers(new Set());
-      loadUsers();
     } catch (error) {
-      console.error("Failed to delete users:", error);
-      alert("Failed to delete users. Check console for details.");
+      console.error('Failed to delete users:', error);
+      showToast({ type: 'error', message: 'Failed to delete users. Check console for details.' });
     }
+  };
+
+  const handleCancelBulkDelete = () => {
+    setConfirmBulkDeleteOpen(false);
   };
 
   const filteredUsers = filteredAndSortedUsers;
@@ -562,6 +565,7 @@ export default function UserManagement() {
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">User</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Email</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Username</th>
+              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Admission #</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Role</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Status</th>
               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-300">Created</th>
@@ -571,7 +575,7 @@ export default function UserManagement() {
           <tbody className="divide-y divide-gray-700">
             {filteredUsers.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-6 py-12 text-center">
+                <td colSpan={9} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center gap-3">
                     <MagnifyingGlassIcon className="h-12 w-12 text-gray-600" />
                     <p className="text-gray-400">No users found</p>
@@ -614,6 +618,9 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 text-gray-300">{user.email}</td>
                   <td className="px-6 py-4 text-gray-300">{user.username}</td>
+                  <td className="px-6 py-4 text-gray-300 font-mono text-sm">
+                    {user.role === 'student' ? ((user as Student).admissionNumber || '—') : '—'}
+                  </td>
                   <td className="px-6 py-4">
                     <select
                       value={user.role}
@@ -642,6 +649,42 @@ export default function UserManagement() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
+                      {user.role === 'student' && (
+                        <> 
+                          <button
+                            onClick={() => { setAssignStudentId(user.uid); setShowAssignStudentToTeacherModal(true); }}
+                            className="p-2 text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                            title="Assign to Teacher"
+                          >
+                            T
+                          </button>
+                          <button
+                            onClick={() => { setAssignCourseStudentId(user.uid); setShowAssignCourseToStudentModal(true); }}
+                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                            title="Assign Course"
+                          >
+                            C
+                          </button>
+                        </>
+                      )}
+                      {user.role === 'parent' && (
+                        <button
+                          onClick={() => { setAssignParentId(user.uid); setShowAssignParentToPartnerModal(true); }}
+                          className="p-2 text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+                          title="Assign Learning Partner"
+                        >
+                          LP
+                        </button>
+                      )}
+                      {user.role === 'teacher' && (
+                        <button
+                          onClick={() => { setAssignTeacherId(user.uid); setShowAssignTeacherToPartnerModal(true); }}
+                          className="p-2 text-purple-400 hover:bg-purple-500/10 rounded-lg transition-colors"
+                          title="Assign Learning Partner"
+                        >
+                          LP
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           setSelectedUser(user);
@@ -769,8 +812,8 @@ export default function UserManagement() {
                 </label>
                 <input
                   type="tel"
-                  value={formData.phoneNumber}
-                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                  value={formData.phoneNumber || ""}
+                  onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value || undefined })}
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-orange-500"
                   placeholder="+1234567890"
                 />
@@ -884,13 +927,13 @@ export default function UserManagement() {
                   role: selectedUser.role,
                   status: selectedUser.status,
                 });
-                alert("User updated successfully!");
+                showToast({ type: 'success', message: "User updated successfully!" });
                 setShowEditModal(false);
                 setSelectedUser(null);
-                loadUsers();
+                // realtime subscription will update list
               } catch (error: any) {
                 console.error("Failed to update user:", error);
-                alert(error.message || "Failed to update user");
+                showToast({ type: 'error', message: error.message || "Failed to update user" });
               }
             }} className="space-y-4">
               <div>
@@ -984,7 +1027,10 @@ export default function UserManagement() {
 
             <form onSubmit={async (e) => {
               e.preventDefault();
-              alert(`To reset password for ${selectedUser.email}:\n\n1. Go to Firebase Console\n2. Navigate to Authentication > Users\n3. Find ${selectedUser.email}\n4. Click the 3-dot menu > Reset Password\n5. User will receive reset email\n\nCloud Function for admin password reset coming soon!`);
+              const instructions = `To reset password for ${selectedUser.email}:\n\n1. Go to Firebase Console\n2. Navigate to Authentication > Users\n3. Find ${selectedUser.email}\n4. Click the 3-dot menu > Reset Password\n5. User will receive reset email\n\nCloud Function for admin password reset coming soon!`;
+              // Show a short toast and log full instructions to console for copy/paste
+              showToast({ type: 'info', message: 'Password reset instructions logged to console.' });
+              console.info(instructions);
               setShowPasswordModal(false);
               setSelectedUser(null);
               setNewPassword("");
@@ -1033,6 +1079,45 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+
+      {/* Assignment Modals */}
+      <AssignStudentToTeacherModal open={showAssignStudentToTeacherModal} onClose={() => { setShowAssignStudentToTeacherModal(false); setAssignStudentId(null); }} studentId={assignStudentId} />
+      <AssignParentToPartnerModal open={showAssignParentToPartnerModal} onClose={() => { setShowAssignParentToPartnerModal(false); setAssignParentId(null); }} parentId={assignParentId} />
+      <AssignTeacherToPartnerModal open={showAssignTeacherToPartnerModal} onClose={() => { setShowAssignTeacherToPartnerModal(false); setAssignTeacherId(null); }} teacherId={assignTeacherId} />
+      <AssignCourseToStudentModal open={showAssignCourseToStudentModal} onClose={() => { setShowAssignCourseToStudentModal(false); setAssignCourseStudentId(null); }} studentId={assignCourseStudentId} />
+
+      {/* Confirm modals for delete flows */}
+      <ConfirmModal
+        isOpen={confirmDeleteOpen}
+        title="Confirm Delete"
+        message="Are you sure you want to delete this user? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="danger"
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
+      <ConfirmModal
+        isOpen={confirmBulkDeleteOpen}
+        title="Confirm Bulk Delete"
+        message={`⚠️ You are about to DELETE ${selectedUsers.size} user(s). This action CANNOT be undone.`}
+        confirmLabel="Delete Permanently"
+        cancelLabel="Cancel"
+        variant="danger"
+        requiredText="DELETE"
+        onConfirm={handleConfirmBulkDelete}
+        onCancel={handleCancelBulkDelete}
+      />
+
     </div>
+  );
+}
+
+export default function UserManagement() {
+  return (
+    <AdminProvider>
+      <UserManagementInner />
+    </AdminProvider>
   );
 }

@@ -48,6 +48,17 @@ service cloud.firestore {
     function isStaff() {
       return isAdmin() || isRM() || isTeacher();
     }
+
+    // Validate a course document shape for writes
+    function isCourse(data) {
+      return data.keys().hasOnly(['title','category','level','sortOrder','active']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 120 &&
+             data.category in ['phonics','grammar_writing','public_speaking'] &&
+             data.sortOrder is number &&
+             data.active is bool &&
+             // level may be absent, null, or string
+             (!('level' in data) || data.level == null || data.level is string);
+    }
     
     // Check if user owns this resource
     function isOwner(uid) {
@@ -117,39 +128,39 @@ service cloud.firestore {
         return isParent() && 
                exists(/databases/$(database)/documents/parents/$(request.auth.uid)/children/$(studentId));
       }
-      
+
       function isAssignedTeacher() {
         return isTeacher() && 
                get(/databases/$(database)/documents/students/$(studentId)).data.assignedTeacherId == request.auth.uid;
       }
-      
+
       function isAssignedRM() {
         return isRM() && 
                get(/databases/$(database)/documents/students/$(studentId)).data.assignedRmId == request.auth.uid;
       }
-      
+
       // Parents can read their children, teachers their students, RMs their cohort
       allow read: if isOwner(studentId) || isStudentParent() || isAssignedTeacher() || isAssignedRM() || isAdmin();
-      
+
       // Only admin/RM can create/update student records
       allow create: if isAdminOrRM() && hasValidCreate();
       allow update: if isAdminOrRM() && hasValidAudit();
       allow delete: if isAdmin();
-      
+
       // /students/{studentId}/attendance/{date}
       match /attendance/{date} {
         allow read: if isOwner(studentId) || isStudentParent() || isAssignedTeacher() || isAssignedRM() || isAdmin();
         allow create, update: if isStaff() && hasValidAudit();
         allow delete: if isAdmin();
       }
-      
+
       // /students/{studentId}/curriculum/{topicId}
       match /curriculum/{topicId} {
         allow read: if isOwner(studentId) || isStudentParent() || isAssignedTeacher() || isAssignedRM() || isAdmin();
         allow create, update: if (isAssignedTeacher() || isAdmin()) && hasValidAudit();
         allow delete: if isAdmin();
       }
-      
+
       // /students/{studentId}/progress/{topicId}
       match /progress/{topicId} {
         allow read: if isOwner(studentId) || isStudentParent() || isAssignedTeacher() || isAssignedRM() || isAdmin();
@@ -245,18 +256,22 @@ service cloud.firestore {
     // /courses/{courseId}
     // ============================================
     match /courses/{courseId} {
-      // Anyone can read courses
-      allow read: if isAuthenticated();
-      
-      // Only admin can manage courses
-      allow create, update: if isAdmin() && hasValidAudit();
-      allow delete: if isAdmin();
-      
+      // Any signed-in user can read (for dropdowns / library views)
+      allow read: if request.auth != null;
+
+      // Only admin can create courses and the document must match the course schema
+      allow create: if request.auth != null && request.auth.token.role == 'admin' && isCourse(request.resource.data);
+
+      // Only admin can update and the new data must match the course schema
+      allow update: if request.auth != null && request.auth.token.role == 'admin' && isCourse(request.resource.data);
+
+      // Only admin can delete
+      allow delete: if request.auth != null && request.auth.token.role == 'admin';
+
       // /courses/{courseId}/topics/{topicId}
       match /topics/{topicId} {
-        allow read: if isAuthenticated();
-        allow create, update: if isAdmin() && hasValidAudit();
-        allow delete: if isAdmin();
+        allow read: if request.auth != null;
+        allow create, update, delete: if request.auth != null && request.auth.token.role == 'admin';
       }
     }
     
@@ -416,6 +431,12 @@ service cloud.firestore {
       allow create: if isAdmin();
       allow delete: if isAdmin();
     }
+
+    // Top-level camelCase systemSettings
+    // Allow admins to read/write under both naming conventions
+    match /systemSettings/{settingId} {
+      allow read, write: if isAdmin();
+    }
     
     // ============================================
     // /call_logs/{logId}
@@ -432,6 +453,50 @@ service cloud.firestore {
       
       // Only admins can delete
       allow delete: if isAdmin();
+    }
+    
+    // ---------- 🔹 AUDIT LOGS (Admin only) ----------
+    match /{prefix=**}/auditLogs/{logId} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+
+    // ---------- 🔹 SYSTEM STATS (Admin only) ----------
+    match /{prefix=**}/systemStats/{statId} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+
+    // ---------- 🔹 COURSES (tenant-prefixed) ----------
+    // Allow reads for any signed-in user for dropdowns/catalogs; writes only by admin
+    match /{prefix=**}/courses/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // ---------- 🔹 COURSE STATS (Admin only) ----------
+    match /{prefix=**}/courseStats/{statId} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+
+    // ---------- 🔹 LESSONS (Admin-only read for analytics) ----------
+    // Admin users need read access to lessons so admin-only course analytics
+    // (computed client-side) can iterate lessons and build stats.
+    match /lessons/{lessonId} {
+      allow read: if request.auth != null && request.auth.token.role == 'admin';
+      allow write: if request.auth != null && request.auth.token.role == 'admin';
+    }
+
+    // ---------- 🔹 SYSTEM SETTINGS (Admin only) ----------
+    match /{prefix=**}/systemSettings/{settingId} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+    // Tenant-prefixed snake_case variant
+    match /{prefix=**}/system_settings/{settingId} {
+      allow read, write: if request.auth != null && isAdmin();
+    }
+
+    // ---------- 🔹 ADMIN CONFIGS (Admin only) ----------
+    match /{prefix=**}/adminConfigs/{configId} {
+      allow read, write: if request.auth != null && isAdmin();
     }
     
     // ============================================

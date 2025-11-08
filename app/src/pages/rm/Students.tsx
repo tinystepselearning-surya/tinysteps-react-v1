@@ -5,6 +5,7 @@ import { useRM } from "../../hooks/useRM";
 import { useRMStudents } from "../../hooks/useRMStudents";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase";
+import RMAssignStudentToTeacherModal from './components/RMAssignStudentToTeacherModal';
 import { 
   MagnifyingGlassIcon, 
   AcademicCapIcon,
@@ -16,6 +17,7 @@ import {
   DocumentTextIcon,
   XMarkIcon,
   ArrowDownTrayIcon,
+  UserGroupIcon
 } from "@heroicons/react/24/outline";
 
 export default function RMStudents() {
@@ -23,6 +25,12 @@ export default function RMStudents() {
   const navigate = useNavigate();
   const { rm } = useRM(user?.uid || null);
   const { students, loading } = useRMStudents(rm?.id || null);
+
+  // Debug: log RM and user data
+  console.log('User:', user);
+  console.log('RM:', rm);
+  console.log('Students loading:', loading);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [healthFilter, setHealthFilter] = useState<"all" | "flagged">("all");
@@ -30,6 +38,7 @@ export default function RMStudents() {
   const [showNotifyModal, setShowNotifyModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [notifyMessage, setNotifyMessage] = useState("");
   const [scheduleDate, setScheduleDate] = useState("");
   const [noteText, setNoteText] = useState("");
@@ -151,6 +160,9 @@ export default function RMStudents() {
   });
 
   const flaggedCount = students.filter(s => getHealthFlags(s).length > 0).length;
+
+  // Debug: log students data
+  console.log('RM Students loaded:', students.length, students);
 
   const handleExportCSV = () => {
     const csvData = filteredStudents.map(student => {
@@ -301,6 +313,9 @@ export default function RMStudents() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredStudents.map((student) => {
+                // Debug: log student data to see assignedTeacherId
+                console.log('Student:', student.displayName, 'assignedTeacherId:', student.assignedTeacherId, 'type:', typeof student.assignedTeacherId);
+                
                 const overallProgress = student.summary
                   ? Math.round((student.summary.phonicsMastery + student.summary.grammarMastery + student.summary.speakingMastery) / 3)
                   : 0;
@@ -343,14 +358,21 @@ export default function RMStudents() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {student.assignedTeacherId ? (
+                      {!student.assignedTeacherId || student.assignedTeacherId === '' || filteredStudents.indexOf(student) === 0 ? (
+                        <button
+                          onClick={() => {
+                            setSelectedStudent(student);
+                            setShowAssignModal(true);
+                          }}
+                          className="text-sm text-orange-600 hover:text-orange-800 font-medium flex items-center gap-1"
+                        >
+                          <UserGroupIcon className="h-4 w-4" />
+                          Assign Teacher
+                        </button>
+                      ) : (
                         <div className="text-sm text-gray-900">
                           {student.assignedTeacherName || "Assigned"}
                         </div>
-                      ) : (
-                        <button className="text-sm text-orange-600 hover:text-orange-800 font-medium">
-                          Assign Teacher
-                        </button>
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -635,6 +657,17 @@ export default function RMStudents() {
           </div>
         </div>
       )}
+
+      {/* Assign Student to Teacher Modal */}
+      <RMAssignStudentToTeacherModal
+        open={showAssignModal}
+        onClose={() => {
+          setShowAssignModal(false);
+          setSelectedStudent(null);
+        }}
+        studentId={selectedStudent?.id || null}
+        studentName={selectedStudent?.displayName}
+      />
     </div>
   );
 }

@@ -14,7 +14,8 @@ import {
   writeBatch,
   orderBy,
   limit,
-  serverTimestamp
+  serverTimestamp,
+  addDoc
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions, auth } from '../firebase';
@@ -35,12 +36,18 @@ import type {
  */
 export async function createUser(data: CreateUserFormData): Promise<User> {
   try {
-    // Normalize username (lowercase, remove spaces)
-    const normalizedUsername = data.username.toLowerCase().replace(/\s+/g, '');
+    // Normalize username (lowercase, remove spaces and special chars, keep only alphanumeric and underscores)
+    const normalizedUsername = data.username.toLowerCase().replace(/[^a-z0-9_]/g, '');
     
-    // Validate username format
-    if (!/^[a-z0-9_]+$/.test(normalizedUsername)) {
-      throw new Error('Username can only contain lowercase letters, numbers, and underscores');
+    // Validate username format - must be 3-20 chars, start with letter, only lowercase letters, numbers, underscores
+    if (!/^[a-z][a-z0-9_]{2,19}$/.test(normalizedUsername)) {
+      throw new Error('Username must be 3-20 characters, start with a letter, and contain only lowercase letters, numbers, and underscores');
+    }
+
+    // Check for reserved usernames
+    const reservedUsernames = ['admin', 'root', 'system', 'support', 'help', 'info', 'contact', 'test', 'demo'];
+    if (reservedUsernames.includes(normalizedUsername)) {
+      throw new Error('This username is reserved and cannot be used');
     }
 
     // Validate student has parent
@@ -51,7 +58,7 @@ export async function createUser(data: CreateUserFormData): Promise<User> {
     // Use Cloud Function to create user (doesn't log out admin!)
     const adminCreateUserFn = httpsCallable(functions, 'adminCreateUser');
     
-    const result = await adminCreateUserFn({
+    const createData: any = {
       email: data.email,
       password: data.password,
       displayName: data.displayName,
@@ -59,13 +66,19 @@ export async function createUser(data: CreateUserFormData): Promise<User> {
       lastName: data.lastName,
       username: normalizedUsername,
       role: data.role,
-      phoneNumber: data.phoneNumber,
       parentId: data.parentId,
       learningPartnerId: data.learningPartnerId,
       teacherId: data.teacherId,
       enrolledCourses: data.enrolledCourses,
       dateOfBirth: data.dateOfBirth
-    });
+    };
+
+    // Only include phoneNumber if it's provided and not empty
+    if (data.phoneNumber && data.phoneNumber.trim() !== '') {
+      createData.phoneNumber = data.phoneNumber;
+    }
+
+    const result = await adminCreateUserFn(createData);
 
     console.log('✅ User created via Cloud Function:', result.data);
     
@@ -231,10 +244,17 @@ export async function assignStudentToParent(studentId: string, parentId: string)
   try {
     const batch = writeBatch(db);
 
+    // Get current admin user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Must be authenticated to assign students');
+    }
+
     // Update student
     batch.update(doc(db, 'users', studentId), {
       parentId,
-      updatedAt: new Date().toISOString()
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser.uid
     });
 
     // Update parent
@@ -244,7 +264,8 @@ export async function assignStudentToParent(studentId: string, parentId: string)
       if (!parentData.children.includes(studentId)) {
         batch.update(doc(db, 'users', parentId), {
           children: [...parentData.children, studentId],
-          updatedAt: new Date().toISOString()
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid
         });
       }
     }
@@ -267,10 +288,17 @@ export async function assignLearningPartnerToTeacher(
   try {
     const batch = writeBatch(db);
 
+    // Get current admin user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Must be authenticated to assign learning partners');
+    }
+
     // Update teacher
     batch.update(doc(db, 'users', teacherId), {
       learningPartnerId,
-      updatedAt: new Date().toISOString()
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser.uid
     });
 
     // Update learning partner
@@ -280,7 +308,8 @@ export async function assignLearningPartnerToTeacher(
       if (!lpData.assignedTeachers.includes(teacherId)) {
         batch.update(doc(db, 'users', learningPartnerId), {
           assignedTeachers: [...lpData.assignedTeachers, teacherId],
-          updatedAt: new Date().toISOString()
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid
         });
       }
     }
@@ -303,10 +332,17 @@ export async function assignLearningPartnerToParent(
   try {
     const batch = writeBatch(db);
 
+    // Get current admin user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Must be authenticated to assign learning partners');
+    }
+
     // Update parent
     batch.update(doc(db, 'users', parentId), {
       learningPartnerId,
-      updatedAt: new Date().toISOString()
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser.uid
     });
 
     // Update learning partner
@@ -316,7 +352,8 @@ export async function assignLearningPartnerToParent(
       if (!lpData.assignedParents.includes(parentId)) {
         batch.update(doc(db, 'users', learningPartnerId), {
           assignedParents: [...lpData.assignedParents, parentId],
-          updatedAt: new Date().toISOString()
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid
         });
       }
     }
@@ -339,11 +376,18 @@ export async function assignCourseToStudent(studentId: string, courseId: string)
       throw new Error('Student not found');
     }
 
+    // Get current admin user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Must be authenticated to assign courses');
+    }
+
     const studentData = studentDoc.data() as Student;
     if (!studentData.enrolledCourses.includes(courseId)) {
       await updateDoc(doc(db, 'users', studentId), {
         enrolledCourses: [...studentData.enrolledCourses, courseId],
-        updatedAt: new Date().toISOString()
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid
       });
       console.log(`✅ Course ${courseId} assigned to student ${studentId}`);
     }
@@ -363,10 +407,17 @@ export async function removeCourseFromStudent(studentId: string, courseId: strin
       throw new Error('Student not found');
     }
 
+    // Get current admin user
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error('Must be authenticated to remove courses');
+    }
+
     const studentData = studentDoc.data() as Student;
     await updateDoc(doc(db, 'users', studentId), {
       enrolledCourses: studentData.enrolledCourses.filter(id => id !== courseId),
-      updatedAt: new Date().toISOString()
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser.uid
     });
     console.log(`✅ Course ${courseId} removed from student ${studentId}`);
   } catch (error) {
@@ -494,17 +545,21 @@ export async function getAuditLogs(limitCount: number = 50): Promise<AuditLog[]>
  */
 export async function createAuditLog(log: Omit<AuditLog, 'id' | 'timestamp'>): Promise<void> {
   try {
+    // Persist audit log to /audit_logs collection
     const logsRef = collection(db, 'audit_logs');
-    await writeBatch(db).commit(); // Just to import writeBatch if needed
-    
-    const newLog = {
-      ...log,
-      timestamp: new Date().toISOString()
-    };
-    
-    await getDocs(logsRef); // Ensure collection exists
-    // In production, use addDoc from firestore
-    console.log('Audit log created:', newLog);
+    await addDoc(logsRef, {
+      action: log.action,
+      userId: log.userId,
+      userName: log.userName,
+      userRole: log.userRole,
+      entityType: log.entityType,
+      entityId: log.entityId,
+      details: log.details,
+      metadata: log.metadata || null,
+      timestamp: new Date().toISOString(),
+      createdAt: serverTimestamp()
+    });
+    console.log('Audit log persisted');
   } catch (error) {
     console.error('Error creating audit log:', error);
     // Don't throw - audit logs are not critical
@@ -516,6 +571,8 @@ export async function createAuditLog(log: Omit<AuditLog, 'id' | 'timestamp'>): P
  */
 export async function getSystemSettings(): Promise<SystemSettings | null> {
   try {
+    const settingsPath = 'system_settings/current';
+    console.debug('[SystemSettings] path =', settingsPath);
     const settingsDoc = await getDoc(doc(db, 'system_settings', 'current'));
     
     if (settingsDoc.exists()) {

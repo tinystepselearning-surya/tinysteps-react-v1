@@ -43,12 +43,16 @@ exports.adminCreateUser = (0, https_1.onCall)({
             throw new https_1.HttpsError('already-exists', `Username "${data.username}" is already taken`);
         }
         // Create Firebase Auth user (Admin SDK doesn't sign them in!)
-        const userRecord = await auth.createUser({
+        const createUserData = {
             email: data.email,
             password: data.password,
-            displayName: data.displayName,
-            phoneNumber: data.phoneNumber
-        });
+            displayName: data.displayName
+        };
+        // Only include phoneNumber if it's provided and not empty
+        if (data.phoneNumber && data.phoneNumber.trim() !== '') {
+            createUserData.phoneNumber = data.phoneNumber;
+        }
+        const userRecord = await auth.createUser(createUserData);
         const uid = userRecord.uid;
         // Set custom claims for role-based access
         await auth.setCustomUserClaims(uid, { role: data.role });

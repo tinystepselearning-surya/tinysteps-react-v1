@@ -13,8 +13,59 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function RMLayout() {
-  const { user, signOut } = useAuth();
+  const { user, role, signOut, loading } = useAuth();
   const location = useLocation();
+
+  console.log('[RMLayout] User:', user?.email, 'Role:', role, 'Loading:', loading, 'Path:', location.pathname);
+
+  // Show loading while auth is loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is not a learning-partner, show access denied
+  if (role !== "learning-partner") {
+    console.log('[RMLayout] Access denied for role:', role);
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+          <div className="mb-6">
+            <UserCircleIcon className="h-16 w-16 text-red-500 mx-auto" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-6">
+            You don't have permission to access the Learning Partner portal. 
+            Your current role is: <span className="font-semibold text-red-600">{role || 'unknown'}</span>
+          </p>
+          <div className="space-y-3">
+            {role === "admin" && (
+              <Link
+                to="/surya/learning-partners"
+                className="block w-full bg-orange-600 text-white py-2 px-4 rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                Go to Admin Learning Partners Page
+              </Link>
+            )}
+            <button
+              onClick={signOut}
+              className="block w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('[RMLayout] Access granted for learning-partner role');
 
   const navigation = [
     { name: "Dashboard", href: "/rm/dashboard", icon: HomeIcon },

@@ -8,7 +8,10 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['**/__tests__/**/*.test.{ts,tsx}'],
+    include: ['**/__tests__/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
+    environmentMatchGlobs: [
+      ['tests/firestore.rules.*.test.ts', 'node'],
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

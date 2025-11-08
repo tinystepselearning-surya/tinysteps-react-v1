@@ -27,6 +27,7 @@ export default function ParentLayout() {
 
   const isActive = (path: string) => location.pathname === path;
 
+  console.log("[ParentLayout] Rendering for user:", user?.email);
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Navigation */}

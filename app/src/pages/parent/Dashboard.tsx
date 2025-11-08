@@ -7,6 +7,7 @@ import { UserGroupIcon, SparklesIcon } from "@heroicons/react/24/outline";
 
 export default function ParentDashboard() {
   const { user } = useAuth();
+  console.log("[ParentDashboard] Rendering for user:", user?.email);
   const { children, loading: childrenLoading, error: childrenError } = useChildren(user?.uid || null);
   const [selectedChildIndex, setSelectedChildIndex] = useState(0);
 

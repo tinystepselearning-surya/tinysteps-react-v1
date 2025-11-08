@@ -44,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Get the latest token to ensure we have fresh claims
         const idTokenResult = await firebaseUser.getIdTokenResult();
         const userRole = idTokenResult.claims.role as UserRole | undefined;
-        
+        console.log("[AuthContext] onAuthStateChanged: user=", firebaseUser.email, "role=", userRole);
         setUser(firebaseUser);
         setRole(userRole || null);
       } else {
@@ -53,7 +53,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
       setLoading(false);
     });
-
     return unsubscribe;
   }, []);
 
@@ -63,6 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (auth.currentUser) {
       await auth.currentUser.getIdToken(true);
       const idTokenResult = await auth.currentUser.getIdTokenResult();
+      console.log("[AuthContext] signIn: user=", auth.currentUser.email, "role=", idTokenResult.claims.role);
       setRole(idTokenResult.claims.role as UserRole);
     }
   };

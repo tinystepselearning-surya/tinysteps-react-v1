@@ -58,15 +58,15 @@ export default function CoursesOverview() {
   } = useCourses(filters);
 
   const handleCreateCourse = () => {
-    navigate('/admin/courses/new');
+    navigate('/surya/courses/new');
   };
 
   const handleEditCourse = (courseId: string) => {
-    navigate(`/admin/courses/${courseId}/edit`);
+    navigate(`/surya/courses/${courseId}/edit`);
   };
 
   const handleViewCourse = (courseId: string) => {
-    navigate(`/admin/courses/${courseId}`);
+    navigate(`/surya/courses/${courseId}`);
   };
 
   const handleDeleteCourse = async (courseId: string, courseName: string) => {
@@ -92,7 +92,7 @@ export default function CoursesOverview() {
   const handleDuplicateCourse = async (courseId: string) => {
     try {
       const newCourse = await duplicateCourse(courseId, user?.uid || '');
-      navigate(`/admin/courses/${newCourse.id}/edit`);
+      navigate(`/surya/courses/${newCourse.id}/edit`);
     } catch (err) {
       alert('Failed to duplicate course');
     }

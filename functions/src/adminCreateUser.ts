@@ -65,13 +65,45 @@ export const adminCreateUser = onCall({
       throw new HttpsError('already-exists', `Username "${data.username}" is already taken`);
     }
 
+    // Check if email already exists
+    const emailQuery = await db.collection('users').where('email', '==', data.email.toLowerCase()).get();
+    if (!emailQuery.empty) {
+      throw new HttpsError('already-exists', `Email "${data.email}" is already registered`);
+    }
+
+    // Generate admission number for students
+    let admissionNumber: string | undefined;
+    if (data.role === 'student') {
+      // Get the current highest admission number
+      const studentsQuery = await db.collection('students')
+        .where('admissionNumber', '!=', null)
+        .orderBy('admissionNumber', 'desc')
+        .limit(1)
+        .get();
+
+      let nextNumber = 1;
+      if (!studentsQuery.empty) {
+        const lastStudent = studentsQuery.docs[0].data();
+        const lastNumber = parseInt(lastStudent.admissionNumber?.replace('TS', '') || '0');
+        nextNumber = lastNumber + 1;
+      }
+
+      admissionNumber = `TS${nextNumber.toString().padStart(3, '0')}`;
+    }
+
     // Create Firebase Auth user (Admin SDK doesn't sign them in!)
-    const userRecord = await auth.createUser({
+    const createUserData: any = {
       email: data.email,
       password: data.password,
-      displayName: data.displayName,
-      phoneNumber: data.phoneNumber
-    });
+      displayName: data.displayName
+    };
+
+    // Only include phoneNumber if it's provided and not empty
+    if (data.phoneNumber && data.phoneNumber.trim() !== '') {
+      createUserData.phoneNumber = data.phoneNumber;
+    }
+
+    const userRecord = await auth.createUser(createUserData);
 
     const uid = userRecord.uid;
 
@@ -104,7 +136,8 @@ export const adminCreateUser = onCall({
           parentId: data.parentId,
           enrolledCourses: data.enrolledCourses || [],
           learningPartnerId: data.learningPartnerId,
-          teacherId: data.teacherId
+          teacherId: data.teacherId,
+          admissionNumber
         };
 
         // Add DOB and calculate age if provided
@@ -208,6 +241,7 @@ export const adminCreateUser = onCall({
         status: 'active',
         dateOfBirth: data.dateOfBirth || null,
         age: userData.age || null,
+        admissionNumber,
         createdAt: new Date().toISOString(),
         createdBy: request.auth.uid,
         updatedAt: new Date().toISOString(),
@@ -262,6 +296,7 @@ export const adminCreateUser = onCall({
         status: 'active',
         dateOfBirth: data.dateOfBirth || null,
         age: userData.age || null,
+        admissionNumber,
         createdAt: new Date().toISOString(),
         createdBy: request.auth.uid,
         updatedAt: new Date().toISOString(),
@@ -302,19 +337,15 @@ export const adminCreateUser = onCall({
     if (data.role === 'learning-partner') {
       const rmRef = db.collection('rms').doc(uid);
       batch.set(rmRef, {
-        uid,
-        email: data.email,
+        userId: uid,
         displayName: data.displayName,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phoneNumber: data.phoneNumber || '',
-        assignedTeachers: [],
-        assignedParents: [],
+        email: data.email,
+        phone: data.phoneNumber || '',
         status: 'active',
-        createdAt: new Date().toISOString(),
         createdBy: request.auth.uid,
-        updatedAt: new Date().toISOString(),
-        updatedBy: request.auth.uid
+        createdAt: new Date(),
+        updatedBy: request.auth.uid,
+        updatedAt: new Date()
       });
     }
 

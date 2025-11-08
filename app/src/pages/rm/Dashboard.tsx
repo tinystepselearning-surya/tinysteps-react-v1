@@ -16,12 +16,20 @@ import {
 } from "@heroicons/react/24/outline";
 
 export default function RMDashboard() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { rm, stats, loading: rmLoading } = useRM(user?.uid || null);
   const { students, unassignedStudents } = useRMStudents(rm?.id || null);
   const { workloads } = useRMTeachers(rm?.id || null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [alertsLoading, setAlertsLoading] = useState(true);
+
+  // Debug logging
+  console.log('RM Dashboard - User:', user);
+  console.log('RM Dashboard - Role:', role);
+  console.log('RM Dashboard - RM:', rm);
+  console.log('RM Dashboard - Students:', students.length);
+  console.log('RM Dashboard - Workloads:', workloads.length);
+  console.log('RM Dashboard - Unassigned:', unassignedStudents.length);
 
   useEffect(() => {
     async function fetchAlerts() {
@@ -40,6 +48,19 @@ export default function RMDashboard() {
 
     fetchAlerts();
   }, [rm?.id]);
+
+  if (role !== "learning-partner") {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+          <h2 className="text-xl font-bold text-red-900 mb-2">Access Denied</h2>
+          <p className="text-red-700">
+            This page is only accessible to Learning Partners. Your current role is: <span className="font-semibold">{role}</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (rmLoading) {
     return (

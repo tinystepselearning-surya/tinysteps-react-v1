@@ -38,10 +38,12 @@ export function ProtectedRoute({
 
   // Check if user has one of the allowed roles
   if (role && allowedRoles.includes(role)) {
+    console.log(`[ProtectedRoute] Access granted for role "${role}" to ${allowedRoles.join(', ')} routes`);
     return <>{children}</>;
   }
 
   // User doesn't have permission - redirect based on their role
+  console.log(`[ProtectedRoute] Access denied for role "${role}" to ${allowedRoles.join(', ')} routes`);
   const roleRedirects: Record<UserRole, string> = {
     admin: "/surya/dashboard",
     "learning-partner": "/rm/dashboard",
@@ -51,5 +53,6 @@ export function ProtectedRoute({
   };
 
   const userRedirect = role ? roleRedirects[role] : "/";
+  console.log(`[ProtectedRoute] Redirecting to ${userRedirect}`);
   return <Navigate to={userRedirect} replace />;
 }

@@ -19,7 +19,7 @@ const GUEST_CONFIG = {
             "Printable worksheet pack (Level 1 Phonics)",
             "Weekly learning goals checklist to try at home",
         ],
-        upgrade: "/login/parents",
+        upgrade: "/parent-login",
     },
 };
 export default function GuestPortalPage() {

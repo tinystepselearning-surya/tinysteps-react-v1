@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, addDoc, updateDoc, doc, query, where } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, doc, query, where, getDoc, serverTimestamp } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 import { db } from "../../firebase";
 import { Link } from "react-router-dom";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+
+const auth = getAuth();
 
 interface Parent {
   id: string;
@@ -26,6 +29,7 @@ interface Student {
   ageYears: number;
   gender: "male" | "female" | "other";
   parentIds: string[];
+  enrolledCourses: string[];
 }
 
 export default function ParentManagement() {
@@ -48,6 +52,9 @@ export default function ParentManagement() {
     ageYears: 5,
     gender: "male" as "male" | "female" | "other",
   });
+
+  const [isNewStudent, setIsNewStudent] = useState(true);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -104,34 +111,82 @@ export default function ParentManagement() {
     if (!selectedParent) return;
 
     try {
-      // Create student
-      const studentRef = await addDoc(collection(db, "students"), {
-        name: childForm.name,
-        displayName: childForm.displayName,
-        ageYears: childForm.ageYears,
-        gender: childForm.gender,
-        parentIds: [selectedParent.id],
-        currentPhase: 0,
-        createdAt: new Date(),
-      });
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Must be authenticated to add child');
+      }
 
-      // Update parent's childIds
-      const updatedChildIds = [...(selectedParent.childIds || []), studentRef.id];
-      await updateDoc(doc(db, "users", selectedParent.id), {
-        childIds: updatedChildIds,
-      });
+      if (isNewStudent) {
+        // Create new student
+        const studentPayload = {
+          name: childForm.name,
+          displayName: childForm.displayName,
+          ageYears: childForm.ageYears,
+          gender: childForm.gender,
+          parentIds: [selectedParent.id],
+          enrolledCourses: [],
+          createdAt: serverTimestamp(),
+          createdBy: currentUser.uid,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid,
+        };
+        console.log("Creating new student with payload:", studentPayload);
+        const studentRef = await addDoc(collection(db, "students"), studentPayload);
+        console.log("New student created with ID:", studentRef.id);
+
+        // Update parent's childIds
+        const updatedChildIds = [...(selectedParent.childIds || []), studentRef.id];
+        console.log("Updating parent with childIds:", updatedChildIds);
+        await updateDoc(doc(db, "users", selectedParent.id), {
+          childIds: updatedChildIds,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid,
+        });
+      } else if (selectedStudentId) {
+        // Map existing student to parent
+        const studentRef = doc(db, "students", selectedStudentId);
+        const studentDoc = await getDoc(studentRef);
+        if (studentDoc.exists()) {
+          const studentData = studentDoc.data();
+          const updatedParentIds = [...(studentData.parentIds || []), selectedParent.id];
+          console.log("Updating existing student with parentIds:", updatedParentIds);
+          await updateDoc(studentRef, {
+            parentIds: updatedParentIds,
+            updatedAt: serverTimestamp(),
+            updatedBy: currentUser.uid,
+          });
+          console.log("Student updated successfully:", selectedStudentId);
+        } else {
+          console.error("Student not found:", selectedStudentId);
+        }
+
+        const updatedChildIds = [...(selectedParent.childIds || []), selectedStudentId];
+        console.log("Updating parent with childIds:", updatedChildIds);
+        await updateDoc(doc(db, "users", selectedParent.id), {
+          childIds: updatedChildIds,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid,
+        });
+      }
 
       setChildForm({ name: "", displayName: "", ageYears: 5, gender: "male" });
+      setSelectedStudentId(null);
       setShowAddChildModal(false);
       setSelectedParent(null);
       loadData();
     } catch (error: any) {
+      console.error("Error in handleAddChild:", error);
       alert(error.message);
     }
   };
 
   const handleUpdateSubscription = async (parentId: string, status: "active" | "inactive" | "trial") => {
     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Must be authenticated to update subscription');
+      }
+
       await updateDoc(doc(db, "users", parentId), {
         subscription: {
           status,
@@ -139,6 +194,8 @@ export default function ParentManagement() {
           startDate: new Date(),
           endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid,
       });
       loadData();
     } catch (error) {
@@ -150,12 +207,19 @@ export default function ParentManagement() {
     if (!confirm("Remove this child from the parent?")) return;
 
     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('Must be authenticated to remove child');
+      }
+
       const parent = parents.find(p => p.id === parentId);
       if (!parent) return;
 
       const updatedChildIds = parent.childIds.filter(id => id !== childId);
       await updateDoc(doc(db, "users", parentId), {
         childIds: updatedChildIds,
+        updatedAt: serverTimestamp(),
+        updatedBy: currentUser.uid,
       });
 
       // Update student's parentIds
@@ -164,6 +228,8 @@ export default function ParentManagement() {
         const updatedParentIds = student.parentIds.filter(id => id !== parentId);
         await updateDoc(doc(db, "students", childId), {
           parentIds: updatedParentIds,
+          updatedAt: serverTimestamp(),
+          updatedBy: currentUser.uid,
         });
       }
 
@@ -229,7 +295,7 @@ export default function ParentManagement() {
       {/* Parents List */}
       <div className="space-y-4">
         {parents.map((parent) => {
-          const parentChildren = students.filter(s => s.parentIds.includes(parent.id));
+          const parentChildren = students.filter(s => Array.isArray(s.parentIds) && s.parentIds.includes(parent.id));
           
           return (
             <div key={parent.id} className="bg-gray-800 border border-gray-700 rounded-xl p-6">
@@ -364,49 +430,82 @@ export default function ParentManagement() {
             <p className="text-gray-400 mb-6">For parent: {selectedParent.displayName}</p>
             <form onSubmit={handleAddChild} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Child Name</label>
-                <input
-                  type="text"
-                  value={childForm.name}
-                  onChange={(e) => setChildForm({ ...childForm, name: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
-                <input
-                  type="text"
-                  value={childForm.displayName}
-                  onChange={(e) => setChildForm({ ...childForm, displayName: e.target.value })}
-                  required
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Age (years)</label>
-                <input
-                  type="number"
-                  min="3"
-                  max="12"
-                  value={childForm.ageYears}
-                  onChange={(e) => setChildForm({ ...childForm, ageYears: parseInt(e.target.value) })}
-                  required
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
+                <label className="block text-sm font-medium text-gray-300 mb-2">Add Existing or New Student</label>
                 <select
-                  value={childForm.gender}
-                  onChange={(e) => setChildForm({ ...childForm, gender: e.target.value as any })}
+                  value={isNewStudent ? "new" : "existing"}
+                  onChange={(e) => setIsNewStudent(e.target.value === "new")}
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
                 >
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
+                  <option value="new">New Student</option>
+                  <option value="existing">Existing Student</option>
                 </select>
               </div>
+
+              {isNewStudent ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Child Name</label>
+                    <input
+                      type="text"
+                      value={childForm.name}
+                      onChange={(e) => setChildForm({ ...childForm, name: e.target.value })}
+                      required
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+                    <input
+                      type="text"
+                      value={childForm.displayName}
+                      onChange={(e) => setChildForm({ ...childForm, displayName: e.target.value })}
+                      required
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Age (years)</label>
+                    <input
+                      type="number"
+                      min="3"
+                      max="12"
+                      value={childForm.ageYears}
+                      onChange={(e) => setChildForm({ ...childForm, ageYears: parseInt(e.target.value) })}
+                      required
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Gender</label>
+                    <select
+                      value={childForm.gender}
+                      onChange={(e) => setChildForm({ ...childForm, gender: e.target.value as any })}
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
+                    >
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Select Existing Student</label>
+                  <select
+                    value={selectedStudentId || ""}
+                    onChange={(e) => setSelectedStudentId(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:ring-2 focus:ring-sky-500"
+                  >
+                    <option value="" disabled>Select a student</option>
+                    {students.map((student) => (
+                      <option key={student.id} value={student.id}>
+                        {student.displayName} ({student.ageYears} years)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <div className="flex gap-4 pt-4">
                 <button
                   type="button"

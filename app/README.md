@@ -4,8 +4,6 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
 
 ## React Compiler
 
@@ -71,3 +69,31 @@ export default defineConfig([
   },
 ])
 ```
+ 
+## Developer notes: Firestore rules & indexes
+
+Run and deploy Firestore rules and indexes when you make security/schema changes.
+
+- Deploy rules (from repo root or the `app/` folder depending on your firebase setup):
+
+```bash
+firebase deploy --only firestore:rules
+```
+
+- Deploy indexes:
+
+```bash
+firebase deploy --only firestore:indexes
+```
+
+- Run the Firestore rules tests (requires the emulator libraries):
+
+```bash
+# from app/ directory
+npm install
+npm run test:rules
+```
+
+The repository contains `app/firestore.indexes.json` and a root `firestore.indexes.json` with recommended composite indexes for course queries (active + sortOrder, category + sortOrder).
+
+Tenant-prefixed rules tests are available at `app/tests/firestore.rules.courses.tenant.test.ts` and can be run with `npm run test:rules`.

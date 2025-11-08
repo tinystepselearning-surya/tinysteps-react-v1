@@ -6,11 +6,14 @@ import {
   ArrowLeftIcon,
   AcademicCapIcon,
   ClockIcon,
-  ChartBarIcon,
   DocumentTextIcon,
   TrophyIcon,
   LightBulbIcon,
 } from "@heroicons/react/24/outline";
+// useAuth not required in this view right now
+import { addAttendanceRecord, updateCurriculumTopic, seedSampleData } from "../../services/teacherService";
+import CurriculumList from "../../components/CurriculumList";
+import { useToast } from "../../ui/ToastProvider";
 
 interface Student {
   id: string;
@@ -18,7 +21,6 @@ interface Student {
   lastName: string;
   age: number;
   assignedTeacherId: string;
-  currentPhase: string;
   enrolledCourses: string[];
 }
 
@@ -74,12 +76,19 @@ export default function StudentProfile() {
   const [worksheets, setWorksheets] = useState<Worksheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"timeline" | "curriculum" | "worksheets" | "games">("timeline");
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [attendanceDate, setAttendanceDate] = useState( new Date().toISOString().split('T')[0] );
+  const [attendanceStatus, setAttendanceStatus] = useState<"present" | "absent" | "excused">("present");
+  const [seeding, setSeeding] = useState(false);
+  // const { user } = useAuth(); // unused in this view for now
 
   useEffect(() => {
     if (studentId) {
       fetchStudentData();
     }
   }, [studentId]);
+
+  const { showToast } = useToast();
 
   const fetchStudentData = async () => {
     if (!studentId) return;
@@ -97,8 +106,7 @@ export default function StudentProfile() {
           lastName: data.lastName,
           age: data.age || 6,
           assignedTeacherId: data.assignedTeacherId,
-          currentPhase: data.currentPhase || "Phase 2",
-          enrolledCourses: data.enrolledCourses || ["Phonics", "Grammar"],
+          enrolledCourses: data.enrolledCourses || [],
         });
       }
 
@@ -310,7 +318,7 @@ export default function StudentProfile() {
                   <h1 className="text-2xl font-bold text-gray-900">
                     {student.firstName} {student.lastName}
                   </h1>
-                  <p className="text-gray-600 mt-1">Age: {student.age} • {student.currentPhase}</p>
+                  <p className="text-gray-600 mt-1">Age: {student.age} • {student.enrolledCourses.length} courses enrolled</p>
                   <div className="flex gap-2 mt-2">
                     {student.enrolledCourses.map((course) => (
                       <span
@@ -345,6 +353,22 @@ export default function StudentProfile() {
               </div>
             </div>
           </div>
+              <div className="mt-3 flex gap-2">
+                <button onClick={() => setShowAttendanceModal(true)} className="px-3 py-2 bg-blue-600 text-white rounded">Mark Attendance</button>
+                <button onClick={async () => {
+                  if (!student) return;
+                  if (!confirm('Seed sample attendance and curriculum for this student?')) return;
+                  try {
+                    setSeeding(true);
+                    await seedSampleData(student.id);
+                    showToast({ message: 'Sample data seeded. Refreshing view...', type: 'success' });
+                    fetchStudentData();
+                  } catch (err) {
+                    console.error(err);
+                    showToast({ message: 'Failed to seed sample data', type: 'error' });
+                  } finally { setSeeding(false); }
+                }} className="px-3 py-2 bg-green-600 text-white rounded">{seeding ? 'Seeding...' : 'Seed Sample Data'}</button>
+              </div>
         </div>
 
         {/* Recommendations */}
@@ -456,67 +480,57 @@ export default function StudentProfile() {
           </div>
         )}
 
-        {/* Curriculum Tab */}
-        {activeTab === "curriculum" && (
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Course</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Phase</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Topic</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Completed</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {curriculum.map((topic) => (
-                    <tr key={topic.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm text-gray-900">{topic.course}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{topic.phase}</td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{topic.title}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(topic.status)}`}>
-                          {topic.status.replace("_", " ")}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {topic.completedDate ? new Date(topic.completedDate).toLocaleDateString() : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Chart */}
-            <div className="p-6 border-t border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <ChartBarIcon className="h-5 w-5 text-purple-600" />
-                Progress Overview
-              </h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-3xl font-bold text-green-600">
-                    {curriculum.filter((t) => t.status === "completed").length}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">Completed</div>
+        {/* Attendance Modal */}
+        {showAttendanceModal && student && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 w-full max-w-md">
+              <h3 className="text-lg font-bold mb-4">Mark Attendance for {student.firstName}</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Date</label>
+                  <input type="date" value={attendanceDate} onChange={(e) => setAttendanceDate(e.target.value)} className="w-full border rounded px-3 py-2" />
                 </div>
-                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                  <div className="text-3xl font-bold text-yellow-600">
-                    {curriculum.filter((t) => t.status === "in_progress").length}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">In Progress</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-3xl font-bold text-gray-600">
-                    {curriculum.filter((t) => t.status === "not_started").length}
-                  </div>
-                  <div className="text-sm text-gray-600 mt-1">Not Started</div>
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Status</label>
+                  <select value={attendanceStatus} onChange={(e) => setAttendanceStatus(e.target.value as any)} className="w-full border rounded px-3 py-2">
+                    <option value="present">Present</option>
+                    <option value="absent">Absent</option>
+                    <option value="excused">Excused</option>
+                  </select>
                 </div>
               </div>
+              <div className="mt-4 flex gap-3">
+                <button className="px-4 py-2 rounded border" onClick={() => setShowAttendanceModal(false)}>Cancel</button>
+                <button className="px-4 py-2 bg-purple-600 text-white rounded" onClick={async () => {
+                  try {
+                        await addAttendanceRecord(student.id, attendanceDate, attendanceStatus, attendanceStatus === 'present' ? 45 : 0);
+                        showToast({ message: 'Attendance recorded', type: 'success' });
+                        setShowAttendanceModal(false);
+                        fetchStudentData();
+                  } catch (err) {
+                    console.error(err);
+                        showToast({ message: 'Failed to record attendance', type: 'error' });
+                  }
+                }}>Submit</button>
+              </div>
             </div>
+          </div>
+        )}
+
+        {/* Curriculum Tab */}
+        {activeTab === "curriculum" && (
+          <div>
+            <CurriculumList initial={curriculum.map((c) => ({ id: c.id, course: c.course, phase: c.phase, title: c.title, status: c.status, completedDate: c.completedDate, teacherNote: c.teacherNote }))} onUpdateTopic={async (topicId, payload) => {
+              // call service to persist change and refresh parent view
+              try {
+                await updateCurriculumTopic(student.id, topicId, payload);
+                // refresh full student data after change
+                fetchStudentData();
+              } catch (err) {
+                console.error('Failed to persist topic change', err);
+                throw err;
+              }
+            }} />
           </div>
         )}
 

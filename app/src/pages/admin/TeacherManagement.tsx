@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { getUsers, createUser, updateUser, deleteUser, assignLearningPartnerToTeacher } from '../../services/adminService';
 import type { Teacher, LearningPartner, CreateUserFormData } from '../../types/admin';
+import AssignTeacherToPartnerModal from './components/AssignTeacherToPartnerModal';
 
 export default function TeacherManagement() {
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [learningPartners, setLearningPartners] = useState<LearningPartner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAssignTeacherToPartnerModal, setShowAssignTeacherToPartnerModal] = useState(false);
+  const [assignTeacherId, setAssignTeacherId] = useState<string | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [formData, setFormData] = useState<CreateUserFormData>({
@@ -26,6 +30,7 @@ export default function TeacherManagement() {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(null);
       const [teachersData, lpData] = await Promise.all([
         getUsers('teacher'),
         getUsers('learning-partner')
@@ -34,7 +39,7 @@ export default function TeacherManagement() {
       setLearningPartners(lpData as LearningPartner[]);
     } catch (error) {
       console.error('Error loading data:', error);
-      alert('Failed to load teachers');
+      setError(error instanceof Error ? error.message : 'Failed to load teachers');
     } finally {
       setLoading(false);
     }
@@ -123,6 +128,34 @@ export default function TeacherManagement() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="p-6">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Error loading teachers</h3>
+              <div className="mt-2 text-sm text-red-700">{error}</div>
+              <div className="mt-4">
+                <button
+                  onClick={loadData}
+                  className="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -175,7 +208,16 @@ export default function TeacherManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {lp ? (
-                        <div className="text-sm text-gray-900">{lp.displayName}</div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-sm text-gray-900">{lp.displayName}</div>
+                          <button
+                            onClick={() => { setAssignTeacherId(teacher.uid); setShowAssignTeacherToPartnerModal(true); }}
+                            className="text-xs text-blue-600 hover:text-blue-800 underline"
+                            title="Change Learning Partner"
+                          >
+                            Change
+                          </button>
+                        </div>
                       ) : (
                         <select
                           className="text-sm border rounded px-2 py-1"
@@ -190,7 +232,7 @@ export default function TeacherManagement() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-500">{teacher.students.length}</div>
+                      <div className="text-sm text-gray-500">{Array.isArray(teacher.students) ? teacher.students.length : 0}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -339,6 +381,7 @@ export default function TeacherManagement() {
           </div>
         </div>
       )}
+      <AssignTeacherToPartnerModal open={showAssignTeacherToPartnerModal} onClose={() => { setShowAssignTeacherToPartnerModal(false); setAssignTeacherId(null); }} teacherId={assignTeacherId} />
     </div>
   );
 }

@@ -71,7 +71,7 @@ export default function Footer() {
                   <a href="/main/book-demo/" className="hover:text-white">Book a Learning Call</a>
                 </li>
                 <li>
-                  <Link to="/login/learning-managers" className="hover:text-white">Learning Partner Login</Link>
+                  <Link to="/learning-partner-login" className="hover:text-white">Learning Partner Login</Link>
                 </li>
               </ul>
             </div>

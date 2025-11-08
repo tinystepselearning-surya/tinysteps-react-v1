@@ -24,7 +24,7 @@ const GUEST_CONFIG: Record<GuestRole, { title: string; blurb: string; highlights
       "Printable worksheet pack (Level 1 Phonics)",
       "Weekly learning goals checklist to try at home",
     ],
-    upgrade: "/login/parents",
+    upgrade: "/parent-login",
   },
 };
 

@@ -38,10 +38,10 @@ const ROLE_CONFIG = {
         ],
     },
     "learning-managers": {
-        title: "Learning Manager Login",
+        title: "Learning Partner Login",
         subtitle: "Coordinate families, teachers, and payments from your control room.",
         cta: "Sign in to control room",
-        helper: "Learning Managers receive their credentials from Tiny Steps admin",
+        helper: "Learning Partners receive their credentials from Tiny Steps admin",
         benefits: [
             "Manage family pipelines and parent touchpoints",
             "Approve payouts and lesson changes",
@@ -67,7 +67,7 @@ export default function RoleLoginPage() {
         return config.title;
     }, [config]);
     if (!config) {
-        return _jsx(Navigate, { to: "/login/parents", replace: true });
+        return _jsx(Navigate, { to: "/parent-login", replace: true });
     }
     const onSubmit = (event) => {
         event.preventDefault();
@@ -94,6 +94,6 @@ const ROLE_OPTIONS = [
     { value: "kids", label: "Kids" },
     { value: "parents", label: "Parents" },
     { value: "teachers", label: "Teachers" },
-    { value: "learning-managers", label: "Learning Managers" },
+    { value: "learning-managers", label: "Learning Partners" },
 ];
 //# sourceMappingURL=RoleLogin.js.map

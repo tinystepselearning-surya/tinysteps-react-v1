@@ -4,7 +4,8 @@
  */
 
 // Debounced localStorage writer
-const debouncedWrites = new Map<string, number>();
+// Use ReturnType<typeof setTimeout> to be compatible with both browser (number) and NodeJS (Timeout)
+const debouncedWrites = new Map<string, ReturnType<typeof setTimeout>>();
 
 export function debouncedLocalStorageWrite(
   key: string,

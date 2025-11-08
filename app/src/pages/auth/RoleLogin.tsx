@@ -107,7 +107,7 @@ export default function RoleLoginPage() {
   }
 
   if (!config) {
-    return <Navigate to="/login/parents" replace />;
+    return <Navigate to="/parent-login" replace />;
   }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {

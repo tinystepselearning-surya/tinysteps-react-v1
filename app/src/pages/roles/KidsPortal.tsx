@@ -142,7 +142,7 @@ export default function KidsPortal() {
         includeKeys: ["kids", "parents", "homework"],
         overrides: {
           kids: { label: "Kids arena", badge: "Fun", onSelect: scrollToId("kids-adventure") },
-          parents: { label: "Family dashboard", href: "/login/parents" },
+          parents: { label: "Family dashboard", href: "/parent-login" },
           homework: { label: "Practice hub", onSelect: scrollToId("kids-adventure") },
         },
       }),

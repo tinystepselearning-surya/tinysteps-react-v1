@@ -1,15 +1,89 @@
 import { db } from "../firebase";
-import { 
-  collection, 
-  doc, 
-  getDoc, 
+import {
+  collection,
+  addDoc,
+  doc,
+  setDoc,
+  serverTimestamp,
+  getDoc,
   getDocs,
   query,
   where,
-  orderBy
+  orderBy,
 } from "firebase/firestore";
 import type { Teacher } from "../types/teacher";
 import type { Student } from "../types/student";
+
+/**
+ * Add an attendance record for a student
+ */
+export async function addAttendanceRecord(studentId: string, date: string, status: "present" | "absent" | "excused", minutesAttended?: number) {
+  try {
+    const attendanceRef = collection(db, "students", studentId, "attendance");
+    const res = await addDoc(attendanceRef, {
+      date,
+      status,
+      minutesAttended: minutesAttended || 0,
+      createdBy: "teacher",
+      createdAt: serverTimestamp(),
+      updatedBy: "teacher",
+      updatedAt: serverTimestamp(),
+    });
+    return res.id;
+  } catch (err) {
+    console.error("Error adding attendance record:", err);
+    throw err;
+  }
+}
+
+/**
+ * Update or create a curriculum topic document under students/{sid}/curriculum/{topicId}
+ */
+export async function updateCurriculumTopic(studentId: string, topicId: string, payload: { status?: string; teacherNote?: string; completedDate?: string }) {
+  try {
+    const topicRef = doc(db, "students", studentId, "curriculum", topicId);
+    await setDoc(topicRef, {
+      ...payload,
+      updatedAt: serverTimestamp(),
+      updatedBy: "teacher",
+    }, { merge: true });
+    return true;
+  } catch (err) {
+    console.error("Error updating curriculum topic:", err);
+    throw err;
+  }
+}
+
+/**
+ * Seed sample attendance and curriculum entries for a student (for teacher testing)
+ */
+export async function seedSampleData(studentId: string) {
+  try {
+    // sample attendance for last 5 days
+    const today = new Date();
+    for (let i = 1; i <= 5; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateKey = d.toISOString().split("T")[0];
+      await addAttendanceRecord(studentId, dateKey, i % 5 === 0 ? "absent" : "present", 45);
+    }
+
+    // sample curriculum topics - minimal set
+    const sampleTopics = [
+      { id: "phonics-a2z", title: "Jolly Phonics order", status: "in_progress" },
+      { id: "phonics-short-vowels", title: "Short vowel sounds", status: "not_started" },
+      { id: "grammar-nouns", title: "Nouns", status: "in_progress" },
+    ];
+    for (const t of sampleTopics) {
+      await updateCurriculumTopic(studentId, t.id, { status: t.status, teacherNote: `Seeded: ${t.title}` });
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error seeding sample data:", err);
+    throw err;
+  }
+}
 
 /**
  * Get teacher document by userId

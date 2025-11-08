@@ -1,5 +1,5 @@
 import { db } from "../firebase";
-import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, limit, doc, getDoc } from "firebase/firestore";
 import type { RM, RMStats, Alert, TeacherWorkload } from "../types/rm";
 import type { Student } from "../types/student";
 import type { Teacher } from "../types/teacher";
@@ -9,17 +9,16 @@ import type { Teacher } from "../types/teacher";
  */
 export async function getRM(userId: string): Promise<RM | null> {
   try {
-    const rmDoc = await getDocs(
-      query(collection(db, "rms"), where("userId", "==", userId), limit(1))
-    );
-    
-    if (rmDoc.empty) {
+    const rmDoc = await getDoc(doc(db, "rms", userId));
+
+    if (!rmDoc.exists()) {
       return null;
     }
 
-    const data = rmDoc.docs[0].data();
+    const data = rmDoc.data();
     return {
-      id: rmDoc.docs[0].id,
+      id: rmDoc.id,
+      userId: rmDoc.id, // The document ID is the userId
       ...data,
     } as RM;
   } catch (error) {

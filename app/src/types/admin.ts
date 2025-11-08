@@ -56,6 +56,7 @@ export interface Student extends BaseUser {
   enrolledCourses: string[]; // Array of course IDs
   learningPartnerId?: string; // Inherited from parent or directly assigned
   teacherId?: string; // Assigned teacher UID
+  admissionNumber?: string; // Unique admission number (e.g., TS001, TS002)
 }
 
 // Teacher-specific fields
@@ -164,6 +165,7 @@ export interface CreateUserFormData {
   dateOfBirth?: string; // For students - ISO date string
   firstName?: string; // For parents
   lastName?: string; // For parents
+  admissionNumber?: string; // Auto-generated for students
 }
 
 // System Statistics
