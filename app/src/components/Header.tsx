@@ -79,16 +79,6 @@ export default function Header() {
             Kids
           </NavLink>
 
-  <NavLink
-    className={({ isActive }) =>
-      `inline-flex items-center rounded-full px-3.5 py-2 transition-colors ${
-        isActive ? "bg-[#fff4ec] text-[#e05c0a]" : "hover:bg-[#fff4ec] text-gray-700 hover:text-[#e05c0a]"
-      }`
-    }
-    onClick={onNavigate}
-  >
-  </NavLink>
-
           {/* Courses dropdown */}
           <div className="relative" ref={coursesRef}>
             <button
@@ -189,14 +179,11 @@ export default function Header() {
                 role="menu"
               >
                 <Link
-                  className="block rounded-xl px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                  onClick={onNavigate}
-                >
-                </Link>
-                                <Link
                   to="/learning-partner-login"
                   className="block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                  onClick={onNavigate}
                 >
+                  Learning Partner Login
                 </Link>
               </div>
             )}
@@ -210,7 +197,6 @@ export default function Header() {
           >
             Book Trial
           </Link>
-
         </nav>
 
         {/* Mobile menu button */}
@@ -229,7 +215,6 @@ export default function Header() {
           <nav className="mx-auto max-w-6xl px-4 py-3 grid gap-2" aria-label="Mobile">
             <Link to="/kids" className="py-2 text-gray-700 border-b last:border-0" onClick={onNavigate}>
               Kids
-            </Link>
             </Link>
 
             <details>
@@ -261,8 +246,8 @@ export default function Header() {
             <details>
               <summary className="cursor-pointer font-semibold text-gray-800">Educators</summary>
               <div className="mt-2 grid">
-                </Link>
                 <Link to="/learning-partner-login" className="py-2 text-gray-700 border-b last:border-0" onClick={onNavigate}>
+                  Learning Partner Login
                 </Link>
               </div>
             </details>
