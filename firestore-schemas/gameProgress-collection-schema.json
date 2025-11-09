@@ -1,0 +1,69 @@
+{
+  "collection_name": "gameProgress",
+  "document_id_pattern": "{progressId}",
+  "purpose": "Track progress and scores for games played by kids.",
+  "fields": {
+    "progressId": {
+      "type": "string",
+      "description": "Unique identifier for the progress record."
+    },
+    "kidId": {
+      "type": "string",
+      "description": "ID of the kid who played the game."
+    },
+    "gameId": {
+      "type": "string",
+      "description": "ID of the game played."
+    },
+    "score": {
+      "type": "number",
+      "description": "Score achieved in the game."
+    },
+    "level": {
+      "type": "number",
+      "description": "Level reached in the game."
+    },
+    "duration": {
+      "type": "number",
+      "description": "Time spent playing the game (in seconds)."
+    },
+    "playedAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the game was played."
+    },
+    "createdAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the progress record was created."
+    },
+    "updatedAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the progress record was last updated."
+    }
+  },
+  "relationships": {
+    "kidId": "kids/{kidId}",
+    "gameId": "materials/{gameId}"
+  },
+  "access_patterns": {
+    "admin": "read/write all",
+    "teacher": "read if linked to their student",
+    "parent": "read if linked to their child",
+    "kid": "read/write their own progress"
+  },
+  "composite_indexes_needed": [
+    {
+      "fields": ["kidId", "gameId"],
+      "description": "For querying progress by kid and game."
+    },
+    {
+      "fields": ["gameId", "playedAt"],
+      "description": "For querying progress by game and date."
+    }
+  ],
+  "validation_rules": [
+    "score must be a non-negative number.",
+    "level must be a non-negative number.",
+    "duration must be a non-negative number."
+  ],
+  "performance_notes": "Indexes on kidId and gameId are critical for progress queries."
+}

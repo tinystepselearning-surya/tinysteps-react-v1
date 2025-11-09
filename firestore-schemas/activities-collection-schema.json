@@ -1,0 +1,65 @@
+{
+  "collection_name": "activities",
+  "document_id_pattern": "{activityId}",
+  "purpose": "Store worksheets, assignments, and games for students.",
+  "fields": {
+    "activityId": {
+      "type": "string",
+      "description": "Unique identifier for the activity."
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the activity."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the activity."
+    },
+    "type": {
+      "type": "string",
+      "enum": ["worksheet", "assignment", "game"],
+      "description": "Type of the activity."
+    },
+    "courseId": {
+      "type": "string",
+      "description": "ID of the course this activity belongs to."
+    },
+    "topicId": {
+      "type": "string",
+      "description": "ID of the curriculum topic this activity is linked to."
+    },
+    "url": {
+      "type": "string",
+      "description": "URL to access the activity (e.g., PDF, game link)."
+    },
+    "createdAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the activity was created."
+    },
+    "updatedAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the activity was last updated."
+    }
+  },
+  "relationships": {
+    "courseId": "courses/{courseId}",
+    "topicId": "courses/{courseId}/curriculum/{topicId}"
+  },
+  "access_patterns": {
+    "admin": "read/write all",
+    "teacher": "read/write if courseId matches their assigned course",
+    "parent": "read if child is enrolled in the course",
+    "lp": "read if assigned to the course"
+  },
+  "composite_indexes_needed": [
+    {
+      "fields": ["courseId", "topicId"],
+      "description": "For querying activities by course and topic."
+    }
+  ],
+  "validation_rules": [
+    "type must be one of the predefined types.",
+    "courseId and topicId must reference valid documents."
+  ],
+  "performance_notes": "Ensure efficient querying by course and topic for teacher dashboards."
+}

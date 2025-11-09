@@ -1,0 +1,92 @@
+{
+  "collectionName": "sessions",
+  "documentIdPattern": "{sessionId}",
+  "fields": {
+    "sessionId": {
+      "type": "string",
+      "description": "Unique identifier for the session."
+    },
+    "courseId": {
+      "type": "string",
+      "description": "ID of the course this session belongs to."
+    },
+    "topicId": {
+      "type": "string",
+      "description": "ID of the topic covered in this session."
+    },
+    "teacherId": {
+      "type": "string",
+      "description": "UID of the teacher conducting the session."
+    },
+    "studentIds": {
+      "type": "array",
+      "items": "string",
+      "description": "List of student UIDs enrolled in this session."
+    },
+    "schedule": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "string",
+          "description": "Day of the session (e.g., Monday, Wednesday, Friday)."
+        },
+        "time": {
+          "type": "string",
+          "description": "Time of the session in HH:mm format."
+        }
+      },
+      "description": "Schedule details for the session."
+    },
+    "zoomLink": {
+      "type": "string",
+      "description": "External Zoom link for the session."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["scheduled", "completed", "cancelled"],
+      "description": "Current status of the session."
+    },
+    "createdAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the session was created."
+    },
+    "updatedAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the session was last updated."
+    }
+  },
+  "relationships": {
+    "courseId": "courses/{courseId}",
+    "topicId": "courses/{courseId}/curriculum/{topicId}",
+    "teacherId": "users/{uid}",
+    "studentIds": "users/{uid}"
+  },
+  "accessControl": {
+    "read": ["admin", "teacher", "parent", "lp"],
+    "write": ["admin", "teacher"]
+  },
+  "compositeIndexes": [
+    {
+      "fields": ["courseId", "topicId"],
+      "description": "For querying sessions by course and topic."
+    },
+    {
+      "fields": ["teacherId", "status"],
+      "description": "For querying sessions by teacher and status."
+    },
+    {
+      "fields": ["studentIds", "status"],
+      "description": "For querying sessions by student and status."
+    }
+  ],
+  "validationConstraints": {
+    "zoomLink": {
+      "pattern": "^https://.*$",
+      "description": "Must be a valid HTTPS URL."
+    },
+    "status": {
+      "enum": ["scheduled", "completed", "cancelled"],
+      "description": "Must be one of the predefined statuses."
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "collectionName": "courses",
+  "documentIdPattern": "{courseId}",
+  "fields": {
+    "courseId": {
+      "type": "string",
+      "description": "Unique identifier for the course."
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the course."
+    },
+    "description": {
+      "type": "string",
+      "description": "Detailed description of the course."
+    },
+    "ageGroup": {
+      "type": "string",
+      "description": "Recommended age group for the course (e.g., Ages 5-7)."
+    },
+    "createdAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the course was created."
+    },
+    "updatedAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the course was last updated."
+    }
+  },
+  "relationships": {},
+  "accessControl": {
+    "read": ["admin", "teacher", "parent", "lp"],
+    "write": ["admin"]
+  },
+  "compositeIndexes": [
+    {
+      "fields": ["title"],
+      "description": "For querying courses by title."
+    }
+  ],
+  "validationConstraints": {
+    "title": {
+      "maxLength": 100,
+      "description": "Title must not exceed 100 characters."
+    }
+  }
+}

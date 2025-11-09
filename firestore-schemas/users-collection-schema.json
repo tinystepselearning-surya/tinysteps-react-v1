@@ -1,0 +1,63 @@
+{
+  "collection_name": "users",
+  "document_id_pattern": "{uid}",
+  "purpose": "Authentication identities and role-based access control.",
+  "fields": {
+    "uid": {
+      "type": "string",
+      "description": "Unique identifier for the user (Firebase UID)."
+    },
+    "role": {
+      "type": "string",
+      "enum": ["admin", "teacher", "parent", "lp", "kid"],
+      "description": "Role of the user in the system."
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address of the user."
+    },
+    "displayName": {
+      "type": "string",
+      "description": "Full name of the user."
+    },
+    "photoURL": {
+      "type": "string",
+      "description": "Profile picture URL of the user."
+    },
+    "childIds": {
+      "type": "array",
+      "items": "string",
+      "description": "Array of child IDs (for parents)."
+    },
+    "createdAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the user was created."
+    },
+    "updatedAt": {
+      "type": "timestamp",
+      "description": "Timestamp when the user was last updated."
+    }
+  },
+  "relationships": {
+    "childIds": "kids/{kidId}"
+  },
+  "access_patterns": {
+    "admin": "read/write all",
+    "teacher": "read/write own profile",
+    "parent": "read/write own profile, read child profiles",
+    "lp": "read/write own profile",
+    "kid": "read/write own profile"
+  },
+  "composite_indexes_needed": [
+    {
+      "fields": ["role"],
+      "description": "For querying users by role."
+    }
+  ],
+  "validation_rules": [
+    "role must be one of the predefined roles.",
+    "email must be a valid email address.",
+    "childIds must reference valid kids."
+  ],
+  "performance_notes": "Ensure indexes on role for admin queries."
+}

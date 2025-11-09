@@ -3,6 +3,7 @@ import { createBrowserRouter, Outlet } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
+import HomePage from '../pages/HomePage';
 
 // Dashboards (to be created)
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -22,70 +23,85 @@ const Layout: React.FC = () => (
   </div>
 );
 
-export const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Layout />,
-    errorElement: <NotFoundPage />,
-    children: [
-      {
-        path: 'login',
-        element: <LoginPage />,
-      },
-      {
-        path: 'unauthorized',
-        element: <UnauthorizedPage />,
-      },
-      {
-        path: 'admin',
-        element: <RoleGate allowedRoles={['admin']} />,
-        children: [
-          {
-            path: '',
-            element: <AdminDashboard />,
-          },
-        ],
-      },
-      {
-        path: 'teacher',
-        element: <RoleGate allowedRoles={['teacher']} />,
-        children: [
-          {
-            path: '',
-            element: <TeacherDashboard />,
-          },
-        ],
-      },
-      {
-        path: 'parent',
-        element: <RoleGate allowedRoles={['parent']} />,
-        children: [
-          {
-            path: '',
-            element: <ParentDashboard />,
-          },
-        ],
-      },
-      {
-        path: 'learningpartner',
-        element: <RoleGate allowedRoles={['learningPartner']} />,
-        children: [
-          {
-            path: '',
-            element: <LPDashboard />,
-          },
-        ],
-      },
-      {
-        path: 'kid',
-        element: <RoleGate allowedRoles={['kid']} />,
-        children: [
-          {
-            path: '',
-            element: <KidDashboard />,
-          },
-        ],
-      },
-    ],
+const routerOptions: any = {
+  future: {
+    v7_startTransition: true,
   },
-]);
+};
+
+const router = createBrowserRouter(
+  [
+    {
+      path: '/',
+      element: <Layout />,
+      errorElement: <NotFoundPage />,
+      children: [
+        {
+          index: true,
+          element: <HomePage />,
+        },
+        {
+          path: 'login',
+          element: <LoginPage />,
+        },
+        {
+          path: 'unauthorized',
+          element: <UnauthorizedPage />,
+        },
+        {
+          path: 'admin',
+          element: <RoleGate allowedRoles={['admin']} />,
+          children: [
+            {
+              path: '',
+              element: <AdminDashboard />,
+            },
+          ],
+        },
+        {
+          path: 'teacher',
+          element: <RoleGate allowedRoles={['teacher']} />,
+          children: [
+            {
+              path: '',
+              element: <TeacherDashboard />,
+            },
+          ],
+        },
+        {
+          path: 'parent',
+          element: <RoleGate allowedRoles={['parent']} />,
+          children: [
+            {
+              path: '',
+              element: <ParentDashboard />,
+            },
+          ],
+        },
+        {
+          path: 'learningpartner',
+          element: <RoleGate allowedRoles={['learningPartner']} />,
+          children: [
+            {
+              path: '',
+              element: <LPDashboard />,
+            },
+          ],
+        },
+        {
+          path: 'kid',
+          element: <RoleGate allowedRoles={['kid']} />,
+          children: [
+            {
+              path: '',
+              element: <KidDashboard />,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  routerOptions
+);
+
+export default router;
