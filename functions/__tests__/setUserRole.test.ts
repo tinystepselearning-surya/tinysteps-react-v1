@@ -8,7 +8,7 @@ jest.mock('firebase-admin', () => {
   return {
     ...actualAdmin,
     auth: () => ({
-      setCustomUserClaims: jest.fn(),
+      setCustomUserClaims: jest.fn((uid: string, claims: Record<string, any>) => Promise.resolve()) as jest.MockedFunction<(uid: string, claims: Record<string, any>) => Promise<void>>,
     }),
   };
 });
@@ -37,12 +37,20 @@ describe('setUserRole Cloud Function', () => {
 
     const data = { uid: 'test-user', role: 'teacher' };
 
-    const mockSetCustomUserClaims = admin.auth().setCustomUserClaims as jest.Mock;
-    mockSetCustomUserClaims.mockResolvedValueOnce(undefined);
+    // Define the mock function correctly without type assertions
+    const mockSetCustomUserClaims = jest.fn((uid: string, claims: Record<string, any>) => Promise.resolve());
 
     const result = await setUserRole(data, context);
 
-    expect(mockSetCustomUserClaims).toHaveBeenCalledWith('test-user', { role: 'teacher' });
+    // Ensure the test logic matches the mock function's signature
+    expect(mockSetCustomUserClaims).toHaveBeenCalledWith('test-user', {
+      admin: false,
+      teacher: true,
+      parent: false,
+      kid: false,
+      learningPartner: false,
+      role: 'teacher',
+    });
     expect(result).toEqual({ success: true });
   });
 
@@ -55,7 +63,7 @@ describe('setUserRole Cloud Function', () => {
 
     const data = { uid: 'test-user', role: 'teacher' };
 
-    await expect(setUserRole(data, context)).rejects.toThrow('PERMISSION_DENIED');
+    await expect(setUserRole(data, context)).rejects.toThrow('permission-denied');
   });
 
   it('should reject invalid roles', async () => {
@@ -67,6 +75,6 @@ describe('setUserRole Cloud Function', () => {
 
     const data = { uid: 'test-user', role: 'invalid-role' };
 
-    await expect(setUserRole(data, context)).rejects.toThrow('INVALID_ARGUMENT');
+    await expect(setUserRole(data, context)).rejects.toThrow('invalid-argument');
   });
 });

@@ -62,11 +62,31 @@ const router = createBrowserRouter(
           element: <LoginPage />,
         },
         {
+          path: 'admin/login',
+          element: <LoginPage />,
+        },
+        {
+          path: 'teacher/login',
+          element: <LoginPage />,
+        },
+        {
+          path: 'parent/login',
+          element: <LoginPage />,
+        },
+        {
+          path: 'learningpartner/login',
+          element: <LoginPage />,
+        },
+        {
+          path: 'kid/login',
+          element: <LoginPage />,
+        },
+        {
           path: 'unauthorized',
           element: <UnauthorizedPage />,
         },
         {
-          path: 'admin',
+          path: 'Surya',
           element: <RoleGate allowedRoles={['admin']} />,
           children: [
             {

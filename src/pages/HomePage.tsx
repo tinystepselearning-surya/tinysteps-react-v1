@@ -172,58 +172,96 @@ export default function HomePage() {
   return (
     <main className="relative">
       {/* Hero */}
-      <section className="bg-gradient-to-b from-white via-sky-50/40 to-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-12 pb-8">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-200">
-                <span className="inline-flex h-2 w-2 rounded-full bg-green-500 animate-pulse"/> Live 1:1 & Group Classes
-              </div>
-              <h1 className="mt-4 text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">
-                Tiny Steps: Confident Readers & Speakers
-              </h1>
-              <p className="mt-4 text-slate-600 leading-relaxed">
-                Engaging lessons, interactive games, and progress dashboards—built for busy parents and curious kids.
-              </p>
-              <div className="mt-6 flex items-center gap-6 text-sm text-slate-600">
-                <div className="inline-flex items-center gap-2"><Users className="h-4 w-4"/> Small groups or 1:1</div>
-                <div className="inline-flex items-center gap-2"><Star className="h-4 w-4"/> Parent-loved lessons</div>
-                <div className="inline-flex items-center gap-2"><UserCheck className="h-4 w-4"/> Expert teachers</div>
-              </div>
+      <section className="bg-gradient-to-b from-white via-sky-50/30 to-white pt-20 pb-16">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center space-y-8"
+          >
+            <div className="inline-flex items-center gap-3 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 shadow-sm ring-1 ring-indigo-100">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-green-500 animate-pulse"/>
+              Live 1:1 & Small Group Classes
             </div>
-            <div className="relative">
-              <div className="aspect-[4/3] w-full rounded-3xl bg-gradient-to-br from-sky-100 via-white to-orange-100 ring-1 ring-black/5 shadow-xl flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">📚</div>
-                  <p className="text-slate-600 font-medium">Interactive Learning Awaits</p>
-                  <p className="text-sm text-slate-500 mt-2">Join thousands of happy learners</p>
+            <h1 className="text-5xl lg:text-6xl font-bold tracking-tight text-slate-900 leading-tight">
+              Tiny Steps:<br/>
+              <span className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Confident Readers & Speakers
+              </span>
+            </h1>
+            <p className="text-xl text-slate-600 leading-relaxed max-w-2xl mx-auto">
+              Engaging lessons, interactive games, and progress dashboards—built for busy parents and curious kids.
+            </p>
+            <div className="flex flex-wrap justify-center gap-8 text-slate-600">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-600" />
                 </div>
+                <span className="font-medium">Small groups or 1:1</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <Star className="h-5 w-5 text-green-600" />
+                </div>
+                <span className="font-medium">Parent-loved lessons</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <UserCheck className="h-5 w-5 text-purple-600" />
+                </div>
+                <span className="font-medium">Expert teachers</span>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Center-aligned course links */}
-      <section className="py-8 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center gap-6 overflow-x-auto no-scrollbar">
-            <Link to="/phonics" className="px-6 py-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 transform transition-all inline-flex items-center gap-2">
-              <span className="text-sm">Phonics & Reading</span>
-            </Link>
-            <Link to="/grammar" className="px-6 py-3 rounded-full bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold shadow-lg hover:scale-105 transform transition-all inline-flex items-center gap-2">
-              <span className="text-sm">Grammar & Writing</span>
-            </Link>
-            <Link to="/speaking" className="px-6 py-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 text-white font-semibold shadow-lg hover:scale-105 transform transition-all inline-flex items-center gap-2">
-              <span className="text-sm">Public Speaking</span>
-            </Link>
+      <section className="py-16 bg-gradient-to-b from-white to-slate-50/50">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Explore Our Courses</h2>
+            <p className="text-lg text-slate-600 max-w-2xl mx-auto">Choose the perfect learning path for your child's development journey</p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-8">
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Link to="/phonics" className="group relative overflow-hidden px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 inline-flex items-center gap-3 min-w-[200px] justify-center">
+                <BookOpen className="h-6 w-6" />
+                <span className="text-lg">Phonics & Reading</span>
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Link to="/grammar" className="group relative overflow-hidden px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 inline-flex items-center gap-3 min-w-[200px] justify-center">
+                <PenSquare className="h-6 w-6" />
+                <span className="text-lg">Grammar & Writing</span>
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
+            <motion.div
+              whileHover={{ y: -5, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <Link to="/speaking" className="group relative overflow-hidden px-8 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-600 text-white font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 inline-flex items-center gap-3 min-w-[200px] justify-center">
+                <Mic2 className="h-6 w-6" />
+                <span className="text-lg">Public Speaking</span>
+                <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-14 bg-gradient-to-b from-white to-slate-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-gradient-to-b from-slate-50/50 to-white">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
           <SectionHeader
             eyebrow="Why Choose Us"
             title="Why Parents Love Tiny Steps"
@@ -235,45 +273,48 @@ export default function HomePage() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16"
           >
             <motion.div
               variants={item}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl transition-all"
+              className="group bg-white rounded-3xl p-8 shadow-lg border border-slate-200/60 hover:shadow-2xl hover:border-slate-300/60 transition-all duration-300"
+              whileHover={{ y: -8 }}
             >
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
-                <Users className="h-6 w-6 text-blue-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Users className="h-8 w-8 text-blue-600" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Expert Teachers</h3>
-              <p className="text-slate-600">Certified educators with years of experience in early childhood education.</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Expert Teachers</h3>
+              <p className="text-slate-600 leading-relaxed">Certified educators with years of experience in early childhood education, creating engaging and supportive learning environments.</p>
             </motion.div>
             <motion.div
               variants={item}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl transition-all"
+              className="group bg-white rounded-3xl p-8 shadow-lg border border-slate-200/60 hover:shadow-2xl hover:border-slate-300/60 transition-all duration-300"
+              whileHover={{ y: -8 }}
             >
-              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
-                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <CheckCircle2 className="h-8 w-8 text-emerald-600" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Personalized Learning</h3>
-              <p className="text-slate-600">Adaptive curriculum that grows with your child at their own pace.</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Personalized Learning</h3>
+              <p className="text-slate-600 leading-relaxed">Adaptive curriculum that grows with your child at their own pace, ensuring optimal challenge and confidence-building.</p>
             </motion.div>
             <motion.div
               variants={item}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl transition-all"
+              className="group bg-white rounded-3xl p-8 shadow-lg border border-slate-200/60 hover:shadow-2xl hover:border-slate-300/60 transition-all duration-300"
+              whileHover={{ y: -8 }}
             >
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
-                <Star className="h-6 w-6 text-purple-600" />
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-purple-200 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                <Star className="h-8 w-8 text-purple-600" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Interactive Games</h3>
-              <p className="text-slate-600">Fun, educational games that make learning engaging and memorable.</p>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">Interactive Games</h3>
+              <p className="text-slate-600 leading-relaxed">Fun, educational games that make learning engaging and memorable, turning practice into playtime.</p>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
       {/* What Parents Say */}
-      <section className="py-14 bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-gradient-to-b from-white to-slate-50/30">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
           <SectionHeader
             eyebrow="Testimonials"
             title="What Parents Say About Us"
@@ -285,65 +326,68 @@ export default function HomePage() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mt-16"
           >
             <motion.div
               variants={item}
-              className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200"
+              className="group bg-gradient-to-br from-blue-50/80 via-blue-100/60 to-indigo-50/80 rounded-3xl p-8 border border-blue-200/50 shadow-lg hover:shadow-2xl transition-all duration-300"
+              whileHover={{ y: -8, scale: 1.02 }}
             >
-              <div className="flex items-center gap-1 mb-4">
+              <div className="flex items-center gap-1 mb-6">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-slate-700 mb-4">"My daughter went from struggling with reading to devouring books. The teachers are amazing!"</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center">
-                  <span className="text-blue-700 font-semibold text-sm">SM</span>
+              <p className="text-slate-700 mb-8 text-lg leading-relaxed italic">"My daughter went from struggling with reading to devouring books. The teachers are amazing and so patient with her."</p>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-200 to-blue-300 rounded-full flex items-center justify-center shadow-md">
+                  <span className="text-blue-700 font-bold text-lg">SM</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">Sarah M.</p>
-                  <p className="text-sm text-slate-600">Parent of 7-year-old</p>
+                  <p className="font-bold text-slate-900 text-lg">Sarah M.</p>
+                  <p className="text-slate-600">Parent of 7-year-old</p>
                 </div>
               </div>
             </motion.div>
             <motion.div
               variants={item}
-              className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border border-green-200"
+              className="group bg-gradient-to-br from-emerald-50/80 via-emerald-100/60 to-teal-50/80 rounded-3xl p-8 border border-emerald-200/50 shadow-lg hover:shadow-2xl transition-all duration-300"
+              whileHover={{ y: -8, scale: 1.02 }}
             >
-              <div className="flex items-center gap-1 mb-4">
+              <div className="flex items-center gap-1 mb-6">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-slate-700 mb-4">"The progress tracking is fantastic. I can see exactly what my son is learning each week."</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center">
-                  <span className="text-green-700 font-semibold text-sm">RJ</span>
+              <p className="text-slate-700 mb-8 text-lg leading-relaxed italic">"The progress tracking is fantastic. I can see exactly what my son is learning each week and celebrate his achievements."</p>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-200 to-emerald-300 rounded-full flex items-center justify-center shadow-md">
+                  <span className="text-emerald-700 font-bold text-lg">RJ</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">Rajesh J.</p>
-                  <p className="text-sm text-slate-600">Parent of 6-year-old</p>
+                  <p className="font-bold text-slate-900 text-lg">Rajesh J.</p>
+                  <p className="text-slate-600">Parent of 6-year-old</p>
                 </div>
               </div>
             </motion.div>
             <motion.div
               variants={item}
-              className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200"
+              className="group bg-gradient-to-br from-purple-50/80 via-purple-100/60 to-pink-50/80 rounded-3xl p-8 border border-purple-200/50 shadow-lg hover:shadow-2xl transition-all duration-300"
+              whileHover={{ y: -8, scale: 1.02 }}
             >
-              <div className="flex items-center gap-1 mb-4">
+              <div className="flex items-center gap-1 mb-6">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                  <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />
                 ))}
               </div>
-              <p className="text-slate-700 mb-4">"Flexible scheduling and excellent communication. Perfect for our busy family."</p>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center">
-                  <span className="text-purple-700 font-semibold text-sm">AK</span>
+              <p className="text-slate-700 mb-8 text-lg leading-relaxed italic">"Flexible scheduling and excellent communication. Perfect for our busy family schedule and lifestyle."</p>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-200 to-purple-300 rounded-full flex items-center justify-center shadow-md">
+                  <span className="text-purple-700 font-bold text-lg">AK</span>
                 </div>
                 <div>
-                  <p className="font-semibold text-slate-900">Anita K.</p>
-                  <p className="text-sm text-slate-600">Parent of 5-year-old</p>
+                  <p className="font-bold text-slate-900 text-lg">Anita K.</p>
+                  <p className="text-slate-600">Parent of 5-year-old</p>
                 </div>
               </div>
             </motion.div>
@@ -352,8 +396,8 @@ export default function HomePage() {
       </section>
 
       {/* LRSW Methodology */}
-      <section className="py-14 bg-gradient-to-b from-slate-50 to-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="py-24 bg-gradient-to-b from-slate-50/30 to-white">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
           <SectionHeader
             eyebrow="Our Methodology"
             title="LRSW: Listen, Read, Speak, Write"
@@ -365,52 +409,52 @@ export default function HomePage() {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mt-16"
           >
             {[
               {
                 letter: 'L',
                 title: 'Listen',
-                description: 'Active listening skills and comprehension',
+                description: 'Active listening skills and comprehension through engaging audio activities and interactive stories.',
                 color: 'from-blue-400 to-blue-600',
-                glow: 'shadow-blue-500/50'
+                glow: 'shadow-blue-500/30'
               },
               {
                 letter: 'R',
                 title: 'Read',
-                description: 'Phonics, vocabulary, and reading fluency',
-                color: 'from-green-400 to-green-600',
-                glow: 'shadow-green-500/50'
+                description: 'Phonics, vocabulary, and reading fluency with personalized practice and progress tracking.',
+                color: 'from-emerald-400 to-emerald-600',
+                glow: 'shadow-emerald-500/30'
               },
               {
                 letter: 'S',
                 title: 'Speak',
-                description: 'Clear communication and public speaking',
+                description: 'Clear communication and public speaking through confidence-building activities and presentations.',
                 color: 'from-purple-400 to-purple-600',
-                glow: 'shadow-purple-500/50'
+                glow: 'shadow-purple-500/30'
               },
               {
                 letter: 'W',
                 title: 'Write',
-                description: 'Grammar, creative writing, and expression',
+                description: 'Grammar, creative writing, and expression through structured lessons and fun writing projects.',
                 color: 'from-orange-400 to-orange-600',
-                glow: 'shadow-orange-500/50'
+                glow: 'shadow-orange-500/30'
               }
             ].map((step, index) => (
               <motion.div
                 key={step.letter}
                 variants={item}
-                className={`relative bg-white rounded-2xl p-6 shadow-lg border border-slate-200 hover:shadow-2xl transition-all group ${step.glow}`}
-                whileHover={{ y: -5, scale: 1.02 }}
+                className={`relative bg-white rounded-3xl p-8 shadow-xl border border-slate-200/60 hover:shadow-2xl hover:border-slate-300/60 transition-all duration-300 group ${step.glow}`}
+                whileHover={{ y: -8, scale: 1.02 }}
               >
-                <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`} />
-                <div className={`w-16 h-16 bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center mb-4 text-white font-bold text-2xl shadow-lg`}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-5 rounded-3xl transition-opacity duration-300`} />
+                <div className={`w-20 h-20 bg-gradient-to-br ${step.color} rounded-3xl flex items-center justify-center text-white font-bold text-3xl mb-6 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                   {step.letter}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>
-                <p className="text-slate-600">{step.description}</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-4 text-center">{step.title}</h3>
+                <p className="text-slate-600 leading-relaxed text-center">{step.description}</p>
                 <motion.div
-                  className={`mt-4 h-1 bg-gradient-to-r ${step.color} rounded-full`}
+                  className={`mt-6 h-1 bg-gradient-to-r ${step.color} rounded-full mx-auto max-w-24`}
                   initial={{ scaleX: 0 }}
                   whileInView={{ scaleX: 1 }}
                   transition={{ delay: index * 0.1, duration: 0.5 }}
@@ -423,9 +467,9 @@ export default function HomePage() {
       </section>
 
       {/* Progress Section */}
-      <section className="py-14 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
+      <section className="py-24 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
+        <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+          <div className="text-center mb-16">
             <SectionHeader
               eyebrow="Learning Journey"
               title="Here's how your child progresses"
@@ -443,7 +487,7 @@ export default function HomePage() {
             {/* Progress Path */}
             <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 transform -translate-y-1/2 z-0" />
 
-            <div className="grid md:grid-cols-3 gap-8 relative z-10">
+            <div className="grid md:grid-cols-3 gap-12 relative z-10">
               {[
                 {
                   step: 1,
@@ -473,28 +517,28 @@ export default function HomePage() {
                 <motion.div
                   key={phase.step}
                   variants={item}
-                  className="bg-white rounded-3xl p-8 shadow-lg border border-slate-200 text-center relative"
+                  className="bg-white rounded-3xl p-10 shadow-xl border border-slate-200/60 hover:shadow-2xl hover:border-slate-300/60 transition-all duration-300 group"
                   whileHover={{ y: -10, scale: 1.02 }}
                 >
                   {/* Step Number */}
-                  <div className={`w-16 h-16 bg-gradient-to-br ${phase.color} rounded-full flex items-center justify-center text-white font-bold text-xl mb-6 mx-auto shadow-lg`}>
+                  <div className={`w-20 h-20 bg-gradient-to-br ${phase.color} rounded-full flex items-center justify-center text-white font-bold text-2xl mb-8 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                     {phase.step}
                   </div>
 
                   {/* Icon */}
-                  <div className="text-4xl mb-4">{phase.icon}</div>
+                  <div className="text-5xl mb-6">{phase.icon}</div>
 
                   {/* Title */}
-                  <h3 className="text-xl font-bold text-slate-900 mb-3">{phase.title}</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-4">{phase.title}</h3>
 
                   {/* Description */}
-                  <p className="text-slate-600 mb-6">{phase.description}</p>
+                  <p className="text-slate-600 mb-8 leading-relaxed text-lg">{phase.description}</p>
 
                   {/* Details */}
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {phase.details.map((detail, i) => (
-                      <li key={i} className="flex items-center justify-center gap-2 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <li key={i} className="flex items-center justify-center gap-3 text-base text-slate-700">
+                        <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0" />
                         {detail}
                       </li>
                     ))}
@@ -502,14 +546,14 @@ export default function HomePage() {
 
                   {/* Connecting Arrow (hidden on mobile) */}
                   {index < 2 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-20">
+                    <div className="hidden md:block absolute top-1/2 -right-6 transform -translate-y-1/2 z-20">
                       <motion.div
-                        className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-200"
+                        className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg border border-slate-200"
                         initial={{ scale: 0 }}
                         whileInView={{ scale: 1 }}
                         transition={{ delay: 0.5 + index * 0.2 }}
                       >
-                        <ArrowRight className="h-4 w-4 text-slate-600" />
+                        <ArrowRight className="h-5 w-5 text-slate-600" />
                       </motion.div>
                     </div>
                   )}
@@ -521,15 +565,53 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section id="contact" className="py-16 bg-gradient-to-br from-orange-50 via-white to-sky-50">
-        <div className="mx-auto max-w-3xl text-center px-4">
-          <h3 className="text-3xl font-extrabold text-slate-900">Ready to start?</h3>
-          <p className="mt-2 text-slate-600">Book a free trial or chat with us on WhatsApp. We’ll suggest the best course and schedule for your child.</p>
-          <div className="mt-6 flex justify-center gap-3">
-            <a href="/contact" className="rounded-xl bg-slate-900 text-white px-5 py-2.5 font-semibold">Book a Free Trial</a>
-            <a href="https://wa.me/919666095553" className="rounded-xl bg-white border border-slate-200 px-5 py-2.5 font-semibold hover:bg-slate-50">WhatsApp Us</a>
-          </div>
-          <p className="mt-3 text-xs text-slate-500">Payments: UPI • Bank Transfer (manual) • Online Autopay (subscription)</p>
+      <section id="contact" className="py-24 bg-gradient-to-br from-orange-50 via-white to-sky-50">
+        <div className="mx-auto max-w-4xl text-center px-6 sm:px-8 lg:px-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            <h3 className="text-4xl font-extrabold text-slate-900 mb-6">Ready to start your child's learning journey?</h3>
+            <p className="text-xl text-slate-600 mb-12 leading-relaxed">Book a free trial or chat with us on WhatsApp. We'll suggest the best course and schedule for your child.</p>
+            <div className="flex flex-col sm:flex-row justify-center gap-6 mb-8">
+              <motion.a
+                href="/contact"
+                className="inline-flex items-center justify-center px-8 py-4 bg-gradient-to-r from-slate-900 to-slate-800 text-white font-bold text-lg rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Book a Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </motion.a>
+              <motion.a
+                href="https://wa.me/919666095553"
+                className="inline-flex items-center justify-center px-8 py-4 bg-white border-2 border-slate-200 text-slate-900 font-bold text-lg rounded-2xl shadow-lg hover:shadow-xl hover:border-slate-300 transition-all duration-300 hover:scale-105"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                WhatsApp Us
+              </motion.a>
+            </div>
+            <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-slate-200/60">
+              <p className="text-sm text-slate-600 font-medium mb-2">Flexible Payment Options</p>
+              <div className="flex flex-wrap justify-center gap-4 text-sm text-slate-500">
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  UPI
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  Bank Transfer
+                </span>
+                <span className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  Online Autopay
+                </span>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 

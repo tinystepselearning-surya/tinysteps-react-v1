@@ -2,11 +2,48 @@ import { Timestamp } from 'firebase/firestore';
 
 // TypeScript interface for the `users` collection
 export interface User {
+  id: string; // Firestore document ID
+  uid: string; // Firebase Auth UID
   name: string; // Full name of the user
   email: string; // Firebase Auth email, unique
-  role: 'admin' | 'teacher' | 'parent' | 'lp' | 'kid'; // User role
+  phone?: string; // Optional phone number
+  role: 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid'; // User role
+  status: 'active' | 'suspended' | 'archived'; // User status
   childIds?: string[]; // Array of kid IDs (for parents)
   assignedKids?: string[]; // Array of kid IDs (for teachers/LPs)
   createdAt: Timestamp; // Timestamp when the user was created
   updatedAt: Timestamp; // Timestamp when the user was last updated
+}
+
+export interface CreateUserData {
+  email: string;
+  name: string;
+  phone?: string;
+  role: User['role'];
+  status: User['status'];
+  // Role-specific fields
+  // For TEACHER:
+  qualification?: string;
+  specialization?: string;
+  yearsExperience?: number;
+  bio?: string;
+  // For PARENT:
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  communicationLanguage?: string;
+  sessionTime?: string;
+  paymentMethods?: string;
+  // For LP:
+  region?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankAccountHolderName?: string;
+  // For KID:
+  isKidProfile?: boolean;
+}
+
+export interface UpdateUserData extends Partial<CreateUserData> {
+  uid: string;
 }

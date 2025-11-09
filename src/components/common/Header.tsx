@@ -2,13 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 // Create a motion-enabled Link for animated nav items
 const MotionLink = motion(Link);
 export default function Header() {
   const { user, clearUser } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [isScrollingUp, setIsScrollingUp] = useState(true);
@@ -18,6 +19,9 @@ export default function Header() {
     clearUser();
     navigate('/login');
   };
+
+  // Determine if we're on the home page
+  const isHomePage = location.pathname === '/';
 
   const navItems = user ? [
     { label: 'Dashboard', href: `/${user.role}` },
@@ -31,8 +35,12 @@ export default function Header() {
     const handleScroll = () => {
       const currentScroll = window.scrollY;
 
-      // Show navbar when scrolling up
-      setIsSticky(currentScroll > 50);
+      // Only make navbar sticky on home page, otherwise keep it fixed
+      if (isHomePage) {
+        setIsSticky(currentScroll > 50);
+      } else {
+        setIsSticky(true); // Always sticky on other pages
+      }
 
       if (currentScroll > scrollRef.current) {
         setIsScrollingUp(false); // Scrolling down
@@ -44,7 +52,7 @@ export default function Header() {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   const navbarVariants = {
     hidden: { opacity: 0, y: -12, x: 0 },
@@ -80,15 +88,19 @@ export default function Header() {
 
   return (
     <>
-      {/* Floating Navbar - Fixed at top when scrolling */}
+      {/* Single Navbar - Fixed at top */}
       <motion.nav
         initial="hidden"
-        animate={isSticky ? 'visible' : 'hidden'}
+        animate="visible"
         variants={navbarVariants}
-        className="fixed top-0 left-0 right-0 z-50"
+        className={`fixed top-0 left-0 right-0 z-50 ${
+          isHomePage && !isSticky ? 'pt-6 px-6' : ''
+        }`}
       >
         {/* Glassmorphism Container */}
-        <div className="relative backdrop-blur-md bg-white/70 rounded-none px-8 py-4 shadow-2xl border-b border-white/30">
+        <div className={`relative backdrop-blur-md bg-white/70 rounded-3xl px-8 py-4 shadow-2xl border border-white/30 ${
+          isHomePage && !isSticky ? 'max-w-7xl mx-auto' : 'rounded-none'
+        }`}>
           {/* Animated Background Blur Gradient */}
           <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
 
@@ -140,7 +152,7 @@ export default function Header() {
                   className="px-3 py-2 bg-blue-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/login?role=parent')}
+                  onClick={() => navigate('/parent/login')}
                 >
                   Parent
                 </motion.button>
@@ -148,7 +160,7 @@ export default function Header() {
                   className="px-3 py-2 bg-green-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/login?role=learning-partner')}
+                  onClick={() => navigate('/learningpartner/login')}
                 >
                   LP
                 </motion.button>
@@ -156,7 +168,7 @@ export default function Header() {
                   className="px-3 py-2 bg-purple-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/login?role=teacher')}
+                  onClick={() => navigate('/teacher/login')}
                 >
                   Teacher
                 </motion.button>
@@ -254,19 +266,19 @@ export default function Header() {
                     <div className="flex justify-center gap-2 py-2">
                       <button
                         className="px-3 py-1 bg-blue-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
-                        onClick={() => navigate('/login?role=parent')}
+                        onClick={() => navigate('/parent/login')}
                       >
                         Parent
                       </button>
                       <button
                         className="px-3 py-1 bg-green-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
-                        onClick={() => navigate('/login?role=learning-partner')}
+                        onClick={() => navigate('/learningpartner/login')}
                       >
                         LP
                       </button>
                       <button
                         className="px-3 py-1 bg-purple-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
-                        onClick={() => navigate('/login?role=teacher')}
+                        onClick={() => navigate('/teacher/login')}
                       >
                         Teacher
                       </button>
@@ -295,109 +307,6 @@ export default function Header() {
           </motion.div>
         </div>
       </motion.nav>
-
-      {/* Static Navbar at Top (always visible) */}
-      {!isSticky && (
-        <div className="fixed top-0 left-0 right-0 z-40 pt-6 px-6">
-          <div className="relative backdrop-blur-md bg-white/70 rounded-full px-8 py-4 shadow-lg border border-white/30 max-w-7xl mx-auto">
-            <div className="flex items-center justify-between">
-              <motion.div
-                className="flex items-center gap-2 cursor-pointer"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/')}
-              >
-                <img
-                  src="/logo.png"
-                  alt="Tiny Steps Logo"
-                  className="w-8 h-8 object-contain"
-                />
-                <span className="hidden sm:inline font-bold text-base text-gray-900">
-                  Tiny Steps
-                </span>
-              </motion.div>
-
-              <div className="hidden md:flex items-center gap-8">
-                {navItems.map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    className="text-gray-700 font-medium text-sm hover:text-blue-600 transition-colors"
-                  >
-                    {item.label}
-                  </a>
-                ))}
-              </div>
-
-              <div className="hidden md:flex items-center gap-4">
-                {/* Role buttons always visible for login */}
-                <div className="flex items-center gap-2">
-                  <motion.button
-                    className="px-3 py-2 bg-blue-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/login?role=parent')}
-                  >
-                    Parent
-                  </motion.button>
-                  <motion.button
-                    className="px-3 py-2 bg-green-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/login?role=learning-partner')}
-                  >
-                    LP
-                  </motion.button>
-                  <motion.button
-                    className="px-3 py-2 bg-purple-600 text-white rounded-full font-medium text-xs hover:shadow-lg transition-all"
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate('/login?role=teacher')}
-                  >
-                    Teacher
-                  </motion.button>
-                </div>
-                {!user && (
-                  <>
-                    <button
-                      className="text-gray-700 font-medium text-sm px-4 py-2 rounded-full hover:bg-gray-100 transition-colors"
-                      onClick={() => navigate('/login')}
-                    >
-                      Sign in
-                    </button>
-                    <button
-                      className="px-6 py-2 bg-black text-white rounded-full font-medium text-sm hover:bg-gray-900 transition-colors"
-                      onClick={() => navigate('/contact')}
-                    >
-                      Contact Us
-                    </button>
-                  </>
-                )}
-                {user && (
-                  <>
-                    <span className="text-sm text-gray-600">{user.displayName} ({user.role})</span>
-                    <button
-                      className="text-red-600 font-medium text-sm px-4 py-2 rounded-full hover:bg-red-100 transition-colors"
-                      onClick={handleLogout}
-                    >
-                      Logout
-                    </button>
-                  </>
-                )}
-              </div>
-
-              <motion.button
-                className="md:hidden flex flex-col gap-1.5"
-                onClick={() => setIsOpen(!isOpen)}
-              >
-                {[0, 1, 2].map((line) => (
-                  <div key={line} className="w-5 h-0.5 bg-gray-900" />
-                ))}
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

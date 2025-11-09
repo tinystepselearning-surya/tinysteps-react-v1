@@ -1,6 +1,6 @@
 import React from 'react';
-import { Button } from '@components/components/ui/button';
-import { Card } from '@components/components/ui/card';
+import { Button } from '@components/ui/button';
+import { Card } from '@components/ui/card';
 
 export default function TestComponent() {
   return (

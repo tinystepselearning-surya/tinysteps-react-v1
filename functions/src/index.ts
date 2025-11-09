@@ -204,3 +204,4 @@ export { scheduleSessionBatch } from './scheduleSessionBatch';
 export { webhookRazorpay } from './webhookRazorpay';
 export { markAttendance } from './markAttendance';
 export { health } from './health';
+export { adminCreateUser } from './adminCreateUser';

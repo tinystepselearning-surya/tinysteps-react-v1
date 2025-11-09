@@ -3,7 +3,11 @@ import { signInWithEmailAndPassword, onAuthStateChanged, signOut } from "firebas
 import { auth } from "../lib/firebaseConfig";
 import { useNavigate } from 'react-router-dom';
 
-const Login: React.FC = () => {
+interface LoginProps {
+  onLogin?: (email: string, password: string) => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -32,8 +36,12 @@ const Login: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Navigation handled in useEffect
+      if (onLogin) {
+        await onLogin(email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        // Navigation handled in useEffect
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

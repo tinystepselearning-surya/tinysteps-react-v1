@@ -2,7 +2,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from './firebaseConfig';
 import { useAuthStore } from '../store/useAuthStore';
 
-export async function handleLogin(email: string, password: string) {
+export async function handleLogin(email: string, password: string, expectedRole?: string) {
   try {
     const credential = await signInWithEmailAndPassword(auth, email, password);
     const firebaseUser = credential.user;
@@ -11,6 +11,11 @@ export async function handleLogin(email: string, password: string) {
     // Extract role from custom claims; default to 'kid' if missing
     const roleClaim = (idTokenResult.claims as any).role as string | undefined;
     const role = (roleClaim as any) || 'kid';
+
+    // If expectedRole is specified and doesn't match the user's actual role, throw error
+    if (expectedRole && role !== expectedRole) {
+      throw new Error(`Invalid credentials for ${expectedRole} role. Please use the correct login button.`);
+    }
 
     useAuthStore.setState({
       user: {
