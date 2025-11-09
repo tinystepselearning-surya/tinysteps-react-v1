@@ -1,6 +1,5 @@
 import React from 'react';
-import { createBrowserRouter } from 'react-router-dom';
-import App from '../app';
+import { createBrowserRouter, Outlet } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
@@ -16,10 +15,17 @@ import KidDashboard from '../pages/kid/KidDashboard';
 import Header from '../components/common/Header';
 import RoleGate from '../components/common/RoleGate';
 
+const Layout: React.FC = () => (
+  <div>
+    <Header />
+    <Outlet />
+  </div>
+);
+
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: <Layout />,
     errorElement: <NotFoundPage />,
     children: [
       {
