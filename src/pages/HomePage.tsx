@@ -1,6 +1,9 @@
 // @ts-nocheck
 import React from "react";
 import { motion } from "framer-motion";
+import { Link } from 'react-router-dom';
+import { ModernCard } from "../components/ui/ModernCard";
+import Footer from "../components/common/Footer";
 
 // Inline SVG icon components (small, self-contained) to avoid an external dependency.
 const Svg = ({ children, className }: { children: any; className?: string }) => (
@@ -182,11 +185,6 @@ export default function HomePage() {
               <p className="mt-4 text-slate-600 leading-relaxed">
                 Engaging lessons, interactive games, and progress dashboards—built for busy parents and curious kids.
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <a href="#phonics" className="rounded-xl bg-slate-900 text-white px-5 py-2.5 font-semibold">Explore Phonics</a>
-                <a href="#grammar" className="rounded-xl bg-white px-5 py-2.5 font-semibold border border-slate-200 hover:bg-slate-50">Grammar</a>
-                <a href="#speaking" className="rounded-xl bg-white px-5 py-2.5 font-semibold border border-slate-200 hover:bg-slate-50">Public Speaking</a>
-              </div>
               <div className="mt-6 flex items-center gap-6 text-sm text-slate-600">
                 <div className="inline-flex items-center gap-2"><Users className="h-4 w-4"/> Small groups or 1:1</div>
                 <div className="inline-flex items-center gap-2"><Star className="h-4 w-4"/> Parent-loved lessons</div>
@@ -194,31 +192,42 @@ export default function HomePage() {
               </div>
             </div>
             <div className="relative">
-              <div className="aspect-[4/3] w-full rounded-3xl bg-gradient-to-br from-sky-100 via-white to-orange-100 ring-1 ring-black/5 shadow-xl"/>
-              <p className="mt-3 text-xs text-center text-slate-500">(Hero illustration / kids image placeholder)</p>
+              <div className="aspect-[4/3] w-full rounded-3xl bg-gradient-to-br from-sky-100 via-white to-orange-100 ring-1 ring-black/5 shadow-xl flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">📚</div>
+                  <p className="text-slate-600 font-medium">Interactive Learning Awaits</p>
+                  <p className="text-sm text-slate-500 mt-2">Join thousands of happy learners</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Sticky mini-nav like Vedantu */}
-      <div className="sticky top-0 z-20 border-t border-b border-slate-200 bg-white/90 backdrop-blur">
+      {/* Center-aligned course links */}
+      <section className="py-8 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex gap-6 overflow-x-auto no-scrollbar py-3 text-sm font-semibold">
-            <a href="#phonics" className="px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">Phonics & Reading</a>
-            <a href="#grammar" className="px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">Grammar & Writing</a>
-            <a href="#speaking" className="px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-50">Public Speaking</a>
+          <div className="flex justify-center gap-6 overflow-x-auto no-scrollbar">
+            <Link to="/phonics" className="px-6 py-3 rounded-full bg-gradient-to-r from-blue-400 to-purple-600 text-white font-semibold shadow-lg hover:scale-105 transform transition-all inline-flex items-center gap-2">
+              <span className="text-sm">Phonics & Reading</span>
+            </Link>
+            <Link to="/grammar" className="px-6 py-3 rounded-full bg-gradient-to-r from-green-400 to-green-600 text-white font-semibold shadow-lg hover:scale-105 transform transition-all inline-flex items-center gap-2">
+              <span className="text-sm">Grammar & Writing</span>
+            </Link>
+            <Link to="/speaking" className="px-6 py-3 rounded-full bg-gradient-to-r from-purple-400 to-pink-500 text-white font-semibold shadow-lg hover:scale-105 transform transition-all inline-flex items-center gap-2">
+              <span className="text-sm">Public Speaking</span>
+            </Link>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* PHONICS & READING */}
-      <section id="phonics" className="py-14">
+      {/* Why Choose Us */}
+      <section className="py-14 bg-gradient-to-b from-white to-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader
-            eyebrow="Phonics & Reading"
-            title="Build strong decoding skills and a love for reading"
-            subtitle="From A–Z sounds and CVC blending to digraphs, long vowels, and reading fluency."
+            eyebrow="Why Choose Us"
+            title="Why Parents Love Tiny Steps"
+            subtitle="Discover what makes our online learning platform the perfect choice for your child's education."
           />
 
           <motion.div
@@ -228,187 +237,286 @@ export default function HomePage() {
             viewport={{ once: true, amount: 0.2 }}
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            <CourseCard
-              icon={<BookOpen className="h-6 w-6" />}
-              title="Early Phonics Foundations"
-              tag="Ages 3–6"
-              desc="Letter–sound mastery, blending, and first words."
-              bullets={[
-                "A–Z sounds, SATPIN order",
-                "CVC decoding & Elkonin boxes",
-                "Games, tracing, and sound stories",
-              ]}
-              ctaPrimary={{ label: "Try a free class", href: "/#contact" }}
-              ctaSecondary={{ label: "See curriculum", href: "/courses/phonics#early" }}
-            />
-            <CourseCard
-              icon={<BookOpen className="h-6 w-6" />}
-              title="Advanced Phonics & Spelling"
-              tag="Ages 6–10"
-              desc="Digraphs, Magic‑E, long vowels, alternate spellings."
-              bullets={[
-                "CK / Rabbit / Floss rules",
-                "Digraphs & diphthongs (sh, ch, ai, ee, oi...)",
-                "Reading sentences & dictation practice",
-              ]}
-              ctaPrimary={{ label: "Enroll now", href: "/#contact" }}
-              ctaSecondary={{ label: "View topics", href: "/courses/phonics#advanced" }}
-            />
-            <CourseCard
-              icon={<BookOpen className="h-6 w-6" />}
-              title="Reading Fluency & Comprehension"
-              tag="Grades 1–4"
-              desc="Move from decoding to confident, expressive reading."
-              bullets={[
-                "Sight words & tricky words",
-                "Pace, phrasing, and expression",
-                "Short passages & question sets",
-              ]}
-              ctaPrimary={{ label: "Get timetable", href: "/#contact" }}
-              ctaSecondary={{ label: "Sample lesson", href: "/courses/phonics#fluency" }}
-            />
+            <motion.div
+              variants={item}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl transition-all"
+            >
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                <Users className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Expert Teachers</h3>
+              <p className="text-slate-600">Certified educators with years of experience in early childhood education.</p>
+            </motion.div>
+            <motion.div
+              variants={item}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl transition-all"
+            >
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Personalized Learning</h3>
+              <p className="text-slate-600">Adaptive curriculum that grows with your child at their own pace.</p>
+            </motion.div>
+            <motion.div
+              variants={item}
+              className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-xl transition-all"
+            >
+              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                <Star className="h-6 w-6 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">Interactive Games</h3>
+              <p className="text-slate-600">Fun, educational games that make learning engaging and memorable.</p>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* GRAMMAR & WRITING */}
-      <section id="grammar" className="py-14 bg-gradient-to-b from-white to-slate-50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            eyebrow="Grammar & Writing"
-            title="Think clearly. Write clearly."
-            subtitle="Simple rules, engaging practice, and real writing tasks."
-          />
-
-          <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            <CourseCard
-              icon={<PenSquare className="h-6 w-6" />}
-              title="Grammar Level 1"
-              tag="Ages 6–9"
-              desc="Must‑know building blocks for young writers."
-              bullets={[
-                "Nouns, verbs, adjectives, articles",
-                "Prepositions of place & time, punctuation",
-                "Sentence building games & worksheets",
-              ]}
-              ctaPrimary={{ label: "Try a free class", href: "/#contact" }}
-              ctaSecondary={{ label: "See curriculum", href: "/courses/grammar#level1" }}
-            />
-            <CourseCard
-              icon={<PenSquare className="h-6 w-6" />}
-              title="Grammar Level 2"
-              tag="Ages 9–12"
-              desc="From tenses to strong sentence structure."
-              bullets={[
-                "Present / Past / Future tenses",
-                "Adverbs, conjunctions, S‑V agreement",
-                "Editing drills and paragraph practice",
-              ]}
-              ctaPrimary={{ label: "Enroll now", href: "/#contact" }}
-              ctaSecondary={{ label: "View topics", href: "/courses/grammar#level2" }}
-            />
-            <CourseCard
-              icon={<PenSquare className="h-6 w-6" />}
-              title="Creative Writing Lab"
-              tag="Grades 2–6"
-              desc="Write sentences, stories, and short essays with voice."
-              bullets={[
-                "Hooks, details, and endings",
-                "Story maps & mind‑mapping",
-                "Peer‑read alouds and feedback",
-              ]}
-              ctaPrimary={{ label: "Get timetable", href: "/#contact" }}
-              ctaSecondary={{ label: "Sample lesson", href: "/courses/grammar#writing" }}
-            />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* PUBLIC SPEAKING */}
-      <section id="speaking" className="py-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            eyebrow="Public Speaking"
-            title="Confident on camera and on stage"
-            subtitle="Fun practice with eye contact, voice, and structure—perfect for shy and bold kids alike."
-          />
-
-          <motion.div
-            variants={container}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.2 }}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            <CourseCard
-              icon={<Mic2 className="h-6 w-6" />}
-              title="Early Speaker"
-              tag="Ages 5–8"
-              desc="Short talks that build comfort and joy."
-              bullets={[
-                "Introduce yourself in many settings",
-                "Look‑move‑smile eye contact habit",
-                "Picture talk & show‑and‑tell",
-              ]}
-              ctaPrimary={{ label: "Try a free class", href: "/#contact" }}
-              ctaSecondary={{ label: "See curriculum", href: "/courses/speaking#early" }}
-            />
-            <CourseCard
-              icon={<Mic2 className="h-6 w-6" />}
-              title="Confident Speaker"
-              tag="Ages 8–11"
-              desc="Structure ideas and speak with expression."
-              bullets={[
-                "S.P.E.A.K. rule + delivery drills",
-                "Storytelling & impromptu topics",
-                "Voice, pace, and emphasis games",
-              ]}
-              ctaPrimary={{ label: "Enroll now", href: "/#contact" }}
-              ctaSecondary={{ label: "View topics", href: "/courses/speaking#confident" }}
-            />
-            <CourseCard
-              icon={<Mic2 className="h-6 w-6" />}
-              title="Superstar Speaker"
-              tag="Ages 10–13"
-              desc="Polish speeches, debates, and hosting skills."
-              bullets={[
-                "Persuasive speeches & debates",
-                "Pause, gesture, and rhetorical devices",
-                "Recording practice & feedback reels",
-              ]}
-              ctaPrimary={{ label: "Get timetable", href: "/#contact" }}
-              ctaSecondary={{ label: "Sample lesson", href: "/courses/speaking#superstar" }}
-            />
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Progress strip (Vedantu-style) */}
+      {/* What Parents Say */}
       <section className="py-14 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <h3 className="text-2xl font-bold text-slate-900">Here’s how your child progresses</h3>
-              <p className="mt-2 text-slate-600">Start where you are, level up with each lesson, and shine in real‑world tasks.</p>
-            </div>
-            <ol className="grid md:grid-cols-3 gap-4">
-              {["Begin at current level", "Progress fast, level up", "Go beyond & be a star"].map((t, i) => (
-                <li key={i} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-                    <span className="grid place-content-center h-6 w-6 rounded-full bg-slate-900 text-white text-[11px]">{i + 1}</span>
-                    {t}
-                  </div>
-                  <p className="mt-2 text-xs text-slate-600">{i===0?"Quick evaluation & placement":i===1?"Weekly goals, games, and practice":"Showcases, debates, and reading reels"}</p>
-                </li>
-              ))}
-            </ol>
+          <SectionHeader
+            eyebrow="Testimonials"
+            title="What Parents Say About Us"
+            subtitle="Hear from parents who have seen their children thrive with Tiny Steps."
+          />
+
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            <motion.div
+              variants={item}
+              className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200"
+            >
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-slate-700 mb-4">"My daughter went from struggling with reading to devouring books. The teachers are amazing!"</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-200 rounded-full flex items-center justify-center">
+                  <span className="text-blue-700 font-semibold text-sm">SM</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">Sarah M.</p>
+                  <p className="text-sm text-slate-600">Parent of 7-year-old</p>
+                </div>
+              </div>
+            </motion.div>
+            <motion.div
+              variants={item}
+              className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6 border border-green-200"
+            >
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-slate-700 mb-4">"The progress tracking is fantastic. I can see exactly what my son is learning each week."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-200 rounded-full flex items-center justify-center">
+                  <span className="text-green-700 font-semibold text-sm">RJ</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">Rajesh J.</p>
+                  <p className="text-sm text-slate-600">Parent of 6-year-old</p>
+                </div>
+              </div>
+            </motion.div>
+            <motion.div
+              variants={item}
+              className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 border border-purple-200"
+            >
+              <div className="flex items-center gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-slate-700 mb-4">"Flexible scheduling and excellent communication. Perfect for our busy family."</p>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-200 rounded-full flex items-center justify-center">
+                  <span className="text-purple-700 font-semibold text-sm">AK</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-slate-900">Anita K.</p>
+                  <p className="text-sm text-slate-600">Parent of 5-year-old</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* LRSW Methodology */}
+      <section className="py-14 bg-gradient-to-b from-slate-50 to-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeader
+            eyebrow="Our Methodology"
+            title="LRSW: Listen, Read, Speak, Write"
+            subtitle="Our proven 4-step methodology ensures comprehensive language development."
+          />
+
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+          >
+            {[
+              {
+                letter: 'L',
+                title: 'Listen',
+                description: 'Active listening skills and comprehension',
+                color: 'from-blue-400 to-blue-600',
+                glow: 'shadow-blue-500/50'
+              },
+              {
+                letter: 'R',
+                title: 'Read',
+                description: 'Phonics, vocabulary, and reading fluency',
+                color: 'from-green-400 to-green-600',
+                glow: 'shadow-green-500/50'
+              },
+              {
+                letter: 'S',
+                title: 'Speak',
+                description: 'Clear communication and public speaking',
+                color: 'from-purple-400 to-purple-600',
+                glow: 'shadow-purple-500/50'
+              },
+              {
+                letter: 'W',
+                title: 'Write',
+                description: 'Grammar, creative writing, and expression',
+                color: 'from-orange-400 to-orange-600',
+                glow: 'shadow-orange-500/50'
+              }
+            ].map((step, index) => (
+              <motion.div
+                key={step.letter}
+                variants={item}
+                className={`relative bg-white rounded-2xl p-6 shadow-lg border border-slate-200 hover:shadow-2xl transition-all group ${step.glow}`}
+                whileHover={{ y: -5, scale: 1.02 }}
+              >
+                <div className={`absolute inset-0 bg-gradient-to-br ${step.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity`} />
+                <div className={`w-16 h-16 bg-gradient-to-br ${step.color} rounded-2xl flex items-center justify-center mb-4 text-white font-bold text-2xl shadow-lg`}>
+                  {step.letter}
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-2">{step.title}</h3>
+                <p className="text-slate-600">{step.description}</p>
+                <motion.div
+                  className={`mt-4 h-1 bg-gradient-to-r ${step.color} rounded-full`}
+                  initial={{ scaleX: 0 }}
+                  whileInView={{ scaleX: 1 }}
+                  transition={{ delay: index * 0.1, duration: 0.5 }}
+                  style={{ originX: 0 }}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Progress Section */}
+      <section className="py-14 bg-gradient-to-r from-blue-50 via-purple-50 to-pink-50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <SectionHeader
+              eyebrow="Learning Journey"
+              title="Here's how your child progresses"
+              subtitle="Start where you are, level up with each lesson, and shine in real-world tasks."
+            />
           </div>
+
+          <motion.div
+            variants={container}
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.2 }}
+            className="relative"
+          >
+            {/* Progress Path */}
+            <div className="hidden md:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 transform -translate-y-1/2 z-0" />
+
+            <div className="grid md:grid-cols-3 gap-8 relative z-10">
+              {[
+                {
+                  step: 1,
+                  title: "Start Where You Are",
+                  description: "Quick assessment and personalized placement. No pressure, just the right starting point.",
+                  icon: "🎯",
+                  color: "from-blue-400 to-blue-600",
+                  details: ["Initial evaluation", "Skill assessment", "Custom learning path"]
+                },
+                {
+                  step: 2,
+                  title: "Level Up with Each Lesson",
+                  description: "Weekly goals, interactive games, and consistent practice build confidence step by step.",
+                  icon: "🚀",
+                  color: "from-purple-400 to-purple-600",
+                  details: ["Weekly objectives", "Engaging activities", "Progress tracking"]
+                },
+                {
+                  step: 3,
+                  title: "Shine in Real-World Tasks",
+                  description: "Apply skills in presentations, reading challenges, and creative projects that matter.",
+                  icon: "✨",
+                  color: "from-pink-400 to-pink-600",
+                  details: ["Showcase events", "Real-world application", "Celebrate achievements"]
+                }
+              ].map((phase, index) => (
+                <motion.div
+                  key={phase.step}
+                  variants={item}
+                  className="bg-white rounded-3xl p-8 shadow-lg border border-slate-200 text-center relative"
+                  whileHover={{ y: -10, scale: 1.02 }}
+                >
+                  {/* Step Number */}
+                  <div className={`w-16 h-16 bg-gradient-to-br ${phase.color} rounded-full flex items-center justify-center text-white font-bold text-xl mb-6 mx-auto shadow-lg`}>
+                    {phase.step}
+                  </div>
+
+                  {/* Icon */}
+                  <div className="text-4xl mb-4">{phase.icon}</div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-bold text-slate-900 mb-3">{phase.title}</h3>
+
+                  {/* Description */}
+                  <p className="text-slate-600 mb-6">{phase.description}</p>
+
+                  {/* Details */}
+                  <ul className="space-y-2">
+                    {phase.details.map((detail, i) => (
+                      <li key={i} className="flex items-center justify-center gap-2 text-sm text-slate-700">
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Connecting Arrow (hidden on mobile) */}
+                  {index < 2 && (
+                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-20">
+                      <motion.div
+                        className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-md border border-slate-200"
+                        initial={{ scale: 0 }}
+                        whileInView={{ scale: 1 }}
+                        transition={{ delay: 0.5 + index * 0.2 }}
+                      >
+                        <ArrowRight className="h-4 w-4 text-slate-600" />
+                      </motion.div>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -424,6 +532,8 @@ export default function HomePage() {
           <p className="mt-3 text-xs text-slate-500">Payments: UPI • Bank Transfer (manual) • Online Autopay (subscription)</p>
         </div>
       </section>
+
+      <Footer />
     </main>
   );
 }

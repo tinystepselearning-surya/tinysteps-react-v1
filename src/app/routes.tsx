@@ -5,6 +5,11 @@ import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import HomePage from '../pages/HomePage';
 
+// Course Pages
+import PhonicsPage from '../pages/phonics';
+import GrammarPage from '../pages/grammar';
+import SpeakingPage from '../pages/speaking';
+
 // Dashboards (to be created)
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import TeacherDashboard from '../pages/teacher/TeacherDashboard';
@@ -39,6 +44,18 @@ const router = createBrowserRouter(
         {
           index: true,
           element: <HomePage />,
+        },
+        {
+          path: 'phonics',
+          element: <PhonicsPage />,
+        },
+        {
+          path: 'grammar',
+          element: <GrammarPage />,
+        },
+        {
+          path: 'speaking',
+          element: <SpeakingPage />,
         },
         {
           path: 'login',
