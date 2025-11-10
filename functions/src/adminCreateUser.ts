@@ -163,6 +163,9 @@ export const adminCreateUser = functions.https.onCall(
         roles: [requestData.role],
         role: requestData.role,
         status: requestData.status || 'active',
+        // Optional admin fields (department, permissions) defaulted here so schema is consistent
+        department: null,
+        permissions: [],
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: context.auth.uid,
