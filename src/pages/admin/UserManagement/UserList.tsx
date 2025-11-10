@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { collection, getDocs, query, orderBy, deleteDoc, doc } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../../lib/firebaseConfig';
@@ -9,6 +9,7 @@ import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@components/ui/dialog';
 import { CreateUserForm } from './CreateUserForm';
 import { EditUserForm } from './EditUserForm';
 import { toast } from '@components/hooks/use-toast';
@@ -19,6 +20,10 @@ export function UserList() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   const { data: users, isLoading, error, refetch } = useQuery({
     queryKey: ['users'],
@@ -38,16 +43,22 @@ export function UserList() {
     if (!users) return [];
 
     return users.filter(user => {
-      const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           user.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-      const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
+      const email = user.email?.toLowerCase?.() || '';
+      const name = user.name?.toLowerCase?.() || '';
+      const role = user.role || 'parent';
+      const status = user.status || 'active';
+
+      const matchesSearch =
+        email.includes(searchTerm.toLowerCase()) ||
+        name.includes(searchTerm.toLowerCase());
+      const matchesRole = roleFilter === 'all' || role === roleFilter;
+      const matchesStatus = statusFilter === 'all' || status === statusFilter;
 
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [users, searchTerm, roleFilter, statusFilter]);
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role?: string) => {
     switch (role) {
       case 'admin': return 'destructive';
       case 'teacher': return 'default';
@@ -58,7 +69,7 @@ export function UserList() {
     }
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status?: string) => {
     switch (status) {
       case 'active': return 'default';
       case 'suspended': return 'destructive';
@@ -68,6 +79,7 @@ export function UserList() {
   };
 
   const handleUserCreated = () => {
+    setIsCreateDialogOpen(false);
     refetch();
   };
 
@@ -103,6 +115,29 @@ export function UserList() {
     }
   };
 
+  const resetPasswordMutation = useMutation({
+    mutationFn: async ({ uid, newPassword }: { uid: string; newPassword: string }) => {
+      const resetPasswordFunction = httpsCallable(functions, 'adminResetPassword');
+      return await resetPasswordFunction({ uid, newPassword });
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Password reset successfully',
+      });
+      setShowResetPasswordDialog(false);
+      setResetPasswordUser(null);
+      setNewPassword('');
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reset password',
+        variant: 'destructive',
+      });
+    },
+  });
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -126,7 +161,20 @@ export function UserList() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Users</h2>
-        <CreateUserForm onUserCreated={handleUserCreated} />
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>Create New User</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New User</DialogTitle>
+            </DialogHeader>
+            <CreateUserForm
+              onUserCreated={handleUserCreated}
+              onClose={() => setIsCreateDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Filters */}
@@ -182,20 +230,28 @@ export function UserList() {
           <TableBody>
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.name}</TableCell>
+                <TableCell>{user.email || '—'}</TableCell>
+                <TableCell>{user.name || '—'}</TableCell>
                 <TableCell>
                   <Badge variant={getRoleBadgeVariant(user.role)}>
-                    {user.role}
+                    {user.role || 'unknown'}
                   </Badge>
                 </TableCell>
                 <TableCell>
                   <Badge variant={getStatusBadgeVariant(user.status)}>
-                    {user.status}
+                    {user.status || 'unknown'}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {user.createdAt instanceof Date ? user.createdAt.toLocaleDateString() : new Date(user.createdAt.seconds * 1000).toLocaleDateString()}
+                  {(() => {
+                    const createdAt =
+                      user.createdAt instanceof Date
+                        ? user.createdAt
+                        : user.createdAt?.seconds
+                          ? new Date(user.createdAt.seconds * 1000)
+                          : null;
+                    return createdAt ? createdAt.toLocaleDateString() : '—';
+                  })()}
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
@@ -205,6 +261,16 @@ export function UserList() {
                       onClick={() => setEditingUser(user)}
                     >
                       Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setResetPasswordUser(user);
+                        setShowResetPasswordDialog(true);
+                      }}
+                    >
+                      Reset Password
                     </Button>
                     <Button
                       size="sm"
@@ -235,6 +301,57 @@ export function UserList() {
           onCancel={() => setEditingUser(null)}
         />
       )}
+
+      {/* Reset Password Dialog */}
+      <Dialog open={showResetPasswordDialog} onOpenChange={setShowResetPasswordDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>
+              Enter a new password for {resetPasswordUser?.name}. This will immediately change their password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="newPassword" className="block text-sm font-medium mb-2">
+                New Password
+              </label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter new password"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowResetPasswordDialog(false);
+                  setResetPasswordUser(null);
+                  setNewPassword('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (resetPasswordUser && newPassword) {
+                    resetPasswordMutation.mutate({
+                      uid: resetPasswordUser.uid,
+                      newPassword,
+                    });
+                  }
+                }}
+                disabled={!newPassword || resetPasswordMutation.isPending}
+              >
+                {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

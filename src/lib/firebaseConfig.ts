@@ -24,7 +24,20 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 const analytics = getAnalytics(app);
 
-// Initialize Firebase Functions
-const functions = getFunctions(app);
+// Initialize Firebase Functions with specific region
+const functions = getFunctions(app, 'asia-south1');
+
+// Connect to emulators in development
+if (process.env.NODE_ENV === 'development') {
+  import('firebase/firestore').then(({ connectFirestoreEmulator }) => {
+    connectFirestoreEmulator(db, 'localhost', 8080);
+  });
+  import('firebase/auth').then(({ connectAuthEmulator }) => {
+    connectAuthEmulator(auth, 'http://localhost:9099');
+  });
+  import('firebase/functions').then(({ connectFunctionsEmulator }) => {
+    connectFunctionsEmulator(functions, 'localhost', 5001);
+  });
+}
 
 export { app, db, auth, analytics, functions };

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { isSuperUserEmail } from '../../constants/accessControl';
 
 interface RoleGateProps {
   allowedRoles: string[];
@@ -11,6 +11,8 @@ interface RoleGateProps {
 export default function RoleGate({ allowedRoles }: RoleGateProps) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
+  const superUser = isSuperUserEmail(user?.email);
+  const canAccess = !!user && (superUser || allowedRoles.includes(user.role));
 
   useEffect(() => {
     if (!user) {
@@ -18,13 +20,13 @@ export default function RoleGate({ allowedRoles }: RoleGateProps) {
       return;
     }
 
-    if (!allowedRoles.includes(user.role)) {
+    if (!superUser && !allowedRoles.includes(user.role)) {
       navigate('/unauthorized');
       return;
     }
-  }, [user, allowedRoles, navigate]);
+  }, [user, allowedRoles, navigate, superUser]);
 
-  if (!user || !allowedRoles.includes(user.role)) {
+  if (!canAccess) {
     return null;
   }
 

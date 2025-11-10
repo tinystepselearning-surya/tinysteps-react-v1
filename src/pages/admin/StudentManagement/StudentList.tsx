@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Button } from '@components/ui/button';
 import { toast } from '@components/hooks/use-toast';
-import CreateStudentForm from './CreateStudentForm';
 import AssignCourseModal from './AssignCourseModal';
 import AssignTeacherModal from './AssignTeacherModal';
 import AssignLPModal from './AssignLPModal';
@@ -81,7 +80,6 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Students</h2>
-        <CreateStudentForm onStudentCreated={() => {/* refresh handled by listener */}} />
       </div>
 
       <Card className="p-4">

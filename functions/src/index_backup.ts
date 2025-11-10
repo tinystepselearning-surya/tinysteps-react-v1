@@ -274,6 +274,3 @@ export const adminResetPassword = onCall(
     }
   }
 );
-
-// Export the adminCreateUser function
-export { adminCreateUser } from './adminCreateUser';

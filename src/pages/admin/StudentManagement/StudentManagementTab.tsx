@@ -3,8 +3,6 @@ import StudentList from './StudentList';
 import CreateStudentForm from './CreateStudentForm';
 import EditStudentForm from './EditStudentForm';
 import AssignCourseModal from './AssignCourseModal';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@components/ui/dialog';
-import { Button } from '@components/ui/button';
 import { db } from '../../../lib/firebaseConfig';
 import type { Student } from '../../../types/Student';
 
@@ -12,13 +10,11 @@ export default function StudentManagementTab() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showEditForm, setShowEditForm] = useState(false);
   const [showAssignCourseModal, setShowAssignCourseModal] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
 
   const handleStudentCreated = () => {
-    setShowCreateModal(false);
     setRefreshKey(k => k + 1);
   };
 
@@ -56,17 +52,7 @@ export default function StudentManagementTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Student Management</h2>
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setShowCreateModal(true)}>+ Create Student</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Student</DialogTitle>
-            </DialogHeader>
-            <CreateStudentForm onStudentCreated={handleStudentCreated} />
-          </DialogContent>
-        </Dialog>
+        <CreateStudentForm onStudentCreated={handleStudentCreated} />
       </div>
 
       {error && <div className="text-red-500 mb-2">{error}</div>}
