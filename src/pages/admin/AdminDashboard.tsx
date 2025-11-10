@@ -72,9 +72,9 @@ export default function AdminDashboard() {
                   <h2 className="text-2xl font-bold">User Management</h2>
                   <Dialog open={showCreateUserModal} onOpenChange={setShowCreateUserModal}>
                     <DialogTrigger asChild>
-                      <Button>Create New User</Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <Button>+ Create New User</Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
                         <DialogTitle>Create New User</DialogTitle>
                       </DialogHeader>

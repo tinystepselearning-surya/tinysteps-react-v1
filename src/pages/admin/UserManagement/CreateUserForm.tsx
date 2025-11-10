@@ -77,9 +77,13 @@ export function CreateUserForm({ onUserCreated, trigger }: CreateUserFormProps) 
       const createUserFunction = httpsCallable(functions, 'adminCreateUser');
       const result = await createUserFunction(submitData);
 
+      // Show success with UID if available
+      const createdUser = result.data as any;
       toast({
-        title: 'Success',
-        description: 'User created successfully',
+        title: 'User created',
+        description: createdUser?.uid
+          ? `User created successfully (UID: ${createdUser.uid})`
+          : 'User created successfully',
       });
 
       form.reset();
