@@ -34,6 +34,18 @@ const BlogPage: React.FC = () => {
   }));
 
   const combined = React.useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
+  const blogSchema = React.useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: 'Tiny Steps Blog',
+    blogPost: combined.map((post) => ({
+      '@type': 'BlogPosting',
+      headline: post.title,
+      datePublished: post.date,
+      author: { '@type': 'Person', name: post.author || 'Tiny Steps' },
+      url: `https://tinystepslearning.com/blog/${post.slug}`
+    }))
+  }), [combined]);
   const featured = combined
     .filter((p) => topic === 'All' || p.category === topic)
     .sort((a,b) => (sort==='Newest' ? (a.date<b.date?1:-1) : 0))[0];
@@ -42,7 +54,7 @@ const BlogPage: React.FC = () => {
 
   return (
     <div className="bg-white">
-      <Meta title="Tiny Steps Blog | Insights for Indian Parents" description="Expert tips, research‑backed articles, and success stories for Indian parents. Phonics, grammar, and public speaking." canonical="https://tinystepslearning.com/blog" />
+      <Meta title="Tiny Steps Blog | Insights for Indian Parents" description="Expert tips, research‑backed articles, and success stories for Indian parents. Phonics, grammar, and public speaking." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-6 text-center">
           <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Indian Parents</h1>

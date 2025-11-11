@@ -53,14 +53,14 @@ export default function TrustSignals() {
         <div className="text-center">
           <div className="gradient-chip mx-auto w-max">Why Parents Trust Us</div>
           <h2 className="mt-2 text-2xl font-bold text-gray-900 md:text-3xl">Proof, Not Promises</h2>
-          <p className="mt-2 text-gray-700">Real outcomes, certified teachers, secure systems.</p>
+          <p className="mt-2 text-gray-700">Real outcomes, certified teachers, AI-powered insights across continents.</p>
         </div>
 
         {/* Stats */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <StatCard value="500+" label="Students taught" />
+          <StatCard value="3500+" label="Students taught worldwide" />
           <StatCard value="95%" label="Parent satisfaction" />
-          <StatCard value="15+" label="States across India" />
+          <StatCard value="9+" label="Countries (IN, US, UK, CA, SG, MY, VN, UAE, AU)" />
         </div>
 
         {/* Badges */}
@@ -70,8 +70,8 @@ export default function TrustSignals() {
             SSL Secure • Safe Payments
           </div>
           <div className="rounded-2xl bg-white/80 backdrop-blur p-4 border border-gray-100 text-sm text-gray-700 flex items-center gap-3">
-            <span className="h-8 w-8 rounded-full bg-tiny-purple-500/20 text-tiny-purple-600 grid place-items-center">🎓</span>
-            Qualified, background‑verified teachers
+            <span className="h-8 w-8 rounded-full bg-tiny-purple-500/20 text-tiny-purple-600 grid place-items-center">🤖</span>
+            AI-curated lessons + parent insight reports
           </div>
           <div className="rounded-2xl bg-white/80 backdrop-blur p-4 border border-gray-100 text-sm text-gray-700 flex items-center gap-3">
             <span className="h-8 w-8 rounded-full bg-tiny-orange-500/20 text-tiny-orange-600 grid place-items-center">✅</span>
@@ -104,4 +104,3 @@ export default function TrustSignals() {
     </section>
   );
 }
-

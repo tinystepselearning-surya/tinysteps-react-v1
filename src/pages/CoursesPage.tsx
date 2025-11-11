@@ -6,6 +6,34 @@ import TrialForm from '../components/forms/TrialForm';
 import Meta from '../components/common/Meta';
 import { catalogs } from '../content/courses';
 
+const CoursesHero = () => (
+  <section className="relative overflow-hidden bg-gradient-hero text-white">
+    <div className="absolute inset-0 opacity-20">
+      <div className="absolute -left-10 top-10 h-48 w-48 rounded-full bg-white/30 blur-3xl" />
+      <div className="absolute right-0 bottom-10 h-64 w-64 rounded-full bg-white/30 blur-3xl" />
+    </div>
+    <div className="relative mx-auto max-w-6xl px-6 py-16">
+      <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="text-sm uppercase tracking-widest text-white/80">Live 1:1 English programs</p>
+          <h1 className="mt-3 text-4xl font-bold md:text-5xl">Choose the perfect track for your child</h1>
+          <p className="mt-4 text-white/90">Phonics, grammar, public speaking, and custom brush-up paths—each mapped week-by-week with transparent pricing.</p>
+          <div className="mt-6 flex flex-wrap gap-3 text-sm">
+            <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>
+            <span className="rounded-full bg-white/20 px-4 py-1">₹550 per live session</span>
+            <span className="rounded-full bg-white/20 px-4 py-1">Parent-rated ★★★★★</span>
+          </div>
+        </div>
+        <div className="glass-panel bg-white/95 text-gray-900" id="book-trial">
+          <h3 className="text-lg font-semibold">Book a Free Trial</h3>
+          <p className="mt-2 text-sm text-gray-600">Tell us about your child—our mentor schedules a class within 24 hours.</p>
+          <div className="mt-4"><TrialForm context="courses_hero" /></div>
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
 type Track = 'phonics' | 'grammar' | 'speaking';
 
 const allCourses = catalogs;
@@ -55,21 +83,7 @@ const CoursesPage: React.FC = () => {
           }))
         }}
       />
-      <div className="pointer-events-none absolute -top-12 left-10 h-64 w-64 rounded-full bg-secondary-200/30 blur-3xl" />
-      <div className="pointer-events-none absolute top-36 right-4 h-72 w-72 rounded-full bg-primary-200/30 blur-3xl" />
-
-      <div className="mx-auto max-w-6xl px-6 pt-8 pb-10">
-        <div className="glass-panel soft-grid overflow-hidden px-6 py-10 text-center">
-          <div className="gradient-chip mx-auto mb-4 w-max">Live 1:1 + small groups</div>
-          <h1 className="font-heading text-3xl font-bold md:text-4xl">Choose Your Course</h1>
-          <p className="mt-3 text-base text-gray-700">Phonics, grammar, and public speaking journeys mapped week-by-week with transparent pricing.</p>
-          <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
-            <span className="rounded-full bg-white/80 px-4 py-1">Ages 3‑15</span>
-            <span className="rounded-full bg-white/80 px-4 py-1">8‑12 week tracks</span>
-            <span className="rounded-full bg-white/80 px-4 py-1">₹4,000+ / month</span>
-          </div>
-        </div>
-      </div>
+      <CoursesHero />
 
       <div className="mx-auto max-w-6xl grid grid-cols-1 gap-8 px-6 pb-16 md:grid-cols-[260px_1fr]">
         <aside className="space-y-4">
@@ -94,10 +108,6 @@ const CoursesPage: React.FC = () => {
             <input className="interactive-input" placeholder="Search courses, levels, topics..." value={query} onChange={(e)=>setQuery(e.target.value)} />
           </div>
           <ParentReportPreview />
-          <div className="glass-panel p-4" id="book-trial">
-            <div className="mb-2 text-sm font-semibold">Book a Free Trial</div>
-            <TrialForm />
-          </div>
         </aside>
 
         <main className="glass-panel p-6">

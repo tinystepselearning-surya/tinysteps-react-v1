@@ -11,6 +11,7 @@ import BlogPage from '../pages/BlogPage';
 import BlogPostPage from '../pages/BlogPostPage';
 import PricingPage from '../pages/PricingPage';
 import FAQPage from '../pages/FAQPage';
+import ContactPage from '../pages/ContactPage';
 
 // Course Pages
 import PhonicsPage from '../pages/phonics';
@@ -28,9 +29,11 @@ const KidDashboard = React.lazy(() => import('../pages/kid/KidDashboard'));
 import Header from '../components/common/Header';
 import { Suspense } from 'react';
 import RoleGate from '../components/common/RoleGate';
+import AnalyticsTracker from '../components/common/AnalyticsTracker';
 
 const Layout: React.FC = () => (
   <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
+    <AnalyticsTracker />
     <Header />
     <main className="pt-32 pb-16 min-h-screen">
       <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
@@ -80,6 +83,10 @@ const router = createBrowserRouter(
         {
           path: 'pricing',
           element: <PricingPage />,
+        },
+        {
+          path: 'contact',
+          element: <ContactPage />,
         },
         {
           path: 'faq',

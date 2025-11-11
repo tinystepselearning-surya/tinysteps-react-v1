@@ -8,8 +8,10 @@ import './lib/firebaseConfig';
 import { initSentry } from './lib/sentry';
 import * as Sentry from '@sentry/react';
 import { ErrorFallback } from './components/ErrorFallback';
+import { initAnalytics } from './lib/analytics';
 
 initSentry();
+initAnalytics();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>

@@ -1,14 +1,44 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+
+const socialLinks = [
+  { label: 'Instagram', href: 'https://instagram.com', icon: '📸' },
+  { label: 'YouTube', href: 'https://youtube.com', icon: '▶️' },
+  { label: 'LinkedIn', href: 'https://linkedin.com', icon: '💼' }
+];
+
+const courseLinks = [
+  { label: 'Phonics Foundation', href: '/courses/phonics-foundation' },
+  { label: 'Phonics Advanced', href: '/courses/phonics-advanced' },
+  { label: 'Grammar Essentials', href: '/courses/grammar-essentials' },
+  { label: 'Grammar Mastery', href: '/courses/grammar-mastery' },
+  { label: 'Public Speaking Foundations', href: '/courses/public-speaking-foundations' },
+  { label: 'Public Speaking Excellence', href: '/courses/public-speaking-excellence' }
+];
+
+const resourceLinks = [
+  { label: 'Curriculum', href: '/curriculum' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'FAQ', href: '/faq' },
+  { label: 'Contact', href: '/contact' }
+];
+
+const legalLinks = [
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'Terms & Conditions', href: '/terms' },
+  { label: 'Refund & Guarantee', href: '/guarantee' }
+];
 
 const Footer = () => {
   return (
-    <footer className="bg-gradient-to-b from-gray-50 to-gray-100 text-gray-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Newsletter band */}
-        <div className="mb-8 rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 p-6 text-white shadow-xl">
-          <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
-            <div className="text-lg font-semibold">Get a free Phonics Guide in your inbox</div>
+    <footer className="bg-[#060a16] text-gray-200">
+      <div className="mx-auto max-w-6xl px-6 py-12 space-y-10">
+        <div className="rounded-3xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 p-6 shadow-2xl">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="text-white text-xl font-semibold">Get the Tiny Steps parent newsletter</div>
+              <p className="text-white/80 text-sm">Weekly phonics, grammar, and speaking tips plus printable resources.</p>
+            </div>
             <form className="flex w-full max-w-md gap-2">
               <input className="flex-1 rounded-xl px-4 py-2 text-gray-900" placeholder="Email address" />
               <button className="rounded-xl bg-white/90 px-4 py-2 text-tiny-blue-700 font-semibold">Subscribe</button>
@@ -16,84 +46,70 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-sm">TS</span>
+        <div className="grid gap-8 md:grid-cols-4">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-br from-tiny-blue-500 to-tiny-purple-500 flex items-center justify-center font-bold">TS</div>
+              <div>
+                <div className="font-semibold text-white">Tiny Steps Online School</div>
+                <p className="text-xs text-white/70">Bengaluru • Serving families PAN India</p>
               </div>
-              <span className="font-bold text-lg">Tiny Steps</span>
             </div>
-            <p className="text-slate-300 mb-2 max-w-md">Tiny Steps Online School</p>
-            <p className="text-slate-300 mb-4 max-w-xl">Making English learning personal. Making confidence real. Mission: Every Indian child finds their voice in English.</p>
-            <p className="text-slate-400 text-sm">Founded: 2023 • Learners: 1000+ • Countries: India, UAE, US • Teachers: 50+</p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                <span className="sr-only">Facebook</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                <span className="sr-only">Instagram</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.017 0C8.396 0 7.966.021 6.675.049c-1.272.028-2.143.14-2.902.403a5.77 5.77 0 00-2.093.913 5.77 5.77 0 00-.913 2.093c-.263.759-.375.63-.403 2.902C.021 7.966 0 8.396 0 12.017s.021 4.051.049 5.342c.028 1.272.14 2.143.403 2.902a5.77 5.77 0 00.913 2.093 5.77 5.77 0 002.093.913c.759.263 1.63.375 2.902.403 1.291.028 1.721.049 5.342.049s4.051-.021 5.342-.049c1.272-.028 2.143-.14 2.902-.403a5.77 5.77 0 002.093-.913 5.77 5.77 0 00.913-2.093c.263-.759.375-1.63.403-2.902.028-1.291.049-1.721.049-5.342s-.021-4.051-.049-5.342c-.028-1.272-.14-2.143-.403-2.902a5.77 5.77 0 00-.913-2.093 5.77 5.77 0 00-2.093-.913c-.759-.263-1.63-.375-2.902-.403C16.068.021 15.638 0 12.017 0zm0 1.446c3.583 0 4.005.014 5.416.04 1.263.024 1.956.135 2.417.28a4.32 4.32 0 011.632.67 4.32 4.32 0 01.67 1.632c.145.461.256 1.154.28 2.417.026 1.411.04 1.833.04 5.416s-.014 4.005-.04 5.416c-.024 1.263-.135 1.956-.28 2.417a4.32 4.32 0 01-.67 1.632 4.32 4.32 0 01-1.632.67c-.461.145-1.154.256-2.417.28-1.411.026-1.833.04-5.416.04s-4.005-.014-5.416-.04c-1.263-.024-1.956-.135-2.417-.28a4.32 4.32 0 01-1.632-.67 4.32 4.32 0 01-.67-1.632c-.145-.461-.256-1.154-.28-2.417-.026-1.411-.04-1.833-.04-5.416s.014-4.005.04-5.416c.024-1.263.135-1.956.28-2.417a4.32 4.32 0 01.67-1.632 4.32 4.32 0 011.632-.67c.461-.145 1.154-.256 2.417-.28 1.411-.026 1.833-.04 5.416-.04zm0 3.635a8.381 8.381 0 100 16.762 8.381 8.381 0 000-16.762zm0 1.446a6.935 6.935 0 110 13.87 6.935 6.935 0 010-13.87zm8.482-1.69a1.94 1.94 0 11-3.88 0 1.94 1.94 0 013.88 0z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                <span className="sr-only">LinkedIn</span>
-                <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </a>
+            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 500+ families, 15+ states, 95% satisfaction.</p>
+            <div className="mt-4 flex gap-4">
+              {socialLinks.map((link) => (
+                <a key={link.label} href={link.href} className="text-white/70 hover:text-white transition" aria-label={link.label}>
+                  {link.icon}
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Quick Links</h3>
-            <ul className="space-y-2">
-              <li><Link to="/" className="hover:text-tiny-blue-600 transition-colors">Home</Link></li>
-              <li><a href="/courses" className="hover:text-tiny-blue-600 transition-colors">Courses</a></li>
-              <li><a href="/curriculum" className="hover:text-tiny-blue-600 transition-colors">Curriculum</a></li>
-              <li><a href="/blog" className="hover:text-tiny-blue-600 transition-colors">Blog</a></li>
-              <li><a href="/pricing" className="hover:text-tiny-blue-600 transition-colors">Pricing</a></li>
-              <li><a href="/faq" className="hover:text-tiny-blue-600 transition-colors">FAQs</a></li>
+            <h3 className="font-semibold text-white mb-3">Courses</h3>
+            <ul className="space-y-2 text-sm">
+              {courseLinks.map((link) => (
+                <li key={link.label}><a href={link.href} className="hover:text-tiny-blue-300 transition">{link.label}</a></li>
+              ))}
             </ul>
           </div>
 
-          {/* Contact & Legal */}
           <div>
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Contact</h3>
-            <ul className="space-y-2">
-              <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-tiny-blue-600 transition-colors">Email: hello@tinystepslearning.com</a></li>
-              <li><a href="https://wa.me/91XXXXXXXXXX" className="hover:text-tiny-blue-600 transition-colors">WhatsApp: +91-XXXXXXXXXX</a></li>
-              <li><a href="tel:+91XXXXXXXXXX" className="hover:text-tiny-blue-600 transition-colors">Phone: +91-XXXXXXXXXX</a></li>
-              <li className="text-sm pt-2 text-gray-600">Location: Bengaluru, Karnataka</li>
-              <li className="text-sm pt-1 text-gray-600">Working Hours: Mon–Fri 9 AM–6 PM IST • Sat–Sun 10 AM–4 PM IST</li>
+            <h3 className="font-semibold text-white mb-3">Explore</h3>
+            <ul className="space-y-2 text-sm">
+              {resourceLinks.map((link) => (
+                <li key={link.label}><a href={link.href} className="hover:text-tiny-blue-300 transition">{link.label}</a></li>
+              ))}
             </ul>
-            <h3 className="text-lg font-semibold mb-2 mt-6 text-gray-900">Legal / Trust</h3>
-            <ul className="space-y-2">
-              <li><a href="/privacy" className="hover:text-tiny-blue-600 transition-colors">Privacy Policy</a></li>
-              <li><a href="/terms" className="hover:text-tiny-blue-600 transition-colors">Terms & Conditions</a></li>
-              <li><a href="/guarantee" className="hover:text-tiny-blue-600 transition-colors">Money-Back Guarantee Details</a></li>
-              <li><a href="/teachers" className="hover:text-tiny-blue-600 transition-colors">Teacher Verification</a></li>
-              <li><a href="/security" className="hover:text-tiny-blue-600 transition-colors">Data Security Statement</a></li>
+            <h3 className="font-semibold text-white mt-6 mb-3">Legal</h3>
+            <ul className="space-y-2 text-sm">
+              {legalLinks.map((link) => (
+                <li key={link.label}><a href={link.href} className="hover:text-tiny-blue-300 transition">{link.label}</a></li>
+              ))}
             </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-white mb-3">Contact</h3>
+            <ul className="space-y-2 text-sm">
+              <li><a href="tel:+919618398383" className="hover:text-tiny-green-300 transition">Call: +91-96183-98383</a></li>
+              <li><a href="https://wa.me/919618398383" className="hover:text-tiny-green-300 transition">WhatsApp: Chat with advisor</a></li>
+              <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-tiny-blue-300 transition">Email: hello@tinystepslearning.com</a></li>
+              <li className="text-xs text-white/60">Hours: Mon–Fri 9 AM–6 PM • Sat 10 AM–2 PM</li>
+            </ul>
+            <p className="text-xs text-white/60 mt-4">Made with ❤️ in India</p>
           </div>
         </div>
 
-        {/* Trust badge strip */}
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600">
-          <span className="flex items-center gap-2"><span>🔒</span> SSL Secure</span>
-          <span className="flex items-center gap-2"><span>💳</span> UPI • Cards • Netbanking</span>
-          <span className="flex items-center gap-2"><span>🛡️</span> Data Protection</span>
-          <span className="flex items-center gap-2"><span>✅</span> Satisfaction Guarantee</span>
+        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
+          <span>🔒 SSL Secure</span>
+          <span>💳 UPI / Cards / Netbanking</span>
+          <span>🛡️ Data protection compliant</span>
+          <span>✅ Satisfaction guarantee</span>
         </div>
 
-        <div className="border-t mt-8 pt-8 text-center text-gray-600">
-          <p>© {new Date().getFullYear()} Tiny Steps Online School. All rights reserved. • Made with ❤️ in India</p>
+        <div className="text-center text-xs text-white/70">
+          © {new Date().getFullYear()} Tiny Steps Online School. All rights reserved.
         </div>
       </div>
     </footer>

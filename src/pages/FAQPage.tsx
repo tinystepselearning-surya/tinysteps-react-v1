@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import FAQAccordion, { FAQItem } from '../components/FAQ/FAQAccordion';
 import Meta from '../components/common/Meta';
 
@@ -26,21 +26,71 @@ const items: FAQItem[] = [
   { id: 'q20', category: 'online', question: 'How do I ensure my child is actually learning online?', answer: 'Demand transparency: weekly reports, recordings, home tasks, monthly calls, mastery bands. Tiny Steps provides all five so you can verify learning.' },
 ];
 
+const categories = [
+  { id: 'all', label: 'All' },
+  { id: 'phonics', label: 'Phonics' },
+  { id: 'grammar', label: 'Grammar' },
+  { id: 'speaking', label: 'Public Speaking' },
+  { id: 'online', label: 'Online Learning' }
+];
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: items.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer
+    }
+  }))
+};
+
 const FAQPage: React.FC = () => {
+  const [selected, setSelected] = useState<string>('all');
+  const [search, setSearch] = useState('');
   useEffect(() => { document.title = 'Frequently Asked Questions | Tiny Steps'; }, []);
+
+  const filtered = useMemo(() => {
+    return items.filter((item) => {
+      const matchCategory = selected === 'all' || item.category === selected;
+      const term = search.trim().toLowerCase();
+      const matchSearch = !term || item.question.toLowerCase().includes(term) || item.answer.toLowerCase().includes(term);
+      return matchCategory && matchSearch;
+    });
+  }, [selected, search]);
+
   return (
-    <div className="bg-white">
-      <Meta title="FAQ | Tiny Steps Online School" description="Answers to your questions about phonics, grammar & public speaking. Parents’ top queries covered in one place." canonical="https://tinystepslearning.com/faq" />
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <h1 className="font-heading text-3xl font-bold md:text-4xl">Frequently Asked Questions</h1>
-        <p className="mt-2 text-base text-gray-700">Answers to your questions about phonics, grammar & public speaking</p>
-        <div className="mt-8">
-          <FAQAccordion items={items} />
+    <div className="page-gradient min-h-screen">
+      <Meta title="FAQ | Tiny Steps Online School" description="Answers to your questions about phonics, grammar & public speaking. Parents’ top queries covered in one place." canonical="https://tinystepslearning.com/faq" jsonLd={faqSchema} />
+      <section className="px-6 pt-24 pb-10">
+        <div className="mx-auto max-w-4xl glass-panel soft-grid px-8 py-10 text-center">
+          <div className="gradient-chip mx-auto w-max">Help centre</div>
+          <h1 className="mt-3 text-3xl font-bold text-gray-900">Frequently Asked Questions</h1>
+          <p className="mt-3 text-gray-600">Everything Indian parents ask about phonics, grammar, speaking, trial classes, payments, and results.</p>
+          <div className="mt-6">
+            <input className="interactive-input" placeholder="Search questions..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          </div>
         </div>
-      </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="mb-6 flex flex-wrap gap-3">
+          {categories.map((cat) => (
+            <button key={cat.id} onClick={() => setSelected(cat.id)} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${selected===cat.id?'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg':'bg-white/90 text-gray-700 hover:bg-white'}`}>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+        <FAQAccordion items={filtered} />
+        <div className="mt-10 rounded-3xl bg-white/80 p-6 text-sm text-gray-700 shadow-card-hover">
+          <div className="font-semibold text-gray-900">Still have questions?</div>
+          <p className="mt-2">Message us on <a href="https://wa.me/919618398383" className="text-tiny-green-600">WhatsApp</a> or <a href="/contact" className="text-tiny-blue-600">contact us</a>. We’ll send personalised recommendations within 12 hours.</p>
+        </div>
+      </section>
     </div>
   );
 };
 
 export default FAQPage;
-

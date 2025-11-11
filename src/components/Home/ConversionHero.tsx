@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Button from '../Button/Button';
+import { trackEvent } from '../../lib/analytics';
 
 const ConversionHero: React.FC = () => {
   return (
-    <section className="relative overflow-hidden bg-gradient-hero py-20 md:py-28">
+    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffd166,_#ff9f1c,_#52a5f0)] py-20 md:py-28">
       <div className="absolute inset-0 opacity-20">
         <div className="absolute -left-10 top-10 h-40 w-40 rounded-full bg-primary-100 blur-3xl" />
         <div className="absolute right-10 top-20 h-48 w-48 rounded-full bg-secondary-500/40 blur-3xl" />
@@ -36,10 +37,21 @@ const ConversionHero: React.FC = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" aria-label="Book Free Trial" onClick={() => document.getElementById('book-trial')?.scrollIntoView({behavior:'smooth'})}>
+            <Button
+              size="lg"
+              aria-label="Book Free Trial"
+              onClick={() => {
+                trackEvent('cta_click', { location: 'hero', label: 'book_free_trial' });
+                document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
               Book Free Trial
             </Button>
-            <a href="/courses" className="px-6 py-3 rounded-2xl border border-primary-300 bg-white/80 text-primary-700 font-semibold shadow-sm hover:shadow transition">
+            <a
+              href="/courses"
+              onClick={() => trackEvent('cta_click', { location: 'hero', label: 'see_courses' })}
+              className="px-6 py-3 rounded-2xl border border-primary-300 bg-white/80 text-primary-700 font-semibold shadow-sm hover:shadow transition"
+            >
               See Courses
             </a>
           </div>
@@ -61,6 +73,7 @@ const ConversionHero: React.FC = () => {
       <div className="fixed bottom-4 left-0 right-0 z-30 flex justify-center px-4 sm:hidden">
         <a
           href="#book-trial"
+          onClick={() => trackEvent('cta_click', { location: 'sticky_mobile', label: 'book_free_trial' })}
           className="w-full max-w-md rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 px-6 py-3 text-center text-white font-semibold shadow-xl"
           aria-label="Book Free Trial"
         >

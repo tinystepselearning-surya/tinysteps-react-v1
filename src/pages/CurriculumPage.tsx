@@ -4,6 +4,7 @@ import { CollapsibleCard } from '../components/common/CollapsibleCard';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import Meta from '../components/common/Meta';
 import { getCourseWeeksOverride } from '../content/curriculumLoader';
+import SmartCard from '../components/ui/SmartCard';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
 
@@ -34,6 +35,27 @@ const CurriculumPage: React.FC = () => {
             <span className="rounded-full bg-white/80 px-4 py-1">Public speaking courage</span>
           </div>
         </div>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-6 pb-6 grid gap-4 md:grid-cols-3">
+        <SmartCard title="Phonics pathways" description="Early, Advanced, and Foundations" badge="Ages 3-12">
+          <ul className="list-disc pl-5 text-sm text-gray-600">
+            <li>SATPIN → vowel teams → multisyllabic strategies</li>
+            <li>Weekly mastery checks + decodable reading</li>
+          </ul>
+        </SmartCard>
+        <SmartCard title="Grammar roadmap" description="Basic + Mastery modules" badge="Ages 5-15">
+          <ul className="list-disc pl-5 text-sm text-gray-600">
+            <li>Parts of speech → complex tenses</li>
+            <li>Paragraphs, editing drills, rubric-based outputs</li>
+          </ul>
+        </SmartCard>
+        <SmartCard title="Speaking journey" description="Confidence to commanding stage" badge="Ages 4-15">
+          <ul className="list-disc pl-5 text-sm text-gray-600">
+            <li>S.P.E.A.K. habits, debates, visual aids</li>
+            <li>Recorded feedback + capstone speeches</li>
+          </ul>
+        </SmartCard>
       </div>
 
       <div className="sticky top-28 z-10 border-y border-white/40 bg-white/80 backdrop-blur">
