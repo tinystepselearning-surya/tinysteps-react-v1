@@ -15,17 +15,13 @@ export const MasteryProgress: React.FC<{ percent: number; size?: number }> = ({ 
   const gradient = `conic-gradient(#10B981 ${clamped}%, #E5E7EB ${clamped}% 100%)`;
 
   return (
-    <div className="inline-flex flex-col items-center">
-      <div
-        className="grid place-items-center rounded-full"
-        style={{ width: size, height: size, background: gradient }}
-      >
+    <div className="inline-flex flex-col items-center text-center">
+      <div className="grid place-items-center rounded-full" style={{ width: size, height: size, background: gradient }}>
         <div className="grid place-items-center rounded-full bg-white" style={{ width: size - 18, height: size - 18 }}>
           <div className="text-sm font-semibold text-gray-900">{clamped}%</div>
         </div>
       </div>
-      <div className="mt-2 text-xs text-gray-600">{band.label}</div>
+      <div className="mt-2 text-xs font-semibold text-gray-600 leading-tight">{band.label}</div>
     </div>
   );
 };
-

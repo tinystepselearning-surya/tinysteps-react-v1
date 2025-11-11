@@ -59,7 +59,7 @@ const WorldMap = () => (
 
 const GlobalImpactSection = () => {
   return (
-    <section className="bg-gradient-to-b from-white to-slate-50/50 px-6 py-16">
+    <section data-animate="fade-up" className="bg-gradient-to-b from-white to-slate-50/50 px-6 py-16">
       <div className="relative mx-auto flex max-w-6xl flex-col gap-10 overflow-hidden rounded-[32px] border border-orange-100 bg-white/80 p-8 shadow-card-hover lg:flex-row">
         <div className="absolute inset-x-0 -top-32 h-64 bg-[radial-gradient(circle,_rgba(255,196,125,0.35),_transparent_60%)]" />
         <div className="absolute -bottom-24 right-10 h-48 w-48 rounded-full bg-[#9cd6ff]/40 blur-3xl" />

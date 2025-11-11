@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo } from 'react';
 import Meta from '../components/common/Meta';
 import { catalogs } from '../content/courses';
+import GamingSubscriptionSection from '../components/Home/GamingSubscriptionSection';
 
 const PER_SESSION = 550;
 
@@ -188,6 +189,7 @@ const PricingPage: React.FC = () => {
           </div>
         </div>
       </section>
+      <GamingSubscriptionSection heading="Joyful Learning Game Plans (Add-on)" />
     </div>
   );
 };

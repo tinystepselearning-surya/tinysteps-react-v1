@@ -64,20 +64,34 @@ const StepTimeline: React.FC = () => {
               <li key={b}>• {b}</li>
             ))}
           </ul>
-          <div className={`mt-3 rounded-full px-3 py-1 text-xs font-medium ${isActive ? `bg-gradient-to-r ${accent.chip} text-white shadow-lg` : 'bg-slate-100 text-gray-700'}`}>
-            Progress: {step.progress}
-          </div>
+            <div className="mt-4">
+              <div className="text-xs font-semibold text-gray-600">Progress</div>
+              <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff]"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.max(0, parseInt(step.progress.replace('%', '') || '0', 10))
+                    )}%`,
+                  }}
+                />
+              </div>
+              <div className="text-xs text-gray-600 mt-1">{step.progress}</div>
+            </div>
         </div>
       </div>
     );
   };
 
   return (
-    <section className="bg-white py-20">
+    <section data-animate="fade-up" className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h2 className="font-heading text-3xl font-bold md:text-4xl">Your Child's Learning Journey</h2>
-          <p className="mt-2 text-base text-gray-700">Desktop timeline • Mobile carousel</p>
+          <p className="mt-2 text-base text-gray-700">
+            Assessment → intensive learning → confidence building → independent communication. Hover or tap to explore each checkpoint.
+          </p>
         </div>
         <div className="flex flex-wrap justify-center gap-3">
           {steps.map((step, index) => (

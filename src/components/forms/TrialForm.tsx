@@ -60,11 +60,11 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         <input className="interactive-input" type="tel" placeholder="Phone" {...register('phone')} />
         {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message as any}</p>}
       </div>
-      <div className="flex gap-2">
-        <button className="px-4 py-2 rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 text-white" disabled={isSubmitting}>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <button className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
           {isSubmitting ? 'Booking…' : 'Book Free Trial'}
         </button>
-        <a href="https://wa.me/919618398383" className="px-4 py-2 rounded-2xl border border-gray-200 bg-white text-gray-800">
+        <a href="https://wa.me/919618398383" className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 sm:flex-1">
           Chat on WhatsApp
         </a>
       </div>

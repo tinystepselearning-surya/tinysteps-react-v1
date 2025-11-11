@@ -12,10 +12,10 @@ import FinalCTASection from '../components/Home/FinalCTASection';
 import Meta from '../components/common/Meta';
 import TrustSignals from '../components/Trust/TrustSignals';
 import TestimonialsCarousel from '../components/Home/TestimonialsCarousel';
-import TeacherProfiles from '../components/Home/TeacherProfiles';
 import TrialForm from '../components/forms/TrialForm';
 import StatsStrip from '../components/Home/StatsStrip';
 import PopularPrograms from '../components/Home/PopularPrograms';
+import GamingSubscriptionSection from '../components/Home/GamingSubscriptionSection';
 import GlobalImpactSection from '../components/Home/GlobalImpactSection';
 import DemoShowcase from '../components/Home/DemoShowcase';
 
@@ -34,7 +34,6 @@ export default function HomePage() {
       <GlobalImpactSection />
       <TrustSignals />
       <TestimonialsCarousel />
-      <TeacherProfiles />
       <DemoShowcase />
       <WhyChooseCollapsibleSection />
       <StepTimeline />
@@ -47,7 +46,7 @@ export default function HomePage() {
             <h2 className="text-3xl font-semibold text-gray-900">3500+ students, 8 countries, one personalized path</h2>
             <p className="text-gray-700">Our AI engine maps your child’s current mastery, curates the weekly plan, and sends parents actionable insights every Friday.</p>
             <ul className="text-sm text-gray-600 space-y-2">
-              <li>🌅 Sunrise-inspired lessons that stay joyful and calm</li>
+              <li>🌅 Bright-sky lessons that feel joyful and calm</li>
               <li>🌍 Learners in India, US, UK, Canada, Singapore, Malaysia, Vietnam, UAE, Australia</li>
               <li>📊 Parent dashboard with AI-driven learning path insights</li>
             </ul>
@@ -62,6 +61,7 @@ export default function HomePage() {
         </div>
       </section>
       <PricingCrispSection />
+      <GamingSubscriptionSection />
       <FAQSection />
       <FinalCTASection />
       <Footer />

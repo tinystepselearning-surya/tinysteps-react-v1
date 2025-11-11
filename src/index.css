@@ -2,16 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Poppins';
-  src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-}
-
-@font-face {
-  font-family: 'Inter';
-  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-}
-
 @layer base {
   :root {
     --radius: 0.75rem;
@@ -22,6 +12,7 @@
   }
 
   body {
+    font-family: 'Inter', 'Poppins', 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     @apply font-body text-gray-900 scroll-smooth;
     background: radial-gradient(circle at top, #fff1cc 0%, #ffe5b4 30%, #f2f7ff 85%);
   }
@@ -54,6 +45,51 @@ html {
 
 body.custom-cursor-enabled {
   cursor: none;
+}
+
+body.custom-cursor-enabled button,
+body.custom-cursor-enabled a,
+body.custom-cursor-enabled .glass-panel,
+body.custom-cursor-enabled .card,
+body.custom-cursor-enabled .hover-highlight {
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+body.custom-cursor-enabled button:hover,
+body.custom-cursor-enabled a:hover,
+body.custom-cursor-enabled .glass-panel:hover,
+body.custom-cursor-enabled .card:hover,
+body.custom-cursor-enabled .hover-highlight:hover {
+  box-shadow: 0 18px 35px rgba(15, 23, 42, 0.18), 0 0 20px rgba(91, 76, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+[data-animate] {
+  opacity: 0;
+  transform: translateY(40px) scale(0.98);
+  transition: opacity 0.9s cubic-bezier(0.16, 1, 0.3, 1), transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+
+[data-animate="fade-left"] {
+  transform: translateX(-40px) scale(0.98);
+}
+
+[data-animate="fade-right"] {
+  transform: translateX(40px) scale(0.98);
+}
+
+[data-animate="fade-up"].is-visible,
+[data-animate="fade-right"].is-visible,
+[data-animate="fade-left"].is-visible,
+[data-animate].is-visible {
+  opacity: 1;
+  transform: translate(0, 0) scale(1);
+}
+
+[data-parallax] {
+  will-change: transform;
+  transition: transform 0.2s ease-out;
 }
 
 .button-ripple {

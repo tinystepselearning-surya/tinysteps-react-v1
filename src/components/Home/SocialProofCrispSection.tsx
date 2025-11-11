@@ -10,7 +10,7 @@ const items = [
 
 const SocialProofCrispSection: React.FC = () => {
   return (
-    <section className="bg-gradient-to-b from-slate-50 to-white py-20">
+    <section data-animate="fade-up" className="bg-gradient-to-b from-slate-50 to-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h2 className="font-heading text-3xl font-bold md:text-4xl">Results & Stories</h2>

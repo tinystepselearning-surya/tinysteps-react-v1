@@ -7,7 +7,7 @@ import Meta from '../components/common/Meta';
 import { catalogs } from '../content/courses';
 
 const CoursesHero = () => (
-  <section className="relative overflow-hidden bg-gradient-hero text-white">
+  <section data-animate="fade-up" className="relative overflow-hidden bg-gradient-hero text-white">
     <div className="absolute inset-0 opacity-20">
       <div className="absolute -left-10 top-10 h-48 w-48 rounded-full bg-white/30 blur-3xl" />
       <div className="absolute right-0 bottom-10 h-64 w-64 rounded-full bg-white/30 blur-3xl" />
@@ -85,13 +85,13 @@ const CoursesPage: React.FC = () => {
       />
       <CoursesHero />
 
-      <div className="mx-auto max-w-6xl grid grid-cols-1 gap-8 px-6 pb-16 md:grid-cols-[260px_1fr]">
-        <aside className="space-y-4">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 px-6 pb-16 lg:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="space-y-5" data-animate="fade-up">
           <div className="glass-panel p-4">
             <div className="mb-2 text-sm font-semibold">Track</div>
             <div className="flex flex-wrap gap-2">
               {(['all','phonics','grammar','speaking'] as const).map((t) => (
-                <button key={t} onClick={() => setTrack(t)} className={`rounded-full px-3 py-1 text-sm ${track===t?'bg-primary-500 text-white':'bg-slate-100'}`}>{t}</button>
+                <button key={t} onClick={() => setTrack(t)} className={`rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap ${track===t?'bg-primary-500 text-white':'bg-slate-100 text-gray-700 hover:bg-white'}`}>{t}</button>
               ))}
             </div>
           </div>
@@ -99,7 +99,7 @@ const CoursesPage: React.FC = () => {
             <div className="mb-2 text-sm font-semibold">Level</div>
             <div className="flex flex-wrap gap-2">
               {(['all','Foundation','Basic','Intermediate','Advanced','Brush‑Up'] as const).map((l) => (
-                <button key={l} onClick={() => setLevel(l)} className={`rounded-full px-3 py-1 text-sm ${level===l?'bg-primary-500 text-white':'bg-slate-100'}`}>{l}</button>
+                <button key={l} onClick={() => setLevel(l)} className={`rounded-full px-4 py-2 text-sm font-semibold whitespace-nowrap ${level===l?'bg-primary-500 text-white':'bg-slate-100 text-gray-700 hover:bg-white'}`}>{l}</button>
               ))}
             </div>
           </div>
@@ -107,10 +107,17 @@ const CoursesPage: React.FC = () => {
             <div className="mb-2 text-sm font-semibold">Search</div>
             <input className="interactive-input" placeholder="Search courses, levels, topics..." value={query} onChange={(e)=>setQuery(e.target.value)} />
           </div>
-          <ParentReportPreview />
+          <div data-animate="fade-up" data-animate-delay="0.05s" className="glass-panel">
+            <ParentReportPreview track={track} />
+          </div>
         </aside>
 
-        <main className="glass-panel p-6">
+        <main data-animate="fade-up" className="glass-panel space-y-6 p-6">
+          <div className="mb-6 rounded-2xl bg-white/80 p-4 text-sm text-gray-700">
+            Filtering results for <span className="font-semibold capitalize">{track === 'all' ? 'all tracks' : track}</span>
+            {level !== 'all' && <> • Level: {level}</>}
+            {query && <> • Keyword: “{query}”</>}
+          </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {courses.map((c) => (
               <CourseCard key={c.name} {...c} />

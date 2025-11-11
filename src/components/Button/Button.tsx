@@ -19,14 +19,14 @@ type Ripple = {
 };
 
 const variantClasses: Record<ButtonVariant, string> = {
-	primary: 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg',
-	secondary: 'bg-gradient-to-r from-accent-500 to-primary-500 text-white shadow-lg',
-	outline: 'border-2 border-primary-500 text-primary-600 bg-white'
+	primary: 'text-white bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] border border-white/30 shadow-[0_18px_40px_rgba(255,143,92,0.35)]',
+	secondary: 'text-gray-900 bg-white/90 border border-gray-200 backdrop-blur-sm shadow-[0_12px_30px_rgba(15,23,42,0.08)]',
+	outline: 'text-gray-900 border-2 border-gray-200 bg-white/70 hover:border-[#ff8f5c] hover:text-[#ff8f5c]'
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-	sm: 'h-8 px-4 text-sm md:text-base',
-	md: 'h-11 px-6 text-base md:text-lg',
+	sm: 'h-9 px-4 text-sm md:text-base',
+	md: 'h-12 px-6 text-base md:text-lg',
 	lg: 'h-14 px-8 text-lg md:text-xl'
 };
 
@@ -75,7 +75,7 @@ const Button: React.FC<ButtonProps> = ({
 			aria-label={ariaLabel}
 			disabled={isDisabled}
 			className={cn(
-				'relative inline-flex overflow-hidden rounded-full font-semibold text-white shadow-lg transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60',
+				'relative inline-flex overflow-hidden rounded-2xl font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60',
 				variantClasses[variant],
 				sizeClasses[size],
 				isFocused && 'ring-2 ring-primary-500 ring-offset-2',

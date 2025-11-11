@@ -59,7 +59,7 @@ const cards = [
 
 const WhyChooseCollapsibleSection: React.FC = () => {
   return (
-    <section className="bg-gradient-to-b from-white to-slate-50/50 py-20">
+    <section data-animate="fade-up" className="bg-gradient-to-b from-white to-slate-50/50 py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h2 className="font-heading text-3xl font-bold md:text-4xl">Why Choose Tiny Steps</h2>

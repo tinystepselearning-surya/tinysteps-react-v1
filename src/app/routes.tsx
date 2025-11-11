@@ -31,17 +31,21 @@ import { Suspense } from 'react';
 import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
 import FloatingAssistant from '../components/common/FloatingAssistant';
+import BackToTopButton from '../components/common/BackToTopButton';
+import ScrollToTop from '../components/common/ScrollToTop';
 
 const Layout: React.FC = () => (
   <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
     <AnalyticsTracker />
+    <ScrollToTop />
     <Header />
-    <main className="pt-32 pb-16 min-h-screen">
+    <main className="min-h-screen pt-8 md:pt-12 lg:pt-16 pb-16">
       <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
         <Outlet />
       </Suspense>
     </main>
     <FloatingAssistant />
+    <BackToTopButton />
   </div>
 );
 
@@ -136,6 +140,16 @@ const router = createBrowserRouter(
         },
         {
           path: 'Surya',
+          element: <RoleGate allowedRoles={['admin']} />,
+          children: [
+            {
+              path: '',
+              element: <AdminDashboard />,
+            },
+          ],
+        },
+        {
+          path: 'admin',
           element: <RoleGate allowedRoles={['admin']} />,
           children: [
             {

@@ -14,11 +14,12 @@ export default function LoginPage() {
   // Extract role from URL path or query parameter
   const getExpectedRole = () => {
     const pathSegments = location.pathname.split('/').filter(Boolean);
-    const roleFromPath = pathSegments[0]; // e.g., 'admin' from '/admin/login'
+    const roleFromPath = (pathSegments[0] || '').toLowerCase(); // e.g., 'admin' from '/admin/login'
 
     // Map path segments to role names
     const pathToRoleMap: Record<string, string> = {
       'admin': 'admin',
+      'surya': 'admin',
       'teacher': 'teacher',
       'parent': 'parent',
       'learning-partner': 'learningPartner',

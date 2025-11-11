@@ -32,6 +32,16 @@ export default function Header() {
   const isHomePage = location.pathname === '/';
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (moreMenuRef.current && !moreMenuRef.current.contains(event.target as Node)) {
+        setShowMore(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     const handleScroll = () => {
       const current = window.scrollY;
       if (isHomePage) {
@@ -71,10 +81,10 @@ export default function Header() {
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate('/')}
         >
-          <img src="/logo.png" alt="Tiny Steps Logo" className="h-9 w-9 object-contain" />
+          <img src="/logo.png" alt="Tiny Steps Logo" className="h-11 w-11 object-contain" />
           <div>
             <div className="font-bold text-gray-900">Tiny Steps</div>
-            <div className="text-[11px] uppercase tracking-[0.2em] text-gray-500">English Lab</div>
+            <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
           </div>
         </motion.div>
 
@@ -88,13 +98,6 @@ export default function Header() {
             className="relative"
             ref={moreMenuRef}
             onMouseEnter={() => setShowMore(true)}
-            onMouseLeave={() => setShowMore(false)}
-            onFocus={() => setShowMore(true)}
-            onBlur={(event) => {
-              if (!moreMenuRef.current?.contains(event.relatedTarget as Node)) {
-                setShowMore(false);
-              }
-            }}
           >
             <button
               type="button"
@@ -103,6 +106,7 @@ export default function Header() {
                 event.preventDefault();
                 setShowMore((prev) => !prev);
               }}
+              onFocus={() => setShowMore(true)}
             >
               More ▾
             </button>

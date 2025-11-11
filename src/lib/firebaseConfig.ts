@@ -27,8 +27,9 @@ const analytics = getAnalytics(app);
 // Initialize Firebase Functions with specific region
 const functions = getFunctions(app, 'asia-south1');
 
-// Connect to emulators in development
-if (process.env.NODE_ENV === 'development') {
+const shouldUseEmulators = import.meta.env?.DEV && import.meta.env?.VITE_USE_FIREBASE_EMULATORS === 'true';
+
+if (shouldUseEmulators) {
   import('firebase/firestore').then(({ connectFirestoreEmulator }) => {
     connectFirestoreEmulator(db, 'localhost', 8080);
   });

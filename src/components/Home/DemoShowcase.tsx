@@ -16,7 +16,7 @@ const sessions = [
 
 const DemoShowcase = () => {
   return (
-    <section className="bg-gradient-to-b from-[#fff8ee] via-white to-[#e7f4ff] px-6 py-16">
+    <section data-animate="fade-up" className="bg-gradient-to-b from-[#fff8ee] via-white to-[#e7f4ff] px-6 py-16">
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[1fr_1fr]">
         <div>
           <div className="gradient-chip w-max">Watch how our class feels</div>

@@ -1,9 +1,16 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { trackEvent } from '../../lib/analytics';
 
 const FloatingAssistant = () => {
+  const [promptVisible, setPromptVisible] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setPromptVisible(true), 6000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const openWhatsApp = (message = 'Hi Tiny Steps! I have a quick question.') => {
     trackEvent('floating_whatsapp_click', { source: 'floating_assistant' });
     const encoded = encodeURIComponent(message);
@@ -12,6 +19,33 @@ const FloatingAssistant = () => {
 
   return (
     <div className="fixed bottom-6 right-4 z-40 flex flex-col items-end gap-3">
+      {promptVisible && (
+        <motion.div
+          className="max-w-xs rounded-2xl border border-gray-100 bg-white/95 p-4 text-sm text-gray-800 shadow-xl"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-xl">💬</span>
+            <div>
+              <p className="font-semibold text-gray-900">Need help with admissions?</p>
+              <p className="text-xs text-gray-600">I’m your Tiny Steps advisor on WhatsApp. Ask anything—schedules, pricing, curriculum.</p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  className="rounded-full bg-gradient-to-r from-[#59c3ff] to-[#ff8f5c] px-3 py-1 text-xs font-semibold text-white"
+                  onClick={() => {
+                    openWhatsApp('Hi! I have a quick question about Tiny Steps admissions.');
+                    setPromptVisible(false);
+                  }}
+                >
+                  Chat now
+                </button>
+                <button className="text-xs text-gray-500" onClick={() => setPromptVisible(false)}>Maybe later</button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
       <motion.button
         className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xl ring-1 ring-gray-100"
         whileHover={{ y: -2 }}

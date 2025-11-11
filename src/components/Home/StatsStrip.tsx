@@ -9,10 +9,10 @@ const stats = [
 
 export default function StatsStrip() {
   return (
-    <section className="bg-white/80 px-6 py-6">
+    <section data-animate="fade-up" className="bg-white/80 px-6 py-6">
       <div className="mx-auto grid max-w-6xl gap-4 rounded-3xl border border-orange-100 bg-gradient-to-r from-[#fff1cc] via-white to-[#cfe9ff] p-6 text-sm font-semibold text-gray-800 md:grid-cols-3">
-        {stats.map((stat) => (
-          <div key={stat.label}>
+        {stats.map((stat, index) => (
+          <div key={stat.label} data-animate="fade-up" data-animate-delay={`${index * 0.05}s`}>
             <div className="text-lg text-gray-900">{stat.label}</div>
             <div className="text-xs text-gray-600">{stat.detail}</div>
           </div>

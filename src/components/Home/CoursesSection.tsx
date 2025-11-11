@@ -54,7 +54,7 @@ const CoursesSection: React.FC = () => {
   const levels = useMemo(() => levelDetails[activeCourse.id as keyof typeof levelDetails], [activeCourse]);
 
   return (
-    <section className="bg-white py-20">
+    <section data-animate="fade-up" className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h2 className="font-heading text-3xl font-bold md:text-4xl">Our Three Core Courses</h2>

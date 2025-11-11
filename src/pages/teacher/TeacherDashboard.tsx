@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
-import React, { Suspense } from 'react';
 const TodaySessionsList = React.lazy(() => import('./components/today-sessions/TodaySessionsList'));
 const StudentsList = React.lazy(() => import('./components/students/StudentsList'));
 const StudentProgressChart = React.lazy(() => import('./components/progress/StudentProgressChart'));

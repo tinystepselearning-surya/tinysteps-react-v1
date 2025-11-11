@@ -5,6 +5,7 @@ import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import Meta from '../components/common/Meta';
 import { getCourseWeeksOverride } from '../content/curriculumLoader';
 import SmartCard from '../components/ui/SmartCard';
+import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
 
@@ -28,7 +29,7 @@ const CurriculumPage: React.FC = () => {
         <div className="glass-panel soft-grid overflow-hidden px-6 py-10 text-center">
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3-15</div>
           <h1 className="font-heading text-3xl md:text-4xl">Complete Learning Curriculum</h1>
-          <p className="mt-3 text-base text-gray-700">Scannable tabs, collapsible cards, and immersive week-by-week details so parents know exactly what’s next.</p>
+          <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive week-by-week details so parents know exactly what’s next.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
             <span className="rounded-full bg-white/80 px-4 py-1">Phonics mastery</span>
             <span className="rounded-full bg-white/80 px-4 py-1">Grammar confidence</span>
@@ -57,6 +58,7 @@ const CurriculumPage: React.FC = () => {
           </ul>
         </SmartCard>
       </div>
+      <IBAlignmentSection />
 
       <div className="sticky top-28 z-10 border-y border-white/40 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 py-3 flex flex-wrap gap-3">
@@ -64,7 +66,7 @@ const CurriculumPage: React.FC = () => {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${tab===t?'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg':'bg-white/80 text-gray-700 hover:bg-white'}`}
+              className={`hover-highlight rounded-full px-4 py-2 text-sm font-semibold transition ${tab===t?'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg':'bg-white/80 text-gray-700 hover:bg-white'}`}
             >
               {t[0].toUpperCase()+t.slice(1)}
             </button>

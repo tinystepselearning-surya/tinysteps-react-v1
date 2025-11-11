@@ -4,7 +4,7 @@ import Button from '../Button/Button';
 
 const PricingCrispSection: React.FC = () => {
   return (
-    <section className="bg-white py-20">
+    <section data-animate="fade-up" className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h3 className="font-heading text-2xl font-bold md:text-3xl">Flexible Plans for Indian Families</h3>

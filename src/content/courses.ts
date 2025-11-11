@@ -13,6 +13,7 @@ export type CourseCatalogItem = {
   overview: string[];
   outcomes: string[];
   price: string;
+  ibLens: string[];
   reviews?: string;
 };
 
@@ -29,6 +30,11 @@ export const catalogs: CourseCatalogItem[] = [
     overview: ['Letters & sounds (SATPIN)', 'Blending CVC', 'Digraphs', 'Magic‑e & teams', 'Tricky words'],
     outcomes: ['Identify 100+ letter sounds', 'Read decodable books', 'Write CVC words correctly', 'Recognize tricky words'],
     price: '₹4,400/month',
+    ibLens: [
+      'ATL: Communication & Thinking (phonological awareness, reflection journals)',
+      'PYP Language: Phonemic awareness, decoding, emergent writing',
+      'Learner Profile: Inquirer, Communicator'
+    ],
     reviews: '⭐⭐⭐⭐⭐ (127 reviews) — "Perfect for my 4‑year‑old! She’s reading now!"'
   },
   {
@@ -42,7 +48,12 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Long vowels', 'R‑controlled', 'Diphthongs', 'Multisyllabic strategies', 'Fluency'],
     outcomes: ['Read 150–300 word passages', 'Write 8–10 sentence paragraphs', 'Apply advanced patterns'],
-    price: '₹6,600/month'
+    price: '₹6,600/month',
+    ibLens: [
+      'ATL: Research & Self-Management (word inquiries, independent practice logs)',
+      'PYP Language: Reading comprehension, spelling conventions, fluency',
+      'Learner Profile: Knowledgeable, Reflective'
+    ]
   },
   {
     slug: 'phonics-foundations',
@@ -55,7 +66,12 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Brush‑Up',
     overview: ['Gap analysis', 'Targeted digraphs', 'Magic‑e & teams', 'Tricky words intensive', 'Multisyllabic decoding'],
     outcomes: ['Eliminate identified gaps', 'Personal reader booklet', 'Spelling list mastery'],
-    price: '₹4,400–₹6,600/month'
+    price: '₹4,400–₹6,600/month',
+    ibLens: [
+      'ATL: Self-Management & Communication (goal tracking, oral reading logs)',
+      'PYP Language: Differentiated decoding + encoding sequences',
+      'Learner Profile: Balanced, Principled'
+    ]
   },
   {
     slug: 'grammar-essentials',
@@ -68,7 +84,12 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Nouns & pronouns', 'Verbs & tenses', 'Adjectives', 'Prepositions', 'Conjunctions'],
     outcomes: ['Write 6–8 sentence paragraph', 'Punctuate correctly', 'Subject‑verb agreement mastery'],
-    price: '₹4,400–₹6,600/month'
+    price: '₹4,400–₹6,600/month',
+    ibLens: [
+      'ATL: Communication (sentence crafting, peer dialogue) & Research (language inquiry)',
+      'PYP Language: Written conventions, grammar usage, short-form writing',
+      'Learner Profile: Communicator, Thinker'
+    ]
   },
   {
     slug: 'grammar-mastery',
@@ -81,7 +102,12 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['All 12 tenses', 'Clauses & modals', 'Reported speech', 'Passive voice', 'Advanced punctuation'],
     outcomes: ['120–180 word informative paragraph', 'Cohesion & transition words', 'Advanced accuracy'],
-    price: '₹6,600–₹8,800/month'
+    price: '₹6,600–₹8,800/month',
+    ibLens: [
+      'ATL: Thinking & Research (essay planning, language analysis)',
+      'MYP Language & Literature alignment: grammar accuracy, rationale writing',
+      'Learner Profile: Reflective, Principled'
+    ]
   },
   {
     slug: 'public-speaking-foundations',
@@ -94,7 +120,12 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Confidence & posture', 'Clear voice', 'Picture talks', 'Show & Tell structure'],
     outcomes: ['30–45s Show & Tell', 'Eye contact & posture', 'Intro‑middle‑close'],
-    price: '₹4,400–₹6,600/month'
+    price: '₹4,400–₹6,600/month',
+    ibLens: [
+      'ATL: Communication & Social skills (spoken interactions, empathy building)',
+      'PYP Oral Language scope: listening & speaking, presentation skills',
+      'Learner Profile: Courageous, Caring'
+    ]
   },
   {
     slug: 'public-speaking-excellence',
@@ -107,7 +138,12 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Hook‑Body‑Close', 'Persuasion & debate', 'Impromptu speaking', 'Visual aids mastery'],
     outcomes: ['1–2 minute capstone speech', 'Rubric‑based evaluation', 'Leadership presence'],
-    price: '₹6,600–₹8,800/month'
+    price: '₹6,600–₹8,800/month',
+    ibLens: [
+      'ATL: Communication & Self-management (speech planning, rehearsals, feedback journals)',
+      'Approaches to Learning – Presentation & Media literacy strands',
+      'Learner Profile: Communicator, Risk-taker'
+    ]
   }
 ];
 

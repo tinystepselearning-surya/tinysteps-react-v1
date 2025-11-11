@@ -51,11 +51,11 @@ const Footer = () => {
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-tiny-blue-500 to-tiny-purple-500 flex items-center justify-center font-bold">TS</div>
               <div>
-                <div className="font-semibold text-white">Tiny Steps Online School</div>
-                <p className="text-xs text-white/70">Bengaluru • Serving families PAN India</p>
+                <div className="font-semibold text-white">Tiny Steps • Foundations Forever</div>
+                <p className="text-xs text-white/70">Hyderabad • Serving families PAN India</p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 8 countries, 95% satisfaction.</p>
+            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 8 countries, 95% satisfaction. Foundations today, confidence forever.</p>
             <div className="mt-4 flex gap-4">
               {socialLinks.map((link) => (
                 <a key={link.label} href={link.href} className="text-white/70 hover:text-white transition" aria-label={link.label}>
@@ -109,7 +109,7 @@ const Footer = () => {
         </div>
 
         <div className="text-center text-xs text-white/70">
-          © {new Date().getFullYear()} Tiny Steps Online School. All rights reserved.
+          © {new Date().getFullYear()} Tiny Steps Online School. Built for joyful learning in India.
         </div>
       </div>
     </footer>
