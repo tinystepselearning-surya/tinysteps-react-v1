@@ -22,7 +22,10 @@ type CourseCardProps = {
 export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, duration, frequency, level, overview, outcomes, price, reviews }) => {
   const [open, setOpen] = useState(false);
   return (
-    <div className={cn('card rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition-transform hover:-translate-y-1 hover:shadow-2xl')}
+    <div
+      className={cn(
+        'rounded-3xl border border-gray-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 shadow-[0_10px_30px_rgba(2,6,23,0.06)] transition-all hover:shadow-2xl hover:-translate-y-1'
+      )}
       onClick={() => setOpen((v) => !v)}
     >
       <div className="p-6">

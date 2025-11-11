@@ -17,9 +17,9 @@ const ConversionHero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          Your Child's Confidence Starts Here.
+          Make English Their Superpower.
           <br className="hidden md:block" />
-          <span className="animated-gradient-text">Master English from Sounds to Stage.</span>
+          <span className="animated-gradient-text">Live 1:1 Phonics, Grammar & Speaking</span>
         </motion.h1>
         <motion.p
           className="mx-auto mt-5 max-w-2xl font-body text-lg text-gray-700 md:text-2xl"
@@ -27,9 +27,7 @@ const ConversionHero: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Expert 1:1 Online Classes in Phonics, Grammar & Public Speaking
-          <br />
-          For Children Ages 3-12 • Personalized • Proven Results
+          Ages 3–12 • Personalized, research-backed lessons • Weekly progress you can see
         </motion.p>
         <motion.div
           className="mt-8 flex flex-col items-center justify-center gap-3"
@@ -37,29 +35,40 @@ const ConversionHero: React.FC = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
-          <Button size="lg" aria-label="Book Your Free Assessment Class">
-            Book Your Free Assessment Class
-          </Button>
-          <p className="text-sm text-gray-600">
-            See your child's learning level in 20 minutes — No payment needed
-          </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button size="lg" aria-label="Book Free Trial" onClick={() => document.getElementById('book-trial')?.scrollIntoView({behavior:'smooth'})}>
+              Book Free Trial
+            </Button>
+            <a href="/courses" className="px-6 py-3 rounded-2xl border border-primary-300 bg-white/80 text-primary-700 font-semibold shadow-sm hover:shadow transition">
+              See Courses
+            </a>
+          </div>
+          <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs text-gray-700">
+            <span className="rounded-full bg-white/80 px-3 py-1">Live 1‑on‑1</span>
+            <span className="rounded-full bg-white/80 px-3 py-1">All‑India</span>
+            <span className="rounded-full bg-white/80 px-3 py-1">Parent‑rated ★★★★★</span>
+          </div>
         </motion.div>
 
         <div className="mt-10 grid grid-cols-1 place-items-center gap-6 md:grid-cols-3">
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">
-            🗣️ One child speaking • confident hand raised
-          </div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">
-            📚 One child reading • book in hand
-          </div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">
-            ✍️ One child writing • pen in hand
-          </div>
+          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">🗣️ Confident speaking in weeks</div>
+          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">📚 Decoding → Fluency roadmaps</div>
+          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">✍️ Write clearly with structure</div>
         </div>
+      </div>
+
+      {/* Sticky mobile CTA */}
+      <div className="fixed bottom-4 left-0 right-0 z-30 flex justify-center px-4 sm:hidden">
+        <a
+          href="#book-trial"
+          className="w-full max-w-md rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 px-6 py-3 text-center text-white font-semibold shadow-xl"
+          aria-label="Book Free Trial"
+        >
+          Book Free Trial
+        </a>
       </div>
     </section>
   );
 };
 
 export default ConversionHero;
-

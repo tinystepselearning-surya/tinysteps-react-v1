@@ -34,6 +34,7 @@ export default function Header() {
   ];
   const navItems: NavItem[] = user
     ? [
+        ...marketingNav,
         { label: 'Dashboard', href: `/${user.role}` },
         { label: 'Profile', href: `/${user.role}/profile` },
       ]
@@ -132,30 +133,55 @@ export default function Header() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex flex-wrap items-center gap-5">
-              {navItems.map((item, idx) => (
-                <MotionLink
-                  key={item.label}
-                  to={item.href}
-                  className={`text-sm font-semibold relative group transition-colors ${
-                    item.variant === 'pill'
-                      ? 'px-4 py-2 rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-secondary-400 text-white shadow-sm hover:shadow-lg'
-                      : 'text-gray-700 hover:text-primary-600'
-                  }`}
-                  whileHover={{ color: '#3b82f6' }}
-                  initial={{ opacity: 0, y: -6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.04, duration: 0.28 }}
-                >
-                  {item.label}
-                  {item.variant !== 'pill' && (
-                    <motion.div
-                      className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 w-0 group-hover:w-full"
-                      transition={{ duration: 0.25 }}
-                      layoutId={`underline-${item.label}`}
-                    />
-                  )}
-                </MotionLink>
-              ))}
+              {navItems.map((item, idx) => {
+                const isCourses = item.label === 'Courses';
+                return (
+                  <div key={item.label} className="relative">
+                    <MotionLink
+                      to={item.href}
+                      className={`text-sm font-semibold relative group transition-colors ${
+                        item.variant === 'pill'
+                          ? 'px-4 py-2 rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-secondary-400 text-white shadow-sm hover:shadow-lg'
+                          : 'text-gray-700 hover:text-primary-600'
+                      }`}
+                      whileHover={{ color: '#3b82f6' }}
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.04, duration: 0.28 }}
+                    >
+                      {item.label}
+                      {item.variant !== 'pill' && (
+                        <motion.div
+                          className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 w-0 group-hover:w-full"
+                          transition={{ duration: 0.25 }}
+                          layoutId={`underline-${item.label}`}
+                        />
+                      )}
+                    </MotionLink>
+                    {isCourses && (
+                      <div className="invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity absolute left-0 top-full mt-3 w-[560px] p-4 rounded-2xl bg-white/95 backdrop-blur border border-gray-100 shadow-2xl">
+                        <div className="grid grid-cols-3 gap-3 text-sm">
+                          <a href="/phonics" className="rounded-xl p-4 hover:bg-gray-50">
+                            <div className="font-semibold">Phonics</div>
+                            <div className="text-xs text-gray-600">Foundation • Advanced</div>
+                          </a>
+                          <a href="/grammar" className="rounded-xl p-4 hover:bg-gray-50">
+                            <div className="font-semibold">Grammar</div>
+                            <div className="text-xs text-gray-600">Essentials • Mastery</div>
+                          </a>
+                          <a href="/speaking" className="rounded-xl p-4 hover:bg-gray-50">
+                            <div className="font-semibold">Public Speaking</div>
+                            <div className="text-xs text-gray-600">Foundations • Excellence</div>
+                          </a>
+                        </div>
+                        <div className="mt-3 border-t pt-3 text-right">
+                          <a className="text-primary-600 text-sm" href="/courses">View all courses →</a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Right Side Buttons */}

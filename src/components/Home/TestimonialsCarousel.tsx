@@ -1,147 +1,109 @@
-import React, { useEffect, useMemo, useState } from 'react';
+// @ts-nocheck
+import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const testimonials = [
-	{
-		id: 1,
-		name: 'Ananya Mehta',
-		result: '+2 reading levels',
-		quote: 'Tiny Steps turned bedtime stories into confident performances. She now reads aloud to the whole class!',
-		rating: 5,
-		photo: 'https://i.pravatar.cc/100?img=45'
-	},
-	{
-		id: 2,
-		name: 'Marcus Lee',
-		result: 'Debate finalist',
-		quote: 'Marcus found his voice! The coaches make public speaking less scary and more like a game.',
-		rating: 5,
-		photo: 'https://i.pravatar.cc/100?img=12'
-	},
-	{
-		id: 3,
-		name: 'Sara Gupta',
-		result: 'Grammar jump',
-		quote: 'We saw instant improvements in sentence structure and writing clarity within four weeks.',
-		rating: 5,
-		photo: 'https://i.pravatar.cc/100?img=30'
-	},
-	{
-		id: 4,
-		name: 'Diego Alvarez',
-		result: 'Confidence unlocked',
-		quote: 'The teachers make every child feel like a star. Diego volunteered for assembly announcements!',
-		rating: 5,
-		photo: 'https://i.pravatar.cc/100?img=5'
-	},
-	{
-		id: 5,
-		name: 'Lina Park',
-		result: 'Speaking award',
-		quote: 'The coaching and feedback loops are unmatched. Lina won her first storytelling contest.',
-		rating: 5,
-		photo: 'https://i.pravatar.cc/100?img=20'
-	}
+  {
+    name: 'Anita Rao',
+    city: 'Bengaluru',
+    age: 'Child: 5 years',
+    quote: "Within 3 months, Kavya is decoding storybooks confidently and loves sharing them at bedtime.",
+    video: '/images/hero/parent-video-1.jpg'
+  },
+  {
+    name: 'Siddharth & Nisha',
+    city: 'Ahmedabad',
+    age: 'Child: 6 years',
+    quote: 'The SATPIN playbooks turned phonics into a game. He now blends new words on his own.',
+    video: '/images/hero/parent-video-2.jpg'
+  },
+  {
+    name: 'Rahul Sharma',
+    city: 'Pune',
+    age: 'Child: 8 years',
+    quote: 'Grammar is no longer a mystery—our weekend writing tasks are full paragraphs now.',
+    video: '/images/hero/parent-video-3.jpg'
+  }
 ];
 
-const TestimonialsCarousel: React.FC = () => {
-	const [index, setIndex] = useState(0);
-	const [isPaused, setIsPaused] = useState(false);
+const Badge = ({ label }: { label: string }) => (
+  <span className="rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 bg-white/70">{label}</span>
+);
 
-	useEffect(() => {
-		if (isPaused) return undefined;
-		const id = setInterval(() => {
-			setIndex((prev) => (prev + 1) % testimonials.length);
-		}, 5000);
-		return () => clearInterval(id);
-	}, [isPaused]);
+export default function TestimonialsCarousel() {
+  const [active, setActive] = useState(0);
 
-	const visibleTestimonials = useMemo(() => {
-		return Array.from({ length: 3 }, (_, offset) => testimonials[(index + offset) % testimonials.length]);
-	}, [index]);
+  useEffect(() => {
+    const id = setInterval(() => setActive((prev) => (prev + 1) % testimonials.length), 6000);
+    return () => clearInterval(id);
+  }, []);
 
-	const handlePrev = () => {
-		setIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
-	};
+  const testimonial = testimonials[active];
 
-	const handleNext = () => {
-		setIndex((prev) => (prev + 1) % testimonials.length);
-	};
+  return (
+    <section className="relative py-16">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="text-center">
+          <div className="gradient-chip mx-auto w-max">Real Families, Real Results</div>
+          <h2 className="mt-2 text-3xl font-semibold text-gray-900">Parent Testimonial Carousel</h2>
+          <p className="mt-2 text-gray-600">Five-star stories from across India.</p>
+        </div>
+        <div className="mt-10 grid items-center gap-6 lg:grid-cols-[1fr_auto]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={testimonial.name}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+              className="rounded-3xl bg-white/90 p-8 shadow-2xl border border-gray-100"
+            >
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-tiny-blue-500 to-tiny-purple-500" />
+                <div>
+                  <div className="text-lg font-semibold text-gray-900">{testimonial.name}</div>
+                  <div className="text-sm text-gray-500">{testimonial.city}</div>
+                </div>
+                <div className="ml-auto text-xs text-gray-600">{testimonial.age}</div>
+              </div>
+              <div className="mt-4 text-gray-700 leading-relaxed">“{testimonial.quote}”</div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Badge label="Live Coaching" />
+                <Badge label="Parent-recommended" />
+                <Badge label="★★★★★" />
+              </div>
+            </motion.div>
+          </AnimatePresence>
+          <motion.div
+            className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-tiny-purple-500 to-tiny-blue-500 p-1 shadow-xl"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: 'spring', stiffness: 260 }}
+          >
+            <img src={testimonial.video} alt="Video testimonial" className="h-64 w-full object-cover brightness-90" />
+            <motion.button
+              className="absolute inset-0 m-auto flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-gray-900 shadow-lg"
+              whileHover={{ scale: 1.1 }}
+            >
+              <span className="text-2xl">▶</span>
+            </motion.button>
+          </motion.div>
+        </div>
+        <div className="mt-6 flex justify-between">
+          <button
+            className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+            onClick={() => setActive((prev) => (prev - 1 + testimonials.length) % testimonials.length)}
+          >
+            Previous
+          </button>
+          <button
+            className="text-sm font-semibold text-gray-600 hover:text-gray-900"
+            onClick={() => setActive((prev) => (prev + 1) % testimonials.length)}
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-	return (
-		<section className="bg-gradient-to-b from-primary-50 to-white py-20">
-			<div className="mx-auto max-w-6xl px-6">
-				<div className="flex flex-col items-center justify-between gap-6 md:flex-row">
-					<div>
-						<h2 className="font-heading text-3xl font-bold text-gray-900 md:text-4xl">What Parents Say</h2>
-						<p className="mt-2 text-base text-gray-600 md:text-lg">Stories from families building confident communicators.</p>
-					</div>
-					<div className="flex gap-4">
-						<button
-							type="button"
-							aria-label="Previous testimonies"
-							className="rounded-full border border-gray-300 p-3 text-gray-600 hover:text-primary-600"
-							onClick={handlePrev}
-						>
-							←
-						</button>
-						<button
-							type="button"
-							aria-label="Next testimonies"
-							className="rounded-full border border-gray-300 p-3 text-gray-600 hover:text-primary-600"
-							onClick={handleNext}
-						>
-							→
-						</button>
-					</div>
-				</div>
-
-				<div
-					className="mt-10 overflow-hidden"
-					onMouseEnter={() => setIsPaused(true)}
-					onMouseLeave={() => setIsPaused(false)}
-				>
-					<AnimatePresence mode="wait">
-						<motion.div
-							key={index}
-							className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-							initial={{ opacity: 0, x: 40 }}
-							animate={{ opacity: 1, x: 0 }}
-							exit={{ opacity: 0, x: -40 }}
-							transition={{ duration: 0.5, ease: 'easeInOut' }}
-						>
-							{visibleTestimonials.map((testimonial) => (
-								<motion.div
-									key={testimonial.id}
-									className="rounded-3xl bg-white p-6 shadow-lg"
-									initial={{ opacity: 0, y: 20 }}
-									animate={{ opacity: 1, y: 0 }}
-									transition={{ duration: 0.4 }}
-								>
-									<div className="flex items-center gap-4">
-										<img src={testimonial.photo} alt={testimonial.name} className="h-14 w-14 rounded-full object-cover" />
-										<div>
-											<p className="font-semibold text-gray-900">{testimonial.name}</p>
-											<p className="text-sm text-primary-500">{testimonial.result}</p>
-										</div>
-									</div>
-									<p className="mt-4 text-gray-600">&ldquo;{testimonial.quote}&rdquo;</p>
-									<div className="mt-4 flex items-center justify-between">
-										<div className="flex gap-1 text-yellow-400">
-											{Array.from({ length: 5 }).map((_, starIndex) => (
-												<span key={starIndex}>{starIndex < testimonial.rating ? '★' : '☆'}</span>
-											))}
-										</div>
-										<span className="text-sm text-gray-500">Rated {testimonial.rating}/5</span>
-									</div>
-								</motion.div>
-							))}
-						</motion.div>
-					</AnimatePresence>
-				</div>
-			</div>
-		</section>
-	);
-};
-
-export default TestimonialsCarousel;

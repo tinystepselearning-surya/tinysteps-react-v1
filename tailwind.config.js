@@ -63,6 +63,32 @@ module.exports = {
 					purple: '#8B5CF6',
 					pink: '#EC4899'
 				},
+                'tiny-blue': {
+                    50: '#EFF6FF',
+                    100: '#DBEAFE',
+                    500: '#3B82F6',
+                    600: '#2563EB',
+                    700: '#1D4ED8',
+                    900: '#1E3A8A',
+                },
+                'tiny-green': {
+                    50: '#ECFDF5',
+                    100: '#D1FAE5',
+                    500: '#10B981',
+                    600: '#059669',
+                },
+                'tiny-orange': {
+                    50: '#FFF7ED',
+                    100: '#FFEDD5',
+                    500: '#F59E0B',
+                    600: '#D97706',
+                },
+                'tiny-purple': {
+                    50: '#FAF5FF',
+                    100: '#F3E8FF',
+                    500: '#A855F7',
+                    600: '#9333EA',
+                },
 				muted: {
 					DEFAULT: '#F1F5F9',
 					foreground: '#64748B'
@@ -76,11 +102,17 @@ module.exports = {
 				ring: '#94A3B8'
 			},
 			backgroundImage: {
-				'gradient-hero': 'linear-gradient(135deg, #0052CC, #FF6B6B, #10B981)',
-				'gradient-card': 'linear-gradient(to right, #E0F2FE, #FEF2F2)',
+				'gradient-hero': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+				'gradient-card': 'linear-gradient(to bottom right, #EFF6FF, #FAF5FF)',
 				'gradient-text-primary': 'linear-gradient(90deg, #0052CC, #8B5CF6)',
 				'gradient-text-secondary': 'linear-gradient(90deg, #FF6B6B, #FF9500)',
 				'gradient-glow': 'radial-gradient(circle, #FF6B6B, #0052CC)'
+			},
+			boxShadow: {
+				'glow-blue': '0 0 20px rgba(59, 130, 246, 0.3)',
+				'glow-orange': '0 0 20px rgba(245, 158, 11, 0.3)',
+				'card-hover': '0 20px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(59, 130, 246, 0.05)',
+				'neumorphic': '12px 12px 24px #d1d9e6, -12px -12px 24px #ffffff',
 			},
 			keyframes: {
 				fadeInUp: {

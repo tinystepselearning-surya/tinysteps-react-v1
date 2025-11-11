@@ -10,6 +10,9 @@ import PricingCrispSection from '../components/Home/PricingCrispSection';
 import FAQSection from '../components/Home/FAQSection';
 import FinalCTASection from '../components/Home/FinalCTASection';
 import Meta from '../components/common/Meta';
+import TrustSignals from '../components/Trust/TrustSignals';
+import TestimonialsCarousel from '../components/Home/TestimonialsCarousel';
+import TeacherProfiles from '../components/Home/TeacherProfiles';
 
 export default function HomePage() {
   return (
@@ -21,6 +24,9 @@ export default function HomePage() {
         canonical="https://tinystepslearning.com/"
       />
       <ConversionHero />
+      <TrustSignals />
+      <TestimonialsCarousel />
+      <TeacherProfiles />
       <WhyChooseCollapsibleSection />
       <StepTimeline />
       <CoursesSection />

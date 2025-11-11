@@ -6,6 +6,10 @@
       "**/.*",
       "**/node_modules/**"
     ],
+    "redirects": [
+      { "source": "/main/courses", "destination": "/courses", "type": 301 },
+      { "source": "/main/courses/**", "destination": "/courses", "type": 301 }
+    ],
     "rewrites": [
       {
         "source": "**",

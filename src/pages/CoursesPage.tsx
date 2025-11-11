@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CourseCard } from '../components/courses/CourseCard';
 import { ParentReportPreview } from '../components/courses/ParentReportPreview';
+import TrialForm from '../components/forms/TrialForm';
 import Meta from '../components/common/Meta';
 import { catalogs } from '../content/courses';
 
@@ -93,6 +94,10 @@ const CoursesPage: React.FC = () => {
             <input className="interactive-input" placeholder="Search courses, levels, topics..." value={query} onChange={(e)=>setQuery(e.target.value)} />
           </div>
           <ParentReportPreview />
+          <div className="glass-panel p-4" id="book-trial">
+            <div className="mb-2 text-sm font-semibold">Book a Free Trial</div>
+            <TrialForm />
+          </div>
         </aside>
 
         <main className="glass-panel p-6">

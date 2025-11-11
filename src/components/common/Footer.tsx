@@ -3,8 +3,19 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 text-white">
+    <footer className="bg-gradient-to-b from-gray-50 to-gray-100 text-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Newsletter band */}
+        <div className="mb-8 rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 p-6 text-white shadow-xl">
+          <div className="flex flex-col items-center gap-3 md:flex-row md:justify-between">
+            <div className="text-lg font-semibold">Get a free Phonics Guide in your inbox</div>
+            <form className="flex w-full max-w-md gap-2">
+              <input className="flex-1 rounded-xl px-4 py-2 text-gray-900" placeholder="Email address" />
+              <button className="rounded-xl bg-white/90 px-4 py-2 text-tiny-blue-700 font-semibold">Subscribe</button>
+            </form>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="col-span-1 md:col-span-2">
@@ -41,42 +52,48 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Quick Links</h3>
             <ul className="space-y-2">
-              <li><Link to="/" className="text-slate-300 hover:text-white transition-colors">Home</Link></li>
-              <li><Link to="/approach" className="text-slate-300 hover:text-white transition-colors">Our Approach</Link></li>
-              <li><a href="/courses" className="text-slate-300 hover:text-white transition-colors">Courses (Phonics, Grammar, Speaking)</a></li>
-              <li><a href="/curriculum" className="text-slate-300 hover:text-white transition-colors">Curriculum</a></li>
-              <li><a href="/pricing" className="text-slate-300 hover:text-white transition-colors">Pricing</a></li>
-              <li><a href="/blog" className="text-slate-300 hover:text-white transition-colors">Blog</a></li>
-              <li><a href="/about" className="text-slate-300 hover:text-white transition-colors">About Us</a></li>
-              <li><a href="/contact" className="text-slate-300 hover:text-white transition-colors">Contact</a></li>
-              <li><a href="/faq" className="text-slate-300 hover:text-white transition-colors">FAQs</a></li>
+              <li><Link to="/" className="hover:text-tiny-blue-600 transition-colors">Home</Link></li>
+              <li><a href="/courses" className="hover:text-tiny-blue-600 transition-colors">Courses</a></li>
+              <li><a href="/curriculum" className="hover:text-tiny-blue-600 transition-colors">Curriculum</a></li>
+              <li><a href="/blog" className="hover:text-tiny-blue-600 transition-colors">Blog</a></li>
+              <li><a href="/pricing" className="hover:text-tiny-blue-600 transition-colors">Pricing</a></li>
+              <li><a href="/faq" className="hover:text-tiny-blue-600 transition-colors">FAQs</a></li>
             </ul>
           </div>
 
           {/* Contact & Legal */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact</h3>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Contact</h3>
             <ul className="space-y-2">
-              <li><a href="mailto:hello@tinystepslearning.com" className="text-slate-300 hover:text-white transition-colors">Email: hello@tinystepslearning.com</a></li>
-              <li><a href="https://wa.me/91XXXXXXXXXX" className="text-slate-300 hover:text-white transition-colors">WhatsApp: +91-XXXXXXXXXX</a></li>
-              <li><a href="tel:+91XXXXXXXXXX" className="text-slate-300 hover:text-white transition-colors">Phone: +91-XXXXXXXXXX</a></li>
-              <li className="text-slate-400 text-sm pt-2">Working Hours: Mon–Fri 9 AM–6 PM IST • Sat–Sun 10 AM–4 PM IST</li>
+              <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-tiny-blue-600 transition-colors">Email: hello@tinystepslearning.com</a></li>
+              <li><a href="https://wa.me/91XXXXXXXXXX" className="hover:text-tiny-blue-600 transition-colors">WhatsApp: +91-XXXXXXXXXX</a></li>
+              <li><a href="tel:+91XXXXXXXXXX" className="hover:text-tiny-blue-600 transition-colors">Phone: +91-XXXXXXXXXX</a></li>
+              <li className="text-sm pt-2 text-gray-600">Location: Bengaluru, Karnataka</li>
+              <li className="text-sm pt-1 text-gray-600">Working Hours: Mon–Fri 9 AM–6 PM IST • Sat–Sun 10 AM–4 PM IST</li>
             </ul>
-            <h3 className="text-lg font-semibold mb-2 mt-6">Legal / Trust</h3>
+            <h3 className="text-lg font-semibold mb-2 mt-6 text-gray-900">Legal / Trust</h3>
             <ul className="space-y-2">
-              <li><a href="/privacy" className="text-slate-300 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="/terms" className="text-slate-300 hover:text-white transition-colors">Terms & Conditions</a></li>
-              <li><a href="/guarantee" className="text-slate-300 hover:text-white transition-colors">Money-Back Guarantee Details</a></li>
-              <li><a href="/teachers" className="text-slate-300 hover:text-white transition-colors">Teacher Verification</a></li>
-              <li><a href="/security" className="text-slate-300 hover:text-white transition-colors">Data Security Statement</a></li>
+              <li><a href="/privacy" className="hover:text-tiny-blue-600 transition-colors">Privacy Policy</a></li>
+              <li><a href="/terms" className="hover:text-tiny-blue-600 transition-colors">Terms & Conditions</a></li>
+              <li><a href="/guarantee" className="hover:text-tiny-blue-600 transition-colors">Money-Back Guarantee Details</a></li>
+              <li><a href="/teachers" className="hover:text-tiny-blue-600 transition-colors">Teacher Verification</a></li>
+              <li><a href="/security" className="hover:text-tiny-blue-600 transition-colors">Data Security Statement</a></li>
             </ul>
           </div>
         </div>
 
-        <div className="border-t border-slate-700 mt-8 pt-8 text-center">
-          <p className="text-slate-400">© {new Date().getFullYear()} Tiny Steps Online School. All rights reserved.</p>
+        {/* Trust badge strip */}
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-gray-600">
+          <span className="flex items-center gap-2"><span>🔒</span> SSL Secure</span>
+          <span className="flex items-center gap-2"><span>💳</span> UPI • Cards • Netbanking</span>
+          <span className="flex items-center gap-2"><span>🛡️</span> Data Protection</span>
+          <span className="flex items-center gap-2"><span>✅</span> Satisfaction Guarantee</span>
+        </div>
+
+        <div className="border-t mt-8 pt-8 text-center text-gray-600">
+          <p>© {new Date().getFullYear()} Tiny Steps Online School. All rights reserved. • Made with ❤️ in India</p>
         </div>
       </div>
     </footer>
