@@ -2,6 +2,163 @@ Tiny Steps GitHub & Copilot Contribution Guide
 
 Welcome to the Tiny Steps Learning Platform project! This guide outlines our Git workflow, GitHub Copilot usage, key contribution areas, and best practices. It is meant for both junior and senior developers using VS Code with GitHub Copilot, ensuring everyone can contribute effectively and consistently.
 
+Tiny Steps VS Code Build Guide – Phase 1.0
+=========================================
+
+Before touching the codebase, align your editor with the rest of the team so Tailwind, shadcn/ui, ESLint, and Copilot prompts behave predictably. Follow the steps below the first time you set up VS Code (or whenever you reinstall).
+
+Phase 1.0: VS Code Configuration for Development
+------------------------------------------------
+
+### Step 1.0.1 – Install Essential VS Code Extensions
+
+Open the Extensions marketplace (`Cmd` + `Shift` + `X` on macOS, `Ctrl` + `Shift` + `X` on Windows/Linux) and install the following. You can paste the IDs via `Cmd` + `P`, then type `ext install <id>` to speed things up.
+
+1. **Tailwind CSS IntelliSense** (`bradleys1337.vscode-tailwindcss`)  
+   Adds autocomplete, linting, and hover previews for Tailwind classes so our design tokens surface inline.
+2. **Prettier – Code Formatter** (`esbenp.prettier-vscode`)  
+   Formats files on save; make sure this is the default formatter so CI formatting matches your editor.
+3. **ES7+ React/Redux/React-Native snippets** (`dsznajder.es7-react-js-snippets`)  
+   Provides handy scaffolds for React components, hooks, and Redux utilities.
+4. **Thunder Client** (`thunderclient.thunder-client`) *or* **REST Client** (`humao.rest-client`)  
+   Lightweight API testing inside VS Code—great for verifying Firebase callable functions or REST endpoints without leaving the editor.
+5. **GitLens** (`eamodio.gitlens`)  
+   Surfaces blame annotations, in-editor history, and rich diff views so you understand context before modifying code.
+
+### Step 1.0.2 – Configure VS Code Settings for Optimal Workflow
+
+Open Settings (`Cmd` + `,`), then search for each item below. You can also drop them in `settings.json`, but UI tweaks are fine for first-time setup.
+
+- `Editor: Format On Save` → **Enabled** (guarantees Prettier runs every time).
+- `Editor: Default Formatter` → **Prettier - Code Formatter**.
+- `Tailwind CSS > Emmet: Include Languages` → ensure `javascript`, `javascriptreact`, `typescriptreact` are enabled for IntelliSense.
+- `Editor: Word Wrap` → **on** (long JSX props stay readable).
+- `Editor: Font Size` → **14**; `Editor: Font Family` → `"Fira Code", "Menlo", monospace` for ligatures and clarity.
+- `Editor: Tab Size` → **2**; `Editor: Insert Spaces` → **true** (matches repo lint rules).
+- `Editor: Render Whitespace` → **selection** (helps with stray spacing when highlighting).
+- `Files: Auto Save` → **afterDelay** with `Files: Auto Save Delay` set to **1000** ms (gives a one-second buffer before saving).
+
+### Step 1.0.3 – Set Up GitHub Copilot for Agent Mode
+
+1. Open Settings (`Cmd` + `,`) and search for `github.copilot`.
+2. Enable:
+   - `GitHub Copilot: Enable`
+   - `GitHub Copilot: Chat Enable`
+   - `GitHub Copilot: Inline Suggest`
+3. Launch Copilot Chat (`Cmd` + `I` or `Cmd` + `Shift` + `I` depending on your keymap).
+4. In the chat panel:
+   - Use the model picker (top-right) to select **GPT-4.1** so replies match our expected reasoning depth.
+   - Toggle **Agent Mode** (labeled “Agent” in current builds). This pins the context so you can run multi-step prompts like “Generate a Tailwind card and hook it to Firestore.”
+5. Keep the chat docked; we expect devs to drive component scaffolding, testing prompts, and Firebase rule drafts through Agent Mode for traceability.
+
+Tiny Steps Mac Setup – Phase 2.0
+================================
+
+Once VS Code is configured, wire up your local macOS environment so terminal tooling and Node builds line up with CI.
+
+Phase 2.0: Complete Mac Setup via VS Code Terminal
+--------------------------------------------------
+
+### Step 2.0.1 – Open the Integrated Terminal
+
+- Use `Cmd` + `` ` `` (on Windows/Linux, `Ctrl` + `` ` ``) or pick `View → Terminal`.
+- Verify the shell with `echo $SHELL`. We standardize on Zsh (`/bin/zsh`) or Bash (`/bin/bash`); update your default shell if it differs so subsequent commands behave consistently.
+
+### Step 2.0.2 – Install Homebrew
+
+Run the official installer directly from the integrated terminal:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+- Follow the prompts (the script may request your password and suggest adding Homebrew to your PATH via `eval "$(/opt/homebrew/bin/brew shellenv)"`—accept that suggestion).
+- Confirm the install with `brew --version`. Expect to see `Homebrew 4.2.x` or newer; if the command is missing, reload your shell or source the profile snippet the installer printed.
+
+### Step 2.0.3 – Install Node.js via Homebrew
+
+```bash
+brew install node
+node -v
+npm -v
+```
+
+- The repo targets Node 20+, so ensure `node -v` reports `v20.x.x` or higher and `npm -v` prints `10.x.x` or higher.
+- Update npm globally to match our CI image:
+
+```bash
+npm install -g npm@latest
+npm -v
+```
+
+### Step 2.0.4 – Create/Navigate to the Project Folder
+
+```bash
+cd ~/Desktop
+mkdir -p tiny-steps-website
+cd tiny-steps-website
+pwd
+```
+
+- The final `pwd` output should end with `tiny-steps-website`, confirming you are inside the workspace folder.
+- If you prefer the GUI, use `File → Open Folder` in VS Code, create `tiny-steps-website`, and open it; the integrated terminal will automatically start in that directory afterward.
+
+Tiny Steps React/Vite Build – Phase 3.0
+=======================================
+
+With the editor and shell ready, bootstrap the React app using Vite so everyone starts from the same scaffold.
+
+Phase 3.0: Create React Project with Vite
+-----------------------------------------
+
+### Step 3.0.1 – Initialize the Project
+
+Run Vite’s generator inside `tiny-steps-website` (the trailing dot tells it to use the current folder):
+
+```bash
+npm create vite@latest . -- --template react
+```
+
+- Accept the defaults unless you’ve aligned on a different variant.
+- Verify the scaffold by confirming that `package.json`, `vite.config.js`, `.gitignore`, `index.html`, and the `src/` folder appear in the explorer.
+
+### Step 3.0.2 – Install Base Dependencies
+
+```bash
+npm install
+```
+
+- Expect the usual summary (“added XXX packages”) and confirm `node_modules/` is present afterward.
+
+### Step 3.0.3 – Install Animation & UI Libraries
+
+```bash
+npm install framer-motion axios react-router-dom react-hook-form zod @hookform/resolvers
+npm list framer-motion react-router-dom
+```
+
+- The `npm list` output should show version numbers; rerun the install if a package is missing.
+
+### Step 3.0.4 – Add Tailwind CSS Tooling
+
+```bash
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+- Confirm `tailwind.config.js` and `postcss.config.js` now exist in the project root.
+
+### Step 3.0.5 – Smoke-Test the Dev Server
+
+```bash
+npm run dev
+```
+
+- Vite should log `VITE v5.x.x ready in …` along with `http://localhost:5173/`.
+- Open the URL and confirm the default Vite React welcome page renders.
+- Trigger hot module replacement by editing `src/App.jsx`; the browser should update instantly.
+- Keep the dev server running for future steps (press `q` to quit once you’re finished experimenting).
+
 Git & GitHub Workflow
 
 Our team follows a structured Git workflow to maintain clean history, traceability, and code quality. All changes go through pull requests (PRs) – no direct commits to main. Below are our conventions and rules:

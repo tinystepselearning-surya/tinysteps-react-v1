@@ -1,0 +1,53 @@
+import React from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import Button from '../Button/Button';
+
+const HeroSection: React.FC = () => {
+	const { scrollY } = useScroll();
+	const parallaxY = useTransform(scrollY, (value) => value * -0.5);
+
+	return (
+		<section className="relative flex h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-primary-50 to-accent-50 px-6 py-12 text-center md:px-12">
+			<motion.div
+				className="pointer-events-none absolute inset-0 opacity-20"
+				style={{ y: parallaxY }}
+				aria-hidden="true"
+			>
+				<div className="absolute -left-16 top-12 h-40 w-40 rounded-full bg-primary-200 blur-3xl" />
+				<div className="absolute right-0 top-32 h-60 w-60 rounded-full bg-secondary-500 blur-3xl" />
+				<div className="absolute bottom-12 left-1/3 h-32 w-64 rounded-full bg-accent-500 blur-3xl" />
+			</motion.div>
+
+			<div className="relative z-10 max-w-4xl space-y-6">
+				<motion.h1
+					className="font-heading text-4xl font-bold text-primary-900 md:text-6xl"
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.8 }}
+				>
+					Your Child&apos;s Voice. Powered by Expert Teaching.
+				</motion.h1>
+
+				<motion.p
+					className="font-body text-lg text-gray-700 md:text-2xl"
+					initial={{ opacity: 0, y: 20 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.8, delay: 0.2 }}
+				>
+					Phonics, Grammar &amp; Public Speaking | Ages 3-12
+				</motion.p>
+
+				<motion.div
+					className="flex justify-center"
+					initial={{ opacity: 0, y: 20, scale: 0.8 }}
+					animate={{ opacity: 1, y: 0, scale: 1 }}
+					transition={{ duration: 0.6, delay: 0.4 }}
+				>
+					<Button size="lg">Start Your Free Trial Class</Button>
+				</motion.div>
+			</div>
+		</section>
+	);
+};
+
+export default HeroSection;

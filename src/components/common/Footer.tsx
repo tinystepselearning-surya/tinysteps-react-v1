@@ -14,9 +14,9 @@ const Footer = () => {
               </div>
               <span className="font-bold text-lg">Tiny Steps</span>
             </div>
-            <p className="text-slate-300 mb-4 max-w-md">
-              Empowering young minds through personalized online learning. Building confident readers, writers, and speakers for tomorrow.
-            </p>
+            <p className="text-slate-300 mb-2 max-w-md">Tiny Steps Online School</p>
+            <p className="text-slate-300 mb-4 max-w-xl">Making English learning personal. Making confidence real. Mission: Every Indian child finds their voice in English.</p>
+            <p className="text-slate-400 text-sm">Founded: 2023 • Learners: 1000+ • Countries: India, UAE, US • Teachers: 50+</p>
             <div className="flex space-x-4">
               <a href="#" className="text-slate-400 hover:text-white transition-colors">
                 <span className="sr-only">Facebook</span>
@@ -44,31 +44,38 @@ const Footer = () => {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li><Link to="/" className="text-slate-300 hover:text-white transition-colors">Home</Link></li>
-              <li><Link to="/about" className="text-slate-300 hover:text-white transition-colors">About Us</Link></li>
-              <li><Link to="/contact" className="text-slate-300 hover:text-white transition-colors">Contact</Link></li>
-              <li><a href="/phonics" className="text-slate-300 hover:text-white transition-colors">Phonics & Reading</a></li>
-              <li><a href="/grammar" className="text-slate-300 hover:text-white transition-colors">Grammar & Writing</a></li>
-              <li><a href="/speaking" className="text-slate-300 hover:text-white transition-colors">Public Speaking</a></li>
+              <li><Link to="/approach" className="text-slate-300 hover:text-white transition-colors">Our Approach</Link></li>
+              <li><a href="/courses" className="text-slate-300 hover:text-white transition-colors">Courses (Phonics, Grammar, Speaking)</a></li>
+              <li><a href="/pricing" className="text-slate-300 hover:text-white transition-colors">Pricing</a></li>
+              <li><a href="/blog" className="text-slate-300 hover:text-white transition-colors">Blog</a></li>
+              <li><a href="/about" className="text-slate-300 hover:text-white transition-colors">About Us</a></li>
+              <li><a href="/contact" className="text-slate-300 hover:text-white transition-colors">Contact</a></li>
+              <li><a href="/faq" className="text-slate-300 hover:text-white transition-colors">FAQs</a></li>
             </ul>
           </div>
 
-          {/* Support */}
+          {/* Contact & Legal */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
+            <h3 className="text-lg font-semibold mb-4">Contact</h3>
             <ul className="space-y-2">
-              <li><a href="/help" className="text-slate-300 hover:text-white transition-colors">Help Center</a></li>
+              <li><a href="mailto:hello@tinystepslearning.com" className="text-slate-300 hover:text-white transition-colors">Email: hello@tinystepslearning.com</a></li>
+              <li><a href="https://wa.me/91XXXXXXXXXX" className="text-slate-300 hover:text-white transition-colors">WhatsApp: +91-XXXXXXXXXX</a></li>
+              <li><a href="tel:+91XXXXXXXXXX" className="text-slate-300 hover:text-white transition-colors">Phone: +91-XXXXXXXXXX</a></li>
+              <li className="text-slate-400 text-sm pt-2">Working Hours: Mon–Fri 9 AM–6 PM IST • Sat–Sun 10 AM–4 PM IST</li>
+            </ul>
+            <h3 className="text-lg font-semibold mb-2 mt-6">Legal / Trust</h3>
+            <ul className="space-y-2">
               <li><a href="/privacy" className="text-slate-300 hover:text-white transition-colors">Privacy Policy</a></li>
-              <li><a href="/terms" className="text-slate-300 hover:text-white transition-colors">Terms of Service</a></li>
-              <li><a href="https://wa.me/919666095553" className="text-slate-300 hover:text-white transition-colors">WhatsApp Support</a></li>
-              <li><a href="mailto:support@tinysteps.com" className="text-slate-300 hover:text-white transition-colors">Email Support</a></li>
+              <li><a href="/terms" className="text-slate-300 hover:text-white transition-colors">Terms & Conditions</a></li>
+              <li><a href="/guarantee" className="text-slate-300 hover:text-white transition-colors">Money-Back Guarantee Details</a></li>
+              <li><a href="/teachers" className="text-slate-300 hover:text-white transition-colors">Teacher Verification</a></li>
+              <li><a href="/security" className="text-slate-300 hover:text-white transition-colors">Data Security Statement</a></li>
             </ul>
           </div>
         </div>
 
         <div className="border-t border-slate-700 mt-8 pt-8 text-center">
-          <p className="text-slate-400">
-            © {new Date().getFullYear()} Tiny Steps Learning Platform. All rights reserved.
-          </p>
+          <p className="text-slate-400">© {new Date().getFullYear()} Tiny Steps Online School. All rights reserved.</p>
         </div>
       </div>
     </footer>

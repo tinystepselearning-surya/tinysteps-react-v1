@@ -1,3 +1,236 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@font-face {
+  font-family: 'Poppins';
+  src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+}
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-body bg-background-light text-gray-900 scroll-smooth;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading font-bold;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-primary-500 to-secondary-500 text-white rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-2;
+  }
+
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-text-primary;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body.custom-cursor-enabled {
+  cursor: none;
+}
+
+.button-ripple {
+  animation: ripple 0.6s ease-out;
+  transform: scale(0);
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(3);
+    opacity: 0;
+  }
+}
+
+.interactive-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.interactive-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, #0052CC, #FF6B6B);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.interactive-link:hover {
+  color: #0052CC;
+  transform: translateY(-1px) scale(1.05);
+}
+
+.interactive-link:hover::after {
+  transform: scaleX(1);
+}
+
+.interactive-input {
+  @apply w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-gray-900 transition-all duration-300 placeholder-transparent;
+}
+
+.interactive-input:focus {
+  border-color: #0052CC;
+  box-shadow: 0 0 15px rgba(0, 82, 204, 0.3);
+}
+
+.form-field {
+  position: relative;
+}
+
+.form-field label {
+  position: absolute;
+  top: 50%;
+  left: 1rem;
+  transform: translateY(-50%);
+  color: #6B7280;
+  font-size: 0.9rem;
+  pointer-events: none;
+  transition: transform 0.2s ease, color 0.2s ease, font-size 0.2s ease;
+}
+
+.form-field:focus-within label,
+.form-field input:not(:placeholder-shown) + label,
+.form-field textarea:not(:placeholder-shown) + label {
+  transform: translateY(-160%);
+  color: #0052CC;
+  font-size: 0.75rem;
+}
+
+.animated-gradient-text {
+  background-image: linear-gradient(90deg, #0052CC, #8B5CF6, #FF6B6B);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gradient-move 3s linear infinite;
+}
+
+@keyframes gradient-move {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 200% 50%;
+  }
+}
+
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-glitch);
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.glitch-text:hover::before {
+  color: #FF6B6B;
+  transform: translate(1px, -1px);
+  opacity: 0.4;
+}
+
+.glitch-text:hover::after {
+  color: #10B981;
+  transform: translate(-1px, 1px);
+  opacity: 0.4;
+}
+
+.age-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0052CC, #FF6B6B);
+  outline: none;
+}
+
+.age-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0052CC;
+  box-shadow: 0 10px 20px rgba(0, 82, 204, 0.35);
+  border: 3px solid #FFFFFF;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.age-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+}
+
+.age-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0052CC;
+  box-shadow: 0 10px 20px rgba(0, 82, 204, 0.35);
+  border: 3px solid #FFFFFF;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.age-slider::-moz-range-thumb:hover {
+  transform: scale(1.1);
+}
+
+.animate-gradient-shift {
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(20deg);
+  }
+  100% {
+    filter: hue-rotate(0deg);
+  }
+}
