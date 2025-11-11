@@ -14,20 +14,28 @@ import TrustSignals from '../components/Trust/TrustSignals';
 import TestimonialsCarousel from '../components/Home/TestimonialsCarousel';
 import TeacherProfiles from '../components/Home/TeacherProfiles';
 import TrialForm from '../components/forms/TrialForm';
+import StatsStrip from '../components/Home/StatsStrip';
+import PopularPrograms from '../components/Home/PopularPrograms';
+import GlobalImpactSection from '../components/Home/GlobalImpactSection';
+import DemoShowcase from '../components/Home/DemoShowcase';
 
 export default function HomePage() {
   return (
     <>
       <Meta
         title="Tiny Steps Online School | Phonics, Grammar & Public Speaking Classes for Indian Kids (Ages 3-12)"
-        description="Expert 1:1 online English classes for ages 3-12. Master phonics, grammar & public speaking. ₹4,000-10,500/month. Free assessment class. 95% see improvement in 3 months."
+        description="Expert 1:1 online English classes for ages 3-12. Master phonics, grammar & public speaking. ₹4,400–₹8,800/month. Free assessment class. 95% see improvement in 3 months."
         keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India, best English coaching India"
         canonical="https://tinystepslearning.com/"
       />
       <ConversionHero />
+      <StatsStrip />
+      <PopularPrograms />
+      <GlobalImpactSection />
       <TrustSignals />
       <TestimonialsCarousel />
       <TeacherProfiles />
+      <DemoShowcase />
       <WhyChooseCollapsibleSection />
       <StepTimeline />
       <CoursesSection />

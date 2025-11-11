@@ -55,7 +55,7 @@ const Footer = () => {
                 <p className="text-xs text-white/70">Bengaluru • Serving families PAN India</p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 500+ families, 15+ states, 95% satisfaction.</p>
+            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 8 countries, 95% satisfaction.</p>
             <div className="mt-4 flex gap-4">
               {socialLinks.map((link) => (
                 <a key={link.label} href={link.href} className="text-white/70 hover:text-white transition" aria-label={link.label}>

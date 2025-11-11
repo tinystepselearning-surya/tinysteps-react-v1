@@ -1,33 +1,48 @@
 import React from 'react';
-import Layout from '@components/Layout';
-import CourseTopbar from '@components/CourseTopbar';
+import ProgramHero from '../components/programs/ProgramHero';
+import LevelTabs from '../components/programs/LevelTabs';
+import LearningJourney from '../components/programs/LearningJourney';
+
+const levels = [
+  {
+    name: 'Beginner',
+    outcomes: ['SATPIN mastery & blending routines', 'Tricky words set A', 'Daily AI reading prompts'],
+    pdf: '/curriculum'
+  },
+  {
+    name: 'Intermediate',
+    outcomes: ['Digraphs, vowel teams, silent-e', 'Dictation + spelling rules', 'Weekly fluency recordings'],
+    pdf: '/curriculum'
+  },
+  {
+    name: 'Advanced',
+    outcomes: ['Multisyllabic decoding & morphology', 'Comprehension questions + writing', 'Capstone: 150-word reading video'],
+    pdf: '/curriculum'
+  }
+];
+
+const stages = [
+  { title: 'Weeks 1-4 • Sounds to words', duration: 'Month 1', description: 'SATPIN, blending club, AI-driven home practice.' },
+  { title: 'Weeks 5-8 • Rules & teams', duration: 'Month 2', description: 'Digraphs, magic-e, vowel teams, tricky words set B.' },
+  { title: 'Weeks 9-12 • Fluency & writing', duration: 'Month 3', description: 'Reading passages with expression, spelling, and short paragraphs.' }
+];
 
 export default function PhonicsPage() {
   return (
-    <Layout>
-      <CourseTopbar title="Phonics Foundations" subtitle="Systematic, multi-sensory lessons to build decoding and fluent reading." />
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Early Phonics</h3>
-              <p className="text-sm text-gray-600 mb-3">SATPIN order, letter–sound mapping, and easy practice routines.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Advanced Phonics</h3>
-              <p className="text-sm text-gray-600 mb-3">Digraphs, vowel teams, silent-e, and spelling rules for confident readers.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Fluency & Comprehension</h3>
-              <p className="text-sm text-gray-600 mb-3">Timed reading, expression, and question sets to boost comprehension.</p>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <a href="#book-trial" className="inline-block rounded-xl bg-blue-600 text-white px-6 py-3">Book a Free Trial</a>
-          </div>
-        </div>
-      </section>
-    </Layout>
+    <div>
+      <ProgramHero
+        program="Phonics"
+        title="Phonics Superstar Program"
+        subtitle="Systematic, multi-sensory phonics taught live with AI reading coaches and weekly parent insights."
+        badges={['Ages 3–12', 'Live 1:1 or pods', 'AI progress dashboard']}
+        highlights={[
+          'SATPIN + digraphs + multisyllabic decoding',
+          'Recorded practice + decodable libraries',
+          'Weekly feedback + WhatsApp nudges'
+        ]}
+      />
+      <LevelTabs levels={levels} />
+      <LearningJourney stages={stages} />
+    </div>
   );
 }

@@ -5,38 +5,37 @@ import { trackEvent } from '../../lib/analytics';
 
 const ConversionHero: React.FC = () => {
   return (
-    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffd166,_#ff9f1c,_#52a5f0)] py-20 md:py-28">
-      <div className="absolute inset-0 opacity-20">
-        <div className="absolute -left-10 top-10 h-40 w-40 rounded-full bg-primary-100 blur-3xl" />
-        <div className="absolute right-10 top-20 h-48 w-48 rounded-full bg-secondary-500/40 blur-3xl" />
-        <div className="absolute bottom-10 left-1/3 h-36 w-64 rounded-full bg-accent-500/40 blur-3xl" />
+    <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffe8c2,_#ffd28a,_#8ed1ff)] py-20 md:py-28">
+      <div className="absolute inset-0 opacity-30">
+        <div className="absolute -left-10 top-10 h-40 w-40 rounded-full bg-[#ff9f43]/60 blur-3xl" />
+        <div className="absolute right-10 top-20 h-48 w-48 rounded-full bg-[#66c4ff]/40 blur-3xl" />
+        <div className="absolute bottom-10 left-1/3 h-36 w-64 rounded-full bg-[#ffc857]/40 blur-3xl" />
       </div>
-      <div className="relative z-10 mx-auto max-w-6xl px-6 text-center">
-        <motion.h1
-          className="font-heading text-4xl font-extrabold text-gray-900 md:text-6xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          Make English Their Superpower.
-          <br className="hidden md:block" />
-          <span className="animated-gradient-text">Live 1:1 Phonics, Grammar & Speaking</span>
-        </motion.h1>
-        <motion.p
-          className="mx-auto mt-5 max-w-2xl font-body text-lg text-gray-700 md:text-2xl"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          Ages 3–12 • Personalized, research-backed lessons • Weekly progress you can see
-        </motion.p>
-        <motion.div
-          className="mt-8 flex flex-col items-center justify-center gap-3"
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-6 text-left lg:grid-cols-[1.05fr_0.95fr]">
+        <div>
+          <motion.h1
+            className="font-heading text-4xl font-extrabold text-gray-900 md:text-5xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            IB-aligned Phonics, Grammar & Public Speaking for Ages 3–12.
+            <span className="block text-3xl md:text-4xl text-[#ff8f5c]">AI-curated journeys. Live mentors. Sunrise energy.</span>
+          </motion.h1>
+          <motion.p
+            className="mt-4 max-w-2xl text-lg text-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            3500+ students across India, US, UK, Canada, Singapore, Malaysia, Vietnam, UAE & Australia learn with Tiny Steps. Our AI engine maps every child&apos;s needs and sends parents weekly learning path insights.
+          </motion.p>
+          <motion.div
+            className="mt-6 flex flex-col gap-3 sm:flex-row"
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
             <Button
               size="lg"
               aria-label="Book Free Trial"
@@ -50,22 +49,45 @@ const ConversionHero: React.FC = () => {
             <a
               href="/courses"
               onClick={() => trackEvent('cta_click', { location: 'hero', label: 'see_courses' })}
-              className="px-6 py-3 rounded-2xl border border-primary-300 bg-white/80 text-primary-700 font-semibold shadow-sm hover:shadow transition"
+              className="rounded-2xl border border-white/70 bg-white/80 px-6 py-3 text-center font-semibold text-[#ff8f5c] shadow-sm hover:shadow transition"
             >
-              See Courses
+              Explore Courses
             </a>
+          </motion.div>
+          <div className="mt-5 flex flex-wrap gap-3 text-xs font-semibold text-gray-700">
+            {['Live 1:1 mentors', 'AI learning paths', 'Parent insights dashboard'].map((chip) => (
+              <span key={chip} className="rounded-full bg-white/80 px-3 py-1">{chip}</span>
+            ))}
           </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs text-gray-700">
-            <span className="rounded-full bg-white/80 px-3 py-1">Live 1‑on‑1</span>
-            <span className="rounded-full bg-white/80 px-3 py-1">All‑India</span>
-            <span className="rounded-full bg-white/80 px-3 py-1">Parent‑rated ★★★★★</span>
-          </div>
-        </motion.div>
+        </div>
 
-        <div className="mt-10 grid grid-cols-1 place-items-center gap-6 md:grid-cols-3">
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">🗣️ Confident speaking in weeks</div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">📚 Decoding → Fluency roadmaps</div>
-          <div className="rounded-2xl bg-white/80 p-4 text-sm shadow-lg backdrop-blur">✍️ Write clearly with structure</div>
+        <div className="relative">
+          <div className="rounded-[32px] bg-white/90 p-6 shadow-[0_20px_45px_rgba(255,143,92,0.25)]">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-sm uppercase tracking-widest text-gray-500">Next live demo</div>
+                <div className="text-2xl font-bold text-gray-900">Today • 7:00 PM</div>
+              </div>
+              <span className="rounded-full bg-[#ffe8c2] px-3 py-1 text-xs font-semibold text-[#ff8f5c]">Watch preview</span>
+            </div>
+            <div className="mt-5 space-y-3 text-sm text-gray-600">
+              <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                <span>🧠 AI-curated curriculum</span>
+                <span className="text-xs text-gray-500">Personalized weekly plan</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                <span>📈 Parent dashboard</span>
+                <span className="text-xs text-gray-500">Weekly insights</span>
+              </div>
+              <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                <span>🌍 Countries</span>
+                <span className="text-xs text-gray-500">IN • US • UK • CA • SG • MY • VN • UAE • AU</span>
+              </div>
+            </div>
+            <div className="mt-5 rounded-2xl border border-dashed border-gray-200 p-4 text-xs text-gray-600">
+              Sunrise-grade polish, crafted for Tiny Steps parents. Every detail feels warm, trustworthy, and joyful.
+            </div>
+          </div>
         </div>
       </div>
 

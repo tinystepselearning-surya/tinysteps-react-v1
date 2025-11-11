@@ -4,21 +4,21 @@ import Button from '../Button/Button';
 
 const plans = [
   {
-    name: 'STARTER',
-    price: '₹4,000/month',
-    bullets: ['4 classes per month', 'Perfect for testing waters', 'Ideal for ages 3–5'],
+    name: 'Starter',
+    price: '₹4,400/month',
+    bullets: ['8 live classes per month (2x/week)', 'Weekly AI insight summary', 'Great for ages 3–6'],
     highlight: false
   },
   {
-    name: 'GROWTH',
-    price: '₹7,500/month',
-    bullets: ['8 classes per month', 'Most popular for steady progress', 'Ideal for ages 5–8'],
+    name: 'Growth',
+    price: '₹6,600/month',
+    bullets: ['12 live classes per month (3x/week)', 'Monthly mentor consult call', 'Most popular for ages 5–10'],
     highlight: true
   },
   {
-    name: 'INTENSIVE',
-    price: '₹10,500/month',
-    bullets: ['12 classes per month', 'Faster results & focused goals', 'Ideal for ages 8–12'],
+    name: 'Intensive',
+    price: '₹8,800/month',
+    bullets: ['16 live classes per month (4x/week)', 'Daily nudges + capstone prep', 'Ideal for advanced or fast catch-up'],
     highlight: false
   }
 ];
@@ -61,4 +61,3 @@ const PricingSection: React.FC = () => {
 };
 
 export default PricingSection;
-

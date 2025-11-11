@@ -5,7 +5,7 @@ import { useScrollAnimation } from '../../hooks/useScrollAnimation';
 import AnimatedText from '../common/AnimatedText';
 
 const stats = [
-	{ label: 'Happy Learners', value: 1000, suffix: '+' },
+	{ label: 'Happy Learners', value: 3500, suffix: '+' },
 	{ label: 'Parent Satisfaction', value: 98, suffix: '%' },
 	{ label: 'Expert Teachers', value: 50, suffix: '+' },
 	{ label: '3-Month Improvement', value: 95, suffix: '%' }

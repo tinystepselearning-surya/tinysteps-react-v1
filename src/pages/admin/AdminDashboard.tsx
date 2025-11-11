@@ -35,7 +35,7 @@ const ROLE_SHORTCUTS = [
   { id: 'admin', label: 'Admin', path: '/Surya', description: 'Full control panel' },
   { id: 'teacher', label: 'Teacher', path: '/teacher', description: 'Classroom & sessions' },
   { id: 'parent', label: 'Parent', path: '/parent', description: 'Progress & subscriptions' },
-  { id: 'learningPartner', label: 'Learning Partner', path: '/learningpartner', description: 'Relationship hub' },
+  { id: 'learningPartner', label: 'Learning Partner', path: '/learning-partner', description: 'Relationship hub' },
   { id: 'kid', label: 'Kid', path: '/kid', description: 'Student view' },
 ];
 

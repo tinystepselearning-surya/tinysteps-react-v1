@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { HoverDetailsCard } from '../common/HoverDetailsCard';
+import React, { useMemo, useState } from 'react';
 import Button from '../Button/Button';
 
 type Course = {
@@ -38,59 +37,92 @@ const levelDetails = {
   ]
 };
 
+const palette = {
+  phonics: { gradient: 'from-[#ffe4c0] via-white to-[#fff4e1]', accent: 'text-[#b45309]' },
+  grammar: { gradient: 'from-[#e0f2ff] via-white to-[#edf4ff]', accent: 'text-[#0f62fe]' },
+  speaking: { gradient: 'from-[#f3e8ff] via-white to-[#fef2ff]', accent: 'text-[#7c3aed]' }
+};
+
+const slugMap: Record<string, string> = {
+  phonics: '/courses/phonics-foundation',
+  grammar: '/courses/grammar-essentials',
+  speaking: '/courses/public-speaking-foundations'
+};
+
 const CoursesSection: React.FC = () => {
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [activeCourse, setActiveCourse] = useState<Course>(courses[0]);
+  const levels = useMemo(() => levelDetails[activeCourse.id as keyof typeof levelDetails], [activeCourse]);
 
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h2 className="font-heading text-3xl font-bold md:text-4xl">Our Three Core Courses</h2>
-          <p className="mt-2 text-base text-gray-700">Hover or tap to explore levels</p>
+          <p className="mt-2 text-base text-gray-700">Tap a course tab to preview outcomes and levels.</p>
         </div>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {courses.map((c) => (
-            <div key={c.id} onClick={() => setOpenId((v) => (v === c.id ? null : c.id))} className="cursor-pointer">
-              <HoverDetailsCard
-                className="card"
-                header={
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{c.icon}</span>
-                    <span>{c.title}</span>
-                  </div>
-                }
-                preview={
-                  <div className="space-y-1">
-                    <div>{c.subtitle}</div>
-                    <div>{c.age}</div>
-                    <div>{c.duration}</div>
-                    <div className="pt-2 text-primary-600">Explore Levels →</div>
-                  </div>
-                }
-                details={
-                  <div>
-                    <div className="mb-2 font-semibold">✨ {c.title} — 4 LEVELS</div>
-                    <div className="space-y-3">
-                      {levelDetails[c.id as keyof typeof levelDetails].map((lvl) => (
-                        <div key={lvl.name}>
-                          <div className="font-medium">{lvl.name}</div>
-                          <div className="text-xs text-gray-600">Duration: {lvl.duration}</div>
-                          <ul className="list-disc pl-5 text-sm">
-                            {lvl.points.map((p) => (
-                              <li key={p}>{p}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-3">
-                      <Button size="sm" variant="outline">View Full Curriculum</Button>
-                    </div>
-                  </div>
-                }
-              />
+        <div className="flex flex-wrap justify-center gap-4">
+          {courses.map((course) => {
+            const isActive = course.id === activeCourse.id;
+            return (
+              <button
+                key={course.id}
+                type="button"
+                onClick={() => setActiveCourse(course)}
+                className={`flex items-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
+                  isActive ? 'bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] text-white shadow-lg' : 'bg-white/80 text-gray-700 ring-1 ring-gray-200'
+                }`}
+                aria-pressed={isActive}
+              >
+                <span>{course.icon}</span>
+                {course.title}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className={`rounded-3xl border border-white/0 bg-gradient-to-br ${palette[activeCourse.id as keyof typeof palette].gradient} p-6 shadow-card-hover`}>
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">{activeCourse.icon}</span>
+              <div>
+                <h3 className="text-2xl font-semibold text-gray-900">{activeCourse.subtitle}</h3>
+                <p className={`text-sm font-semibold ${palette[activeCourse.id as keyof typeof palette].accent}`}>{activeCourse.title}</p>
+              </div>
             </div>
-          ))}
+            <div className="mt-4 space-y-1 text-sm text-gray-700">
+              <p>{activeCourse.age}</p>
+              <p>{activeCourse.duration}</p>
+            </div>
+            <ul className="mt-4 space-y-2 text-sm text-gray-700">
+              {activeCourse.subtitle && <li>• {activeCourse.subtitle}</li>}
+              {activeCourse.age && <li>• Tailored for {activeCourse.age.toLowerCase()}</li>}
+              <li>• Live classes with AI nudges, worksheets, and recordings.</li>
+            </ul>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button size="sm" onClick={() => window.location.assign(slugMap[activeCourse.id])}>View Curriculum</Button>
+              <Button size="sm" variant="outline" onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}>
+                Book Trial
+              </Button>
+            </div>
+          </div>
+          <div className="rounded-3xl border border-gray-100 bg-white/90 p-6 shadow-card-hover">
+            <h4 className="text-lg font-semibold text-gray-900">Level Roadmap</h4>
+            <div className="mt-4 space-y-4">
+              {levels.map((lvl, index) => (
+                <div key={lvl.name} className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="font-medium text-gray-900">{lvl.name}</div>
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-500">Step {index + 1}</span>
+                  </div>
+                  <div className="text-xs text-gray-500">Duration: {lvl.duration}</div>
+                  <ul className="mt-2 space-y-1 text-sm text-gray-700">
+                    {lvl.points.map((p) => (
+                      <li key={p}>• {p}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -98,4 +130,3 @@ const CoursesSection: React.FC = () => {
 };
 
 export default CoursesSection;
-

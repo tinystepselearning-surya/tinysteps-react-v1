@@ -1,33 +1,48 @@
 import React from 'react';
-import Layout from '@components/Layout';
-import CourseTopbar from '@components/CourseTopbar';
+import ProgramHero from '../components/programs/ProgramHero';
+import LevelTabs from '../components/programs/LevelTabs';
+import LearningJourney from '../components/programs/LearningJourney';
+
+const levels = [
+  {
+    name: 'Foundations',
+    outcomes: ['Nouns, verbs, adjectives mastery', 'Sentence building + punctuation', 'Weekly AI grammar checks'],
+    pdf: '/curriculum'
+  },
+  {
+    name: 'Intermediate',
+    outcomes: ['Tenses, subject-verb agreement, pronouns', 'Paragraph writing with feedback', 'Editing labs + rubrics'],
+    pdf: '/curriculum'
+  },
+  {
+    name: 'Advanced',
+    outcomes: ['Clauses, modals, reported speech', 'Creative + opinion writing packs', 'Capstone: 120-word essay with rubric'],
+    pdf: '/curriculum'
+  }
+];
+
+const stages = [
+  { title: 'Weeks 1-4 • Grammar games', duration: 'Month 1', description: 'Parts of speech, sentence dice, daily story prompts.' },
+  { title: 'Weeks 5-8 • Tenses + paragraphs', duration: 'Month 2', description: 'Tense wheel, editing relay, structured paragraphs.' },
+  { title: 'Weeks 9-12 • Writing lab', duration: 'Month 3', description: 'Narrative + opinion writing, peer reviews, publishing.' }
+];
 
 export default function GrammarPage() {
   return (
-    <Layout>
-      <CourseTopbar title="Grammar & Writing Lab" subtitle="Practical grammar lessons and writing practice that grow strong writers." />
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Grammar Level 1</h3>
-              <p className="text-sm text-gray-600 mb-3">Nouns, verbs, simple sentence building and punctuation.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Grammar Level 2</h3>
-              <p className="text-sm text-gray-600 mb-3">Tenses, agreement, and paragraph structure with editing drills.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Creative Writing</h3>
-              <p className="text-sm text-gray-600 mb-3">Story mapping, hooks, and writing with voice—peer-reviewed in class.</p>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <a href="#book-trial" className="inline-block rounded-xl bg-blue-600 text-white px-6 py-3">Book a Free Trial</a>
-          </div>
-        </div>
-      </section>
-    </Layout>
+    <div>
+      <ProgramHero
+        program="Grammar"
+        title="Grammar & Writing Lab"
+        subtitle="Playful grammar drills + AI writing coach ensure kids write clearly and confidently."
+        badges={['Ages 5–15', 'Live feedback', 'Weekly writing samples']}
+        highlights={[
+          'Sentence dice, grammar bingo, editing relays',
+          'AI writing assistant + downloadable worksheets',
+          'Parent dashboard with writing samples & next steps'
+        ]}
+      />
+      <LevelTabs levels={levels} />
+      <LearningJourney stages={stages} />
+    </div>
   );
 }

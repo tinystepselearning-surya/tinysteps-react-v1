@@ -21,7 +21,7 @@ export default function LoginPage() {
       'admin': 'admin',
       'teacher': 'teacher',
       'parent': 'parent',
-      'learningpartner': 'learningPartner',
+      'learning-partner': 'learningPartner',
       'kid': 'kid'
     };
 

@@ -16,7 +16,7 @@ const FinalCTASection: React.FC = () => {
           <Button size="lg">BOOK FREE ASSESSMENT NOW</Button>
           <p className="text-sm text-gray-600">20 minutes • No payment • See if Tiny Steps is right for your child</p>
           <div className="mt-4 text-sm text-gray-700">
-            <p>Join 1000+ Indian families who transformed their children's English journey.</p>
+            <p>Join 3500+ families across India, the US, UK, Canada, Singapore, Malaysia, Vietnam, UAE & Australia.</p>
             <p>⭐⭐⭐⭐⭐ 4.9/5 - Parent Reviews • 95% see improvement • 89% more confidence • 92% enjoy English</p>
           </div>
         </div>
@@ -26,4 +26,3 @@ const FinalCTASection: React.FC = () => {
 };
 
 export default FinalCTASection;
-

@@ -1,36 +1,48 @@
 import React from 'react';
-import Layout from '@components/Layout';
-import CourseTopbar from '@components/CourseTopbar';
+import ProgramHero from '../components/programs/ProgramHero';
+import LevelTabs from '../components/programs/LevelTabs';
+import LearningJourney from '../components/programs/LearningJourney';
+
+const levels = [
+  {
+    name: 'Foundations',
+    outcomes: ['15-45 second talks, show & tell', 'Voice, face & body language warmups', 'Confidence rituals + gamified practice'],
+    pdf: '/curriculum'
+  },
+  {
+    name: 'Confidence',
+    outcomes: ['Hook-Body-Close framework', 'Impromptu jar, debates, Q&A', 'Weekly video feedback'],
+    pdf: '/curriculum'
+  },
+  {
+    name: 'Super Speakers',
+    outcomes: ['Persuasive + informative speeches', 'Visual aids, storytelling, stagecraft', 'Capstone recording + rubric score'],
+    pdf: '/curriculum'
+  }
+];
+
+const stages = [
+  { title: 'Weeks 1-4 • Confidence seed', duration: 'Month 1', description: 'Micro-speaks, posture, voice games, S.P.E.A.K habit.' },
+  { title: 'Weeks 5-8 • Structure & expression', duration: 'Month 2', description: 'Hook-Body-Close, gestures, vocal variety, storytelling.' },
+  { title: 'Weeks 9-12 • Performance', duration: 'Month 3', description: 'Debates, visual aids, capstone speech + parent showcase.' }
+];
 
 export default function SpeakingPage() {
   return (
-    <Layout>
-      <CourseTopbar title="Public Speaking & Confidence" subtitle="Build confidence, articulation and presence through guided practice and feedback." />
-      <section className="py-12 bg-white">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-extrabold mb-6">Public Speaking Studio</h1>
-          <p className="text-lg text-gray-700 mb-6">Build confidence, clarity, and stage presence with short, focused practice sessions.</p>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Early Speaker</h3>
-              <p className="text-sm text-gray-600 mb-3">Simple talks, show-and-tell, and storytelling to build comfort on camera.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Confident Speaker</h3>
-              <p className="text-sm text-gray-600 mb-3">Structure, delivery drills, impromptu topics, and voice modulation.</p>
-            </div>
-            <div className="bg-white rounded-2xl p-6 shadow">
-              <h3 className="text-2xl font-semibold mb-2">Superstar Speaker</h3>
-              <p className="text-sm text-gray-600 mb-3">Debates, persuasive speech, and recording practice for performance readiness.</p>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <a href="#book-trial" className="inline-block rounded-xl bg-blue-600 text-white px-6 py-3">Book a Free Trial</a>
-          </div>
-        </div>
-      </section>
-    </Layout>
+    <div>
+      <ProgramHero
+        program="Public Speaking"
+        title="Super Speakers Studio"
+        subtitle="From shy to spotlight-ready with live coaches, AI observation notes, and weekly showcase videos."
+        badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
+        highlights={[
+          'Show & tell, storytelling, debates, persuasive speeches',
+          'AI voice analytics + coach feedback',
+          'Capstone performances recorded and certified'
+        ]}
+      />
+      <LevelTabs levels={levels} />
+      <LearningJourney stages={stages} />
+    </div>
   );
 }

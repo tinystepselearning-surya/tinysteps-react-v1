@@ -30,6 +30,7 @@ import Header from '../components/common/Header';
 import { Suspense } from 'react';
 import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
+import FloatingAssistant from '../components/common/FloatingAssistant';
 
 const Layout: React.FC = () => (
   <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
@@ -40,6 +41,7 @@ const Layout: React.FC = () => (
         <Outlet />
       </Suspense>
     </main>
+    <FloatingAssistant />
   </div>
 );
 
@@ -121,7 +123,7 @@ const router = createBrowserRouter(
           element: <LoginPage />,
         },
         {
-          path: 'learningpartner/login',
+          path: 'learning-partner/login',
           element: <LoginPage />,
         },
         {
@@ -163,7 +165,7 @@ const router = createBrowserRouter(
           ],
         },
         {
-          path: 'learningpartner',
+          path: 'learning-partner',
           element: <RoleGate allowedRoles={['learningPartner']} />,
           children: [
             {

@@ -56,7 +56,7 @@ const CoursesPage: React.FC = () => {
     <div className="page-gradient relative overflow-hidden">
       <Meta
         title="Online English Courses for Kids | Phonics, Grammar, Public Speaking"
-        description="Choose the perfect course for your child. 12‑week expert‑designed programs starting at ₹4,000/month. Free assessment."
+        description="Choose the perfect course for your child. 12‑week expert‑designed programs starting at ₹4,400/month. Free assessment."
         canonical="https://tinystepslearning.com/courses"
         jsonLd={{
           '@context': 'https://schema.org',

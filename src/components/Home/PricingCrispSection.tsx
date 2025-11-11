@@ -11,15 +11,14 @@ const PricingCrispSection: React.FC = () => {
         </div>
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div className="max-w-sm">
-            <CollapsibleCard title="STARTER PLAN" subtext="4 Classes/Month • ₹4,000" icon={<span>🎯</span>}>
+            <CollapsibleCard title="Starter Plan" subtext="8 Live Classes/Month • ₹4,400" icon={<span>🎯</span>}>
               <ul className="list-disc pl-5 space-y-1">
-                <li>4 classes per month</li>
-                <li>Flexible scheduling</li>
-                <li>Weekly progress reports</li>
-                <li>24-hour rescheduling</li>
-                <li>Access to all materials</li>
+                <li>8 live classes per month (2x/week).</li>
+                <li>Flexible scheduling and easy reschedules.</li>
+                <li>Weekly AI insight recap + nudges.</li>
+                <li>Parent dashboard + recorded sessions.</li>
               </ul>
-              <div className="mt-3 text-sm text-gray-600">Best for testing the program, busy schedules, ages 3–5.</div>
+              <div className="mt-3 text-sm text-gray-600">Perfect for calmer schedules, new learners ages 3–6, or families easing in.</div>
               <div className="mt-4 flex gap-2">
                 <Button size="sm">Start Trial</Button>
                 <Button size="sm" variant="outline">Learn More</Button>
@@ -28,34 +27,33 @@ const PricingCrispSection: React.FC = () => {
           </div>
 
           <div className="max-w-sm">
-            <CollapsibleCard title="🌟 GROWTH PLAN (Most Popular)" subtext="8 Classes/Month • ₹7,500" icon={<span>🌟</span>} defaultOpen>
+            <CollapsibleCard title="🌟 Growth Plan (Most Popular)" subtext="12 Live Classes/Month • ₹6,600" icon={<span>🌟</span>} defaultOpen>
               <ul className="list-disc pl-5 space-y-1">
-                <li>8 classes per month</li>
-                <li>Flexible scheduling</li>
-                <li>Detailed weekly reports</li>
-                <li>Custom curriculum & guides</li>
-                <li>Priority teacher support</li>
-                <li>Free assessment & monthly review</li>
+                <li>12 live classes per month (3x/week).</li>
+                <li>Detailed weekly video & PDF reports.</li>
+                <li>Custom curriculum packs + practice sheets.</li>
+                <li>Priority mentor support + WhatsApp hotline.</li>
+                <li>Monthly parent strategy call.</li>
               </ul>
-              <div className="mt-3 text-sm text-gray-600">Best for consistent progress, 2x/week, ages 5–8. Includes parent consultation call.</div>
+              <div className="mt-3 text-sm text-gray-600">Best for steady growth, ages 5–10, and families targeting visible 12-week progress.</div>
               <div className="mt-4 flex gap-2">
                 <Button size="sm">Start Trial</Button>
                 <Button size="sm" variant="outline">Learn More</Button>
               </div>
-              <div className="mt-3 text-xs text-gray-600">“Worth every rupee. Visible progress.” — Parent ⭐⭐⭐⭐⭐</div>
+              <div className="mt-3 text-xs text-gray-600">“Worth every rupee. We saw change in six weeks.” — Parent ⭐⭐⭐⭐⭐</div>
             </CollapsibleCard>
           </div>
 
           <div className="max-w-sm">
-            <CollapsibleCard title="INTENSIVE PLAN" subtext="12 Classes/Month • ₹10,500" icon={<span>🚀</span>}>
+            <CollapsibleCard title="Intensive Plan" subtext="16 Live Classes/Month • ₹8,800" icon={<span>🚀</span>}>
               <ul className="list-disc pl-5 space-y-1">
-                <li>12 classes per month</li>
-                <li>Fully flexible scheduling</li>
-                <li>Daily progress updates</li>
-                <li>Priority teacher assignment</li>
-                <li>Direct messaging & bi-weekly calls</li>
+                <li>16 live classes per month (4x/week).</li>
+                <li>Fully flexible scheduling + priority slots.</li>
+                <li>Daily nudges and micro-feedback.</li>
+                <li>Senior mentor + capstone showreel.</li>
+                <li>Bi-weekly parent consults.</li>
               </ul>
-              <div className="mt-3 text-sm text-gray-600">Best for faster results, focused goals, ages 8–12, or catching up quickly.</div>
+              <div className="mt-3 text-sm text-gray-600">Ideal for acceleration, competition prep, or fast catch-up across ages 7–12.</div>
               <div className="mt-4 flex gap-2">
                 <Button size="sm">Start Trial</Button>
                 <Button size="sm" variant="outline">Learn More</Button>
@@ -69,4 +67,3 @@ const PricingCrispSection: React.FC = () => {
 };
 
 export default PricingCrispSection;
-

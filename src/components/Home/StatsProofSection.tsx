@@ -5,7 +5,7 @@ const stats = [
   { value: '95%', label: 'Visible improvement within 3 months' },
   { value: '89%', label: 'Parents report increased confidence' },
   { value: '92%', label: 'Children now ENJOY English learning' },
-  { value: '1000+', label: 'Indian families transformed (since 2023)' },
+  { value: '3500+', label: 'Families supported worldwide (since 2020)' },
   { value: '4.9/5', label: 'Parent satisfaction rating' }
 ];
 
@@ -36,4 +36,3 @@ const StatsProofSection: React.FC = () => {
 };
 
 export default StatsProofSection;
-

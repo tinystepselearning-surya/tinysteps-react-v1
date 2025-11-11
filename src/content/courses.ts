@@ -28,7 +28,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Foundation',
     overview: ['Letters & sounds (SATPIN)', 'Blending CVC', 'Digraphs', 'Magic‑e & teams', 'Tricky words'],
     outcomes: ['Identify 100+ letter sounds', 'Read decodable books', 'Write CVC words correctly', 'Recognize tricky words'],
-    price: '₹4,000/month',
+    price: '₹4,400/month',
     reviews: '⭐⭐⭐⭐⭐ (127 reviews) — "Perfect for my 4‑year‑old! She’s reading now!"'
   },
   {
@@ -42,7 +42,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Long vowels', 'R‑controlled', 'Diphthongs', 'Multisyllabic strategies', 'Fluency'],
     outcomes: ['Read 150–300 word passages', 'Write 8–10 sentence paragraphs', 'Apply advanced patterns'],
-    price: '₹7,500/month'
+    price: '₹6,600/month'
   },
   {
     slug: 'phonics-foundations',
@@ -55,7 +55,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Brush‑Up',
     overview: ['Gap analysis', 'Targeted digraphs', 'Magic‑e & teams', 'Tricky words intensive', 'Multisyllabic decoding'],
     outcomes: ['Eliminate identified gaps', 'Personal reader booklet', 'Spelling list mastery'],
-    price: '₹4,000–₹7,500/month'
+    price: '₹4,400–₹6,600/month'
   },
   {
     slug: 'grammar-essentials',
@@ -68,7 +68,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Nouns & pronouns', 'Verbs & tenses', 'Adjectives', 'Prepositions', 'Conjunctions'],
     outcomes: ['Write 6–8 sentence paragraph', 'Punctuate correctly', 'Subject‑verb agreement mastery'],
-    price: '₹4,000–₹7,500/month'
+    price: '₹4,400–₹6,600/month'
   },
   {
     slug: 'grammar-mastery',
@@ -81,7 +81,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['All 12 tenses', 'Clauses & modals', 'Reported speech', 'Passive voice', 'Advanced punctuation'],
     outcomes: ['120–180 word informative paragraph', 'Cohesion & transition words', 'Advanced accuracy'],
-    price: '₹7,500–₹10,500/month'
+    price: '₹6,600–₹8,800/month'
   },
   {
     slug: 'public-speaking-foundations',
@@ -94,7 +94,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Confidence & posture', 'Clear voice', 'Picture talks', 'Show & Tell structure'],
     outcomes: ['30–45s Show & Tell', 'Eye contact & posture', 'Intro‑middle‑close'],
-    price: '₹4,000–₹7,500/month'
+    price: '₹4,400–₹6,600/month'
   },
   {
     slug: 'public-speaking-excellence',
@@ -107,7 +107,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Hook‑Body‑Close', 'Persuasion & debate', 'Impromptu speaking', 'Visual aids mastery'],
     outcomes: ['1–2 minute capstone speech', 'Rubric‑based evaluation', 'Leadership presence'],
-    price: '₹7,500–₹10,500/month'
+    price: '₹6,600–₹8,800/month'
   }
 ];
 
@@ -152,4 +152,3 @@ export const curriculumBySlug: Record<string, { weeks?: { title: string; learns?
     'public-speaking-excellence': { weeks: [] },
     'phonics-foundations': { weeks: [] }
   };
-

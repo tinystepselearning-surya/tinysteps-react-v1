@@ -20,6 +20,36 @@ const parseClassesPerWeek = (frequency: string) => {
 
 const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`;
 
+const plans = [
+  {
+    name: 'Starter',
+    sessions: 8,
+    duration: '4 weeks • 2 live classes/week',
+    badge: 'New families',
+    highlight: false,
+    color: 'from-white via-[#fff7ec] to-[#ffe0b5]',
+    features: ['Personalised assessment + roadmap', 'Live 1:1 or pod classes', 'Weekly AI insight recap', 'WhatsApp nudges for practice']
+  },
+  {
+    name: 'Growth',
+    sessions: 24,
+    duration: '12 weeks • 2 live classes/week',
+    badge: 'Most popular',
+    highlight: true,
+    color: 'from-[#fff1d6] via-white to-[#dff1ff]',
+    features: ['Everything in Starter', 'Monthly mastery review with mentor', 'Recorded class access + worksheets', 'Parent Q&A call every month']
+  },
+  {
+    name: 'Intensive',
+    sessions: 36,
+    duration: '12 weeks • 3 live classes/week',
+    badge: 'Fast-track',
+    highlight: false,
+    color: 'from-white via-[#e8f3ff] to-[#f4e8ff]',
+    features: ['Daily AI reading/speaking coach prompts', 'Capstone showcase video production', 'Priority scheduling & reschedules', 'Optional Saturday masterclass']
+  }
+];
+
 const PricingPage: React.FC = () => {
   useEffect(() => { document.title = 'Pricing | Tiny Steps'; }, []);
 
@@ -32,6 +62,11 @@ const PricingPage: React.FC = () => {
     const maxFee = maxSessions * PER_SESSION;
     return { course, weeks, classesPerWeek, minSessions, maxSessions, minFee, maxFee };
   }), []);
+
+  const planPricing = useMemo(() => plans.map((plan) => ({
+    ...plan,
+    fee: plan.sessions * PER_SESSION
+  })), []);
 
   const offerCatalog = {
     '@context': 'https://schema.org',
@@ -58,6 +93,45 @@ const PricingPage: React.FC = () => {
           <div className="gradient-chip mx-auto w-max">₹550 per live session</div>
           <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Pricing that mirrors your child’s curriculum</h1>
           <p className="mt-3 text-gray-700">Every course lists classes/week × weeks = total sessions. Multiply by ₹550 and you know the full investment upfront.</p>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-12">
+        <div className="grid gap-6 md:grid-cols-3">
+          {planPricing.map((plan) => (
+            <div
+              key={plan.name}
+              className={`relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br ${plan.color} p-6 shadow-card-hover`}
+            >
+              {plan.badge && (
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${plan.highlight ? 'bg-[#ff8f5c] text-white' : 'bg-white/80 text-gray-700'}`}>
+                  {plan.badge.toUpperCase()}
+                </span>
+              )}
+              <h3 className="mt-4 text-2xl font-semibold text-gray-900">{plan.name} Plan</h3>
+              <p className="text-sm text-gray-600">{plan.duration}</p>
+              <div className="mt-4 text-4xl font-bold text-gray-900">
+                {formatCurrency(plan.fee)}
+                <span className="text-base font-medium text-gray-600"> / {plan.sessions} classes</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">₹550 per 35–40 min live session</p>
+              <ul className="mt-4 space-y-2 text-sm text-gray-700">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-2">
+                    <span>✨</span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                className={`mt-6 w-full rounded-2xl px-4 py-3 text-sm font-semibold ${plan.highlight ? 'bg-gray-900 text-white shadow-2xl' : 'bg-white text-gray-900 shadow'}`}
+                onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Enroll now
+              </button>
+              <p className="mt-2 text-[11px] text-gray-500">Need EMI or split payments? WhatsApp us and we’ll arrange it.</p>
+            </div>
+          ))}
         </div>
       </section>
 

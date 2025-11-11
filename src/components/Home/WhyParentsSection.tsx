@@ -65,7 +65,7 @@ const WhyParentsSection: React.FC = () => {
     <section className="bg-gradient-to-b from-white to-slate-50/50 py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
-          <h2 className="font-heading text-3xl font-bold md:text-4xl">Why 500+ Indian Families Trust Tiny Steps</h2>
+          <h2 className="font-heading text-3xl font-bold md:text-4xl">Why 3500+ Families Worldwide Trust Tiny Steps</h2>
           <p className="mt-2 text-base text-gray-700 md:text-lg">From Mumble to Confident Speaker in 3-4 Months</p>
         </div>
         <motion.div
@@ -93,4 +93,3 @@ const WhyParentsSection: React.FC = () => {
 };
 
 export default WhyParentsSection;
-

@@ -2,10 +2,10 @@ import React from 'react';
 import TestimonialsCarousel from './TestimonialsCarousel';
 
 const items = [
-  { value: '95%', label: 'Visible improvement in 3 months' },
-  { value: '1000+', label: 'Children transformed since 2023' },
-  { value: '4.9/5', label: 'Parent satisfaction' },
-  { value: '89%', label: 'Report increased confidence' }
+  { value: '3500+', label: 'Learners guided since 2020' },
+  { value: '8 countries', label: 'India • US • UK • Canada • Singapore • Malaysia • Vietnam • UAE • Australia' },
+  { value: '95%', label: 'Parents see visible improvement in 12 weeks' },
+  { value: '4.9/5', label: 'Average parent satisfaction rating' }
 ];
 
 const SocialProofCrispSection: React.FC = () => {
@@ -35,4 +35,3 @@ const SocialProofCrispSection: React.FC = () => {
 };
 
 export default SocialProofCrispSection;
-
