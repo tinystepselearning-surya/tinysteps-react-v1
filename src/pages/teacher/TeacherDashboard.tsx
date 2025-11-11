@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
-import { TodaySessionsList } from './components/today-sessions/TodaySessionsList';
-import { StudentsList } from './components/students/StudentsList';
-import { StudentProgressChart } from './components/progress/StudentProgressChart';
-import { EarningsSummary } from './components/earnings/EarningsSummary';
-import { TeacherStats } from './components/analytics/TeacherStats';
+import React, { Suspense } from 'react';
+const TodaySessionsList = React.lazy(() => import('./components/today-sessions/TodaySessionsList'));
+const StudentsList = React.lazy(() => import('./components/students/StudentsList'));
+const StudentProgressChart = React.lazy(() => import('./components/progress/StudentProgressChart'));
+const EarningsSummary = React.lazy(() => import('./components/earnings/EarningsSummary'));
+const TeacherStats = React.lazy(() => import('./components/analytics/TeacherStats'));
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTeacherSessions } from './hooks/useTeacherSessions';
 
@@ -57,19 +58,29 @@ export default function TeacherDashboard() {
               ))}
             </TabsList>
             <TabsContent value="today">
-              <TodaySessionsList teacherId={teacherId} />
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
+                <TodaySessionsList teacherId={teacherId} />
+              </Suspense>
             </TabsContent>
             <TabsContent value="students">
-              <StudentsList teacherId={teacherId} />
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
+                <StudentsList teacherId={teacherId} />
+              </Suspense>
             </TabsContent>
             <TabsContent value="progress">
-              <StudentProgressChart teacherId={teacherId} />
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading progress…</div>}>
+                <StudentProgressChart teacherId={teacherId} />
+              </Suspense>
             </TabsContent>
             <TabsContent value="earnings">
-              <EarningsSummary teacherId={teacherId} />
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
+                <EarningsSummary teacherId={teacherId} />
+              </Suspense>
             </TabsContent>
             <TabsContent value="analytics">
-              <TeacherStats teacherId={teacherId} />
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
+                <TeacherStats teacherId={teacherId} />
+              </Suspense>
             </TabsContent>
           </Tabs>
         </main>

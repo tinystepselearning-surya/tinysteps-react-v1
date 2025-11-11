@@ -4,6 +4,13 @@ import LoginPage from '../pages/LoginPage';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import HomePage from '../pages/HomePage';
+import CurriculumPage from '../pages/CurriculumPage';
+import CoursesPage from '../pages/CoursesPage';
+import CourseDetailPage from '../pages/CourseDetailPage';
+import BlogPage from '../pages/BlogPage';
+import BlogPostPage from '../pages/BlogPostPage';
+import PricingPage from '../pages/PricingPage';
+import FAQPage from '../pages/FAQPage';
 
 // Course Pages
 import PhonicsPage from '../pages/phonics';
@@ -11,20 +18,25 @@ import GrammarPage from '../pages/grammar';
 import SpeakingPage from '../pages/speaking';
 
 // Dashboards (to be created)
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import TeacherDashboard from '../pages/teacher/TeacherDashboard';
-import ParentDashboard from '../pages/parent/ParentDashboard';
-import LPDashboard from '../pages/lp/LPDashboard';
-import KidDashboard from '../pages/kid/KidDashboard';
+const AdminDashboard = React.lazy(() => import('../pages/admin/AdminDashboard'));
+const TeacherDashboard = React.lazy(() => import('../pages/teacher/TeacherDashboard'));
+const ParentDashboard = React.lazy(() => import('../pages/parent/ParentDashboard'));
+const LPDashboard = React.lazy(() => import('../pages/lp/LPDashboard'));
+const KidDashboard = React.lazy(() => import('../pages/kid/KidDashboard'));
 
 // Layout
 import Header from '../components/common/Header';
+import { Suspense } from 'react';
 import RoleGate from '../components/common/RoleGate';
 
 const Layout: React.FC = () => (
-  <div>
+  <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
     <Header />
-    <Outlet />
+    <main className="pt-32 pb-16 min-h-screen">
+      <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+        <Outlet />
+      </Suspense>
+    </main>
   </div>
 );
 
@@ -44,6 +56,34 @@ const router = createBrowserRouter(
         {
           index: true,
           element: <HomePage />,
+        },
+        {
+          path: 'curriculum',
+          element: <CurriculumPage />,
+        },
+        {
+          path: 'courses',
+          element: <CoursesPage />,
+        },
+        {
+          path: 'courses/:slug',
+          element: <CourseDetailPage />,
+        },
+        {
+          path: 'blog',
+          element: <BlogPage />,
+        },
+        {
+          path: 'blog/:slug',
+          element: <BlogPostPage />,
+        },
+        {
+          path: 'pricing',
+          element: <PricingPage />,
+        },
+        {
+          path: 'faq',
+          element: <FAQPage />,
         },
         {
           path: 'phonics',

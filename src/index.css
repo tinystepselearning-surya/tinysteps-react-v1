@@ -22,7 +22,8 @@
   }
 
   body {
-    @apply font-body bg-background-light text-gray-900 scroll-smooth;
+    @apply font-body text-gray-900 scroll-smooth;
+    background: radial-gradient(circle at 20% 20%, #fff4fb 0%, #f1f7ff 45%, #ffffff 85%);
   }
 
   h1,
@@ -95,10 +96,30 @@ body.custom-cursor-enabled {
 .interactive-link:hover {
   color: #0052CC;
   transform: translateY(-1px) scale(1.05);
+  will-change: transform;
 }
 
 .interactive-link:hover::after {
   transform: scaleX(1);
+}
+
+.page-gradient {
+  position: relative;
+  min-height: calc(100vh - 6rem);
+  background: linear-gradient(135deg, rgba(255, 245, 251, 0.95), rgba(239, 246, 255, 0.95));
+}
+
+.glass-panel {
+  @apply rounded-3xl bg-white/85 backdrop-blur border border-white/40 shadow-2xl shadow-primary/5;
+}
+
+.gradient-chip {
+  @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold text-white bg-gradient-to-r from-primary-500 to-secondary-500 shadow-sm;
+}
+
+.soft-grid {
+  background-image: radial-gradient(circle at 1px 1px, rgba(59, 130, 246, 0.1) 1px, transparent 0);
+  background-size: 24px 24px;
 }
 
 .interactive-input {
@@ -185,6 +206,7 @@ body.custom-cursor-enabled {
   border-radius: 999px;
   background: linear-gradient(90deg, #0052CC, #FF6B6B);
   outline: none;
+  will-change: transform;
 }
 
 .age-slider::-webkit-slider-thumb {
@@ -233,4 +255,29 @@ body.custom-cursor-enabled {
   100% {
     filter: hue-rotate(0deg);
   }
+}
+.collapsible-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+.collapsible-body.open {
+  max-height: 500px;
+}
+
+.hover-details-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+.hover-details-body.open {
+  max-height: 900px;
+}
+
+.custom-cursor-dot {
+  will-change: transform;
+}
+
+.card {
+  will-change: transform;
 }

@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /courses/
+Allow: /curriculum/
+Allow: /newsletter/
+
+Disallow: /admin/
+Disallow: /private/
+Disallow: /email/
+
+Sitemap: https://tinystepslearning.com/sitemap.xml
+Sitemap: https://tinystepslearning.com/sitemap-blog.xml
+Sitemap: https://tinystepslearning.com/sitemap-courses.xml
+
+Crawl-delay: 1

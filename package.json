@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npm run gen:sitemaps && vite build",
     "preview": "vite preview",
+    "gen:sitemaps": "node scripts/generate-sitemaps.js",
     "lint": "eslint src --ext ts,tsx",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest",

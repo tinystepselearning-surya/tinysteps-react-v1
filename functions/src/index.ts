@@ -278,3 +278,30 @@ export const adminResetPassword = onCall(
 // Export the adminCreateUser function
 export { adminCreateUser } from './adminCreateUser';
 export { onSessionComplete, onSessionCompleteTrigger } from './onSessionComplete';
+
+// Newsletter subscription (callable)
+interface SubscribeRequest { email: string }
+interface SubscribeResponse { success: boolean }
+
+export const subscribeNewsletter = onCall(
+  { region: 'asia-south1', memory: '128MiB', timeoutSeconds: 30 },
+  async (data: any, context: any) => {
+    try {
+      const { email } = data as SubscribeRequest;
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        throw new HttpsError('invalid-argument', 'Valid email required');
+      }
+      const db = admin.firestore();
+      await db.collection('newsletter_subscribers').doc(email.toLowerCase()).set({
+        email: email.toLowerCase(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        source: context.rawRequest?.headers?.referer || 'website',
+        uid: context.auth?.uid || null
+      }, { merge: true });
+      return { success: true } as SubscribeResponse;
+    } catch (err:any) {
+      logger.error('subscribeNewsletter error', { err });
+      throw new HttpsError('internal', 'Subscription failed');
+    }
+  }
+);

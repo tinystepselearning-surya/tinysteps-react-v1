@@ -23,13 +23,21 @@ export default function Header() {
   // Determine if we're on the home page
   const isHomePage = location.pathname === '/';
 
-  const navItems = user ? [
-    { label: 'Dashboard', href: `/${user.role}` },
-    { label: 'Profile', href: `/${user.role}/profile` },
-  ] : [
+  type NavItem = { label: string; href: string; variant?: 'pill' };
+  const marketingNav: NavItem[] = [
     { label: 'Home', href: '/' },
-    { label: 'About', href: '/about' },
+    { label: 'Courses', href: '/courses', variant: 'pill' },
+    { label: 'Curriculum', href: '/curriculum', variant: 'pill' },
+    { label: 'Blog', href: '/blog' },
+    { label: 'Pricing', href: '/pricing' },
+    { label: 'FAQ', href: '/faq' },
   ];
+  const navItems: NavItem[] = user
+    ? [
+        { label: 'Dashboard', href: `/${user.role}` },
+        { label: 'Profile', href: `/${user.role}/profile` },
+      ]
+    : marketingNav;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -98,7 +106,7 @@ export default function Header() {
         }`}
       >
         {/* Glassmorphism Container */}
-        <div className={`relative backdrop-blur-md bg-white/70 rounded-3xl px-8 py-4 shadow-2xl border border-white/30 ${
+        <div className={`relative backdrop-blur-md bg-gradient-to-r from-white/90 via-white/70 to-white/60 rounded-3xl px-6 py-4 shadow-2xl border border-white/30 ${
           isHomePage && !isSticky ? 'max-w-7xl mx-auto' : 'rounded-none'
         }`}>
           {/* Animated Background Blur Gradient */}
@@ -123,23 +131,29 @@ export default function Header() {
             </motion.div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-8">
+            <div className="hidden md:flex flex-wrap items-center gap-5">
               {navItems.map((item, idx) => (
                 <MotionLink
                   key={item.label}
                   to={item.href}
-                  className="text-gray-700 font-medium text-sm relative group"
+                  className={`text-sm font-semibold relative group transition-colors ${
+                    item.variant === 'pill'
+                      ? 'px-4 py-2 rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-secondary-400 text-white shadow-sm hover:shadow-lg'
+                      : 'text-gray-700 hover:text-primary-600'
+                  }`}
                   whileHover={{ color: '#3b82f6' }}
                   initial={{ opacity: 0, y: -6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.04, duration: 0.28 }}
                 >
                   {item.label}
-                  <motion.div
-                    className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 w-0 group-hover:w-full"
-                    transition={{ duration: 0.25 }}
-                    layoutId={`underline-${item.label}`}
-                  />
+                  {item.variant !== 'pill' && (
+                    <motion.div
+                      className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-600 w-0 group-hover:w-full"
+                      transition={{ duration: 0.25 }}
+                      layoutId={`underline-${item.label}`}
+                    />
+                  )}
                 </MotionLink>
               ))}
             </div>
@@ -243,7 +257,11 @@ export default function Header() {
                 <MotionLink
                   key={item.label}
                   to={item.href}
-                  className="block text-gray-700 font-medium py-2 text-sm hover:text-blue-600 transition-colors"
+                  className={`block font-medium py-2 text-sm transition-colors ${
+                    item.variant === 'pill'
+                      ? 'px-4 text-center rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white'
+                      : 'text-gray-700 hover:text-blue-600'
+                  }`}
                   custom={i}
                   variants={itemVariants}
                 >

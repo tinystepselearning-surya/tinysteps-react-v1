@@ -63,10 +63,10 @@ const CursorAnimation: React.FC = () => {
 				style={{ width: progressWidth }}
 			/>
 			{enabled && (
-				<motion.div
-					className="pointer-events-none fixed z-[1000] h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-500/60 shadow-[0_0_20px_rgba(0,82,204,0.4)]"
-					style={{ x: smoothX, y: smoothY }}
-				/>
+            <motion.div
+              className="pointer-events-none fixed z-[1000] h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-500/60 shadow-[0_0_20px_rgba(0,82,204,0.2)] custom-cursor-dot"
+              style={{ x: smoothX, y: smoothY }}
+            />
 			)}
 		</>
 	);
