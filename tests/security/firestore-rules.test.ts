@@ -2,6 +2,7 @@ import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 import { initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import { getFirestore, setLogLevel } from 'firebase/firestore';
 import fs from 'fs';
+import { seedTestData } from '../utils/seedTestData';
 
 let testEnv: RulesTestEnvironment;
 
@@ -10,11 +11,14 @@ beforeAll(async () => {
     projectId: 'tinysteps-test',
     firestore: {
       rules: fs.readFileSync('firestore.rules', 'utf8'),
-      host: 'localhost',
+      host: '127.0.0.1', // Explicitly use IPv4 to avoid potential IPv6 issues
       port: 8080, // Ensure this matches your Firestore emulator port
     },
   });
   setLogLevel('error');
+
+  // Seed necessary documents so rules that depend on existing resource data pass.
+  await seedTestData(testEnv);
 });
 
 afterAll(async () => {

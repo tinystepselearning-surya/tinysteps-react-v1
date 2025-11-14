@@ -44,12 +44,6 @@ interface SetUserRoleSuccessResponse {
   timestamp: string;
 }
 
-interface SetUserRoleErrorResponse {
-  success: false;
-  error: string;
-  code: string;
-}
-
 // Import required modules for the new function
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
@@ -70,91 +64,84 @@ const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
  * @param context - The callable context containing auth information.
  * @returns Promise<SetUserRoleSuccessResponse | SetUserRoleErrorResponse>
  */
+// Long-term: expose a test-friendly handler and ensure we throw HttpsError for rejections.
+export async function setUserRoleHandler(data: any, context: any) {
+  const now = new Date().toISOString();
+
+  try {
+    // Security check: Only admins can call this function
+    if (!context.auth || !context.auth.token.admin) {
+      const errorMsg = `Unauthorized setUserRole attempt by uid=${context.auth?.uid || 'unknown'}`;
+      logger.warn(errorMsg);
+      throw new HttpsError("permission-denied", "Admin access required");
+    }
+
+    // Input validation
+    const { uid, role } = data as SetUserRoleRequest;
+    if (!uid || typeof uid !== "string" || uid.length !== 28) {
+      throw new HttpsError("invalid-argument", "Invalid uid: must be a 28-character string");
+    }
+    if (!role || !ALLOWED_ROLES.includes(role)) {
+      throw new HttpsError("invalid-argument", `Invalid role: must be one of ${ALLOWED_ROLES.join(", ")}`);
+    }
+
+    // Get current user to check old role for logging
+    let oldRole = "none";
+    try {
+      const user = await admin.auth().getUser(uid);
+      oldRole = user.customClaims?.role || "none";
+    } catch (error) {
+      // User might not exist, but we'll proceed to set claims anyway
+      logger.info(`User ${uid} not found or no custom claims, proceeding to set role`);
+    }
+
+    // Set custom claims
+    const customClaims = {
+      admin: role === "admin",
+      teacher: role === "teacher",
+      parent: role === "parent",
+      kid: role === "kid",
+      learningPartner: role === "learningPartner",
+      role: role,
+    };
+
+    await admin.auth().setCustomUserClaims(uid, customClaims);
+
+    // Log successful operation
+    const logMsg = `Role updated: uid=${uid}, oldRole=${oldRole}, newRole=${role}, changedBy=${context.auth.uid}, timestamp=${now}`;
+    logger.info(logMsg);
+
+    // Return success response
+    const response: SetUserRoleSuccessResponse = {
+      success: true,
+      uid,
+      role,
+      message: `User role updated successfully to ${role}`,
+      timestamp: now,
+    };
+
+    return response;
+
+  } catch (error) {
+    // If this was an HttpsError from our validation/security checks, rethrow it
+    const httpError = error as HttpsError;
+    if (httpError && httpError.code) {
+      throw httpError;
+    }
+
+    // Handle unexpected errors by throwing an HttpsError so callers/tests receive a rejection
+    logger.error("Unexpected error in setUserRole", { error, uid: data?.uid, role: data?.role, caller: context?.auth?.uid });
+    throw new HttpsError("internal", "An unexpected error occurred. Please try again.");
+  }
+}
+
 export const setUserRole = onCall(
   {
     region: "asia-south1",
     memory: "256MiB",
     timeoutSeconds: 60,
   },
-  async (data: any, context: any) => {
-    const now = new Date().toISOString();
-
-    try {
-      // Security check: Only admins can call this function
-      if (!context.auth || !context.auth.token.admin) {
-        const errorMsg = `Unauthorized setUserRole attempt by uid=${context.auth?.uid || 'unknown'}`;
-        logger.warn(errorMsg);
-        throw new HttpsError("permission-denied", "Admin access required");
-      }
-
-      // Input validation
-      const { uid, role } = data as SetUserRoleRequest;
-      if (!uid || typeof uid !== "string" || uid.length !== 28) {
-        throw new HttpsError("invalid-argument", "Invalid uid: must be a 28-character string");
-      }
-      if (!role || !ALLOWED_ROLES.includes(role)) {
-        throw new HttpsError("invalid-argument", `Invalid role: must be one of ${ALLOWED_ROLES.join(", ")}`);
-      }
-
-      // Get current user to check old role for logging
-      let oldRole = "none";
-      try {
-        const user = await admin.auth().getUser(uid);
-        oldRole = user.customClaims?.role || "none";
-      } catch (error) {
-        // User might not exist, but we'll proceed to set claims anyway
-        logger.info(`User ${uid} not found or no custom claims, proceeding to set role`);
-      }
-
-      // Set custom claims
-      const customClaims = {
-        admin: role === "admin",
-        teacher: role === "teacher",
-        parent: role === "parent",
-        kid: role === "kid",
-        learningPartner: role === "learningPartner",
-        role: role,
-      };
-
-      await admin.auth().setCustomUserClaims(uid, customClaims);
-
-      // Log successful operation
-      const logMsg = `Role updated: uid=${uid}, oldRole=${oldRole}, newRole=${role}, changedBy=${context.auth.uid}, timestamp=${now}`;
-      logger.info(logMsg);
-
-      // Return success response
-      const response: SetUserRoleSuccessResponse = {
-        success: true,
-        uid,
-        role,
-        message: `User role updated successfully to ${role}`,
-        timestamp: now,
-      };
-
-      return response;
-
-    } catch (error) {
-      // Handle known HttpsError
-      const httpError = error as HttpsError;
-      if (httpError.code) {
-        const errorResponse: SetUserRoleErrorResponse = {
-          success: false,
-          error: httpError.message,
-          code: httpError.code,
-        };
-        return errorResponse;
-      }
-
-      // Handle unexpected errors
-      logger.error("Unexpected error in setUserRole", { error, uid: data.uid, role: data.role, caller: context.auth?.uid });
-      const errorResponse: SetUserRoleErrorResponse = {
-        success: false,
-        error: "An unexpected error occurred. Please try again.",
-        code: "internal",
-      };
-      return errorResponse;
-    }
-  }
+  setUserRoleHandler
 );
 
 // Type for getUidByEmail

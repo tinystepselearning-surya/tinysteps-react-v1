@@ -3,12 +3,21 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // Helper Functions
+    function normalizeRole(role) {
+      return role == 'learning_partner' ? 'learningPartner' : role;
+    }
+
     function hasRole(role) {
-      return request.auth.token[role] == true;
+      return request.auth != null && (
+        (request.auth.token != null && request.auth.token[role] == true) ||
+        (request.auth.token != null && request.auth.token[normalizeRole(role)] == true) ||
+        (request.auth.token != null && request.auth.token.role == role) ||
+        (request.auth.token != null && request.auth.token.role == normalizeRole(role))
+      );
     }
 
     function isOwnData(uid) {
-      return request.auth.uid == uid;
+      return request.auth != null && request.auth.uid == uid;
     }
 
     function isParentOfKid(kidId) {
@@ -39,7 +48,7 @@ service cloud.firestore {
       allow update: if hasRole('admin') ||
                      (isOwnData(uid) &&
                       request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['displayName', 'email', 'phone']));
+                        .hasOnly(['name', 'email', 'phone']));
       allow delete: if hasRole('admin');
     }
 
@@ -58,7 +67,7 @@ service cloud.firestore {
                      (hasRole('parent') &&
                       request.auth.uid in resource.data.kidIds) ||
                      (hasRole('learning_partner') &&
-                      request.auth.uid in resource.data.lpId);
+                      request.auth.uid == resource.data.lpId);
       allow create, update: if hasRole('admin') || isTeacherOfSession(sessionId);
       allow delete: if hasRole('admin');
     }
@@ -68,22 +77,23 @@ service cloud.firestore {
                      isTeacherOfSession(sessionId) ||
                      (hasRole('parent') &&
                       request.auth.uid in resource.data.kidIds) ||
-                     isOwnData(request.auth.uid);
+                     (request.auth != null && request.auth.uid == resource.data.userId);
       allow write: if hasRole('admin') || isTeacherOfSession(sessionId);
     }
 
-    match /progress/{studentId}_{topicId} {
+    // progress documents store studentId and topicId in fields; document id is arbitrary
+    match /progress/{progressId} {
       allow read: if hasRole('admin') ||
                      (hasRole('teacher') &&
-                      request.auth.uid in resource.data.teacherId) ||
+                      request.auth.uid == resource.data.teacherId) ||
                      (hasRole('parent') &&
-                      request.auth.uid in resource.data.parentId) ||
-                     isOwnData(studentId) ||
+                      request.auth.uid == resource.data.parentId) ||
+                     (request.auth != null && request.auth.uid == resource.data.studentId) ||
                      (hasRole('learning_partner') &&
-                      request.auth.uid in resource.data.lpId);
+                      request.auth.uid == resource.data.lpId);
       allow write: if hasRole('admin') ||
                      (hasRole('teacher') &&
-                      request.auth.uid in resource.data.teacherId);
+                      request.auth.uid == resource.data.teacherId);
     }
 
     match /courses/{courseId} {
@@ -99,9 +109,9 @@ service cloud.firestore {
     match /invoices/{invoiceId} {
       allow read: if hasRole('admin') ||
                      (hasRole('parent') &&
-                      request.auth.uid in resource.data.parentId) ||
+                      request.auth.uid == resource.data.parentId) ||
                      (hasRole('learning_partner') &&
-                      request.auth.uid in resource.data.lpId);
+                      request.auth.uid == resource.data.lpId);
       allow create, update, delete: if hasRole('admin');
     }
 
@@ -112,12 +122,12 @@ service cloud.firestore {
       allow create, update, delete: if hasRole('admin');
     }
 
-    match /gameProgress/{kidId}_{gameId} {
+    match /gameProgress/{gameProgressId} {
       allow read: if hasRole('admin') ||
                      (hasRole('parent') &&
-                      request.auth.uid in resource.data.parentId) ||
-                     isOwnData(kidId);
-      allow write: if isOwnData(kidId);
+                      request.auth.uid == resource.data.parentId) ||
+                     (request.auth != null && request.auth.uid == resource.data.kidId);
+      allow write: if request.auth != null && request.auth.uid == resource.data.kidId;
     }
 
     match /activities/{activityId} {
@@ -128,9 +138,9 @@ service cloud.firestore {
     match /enrollments/{enrollmentId} {
       allow read: if hasRole('admin') ||
                      (hasRole('parent') &&
-                      request.auth.uid in resource.data.parentId) ||
+                      request.auth.uid == resource.data.parentId) ||
                      (hasRole('learning_partner') &&
-                      request.auth.uid in resource.data.lpId);
+                      request.auth.uid == resource.data.lpId);
       allow create, update, delete: if hasRole('admin');
     }
   }

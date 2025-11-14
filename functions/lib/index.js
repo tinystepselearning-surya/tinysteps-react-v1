@@ -41,7 +41,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.adminCreateUser = exports.adminResetPassword = exports.getUidByEmail = exports.setUserRole = void 0;
+exports.subscribeNewsletter = exports.onSessionCompleteTrigger = exports.onSessionComplete = exports.adminCreateUser = exports.adminResetPassword = exports.getUidByEmail = exports.setUserRole = void 0;
+exports.setUserRoleHandler = setUserRoleHandler;
 const firebase_functions_1 = require("firebase-functions");
 const logger = __importStar(require("firebase-functions/logger"));
 // Start writing functions
@@ -74,11 +75,8 @@ const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
  * @param context - The callable context containing auth information.
  * @returns Promise<SetUserRoleSuccessResponse | SetUserRoleErrorResponse>
  */
-exports.setUserRole = (0, https_1.onCall)({
-    region: "asia-south1",
-    memory: "256MiB",
-    timeoutSeconds: 60,
-}, async (data, context) => {
+// Long-term: expose a test-friendly handler and ensure we throw HttpsError for rejections.
+async function setUserRoleHandler(data, context) {
     var _a, _b, _c;
     const now = new Date().toISOString();
     try {
@@ -130,26 +128,21 @@ exports.setUserRole = (0, https_1.onCall)({
         return response;
     }
     catch (error) {
-        // Handle known HttpsError
+        // If this was an HttpsError from our validation/security checks, rethrow it
         const httpError = error;
-        if (httpError.code) {
-            const errorResponse = {
-                success: false,
-                error: httpError.message,
-                code: httpError.code,
-            };
-            return errorResponse;
+        if (httpError && httpError.code) {
+            throw httpError;
         }
-        // Handle unexpected errors
-        logger.error("Unexpected error in setUserRole", { error, uid: data.uid, role: data.role, caller: (_c = context.auth) === null || _c === void 0 ? void 0 : _c.uid });
-        const errorResponse = {
-            success: false,
-            error: "An unexpected error occurred. Please try again.",
-            code: "internal",
-        };
-        return errorResponse;
+        // Handle unexpected errors by throwing an HttpsError so callers/tests receive a rejection
+        logger.error("Unexpected error in setUserRole", { error, uid: data === null || data === void 0 ? void 0 : data.uid, role: data === null || data === void 0 ? void 0 : data.role, caller: (_c = context === null || context === void 0 ? void 0 : context.auth) === null || _c === void 0 ? void 0 : _c.uid });
+        throw new https_1.HttpsError("internal", "An unexpected error occurred. Please try again.");
     }
-});
+}
+exports.setUserRole = (0, https_1.onCall)({
+    region: "asia-south1",
+    memory: "256MiB",
+    timeoutSeconds: 60,
+}, setUserRoleHandler);
 exports.getUidByEmail = (0, https_1.onCall)({
     region: "asia-south1",
     memory: "256MiB",
@@ -234,4 +227,28 @@ exports.adminResetPassword = (0, https_1.onCall)({
 // Export the adminCreateUser function
 var adminCreateUser_1 = require("./adminCreateUser");
 Object.defineProperty(exports, "adminCreateUser", { enumerable: true, get: function () { return adminCreateUser_1.adminCreateUser; } });
+var onSessionComplete_1 = require("./onSessionComplete");
+Object.defineProperty(exports, "onSessionComplete", { enumerable: true, get: function () { return onSessionComplete_1.onSessionComplete; } });
+Object.defineProperty(exports, "onSessionCompleteTrigger", { enumerable: true, get: function () { return onSessionComplete_1.onSessionCompleteTrigger; } });
+exports.subscribeNewsletter = (0, https_1.onCall)({ region: 'asia-south1', memory: '128MiB', timeoutSeconds: 30 }, async (data, context) => {
+    var _a, _b, _c;
+    try {
+        const { email } = data;
+        if (!email || typeof email !== 'string' || !email.includes('@')) {
+            throw new https_1.HttpsError('invalid-argument', 'Valid email required');
+        }
+        const db = admin.firestore();
+        await db.collection('newsletter_subscribers').doc(email.toLowerCase()).set({
+            email: email.toLowerCase(),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            source: ((_b = (_a = context.rawRequest) === null || _a === void 0 ? void 0 : _a.headers) === null || _b === void 0 ? void 0 : _b.referer) || 'website',
+            uid: ((_c = context.auth) === null || _c === void 0 ? void 0 : _c.uid) || null
+        }, { merge: true });
+        return { success: true };
+    }
+    catch (err) {
+        logger.error('subscribeNewsletter error', { err });
+        throw new https_1.HttpsError('internal', 'Subscription failed');
+    }
+});
 //# sourceMappingURL=index.js.map

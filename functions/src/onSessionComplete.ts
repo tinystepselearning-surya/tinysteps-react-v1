@@ -100,7 +100,7 @@ export const onSessionComplete = onCall(
     memory: '256MiB',
     timeoutSeconds: 120,
   },
-  async (data: any, context) => {
+  async (data: any, context: any) => {
     if (!context.auth) {
       throw new HttpsError('unauthenticated', 'Authentication required.');
     }
