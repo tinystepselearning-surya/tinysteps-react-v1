@@ -43,8 +43,14 @@ describe('LPStats Component', () => {
     vi.clearAllMocks();
   });
 
-  it('renders loading state initially', () => {
+  it('renders loading state initially', async () => {
+    // Prevent the getDoc promise from resolving so the component remains in loading state.
+    (getDoc as MockedFunction<typeof getDoc>).mockImplementation(() => new Promise(() => {}));
+
+    // Synchronous render; we don't wait for effects so there are no async state updates
+    // that would trigger act() warnings.
     render(<LPStats lpId={mockLpId} />);
+
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
