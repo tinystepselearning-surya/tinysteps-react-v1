@@ -4,7 +4,7 @@ import Button from '../Button/Button';
 
 const HeroSection: React.FC = () => {
 	const { scrollY } = useScroll();
-	const parallaxY = useTransform(scrollY, (value) => value * -0.5);
+	const parallaxY = useTransform(scrollY, (value: number) => value * -0.5);
 
 	return (
 		<section className="relative flex h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-primary-50 to-accent-50 px-6 py-12 text-center md:px-12">

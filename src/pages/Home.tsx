@@ -179,7 +179,7 @@ const TestimonialsSection = () => (
         </div>
         <div className="bg-gray-50 rounded-3xl p-6 shadow-lg">
           <p className="text-gray-700 mb-4">"Aarav finally understands grammar rules and applies them in stories."</p>
-          <p className="font-semibold text-gray-900">Rahul & Sneha Sharma, Pune</p>
+          <p className="font-semibold text-gray-900">Parent Family, Location</p>
         </div>
       </div>
     </div>

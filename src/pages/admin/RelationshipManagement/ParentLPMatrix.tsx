@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { Input } from '@components/ui/input';
+import { Button } from '@components/ui/button';
 
 // Define types for Firestore data
 interface Parent {
@@ -18,6 +20,8 @@ export function ParentLPMatrix() {
   const [parents, setParents] = useState<Parent[]>([]);
   const [lps, setLps] = useState<LearningPartner[]>([]);
   const [assignments, setAssignments] = useState<Record<string, string[]>>({});
+  const [searchParent, setSearchParent] = useState('');
+  const [searchLP, setSearchLP] = useState('');
 
   // Load all parents
   useEffect(() => {
@@ -66,22 +70,45 @@ export function ParentLPMatrix() {
     });
   };
 
+  const filteredParents = parents.filter(parent =>
+    parent.displayName.toLowerCase().includes(searchParent.toLowerCase())
+  );
+
+  const filteredLPs = lps.filter(lp =>
+    lp.displayName.toLowerCase().includes(searchLP.toLowerCase())
+  );
+
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto p-4">
+      <h1 className="text-xl font-bold mb-4">Parent-LP Assignment Matrix</h1>
+
+      <div className="flex gap-4 mb-4">
+        <Input
+          placeholder="Search Parents"
+          value={searchParent}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchParent(e.target.value)}
+        />
+        <Input
+          placeholder="Search LPs"
+          value={searchLP}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchLP(e.target.value)}
+        />
+      </div>
+
       <table className="w-full border">
         <thead>
           <tr>
             <th>Parent</th>
-            {lps.map(lp => (
+            {filteredLPs.map(lp => (
               <th key={lp.id}>{lp.displayName}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {parents.map(parent => (
+          {filteredParents.map(parent => (
             <tr key={parent.id}>
               <td>{parent.displayName}</td>
-              {lps.map(lp => (
+              {filteredLPs.map(lp => (
                 <td key={lp.id}>
                   <input
                     type="checkbox"
@@ -94,6 +121,12 @@ export function ParentLPMatrix() {
           ))}
         </tbody>
       </table>
+
+      <div className="mt-4">
+        <Button onClick={() => alert('Bulk operations coming soon!')}>
+          Bulk Assign
+        </Button>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,8 @@ export function useAuth() {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const idTokenResult = await firebaseUser.getIdTokenResult();
+          // Force token refresh to ensure updated claims
+          const idTokenResult = await firebaseUser.getIdTokenResult(true);
           const role = (idTokenResult.claims.role as AuthUser['role']) || 'kid';
           setUser({
             uid: firebaseUser.uid,

@@ -3,6 +3,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import LoginPage from '../../pages/LoginPage';
+import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../../lib/auth', () => ({
   handleLogin: vi.fn(),
@@ -18,7 +19,11 @@ describe('LoginPage', () => {
   it('calls handleLogin with email and password', async () => {
   (handleLogin as unknown as any).mockResolvedValue?.(undefined);
 
-    render(<LoginPage />);
+    render(
+      <MemoryRouter initialEntries={["/teacher/login"]}>
+        <LoginPage />
+      </MemoryRouter>
+    );
 
     const email = screen.getByLabelText('email') as HTMLInputElement;
     const password = screen.getByLabelText('password') as HTMLInputElement;
@@ -30,14 +35,19 @@ describe('LoginPage', () => {
     fireEvent.click(button);
 
     await waitFor(() => {
-      expect(handleLogin).toHaveBeenCalledWith('test@example.com', 'secret');
+      // LoginPage calls handleLogin(email, password, role) based on the route
+      expect(handleLogin).toHaveBeenCalledWith('test@example.com', 'secret', 'teacher');
     });
   });
 
   it('shows error when handleLogin rejects', async () => {
   (handleLogin as unknown as any).mockRejectedValue?.(new Error('Bad credentials'));
 
-    render(<LoginPage />);
+    render(
+      <MemoryRouter initialEntries={["/teacher/login"]}>
+        <LoginPage />
+      </MemoryRouter>
+    );
 
     const email = screen.getByLabelText('email') as HTMLInputElement;
     const password = screen.getByLabelText('password') as HTMLInputElement;

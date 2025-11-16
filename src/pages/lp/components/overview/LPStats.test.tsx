@@ -35,7 +35,7 @@ describe('LPStats Component', () => {
     id: 'mock-id',
     path: 'mock-path',
     parent: {} as any,
-    withConverter: vi.fn(),
+  withConverter: vi.fn() as any,
     toJSON: vi.fn(() => ({})),
   };
 

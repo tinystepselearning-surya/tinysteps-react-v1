@@ -1,0 +1,14 @@
+{
+  "topics": {
+    "singular_plural": { "level": "beginner", "exercises": 30 },
+    "present_past_tense": { "level": "beginner", "exercises": 30 },
+    "subject_verb_agreement": { "level": "intermediate", "exercises": 25 },
+    "pronouns": { "level": "beginner", "exercises": 30 },
+    "capitalization": { "level": "beginner", "exercises": 20 },
+    "articles": { "level": "intermediate", "exercises": 25 },
+    "prepositions": { "level": "intermediate", "exercises": 20 },
+    "adjectives_adverbs": { "level": "advanced", "exercises": 20 },
+    "compound_sentences": { "level": "advanced", "exercises": 10 },
+    "punctuation": { "level": "beginner", "exercises": 20 }
+  }
+}

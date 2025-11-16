@@ -103,8 +103,8 @@ export default function TrustSignals() {
               </div>
 
               <div className="mt-10 grid gap-4 md:grid-cols-3">
-                <TeacherCard name="Ms. Priya" role="Lead Phonics" quals="Cambridge Phonics Cert • 7 yrs" />
-                <TeacherCard name="Mr. Arjun" role="Grammar" quals="MA Eng • 8 yrs" />
+                <TeacherCard name="Teacher Name" role="Lead Phonics" quals="Cambridge Phonics Cert • 7 yrs" />
+                <TeacherCard name="Teacher Name" role="Grammar" quals="MA Eng • 8 yrs" />
                 <TeacherCard name="Ms. Neha" role="Public Speaking" quals="CELTA • 6 yrs" />
               </div>
 

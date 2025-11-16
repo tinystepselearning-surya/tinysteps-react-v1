@@ -18,6 +18,14 @@ export default function DevAdmin() {
   const invoices = useInvoices(parentId);
 
   function seedAuth() {
+    // Dev-only helper: sets an in-memory auth user for local testing. Hidden in builds
+    // unless VITE_ENABLE_DEV_SEED is set to 'true'. This avoids accidental distribution
+    // of sample auth users in production builds.
+    const enableSeed = (import.meta as any).env?.VITE_ENABLE_DEV_SEED === 'true';
+    if (!enableSeed) {
+      console.warn('Dev seeding disabled. To enable set VITE_ENABLE_DEV_SEED=true in .env');
+      return;
+    }
     const u: AuthUser = {
       uid: 'dev-user-1',
       email: 'dev@example.com',
@@ -46,7 +54,10 @@ export default function DevAdmin() {
         <h2 className="font-medium">Auth Store</h2>
         <p className="text-sm text-gray-600">Current user: {user ? user.email : '—'}</p>
         <div className="mt-2 flex gap-2">
-          <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={seedAuth}>Seed Auth</button>
+          {/* Dev-only seed button (hidden unless VITE_ENABLE_DEV_SEED=true) */}
+          {(import.meta as any).env?.VITE_ENABLE_DEV_SEED === 'true' && (
+            <button className="px-3 py-1 bg-blue-600 text-white rounded" onClick={seedAuth}>Seed Auth</button>
+          )}
           <button className="px-3 py-1 bg-gray-200 rounded" onClick={() => clearUser()}>Clear Auth</button>
           <button className="px-3 py-1 bg-red-500 text-white rounded" onClick={clearAll}>Clear Storage & Reload</button>
         </div>

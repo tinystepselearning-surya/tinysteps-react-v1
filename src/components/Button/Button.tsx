@@ -69,8 +69,10 @@ const Button: React.FC<ButtonProps> = ({
 		onClick?.(event);
 	};
 
+	const MButton: any = motion.button;
+
 	return (
-		<motion.button
+		<MButton
 			type={type}
 			aria-label={ariaLabel}
 			disabled={isDisabled}
@@ -91,11 +93,11 @@ const Button: React.FC<ButtonProps> = ({
 			}
 			whileTap={!isDisabled ? { scale: 0.95 } : undefined}
 			transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-			onFocus={(event) => {
+			onFocus={(event: React.FocusEvent<HTMLButtonElement>) => {
 				setIsFocused(true);
 				onFocus?.(event);
 			}}
-			onBlur={(event) => {
+			onBlur={(event: React.FocusEvent<HTMLButtonElement>) => {
 				setIsFocused(false);
 				onBlur?.(event);
 			}}
@@ -119,7 +121,7 @@ const Button: React.FC<ButtonProps> = ({
 				/>
 			)}
 			<span className="flex items-center gap-2">{children}</span>
-		</motion.button>
+	</MButton>
 	);
 };
 

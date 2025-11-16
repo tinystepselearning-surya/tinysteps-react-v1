@@ -21,6 +21,7 @@ export interface ParentSession {
   startTime: string;
   status: 'scheduled' | 'in_progress' | 'completed';
   teacherName?: string;
+  joinUrl?: string;
 }
 
 export interface ParentInvoiceLineItem {

@@ -10,7 +10,7 @@
 | CF-02   | setUserRole           | Non-admin user authenticated          | Call function with non-admin token                                   | Throws `PERMISSION_DENIED`               | Error message matches                                                              |
 | CF-03   | setUserRole           | Admin user, invalid role              | Call function with invalid role                                      | Throws `INVALID_ARGUMENT`                | Error message matches                                                              |
 | CF-04   | onSessionComplete     | Session exists                        | Trigger function with valid session data                             | Updates session status to `completed`    | Firestore updated with correct session status                                      |
-| CF-05   | webhookRazorpay       | Valid Razorpay webhook payload        | Call function with valid payload                                     | Processes payment successfully           | Firestore updated with payment status                                              |
+| CF-05   | webhookPhonePe        | Valid PhonePe webhook payload         | Call function with valid payload                                     | Processes payment successfully           | Firestore updated with payment status                                              |
 
 ### Firestore Rules
 
@@ -42,5 +42,5 @@
 ## Notes
 - Use Jest for unit tests.
 - Use Firebase Emulator for Firestore rules testing.
-- Mock external dependencies (e.g., Razorpay, Firestore SDK).
+- Mock external dependencies (e.g., PhonePe, Firestore SDK).
 - Ensure 80%+ test coverage for critical paths.

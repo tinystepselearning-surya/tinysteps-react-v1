@@ -19,6 +19,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
+        cta: "bg-cta text-white shadow-lg hover:bg-cta-hover focus-visible:ring-2 focus-visible:ring-cta",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -47,6 +48,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        aria-label={props["aria-label"] || props.children?.toString() || "Button"}
         {...props}
       />
     )

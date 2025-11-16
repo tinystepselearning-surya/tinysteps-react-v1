@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@components/ui/dialog';
 import { CreateUserForm } from './CreateUserForm';
+import GmailParentsBucket from './GmailParentsBucket';
 import { EditUserForm } from './EditUserForm';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
@@ -23,7 +24,11 @@ export function UserList() {
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState('');
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
+  const [resetLinkUser, setResetLinkUser] = useState<User | null>(null);
+  const [generatedResetLink, setGeneratedResetLink] = useState<string | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isGmailBucketOpen, setIsGmailBucketOpen] = useState(false);
 
   const { data: users, isLoading, error, refetch } = useQuery({
     queryKey: ['users'],
@@ -78,9 +83,16 @@ export function UserList() {
     }
   };
 
-  const handleUserCreated = () => {
-    setIsCreateDialogOpen(false);
-    refetch();
+  const handleUserCreated = async (user?: User) => {
+    try {
+      // Refresh the users list and wait for the new user to appear before closing
+      await refetch();
+      toast({ title: 'User created', description: `${user?.name || user?.email || user?.id} created successfully` });
+    } catch (err: any) {
+      toast({ title: 'User created', description: 'User created, but we could not refresh the list immediately. Try refreshing the list manually.' });
+    } finally {
+      setIsCreateDialogOpen(false);
+    }
   };
 
   const handleUserUpdated = () => {
@@ -138,6 +150,21 @@ export function UserList() {
     },
   });
 
+  const sendResetLinkMutation = useMutation({
+    mutationFn: async ({ email }: { email: string }) => {
+      const generateResetLinkFn = httpsCallable(functions, 'adminGenerateResetLink');
+      const res = await generateResetLinkFn({ email });
+      return res.data as { resetLink: string };
+    },
+    onSuccess: (data) => {
+      setGeneratedResetLink(data.resetLink);
+      toast({ title: 'Reset link generated', description: 'Copy and send this link to the user.' });
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err.message || 'Failed to generate reset link', variant: 'destructive' });
+    },
+  });
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -161,20 +188,27 @@ export function UserList() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Users</h2>
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <div className="flex gap-2 items-center">
+          <GmailParentsBucket />
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button>Create New User</Button>
           </DialogTrigger>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
+              <DialogDescription>
+                Create a new user account with the appropriate role and details.
+              </DialogDescription>
             </DialogHeader>
             <CreateUserForm
               onUserCreated={handleUserCreated}
               onClose={() => setIsCreateDialogOpen(false)}
             />
           </DialogContent>
-        </Dialog>
+          </Dialog>
+          
+        </div>
       </div>
 
       {/* Filters */}
@@ -274,6 +308,22 @@ export function UserList() {
                     </Button>
                     <Button
                       size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (!user.email) {
+                          toast({ title: 'No email', description: 'Cannot generate reset link without an email', variant: 'destructive' });
+                          return;
+                        }
+                        setResetLinkUser(user);
+                        setGeneratedResetLink(null);
+                        setShowResetLinkDialog(true);
+                        sendResetLinkMutation.mutate({ email: user.email });
+                      }}
+                    >
+                      Send Reset Link
+                    </Button>
+                    <Button
+                      size="sm"
                       variant="destructive"
                       onClick={() => handleDeleteUser(user)}
                     >
@@ -349,6 +399,49 @@ export function UserList() {
                 {resetPasswordMutation.isPending ? 'Resetting...' : 'Reset Password'}
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Link Dialog */}
+      <Dialog open={showResetLinkDialog} onOpenChange={setShowResetLinkDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset Link</DialogTitle>
+            <DialogDescription>
+              A password reset link has been generated for {resetLinkUser?.name} ({resetLinkUser?.email}).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {sendResetLinkMutation.isPending ? (
+              <div>Generating reset link…</div>
+            ) : (
+              <>
+                <p className="font-mono text-xs break-all">{generatedResetLink || '—'}</p>
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowResetLinkDialog(false);
+                      setResetLinkUser(null);
+                      setGeneratedResetLink(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (generatedResetLink) {
+                        navigator.clipboard.writeText(generatedResetLink);
+                        toast({ title: 'Copied', description: 'Reset link copied to clipboard' });
+                      }
+                    }}
+                  >
+                    Copy Link
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

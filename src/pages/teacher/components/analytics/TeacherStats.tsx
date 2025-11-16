@@ -36,7 +36,7 @@ export const TeacherStats: React.FC<TeacherStatsProps> = ({ teacherId }) => {
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Sessions by Course</h3>
         <div className="space-y-2">
-          {(data.sessionsByCourse || []).map((row) => (
+          {(data.sessionsByCourse || []).map((row: any) => (
             <div key={row.course} className="flex items-center justify-between">
               <span>{row.course}</span>
               <span>{row.value}</span>
@@ -50,7 +50,7 @@ export const TeacherStats: React.FC<TeacherStatsProps> = ({ teacherId }) => {
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Monthly Trend</h3>
         <div className="space-y-2">
-          {(data.sessionsByMonth || []).map((row) => (
+          {(data.sessionsByMonth || []).map((row: any) => (
             <div key={row.month} className="flex items-center justify-between text-sm">
               <span>{row.month}</span>
               <span>{row.value}</span>

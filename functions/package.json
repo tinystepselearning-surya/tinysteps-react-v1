@@ -1,6 +1,8 @@
 {
   "name": "functions",
   "scripts": {
+    "set-groq-secret": "node scripts/setGroqSecret.js",
+    "set-groq-secret-shell": "sh scripts/set-groq-secret.sh",
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
     "build:watch": "tsc --watch",
@@ -17,10 +19,16 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+  "@google-cloud/secret-manager": "^3.8.1",
+    "axios": "^1.7.7",
     "firebase-admin": "^12.6.0",
-    "firebase-functions": "^6.0.1"
+    "firebase-functions": "^6.0.1",
+    "papaparse": "^5.4.1"
   },
   "devDependencies": {
+    "@types/mdx": "^2.0.13",
+    "@types/papaparse": "^5.5.0",
+    "@types/react": "^19.2.5",
     "@typescript-eslint/eslint-plugin": "^5.12.0",
     "@typescript-eslint/parser": "^5.12.0",
     "@vitest/ui": "^4.0.8",
@@ -31,5 +39,13 @@
     "typescript": "^5.7.3",
     "vitest": "^4.0.8"
   },
-  "private": true
+  "private": true,
+  "version": "1.0.0",
+  "directories": {
+    "lib": "lib"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
 }

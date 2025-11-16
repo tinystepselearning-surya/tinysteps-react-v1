@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import Meta from '../components/common/Meta';
 import { trackEvent } from '../lib/analytics';
+import { useAuthStore } from '../store/useAuthStore';
 
 const phone = '+91-96183-98383';
 const whatsappLink = 'https://wa.me/919618398383';
@@ -16,6 +17,7 @@ const ContactPage: React.FC = () => {
     trackEvent('contact_form_submit', { channel: 'site_form' });
   };
 
+  const { user } = useAuthStore();
   return (
     <div className="page-gradient min-h-screen">
       <Meta title="Contact Tiny Steps Online School" description="Talk to us about phonics, grammar and public speaking programs. Call, WhatsApp or send a note—team replies in 12 hours." canonical="https://tinystepslearning.com/contact" />
@@ -32,7 +34,12 @@ const ContactPage: React.FC = () => {
             <h2 className="text-xl font-semibold text-gray-900">Direct lines</h2>
             <ul className="mt-4 space-y-3 text-gray-700">
               <li><span className="font-semibold">Phone:</span> <a href="tel:+919618398383" className="text-tiny-blue-600">{phone}</a></li>
-              <li><span className="font-semibold">WhatsApp:</span> <a href={whatsappLink} onClick={() => trackEvent('cta_click', { location: 'contact', label: 'whatsapp_chat' })} className="text-tiny-green-600">Chat with our parent advisor</a></li>
+              {!user && (
+                <li><span className="font-semibold">WhatsApp:</span> <a href={whatsappLink} onClick={() => trackEvent('cta_click', { location: 'contact', label: 'whatsapp_chat' })} className="text-tiny-green-600">Chat with our parent advisor</a></li>
+              )}
+              {user && (
+                <li><span className="font-semibold">Support:</span> <a href="/contact" className="text-tiny-blue-600">Use the contact form to reach our team</a></li>
+              )}
               <li><span className="font-semibold">Email:</span> <a href="mailto:hello@tinystepslearning.com" className="text-tiny-blue-600">hello@tinystepslearning.com</a></li>
               <li><span className="font-semibold">Location:</span> Bengaluru, Karnataka (serving families PAN India)</li>
               <li><span className="font-semibold">Hours:</span> Mon–Fri 9 AM – 6 PM IST • Sat 10 AM – 2 PM IST</li>

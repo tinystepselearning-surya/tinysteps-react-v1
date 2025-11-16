@@ -1,0 +1,23 @@
+{
+  "age5_6": {
+    "level": "beginner",
+    "topics": [
+      { "prompt": "Tell me about your favorite animal. Why do you like it?", "timeLimit": 20 },
+      { "prompt": "What did you do today?", "timeLimit": 20 }
+    ]
+  },
+  "age7_8": {
+    "level": "intermediate",
+    "topics": [
+      { "prompt": "Describe your best friend.", "timeLimit": 30 },
+      { "prompt": "Tell a story about an adventure you had.", "timeLimit": 40 }
+    ]
+  },
+  "age9_10": {
+    "level": "advanced",
+    "topics": [
+      { "prompt": "Give directions from school to your home.", "timeLimit": 45 },
+      { "prompt": "Explain a scientific concept.", "timeLimit": 60 }
+    ]
+  }
+}

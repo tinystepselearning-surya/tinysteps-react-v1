@@ -1,6 +1,6 @@
 import React from 'react';
 import { useToast } from "@components/hooks/use-toast";
-import { Toast } from "../../ui/toast";
+import { Toast } from "./toast";
 
 interface ToastItem {
   id: string;

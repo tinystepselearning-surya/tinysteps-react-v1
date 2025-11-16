@@ -32,12 +32,12 @@ export const ChildProgressOverview: React.FC<ChildProgressOverviewProps> = ({ pr
             <div key={topic}>
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{topic.charAt(0).toUpperCase() + topic.slice(1)}</span>
-                <span>{snapshot[topic as keyof typeof snapshot]}%</span>
+                <span>{Number(snapshot[topic as keyof typeof snapshot])}%</span>
               </div>
               <div className="h-2 bg-muted rounded-full">
                 <div
-                  className={cn('h-2 rounded-full', getBarColor(snapshot[topic as keyof typeof snapshot] as number))}
-                  style={{ width: `${snapshot[topic as keyof typeof snapshot]}%` }}
+                  className={cn('h-2 rounded-full', getBarColor(Number(snapshot[topic as keyof typeof snapshot]) as number))}
+                  style={{ width: `${Number(snapshot[topic as keyof typeof snapshot])}%` }}
                 />
               </div>
             </div>

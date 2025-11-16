@@ -38,14 +38,14 @@
       "port": 5001
     },
     "firestore": {
-      "port": 8080
+      "port": 8085
     },
     "storage": {
       "port": 9199
     },
     "ui": {
       "enabled": true,
-      "port": 4000
+      "port": 4001
     },
     "dataconnect": {
       "port": 9399,

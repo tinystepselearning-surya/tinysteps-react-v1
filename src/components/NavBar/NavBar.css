@@ -1,0 +1,142 @@
+/* NavBar.css - neon underline with animated streak and particles */
+:root{
+  --bg: #ffffff;
+  --text: #000000;
+  --gap: 44px;
+  --underline-h: 6px;
+  --accent-core: #3b82f6;
+  --accent-outer: #1d4ed8;
+  --streak: #dbeafe;
+}
+
+.ts-nav-wrapper{
+  background: transparent;
+  padding: 0;
+  color: var(--text);
+  border-bottom: none;
+}
+
+.ts-nav{
+  position: relative;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding-bottom: 18px; /* space for underline */
+}
+
+/* list */
+.ts-nav-list{
+  list-style: none;
+  display: flex;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
+
+/* link */
+.ts-nav-link{
+  color: rgba(0,0,0,0.92);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  position: relative;
+  z-index: 3; /* above underline */
+}
+
+/* active text slightly brighter */
+.ts-nav-link.active {
+  color: #000000;
+}
+
+/* Underline container */
+.ts-underline{
+  position: absolute;
+  left: 0;
+  bottom: 8px;
+  height: var(--underline-h);
+  width: 0;
+  transform: translateX(0);
+  transition: transform 360ms cubic-bezier(.2,.9,.2,1), width 360ms cubic-bezier(.2,.9,.2,1);
+  border-radius: 999px;
+  z-index: 2;
+  pointer-events: none;
+
+  /* gradient core with inner glow */
+  background: linear-gradient(90deg, var(--accent-core), var(--accent-outer));
+  box-shadow:
+    0 4px 18px rgba(59,130,246,0.20),
+    0 0 36px rgba(29,78,216,0.12),
+    inset 0 -2px 8px rgba(59,130,246,0.12);
+  filter: drop-shadow(0 8px 26px rgba(59,130,246,0.12));
+  will-change: transform, width;
+  transform-origin: left center;
+  overflow: visible;
+}
+
+/* the moving bright streak (animated) */
+.ts-underline .streak{
+  position: absolute;
+  right: 8%;
+  top: -10px;
+  left: 8%;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.0), var(--streak), rgba(255,255,255,0.0));
+  filter: blur(0.6px);
+  opacity: 0.95;
+  transform-origin: center;
+  pointer-events: none;
+  animation: streak-move 1.6s linear infinite;
+  mix-blend-mode: screen;
+}
+
+/* tiny particles flicker along underline - create with CSS gradient trick */
+.ts-underline .particles{
+  position: absolute;
+  left: 0;
+  top: -22px;
+  width: 100%;
+  height: 44px;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 20% 45%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.0) 50%),
+    radial-gradient(1.5px 1.5px at 40% 55%, rgba(219,234,254,0.9) 0%, rgba(219,234,254,0.0) 50%),
+    radial-gradient(1.2px 1.2px at 60% 40%, rgba(191,219,254,0.95) 0%, rgba(191,219,254,0.0) 50%),
+    radial-gradient(2px 2px at 80% 48%, rgba(219,234,254,0.9) 0%, rgba(219,234,254,0.0) 50%);
+  background-repeat: no-repeat;
+  opacity: 0.9;
+  transform: translateX(0);
+  animation: particles-sheen 2.8s linear infinite;
+  mix-blend-mode: screen;
+}
+
+/* streak movement keyframes: sweeps left-to-right while scaling */
+@keyframes streak-move {
+  0% { transform: translateX(-110%) scaleX(.6); opacity: 0; }
+  10% { opacity: 1; transform: translateX(-60%) scaleX(1.05); }
+  40% { transform: translateX(-30%) scaleX(.9); opacity: 0.9; }
+  70% { transform: translateX(10%) scaleX(1.1); opacity: 0.6; }
+  100% { transform: translateX(110%) scaleX(.6); opacity: 0; }
+}
+
+/* particles sheen */
+@keyframes particles-sheen {
+  0% { transform: translateX(-20%); opacity: 0.85; }
+  40% { transform: translateX(10%); opacity: 1; }
+  60% { transform: translateX(40%); opacity: 0.85; }
+  100% { transform: translateX(120%); opacity: 0; }
+}
+
+/* some responsive adjustments */
+@media (max-width: 720px){
+  :root { --gap: 22px; --underline-h: 5px; }
+  .ts-nav-wrapper { padding: 18px 16px; }
+  .ts-nav-link { font-size: 15px; }
+  .ts-underline .streak { top: -8px; height: 5px; }
+  .ts-underline .particles { top: -18px; height: 36px; }
+}

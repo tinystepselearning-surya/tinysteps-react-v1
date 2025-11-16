@@ -44,3 +44,37 @@ export interface Invoice {
   dueDate?: string;
   status?: string;
 }
+
+export interface Course {
+  id?: string;
+  name: string;
+  area: 'Phonics' | 'Grammar' | 'Speaking';
+  level: number;
+  description: string;
+  durationMinutes: number;
+  sessionFrequency: 'weekly' | 'biweekly' | 'monthly';
+  ratePerSession: number;
+  topics: string[];
+  prerequisites?: string[];
+  targetAge: number[];
+  targetGrade: string[];
+  maxStudentsPerSession: number;
+  status: 'active' | 'inactive' | 'draft';
+  createdBy: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Topic {
+  id?: string;
+  courseId: string;
+  name: string;
+  description: string;
+  sequenceNumber: number;
+  practiceExercises: string[];
+  worksheets: string[];
+  games: string[];
+  estimatedMinutes: number;
+  targetMastery: number;
+  createdAt: Timestamp;
+}

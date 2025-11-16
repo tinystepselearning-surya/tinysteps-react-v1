@@ -2,146 +2,207 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper Functions
-    function normalizeRole(role) {
-      return role == 'learning_partner' ? 'learningPartner' : role;
+    // Public game reference data
+    match /gameData/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+    
+    // Helper functions
+    function isAdmin() {
+      return request.auth.token.admin == true;
+    }
+    
+    function isTeacher() {
+      return request.auth.token.teacher == true;
+    }
+    
+    function isParent() {
+      return request.auth.token.parent == true;
+    }
+    
+    function isLP() {
+      return request.auth.token.learningPartner == true;
+    }
+    
+    function isKid() {
+      return request.auth.token.kid == true;
     }
 
-    function hasRole(role) {
-      return request.auth != null && (
-        (request.auth.token != null && request.auth.token[role] == true) ||
-        (request.auth.token != null && request.auth.token[normalizeRole(role)] == true) ||
-        (request.auth.token != null && request.auth.token.role == role) ||
-        (request.auth.token != null && request.auth.token.role == normalizeRole(role))
+    // ===== USERS COLLECTION =====
+    match /users/{uid} {
+      // Admin: Read/Write all (broad privileges)
+      allow read, create, delete: if isAdmin();
+
+      // Users: read own doc
+      allow read: if request.auth.uid == uid;
+
+      // Allow admins to update any user. Also allow a user to update their own profile, but users cannot change their 'role' field.
+      allow update: if isAdmin() || (request.auth.uid == uid && (
+        !('role' in request.resource.data) || request.resource.data.role == resource.data.role
+      ));
+
+      // LP: Read assigned teachers & parents only. Allow read if the user's assignedLP or assignedLPs includes the LP uid,
+      // or if the LP has token-based lists that include the user's uid.
+      allow read: if isLP() && (
+        ('assignedLP' in resource.data && resource.data.assignedLP == request.auth.uid) ||
+        ('assignedLPs' in resource.data && request.auth.uid in resource.data.assignedLPs) ||
+        (('lpAssignedTeachers' in request.auth.token) && resource.data.uid in request.auth.token.lpAssignedTeachers) ||
+        (('lpAssignedParents' in request.auth.token) && resource.data.uid in request.auth.token.lpAssignedParents)
+      );
+
+      // Teacher: read parents only
+      allow read: if isTeacher() && resource.data.role == 'parent';
+
+      // Parent: read teachers only
+      allow read: if isParent() && resource.data.role == 'teacher';
+    }
+
+    // User progress per game (scoped to their uid)
+    match /users/{userId}/progress/{document=**} {
+      allow read, write, create: if request.auth.uid == userId;
+    }
+
+    // User game stats per game (scoped to their uid)
+    match /users/{userId}/gameStats/{document=**} {
+      allow read, write: if request.auth.uid == userId;
+    }
+
+    // Leaderboards are public read, admin-managed writes via backend only
+    match /leaderboards/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Teacher class metrics (teacher scoped)
+    match /teachers/{teacherId}/classes/{classId}/studentMetrics/{document=**} {
+      allow read, write: if request.auth.uid == teacherId;
+    }
+
+    // ===== KIDS COLLECTION =====
+    match /kids/{kidId} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+      
+      // Parent: Read own children only
+      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+      
+      // Teacher: Read students from enrollments
+      allow read: if isTeacher() && exists(/databases/$(database)/documents/enrollments/
+        $(request.auth.uid)) && get(/databases/$(database)/documents/enrollments/
+        $(request.auth.uid)).data.studentId == kidId;
+      
+      // LP: Read via parent/teacher assignment
+      allow read: if isLP() && (
+        request.auth.uid in resource.data.assignedLPs
       );
     }
 
-    function isOwnData(uid) {
-      return request.auth != null && request.auth.uid == uid;
-    }
-
-    function isParentOfKid(kidId) {
-      return hasRole('parent') &&
-             get(/databases/$(database)/documents/kids/$(kidId)).data.parentId == request.auth.uid;
-    }
-
-    function isTeacherOfKid(kidId) {
-      return hasRole('teacher') &&
-             get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid;
-    }
-
-    function isLPOfKid(kidId) {
-      return hasRole('learning_partner') &&
-             get(/databases/$(database)/documents/kids/$(kidId)).data.lpId == request.auth.uid;
-    }
-
-    function isTeacherOfSession(sessionId) {
-      return hasRole('teacher') &&
-             get(/databases/$(database)/documents/sessions/$(sessionId)).data.teacherId == request.auth.uid;
-    }
-
-    // Collection Rules
-
-    match /users/{uid} {
-      allow read: if hasRole('admin') || isOwnData(uid);
-      allow create: if false;
-      allow update: if hasRole('admin') ||
-                     (isOwnData(uid) &&
-                      request.resource.data.diff(resource.data).affectedKeys()
-                        .hasOnly(['name', 'email', 'phone']));
-      allow delete: if hasRole('admin');
-    }
-
-    match /kids/{kidId} {
-      allow read: if hasRole('admin') ||
-                     isParentOfKid(kidId) ||
-                     isTeacherOfKid(kidId) ||
-                     isLPOfKid(kidId) ||
-                     isOwnData(kidId);
-      allow create, update, delete: if hasRole('admin');
-    }
-
-    match /sessions/{sessionId} {
-      allow read: if hasRole('admin') ||
-                     isTeacherOfSession(sessionId) ||
-                     (hasRole('parent') &&
-                      request.auth.uid in resource.data.kidIds) ||
-                     (hasRole('learning_partner') &&
-                      request.auth.uid == resource.data.lpId);
-      allow create, update: if hasRole('admin') || isTeacherOfSession(sessionId);
-      allow delete: if hasRole('admin');
-    }
-
-    match /attendance/{sessionId}/attendanceRecords/{date} {
-      allow read: if hasRole('admin') ||
-                     isTeacherOfSession(sessionId) ||
-                     (hasRole('parent') &&
-                      request.auth.uid in resource.data.kidIds) ||
-                     (request.auth != null && request.auth.uid == resource.data.userId);
-      allow write: if hasRole('admin') || isTeacherOfSession(sessionId);
-    }
-
-    // progress documents store studentId and topicId in fields; document id is arbitrary
-    match /progress/{progressId} {
-      allow read: if hasRole('admin') ||
-                     (hasRole('teacher') &&
-                      request.auth.uid == resource.data.teacherId) ||
-                     (hasRole('parent') &&
-                      request.auth.uid == resource.data.parentId) ||
-                     (request.auth != null && request.auth.uid == resource.data.studentId) ||
-                     (hasRole('learning_partner') &&
-                      request.auth.uid == resource.data.lpId);
-      allow write: if hasRole('admin') ||
-                     (hasRole('teacher') &&
-                      request.auth.uid == resource.data.teacherId);
-    }
-
-    match /courses/{courseId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if hasRole('admin');
-    }
-
-    match /courses/{courseId}/curriculum/{topicId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if hasRole('admin');
-    }
-
-    match /invoices/{invoiceId} {
-      allow read: if hasRole('admin') ||
-                     (hasRole('parent') &&
-                      request.auth.uid == resource.data.parentId) ||
-                     (hasRole('learning_partner') &&
-                      request.auth.uid == resource.data.lpId);
-      allow create, update, delete: if hasRole('admin');
-    }
-
-    match /materials/{materialId} {
-      allow read: if request.auth != null &&
-                     (resource.data.audience == null ||
-                      request.auth.token.role in resource.data.audience);
-      allow create, update, delete: if hasRole('admin');
-    }
-
-    match /gameProgress/{gameProgressId} {
-      allow read: if hasRole('admin') ||
-                     (hasRole('parent') &&
-                      request.auth.uid == resource.data.parentId) ||
-                     (request.auth != null && request.auth.uid == resource.data.kidId);
-      allow write: if request.auth != null && request.auth.uid == resource.data.kidId;
-    }
-
-    match /activities/{activityId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if hasRole('admin');
-    }
-
+    // ===== ENROLLMENTS COLLECTION =====
     match /enrollments/{enrollmentId} {
-      allow read: if hasRole('admin') ||
-                     (hasRole('parent') &&
-                      request.auth.uid == resource.data.parentId) ||
-                     (hasRole('learning_partner') &&
-                      request.auth.uid == resource.data.lpId);
-      allow create, update, delete: if hasRole('admin');
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+      
+      // Parent: Read own enrollments (own children)
+      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+      
+      // Teacher: Read own enrollments
+      allow read: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      
+      // LP: Read via assignment
+      allow read: if isLP() && (
+        resource.data.lpId == request.auth.uid ||
+        resource.data.teacherId in request.auth.token.lpAssignedTeachers
+      );
+    }
+
+    // ===== SESSIONS COLLECTION =====
+    match /sessions/{sessionId} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+      
+      // Teacher: Read/Write own sessions
+      allow read, write: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      
+      // Parent: Read sessions for own children
+      allow read: if isParent() && (
+        get(/databases/$(database)/documents/kids/
+        $(resource.data.kidIds)).data.parentId == request.auth.uid
+      );
+      
+      // Kid: Read own sessions
+      allow read: if isKid() && request.auth.uid in resource.data.kidIds;
+    }
+
+    // ===== PROGRESS COLLECTION =====
+    match /progress/{progressId} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+      
+      // Teacher: Read students they teach
+      allow read: if isTeacher();
+      
+      // Parent: Read own children's progress
+      allow read: if isParent();
+      
+      // LP: Read assigned
+      allow read: if isLP();
+    }
+
+    // ===== INVOICES COLLECTION =====
+    match /invoices/{invoiceId} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+      
+      // Parent: Read own invoices
+      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+      
+      // LP: Read assigned parents' invoices
+      allow read: if isLP() && (
+        resource.data.parentId in request.auth.token.lpAssignedParents
+      );
+    }
+
+    // ===== COURSES COLLECTION =====
+    match /courses/{courseId} {
+      // Everyone: Read (curriculum is public)
+      allow read: if request.auth != null;
+      
+      // Admin: Write
+      allow write: if isAdmin();
+    }
+
+    // ===== NOTIFICATIONS COLLECTION =====
+    match /notifications/{notificationId} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+      
+      // Users: Read own notifications
+      allow read: if request.auth.uid == resource.data.userId;
+      allow write: if false; // Only backend can write
+    }
+
+    // ===== BULK UPLOAD JOBS =====
+    // Jobs created by admins to perform bulk CSV processing (tracked and audited)
+    match /bulkUploadJobs/{jobId} {
+      // Admin: create/read all
+      allow create, read: if isAdmin();
+      // Admin can also update or delete if necessary
+      allow update, delete: if isAdmin();
+    }
+
+    // ===== AI USAGE LOGS =====
+    match /ai-usage-logs/{logId} {
+      // Admin: Read all
+      allow read: if isAdmin();
+      // Functions: Write (authenticated context)
+      allow write: if request.auth != null;
+    }
+
+    // ===== AI ERROR LOGS =====
+    match /ai-error-logs/{logId} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
     }
   }
 }

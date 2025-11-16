@@ -10,6 +10,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
   const tabs = [
     { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'students', label: 'Student Management', icon: '🎓' },
+    { id: 'enrollments', label: 'Enrollment Management', icon: '📝' },
     { id: 'relationships', label: 'Relationship Management', icon: '🤝' },
     { id: 'courses', label: 'Course Management', icon: '📚' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },

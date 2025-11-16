@@ -8,7 +8,7 @@ import { functions, db } from '../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@components/ui/form';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
@@ -96,6 +96,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>Edit the user's profile information, role and status. Be careful when changing roles as it may affect permissions.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
@@ -107,7 +108,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="John Doe" {...field} />
+                    <Input placeholder="Full Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -121,7 +122,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="john@example.com" {...field} />
+                    <Input type="email" placeholder="email@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

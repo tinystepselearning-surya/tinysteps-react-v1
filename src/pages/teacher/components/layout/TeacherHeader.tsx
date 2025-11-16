@@ -1,7 +1,11 @@
 import React from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
+import { NotificationBell } from '../notifications/NotificationsPanel';
 
 interface TeacherHeaderProps {
   name?: string;
@@ -10,6 +14,16 @@ interface TeacherHeaderProps {
 
 export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ name, upcomingCount }) => {
   const { clearUser } = useAuthStore();
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      clearUser();
+      navigate('/teacher/login');
+    } catch (err) {
+      console.error('Logout failed', err);
+    }
+  };
   const initials = name
     ?.split(' ')
     .map((part) => part[0] || '')
@@ -30,10 +44,11 @@ export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ name, upcomingCoun
         )}
       </div>
       <div className="flex items-center gap-4">
+        <NotificationBell count={2} /> {/* Placeholder count */}
         <div className="h-12 w-12 rounded-full bg-white/80 dark:bg-slate-800 text-blue-600 flex items-center justify-center font-semibold">
           {initials || 'TT'}
         </div>
-        <Button variant="outline" onClick={clearUser}>
+        <Button variant="outline" onClick={handleLogout}>
           Logout
         </Button>
       </div>

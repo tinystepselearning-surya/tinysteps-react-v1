@@ -36,6 +36,7 @@ export interface CreateUserData {
   communicationLanguage?: string;
   sessionTime?: string;
   paymentMethods?: string;
+  childIds?: string[];
   // For LP:
   region?: string;
   bankAccountNumber?: string;

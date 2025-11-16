@@ -19,11 +19,11 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
 }) => {
 	const motionValue = useMotionValue(0);
 	const [formatted, setFormatted] = useState('0');
-	const controlsRef = useRef<ReturnType<typeof animate>>();
-	const transformer = useTransform(motionValue, (latest) => Number(latest).toFixed(decimals));
+	const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
+	const transformer = useTransform(motionValue, (latest: number) => Number(latest).toFixed(decimals));
 
 	useEffect(() => {
-		const unsubscribe = transformer.on('change', (val) => setFormatted(val));
+	const unsubscribe = transformer.on('change', (val: string) => setFormatted(val));
 		return () => {
 			unsubscribe();
 		};
@@ -42,14 +42,16 @@ const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
 		};
 	}, [motionValue, value, duration]);
 
+	const MSpan: any = motion.span;
+
 	return (
-		<motion.span
+		<MSpan
 			aria-live="polite"
 			className={cn('text-4xl font-extrabold text-gray-900 md:text-5xl', className)}
 		>
 			{formatted}
 			{suffix}
-		</motion.span>
+	</MSpan>
 	);
 };
 

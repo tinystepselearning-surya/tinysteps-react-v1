@@ -1,10 +1,11 @@
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from './firebaseConfig';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore, AuthUser } from '../store/useAuthStore';
 
 export async function handleLogin(email: string, password: string, expectedRole?: string) {
   try {
-    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const normalizedEmail = email.trim();
+    const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
     const firebaseUser = credential.user;
     const idTokenResult = await firebaseUser.getIdTokenResult();
 
@@ -22,15 +23,58 @@ export async function handleLogin(email: string, password: string, expectedRole?
         uid: firebaseUser.uid,
         email: firebaseUser.email || '',
         displayName: firebaseUser.displayName || 'User',
-        // cast to union defined in store
-        role: role as any,
+        role: role as AuthUser['role'],
       },
     });
 
-    // Navigate to role home
-    window.location.href = `/${role}`;
+    const roleRedirectMap: Record<AuthUser['role'], string> = {
+      admin: '/surya',
+      teacher: '/teacher',
+      parent: '/parent',
+      kid: '/parent/kids',
+      learningPartner: '/learning-partner',
+    };
+
+    const destination = roleRedirectMap[role as AuthUser['role']] || `/${role}`;
+    window.location.href = destination;
   } catch (err) {
     // Re-throw so callers can show UI errors
+    throw err;
+  }
+}
+
+export async function handleLoginWithGoogle(expectedRole?: string) {
+  try {
+    const provider = new GoogleAuthProvider();
+    const credential = await signInWithPopup(auth, provider);
+    const firebaseUser = credential.user;
+    const idTokenResult = await firebaseUser.getIdTokenResult();
+    const roleClaim = (idTokenResult.claims as any).role as string | undefined;
+    const role = (roleClaim as any) || 'parent';
+
+    if (expectedRole && role !== expectedRole) {
+      throw new Error(`Invalid Google account for ${expectedRole} role`);
+    }
+
+    useAuthStore.setState({
+      user: {
+        uid: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        displayName: firebaseUser.displayName || 'User',
+        role: role as AuthUser['role'],
+      }
+    });
+
+    const roleRedirectMap: Record<AuthUser['role'], string> = {
+      admin: '/surya',
+      teacher: '/teacher',
+      parent: '/parent',
+      kid: '/parent/kids',
+      learningPartner: '/learning-partner',
+    };
+    const destination = roleRedirectMap[role as AuthUser['role']] || `/${role}`;
+    window.location.href = destination;
+  } catch (err) {
     throw err;
   }
 }

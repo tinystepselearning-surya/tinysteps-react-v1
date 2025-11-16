@@ -5,7 +5,7 @@ const integrations = [
   { name: 'Zoom', icon: '🎥', color: 'from-blue-400 to-blue-600', description: 'Seamless video conferencing for live classes' },
   { name: 'Firebase', icon: '🔥', color: 'from-orange-400 to-red-500', description: 'Real-time database and authentication' },
   { name: 'Google Analytics', icon: '📊', color: 'from-green-400 to-green-600', description: 'Track user engagement and progress' },
-  { name: 'Razorpay', icon: '💳', color: 'from-purple-400 to-purple-600', description: 'Secure payment processing for fees' },
+  { name: 'PhonePe', icon: '💳', color: 'from-purple-400 to-purple-600', description: 'Secure payment processing for fees' },
   { name: 'SendGrid', icon: '📧', color: 'from-red-400 to-red-600', description: 'Automated email notifications and reports' },
   { name: 'Sentry', icon: '🛡️', color: 'from-gray-500 to-gray-700', description: 'Error monitoring and performance tracking' },
 ];

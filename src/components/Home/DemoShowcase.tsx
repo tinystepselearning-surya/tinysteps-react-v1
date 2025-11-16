@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React from 'react';
+import { useAuthStore } from '../../store/useAuthStore';
 import { motion } from 'framer-motion';
 
 const highlights = [
@@ -15,6 +16,8 @@ const sessions = [
 ];
 
 const DemoShowcase = () => {
+  const { user } = useAuthStore();
+
   return (
     <section data-animate="fade-up" className="bg-gradient-to-b from-[#fff8ee] via-white to-[#e7f4ff] px-6 py-16">
       <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[1fr_1fr]">
@@ -43,12 +46,14 @@ const DemoShowcase = () => {
             >
               Book free trial after demo
             </button>
-            <a
-              href="https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20Share%20the%20demo%20class%20video%20please."
-              className="rounded-full border border-gray-200 bg-white px-5 py-3 text-gray-900 shadow"
-            >
-              Get demo link on WhatsApp ↗
-            </a>
+            {!user && (
+              <a
+                href="https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20Share%20the%20demo%20class%20video%20please."
+                className="rounded-full border border-gray-200 bg-white px-5 py-3 text-gray-900 shadow"
+              >
+                Get demo link on WhatsApp ↗
+              </a>
+            )}
           </div>
         </div>
         <motion.div
@@ -70,7 +75,7 @@ const DemoShowcase = () => {
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 p-4 shadow-lg">
             <div className="text-xs uppercase tracking-[0.3em] text-gray-500">AI insight overlay</div>
-            <p className="text-sm font-semibold text-gray-900">“Arjun nailed consonant blends today. Focus for next class: long vowels + expression.”</p>
+            <p className="text-sm font-semibold text-gray-900">“Student nailed consonant blends today. Focus for next class: long vowels + expression.”</p>
             <p className="text-xs text-gray-500">Sent automatically to parents after every class.</p>
           </div>
         </motion.div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import NavBar from './NavBar/NavBar';
 
 export const Header: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -14,10 +15,7 @@ export const Header: React.FC = () => {
           <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">T</div>
           <span className="text-2xl font-bold text-gray-900">TinySteps</span>
         </div>
-        <nav className="hidden md:flex space-x-8">
-          <Link to="/" className={`text-gray-700 hover:text-blue-600 transition duration-300 font-medium ${isActive('/') ? 'text-blue-600 underline' : ''}`}>Home</Link>
-          <a href="#book-trial" className="text-gray-700 hover:text-blue-600 transition duration-300 font-medium">Book Trial</a>
-        </nav>
+        <NavBar />
         <button
           className="md:hidden p-2 rounded-md bg-white border border-gray-200 shadow-sm"
           onClick={() => setOpen(!open)}

@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { trackEvent } from '../../lib/analytics';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const schema = z.object({
   parentName: z.string().min(2, 'Please enter your name'),
@@ -22,6 +23,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
     formState: { errors, isSubmitting, isSubmitSuccessful },
     reset,
   } = useForm<FormData>({ resolver: zodResolver(schema) });
+  const { user } = useAuthStore();
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -32,10 +34,10 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
       const submitLead = httpsCallable(functions as any, 'subscribeNewsletter');
       await submitLead({ email: data.email, parentName: data.parentName, phone: data.phone, childAge: data.childAge, source: 'trial' });
       trackEvent('trial_form_submit', { context, childAge: data.childAge });
-      const message = encodeURIComponent(
-        `Hi Tiny Steps! I'm ${data.parentName}.\nChild age: ${data.childAge}\nPhone: ${data.phone}\nEmail: ${data.email}\nI'd like to book a free trial.`
-      );
-      window.open(`https://wa.me/919618398383?text=${message}`, '_blank');
+      const message = encodeURIComponent(`Hi Tiny Steps! I'm ${data.parentName}.\nChild age: ${data.childAge} \nPhone: ${data.phone} \nEmail: ${data.email} \nI'd like to book a free trial.`);
+      if (!user) {
+        window.open(`https://wa.me/919618398383?text=${message}`, '_blank');
+      }
       reset();
     } catch (e) {
       // swallow for now; UI shows generic state
@@ -64,9 +66,11 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         <button className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
           {isSubmitting ? 'Booking…' : 'Book Free Trial'}
         </button>
-        <a href="https://wa.me/919618398383" className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 sm:flex-1">
-          Chat on WhatsApp
-        </a>
+  {!user && (
+          <a href="https://wa.me/919618398383" className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 sm:flex-1">
+            Chat on WhatsApp
+          </a>
+        )}
       </div>
       {isSubmitSuccessful && <p className="text-xs text-green-600">We’ve received your request. We’ll contact you shortly.</p>}
     </form>

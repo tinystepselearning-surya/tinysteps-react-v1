@@ -69,7 +69,7 @@ const renderDashboard = () =>
         <Route path="/Surya" element={<AdminDashboard />} />
         <Route path="/teacher" element={<div>Teacher Dashboard</div>} />
         <Route path="/parent" element={<div>Parent Dashboard</div>} />
-        <Route path="/learningpartner" element={<div>LP Dashboard</div>} />
+        <Route path="/learning-partner" element={<div>LP Dashboard</div>} />
         <Route path="/kid" element={<div>Kid Dashboard</div>} />
       </Routes>
     </MemoryRouter>

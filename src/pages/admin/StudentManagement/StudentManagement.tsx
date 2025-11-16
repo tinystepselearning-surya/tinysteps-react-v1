@@ -1,13 +1,17 @@
 import React from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
+import StudentBulkUploader from './StudentBulkUploader';
 
 export default function StudentManagement() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Student Management</h2>
-        <Button>Create New Student</Button>
+        <div className="flex gap-2">
+          <StudentBulkUploader />
+          <Button>Create New Student</Button>
+        </div>
       </div>
 
       <Card className="p-6">

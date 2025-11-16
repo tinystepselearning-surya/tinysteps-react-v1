@@ -13,9 +13,9 @@ const BlogPostPage: React.FC = () => {
     (async () => {
       if (post || !slug) return;
       try {
-        const mod: any = await import(`../content/blog/${slug}.mdx`);
-        setMdxComp(() => mod.default);
-        setMdxMeta(mod.meta || {});
+        // const mod: any = await import(`../content/blog/${slug}.mdx`);
+        // setMdxComp(() => mod.default);
+        // setMdxMeta(mod.meta || {});
       } catch (e) {
         // not mdx
       }

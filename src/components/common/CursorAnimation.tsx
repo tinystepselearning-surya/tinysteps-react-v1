@@ -9,7 +9,7 @@ const CursorAnimation: React.FC = () => {
 	const smoothY = useSpring(cursorY, { stiffness: 300, damping: 30 });
 	const scrollProgress = useMotionValue(0);
 	const smoothProgress = useSpring(scrollProgress, { stiffness: 200, damping: 30 });
-	const progressWidth = useTransform(smoothProgress, (value) => `${value}%`);
+	const progressWidth = useTransform(smoothProgress, (value: number) => `${value}%`);
 
 	useEffect(() => {
 		if (typeof window === 'undefined' || typeof document === 'undefined') return;

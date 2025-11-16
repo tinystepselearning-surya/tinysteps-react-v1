@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useEffect, useMemo } from 'react';
 import Meta from '../components/common/Meta';
+import { useAuthStore } from '../store/useAuthStore';
 import { catalogs } from '../content/courses';
 import GamingSubscriptionSection from '../components/Home/GamingSubscriptionSection';
 
@@ -185,7 +186,11 @@ const PricingPage: React.FC = () => {
           </div>
           <div className="glass-panel p-5">
             <div className="font-semibold text-gray-900">Need installment plans?</div>
-            <p className="mt-2">Chat with us on <a href="https://wa.me/919618398383" className="text-tiny-green-600">WhatsApp</a>. We set up 2-month or 3-month payment splits for most families.</p>
+            <p className="mt-2 text-sm text-gray-600">{!useAuthStore().user ? (
+              <>Chat with us on <a href="https://wa.me/919618398383" className="text-tiny-green-600">WhatsApp</a>. We set up 2-month or 3-month payment splits for most families.</>
+            ) : (
+              <>Please use <a href="/contact" className="text-tiny-blue-600">Contact</a> to verify payment options; our finance team will assist.</>
+            )}</p>
           </div>
         </div>
       </section>

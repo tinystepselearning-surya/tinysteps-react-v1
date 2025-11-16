@@ -1,10 +1,13 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useAuthStore } from '../../store/useAuthStore';
 import { trackEvent } from '../../lib/analytics';
 
 const FloatingAssistant = () => {
+  const { user } = useAuthStore();
   const [promptVisible, setPromptVisible] = useState(false);
+  // Note: Do not return early before hooks; only check after all hooks declared
 
   useEffect(() => {
     const timer = setTimeout(() => setPromptVisible(true), 6000);
@@ -16,6 +19,8 @@ const FloatingAssistant = () => {
     const encoded = encodeURIComponent(message);
     window.open(`https://wa.me/919618398383?text=${encoded}`, '_blank');
   };
+
+  if (user) return null;
 
   return (
     <div className="fixed bottom-6 right-4 z-40 flex flex-col items-end gap-3">

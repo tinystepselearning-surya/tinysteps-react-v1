@@ -6,17 +6,23 @@ interface SidebarProps {
   active: string;
   onSelect: (value: string) => void;
   todayCount?: number;
+  teacherId?: string;
 }
 
 const items = [
   { id: 'today', label: "Today's Sessions" },
+  { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'My Students' },
   { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'analytics', label: 'Analytics' },
+  { id: 'messages', label: 'Messages' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'profile', label: 'Profile' },
+  { id: 'notifications', label: 'Notifications' },
 ];
 
-export const TeacherSidebar: React.FC<SidebarProps> = ({ active, onSelect, todayCount }) => {
+export const TeacherSidebar: React.FC<SidebarProps> = ({ active, onSelect, todayCount, teacherId }) => {
   return (
     <aside className="hidden lg:block w-64 pr-6">
       <div className="space-y-2">
@@ -35,6 +41,15 @@ export const TeacherSidebar: React.FC<SidebarProps> = ({ active, onSelect, today
             )}
           </Button>
         ))}
+        <Button
+          asChild
+          variant="ghost"
+          className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700"
+        >
+          <a href={teacherId ? `/teacher/${teacherId}/worksheet-generator` : '/teacher/worksheet-generator'}>
+            Worksheet Generator ✨
+          </a>
+        </Button>
       </div>
     </aside>
   );

@@ -17,6 +17,7 @@ export function TeacherLPMatrix() {
   const [teachers, setTeachers] = useState<User[]>([]);
   const [lps, setLps] = useState<User[]>([]);
   const [assignments, setAssignments] = useState<Assignments>({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Load all teachers
   useEffect(() => {
@@ -65,23 +66,38 @@ export function TeacherLPMatrix() {
     });
   };
 
+  // Filter teachers by search term
+  const filteredTeachers = teachers.filter(teacher =>
+    teacher.displayName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border">
+    <div className="overflow-x-auto p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">Teacher ↔ LP Assignment Matrix</h2>
+        <input
+          type="text"
+          placeholder="Search teachers..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="border p-2 rounded w-1/3"
+        />
+      </div>
+      <table className="w-full border text-sm">
         <thead>
           <tr>
-            <th>Teacher</th>
+            <th className="border p-2">Teacher</th>
             {lps.map(lp => (
-              <th key={lp.id}>{lp.displayName}</th>
+              <th key={lp.id} className="border p-2">{lp.displayName}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {teachers.map(teacher => (
+          {filteredTeachers.map(teacher => (
             <tr key={teacher.id}>
-              <td>{teacher.displayName}</td>
+              <td className="border p-2">{teacher.displayName}</td>
               {lps.map(lp => (
-                <td key={lp.id}>
+                <td key={lp.id} className="border p-2 text-center">
                   <input
                     type="checkbox"
                     checked={assignments[teacher.id]?.includes(lp.id) || false}
@@ -93,6 +109,20 @@ export function TeacherLPMatrix() {
           ))}
         </tbody>
       </table>
+      <div className="flex justify-between items-center mt-4">
+        <button
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+          onClick={() => alert('Bulk operations coming soon!')}
+        >
+          Bulk Operations
+        </button>
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded"
+          onClick={() => alert('Changes saved!')}
+        >
+          Save Changes
+        </button>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { ParentInvoice } from '../../../../types/Parent';
-import { PaymentModal } from './PaymentModal';
+import PaymentModal from '../../Payments/PaymentModal';
 
 interface InvoiceListProps {
   invoices: ParentInvoice[];
@@ -41,7 +41,7 @@ export const InvoiceList: React.FC<InvoiceListProps> = ({ invoices }) => {
           <p className="text-sm text-muted-foreground">No outstanding invoices. Thank you!</p>
         )}
       </Card>
-      <PaymentModal invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />
+      <PaymentModal invoiceId={selectedInvoice!.id} amount={selectedInvoice!.amount} onPaymentComplete={() => {}} onClose={() => setSelectedInvoice(null)} />
     </>
   );
 };

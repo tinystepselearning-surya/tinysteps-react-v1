@@ -1,0 +1,134 @@
+Firestore Collections (JSON)
+{
+  "ai-sessions": {
+    "{sessionId}": {
+      "sessionId": "string",
+      "studentId": "string",
+      "teacherId": "string",
+      "studentName": "string",        // denormalized to avoid extra reads
+      "studentAge": "number",         // denormalized to avoid extra reads
+      "feature": "practice-buddy | worksheet | other-feature-flags",
+      "status": "string",             // e.g., pending | running | completed | failed
+      "createdAt": "timestamp"
+    }
+  },
+  "ai-usage-logs": {
+    "{logId}": {
+      "logId": "string",
+      "studentId": "string",
+      "feature": "practice-buddy | worksheet | other-feature-flags",
+      "tokensUsed": "number",
+      "cost": "number",               // ₹0 for now
+      "timestamp": "timestamp"
+    }
+  },
+  "ai-error-logs": {
+    "{errorId}": {
+      "errorId": "string",
+      "errorMessage": "string",
+      "timestamp": "timestamp",
+      "studentId": "string",
+      "featureType": "practice-buddy | worksheet | other-feature-flags"
+    }
+  },
+  "student-ai-history": {
+    "{historyId}": {
+      "studentId": "string",
+      "feature": "practice-buddy | worksheet | other-feature-flags",
+      "prompt": "string",
+      "response": "string",
+      "rating": "number (1-5)",
+      "timestamp": "timestamp"
+    }
+  }
+}
+
+Assumptions for rules
+- User documents live at /users/{uid} with a `role` field in { "admin", "teacher", "parent", "kid" }.
+- Student ownership is tracked at /students/{studentId} with:
+  - `teacherId`: uid of assigned teacher.
+  - `parentIds`: array of parent uids.
+  - `studentUid`: uid for the kid account (if kids sign in).
+
+Firestore Security Rules (copy into firestore.rules)
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userRole() {
+      return request.auth != null ? userDoc().role : null;
+    }
+
+    function isAdmin() {
+      return userRole() == "admin";
+    }
+
+    function studentDoc(studentId) {
+      return get(/databases/$(database)/documents/students/$(studentId)).data;
+    }
+
+    function isTeacherOfStudent(studentId) {
+      return userRole() == "teacher" && studentDoc(studentId).teacherId == request.auth.uid;
+    }
+
+    function isParentOfStudent(studentId) {
+      return userRole() == "parent" && studentDoc(studentId).parentIds.hasAny([request.auth.uid]);
+    }
+
+    function isStudentSelf(studentId) {
+      return userRole() == "kid" && studentDoc(studentId).studentUid == request.auth.uid;
+    }
+
+    match /ai-sessions/{sessionId} {
+      allow read: if isAdmin()
+        || (isTeacherOfStudent(resource.data.studentId))
+        || (isParentOfStudent(resource.data.studentId))
+        || (isStudentSelf(resource.data.studentId));
+
+      allow create: if isAdmin()
+        || (isTeacherOfStudent(request.resource.data.studentId));
+
+      allow update: if isAdmin()
+        || (isTeacherOfStudent(resource.data.studentId));
+
+      allow delete: if isAdmin();
+    }
+
+    match /ai-usage-logs/{logId} {
+      // Typically written by Cloud Functions (admin SDK bypasses rules).
+      allow read: if isAdmin()
+        || (isTeacherOfStudent(resource.data.studentId))
+        || (isParentOfStudent(resource.data.studentId));
+      allow create: if isAdmin() || isTeacherOfStudent(request.resource.data.studentId) || isParentOfStudent(request.resource.data.studentId);
+      allow update, delete: if isAdmin();
+    }
+
+    match /ai-error-logs/{errorId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() || isTeacherOfStudent(request.resource.data.studentId) || isParentOfStudent(request.resource.data.studentId);
+      allow update, delete: if isAdmin();
+    }
+
+    match /student-ai-history/{historyId} {
+      allow read: if isAdmin()
+        || (isTeacherOfStudent(resource.data.studentId))
+        || (isParentOfStudent(resource.data.studentId))
+        || (isStudentSelf(resource.data.studentId));
+
+      allow create: if isAdmin()
+        || isTeacherOfStudent(request.resource.data.studentId)
+        || isParentOfStudent(request.resource.data.studentId)
+        || isStudentSelf(request.resource.data.studentId);
+
+      allow update: if isAdmin()
+        || (isTeacherOfStudent(resource.data.studentId) && request.auth.uid == resource.data.teacherId)
+        || (isParentOfStudent(resource.data.studentId) && request.auth.uid in resource.data.parentIds);
+
+      allow delete: if isAdmin();
+    }
+  }
+}

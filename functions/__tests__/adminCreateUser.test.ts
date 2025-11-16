@@ -46,7 +46,8 @@ describe('adminCreateUser Implementation Validation', () => {
     });
 
     it('should have authentication checks', () => {
-      expect(adminCreateUserSource).toContain('context.auth');
+      // v2 signature: request or const auth = request?.auth
+      expect(adminCreateUserSource).toMatch(/request\?\.auth|const auth = request\?\.auth/);
       expect(adminCreateUserSource).toContain('unauthenticated');
       expect(adminCreateUserSource).toContain('permission-denied');
     });

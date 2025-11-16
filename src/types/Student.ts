@@ -15,6 +15,7 @@ export interface Student {
   grade: string;
   parentIds: string[];
   primaryParentId: string;
+  lpId?: string;
   status: StudentStatus;
   summary: StudentSummary;
   createdAt: any;

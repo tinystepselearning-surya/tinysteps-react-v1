@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
+import CourseList from './CourseList';
 
 export default function CourseManagement() {
   return (
@@ -11,10 +12,7 @@ export default function CourseManagement() {
       </div>
 
       <Card className="p-6">
-        <div className="text-center text-gray-500">
-          <p>Course list will be displayed here</p>
-          <p className="text-sm mt-2">View courses, manage topics, and track assignments</p>
-        </div>
+        <CourseList />
       </Card>
     </div>
   );

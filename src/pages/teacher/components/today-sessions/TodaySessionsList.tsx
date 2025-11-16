@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
-import { TeacherSession } from '../../../../types/Teacher';
+import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -37,13 +37,12 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     }
   };
 
-  const handleAttendanceSubmit = async (
-    attendance: Record<string, { status: 'present' | 'absent' | 'late'; notes?: string }>
-  ) => {
+  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }>; sessionNotes: string }) => {
     if (!selectedSession) return;
     try {
       await updateDoc(doc(db, 'sessions', selectedSession.id), {
-        attendance,
+        attendance: data.attendance,
+        notes: data.sessionNotes,
         status: 'completed',
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid,

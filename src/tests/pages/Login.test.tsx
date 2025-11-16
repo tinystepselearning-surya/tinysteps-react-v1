@@ -33,14 +33,16 @@ describe('LoginForm', () => {
     const onLogin = vi.fn();
     render(<Login onLogin={onLogin} />);
     
-    fireEvent.change(screen.getByPlaceholderText('Email address'), {
-      target: { value: 'test@test.com' }
+    await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText('Email address'), {
+        target: { value: 'test@test.com' }
+      });
+      fireEvent.change(screen.getByPlaceholderText('Password'), {
+        target: { value: 'password123' }
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
-      target: { value: 'password123' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
-    
+
     await waitFor(() => {
       expect(onLogin).toHaveBeenCalledWith('test@test.com', 'password123');
     });
@@ -50,14 +52,13 @@ describe('LoginForm', () => {
     const onLogin = vi.fn().mockRejectedValue(new Error('Invalid credentials'));
     render(<Login onLogin={onLogin} />);
     
-    fireEvent.change(screen.getByPlaceholderText('Email address'), {
-      target: { value: 'wrong@test.com' }
-    });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
-      target: { value: 'wrongpass' }
-    });
-    
     await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText('Email address'), {
+        target: { value: 'wrong@test.com' }
+      });
+      fireEvent.change(screen.getByPlaceholderText('Password'), {
+        target: { value: 'wrongpass' }
+      });
       fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     });
     
@@ -70,14 +71,13 @@ describe('LoginForm', () => {
     const onLogin = vi.fn(() => new Promise(() => {})); // Never resolves
     render(<Login onLogin={onLogin} />);
     
-    fireEvent.change(screen.getByPlaceholderText('Email address'), {
-      target: { value: 'test@test.com' }
-    });
-    fireEvent.change(screen.getByPlaceholderText('Password'), {
-      target: { value: 'password123' }
-    });
-    
     await act(async () => {
+      fireEvent.change(screen.getByPlaceholderText('Email address'), {
+        target: { value: 'test@test.com' }
+      });
+      fireEvent.change(screen.getByPlaceholderText('Password'), {
+        target: { value: 'password123' }
+      });
       fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     });
     

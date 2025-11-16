@@ -2,6 +2,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../lib/firebaseConfig';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
@@ -22,12 +24,23 @@ export default function Header() {
   ];
 
   const moreLinks = [
-    { label: 'Teachers', href: '/teachers' },
+    { label: 'Teachers', href: '/teacher' },
     { label: 'Learning Partner', href: '/learning-partner' },
-    { label: 'Kids', href: '/kid' },
+    { label: 'Kids', href: '/parent/kids' },
     { label: 'FAQ', href: '/faq' },
-    { label: 'Contact', href: '/contact' }
+    { label: 'Contact', href: '/contact' },
+    { label: 'Parent', href: '/parent/login' },
   ];
+
+  const ctaLink = { label: 'Why Tiny Steps', href: '/why-tiny-steps' };
+
+  const dashboardPaths: Record<string, string> = {
+    admin: '/surya',
+    teacher: '/teacher',
+    parent: '/parent',
+    learningPartner: '/learning-partner',
+    kid: '/parent/kids',
+  };
 
   const isHomePage = location.pathname === '/';
 
@@ -55,9 +68,26 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isHomePage]);
 
-  const handleLogout = () => {
-    clearUser();
-    navigate('/login');
+  const handleLogout = async () => {
+    // sign out of firebase as well
+    try {
+      await signOut(auth);
+    } catch (err) {
+      // ignore firebase signout error (we still clear local state)
+      console.error('Error signing out of Firebase', err);
+    }
+    // capture role first
+    const currentRole = user?.role;
+  clearUser();
+    const loginMap: Record<string, string> = {
+      admin: '/surya/login',
+      teacher: '/teacher/login',
+      parent: '/parent/login',
+      learningPartner: '/learning-partner/login',
+      kid: '/parent/login',
+    };
+    const destination = currentRole ? (loginMap[currentRole] || '/login') : '/login';
+    navigate(destination);
   };
 
   const navbarVariants = {
@@ -124,7 +154,11 @@ export default function Header() {
                     </Link>
                   ))}
                   {user && (
-                    <Link to={`/${user.role}`} className="hover:text-tiny-blue-600" onClick={() => setShowMore(false)}>
+                    <Link
+                      to={dashboardPaths[user.role] || `/${user.role}`}
+                      className="hover:text-tiny-blue-600"
+                      onClick={() => setShowMore(false)}
+                    >
                       Dashboard
                     </Link>
                   )}
@@ -132,15 +166,23 @@ export default function Header() {
               </div>
             )}
           </div>
+          <Link
+            to={ctaLink.href}
+            className="ml-4 inline-flex items-center rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 py-2 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.35)] transition hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+          >
+            {ctaLink.label}
+          </Link>
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          <a
-            href="https://wa.me/919618398383"
-            className="flex items-center gap-2 rounded-full border border-tiny-green-200/70 bg-white/80 px-4 py-1.5 text-sm font-semibold text-tiny-green-700 shadow-sm"
-          >
-            💬 +91 96183 98383
-          </a>
+          {!user && (
+            <a
+              href="https://wa.me/919618398383"
+              className="flex items-center gap-2 rounded-full border border-tiny-green-200/70 bg-white/80 px-4 py-1.5 text-sm font-semibold text-tiny-green-700 shadow-sm"
+            >
+              💬 +91 96183 98383
+            </a>
+          )}
           <button
             onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}
             className="rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_25px_rgba(255,143,92,0.35)]"
@@ -173,7 +215,7 @@ export default function Header() {
         </div>
       </div>
 
-      <motion.div
+          <motion.div
         initial={{ height: 0 }}
         animate={{ height: isOpen ? 'auto' : 0 }}
         className="md:hidden overflow-hidden bg-white/95 backdrop-blur"
@@ -184,6 +226,13 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+          <Link
+            to={ctaLink.href}
+            onClick={() => setIsOpen(false)}
+            className="mt-2 block rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 py-2 text-center font-semibold text-white shadow-md"
+          >
+            {ctaLink.label}
+          </Link>
           {user ? (
             <button className="text-left text-red-600" onClick={() => { handleLogout(); setIsOpen(false); }}>
               Logout
@@ -193,7 +242,9 @@ export default function Header() {
               Sign in
             </button>
           )}
-          <a href="https://wa.me/919618398383" className="block text-tiny-green-700">WhatsApp: +91 96183 98383</a>
+          {!user && (
+            <a href="https://wa.me/919618398383" className="block text-tiny-green-700">WhatsApp: +91 96183 98383</a>
+          )}
         </div>
       </motion.div>
     </motion.nav>

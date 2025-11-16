@@ -10,7 +10,7 @@ export default function FounderArticleCard() {
         <header className="flex items-start justify-between">
           <div>
             <h2 className="text-2xl md:text-3xl font-extrabold">Foundations Forever: Why Phonics Matters for Every Child</h2>
-            <p className="mt-2 text-sm text-gray-600">By Priya, Founder of Tiny Steps Learning</p>
+            <p className="mt-2 text-sm text-gray-600">By Founder, Tiny Steps Learning</p>
           </div>
 
           <div className="ml-4 flex-shrink-0">
@@ -65,7 +65,7 @@ export default function FounderArticleCard() {
 
                   <p><strong>Parents as Partners</strong><br/>Weekly learning notes, Read & Reflect moments, a sound library and progress snapshots help families stay connected and celebrate every tiny step.</p>
 
-                  <p>— Priya<br/>Founder, Tiny Steps Learning</p>
+                  <p>— Founder<br/>Tiny Steps Learning</p>
                 </div>
               </motion.div>
             )}

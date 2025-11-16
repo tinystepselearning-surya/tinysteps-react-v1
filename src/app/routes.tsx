@@ -1,6 +1,7 @@
 import React from 'react';
-import { createBrowserRouter, Outlet } from 'react-router-dom';
+import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
+import Login from '../pages/Login';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
 import NotFoundPage from '../pages/NotFoundPage';
 import HomePage from '../pages/HomePage';
@@ -12,6 +13,7 @@ import BlogPostPage from '../pages/BlogPostPage';
 import PricingPage from '../pages/PricingPage';
 import FAQPage from '../pages/FAQPage';
 import ContactPage from '../pages/ContactPage';
+import WhyTinyStepsPage from '../pages/WhyTinyStepsPage';
 
 // Course Pages
 import PhonicsPage from '../pages/phonics';
@@ -23,7 +25,19 @@ const AdminDashboard = React.lazy(() => import('../pages/admin/AdminDashboard'))
 const TeacherDashboard = React.lazy(() => import('../pages/teacher/TeacherDashboard'));
 const ParentDashboard = React.lazy(() => import('../pages/parent/ParentDashboard'));
 const LPDashboard = React.lazy(() => import('../pages/lp/LPDashboard'));
-const KidDashboard = React.lazy(() => import('../pages/kid/KidDashboard'));
+const PracticeBuddyPage = React.lazy(() => import('../pages/kids/PracticeBuddyPage'));
+const WorksheetGeneratorPage = React.lazy(() => import('../pages/teacher/WorksheetGeneratorPage'));
+const BetaAnalytics = React.lazy(() => import('../pages/admin/beta-analytics.jsx'));
+const SpellBeeGamePage = React.lazy(() => import('../pages/kids/games/SpellBeeGamePage'));
+const PhonicsMazePage = React.lazy(() => import('../pages/kids/games/PhonicsMazePage'));
+const SightWordBingoPage = React.lazy(() => import('../pages/kids/games/SightWordBingoPage'));
+const GrammarBuilderPage = React.lazy(() => import('../pages/kids/games/GrammarBuilderPage'));
+const PublicSpeakingPage = React.lazy(() => import('../pages/kids/games/PublicSpeakingPage'));
+const ReadingAdventurePage = React.lazy(() => import('../pages/kids/games/ReadingAdventurePage'));
+
+// Payment Components
+const PaymentCallback = React.lazy(() => import('../pages/parent/Payments/PaymentCallback'));
+const PhonePeCallback = React.lazy(() => import('../pages/payments/PhonePeCallback').then(module => ({ default: module.PhonePeCallback })));
 
 // Layout
 import Header from '../components/common/Header';
@@ -95,6 +109,14 @@ const router = createBrowserRouter(
           element: <ContactPage />,
         },
         {
+          path: 'why-tiny-steps',
+          element: <WhyTinyStepsPage />,
+        },
+        {
+          path: 'why-us',
+          element: <Navigate to="/why-tiny-steps" replace />,
+        },
+        {
           path: 'faq',
           element: <FAQPage />,
         },
@@ -115,8 +137,16 @@ const router = createBrowserRouter(
           element: <LoginPage />,
         },
         {
+          path: 'surya/login',
+          element: <Login />,
+        },
+        {
           path: 'admin/login',
-          element: <LoginPage />,
+          element: <Navigate to="/surya/login" replace />,
+        },
+        {
+          path: 'Surya/login',
+          element: <Navigate to="/surya/login" replace />,
         },
         {
           path: 'teacher/login',
@@ -130,33 +160,40 @@ const router = createBrowserRouter(
           path: 'learning-partner/login',
           element: <LoginPage />,
         },
+        // Alias without hyphen for convenience (older links / direct typed URLs)
+        {
+          path: 'learningpartner/login',
+          element: <LoginPage />,
+        },
         {
           path: 'kid/login',
-          element: <LoginPage />,
+          element: <Navigate to="/parent/login" replace />,
         },
         {
           path: 'unauthorized',
           element: <UnauthorizedPage />,
         },
         {
-          path: 'Surya',
-          element: <RoleGate allowedRoles={['admin']} />,
+          path: 'surya',
+          element: <RoleGate allowedRoles={['admin']} loginPath="/surya/login" />,
           children: [
             {
               path: '',
+              element: <AdminDashboard />,
+            },
+            {
+              path: 'analytics',
               element: <AdminDashboard />,
             },
           ],
         },
         {
           path: 'admin',
-          element: <RoleGate allowedRoles={['admin']} />,
-          children: [
-            {
-              path: '',
-              element: <AdminDashboard />,
-            },
-          ],
+          element: <Navigate to="/surya/login" replace />,
+        },
+        {
+          path: 'Surya',
+          element: <Navigate to="/surya" replace />,
         },
         {
           path: 'teacher',
@@ -169,12 +206,34 @@ const router = createBrowserRouter(
           ],
         },
         {
+          path: 'teachers',
+          element: <RoleGate allowedRoles={['teacher']} />,
+          children: [
+            {
+              path: '',
+              element: <TeacherDashboard />,
+            },
+          ],
+        },
+        {
           path: 'parent',
-          element: <RoleGate allowedRoles={['parent']} />,
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
           children: [
             {
               path: '',
               element: <ParentDashboard />,
+            },
+            {
+              path: 'kids',
+              element: <ParentDashboard />,
+            },
+            {
+              path: 'payments/callback',
+              element: <PaymentCallback />,
+            },
+            {
+              path: 'payments/phonepe-callback',
+              element: <PhonePeCallback />,
             },
           ],
         },
@@ -189,12 +248,105 @@ const router = createBrowserRouter(
           ],
         },
         {
+          // Alias for backwards compatibility
+          path: 'learningpartner',
+          element: <Navigate to="/learning-partner" replace />,
+        },
+        {
           path: 'kid',
-          element: <RoleGate allowedRoles={['kid']} />,
+          element: <Navigate to="/parent/kids" replace />,
+        },
+        {
+          path: 'kids/:childId/dashboard',
+          element: <Navigate to="/parent" replace />,
+        },
+        {
+          path: 'kids/:childId/spellbee',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
           children: [
             {
               path: '',
-              element: <KidDashboard />,
+              element: <SpellBeeGamePage />,
+            },
+          ],
+        },
+        {
+          path: 'kids/:childId/phonics-maze',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          children: [
+            {
+              path: '',
+              element: <PhonicsMazePage />,
+            },
+          ],
+        },
+        {
+          path: 'kids/:childId/bingo',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          children: [
+            {
+              path: '',
+              element: <SightWordBingoPage />,
+            },
+          ],
+        },
+        {
+          path: 'kids/:childId/bingo/:roomId',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          children: [
+            {
+              path: '',
+              element: <SightWordBingoPage />,
+            },
+          ],
+        },
+        {
+          path: 'kids/:childId/grammar-builder',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          children: [
+            {
+              path: '',
+              element: <GrammarBuilderPage />,
+            },
+          ],
+        },
+        {
+          path: 'kids/:childId/speaking',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          children: [
+            {
+              path: '',
+              element: <PublicSpeakingPage />,
+            },
+          ],
+        },
+        {
+          path: 'kids/:childId/reading-adventure',
+          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          children: [
+            {
+              path: '',
+              element: <ReadingAdventurePage />,
+            },
+          ],
+        },
+        {
+          path: 'teacher/:teacherId/worksheet-generator',
+          element: <RoleGate allowedRoles={['teacher']} />,
+          children: [
+            {
+              path: '',
+              element: <WorksheetGeneratorPage />,
+            },
+          ],
+        },
+        {
+          path: 'admin/beta-analytics',
+          element: <RoleGate allowedRoles={['admin']} loginPath="/surya/login" />,
+          children: [
+            {
+              path: '',
+              element: <BetaAnalytics />,
             },
           ],
         },

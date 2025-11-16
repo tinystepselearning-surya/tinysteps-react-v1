@@ -19,14 +19,28 @@ vi.mock('firebase/analytics', () => ({
 // @ts-ignore
 globalThis.indexedDB = undefined
 
-// Filter noisy console warnings about IndexedDB/analytics in tests to keep output
-// focused on failures. We still print other warnings.
+// Filter only the specific Firebase analytics / IndexedDB warning messages
+// that are expected in a Node test environment. Keep all other warnings.
 const originalWarn = console.warn.bind(console)
+const firebaseWarningPatterns: Array<string> = [
+	// Exact or leading phrases from firebase analytics module
+	'Firebase Analytics is not supported in this environment. Wrap initialization of analytics in analytics.isSupported() to prevent initialization in unsupported environments.',
+	'IndexedDB unavailable or restricted in this environment. Wrap initialization of analytics in analytics.isSupported() to prevent initialization in unsupported environments.',
+	// Prefix for IndexedDB open errors from Firebase code
+	'Error thrown when opening IndexedDB. Original error:',
+]
+
 console.warn = (...args: any[]) => {
 	try {
-		const msg = args[0]
-		if (typeof msg === 'string' && (msg.includes('IndexedDB') || msg.includes('analytics'))) {
-			return
+		const raw = args[0]
+		const msg = typeof raw === 'string' ? raw : raw?.message ?? String(raw)
+		if (typeof msg === 'string') {
+			for (const pattern of firebaseWarningPatterns) {
+				if (msg.includes(pattern)) {
+					// swallow this known Firebase analytics / IDB warning
+					return
+				}
+			}
 		}
 	} catch (e) {
 		// fallthrough to default warn

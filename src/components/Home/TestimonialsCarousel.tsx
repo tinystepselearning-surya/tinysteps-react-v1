@@ -18,7 +18,7 @@ const testimonials = [
     video: '/images/hero/parent-video-2.jpg'
   },
   {
-    name: 'Rahul Sharma',
+    name: 'Parent Name',
     city: 'Pune',
     age: 'Child: 8 years',
     quote: 'Grammar is no longer a mystery—our weekend writing tasks are full paragraphs now.',

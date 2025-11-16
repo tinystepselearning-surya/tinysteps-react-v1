@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import Button from '../Button/Button';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const plans = [
   {
@@ -35,6 +36,7 @@ const bundle = {
 };
 
 export default function GamingSubscriptionSection({ heading = 'Joyful Learning Game Subscriptions' }: { heading?: string }) {
+  const { user } = useAuthStore();
   return (
     <section data-animate="fade-up" className="bg-gradient-to-b from-white to-slate-50/50 py-16">
       <div className="mx-auto max-w-6xl px-6">
@@ -86,12 +88,14 @@ export default function GamingSubscriptionSection({ heading = 'Joyful Learning G
                 <li>Kids get weekly missions inside the Tiny Steps Games app.</li>
                 <li>Parents receive AI insight summaries + habit nudges.</li>
               </ol>
-              <Button
-                onClick={() => window.open('https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20Tell%20me%20about%20the%20game%20subscriptions.%20', '_blank')}
-                className="w-full"
-              >
-                Get the game pass
-              </Button>
+              {!user && (
+                <Button
+                  onClick={() => window.open('https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20Tell%20me%20about%20the%20game%20subscriptions.%20', '_blank')}
+                  className="w-full"
+                >
+                  Get the game pass
+                </Button>
+              )}
             </div>
           </div>
         </div>

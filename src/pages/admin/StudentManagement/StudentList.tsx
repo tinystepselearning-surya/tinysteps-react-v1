@@ -11,6 +11,7 @@ import AssignCourseModal from './AssignCourseModal';
 import AssignTeacherModal from './AssignTeacherModal';
 import AssignLPModal from './AssignLPModal';
 import { Student } from '../../../types/Student';
+import { useEnrollmentsForStudents } from '../../../hooks/useData';
 import { User } from '../../../types/User';
 
 const PAGE_SIZE = 25;
@@ -20,6 +21,8 @@ interface StudentListProps {
   onDelete: (studentId: string) => void;
   onAssignCourse: (student: Student) => void;
 }
+
+import { useAuthStore } from '../../../store/useAuthStore';
 
 export default function StudentList({ onEdit, onDelete, onAssignCourse }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
@@ -33,6 +36,18 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [assignCourseFor, setAssignCourseFor] = useState<Student | null>(null);
   const [assignTeacherFor, setAssignTeacherFor] = useState<Student | null>(null);
   const [assignLPFor, setAssignLPFor] = useState<Student | null>(null);
+  const { user } = useAuthStore();
+  const handleDeleteEnrollment = async (enrollmentId: string) => {
+    if (!window.confirm('Delete this enrollment?')) return;
+    try {
+      await import('firebase/firestore').then(({ deleteDoc, doc }) => deleteDoc(doc(db, 'enrollments', enrollmentId)));
+      toast({ title: 'Enrollment removed' });
+      enrollmentsQuery.refetch();
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Error', description: 'Failed to delete enrollment', variant: 'destructive' });
+    }
+  };
 
   useEffect(() => {
     // load parents list for filters
@@ -74,6 +89,19 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paged = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const pagedStudentIds = paged.map(s => s.id);
+  const enrollmentsQuery = useEnrollmentsForStudents(pagedStudentIds);
+  const enrollmentsByStudent = useMemo(() => {
+    const map: Record<string, any[]> = {};
+    if (!enrollmentsQuery.data) return map;
+    enrollmentsQuery.data.forEach((e: any) => {
+      const sid = e.studentId || e.studentId || e.kidId || (e.kidIds && e.kidIds[0]);
+      // Ensure array exists
+      if (!map[sid]) map[sid] = [];
+      map[sid].push(e);
+    });
+    return map;
+  }, [enrollmentsQuery.data]);
 
 
   return (
@@ -130,6 +158,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               <TableHead>DOB</TableHead>
               <TableHead>Grade</TableHead>
               <TableHead>Status</TableHead>
+                <TableHead>Enrollments</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -142,15 +171,41 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                     const p = parents.find(x => x.uid === pid || x.id === pid);
                     return <div key={pid}>{p?.email || pid}</div>;
                   })}
+                    {enrollmentsByStudent[s.id] && enrollmentsByStudent[s.id].length > 0 ? (
+                      <div className="space-y-1">
+                        {enrollmentsByStudent[s.id].map((e: any) => (
+                          <div key={e.id} className="text-sm flex items-center justify-between">
+                            <div>
+                              <strong>{e.course?.title || e.courseId}</strong>
+                              {e.teacher && ` — ${e.teacher.name || e.teacher.email}`}
+                              {` — ${e.status}`}
+                            </div>
+                            <div className="ml-4">
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteEnrollment(e.id)} disabled={!(user?.role === 'admin' || (user?.role === 'learningPartner' && ((s as any).lpId === user.uid)))}>
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-gray-400">No enrollments</div>
+                    )}
                 </TableCell>
                 <TableCell>{s.dob}</TableCell>
                 <TableCell>{s.grade}</TableCell>
                 <TableCell>{s.status}</TableCell>
                 <TableCell>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => onAssignCourse(s)}>Assign Course</Button>
-                    <Button size="sm" onClick={() => setAssignTeacherFor(s)}>Assign Teacher</Button>
-                    <Button size="sm" onClick={() => setAssignLPFor(s)}>Assign LP</Button>
+                    <Button size="sm" onClick={() => onAssignCourse(s)} disabled={!(user?.role === 'admin' || (user?.role === 'learningPartner' && ((s as any).lpId === user.uid)))}>
+                      Assign Course
+                    </Button>
+                    <Button size="sm" onClick={() => setAssignTeacherFor(s)} disabled={!(user?.role === 'admin' || (user?.role === 'learningPartner' && ((s as any).lpId === user.uid)))}>
+                      Assign Teacher
+                    </Button>
+                    <Button size="sm" onClick={() => setAssignLPFor(s)} disabled={!(user?.role === 'admin')}>
+                      {user?.role === 'admin' ? 'Assign LP' : 'Not Authorized'}
+                    </Button>
                     <Button size="sm" variant="destructive" onClick={() => onDelete(s.id)}>Delete</Button>
                     <Button size="sm" variant="secondary" onClick={() => onEdit(s)}>Edit</Button>
                   </div>
@@ -170,9 +225,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         </div>
       </Card>
 
-      {assignCourseFor && <AssignCourseModal student={assignCourseFor} onClose={() => setAssignCourseFor(null)} />}
-      {assignTeacherFor && <AssignTeacherModal student={assignTeacherFor} onClose={() => setAssignTeacherFor(null)} />}
-      {assignLPFor && <AssignLPModal student={assignLPFor} onClose={() => setAssignLPFor(null)} />}
+  {assignCourseFor && <AssignCourseModal student={assignCourseFor} onClose={() => setAssignCourseFor(null)} onAssigned={() => { setAssignCourseFor(null); enrollmentsQuery.refetch(); }} />}
+  {assignTeacherFor && <AssignTeacherModal student={assignTeacherFor} onClose={() => setAssignTeacherFor(null)} onAssigned={() => { setAssignTeacherFor(null); enrollmentsQuery.refetch(); }} />}
+  {assignLPFor && <AssignLPModal student={assignLPFor} onClose={() => setAssignLPFor(null)} onAssigned={() => { setAssignLPFor(null); enrollmentsQuery.refetch(); }} />}
     </div>
   );
 }

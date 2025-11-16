@@ -41,7 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.subscribeNewsletter = exports.onSessionCompleteTrigger = exports.onSessionComplete = exports.adminCreateUser = exports.adminResetPassword = exports.getUidByEmail = exports.setUserRole = void 0;
+exports.initializeGameData = exports.getGameContent = exports.seedGameData = exports.subscribeNewsletter = exports.unassignLPFromTeacher = exports.assignLPToTeacher = exports.unassignLPFromParent = exports.assignLPToParent = exports.verifyPhonePePayment = exports.createPhonePeOrder = exports.webhookPhonePe = exports.adminProcessEnrollmentCSV = exports.onEnrollmentUpdate = exports.adminGenerateResetLink = exports.onSessionCompleteTrigger = exports.onSessionComplete = exports.onAuthUserCreate = exports.adminCreateUser = exports.adminResetPassword = exports.getUidByEmail = exports.setUserRole = exports.generateReadingChapter = exports.generateSpeakingPrompt = exports.generateStorySnippet = exports.generateBingoCard = exports.gradePhonicsJunction = exports.generateMaze = exports.gradeSpelling = exports.generateSpellingWords = void 0;
 exports.setUserRoleHandler = setUserRoleHandler;
 const firebase_functions_1 = require("firebase-functions");
 const logger = __importStar(require("firebase-functions/logger"));
@@ -61,10 +61,30 @@ const logger = __importStar(require("firebase-functions/logger"));
 // Import required modules for the new function
 const https_1 = require("firebase-functions/v2/https");
 const admin = __importStar(require("firebase-admin"));
+const module_1 = require("module");
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
     admin.initializeApp();
 }
+// Bring legacy JS callable game functions into the deployed bundle.
+// These files live at the repo root (functions/*.js) and use the v1 SDK.
+const require = (0, module_1.createRequire)(import.meta.url);
+const { generateSpellingWords } = require("../generateSpellingWords.js");
+exports.generateSpellingWords = generateSpellingWords;
+const { gradeSpelling } = require("../gradeSpelling.js");
+exports.gradeSpelling = gradeSpelling;
+const { generateMaze } = require("../generateMaze.js");
+exports.generateMaze = generateMaze;
+const { gradePhonicsJunction } = require("../gradePhonicsJunction.js");
+exports.gradePhonicsJunction = gradePhonicsJunction;
+const { generateBingoCard } = require("../generateBingoCard.js");
+exports.generateBingoCard = generateBingoCard;
+const { generateStorySnippet } = require("../generateStorySnippet.js");
+exports.generateStorySnippet = generateStorySnippet;
+const { generateSpeakingPrompt } = require("../generateSpeakingPrompt.js");
+exports.generateSpeakingPrompt = generateSpeakingPrompt;
+const { generateReadingChapter } = require("../generateReadingChapter.js");
+exports.generateReadingChapter = generateReadingChapter;
 // Allowed roles
 const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
 /**
@@ -227,9 +247,27 @@ exports.adminResetPassword = (0, https_1.onCall)({
 // Export the adminCreateUser function
 var adminCreateUser_1 = require("./adminCreateUser");
 Object.defineProperty(exports, "adminCreateUser", { enumerable: true, get: function () { return adminCreateUser_1.adminCreateUser; } });
+var onAuthUserCreate_1 = require("./onAuthUserCreate");
+Object.defineProperty(exports, "onAuthUserCreate", { enumerable: true, get: function () { return onAuthUserCreate_1.onAuthUserCreate; } });
 var onSessionComplete_1 = require("./onSessionComplete");
 Object.defineProperty(exports, "onSessionComplete", { enumerable: true, get: function () { return onSessionComplete_1.onSessionComplete; } });
 Object.defineProperty(exports, "onSessionCompleteTrigger", { enumerable: true, get: function () { return onSessionComplete_1.onSessionCompleteTrigger; } });
+var adminGenerateResetLink_1 = require("./adminGenerateResetLink");
+Object.defineProperty(exports, "adminGenerateResetLink", { enumerable: true, get: function () { return adminGenerateResetLink_1.adminGenerateResetLink; } });
+var onEnrollmentUpdate_1 = require("./onEnrollmentUpdate");
+Object.defineProperty(exports, "onEnrollmentUpdate", { enumerable: true, get: function () { return onEnrollmentUpdate_1.onEnrollmentUpdate; } });
+var adminProcessEnrollmentCSV_1 = require("./adminProcessEnrollmentCSV");
+Object.defineProperty(exports, "adminProcessEnrollmentCSV", { enumerable: true, get: function () { return adminProcessEnrollmentCSV_1.adminProcessEnrollmentCSV; } });
+var webhookPhonePe_1 = require("./webhookPhonePe");
+Object.defineProperty(exports, "webhookPhonePe", { enumerable: true, get: function () { return webhookPhonePe_1.webhookPhonePe; } });
+var phonepePayments_1 = require("./phonepePayments");
+Object.defineProperty(exports, "createPhonePeOrder", { enumerable: true, get: function () { return phonepePayments_1.createPhonePeOrder; } });
+Object.defineProperty(exports, "verifyPhonePePayment", { enumerable: true, get: function () { return phonepePayments_1.verifyPhonePePayment; } });
+var assignLP_1 = require("./assignLP");
+Object.defineProperty(exports, "assignLPToParent", { enumerable: true, get: function () { return assignLP_1.assignLPToParent; } });
+Object.defineProperty(exports, "unassignLPFromParent", { enumerable: true, get: function () { return assignLP_1.unassignLPFromParent; } });
+Object.defineProperty(exports, "assignLPToTeacher", { enumerable: true, get: function () { return assignLP_1.assignLPToTeacher; } });
+Object.defineProperty(exports, "unassignLPFromTeacher", { enumerable: true, get: function () { return assignLP_1.unassignLPFromTeacher; } });
 exports.subscribeNewsletter = (0, https_1.onCall)({ region: 'asia-south1', memory: '128MiB', timeoutSeconds: 30 }, async (data, context) => {
     var _a, _b, _c;
     try {
@@ -251,4 +289,11 @@ exports.subscribeNewsletter = (0, https_1.onCall)({ region: 'asia-south1', memor
         throw new https_1.HttpsError('internal', 'Subscription failed');
     }
 });
+// Export the new game data functions
+var seedGameData_1 = require("./seedGameData");
+Object.defineProperty(exports, "seedGameData", { enumerable: true, get: function () { return seedGameData_1.seedGameData; } });
+var getGameContent_1 = require("./getGameContent");
+Object.defineProperty(exports, "getGameContent", { enumerable: true, get: function () { return getGameContent_1.getGameContent; } });
+var initializeGameData_1 = require("../initializeGameData");
+Object.defineProperty(exports, "initializeGameData", { enumerable: true, get: function () { return initializeGameData_1.initializeGameData; } });
 //# sourceMappingURL=index.js.map

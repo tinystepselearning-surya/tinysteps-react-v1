@@ -13,7 +13,10 @@ import { UserList } from './UserManagement/UserList';
 import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
+import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import Analytics, { AdminStats } from './Analytics';
+import AnalyticsDashboard from './AnalyticsDashboard';
+import { useLocation } from 'react-router-dom';
 import { isSuperUserEmail } from '../../constants/accessControl';
 
 const fetchAdminStats = async (): Promise<AdminStats> => {
@@ -32,11 +35,11 @@ const fetchAdminStats = async (): Promise<AdminStats> => {
 };
 
 const ROLE_SHORTCUTS = [
-  { id: 'admin', label: 'Admin', path: '/Surya', description: 'Full control panel' },
+  { id: 'admin', label: 'Admin', path: '/surya', description: 'Full control panel' },
   { id: 'teacher', label: 'Teacher', path: '/teacher', description: 'Classroom & sessions' },
   { id: 'parent', label: 'Parent', path: '/parent', description: 'Progress & subscriptions' },
   { id: 'learningPartner', label: 'Learning Partner', path: '/learning-partner', description: 'Relationship hub' },
-  { id: 'kid', label: 'Kid', path: '/kid', description: 'Student view' },
+  { id: 'kid', label: 'Kid', path: '/parent/kids', description: 'Student view via Parent' },
 ];
 
 const AccessMessage = ({ children }: { children: React.ReactNode }) => (
@@ -54,6 +57,13 @@ export default function AdminDashboard() {
   const [selectedTab, setSelectedTab] = useState('users');
   const isSuperUser = isSuperUserEmail(user?.email);
   const canViewAdmin = isSuperUser || user?.role === 'admin';
+
+  const location = useLocation();
+
+  // Sync selected tab with URL path (e.g. /surya/analytics)
+  React.useEffect(() => {
+    if (location.pathname.includes('/surya/analytics')) setSelectedTab('analytics');
+  }, [location.pathname]);
 
   const {
     data: stats,
@@ -112,6 +122,7 @@ export default function AdminDashboard() {
             <TabsList className="mb-6">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="students">Student Management</TabsTrigger>
+              <TabsTrigger value="enrollments">Enrollment Management</TabsTrigger>
               <TabsTrigger value="relationships">Relationship Management</TabsTrigger>
               <TabsTrigger value="courses">Course Management</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
@@ -130,6 +141,17 @@ export default function AdminDashboard() {
             <TabsContent value="students">
               <StudentManagementTab />
             </TabsContent>
+            <TabsContent value="enrollments">
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Enrollment Management</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Manage enrollments, assignments and lifecycle.
+                  </p>
+                </div>
+                <EnrollmentsList />
+              </div>
+            </TabsContent>
             <TabsContent value="relationships">
               <RelationshipManagement />
             </TabsContent>
@@ -137,11 +159,7 @@ export default function AdminDashboard() {
               <CourseManagement />
             </TabsContent>
             <TabsContent value="analytics">
-              <Analytics
-                stats={stats}
-                isLoading={statsLoading}
-                error={statsError?.message}
-              />
+              <AnalyticsDashboard />
             </TabsContent>
           </Tabs>
         </main>

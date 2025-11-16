@@ -11,55 +11,37 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-const teacherId = process.env.SEED_TEACHER_UID || 'demo-teacher-uid';
-const parentId = process.env.SEED_PARENT_UID || 'demo-parent-uid';
+// Require a conscious opt-in to seed demo data in the DB. This avoids accidental upload
+// of sample students/parents/teachers to shared environments. To run seeding, set
+// ALLOW_DEMO_SEED=true and provide SEED_TEACHER_UID and SEED_PARENT_UID.
+const allowSeed = process.env.ALLOW_DEMO_SEED === 'true';
+const teacherId = process.env.SEED_TEACHER_UID || null;
+const parentId = process.env.SEED_PARENT_UID || null;
 const today = new Date();
 const isoDate = today.toISOString().slice(0, 10);
 
-const kids = [
-  {
-    id: 'seed-kid-1',
-    fullName: 'Arjun Rao',
-    grade: 'Grade 2',
-    courseNames: ['Phonics L2', 'Speaking L1'],
-    progressStatus: 'on_track',
-  },
-  {
-    id: 'seed-kid-2',
-    fullName: 'Zara Patel',
-    grade: 'Grade 1',
-    courseNames: ['Grammar L1'],
-    progressStatus: 'needs_attention',
-  },
-];
+// No demo kids by default. The script will not create any kid documents unless
+// ALLOW_DEMO_SEED is set to 'true' and the env vars for target uids are present.
+const kids = [];
 
-const sessions = [
-  {
-    id: `session-${randomUUID()}`,
-    courseId: 'course-phonics-l2',
-    courseName: 'Phonics Level 2',
-    startTime: '16:00',
-    endTime: '16:30',
-    kidIds: ['seed-kid-1'],
-    joinUrl: 'https://zoom.us/j/123456789',
-  },
-  {
-    id: `session-${randomUUID()}`,
-    courseId: 'course-grammar-l1',
-    courseName: 'Grammar Level 1',
-    startTime: '17:00',
-    endTime: '17:30',
-    kidIds: ['seed-kid-2'],
-    joinUrl: 'https://zoom.us/j/234567891',
-  },
-];
+const sessions = [];
 
 async function seed() {
-  console.log('Seeding teacher dashboard data...');
+  if (!allowSeed) {
+    console.log('Demo seeding disabled. Set ALLOW_DEMO_SEED=true to enable. No data written.');
+    process.exit(0);
+  }
+  if (!teacherId || !parentId) {
+    console.error('SEED_TEACHER_UID and SEED_PARENT_UID must be set to seed demo data. Exiting.');
+    process.exit(1);
+  }
+
+  console.log('Seeding teacher dashboard data (demo mode)...');
 
   for (const kid of kids) {
     await db.collection('kids').doc(kid.id).set({
-      fullName: kid.fullName,
+      // fullName intentionally omitted from demo seeding script unless provided
+      fullName: kid.fullName || '',
       grade: kid.grade,
       courseNames: kid.courseNames,
       progressStatus: kid.progressStatus,

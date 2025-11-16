@@ -1,4 +1,5 @@
 import React from 'react';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const socialLinks = [
   { label: 'Instagram', href: 'https://instagram.com', icon: '📸' },
@@ -30,6 +31,7 @@ const legalLinks = [
 ];
 
 const Footer = () => {
+  const { user } = useAuthStore();
   return (
     <footer className="bg-[#060a16] text-gray-200">
       <div className="mx-auto max-w-6xl px-6 py-12 space-y-10">
@@ -93,7 +95,9 @@ const Footer = () => {
             <h3 className="font-semibold text-white mb-3">Contact</h3>
             <ul className="space-y-2 text-sm">
               <li><a href="tel:+919618398383" className="hover:text-tiny-green-300 transition">Call: +91-96183-98383</a></li>
-              <li><a href="https://wa.me/919618398383" className="hover:text-tiny-green-300 transition">WhatsApp: Chat with advisor</a></li>
+              {!user && (
+                <li><a href="https://wa.me/919618398383" className="hover:text-tiny-green-300 transition">WhatsApp: Chat with advisor</a></li>
+              )}
               <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-tiny-blue-300 transition">Email: hello@tinystepslearning.com</a></li>
               <li className="text-xs text-white/60">Hours: Mon–Fri 9 AM–6 PM • Sat 10 AM–2 PM</li>
             </ul>

@@ -2,13 +2,20 @@ import React, { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
-const TodaySessionsList = React.lazy(() => import('./components/today-sessions/TodaySessionsList'));
-const StudentsList = React.lazy(() => import('./components/students/StudentsList'));
-const StudentProgressChart = React.lazy(() => import('./components/progress/StudentProgressChart'));
-const EarningsSummary = React.lazy(() => import('./components/earnings/EarningsSummary'));
-const TeacherStats = React.lazy(() => import('./components/analytics/TeacherStats'));
+import { Card } from '@components/ui/card';
+const TodaySessionsView = React.lazy(() => import('./components/today-sessions/TodaySessionsList').then(module => ({ default: module.TodaySessionsList })));
+const UpcomingSessionsView = React.lazy(() => import('./components/upcoming-sessions/UpcomingSessionsView').then(module => ({ default: module.UpcomingSessionsView })));
+const StudentsList = React.lazy(() => import('./components/students/StudentsList').then(module => ({ default: module.StudentsList })));
+const StudentProgressChart = React.lazy(() => import('./components/progress/StudentProgressChart').then(module => ({ default: module.StudentProgressChart })));
+const EarningsSummary = React.lazy(() => import('./components/earnings/EarningsSummary').then(module => ({ default: module.EarningsSummary })));
+const TeacherStats = React.lazy(() => import('./components/analytics/TeacherStats').then(module => ({ default: module.TeacherStats })));
+const MessagesView = React.lazy(() => import('./components/messages/MessagesView').then(module => ({ default: module.MessagesView })));
+const ScheduleView = React.lazy(() => import('./components/schedule/ScheduleView').then(module => ({ default: module.ScheduleView })));
+const TeacherProfile = React.lazy(() => import('./components/profile/TeacherProfile').then(module => ({ default: module.TeacherProfile })));
+const NotificationsPanel = React.lazy(() => import('./components/notifications/NotificationsPanel').then(module => ({ default: module.NotificationsPanel })));
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTeacherSessions } from './hooks/useTeacherSessions';
+import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
@@ -18,10 +25,15 @@ const AccessNotice = ({ children }: { children: React.ReactNode }) => (
 
 const TAB_ITEMS = [
   { id: 'today', label: "Today's Sessions" },
+  { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
   { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'analytics', label: 'Analytics' },
+  { id: 'messages', label: 'Messages' },
+  { id: 'schedule', label: 'Schedule' },
+  { id: 'profile', label: 'Profile' },
+  { id: 'notifications', label: 'Notifications' },
 ];
 
 export default function TeacherDashboard() {
@@ -29,6 +41,7 @@ export default function TeacherDashboard() {
   const [tab, setTab] = useState('today');
   const teacherId = user?.uid;
   const { sessions } = useTeacherSessions(teacherId);
+  const { students, loading, error } = useTeacherFilteredStudents();
 
   if (isLoading) {
     return (
@@ -46,7 +59,7 @@ export default function TeacherDashboard() {
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
       <TeacherHeader name={user.displayName || user.email} upcomingCount={sessions.length} />
       <div className="flex gap-6">
-        <TeacherSidebar active={tab} onSelect={setTab} todayCount={sessions.length} />
+        <TeacherSidebar active={tab} onSelect={setTab} todayCount={sessions.length} teacherId={teacherId} />
         <main className="flex-1 space-y-6">
           <Tabs value={tab} onValueChange={setTab} className="space-y-4">
             <TabsList className="lg:hidden">
@@ -58,12 +71,37 @@ export default function TeacherDashboard() {
             </TabsList>
             <TabsContent value="today">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
-                <TodaySessionsList teacherId={teacherId} />
+                <TodaySessionsView teacherId={teacherId} />
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="upcoming">
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
+                <UpcomingSessionsView teacherId={teacherId} />
               </Suspense>
             </TabsContent>
             <TabsContent value="students">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
-                <StudentsList teacherId={teacherId} />
+                <div className="space-y-6">
+                  <h1>Teacher Dashboard</h1>
+
+                  {/* My Students Section */}
+                  <section>
+                    <h2 className="text-xl font-bold mb-4">My Students ({students.length})</h2>
+                    {loading ? (
+                      <div>Loading students...</div>
+                    ) : error ? (
+                      <div className="text-red-600">Error: {error}</div>
+                    ) : students.length === 0 ? (
+                      <div className="text-gray-600">No students assigned yet. Wait for admin assignment.</div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {students.map((student) => (
+                          <StudentRow key={student.uid} student={student} />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
               </Suspense>
             </TabsContent>
             <TabsContent value="progress">
@@ -81,8 +119,46 @@ export default function TeacherDashboard() {
                 <TeacherStats teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+            <TabsContent value="messages">
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
+                <MessagesView teacherId={teacherId} />
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="schedule">
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
+                <ScheduleView teacherId={teacherId} />
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="profile">
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
+                <TeacherProfile teacherId={teacherId} />
+              </Suspense>
+            </TabsContent>
+            <TabsContent value="notifications">
+              <Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
+                <NotificationsPanel teacherId={teacherId} />
+              </Suspense>
+            </TabsContent>
           </Tabs>
         </main>
+      </div>
+    </div>
+  );
+}
+
+function StudentRow({ student }: { student: any }) {
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="flex justify-between">
+        <div>
+          <h3 className="font-bold">{student.studentName}</h3>
+          <p className="text-sm text-gray-600">Parent: {student.parentName}</p>
+          <p className="text-sm">Course: {student.courseName}</p>
+        </div>
+        <div className="text-right">
+          <p className="font-bold text-lg">{student.mastery}% Mastery</p>
+          <p className="text-sm text-gray-600">Status: {student.status}</p>
+        </div>
       </div>
     </div>
   );

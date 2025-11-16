@@ -53,6 +53,28 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+// Bring legacy JS callable game functions into the deployed bundle.
+// These files live at the repo root (functions/*.js) and use the v1 SDK.
+const {generateSpellingWords} = require("../generateSpellingWords.js");
+const {gradeSpelling} = require("../gradeSpelling.js");
+const {generateMaze} = require("../generateMaze.js");
+const {gradePhonicsJunction} = require("../gradePhonicsJunction.js");
+const {generateBingoCard} = require("../generateBingoCard.js");
+const {generateStorySnippet} = require("../generateStorySnippet.js");
+const {generateSpeakingPrompt} = require("../generateSpeakingPrompt.js");
+const {generateReadingChapter} = require("../generateReadingChapter.js");
+
+export {
+  generateSpellingWords,
+  gradeSpelling,
+  generateMaze,
+  gradePhonicsJunction,
+  generateBingoCard,
+  generateStorySnippet,
+  generateSpeakingPrompt,
+  generateReadingChapter,
+};
+
 // Allowed roles
 const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
 
@@ -264,7 +286,14 @@ export const adminResetPassword = onCall(
 
 // Export the adminCreateUser function
 export { adminCreateUser } from './adminCreateUser';
+export { onAuthUserCreate } from './onAuthUserCreate';
 export { onSessionComplete, onSessionCompleteTrigger } from './onSessionComplete';
+export { adminGenerateResetLink } from './adminGenerateResetLink';
+export { onEnrollmentUpdate } from './onEnrollmentUpdate';
+export { adminProcessEnrollmentCSV } from './adminProcessEnrollmentCSV';
+export { webhookPhonePe } from './webhookPhonePe';
+export { createPhonePeOrder, verifyPhonePePayment } from './phonepePayments';
+export { assignLPToParent, unassignLPFromParent, assignLPToTeacher, unassignLPFromTeacher } from './assignLP';
 
 // Newsletter subscription (callable)
 interface SubscribeRequest { email: string }
@@ -292,3 +321,10 @@ export const subscribeNewsletter = onCall(
     }
   }
 );
+
+// Export the new game data functions
+export { seedGameData } from './seedGameData';
+export { getGameContent } from './getGameContent';
+export { initializeGameData } from '../initializeGameData';
+export { createUserProfile } from '../createUserProfile';
+export { aggregateDailyMetrics } from '../aggregateDailyMetrics';

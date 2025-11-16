@@ -1,0 +1,16 @@
+{
+  "phonicsPatterns": {
+    "cvc": {
+      "short_a": ["bat", "cat", "hat", "mat"],
+      "short_e": ["bed", "fed", "red", "wet"],
+      "short_i": ["dig", "fig", "pig", "rig"],
+      "short_o": ["bog", "cog", "dog", "fog"],
+      "short_u": ["bug", "hug", "mug", "rug"]
+    }
+  },
+  "progressionStages": {
+    "stage1": "Sound Makers",
+    "stage2": "Sound Blenders",
+    "stage3": "Spell Writers"
+  }
+}

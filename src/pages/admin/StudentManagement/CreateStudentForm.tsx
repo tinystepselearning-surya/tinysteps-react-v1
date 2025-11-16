@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, getDocs, query, where, setDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, setDoc, doc, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@components/ui/form';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
@@ -25,16 +25,17 @@ type FormData = z.infer<typeof createStudentSchema>;
 
 interface Props {
   onStudentCreated?: (studentId: string) => void;
+  defaultParentId?: string | null;
 }
 
-export function CreateStudentForm({ onStudentCreated }: Props) {
+export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) {
   const [open, setOpen] = useState(false);
   const [parents, setParents] = useState<User[]>([]);
 
   const form = useForm<FormData>({
     // zodResolver generic typing can be strict in some RHF versions; cast to any to avoid incompat issues
     resolver: (zodResolver(createStudentSchema) as unknown) as any,
-    defaultValues: { parentId: '', fullName: '', dob: '', grade: '', status: 'active' },
+    defaultValues: { parentId: defaultParentId || '', fullName: '', dob: '', grade: '', status: 'active' },
   });
 
   useEffect(() => {
@@ -51,6 +52,10 @@ export function CreateStudentForm({ onStudentCreated }: Props) {
       }
     };
     if (open) loadParents();
+    // If defaultParentId is provided, set form value
+    if (open && defaultParentId) {
+      form.setValue('parentId', defaultParentId);
+    }
   }, [open]);
 
   const onSubmit = async (values: FormData) => {
@@ -76,6 +81,15 @@ export function CreateStudentForm({ onStudentCreated }: Props) {
 
       await setDoc(studentRef, payload);
 
+      // Update parent user document to include this kid id
+      try {
+        if (values.parentId) {
+          await updateDoc(doc(db, 'users', values.parentId), { childIds: arrayUnion(studentRef.id), updatedAt: serverTimestamp() } as any);
+        }
+      } catch (err) {
+        // ignore if update failed; admin can fix manually
+      }
+
       toast({ title: 'Student created', description: `${values.fullName} created successfully` });
       setOpen(false);
       form.reset();
@@ -94,6 +108,7 @@ export function CreateStudentForm({ onStudentCreated }: Props) {
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create Student</DialogTitle>
+          <DialogDescription>Fill in basic information to create a new student profile and associate it with a parent.</DialogDescription>
         </DialogHeader>
 
         <Form {...form}>

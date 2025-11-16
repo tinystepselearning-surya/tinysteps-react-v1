@@ -11,7 +11,7 @@ import {
   documentId,
 } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
-import { Enrollment, Invoice, ProgressItem, Session, AttendanceRecord } from '../types/models';
+import { Enrollment, Invoice, ProgressItem, Session, AttendanceRecord, Course, Topic } from '../types/models';
 
 // Hook 1: useKidProgress
 export function useKidProgress(kidId: string) {
@@ -166,6 +166,89 @@ export function useEnrollments(parentId: string) {
   });
 }
 
+// Hook 6: useEnrollmentsForStudents
+export function useEnrollmentsForStudents(studentIds: string[]) {
+  return useQuery({
+    queryKey: ['enrollments', 'students', studentIds.join(',')],
+    queryFn: async () => {
+      if (!studentIds || studentIds.length === 0) return [];
+      const CACHE_TTL = 30 * 1000; // 30 seconds
+      const cacheKey = `enrollments:students:${studentIds.join(',')}`;
+      // @ts-ignore
+      if ((globalThis as any).__enrollmentsCache && (globalThis as any).__enrollmentsCache.has(cacheKey)) {
+        const entry = (globalThis as any).__enrollmentsCache.get(cacheKey);
+        if (entry.expiresAt > Date.now()) return entry.data;
+      }
+
+      // Firestore 'in' supports up to 10 elements; we'll chunk if needed.
+      const chunk = <T,>(arr: T[], size = 10) => {
+        const out: T[][] = [];
+        for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+        return out;
+      };
+
+      const chunks = chunk(studentIds, 10);
+      const allResults: any[] = [];
+      for (const c of chunks) {
+        const q1 = query(collection(db, 'enrollments'), where('studentId', 'in', c));
+        const snap1 = await getDocs(q1);
+        snap1.docs.forEach((d) => allResults.push({ id: d.id, ...(d.data() as any) }));
+        // also check kidIds array contains any
+        const q2 = query(collection(db, 'enrollments'), where('kidIds', 'array-contains-any', c));
+        const snap2 = await getDocs(q2);
+        snap2.docs.forEach((d) => allResults.push({ id: d.id, ...(d.data() as any) }));
+      }
+      // dedupe by id
+      const uniqueResults: any[] = [];
+      const seen = new Set<string>();
+      for (const r of allResults) {
+        if (!seen.has(r.id)) {
+          uniqueResults.push(r);
+          seen.add(r.id);
+        }
+      }
+      const allResultsFinal = uniqueResults;
+
+      // Prefetch courses and teachers
+      const courseIds = new Set<string>();
+      const teacherIds = new Set<string>();
+      allResults.forEach((enr) => {
+        if (enr.courseId) courseIds.add(enr.courseId);
+        if (enr.teacherId) teacherIds.add(enr.teacherId);
+      });
+
+      const batchFetch = async (collectionName: string, ids: string[]) => {
+        const map = new Map<string, any>();
+        if (!ids || ids.length === 0) return map;
+        const idChunks = chunk(ids, 10);
+        for (const c of idChunks) {
+          const qd = query(collection(db, collectionName), where(documentId(), 'in', c));
+          const s = await getDocs(qd);
+          s.docs.forEach((d) => map.set(d.id, d.data()));
+        }
+        return map;
+      };
+
+      const [coursesMap, teachersMap] = await Promise.all([
+        batchFetch('courses', Array.from(courseIds)),
+        batchFetch('users', Array.from(teacherIds)),
+      ]);
+
+  const results = allResultsFinal.map((e) => ({ id: e.id, ...e, course: coursesMap.get(e.courseId) || null, teacher: teachersMap.get(e.teacherId) || null }));
+
+      try {
+        if (!(globalThis as any).__enrollmentsCache) (globalThis as any).__enrollmentsCache = new Map();
+        (globalThis as any).__enrollmentsCache.set(cacheKey, { data: results, expiresAt: Date.now() + CACHE_TTL });
+      } catch (err) {
+        // ignore
+      }
+
+      return results;
+    },
+    enabled: Array.isArray(studentIds) && studentIds.length > 0,
+  });
+}
+
 // Hook 5: useInvoices
 export function useInvoices(parentId: string) {
   return useQuery({
@@ -176,5 +259,91 @@ export function useInvoices(parentId: string) {
       return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Invoice) }));
     },
     enabled: !!parentId,
+  });
+}
+
+// Hook 7: useCourses
+export function useCourses(filters?: { area?: string; level?: number; status?: string; search?: string }) {
+  return useQuery({
+    queryKey: ['courses', filters],
+    queryFn: async () => {
+      let q = query(collection(db, 'courses'), orderBy('name', 'asc'));
+      
+      // Note: Firestore doesn't support complex filtering in a single query
+      // We'll fetch all and filter client-side for now
+      const snap = await getDocs(q);
+      let courses = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Course) }));
+      
+      // Apply filters
+      if (filters) {
+        if (filters.area) {
+          courses = courses.filter(c => c.area === filters.area);
+        }
+        if (filters.level) {
+          courses = courses.filter(c => c.level === filters.level);
+        }
+        if (filters.status) {
+          courses = courses.filter(c => c.status === filters.status);
+        }
+        if (filters.search) {
+          const searchLower = filters.search.toLowerCase();
+          courses = courses.filter(c => 
+            c.name.toLowerCase().includes(searchLower) || 
+            c.description.toLowerCase().includes(searchLower)
+          );
+        }
+      }
+      
+      return courses;
+    },
+  });
+}
+
+// Hook 8: useCourse
+export function useCourse(courseId: string) {
+  return useQuery({
+    queryKey: ['course', courseId],
+    queryFn: async () => {
+      if (!courseId) return null;
+      const docRef = doc(db, 'courses', courseId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        return { id: docSnap.id, ...(docSnap.data() as Course) };
+      }
+      return null;
+    },
+    enabled: !!courseId,
+  });
+}
+
+// Hook 9: useTopics
+export function useTopics(courseId: string) {
+  return useQuery({
+    queryKey: ['topics', courseId],
+    queryFn: async () => {
+      if (!courseId) return [];
+      const q = query(
+        collection(db, 'curriculum'), 
+        where('courseId', '==', courseId),
+        orderBy('sequenceNumber', 'asc')
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Topic) }));
+    },
+    enabled: !!courseId,
+  });
+}
+
+// Hook 10: useCourseEnrollments
+export function useCourseEnrollments(courseId: string) {
+  return useQuery({
+    queryKey: ['course-enrollments', courseId],
+    queryFn: async () => {
+      if (!courseId) return [];
+      const q = query(collection(db, 'enrollments'), where('courseId', '==', courseId));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Enrollment) }));
+    },
+    enabled: !!courseId,
   });
 }

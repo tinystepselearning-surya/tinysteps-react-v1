@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../../lib/firebaseConfig';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,9 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@components/ui/form';
+import KidMultiSelect from '@components/KidMultiSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { toast } from '@components/hooks/use-toast';
 import { CreateUserData, User } from '../../../types/User';
+import { auth } from '../../../lib/firebaseConfig';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -39,6 +43,7 @@ const createUserSchema = z.object({
   bankIfscCode: z.string().optional(),
   bankAccountHolderName: z.string().optional(),
   isKidProfile: z.boolean().optional(),
+  childIds: z.array(z.string()).optional(),
 });
 
 interface CreateUserFormProps {
@@ -50,10 +55,12 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
   const [isLoading, setIsLoading] = useState(false);
   const [activeRole, setActiveRole] = useState<'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid'>('parent');
   const [createdUserData, setCreatedUserData] = useState<any>(null);
+  const [kids, setKids] = useState<any[]>([]);
+  const [isAdminLocal, setIsAdminLocal] = useState<boolean | null>(null);
 
   const form = useForm<CreateUserData>({
     resolver: zodResolver(createUserSchema),
-    defaultValues: {
+  defaultValues: {
       email: '',
       password: '',
       name: '',
@@ -76,30 +83,97 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       bankIfscCode: '',
       bankAccountHolderName: '',
       isKidProfile: false,
+      childIds: [],
     },
   });
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        console.error('Debug: No user logged in');
+        setIsAdminLocal(false);
+        toast({
+          title: 'Authentication Error',
+          description: 'You must be logged in to create users.',
+          variant: 'destructive',
+        });
+      } else {
+        console.log('Debug: Logged-in user:', user);
+        try {
+          const tokenResult = await user.getIdTokenResult(true);
+          const isAdminClaim = tokenResult.claims?.admin === true || tokenResult.claims?.role === 'admin';
+          if (isAdminClaim) {
+            setIsAdminLocal(true);
+          } else {
+            // No admin assertions found in token; default to false.
+            setIsAdminLocal(false);
+          }
+        } catch (err) {
+          console.warn('Debug: Failed to determine admin claim locally', err);
+          setIsAdminLocal(false);
+        }
+      }
+    });
+
+    return () => unsubscribe(); // Ensure cleanup to prevent memory leaks
+  }, []);
+
   const onSubmit = async (data: CreateUserData) => {
     setIsLoading(true);
+    console.log('Debug: onSubmit called with data:', data);
     try {
-      // Map name to displayName for Cloud Function
-      const submitData = {
+      // Ensure auth state is ready and refresh token
+      const currentUser = await new Promise<any>((resolve) => {
+        if (auth.currentUser) return resolve(auth.currentUser);
+        const unsub = auth.onAuthStateChanged((u) => {
+          unsub();
+          resolve(u);
+        });
+      });
+
+      if (!currentUser) {
+        throw new Error('You must be logged in to create users.');
+      }
+      console.log('Debug: currentUser exists:', {
+        uid: currentUser.uid,
+        email: currentUser.email,
+      });
+
+      // Force refresh token to ensure the callable has the latest token attached
+      let freshToken: string | null = null;
+      try {
+        const token = await currentUser.getIdToken(true);
+        console.log('Debug: Refreshed ID token (first 8 chars):', token?.slice?.(0, 8));
+        freshToken = token;
+      } catch (tErr) {
+        console.warn('Debug: Failed to refresh token:', tErr);
+      }
+
+      const submitData: Record<string, any> = {
         ...data,
         displayName: data.name,
         role: activeRole,
-        // Handle arrays
         specialization: data.specialization ? data.specialization.split(',').map(s => s.trim()) : undefined,
         paymentMethods: data.paymentMethods ? data.paymentMethods.split(',').map(s => s.trim()) : undefined,
+        adminToken: freshToken || undefined,
       };
+      console.log('Debug: submitData prepared:', submitData);
 
       const createUserFunction = httpsCallable(functions, 'adminCreateUser');
-      const result = await createUserFunction(submitData);
+  console.log('Debug: Calling adminCreateUser with region functions:', functions);
+  const result = await createUserFunction(submitData);
+      console.log('Debug: createUserFunction result:', result);
 
-      // Store created user data for display
       const createdUser = result.data as any;
-      setCreatedUserData(createdUser);
+      if (createdUser && createdUser.success === false) {
+        const message = createdUser.error || 'Failed to create user';
+        console.error('Debug: User creation failed:', message);
+        toast({ title: 'Error', description: message, variant: 'destructive' });
+        return;
+      }
 
-      // Show success with UID if available
+      const resetLink = createdUser?.resetLink || null;
+      setCreatedUserData({ ...createdUser, resetLink });
       toast({
         title: 'User created',
         description: createdUser?.uid
@@ -109,12 +183,35 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
 
       form.reset();
       onUserCreated(result.data as User);
-      onClose?.();
+      // After creation, navigate to admin page and highlight new user if possible
+      try {
+        const createdUid = (result.data as any)?.uid;
+        if (createdUid) {
+          console.log('Debug: Redirecting to admin page with createdUserId:', createdUid);
+          window.location.href = `/surya?createdUserId=${createdUid}`;
+        }
+      } catch (err) {
+        console.error('Debug: Error during redirect:', err);
+      }
     } catch (error: any) {
-      console.error('Error creating user:', error);
+        console.error('Debug: Error in onSubmit:', error);
+        if (error?.code || error?.status) {
+          console.error('Debug: callable error code/status:', error.code || error.status);
+        }
+        if (error?.details) {
+          console.error('Debug: callable error details:', error.details);
+        }
+      // Provide clearer messaging for common function errors
+      const code = error?.code || error?.status || null;
+      let description = error?.message || 'Failed to create user. Try again.';
+      if (code === 'permission-denied' || description.includes('Only admins')) {
+        description = 'You do not have permission to create users. Ensure your account has the Admin role in Firestore or in Auth claims.';
+      } else if (code === 'already-exists' || description.includes('already exists')) {
+        description = 'A user with this email already exists. Try a different email.';
+      }
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create user',
+        description,
         variant: 'destructive',
       });
     } finally {
@@ -136,8 +233,26 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
     });
   };
 
+  useEffect(() => {
+    // load kids for parent selection
+    const loadKids = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'kids'));
+        setKids(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })));
+      } catch (err) {
+        console.error('Failed to load kids for parent selection', err);
+      }
+    };
+    loadKids();
+  }, []);
+
   return (
     <div className="space-y-4">
+      {isAdminLocal === false && (
+        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+          Your account does not appear to have Admin permissions. You will not be able to create users.
+        </div>
+      )}
       <Tabs value={activeRole} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="admin">Admin</TabsTrigger>
@@ -188,7 +303,7 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                   <FormItem>
                     <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="Full Name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -402,6 +517,23 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="childIds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assign kids (optional)</FormLabel>
+                      <div className="mt-2">
+                        <KidMultiSelect
+                          value={field.value || []}
+                          onChange={(ids) => field.onChange(ids)}
+                          kids={kids.map(k => ({ id: k.id, name: k.fullName || k.name || k.id }))}
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </TabsContent>
             )}
 
@@ -428,7 +560,7 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                     <FormItem>
                       <FormLabel>Bank Account Holder Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input placeholder="Full Name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -502,55 +634,78 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || isAdminLocal === false}>
                 {isLoading ? 'Creating...' : 'Create User'}
               </Button>
             </div>
           </form>
         </Form>
-        </Tabs>
+      </Tabs>
 
-        {createdUserData && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
-            <h3 className="text-lg font-semibold text-green-800 mb-2">User Created Successfully!</h3>
-            <div className="space-y-2 text-sm">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="font-medium text-gray-700">User ID (UID):</span>
-                  <p className="font-mono text-xs bg-gray-100 p-1 rounded mt-1">{createdUserData.uid}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Email:</span>
-                  <p className="text-gray-900">{createdUserData.email}</p>
-                </div>
+      {createdUserData && (
+        <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md">
+          <h3 className="text-lg font-semibold text-green-800 mb-2">User Created Successfully!</h3>
+          <div className="space-y-2 text-sm">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="font-medium text-gray-700">User ID (UID):</span>
+                <p className="font-mono text-xs bg-gray-100 p-1 rounded mt-1">{createdUserData.uid}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="font-medium text-gray-700">Created At:</span>
-                  <p className="text-gray-900">
-                    {createdUserData.createdAt ? new Date(createdUserData.createdAt).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <span className="font-medium text-gray-700">Last Updated:</span>
-                  <p className="text-gray-900">
-                    {createdUserData.updatedAt ? new Date(createdUserData.updatedAt).toLocaleString() : 'N/A'}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCreatedUserData(null)}
-                >
-                  Clear
-                </Button>
+              <div>
+                <span className="font-medium text-gray-700">Email:</span>
+                <p className="text-gray-900">{createdUserData.email}</p>
               </div>
             </div>
+            {createdUserData?.resetLink && (
+              <div className="mt-4">
+                <span className="font-medium text-gray-700">Password Reset Link</span>
+                <p className="text-xs mt-1 break-all">{createdUserData.resetLink}</p>
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      try {
+                        navigator.clipboard.writeText(createdUserData.resetLink);
+                        toast({ title: 'Copied', description: 'Reset link copied to clipboard' });
+                      } catch (err) {
+                        toast({ title: 'Copy failed', description: 'Could not copy reset link' });
+                      }
+                    }}
+                  >
+                    Copy Reset Link
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <span className="font-medium text-gray-700">Created At:</span>
+                <p className="text-gray-900">
+                  {createdUserData.createdAt ? new Date(createdUserData.createdAt).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+              <div>
+                <span className="font-medium text-gray-700">Last Updated:</span>
+                <p className="text-gray-900">
+                  {createdUserData.updatedAt ? new Date(createdUserData.updatedAt).toLocaleString() : 'N/A'}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCreatedUserData(null)}
+              >
+                Clear
+              </Button>
+            </div>
           </div>
-        )}
-      </div>
-    );
-  }
+        </div>
+      )}
+    </div>
+  );
+}

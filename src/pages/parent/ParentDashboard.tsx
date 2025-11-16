@@ -1,18 +1,25 @@
-import React, { useMemo, useState } from 'react';
-import { Card } from '@components/ui/card';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useParentChildren } from './hooks/useParentChildren';
-import { useUpcomingSessions } from './hooks/useUpcomingSessions';
-import { useInvoices, usePaymentHistory } from './hooks/useInvoices';
-import { useChildProgress } from './hooks/useChildProgress';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
+import { Card, CardContent } from '../../components/ui/card';
+import ParentSidebar from './components/layout/ParentSidebar';
 import { ParentHeader } from './components/layout/ParentHeader';
-import { ChildrenCards } from './components/children/ChildrenCards';
-import { ChildDetail } from './components/children/ChildDetail';
-import { UpcomingSessionsList } from './components/sessions/UpcomingSessionsList';
-import { InvoiceList } from './components/payments/InvoiceList';
-import { PaymentHistory } from './components/payments/PaymentHistory';
-import { ChildProgressOverview } from './components/progress/ChildProgressOverview';
-import { ParentChildSummary } from '../../types/Parent';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useParentFilteredChildren } from '@/hooks/useParentFilteredData';
+import { useLocation, useNavigate } from 'react-router-dom';
+
+// Lazy load components for better performance
+const ChildrenManagement = lazy(() => import('./components/children/ChildrenManagement'));
+const ChildDetailView = lazy(() => import('./components/children/ChildDetailView'));
+const UpcomingSessionsView = lazy(() => import('./components/sessions/UpcomingSessionsView'));
+const InvoiceManagement = lazy(() => import('./components/payments/InvoiceManagement').then(module => ({ default: module.InvoiceManagement })));
+const PaymentHistory = lazy(() => import('./components/payments/PaymentHistory').then(module => ({ default: module.PaymentHistory })));
+const SessionTracking = lazy(() => import('../../components/SessionTracking'));
+const ProgressReports = lazy(() => import('../../components/ProgressReports'));
+const TeacherMessaging = lazy(() => import('../../components/TeacherMessaging'));
+const NotificationsCenter = lazy(() => import('../../components/NotificationsCenter'));
+const ParentSettings = lazy(() => import('../../components/ParentSettings'));
+const ParentProfile = lazy(() => import('../../components/ParentProfile'));
+const KidDashboard = lazy(() => import('../kid/KidDashboard'));
 
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
@@ -22,25 +29,27 @@ const AccessNotice = ({ children }: { children: React.ReactNode }) => (
 
 export default function ParentDashboard() {
   const { user, isLoading } = useAuthStore();
-  const parentId = user?.uid;
-  const [selectedChild, setSelectedChild] = useState<ParentChildSummary | null>(null);
+  const { children, loading, error } = useParentFilteredChildren();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const {
-    data: children = [],
-    isLoading: childrenLoading,
-  } = useParentChildren(parentId);
-  const childIds = useMemo(() => children.map((child) => child.id), [children]);
+  const [activeTab, setActiveTab] = useState(location.pathname.includes('/parent/kids') ? 'kids' : 'dashboard');
 
-  const { data: sessions = [], isLoading: sessionsLoading } = useUpcomingSessions(childIds);
-  const { data: invoices = [], isLoading: invoicesLoading } = useInvoices(parentId);
-  const { data: payments = [] } = usePaymentHistory(parentId);
-  const { data: progress = [], isLoading: progressLoading } = useChildProgress(childIds);
-
-  React.useEffect(() => {
-    if (!selectedChild && children.length) {
-      setSelectedChild(children[0]);
+  useEffect(() => {
+    if (location.pathname.includes('/parent/kids')) {
+      setActiveTab('kids');
     }
-  }, [children, selectedChild]);
+  }, [location.pathname]);
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+
+    if (tab === 'kids') {
+      navigate('/parent/kids', { replace: location.pathname.includes('/parent/kids') });
+    } else if (location.pathname.includes('/parent/kids')) {
+      navigate('/parent', { replace: true });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -55,45 +64,110 @@ export default function ParentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-4 md:p-8 space-y-6">
-      <ParentHeader name={user.displayName || user.email} totalChildren={children.length} />
+    <div className="flex h-screen bg-gray-50">
+      <ParentSidebar activeTab={activeTab} onTabChange={handleTabChange} />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <ParentHeader onOpenKidsView={() => handleTabChange('kids')} />
+        <main className="flex-1 overflow-auto">
+          <Suspense fallback={<div className="p-6">Loading...</div>}>
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full">
+              <div className="border-b bg-white px-6">
+                <TabsList className="grid w-full grid-cols-10">
+                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+                  <TabsTrigger value="children">Children</TabsTrigger>
+                  <TabsTrigger value="sessions">Sessions</TabsTrigger>
+                  <TabsTrigger value="payments">Payments</TabsTrigger>
+                  <TabsTrigger value="kids">Kids Page</TabsTrigger>
+                  <TabsTrigger value="reports">Reports</TabsTrigger>
+                  <TabsTrigger value="messages">Messages</TabsTrigger>
+                  <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                  <TabsTrigger value="profile">Profile</TabsTrigger>
+                </TabsList>
+              </div>
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2 space-y-4">
-          {childrenLoading ? (
-            <Card className="p-6 text-sm text-muted-foreground">Loading children...</Card>
-          ) : (
-            <ChildrenCards childrenData={children} onSelectChild={setSelectedChild} />
-          )}
-        </div>
-        <ChildDetail child={selectedChild} />
-      </section>
+              <TabsContent value="dashboard" className="m-0 h-full">
+                <div className="p-6">
+                  <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
+                  <Card>
+                    <CardContent className="p-6">
+                      <p>Dashboard overview with quick stats and recent activity will be displayed here.</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
 
-      <section className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          {sessionsLoading ? (
-            <Card className="p-6 text-sm text-muted-foreground">Loading sessions...</Card>
-          ) : (
-            <UpcomingSessionsList sessions={sessions} />
-          )}
-        </div>
-        <div className="space-y-4">
-          {invoicesLoading ? (
-            <Card className="p-6 text-sm text-muted-foreground">Loading invoices...</Card>
-          ) : (
-            <InvoiceList invoices={invoices} />
-          )}
-          <PaymentHistory payments={payments} />
-        </div>
-      </section>
+              <TabsContent value="children" className="m-0 h-full">
+                <div className="space-y-6">
+                  <h1>Parent Dashboard</h1>
 
-      <section>
-        {progressLoading ? (
-          <Card className="p-6 text-sm text-muted-foreground">Loading progress...</Card>
-        ) : (
-          <ChildProgressOverview progress={progress} />
-        )}
-      </section>
+                  {/* My Children Section */}
+                  <section>
+                    <h2 className="text-xl font-bold mb-4">My Children ({children.length})</h2>
+                    {loading ? (
+                      <div>Loading children...</div>
+                    ) : error ? (
+                      <div className="text-red-600">Error: {error}</div>
+                    ) : children.length === 0 ? (
+                      <div className="text-gray-600">No children registered yet.</div>
+                    ) : (
+                      <div className="grid gap-4">
+                        {children.map((child) => (
+                          <ChildCard key={child.uid} child={child} />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="sessions" className="m-0 h-full">
+                <UpcomingSessionsView />
+              </TabsContent>
+
+              <TabsContent value="payments" className="m-0 h-full">
+                <InvoiceManagement />
+              </TabsContent>
+
+              <TabsContent value="kids" className="m-0 h-full p-0">
+                <KidDashboard />
+              </TabsContent>
+
+              <TabsContent value="reports" className="m-0 h-full">
+                <ProgressReports />
+              </TabsContent>
+
+              <TabsContent value="messages" className="m-0 h-full">
+                <TeacherMessaging />
+              </TabsContent>
+
+              <TabsContent value="notifications" className="m-0 h-full">
+                <NotificationsCenter />
+              </TabsContent>
+
+              <TabsContent value="settings" className="m-0 h-full">
+                <ParentSettings />
+              </TabsContent>
+
+              <TabsContent value="profile" className="m-0 h-full">
+                <ParentProfile />
+              </TabsContent>
+            </Tabs>
+          </Suspense>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+function ChildCard({ child }: { child: any }) {
+  return (
+    <div className="border rounded-lg p-4 hover:shadow-lg transition">
+      <h3 className="font-bold text-lg">{child.displayName}</h3>
+      <p className="text-sm text-gray-600">Age: {child.age} | Grade: {child.grade}</p>
+      <p className="text-sm">Active Courses: {child.enrollmentCount}</p>
+      <p className="text-sm">Average Mastery: {child.averageMastery}%</p>
+      <button className="mt-2 text-blue-600">View Progress</button>
     </div>
   );
 }

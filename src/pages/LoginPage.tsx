@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import { handleLogin } from '../lib/auth';
+import { handleLogin, handleLoginWithGoogle } from '../lib/auth';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -23,6 +23,7 @@ export default function LoginPage() {
       'teacher': 'teacher',
       'parent': 'parent',
       'learning-partner': 'learningPartner',
+      'learningpartner': 'learningPartner',
       'kid': 'kid'
     };
 
@@ -70,7 +71,7 @@ export default function LoginPage() {
           </div>
         )}
         {error && <div className="mb-4 text-red-600">{error}</div>}
-        <form className="space-y-4" onSubmit={onSubmit}>
+  <form className="space-y-4" onSubmit={onSubmit}>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -96,6 +97,28 @@ export default function LoginPage() {
           >
             {isSubmitting ? 'Signing in…' : 'Sign In'}
           </button>
+          {/* Google Sign-in for parent role */}
+          {expectedRole === 'parent' && (
+            <div>
+              <button
+                type="button"
+                onClick={async () => {
+                  setError(null);
+                  setIsSubmitting(true);
+                  try {
+                    await handleLoginWithGoogle('parent');
+                  } catch (err: any) {
+                    setError(err?.message || 'Google sign-in failed');
+                  } finally {
+                    setIsSubmitting(false);
+                  }
+                }}
+                className={`w-full mt-2 px-4 py-2 rounded border ${isSubmitting ? 'opacity-60' : 'bg-white'}`}
+              >
+                Sign in with Google
+              </button>
+            </div>
+          )}
         </form>
       </div>
     </div>

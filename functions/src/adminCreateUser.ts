@@ -11,6 +11,7 @@ if (!admin.apps.length) {
 interface AdminCreateUserRequest {
   email: string;
   displayName: string;
+  password?: string;
   phone?: string;
   role: 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
 
@@ -41,6 +42,8 @@ interface AdminCreateUserRequest {
 
   // Admin/Common:
   status?: 'active' | 'suspended' | 'archived';
+  // Optional childIds to map this parent to existing students
+  childIds?: string[];
 }
 
 interface AdminCreateUserResponse {
@@ -52,8 +55,11 @@ interface AdminCreateUserResponse {
   message: string;
   timestamp: string;
   resetLinkSent: boolean;
+  resetLink?: string | null;
   nextSteps: string[];
 }
+
+// Added to include resetLink if function generated one
 
 interface AdminCreateUserErrorResponse {
   success: false;
@@ -64,41 +70,82 @@ interface AdminCreateUserErrorResponse {
 // Valid roles
 const VALID_ROLES = ['admin', 'teacher', 'parent', 'learningPartner', 'kid'] as const;
 
+type AdminCreateUserPayload = AdminCreateUserRequest & { adminToken?: string };
+
+async function resolveAuthContext(request: any): Promise<{ uid: string; token?: admin.auth.DecodedIdToken } | null> {
+  if (request?.auth?.uid) {
+    return request.auth;
+  }
+
+  const headerAuth = request?.rawRequest?.headers?.authorization;
+  let tokenFromHeader: string | null = null;
+  if (typeof headerAuth === 'string' && headerAuth.trim().length > 0) {
+    if (headerAuth.startsWith('Bearer ')) {
+      tokenFromHeader = headerAuth.slice(7);
+    } else {
+      tokenFromHeader = headerAuth;
+    }
+  }
+
+  const tokenFromBody = request?.data?.adminToken;
+  const token = tokenFromBody || tokenFromHeader || null;
+
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    return {
+      uid: decoded.uid,
+      token: decoded
+    };
+  } catch (error) {
+    logger.warn('Failed to manually verify ID token for adminCreateUser', error as Error);
+    return null;
+  }
+}
+
 /**
  * Cloud Function to create users with complete role-based setup
  * Only callable by admins. Creates Firebase Auth user + Firestore document + custom claims
  */
-export const adminCreateUser = functions.https.onCall(
-  {
-    region: 'asia-south1',
-    memory: '256MiB',
-    timeoutSeconds: 60,
-  },
-  async (data: any, context: any): Promise<AdminCreateUserResponse | AdminCreateUserErrorResponse> => {
-    const now = new Date().toISOString();
+/**
+ * Implementation function for adminCreateUser logic.
+ * Extracted so tests can import and call the handler directly.
+ */
+async function adminCreateUserHandlerImpl(request: any): Promise<AdminCreateUserResponse | AdminCreateUserErrorResponse> {
+  const now = new Date().toISOString();
 
-    try {
-      // Step 1: Authentication Check
-      if (!context.auth) {
-        const errorMsg = 'adminCreateUser called without authentication';
-        logger.warn(errorMsg);
-        throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
-      }
+  try {
+    const data = request?.data as AdminCreateUserPayload | undefined;
+    const auth = await resolveAuthContext(request);
 
-      // Verify caller is admin
-      const callerDoc = await admin.firestore().collection('users').doc(context.auth.uid).get();
-      const callerData = callerDoc.data();
+    // Step 1: Authentication Check
+    if (!auth) {
+      const errorMsg = 'adminCreateUser called without authentication';
+      logger.warn(errorMsg);
+      throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+    }
 
-      if (!callerData || (!callerData.roles?.includes('admin') && callerData.role !== 'admin')) {
-        const errorMsg = `Non-admin user ${context.auth.uid} attempted to create user`;
-        logger.warn(errorMsg);
-        throw new functions.https.HttpsError('permission-denied', 'Only admins can create users');
-      }
+    // Verify caller is admin
+    const callerDoc = await admin.firestore().collection('users').doc(auth.uid).get();
+    const callerData = callerDoc.data();
 
-      logger.info(`Admin ${context.auth.uid} creating user with role ${data.role}`);
+    // Check if caller has admin claim (supports either boolean `admin` or role string in token)
+    const callerIsAdminClaim = (auth?.token?.admin === true) || (auth?.token?.role === 'admin');
 
-      // Step 2: Input Validation
-      const requestData = data as AdminCreateUserRequest;
+    if (!((callerData && (callerData.roles?.includes('admin') || callerData.role === 'admin')) || callerIsAdminClaim)) {
+      const errorMsg = `Non-admin user ${auth.uid} attempted to create user`;
+      logger.warn(errorMsg);
+      throw new functions.https.HttpsError('permission-denied', 'Only admins can create users');
+    }
+
+    logger.info(`Admin ${auth.uid} creating user with role ${data?.role}`);
+
+    // Step 2: Input Validation
+    const { adminToken: _adminToken, ...cleanedData } = (data || {}) as AdminCreateUserPayload;
+    const requestData = cleanedData as AdminCreateUserRequest;
 
       // Validate required fields
       if (!requestData.email || !requestData.displayName || !requestData.role) {
@@ -144,7 +191,8 @@ export const adminCreateUser = functions.https.onCall(
         newUser = await admin.auth().createUser({
           email: requestData.email,
           displayName: requestData.displayName,
-          disabled: false
+          disabled: false,
+          ...(requestData.password ? { password: requestData.password } : {})
         });
 
         logger.info(`Created Firebase Auth user: ${newUser.uid}`);
@@ -156,9 +204,29 @@ export const adminCreateUser = functions.https.onCall(
       }
 
       // Step 5: Create Firestore Document
+      // Debug: ensure admin.firestore.FieldValue exists to avoid TypeError
+      try {
+        logger.debug('admin.firestore availability', {
+          hasFirestore: !!admin.firestore,
+          hasFieldValue: !!(admin.firestore && (admin.firestore as any).FieldValue),
+          hasServerTimestamp: !!(admin.firestore && (admin.firestore as any).FieldValue && typeof (admin.firestore as any).FieldValue.serverTimestamp === 'function')
+        });
+      } catch (debugErr) {
+        logger.warn('Failed to evaluate admin.firestore.FieldValue debug', { error: String(debugErr) });
+      }
+      // Use a robust serverTimestamp field that falls back if FieldValue is not present in the environment
+      const serverTimestampField: any = (admin.firestore && (admin.firestore as any).FieldValue && (admin.firestore as any).FieldValue.serverTimestamp)
+        ? (admin.firestore as any).FieldValue.serverTimestamp()
+        : (admin.firestore && (admin.firestore as any).Timestamp && (admin.firestore as any).Timestamp.now)
+          ? (admin.firestore as any).Timestamp.now()
+          : new Date();
+
       const baseUserDoc: any = {
         email: requestData.email,
         displayName: requestData.displayName,
+        provider: 'admin:create',
+        // Also write `name` to match frontend expectations
+        name: requestData.displayName,
         phone: requestData.phone || null,
         roles: [requestData.role],
         role: requestData.role,
@@ -166,10 +234,10 @@ export const adminCreateUser = functions.https.onCall(
         // Optional admin fields (department, permissions) defaulted here so schema is consistent
         department: null,
         permissions: [],
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        createdBy: context.auth.uid,
-        updatedBy: context.auth.uid
+  createdAt: serverTimestampField,
+  updatedAt: serverTimestampField,
+  createdBy: auth.uid,
+  updatedBy: auth.uid
       };
 
       // Add role-specific fields
@@ -241,6 +309,25 @@ export const adminCreateUser = functions.https.onCall(
         throw new functions.https.HttpsError('internal', `Failed to create user document: ${error.message}`);
       }
 
+      // Optional: If new parent has childIds, update child docs to set parentIds / primaryParentId
+      if (requestData.role === 'parent' && Array.isArray(requestData.childIds) && requestData.childIds.length > 0) {
+        const batch = admin.firestore().batch();
+        for (const childId of requestData.childIds) {
+          const kidRef = admin.firestore().collection('kids').doc(childId);
+          batch.update(kidRef, {
+            parentIds: admin.firestore.FieldValue.arrayUnion(newUser.uid),
+            primaryParentId: newUser.uid,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          } as any);
+        }
+        try {
+          await batch.commit();
+          logger.info(`Linked parent ${newUser.uid} to childIds: ${JSON.stringify(requestData.childIds)}`);
+        } catch (err: any) {
+          logger.warn(`Failed to link parent to children: ${err.message}`);
+        }
+      }
+
       // Step 6: Set Custom Claims
       try {
         const customClaims = {
@@ -255,20 +342,22 @@ export const adminCreateUser = functions.https.onCall(
         // Don't rollback - claims can be set manually later
       }
 
-      // Step 7: Send Password Reset Email
+      // Step 7: Send Password Reset Email / Return reset link
       let resetLinkSent = false;
+      let resetLink: string | null = null;
       try {
-        const resetLink = await admin.auth().generatePasswordResetLink(requestData.email);
+        resetLink = await admin.auth().generatePasswordResetLink(requestData.email);
         logger.info(`Generated password reset link for ${requestData.email}`);
 
         // In production, you would send this via email service
-        // For now, just log it (admin can manually send or use the link)
+        // For now, log it and include in response so admin can forward it
         console.log(`Password reset link: ${resetLink}`);
         resetLinkSent = true;
 
       } catch (error: any) {
         logger.warn(`Could not generate password reset link: ${error.message}`);
         resetLinkSent = false;
+        resetLink = null;
       }
 
       // Step 8: Return Success Response
@@ -280,7 +369,8 @@ export const adminCreateUser = functions.https.onCall(
         role: requestData.role,
         message: `User ${requestData.displayName} created successfully as ${requestData.role}`,
         timestamp: now,
-        resetLinkSent,
+  resetLinkSent,
+  resetLink,
         nextSteps: [
           `1. User will receive password reset email at ${requestData.email}`,
           `2. User can set password via email link`,
@@ -295,17 +385,32 @@ export const adminCreateUser = functions.https.onCall(
     } catch (error) {
       // Handle known HttpsError
       const httpError = error as functions.https.HttpsError;
-      if (httpError.code) {
+      if (httpError && (httpError as any).code) {
         const errorResponse: AdminCreateUserErrorResponse = {
           success: false,
           error: httpError.message,
-          code: httpError.code
+          code: (httpError as any).code
         };
         return errorResponse;
       }
 
       // Handle unexpected errors
-      logger.error('Unexpected error in adminCreateUser', { error, data, caller: context.auth?.uid });
+      // Handle unexpected errors
+      // Add detailed debug information for diagnosis in the emulator / logs
+      try {
+        const details: any = {
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          name: error instanceof Error ? error.name : undefined,
+          code: (error as any)?.code,
+          data: request?.data,
+          caller: request?.auth?.uid
+        };
+        logger.error('Unexpected error in adminCreateUser', details);
+      } catch (loggingErr) {
+        // Fallback to simple log if structured logging fails
+        logger.error('Unexpected error in adminCreateUser (failed to serialize error)', { error: String(error) });
+      }
       const errorResponse: AdminCreateUserErrorResponse = {
         success: false,
         error: 'An unexpected error occurred. Please try again.',
@@ -313,5 +418,15 @@ export const adminCreateUser = functions.https.onCall(
       };
       return errorResponse;
     }
-  }
+}
+
+export const adminCreateUserHandler = adminCreateUserHandlerImpl;
+
+export const adminCreateUser = functions.https.onCall(
+  {
+    region: 'asia-south1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  adminCreateUserHandlerImpl
 );
