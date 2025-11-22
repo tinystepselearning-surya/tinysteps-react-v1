@@ -3,11 +3,7 @@
     "mazes": [
       { "title": "Cat's Journey", "difficulty": "easy", "junctions": 5 },
       { "title": "Dog's Adventure", "difficulty": "easy", "junctions": 5 }
-    ]
-  },
-  "level2": {
-    "mazes": [
-      { "title": "Make & Bake", "difficulty": "medium", "junctions": 6 },
+    {"removed": true, "note": "maze data removed from repository"}
       { "title": "Bees in Trees", "difficulty": "medium", "junctions": 6 }
     ]
   },

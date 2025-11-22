@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 
@@ -16,7 +16,7 @@ const MENU_ITEMS = [
   { id: 'region', label: 'Regional Data', icon: '🌍' },
 ];
 
-export const LPSidebar: React.FC<LPSidebarProps> = ({ active, onSelect }) => {
+export const LPSidebar: FC<LPSidebarProps> = ({ active, onSelect }) => {
   return (
     <aside className="w-64 hidden lg:block">
       <Card className="p-4">

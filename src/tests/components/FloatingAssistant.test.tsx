@@ -11,7 +11,7 @@ describe('FloatingAssistant', () => {
     vi.useFakeTimers()
     // stub requestAnimationFrame to immediate callback to avoid animation scheduling triggers
     // framer-motion uses RAF internally which can cause unwrapped updates in tests
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+     
     // @ts-ignore
     global.requestAnimationFrame = (cb) => cb(0)
   })
@@ -20,7 +20,7 @@ describe('FloatingAssistant', () => {
     useAuthStore.setState({ user: null })
     vi.useRealTimers()
     // restore RAF
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+     
     // @ts-ignore
     global.requestAnimationFrame = rafBackup
   })

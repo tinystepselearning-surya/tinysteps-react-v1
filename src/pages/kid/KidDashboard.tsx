@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { TodaySession } from './components/session/TodaySession';
 import { ProgressBars } from './components/progress/ProgressBars';
 import { Achievements } from './components/achievements/Achievements';
 import { WorksheetsList } from './components/worksheets/WorksheetsList';
-import { GamesList } from './components/games/GamesList';
 import { useAuthStore } from '../../store/useAuthStore';
-import DailyProgressCard from '../../components/DailyPractice/DailyProgressCard';
+import DailyProgressCard from '../../components/DailyPractice/DailyProgressCard.jsx';
 import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 
@@ -14,7 +12,6 @@ export default function KidDashboard() {
   const { user } = useAuthStore();
   const practiceLink = user?.uid ? `/kids/${user.uid}/practice-buddy` : '/kids/me/practice-buddy';
   const dailyLink = user?.uid ? `/kids/${user.uid}/daily-practice` : '/kids/me/daily-practice';
-  const gameBase = user?.uid ? `/kids/${user.uid}` : '/kids/me';
   const [dailyStatus, setDailyStatus] = useState({ score: 0, total: 5, completed: false });
 
   useEffect(() => {
@@ -70,29 +67,9 @@ export default function KidDashboard() {
           <Achievements />
         </div>
 
-        {/* Worksheets and Games Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Worksheets Row (games removed) */}
+        <div className="w-full">
           <WorksheetsList />
-          <GamesList />
-        </div>
-
-        {/* Games Section */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-indigo-600 font-semibold uppercase tracking-wide">Games</p>
-              <h3 className="text-xl font-bold text-gray-900">Play and learn with Tiny Steps AI</h3>
-            </div>
-            <span className="text-xs text-gray-500">New! Try SpellBee, Maze, Bingo</span>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <GameCard title="SpellBee Trainer" desc="Spell words and get instant feedback" link={`${gameBase}/spellbee`} emoji="🐝" />
-            <GameCard title="Phonics Maze" desc="Follow sounds to escape the maze" link={`${gameBase}/phonics-maze`} emoji="🌀" />
-            <GameCard title="Sight Word Bingo" desc="Mark words that match the clue" link={`${gameBase}/bingo`} emoji="🎯" />
-            <GameCard title="Grammar Builder" desc="Pick grammar choices to build a story" link={`${gameBase}/grammar-builder`} emoji="📖" />
-            <GameCard title="Speaking Stage" desc="Practice prompts with your voice" link={`${gameBase}/speaking`} emoji="🎤" />
-            <GameCard title="Reading Adventure" desc="Read chapters and answer questions" link={`${gameBase}/reading-adventure`} emoji="📚" />
-          </div>
         </div>
 
         {/* Footer */}
@@ -107,21 +84,5 @@ export default function KidDashboard() {
         </div>
       </div>
     </div>
-  );
-}
-
-function GameCard({ title, desc, link, emoji }: { title: string; desc: string; link: string; emoji?: string }) {
-  return (
-    <Link
-      to={link}
-      className="block p-4 rounded-2xl bg-white border border-indigo-100 shadow hover:shadow-md transition space-y-2"
-    >
-      <div className="flex items-center justify-between">
-        <p className="text-xl">{emoji || '🎮'}</p>
-        <span className="text-xs text-indigo-500 font-semibold uppercase">Play</span>
-      </div>
-      <p className="text-lg font-bold text-gray-900">{title}</p>
-      <p className="text-sm text-gray-600">{desc}</p>
-    </Link>
   );
 }

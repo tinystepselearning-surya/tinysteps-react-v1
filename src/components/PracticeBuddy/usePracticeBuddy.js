@@ -109,8 +109,8 @@ export function usePracticeBuddy(studentId) {
       }
 
       const prompt = buildPrompt(word);
-      setLoading(true);
       const start = Date.now();
+      setLoading(true);
 
       try {
         const response = await generateAIResponse({
@@ -142,12 +142,12 @@ export function usePracticeBuddy(studentId) {
         });
 
         setTodayCount((prev) => prev + 1);
-      } catch (err) {
-        console.error('Practice buddy error', err);
+      } catch (_err) {
+        console.error('Practice buddy error', _err);
         setError(
-          err?.message ||
-            err?.code ||
-            err?.response?.data?.message ||
+          _err?.message ||
+            _err?.code ||
+            _err?.response?.data?.message ||
             fallbackMessage
         );
         setAiResponse(fallbackMessage);

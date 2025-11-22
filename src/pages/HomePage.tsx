@@ -1,5 +1,4 @@
 // @ts-nocheck
-import React from 'react';
 import { BookOpen, Users, CheckCircle, Star, MessageCircle } from 'lucide-react';
 import Footer from '../components/common/Footer';
 import ConversionHero from '../components/Home/ConversionHero';
@@ -17,7 +16,6 @@ import TestimonialsCarousel from '../components/Home/TestimonialsCarousel';
 import TrialForm from '../components/forms/TrialForm';
 import StatsStrip from '../components/Home/StatsStrip';
 import PopularPrograms from '../components/Home/PopularPrograms';
-import GamingSubscriptionSection from '../components/Home/GamingSubscriptionSection';
 import GlobalImpactSection from '../components/Home/GlobalImpactSection';
 import DemoShowcase from '../components/Home/DemoShowcase';
 
@@ -197,7 +195,7 @@ export default function HomePage() {
         </div>
       </section>
       <PricingCrispSection />
-      <GamingSubscriptionSection />
+      {/* Gaming subscription removed */}
       <FAQSection />
       <FinalCTASection />
       <Footer />

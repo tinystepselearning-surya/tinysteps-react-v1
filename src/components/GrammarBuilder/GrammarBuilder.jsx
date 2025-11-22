@@ -1,9 +1,8 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import useGrammarBuilder from './useGrammarBuilder';
-import StoryDisplay from './StoryDisplay';
-import ChoiceButtons from './ChoiceButtons';
-import StoryResult from './StoryResult';
+import StoryDisplay from './StoryDisplay.jsx';
+import ChoiceButtons from './ChoiceButtons.jsx';
+import StoryResult from './StoryResult.jsx';
 
 export default function GrammarBuilder({ grammarTopic = 'singular/plural' }) {
   const { story, snippet, loading, error, history, choose, reload } = useGrammarBuilder({ grammarTopic });

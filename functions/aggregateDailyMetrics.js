@@ -25,7 +25,7 @@ exports.aggregateDailyMetrics = functions.pubsub
         .where('timestamp', '<=', end)
         .get();
 
-      const stats: any = {
+      const stats = {
         totalSessions: sessions.size,
         byGame: {},
         avgAccuracy: 0,

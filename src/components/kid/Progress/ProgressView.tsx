@@ -1,7 +1,7 @@
-import React from 'react';
+import type { FC } from 'react';
 import { motion } from 'framer-motion';
 
-const ProgressView = () => {
+const ProgressView: FC = () => {
   const progressData = [
     {
       subject: 'Phonics',

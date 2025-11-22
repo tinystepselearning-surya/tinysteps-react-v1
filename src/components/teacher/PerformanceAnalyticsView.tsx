@@ -1,7 +1,7 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 
-const PerformanceAnalyticsView: React.FC = () => {
+const PerformanceAnalyticsView: FC = () => {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Performance Analytics</h1>

@@ -1,5 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import FAQAccordion, { FAQItem } from '../components/FAQ/FAQAccordion';
 import Meta from '../components/common/Meta';
@@ -48,7 +49,7 @@ const faqSchema = {
   }))
 };
 
-const FAQPage: React.FC = () => {
+const FAQPage: FC = () => {
   const [selected, setSelected] = useState<string>('all');
   const [search, setSearch] = useState('');
   useEffect(() => { document.title = 'Frequently Asked Questions | Tiny Steps'; }, []);

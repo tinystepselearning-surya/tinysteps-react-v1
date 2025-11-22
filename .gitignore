@@ -1,8 +1,7 @@
 .DS_Store
-node_modules/
+**/node_modules/
 dist/
 build/
-.firebase/
 .firebase/
 emu-nohup.log
 firebase-debug.log
@@ -24,12 +23,5 @@ dist/assets/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*node_modules
-VITE_FIREBASE_API_KEY=your_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your-project-id
-VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_FIREBASE_MEASUREMENT_ID=G-your_measurement_id
-VITE_SENTRY_DSN=https://...@sentry.io/...
+pnpm-debug.log*
+tinysteps-react-v1-firebase-adminsdk-*.json

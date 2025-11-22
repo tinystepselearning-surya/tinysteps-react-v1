@@ -37,7 +37,7 @@ const itemVariants = {
 
 const AgePathwaySection: React.FC = () => {
 	const [selectedAge, setSelectedAge] = useState(6);
-	const { ref, isInView } = useScrollAnimation(0.2);
+	const { ref } = useScrollAnimation(0.2);
 	const pathway = pathways[selectedAge] ?? pathways[6];
 
 	const coursesWithIndex = useMemo(() => pathway.courses.map((course, index) => ({ course, index })), [pathway]);

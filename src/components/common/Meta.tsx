@@ -1,5 +1,6 @@
 // Lightweight meta + JSON-LD injector without extra deps
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
+import type { FC } from 'react';
 
 type MetaProps = {
   title?: string;
@@ -20,7 +21,7 @@ const setTag = (name: string, content?: string) => {
   el.setAttribute('content', content);
 };
 
-const Meta: React.FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }) => {
+const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }) => {
   useEffect(() => {
     if (title) document.title = title;
     setTag('description', description);

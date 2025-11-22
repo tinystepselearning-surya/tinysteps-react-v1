@@ -1,4 +1,4 @@
-import React from 'react';
+// no React import needed in new JSX runtime
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import CourseList from './CourseList';

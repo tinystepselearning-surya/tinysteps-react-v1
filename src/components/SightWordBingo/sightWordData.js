@@ -100,7 +100,7 @@ function take(arr, n) {
   return arr.slice(0, n);
 }
 
-export function buildBingoCard(studentLevel = 'kindergarten', performanceHistory = []) {
+export function buildBingoCard(studentLevel = 'kindergarten', _performanceHistory = []) {
   const levelData = sightWordData[studentLevel] || sightWordData.kindergarten;
   const tierWords = [
     ...(levelData.frequencyTier1 || []).map((w) => w.word),

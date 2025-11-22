@@ -1,4 +1,4 @@
-import React from 'react';
+// React default import removed
 import { Button } from '@components/ui/button';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';

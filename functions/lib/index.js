@@ -41,7 +41,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initializeGameData = exports.getGameContent = exports.seedGameData = exports.subscribeNewsletter = exports.unassignLPFromTeacher = exports.assignLPToTeacher = exports.unassignLPFromParent = exports.assignLPToParent = exports.verifyPhonePePayment = exports.createPhonePeOrder = exports.webhookPhonePe = exports.adminProcessEnrollmentCSV = exports.onEnrollmentUpdate = exports.adminGenerateResetLink = exports.onSessionCompleteTrigger = exports.onSessionComplete = exports.onAuthUserCreate = exports.adminCreateUser = exports.adminResetPassword = exports.getUidByEmail = exports.setUserRole = exports.generateReadingChapter = exports.generateSpeakingPrompt = exports.generateStorySnippet = exports.generateBingoCard = exports.gradePhonicsJunction = exports.generateMaze = exports.gradeSpelling = exports.generateSpellingWords = void 0;
+exports.subscribeNewsletter = exports.unassignLPFromTeacher = exports.assignLPToTeacher = exports.unassignLPFromParent = exports.assignLPToParent = exports.verifyPhonePePayment = exports.createPhonePeOrder = exports.webhookPhonePe = exports.adminProcessEnrollmentCSV = exports.onEnrollmentUpdate = exports.adminGenerateResetLink = exports.onSessionCompleteTrigger = exports.onSessionComplete = exports.onAuthUserCreate = exports.adminCreateUser = exports.adminResetPassword = exports.getUidByEmail = exports.setUserRole = void 0;
 exports.setUserRoleHandler = setUserRoleHandler;
 const firebase_functions_1 = require("firebase-functions");
 const logger = __importStar(require("firebase-functions/logger"));
@@ -61,30 +61,11 @@ const logger = __importStar(require("firebase-functions/logger"));
 // Import required modules for the new function
 const https_1 = require("firebase-functions/v2/https");
 const admin = __importStar(require("firebase-admin"));
-const module_1 = require("module");
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-// Bring legacy JS callable game functions into the deployed bundle.
-// These files live at the repo root (functions/*.js) and use the v1 SDK.
-const require = (0, module_1.createRequire)(import.meta.url);
-const { generateSpellingWords } = require("../generateSpellingWords.js");
-exports.generateSpellingWords = generateSpellingWords;
-const { gradeSpelling } = require("../gradeSpelling.js");
-exports.gradeSpelling = gradeSpelling;
-const { generateMaze } = require("../generateMaze.js");
-exports.generateMaze = generateMaze;
-const { gradePhonicsJunction } = require("../gradePhonicsJunction.js");
-exports.gradePhonicsJunction = gradePhonicsJunction;
-const { generateBingoCard } = require("../generateBingoCard.js");
-exports.generateBingoCard = generateBingoCard;
-const { generateStorySnippet } = require("../generateStorySnippet.js");
-exports.generateStorySnippet = generateStorySnippet;
-const { generateSpeakingPrompt } = require("../generateSpeakingPrompt.js");
-exports.generateSpeakingPrompt = generateSpeakingPrompt;
-const { generateReadingChapter } = require("../generateReadingChapter.js");
-exports.generateReadingChapter = generateReadingChapter;
+// Game-related callables removed from functions bundle during cleanup.
 // Allowed roles
 const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
 /**
@@ -289,11 +270,9 @@ exports.subscribeNewsletter = (0, https_1.onCall)({ region: 'asia-south1', memor
         throw new https_1.HttpsError('internal', 'Subscription failed');
     }
 });
-// Export the new game data functions
-var seedGameData_1 = require("./seedGameData");
-Object.defineProperty(exports, "seedGameData", { enumerable: true, get: function () { return seedGameData_1.seedGameData; } });
-var getGameContent_1 = require("./getGameContent");
-Object.defineProperty(exports, "getGameContent", { enumerable: true, get: function () { return getGameContent_1.getGameContent; } });
-var initializeGameData_1 = require("../initializeGameData");
-Object.defineProperty(exports, "initializeGameData", { enumerable: true, get: function () { return initializeGameData_1.initializeGameData; } });
+// Game seed/content functions removed from compiled bundle.
+// @ts-ignore
+// export { createUserProfile } from '../createUserProfile';
+// @ts-ignore
+// export { aggregateDailyMetrics } from '../aggregateDailyMetrics';
 //# sourceMappingURL=index.js.map

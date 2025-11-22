@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const axios = require('axios');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
@@ -70,10 +70,13 @@ function parseSnippet(text) {
   }
 }
 
-exports.generateStorySnippet = functions.region('us-central1').https.onCall(async (data, context) => {
-  if (!context.auth || !context.auth.uid) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required');
-  }
+exports.generateStorySnippet = onCall(
+  {
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (data, context) => {
   const { previousStory = '', grammar_topic = 'singular/plural' } = data || {};
   const topic = normalizeTopic(grammar_topic);
 
@@ -115,7 +118,7 @@ exports.generateStorySnippet = functions.region('us-central1').https.onCall(asyn
 
   try {
     await admin.firestore().collection('ai-usage-logs').add({
-      userId: context.auth.uid,
+      userId: context.auth?.uid || null,
       feature: 'grammar-story-snippet',
       tokens_used: tokensUsed,
       cost: 0,

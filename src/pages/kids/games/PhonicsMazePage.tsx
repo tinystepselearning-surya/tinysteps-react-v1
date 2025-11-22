@@ -1,19 +1,14 @@
-import React from 'react';
+// React import removed (unused)
 import { useParams } from 'react-router-dom';
 import KidGameShell from './KidGameShell';
-import PhoneticsMaze from '../../../components/PhonicsMaze/PhoneticsMaze';
+// Phonics Maze feature removed — page kept as a placeholder.
 
 export default function PhonicsMazePage() {
   const { childId } = useParams<{ childId: string }>();
 
   return (
-    <KidGameShell
-      childId={childId}
-      title="Phonics Maze 🌀"
-      subtitle="Follow the correct sounds to escape the maze."
-      highlight="Uses Groq-generated mazes and tracks progress"
-    >
-      <PhoneticsMaze userId={childId} />
-    </KidGameShell>
+    <div className="p-8">
+      <h2 className="text-xl font-bold">Phonics Maze (Removed)</h2>
+    </div>
   );
 }

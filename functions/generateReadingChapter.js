@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const axios = require('axios');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
@@ -41,10 +41,13 @@ Provide JSON:
 ${CHILD_PSYCHOLOGY_ADDENDUM}`;
 }
 
-exports.generateReadingChapter = functions.region('us-central1').https.onCall(async (data, context) => {
-  if (!context.auth || !context.auth.uid) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required');
-  }
+exports.generateReadingChapter = onCall(
+  {
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (data, context) => {
   const { bookId = 'default-book', chapterNumber = 1, readingLevel = 'early-primary' } = data || {};
 
   let result = null;
@@ -89,10 +92,10 @@ exports.generateReadingChapter = functions.region('us-central1').https.onCall(as
       readingLevel,
       ...result,
       createdAt: admin.firestore.Timestamp.now(),
-      userId: context.auth.uid,
+      userId: context.auth?.uid || null,
     });
     await db.collection('ai-usage-logs').add({
-      userId: context.auth.uid,
+      userId: context.auth?.uid || null,
       feature: 'reading-chapter',
       tokens_used: tokensUsed,
       cost: 0,

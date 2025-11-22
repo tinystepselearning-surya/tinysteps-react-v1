@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+          import { useEffect, useState } from 'react';
 import { onSnapshot, query, collection, QueryConstraint } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 
@@ -8,26 +8,40 @@ export function useRealtimeData(collectionName: string, constraints: QueryConstr
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
     try {
       const q = query(collection(db, collectionName), ...constraints);
       const unsubscribe = onSnapshot(
         q,
         (snapshot) => {
+          if (!mounted) return;
           setData(snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
           setIsLoading(false);
         },
         (err) => {
-          setError(err as Error);
+          if (!mounted) return;
+          // Provide a friendlier error message if the client is unauthorized to read the collection
+          if ((err as any)?.code === 'permission-denied') {
+            setError(new Error('Access denied. You do not have permission to read this data.'));
+          } else {
+            setError(err as Error);
+          }
           setIsLoading(false);
         }
       );
 
-      return () => unsubscribe();
+      return () => {
+        mounted = false;
+        unsubscribe();
+      };
     } catch (err) {
-      setError(err as Error);
-      setIsLoading(false);
+      if (mounted) {
+        setError(err as Error);
+        setIsLoading(false);
+      }
     }
-  }, [collectionName, JSON.stringify(constraints)]);
+  // Use direct references as deps; callers should memoize `constraints` when passing inline arrays
+  }, [collectionName, constraints]);
 
   return { data, error, isLoading };
 }

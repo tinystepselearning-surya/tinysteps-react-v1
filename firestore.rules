@@ -9,53 +9,45 @@ service cloud.firestore {
     }
     
     // Helper functions
+    // Admin check - allow either the known seeded admin UID OR any user with a custom claim `role: 'admin'`.
+    // This makes it easier in dev to seed admin accounts via the emulator and via custom claims.
     function isAdmin() {
-      return request.auth.token.admin == true;
+      return request.auth != null && (
+        request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3' ||
+        ((request.auth.token.role == 'admin') && request.auth.token != null)
+      );
     }
     
     function isTeacher() {
-      return request.auth.token.teacher == true;
+      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
     }
     
     function isParent() {
-      return request.auth.token.parent == true;
+      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'parent';
     }
     
     function isLP() {
-      return request.auth.token.learningPartner == true;
+      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'learningPartner';
     }
     
     function isKid() {
-      return request.auth.token.kid == true;
+      return request.auth != null && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'kid';
     }
 
     // ===== USERS COLLECTION =====
     match /users/{uid} {
-      // Admin: Read/Write all (broad privileges)
-      allow read, create, delete: if isAdmin();
+      // Development/Emulator friendly: allow any authenticated user to read user documents.
+      // NOTE: This relaxed rule is intentional for local debugging and E2E testing with the emulator.
+      // In production, tighten this to the RBAC checks above (isAdmin/isLP/isTeacher/isParent).
+      allow read: if request.auth != null;
 
-      // Users: read own doc
-      allow read: if request.auth.uid == uid;
+      // Allow creation/deletion only to admins
+      allow create, delete: if isAdmin();
 
       // Allow admins to update any user. Also allow a user to update their own profile, but users cannot change their 'role' field.
       allow update: if isAdmin() || (request.auth.uid == uid && (
         !('role' in request.resource.data) || request.resource.data.role == resource.data.role
       ));
-
-      // LP: Read assigned teachers & parents only. Allow read if the user's assignedLP or assignedLPs includes the LP uid,
-      // or if the LP has token-based lists that include the user's uid.
-      allow read: if isLP() && (
-        ('assignedLP' in resource.data && resource.data.assignedLP == request.auth.uid) ||
-        ('assignedLPs' in resource.data && request.auth.uid in resource.data.assignedLPs) ||
-        (('lpAssignedTeachers' in request.auth.token) && resource.data.uid in request.auth.token.lpAssignedTeachers) ||
-        (('lpAssignedParents' in request.auth.token) && resource.data.uid in request.auth.token.lpAssignedParents)
-      );
-
-      // Teacher: read parents only
-      allow read: if isTeacher() && resource.data.role == 'parent';
-
-      // Parent: read teachers only
-      allow read: if isParent() && resource.data.role == 'teacher';
     }
 
     // User progress per game (scoped to their uid)
@@ -203,6 +195,24 @@ service cloud.firestore {
     match /ai-error-logs/{logId} {
       // Admin: Read/Write all
       allow read, write: if isAdmin();
+    }
+    
+    // ===== ADMIN STATS COLLECTION =====
+    match /adminStats/{document=**} {
+      // Admin: Read/Write all
+      allow read, write: if isAdmin();
+    }
+    
+    // Temporary debug rule to log request.auth.token
+    match /debug/{doc=**} {
+      allow read, write: if request.auth != null;
+    }
+    // DEVELOPMENT: permissive read rule for local emulator testing only.
+    // This allows the frontend to perform queries and listens during E2E/debug runs.
+    // Remove or tighten before deploying to production.
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

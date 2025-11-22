@@ -1,6 +1,6 @@
-import React from 'react';
+import type { FC } from 'react';
 
-const PerformanceMetrics = () => {
+const PerformanceMetrics: FC = () => {
   return (
     <div className="bg-white shadow-md rounded-lg p-4 mb-6">
       <h2 className="text-xl font-semibold mb-4">Performance Metrics</h2>

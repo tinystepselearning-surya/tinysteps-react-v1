@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { useTeacherStats } from '../../hooks/useTeacherStats';
 
@@ -13,7 +13,7 @@ const StatBlock = ({ label, value }: { label: string; value: string | number }) 
   </Card>
 );
 
-export const TeacherStats: React.FC<TeacherStatsProps> = ({ teacherId }) => {
+export const TeacherStats: FC<TeacherStatsProps> = ({ teacherId }) => {
   const { data, isLoading } = useTeacherStats(teacherId);
 
   if (isLoading || !data) {

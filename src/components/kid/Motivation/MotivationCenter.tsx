@@ -1,7 +1,7 @@
-import React from 'react';
+import type { FC } from 'react';
 import { motion } from 'framer-motion';
 
-const MotivationCenter = () => {
+const MotivationCenter: FC = () => {
   const dailyTip = "Did you know? There are 44 sounds in English! You're learning them one by one! 🎵";
 
   const messages = {

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { cn } from '@components/lib/utils';
 import { Button } from '@components/ui/button';
 
@@ -22,7 +22,7 @@ const items = [
   { id: 'notifications', label: 'Notifications' },
 ];
 
-export const TeacherSidebar: React.FC<SidebarProps> = ({ active, onSelect, todayCount, teacherId }) => {
+export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount, teacherId }) => {
   return (
     <aside className="hidden lg:block w-64 pr-6">
       <div className="space-y-2">

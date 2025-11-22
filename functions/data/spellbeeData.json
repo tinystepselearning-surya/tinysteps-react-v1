@@ -6,11 +6,7 @@
       "short_i": ["dig", "fig", "pig", "rig"],
       "short_o": ["bog", "cog", "dog", "fog"],
       "short_u": ["bug", "hug", "mug", "rug"]
-    }
-  },
-  "progressionStages": {
-    "stage1": "Sound Makers",
-    "stage2": "Sound Blenders",
+    {"removed": true, "note": "spellbee data removed from repository"}
     "stage3": "Spell Writers"
   }
 }

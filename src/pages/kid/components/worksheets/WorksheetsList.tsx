@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
@@ -18,7 +18,7 @@ interface Worksheet {
   icon: string;
 }
 
-export const WorksheetsList: React.FC<WorksheetsListProps> = ({ kidId }) => {
+export const WorksheetsList: FC<WorksheetsListProps> = ({ kidId }) => {
   // Mock data - in real implementation, fetch from Firestore
   const worksheets: Worksheet[] = [
     {

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 
@@ -6,7 +6,7 @@ interface PerformanceMetricsProps {
   lpId?: string;
 }
 
-export const PerformanceMetrics: React.FC<PerformanceMetricsProps> = ({ lpId }) => {
+export const PerformanceMetrics: FC<PerformanceMetricsProps> = ({ lpId }) => {
   // Mock data - in real implementation, fetch from Firestore
   const metrics = {
     totalRevenue: 125000,

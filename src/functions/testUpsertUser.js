@@ -1,0 +1,140 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+// Import the Firebase Admin SDK
+import * as admin from "firebase-admin";
+// Initialize Firebase Admin SDK with the service account key
+const serviceAccount = require("../../tinysteps-react-v1-firebase-adminsdk-fbsvc-54979d3c19.json");
+if (!admin.apps.length) {
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+    });
+}
+const db = admin.firestore();
+// Your web app's Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyBZ5h2M3hataZjWM7480e76QAiFmEVK37Y",
+    authDomain: "tinysteps-react-v1.firebaseapp.com",
+    projectId: "tinysteps-react-v1",
+    storageBucket: "tinysteps-react-v1.firebasestorage.app",
+    messagingSenderId: "31484691215",
+    appId: "1:31484691215:web:2e8854696bc7e27b63347a",
+    measurementId: "G-5RMQVF1HGD"
+};
+/**
+ * The `upsertUser` function is used to create or update a user document in Firestore.
+ * It ensures that the user data is consistent and adheres to the required schema.
+ *
+ * @param {string} uid - The unique identifier for the user (Firebase Auth UID).
+ * @param {Object} data - The user data to be upserted.
+ * @param {string} data.name - The name of the user.
+ * @param {string} data.email - The email address of the user.
+ * @param {"parent" | "teacher" | "admin"} data.role - The role of the user (e.g., parent, teacher, admin).
+ * @param {string[]} [data.childIds] - Optional array of child IDs associated with the user (for parents).
+ *
+ * The function performs the following steps:
+ * 1. Validates the input data.
+ * 2. Checks if the user document already exists in Firestore.
+ * 3. Creates a new document or updates the existing one with the provided data.
+ * 4. Logs the operation result for debugging purposes.
+ *
+ * Example usage:
+ * ```javascript
+ * await upsertUser("test-uid-123", {
+ *   name: "Test Parent",
+ *   email: "parent@example.com",
+ *   role: "parent",
+ *   childIds: ["kid-1", "kid-2"]
+ * });
+ * ```
+ */
+function upsertUser(uid, data) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // Validate input data
+        if (!uid || !data) {
+            throw new Error("UID and data are required");
+        }
+        if (!data.name || !data.email || !data.role) {
+            throw new Error("Name, email, and role are required");
+        }
+        if (!["parent", "teacher", "admin"].includes(data.role)) {
+            throw new Error("Invalid role");
+        }
+        if (data.childIds && !Array.isArray(data.childIds)) {
+            throw new Error("childIds must be an array");
+        }
+        // Check if the user document already exists
+        const userDoc = yield db.doc(`users/${uid}`).get();
+        if (userDoc.exists) {
+            console.log(`User with UID ${uid} already exists.`);
+            // Update the existing document
+            yield db.doc(`users/${uid}`).update(data);
+            console.log(`User with UID ${uid} updated.`);
+        }
+        else {
+            // Create a new document
+            yield db.doc(`users/${uid}`).set(data);
+            console.log(`User with UID ${uid} created.`);
+        }
+    });
+}
+function testUpsertUser() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const testCases = [
+            {
+                uid: "test-uid-123",
+                data: {
+                    name: "Test Parent",
+                    email: "parent@example.com",
+                    role: "parent",
+                    childIds: ["kid-1", "kid-2"],
+                },
+            },
+            {
+                uid: "test-uid-456",
+                data: {
+                    name: "Test Teacher",
+                    email: "teacher@example.com",
+                    role: "teacher",
+                    childIds: [],
+                },
+            },
+            {
+                uid: "test-uid-789",
+                data: {
+                    name: "Test Admin",
+                    email: "admin@example.com",
+                    role: "admin",
+                    childIds: [],
+                },
+            },
+            {
+                uid: "test-uid-invalid",
+                data: {
+                    name: "Invalid Role",
+                    email: "invalid@example.com",
+                    role: "invalid", // Invalid role for testing
+                    childIds: [],
+                },
+            },
+        ];
+        for (const testCase of testCases) {
+            try {
+                console.log(`Testing upsertUser with UID: ${testCase.uid}`);
+                yield upsertUser(testCase.uid, testCase.data);
+                console.log(`Success: User with UID ${testCase.uid} upserted.`);
+            }
+            catch (error) {
+                console.error(`Error for UID ${testCase.uid}:`, error);
+            }
+        }
+    });
+}
+// Run the test
+testUpsertUser();

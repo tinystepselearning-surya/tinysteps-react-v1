@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (unused; using new JSX transform)
 
 export default function UnauthorizedPage() {
   return (

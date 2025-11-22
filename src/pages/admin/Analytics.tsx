@@ -1,4 +1,4 @@
-import React from 'react';
+// React default import removed
 import { Card } from '@components/ui/card';
 
 export interface AdminStats {

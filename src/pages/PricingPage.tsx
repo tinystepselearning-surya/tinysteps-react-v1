@@ -1,9 +1,9 @@
 // @ts-nocheck
-import React, { useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import type { FC } from 'react';
 import Meta from '../components/common/Meta';
 import { useAuthStore } from '../store/useAuthStore';
 import { catalogs } from '../content/courses';
-import GamingSubscriptionSection from '../components/Home/GamingSubscriptionSection';
 
 const PER_SESSION = 550;
 
@@ -52,7 +52,7 @@ const plans = [
   }
 ];
 
-const PricingPage: React.FC = () => {
+const PricingPage: FC = () => {
   useEffect(() => { document.title = 'Pricing | Tiny Steps'; }, []);
 
   const coursePricing = useMemo(() => catalogs.map((course) => {
@@ -194,7 +194,7 @@ const PricingPage: React.FC = () => {
           </div>
         </div>
       </section>
-      <GamingSubscriptionSection heading="Joyful Learning Game Plans (Add-on)" />
+      {/* Gaming subscription section removed */}
     </div>
   );
 };

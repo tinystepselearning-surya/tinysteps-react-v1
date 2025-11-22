@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
@@ -19,7 +19,7 @@ interface Teacher {
   status: 'active' | 'inactive';
 }
 
-export const TeachersList: React.FC<TeachersListProps> = ({ lpId }) => {
+export const TeachersList: FC<TeachersListProps> = ({ lpId }) => {
   // Mock data - in real implementation, fetch from Firestore
   const teachers: Teacher[] = [
     {

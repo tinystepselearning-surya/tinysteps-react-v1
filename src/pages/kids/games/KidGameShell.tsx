@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store/useAuthStore';
 
@@ -7,7 +7,7 @@ type KidGameShellProps = {
   title: string;
   subtitle?: string;
   highlight?: string;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export default function KidGameShell({ childId, title, subtitle, highlight, children }: KidGameShellProps) {

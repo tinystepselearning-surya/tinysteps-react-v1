@@ -9,9 +9,7 @@
     ],
     "frequencyTier3": [
       { "word": "have", "clue": "Own something", "frequency": "Medium" }
-    ]
-  },
-  "clueStrategies": {
+    {"removed": true, "note": "bingo data removed from repository"}
     "simple": "One-word definition",
     "contextual": "Use in sentence"
   }

@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function GameOver({ score, results, onPlayAgain }) {
   const correctCount = results.filter((r) => r.correct).length;
   return (

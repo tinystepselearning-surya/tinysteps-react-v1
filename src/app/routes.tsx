@@ -1,4 +1,5 @@
-import React from 'react';
+import { lazy, Suspense } from 'react';
+import type { FC } from 'react';
 import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
 import LoginPage from '../pages/LoginPage';
 import Login from '../pages/Login';
@@ -21,34 +22,26 @@ import GrammarPage from '../pages/grammar';
 import SpeakingPage from '../pages/speaking';
 
 // Dashboards (to be created)
-const AdminDashboard = React.lazy(() => import('../pages/admin/AdminDashboard'));
-const TeacherDashboard = React.lazy(() => import('../pages/teacher/TeacherDashboard'));
-const ParentDashboard = React.lazy(() => import('../pages/parent/ParentDashboard'));
-const LPDashboard = React.lazy(() => import('../pages/lp/LPDashboard'));
-const PracticeBuddyPage = React.lazy(() => import('../pages/kids/PracticeBuddyPage'));
-const WorksheetGeneratorPage = React.lazy(() => import('../pages/teacher/WorksheetGeneratorPage'));
-const BetaAnalytics = React.lazy(() => import('../pages/admin/beta-analytics.jsx'));
-const SpellBeeGamePage = React.lazy(() => import('../pages/kids/games/SpellBeeGamePage'));
-const PhonicsMazePage = React.lazy(() => import('../pages/kids/games/PhonicsMazePage'));
-const SightWordBingoPage = React.lazy(() => import('../pages/kids/games/SightWordBingoPage'));
-const GrammarBuilderPage = React.lazy(() => import('../pages/kids/games/GrammarBuilderPage'));
-const PublicSpeakingPage = React.lazy(() => import('../pages/kids/games/PublicSpeakingPage'));
-const ReadingAdventurePage = React.lazy(() => import('../pages/kids/games/ReadingAdventurePage'));
+import AdminDashboard from '../pages/admin/AdminDashboard';
+const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
+const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
+const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
+const WorksheetGeneratorPage = lazy(() => import('../pages/teacher/WorksheetGeneratorPage'));
+const BetaAnalytics = lazy(() => import('../pages/admin/beta-analytics.jsx') as any);
 
 // Payment Components
-const PaymentCallback = React.lazy(() => import('../pages/parent/Payments/PaymentCallback'));
-const PhonePeCallback = React.lazy(() => import('../pages/payments/PhonePeCallback').then(module => ({ default: module.PhonePeCallback })));
+const PaymentCallback = lazy(() => import('../pages/parent/Payments/PaymentCallback'));
+const PhonePeCallback = lazy(() => import('../pages/payments/PhonePeCallback').then(module => ({ default: module.PhonePeCallback })));
 
 // Layout
 import Header from '../components/common/Header';
-import { Suspense } from 'react';
 import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
 import FloatingAssistant from '../components/common/FloatingAssistant';
 import BackToTopButton from '../components/common/BackToTopButton';
 import ScrollToTop from '../components/common/ScrollToTop';
 
-const Layout: React.FC = () => (
+const Layout: FC = () => (
   <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
     <AnalyticsTracker />
     <ScrollToTop />
@@ -63,16 +56,9 @@ const Layout: React.FC = () => (
   </div>
 );
 
-const routerOptions: any = {
-  future: {
-    v7_startTransition: true,
-  },
-};
-
 const router = createBrowserRouter(
   [
     {
-      path: '/',
       element: <Layout />,
       errorElement: <NotFoundPage />,
       children: [
@@ -81,18 +67,7 @@ const router = createBrowserRouter(
           element: <HomePage />,
         },
         {
-          path: 'curriculum',
-          element: <CurriculumPage />,
-        },
-        {
-          path: 'courses',
-          element: <CoursesPage />,
-        },
-        {
-          path: 'courses/:slug',
-          element: <CourseDetailPage />,
-        },
-        {
+      
           path: 'blog',
           element: <BlogPage />,
         },
@@ -100,6 +75,7 @@ const router = createBrowserRouter(
           path: 'blog/:slug',
           element: <BlogPostPage />,
         },
+      // 'Suspense' is now imported from React above
         {
           path: 'pricing',
           element: <PricingPage />,
@@ -111,6 +87,18 @@ const router = createBrowserRouter(
         {
           path: 'why-tiny-steps',
           element: <WhyTinyStepsPage />,
+        },
+        {
+          path: 'courses',
+          element: <CoursesPage />,
+        },
+        {
+          path: 'courses/:courseId',
+          element: <CourseDetailPage />,
+        },
+        {
+          path: 'curriculum',
+          element: <CurriculumPage />,
         },
         {
           path: 'why-us',
@@ -261,76 +249,6 @@ const router = createBrowserRouter(
           element: <Navigate to="/parent" replace />,
         },
         {
-          path: 'kids/:childId/spellbee',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <SpellBeeGamePage />,
-            },
-          ],
-        },
-        {
-          path: 'kids/:childId/phonics-maze',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <PhonicsMazePage />,
-            },
-          ],
-        },
-        {
-          path: 'kids/:childId/bingo',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <SightWordBingoPage />,
-            },
-          ],
-        },
-        {
-          path: 'kids/:childId/bingo/:roomId',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <SightWordBingoPage />,
-            },
-          ],
-        },
-        {
-          path: 'kids/:childId/grammar-builder',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <GrammarBuilderPage />,
-            },
-          ],
-        },
-        {
-          path: 'kids/:childId/speaking',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <PublicSpeakingPage />,
-            },
-          ],
-        },
-        {
-          path: 'kids/:childId/reading-adventure',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
-          children: [
-            {
-              path: '',
-              element: <ReadingAdventurePage />,
-            },
-          ],
-        },
-        {
           path: 'teacher/:teacherId/worksheet-generator',
           element: <RoleGate allowedRoles={['teacher']} />,
           children: [
@@ -353,7 +271,16 @@ const router = createBrowserRouter(
       ],
     },
   ],
-  routerOptions
+  {
+    future: {
+      v7_startTransition: true,
+      v7_relativeSplatPath: true,
+      v7_fetcherPersist: true,
+      v7_normalizeFormMethod: true,
+      v7_partialHydration: true,
+      v7_skipActionErrorRevalidation: true,
+    },
+  }
 );
 
 export default router;

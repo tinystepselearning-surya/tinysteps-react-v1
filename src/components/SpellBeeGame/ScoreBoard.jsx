@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function ScoreBoard({ score, streak, attempts, total }) {
   const accuracy = attempts ? Math.round((score / (attempts * 10)) * 100) : 0;
   return (

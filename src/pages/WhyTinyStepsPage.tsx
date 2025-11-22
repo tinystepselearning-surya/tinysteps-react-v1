@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 
 type Feature = {
   title: string;
@@ -68,7 +68,7 @@ const testimonials: string[] = [
 
 const ctaOptions = ['Book a Free Trial Class', 'Talk to Us About Your Child', 'Explore Our Courses'];
 
-const WhyTinyStepsPage: React.FC = () => {
+const WhyTinyStepsPage: FC = () => {
   return (
     <main className="min-h-screen bg-white text-gray-900">
       <section className="text-center py-10 px-4 max-w-4xl mx-auto">

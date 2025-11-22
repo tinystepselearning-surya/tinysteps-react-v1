@@ -20,7 +20,11 @@ export function useGrammarBuilder({ grammarTopic = 'singular/plural' }) {
     } catch (err) {
       const fallback = getOfflineSnippet(grammarTopic);
       setSnippet(fallback);
-      setError(err?.message || 'Using offline grammar exercise while AI is unavailable.');
+      const msg =
+        err?.code === 'functions/unauthenticated' || /unauth/i.test(String(err?.message || ''))
+          ? 'Please sign in to use AI grammar builder. Showing offline exercise instead.'
+          : err?.message || 'Using offline grammar exercise while AI is unavailable.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -47,7 +51,11 @@ export function useGrammarBuilder({ grammarTopic = 'singular/plural' }) {
         .catch((err) => {
           const fallback = getOfflineSnippet(topic);
           setSnippet(fallback);
-          setError(err?.message || 'Using offline grammar exercise while AI is unavailable.');
+          const msg =
+            err?.code === 'functions/unauthenticated' || /unauth/i.test(String(err?.message || ''))
+              ? 'Please sign in to use AI grammar builder. Showing offline exercise instead.'
+              : err?.message || 'Using offline grammar exercise while AI is unavailable.';
+          setError(msg);
         });
     },
     [grammarTopic, history, snippet, story]

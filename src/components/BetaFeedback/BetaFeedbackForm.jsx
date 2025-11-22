@@ -1,7 +1,3 @@
-import React from 'react';
-import KidsFeedbackForm from './KidsFeedbackForm';
-import TeacherFeedbackForm from './TeacherFeedbackForm';
-import ParentsFeedbackForm from './ParentsFeedbackForm';
 import { useBetaFeedback } from './useBetaFeedback';
 
 export default function BetaFeedbackForm({ role }) {

@@ -19,7 +19,11 @@ export function useReadingAdventure({ bookId = 'default-book', readingLevel = 'e
     } catch (err) {
       const lvlKey = readingLevel.startsWith('level') ? readingLevel : 'levelA';
       setChapter(buildOfflineChapter(lvlKey));
-      setError(err?.message || 'Using offline chapter while AI is unavailable.');
+      const msg =
+        err?.code === 'functions/unauthenticated' || /unauth/i.test(String(err?.message || ''))
+          ? 'Please sign in to use AI reading adventure. Showing offline chapter instead.'
+          : err?.message || 'Using offline chapter while AI is unavailable.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -35,7 +39,7 @@ export function useReadingAdventure({ bookId = 'default-book', readingLevel = 'e
       const correct = choice === chapter.correctAnswer;
       setHistory((h) => [...h, { chapterNumber, choice, correct }]);
       if (correct) {
-        const nextLevel = nextLevelKey(chapter.level || readingLevel, [...history, { chapterNumber, choice, correct }]);
+        const _nextLevel = nextLevelKey(chapter.level || readingLevel, [...history, { chapterNumber, choice, correct }]);
         setChapterNumber((n) => n + 1);
         // optionally adjust readingLevel to nextLevel for future fetches
       }

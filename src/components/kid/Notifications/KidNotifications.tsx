@@ -1,7 +1,7 @@
-import React from 'react';
+import type { FC } from 'react';
 import { motion } from 'framer-motion';
 
-const KidNotifications = () => {
+const KidNotifications: FC = () => {
   const notifications = [
     {
       id: 1,

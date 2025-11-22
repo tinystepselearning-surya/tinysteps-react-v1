@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { doc, getDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
-import PracticeBuddy from '../../components/PracticeBuddy/PracticeBuddy';
+import PracticeBuddy from '../../components/PracticeBuddy/PracticeBuddy.jsx';
 import { useAuthStore } from '../../store/useAuthStore';
 
 type StudentMeta = {

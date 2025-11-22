@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import WorksheetGenerator from '../../components/WorksheetGenerator/WorksheetGenerator';
+import WorksheetGenerator from '../../components/WorksheetGenerator/WorksheetGenerator.jsx';
 import { db } from '../../lib/firebaseConfig';
 import { useAuthStore } from '../../store/useAuthStore';
 
-type Student = { id: string; name?: string; classId?: string };
+type Student = { id: string; name?: string; studentName?: string; classId?: string };
 
 export default function WorksheetGeneratorPage() {
   const { teacherId } = useParams();

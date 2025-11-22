@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { ParentPayment } from '../../../../types/Parent';
 
@@ -6,7 +6,7 @@ interface PaymentHistoryProps {
   payments: ParentPayment[];
 }
 
-export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ payments }) => {
+export const PaymentHistory: FC<PaymentHistoryProps> = ({ payments }) => {
   if (!payments.length) {
     return <Card className="p-6 text-sm text-muted-foreground">No payment history yet.</Card>;
   }

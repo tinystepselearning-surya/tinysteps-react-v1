@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import useReadingAdventure from './useReadingAdventure';
-import ChapterDisplay from './ChapterDisplay';
-import ComprehensionQuestion from './ComprehensionQuestion';
-import ProgressBar from './ProgressBar';
+import ProgressBar from './ProgressBar.jsx';
+import ChapterDisplay from './ChapterDisplay.jsx';
+import ComprehensionQuestion from './ComprehensionQuestion.jsx';
 
 export default function ReadingAdventure({ bookId = 'default-book', readingLevel = 'early-primary' }) {
   const { chapterNumber, chapter, loading, error, history, answer, reload } = useReadingAdventure({ bookId, readingLevel });

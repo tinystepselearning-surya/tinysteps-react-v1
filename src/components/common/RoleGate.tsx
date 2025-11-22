@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (unused)
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
@@ -15,7 +15,7 @@ export default function RoleGate({ allowedRoles, loginPath = '/login', unauthori
   const navigate = useNavigate();
   const location = useLocation();
   const superUser = isSuperUserEmail(user?.email);
-  const canAccess = !!user && (superUser || allowedRoles.includes(user.role));
+  const canAccess = !!user && (superUser || allowedRoles.includes(user?.role));
 
   useEffect(() => {
     if (isLoading) {

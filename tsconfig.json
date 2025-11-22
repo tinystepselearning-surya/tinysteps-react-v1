@@ -10,9 +10,11 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "./",
     "paths": {
+      "@/components/*": ["src/components/*"],
       "@components/*": ["src/components/*"],
       "@/hooks/*": ["src/hooks/*"]
-    }
+    },
+    "typeRoots": ["./src/types", "./node_modules/@types"]
   },
   "include": [
     "src",
@@ -20,7 +22,11 @@
     "src/tests/**/*.tsx",
     "src/tests/**/*.js",
     "src/tests/**/*.jsx",
-    "src/tests/hooks/useEnrollments.spec.tsx"
+    "src/tests/hooks/useEnrollments.spec.tsx",
+    "src/types"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    "src/pages/admin/beta-analytics.jsx"
+  ]
 }

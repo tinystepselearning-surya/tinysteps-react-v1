@@ -1,10 +1,28 @@
+// useBingoGame stubbed out to remove server-side bingo logic and game flow.
+export function useBingoGame() {
+  return {
+    card: null,
+    clues: [],
+    currentClue: null,
+    calledIndex: 0,
+    marks: {},
+    winner: null,
+    loading: false,
+    error: null,
+    markWord: () => {},
+    callNext: () => {},
+    declareWinner: () => {},
+  };
+}
+
+export default useBingoGame;
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import callFunction from '../../lib/callFunctions';
 import { db } from '../../lib/firebaseConfig';
 import { buildBingoCard, buildClues, getBingoAdaptiveSettings } from './sightWordData';
 
-export function useBingoGame({ roomId, userId, difficulty = 'medium' }) {
+export function useBingoGame({ roomId, userId: _userId, difficulty = 'medium' }) {
   const [card, setCard] = useState([]);
   const [clues, setClues] = useState([]);
   const [words, setWords] = useState([]);
@@ -91,7 +109,7 @@ export function useBingoGame({ roomId, userId, difficulty = 'medium' }) {
       if (!roomRef) return;
       try {
         await updateDoc(roomRef, { winner: user });
-      } catch (err) {
+      } catch (_err) {
         // ignore
       }
     },

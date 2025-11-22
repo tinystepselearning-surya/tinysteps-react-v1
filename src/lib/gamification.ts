@@ -46,14 +46,14 @@ export const dailyChallengeSystem = {
   challenges: {
     daily: {
       morning_spelling_rush: {
-        game: 'SpellBee',
+        game: null,
         dailyAt: '6:00 AM',
         duration: 300,
         reward: 100,
         description: 'Spell 10 words in 5 minutes!',
       },
       afternoon_maze_master: {
-        game: 'Maze',
+        game: null,
         dailyAt: '3:00 PM',
         duration: 600,
         reward: 150,
@@ -70,7 +70,7 @@ export const dailyChallengeSystem = {
     weekly: {
       phonics_week: {
         theme: 'Master Phonics',
-        games: ['SpellBee', 'Maze', 'Bingo'],
+        games: [],
         goal: '500 points total',
         reward: 500,
         startDay: 'Monday',

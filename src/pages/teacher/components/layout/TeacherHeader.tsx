@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
@@ -12,7 +12,7 @@ interface TeacherHeaderProps {
   upcomingCount?: number;
 }
 
-export const TeacherHeader: React.FC<TeacherHeaderProps> = ({ name, upcomingCount }) => {
+export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount }) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
   const handleLogout = async () => {

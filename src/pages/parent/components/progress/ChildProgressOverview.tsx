@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { ChildProgressSnapshot } from '../../../../types/Parent';
 import { cn } from '@components/lib/utils';
@@ -13,7 +13,7 @@ const getBarColor = (value: number) => {
   return 'bg-rose-400';
 };
 
-export const ChildProgressOverview: React.FC<ChildProgressOverviewProps> = ({ progress }) => {
+export const ChildProgressOverview: FC<ChildProgressOverviewProps> = ({ progress }) => {
   if (!progress.length) {
     return <Card className="p-6 text-sm text-muted-foreground">No progress data yet.</Card>;
   }

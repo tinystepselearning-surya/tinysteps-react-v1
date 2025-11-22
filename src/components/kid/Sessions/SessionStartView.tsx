@@ -1,7 +1,7 @@
-import React from 'react';
+import type { FC } from 'react';
 import { motion } from 'framer-motion';
 
-const SessionStartView = () => {
+const SessionStartView: FC = () => {
   return (
     <div className="p-6">
       <motion.div

@@ -1,8 +1,8 @@
-import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 
-// Import the enhanced datasets using require since it's a JS file
-const { enhancedSpellbeeData } = require('../enhancedSpellbeeData.js');
+// @ts-ignore
+import { enhancedSpellbeeData } from '../enhancedSpellbeeData.js';
 
 // Static maze data (simplified version)
 const staticMazeData = {

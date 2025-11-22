@@ -51,7 +51,7 @@ const LearningJourneySection: React.FC = () => {
         <div className="relative">
           <div className="absolute left-1/2 top-0 hidden h-full w-0.5 -translate-x-1/2 bg-gradient-to-b from-primary-500 to-secondary-500 md:block" />
           <ol className="space-y-10">
-            {steps.map((s, i) => (
+            {steps.map((s, _i) => (
               <li key={s.title} className="md:grid md:grid-cols-2 md:items-center md:gap-10">
                 <motion.div
                   className="rounded-3xl bg-white p-6 shadow-lg ring-1 ring-slate-200"

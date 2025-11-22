@@ -1,5 +1,3 @@
-import React from 'react';
-import { motion } from 'framer-motion';
 
 export default function ChoiceButtons({ choices = [], onChoose, disabled }) {
   return (

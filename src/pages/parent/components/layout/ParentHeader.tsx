@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { useAuthStore } from '../../../../store/useAuthStore';
@@ -12,7 +12,7 @@ interface ParentHeaderProps {
   onOpenKidsView?: () => void;
 }
 
-export const ParentHeader: React.FC<ParentHeaderProps> = ({ name, totalChildren, onOpenKidsView }) => {
+export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpenKidsView }) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 

@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import WordButton from './WordButton';
+import { useMemo } from 'react';
 
 export default function BingoCard({ card, marks, onMark }) {
   const grid = useMemo(() => card || [], [card]);

@@ -29,6 +29,17 @@ const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
 
   const child = selectedChild;
 
+  if (!child) {
+    return (
+      <div className="p-6">
+        <h1 className="text-xl font-semibold mb-2">No child selected</h1>
+        <p className="text-sm text-gray-600">
+          Please select a child from your list to view detailed progress and enrollment information.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -37,10 +48,10 @@ const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
               {child?.fullName ? child.fullName.charAt(0) : '—'}
             </div>
             <div>
-              <h1 className="text-2xl font-bold">{child?.fullName || 'No child selected'}</h1>
-              <p className="text-gray-600">Grade {child?.grade || '—'}</p>
-              <Badge variant={child?.status === 'active' ? 'default' : 'secondary'}>
-                {child?.status || '—'}
+              <h1 className="text-2xl font-bold">{child.fullName}</h1>
+              <p className="text-gray-600">Grade {child.grade}</p>
+              <Badge variant={child.status === 'active' ? 'default' : 'secondary'}>
+                {child.status}
               </Badge>
             </div>
         </div>

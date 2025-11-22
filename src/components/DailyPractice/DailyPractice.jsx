@@ -1,14 +1,9 @@
-import React from 'react';
 import useDailyPractice from './useDailyPractice';
-import ExerciseCard from './ExerciseCard';
-import ExerciseResult from './ExerciseResult';
-import DailyProgressCard from './DailyProgressCard';
 
 export default function DailyPractice({ studentId, onBack }) {
   const {
     loading,
     error,
-    exercises,
     currentExercise,
     currentIndex,
     total,

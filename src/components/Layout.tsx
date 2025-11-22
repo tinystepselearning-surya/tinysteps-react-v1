@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FC } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import NavBar from './NavBar/NavBar';
 
-export const Header: React.FC = () => {
+export const Header: FC = () => {
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
 
@@ -49,7 +50,7 @@ export const Header: React.FC = () => {
   );
 };
 
-export const Footer: React.FC = () => (
+export const Footer: FC = () => (
   <footer className="bg-gray-900 text-white py-16">
     <div className="container mx-auto px-4">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
@@ -92,7 +93,7 @@ export const Footer: React.FC = () => (
   </footer>
 );
 
-const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+const Layout: FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="min-h-screen">
     <Header />
     <main>{children}</main>

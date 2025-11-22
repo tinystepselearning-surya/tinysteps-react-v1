@@ -42,10 +42,10 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
     // load parents
     const loadParents = async () => {
       try {
-        const q = query(collection(db, 'users'), where('role', '==', 'parent'));
+        const q = query(collection(db, 'users'));
         const snap = await getDocs(q);
-        const list = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
-        setParents(list);
+        const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
+        setParents(allUsers.filter(u => u.role === 'parent'));
       } catch (err) {
         console.error(err);
         toast({ title: 'Error', description: 'Failed to load parents', variant: 'destructive' });

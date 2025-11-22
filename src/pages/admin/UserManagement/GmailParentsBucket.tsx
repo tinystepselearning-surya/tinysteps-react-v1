@@ -22,9 +22,10 @@ export default function GmailParentsBucket({ open = true }: Props) {
     const loadParents = async () => {
       setLoading(true);
       try {
-  const q = query(collection(db, 'users'), where('role', '==', 'parent'), where('provider', '==', 'google.com'), orderBy('createdAt', 'desc'));
-  const snap = await getDocs(q);
-  setParents(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })).filter(u => (u.role === 'parent' || (u.roles && u.roles.includes && u.roles.includes('parent')))));
+        const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(q);
+        const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        setParents(allUsers.filter(u => (u.role === 'parent' || (u.roles && u.roles.includes && u.roles.includes('parent'))) && u.provider === 'google.com'));
       } catch (err) {
         console.error(err);
         toast({ title: 'Error', description: 'Failed to load Gmail parents', variant: 'destructive' });
@@ -44,9 +45,10 @@ export default function GmailParentsBucket({ open = true }: Props) {
     // refresh parent list to show updated child counts
     setOpenCreateStudentForParent(null);
     try { // reload list
-  const q = query(collection(db, 'users'), where('provider', '==', 'google.com'), orderBy('createdAt', 'desc'));
+      const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
-  setParents(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })).filter(u => (u.role === 'parent' || (u.roles && u.roles.includes && u.roles.includes('parent')))));
+      const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+      setParents(allUsers.filter(u => (u.role === 'parent' || (u.roles && u.roles.includes && u.roles.includes('parent'))) && u.provider === 'google.com'));
     } catch (err) {
       // ignore
     }
@@ -143,8 +145,11 @@ export default function GmailParentsBucket({ open = true }: Props) {
                 <MapExistingKidButton parentId={p.id} onMapped={() => {
                   // refresh parents list after map
                   setTimeout(() => {
-                    const q = query(collection(db, 'users'), where('provider', '==', 'google.com'), orderBy('createdAt', 'desc'));
-                    getDocs(q).then(snap => setParents(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })).filter(u => (u.role === 'parent' || (u.roles && u.roles.includes && u.roles.includes('parent')))))).catch(() => {});
+                    const q = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
+                    getDocs(q).then(snap => {
+                      const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+                      setParents(allUsers.filter(u => (u.role === 'parent' || (u.roles && u.roles.includes && u.roles.includes('parent'))) && u.provider === 'google.com'));
+                    }).catch(() => {});
                   }, 100);
                 }} />
                 <Button
@@ -153,14 +158,16 @@ export default function GmailParentsBucket({ open = true }: Props) {
                   onClick={async () => {
                     // Load this parent's kids and if one found prompt to assign course
                     try {
-                      const q = query(collection(db, 'kids'), where('parentIds', 'array-contains', p.id));
+                      const q = query(collection(db, 'kids'));
                       const snap = await getDocs(q);
-                      if (snap.docs.length === 0) {
+                      const allKids = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+                      const parentKids = allKids.filter(k => (k.parentIds || []).includes(p.id));
+                      if (parentKids.length === 0) {
                         toast({ title: 'No kids', description: 'This parent has no kids yet. Add a kid first.' });
                         return;
                       }
-                      const k = snap.docs[0];
-                      const student = { id: k.id, ...(k.data() as any) } as Student;
+                      const k = parentKids[0];
+                      const student = { id: k.id, ...k } as Student;
                       setAssigningStudent(student);
                     } catch (err) {
                       console.error(err);

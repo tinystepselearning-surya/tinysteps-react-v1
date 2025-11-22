@@ -1,0 +1,875 @@
+.
+├── (firestore.rules)
+├── (storage.rules)
+├── README_TESTS.md
+├── app
+├── check-user.js
+├── components.json
+├── cypress
+│   ├── fixtures
+│   │   └── userData.json
+│   ├── integration
+│   │   └── adminUserCreation.cy.js
+│   ├── plugins
+│   │   └── index.js
+│   └── support
+│       ├── commands.ts
+│       ├── e2e.ts
+│       └── index.js
+├── cypress.config.ts
+├── cypress.json
+├── dataconnect
+│   ├── auth_export
+│   │   ├── accounts.json
+│   │   └── config.json
+│   ├── firebase-export-metadata.json
+│   └── firestore_export
+│       └── firestore_export.overall_export_metadata
+├── docs
+│   ├── FIRESTORE_INDEXES.md
+│   ├── admin-course-management.md
+│   ├── dashboards
+│   │   └── teacher-seeding.md
+│   ├── firestore-storage-guide.md
+│   ├── games-ux.md
+│   ├── seed-courses.md
+│   └── test-strategy.md
+├── emu-nohup.log
+├── emu.log
+├── eslint.config.js
+├── firebase-debug.log
+├── firebase-export-1763225367041ezFFIz
+├── firebase.json
+├── firestore-debug.log
+├── firestore-schemas
+│   ├── activities-collection-schema.json
+│   ├── attendance-collection-schema.json
+│   ├── courses-collection-schema.json
+│   ├── curriculum-topics-schema.json
+│   ├── enrollments-collection-schema.json
+│   ├── gameProgress-collection-schema.json
+│   ├── invoices-collection-schema.json
+│   ├── kids-collection-schema.json
+│   ├── materials-collection-schema.json
+│   ├── progress-collection-schema.json
+│   ├── sessions-collection-schema.json
+│   └── users-collection-schema.json
+├── firestore-setup
+│   └── collections-and-rules.txt
+├── firestore.indexes.json
+├── firestore.rules
+├── functions
+│   ├── README.md
+│   ├── __tests__
+│   │   ├── adminCreateUser.test.ts
+│   │   ├── adminCreateUser.unit.test.ts
+│   │   ├── adminProcessEnrollmentCSV.test.ts
+│   │   ├── cloud-functions.test.ts
+│   │   ├── onAuthUserCreate.test.ts
+│   │   └── setUserRole.test.ts
+│   ├── adminCreateUser.ts
+│   ├── aggregateDailyMetrics.js
+│   ├── analyzeStudentErrors.js
+│   ├── checkSubscriptionAccess.js
+│   ├── createUserProfile.js
+│   ├── data
+│   │   ├── bingoData.json
+│   │   ├── grammarData.json
+│   │   ├── mazeData.json
+│   │   ├── readingData.json
+│   │   ├── speakingData.json
+│   │   └── spellbeeData.json
+│   ├── enhancedSpellbeeData.js
+│   ├── essayScore.js
+│   ├── fetchAdminStats.js
+│   ├── firestore-debug.log
+│   ├── generateAIResponse.js
+│   ├── generateBingoCard.js
+│   ├── generateDailyPractice.js
+│   ├── generateGrammarQuiz.js
+│   ├── generateMaze.js
+│   ├── generateParentInsights.js
+│   ├── generatePictureComprehension.js
+│   ├── generateReadingChapter.js
+│   ├── generateSpeakingPrompt.js
+│   ├── generateSpellingWords.js
+│   ├── generateStorySnippet.js
+│   ├── generateWeeklyClassReport.js
+│   ├── generateWeeklyReport.js
+│   ├── getGameContent.js
+│   ├── gradePhonicsJunction.js
+│   ├── gradeSpelling.js
+│   ├── initializeGameData.js
+│   ├── lib
+│   │   ├── adminCreateUser.js
+│   │   ├── adminCreateUser.js.map
+│   │   ├── adminGenerateResetLink.js
+│   │   ├── adminGenerateResetLink.js.map
+│   │   ├── adminProcessEnrollmentCSV.js
+│   │   ├── adminProcessEnrollmentCSV.js.map
+│   │   ├── assignLP.js
+│   │   ├── assignLP.js.map
+│   │   ├── getGameContent.js
+│   │   ├── getGameContent.js.map
+│   │   ├── health.js
+│   │   ├── health.js.map
+│   │   ├── index.js
+│   │   ├── index.js.map
+│   │   ├── index_backup.js
+│   │   ├── index_backup.js.map
+│   │   ├── markAttendance.js
+│   │   ├── markAttendance.js.map
+│   │   ├── onAuthUserCreate.js
+│   │   ├── onAuthUserCreate.js.map
+│   │   ├── onEnrollmentUpdate.js
+│   │   ├── onEnrollmentUpdate.js.map
+│   │   ├── onSessionComplete.js
+│   │   ├── onSessionComplete.js.map
+│   │   ├── phonepePayments.js
+│   │   ├── phonepePayments.js.map
+│   │   ├── razorpayPayments.js
+│   │   ├── razorpayPayments.js.map
+│   │   ├── recomputeStudentSummary.js
+│   │   ├── recomputeStudentSummary.js.map
+│   │   ├── scheduleSessionBatch.js
+│   │   ├── scheduleSessionBatch.js.map
+│   │   ├── seedGameData.js
+│   │   ├── seedGameData.js.map
+│   │   ├── webhookPhonePe.js
+│   │   ├── webhookPhonePe.js.map
+│   │   ├── webhookRazorpay.js
+│   │   └── webhookRazorpay.js.map
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── parentHelpdesk.js
+│   ├── promptAddendum.js
+│   ├── scheduleDailyPracticeGeneration.js
+│   ├── scripts
+│   │   ├── set-groq-secret.sh
+│   │   └── setGroqSecret.js
+│   ├── seedGameData.js
+│   ├── src
+│   │   ├── adminCreateUser.ts
+│   │   ├── adminGenerateResetLink.ts
+│   │   ├── adminProcessEnrollmentCSV.ts
+│   │   ├── assignLP.ts
+│   │   ├── getGameContent.ts
+│   │   ├── global.d.ts
+│   │   ├── health.ts
+│   │   ├── index.ts
+│   │   ├── index_backup.ts
+│   │   ├── markAttendance.ts
+│   │   ├── onAuthUserCreate.ts
+│   │   ├── onEnrollmentUpdate.ts
+│   │   ├── onSessionComplete.ts
+│   │   ├── phonepePayments.ts
+│   │   ├── recomputeStudentSummary.ts
+│   │   ├── scheduleSessionBatch.ts
+│   │   ├── seedGameData.ts
+│   │   └── webhookPhonePe.ts
+│   ├── test-groq-integration.js
+│   ├── tsconfig.dev.json
+│   ├── tsconfig.json
+│   ├── uploadGameAssets.js
+│   └── vitest.config.ts
+├── index.html
+├── lighthouse-home-report.json
+├── lighthouse-prod-report.json
+├── lighthouse-report.json
+├── package-lock.json
+├── package.json
+├── postcss.config.cjs
+├── project-structure.txt
+├── public
+│   ├── curriculum-v2.1.json
+│   ├── favicon.ico
+│   ├── logo.png
+│   ├── manifest.json
+│   ├── offline.html
+│   ├── robots.txt
+│   ├── service-worker.js
+│   ├── sitemap-blog.xml
+│   ├── sitemap-courses.xml
+│   └── sitemap.xml
+├── scripts
+│   ├── capture-console.js
+│   ├── check-imports.js
+│   ├── courses.json
+│   ├── create-enrollment-as-lp.js
+│   ├── create-enrollment-as-parent.js
+│   ├── create-enrollment-via-rest.js
+│   ├── create-test-users.js
+│   ├── e2e-create-user.js
+│   ├── generate-sitemaps.js
+│   ├── parseFirestoreIndex.js
+│   ├── seed-admin-stats.js
+│   ├── seed-courses.js
+│   ├── seed-teacher-dashboard.js
+│   └── set-admin-claims.js
+├── set-admin-role.js
+├── set-admin.js
+├── src
+│   ├── TestColors.js
+│   ├── TestColors.tsx
+│   ├── app
+│   │   ├── index.js
+│   │   ├── index.tsx
+│   │   ├── routes.js
+│   │   └── routes.tsx
+│   ├── app.js
+│   ├── app.tsx
+│   ├── components
+│   │   ├── AnimatedCounter
+│   │   │   ├── AnimatedCounter.js
+│   │   │   └── AnimatedCounter.tsx
+│   │   ├── BetaFeedback
+│   │   │   ├── BetaFeedbackForm.jsx
+│   │   │   ├── KidsFeedbackForm.jsx
+│   │   │   ├── ParentsFeedbackForm.jsx
+│   │   │   ├── TeacherFeedbackForm.jsx
+│   │   │   └── useBetaFeedback.js
+│   │   ├── Button
+│   │   │   ├── Button.js
+│   │   │   └── Button.tsx
+│   │   ├── Card
+│   │   │   ├── Card.js
+│   │   │   └── Card.tsx
+│   │   ├── CountUp.js
+│   │   ├── CountUp.tsx
+│   │   ├── CourseTopbar.js
+│   │   ├── CourseTopbar.tsx
+│   │   ├── DailyPractice
+│   │   │   ├── DailyPractice.jsx
+│   │   │   ├── DailyProgressCard.jsx
+│   │   │   ├── ExerciseCard.jsx
+│   │   │   ├── ExerciseResult.jsx
+│   │   │   └── useDailyPractice.js
+│   │   ├── ErrorFallback.js
+│   │   ├── ErrorFallback.tsx
+│   │   ├── ExampleUsage.js
+│   │   ├── ExampleUsage.tsx
+│   │   ├── FAQ
+│   │   │   ├── FAQAccordion.js
+│   │   │   └── FAQAccordion.tsx
+│   │   ├── FounderArticleCard.js
+│   │   ├── FounderArticleCard.tsx
+│   │   ├── GrammarBuilder
+│   │   │   ├── ChoiceButtons.jsx
+│   │   │   ├── GrammarBuilder.jsx
+│   │   │   ├── StoryDisplay.jsx
+│   │   │   ├── StoryResult.jsx
+│   │   │   ├── grammarGameData.js
+│   │   │   └── useGrammarBuilder.js
+│   │   ├── Home
+│   │   │   ├── AgePathwaySection.js
+│   │   │   ├── AgePathwaySection.tsx
+│   │   │   ├── ComparisonTableSection.js
+│   │   │   ├── ComparisonTableSection.tsx
+│   │   │   ├── ConversionHero.js
+│   │   │   ├── ConversionHero.tsx
+│   │   │   ├── CoursesPreviewSection.js
+│   │   │   ├── CoursesPreviewSection.tsx
+│   │   │   ├── CoursesSection.js
+│   │   │   ├── CoursesSection.tsx
+│   │   │   ├── DemoShowcase.js
+│   │   │   ├── DemoShowcase.tsx
+│   │   │   ├── FAQSection.js
+│   │   │   ├── FAQSection.tsx
+│   │   │   ├── FinalCTASection.js
+│   │   │   ├── FinalCTASection.tsx
+│   │   │   ├── GamingSubscriptionSection.js
+│   │   │   ├── GamingSubscriptionSection.tsx
+│   │   │   ├── GlobalImpactSection.js
+│   │   │   ├── GlobalImpactSection.tsx
+│   │   │   ├── HeroSection.js
+│   │   │   ├── HeroSection.tsx
+│   │   │   ├── HowToStartSection.js
+│   │   │   ├── HowToStartSection.tsx
+│   │   │   ├── LearningJourneySection.js
+│   │   │   ├── LearningJourneySection.tsx
+│   │   │   ├── PopularPrograms.js
+│   │   │   ├── PopularPrograms.tsx
+│   │   │   ├── PricingCrispSection.js
+│   │   │   ├── PricingCrispSection.tsx
+│   │   │   ├── PricingSection.js
+│   │   │   ├── PricingSection.tsx
+│   │   │   ├── SocialProofCrispSection.js
+│   │   │   ├── SocialProofCrispSection.tsx
+│   │   │   ├── SocialProofSection.js
+│   │   │   ├── SocialProofSection.tsx
+│   │   │   ├── StatCard.js
+│   │   │   ├── StatCard.tsx
+│   │   │   ├── StatsProofSection.js
+│   │   │   ├── StatsProofSection.tsx
+│   │   │   ├── StatsStrip.js
+│   │   │   ├── StatsStrip.tsx
+│   │   │   ├── StepTimeline.js
+│   │   │   ├── StepTimeline.tsx
+│   │   │   ├── TestimonialsCarousel.js
+│   │   │   ├── TestimonialsCarousel.tsx
+│   │   │   ├── WhyChooseCollapsibleSection.js
+│   │   │   ├── WhyChooseCollapsibleSection.tsx
+│   │   │   ├── WhyParentsSection.js
+│   │   │   └── WhyParentsSection.tsx
+│   │   ├── InvoiceManagement.js
+│   │   ├── InvoiceManagement.tsx
+│   │   ├── KidMultiSelect.js
+│   │   ├── KidMultiSelect.tsx
+│   │   ├── Layout
+│   │   │   ├── Footer.js
+│   │   │   ├── Footer.tsx
+│   │   │   ├── Header.js
+│   │   │   └── Header.tsx
+│   │   ├── Layout.js
+│   │   ├── Layout.tsx
+│   │   ├── NavBar
+│   │   │   ├── NavBar.css
+│   │   │   ├── NavBar.js
+│   │   │   └── NavBar.tsx
+│   │   ├── NotificationsCenter.js
+│   │   ├── NotificationsCenter.tsx
+│   │   ├── ParentProfile.js
+│   │   ├── ParentProfile.tsx
+│   │   ├── ParentSettings.js
+│   │   ├── ParentSettings.tsx
+│   │   ├── PaymentHistory.js
+│   │   ├── PaymentHistory.tsx
+│   │   ├── PhonicsMaze
+│   │   │   ├── FeedbackPopup.jsx
+│   │   │   ├── JunctionChoice.jsx
+│   │   │   ├── MazeRenderer.jsx
+│   │   │   ├── PhoneticsMaze.jsx
+│   │   │   ├── PlayerCharacter.jsx
+│   │   │   ├── phonicsMazeData.js
+│   │   │   └── usePhoneticsMaze.js
+│   │   ├── PictureComprehension
+│   │   │   └── PictureComprehension.jsx
+│   │   ├── PracticeBuddy
+│   │   │   ├── PracticeBuddy.jsx
+│   │   │   ├── PracticeBuddyCard.jsx
+│   │   │   └── usePracticeBuddy.js
+│   │   ├── ProgressReports.js
+│   │   ├── ProgressReports.tsx
+│   │   ├── PublicSpeaking
+│   │   │   ├── FeedbackDisplay.jsx
+│   │   │   ├── PromptDisplay.jsx
+│   │   │   ├── PublicSpeakingStage.jsx
+│   │   │   ├── RecordButton.jsx
+│   │   │   └── speakingData.js
+│   │   ├── ReadingAdventure
+│   │   │   ├── ChapterDisplay.jsx
+│   │   │   ├── ComprehensionQuestion.jsx
+│   │   │   ├── ProgressBar.jsx
+│   │   │   ├── ReadingAdventure.jsx
+│   │   │   ├── readingData.js
+│   │   │   └── useReadingAdventure.js
+│   │   ├── SessionTracking.js
+│   │   ├── SessionTracking.tsx
+│   │   ├── SightWordBingo
+│   │   │   ├── BingoCard.jsx
+│   │   │   ├── ClueDisplay.jsx
+│   │   │   ├── SightWordBingo.jsx
+│   │   │   ├── WinnerDisplay.jsx
+│   │   │   ├── WordButton.jsx
+│   │   │   ├── sightWordData.js
+│   │   │   └── useBingoGame.js
+│   │   ├── SpellBeeGame
+│   │   │   ├── FeedbackAnimation.jsx
+│   │   │   ├── GameHeader.jsx
+│   │   │   ├── GameOver.jsx
+│   │   │   ├── ScoreBoard.jsx
+│   │   │   ├── SpellBeeGame.jsx
+│   │   │   ├── SpellingInput.jsx
+│   │   │   ├── WordCard.jsx
+│   │   │   ├── spellbeeWordData.js
+│   │   │   └── useSpellBeeGame.js
+│   │   ├── SpellingPractice
+│   │   │   └── SpellingPractice.jsx
+│   │   ├── TeacherCopilot
+│   │   │   ├── ChatMessage.jsx
+│   │   │   ├── TeacherCopilot.jsx
+│   │   │   └── useTeacherCopilot.js
+│   │   ├── TeacherMessaging.js
+│   │   ├── TeacherMessaging.tsx
+│   │   ├── TestComponent.js
+│   │   ├── TestComponent.tsx
+│   │   ├── Trust
+│   │   │   ├── TrustSignals.js
+│   │   │   └── TrustSignals.tsx
+│   │   ├── UserFilters.js
+│   │   ├── UserFilters.tsx
+│   │   ├── WhyChooseUs.js
+│   │   ├── WhyChooseUs.tsx
+│   │   ├── WorksheetGenerator
+│   │   │   ├── WorksheetForm.jsx
+│   │   │   ├── WorksheetGenerator.jsx
+│   │   │   ├── WorksheetPreview.jsx
+│   │   │   └── useWorksheetGenerator.js
+│   │   ├── attendance
+│   │   │   ├── AttendanceForm.js
+│   │   │   └── AttendanceForm.tsx
+│   │   ├── common
+│   │   │   ├── AnalyticsTracker.js
+│   │   │   ├── AnalyticsTracker.tsx
+│   │   │   ├── AnimatedText.js
+│   │   │   ├── AnimatedText.tsx
+│   │   │   ├── BackToTopButton.js
+│   │   │   ├── BackToTopButton.tsx
+│   │   │   ├── Carousel.js
+│   │   │   ├── Carousel.tsx
+│   │   │   ├── CollapsibleCard.js
+│   │   │   ├── CollapsibleCard.tsx
+│   │   │   ├── CursorAnimation.js
+│   │   │   ├── CursorAnimation.tsx
+│   │   │   ├── FloatingAssistant.js
+│   │   │   ├── FloatingAssistant.tsx
+│   │   │   ├── Footer.js
+│   │   │   ├── Footer.tsx
+│   │   │   ├── Header.js
+│   │   │   ├── Header.tsx
+│   │   │   ├── HoverDetailsCard.js
+│   │   │   ├── HoverDetailsCard.tsx
+│   │   │   ├── MasteryProgress.js
+│   │   │   ├── MasteryProgress.tsx
+│   │   │   ├── Meta.js
+│   │   │   ├── Meta.tsx
+│   │   │   ├── NewsletterForm.js
+│   │   │   ├── NewsletterForm.tsx
+│   │   │   ├── RoleGate.js
+│   │   │   ├── RoleGate.tsx
+│   │   │   ├── ScrollToTop.js
+│   │   │   └── ScrollToTop.tsx
+│   │   ├── courses
+│   │   │   ├── CourseCard.js
+│   │   │   ├── CourseCard.tsx
+│   │   │   ├── ParentReportPreview.js
+│   │   │   └── ParentReportPreview.tsx
+│   │   ├── curriculum
+│   │   │   ├── IBAlignmentSection.js
+│   │   │   ├── IBAlignmentSection.tsx
+│   │   │   ├── WeekAccordion.js
+│   │   │   └── WeekAccordion.tsx
+│   │   ├── forms
+│   │   │   ├── TrialForm.js
+│   │   │   └── TrialForm.tsx
+│   │   ├── hooks
+│   │   │   ├── use-toast.js
+│   │   │   └── use-toast.ts
+│   │   ├── kid
+│   │   │   ├── Achievements
+│   │   │   ├── Activities
+│   │   │   ├── Home
+│   │   │   ├── KidDashboard.js
+│   │   │   ├── KidDashboard.tsx
+│   │   │   ├── Motivation
+│   │   │   ├── Notifications
+│   │   │   ├── ParentalControls
+│   │   │   ├── Profile
+│   │   │   ├── Progress
+│   │   │   ├── Sessions
+│   │   │   └── Timeline
+│   │   ├── lib
+│   │   │   ├── utils.js
+│   │   │   └── utils.ts
+│   │   ├── lp
+│   │   │   ├── DashboardOverview.js
+│   │   │   ├── DashboardOverview.tsx
+│   │   │   ├── LPDuesTracker.js
+│   │   │   ├── LPDuesTracker.tsx
+│   │   │   ├── LearningPartnerDashboard.js
+│   │   │   ├── LearningPartnerDashboard.tsx
+│   │   │   ├── ParentsManagement.js
+│   │   │   ├── ParentsManagement.tsx
+│   │   │   ├── PerformanceMetrics.js
+│   │   │   ├── PerformanceMetrics.tsx
+│   │   │   ├── SupportTickets.js
+│   │   │   ├── SupportTickets.tsx
+│   │   │   ├── TeachersManagement.js
+│   │   │   └── TeachersManagement.tsx
+│   │   ├── parent
+│   │   │   ├── ParentProgressDashboard.js
+│   │   │   ├── ParentProgressDashboard.tsx
+│   │   │   └── SuggestedActivities.jsx
+│   │   ├── programs
+│   │   │   ├── LearningJourney.js
+│   │   │   ├── LearningJourney.tsx
+│   │   │   ├── LevelTabs.js
+│   │   │   ├── LevelTabs.tsx
+│   │   │   ├── ProgramHero.js
+│   │   │   ├── ProgramHero.tsx
+│   │   │   ├── ProgramLeadForm.js
+│   │   │   └── ProgramLeadForm.tsx
+│   │   ├── sections
+│   │   │   ├── IntegrationsSection.jsx
+│   │   │   └── ModernFeaturesSection.jsx
+│   │   ├── teacher
+│   │   │   ├── EarningsSummary.js
+│   │   │   ├── EarningsSummary.tsx
+│   │   │   ├── MessagesView.js
+│   │   │   ├── MessagesView.tsx
+│   │   │   ├── NotificationsPanel.js
+│   │   │   ├── NotificationsPanel.tsx
+│   │   │   ├── PerformanceAnalyticsView.js
+│   │   │   ├── PerformanceAnalyticsView.tsx
+│   │   │   ├── ScheduleView.js
+│   │   │   ├── ScheduleView.tsx
+│   │   │   ├── StudentProgressForm.js
+│   │   │   ├── StudentProgressForm.tsx
+│   │   │   ├── StudentProgressView.js
+│   │   │   ├── StudentProgressView.tsx
+│   │   │   ├── StudentsView.js
+│   │   │   ├── StudentsView.tsx
+│   │   │   ├── TeacherDashboard.js
+│   │   │   ├── TeacherDashboard.tsx
+│   │   │   ├── TeacherErrorAnalysis.jsx
+│   │   │   ├── TeacherHeader.js
+│   │   │   ├── TeacherHeader.tsx
+│   │   │   ├── TeacherProfile.js
+│   │   │   ├── TeacherProfile.tsx
+│   │   │   ├── TeacherSessionList.js
+│   │   │   ├── TeacherSessionList.tsx
+│   │   │   ├── TeacherSidebar.js
+│   │   │   ├── TeacherSidebar.tsx
+│   │   │   ├── TodaySessionsView.js
+│   │   │   ├── TodaySessionsView.tsx
+│   │   │   ├── UpcomingSessionsView.js
+│   │   │   ├── UpcomingSessionsView.tsx
+│   │   │   └── WeeklyClassReport.jsx
+│   │   └── ui
+│   │       ├── ModernCard.js
+│   │       ├── ModernCard.tsx
+│   │       ├── SmartCard.js
+│   │       ├── SmartCard.tsx
+│   │       ├── alert.js
+│   │       ├── alert.tsx
+│   │       ├── badge.js
+│   │       ├── badge.tsx
+│   │       ├── button.js
+│   │       ├── button.tsx
+│   │       ├── card.js
+│   │       ├── card.tsx
+│   │       ├── dialog.js
+│   │       ├── dialog.tsx
+│   │       ├── dropdown-menu.js
+│   │       ├── dropdown-menu.tsx
+│   │       ├── form.js
+│   │       ├── form.tsx
+│   │       ├── input.js
+│   │       ├── input.tsx
+│   │       ├── label.js
+│   │       ├── label.tsx
+│   │       ├── select.js
+│   │       ├── select.tsx
+│   │       ├── spinner.js
+│   │       ├── spinner.tsx
+│   │       ├── table.js
+│   │       ├── table.tsx
+│   │       ├── tabs.js
+│   │       ├── tabs.tsx
+│   │       ├── textarea.js
+│   │       ├── textarea.tsx
+│   │       ├── toast.js
+│   │       ├── toast.tsx
+│   │       ├── toaster.js
+│   │       └── toaster.tsx
+│   ├── constants
+│   │   ├── accessControl.js
+│   │   └── accessControl.ts
+│   ├── content
+│   │   ├── blog.js
+│   │   ├── blog.ts
+│   │   ├── blogMdx.js
+│   │   ├── blogMdx.ts
+│   │   ├── courses.js
+│   │   ├── courses.ts
+│   │   ├── curriculumLoader.js
+│   │   └── curriculumLoader.ts
+│   ├── env.d.ts
+│   ├── firebaseConfig.js
+│   ├── firebaseConfig.ts
+│   ├── functions
+│   │   ├── testUpsertUser.js
+│   │   ├── testUpsertUser.ts
+│   │   ├── upsertUser.js
+│   │   └── upsertUser.ts
+│   ├── hooks
+│   │   ├── useAuth.js
+│   │   ├── useAuth.ts
+│   │   ├── useData.js
+│   │   ├── useData.ts
+│   │   ├── useLPFilteredData.js
+│   │   ├── useLPFilteredData.ts
+│   │   ├── useMessages.js
+│   │   ├── useMessages.ts
+│   │   ├── useParallaxElements.js
+│   │   ├── useParallaxElements.ts
+│   │   ├── useParent.js
+│   │   ├── useParent.ts
+│   │   ├── useParentFilteredData.js
+│   │   ├── useParentFilteredData.ts
+│   │   ├── useProgress.js
+│   │   ├── useProgress.ts
+│   │   ├── useRealtime.js
+│   │   ├── useRealtime.ts
+│   │   ├── useRevealAnimations.js
+│   │   ├── useRevealAnimations.ts
+│   │   ├── useScrollAnimation.js
+│   │   ├── useScrollAnimation.ts
+│   │   ├── useTeacherFilteredData.js
+│   │   └── useTeacherFilteredData.ts
+│   ├── index.css
+│   ├── lib
+│   │   ├── advancedAnalytics.js
+│   │   ├── advancedAnalytics.ts
+│   │   ├── analytics.js
+│   │   ├── analytics.ts
+│   │   ├── analyticsTemplates.js
+│   │   ├── analyticsTemplates.ts
+│   │   ├── auth.js
+│   │   ├── auth.ts
+│   │   ├── callFunctions.js
+│   │   ├── callFunctions.ts
+│   │   ├── firebaseConfig.js
+│   │   ├── firebaseConfig.ts
+│   │   ├── gamification.js
+│   │   ├── gamification.ts
+│   │   ├── performanceEngine.js
+│   │   ├── performanceEngine.ts
+│   │   ├── phonepe.js
+│   │   ├── phonepe.ts
+│   │   ├── queryClient.js
+│   │   ├── queryClient.ts
+│   │   ├── sentry.js
+│   │   └── sentry.ts
+│   ├── main.js
+│   ├── main.tsx
+│   ├── pages
+│   │   ├── About.js
+│   │   ├── About.tsx
+│   │   ├── Admin.js
+│   │   ├── Admin.tsx
+│   │   ├── BlogPage.js
+│   │   ├── BlogPage.tsx
+│   │   ├── BlogPostPage.js
+│   │   ├── BlogPostPage.tsx
+│   │   ├── Blogs.js
+│   │   ├── Blogs.tsx
+│   │   ├── Contact.js
+│   │   ├── Contact.tsx
+│   │   ├── ContactPage.js
+│   │   ├── ContactPage.tsx
+│   │   ├── CourseDetailPage.js
+│   │   ├── CourseDetailPage.tsx
+│   │   ├── CoursesPage.js
+│   │   ├── CoursesPage.tsx
+│   │   ├── CurriculumPage.js
+│   │   ├── CurriculumPage.tsx
+│   │   ├── DevAdmin.js
+│   │   ├── DevAdmin.tsx
+│   │   ├── FAQPage.js
+│   │   ├── FAQPage.tsx
+│   │   ├── Home.js
+│   │   ├── Home.tsx
+│   │   ├── HomePage.js
+│   │   ├── HomePage.tsx
+│   │   ├── Login.js
+│   │   ├── Login.tsx
+│   │   ├── LoginPage.js
+│   │   ├── LoginPage.tsx
+│   │   ├── NotFoundPage.js
+│   │   ├── NotFoundPage.tsx
+│   │   ├── PricingPage.js
+│   │   ├── PricingPage.tsx
+│   │   ├── Services.js
+│   │   ├── Services.tsx
+│   │   ├── TestButtonVariants.js
+│   │   ├── TestButtonVariants.tsx
+│   │   ├── TestCardVariants.js
+│   │   ├── TestCardVariants.tsx
+│   │   ├── UnauthorizedPage.js
+│   │   ├── UnauthorizedPage.tsx
+│   │   ├── WhyTinyStepsPage.js
+│   │   ├── WhyTinyStepsPage.tsx
+│   │   ├── admin
+│   │   │   ├── AdminDashboard.js
+│   │   │   ├── AdminDashboard.tsx
+│   │   │   ├── Analytics.js
+│   │   │   ├── Analytics.tsx
+│   │   │   ├── AnalyticsDashboard.js
+│   │   │   ├── AnalyticsDashboard.tsx
+│   │   │   ├── CourseManagement
+│   │   │   ├── EnrollmentManagement
+│   │   │   ├── RelationshipManagement
+│   │   │   ├── StudentManagement
+│   │   │   ├── UserManagement
+│   │   │   ├── beta-analytics.d.ts
+│   │   │   ├── beta-analytics.jsx
+│   │   │   └── components
+│   │   ├── grammar.js
+│   │   ├── grammar.tsx
+│   │   ├── kid
+│   │   │   ├── KidDashboard.js
+│   │   │   ├── KidDashboard.tsx
+│   │   │   └── components
+│   │   ├── kids
+│   │   │   ├── PracticeBuddyPage.js
+│   │   │   ├── PracticeBuddyPage.tsx
+│   │   │   └── games
+│   │   ├── lp
+│   │   │   ├── LPDashboard.js
+│   │   │   ├── LPDashboard.tsx
+│   │   │   ├── LearningPartnerDashboard.js
+│   │   │   ├── LearningPartnerDashboard.tsx
+│   │   │   └── components
+│   │   ├── parent
+│   │   │   ├── ParentDashboard.js
+│   │   │   ├── ParentDashboard.tsx
+│   │   │   ├── Payments
+│   │   │   ├── child-dashboard.jsx
+│   │   │   ├── components
+│   │   │   └── hooks
+│   │   ├── payments
+│   │   │   ├── PhonePeCallback.js
+│   │   │   └── PhonePeCallback.tsx
+│   │   ├── phonics.js
+│   │   ├── phonics.tsx
+│   │   ├── speaking.js
+│   │   ├── speaking.tsx
+│   │   └── teacher
+│   │       ├── TeacherDashboard.js
+│   │       ├── TeacherDashboard.tsx
+│   │       ├── WorksheetGeneratorPage.js
+│   │       ├── WorksheetGeneratorPage.tsx
+│   │       ├── components
+│   │       └── hooks
+│   ├── public
+│   ├── setupTests.js
+│   ├── setupTests.ts
+│   ├── store
+│   │   ├── useAuthStore.js
+│   │   └── useAuthStore.ts
+│   ├── styles
+│   │   ├── designTokens.d.ts
+│   │   └── designTokens.js
+│   ├── tests
+│   │   ├── admin
+│   │   │   ├── GmailParentsBucket.test.js
+│   │   │   └── GmailParentsBucket.test.tsx
+│   │   ├── components
+│   │   │   ├── FloatingAssistant.test.js
+│   │   │   ├── FloatingAssistant.test.tsx
+│   │   │   ├── HeaderLogout.test.js
+│   │   │   └── HeaderLogout.test.tsx
+│   │   ├── hooks
+│   │   │   ├── useEnrollments.spec.js
+│   │   │   ├── useEnrollments.spec.ts
+│   │   │   └── useEnrollments.spec.tsx
+│   │   ├── pages
+│   │   │   ├── CreateUserForm.test.js
+│   │   │   ├── CreateUserForm.test.tsx
+│   │   │   ├── GmailParentsBucket.test.js
+│   │   │   ├── GmailParentsBucket.test.tsx
+│   │   │   ├── Login.test.js
+│   │   │   ├── Login.test.tsx
+│   │   │   ├── LoginPage.spec.js
+│   │   │   ├── LoginPage.spec.tsx
+│   │   │   ├── ParentLogin.test.js
+│   │   │   └── ParentLogin.test.tsx
+│   │   ├── setupTests.js
+│   │   ├── setupTests.ts
+│   │   └── store
+│   │       ├── useAuthStore.spec.js
+│   │       └── useAuthStore.spec.ts
+│   └── types
+│       ├── Enrollment.js
+│       ├── Enrollment.ts
+│       ├── Kid.js
+│       ├── Kid.ts
+│       ├── Parent.js
+│       ├── Parent.ts
+│       ├── Student.js
+│       ├── Student.ts
+│       ├── Teacher.js
+│       ├── Teacher.ts
+│       ├── User.js
+│       ├── User.ts
+│       ├── beta-analytics.d.ts
+│       ├── framer-motion-fix.d.ts
+│       ├── global-jsx.d.ts
+│       ├── models.js
+│       ├── models.ts
+│       └── papaparse.d.ts
+├── storage.rules
+├── tailwind.config.cjs
+├── test-function.js
+├── testing
+│   ├── admin-console-headed.log
+│   ├── admin-console.log
+│   ├── admin-users-headed.png
+│   ├── admin-users.png
+│   ├── beta-test-checklist.md
+│   ├── headed-admin-check-headed.js
+│   ├── headed-admin-check.js
+│   ├── headed-run.log
+│   └── headless-admin-check.js
+├── tests
+│   ├── admin
+│   │   ├── AdminDashboard.adminAccess.test.tsx
+│   │   ├── AdminDashboard.superuser.test.tsx
+│   │   ├── StudentBulkUploader.test.tsx
+│   │   └── UserFilters.test.tsx
+│   ├── kid
+│   │   └── KidDashboard.test.tsx
+│   ├── lp
+│   │   └── LPDashboard.test.tsx
+│   ├── lpAssignment.test.ts
+│   ├── pages
+│   │   └── Login.test.tsx
+│   ├── parent
+│   │   └── ParentDashboard.test.tsx
+│   ├── security
+│   │   └── firestore-rules.test.ts
+│   ├── teacher
+│   │   └── TeacherDashboard.test.tsx
+│   └── utils
+│       └── seedTestData.ts
+├── tinysteps-app
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   └── vite.svg
+│   ├── src
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── assets
+│   │   │   └── react.svg
+│   │   ├── dataconnect-generated
+│   │   │   ├── README.md
+│   │   │   ├── esm
+│   │   │   ├── index.cjs.js
+│   │   │   ├── index.d.ts
+│   │   │   ├── package.json
+│   │   │   └── react
+│   │   ├── index.css
+│   │   └── main.tsx
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── tinysteps-react-v1-firebase-adminsdk-fbsvc-54979d3c19.json
+├── tinysteps-react-v1-firebase-adminsdk-fbsvc-75997bbcea.json
+├── tsconfig.eslint.json
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+├── users.csv
+├── verify-uid.js
+├── vite-env.d.ts
+├── vite.config.js
+├── vite.config.ts
+├── vitest.config.ts
+└── vitest.setup.ts
+
+125 directories, 748 files

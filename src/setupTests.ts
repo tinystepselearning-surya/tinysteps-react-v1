@@ -30,13 +30,13 @@ const rafBackup = globalThis.requestAnimationFrame
 
 beforeEach(() => {
   // stub RAF to call immediately (framer-motion uses RAF internally)
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+   
   // @ts-ignore
   globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 0)
 })
 
 afterEach(() => {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+   
   // @ts-ignore
   globalThis.requestAnimationFrame = rafBackup
   vi.restoreAllMocks()

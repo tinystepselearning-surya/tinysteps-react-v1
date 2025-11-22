@@ -1,4 +1,4 @@
-import React from 'react';
+// React default import removed
 import DashboardOverview from '../../components/lp/DashboardOverview';
 import ParentsManagement from '../../components/lp/ParentsManagement';
 import TeachersManagement from '../../components/lp/TeachersManagement';

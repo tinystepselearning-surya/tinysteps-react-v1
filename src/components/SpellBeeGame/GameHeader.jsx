@@ -1,5 +1,3 @@
-import React from 'react';
-
 export default function GameHeader({ score, streak, index, total, onReset }) {
   return (
     <div className="bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl p-4 flex items-center justify-between text-white shadow">

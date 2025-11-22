@@ -1,9 +1,9 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Button } from '../ui/button';
 import { Bell, Search, Settings, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 
-const TeacherHeader: React.FC = () => {
+const TeacherHeader: FC = () => {
   const { user } = useAuth();
 
   return (

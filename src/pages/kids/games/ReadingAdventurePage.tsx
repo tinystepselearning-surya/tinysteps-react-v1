@@ -1,7 +1,7 @@
-import React from 'react';
+// React import removed (unused)
 import { useParams } from 'react-router-dom';
 import KidGameShell from './KidGameShell';
-import ReadingAdventure from '../../../components/ReadingAdventure/ReadingAdventure';
+import ReadingAdventure from '../../../components/ReadingAdventure/ReadingAdventure.jsx';
 
 export default function ReadingAdventurePage() {
   const { childId } = useParams<{ childId: string }>();

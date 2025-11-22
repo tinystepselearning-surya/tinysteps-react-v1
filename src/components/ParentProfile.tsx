@@ -71,7 +71,7 @@ const ParentProfile: React.FC = () => {
             <CardTitle>Emergency Contact</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Name: {user?.name || 'Parent Name'}</p>
+            <p>Name: {profile.name || 'Parent Name'}</p>
             <p>Phone: 0987654321</p>
             <Button className="mt-4">Edit Contact</Button>
           </CardContent>

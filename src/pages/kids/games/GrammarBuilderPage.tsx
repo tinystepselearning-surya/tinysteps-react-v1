@@ -1,7 +1,7 @@
-import React from 'react';
+// React import removed (unused)
 import { useParams } from 'react-router-dom';
 import KidGameShell from './KidGameShell';
-import GrammarBuilder from '../../../components/GrammarBuilder/GrammarBuilder';
+import GrammarBuilder from '../../../components/GrammarBuilder/GrammarBuilder.jsx';
 
 export default function GrammarBuilderPage() {
   const { childId } = useParams<{ childId: string }>();

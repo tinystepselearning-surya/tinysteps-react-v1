@@ -33,17 +33,19 @@ export function LPAssignmentMatrix(): JSX.Element {
   useEffect(() => {
     setLoading(true);
 
-    const parentsQ = query(collection(db, 'users'), where('role', '==', 'parent'));
-    const teachersQ = query(collection(db, 'users'), where('role', '==', 'teacher'));
-    const lpsQ = query(collection(db, 'users'), where('role', '==', 'learningPartner'));
+    const parentsQ = query(collection(db, 'users'));
+    const teachersQ = query(collection(db, 'users'));
+    const lpsQ = query(collection(db, 'users'));
 
     const unsubParents = onSnapshot(parentsQ, (snap) => {
-      const parents: User[] = snap.docs.map((d) => ({
-        uid: d.id,
-        displayName: (d.data() as any).displayName || 'Unknown',
-        role: 'parent',
-        assignedLPs: (d.data() as any).assignedLPs || []
-      }));
+      const parents: User[] = snap.docs
+        .filter(d => (d.data() as any).role === 'parent')
+        .map((d) => ({
+          uid: d.id,
+          displayName: (d.data() as any).displayName || 'Unknown',
+          role: 'parent',
+          assignedLPs: (d.data() as any).assignedLPs || []
+        }));
 
       setParentMatrix((prev) => ({ ...prev, users: parents }));
       setLoading(false);
@@ -54,12 +56,14 @@ export function LPAssignmentMatrix(): JSX.Element {
     });
 
     const unsubTeachers = onSnapshot(teachersQ, (snap) => {
-      const teachers: User[] = snap.docs.map((d) => ({
-        uid: d.id,
-        displayName: (d.data() as any).displayName || 'Unknown',
-        role: 'teacher',
-        assignedLPs: (d.data() as any).assignedLPs || []
-      }));
+      const teachers: User[] = snap.docs
+        .filter(d => (d.data() as any).role === 'teacher')
+        .map((d) => ({
+          uid: d.id,
+          displayName: (d.data() as any).displayName || 'Unknown',
+          role: 'teacher',
+          assignedLPs: (d.data() as any).assignedLPs || []
+        }));
 
       setTeacherMatrix((prev) => ({ ...prev, users: teachers }));
       setLoading(false);
@@ -70,11 +74,13 @@ export function LPAssignmentMatrix(): JSX.Element {
     });
 
     const unsubLPs = onSnapshot(lpsQ, (snap) => {
-      const lps: User[] = snap.docs.map((d) => ({
-        uid: d.id,
-        displayName: (d.data() as any).displayName || 'Unknown',
-        role: 'learningPartner'
-      }));
+      const lps: User[] = snap.docs
+        .filter(d => (d.data() as any).role === 'learningPartner')
+        .map((d) => ({
+          uid: d.id,
+          displayName: (d.data() as any).displayName || 'Unknown',
+          role: 'learningPartner'
+        }));
 
       // Attach LPs to both matrices
       setParentMatrix((prev) => ({ ...prev, lps }));
@@ -167,14 +173,18 @@ export function LPAssignmentMatrix(): JSX.Element {
     }
   };
 
+  const filteredParents = useMemo(() => parentMatrix.users.filter(u => u.displayName.toLowerCase().includes(searchParent.toLowerCase())), [parentMatrix.users, searchParent]);
+  const filteredTeachers = useMemo(() => teacherMatrix.users.filter(u => u.displayName.toLowerCase().includes(searchTeacher.toLowerCase())), [teacherMatrix.users, searchTeacher]);
+  const filteredLPs = useMemo(() => parentMatrix.lps.filter(lp => lp.displayName.toLowerCase().includes(searchLP.toLowerCase())), [parentMatrix.lps, searchLP]);
+
   const renderMatrix = (
     matrix: AssignmentMatrix,
+    filteredUsers: User[],
+    filteredLPs: User[],
     userRole: 'parent' | 'teacher',
     searchTerm: string,
     setSearchTerm: (s: string) => void
   ) => {
-    const filteredUsers = useMemo(() => matrix.users.filter(u => u.displayName.toLowerCase().includes(searchTerm.toLowerCase())), [matrix.users, searchTerm]);
-    const filteredLPs = useMemo(() => matrix.lps.filter(lp => lp.displayName.toLowerCase().includes(searchLP.toLowerCase())), [matrix.lps, searchLP]);
 
     return (
       <div className="space-y-4">
@@ -264,12 +274,12 @@ export function LPAssignmentMatrix(): JSX.Element {
 
         <TabsContent value="parents" className="space-y-4">
           <p className="text-sm text-gray-600">Assign Learning Partners to Parents. LPs will see only their assigned parents.</p>
-          {renderMatrix(parentMatrix, 'parent', searchParent, setSearchParent)}
+          {renderMatrix(parentMatrix, filteredParents, filteredLPs, 'parent', searchParent, setSearchParent)}
         </TabsContent>
 
         <TabsContent value="teachers" className="space-y-4">
           <p className="text-sm text-gray-600">Assign Learning Partners to Teachers. LPs will see only their assigned teachers.</p>
-          {renderMatrix(teacherMatrix, 'teacher', searchTeacher, setSearchTeacher)}
+          {renderMatrix(teacherMatrix, filteredTeachers, filteredLPs, 'teacher', searchTeacher, setSearchTeacher)}
         </TabsContent>
       </Tabs>
     </div>

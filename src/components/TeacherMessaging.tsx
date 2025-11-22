@@ -35,14 +35,14 @@ const TeacherMessaging: React.FC = () => {
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-                  {teacher.name[0]}
+                  {teacher.name?.[0] || 'T'}
                 </div>
                 <div>
                   <p className="font-bold">{teacher.name}</p>
                   <p className="text-sm text-gray-600">{teacher.child}</p>
                   <p className="text-sm">{teacher.lastMessage}</p>
                 </div>
-                {teacher.unread > 0 && <Badge>{teacher.unread}</Badge>}
+                {(teacher.unread ?? 0) > 0 && <Badge>{teacher.unread}</Badge>}
                 <Badge variant={teacher.online ? 'default' : 'secondary'}>
                   {teacher.online ? 'Online' : 'Offline'}
                 </Badge>
@@ -63,7 +63,7 @@ const TeacherMessaging: React.FC = () => {
               <div key={msg.id} className={`mb-2 ${msg.sender === 'parent' ? 'text-right' : 'text-left'}`}>
                 <div className={`inline-block p-2 rounded ${msg.sender === 'parent' ? 'bg-blue-200' : 'bg-gray-200'}`}>
                   <p>{msg.text}</p>
-                  {msg.attachments.map(att => <p key={att} className="text-sm underline">{att}</p>)}
+                  {msg.attachments?.map(att => <p key={att} className="text-sm underline">{att}</p>)}
                   <p className="text-xs">{msg.time}</p>
                 </div>
               </div>

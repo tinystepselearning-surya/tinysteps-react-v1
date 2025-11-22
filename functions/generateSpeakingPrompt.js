@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
 const axios = require('axios');
 const { SecretManagerServiceClient } = require('@google-cloud/secret-manager');
@@ -44,10 +44,13 @@ Provide JSON:
 ${CHILD_PSYCHOLOGY_ADDENDUM}`;
 }
 
-exports.generateSpeakingPrompt = functions.region('us-central1').https.onCall(async (data, context) => {
-  if (!context.auth || !context.auth.uid) {
-    throw new functions.https.HttpsError('unauthenticated', 'Authentication required');
-  }
+exports.generateSpeakingPrompt = onCall(
+  {
+    region: 'us-central1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (data, context) => {
   const { age = '6-10', difficulty = 'easy', topic = 'favorite animal' } = data || {};
 
   let result = null;
@@ -85,7 +88,7 @@ exports.generateSpeakingPrompt = functions.region('us-central1').https.onCall(as
 
   try {
     await admin.firestore().collection('ai-usage-logs').add({
-      userId: context.auth.uid,
+      userId: context.auth?.uid || null,
       feature: 'speaking-prompt',
       tokens_used: tokensUsed,
       cost: 0,

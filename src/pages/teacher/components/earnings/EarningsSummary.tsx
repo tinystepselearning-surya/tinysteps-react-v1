@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { useEarnings } from '../../hooks/useEarnings';
@@ -7,7 +7,7 @@ interface EarningsSummaryProps {
   teacherId?: string;
 }
 
-export const EarningsSummary: React.FC<EarningsSummaryProps> = ({ teacherId }) => {
+export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const { data, isLoading } = useEarnings(teacherId);
 
   if (isLoading || !data) {

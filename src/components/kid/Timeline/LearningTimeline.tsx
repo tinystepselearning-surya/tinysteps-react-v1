@@ -1,7 +1,7 @@
-import React from 'react';
+import type { FC } from 'react';
 import { motion } from 'framer-motion';
 
-const LearningTimeline = () => {
+const LearningTimeline: FC = () => {
   const timelineEvents = [
     { date: 'Nov 1', event: 'Started course', emoji: '🎓', type: 'milestone' },
     { date: 'Nov 3', event: 'Learned phoneme A', emoji: '✨', type: 'topic' },

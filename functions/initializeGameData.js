@@ -1,36 +1,14 @@
-// One-time initializer to seed gameData/* documents in Firestore.
-// Run via: firebase functions:shell and call initializeGameData() OR deploy as callable.
-const admin = require('firebase-admin');
-
-try {
-  admin.initializeApp();
-} catch (_) {
-  /* already initialized */
-}
-
-const db = admin.firestore();
-
-const gameDataToInitialize = {
-  spellbee: require('./data/spellbeeData.json'),
-  maze: require('./data/mazeData.json'),
-  bingo: require('./data/bingoData.json'),
-  grammar: require('./data/grammarData.json'),
-  speaking: require('./data/speakingData.json'),
-  reading: require('./data/readingData.json'),
-};
+// Game data initialization has been removed from this repository.
+// The original initializer that seeded gameData documents was removed
+// as part of the effort to delete kid games and their data.
+// This file remains as a safe stub to avoid accidental runtime errors
+// if callers still reference `initializeGameData`.
 
 async function initializeGameData() {
-  try {
-    for (const [game, data] of Object.entries(gameDataToInitialize)) {
-      await db.collection('gameData').doc(game).set(data);
-      console.log(`✅ Initialized ${game} data`);
-    }
-    console.log('✅ All game data initialized!');
-    return { success: true };
-  } catch (error) {
-    console.error('❌ Error initializing game data:', error);
-    throw error;
-  }
+  return {
+    success: false,
+    message: 'initializeGameData has been removed. Game seeding is disabled in this deployment.'
+  };
 }
 
 module.exports = { initializeGameData };

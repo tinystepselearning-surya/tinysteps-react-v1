@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (unused)
 import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';

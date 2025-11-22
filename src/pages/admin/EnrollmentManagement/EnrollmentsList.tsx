@@ -50,36 +50,29 @@ export default function EnrollmentsList() {
 
     // fetch students
     const sMap: Record<string, any> = {};
-    // Firestore 'in' queries are limited to 10 items; chunk requests to ensure all entries are fetched
     if (studentIds.size > 0) {
-      const students = Array.from(studentIds);
-      for (let i = 0; i < students.length; i += 10) {
-        const chunk = students.slice(i, i + 10);
-        const studentsSnap = await getDocs(query(collection(db, 'kids'), where('__name__', 'in', chunk)));
-        studentsSnap.forEach(s => sMap[s.id] = { id: s.id, ...(s.data() as any) });
-      }
+      const studentsSnap = await getDocs(collection(db, 'kids'));
+      studentsSnap.forEach(s => {
+        if (studentIds.has(s.id)) sMap[s.id] = { id: s.id, ...(s.data() as any) };
+      });
     }
 
     // fetch courses
     const cMap: Record<string, any> = {};
     if (courseIds.size > 0) {
-      const courses = Array.from(courseIds);
-      for (let i = 0; i < courses.length; i += 10) {
-        const chunkC = courses.slice(i, i + 10);
-        const coursesSnap = await getDocs(query(collection(db, 'courses'), where('__name__', 'in', chunkC)));
-        coursesSnap.forEach(c => cMap[c.id] = { id: c.id, ...(c.data() as any) });
-      }
+      const coursesSnap = await getDocs(collection(db, 'courses'));
+      coursesSnap.forEach(c => {
+        if (courseIds.has(c.id)) cMap[c.id] = { id: c.id, ...(c.data() as any) };
+      });
     }
 
     // fetch users (parents/teachers/lps)
     const uMap: Record<string, any> = {};
     if (userIds.size > 0) {
-      const users = Array.from(userIds);
-      for (let i = 0; i < users.length; i += 10) {
-        const chunkU = users.slice(i, i + 10);
-        const uSnap = await getDocs(query(collection(db, 'users'), where('__name__', 'in', chunkU)));
-        uSnap.forEach(u => uMap[u.id] = { id: u.id, ...(u.data() as any) });
-      }
+      const usersSnap = await getDocs(collection(db, 'users'));
+      usersSnap.forEach(u => {
+        if (userIds.has(u.id)) uMap[u.id] = { id: u.id, ...(u.data() as any) };
+      });
     }
 
     setStudentsMap(sMap);

@@ -3,10 +3,8 @@ import { httpsCallable, getFunctions } from 'firebase/functions';
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   limit,
-  orderBy,
   query,
   serverTimestamp,
   setDoc,
@@ -14,6 +12,8 @@ import {
   addDoc,
 } from 'firebase/firestore';
 import { app, db } from '../../lib/firebaseConfig';
+
+/* global setTimeout */
 
 const functionsClient = getFunctions(app, 'us-central1');
 const generateDailyPractice = httpsCallable(functionsClient, 'generateDailyPractice');
@@ -99,7 +99,7 @@ export function useDailyPractice(studentId) {
           correct,
           timestamp: serverTimestamp(),
         });
-      } catch (err) {
+      } catch (_err) {
         // non-blocking
       }
     },
@@ -145,7 +145,7 @@ export function useDailyPractice(studentId) {
                 { merge: true }
               );
             }
-          } catch (err) {
+          } catch (_err) {
             /* ignore */
           }
         }
@@ -177,7 +177,7 @@ export function useDailyPractice(studentId) {
           createdAt: serverTimestamp(),
         });
         return docId;
-      } catch (err) {
+      } catch (_err) {
         return null;
       }
     },

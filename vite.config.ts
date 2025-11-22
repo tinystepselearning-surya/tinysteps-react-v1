@@ -58,4 +58,16 @@ export default defineConfig({
       }
     }
   }
+  ,
+  // Ensure HMR works reliably on localhost and across environments where the dev server
+  // may be bound to the loopback address. This resolves common "failed to connect to websocket" issues.
+  server: {
+    host: true,
+    port: 5173,
+    hmr: {
+      host: 'localhost',
+      port: 5173,
+      protocol: 'ws'
+    }
+  }
 });

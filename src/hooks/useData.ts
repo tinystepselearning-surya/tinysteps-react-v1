@@ -13,6 +13,12 @@ import {
 import { db } from '../lib/firebaseConfig';
 import { Enrollment, Invoice, ProgressItem, Session, AttendanceRecord, Course, Topic } from '../types/models';
 
+export interface KidRecord {
+  id: string;
+  birthdate?: any;
+  [key: string]: any;
+}
+
 // Hook 1: useKidProgress
 export function useKidProgress(kidId: string) {
   return useQuery({
@@ -345,5 +351,21 @@ export function useCourseEnrollments(courseId: string) {
       return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Enrollment) }));
     },
     enabled: !!courseId,
+  });
+}
+
+// Hook 11: useKid
+export function useKid(kidId: string) {
+  return useQuery<KidRecord | null>({
+    queryKey: ['kid', kidId],
+    queryFn: async () => {
+      if (!kidId) return null;
+      const docRef = doc(db, 'kids', kidId);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.exists()) return null;
+      const data = docSnap.data() as KidRecord;
+      return { ...data, id: docSnap.id };
+    },
+    enabled: !!kidId,
   });
 }

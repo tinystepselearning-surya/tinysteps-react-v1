@@ -1,0 +1,12 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Card } from '@components/ui/card';
+import { useTeacherStats } from '../../hooks/useTeacherStats';
+const StatBlock = ({ label, value }) => (_jsxs(Card, { className: "p-4", children: [_jsx("p", { className: "text-sm text-muted-foreground", children: label }), _jsx("p", { className: "text-2xl font-semibold", children: value })] }));
+export const TeacherStats = ({ teacherId }) => {
+    var _a, _b;
+    const { data, isLoading } = useTeacherStats(teacherId);
+    if (isLoading || !data) {
+        return (_jsx(Card, { className: "p-6", children: _jsx("p", { className: "text-sm text-muted-foreground", children: "Loading analytics..." }) }));
+    }
+    return (_jsxs("div", { className: "space-y-4", children: [_jsxs("div", { className: "grid grid-cols-2 md:grid-cols-3 gap-4", children: [_jsx(StatBlock, { label: "Total Sessions", value: data.totalSessions }), _jsx(StatBlock, { label: "Students", value: data.totalStudents }), _jsx(StatBlock, { label: "Attendance", value: `${data.averageAttendance}%` }), _jsx(StatBlock, { label: "Satisfaction", value: data.averageSatisfaction.toFixed(1) }), _jsx(StatBlock, { label: "Completion", value: `${data.completionRate}%` })] }), _jsxs(Card, { className: "p-6", children: [_jsx("h3", { className: "text-lg font-semibold mb-4", children: "Sessions by Course" }), _jsxs("div", { className: "space-y-2", children: [(data.sessionsByCourse || []).map((row) => (_jsxs("div", { className: "flex items-center justify-between", children: [_jsx("span", { children: row.course }), _jsx("span", { children: row.value })] }, row.course))), !((_a = data.sessionsByCourse) === null || _a === void 0 ? void 0 : _a.length) && (_jsx("p", { className: "text-sm text-muted-foreground", children: "No data available." }))] })] }), _jsxs(Card, { className: "p-6", children: [_jsx("h3", { className: "text-lg font-semibold mb-4", children: "Monthly Trend" }), _jsxs("div", { className: "space-y-2", children: [(data.sessionsByMonth || []).map((row) => (_jsxs("div", { className: "flex items-center justify-between text-sm", children: [_jsx("span", { children: row.month }), _jsx("span", { children: row.value })] }, row.month))), !((_b = data.sessionsByMonth) === null || _b === void 0 ? void 0 : _b.length) && (_jsx("p", { className: "text-sm text-muted-foreground", children: "No data available." }))] })] })] }));
+};

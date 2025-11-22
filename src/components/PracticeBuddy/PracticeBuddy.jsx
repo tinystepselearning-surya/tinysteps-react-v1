@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import PracticeBuddyCard from './PracticeBuddyCard';
+import { useEffect, useState } from 'react';
 import { usePracticeBuddy } from './usePracticeBuddy';
+import PracticeBuddyCard from './PracticeBuddyCard.jsx';
 
 // Main UI container for kids' Practice Buddy
 export default function PracticeBuddy({ studentId, onBeforePractice, onAfterPractice }) {

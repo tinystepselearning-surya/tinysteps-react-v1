@@ -1,4 +1,4 @@
-import React from 'react';
+// React default import removed
 import { LPAssignmentMatrix } from './LPAssignmentMatrix';
 
 export default function RelationshipManagement() {

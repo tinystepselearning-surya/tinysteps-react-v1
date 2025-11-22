@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 export default function SpellingInput({ value, onChange, onSubmit, disabled }) {
   const inputRef = useRef(null);
@@ -18,6 +18,9 @@ export default function SpellingInput({ value, onChange, onSubmit, disabled }) {
         ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        id="spellbee-input"
+        name="spellbee-input"
+        autoComplete="off"
         className="w-full rounded-xl border border-gray-200 px-4 py-3 text-lg shadow-sm focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
         placeholder="Type the spelling"
         disabled={disabled}

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 
 interface ProgressBarsProps {
@@ -13,7 +13,7 @@ interface SubjectProgress {
   icon: string;
 }
 
-export const ProgressBars: React.FC<ProgressBarsProps> = ({ kidId }) => {
+export const ProgressBars: FC<ProgressBarsProps> = ({ kidId }) => {
   // Mock data - in real implementation, fetch from Firestore
   const subjects: SubjectProgress[] = [
     {

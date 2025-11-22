@@ -1,15 +1,16 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
+import { useState } from 'react';
+import type { FC } from 'react';
+import { Card, CardContent } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Badge } from '@components/ui/badge';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 
-const PaymentHistory: React.FC = () => {
-  const [filterDate, setFilterDate] = React.useState('');
-  const [filterStatus, setFilterStatus] = React.useState('');
-  const [filterMethod, setFilterMethod] = React.useState('');
+const PaymentHistory: FC = () => {
+  const [filterDate, setFilterDate] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterMethod, setFilterMethod] = useState('');
 
   const payments = [
     { id: 1, invoiceId: 'INV-2025-001', amount: 2000, date: '2025-11-01', method: 'UPI', status: 'Paid' },

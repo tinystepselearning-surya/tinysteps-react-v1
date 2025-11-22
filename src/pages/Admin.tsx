@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FC } from 'react';
 import { getFunctions, httpsCallable } from "firebase/functions";
 import { app } from "../lib/firebaseConfig";
 
@@ -6,7 +7,7 @@ const functions = getFunctions(app, 'asia-south1');
 const setUserRole = httpsCallable(functions, 'setUserRole');
 const getUidByEmail = httpsCallable(functions, 'getUidByEmail');
 
-const AdminPanel: React.FC = () => {
+const AdminPanel: FC = () => {
   const [email, setEmail] = useState('');
   const [uid, setUid] = useState('');
   const [role, setRole] = useState('teacher');

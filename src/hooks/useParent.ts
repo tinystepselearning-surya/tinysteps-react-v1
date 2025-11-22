@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { collection, query, where, getDocs, orderBy, getFirestore } from 'firebase/firestore';
-import { app } from '../firebaseConfig';
-
-const db = getFirestore(app);
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebaseConfig';
 import { ParentChildSummary, ParentSession, ParentInvoice, ParentPayment } from '../types/Parent';
 
 export const useParentChildren = (parentId: string) => {

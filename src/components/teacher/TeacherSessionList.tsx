@@ -1,4 +1,4 @@
-import React from 'react';
+// React is not required in new JSX transform; keep imports minimal
 import { useRealtimeData } from '../../hooks/useRealtime';
 import { useAuthStore } from '../../store/useAuthStore';
 import { where } from 'firebase/firestore';

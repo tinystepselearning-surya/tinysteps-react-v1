@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function DailyProgressCard({ score, total, completed, onStart }) {
   const stars = Array.from({ length: 5 }).map((_, i) => (i < Math.round((score / Math.max(total, 1)) * 5) ? '★' : '☆'));

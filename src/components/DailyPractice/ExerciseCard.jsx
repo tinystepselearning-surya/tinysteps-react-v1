@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export default function ExerciseCard({ exercise, onAnswer, loading, allowSkip, onSkip }) {
   const [selected, setSelected] = useState('');

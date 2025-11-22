@@ -53,27 +53,7 @@ if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Bring legacy JS callable game functions into the deployed bundle.
-// These files live at the repo root (functions/*.js) and use the v1 SDK.
-const {generateSpellingWords} = require("../generateSpellingWords.js");
-const {gradeSpelling} = require("../gradeSpelling.js");
-const {generateMaze} = require("../generateMaze.js");
-const {gradePhonicsJunction} = require("../gradePhonicsJunction.js");
-const {generateBingoCard} = require("../generateBingoCard.js");
-const {generateStorySnippet} = require("../generateStorySnippet.js");
-const {generateSpeakingPrompt} = require("../generateSpeakingPrompt.js");
-const {generateReadingChapter} = require("../generateReadingChapter.js");
-
-export {
-  generateSpellingWords,
-  gradeSpelling,
-  generateMaze,
-  gradePhonicsJunction,
-  generateBingoCard,
-  generateStorySnippet,
-  generateSpeakingPrompt,
-  generateReadingChapter,
-};
+// Game-related v1 callables removed from bundle during cleanup.
 
 // Allowed roles
 const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
@@ -323,8 +303,8 @@ export const subscribeNewsletter = onCall(
 );
 
 // Export the new game data functions
-export { seedGameData } from './seedGameData';
-export { getGameContent } from './getGameContent';
-export { initializeGameData } from '../initializeGameData';
-export { createUserProfile } from '../createUserProfile';
-export { aggregateDailyMetrics } from '../aggregateDailyMetrics';
+// game seed/content functions removed
+// @ts-ignore
+// export { createUserProfile } from '../createUserProfile';
+// @ts-ignore
+// export { aggregateDailyMetrics } from '../aggregateDailyMetrics';

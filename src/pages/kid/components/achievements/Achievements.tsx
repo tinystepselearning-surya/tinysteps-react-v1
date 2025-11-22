@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
 
@@ -16,7 +16,7 @@ interface Achievement {
   category: string;
 }
 
-export const Achievements: React.FC<AchievementsProps> = ({ kidId }) => {
+export const Achievements: FC<AchievementsProps> = ({ kidId }) => {
   // Mock data - in real implementation, fetch from Firestore
   const achievements: Achievement[] = [
     {

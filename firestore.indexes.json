@@ -4,8 +4,6 @@
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "role", "order": "ASCENDING" },
-        { "fieldPath": "provider", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" },
         { "fieldPath": "__name__", "order": "DESCENDING" }
       ],
@@ -127,17 +125,6 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "sessions",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "uid", "order": "ASCENDING" },
-        { "fieldPath": "gameId", "order": "ASCENDING" },
-        { "fieldPath": "startedAt", "order": "DESCENDING" },
-        { "fieldPath": "__name__", "order": "DESCENDING" }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
       "collectionGroup": "students",
       "queryScope": "COLLECTION",
       "fields": [
@@ -168,14 +155,7 @@
         { "fieldPath": "lastPlayed", "order": "DESCENDING" }
       ]
     },
-    {
-      "collectionGroup": "gameStats",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "game", "order": "ASCENDING" },
-        { "fieldPath": "timestamp", "order": "DESCENDING" }
-      ]
-    },
+    
     {
       "collectionGroup": "leaderboards",
       "queryScope": "COLLECTION",

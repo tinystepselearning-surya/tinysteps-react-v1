@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, onSnapshot, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { db } from '../lib/firebaseConfig';
 import { Conversation, Message } from '../types/Teacher';
 
 export const useMessages = (teacherId?: string) => {

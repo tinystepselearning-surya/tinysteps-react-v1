@@ -1,7 +1,7 @@
-import React from 'react';
+// React import removed (unused)
 import { useParams } from 'react-router-dom';
 import KidGameShell from './KidGameShell';
-import PublicSpeakingStage from '../../../components/PublicSpeaking/PublicSpeakingStage';
+import PublicSpeakingStage from '../../../components/PublicSpeaking/PublicSpeakingStage.jsx';
 
 export default function PublicSpeakingPage() {
   const { childId } = useParams<{ childId: string }>();

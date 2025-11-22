@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Button } from '@components/ui/button';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
@@ -9,7 +9,7 @@ interface LPHeaderProps {
   name: string;
 }
 
-export const LPHeader: React.FC<LPHeaderProps> = ({ name }) => {
+export const LPHeader: FC<LPHeaderProps> = ({ name }) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 

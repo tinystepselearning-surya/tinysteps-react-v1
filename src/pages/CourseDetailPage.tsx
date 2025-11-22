@@ -1,12 +1,13 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { catalogs, curriculumBySlug } from '../content/courses';
 import { getCourseWeeksOverride } from '../content/curriculumLoader';
 import Meta from '../components/common/Meta';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 
-const CourseDetailPage: React.FC = () => {
+const CourseDetailPage: FC = () => {
   const { slug } = useParams();
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const base = curriculumBySlug[slug || ''] || {};

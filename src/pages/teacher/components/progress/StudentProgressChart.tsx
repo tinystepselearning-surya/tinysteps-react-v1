@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { useStudentProgress } from '../../hooks/useStudentProgress';
 import { cn } from '@components/lib/utils';
@@ -13,7 +13,7 @@ const getBarColor = (value: number) => {
   return 'bg-red-400';
 };
 
-export const StudentProgressChart: React.FC<StudentProgressChartProps> = ({ teacherId }) => {
+export const StudentProgressChart: FC<StudentProgressChartProps> = ({ teacherId }) => {
   const { data = [], isLoading } = useStudentProgress(teacherId);
 
   if (isLoading) {

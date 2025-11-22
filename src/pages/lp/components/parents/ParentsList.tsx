@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
@@ -18,7 +18,7 @@ interface Parent {
   status: 'active' | 'inactive';
 }
 
-export const ParentsList: React.FC<ParentsListProps> = ({ lpId }) => {
+export const ParentsList: FC<ParentsListProps> = ({ lpId }) => {
   // Mock data - in real implementation, fetch from Firestore
   const parents: Parent[] = [
     {

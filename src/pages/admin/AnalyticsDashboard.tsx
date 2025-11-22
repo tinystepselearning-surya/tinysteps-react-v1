@@ -361,7 +361,7 @@ export default function AnalyticsDashboard(): JSX.Element {
           <div className="w-full min-w-0" style={{ height: 240 }}>
             {Recharts ? (
               // @ts-ignore
-              <Recharts.ResponsiveContainer width="100%" height="100%">
+              <Recharts.ResponsiveContainer width="100%" height={240}>
                 {/* @ts-ignore */}
                 <Recharts.PieChart>
                   {/* @ts-ignore */}
@@ -387,7 +387,7 @@ export default function AnalyticsDashboard(): JSX.Element {
           <div className="w-full min-w-0" style={{ height: 240 }}>
             {Recharts ? (
               // @ts-ignore
-              <Recharts.ResponsiveContainer width="100%" height="100%">
+              <Recharts.ResponsiveContainer width="100%" height={240}>
                 {/* @ts-ignore */}
                 <Recharts.BarChart data={revenueByCourse}>
                   {/* @ts-ignore */}
@@ -411,7 +411,7 @@ export default function AnalyticsDashboard(): JSX.Element {
           <div className="w-full min-w-0" style={{ height: 240 }}>
             {Recharts ? (
               // @ts-ignore
-              <Recharts.ResponsiveContainer width="100%" height="100%">
+              <Recharts.ResponsiveContainer width="100%" height={240}>
                 {/* @ts-ignore */}
                 <Recharts.BarChart data={masteryDistribution}>
                   {/* @ts-ignore */}
@@ -435,7 +435,7 @@ export default function AnalyticsDashboard(): JSX.Element {
         <div className="w-full min-w-0" style={{ height: 260 }}>
           {Recharts ? (
             // @ts-ignore
-            <Recharts.ResponsiveContainer width="100%" height="100%">
+            <Recharts.ResponsiveContainer width="100%" height={260}>
               {/* @ts-ignore */}
               <Recharts.LineChart data={sessionsTrend}>
                 {/* @ts-ignore */}

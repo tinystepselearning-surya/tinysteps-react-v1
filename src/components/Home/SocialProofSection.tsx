@@ -84,7 +84,7 @@ const SocialProofSection: React.FC = () => {
 					initial="hidden"
 					animate={isInView ? 'visible' : 'hidden'}
 				>
-					{stats.map((stat, index) => (
+					{stats.map((stat, _index) => (
 						<motion.div key={stat.label} variants={cardVariants}>
 							<StatCard
 								value={stat.value}

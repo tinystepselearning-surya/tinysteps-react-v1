@@ -1,10 +1,11 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
 import Meta from '../components/common/Meta';
 
-const BlogPostPage: React.FC = () => {
+const BlogPostPage: FC = () => {
   const { slug } = useParams();
   const post = useMemo(() => blogPosts.find((p) => p.slug === slug), [slug]);
   const [MdxComp, setMdxComp] = useState<any>(null);

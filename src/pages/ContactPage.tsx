@@ -1,5 +1,6 @@
 // @ts-nocheck
-import React, { useState } from 'react';
+import { useState } from 'react';
+import type { FC, FormEvent } from 'react';
 import Meta from '../components/common/Meta';
 import { trackEvent } from '../lib/analytics';
 import { useAuthStore } from '../store/useAuthStore';
@@ -7,9 +8,9 @@ import { useAuthStore } from '../store/useAuthStore';
 const phone = '+91-96183-98383';
 const whatsappLink = 'https://wa.me/919618398383';
 
-const ContactPage: React.FC = () => {
+const ContactPage: FC = () => {
   const [status, setStatus] = useState<'idle'|'success'>('idle');
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     form.reset();

@@ -1,5 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
 import { CollapsibleCard } from '../components/common/CollapsibleCard';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import Meta from '../components/common/Meta';
@@ -9,7 +10,7 @@ import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
 
-const CurriculumPage: React.FC = () => {
+const CurriculumPage: FC = () => {
   const [tab, setTab] = useState<Tab>('phonics');
   useEffect(() => {
     document.title = 'Complete Learning Curriculum | Tiny Steps';

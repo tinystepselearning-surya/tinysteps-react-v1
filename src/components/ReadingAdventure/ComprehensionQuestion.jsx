@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function ComprehensionQuestion({ question, options, onSelect }) {
   if (!question) return null;

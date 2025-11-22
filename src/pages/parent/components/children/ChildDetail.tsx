@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { ParentChildSummary } from '../../../../types/Parent';
 
@@ -6,7 +6,7 @@ interface ChildDetailProps {
   child?: ParentChildSummary | null;
 }
 
-export const ChildDetail: React.FC<ChildDetailProps> = ({ child }) => {
+export const ChildDetail: FC<ChildDetailProps> = ({ child }) => {
   if (!child) {
     return (
       <Card className="p-6 text-muted-foreground text-sm">

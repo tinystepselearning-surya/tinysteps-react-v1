@@ -1,5 +1,6 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
 import { CourseCard } from '../components/courses/CourseCard';
 import { ParentReportPreview } from '../components/courses/ParentReportPreview';
 import TrialForm from '../components/forms/TrialForm';
@@ -38,7 +39,7 @@ type Track = 'phonics' | 'grammar' | 'speaking';
 
 const allCourses = catalogs;
 
-const CoursesPage: React.FC = () => {
+const CoursesPage: FC = () => {
   const [track, setTrack] = useState<Track | 'all'>('all');
   const [query, setQuery] = useState('');
   const [level, setLevel] = useState<'all'|'Foundation'|'Basic'|'Intermediate'|'Advanced'|'Brush‑Up'>('all');

@@ -53,11 +53,12 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     // load parents list for filters
     const loadParents = async () => {
       try {
-        const q = query(collection(db, 'users'), where('role', '==', 'parent'));
+        const q = query(collection(db, 'users'));
         const snap = await getDocs(q);
-        setParents(snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[]);
+        const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
+        setParents(allUsers.filter(u => u.role === 'parent'));
       } catch (err) {
-        console.error(err);
+        console.error('parents onSnapshot error', err);
       }
     };
     loadParents();

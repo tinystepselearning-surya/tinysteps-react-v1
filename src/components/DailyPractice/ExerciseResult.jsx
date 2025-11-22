@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function ExerciseResult({ result, onNext }) {
   if (!result) return null;

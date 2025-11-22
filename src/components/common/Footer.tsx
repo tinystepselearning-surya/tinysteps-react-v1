@@ -1,4 +1,4 @@
-import React from 'react';
+// React default import removed (not needed with new JSX transform)
 import { useAuthStore } from '../../store/useAuthStore';
 
 const socialLinks = [

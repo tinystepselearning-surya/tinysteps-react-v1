@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function StoryResult({ history }) {
   if (!history || history.length === 0) return null;

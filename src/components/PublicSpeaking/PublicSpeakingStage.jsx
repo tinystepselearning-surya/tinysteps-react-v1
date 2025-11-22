@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
-import PromptDisplay from './PromptDisplay';
-import RecordButton from './RecordButton';
-import FeedbackDisplay from './FeedbackDisplay';
+import { useEffect, useRef, useState } from 'react';
 import callFunction from '../../lib/callFunctions';
 import { getLocalPrompt, buildLocalFeedback } from './speakingData';
+import PromptDisplay from './PromptDisplay.jsx';
+import RecordButton from './RecordButton.jsx';
+import FeedbackDisplay from './FeedbackDisplay.jsx';
 
-export default function PublicSpeakingStage({ userId, age = 8, difficulty = 'easy', topic = 'favorite animal' }) {
+export default function PublicSpeakingStage({ userId: _userId, age = 8, difficulty = 'easy', topic = 'favorite animal' }) {
   const [prompt, setPrompt] = useState(null);
   const [feedback, setFeedback] = useState(null);
   const [recording, setRecording] = useState(false);
@@ -24,7 +24,11 @@ export default function PublicSpeakingStage({ userId, age = 8, difficulty = 'eas
       setPrompt(data || getLocalPrompt(age));
     } catch (err) {
       setPrompt(getLocalPrompt(age));
-      setError(err?.message || 'Using offline prompt while AI is unavailable.');
+      const msg =
+        err?.code === 'functions/unauthenticated' || /unauth/i.test(String(err?.message || ''))
+          ? 'Please sign in to use AI speaking prompts. Showing offline prompt instead.'
+          : err?.message || 'Using offline prompt while AI is unavailable.';
+      setError(msg);
     }
   };
 
@@ -41,14 +45,14 @@ export default function PublicSpeakingStage({ userId, age = 8, difficulty = 'eas
       mediaRecorder.onstop = handleStop;
       mediaRecorder.start();
       setRecording(true);
-    } catch (err) {
+    } catch (_err) {
       setError('Microphone access denied or unavailable.');
     }
   };
 
   const handleStop = async () => {
     setRecording(false);
-    const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+    const _blob = new Blob(chunksRef.current, { type: 'audio/webm' });
     // TODO: upload blob to storage, run STT + Groq eval; fallback feedback below
     if (prompt?.prompt) {
       setFeedback(buildLocalFeedback({ prompt: prompt.prompt, age }));

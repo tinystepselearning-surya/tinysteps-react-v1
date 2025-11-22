@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC, ReactNode } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
 import { Home, Users, Calendar, CreditCard, FileText, MessageSquare, Bell, Settings, User, Sparkles } from 'lucide-react';
@@ -6,7 +6,7 @@ import { Home, Users, Calendar, CreditCard, FileText, MessageSquare, Bell, Setti
 interface SidebarItem {
   id: string;
   label: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   badge?: string;
 }
 
@@ -28,7 +28,7 @@ interface ParentSidebarProps {
   onTabChange?: (tab: string) => void;
 }
 
-const ParentSidebar: React.FC<ParentSidebarProps> = ({ activeTab, onTabChange }) => {
+const ParentSidebar: FC<ParentSidebarProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-6 border-b border-gray-200">

@@ -1,13 +1,13 @@
-import React from 'react';
+import type { FC, HTMLAttributes } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../lib/utils';
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
 	gradient?: boolean;
 	withBorder?: boolean;
 }
 
-const Card: React.FC<CardProps> = ({ gradient = false, withBorder = false, className, children, ...rest }) => {
+const Card: FC<CardProps> = ({ gradient = false, withBorder = false, className, children, ...rest }) => {
 	return (
 		<motion.div
 			className={cn(

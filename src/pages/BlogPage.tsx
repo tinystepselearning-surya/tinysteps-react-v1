@@ -1,12 +1,13 @@
 // @ts-nocheck
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
 import { fetchMdxPosts } from '../content/blogMdx';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
 
-const BlogPage: React.FC = () => {
+const BlogPage: FC = () => {
   const [topic, setTopic] = useState<'All'|'Phonics'|'Grammar'|'Public Speaking'|'Parent Tips'|'Research'>('All');
   const [sort, setSort] = useState<'Newest'|'Most Popular'|'Most Read'>('Newest');
   const posts = useMemo(() => {
@@ -18,7 +19,7 @@ const BlogPage: React.FC = () => {
   }, [topic, sort]);
   const [mdxPosts, setMdxPosts] = useState<any[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchMdxPosts().then(setMdxPosts).catch(()=>setMdxPosts([]));
   }, []);
 
@@ -33,8 +34,8 @@ const BlogPage: React.FC = () => {
     excerpt: m.excerpt || ''
   }));
 
-  const combined = React.useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
-  const blogSchema = React.useMemo(() => ({
+  const combined = useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
+  const blogSchema = useMemo(() => ({
     '@context': 'https://schema.org',
     '@type': 'Blog',
     name: 'Tiny Steps Blog',

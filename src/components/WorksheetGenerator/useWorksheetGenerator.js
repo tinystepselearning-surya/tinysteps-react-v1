@@ -135,10 +135,10 @@ export function useWorksheetGenerator(teacherId) {
         questionCount: form.questionCount,
         timestamp: serverTimestamp(),
       });
-    } catch (err) {
-      console.error('Worksheet Generator error', err);
+    } catch (_err) {
+      console.error('Worksheet Generator error', _err);
       setError(
-        err?.message || err?.code || err?.response?.data?.message || 'Could not generate worksheet.'
+        _err?.message || _err?.code || _err?.response?.data?.message || 'Could not generate worksheet.'
       );
     } finally {
       setLoading(false);
@@ -159,8 +159,8 @@ export function useWorksheetGenerator(teacherId) {
         tokensUsed,
       });
       await fetchRecent();
-    } catch (err) {
-      console.error('Save worksheet failed', err);
+    } catch (_err) {
+      console.error('Save worksheet failed', _err);
       setError('Failed to save worksheet.');
     }
   }, [teacherId, worksheetText, form, tokensUsed, fetchRecent]);
@@ -181,12 +181,15 @@ export function useWorksheetGenerator(teacherId) {
   }, [worksheetText, form.level, form.topic]);
 
   const shareLink = useCallback(async () => {
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return false;
+    }
     const shareUrl = window.location.href;
     try {
       await navigator.clipboard.writeText(shareUrl);
       return true;
-    } catch (err) {
-      console.error('Share link copy failed', err);
+    } catch (_err) {
+      console.error('Share link copy failed', _err);
       return false;
     }
   }, []);
