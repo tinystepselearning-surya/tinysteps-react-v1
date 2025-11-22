@@ -1,9 +1,9 @@
 import * as admin from 'firebase-admin';
-import * as functions from 'firebase-functions';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
 
-const setUserRole = require('../lib/index').setUserRoleHandler;
+// ✅ Import from index.ts
+import { setUserRoleHandler } from '../src/index';
 
 let testEnv: any;
 
@@ -12,13 +12,17 @@ beforeAll(async () => {
     projectId: 'tinysteps-test',
   });
 
-  // Spy on admin.auth() to provide mocked implementations for getUser and setCustomUserClaims
+  // Mock admin.auth() so we don't hit real Firebase
   const getUserMock = vi.fn(async (uid: string) => ({ uid, customClaims: {} }));
-  const setCustomUserClaimsMock = vi.fn(async (uid: string, claims: Record<string, any>) => Promise.resolve());
-  vi.spyOn(admin, 'auth').mockImplementation(() => ({
-    getUser: getUserMock,
-    setCustomUserClaims: setCustomUserClaimsMock,
-  }) as any);
+  const setCustomUserClaimsMock = vi.fn(async (_uid: string, _claims: Record<string, any>) => Promise.resolve());
+
+  vi.spyOn(admin, 'auth').mockImplementation(
+    () =>
+      ({
+        getUser: getUserMock,
+        setCustomUserClaims: setCustomUserClaimsMock,
+      } as any),
+  );
 });
 
 afterAll(async () => {
@@ -27,7 +31,7 @@ afterAll(async () => {
 
 describe('setUserRole Cloud Function', () => {
   it('should allow admin to set user role', async () => {
-    const context = {
+    const context: any = {
       auth: {
         token: { admin: true },
       },
@@ -36,7 +40,7 @@ describe('setUserRole Cloud Function', () => {
     const VALID_UID = 't'.repeat(28);
     const data = { uid: VALID_UID, role: 'teacher' };
 
-    const result = await setUserRole(data, context);
+    const result = await setUserRoleHandler(data, context);
 
     // Verify admin.auth().setCustomUserClaims was called with expected claims
     const authMock = admin.auth();
@@ -49,12 +53,12 @@ describe('setUserRole Cloud Function', () => {
       role: 'teacher',
     });
 
-    // Handler returns full response object when successful
+    // Handler returns response object when successful
     expect(result).toHaveProperty('success', true);
   });
 
   it('should block non-admin users', async () => {
-    const context = {
+    const context: any = {
       auth: {
         token: { admin: false },
       },
@@ -63,18 +67,19 @@ describe('setUserRole Cloud Function', () => {
     const VALID_UID = 't'.repeat(28);
     const data = { uid: VALID_UID, role: 'teacher' };
 
-    await expect(setUserRole(data, context)).rejects.toHaveProperty('code', 'permission-denied');
+    await expect(setUserRoleHandler(data, context)).rejects.toHaveProperty('code', 'permission-denied');
   });
 
   it('should reject invalid roles', async () => {
-    const context = {
+    const context: any = {
       auth: {
         token: { admin: true },
       },
     };
+
     const VALID_UID = 't'.repeat(28);
     const data = { uid: VALID_UID, role: 'invalid-role' };
 
-    await expect(setUserRole(data, context)).rejects.toHaveProperty('code', 'invalid-argument');
+    await expect(setUserRoleHandler(data, context)).rejects.toHaveProperty('code', 'invalid-argument');
   });
 });

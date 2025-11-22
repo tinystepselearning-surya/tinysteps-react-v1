@@ -1,10 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import * as admin from 'firebase-admin';
-import { setUserRole } from '../lib/index.js';
-import { markAttendance } from '../lib/markAttendance.js';
-import { recomputeStudentSummary } from '../lib/recomputeStudentSummary.js';
-import { scheduleSessionBatch } from '../lib/scheduleSessionBatch.js';
+
+// ✅ Import setUserRoleHandler from index.ts
+import { setUserRoleHandler as setUserRole } from '../src/index';
+import { markAttendance } from '../src/markAttendance';
+import { recomputeStudentSummary } from '../src/recomputeStudentSummary';
+import { scheduleSessionBatch } from '../src/scheduleSessionBatch';
+
 
 // Mock firebase-admin
 vi.mock('firebase-admin', () => ({
