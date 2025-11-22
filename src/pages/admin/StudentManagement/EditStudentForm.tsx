@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { updateKid } from '../../../services/kidsService';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -28,12 +29,12 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
   const handleUpdate = async () => {
     setLoading(true);
     try {
-      await updateDoc(doc(db, 'kids', student.id), {
+      await updateKid(student.id as string, {
         fullName,
         dob,
         grade,
         status,
-      });
+      } as any);
       toast({ title: 'Updated', description: 'Student updated' });
       onUpdated?.();
       onClose();

@@ -1,10 +1,26 @@
-# Compiled JavaScript files
-lib/**/*.js
-lib/**/*.js.map
-
-# TypeScript v1 declaration files
+# Build output (TypeScript → JavaScript)
+lib/
+# If you ever generate types here
 typings/
 
-# Node.js dependency directory
+# Node.js dependencies
 node_modules/
+
+# Firebase Functions runtime config (contains secrets)
+.runtimeconfig.json
+
+# Logs & debug files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Local / env-specific config (never commit secrets)
+.env
+.env.*
 *.local
+
+# OS / editor junk
+.DS_Store
+.idea/
+.vscode/

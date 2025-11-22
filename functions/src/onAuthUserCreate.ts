@@ -1,9 +1,13 @@
 import * as admin from 'firebase-admin';
 import * as functions from 'firebase-functions/v1';
+import * as logger from 'firebase-functions/logger';
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
+
+// Keep roles aligned with your app
+type TinyStepsRole = 'admin' | 'teacher' | 'parent' | 'kid' | 'learningPartner';
 
 export const onAuthUserCreate = functions
   .region('asia-south1')
@@ -11,30 +15,41 @@ export const onAuthUserCreate = functions
   .onCreate(async (user) => {
     try {
       const uid = user.uid;
-  const providerId = (user.providerData && user.providerData[0] && (user.providerData[0] as any).providerId) || null;
-  const provider = providerId || null;
 
-      // If user doc exists, don't overwrite
-      const userRef = admin.firestore().collection('users').doc(uid);
+      // Try to infer provider (google.com, password, etc.)
+      const providerId = user.providerData?.[0]?.providerId ?? null;
+      const provider = providerId || null;
+
+      const db = admin.firestore();
+      const userRef = db.collection('users').doc(uid);
       const docSnapshot = await userRef.get();
-      let role: string;
-      if (docSnapshot.exists) {
-        // Update provider if missing
-        const existing = docSnapshot.data() || {};
-        if (!existing.provider && provider) {
-          await userRef.update({ provider, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-        }
-        role = existing.role || 'parent';
-      } else {
-        // For new users via Google, default role to 'parent'
-        role = 'parent';
 
+      // Default role for self-signups is parent
+      let role: TinyStepsRole = 'parent';
+
+      if (docSnapshot.exists) {
+        // If an admin/LP created the user beforehand, reuse that role
+        const existing = docSnapshot.data() || {};
+
+        // Backfill provider if missing
+        if (!existing.provider && provider) {
+          await userRef.update({
+            provider,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          });
+        }
+
+        if (typeof existing.role === 'string') {
+          role = existing.role as TinyStepsRole;
+        }
+      } else {
+        // New user created directly via Auth (e.g., Google sign-in / email+password)
         const now = admin.firestore.FieldValue.serverTimestamp();
         const userDoc: any = {
-          email: user.email || null,
-          name: user.displayName || null,
-          displayName: user.displayName || null,
-          provider: provider || null,
+          email: user.email ?? null,
+          name: user.displayName ?? null,
+          displayName: user.displayName ?? null,
+          provider,
           role,
           roles: [role],
           status: 'active',
@@ -43,31 +58,77 @@ export const onAuthUserCreate = functions
         };
 
         await userRef.set(userDoc);
-        functions.logger.info(`onAuthUserCreate: Created Firestore user doc for ${uid} provider=${provider}`);
+        logger.info('onAuthUserCreate: Created Firestore user doc', {
+          uid,
+          provider,
+        });
       }
 
-      // Set custom claims based on role
-      const customClaims = {
-        [role]: true,
+      // Custom claims for RBAC – matches your firestore.rules usage
+      const customClaims: Record<string, unknown> = {
         role,
+        [role]: true,
       };
 
       try {
         await admin.auth().setCustomUserClaims(uid, customClaims);
-        functions.logger.info(`Set custom claims for ${uid}: ${JSON.stringify(customClaims)}`);
+        logger.info('onAuthUserCreate: Set custom claims', {
+          uid,
+          claims: customClaims,
+        });
       } catch (claimErr: any) {
-        // In emulators or restricted environments setCustomUserClaims may fail.
-        // Log full details and persist a fallback to the Firestore user doc so the client
-        // and other services can still read role information from the user document.
-        functions.logger.error(`Failed to set custom claims for ${uid}`, { error: claimErr?.message || claimErr });
+        // On emulator or restricted envs this can fail – so we fall back
+        logger.error('onAuthUserCreate: Failed to set custom claims', {
+          uid,
+          error: claimErr?.message || String(claimErr),
+        });
+
         try {
-          await userRef.set({ claimsFallback: customClaims, updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-          functions.logger.info(`Persisted claimsFallback for ${uid} to Firestore user doc.`);
+          await userRef.set(
+            {
+              claimsFallback: customClaims,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          logger.info(
+            'onAuthUserCreate: Persisted claimsFallback to Firestore user doc',
+            { uid }
+          );
         } catch (persistErr: any) {
-          functions.logger.error(`Failed to persist claimsFallback for ${uid}`, { error: persistErr?.message || persistErr });
+          logger.error(
+            'onAuthUserCreate: Failed to persist claimsFallback',
+            {
+              uid,
+              error: persistErr?.message || String(persistErr),
+            }
+          );
         }
       }
+
+      // ---- 🔹 Audit log for new account creation (admin-only analytics) ----
+      try {
+        await db.collection('auditLogs').add({
+          type: 'auth_user_created',
+          uid,
+          email: user.email ?? null,
+          displayName: user.displayName ?? null,
+          provider,
+          role,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          source: 'auth_onCreate',
+        });
+        logger.info('onAuthUserCreate: auditLogs entry created', { uid, role });
+      } catch (auditErr: any) {
+        // Do NOT fail user creation if audit logging fails – just log the error
+        logger.error('onAuthUserCreate: Failed to write audit log', {
+          uid,
+          error: auditErr?.message || String(auditErr),
+        });
+      }
     } catch (err: any) {
-      functions.logger.error('onAuthUserCreate failed', { err });
+      logger.error('onAuthUserCreate failed', {
+        error: err?.message || String(err),
+      });
     }
   });

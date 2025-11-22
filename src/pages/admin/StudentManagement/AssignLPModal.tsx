@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@components/ui/dialog';
 import { Button } from '@components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { collection, getDocs, query, where, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { updateKid } from '../../../services/kidsService';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -69,10 +70,7 @@ export default function AssignLPModal({ student, onClose, onAssigned }: Props) {
       } as any);
 
       // Update the kid's lpId
-      await updateDoc(doc(db, 'kids', student.id), {
-        lpId: selectedLP,
-        updatedAt: serverTimestamp(),
-      });
+      await updateKid(student.id as string, { lpId: selectedLP } as any);
 
       // Optionally link LP to parent: simplistic approach - find enrollment parentId and update LP's managed list
       // Skipping complex linking here; can be added later

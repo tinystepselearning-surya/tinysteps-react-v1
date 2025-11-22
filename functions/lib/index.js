@@ -65,7 +65,6 @@ const admin = __importStar(require("firebase-admin"));
 if (!admin.apps.length) {
     admin.initializeApp();
 }
-// Game-related callables removed from functions bundle during cleanup.
 // Allowed roles
 const ALLOWED_ROLES = ["admin", "teacher", "parent", "kid", "learningPartner"];
 /**
@@ -270,9 +269,5 @@ exports.subscribeNewsletter = (0, https_1.onCall)({ region: 'asia-south1', memor
         throw new https_1.HttpsError('internal', 'Subscription failed');
     }
 });
-// Game seed/content functions removed from compiled bundle.
-// @ts-ignore
-// export { createUserProfile } from '../createUserProfile';
-// @ts-ignore
-// export { aggregateDailyMetrics } from '../aggregateDailyMetrics';
+// Removed game-related comments and references to ensure clean compiled output.
 //# sourceMappingURL=index.js.map

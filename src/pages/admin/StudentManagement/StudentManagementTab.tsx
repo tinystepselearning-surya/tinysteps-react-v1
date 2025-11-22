@@ -4,6 +4,7 @@ import CreateStudentForm from './CreateStudentForm';
 import EditStudentForm from './EditStudentForm';
 import AssignCourseModal from './AssignCourseModal';
 import { db } from '../../../lib/firebaseConfig';
+import { deleteKid } from '../../../services/kidsService';
 import type { Student } from '../../../types/Student';
 
 export default function StudentManagementTab() {
@@ -33,9 +34,7 @@ export default function StudentManagementTab() {
     setLoading(true);
     setError('');
     try {
-      await import('firebase/firestore').then(({ deleteDoc, doc }) =>
-        deleteDoc(doc(db, 'kids', studentId))
-      );
+      await deleteKid(studentId);
       setRefreshKey(k => k + 1);
     } catch (err) {
       if (err instanceof Error) {

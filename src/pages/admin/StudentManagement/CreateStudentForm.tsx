@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { collection, getDocs, query, where, setDoc, doc, serverTimestamp, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { createKid } from '../../../services/kidsService';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
@@ -60,8 +61,7 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
 
   const onSubmit = async (values: FormData) => {
     try {
-      const studentRef = doc(collection(db, 'kids'));
-      const payload: Partial<Student> = {
+      const newKidId = await createKid({
         fullName: values.fullName,
         dob: values.dob,
         grade: values.grade,
@@ -75,25 +75,12 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
           attendanceRate30d: 0,
           creditsRemaining: 0,
         },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await setDoc(studentRef, payload);
-
-      // Update parent user document to include this kid id
-      try {
-        if (values.parentId) {
-          await updateDoc(doc(db, 'users', values.parentId), { childIds: arrayUnion(studentRef.id), updatedAt: serverTimestamp() } as any);
-        }
-      } catch (err) {
-        // ignore if update failed; admin can fix manually
-      }
+      });
 
       toast({ title: 'Student created', description: `${values.fullName} created successfully` });
       setOpen(false);
       form.reset();
-      onStudentCreated?.(studentRef.id);
+      onStudentCreated?.(newKidId);
     } catch (err: any) {
       console.error(err);
       toast({ title: 'Error', description: err.message || 'Failed to create student', variant: 'destructive' });

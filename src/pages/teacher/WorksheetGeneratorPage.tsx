@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { collection, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
-import WorksheetGenerator from '../../components/WorksheetGenerator/WorksheetGenerator.jsx';
 import { db } from '../../lib/firebaseConfig';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -84,9 +83,6 @@ export default function WorksheetGeneratorPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2">
-            <WorksheetGenerator teacherId={teacherId as string} />
-          </div>
           <div className="space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
               <h3 className="text-sm font-semibold text-gray-900 mb-2">Assigned students</h3>

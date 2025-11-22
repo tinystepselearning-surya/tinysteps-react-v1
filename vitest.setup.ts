@@ -5,6 +5,34 @@
 
 import { vi } from 'vitest'
 
+// Provide a lightweight mock for firebase/auth so tests that read
+// `getAuth().currentUser.uid` see a deterministic uid during unit tests.
+vi.mock('firebase/auth', () => {
+  // Provide both the named exports (connectAuthEmulator) and
+  // a getAuth() that returns an `auth` object with `onAuthStateChanged`.
+  return {
+    getAuth: () => ({
+      currentUser: { uid: 'test-admin-uid', email: 'admin@example.com' },
+      onAuthStateChanged: (cb: any) => {
+        // call callback immediately with a test user and return an unsubscribe fn
+        try {
+          cb({ uid: 'test-admin-uid', email: 'admin@example.com' });
+        }
+        catch (e) {
+          // ignore
+        }
+        return () => { };
+      },
+    }),
+    // Provide emulator connector no-op so firebaseConfig can call it in tests
+    connectAuthEmulator: () => { },
+    // some code imports onAuthStateChanged directly; provide a noop implementation
+    onAuthStateChanged: (auth: any, cb: any) => {
+      if (typeof cb === 'function') cb({ uid: 'test-admin-uid', email: 'admin@example.com' });
+      return () => { };
+    },
+  };
+});
 // ---------------------------------------------------------------------------
 // 1) Disable Firebase Analytics in the test environment
 // ---------------------------------------------------------------------------

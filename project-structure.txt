@@ -1,4 +1,6 @@
 .
+NOTE: Interactive kid game features (SpellBee, Maze, Bingo, Reading, Public Speaking) have been removed from this branch (v2.1). Many game components and data were stubbbed or deleted to simplify the codebase.
+
 ├── (firestore.rules)
 ├── (storage.rules)
 ├── README_TESTS.md

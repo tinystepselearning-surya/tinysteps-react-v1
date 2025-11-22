@@ -2,8 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@components/ui/dialog';
 import { Button } from '@components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { collection, getDocs, query, where, updateDoc, doc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { updateKid } from '../../../services/kidsService';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -82,10 +83,9 @@ export default function AssignTeacherModal({ student, onClose, onAssigned }: Pro
       } as any);
 
       // Update the kid's teacherId
-      await updateDoc(doc(db, 'kids', student.id), {
+      await updateKid(student.id as string, {
         teacherId: selectedTeacher,
-        updatedAt: serverTimestamp(),
-      });
+      } as any);
 
       toast({ title: 'Assigned', description: 'Teacher assigned' });
       onAssigned?.();

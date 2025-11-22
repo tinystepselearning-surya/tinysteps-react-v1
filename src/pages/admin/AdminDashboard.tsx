@@ -13,10 +13,12 @@ import { UserList } from './UserManagement/UserList';
 import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
+import ScheduleSessionBatchForm from '../../components/teacher/ScheduleSessionBatchForm';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import { isSuperUserEmail } from '../../constants/accessControl';
+import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 
 const fetchAdminStats = async (): Promise<AdminStats> => {
   try {
@@ -185,7 +187,18 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="analytics">
-              <AnalyticsDashboard />
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">Analytics & Admin Overview</h2>
+                  <p className="text-sm text-muted-foreground">
+                    High-level insights about your Tiny Steps accounts and activity.
+                  </p>
+                </div>
+                <div className="grid gap-6 lg:grid-cols-2">
+                  <AdminOverviewCard />
+                  <AnalyticsDashboard />
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </main>

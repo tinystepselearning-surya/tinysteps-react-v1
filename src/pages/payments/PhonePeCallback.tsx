@@ -1,73 +1,79 @@
-import { useEffect, useState } from 'react';
+// src/pages/payments/PhonePeCallback.tsx
+import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../lib/firebaseConfig';
-import { useToast } from '@components/hooks/use-toast';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { app } from '../../firebaseConfig';
 
-export function PhonePeCallback() {
+const PhonePeCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<'checking' | 'success' | 'failed' | 'pending'>('checking');
+  const [message, setMessage] = useState<string>('Verifying your payment…');
 
   useEffect(() => {
-    const verifyPayment = async () => {
+    const invoiceId = searchParams.get('invoiceId');
+    const merchantTransactionId = searchParams.get('transactionId');
+
+    if (!invoiceId || !merchantTransactionId) {
+      setStatus('failed');
+      setMessage('Missing payment details. Please contact support if amount was deducted.');
+      return;
+    }
+
+    const verify = async () => {
       try {
-        // Extract PhonePe response from URL
-        const merchantTransactionId = searchParams.get('merchantTransactionId');
-        const transactionId = searchParams.get('transactionId');
+        const functions = getFunctions(app, 'asia-south1');
+        const verifyPhonePePayment = httpsCallable(functions, 'verifyPhonePePayment');
 
-        if (!merchantTransactionId || !transactionId) {
-          throw new Error('Missing payment parameters');
-        }
-
-        // Verify with backend
-        const verifyPhonePePayment = httpsCallable(
-          functions,
-          'verifyPhonePePayment'
-        );
         const result = await verifyPhonePePayment({
+          invoiceId,
           merchantTransactionId,
-          transactionId,
         });
 
-        const data = result.data as { success?: boolean };
-        if (data.success) {
-          toast({
-            title: 'Payment Successful',
-            description: 'Your payment has been processed',
-          });
-          // Redirect to success page or invoices
-          navigate('/parent/payments?success=true');
+        const data = result.data as any;
+
+        if (data?.status === 'completed') {
+          setStatus('success');
+          setMessage('Payment successful! Your subscription will be updated shortly.');
+        } else if (data?.status === 'failed') {
+          setStatus('failed');
+          setMessage('Payment failed. Please try again or use another method.');
         } else {
-          throw new Error('Payment verification failed');
+          setStatus('pending');
+          setMessage('Payment is still pending. Please refresh after a few minutes.');
         }
-      } catch (error: any) {
-        console.error('Callback error:', error);
-        toast({
-          title: 'Payment Verification Error',
-          description: error.message,
-          variant: 'destructive',
-        });
-        navigate('/parent/payments?error=true');
-      } finally {
-        setLoading(false);
+      } catch (err: any) {
+        console.error(err);
+        setStatus('failed');
+        setMessage(err?.message || 'Could not verify payment. Please contact support.');
       }
     };
 
-    verifyPayment();
-  }, [searchParams, navigate, toast]);
+    verify();
+  }, [searchParams]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <h1>Verifying Payment...</h1>
-          <p className="text-gray-600">Please wait while we confirm your payment</p>
-        </div>
+  const goToDashboard = () => navigate('/parent');
+
+  return (
+    <div className="max-w-lg mx-auto px-4 py-12">
+      <h1 className="text-2xl font-bold mb-4">PhonePe Payment Status</h1>
+      <div className="border rounded-xl bg-white p-4 shadow-sm mb-4">
+        <p className="text-sm mb-2">{message}</p>
+        <p className="text-xs text-gray-500">
+          Status:{' '}
+          <span className="font-semibold">
+            {status === 'checking' ? 'Checking…' : status}
+          </span>
+        </p>
       </div>
-    );
-  }
+      <button
+        onClick={goToDashboard}
+        className="px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium"
+      >
+        Go to Parent Dashboard
+      </button>
+    </div>
+  );
+};
 
-  return null;
-}
+export default PhonePeCallback;

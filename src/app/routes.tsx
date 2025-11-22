@@ -1,6 +1,8 @@
+// src/app/routes.tsx
 import { lazy, Suspense } from 'react';
 import type { FC } from 'react';
 import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
+
 import LoginPage from '../pages/LoginPage';
 import Login from '../pages/Login';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
@@ -21,17 +23,28 @@ import PhonicsPage from '../pages/phonics';
 import GrammarPage from '../pages/grammar';
 import SpeakingPage from '../pages/speaking';
 
-// Dashboards (to be created)
+// Dashboards
 import AdminDashboard from '../pages/admin/AdminDashboard';
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
-const WorksheetGeneratorPage = lazy(() => import('../pages/teacher/WorksheetGeneratorPage'));
-const BetaAnalytics = lazy(() => import('../pages/admin/beta-analytics.jsx') as any);
+const BetaAnalytics = lazy(
+  () => import('../pages/admin/beta-analytics.jsx') as any
+);
 
 // Payment Components
-const PaymentCallback = lazy(() => import('../pages/parent/Payments/PaymentCallback'));
-const PhonePeCallback = lazy(() => import('../pages/payments/PhonePeCallback').then(module => ({ default: module.PhonePeCallback })));
+// Old parent payment callback (non-PhonePe / generic)
+const PaymentCallback = lazy(
+  () => import('../pages/parent/Payments/PaymentCallback')
+);
+
+// New PhonePe pages
+const PhonePeCheckout = lazy(
+  () => import('../pages/payments/PhonePeCheckout')
+);
+const PhonePeCallback = lazy(
+  () => import('../pages/payments/PhonePeCallback')
+);
 
 // Layout
 import Header from '../components/common/Header';
@@ -47,7 +60,11 @@ const Layout: FC = () => (
     <ScrollToTop />
     <Header />
     <main className="min-h-screen pt-8 md:pt-12 lg:pt-16 pb-16">
-      <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+      <Suspense
+        fallback={
+          <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>
+        }
+      >
         <Outlet />
       </Suspense>
     </main>
@@ -62,12 +79,12 @@ const router = createBrowserRouter(
       element: <Layout />,
       errorElement: <NotFoundPage />,
       children: [
+        // Public site pages
         {
           index: true,
           element: <HomePage />,
         },
         {
-      
           path: 'blog',
           element: <BlogPage />,
         },
@@ -75,7 +92,6 @@ const router = createBrowserRouter(
           path: 'blog/:slug',
           element: <BlogPostPage />,
         },
-      // 'Suspense' is now imported from React above
         {
           path: 'pricing',
           element: <PricingPage />,
@@ -120,6 +136,8 @@ const router = createBrowserRouter(
           path: 'speaking',
           element: <SpeakingPage />,
         },
+
+        // Auth routes
         {
           path: 'login',
           element: <LoginPage />,
@@ -161,9 +179,16 @@ const router = createBrowserRouter(
           path: 'unauthorized',
           element: <UnauthorizedPage />,
         },
+
+        // Admin area – ONLY under /surya
         {
           path: 'surya',
-          element: <RoleGate allowedRoles={['admin']} loginPath="/surya/login" />,
+          element: (
+            <RoleGate
+              allowedRoles={['admin']}
+              loginPath="/surya/login"
+            />
+          ),
           children: [
             {
               path: '',
@@ -175,14 +200,18 @@ const router = createBrowserRouter(
             },
           ],
         },
+        // Block /admin direct access – redirect to Surya login
         {
           path: 'admin',
           element: <Navigate to="/surya/login" replace />,
         },
+        // Alias for /Surya → /surya
         {
           path: 'Surya',
           element: <Navigate to="/surya" replace />,
         },
+
+        // Teacher dashboard
         {
           path: 'teacher',
           element: <RoleGate allowedRoles={['teacher']} />,
@@ -203,9 +232,16 @@ const router = createBrowserRouter(
             },
           ],
         },
+
+        // Parent dashboard + payments
         {
           path: 'parent',
-          element: <RoleGate allowedRoles={['parent']} loginPath="/parent/login" />,
+          element: (
+            <RoleGate
+              allowedRoles={['parent']}
+              loginPath="/parent/login"
+            />
+          ),
           children: [
             {
               path: '',
@@ -215,16 +251,28 @@ const router = createBrowserRouter(
               path: 'kids',
               element: <ParentDashboard />,
             },
+
+            // New PhonePe checkout – parent navigates here from invoice list
+            {
+              path: 'payments/:invoiceId',
+              element: <PhonePeCheckout />,
+            },
+
+            // Existing generic callback (if still used)
             {
               path: 'payments/callback',
               element: <PaymentCallback />,
             },
+
+            // New PhonePe callback page – handles redirect from PhonePe
             {
               path: 'payments/phonepe-callback',
               element: <PhonePeCallback />,
             },
           ],
         },
+
+        // Learning Partner dashboard
         {
           path: 'learning-partner',
           element: <RoleGate allowedRoles={['learningPartner']} />,
@@ -240,6 +288,8 @@ const router = createBrowserRouter(
           path: 'learningpartner',
           element: <Navigate to="/learning-partner" replace />,
         },
+
+        // Misc aliases
         {
           path: 'kid',
           element: <Navigate to="/parent/kids" replace />,
@@ -248,19 +298,16 @@ const router = createBrowserRouter(
           path: 'kids/:childId/dashboard',
           element: <Navigate to="/parent" replace />,
         },
-        {
-          path: 'teacher/:teacherId/worksheet-generator',
-          element: <RoleGate allowedRoles={['teacher']} />,
-          children: [
-            {
-              path: '',
-              element: <WorksheetGeneratorPage />,
-            },
-          ],
-        },
+
+        // Beta analytics – admin only under /admin/beta-analytics
         {
           path: 'admin/beta-analytics',
-          element: <RoleGate allowedRoles={['admin']} loginPath="/surya/login" />,
+          element: (
+            <RoleGate
+              allowedRoles={['admin']}
+              loginPath="/surya/login"
+            />
+          ),
           children: [
             {
               path: '',

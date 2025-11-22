@@ -1,3 +1,4 @@
+// /functions/.eslintrc.js
 module.exports = {
   root: true,
   env: {
@@ -18,16 +19,20 @@ module.exports = {
     sourceType: "module",
   },
   ignorePatterns: [
-    "/lib/**/*", // Ignore built files.
-    "/generated/**/*", // Ignore generated files.
+    "/lib/**/*",        // built files
+    "/generated/**/*",  // generated files
   ],
   plugins: [
     "@typescript-eslint",
     "import",
   ],
   rules: {
-    "quotes": ["error", "double"],
+    quotes: ["error", "double"],
+    indent: ["error", 2],
     "import/no-unresolved": 0,
-    "indent": ["error", 2],
+
+    // Optional: stop Google style from forcing JSDoc everywhere
+    "require-jsdoc": "off",
+    "valid-jsdoc": "off",
   },
 };

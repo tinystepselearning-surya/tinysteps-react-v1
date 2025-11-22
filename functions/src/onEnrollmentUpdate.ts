@@ -7,41 +7,63 @@ export const onEnrollmentUpdate = functions
   .region('asia-south1')
   .firestore.document('enrollments/{enrollmentId}')
   .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+    const enrollmentId = context.params.enrollmentId;
+
+    const beforeTeacher = before.teacherId || null;
+    const afterTeacher = after.teacherId || null;
+
+    // If teacher didn't change, nothing to do
+    if (beforeTeacher === afterTeacher) {
+      return;
+    }
+
+    // Determine student id (inconsistent naming across code: studentId or kidId)
+    const studentId =
+      after.studentId ||
+      after.kidId ||
+      before.studentId ||
+      before.kidId ||
+      null;
+
+    if (!studentId) {
+      functions.logger.warn(
+        `onEnrollmentUpdate: enrollment ${enrollmentId} has no studentId/kidId to update`
+      );
+      return;
+    }
+
+    const db = admin.firestore();
+    const kidRef = db.collection('kids').doc(studentId);
+
     try {
-      const before = change.before.data();
-      const after = change.after.data();
-      const enrollmentId = context.params.enrollmentId;
-
-      const beforeTeacher = before?.teacherId || null;
-      const afterTeacher = after?.teacherId || null;
-
-      // Determine student id (inconsistent naming across code: studentId or kidId)
-      const studentId = after?.studentId || after?.kidId || before?.studentId || before?.kidId || null;
-      if (!studentId) {
-        functions.logger.warn(`Enrollment ${enrollmentId} has no studentId/kidId to update`);
-        return;
-      }
-
-      const kidRef = admin.firestore().collection('kids').doc(studentId);
-
-      // If teacher changed, update the kid's teacherIds array accordingly
-      if (beforeTeacher && beforeTeacher !== afterTeacher) {
+      // If there was a previous teacher, remove it
+      if (beforeTeacher) {
         await kidRef.update({
           teacherIds: admin.firestore.FieldValue.arrayRemove(beforeTeacher),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         } as any);
-        functions.logger.info(`Removed prior teacher ${beforeTeacher} from student ${studentId}`);
+        functions.logger.info(
+          `onEnrollmentUpdate: removed prior teacher ${beforeTeacher} from student ${studentId}`
+        );
       }
 
-      if (afterTeacher && beforeTeacher !== afterTeacher) {
+      // If there's a new teacher, add it
+      if (afterTeacher) {
         await kidRef.update({
           teacherIds: admin.firestore.FieldValue.arrayUnion(afterTeacher),
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         } as any);
-        functions.logger.info(`Added teacher ${afterTeacher} to student ${studentId}`);
+        functions.logger.info(
+          `onEnrollmentUpdate: added teacher ${afterTeacher} to student ${studentId}`
+        );
       }
-
     } catch (err: any) {
-      functions.logger.error('onEnrollmentUpdate failed', { err });
+      functions.logger.error('onEnrollmentUpdate failed', {
+        enrollmentId,
+        studentId,
+        error: err?.message || String(err),
+      });
     }
   });

@@ -2,6 +2,7 @@ import React, { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
+import ScheduleSessionBatchForm from '../../components/teacher/ScheduleSessionBatchForm';
 import { Card } from '@components/ui/card';
 const TodaySessionsView = React.lazy(() => import('./components/today-sessions/TodaySessionsList').then(module => ({ default: module.TodaySessionsList })));
 const UpcomingSessionsView = React.lazy(() => import('./components/upcoming-sessions/UpcomingSessionsView').then(module => ({ default: module.UpcomingSessionsView })));

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { collection, getDocs, query, where, orderBy, doc, getDoc, setDoc, updateDoc, serverTimestamp, arrayUnion } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { updateKid } from '../../../services/kidsService';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import AssignCourseModal from '../StudentManagement/AssignCourseModal';
@@ -77,7 +78,7 @@ export default function GmailParentsBucket({ open = true }: Props) {
       const apply = async () => {
         try {
           for (const kidId of Array.from(selected)) {
-            await updateDoc(doc(db, 'kids', kidId), { parentIds: arrayUnion(parentId), updatedAt: serverTimestamp() } as any);
+            await updateKid(kidId, { parentIds: arrayUnion(parentId) } as any);
             await updateDoc(doc(db, 'users', parentId), { childIds: arrayUnion(kidId), updatedAt: serverTimestamp() } as any);
           }
           toast({ title: 'Mapped', description: `Mapped ${selected.size} kid(s) to parent.` });

@@ -67,7 +67,7 @@ export default function KidDashboard() {
           <Achievements />
         </div>
 
-        {/* Worksheets Row (games removed) */}
+        {/* Worksheets Row */}
         <div className="w-full">
           <WorksheetsList />
         </div>

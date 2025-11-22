@@ -1,4 +1,5 @@
-import * as functions from 'firebase-functions/v1';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 
 if (!admin.apps.length) {
@@ -7,67 +8,131 @@ if (!admin.apps.length) {
 
 interface MarkAttendanceRequest {
   sessionId: string;
-  date: string;
+  date: string; // e.g. '2025-11-22' or '20251122'
   attendance: { [kidId: string]: 'present' | 'absent' | 'late' };
 }
 
-export const markAttendance = functions.https.onCall(
-  async (data, context) => {
+interface MarkAttendanceResponse {
+  success: boolean;
+  marked: number;
+}
+
+export const markAttendance = onCall(
+  {
+    region: 'asia-south1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (request): Promise<MarkAttendanceResponse> => {
+    const { data, auth } = request;
+
+    // 1) Auth check
+    if (!auth) {
+      throw new HttpsError('unauthenticated', 'Must be logged in to mark attendance');
+    }
+
     const { sessionId, date, attendance } = data as MarkAttendanceRequest;
 
-    if (!sessionId || !date || !attendance) {
-      throw new functions.https.HttpsError('invalid-argument', 'sessionId, date, and attendance are required');
+    // 2) Basic validation
+    if (!sessionId || typeof sessionId !== 'string') {
+      throw new HttpsError('invalid-argument', 'sessionId is required');
+    }
+    if (!date || typeof date !== 'string') {
+      throw new HttpsError('invalid-argument', 'date is required');
+    }
+    if (!attendance || typeof attendance !== 'object') {
+      throw new HttpsError('invalid-argument', 'attendance object is required');
     }
 
     try {
-      // Verify caller is teacher
-      const sessionDoc = await admin.firestore().collection('sessions').doc(sessionId).get();
-      if (!sessionDoc.exists) {
-        throw new functions.https.HttpsError('not-found', 'Session not found');
-      }
-      const session = sessionDoc.data()!;
-      if (session.teacherId !== context.auth?.uid) {
-        throw new functions.https.HttpsError('permission-denied', 'Only the assigned teacher can mark attendance');
+      const db = admin.firestore();
+
+      // 3) Load the session and verify teacher
+      const sessionSnap = await db.collection('sessions').doc(sessionId).get();
+      if (!sessionSnap.exists) {
+        throw new HttpsError('not-found', 'Session not found');
       }
 
-      const batch = admin.firestore().batch();
+      const session = sessionSnap.data() as any;
+      if (!session || session.teacherId !== auth.uid) {
+        throw new HttpsError(
+          'permission-denied',
+          'Only the assigned teacher can mark attendance for this session'
+        );
+      }
+
+      // 4) Batch attendance writes
+      const batch = db.batch();
       let count = 0;
 
       for (const [kidId, status] of Object.entries(attendance)) {
-        const attendanceRef = admin.firestore()
-          .collection('attendance')
-          .doc(sessionId)
-          .collection('attendanceRecords')
-          .doc(kidId);
+        if (!['present', 'absent', 'late'].includes(status as string)) {
+          // Skip invalid statuses instead of breaking the whole batch
+          logger.warn('markAttendance: invalid status skipped', { kidId, status });
+          continue;
+        }
 
-        batch.set(attendanceRef, {
-          kidId,
-          status,
-          markedAt: admin.firestore.FieldValue.serverTimestamp(),
-          markedBy: context.auth!.uid
-        });
+        // In your newer model, kidId == studentId
+        const studentId = kidId;
+
+        // Write under /students/{studentId}/attendance/{date}
+        const attendanceRef = db
+          .collection('students')
+          .doc(studentId)
+          .collection('attendance')
+          .doc(date);
+
+        batch.set(
+          attendanceRef,
+          {
+            studentId,
+            sessionId,
+            date,
+            status,
+            markedAt: admin.firestore.FieldValue.serverTimestamp(),
+            markedBy: auth.uid,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: auth.uid,
+          },
+          { merge: true }
+        );
+
         count++;
       }
 
-      // Update session status to completed
-      batch.update(sessionDoc.ref, {
+      // 5) Update the session status to completed
+      batch.update(sessionSnap.ref, {
         status: 'completed',
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedBy: context.auth!.uid
+        updatedBy: auth.uid,
       });
 
       await batch.commit();
 
-      // Trigger onSessionComplete (it will handle credits/summary)
-      // Since it's a trigger, it should fire automatically on update
+      logger.info('Attendance marked', {
+        sessionId,
+        date,
+        count,
+        markedBy: auth.uid,
+      });
 
-      functions.logger.info(`Attendance marked: sessionId=${sessionId}, count=${count}, markedBy=${context.auth!.uid}`);
-
+      // onSessionComplete trigger (Firestore) will react to the session status update
       return { success: true, marked: count };
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      functions.logger.error(`Error in markAttendance: ${errorMessage}`, { sessionId, date });
-      throw new functions.https.HttpsError('internal', 'Failed to mark attendance');
+    } catch (error: any) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error('Error in markAttendance', {
+        sessionId,
+        date,
+        error: msg,
+        caller: request.auth?.uid,
+      });
+
+      // If it’s already an HttpsError, just rethrow
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+
+      throw new HttpsError('internal', 'Failed to mark attendance');
     }
   }
 );

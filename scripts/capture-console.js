@@ -18,16 +18,15 @@ const { chromium } = require('playwright');
   try {
     console.log('Opening', url);
     await page.goto(url, { waitUntil: 'networkidle' });
-    // Try to find a link or button to SpellBee by text
-    const link = await page.$(`text=/SpellBee|Spell Bee|Spellbee|Spell-bee/i`);
+    // Games pages were removed in this deployment. Try to find any links to games
+    // but don't navigate to hardcoded game routes.
+    const link = await page.$(`text=/SpellBee|Spell Bee|Spellbee|Spell-bee|Games|Play/i`);
     if (link) {
-      console.log('Found link/button to SpellBee, clicking...');
+      console.log('Found a link/button mentioning games or SpellBee; clicking to capture console output...');
       await link.click();
       await page.waitForTimeout(1000);
     } else {
-      console.log('No direct SpellBee link found on homepage; attempting to open common route /kids/games/spellbee');
-      await page.goto(url.replace(/\/$/, '') + '/kids/games/spellbee', { waitUntil: 'networkidle' });
-      await page.waitForTimeout(1000);
+      console.log('No game links found on homepage. Games routes have been removed from this build.');
     }
 
     console.log('\n=== Captured Console / Page Errors ===');
