@@ -5,7 +5,7 @@ import { Button } from '@components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../../lib/firebaseConfig';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -14,24 +14,40 @@ import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
-import Analytics, { AdminStats } from './Analytics';
+import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
-import { useLocation } from 'react-router-dom';
 import { isSuperUserEmail } from '../../constants/accessControl';
 
 const fetchAdminStats = async (): Promise<AdminStats> => {
-  const [usersSnap, studentsSnap, coursesSnap] = await Promise.all([
-    getDocs(collection(db, 'users')),
-    getDocs(collection(db, 'kids')),
-    getDocs(collection(db, 'courses')),
-  ]);
+  try {
+    const [usersSnap, studentsSnap, coursesSnap] = await Promise.all([
+      getDocs(collection(db, 'users')),
+      getDocs(collection(db, 'kids')),
+      getDocs(collection(db, 'courses')),
+    ]);
 
-  return {
-    totalUsers: usersSnap.size,
-    totalStudents: studentsSnap.size,
-    totalCourses: coursesSnap.size,
-    activeSessionsToday: 0,
-  };
+    return {
+      totalUsers: usersSnap.size,
+      totalStudents: studentsSnap.size,
+      totalCourses: coursesSnap.size,
+      activeSessionsToday: 0,
+    };
+  } catch (err: any) {
+    console.warn('Failed to fetch admin stats:', err);
+    if (err && String(err.message).includes('Missing or insufficient permissions')) {
+      console.warn(
+        'Permission error while fetching admin stats — make sure you are signed into Firebase Auth and have admin role/claims.'
+      );
+    }
+
+    // Safe defaults so UI still renders
+    return {
+      totalUsers: 0,
+      totalStudents: 0,
+      totalCourses: 0,
+      activeSessionsToday: 0,
+    };
+  }
 };
 
 const ROLE_SHORTCUTS = [
@@ -54,15 +70,18 @@ const AccessMessage = ({ children }: { children: React.ReactNode }) => (
 export default function AdminDashboard() {
   const { user, isLoading: authLoading } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const [selectedTab, setSelectedTab] = useState('users');
+
   const isSuperUser = isSuperUserEmail(user?.email);
   const canViewAdmin = isSuperUser || user?.role === 'admin';
 
-  const location = useLocation();
-
   // Sync selected tab with URL path (e.g. /surya/analytics)
   React.useEffect(() => {
-    if (location.pathname.includes('/surya/analytics')) setSelectedTab('analytics');
+    if (location.pathname.includes('/surya/analytics')) {
+      setSelectedTab('analytics');
+    }
   }, [location.pathname]);
 
   const {
@@ -81,7 +100,7 @@ export default function AdminDashboard() {
   }
 
   if (!user) {
-    return <AccessMessage>Please sign in to view the admin dashboard.</AccessMessage>;
+    return <AccessMessage>Login required to access this page.</AccessMessage>;
   }
 
   if (!canViewAdmin) {
@@ -118,6 +137,7 @@ export default function AdminDashboard() {
               </div>
             </Card>
           )}
+
           <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
             <TabsList className="mb-6">
               <TabsTrigger value="users">User Management</TabsTrigger>
@@ -127,6 +147,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="courses">Course Management</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
+
             <TabsContent value="users">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
@@ -138,9 +159,11 @@ export default function AdminDashboard() {
                 <UserList />
               </div>
             </TabsContent>
+
             <TabsContent value="students">
               <StudentManagementTab />
             </TabsContent>
+
             <TabsContent value="enrollments">
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
@@ -152,18 +175,22 @@ export default function AdminDashboard() {
                 <EnrollmentsList />
               </div>
             </TabsContent>
+
             <TabsContent value="relationships">
               <RelationshipManagement />
             </TabsContent>
+
             <TabsContent value="courses">
               <CourseManagement />
             </TabsContent>
+
             <TabsContent value="analytics">
               <AnalyticsDashboard />
             </TabsContent>
           </Tabs>
         </main>
       </div>
+
       {/* Status Bar */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">

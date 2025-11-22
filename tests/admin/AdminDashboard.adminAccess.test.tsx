@@ -6,7 +6,11 @@ import AdminDashboard from '../../src/pages/admin/AdminDashboard';
 
 vi.mock('../../src/store/useAuthStore', () => ({
   useAuthStore: () => ({
-    user: { email: 'admin@test.com', role: 'admin' },
+    user: {
+      uid: 'admin-uid',              // ✅ add this line
+      email: 'admin@test.com',
+      role: 'admin',
+    },
     isLoading: false,
   }),
 }));
