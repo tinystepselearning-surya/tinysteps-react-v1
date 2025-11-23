@@ -1,3 +1,4 @@
+// src/pages/admin/StudentManagement/StudentManagement.tsx
 import { useEffect, useState } from 'react';
 import {
   collection,
@@ -114,8 +115,8 @@ export default function StudentManagement() {
   };
 
   useEffect(() => {
+    // Run once on mount to load initial students list
     void fetchStudents();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filtered = students.filter((s) => {

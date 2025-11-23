@@ -200,32 +200,5 @@ export function useParentFilteredChildren(): UseParentFilteredChildrenResult {
       ? errorValue
       : errorValue?.message ?? null;
 
-  if (import.meta.env.DEV) {
-    // eslint-disable-next-line no-console
-    try {
-      // Shallow log the keys + child count
-      const keys =
-        rawResult && typeof rawResult === 'object'
-          ? Object.keys(rawResult)
-          : null;
-
-      console.log('[useParentFilteredChildren][wrapped]', {
-        rawResultType: typeof rawResult,
-        rawResultKeys: keys,
-        childrenCount: children.length,
-        loading,
-        error,
-        sampleChild: children[0] ?? null,
-      });
-    } catch {
-      console.log('[useParentFilteredChildren][wrapped]', {
-        childrenCount: children.length,
-        loading,
-        error,
-        sampleChild: children[0] ?? null,
-      });
-    }
-  }
-
   return { children, loading, error };
 }

@@ -33,7 +33,6 @@ export default function EnrollmentDetailView({
 
   useEffect(() => {
     void loadEnrollment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enrollmentId]);
 
   const loadEnrollment = async () => {

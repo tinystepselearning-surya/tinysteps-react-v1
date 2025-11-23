@@ -6,33 +6,31 @@ module.exports = {
     node: true,
   },
   extends: [
-    "eslint:recommended",
-    "plugin:import/errors",
-    "plugin:import/warnings",
-    "plugin:import/typescript",
-    "google",
-    "plugin:@typescript-eslint/recommended",
+    'eslint:recommended',
+    'plugin:import/errors',
+    'plugin:import/warnings',
+    'plugin:import/typescript',
+    'google',
+    'plugin:@typescript-eslint/recommended',
   ],
-  parser: "@typescript-eslint/parser",
+  parser: '@typescript-eslint/parser',
   parserOptions: {
-    project: ["tsconfig.json", "tsconfig.dev.json"],
-    sourceType: "module",
+    project: ['tsconfig.json', 'tsconfig.dev.json'],
+    sourceType: 'module',
   },
   ignorePatterns: [
-    "/lib/**/*",        // built files
-    "/generated/**/*",  // generated files
+    '/lib/**/*',        // built files
+    '/generated/**/*',  // generated files
   ],
   plugins: [
-    "@typescript-eslint",
-    "import",
+    '@typescript-eslint',
+    'import',
   ],
   rules: {
-    quotes: ["error", "double"],
-    indent: ["error", 2],
-    "import/no-unresolved": 0,
-
-    // Optional: stop Google style from forcing JSDoc everywhere
-    "require-jsdoc": "off",
-    "valid-jsdoc": "off",
+    quotes: ['error', 'double'],
+    indent: ['error', 2],
+    'import/no-unresolved': 0,
+    'require-jsdoc': 'off',
+    'valid-jsdoc': 'off',
   },
 };
