@@ -27,6 +27,7 @@
     "cors": "^2.8.5",
     "firebase-admin": "^12.7.0",
     "firebase-functions": "^7.0.0",
+    "groq-sdk": "^0.36.0",
     "nice-color-palettes": "^4.0.0",
     "papaparse": "^5.5.0",
     "three-bmfont-text": "^3.0.1"

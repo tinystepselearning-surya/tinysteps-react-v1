@@ -1,43 +1,53 @@
+// src/components/admin/AdminOverviewCard.tsx
 import React, { useEffect, useState } from 'react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../../firebaseConfig';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
-} from '../../components/ui/card';
+} from '@components/ui/card';
+import { collection, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebaseConfig';
 
-interface AdminUser {
-  uid: string;
-  email?: string | null;
-  displayName?: string | null;
-  role?: string;
-}
-
-interface FetchAdminStatsResponse {
-  admins: AdminUser[];
-  count: number;
+interface OverviewStats {
+  totalUsers: number;
+  totalStudents: number;
+  totalCourses: number;
+  activeSessionsToday: number;
 }
 
 const AdminOverviewCard: React.FC = () => {
+  const [stats, setStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<FetchAdminStatsResponse | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const functions = getFunctions(app, 'asia-south1');
-        const fetchAdminStats = httpsCallable(functions, 'fetchAdminStats');
+        setLoading(true);
+        setError(null);
 
-        const result = await fetchAdminStats({ limit: 10 });
-        const payload = result.data as FetchAdminStatsResponse;
+        const [usersSnap, studentsSnap, coursesSnap] = await Promise.all([
+          getDocs(collection(db, 'users')),
+          getDocs(collection(db, 'kids')),
+          getDocs(collection(db, 'courses')),
+        ]);
 
-        setData(payload);
+        setStats({
+          totalUsers: usersSnap.size,
+          totalStudents: studentsSnap.size,
+          totalCourses: coursesSnap.size,
+          activeSessionsToday: 0,
+        });
       } catch (err: any) {
-        console.error(err);
-        setError(err?.message || 'Failed to load admin stats.');
+        console.warn('AdminOverviewCard: failed to fetch stats', err);
+        setError('Unable to load overview stats.');
+        setStats({
+          totalUsers: 0,
+          totalStudents: 0,
+          totalCourses: 0,
+          activeSessionsToday: 0,
+        });
       } finally {
         setLoading(false);
       }
@@ -47,59 +57,56 @@ const AdminOverviewCard: React.FC = () => {
   }, []);
 
   return (
-    <Card className="w-full">
+    <Card className="h-full">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Admin Overview</span>
-          {data && (
-            <span className="text-xs font-normal text-gray-500">
-              Total admins: <span className="font-semibold">{data.count}</span>
-            </span>
-          )}
+        <CardTitle className="text-lg">
+          Admin Overview
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {loading && (
-          <p className="text-sm text-gray-600">Loading admin stats…</p>
-        )}
-
-        {error && (
-          <p className="text-sm text-red-600">
-            {error}
+        {loading ? (
+          <p className="text-sm text-muted-foreground">
+            Loading overview…
           </p>
-        )}
-
-        {!loading && !error && data && (
-          <div className="space-y-3">
-            {data.admins.length === 0 && (
-              <p className="text-sm text-gray-500">
-                No admin records found in <code>users</code> collection.
+        ) : error ? (
+          <p className="text-sm text-red-500">{error}</p>
+        ) : stats ? (
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-xs uppercase text-muted-foreground">
+                Total Users
               </p>
-            )}
-
-            {data.admins.length > 0 && (
-              <ul className="space-y-2">
-                {data.admins.map((adminUser) => (
-                  <li
-                    key={adminUser.uid}
-                    className="flex items-start justify-between rounded-md border border-gray-100 bg-gray-50 px-3 py-2 text-xs"
-                  >
-                    <div>
-                      <div className="font-semibold">
-                        {adminUser.displayName || '(No name)'}
-                      </div>
-                      <div className="text-gray-600 break-all">
-                        {adminUser.email || '(No email)'}
-                      </div>
-                    </div>
-                    <div className="ml-3 text-right text-[11px] text-purple-700 font-medium uppercase tracking-wide">
-                      {adminUser.role || 'admin'}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+              <p className="text-xl font-semibold">{stats.totalUsers}</p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-muted-foreground">
+                Total Students
+              </p>
+              <p className="text-xl font-semibold">
+                {stats.totalStudents}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-muted-foreground">
+                Total Courses
+              </p>
+              <p className="text-xl font-semibold">
+                {stats.totalCourses}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs uppercase text-muted-foreground">
+                Active Sessions Today
+              </p>
+              <p className="text-xl font-semibold">
+                {stats.activeSessionsToday}
+              </p>
+            </div>
           </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No data available.
+          </p>
         )}
       </CardContent>
     </Card>

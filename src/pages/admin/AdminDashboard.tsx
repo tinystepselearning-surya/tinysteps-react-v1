@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// src/pages/admin/AdminDashboard.tsx
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -13,13 +14,14 @@ import { UserList } from './UserManagement/UserList';
 import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
-import ScheduleSessionBatchForm from '../../components/teacher/ScheduleSessionBatchForm';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
+// ---------- Admin stats fetcher ----------
 const fetchAdminStats = async (): Promise<AdminStats> => {
   try {
     const [usersSnap, studentsSnap, coursesSnap] = await Promise.all([
@@ -38,11 +40,10 @@ const fetchAdminStats = async (): Promise<AdminStats> => {
     console.warn('Failed to fetch admin stats:', err);
     if (err && String(err.message).includes('Missing or insufficient permissions')) {
       console.warn(
-        'Permission error while fetching admin stats — make sure you are signed into Firebase Auth and have admin role/claims.'
+        'Permission error while fetching admin stats — make sure you are signed into Firebase Auth and have admin role/claims.',
       );
     }
 
-    // Safe defaults so UI still renders
     return {
       totalUsers: 0,
       totalStudents: 0,
@@ -56,7 +57,12 @@ const ROLE_SHORTCUTS = [
   { id: 'admin', label: 'Admin', path: '/surya', description: 'Full control panel' },
   { id: 'teacher', label: 'Teacher', path: '/teacher', description: 'Classroom & sessions' },
   { id: 'parent', label: 'Parent', path: '/parent', description: 'Progress & subscriptions' },
-  { id: 'learningPartner', label: 'Learning Partner', path: '/learning-partner', description: 'Relationship hub' },
+  {
+    id: 'learningPartner',
+    label: 'Learning Partner',
+    path: '/learning-partner',
+    description: 'Relationship hub',
+  },
   { id: 'kid', label: 'Kid', path: '/parent/kids', description: 'Student view via Parent' },
 ];
 
@@ -69,6 +75,83 @@ const AccessMessage = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
+// ---------- Groq Live Test Card ----------
+const GroqIdeaTester: React.FC = () => {
+  const [topic, setTopic] = useState('animals');
+  const [idea, setIdea] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    setError(null);
+    setIdea('');
+
+    try {
+      const functions = getFunctions(undefined, 'asia-south1');
+      const groqFn = httpsCallable<{ topic: string }, { idea: string }>(
+        functions,
+        'groqKidIdea',
+      );
+
+      const trimmedTopic = topic.trim() || 'animals';
+      const result = await groqFn({ topic: trimmedTopic });
+      setIdea(result.data.idea);
+    } catch (err: any) {
+      console.error('groqKidIdea error:', err);
+      setError('Unable to generate idea right now. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="p-4 space-y-4" id="groq-live-test-card">
+      <div className="flex flex-col gap-1">
+        <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
+          Groq Live Test
+        </p>
+        <h3 className="text-lg font-semibold">
+          Tiny Steps AI – Speaking/Activity Idea
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Type a topic and let Groq generate a short, kid-friendly speaking or activity idea
+          (ages 5–10). This uses the <code className="text-xs">groqKidIdea</code> callable.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label className="flex-1 text-sm">
+          Topic
+          <input
+            className="mt-1 w-full rounded border px-2 py-1 text-sm bg-white dark:bg-slate-900"
+            value={topic}
+            onChange={(e) => setTopic(e.target.value)}
+            placeholder="e.g. rain, pets, birthday, friendship"
+          />
+        </label>
+        <Button
+          className="mt-2 sm:mt-6"
+          size="sm"
+          onClick={handleGenerate}
+          disabled={loading}
+        >
+          {loading ? 'Asking Groq…' : 'Generate Idea'}
+        </Button>
+      </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      {idea && (
+        <div className="mt-2 rounded border bg-slate-50 dark:bg-slate-900/60 p-3 text-sm whitespace-pre-line">
+          {idea}
+        </div>
+      )}
+    </Card>
+  );
+};
+
+// ---------- Main Admin Dashboard ----------
 export default function AdminDashboard() {
   const { user, isLoading: authLoading } = useAuthStore();
   const navigate = useNavigate();
@@ -79,8 +162,13 @@ export default function AdminDashboard() {
   const isSuperUser = isSuperUserEmail(user?.email);
   const canViewAdmin = isSuperUser || user?.role === 'admin';
 
+  // Debug: confirm this component is being used
+  useEffect(() => {
+    console.log('✅ AdminDashboard (Groq version) mounted');
+  }, []);
+
   // Sync selected tab with URL path (e.g. /surya/analytics)
-  React.useEffect(() => {
+  useEffect(() => {
     if (location.pathname.includes('/surya/analytics')) {
       setSelectedTab('analytics');
     }
@@ -106,7 +194,11 @@ export default function AdminDashboard() {
   }
 
   if (!canViewAdmin) {
-    return <AccessMessage>You do not have permission to access the admin dashboard.</AccessMessage>;
+    return (
+      <AccessMessage>
+        You do not have permission to access the admin dashboard.
+      </AccessMessage>
+    );
   }
 
   return (
@@ -115,11 +207,18 @@ export default function AdminDashboard() {
       <div className="flex flex-1">
         <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
         <main className="flex-1 p-8">
+          {/* BIG BANNER so you can visually confirm this version */}
+          <div className="mb-4 rounded bg-yellow-100 border border-yellow-300 p-3 text-sm font-semibold text-yellow-900">
+            🔧 ADMIN DASHBOARD – GROQ VERSION (Analytics tab has Groq Live Test)
+          </div>
+
           {isSuperUser && (
             <Card className="p-4 mb-6 border border-dashed border-blue-300 bg-blue-50/40 dark:bg-slate-900/40">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">Superuser Mode</p>
+                  <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
+                    Superuser Mode
+                  </p>
                   <p className="text-lg font-bold">Quick role access</p>
                   <p className="text-sm text-muted-foreground">
                     Jump into any dashboard view without switching accounts.
@@ -194,17 +293,20 @@ export default function AdminDashboard() {
                     High-level insights about your Tiny Steps accounts and activity.
                   </p>
                 </div>
+
                 <div className="grid gap-6 lg:grid-cols-2">
                   <AdminOverviewCard />
                   <AnalyticsDashboard />
                 </div>
+
+                {/* Groq real-time test card */}
+                <GroqIdeaTester />
               </div>
             </TabsContent>
           </Tabs>
         </main>
       </div>
 
-      {/* Status Bar */}
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
         <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
           {statsLoading ? (

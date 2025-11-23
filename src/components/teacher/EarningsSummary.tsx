@@ -1,10 +1,10 @@
+// src/components/teacher/EarningsSummary.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
+import { db } from '../../lib/firebaseConfig';
 
-// ⬅️ FIXED: import from firebaseconfig.ts
-import { db } from '../../firebaseConfig';
 interface TeacherEarnings {
   teacherId: string;
   month: string; // "YYYY-MM"
@@ -18,6 +18,10 @@ interface TeacherEarnings {
 interface MonthOption {
   id: string;    // "2025-11"
   label: string; // "Nov 2025"
+}
+
+interface EarningsSummaryProps {
+  teacherId?: string | null;
 }
 
 // Helpers
@@ -39,30 +43,36 @@ function buildMonthOptions(monthsBack: number): MonthOption[] {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const id = `${year}-${month}`;
-    const label = d.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    const label = d.toLocaleString('en-US', {
+      month: 'short',
+      year: 'numeric',
+    });
     result.push({ id, label });
   }
 
   return result;
 }
 
-const PER_CREDIT_RATE = 150;   // ₹ per credit – change whenever you decide
+const PER_CREDIT_RATE = 150; // ₹ per credit – change whenever you decide
 
-const EarningsSummary: React.FC = () => {
+const EarningsSummary: React.FC<EarningsSummaryProps> = ({ teacherId: propTeacherId }) => {
   const auth = getAuth();
+
+  // Prefer prop from TeacherDashboard, fall back to logged-in user
+  const teacherId = propTeacherId ?? auth.currentUser?.uid ?? null;
+
   const [selectedMonth, setSelectedMonth] = useState<string>(getCurrentMonthId());
   const [earnings, setEarnings] = useState<TeacherEarnings | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const monthOptions = useMemo(() => buildMonthOptions(6), []); // last 6 months
-
-  const teacherId = auth.currentUser?.uid || null;
+  const monthOptions = useMemo(() => buildMonthOptions(6), []);
 
   useEffect(() => {
     if (!teacherId) {
-      setError('Teacher ID not available. Please sign in again.');
       setEarnings(null);
+      setError('Teacher ID not available. Please sign in again.');
+      setLoading(false);
       return;
     }
 
@@ -94,7 +104,7 @@ const EarningsSummary: React.FC = () => {
         console.error('Error loading teacher earnings:', err);
         setError('Failed to load earnings. Please try again.');
         setLoading(false);
-      }
+      },
     );
 
     return () => unsubscribe();

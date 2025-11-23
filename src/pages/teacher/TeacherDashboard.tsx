@@ -1,22 +1,77 @@
+// src/pages/teacher/TeacherDashboard.tsx
 import React, { Suspense, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import { Card } from '@components/ui/card';
+
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
-import ScheduleSessionBatchForm from '../../components/teacher/ScheduleSessionBatchForm';
-import { Card } from '@components/ui/card';
-const TodaySessionsView = React.lazy(() => import('./components/today-sessions/TodaySessionsList').then(module => ({ default: module.TodaySessionsList })));
-const UpcomingSessionsView = React.lazy(() => import('./components/upcoming-sessions/UpcomingSessionsView').then(module => ({ default: module.UpcomingSessionsView })));
-const StudentsList = React.lazy(() => import('./components/students/StudentsList').then(module => ({ default: module.StudentsList })));
-const StudentProgressChart = React.lazy(() => import('./components/progress/StudentProgressChart').then(module => ({ default: module.StudentProgressChart })));
-const EarningsSummary = React.lazy(() => import('./components/earnings/EarningsSummary').then(module => ({ default: module.EarningsSummary })));
-const TeacherStats = React.lazy(() => import('./components/analytics/TeacherStats').then(module => ({ default: module.TeacherStats })));
-const MessagesView = React.lazy(() => import('./components/messages/MessagesView').then(module => ({ default: module.MessagesView })));
-const ScheduleView = React.lazy(() => import('./components/schedule/ScheduleView').then(module => ({ default: module.ScheduleView })));
-const TeacherProfile = React.lazy(() => import('./components/profile/TeacherProfile').then(module => ({ default: module.TeacherProfile })));
-const NotificationsPanel = React.lazy(() => import('./components/notifications/NotificationsPanel').then(module => ({ default: module.NotificationsPanel })));
+
 import { useAuthStore } from '../../store/useAuthStore';
 import { useTeacherSessions } from './hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+
+// Lazy-loaded views
+const TodaySessionsView = React.lazy(() =>
+  import('./components/today-sessions/TodaySessionsList').then((module) => ({
+    default: module.TodaySessionsList,
+  })),
+);
+
+const UpcomingSessionsView = React.lazy(() =>
+  import('./components/upcoming-sessions/UpcomingSessionsView').then(
+    (module) => ({
+      default: module.UpcomingSessionsView,
+    }),
+  ),
+);
+
+const StudentsList = React.lazy(() =>
+  import('./components/students/StudentsList').then((module) => ({
+    default: module.StudentsList,
+  })),
+);
+
+const StudentProgressChart = React.lazy(() =>
+  import('./components/progress/StudentProgressChart').then((module) => ({
+    default: module.StudentProgressChart,
+  })),
+);
+
+const EarningsSummary = React.lazy(() =>
+  import('./components/earnings/EarningsSummary').then((module) => ({
+    default: module.EarningsSummary,
+  })),
+);
+
+const TeacherStats = React.lazy(() =>
+  import('./components/analytics/TeacherStats').then((module) => ({
+    default: module.TeacherStats,
+  })),
+);
+
+const MessagesView = React.lazy(() =>
+  import('./components/messages/MessagesView').then((module) => ({
+    default: module.MessagesView,
+  })),
+);
+
+const ScheduleView = React.lazy(() =>
+  import('./components/schedule/ScheduleView').then((module) => ({
+    default: module.ScheduleView,
+  })),
+);
+
+const TeacherProfile = React.lazy(() =>
+  import('./components/profile/TeacherProfile').then((module) => ({
+    default: module.TeacherProfile,
+  })),
+);
+
+const NotificationsPanel = React.lazy(() =>
+  import('./components/notifications/NotificationsPanel').then((module) => ({
+    default: module.NotificationsPanel,
+  })),
+);
 
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
@@ -37,9 +92,21 @@ const TAB_ITEMS = [
   { id: 'notifications', label: 'Notifications' },
 ];
 
+type StudentForRow = {
+  uid?: string;
+  id?: string;
+  studentName?: string;
+  parentName?: string;
+  courseName?: string;
+  mastery?: number;
+  status?: string;
+  [key: string]: any;
+};
+
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
-  const [tab, setTab] = useState('today');
+  const [tab, setTab] = useState<string>('today');
+
   const teacherId = user?.uid;
   const { sessions } = useTeacherSessions(teacherId);
   const { students, loading, error } = useTeacherFilteredStudents();
@@ -53,16 +120,31 @@ export default function TeacherDashboard() {
   }
 
   if (!user || user.role !== 'teacher') {
-    return <AccessNotice>You do not have permission to access the teacher dashboard.</AccessNotice>;
+    return (
+      <AccessNotice>
+        You do not have permission to access the teacher dashboard.
+      </AccessNotice>
+    );
   }
 
   return (
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
-      <TeacherHeader name={user.displayName || user.email} upcomingCount={sessions.length} />
+      <TeacherHeader
+        name={user.displayName || user.email || 'Teacher'}
+        upcomingCount={sessions.length}
+      />
+
       <div className="flex gap-6">
-        <TeacherSidebar active={tab} onSelect={setTab} todayCount={sessions.length} teacherId={teacherId} />
+        <TeacherSidebar
+          active={tab}
+          onSelect={setTab}
+          todayCount={sessions.length}
+          teacherId={teacherId}
+        />
+
         <main className="flex-1 space-y-6">
           <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+            {/* Mobile tabs for when sidebar is hidden */}
             <TabsList className="lg:hidden">
               {TAB_ITEMS.map((item) => (
                 <TabsTrigger key={item.id} value={item.id}>
@@ -70,34 +152,47 @@ export default function TeacherDashboard() {
                 </TabsTrigger>
               ))}
             </TabsList>
+
+            {/* Today */}
             <TabsContent value="today">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
                 <TodaySessionsView teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Upcoming */}
             <TabsContent value="upcoming">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
                 <UpcomingSessionsView teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Students */}
             <TabsContent value="students">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
                 <div className="space-y-6">
-                  <h1>Teacher Dashboard</h1>
+                  <h1 className="text-xl font-bold">Teacher Dashboard</h1>
 
-                  {/* My Students Section */}
                   <section>
-                    <h2 className="text-xl font-bold mb-4">My Students ({students.length})</h2>
+                    <h2 className="text-lg font-semibold mb-4">
+                      My Students ({students.length})
+                    </h2>
+
                     {loading ? (
                       <div>Loading students...</div>
                     ) : error ? (
                       <div className="text-red-600">Error: {error}</div>
                     ) : students.length === 0 ? (
-                      <div className="text-gray-600">No students assigned yet. Wait for admin assignment.</div>
+                      <div className="text-gray-600">
+                        No students assigned yet. Wait for admin assignment.
+                      </div>
                     ) : (
                       <div className="grid gap-4">
-                        {students.map((student) => (
-                          <StudentRow key={student.uid} student={student} />
+                        {students.map((student: StudentForRow) => (
+                          <StudentRow
+                            key={student.uid || student.id}
+                            student={student}
+                          />
                         ))}
                       </div>
                     )}
@@ -105,36 +200,50 @@ export default function TeacherDashboard() {
                 </div>
               </Suspense>
             </TabsContent>
+
+            {/* Progress */}
             <TabsContent value="progress">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading progress…</div>}>
                 <StudentProgressChart teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Earnings */}
             <TabsContent value="earnings">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
                 <EarningsSummary teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Analytics */}
             <TabsContent value="analytics">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
                 <TeacherStats teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Messages */}
             <TabsContent value="messages">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
                 <MessagesView teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Schedule */}
             <TabsContent value="schedule">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
                 <ScheduleView teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Profile */}
             <TabsContent value="profile">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
                 <TeacherProfile teacherId={teacherId} />
               </Suspense>
             </TabsContent>
+
+            {/* Notifications */}
             <TabsContent value="notifications">
               <Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
                 <NotificationsPanel teacherId={teacherId} />
@@ -147,19 +256,28 @@ export default function TeacherDashboard() {
   );
 }
 
-function StudentRow({ student }: { student: any }) {
+function StudentRow({ student }: { student: StudentForRow }) {
+  const mastery =
+    typeof student.mastery === 'number' ? `${student.mastery}%` : '—';
+
   return (
-    <div className="border rounded-lg p-4">
-      <div className="flex justify-between">
-        <div>
-          <h3 className="font-bold">{student.studentName}</h3>
-          <p className="text-sm text-gray-600">Parent: {student.parentName}</p>
-          <p className="text-sm">Course: {student.courseName}</p>
-        </div>
-        <div className="text-right">
-          <p className="font-bold text-lg">{student.mastery}% Mastery</p>
-          <p className="text-sm text-gray-600">Status: {student.status}</p>
-        </div>
+    <div className="border rounded-lg p-4 flex justify-between items-start">
+      <div>
+        <h3 className="font-bold">
+          {student.studentName || 'Unnamed student'}
+        </h3>
+        <p className="text-sm text-gray-600">
+          Parent: {student.parentName || '—'}
+        </p>
+        <p className="text-sm">
+          Course: {student.courseName || '—'}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className="font-bold text-lg">{mastery} Mastery</p>
+        <p className="text-sm text-gray-600">
+          Status: {student.status || '—'}
+        </p>
       </div>
     </div>
   );

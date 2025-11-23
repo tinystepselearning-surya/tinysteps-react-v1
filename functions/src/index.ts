@@ -6,7 +6,7 @@
  */
 
 import { setGlobalOptions } from 'firebase-functions';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, onRequest } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 
@@ -63,6 +63,10 @@ interface SubscribeRequest {
 }
 interface SubscribeResponse {
   success: boolean;
+}
+
+interface GroqKidIdeaResponse {
+  idea: string;
 }
 
 // Allowed roles for setUserRole
@@ -362,5 +366,202 @@ export const subscribeNewsletter = onCall(
     }
   }
 );
-export { checkSubscriptionAccess } from "./checkSubscriptionAccess";
+
+export { checkSubscriptionAccess } from './checkSubscriptionAccess';
 export { fetchAdminStats } from './fetchAdminStats';
+export { soundDetectiveRound } from './soundDetective';
+
+// ---------- groqKidIdea (callable for real-time use) ----------
+
+/**
+ * Callable function:
+ * Input: { topic: string }  e.g. { topic: "animals" }
+ * Output: { idea: string }
+ *
+ * Use from frontend with httpsCallable("groqKidIdea").
+ */
+export const groqKidIdea = onCall(
+  {
+    region: 'asia-south1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+    secrets: ['GROQ_API_KEY'],
+  },
+  async (request): Promise<GroqKidIdeaResponse> => {
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+      logger.error('groqKidIdea: GROQ_API_KEY missing in environment');
+      throw new HttpsError(
+        'failed-precondition',
+        'GROQ_API_KEY is not set on the server.'
+      );
+    }
+
+    const { data, auth } = request;
+    const topic = (data?.topic as string | undefined)?.trim() || 'animals';
+
+    logger.info('groqKidIdea called', {
+      topic,
+      callerUid: auth?.uid ?? null,
+    });
+
+    try {
+      const groqResponse = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            temperature: 0.4,
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are a friendly Tiny Steps assistant. Create short, fun ideas for kids (ages 5–10) to speak or play based on a topic. Keep it to 2–3 sentences, simple, positive, and kid-friendly.',
+              },
+              {
+                role: 'user',
+                content: `Give me one fun speaking or activity idea for a child about the topic: "${topic}".`,
+              },
+            ],
+            max_tokens: 120,
+          }),
+        }
+      );
+
+      const dataJson = await groqResponse.json();
+
+      if (!groqResponse.ok) {
+        logger.error('groqKidIdea: Groq error', {
+          status: groqResponse.status,
+          body: dataJson,
+        });
+        throw new HttpsError(
+          'internal',
+          `Groq error: ${groqResponse.status}`
+        );
+      }
+
+      const idea =
+        dataJson?.choices?.[0]?.message?.content?.trim() ??
+        'Here is a Tiny Steps idea, but the AI did not send content.';
+
+      return { idea };
+    } catch (err: any) {
+      logger.error('groqKidIdea: Groq call failed', {
+        error: String(err),
+      });
+      throw new HttpsError(
+        'internal',
+        'Unable to generate idea right now. Please try again.'
+      );
+    }
+  }
+);
+
+// ---------- Groq secrets + test endpoints ----------
+
+/**
+ * Simple HTTPS function to verify that GROQ_API_KEY
+ * is available to Cloud Functions from Secret Manager.
+ */
+export const checkGroqSecret = onRequest(
+  {
+    region: 'asia-south1',
+    secrets: ['GROQ_API_KEY'],
+  },
+  (req, res) => {
+    const hasKey = !!process.env.GROQ_API_KEY;
+
+    if (hasKey) {
+      res
+        .status(200)
+        .send('✅ GROQ_API_KEY is available to Cloud Functions.');
+    } else {
+      res
+        .status(500)
+        .send('❌ GROQ_API_KEY is NOT available to Cloud Functions.');
+    }
+  }
+);
+
+/**
+ * Test function that actually calls Groq once and returns a short message.
+ * Use this to confirm network + key + model are all working end-to-end.
+ */
+export const testGroq = onRequest(
+  {
+    region: 'asia-south1',
+    secrets: ['GROQ_API_KEY'],
+    timeoutSeconds: 60,
+    memory: '256MiB',
+  },
+  async (req, res) => {
+    const apiKey = process.env.GROQ_API_KEY;
+
+    if (!apiKey) {
+      logger.error('testGroq: GROQ_API_KEY missing in environment');
+      res.status(500).send('GROQ_API_KEY is not set for this function.');
+      return;
+    }
+
+    try {
+      const groqResponse = await fetch(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'llama-3.1-8b-instant',
+            temperature: 0, // make it deterministic
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You are a test bot. Answer ONLY this exact sentence: "Groq is working for Tiny Steps ✅". Do not add anything else.',
+              },
+              {
+                role: 'user',
+                content: 'Test the connection.',
+              },
+            ],
+            max_tokens: 30,
+          }),
+        }
+      );
+
+      const data = await groqResponse.json();
+
+      logger.info('testGroq: Groq HTTP status', {
+        status: groqResponse.status,
+      });
+
+      if (!groqResponse.ok) {
+        logger.error('testGroq: Groq error body', { data });
+        res
+          .status(500)
+          .send(`Groq error: ${groqResponse.status} - see logs for details.`);
+        return;
+      }
+
+      const message =
+        data?.choices?.[0]?.message?.content ||
+        'Groq call succeeded but no content returned.';
+
+      res.status(200).send(message);
+    } catch (err: any) {
+      logger.error('testGroq: Groq call failed', {
+        error: String(err),
+      });
+      res.status(500).send('Groq call failed. Check logs for details.');
+    }
+  }
+);
