@@ -1,14 +1,12 @@
-// @ts-nocheck
-import { useEffect, useMemo } from 'react';
-import type { FC } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import Meta from '../components/common/Meta';
 import { useAuthStore } from '../store/useAuthStore';
 import { catalogs } from '../content/courses';
 
-const MRP_PER_SESSION = 599;           // Official 1:1 MRP
-const DEFAULT_PACK_RATE = 550;         // Typical pack rate used for estimates
+const MRP_PER_SESSION = 599;      // Official 1:1 MRP
+const DEFAULT_PACK_RATE = 550;    // Typical pack rate used for estimates
 
-const parseWeeks = (duration: string) => {
+const parseWeeks = (duration) => {
   const match = duration.match(/(\d+)(?:[–-](\d+))?/);
   if (!match) return { min: 0, max: 0 };
   const min = parseInt(match[1], 10);
@@ -16,12 +14,12 @@ const parseWeeks = (duration: string) => {
   return { min, max };
 };
 
-const parseClassesPerWeek = (frequency: string) => {
+const parseClassesPerWeek = (frequency) => {
   const match = frequency.match(/(\d+)/);
   return match ? parseInt(match[1], 10) : 2;
 };
 
-const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`;
+const formatCurrency = (value) => `₹${value.toLocaleString('en-IN')}`;
 
 const plans = [
   {
@@ -71,7 +69,7 @@ const plans = [
   },
 ];
 
-const PricingPage: FC = () => {
+const PricingPage = () => {
   useEffect(() => {
     document.title = 'Pricing | Tiny Steps';
   }, []);
@@ -105,7 +103,7 @@ const PricingPage: FC = () => {
     () =>
       plans.map((plan) => ({
         ...plan,
-        fee: plan.sessions * (plan.rate ?? DEFAULT_PACK_RATE),
+        fee: plan.sessions * (plan.rate || DEFAULT_PACK_RATE),
       })),
     []
   );
@@ -138,6 +136,7 @@ const PricingPage: FC = () => {
         jsonLd={offerCatalog}
       />
 
+      {/* Hero / intro */}
       <section className="relative px-6 pt-24 pb-10">
         <div className="mx-auto max-w-5xl glass-panel px-8 py-10 text-center">
           <div className="gradient-chip mx-auto w-max">
@@ -147,13 +146,15 @@ const PricingPage: FC = () => {
             Pricing that mirrors your child’s curriculum
           </h1>
           <p className="mt-3 text-gray-700">
-            Every course lists classes/week × weeks = total sessions. We estimate your fee
-            using a typical pack rate of ~₹{DEFAULT_PACK_RATE} per session (MRP ₹
-            {MRP_PER_SESSION}), so you know the full investment upfront.
+            Every course lists classes/week × weeks = total sessions. We
+            estimate your fee using a typical pack rate of ~₹{DEFAULT_PACK_RATE}{' '}
+            per session (MRP ₹{MRP_PER_SESSION}), so you know the full
+            investment upfront.
           </p>
         </div>
       </section>
 
+      {/* Plan cards */}
       <section className="mx-auto max-w-6xl px-6 pb-12">
         <div className="grid gap-6 md:grid-cols-3">
           {planPricing.map((plan) => (
@@ -218,6 +219,7 @@ const PricingPage: FC = () => {
         </div>
       </section>
 
+      {/* Course-wise pricing table */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="overflow-x-auto rounded-3xl bg-white shadow-card-hover border border-gray-100">
           <table className="w-full border-collapse text-sm text-gray-700">
@@ -276,27 +278,27 @@ const PricingPage: FC = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Info cards */}
         <div className="mt-8 grid gap-4 md:grid-cols-3 text-sm text-gray-600">
           <div className="glass-panel p-5">
-            <div className="font-semibold text-gray-900">
-              What’s included
-            </div>
+            <div className="font-semibold text-gray-900">What’s included</div>
             <ul className="mt-2 list-disc pl-5">
               <li>Live 1:1 or small-group sessions</li>
               <li>Weekly mastery reports</li>
               <li>Recorded sessions + resources</li>
             </ul>
           </div>
+
           <div className="glass-panel p-5">
-            <div className="font-semibold text-gray-900">
-              Payment options
-            </div>
+            <div className="font-semibold text-gray-900">Payment options</div>
             <ul className="mt-2 list-disc pl-5">
               <li>UPI</li>
               <li>Bank transfer (with manual confirmation)</li>
               <li>Online autopay subscriptions</li>
             </ul>
           </div>
+
           <div className="glass-panel p-5">
             <div className="font-semibold text-gray-900">
               Need installment plans?
@@ -327,8 +329,6 @@ const PricingPage: FC = () => {
           </div>
         </div>
       </section>
-
-      {/* Gaming subscription section removed */}
     </div>
   );
 };
