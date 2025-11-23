@@ -7,19 +7,44 @@ import { db } from '../../../lib/firebaseConfig';
 import { createKid } from '../../../services/kidsService';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from '@components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+} from '@components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@components/ui/form';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
-import { Student } from '../../../types/Student';
 
 const createStudentSchema = z.object({
   parentId: z.string().min(1, 'Select a parent'),
   fullName: z.string().min(2, 'Name required'),
-  dob: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD'),
+  dob: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD'),
   grade: z.string().min(1, 'Select grade'),
-  status: z.enum(['active', 'suspended', 'archived']).default('active'),
+  // With default() zod makes this optional in the TS type
+  status: z
+    .enum(['active', 'suspended', 'archived'])
+    .default('active'),
 });
 
 type FormData = z.infer<typeof createStudentSchema>;
@@ -29,45 +54,75 @@ interface Props {
   defaultParentId?: string | null;
 }
 
-export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) {
+export function CreateStudentForm({
+  onStudentCreated,
+  defaultParentId,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [parents, setParents] = useState<User[]>([]);
 
-  const form = useForm<FormData>({
-    // zodResolver generic typing can be strict in some RHF versions; cast to any to avoid incompat issues
-    resolver: (zodResolver(createStudentSchema) as unknown) as any,
-    defaultValues: { parentId: defaultParentId || '', fullName: '', dob: '', grade: '', status: 'active' },
+  // NOTE: we don't pass a generic here; we also cast resolver to any.
+  // This avoids the Control<TFieldValues> / Resolver<TFieldValues> conflict
+  // you’re seeing with your RHF + resolver versions.
+  const form = useForm({
+    resolver: zodResolver(createStudentSchema) as any,
+    defaultValues: {
+      parentId: defaultParentId || '',
+      fullName: '',
+      dob: '',
+      grade: '',
+      status: 'active',
+    } as FormData,
   });
 
+  const { isSubmitting } = form.formState;
+
+  // Load parents when dialog opens
   useEffect(() => {
-    // load parents
+    if (!open) return;
+
     const loadParents = async () => {
       try {
-        const q = query(collection(db, 'users'));
-        const snap = await getDocs(q);
-        const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
-        setParents(allUsers.filter(u => u.role === 'parent'));
+        const qParents = query(
+          collection(db, 'users'),
+          where('role', '==', 'parent'),
+        );
+        const snap = await getDocs(qParents);
+        const allParents = snap.docs.map(
+          (d) => ({ id: d.id, ...(d.data() as any) }) as User,
+        );
+        setParents(allParents);
       } catch (err) {
         console.error(err);
-        toast({ title: 'Error', description: 'Failed to load parents', variant: 'destructive' });
+        toast({
+          title: 'Error',
+          description: 'Failed to load parents',
+          variant: 'destructive',
+        });
       }
     };
-    if (open) loadParents();
-    // If defaultParentId is provided, set form value
+
+    void loadParents();
+  }, [open]);
+
+  // Apply defaultParentId when opening or when prop changes
+  useEffect(() => {
     if (open && defaultParentId) {
       form.setValue('parentId', defaultParentId);
     }
-  }, [open]);
+  }, [open, defaultParentId, form]);
 
   const onSubmit = async (values: FormData) => {
     try {
+      const status = values.status ?? 'active';
+
       const newKidId = await createKid({
         fullName: values.fullName,
         dob: values.dob,
         grade: values.grade,
         parentIds: [values.parentId],
         primaryParentId: values.parentId,
-        status: values.status as any,
+        status,
         summary: {
           phonicsMastery: 0,
           grammarMastery: 0,
@@ -77,13 +132,26 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
         },
       });
 
-      toast({ title: 'Student created', description: `${values.fullName} created successfully` });
+      toast({
+        title: 'Student created',
+        description: `${values.fullName} created successfully`,
+      });
       setOpen(false);
-      form.reset();
+      form.reset({
+        parentId: defaultParentId || '',
+        fullName: '',
+        dob: '',
+        grade: '',
+        status: 'active',
+      } as FormData);
       onStudentCreated?.(newKidId);
     } catch (err: any) {
       console.error(err);
-      toast({ title: 'Error', description: err.message || 'Failed to create student', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to create student',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -95,28 +163,44 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create Student</DialogTitle>
-          <DialogDescription>Fill in basic information to create a new student profile and associate it with a parent.</DialogDescription>
+          <DialogDescription>
+            Fill in basic information to create a new student
+            profile and associate it with a parent.
+          </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form {...(form as any)}>
+          <form
+            onSubmit={form.handleSubmit((values) =>
+              onSubmit(values as FormData),
+            )}
+            className="space-y-4"
+          >
+            {/* Parent */}
             <FormField
-              control={form.control}
+              control={form.control as any}
               name="parentId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Select Primary Parent</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select parent" />
                       </SelectTrigger>
                       <SelectContent>
-                        {parents.map(p => (
-                          <SelectItem key={p.uid || p.id} value={p.uid || p.id}>
-                            {p.email} — {p.name || p.email}
-                          </SelectItem>
-                        ))}
+                        {parents.map((p) => {
+                          const id = (p as any).id || (p as any).uid;
+                          const labelName = p.name || p.email;
+                          return (
+                            <SelectItem key={id} value={id}>
+                              {p.email} — {labelName}
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -125,8 +209,9 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
               )}
             />
 
+            {/* Full name */}
             <FormField
-              control={form.control}
+              control={form.control as any}
               name="fullName"
               render={({ field }) => (
                 <FormItem>
@@ -139,8 +224,9 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
               )}
             />
 
+            {/* DOB */}
             <FormField
-              control={form.control}
+              control={form.control as any}
               name="dob"
               render={({ field }) => (
                 <FormItem>
@@ -153,14 +239,18 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
               )}
             />
 
+            {/* Grade */}
             <FormField
-              control={form.control}
+              control={form.control as any}
               name="grade"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Grade</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select grade" />
                       </SelectTrigger>
@@ -178,10 +268,20 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
               )}
             />
 
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit">Create</Button>
-            </div>
+            {/* Footer actions */}
+            <DialogFooter className="flex justify-end space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating…' : 'Create'}
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

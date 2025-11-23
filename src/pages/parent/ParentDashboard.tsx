@@ -1,173 +1,362 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
-import { Card, CardContent } from '../../components/ui/card';
-import ParentSidebar from './components/layout/ParentSidebar';
-import { ParentHeader } from './components/layout/ParentHeader';
+// src/pages/parent/ParentDashboard.tsx
+import React, { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useParentFilteredChildren } from '@/hooks/useParentFilteredData';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useParentFilteredChildren } from '../../hooks/useParentFilteredData';
 
-// Lazy load components for better performance
-const ChildrenManagement = lazy(() => import('./components/children/ChildrenManagement'));
-const ChildDetailView = lazy(() => import('./components/children/ChildDetailView'));
-const UpcomingSessionsView = lazy(() => import('./components/sessions/UpcomingSessionsView'));
-const InvoiceManagement = lazy(() => import('./components/payments/InvoiceManagement').then(module => ({ default: module.InvoiceManagement })));
-const PaymentHistory = lazy(() => import('./components/payments/PaymentHistory').then(module => ({ default: module.PaymentHistory })));
-const SessionTracking = lazy(() => import('../../components/SessionTracking'));
-const ProgressReports = lazy(() => import('../../components/ProgressReports'));
-const TeacherMessaging = lazy(() => import('../../components/TeacherMessaging'));
-const NotificationsCenter = lazy(() => import('../../components/NotificationsCenter'));
-const ParentSettings = lazy(() => import('../../components/ParentSettings'));
-const ParentProfile = lazy(() => import('../../components/ParentProfile'));
-const KidDashboard = lazy(() => import('../kid/KidDashboard'));
+type ParentTab =
+  | 'overview'
+  | 'children'
+  | 'sessions'
+  | 'payments'
+  | 'kids'
+  | 'reports'
+  | 'messages'
+  | 'notifications'
+  | 'settings'
+  | 'profile';
 
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
-    <Card className="p-8 text-center space-y-2 max-w-md">{children}</Card>
+    <div className="p-8 text-center space-y-2 max-w-md rounded-lg shadow bg-white">
+      {children}
+    </div>
   </div>
 );
 
 export default function ParentDashboard() {
   const { user, isLoading } = useAuthStore();
-  const { children, loading, error } = useParentFilteredChildren();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<ParentTab>('overview');
 
-  const [activeTab, setActiveTab] = useState(location.pathname.includes('/parent/kids') ? 'kids' : 'dashboard');
+  const {
+    children: kids,
+    loading: kidsLoading,
+    error: kidsError,
+  } = useParentFilteredChildren();
 
-  useEffect(() => {
-    if (location.pathname.includes('/parent/kids')) {
-      setActiveTab('kids');
-    }
-  }, [location.pathname]);
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-
-    if (tab === 'kids') {
-      navigate('/parent/kids', { replace: location.pathname.includes('/parent/kids') });
-    } else if (location.pathname.includes('/parent/kids')) {
-      navigate('/parent', { replace: true });
-    }
-  };
-
+  // 1) Loading auth
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <Card className="p-6">Checking permissions...</Card>
+      <div className="flex h-screen items-center justify-center text-gray-600">
+        Checking permissions…
       </div>
     );
   }
 
-  if (!user || user.role !== 'parent') {
-    return <AccessNotice>You do not have permission to access the parent dashboard.</AccessNotice>;
+  // 2) Not logged in
+  if (!user) {
+    return (
+      <AccessNotice>
+        <p className="font-semibold mb-1">Not logged in</p>
+        <p className="text-sm text-gray-600">
+          Please log in with your parent account to view this page.
+        </p>
+      </AccessNotice>
+    );
+  }
+
+  // 3) Wrong role
+  if (user.role !== 'parent') {
+    return (
+      <AccessNotice>
+        <p className="font-semibold mb-1">Access denied</p>
+        <p className="text-sm text-gray-600">
+          This dashboard is only for parent accounts.
+        </p>
+      </AccessNotice>
+    );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <ParentSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <ParentHeader onOpenKidsView={() => handleTabChange('kids')} />
-        <main className="flex-1 overflow-auto">
-          <Suspense fallback={<div className="p-6">Loading...</div>}>
-            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full h-full">
-              <div className="border-b bg-white px-6">
-                <TabsList className="grid w-full grid-cols-10">
-                  <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                  <TabsTrigger value="children">Children</TabsTrigger>
-                  <TabsTrigger value="sessions">Sessions</TabsTrigger>
-                  <TabsTrigger value="payments">Payments</TabsTrigger>
-                  <TabsTrigger value="kids">Kids Page</TabsTrigger>
-                  <TabsTrigger value="reports">Reports</TabsTrigger>
-                  <TabsTrigger value="messages">Messages</TabsTrigger>
-                  <TabsTrigger value="notifications">Notifications</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
-                  <TabsTrigger value="profile">Profile</TabsTrigger>
-                </TabsList>
-              </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Simple header */}
+      <header className="w-full border-b bg-white px-6 py-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold">
+            Welcome, {user.displayName || user.email}
+          </h1>
+          <p className="text-xs text-gray-500">
+            Tiny Steps Parent Dashboard
+          </p>
+        </div>
+        <div className="text-xs text-gray-400">
+          {/* You can add logout / avatar later here */}
+          Parent View
+        </div>
+      </header>
 
-              <TabsContent value="dashboard" className="m-0 h-full">
-                <div className="p-6">
-                  <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
-                  <Card>
-                    <CardContent className="p-6">
-                      <p>Dashboard overview with quick stats and recent activity will be displayed here.</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
+      {/* Main layout */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left side: simple nav */}
+        <aside className="w-56 border-r bg-white p-4 space-y-1 text-sm">
+          <NavButton
+            label="Dashboard Overview"
+            tab="overview"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label={`My Children (${kids.length})`}
+            tab="children"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Sessions"
+            tab="sessions"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Payments"
+            tab="payments"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Kids Page"
+            tab="kids"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Reports"
+            tab="reports"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Messages"
+            tab="messages"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Notifications"
+            tab="notifications"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Settings"
+            tab="settings"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+          <NavButton
+            label="Profile"
+            tab="profile"
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+        </aside>
 
-              <TabsContent value="children" className="m-0 h-full">
-                <div className="space-y-6">
-                  <h1>Parent Dashboard</h1>
+        {/* Right side: content */}
+        <main className="flex-1 overflow-auto p-6 bg-gray-50">
+          {activeTab === 'overview' && (
+            <OverviewPanel kidsCount={kids.length} />
+          )}
 
-                  {/* My Children Section */}
-                  <section>
-                    <h2 className="text-xl font-bold mb-4">My Children ({children.length})</h2>
-                    {loading ? (
-                      <div>Loading children...</div>
-                    ) : error ? (
-                      <div className="text-red-600">Error: {error}</div>
-                    ) : children.length === 0 ? (
-                      <div className="text-gray-600">No children registered yet.</div>
-                    ) : (
-                      <div className="grid gap-4">
-                        {children.map((child) => (
-                          <ChildCard key={child.uid} child={child} />
-                        ))}
-                      </div>
-                    )}
-                  </section>
-                </div>
-              </TabsContent>
+          {activeTab === 'children' && (
+            <ChildrenPanel
+              kids={kids}
+              loading={kidsLoading}
+              error={kidsError}
+            />
+          )}
 
-              <TabsContent value="sessions" className="m-0 h-full">
-                <UpcomingSessionsView />
-              </TabsContent>
+          {activeTab === 'sessions' && (
+            <PlaceholderPanel title="Sessions">
+              Your upcoming and past sessions will appear here.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="payments" className="m-0 h-full">
-                <InvoiceManagement />
-              </TabsContent>
+          {activeTab === 'payments' && (
+            <PlaceholderPanel title="Payments">
+              Your invoices and payment history will appear here.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="kids" className="m-0 h-full p-0">
-                <KidDashboard />
-              </TabsContent>
+          {activeTab === 'kids' && (
+            <PlaceholderPanel title="Kids Page">
+              Kids interactive dashboard will be linked here.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="reports" className="m-0 h-full">
-                <ProgressReports />
-              </TabsContent>
+          {activeTab === 'reports' && (
+            <PlaceholderPanel title="Reports">
+              Progress reports and learning summaries will appear here.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="messages" className="m-0 h-full">
-                <TeacherMessaging />
-              </TabsContent>
+          {activeTab === 'messages' && (
+            <PlaceholderPanel title="Messages">
+              Messages between you and teachers/RMs will appear here.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="notifications" className="m-0 h-full">
-                <NotificationsCenter />
-              </TabsContent>
+          {activeTab === 'notifications' && (
+            <PlaceholderPanel title="Notifications">
+              All important updates will appear here.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="settings" className="m-0 h-full">
-                <ParentSettings />
-              </TabsContent>
+          {activeTab === 'settings' && (
+            <PlaceholderPanel title="Settings">
+              Parent account and preferences configuration.
+            </PlaceholderPanel>
+          )}
 
-              <TabsContent value="profile" className="m-0 h-full">
-                <ParentProfile />
-              </TabsContent>
-            </Tabs>
-          </Suspense>
+          {activeTab === 'profile' && (
+            <PlaceholderPanel title="Profile">
+              Parent profile details will be shown here.
+            </PlaceholderPanel>
+          )}
         </main>
       </div>
     </div>
   );
 }
 
-function ChildCard({ child }: { child: any }) {
+/** Left nav button */
+interface NavButtonProps {
+  label: string;
+  tab: ParentTab;
+  activeTab: ParentTab;
+  onClick: (tab: ParentTab) => void;
+}
+
+const NavButton: React.FC<NavButtonProps> = ({
+  label,
+  tab,
+  activeTab,
+  onClick,
+}) => {
+  const isActive = tab === activeTab;
   return (
-    <div className="border rounded-lg p-4 hover:shadow-lg transition">
-      <h3 className="font-bold text-lg">{child.displayName}</h3>
-      <p className="text-sm text-gray-600">Age: {child.age} | Grade: {child.grade}</p>
-      <p className="text-sm">Active Courses: {child.enrollmentCount}</p>
-      <p className="text-sm">Average Mastery: {child.averageMastery}%</p>
-      <button className="mt-2 text-blue-600">View Progress</button>
+    <button
+      type="button"
+      onClick={() => onClick(tab)}
+      className={`w-full text-left px-3 py-2 rounded-md transition text-xs ${
+        isActive
+          ? 'bg-indigo-600 text-white font-semibold'
+          : 'text-gray-700 hover:bg-gray-100'
+      }`}
+    >
+      {label}
+    </button>
+  );
+};
+
+/** Overview tab panel */
+const OverviewPanel: React.FC<{ kidsCount: number }> = ({ kidsCount }) => (
+  <div className="space-y-4">
+    <h2 className="text-xl font-bold mb-2">Dashboard Overview</h2>
+    <div className="grid gap-4 md:grid-cols-3">
+      <div className="bg-white rounded-lg shadow p-4">
+        <p className="text-xs text-gray-500 mb-1">Children Linked</p>
+        <p className="text-2xl font-bold">{kidsCount}</p>
+      </div>
+      <div className="bg-white rounded-lg shadow p-4">
+        <p className="text-xs text-gray-500 mb-1">Upcoming Sessions</p>
+        <p className="text-2xl font-bold">–</p>
+      </div>
+      <div className="bg-white rounded-lg shadow p-4">
+        <p className="text-xs text-gray-500 mb-1">Active Courses</p>
+        <p className="text-2xl font-bold">–</p>
+      </div>
+    </div>
+  </div>
+);
+
+/** Children tab panel */
+type AnyChild = {
+  id?: string;
+  uid?: string;
+  fullName?: string;
+  displayName?: string;
+  name?: string;
+  age?: number | string | null;
+  grade?: string | null;
+  enrollmentCount?: number;
+  averageMastery?: number;
+};
+
+interface ChildrenPanelProps {
+  kids: AnyChild[];
+  loading: boolean;
+  error: string | null;
+}
+
+const ChildrenPanel: React.FC<ChildrenPanelProps> = ({
+  kids,
+  loading,
+  error,
+}) => {
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold mb-2">
+        My Children ({kids.length})
+      </h2>
+
+      {loading && <div>Loading children…</div>}
+      {error && <div className="text-red-600 text-sm">Error: {error}</div>}
+
+      {!loading && !error && kids.length === 0 && (
+        <div className="text-gray-600 text-sm">
+          No children registered yet.
+        </div>
+      )}
+
+      {!loading && !error && kids.length > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {kids.map((child) => (
+            <ChildCard
+              key={child.id || child.uid || String(child.fullName)}
+              child={child}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+const ChildCard: React.FC<{ child: AnyChild }> = ({ child }) => {
+  const name =
+    child.fullName || child.displayName || child.name || 'Unnamed child';
+  const age = child.age ?? '-';
+  const grade = child.grade ?? '-';
+  const enrollmentCount = child.enrollmentCount ?? 0;
+  const avgMastery = child.averageMastery ?? 0;
+
+  return (
+    <div className="border rounded-lg p-4 hover:shadow-lg transition bg-white text-sm">
+      <h3 className="font-bold text-base mb-1">{name}</h3>
+      <p className="text-gray-600">
+        Age: {age} | Grade: {grade}
+      </p>
+      <p>Active Courses: {enrollmentCount}</p>
+      <p>Average Mastery: {avgMastery}%</p>
+      <button className="mt-2 text-blue-600 text-xs">
+        View Progress
+      </button>
+    </div>
+  );
+};
+
+/** Generic placeholder for tabs we haven’t wired yet */
+const PlaceholderPanel: React.FC<{
+  title: string;
+  children: React.ReactNode;
+}> = ({ title, children }) => (
+  <div className="space-y-3">
+    <h2 className="text-xl font-bold mb-1">{title}</h2>
+    <div className="bg-white rounded-lg shadow p-4 text-sm text-gray-600">
+      {children}
+      <p className="mt-2 text-xs text-gray-400">
+        (This section is a placeholder. We’ll wire the full component
+        here later.)
+      </p>
+    </div>
+  </div>
+);

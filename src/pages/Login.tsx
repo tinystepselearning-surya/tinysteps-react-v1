@@ -1,11 +1,19 @@
-import { useState, useEffect } from 'react';
+// src/pages/Login.tsx
+import { useState } from 'react';
 import type { FormEvent, FC } from 'react';
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut, sendPasswordResetEmail } from "firebase/auth";
-import { auth } from "../lib/firebaseConfig";
+import {
+  signInWithEmailAndPassword,
+  signOut,
+  sendPasswordResetEmail,
+} from 'firebase/auth';
+import { auth } from '../lib/firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface LoginProps {
-  onLogin?: (email: string, password: string) => void;
+  // Optional override (e.g. for tests or future refactor).
+  // Can be sync or async.
+  onLogin?: (email: string, password: string) => Promise<void> | void;
 }
 
 const Login: FC<LoginProps> = ({ onLogin }) => {
@@ -17,46 +25,66 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Check admin claim (supports both boolean `admin` claim or `role: 'admin'`)
-        user.getIdTokenResult(true).then((result) => {
-          const claims = (result.claims || {}) as any;
-          const isAdmin = claims.admin === true || claims.role === 'admin';
-          if (isAdmin) {
-            navigate('/surya');
-          } else {
-            setError('Access denied: Admin privileges required');
-            signOut(auth); // Sign out non-admin
-          }
-        });
-      }
-    });
-    return unsubscribe;
-  }, [navigate]);
+  // Get setter from Zustand store so RoleGate / dashboards can see admin
+  const { setUser, clearUser } = useAuthStore();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setInfoMessage('');
     setError('');
+
     try {
       const normalizedEmail = email.trim();
+
+      // Allow optional custom handler (tests / future)
       if (onLogin) {
-        await onLogin(normalizedEmail, password);
-      } else {
-        await signInWithEmailAndPassword(auth, normalizedEmail, password);
-        // Navigation handled in useEffect
+        await Promise.resolve(onLogin(normalizedEmail, password));
+        return;
       }
+
+      // Default strict admin login flow
+      const cred = await signInWithEmailAndPassword(
+        auth,
+        normalizedEmail,
+        password,
+      );
+
+      const result = await cred.user.getIdTokenResult(true);
+      const claims = result.claims as any;
+      const isAdmin = claims.admin === true || claims.role === 'admin';
+
+      if (!isAdmin) {
+        setError(
+          'Access denied: this account does not have admin privileges.',
+        );
+        await signOut(auth);
+        clearUser(); // make sure store is clean
+        return;
+      }
+
+      // ✅ Store admin in Zustand so RoleGate sees it
+      setUser({
+        uid: cred.user.uid,
+        email: cred.user.email || '',
+        displayName: cred.user.displayName || 'Admin',
+        role: 'admin',
+      });
+
+      // Success → go to /surya (AdminDashboard behind RoleGate)
+      navigate('/surya', { replace: true });
     } catch (err: any) {
       switch (err?.code) {
         case 'auth/wrong-password':
         case 'auth/invalid-credential':
-          setError('Incorrect email or password. You can reset the admin password using the link below.');
+          setError(
+            'Incorrect email or password. You can reset the admin password using the link below.',
+          );
           break;
         case 'auth/user-not-found':
-          setError('No admin account found for this email. Double-check the address or create an admin user via Firebase.');
+          setError(
+            'No admin account found for this email. Double-check the address or create an admin user via Firebase.',
+          );
           break;
         default:
           setError(err?.message || 'Unable to sign in.');
@@ -77,7 +105,9 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
     try {
       setIsResetting(true);
       await sendPasswordResetEmail(auth, normalizedEmail);
-      setInfoMessage('Password reset email sent. Check your inbox (and spam folder) for instructions.');
+      setInfoMessage(
+        'Password reset email sent. Check your inbox (and spam folder) for instructions.',
+      );
     } catch (err: any) {
       switch (err?.code) {
         case 'auth/user-not-found':
@@ -129,11 +159,17 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
               />
             </div>
           </div>
+
           {(error || infoMessage) && (
-            <div className={`text-sm text-center ${error ? 'text-red-600' : 'text-green-600'}`}>
+            <div
+              className={`text-sm text-center ${
+                error ? 'text-red-600' : 'text-green-600'
+              }`}
+            >
               {error || infoMessage}
             </div>
           )}
+
           <div>
             <button
               type="submit"
@@ -148,7 +184,9 @@ const Login: FC<LoginProps> = ({ onLogin }) => {
               disabled={isResetting}
               className="mt-3 w-full text-sm font-medium text-indigo-600 hover:text-indigo-500 disabled:opacity-50"
             >
-              {isResetting ? 'Sending reset link…' : 'Forgot password? Send reset email'}
+              {isResetting
+                ? 'Sending reset link…'
+                : 'Forgot password? Send reset email'}
             </button>
           </div>
         </form>

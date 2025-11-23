@@ -1,10 +1,11 @@
 // src/components/common/RoleGate.tsx
+
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { isSuperUserEmail } from '../../constants/accessControl';
 
-type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
+export type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
 
 interface RoleGateProps {
   allowedRoles: Role[];
@@ -12,24 +13,26 @@ interface RoleGateProps {
   unauthorizedPath?: string;
 }
 
-export default function RoleGate({
+const RoleGate: React.FC<RoleGateProps> = ({
   allowedRoles,
   loginPath = '/login',
   unauthorizedPath = '/unauthorized',
-}: RoleGateProps) {
+}) => {
   const { user, isLoading } = useAuthStore();
   const location = useLocation();
 
-  // 1) While auth is loading, don’t decide yet
+  // 1) While auth is loading, show soft loader
   if (isLoading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center text-sm text-gray-500">
-        Verifying your access…
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+          Verifying your access…
+        </div>
       </div>
     );
   }
 
-  // 2) If there is no user at all, go to login
+  // 2) No user at all → go to login
   if (!user) {
     return (
       <Navigate
@@ -40,29 +43,19 @@ export default function RoleGate({
     );
   }
 
-  // 3) Derive role from user (supports both `role` and `roles[0]`)
-  const rawRole =
-    (user as any).role ||
-    (Array.isArray((user as any).roles) ? (user as any).roles[0] : undefined) ||
-    (user as any).customClaims?.role;
+  // 3) Determine role & superuser
+  const userRole = user.role as Role | undefined;
+  const superUser = user.email ? isSuperUserEmail(user.email) : false;
+  const canAccess =
+    superUser || (!!userRole && allowedRoles.includes(userRole));
 
-  const userRole = rawRole as Role | undefined;
-  const superUser = isSuperUserEmail(user.email);
-  const canAccess = superUser || (!!userRole && allowedRoles.includes(userRole));
-
-  console.log('[RoleGate]', {
-    email: user.email,
-    userRole,
-    allowedRoles,
-    superUser,
-    canAccess,
-  });
-
-  // 4) If wrong role, show unauthorized
+  // 4) Wrong role → unauthorized
   if (!canAccess) {
     return <Navigate to={unauthorizedPath} replace />;
   }
 
-  // 5) Otherwise render the protected child routes
+  // 5) OK → render nested routes
   return <Outlet />;
-}
+};
+
+export default RoleGate;

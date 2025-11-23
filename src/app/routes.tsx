@@ -1,6 +1,5 @@
 // src/app/routes.tsx
-import { lazy, Suspense } from 'react';
-import type { FC } from 'react';
+import { lazy, Suspense, type FC } from 'react';
 import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
 
 import LoginPage from '../pages/LoginPage';
@@ -25,25 +24,24 @@ import SpeakingPage from '../pages/speaking';
 
 // Dashboards
 import AdminDashboard from '../pages/admin/AdminDashboard';
+import TopicsSeedPicklistPage from '../pages/admin/TopicsSeedPicklistPage';
+import TeacherStudentTopicProgressPage from '../pages/teacher/TeacherStudentTopicProgressPage';
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
 const BetaAnalytics = lazy(
-  () => import('../pages/admin/beta-analytics.jsx') as any
+  () => import('../pages/admin/beta-analytics.jsx') as any,
 );
 
 // Payment Components
-// Old parent payment callback (non-PhonePe / generic)
 const PaymentCallback = lazy(
-  () => import('../pages/parent/Payments/PaymentCallback')
+  () => import('../pages/parent/Payments/PaymentCallback'),
 );
-
-// New PhonePe pages
 const PhonePeCheckout = lazy(
-  () => import('../pages/payments/PhonePeCheckout')
+  () => import('../pages/payments/PhonePeCheckout'),
 );
 const PhonePeCallback = lazy(
-  () => import('../pages/payments/PhonePeCallback')
+  () => import('../pages/payments/PhonePeCallback'),
 );
 
 // Layout
@@ -60,11 +58,7 @@ const Layout: FC = () => (
     <ScrollToTop />
     <Header />
     <main className="min-h-screen pt-8 md:pt-12 lg:pt-16 pb-16">
-      <Suspense
-        fallback={
-          <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>
-        }
-      >
+      <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
         <Outlet />
       </Suspense>
     </main>
@@ -79,108 +73,37 @@ const router = createBrowserRouter(
       element: <Layout />,
       errorElement: <NotFoundPage />,
       children: [
-        // Public site pages
-        {
-          index: true,
-          element: <HomePage />,
-        },
-        {
-          path: 'blog',
-          element: <BlogPage />,
-        },
-        {
-          path: 'blog/:slug',
-          element: <BlogPostPage />,
-        },
-        {
-          path: 'pricing',
-          element: <PricingPage />,
-        },
-        {
-          path: 'contact',
-          element: <ContactPage />,
-        },
-        {
-          path: 'why-tiny-steps',
-          element: <WhyTinyStepsPage />,
-        },
-        {
-          path: 'courses',
-          element: <CoursesPage />,
-        },
-        {
-          path: 'courses/:courseId',
-          element: <CourseDetailPage />,
-        },
-        {
-          path: 'curriculum',
-          element: <CurriculumPage />,
-        },
-        {
-          path: 'why-us',
-          element: <Navigate to="/why-tiny-steps" replace />,
-        },
-        {
-          path: 'faq',
-          element: <FAQPage />,
-        },
-        {
-          path: 'phonics',
-          element: <PhonicsPage />,
-        },
-        {
-          path: 'grammar',
-          element: <GrammarPage />,
-        },
-        {
-          path: 'speaking',
-          element: <SpeakingPage />,
-        },
+        // ---------- Public marketing site ----------
+        { index: true, element: <HomePage /> },
+        { path: 'blog', element: <BlogPage /> },
+        { path: 'blog/:slug', element: <BlogPostPage /> },
+        { path: 'pricing', element: <PricingPage /> },
+        { path: 'contact', element: <ContactPage /> },
+        { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
+        { path: 'courses', element: <CoursesPage /> },
+        { path: 'courses/:courseId', element: <CourseDetailPage /> },
+        { path: 'curriculum', element: <CurriculumPage /> },
+        { path: 'why-us', element: <Navigate to="/why-tiny-steps" replace /> },
+        { path: 'faq', element: <FAQPage /> },
+        { path: 'phonics', element: <PhonicsPage /> },
+        { path: 'grammar', element: <GrammarPage /> },
+        { path: 'speaking', element: <SpeakingPage /> },
 
-        // Auth routes
-        {
-          path: 'login',
-          element: <LoginPage />,
-        },
-        {
-          path: 'surya/login',
-          element: <Login />,
-        },
-        {
-          path: 'admin/login',
-          element: <Navigate to="/surya/login" replace />,
-        },
-        {
-          path: 'Surya/login',
-          element: <Navigate to="/surya/login" replace />,
-        },
-        {
-          path: 'teacher/login',
-          element: <LoginPage />,
-        },
-        {
-          path: 'parent/login',
-          element: <LoginPage />,
-        },
-        {
-          path: 'learning-partner/login',
-          element: <LoginPage />,
-        },
-        // Alias without hyphen for convenience (older links / direct typed URLs)
-        {
-          path: 'learningpartner/login',
-          element: <LoginPage />,
-        },
-        {
-          path: 'kid/login',
-          element: <Navigate to="/parent/login" replace />,
-        },
-        {
-          path: 'unauthorized',
-          element: <UnauthorizedPage />,
-        },
+        // ---------- Public auth routes ----------
+        { path: 'login', element: <LoginPage /> },
+        { path: 'surya/login', element: <Login /> },
+        { path: 'admin/login', element: <Navigate to="/surya/login" replace /> },
+        { path: 'Surya/login', element: <Navigate to="/surya/login" replace /> },
 
-        // Admin area – ONLY under /surya
+        { path: 'teacher/login', element: <LoginPage /> },
+        { path: 'parent/login', element: <LoginPage /> },
+        { path: 'learning-partner/login', element: <LoginPage /> },
+        { path: 'learningpartner/login', element: <LoginPage /> }, // alias
+
+        { path: 'kid/login', element: <Navigate to="/parent/login" replace /> },
+        { path: 'unauthorized', element: <UnauthorizedPage /> },
+
+        // ---------- Admin area – ONLY under /surya ----------
         {
           path: 'surya',
           element: (
@@ -190,50 +113,42 @@ const router = createBrowserRouter(
             />
           ),
           children: [
-            {
-              path: '',
-              element: <AdminDashboard />,
-            },
-            {
-              path: 'analytics',
-              element: <AdminDashboard />,
-            },
+            { index: true, element: <AdminDashboard /> },
+            { path: 'analytics', element: <AdminDashboard /> },
           ],
         },
-        // Block /admin direct access – redirect to Surya login
-        {
-          path: 'admin',
-          element: <Navigate to="/surya/login" replace />,
-        },
-        // Alias for /Surya → /surya
-        {
-          path: 'Surya',
-          element: <Navigate to="/surya" replace />,
-        },
+        { path: 'admin', element: <Navigate to="/surya/login" replace /> },
+        { path: 'Surya', element: <Navigate to="/surya" replace /> },
 
-        // Teacher dashboard
+        // ---------- Teacher dashboard ----------
         {
           path: 'teacher',
-          element: <RoleGate allowedRoles={['teacher']} />,
+          element: (
+            <RoleGate
+              allowedRoles={['teacher']}
+              loginPath="/teacher/login"
+            />
+          ),
           children: [
+            { index: true, element: <TeacherDashboard /> },
             {
-              path: '',
-              element: <TeacherDashboard />,
+              path: 'students/:kidId/topic-progress',
+              element: <TeacherStudentTopicProgressPage />,
             },
           ],
         },
         {
           path: 'teachers',
-          element: <RoleGate allowedRoles={['teacher']} />,
-          children: [
-            {
-              path: '',
-              element: <TeacherDashboard />,
-            },
-          ],
+          element: (
+            <RoleGate
+              allowedRoles={['teacher']}
+              loginPath="/teacher/login"
+            />
+          ),
+          children: [{ index: true, element: <TeacherDashboard /> }],
         },
 
-        // Parent dashboard + payments
+        // ---------- Parent dashboard + payments ----------
         {
           path: 'parent',
           element: (
@@ -243,63 +158,32 @@ const router = createBrowserRouter(
             />
           ),
           children: [
-            {
-              path: '',
-              element: <ParentDashboard />,
-            },
-            {
-              path: 'kids',
-              element: <ParentDashboard />,
-            },
-
-            // New PhonePe checkout – parent navigates here from invoice list
-            {
-              path: 'payments/:invoiceId',
-              element: <PhonePeCheckout />,
-            },
-
-            // Existing generic callback (if still used)
-            {
-              path: 'payments/callback',
-              element: <PaymentCallback />,
-            },
-
-            // New PhonePe callback page – handles redirect from PhonePe
-            {
-              path: 'payments/phonepe-callback',
-              element: <PhonePeCallback />,
-            },
+            { index: true, element: <ParentDashboard /> },
+            { path: 'kids', element: <ParentDashboard /> },
+            { path: 'payments/:invoiceId', element: <PhonePeCheckout /> },
+            { path: 'payments/callback', element: <PaymentCallback /> },
+            { path: 'payments/phonepe-callback', element: <PhonePeCallback /> },
           ],
         },
 
-        // Learning Partner dashboard
+        // ---------- Learning Partner dashboard ----------
         {
           path: 'learning-partner',
-          element: <RoleGate allowedRoles={['learningPartner']} />,
-          children: [
-            {
-              path: '',
-              element: <LPDashboard />,
-            },
-          ],
+          element: (
+            <RoleGate
+              allowedRoles={['learningPartner']}
+              loginPath="/learning-partner/login"
+            />
+          ),
+          children: [{ index: true, element: <LPDashboard /> }],
         },
-        {
-          // Alias for backwards compatibility
-          path: 'learningpartner',
-          element: <Navigate to="/learning-partner" replace />,
-        },
+        { path: 'learningpartner', element: <Navigate to="/learning-partner" replace /> },
 
-        // Misc aliases
-        {
-          path: 'kid',
-          element: <Navigate to="/parent/kids" replace />,
-        },
-        {
-          path: 'kids/:childId/dashboard',
-          element: <Navigate to="/parent" replace />,
-        },
+        // ---------- Misc aliases ----------
+        { path: 'kid', element: <Navigate to="/parent/kids" replace /> },
+        { path: 'kids/:childId/dashboard', element: <Navigate to="/parent" replace /> },
 
-        // Beta analytics – admin only under /admin/beta-analytics
+        // ---------- Beta analytics (admin only) ----------
         {
           path: 'admin/beta-analytics',
           element: (
@@ -308,12 +192,19 @@ const router = createBrowserRouter(
               loginPath="/surya/login"
             />
           ),
-          children: [
-            {
-              path: '',
-              element: <BetaAnalytics />,
-            },
-          ],
+          children: [{ index: true, element: <BetaAnalytics /> }],
+        },
+
+        // ---------- Topics seed picklist (admin only) ----------
+        {
+          path: 'admin/topics-seed-picklist',
+          element: (
+            <RoleGate
+              allowedRoles={['admin']}
+              loginPath="/surya/login"
+            />
+          ),
+          children: [{ index: true, element: <TopicsSeedPicklistPage /> }],
         },
       ],
     },
@@ -327,7 +218,7 @@ const router = createBrowserRouter(
       v7_partialHydration: true,
       v7_skipActionErrorRevalidation: true,
     },
-  }
+  },
 );
 
 export default router;

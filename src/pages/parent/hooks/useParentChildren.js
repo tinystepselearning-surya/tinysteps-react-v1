@@ -1,39 +1,142 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
+// src/pages/parent/hooks/useParentChildren.js
+
+import { useEffect, useState } from 'react';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+
+// ⬇️ Adjust if your exports are named differently
+import { db, auth } from '../../../lib/firebaseConfig';
+
+/**
+ * Map a kid document into the shape KidDashboard / parent views expect.
+ */
+const mapChildFromSnapshot = (docSnap) => {
+  const data = docSnap.data() || {};
+  const summary = data.summary || {};
+
+  return {
+    // IDs
+    id: docSnap.id,
+    uid: data.uid ?? docSnap.id,
+
+    // Names
+    fullName: data.fullName || data.name || 'Child',
+    displayName: data.displayName || data.fullName || data.name || null,
+    name: data.name || null,
+
+    // Basic info
+    grade: data.grade || data.className || null,
+    courses: data.courseNames || data.courses || [],
+
+    // Status + mastery with safe fallbacks
+    status: data.status || 'active',
+    phonicsMastery:
+      summary.phonicsMastery ??
+      data.phonicsMastery ??
+      (data.phonics && data.phonics.mastery) ??
+      0,
+    grammarMastery:
+      summary.grammarMastery ??
+      data.grammarMastery ??
+      (data.grammar && data.grammar.mastery) ??
+      0,
+    speakingMastery:
+      summary.speakingMastery ??
+      data.speakingMastery ??
+      (data.speaking && data.speaking.mastery) ??
+      0,
+
+    avatarUrl: data.avatarUrl || null,
+
+    // Keep all original fields as well
+    ...data,
+  };
 };
-import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '../../../lib/firebaseConfig';
-const mapChild = (doc) => {
-    var _a, _b, _c, _d, _e, _f;
-    return ({
-        id: doc.id,
-        fullName: doc.fullName || doc.name || 'Child',
-        grade: doc.grade,
-        courses: doc.courseNames || doc.courses || [],
-        status: doc.status || 'active',
-        phonicsMastery: (_b = (_a = doc.summary) === null || _a === void 0 ? void 0 : _a.phonicsMastery) !== null && _b !== void 0 ? _b : doc.phonicsMastery,
-        grammarMastery: (_d = (_c = doc.summary) === null || _c === void 0 ? void 0 : _c.grammarMastery) !== null && _d !== void 0 ? _d : doc.grammarMastery,
-        speakingMastery: (_f = (_e = doc.summary) === null || _e === void 0 ? void 0 : _e.speakingMastery) !== null && _f !== void 0 ? _f : doc.speakingMastery,
-        avatarUrl: doc.avatarUrl,
-    });
-};
-const fetchParentChildren = (parentId) => __awaiter(void 0, void 0, void 0, function* () {
-    const q = query(collection(db, 'kids'), where('parentIds', 'array-contains', parentId));
-    const snapshot = yield getDocs(q);
-    return snapshot.docs.map((docSnap) => mapChild(Object.assign({ id: docSnap.id }, docSnap.data())));
-});
-export const useParentChildren = (parentId) => {
-    return useQuery({
-        queryKey: ['parentChildren', parentId],
-        queryFn: () => (parentId ? fetchParentChildren(parentId) : Promise.resolve([])),
-        enabled: Boolean(parentId),
-        staleTime: 1000 * 60 * 5,
-    });
-};
+
+/**
+ * Hook: useParentChildren
+ *
+ * Reads all kids for the logged-in parent from Firestore.
+ * Collection: "kids"
+ * Field: parentIds: string[]  (array of parent UIDs)
+ *
+ * Signature:
+ *   - If called with parentIdFromProp, uses that.
+ *   - If called with no args (like your TS wrapper), it derives parentUid from Firebase Auth.
+ *
+ * Returns: { children, loading, error }
+ */
+export function useParentChildren(parentIdFromProp) {
+  const [children, setChildren] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let unsubscribeAuth;
+    let unsubscribeKids;
+
+    const startKidsListener = (parentId) => {
+      // No parent → clear and stop
+      if (!parentId) {
+        setChildren([]);
+        setLoading(false);
+        setError(null);
+        if (unsubscribeKids) {
+          unsubscribeKids();
+          unsubscribeKids = undefined;
+        }
+        return;
+      }
+
+      setLoading(true);
+
+      const kidsRef = collection(db, 'kids');
+      const q = query(kidsRef, where('parentIds', 'array-contains', parentId));
+
+      if (unsubscribeKids) {
+        unsubscribeKids();
+        unsubscribeKids = undefined;
+      }
+
+      unsubscribeKids = onSnapshot(
+        q,
+        (snap) => {
+          const kids = snap.docs.map((docSnap) => mapChildFromSnapshot(docSnap));
+          setChildren(kids);
+          setLoading(false);
+          setError(null);
+        },
+        (err) => {
+          setChildren([]);
+          setLoading(false);
+          setError(err?.message || String(err));
+        },
+      );
+    };
+
+    // If parentId explicitly passed, use it (for any legacy callers)
+    if (parentIdFromProp) {
+      startKidsListener(parentIdFromProp);
+    } else {
+      // Otherwise derive parent UID from auth (this is what your TS wrapper uses)
+      unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+        const parentUid = user?.uid ?? null;
+        startKidsListener(parentUid);
+      });
+    }
+
+    return () => {
+      if (unsubscribeAuth) unsubscribeAuth();
+      if (unsubscribeKids) unsubscribeKids();
+    };
+  }, [parentIdFromProp]);
+
+  return { children, loading, error };
+}
+
+export default useParentChildren;

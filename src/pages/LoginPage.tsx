@@ -1,6 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+// src/pages/LoginPage.tsx
+import React, { useState } from 'react';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { handleLogin, handleLoginWithGoogle } from '../lib/auth';
+import type { AuthRole } from '../store/useAuthStore';
+
+const VALID_ROLES: AuthRole[] = [
+  'admin',
+  'teacher',
+  'parent',
+  'kid',
+  'learningPartner',
+];
+
+const ROLE_LABELS: Record<AuthRole, string> = {
+  admin: 'Administrator',
+  teacher: 'Teacher',
+  parent: 'Parent',
+  kid: 'Kid',
+  learningPartner: 'Learning Partner',
+};
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -8,26 +26,36 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const location = useLocation();
 
-  // Extract role from URL path or query parameter
-  const getExpectedRole = () => {
+  // Map URL segment → AuthRole
+  const pathToRoleMap: Record<string, AuthRole> = {
+    admin: 'admin',
+    surya: 'admin', // not actually used here (Surya has its own Login.tsx), but safe
+    teacher: 'teacher',
+    parent: 'parent',
+    'learning-partner': 'learningPartner',
+    learningpartner: 'learningPartner',
+    kid: 'kid',
+  };
+
+  const getExpectedRole = (): AuthRole | null => {
     const pathSegments = location.pathname.split('/').filter(Boolean);
-    const roleFromPath = (pathSegments[0] || '').toLowerCase(); // e.g., 'admin' from '/admin/login'
+    const roleFromPath = (pathSegments[0] || '').toLowerCase(); // e.g. 'parent' from '/parent/login'
 
-    // Map path segments to role names
-    const pathToRoleMap: Record<string, string> = {
-      'admin': 'admin',
-      'surya': 'admin',
-      'teacher': 'teacher',
-      'parent': 'parent',
-      'learning-partner': 'learningPartner',
-      'learningpartner': 'learningPartner',
-      'kid': 'kid'
-    };
+    // 1) Prefer role inferred from the path
+    if (pathToRoleMap[roleFromPath]) {
+      return pathToRoleMap[roleFromPath];
+    }
 
-    return pathToRoleMap[roleFromPath] || searchParams.get('role');
+    // 2) Fallback to ?role= query param if valid
+    const qpRole = searchParams.get('role') as AuthRole | null;
+    if (qpRole && VALID_ROLES.includes(qpRole)) {
+      return qpRole;
+    }
+
+    // 3) Otherwise, generic login (no role banner)
+    return null;
   };
 
   const expectedRole = getExpectedRole();
@@ -37,8 +65,13 @@ export default function LoginPage() {
     setError(null);
     setIsSubmitting(true);
     try {
-      await handleLogin(email, password, expectedRole || undefined);
-      // handleLogin will redirect on success
+      const normalizedEmail = email.trim();
+      await handleLogin(
+        normalizedEmail,
+        password,
+        expectedRole || undefined,
+      );
+      // handleLogin will redirect based on role
     } catch (err: any) {
       setError(err?.message || 'Login failed');
     } finally {
@@ -46,32 +79,33 @@ export default function LoginPage() {
     }
   };
 
-  // If role parameter is specified, show a message
   const getRoleMessage = () => {
     if (!expectedRole) return null;
-
-    const roleNames = {
-      parent: 'Parent',
-      teacher: 'Teacher',
-      learningPartner: 'Learning Partner',
-      admin: 'Administrator',
-      kid: 'Kid'
-    };
-
-    return `Please log in with your ${roleNames[expectedRole as keyof typeof roleNames] || expectedRole} credentials.`;
+    const label = ROLE_LABELS[expectedRole] || expectedRole;
+    return `Please log in with your ${label} credentials.`;
   };
+
+  const title =
+    expectedRole && ROLE_LABELS[expectedRole]
+      ? `${ROLE_LABELS[expectedRole]} Login`
+      : 'Login';
+
+  const showGoogleButton = expectedRole === 'parent';
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="w-full max-w-md p-8 bg-white rounded shadow">
-        <h1 className="text-2xl font-bold mb-6">Login</h1>
+        <h1 className="text-2xl font-bold mb-6">{title}</h1>
+
         {expectedRole && (
           <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm">
             {getRoleMessage()}
           </div>
         )}
+
         {error && <div className="mb-4 text-red-600">{error}</div>}
-  <form className="space-y-4" onSubmit={onSubmit}>
+
+        <form className="space-y-4" onSubmit={onSubmit}>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -90,15 +124,19 @@ export default function LoginPage() {
             required
             aria-label="password"
           />
+
           <button
             type="submit"
-            className={`w-full px-4 py-2 rounded ${isSubmitting ? 'bg-gray-400' : 'bg-blue-600 text-white'}`}
+            className={`w-full px-4 py-2 rounded ${
+              isSubmitting ? 'bg-gray-400' : 'bg-blue-600 text-white'
+            }`}
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Signing in…' : 'Sign In'}
           </button>
-          {/* Google Sign-in for parent role */}
-          {expectedRole === 'parent' && (
+
+          {/* Google Sign-in for parent role only */}
+          {showGoogleButton && (
             <div>
               <button
                 type="button"
@@ -113,7 +151,9 @@ export default function LoginPage() {
                     setIsSubmitting(false);
                   }
                 }}
-                className={`w-full mt-2 px-4 py-2 rounded border ${isSubmitting ? 'opacity-60' : 'bg-white'}`}
+                className={`w-full mt-2 px-4 py-2 rounded border ${
+                  isSubmitting ? 'opacity-60' : 'bg-white'
+                }`}
               >
                 Sign in with Google
               </button>
