@@ -2,12 +2,14 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { app } from '../../firebaseConfig';
+import { app } from '../../lib/firebaseConfig';
 
 const PhonePeCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState<'checking' | 'success' | 'failed' | 'pending'>('checking');
+  const [status, setStatus] = useState<
+    'checking' | 'success' | 'failed' | 'pending'
+  >('checking');
   const [message, setMessage] = useState<string>('Verifying your payment…');
 
   useEffect(() => {
@@ -16,14 +18,19 @@ const PhonePeCallback: React.FC = () => {
 
     if (!invoiceId || !merchantTransactionId) {
       setStatus('failed');
-      setMessage('Missing payment details. Please contact support if amount was deducted.');
+      setMessage(
+        'Missing payment details. Please contact support if amount was deducted.',
+      );
       return;
     }
 
     const verify = async () => {
       try {
         const functions = getFunctions(app, 'asia-south1');
-        const verifyPhonePePayment = httpsCallable(functions, 'verifyPhonePePayment');
+        const verifyPhonePePayment = httpsCallable(
+          functions,
+          'verifyPhonePePayment',
+        );
 
         const result = await verifyPhonePePayment({
           invoiceId,
@@ -34,22 +41,31 @@ const PhonePeCallback: React.FC = () => {
 
         if (data?.status === 'completed') {
           setStatus('success');
-          setMessage('Payment successful! Your subscription will be updated shortly.');
+          setMessage(
+            'Payment successful! Your subscription will be updated shortly.',
+          );
         } else if (data?.status === 'failed') {
           setStatus('failed');
-          setMessage('Payment failed. Please try again or use another method.');
+          setMessage(
+            'Payment failed. Please try again or use another method.',
+          );
         } else {
           setStatus('pending');
-          setMessage('Payment is still pending. Please refresh after a few minutes.');
+          setMessage(
+            'Payment is still pending. Please refresh after a few minutes.',
+          );
         }
       } catch (err: any) {
         console.error(err);
         setStatus('failed');
-        setMessage(err?.message || 'Could not verify payment. Please contact support.');
+        setMessage(
+          err?.message ||
+            'Could not verify payment. Please contact support.',
+        );
       }
     };
 
-    verify();
+    void verify();
   }, [searchParams]);
 
   const goToDashboard = () => navigate('/parent');
@@ -57,8 +73,8 @@ const PhonePeCallback: React.FC = () => {
   return (
     <div className="max-w-lg mx-auto px-4 py-12">
       <h1 className="text-2xl font-bold mb-4">PhonePe Payment Status</h1>
-      <div className="border rounded-xl bg-white p-4 shadow-sm mb-4">
-        <p className="text-sm mb-2">{message}</p>
+      <div className="mb-4 rounded-xl border bg-white p-4 shadow-sm">
+        <p className="mb-2 text-sm">{message}</p>
         <p className="text-xs text-gray-500">
           Status:{' '}
           <span className="font-semibold">
@@ -68,7 +84,7 @@ const PhonePeCallback: React.FC = () => {
       </div>
       <button
         onClick={goToDashboard}
-        className="px-4 py-2 rounded-md bg-purple-600 text-white text-sm font-medium"
+        className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white"
       >
         Go to Parent Dashboard
       </button>

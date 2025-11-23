@@ -17,7 +17,7 @@ import {
   TableRow,
 } from '@components/ui/table';
 import { Button } from '@components/ui/button';
-  import { Input } from '@components/ui/input';
+import { Input } from '@components/ui/input';
 import {
   Select,
   SelectContent,
@@ -64,7 +64,11 @@ const resolveDate = (value: any): Date | null => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-export default function EnrollmentsList() {
+interface EnrollmentsListProps {
+  reloadKey?: number;
+}
+
+const EnrollmentsList: React.FC<EnrollmentsListProps> = ({ reloadKey }) => {
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [studentsMap, setStudentsMap] = useState<Record<string, any>>({});
   const [coursesMap, setCoursesMap] = useState<Record<string, any>>({});
@@ -78,15 +82,14 @@ export default function EnrollmentsList() {
     status: '',
   });
   const [search, setSearch] = useState('');
-  const [selectedEnrollment, setSelectedEnrollment] = useState<any | null>(
-    null,
-  );
+  const [selectedEnrollment, setSelectedEnrollment] = useState<any | null>(null);
   const [assignTeacherFor, setAssignTeacherFor] = useState<any | null>(null);
   const [assignLPFor, setAssignLPFor] = useState<any | null>(null);
 
   useEffect(() => {
     fetchEnrollments();
-  }, []);
+    // re-fetch when reloadKey changes
+  }, [reloadKey]);
 
   const fetchEnrollments = async () => {
     const qRef = query(collection(db, 'enrollments'));
@@ -103,16 +106,12 @@ export default function EnrollmentsList() {
       // ---- normalize student ids from multiple possible fields ----
       const studentIdCandidates: string[] = [];
 
-      [
-        raw.studentId,
-        raw.kidId,
-        raw.childId,
-        raw.studentRef,
-        raw.kidRef,
-      ].forEach((v) => {
-        const id = normalizeId(v);
-        if (id) studentIdCandidates.push(id);
-      });
+      [raw.studentId, raw.kidId, raw.childId, raw.studentRef, raw.kidRef].forEach(
+        (v) => {
+          const id = normalizeId(v);
+          if (id) studentIdCandidates.push(id);
+        },
+      );
 
       if (Array.isArray(raw.kidIds)) {
         raw.kidIds.forEach((v: any) => {
@@ -237,9 +236,7 @@ export default function EnrollmentsList() {
     const studentNameFromEnrollment =
       e.studentName || e.kidName || e.childName || e.name || '';
 
-    const combined = (
-      studentNameFromObj || studentNameFromEnrollment
-    ).toLowerCase();
+    const combined = (studentNameFromObj || studentNameFromEnrollment).toLowerCase();
 
     if (search && !combined.includes(search.toLowerCase())) return false;
     if (filters.course && e.courseId !== filters.course) return false;
@@ -252,14 +249,35 @@ export default function EnrollmentsList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <h2 className="text-xl font-semibold">Enrollments</h2>
-        <div className="flex gap-2">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center">
           <Input
             placeholder="Search by student name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          {/* Filter placeholders (wiring available if you want later) */}
+          <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
+            <Select
+              value={filters.status}
+              onValueChange={(value) =>
+                setFilters((prev) => ({ ...prev, status: value }))
+              }
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All</SelectItem>
+                <SelectItem value="pending_teacher">Pending Teacher</SelectItem>
+                <SelectItem value="pending_lp">Pending LP</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
@@ -362,23 +380,18 @@ export default function EnrollmentsList() {
                 const startDate = resolveDate(e.startDate) || enrollmentDate;
                 let durationDays: number | string = '-';
                 if (startDate) {
-                  const diffMs =
-                    new Date().getTime() - startDate.getTime();
+                  const diffMs = new Date().getTime() - startDate.getTime();
                   if (!isNaN(diffMs)) {
                     durationDays =
                       diffMs >= 0
-                        ? Math.ceil(
-                            diffMs / (1000 * 60 * 60 * 24),
-                          )
+                        ? Math.ceil(diffMs / (1000 * 60 * 60 * 24))
                         : 0;
                   }
                 }
 
                 return (
                   <TableRow key={e.id}>
-                    <TableCell className="font-medium">
-                      {studentName}
-                    </TableCell>
+                    <TableCell className="font-medium">{studentName}</TableCell>
                     <TableCell>{courseName}</TableCell>
                     <TableCell>{parentName}</TableCell>
                     <TableCell>{teacherName}</TableCell>
@@ -403,18 +416,12 @@ export default function EnrollmentsList() {
                           <Edit className="h-4 w-4" />
                         </Button>
                         {e.status === 'pending_teacher' && (
-                          <Button
-                            size="sm"
-                            onClick={() => openAssignTeacher(e)}
-                          >
+                          <Button size="sm" onClick={() => openAssignTeacher(e)}>
                             Assign Teacher
                           </Button>
                         )}
                         {e.status === 'pending_lp' && (
-                          <Button
-                            size="sm"
-                            onClick={() => openAssignLP(e)}
-                          >
+                          <Button size="sm" onClick={() => openAssignLP(e)}>
                             Assign LP
                           </Button>
                         )}
@@ -446,25 +453,25 @@ export default function EnrollmentsList() {
 
       {assignTeacherFor && (
         <AssignTeacherModal
-          student={{ id: assignTeacherFor.studentId, fullName: '' } as any}
+          enrollment={assignTeacherFor}
           onClose={() => {
             setAssignTeacherFor(null);
             fetchEnrollments();
           }}
-          onAssigned={fetchEnrollments}
         />
       )}
 
       {assignLPFor && (
         <AssignLPModal
-          student={{ id: assignLPFor.studentId, fullName: '' } as any}
+          enrollment={assignLPFor}
           onClose={() => {
             setAssignLPFor(null);
             fetchEnrollments();
           }}
-          onAssigned={fetchEnrollments}
         />
       )}
     </div>
   );
-}
+};
+
+export default EnrollmentsList;

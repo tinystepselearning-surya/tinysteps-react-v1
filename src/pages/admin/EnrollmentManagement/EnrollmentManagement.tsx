@@ -18,7 +18,8 @@ export default function EnrollmentManagement() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Enrollment Management</h2>
         <p className="text-sm text-gray-500">
-          Create new enrollments, assign teachers & learning partners, and track progress.
+          Create new enrollments, assign teachers & learning partners, and track
+          progress.
         </p>
       </div>
 

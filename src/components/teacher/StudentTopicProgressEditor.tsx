@@ -16,9 +16,10 @@ interface StudentTopicProgressEditorProps {
   kidName?: string;
 }
 
-const StudentTopicProgressEditor: React.FC<
-  StudentTopicProgressEditorProps
-> = ({ kidId, kidName }) => {
+const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
+  kidId,
+  kidName,
+}) => {
   const { config, loading: configLoading, error: configError } =
     useProgressPicklists();
 
@@ -61,7 +62,15 @@ const StudentTopicProgressEditor: React.FC<
     );
 
     if (existing) {
-      setMastery(existing.mastery || 'not_started');
+      const existingMastery = existing.mastery;
+      // Coerce possible number | "not_started" into a string
+      setMastery(
+        existingMastery == null
+          ? 'not_started'
+          : typeof existingMastery === 'number'
+          ? String(existingMastery)
+          : existingMastery,
+      );
       setScoreBand(existing.scoreBand || '');
       setLastEvidence(existing.lastEvidence || '');
       setNextAction(existing.nextAction || '');
@@ -86,13 +95,7 @@ const StudentTopicProgressEditor: React.FC<
       setSaving(true);
       setSaveMessage(null);
 
-      const ref = doc(
-        db,
-        'students',
-        kidId,
-        'progress',
-        selectedTopicId,
-      );
+      const ref = doc(db, 'students', kidId, 'progress', selectedTopicId);
 
       await setDoc(
         ref,
@@ -142,9 +145,7 @@ const StudentTopicProgressEditor: React.FC<
           </span>
         )}
         {!saving && saveMessage && (
-          <span className="text-xs text-emerald-600">
-            {saveMessage}
-          </span>
+          <span className="text-xs text-emerald-600">{saveMessage}</span>
         )}
       </div>
 
@@ -251,9 +252,9 @@ const StudentTopicProgressEditor: React.FC<
             disabled={disabled}
           >
             <option value="">Not set</option>
-            {(config?.lastEvidence ?? []).map((e) => (
-              <option key={e} value={e}>
-                {e}
+            {(config?.lastEvidence ?? []).map((ev) => (
+              <option key={ev} value={ev}>
+                {ev}
               </option>
             ))}
           </select>

@@ -5,7 +5,7 @@ import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { NotificationBell } from '../notifications/NotificationsPanel';
+import { NotificationsPanel } from '../notifications/NotificationsPanel';
 
 interface TeacherHeaderProps {
   name?: string;
@@ -15,6 +15,7 @@ interface TeacherHeaderProps {
 export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount }) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -24,6 +25,7 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount }) =
       console.error('Logout failed', err);
     }
   };
+
   const initials = name
     ?.split(' ')
     .map((part) => part[0] || '')
@@ -44,7 +46,8 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount }) =
         )}
       </div>
       <div className="flex items-center gap-4">
-        <NotificationBell count={2} /> {/* Placeholder count */}
+        {/* Notifications panel / bell */}
+        <NotificationsPanel />
         <div className="h-12 w-12 rounded-full bg-white/80 dark:bg-slate-800 text-blue-600 flex items-center justify-center font-semibold">
           {initials || 'TT'}
         </div>
