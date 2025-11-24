@@ -54,7 +54,6 @@ export function useAuth() {
       mounted = false;
       if (unsub) unsub();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setUser, clearUser, setLoading]);
 
   return { user, isLoading };
