@@ -24,12 +24,12 @@ const PricingCrispSection: React.FC = () => {
               icon={<span>🎯</span>}
             >
               <ul className="list-disc pl-5 space-y-1">
-                <li>Perfect for new families trying 1:1 classes.</li>
+                <li>Personalised assessment + roadmap.</li>
                 <li>Around 2 classes per week.</li>
-                <li>From under ₹600 per class (approx.).</li>
+                <li>₹600 per class (₹4,800 total).</li>
               </ul>
               <div className="mt-4 flex gap-2">
-                <Button size="sm">Start Trial</Button>
+                <Button size="sm" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
                 <Button size="sm" variant="outline">
                   Learn More
                 </Button>
@@ -46,12 +46,12 @@ const PricingCrispSection: React.FC = () => {
               defaultOpen
             >
               <ul className="list-disc pl-5 space-y-1">
-                <li>For steady progress with 3–4 classes each week.</li>
-                <li>Lower per-class pricing compared to Starter.</li>
-                <li>Weekly progress reports and practice packs.</li>
+                <li>Everything in Starter + monthly mastery review.</li>
+                <li>3–4 classes per week.</li>
+                <li>₹575 per class (₹9,200 total).</li>
               </ul>
               <div className="mt-4 flex gap-2">
-                <Button size="sm">Start Trial</Button>
+                <Button size="sm" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
                 <Button size="sm" variant="outline">
                   Learn More
                 </Button>
@@ -70,12 +70,12 @@ const PricingCrispSection: React.FC = () => {
               icon={<span>🚀</span>}
             >
               <ul className="list-disc pl-5 space-y-1">
-                <li>Ideal for kids who love consistent practice.</li>
-                <li>Best per-class value across phonics, grammar and speaking.</li>
-                <li>Great for sustained progress and confidence building.</li>
+                <li>Daily AI-guided practice + priority scheduling.</li>
+                <li>Best per-class value for 1:1 mentoring.</li>
+                <li>₹550 per class (₹13,200 total).</li>
               </ul>
               <div className="mt-4 flex gap-2">
-                <Button size="sm">Start Trial</Button>
+                <Button size="sm" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
                 <Button size="sm" variant="outline">
                   Learn More
                 </Button>

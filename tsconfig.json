@@ -23,7 +23,8 @@
     "src/tests/**/*.js",
     "src/tests/**/*.jsx",
     "src/tests/hooks/useEnrollments.spec.tsx",
-    "src/types"
+    "src/types",
+    "vitest.setup.ts"
   ],
   "exclude": [
     "node_modules",

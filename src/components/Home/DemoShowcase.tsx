@@ -41,10 +41,11 @@ const DemoShowcase = () => {
           </div>
           <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold">
             <button
+              aria-label="Book Free Assessment Class"
               className="rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] px-5 py-3 text-white shadow-lg"
               onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              Book free trial after demo
+              Book Free Assessment Class
             </button>
             {!user && (
               <a

@@ -34,7 +34,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
       const submitLead = httpsCallable(functions as any, 'subscribeNewsletter');
       await submitLead({ email: data.email, parentName: data.parentName, phone: data.phone, childAge: data.childAge, source: 'trial' });
       trackEvent('trial_form_submit', { context, childAge: data.childAge });
-      const message = encodeURIComponent(`Hi Tiny Steps! I'm ${data.parentName}.\nChild age: ${data.childAge} \nPhone: ${data.phone} \nEmail: ${data.email} \nI'd like to book a free trial.`);
+      const message = encodeURIComponent(`Hi Tiny Steps! I'm ${data.parentName}.\nChild age: ${data.childAge} \nPhone: ${data.phone} \nEmail: ${data.email} \nI'd like to book a free assessment class.`);
       if (!user) {
         window.open(`https://wa.me/919618398383?text=${message}`, '_blank');
       }
@@ -63,8 +63,8 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone.message as any}</p>}
       </div>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <button className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
-          {isSubmitting ? 'Booking…' : 'Book Free Trial'}
+        <button aria-label="Book Free Assessment Class" className="w-full rounded-2xl bg-gradient-to-r from-primary-500 to-secondary-500 px-4 py-3 text-sm font-semibold text-white sm:flex-1" disabled={isSubmitting}>
+          {isSubmitting ? 'Booking…' : 'Book Free Assessment Class'}
         </button>
   {!user && (
           <a href="https://wa.me/919618398383" className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 sm:flex-1">

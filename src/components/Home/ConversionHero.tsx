@@ -68,7 +68,7 @@ const ConversionHero: React.FC = () => {
               size="lg"
               aria-label="Book Free Assessment Class"
               onClick={() => {
-                trackEvent('cta_click', { location: 'hero', label: 'book_free_trial' });
+                trackEvent('cta_click', { location: 'hero', label: 'book_free_assessment_class' });
                 document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
               }}
             >
@@ -134,7 +134,7 @@ const ConversionHero: React.FC = () => {
       <div className="fixed bottom-4 left-0 right-0 z-30 flex justify-center px-4 sm:hidden">
         <a
           href="#book-trial"
-          onClick={() => trackEvent('cta_click', { location: 'sticky_mobile', label: 'book_free_trial' })}
+          onClick={() => trackEvent('cta_click', { location: 'sticky_mobile', label: 'book_free_assessment_class' })}
           className="w-full max-w-md rounded-full bg-gradient-to-r from-primary-500 to-secondary-500 px-6 py-3 text-center text-white font-semibold shadow-xl"
           aria-label="Book Free Assessment Class"
         >

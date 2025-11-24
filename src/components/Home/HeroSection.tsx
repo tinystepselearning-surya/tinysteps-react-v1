@@ -43,7 +43,7 @@ const HeroSection: React.FC = () => {
 					animate={{ opacity: 1, y: 0, scale: 1 }}
 					transition={{ duration: 0.6, delay: 0.4 }}
 				>
-					<Button size="lg">Start Your Free Trial Class</Button>
+					<Button size="lg" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
 				</motion.div>
 			</div>
 		</section>

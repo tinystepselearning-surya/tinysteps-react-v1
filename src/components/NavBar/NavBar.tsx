@@ -6,7 +6,7 @@ type NavItem = { label: string; to: string };
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", to: "/" },
-  { label: "Book Trial", to: "#book-trial" },
+  { label: "Book Free Assessment Class", to: "#book-trial" },
 ];
 
 export default function NavBar(): JSX.Element {

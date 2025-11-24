@@ -18,6 +18,8 @@ import StatsStrip from '../components/Home/StatsStrip';
 import PopularPrograms from '../components/Home/PopularPrograms';
 import GlobalImpactSection from '../components/Home/GlobalImpactSection';
 import DemoShowcase from '../components/Home/DemoShowcase';
+import AIGuidedPracticeSection from '../components/Home/AIGuidedPracticeSection';
+import InteractiveSampleActivitySection from '../components/Home/InteractiveSampleActivitySection';
 
 const courseCards = [
   {
@@ -105,7 +107,7 @@ const MobileLandingView = () => (
         href="#book-trial"
         className="mt-8 inline-flex w-full items-center justify-center rounded-3xl bg-gradient-to-r from-blue-600 to-cyan-500 px-7 py-5 text-lg font-semibold text-white shadow-lg shadow-blue-500/40 transition hover:scale-105 hover:shadow-xl hover:shadow-blue-600/50"
       >
-        Book Your Free Trial Today
+        Book Free Assessment Class
       </a>
       <div className="mt-8 rounded-3xl bg-white p-4 shadow-lg shadow-slate-200/70">
         <img
@@ -172,6 +174,8 @@ export default function HomePage() {
       <WhyChooseCollapsibleSection />
       <StepTimeline />
       <CoursesSection />
+      <AIGuidedPracticeSection />
+      <InteractiveSampleActivitySection />
       <SocialProofCrispSection />
       <section id="book-trial" className="px-6 py-12">
         <div className="mx-auto max-w-6xl grid gap-8 rounded-3xl bg-white/80 p-8 shadow-card-hover md:grid-cols-[1.1fr_0.9fr]">
@@ -186,7 +190,7 @@ export default function HomePage() {
             </ul>
           </div>
           <div className="glass-panel p-6">
-              <h3 className="text-lg font-semibold text-gray-900">{user ? 'Book a Free Trial' : 'Book a Free Trial & WhatsApp us instantly'}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{user ? 'Book Free Assessment Class' : 'Book Free Assessment Class & WhatsApp us instantly'}</h3>
               <p className="mt-1 text-sm text-gray-600">{user ? 'Fill the form—our team will contact you shortly.' : 'Fill the form—details auto-share with our advisor on WhatsApp (+91 96183 98383).'}</p>
             <div className="mt-4">
               <TrialForm context="home_book_trial" />

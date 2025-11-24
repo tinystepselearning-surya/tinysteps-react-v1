@@ -99,8 +99,8 @@ const CoursesSection: React.FC = () => {
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button size="sm" onClick={() => window.location.assign(slugMap[activeCourse.id])}>View Curriculum</Button>
-              <Button size="sm" variant="outline" onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}>
-                Book Trial
+              <Button size="sm" variant="outline" onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })} aria-label="Book Free Assessment Class">
+                Book Free Assessment Class
               </Button>
             </div>
           </div>

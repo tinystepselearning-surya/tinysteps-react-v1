@@ -16,6 +16,7 @@ const PricingPage = lazy(() => import('../pages/PricingPage'));
 const FAQPage = lazy(() => import('../pages/FAQPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
 const WhyTinyStepsPage = lazy(() => import('../pages/WhyTinyStepsPage'));
+const ForSchoolsPage = lazy(() => import('../pages/ForSchoolsPage'));
 
 // Course Pages
 const PhonicsPage = lazy(() => import('../pages/phonics'));
@@ -90,6 +91,7 @@ const router = createBrowserRouter(
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
+        { path: 'for-schools', element: <ForSchoolsPage /> },
 
         // ---------- Public auth routes ----------
         { path: 'login', element: <LoginPage /> },

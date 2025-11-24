@@ -27,14 +27,14 @@ const plans = [
   {
     name: 'Starter',
     sessions: 8,
-    rate: 550, // ₹4,400
+    rate: 600, // ₹4,800
     duration: '4 weeks • 2 live classes/week',
     badge: 'New families',
     highlight: false,
     color: 'from-white via-[#fff7ec] to-[#ffe0b5]',
     features: [
       'Personalised assessment + roadmap',
-      'Live 1:1 or pod classes',
+      'Live 1:1 classes with expert mentors',
       'Weekly AI insight recap',
       'WhatsApp nudges for practice',
     ],
@@ -42,7 +42,7 @@ const plans = [
   {
     name: 'Growth',
     sessions: 16,
-    rate: 525, // ₹8,400
+    rate: 575, // ₹9,200
     duration: '8 weeks • 2 live classes/week',
     badge: 'Most popular',
     highlight: true,
@@ -57,7 +57,7 @@ const plans = [
   {
     name: 'Intensive',
     sessions: 24,
-    rate: 500, // ₹12,000
+    rate: 550, // ₹13,200
     duration: '8 weeks • 3 live classes/week',
     badge: 'Fast-track',
     highlight: false,
@@ -328,7 +328,45 @@ const PricingPage: FC = () => {
         </div>
       </section>
 
-      {/* Gaming subscription section removed */}
+      {/* Reinstated and updated the gaming subscription section */}
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="overflow-x-auto rounded-3xl bg-white shadow-card-hover border border-gray-100">
+          <h2 className="text-2xl font-semibold text-gray-900 text-center py-6">
+            Optional Game Subscriptions
+          </h2>
+          <p className="text-gray-700 text-center mb-6">
+            Enhance your child’s learning with curated games. These subscriptions are designed to complement our core 1:1 classes.
+          </p>
+          <table className="w-full border-collapse text-sm text-gray-700">
+            <thead>
+              <tr className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
+                <th className="px-4 py-3">Plan</th>
+                <th className="px-4 py-3">Price</th>
+                <th className="px-4 py-3">Features</th>
+              </tr>
+            </thead>
+            <tbody>
+              {plans.map((plan) => (
+                <tr key={plan.name} className="border-t border-gray-100">
+                  <td className="px-4 py-4">
+                    <div className="font-semibold text-gray-900">{plan.name}</div>
+                  </td>
+                  <td className="px-4 py-4 font-semibold text-gray-900">
+                    {plan.price}
+                  </td>
+                  <td className="px-4 py-4">
+                    <ul className="list-disc pl-5">
+                      {plan.features.map((feature) => (
+                        <li key={feature}>{feature}</li>
+                      ))}
+                    </ul>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 };

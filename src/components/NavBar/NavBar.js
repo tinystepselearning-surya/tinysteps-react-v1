@@ -4,7 +4,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import "./NavBar.css";
 const NAV_ITEMS = [
     { label: "Home", to: "/" },
-    { label: "Book Trial", to: "#book-trial" },
+    { label: "Book Free Assessment Class", to: "#book-trial" },
 ];
 export default function NavBar() {
     const containerRef = useRef(null);

@@ -110,7 +110,7 @@ const CurriculumPage: FC = () => {
               <li>• Fun games & songs</li>
             </ul>
             <div className="mt-4">
-              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white" aria-label="Try a free Phonics class">Try a free Phonics class</a>
+              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white" aria-label="Book Free Assessment Class">Book Free Assessment Class</a>
             </div>
           </article>
 
@@ -123,7 +123,7 @@ const CurriculumPage: FC = () => {
               <li>• School-aligned reinforcement</li>
             </ul>
             <div className="mt-4">
-              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white" aria-label="Try a free Grammar class">Try a free Grammar class</a>
+              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white" aria-label="Book Free Assessment Class">Book Free Assessment Class</a>
             </div>
           </article>
 
@@ -136,7 +136,7 @@ const CurriculumPage: FC = () => {
               <li>• Confidence-building activities</li>
             </ul>
             <div className="mt-4">
-              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white" aria-label="Try a free Speaking class">Try a free Speaking class</a>
+              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white" aria-label="Book Free Assessment Class">Book Free Assessment Class</a>
             </div>
           </article>
         </div>
@@ -441,7 +441,7 @@ const CurriculumPage: FC = () => {
 
       {/* Sticky CTA for mobile */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 md:hidden z-50">
-        <a href="#signup" className="block w-full text-center bg-primary-500 text-white py-3 rounded font-semibold" aria-label="Book Free Trial Class">Book Free Trial Class</a>
+        <a href="#signup" className="block w-full text-center bg-primary-500 text-white py-3 rounded font-semibold" aria-label="Book Free Assessment Class">Book Free Assessment Class</a>
       </div>
 
     </div>
