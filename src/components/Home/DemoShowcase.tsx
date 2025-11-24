@@ -26,9 +26,9 @@ const DemoShowcase = () => {
           <h2 className="mt-3 text-3xl font-semibold text-gray-900 md:text-4xl">Demo lesson • AI feedback overlay • Mentor commentary</h2>
           <p className="mt-3 text-gray-700">Parents can preview a real Tiny Steps session before booking. See how we mix joyful teaching with AI visibility.</p>
           <ul className="mt-4 space-y-3 text-sm text-gray-700">
-            {highlights.map((item) => (
-              <li key={item} className="flex items-start gap-2"><span>🎥</span>{item}</li>
-            ))}
+            <li className="flex items-start gap-2"><span>📚</span>5 minutes of phonics or reading</li>
+            <li className="flex items-start gap-2"><span>✍️</span>5 minutes of grammar or writing</li>
+            <li className="flex items-start gap-2"><span>🗣️</span>5 minutes of speaking practice</li>
           </ul>
           <div className="mt-6 grid gap-3 rounded-2xl border border-gray-100 bg-white/80 p-4">
             {sessions.map((session) => (
@@ -56,30 +56,20 @@ const DemoShowcase = () => {
               </a>
             )}
           </div>
+          <button className="mt-4 inline-block rounded-lg bg-blue-500 px-4 py-2 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2">
+            Watch a 2-minute preview
+          </button>
         </div>
-        <motion.div
-          className="relative overflow-hidden rounded-[32px] border border-white/70 bg-black/90 shadow-2xl"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.6 }}
-        >
-          <video
-            className="h-full w-full object-cover"
-            poster="/images/demo-class-poster.jpg"
-            controls
-            preload="none"
-          >
-            <source src="/videos/demo-class.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 rounded-2xl bg-white/90 p-4 shadow-lg">
-            <div className="text-xs uppercase tracking-[0.3em] text-gray-500">AI insight overlay</div>
-            <p className="text-sm font-semibold text-gray-900">“Student nailed consonant blends today. Focus for next class: long vowels + expression.”</p>
-            <p className="text-xs text-gray-500">Sent automatically to parents after every class.</p>
+        <div>
+          <div className="relative rounded-xl border border-gray-200 bg-white p-4 shadow-md">
+            <h3 className="text-lg font-semibold text-gray-800">AI Feedback Insights</h3>
+            <ul className="mt-3 space-y-2 text-sm text-gray-700">
+              <li>Accuracy: ⭐⭐⭐⭐☆</li>
+              <li>Fluency: ⭐⭐⭐⭐☆</li>
+              <li>Confidence: ⭐⭐⭐⭐☆</li>
+            </ul>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

@@ -7,6 +7,7 @@ const testimonials = [
     name: 'Parent of a Grade 2 child',
     city: 'Hyderabad',
     age: 'Grade 2',
+    focusArea: 'Reading Confidence',
     quote:
       '“My daughter now reads boards, packets and storybooks aloud on her own. Her shyness has reduced so much that she even volunteers to answer in school.”',
     video: '/images/hero/parent-video-1.jpg'
@@ -15,6 +16,7 @@ const testimonials = [
     name: 'Parent of a 7-year-old',
     city: 'US time zone',
     age: '7 years',
+    focusArea: '1:1 Attention',
     quote:
       '“The 1:1 format is a blessing. The teacher knows exactly where my son gets stuck and patiently corrects him without making him feel wrong or slow.”',
     video: '/images/hero/parent-video-2.jpg'
@@ -23,6 +25,7 @@ const testimonials = [
     name: 'Parent of siblings',
     city: 'Singapore',
     age: 'Siblings',
+    focusArea: 'Confidence Building',
     quote:
       '“Both my kids attend Tiny Steps and I can clearly see the difference—better sentence formation, clearer pronunciation and much more confidence in daily conversations.”',
     video: '/images/hero/parent-video-3.jpg'
@@ -71,6 +74,7 @@ export default function TestimonialsCarousel() {
               </div>
               <div className="mt-4 text-gray-700 leading-relaxed">“{testimonial.quote}”</div>
               <div className="mt-4 flex flex-wrap gap-2">
+                <Badge label={testimonial.focusArea} />
                 <Badge label="Live Coaching" />
                 <Badge label="Parent-recommended" />
                 <Badge label="★★★★★" />

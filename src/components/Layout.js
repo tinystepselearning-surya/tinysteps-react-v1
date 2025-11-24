@@ -17,7 +17,7 @@ export const Header = () => {
                 <nav aria-label="Main site navigation" className="hidden md:flex space-x-4">
                     <Link to="/" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Home</Link>
                     <Link to="/parents" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/parents') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>For Parents</Link>
-                    <Link to="/schools" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/schools') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>For Schools</Link>
+                    <Link to="/for-schools" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/for-schools') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>For Schools</Link>
                     <Link to="/phonics" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/phonics') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Phonics</Link>
                     <Link to="/grammar" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/grammar') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Grammar</Link>
                     <Link to="/speaking" className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/speaking') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Public Speaking</Link>
@@ -65,7 +65,7 @@ export const Header = () => {
                     <div className="px-4 py-4 space-y-2">
                         <Link to="/" className={`block px-3 py-2 rounded-md text-base font-medium ${isActive('/') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Home</Link>
                         <Link to="/parents" className={`block px-3 py-2 rounded-md textBase font-medium ${isActive('/parents') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>For Parents</Link>
-                        <Link to="/schools" className={`block px-3 py-2 rounded-md textBase font-medium ${isActive('/schools') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>For Schools</Link>
+                        <Link to="/for-schools" className={`block px-3 py-2 rounded-md textBase font-medium ${isActive('/for-schools') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>For Schools</Link>
                         <Link to="/phonics" className={`block px-3 py-2 rounded-md textBase font-medium ${isActive('/phonics') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Phonics</Link>
                         <Link to="/grammar" className={`block px-3 py-2 rounded-md textBase font-medium ${isActive('/grammar') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Grammar</Link>
                         <Link to="/speaking" className={`block px-3 py-2 rounded-md textBase font-medium ${isActive('/speaking') ? 'text-blue-600 bg-gray-50' : 'text-gray-700 hover:bg-gray-50'}`}>Public Speaking</Link>

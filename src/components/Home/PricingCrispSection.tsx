@@ -1,87 +1,108 @@
 import React from 'react';
-import { CollapsibleCard } from '../common/CollapsibleCard';
 import Button from '../Button/Button';
 
 const PricingCrispSection: React.FC = () => {
   return (
-    <section data-animate="fade-up" className="bg-white py-20">
+    <section
+      id="one-to-one-pricing"
+      className="bg-gradient-to-b from-[#FDF7EC] via-white to-[#F3F7FF] py-20"
+    >
       <div className="mx-auto max-w-6xl px-6">
-        <div className="mb-10 text-center">
-          <h3 className="font-heading text-2xl font-bold md:text-3xl">
+        <div className="text-center">
+          <p className="mb-2 inline-flex items-center rounded-full bg-white/70 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700 shadow-sm">
+            1:1 Phonics · Grammar · Public Speaking
+          </p>
+          <h2 className="text-center text-3xl sm:text-4xl font-semibold tracking-tight text-slate-900">
             Premium 1:1 classes, simple plans
-          </h3>
-          <p className="mt-3 text-gray-700 max-w-2xl mx-auto">
-            Choose flexible monthly packs that fit your child’s schedule. Every plan includes live 1:1 classes, AI-guided practice, and clear progress updates for parents.
+          </h2>
+          <p className="mt-3 text-center text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
+            Choose a flexible monthly pack. Every plan includes live 1:1 classes, AI-guided practice, and clear progress updates for parents.
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
           {/* Starter Pack */}
-          <div className="max-w-sm">
-            <CollapsibleCard
-              title="Starter · 8 classes / month"
-              subtext="Perfect for new families trying 1:1 classes"
-              icon={<span>🎯</span>}
-            >
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Personalised assessment + roadmap.</li>
-                <li>Around 2 classes per week.</li>
-                <li>₹600 per class (₹4,800 total).</li>
-              </ul>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
-                <Button size="sm" variant="outline">
-                  Learn More
-                </Button>
-              </div>
-            </CollapsibleCard>
+          <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Starter · 8 classes / month
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              ₹600<span className="text-sm font-normal text-slate-500"> / class</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">₹4,800 total · billed monthly</p>
+            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
+              <li>• Personalised assessment + roadmap</li>
+              <li>• Around 2 classes per week</li>
+              <li>• Phonics, grammar, or public speaking</li>
+            </ul>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button className="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition">
+                Book Free Assessment Class
+              </button>
+              <button className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                Learn More
+              </button>
+            </div>
           </div>
 
           {/* Growth Pack (Most Popular) */}
-          <div className="max-w-sm">
-            <CollapsibleCard
-              title="Growth · 16 classes / month"
-              subtext="For steady progress with 3–4 classes weekly"
-              icon={<span>🌟</span>}
-              defaultOpen
-            >
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Everything in Starter + monthly mastery review.</li>
-                <li>3–4 classes per week.</li>
-                <li>₹575 per class (₹9,200 total).</li>
-              </ul>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
-                <Button size="sm" variant="outline">
-                  Learn More
-                </Button>
-              </div>
-              <div className="mt-3 text-xs text-gray-600">
-                “Worth every rupee. We saw change in six weeks.” — Parent ⭐⭐⭐⭐⭐
-              </div>
-            </CollapsibleCard>
+          <div className="relative flex flex-col justify-between rounded-3xl bg-white p-6 shadow-lg ring-2 ring-orange-300/70">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
+              Most popular
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Growth · 16 classes / month
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              ₹525<span className="text-sm font-normal text-slate-500"> / class</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">₹8,400 total · billed monthly</p>
+            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
+              <li>• Personalised assessment + roadmap</li>
+              <li>• Around 3–4 classes per week</li>
+              <li>• Phonics, grammar, or public speaking</li>
+            </ul>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button className="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition">
+                Book Free Assessment Class
+              </button>
+              <button className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                Learn More
+              </button>
+            </div>
           </div>
 
           {/* Power Pack */}
-          <div className="max-w-sm">
-            <CollapsibleCard
-              title="Power · 24 classes / month"
-              subtext="Ideal for consistent practice across skills"
-              icon={<span>🚀</span>}
-            >
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Daily AI-guided practice + priority scheduling.</li>
-                <li>Best per-class value for 1:1 mentoring.</li>
-                <li>₹550 per class (₹13,200 total).</li>
-              </ul>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
-                <Button size="sm" variant="outline">
-                  Learn More
-                </Button>
-              </div>
-            </CollapsibleCard>
+          <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Power · 24 classes / month
+            </p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900">
+              ₹500<span className="text-sm font-normal text-slate-500"> / class</span>
+            </p>
+            <p className="mt-1 text-xs text-slate-500">₹12,000 total · billed monthly</p>
+            <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
+              <li>• Personalised assessment + roadmap</li>
+              <li>• Around 5–6 classes per week</li>
+              <li>• Phonics, grammar, or public speaking</li>
+            </ul>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+              <button className="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition">
+                Book Free Assessment Class
+              </button>
+              <button className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
+                Learn More
+              </button>
+            </div>
           </div>
+        </div>
+
+        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-500">
+          <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+            <span>✅ No long-term lock-in</span>
+            <span>✅ Easy class rescheduling</span>
+            <span>✅ Pause anytime between months</span>
+          </p>
         </div>
       </div>
     </section>

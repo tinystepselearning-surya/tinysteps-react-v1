@@ -66,7 +66,7 @@ const ConversionHero: React.FC = () => {
           >
             <Button
               size="lg"
-              aria-label="Book Free Assessment Class"
+              aria-label="Book a free Tiny Steps assessment class"
               onClick={() => {
                 trackEvent('cta_click', { location: 'hero', label: 'book_free_assessment_class' });
                 document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
@@ -74,20 +74,43 @@ const ConversionHero: React.FC = () => {
             >
               Book Free Assessment Class
             </Button>
-            <a
-              href="/courses"
-              onClick={() => trackEvent('cta_click', { location: 'hero', label: 'see_courses' })}
-              className="rounded-2xl border border-white/70 bg-white/80 px-6 py-3 text-center font-semibold text-[#ff8f5c] shadow-sm hover:shadow transition"
-            >
-              Explore Courses
-            </a>
+            <p className="mt-2 text-sm text-gray-600">
+              20-minute Zoom session · No payment · See if Tiny Steps is right for your child
+            </p>
           </motion.div>
+
           <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-gray-700">
-            {['Live 1:1 mentors', 'AI learning paths', 'Parent insights dashboard'].map((chip) => (
-              <span key={chip} className="rounded-full bg-white/80 px-3 py-1">
-                {chip}
-              </span>
+            {[
+              { label: 'Live 1:1 mentors', target: 'one-to-one-pricing' },
+              { label: 'AI learning paths', target: 'ai-learning-paths' },
+              { label: 'Parent insights dashboard', target: 'parent-insights' },
+            ].map(({ label, target }) => (
+              <button
+                key={label}
+                className="rounded-full bg-white/80 px-3 py-1"
+                onClick={() => {
+                  document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                aria-label={`Scroll to ${label}`}
+              >
+                {label}
+              </button>
             ))}
+          </div>
+
+          <div className="mt-5 space-y-3 text-sm text-gray-600">
+            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+              <span>3500+ students</span>
+              <span className="text-xs text-gray-500">Guided since 2020</span>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+              <span>95% parent satisfaction</span>
+              <span className="text-xs text-gray-500">Based on post-class surveys</span>
+            </div>
+            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+              <span>AI-driven curriculum</span>
+              <span className="text-xs text-gray-500">Weekly adaptive plan</span>
+            </div>
           </div>
         </div>
 
@@ -109,7 +132,7 @@ const ConversionHero: React.FC = () => {
             <div className="mt-5 space-y-3 text-sm text-gray-600">
               <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
                 <span>🧠 AI-guided practice plan</span>
-                <span className="text-xs text-gray-500">AI suggests the right activities each week</span>
+                <span className="text-xs text-gray-500">AI suggests the right activities each week (currently curated + reviewed by human mentors)</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
                 <span>📈 Parent dashboard</span>

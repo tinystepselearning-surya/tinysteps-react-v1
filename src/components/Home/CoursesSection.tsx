@@ -96,12 +96,30 @@ const CoursesSection: React.FC = () => {
               {activeCourse.subtitle && <li>• {activeCourse.subtitle}</li>}
               {activeCourse.age && <li>• Tailored for {activeCourse.age.toLowerCase()}</li>}
               <li>• Live classes with AI nudges, worksheets, and recordings.</li>
+              <li>• Aligned with IB and Cambridge-style English learning outcomes.</li>
             </ul>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Button size="sm" onClick={() => window.location.assign(slugMap[activeCourse.id])}>View Curriculum</Button>
-              <Button size="sm" variant="outline" onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })} aria-label="Book Free Assessment Class">
-                Book Free Assessment Class
+              <Button
+                size="sm"
+                onClick={() => window.location.assign(`/curriculum#${activeCourse.id}`)}
+              >
+                View Curriculum
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const bookTrialElement = document.getElementById('book-trial');
+                  bookTrialElement?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              >
+                Book Trial
+              </Button>
+            </div>
+            <div className="mt-10">
+              <p className="text-sm text-gray-500">
+                Most children complete Levels 1–4 in 8–24 weeks, depending on their starting level.
+              </p>
             </div>
           </div>
           <div className="rounded-3xl border border-gray-100 bg-white/90 p-6 shadow-card-hover">

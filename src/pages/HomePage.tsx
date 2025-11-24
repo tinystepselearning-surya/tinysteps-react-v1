@@ -181,7 +181,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl grid gap-8 rounded-3xl bg-white/80 p-8 shadow-card-hover md:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
             <div className="gradient-chip w-max">AI-curated learning journey</div>
-            <h2 className="text-3xl font-semibold text-gray-900">3500+ students, 8 countries, one personalized path</h2>
+            <h2 className="text-3xl font-semibold text-gray-900">Empowering 3500+ students across 8 countries</h2>
             <p className="text-gray-700">Our AI engine maps your child’s current mastery, curates the weekly plan, and sends parents actionable insights every Friday.</p>
             <ul className="text-sm text-gray-600 space-y-2">
               <li>🌅 Bright-sky lessons that feel joyful and calm</li>
@@ -190,8 +190,8 @@ export default function HomePage() {
             </ul>
           </div>
           <div className="glass-panel p-6">
-              <h3 className="text-lg font-semibold text-gray-900">{user ? 'Book Free Assessment Class' : 'Book Free Assessment Class & WhatsApp us instantly'}</h3>
-              <p className="mt-1 text-sm text-gray-600">{user ? 'Fill the form—our team will contact you shortly.' : 'Fill the form—details auto-share with our advisor on WhatsApp (+91 96183 98383).'}</p>
+            <h3 className="text-lg font-semibold text-gray-900">Book Your Free Assessment Class</h3>
+            <p className="mt-1 text-sm text-gray-600">Fill out the form below, and our team will contact you shortly. Your privacy is our priority.</p>
             <div className="mt-4">
               <TrialForm context="home_book_trial" />
             </div>

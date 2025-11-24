@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Meta from '../components/common/Meta';
+import Modal from '@/common/Modal';
 
 const ForSchoolsPage: React.FC = () => {
+  const [showSampleSchedule, setShowSampleSchedule] = useState(false);
+
   return (
     <div className="page-gradient relative overflow-hidden">
       <Meta
@@ -114,6 +117,43 @@ const ForSchoolsPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Your Child’s Learning Journey Section */}
+      <section className="py-16 px-6">
+        <h2 className="text-3xl font-semibold text-center mb-8">
+          Your Child’s Learning Journey
+        </h2>
+        <p className="text-lg text-gray-700 mb-4">
+          At Tiny Steps, we tailor the learning journey to each child's needs, ensuring a balanced focus on phonics, grammar, and speaking skills.
+        </p>
+        <p className="text-sm text-gray-500 mb-6">
+          Our program is designed to be flexible, fun, and effective, fitting seamlessly into your school's existing framework.
+        </p>
+        <button
+          type="button"
+          className="mt-3 text-sm font-medium text-primary underline"
+          onClick={() => setShowSampleSchedule(true)}
+        >
+          View a sample weekly schedule
+        </button>
+      </section>
+
+      <Modal
+        isOpen={showSampleSchedule}
+        onClose={() => setShowSampleSchedule(false)}
+        title="Sample Weekly Schedule"
+        size="md"
+      >
+        {/* Replace this placeholder content later with the real schedule */}
+        <p className="text-sm text-muted-foreground mb-2">
+          Here’s an example of how Weeks 2–8 might look for most children.
+        </p>
+        <ul className="list-disc pl-5 space-y-1 text-sm text-foreground">
+          <li>Mon – Phonics & reading practice</li>
+          <li>Wed – Grammar & writing focus</li>
+          <li>Fri – Speaking & confidence activities</li>
+        </ul>
+      </Modal>
 
       {/* Call-to-Action Section */}
       <section className="py-16 px-6 bg-primary-500 text-white text-center">

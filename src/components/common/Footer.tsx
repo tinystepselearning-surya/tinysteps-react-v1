@@ -40,10 +40,11 @@ const Footer = () => {
             <div>
               <div className="text-white text-xl font-semibold">Get the Tiny Steps parent newsletter</div>
               <p className="text-white/80 text-sm">Weekly phonics, grammar, and speaking tips plus printable resources.</p>
+              <p className="text-white/60 text-xs">Join 3500+ families who love our tips!</p>
             </div>
             <form className="flex w-full max-w-md gap-2">
-              <input className="flex-1 rounded-xl px-4 py-2 text-gray-900" placeholder="Email address" />
-              <button className="rounded-xl bg-white/90 px-4 py-2 text-tiny-blue-700 font-semibold">Subscribe</button>
+              <input className="flex-1 rounded-xl px-4 py-2 text-gray-900 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-tiny-blue-500" placeholder="Enter your email" aria-label="Email address" />
+              <button className="rounded-xl bg-tiny-blue-600 px-4 py-2 text-white font-semibold hover:bg-tiny-blue-700 transition">Subscribe</button>
             </form>
           </div>
         </div>
@@ -55,6 +56,7 @@ const Footer = () => {
               <div>
                 <div className="font-semibold text-white">Tiny Steps • Foundations Forever</div>
                 <p className="text-xs text-white/70">Hyderabad • Serving families PAN India</p>
+                <p className="text-xs text-white/70">Established 2020</p>
               </div>
             </div>
             <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 8 countries, 95% satisfaction. Foundations today, confidence forever.</p>

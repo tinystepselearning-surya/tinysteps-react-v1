@@ -49,8 +49,21 @@ export default function PopularPrograms() {
           <h2 className="mt-2 text-3xl font-semibold text-gray-900">Pick a track or mix and match levels</h2>
         </div>
         <div className="hidden sm:flex gap-2">
-          <button onClick={() => scroll(-320)} className="rounded-full border border-gray-200 bg-white px-3 py-2 text-sm">←</button>
-          <button onClick={() => scroll(320)} className="rounded-full border border-gray-200 bg-white px-3 py-2 text-sm">→</button>
+          <button
+            onClick={() => scroll(-320)}
+            className="rounded-full border border-gray-200 bg-white p-3 text-sm"
+            aria-label="Previous track"
+          >
+            
+            ←
+          </button>
+          <button
+            onClick={() => scroll(320)}
+            className="rounded-full border border-gray-200 bg-white p-3 text-sm"
+            aria-label="Next track"
+          >
+            →
+          </button>
         </div>
       </div>
       <div ref={scrollRef} className="mt-6 flex gap-5 overflow-x-auto pb-4">
