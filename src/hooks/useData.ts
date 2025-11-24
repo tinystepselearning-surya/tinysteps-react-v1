@@ -1,16 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  Timestamp,
-  doc,
-  getDoc,
-  documentId,
-} from 'firebase/firestore';
-import { db } from '../lib/firebaseConfig';
 import { Enrollment, Invoice, ProgressItem, Session, AttendanceRecord, Course, Topic } from '../types/models';
 
 export interface KidRecord {
@@ -24,9 +12,13 @@ export function useKidProgress(kidId: string) {
   return useQuery({
     queryKey: ['progress', kidId],
     queryFn: async () => {
+      const [{ collection, query, where, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(collection(db, 'progress'), where('studentId', '==', kidId));
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as ProgressItem[];
+      return snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() })) as ProgressItem[];
     },
     enabled: !!kidId,
   });
@@ -37,6 +29,10 @@ export function useSessionsForTeacher(teacherId: string) {
   return useQuery({
     queryKey: ['sessions', 'teacher', teacherId],
     queryFn: async () => {
+      const [{ collection, query, where, orderBy, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(
         collection(db, 'sessions'),
         where('teacherId', '==', teacherId),
@@ -44,7 +40,7 @@ export function useSessionsForTeacher(teacherId: string) {
         orderBy('date', 'asc')
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((d) => ({ id: d.id, ...(d.data() as Session) }));
+      return snapshot.docs.map((d: any) => ({ id: d.id, ...(d.data() as Session) }));
     },
     enabled: !!teacherId,
   });
@@ -56,6 +52,10 @@ export function useKidAttendance(kidId: string, monthStart: string) {
     queryKey: ['attendance', kidId, monthStart],
     queryFn: async () => {
       // monthStart should be YYYY-MM-DD
+      const [{ collection, query, where, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(collection(db, 'attendance'));
       const snapshot = await getDocs(q);
 
@@ -104,6 +104,10 @@ export function useEnrollments(parentId: string) {
           return entry.data;
         }
       }
+      const [{ collection, query, where, getDocs, documentId }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(
         collection(db, 'enrollments'),
         where('parentId', '==', parentId),
@@ -127,7 +131,7 @@ export function useEnrollments(parentId: string) {
         for (const c of idChunks) {
           const qd = query(collection(db, collectionName), where(documentId(), 'in', c));
           const s = await getDocs(qd);
-          s.docs.forEach((d) => map.set(d.id, d.data()));
+          s.docs.forEach((d: any) => map.set(d.id, d.data()));
         }
         return map;
       };
@@ -193,6 +197,10 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
         return out;
       };
 
+      const [{ collection, query, where, getDocs, documentId }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const chunks = chunk(studentIds, 10);
       const allResults: any[] = [];
       for (const c of chunks) {
@@ -260,9 +268,13 @@ export function useInvoices(parentId: string) {
   return useQuery({
     queryKey: ['invoices', parentId],
     queryFn: async () => {
+      const [{ collection, query, where, orderBy, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(collection(db, 'invoices'), where('parentId', '==', parentId), orderBy('dueDate', 'desc'));
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Invoice) }));
+      return snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as Invoice) }));
     },
     enabled: !!parentId,
   });
@@ -273,6 +285,10 @@ export function useCourses(filters?: { area?: string; level?: number; status?: s
   return useQuery({
     queryKey: ['courses', filters],
     queryFn: async () => {
+      const [{ collection, query, orderBy, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       let q = query(collection(db, 'courses'), orderBy('name', 'asc'));
       
       // Note: Firestore doesn't support complex filtering in a single query
@@ -311,6 +327,10 @@ export function useCourse(courseId: string) {
     queryKey: ['course', courseId],
     queryFn: async () => {
       if (!courseId) return null;
+      const [{ doc, getDoc }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const docRef = doc(db, 'courses', courseId);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
@@ -328,13 +348,17 @@ export function useTopics(courseId: string) {
     queryKey: ['topics', courseId],
     queryFn: async () => {
       if (!courseId) return [];
+      const [{ collection, query, where, orderBy, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(
         collection(db, 'curriculum'), 
         where('courseId', '==', courseId),
         orderBy('sequenceNumber', 'asc')
       );
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Topic) }));
+      return snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as Topic) }));
     },
     enabled: !!courseId,
   });
@@ -346,9 +370,13 @@ export function useCourseEnrollments(courseId: string) {
     queryKey: ['course-enrollments', courseId],
     queryFn: async () => {
       if (!courseId) return [];
+      const [{ collection, query, where, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const q = query(collection(db, 'enrollments'), where('courseId', '==', courseId));
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as Enrollment) }));
+      return snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as Enrollment) }));
     },
     enabled: !!courseId,
   });
@@ -360,6 +388,10 @@ export function useKid(kidId: string) {
     queryKey: ['kid', kidId],
     queryFn: async () => {
       if (!kidId) return null;
+      const [{ doc, getDoc }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
       const docRef = doc(db, 'kids', kidId);
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) return null;

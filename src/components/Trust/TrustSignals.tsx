@@ -103,9 +103,9 @@ export default function TrustSignals() {
               </div>
 
               <div className="mt-10 grid gap-4 md:grid-cols-3">
-                <TeacherCard name="Teacher Name" role="Lead Phonics" quals="Cambridge Phonics Cert • 7 yrs" />
-                <TeacherCard name="Teacher Name" role="Grammar" quals="MA Eng • 8 yrs" />
-                <TeacherCard name="Ms. Neha" role="Public Speaking" quals="CELTA • 6 yrs" />
+                  <TeacherCard name="Aisha Verma" role="Lead – Phonics" quals="Cambridge Phonics Certificate • 7 yrs teaching" />
+                  <TeacherCard name="Rahul Menon" role="Grammar Lead" quals="MA (English) • 8 yrs teaching" />
+                  <TeacherCard name="Neha Kapoor" role="Public Speaking Coach" quals="CELTA • 6 yrs teaching" />
               </div>
 
               <div className="mt-10 rounded-2xl border border-gray-100 bg-white/80 backdrop-blur p-4 text-xs text-gray-600 flex flex-wrap items-center justify-center gap-4">

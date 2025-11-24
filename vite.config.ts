@@ -42,17 +42,29 @@ export default defineConfig({
     },
   },
   build: {
+    // Improve build chunking to keep large bundles split and easier to cache.
+    // We add specific vendor groups for React, animation, charting libraries and Firebase.
+    // Adjust `chunkSizeWarningLimit` if you prefer fewer noisy warnings (measured in KB).
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
         manualChunks(id) {
+          if (!id) return undefined;
+          // node_modules -> vendor buckets
           if (id.includes('node_modules')) {
             if (id.includes('firebase')) return 'vendor-firebase';
+            if (id.includes('framer-motion')) return 'vendor-framer-motion';
+            if (id.includes('react') && id.includes('node_modules')) return 'vendor-react';
+            if (id.match(/(chart|d3|recharts|chartjs|vega)/i)) return 'vendor-charts';
             if (id.includes('@mdx-js') || id.includes('rehype') || id.includes('remark')) return 'vendor-mdx';
             return 'vendor';
           }
+
+          // Large app areas -> separate dashboards bundle
           if (id.includes('/src/pages/admin/') || id.includes('/src/pages/teacher/') || id.includes('/src/pages/parent/') || id.includes('/src/pages/lp/') || id.includes('/src/pages/kid/')) {
             return 'dashboards';
           }
+
           return undefined;
         }
       }

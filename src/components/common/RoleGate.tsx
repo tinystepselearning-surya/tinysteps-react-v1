@@ -3,6 +3,8 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useEffect } from 'react';
+import useAuth from '../../hooks/useAuth';
 import { isSuperUserEmail } from '../../constants/accessControl';
 
 export type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
@@ -18,6 +20,9 @@ const RoleGate: React.FC<RoleGateProps> = ({
   loginPath = '/login',
   unauthorizedPath = '/unauthorized',
 }) => {
+  // Ensure auth listener is initialized when RoleGate mounts — this avoids
+  // initializing Firebase on purely public pages.
+  useAuth();
   const { user, isLoading } = useAuthStore();
   const location = useLocation();
 

@@ -10,7 +10,7 @@ type MetaProps = {
   jsonLd?: Record<string, any> | Record<string, any>[];
 };
 
-const DEFAULT_DESCRIPTION = 'Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans.';
+const DEFAULT_DESCRIPTION = 'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class.';
 
 const setTag = (name: string, content?: string) => {
   if (!content) return;

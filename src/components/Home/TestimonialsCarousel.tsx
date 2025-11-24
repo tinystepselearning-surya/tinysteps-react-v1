@@ -4,24 +4,27 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 const testimonials = [
   {
-    name: 'Anita Rao',
-    city: 'Bengaluru',
-    age: 'Child: 5 years',
-    quote: "Within 3 months, Kavya is decoding storybooks confidently and loves sharing them at bedtime.",
+    name: 'Parent of a Grade 2 child',
+    city: 'Hyderabad',
+    age: 'Grade 2',
+    quote:
+      '“My daughter now reads boards, packets and storybooks aloud on her own. Her shyness has reduced so much that she even volunteers to answer in school.”',
     video: '/images/hero/parent-video-1.jpg'
   },
   {
-    name: 'Siddharth & Nisha',
-    city: 'Ahmedabad',
-    age: 'Child: 6 years',
-    quote: 'The SATPIN playbooks turned phonics into a game. He now blends new words on his own.',
+    name: 'Parent of a 7-year-old',
+    city: 'US time zone',
+    age: '7 years',
+    quote:
+      '“The 1:1 format is a blessing. The teacher knows exactly where my son gets stuck and patiently corrects him without making him feel wrong or slow.”',
     video: '/images/hero/parent-video-2.jpg'
   },
   {
-    name: 'Parent Name',
-    city: 'Pune',
-    age: 'Child: 8 years',
-    quote: 'Grammar is no longer a mystery—our weekend writing tasks are full paragraphs now.',
+    name: 'Parent of siblings',
+    city: 'Singapore',
+    age: 'Siblings',
+    quote:
+      '“Both my kids attend Tiny Steps and I can clearly see the difference—better sentence formation, clearer pronunciation and much more confidence in daily conversations.”',
     video: '/images/hero/parent-video-3.jpg'
   }
 ];
@@ -45,8 +48,8 @@ export default function TestimonialsCarousel() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="text-center">
           <div className="gradient-chip mx-auto w-max">Real Families, Real Results</div>
-          <h2 className="mt-2 text-3xl font-semibold text-gray-900">Parent Testimonial Carousel</h2>
-          <p className="mt-2 text-gray-600">Five-star stories from across India.</p>
+          <h2 className="mt-2 text-3xl font-semibold text-gray-900">Parent Testimonials</h2>
+          <p className="mt-2 text-gray-600">Five-star stories from across the world.</p>
         </div>
         <div className="mt-10 grid items-center gap-6 lg:grid-cols-[1fr_auto]">
           <AnimatePresence mode="wait">

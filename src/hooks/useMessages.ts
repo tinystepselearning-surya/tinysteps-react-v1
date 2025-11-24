@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, where, orderBy, onSnapshot, addDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../lib/firebaseConfig';
+import { Conversation, Message } from '../types/Teacher';
 import { Conversation, Message } from '../types/Teacher';
 
 export const useMessages = (teacherId?: string) => {
@@ -19,15 +18,20 @@ export const useMessages = (teacherId?: string) => {
     setError(null);
 
     // Query messages where teacher is participant
-    const messagesQuery = query(
-      collection(db, 'messages'),
-      where('participants', 'array-contains', teacherId),
-      orderBy('timestamp', 'desc')
-    );
+    const unsubscribe = (async () => {
+      const [{ collection, query, where, orderBy, onSnapshot }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../lib/firebaseConfig'),
+      ] as any);
+      const messagesQuery = query(
+        collection(db, 'messages'),
+        where('participants', 'array-contains', teacherId),
+        orderBy('timestamp', 'desc')
+      );
 
-    const unsubscribe = onSnapshot(
-      messagesQuery,
-      (snapshot) => {
+      return onSnapshot(
+        messagesQuery,
+        (snapshot: any) => {
         const msgs: Message[] = [];
         const convMap = new Map<string, Conversation>();
 
@@ -58,14 +62,21 @@ export const useMessages = (teacherId?: string) => {
         setMessages(msgs);
         setConversations(Array.from(convMap.values()));
         setIsLoading(false);
-      },
-      (err) => {
-        setError(err);
-        setIsLoading(false);
-      }
-    );
+        },
+        (err: any) => {
+          setError(err);
+          setIsLoading(false);
+        }
+      );
+    })();
 
-    return unsubscribe;
+    // unsubscribe may be a Promise resolving to the unsubscribe function
+    // we return a cleanup that resolves and calls it if present
+    return () => {
+      Promise.resolve(unsubscribe).then((u) => {
+        if (typeof u === 'function') u();
+      }).catch(() => {});
+    };
   }, [teacherId]);
 
   const sendMessage = async (conversationId: string, content: string) => {
@@ -74,6 +85,10 @@ export const useMessages = (teacherId?: string) => {
     const participants = conversationId.split('-');
     const toId = participants.find(p => p !== teacherId)!;
 
+    const [{ collection, addDoc, Timestamp }, { db }] = await Promise.all([
+      import('firebase/firestore'),
+      import('../lib/firebaseConfig'),
+    ] as any);
     await addDoc(collection(db, 'messages'), {
       fromId: teacherId,
       toId,

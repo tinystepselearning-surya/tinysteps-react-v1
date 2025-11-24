@@ -9,16 +9,21 @@ type Pathway = {
 };
 
 const pathways: Record<number, Pathway> = {
-	3: { courses: ['Sound Discovery', 'Story Time Crafts', 'Rhythm & Rhyme'], focus: 'Play-based phonemic awareness.' },
-	4: { courses: ['Letter Launch', 'Mini Readers Lab', 'Expressive Play'], focus: 'Blend sounds with imaginative play.' },
-	5: { courses: ['Phonics Power', 'Confidence Club', 'Storytelling Circles'], focus: 'Sentence building through drama.' },
-	6: { courses: ['Grammar Safari', 'Stage Stars', 'Word Wizards'], focus: 'Early grammar mastery + projection.' },
-	7: { courses: ['Grammar Safari', 'Debate Buds', 'Creative Writing Lab'], focus: 'Paragraph writing and vocal clarity.' },
-	8: { courses: ['Structure Sprint', 'Spotlight Speeches', 'Reading Champs'], focus: 'Narrative writing and poise.' },
-	9: { courses: ['Grammar Studio', 'Junior TED Talks', 'Reading for Impact'], focus: 'Persuasive writing & gestures.' },
-	10: { courses: ['Essay Architects', 'Confidence on Camera', 'Book Club Live'], focus: 'Long-form writing and media confidence.' },
-	11: { courses: ['Advanced Grammar Lab', 'Leadership Speaking', 'Podcast Lab'], focus: 'Argumentation and tonal control.' },
-	12: { courses: ['Scholars Writing Lab', 'Global Speakers Forum', 'Innovation Pitch'], focus: 'Academic rigor + storytelling.' }
+	// Ages 3-6: Early Readers & Speakers
+	3: { courses: ['Fun phonics and letter-sound stories', 'Early blending, reading and sight words', 'Simple speaking games to build confidence'], focus: 'Phonics, early reading, and confidence building.' },
+	4: { courses: ['Fun phonics and letter-sound stories', 'Early blending, reading and sight words', 'Simple speaking games to build confidence'], focus: 'Phonics, early reading, and confidence building.' },
+	5: { courses: ['Fun phonics and letter-sound stories', 'Early blending, reading and sight words', 'Simple speaking games to build confidence'], focus: 'Phonics, early reading, and confidence building.' },
+	6: { courses: ['Fun phonics and letter-sound stories', 'Early blending, reading and sight words', 'Simple speaking games to build confidence'], focus: 'Phonics, early reading, and confidence building.' },
+
+	// Ages 7-9: Strong Grammar & Reading
+	7: { courses: ['Clear grammar basics for school', 'Reading fluency with short passages', 'Storytelling and picture talk to express ideas'], focus: 'Grammar foundations and reading fluency.' },
+	8: { courses: ['Clear grammar basics for school', 'Reading fluency with short passages', 'Storytelling and picture talk to express ideas'], focus: 'Grammar foundations and reading fluency.' },
+	9: { courses: ['Clear grammar basics for school', 'Reading fluency with short passages', 'Storytelling and picture talk to express ideas'], focus: 'Grammar foundations and reading fluency.' },
+
+	// Ages 10-12: Writing & Public Speaking
+	10: { courses: ['Paragraph and essay writing support', 'Presentation skills and structured speeches', 'Listening, note-taking and comprehension practice'], focus: 'Writing, presentations, and advanced comprehension.' },
+	11: { courses: ['Paragraph and essay writing support', 'Presentation skills and structured speeches', 'Listening, note-taking and comprehension practice'], focus: 'Writing, presentations, and advanced comprehension.' },
+	12: { courses: ['Paragraph and essay writing support', 'Presentation skills and structured speeches', 'Listening, note-taking and comprehension practice'], focus: 'Writing, presentations, and advanced comprehension.' }
 };
 
 const listVariants = {
@@ -48,11 +53,14 @@ const AgePathwaySection: React.FC = () => {
 			<div className="relative mx-auto max-w-5xl px-6">
 				<div ref={ref as React.RefObject<HTMLDivElement>} className="text-center">
 					<AnimatedText
-						text="Your Child's Learning Path"
+						text="Built for every age and stage"
 						as="h2"
 						className="font-heading text-3xl font-bold text-gray-900 md:text-4xl"
 						animation="slide"
 					/>
+					<p className="mt-4 max-w-2xl mx-auto text-gray-700">
+						Whether your child is just starting with sounds or preparing for big-school presentations, Tiny Steps has a clear, gentle path for ages 3–12.
+					</p>
 				</div>
 
 				<div className="mt-10 space-y-6">

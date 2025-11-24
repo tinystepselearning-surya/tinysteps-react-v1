@@ -1,16 +1,24 @@
-import * as Sentry from "@sentry/react";
-import { BrowserTracing } from "@sentry/tracing";
-
-export function initSentry() {
+export async function initSentry() {
   // Only initialize if DSN is provided
   const dsn = (import.meta as any).env?.VITE_SENTRY_DSN as string | undefined;
   if (!dsn) return;
 
-  Sentry.init({
-    dsn,
-    // BrowserTracing's types can conflict; cast to any to avoid type issues
-    integrations: [new BrowserTracing() as any] as any,
-    tracesSampleRate: (import.meta as any).env?.PROD ? 0.1 : 1.0,
-    environment: (import.meta as any).env?.MODE,
-  });
+  try {
+    // Dynamically import Sentry only when needed to avoid bundling it into
+    // the public landing/main bundle when no DSN is configured.
+    const Sentry = await import('@sentry/react');
+    const { BrowserTracing } = await import('@sentry/tracing');
+
+    Sentry.init({
+      dsn,
+      integrations: [new BrowserTracing() as any] as any,
+      tracesSampleRate: (import.meta as any).env?.PROD ? 0.1 : 1.0,
+      environment: (import.meta as any).env?.MODE,
+    });
+  } catch (err) {
+    // If Sentry package is missing or fails to load, fail silently.
+    // This prevents the monitoring lib from blocking runtime.
+    // eslint-disable-next-line no-console
+    console.warn('Sentry init failed', err);
+  }
 }

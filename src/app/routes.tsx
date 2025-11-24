@@ -2,30 +2,30 @@
 import { lazy, Suspense, type FC } from 'react';
 import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
 
-import LoginPage from '../pages/LoginPage';
-import Login from '../pages/Login';
-import UnauthorizedPage from '../pages/UnauthorizedPage';
-import NotFoundPage from '../pages/NotFoundPage';
-import HomePage from '../pages/HomePage';
-import CurriculumPage from '../pages/CurriculumPage';
-import CoursesPage from '../pages/CoursesPage';
-import CourseDetailPage from '../pages/CourseDetailPage';
-import BlogPage from '../pages/BlogPage';
-import BlogPostPage from '../pages/BlogPostPage';
-import PricingPage from '../pages/PricingPage';
-import FAQPage from '../pages/FAQPage';
-import ContactPage from '../pages/ContactPage';
-import WhyTinyStepsPage from '../pages/WhyTinyStepsPage';
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const Login = lazy(() => import('../pages/Login'));
+const UnauthorizedPage = lazy(() => import('../pages/UnauthorizedPage'));
+const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
+const HomePage = lazy(() => import('../pages/HomePage'));
+const CurriculumPage = lazy(() => import('../pages/CurriculumPage'));
+const CoursesPage = lazy(() => import('../pages/CoursesPage'));
+const CourseDetailPage = lazy(() => import('../pages/CourseDetailPage'));
+const BlogPage = lazy(() => import('../pages/BlogPage'));
+const BlogPostPage = lazy(() => import('../pages/BlogPostPage'));
+const PricingPage = lazy(() => import('../pages/PricingPage'));
+const FAQPage = lazy(() => import('../pages/FAQPage'));
+const ContactPage = lazy(() => import('../pages/ContactPage'));
+const WhyTinyStepsPage = lazy(() => import('../pages/WhyTinyStepsPage'));
 
 // Course Pages
-import PhonicsPage from '../pages/phonics';
-import GrammarPage from '../pages/grammar';
-import SpeakingPage from '../pages/speaking';
+const PhonicsPage = lazy(() => import('../pages/phonics'));
+const GrammarPage = lazy(() => import('../pages/grammar'));
+const SpeakingPage = lazy(() => import('../pages/speaking'));
 
 // Dashboards
-import AdminDashboard from '../pages/admin/AdminDashboard';
-import TopicsSeedPicklistPage from '../pages/admin/TopicsSeedPicklistPage';
-import TeacherStudentTopicProgressPage from '../pages/teacher/TeacherStudentTopicProgressPage';
+const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
+const TopicsSeedPicklistPage = lazy(() => import('../pages/admin/TopicsSeedPicklistPage'));
+const TeacherStudentTopicProgressPage = lazy(() => import('../pages/teacher/TeacherStudentTopicProgressPage'));
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
@@ -48,8 +48,8 @@ const PhonePeCallback = lazy(
 import Header from '../components/common/Header';
 import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
-import FloatingAssistant from '../components/common/FloatingAssistant';
-import BackToTopButton from '../components/common/BackToTopButton';
+const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
+const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
 import ScrollToTop from '../components/common/ScrollToTop';
 
 const Layout: FC = () => (
@@ -62,8 +62,10 @@ const Layout: FC = () => (
         <Outlet />
       </Suspense>
     </main>
-    <FloatingAssistant />
-    <BackToTopButton />
+    <Suspense fallback={null}>
+      <FloatingAssistant />
+      <BackToTopButton />
+    </Suspense>
   </div>
 );
 

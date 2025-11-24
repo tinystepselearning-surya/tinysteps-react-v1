@@ -57,12 +57,12 @@ const SocialProofSection: React.FC = () => {
 
 			<div className="relative mx-auto max-w-6xl px-6">
 				<div ref={ref as React.RefObject<HTMLDivElement>} className="text-center">
-					<AnimatedText
-						text="Our Impact"
-						as="h2"
-						className="font-heading text-3xl font-bold md:text-4xl gradient-text"
-						animation="slide"
-					/>
+						<AnimatedText
+							text="Loved by parents across the world"
+							as="h2"
+							className="font-heading text-3xl font-bold md:text-4xl gradient-text"
+							animation="slide"
+						/>
 					<motion.div
 						className="mx-auto mt-3 h-1 w-10 rounded-full bg-primary-500"
 						initial={{ scaleX: 0 }}
@@ -70,7 +70,7 @@ const SocialProofSection: React.FC = () => {
 						transition={{ duration: 0.6, ease: 'easeOut' }}
 					/>
 					<AnimatedText
-						text="We blend expert educators with playful learning science to deliver measurable results."
+						text="Tiny Steps families join from India, the Middle East, the US, UK and beyond—because children feel seen, heard and gently challenged in every class."
 						as="p"
 						className="mt-4 text-base text-gray-700 md:text-lg"
 						animation="words"

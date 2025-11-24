@@ -3,50 +3,31 @@ import { motion } from 'framer-motion';
 
 const items = [
   {
-    icon: '🎯',
-    title: 'Customized to YOUR Child. Not One-Size-Fits-All.',
+    icon: '🤝',
+    title: 'Caring 1:1 mentors',
     points: [
-      'Other online schools teach 20 kids at once. We teach YOUR child.',
-      "Every lesson is designed for your child's level:",
-      '- Struggling with pronunciation? We focus there.',
-      '- Already reads well? We skip basics, focus on fluency.',
-      '- Shy about speaking? We build confidence gradually.',
-      'Your child gets a learning path, not a predetermined curriculum.'
+      'Children learn with warm, patient teachers who encourage them to speak, read and ask questions without fear.'
     ]
   },
   {
-    icon: '👩‍🏫',
-    title: 'Expert Teachers Who Specialize in Young Learners',
+    icon: '📣',
+    title: 'Clear progress for parents',
     points: [
-      '✓ Certified in early childhood education (not just English speakers)',
-      '✓ Trained in phonics & speech development (not random background)',
-      '✓ Experienced with shy, anxious, or resistant children',
-      '✓ Native English speakers with Indian parent experience',
-      "Your child is taught by professionals who understand how children learn."
+      'Regular messages and progress updates show what your child practised, what they did well, and what we\'ll work on next.'
     ]
   },
   {
-    icon: '📊',
-    title: 'You See Progress. Every Week.',
+    icon: '🎓',
+    title: 'Strong school support',
     points: [
-      'Weekly Progress Reports:',
-      '→ What your child learned this week',
-      '→ Improvements in pronunciation, grammar, confidence',
-      '→ Practice at home (5 mins/day)',
-      '→ Next week\'s goals',
-      'No more wondering “Is my child actually learning?” – You\'ll see it.'
+      'IB-aligned phonics, grammar and speaking practice that strengthens school English rather than competing with it.'
     ]
   },
   {
-    icon: '⏰',
-    title: 'Classes When Your Family Works. Not the Other Way Around.',
+    icon: '⏱️',
+    title: 'Built for busy families',
     points: [
-      'Flexible Scheduling:',
-      '→ Choose days & times that fit YOU',
-      '→ Reschedule anytime (up to 24 hours before)',
-      '→ No rigid batch timings',
-      '→ Classes: 5 AM to 10 PM IST',
-      'Working parent? Multiple kids? No problem.'
+      'Short 35-minute sessions, flexible scheduling across time zones, and digital practice that doesn\'t overload parents.'
     ]
   }
 ];
@@ -65,8 +46,8 @@ const WhyParentsSection: React.FC = () => {
     <section className="bg-gradient-to-b from-white to-slate-50/50 py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
-          <h2 className="font-heading text-3xl font-bold md:text-4xl">Why 3500+ Families Worldwide Trust Tiny Steps</h2>
-          <p className="mt-2 text-base text-gray-700 md:text-lg">From Mumble to Confident Speaker in 3-4 Months</p>
+          <h2 className="font-heading text-3xl font-bold md:text-4xl">Why parents trust Tiny Steps</h2>
+          <p className="mt-2 text-base text-gray-700 md:text-lg">Parents tell us they stay because classes are calm, teachers are kind, and progress is visible at home and in school.</p>
         </div>
         <motion.div
           className="grid gap-8 md:grid-cols-2 lg:grid-cols-4"

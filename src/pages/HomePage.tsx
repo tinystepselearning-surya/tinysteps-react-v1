@@ -156,8 +156,8 @@ export default function HomePage() {
   return (
     <>
       <Meta
-        title="Tiny Steps Online School | Phonics, Grammar & Public Speaking Classes for Indian Kids (Ages 3-12)"
-        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans."
+        title="Tiny Steps Online English School | 1:1 Phonics, Grammar & Public Speaking for Kids (3–12)"
+        description="Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class."
         keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India, best English coaching India"
         canonical="https://tinystepslearning.com/"
       />

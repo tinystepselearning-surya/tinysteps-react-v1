@@ -2,8 +2,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
-import { signOut } from 'firebase/auth';
-import { auth } from '../../lib/firebaseConfig';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 export default function Header() {
@@ -69,8 +67,14 @@ export default function Header() {
   }, [isHomePage]);
 
   const handleLogout = async () => {
-    // sign out of firebase as well
+    // Sign out via firebase only when user actually logs out. Importing
+    // firebase/auth and the app config lazily keeps the public pages free
+    // of the Firebase SDK until needed.
     try {
+      const [{ signOut }, { auth }] = await Promise.all([
+        import('firebase/auth'),
+        import('../../lib/firebaseConfig'),
+      ] as any);
       await signOut(auth);
     } catch (err) {
       // ignore firebase signout error (we still clear local state)
