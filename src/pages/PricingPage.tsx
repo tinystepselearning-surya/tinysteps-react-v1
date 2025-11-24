@@ -133,7 +133,7 @@ const PricingPage: FC = () => {
     <div className="page-gradient min-h-screen">
       <Meta
         title="Pricing | Tiny Steps Online School"
-        description="Transparent premium pricing with a standard 1:1 fee of ₹599 per 35-minute session and pack rates between ₹500–₹550 per class. See the total investment for every course before you enroll."
+        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans."
         canonical="https://tinystepslearning.com/pricing"
         jsonLd={offerCatalog}
       />

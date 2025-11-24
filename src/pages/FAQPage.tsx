@@ -67,7 +67,7 @@ const FAQPage: FC = () => {
 
   return (
     <div className="page-gradient min-h-screen">
-      <Meta title="FAQ | Tiny Steps Online School" description="Answers to your questions about phonics, grammar & public speaking. Parents’ top queries covered in one place." canonical="https://tinystepslearning.com/faq" jsonLd={faqSchema} />
+      <Meta title="FAQ | Tiny Steps Online School" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/faq" jsonLd={faqSchema} />
       <section className="px-6 pt-24 pb-10">
         <div className="mx-auto max-w-4xl glass-panel soft-grid px-8 py-10 text-center">
           <div className="gradient-chip mx-auto w-max">Help centre</div>

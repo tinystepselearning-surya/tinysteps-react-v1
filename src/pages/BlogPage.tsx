@@ -55,7 +55,7 @@ const BlogPage: FC = () => {
 
   return (
     <div className="bg-white">
-      <Meta title="Tiny Steps Blog | Insights for Indian Parents" description="Expert tips, research‑backed articles, and success stories for Indian parents. Phonics, grammar, and public speaking." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
+      <Meta title="Tiny Steps Blog | Insights for Indian Parents" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-6 text-center">
           <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Indian Parents</h1>

@@ -10,6 +10,8 @@ type MetaProps = {
   jsonLd?: Record<string, any> | Record<string, any>[];
 };
 
+const DEFAULT_DESCRIPTION = 'Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans.';
+
 const setTag = (name: string, content?: string) => {
   if (!content) return;
   let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
@@ -24,7 +26,7 @@ const setTag = (name: string, content?: string) => {
 const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }) => {
   useEffect(() => {
     if (title) document.title = title;
-    setTag('description', description);
+    setTag('description', description ?? DEFAULT_DESCRIPTION);
     setTag('keywords', keywords);
     if (canonical) {
       let link = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;

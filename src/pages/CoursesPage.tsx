@@ -57,7 +57,7 @@ const CoursesPage: FC = () => {
     <div className="page-gradient relative overflow-hidden">
       <Meta
         title="Online English Courses for Kids | Phonics, Grammar, Public Speaking"
-        description="Choose the perfect course for your child. 12‑week expert‑designed programs starting at ₹4,400/month. Free assessment."
+        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans."
         canonical="https://tinystepslearning.com/courses"
         jsonLd={{
           '@context': 'https://schema.org',

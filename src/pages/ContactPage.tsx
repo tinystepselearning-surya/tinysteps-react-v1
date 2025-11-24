@@ -21,7 +21,7 @@ const ContactPage: FC = () => {
   const { user } = useAuthStore();
   return (
     <div className="page-gradient min-h-screen">
-      <Meta title="Contact Tiny Steps Online School" description="Talk to us about phonics, grammar and public speaking programs. Call, WhatsApp or send a note—team replies in 12 hours." canonical="https://tinystepslearning.com/contact" />
+      <Meta title="Contact Tiny Steps Online School" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/contact" />
       <section className="relative px-6 pt-28 pb-12">
         <div className="mx-auto max-w-4xl text-center glass-panel soft-grid px-8 py-10">
           <div className="gradient-chip mx-auto w-max">We’re here for parents across India</div>

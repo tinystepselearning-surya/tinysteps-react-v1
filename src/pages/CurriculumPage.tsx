@@ -20,7 +20,7 @@ const CurriculumPage: FC = () => {
     <div className="page-gradient relative overflow-hidden">
       <Meta
         title="Online English Classes for Kids (Ages 3–12) | Tiny Steps"
-        description="Tiny Steps offers live 1-on-1 phonics, grammar and public speaking classes for children ages 3–12. Personalized plans, certified mentors, and measurable progress. Book a free trial."
+        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans."
         canonical="https://tinystepslearning.com/curriculum"
         jsonLd={[
           {
