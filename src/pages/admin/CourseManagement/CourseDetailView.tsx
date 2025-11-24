@@ -26,8 +26,8 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
     return <div className="text-center p-8">Course not found</div>;
   }
 
-  const activeEnrollments = enrollments.filter(e => e.status === 'active');
-  const completedEnrollments = enrollments.filter(e => e.status === 'completed');
+    const activeEnrollments = enrollments.filter((e: { status: string }) => e.status === 'active');
+    const completedEnrollments = enrollments.filter((e: { status: string }) => e.status === 'completed');
 
   return (
     <div className="space-y-6">
@@ -159,9 +159,9 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
                 <div>
                   <label className="text-sm font-medium">Topics</label>
                   <div className="flex flex-wrap gap-2 mt-1">
-                    {course.topics.map((topic: string, index: number) => (
-                      <Badge key={index} variant="outline">{topic}</Badge>
-                    ))}
+                      {course.topics.map((topic: string, index: number) => (
+                        <Badge key={index} variant="outline">{topic}</Badge>
+                      ))}
                   </div>
                 </div>
               )}
@@ -203,8 +203,8 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
                   </TableHeader>
                   <TableBody>
                     {topics
-                      .sort((a, b) => (a.sequenceNumber || 0) - (b.sequenceNumber || 0))
-                      .map((topic) => (
+                      .sort((a: any, b: any) => (a.sequenceNumber || 0) - (b.sequenceNumber || 0))
+                      .map((topic: any) => (
                         <TableRow key={topic.id}>
                           <TableCell>{topic.sequenceNumber}</TableCell>
                           <TableCell className="font-medium">{topic.name}</TableCell>
@@ -242,7 +242,7 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {enrollments.map((enrollment) => (
+                    {enrollments.map((enrollment: any) => (
                       <TableRow key={enrollment.id}>
                         <TableCell className="font-medium">
                           {enrollment.kidIds?.join(', ') || 'Unknown Students'}

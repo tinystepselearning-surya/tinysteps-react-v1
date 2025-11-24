@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Conversation, Message } from '../types/Teacher';
-import { Conversation, Message } from '../types/Teacher';
 
 export const useMessages = (teacherId?: string) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -35,7 +34,7 @@ export const useMessages = (teacherId?: string) => {
         const msgs: Message[] = [];
         const convMap = new Map<string, Conversation>();
 
-        snapshot.forEach((doc) => {
+        snapshot.forEach((doc: any) => {
           const msg = { id: doc.id, ...doc.data() } as Message;
           msgs.push(msg);
 

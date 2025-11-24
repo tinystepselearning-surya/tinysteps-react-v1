@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Enrollment, Invoice, ProgressItem, Session, AttendanceRecord, Course, Topic } from '../types/models';
+import type { Timestamp } from 'firebase/firestore';
 
 export interface KidRecord {
   id: string;
@@ -68,7 +69,7 @@ export function useKidAttendance(kidId: string, monthStart: string) {
         const attendanceRef = collection(db, 'attendance', sessionDoc.id, 'attendanceRecords');
         const attQ = query(attendanceRef, where('kidId', '==', kidId));
         const attSnap = await getDocs(attQ);
-        attSnap.forEach((d) => {
+        attSnap.forEach((d: any) => {
           const data = d.data() as AttendanceRecord;
           const markedAt = data.markedAt as Timestamp | undefined;
           const dateStr = markedAt ? markedAt.toDate().toISOString().split('T')[0] : undefined;
@@ -141,7 +142,7 @@ export function useEnrollments(parentId: string) {
       const courseIds = new Set<string>();
       const teacherIds = new Set<string>();
 
-      snap.docs.forEach((d) => {
+      snap.docs.forEach((d: any) => {
         const enrollment = d.data() as Enrollment;
         (enrollment.kidIds || []).forEach((k) => allKidIds.add(k));
         if (enrollment.courseId) courseIds.add(enrollment.courseId);
@@ -206,11 +207,11 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
       for (const c of chunks) {
         const q1 = query(collection(db, 'enrollments'), where('studentId', 'in', c));
         const snap1 = await getDocs(q1);
-        snap1.docs.forEach((d) => allResults.push({ id: d.id, ...(d.data() as any) }));
+        snap1.docs.forEach((d: any) => allResults.push({ id: d.id, ...(d.data() as any) }));
         // also check kidIds array contains any
         const q2 = query(collection(db, 'enrollments'), where('kidIds', 'array-contains-any', c));
         const snap2 = await getDocs(q2);
-        snap2.docs.forEach((d) => allResults.push({ id: d.id, ...(d.data() as any) }));
+        snap2.docs.forEach((d: any) => allResults.push({ id: d.id, ...(d.data() as any) }));
       }
       // dedupe by id
       const uniqueResults: any[] = [];
@@ -226,7 +227,7 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
       // Prefetch courses and teachers
       const courseIds = new Set<string>();
       const teacherIds = new Set<string>();
-      allResults.forEach((enr) => {
+      allResults.forEach((enr: any) => {
         if (enr.courseId) courseIds.add(enr.courseId);
         if (enr.teacherId) teacherIds.add(enr.teacherId);
       });
@@ -238,7 +239,7 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
         for (const c of idChunks) {
           const qd = query(collection(db, collectionName), where(documentId(), 'in', c));
           const s = await getDocs(qd);
-          s.docs.forEach((d) => map.set(d.id, d.data()));
+            s.docs.forEach((d: any) => map.set(d.id, d.data()));
         }
         return map;
       };
@@ -248,7 +249,7 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
         batchFetch('users', Array.from(teacherIds)),
       ]);
 
-  const results = allResultsFinal.map((e) => ({ id: e.id, ...e, course: coursesMap.get(e.courseId) || null, teacher: teachersMap.get(e.teacherId) || null }));
+  const results = allResultsFinal.map((e: any) => ({ id: e.id, ...e, course: coursesMap.get(e.courseId) || null, teacher: teachersMap.get(e.teacherId) || null }));
 
       try {
         if (!(globalThis as any).__enrollmentsCache) (globalThis as any).__enrollmentsCache = new Map();
@@ -294,22 +295,22 @@ export function useCourses(filters?: { area?: string; level?: number; status?: s
       // Note: Firestore doesn't support complex filtering in a single query
       // We'll fetch all and filter client-side for now
       const snap = await getDocs(q);
-      let courses = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Course) }));
+      let courses = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as Course) }));
       
       // Apply filters
       if (filters) {
         if (filters.area) {
-          courses = courses.filter(c => c.area === filters.area);
+          courses = courses.filter((c: any) => c.area === filters.area);
         }
         if (filters.level) {
-          courses = courses.filter(c => c.level === filters.level);
+          courses = courses.filter((c: any) => c.level === filters.level);
         }
         if (filters.status) {
-          courses = courses.filter(c => c.status === filters.status);
+          courses = courses.filter((c: any) => c.status === filters.status);
         }
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
-          courses = courses.filter(c => 
+          courses = courses.filter((c: any) => 
             c.name.toLowerCase().includes(searchLower) || 
             c.description.toLowerCase().includes(searchLower)
           );

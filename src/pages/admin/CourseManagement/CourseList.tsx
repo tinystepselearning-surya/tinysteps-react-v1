@@ -156,11 +156,11 @@ export default function CourseList({
           
           <div className="md:col-span-2">
             <label className="text-sm font-medium">Search</label>
-            <Input 
-              placeholder="Search courses..." 
-              value={filters.search}
-              onChange={(e) => setFilters({...filters, search: e.target.value})}
-            />
+                <Input 
+                  placeholder="Search courses..." 
+                  value={filters.search}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFilters({...filters, search: e.target.value})}
+                />
           </div>
         </div>
       </Card>
@@ -193,7 +193,7 @@ export default function CourseList({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedCourses.map((course) => (
+                {paginatedCourses.map((course: any) => (
               <CourseRow 
                 key={course.id} 
                 course={course} 
@@ -247,7 +247,7 @@ interface CourseRowProps {
 
 function CourseRow({ course, onView, onEdit, onDelete }: CourseRowProps) {
   const { data: enrollments = [] } = useCourseEnrollments(course.id || '');
-  const activeStudents = enrollments.filter(e => e.status === 'active').length;
+  const activeStudents = enrollments.filter((e: any) => e.status === 'active').length;
 
   const getAreaColor = (area: string) => {
     switch (area) {

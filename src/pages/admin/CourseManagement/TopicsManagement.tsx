@@ -182,7 +182,7 @@ export default function TopicsManagement({ courseId, onBack }: TopicsManagementP
           </TableRow>
         </TableHeader>
         <TableBody>
-          {topics.map((topic, index) => (
+          {topics.map((topic: any, index: number) => (
             <TableRow key={topic.id}>
               <TableCell>
                 <div className="flex gap-1">
@@ -235,7 +235,7 @@ export default function TopicsManagement({ courseId, onBack }: TopicsManagementP
               <label className="text-sm font-medium">Topic Name</label>
               <Input 
                 value={formData.name} 
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, name: e.target.value})}
                 placeholder="e.g., Phoneme 'A'"
               />
             </div>
@@ -243,7 +243,7 @@ export default function TopicsManagement({ courseId, onBack }: TopicsManagementP
               <label className="text-sm font-medium">Description</label>
               <Textarea 
                 value={formData.description} 
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, description: e.target.value})}
                 placeholder="Describe what students will learn..."
               />
             </div>
@@ -253,7 +253,7 @@ export default function TopicsManagement({ courseId, onBack }: TopicsManagementP
                 <Input 
                   type="number"
                   value={formData.sequenceNumber} 
-                  onChange={(e) => setFormData({...formData, sequenceNumber: parseInt(e.target.value) || 1})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, sequenceNumber: parseInt(e.target.value) || 1})}
                 />
               </div>
               <div>
@@ -261,17 +261,17 @@ export default function TopicsManagement({ courseId, onBack }: TopicsManagementP
                 <Input 
                   type="number"
                   value={formData.estimatedMinutes} 
-                  onChange={(e) => setFormData({...formData, estimatedMinutes: parseInt(e.target.value) || 15})}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, estimatedMinutes: parseInt(e.target.value) || 15})}
                 />
               </div>
             </div>
             <div>
               <label className="text-sm font-medium">Target Mastery (%)</label>
-              <Input 
-                type="number"
-                value={formData.targetMastery} 
-                onChange={(e) => setFormData({...formData, targetMastery: parseInt(e.target.value) || 80})}
-              />
+                <Input 
+                  type="number"
+                  value={formData.targetMastery} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({...formData, targetMastery: parseInt(e.target.value) || 80})}
+                />
             </div>
           </div>
           <DialogFooter>
