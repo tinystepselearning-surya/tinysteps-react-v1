@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { motion } from 'framer-motion';
 const metrics = [
     { value: '3500+', label: 'Learners guided since 2020', detail: 'Personalised phonics, grammar & public speaking plans' },
-    { value: '8 countries', label: 'Live cohorts worldwide', detail: 'India • US • UK • Canada • Singapore • Malaysia • Vietnam • UAE • Australia' },
+    { value: '9 countries', label: 'Live cohorts worldwide', detail: 'India • US • UK • Canada • Singapore • Malaysia • Vietnam • UAE • Australia' },
     { value: '95% satisfaction', label: 'Parent happiness score', detail: 'Weekly AI progress mails + WhatsApp mentor access' },
     { value: '< 6 hrs', label: 'Advisor response time', detail: 'Dedicated WhatsApp line + 1:1 onboarding call' }
 ];

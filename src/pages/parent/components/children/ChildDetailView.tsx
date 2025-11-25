@@ -200,7 +200,7 @@ const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
                   <div>
                     <p className="font-medium">Nov 15, 2025 - 4:00 PM</p>
                     <p className="text-sm text-gray-600">Phonics Level 2</p>
-                    <p className="text-sm text-gray-600">Teacher: Teacher Name</p>
+                    <p className="text-sm text-gray-600">Teacher: Anjali Varma</p>
                   </div>
                   <div className="text-right">
                     <Badge variant="default">Completed</Badge>

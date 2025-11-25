@@ -7,7 +7,7 @@ const ConversionHero: React.FC = () => {
   return (
     <section
       data-animate="fade-up"
-      className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffe6cc,_#fff8ec,_#dff2ff_70%)] py-20 md:py-28"
+      className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffe6cc,_#fff8ec,_#dff2ff_70%)] pt-10 pb-16 md:pt-12 md:pb-20 lg:pt-14 lg:pb-24"
     >
       <div className="pointer-events-none absolute inset-0 opacity-30">
         <div
@@ -32,122 +32,107 @@ const ConversionHero: React.FC = () => {
         />
       </div>
 
-      <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-10 px-6 text-left lg:grid-cols-[1.05fr_0.95fr]">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1 text-sm font-semibold text-gray-700 shadow-sm">
-            Tiny Steps • Foundations Forever
-          </div>
-          <motion.h1
-            className="font-heading text-4xl font-extrabold text-gray-900 md:text-5xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            IB-aligned Phonics, Grammar & Public Speaking for Ages 3–12.
-            <span className="block bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] bg-clip-text text-3xl text-transparent md:text-4xl">
-              Live 1:1 mentors. Kind teachers. Smart AI support. Confident, clear speakers in just a few weeks.
-            </span>
-          </motion.h1>
-          <motion.p
-            className="mt-4 max-w-2xl text-lg text-gray-700"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-          >
-            3500+ children across India, the US, UK, Canada, Singapore, Malaysia, Vietnam, UAE and Australia
-            learn with Tiny Steps. Our AI engine suggests the right activities for each child and sends parents
-            simple weekly progress updates.
-          </motion.p>
-          <motion.div
-            className="mt-6 flex flex-col gap-3 sm:flex-row"
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            <Button
-              size="lg"
-              aria-label="Book a free Tiny Steps assessment class"
-              onClick={() => {
-                trackEvent('cta_click', { location: 'hero', label: 'book_free_assessment_class' });
-                document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
-              }}
+      <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-16">
+          <div>
+            <div className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-1 text-xs font-medium tracking-wide text-slate-900/80 shadow-sm backdrop-blur">
+              Tiny Steps • Foundations Forever
+            </div>
+            <motion.h1
+              className="mt-6 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] leading-tight max-w-3xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
             >
-              Book Free Assessment Class
-            </Button>
-            <p className="mt-2 text-sm text-gray-600">
-              20-minute Zoom session · No payment · See if Tiny Steps is right for your child
-            </p>
-          </motion.div>
-
-          <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-gray-700">
-            {[
-              { label: 'Live 1:1 mentors', target: 'one-to-one-pricing' },
-              { label: 'AI learning paths', target: 'ai-learning-paths' },
-              { label: 'Parent insights dashboard', target: 'parent-insights' },
-            ].map(({ label, target }) => (
-              <button
-                key={label}
-                className="rounded-full bg-white/80 px-3 py-1"
+              IB-aligned Phonics,
+              <br className="hidden md:block" />
+              Grammar &amp; Public Speaking
+              <br className="hidden md:block" />
+              for Ages{' '}
+              <span className="whitespace-nowrap">3–12.</span>
+            </motion.h1>
+            <motion.p
+              className="mt-4 text-base sm:text-lg text-slate-700 max-w-xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              @ Tiny Steps, our AI engine suggests the right activities for each child and sends parents
+              simple weekly progress updates.
+            </motion.p>
+            <motion.div
+              className="mt-6 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+            >
+              <Button
+                size="lg"
+                className="text-sm"
+                aria-label="Book a free Tiny Steps assessment class"
                 onClick={() => {
-                  document.getElementById(target)?.scrollIntoView({ behavior: 'smooth' });
+                  trackEvent('cta_click', { location: 'hero', label: 'book_free_assessment_class' });
+                  document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                aria-label={`Scroll to ${label}`}
               >
-                {label}
-              </button>
-            ))}
-          </div>
+                Book Free Assessment
+              </Button>
+              <p className="mt-2 text-sm text-gray-600">
+                35-minute Session · No payment · See if Tiny Steps is right for your child
+              </p>
+            </motion.div>
 
-          <div className="mt-5 space-y-3 text-sm text-gray-600">
-            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-              <span>3500+ students</span>
-              <span className="text-xs text-gray-500">Guided since 2020</span>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-              <span>95% parent satisfaction</span>
-              <span className="text-xs text-gray-500">Based on post-class surveys</span>
-            </div>
-            <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-              <span>AI-driven curriculum</span>
-              <span className="text-xs text-gray-500">Weekly adaptive plan</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="relative">
-          <div className="rounded-[32px] bg-white/90 p-6 shadow-[0_20px_45px_rgba(255,143,92,0.25)]">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm uppercase tracking-widest text-gray-500">
-                  Free assessment class
-                </div>
-                <div className="text-2xl font-bold text-gray-900">
-                  Book a 1:1 demo at your convenient time this week
-                </div>
-              </div>
-              <span className="rounded-full bg-[#ffe8c2] px-3 py-1 text-xs font-semibold text-[#ff8f5c]">
-                Watch preview
-              </span>
-            </div>
             <div className="mt-5 space-y-3 text-sm text-gray-600">
               <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                <span>🧠 AI-guided practice plan</span>
-                <span className="text-xs text-gray-500">AI suggests the right activities each week (currently curated + reviewed by human mentors)</span>
+                <span>3500+ students</span>
+                <span className="text-xs text-gray-500">Guided since 2020</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                <span>📈 Parent dashboard</span>
-                <span className="text-xs text-gray-500">Weekly insights</span>
+                <span>95% parent satisfaction</span>
+                <span className="text-xs text-gray-500">Based on post-class surveys</span>
               </div>
               <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                <span>🌍 Countries</span>
-                <span className="text-xs text-gray-500">
-                  IN • US • UK • CA • SG • MY • VN • UAE • AU
-                </span>
+                <span>AI-driven curriculum</span>
+                <span className="text-xs text-gray-500">Weekly adaptive plan</span>
               </div>
             </div>
-            <div className="mt-5 rounded-2xl border border-dashed border-gray-200 p-4 text-xs text-gray-600">
-              Each session is structured, distraction-free, and focused on building your child&apos;s confidence—plus
-              regular updates for parents.
+          </div>
+
+          <div className="w-full max-w-md lg:justify-self-end lg:self-start">
+            <div className="w-full max-w-md rounded-3xl bg-white shadow-xl shadow-slate-900/5 border border-slate-100 p-6 sm:p-7 lg:p-8 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm uppercase tracking-widest text-gray-500">
+                    Free assessment class
+                  </div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    Book a 1:1 demo at your convenient time this week
+                  </div>
+                </div>
+                <span className="rounded-full bg-[#ffe8c2] px-3 py-1 text-xs font-semibold text-[#ff8f5c]">
+                  Watch preview
+                </span>
+              </div>
+              <div className="mt-5 space-y-3 text-sm text-gray-600">
+                <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                  <span>🧠 AI-guided practice plan</span>
+                  <span className="text-xs text-gray-500">AI suggests the right activities each week (currently curated + reviewed by human mentors)</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                  <span>📈 Parent dashboard</span>
+                  <span className="text-xs text-gray-500">Weekly insights</span>
+                </div>
+                <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
+                  <span>🌍 Countries</span>
+                  <span className="text-xs text-gray-500">
+                    IN • US • UK • CA • SG • MY • VN • UAE • AU
+                  </span>
+                </div>
+              </div>
+              <div className="mt-5 rounded-2xl border border-dashed border-gray-200 p-4 text-xs text-gray-600">
+                Each session is structured, distraction-free, and focused on building your child&apos;s confidence—plus
+                regular updates for parents.
+              </div>
             </div>
           </div>
         </div>

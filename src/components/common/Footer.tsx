@@ -55,7 +55,7 @@ const Footer = () => {
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-tiny-blue-500 to-tiny-purple-500 flex items-center justify-center font-bold">TS</div>
               <div>
                 <div className="font-semibold text-white">Tiny Steps • Foundations Forever</div>
-                <p className="text-xs text-white/70">Hyderabad • Serving families PAN India</p>
+                <p className="text-xs text-white/70">Hyderabad • Serving families across globe</p>
                 <p className="text-xs text-white/70">Established 2020</p>
               </div>
             </div>
@@ -103,7 +103,7 @@ const Footer = () => {
               <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-tiny-blue-300 transition">Email: hello@tinystepslearning.com</a></li>
               <li className="text-xs text-white/60">Hours: Mon–Fri 9 AM–6 PM • Sat 10 AM–2 PM</li>
             </ul>
-            <p className="text-xs text-white/60 mt-4">Made with ❤️ in India</p>
+            <p className="text-xs text-white/60 mt-4">Made with ❤️ by Surya</p>
           </div>
         </div>
 
