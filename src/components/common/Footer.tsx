@@ -55,11 +55,13 @@ const Footer = () => {
               <div className="h-10 w-10 rounded-full bg-gradient-to-br from-tiny-blue-500 to-tiny-purple-500 flex items-center justify-center font-bold">TS</div>
               <div>
                 <div className="font-semibold text-white">Tiny Steps • Foundations Forever</div>
-                <p className="text-xs text-white/70">Hyderabad • Serving families across globe</p>
-                <p className="text-xs text-white/70">Established 2020</p>
+                <p className="text-sm text-gray-500">
+                  Tiny Steps • Foundations Forever<br />
+                  Hyderabad • Serving families across the globe
+                </p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 8 countries, 95% satisfaction. Foundations today, confidence forever.</p>
+            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 9 countries, 95% satisfaction. Foundations today, confidence forever.</p>
             <div className="mt-4 flex gap-4">
               {socialLinks.map((link) => (
                 <a key={link.label} href={link.href} className="text-white/70 hover:text-white transition" aria-label={link.label}>
@@ -103,7 +105,9 @@ const Footer = () => {
               <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-tiny-blue-300 transition">Email: hello@tinystepslearning.com</a></li>
               <li className="text-xs text-white/60">Hours: Mon–Fri 9 AM–6 PM • Sat 10 AM–2 PM</li>
             </ul>
-            <p className="text-xs text-white/60 mt-4">Made with ❤️ by Surya</p>
+            <p className="mt-2 text-sm text-gray-500">
+              Made with ❤️ by Surya
+            </p>
           </div>
         </div>
 
