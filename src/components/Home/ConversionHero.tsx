@@ -83,18 +83,7 @@ const ConversionHero: React.FC = () => {
             </motion.div>
 
             <div className="mt-5 space-y-3 text-sm text-gray-600">
-              <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                <span>3500+ students</span>
-                <span className="text-xs text-gray-500">Guided since 2020</span>
-              </div>
-              <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                <span>95% parent satisfaction</span>
-                <span className="text-xs text-gray-500">Based on post-class surveys</span>
-              </div>
-              <div className="flex items-center justify-between rounded-2xl bg-gray-50 px-4 py-3">
-                <span>AI-driven curriculum</span>
-                <span className="text-xs text-gray-500">Weekly adaptive plan</span>
-              </div>
+              {/* Removed repetitive stats */}
             </div>
           </div>
 
