@@ -106,7 +106,7 @@ const Footer = () => {
               <li className="text-xs text-white/60">Hours: Mon–Fri 9 AM–6 PM • Sat 10 AM–2 PM</li>
             </ul>
             <p className="mt-2 text-sm text-gray-500">
-              Made with ❤️ by Surya
+              Built with ❤️ by Surya
             </p>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import TestimonialsCarousel from './TestimonialsCarousel';
 const items = [
     { value: '3500+', label: 'Learners guided since 2020' },
-    { value: '8 countries', label: 'India • US • UK • Canada • Singapore • Malaysia • Vietnam • UAE • Australia' },
+    { value: '9 countries', label: 'India • US • UK • Canada • Singapore • Malaysia • Vietnam • UAE • Australia' },
     { value: '95%', label: 'Parents see visible improvement in 12 weeks' },
     { value: '4.9/5', label: 'Average parent satisfaction rating' }
 ];
