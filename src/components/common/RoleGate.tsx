@@ -1,11 +1,11 @@
 // src/components/common/RoleGate.tsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useEffect } from 'react';
 import useAuth from '../../hooks/useAuth';
 import { isSuperUserEmail } from '../../constants/accessControl';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
 export type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
 
@@ -20,14 +20,30 @@ const RoleGate: React.FC<RoleGateProps> = ({
   loginPath = '/login',
   unauthorizedPath = '/unauthorized',
 }) => {
-  // Ensure auth listener is initialized when RoleGate mounts — this avoids
-  // initializing Firebase on purely public pages.
   useAuth();
   const { user, isLoading } = useAuthStore();
   const location = useLocation();
+  const [latestRole, setLatestRole] = useState<Role | null>(null);
+
+  useEffect(() => {
+    const fetchLatestRole = async () => {
+      if (user?.uid) {
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data();
+          setLatestRole(data.role as Role);
+        }
+      }
+    };
+
+    if (user) {
+      fetchLatestRole();
+    }
+  }, [user]);
 
   // 1) While auth is loading, show soft loader
-  if (isLoading) {
+  if (isLoading || (user && !latestRole)) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -49,7 +65,7 @@ const RoleGate: React.FC<RoleGateProps> = ({
   }
 
   // 3) Determine role & superuser
-  const userRole = user.role as Role | undefined;
+  const userRole = latestRole || (user.role as Role | undefined);
   const superUser = user.email ? isSuperUserEmail(user.email) : false;
   const canAccess =
     superUser || (!!userRole && allowedRoles.includes(userRole));

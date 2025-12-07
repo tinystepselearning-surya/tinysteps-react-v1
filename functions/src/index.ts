@@ -10,6 +10,15 @@ import { onCall, HttpsError, onRequest } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import * as admin from 'firebase-admin';
 
+// Ensure admin SDK talks to emulators when running locally so emulator-issued
+// ID tokens verify correctly (avoids "invalid signature" errors).
+if (process.env.FUNCTIONS_EMULATOR === 'true') {
+  process.env.FIREBASE_AUTH_EMULATOR_HOST =
+    process.env.FIREBASE_AUTH_EMULATOR_HOST || '127.0.0.1:9099';
+  process.env.FIRESTORE_EMULATOR_HOST =
+    process.env.FIRESTORE_EMULATOR_HOST || '127.0.0.1:8085';
+}
+
 // Limit max instances per function (cost + safety)
 setGlobalOptions({ maxInstances: 10 });
 
@@ -110,7 +119,10 @@ async function ensureAdmin(auth: any) {
       callerUid,
       error: String(err),
     });
-    throw new HttpsError('permission-denied', 'Admin access required');
+    // Throw a standard error for HTTP functions
+    const httpError = new Error('Admin access required');
+    (httpError as any).code = 'permission-denied';
+    throw httpError;
   }
 }
 
@@ -145,65 +157,48 @@ export async function setUserRoleHandler(
     // Get current role for logging
     let oldRole = 'none';
     try {
-      const user = await admin.auth().getUser(uid);
-      oldRole = (user.customClaims?.role as string) || 'none';
-    } catch {
-      logger.info(
-        `setUserRole: user ${uid} not found or no custom claims; proceeding`
-      );
+      const userDoc = await admin.firestore().collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        oldRole = userDoc.data()?.role || 'none';
+      }
+    } catch (err) {
+      logger.warn('Failed to fetch current role for user', { uid, error: String(err) });
     }
 
-    // Set custom claims
-    const customClaims = {
-      admin: role === 'admin',
-      teacher: role === 'teacher',
-      parent: role === 'parent',
-      kid: role === 'kid',
-      learningPartner: role === 'learningPartner',
+    // Update Firestore
+    await admin.firestore().collection('users').doc(uid).update({
       role,
-    };
+      roles: admin.firestore.FieldValue.arrayUnion(role),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
 
+    // Update custom claims
+    const customClaims = { role, [role]: true };
     await admin.auth().setCustomUserClaims(uid, customClaims);
 
-    logger.info('Role updated', {
+    logger.info('setUserRole: Updated user role and claims', {
       uid,
       oldRole,
       newRole: role,
-      changedBy: auth?.uid,
-      timestamp: now,
     });
 
-    const response: SetUserRoleSuccessResponse = {
+    return {
       success: true,
       uid,
       role,
-      message: `User role updated successfully to ${role}`,
+      message: `Role updated from ${oldRole} to ${role}`,
       timestamp: now,
     };
-    return response;
   } catch (error: any) {
-    const httpError = error as HttpsError;
-    if (httpError && (httpError as any).code) {
-      const errorResponse: SetUserRoleErrorResponse = {
-        success: false,
-        error: httpError.message,
-        code: (httpError as any).code,
-      };
-      return errorResponse;
-    }
-
-    logger.error('Unexpected error in setUserRole', {
-      error: String(error),
-      data,
-      caller: auth?.uid,
+    logger.error('setUserRole: Failed to update role', {
+      error: error.message || String(error),
     });
 
-    const errorResponse: SetUserRoleErrorResponse = {
+    return {
       success: false,
-      error: 'An unexpected error occurred. Please try again.',
-      code: 'internal',
+      error: error.message || 'Unknown error',
+      code: error.code || 'unknown',
     };
-    return errorResponse;
   }
 }
 
@@ -312,6 +307,96 @@ export const adminResetPassword = onCall(
   }
 );
 
+// ---------- adminDeleteUser ----------
+
+export const adminDeleteUser = onRequest(
+  {
+    region: 'asia-south1',
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (request, response) => {
+    // Always set CORS headers (even on errors) so the browser accepts the response
+    const origin = request.headers.origin;
+    if (origin && ['http://localhost:5173', 'http://localhost:5175', 'http://localhost:5176'].includes(origin)) {
+      response.set('Access-Control-Allow-Origin', origin);
+    }
+    response.set('Vary', 'Origin');
+    response.set('Access-Control-Allow-Methods', 'POST,OPTIONS');
+    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    response.set('Access-Control-Allow-Credentials', 'true');
+
+    // Short-circuit preflight before any auth/logic
+    if (request.method === 'OPTIONS') {
+      response.status(204).send('');
+      return;
+    }
+
+    // Reject other HTTP verbs
+    if (request.method !== 'POST') {
+      response.status(405).send({ error: 'Method Not Allowed' });
+      return;
+    }
+
+    try {
+      const now = new Date().toISOString();
+
+      // Ensure admin authentication
+      const authHeader = request.headers.authorization || '';
+      const idToken = authHeader.startsWith('Bearer ')
+        ? authHeader.split('Bearer ')[1]
+        : null;
+
+      if (!idToken) {
+        logger.warn('adminDeleteUser: Missing Authorization header');
+        response.status(401).send({ error: 'Unauthorized: Missing token' });
+        return;
+      }
+
+      const decodedToken = await admin.auth().verifyIdToken(idToken);
+      await ensureAdmin({ uid: decodedToken.uid, token: decodedToken });
+
+      // Parse request body
+      const { uid } = request.body as { uid?: string };
+
+      if (!uid || typeof uid !== 'string' || uid.length !== 28) {
+        logger.warn('adminDeleteUser: Invalid UID in request body', { uid });
+        response.status(400).send({ error: 'Invalid uid: must be a 28-character string' });
+        return;
+      }
+
+      // Delete from Firebase Auth
+      await admin.auth().deleteUser(uid);
+
+      logger.info('adminDeleteUser: deleted user from Auth', {
+        uid,
+        deletedBy: decodedToken.uid,
+        timestamp: now,
+      });
+
+      // Also delete from Firestore 'users' collection
+      const userDocRef = admin.firestore().collection('users').doc(uid);
+      await userDocRef.delete();
+      logger.info('adminDeleteUser: deleted user from Firestore', { uid });
+
+      response.status(200).send({ success: true, message: 'User deleted successfully' });
+    } catch (error: any) {
+      logger.error('Unexpected error in adminDeleteUser', {
+        error: String(error),
+        code: error.code,
+      });
+
+      if (error.code === 'auth/user-not-found') {
+        response.status(404).send({ error: 'User not found' });
+      } else if (error.code === 'permission-denied' || error.code === 'unauthenticated') {
+        response.status(403).send({ error: 'Permission denied' });
+      } else {
+        response.status(500).send({ error: 'Failed to delete user', details: error.message });
+      }
+    }
+  }
+);
+
 // ---------- Re-exports from other modules ----------
 
 export { adminCreateUser } from './adminCreateUser';
@@ -370,6 +455,7 @@ export const subscribeNewsletter = onCall(
 export { checkSubscriptionAccess } from './checkSubscriptionAccess';
 export { fetchAdminStats } from './fetchAdminStats';
 export { soundDetectiveRound } from './soundDetective';
+export { askTinySteps } from './ai/askTinySteps';
 
 // ---------- groqKidIdea (callable for real-time use) ----------
 
@@ -565,3 +651,44 @@ export const testGroq = onRequest(
     }
   }
 );
+
+// ---------- suspendUserHandler ----------
+
+export async function suspendUserHandler(
+  request: any
+): Promise<{ success: boolean; message: string }> {
+  const { data, auth } = request;
+
+  try {
+    await ensureAdmin(auth);
+
+    const { uid } = data;
+
+    if (!uid || typeof uid !== 'string' || uid.length !== 28) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Invalid uid: must be a 28-character string'
+      );
+    }
+
+    // Update Firestore to set status as suspended
+    await admin.firestore().collection('users').doc(uid).update({
+      status: 'suspended',
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Update custom claims to include suspended status
+    const customClaims = { status: 'suspended' };
+    await admin.auth().setCustomUserClaims(uid, customClaims);
+
+    logger.info('suspendUserHandler: User suspended successfully', { uid });
+
+    return { success: true, message: 'User suspended successfully' };
+  } catch (error: any) {
+    logger.error('suspendUserHandler: Failed to suspend user', {
+      error: error.message || String(error),
+    });
+
+    return { success: false, message: error.message || 'Unknown error' };
+  }
+}

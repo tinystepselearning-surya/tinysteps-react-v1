@@ -2,10 +2,20 @@ import * as functions from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+
 // Initialize Firebase Admin SDK
-if (!admin.apps.length) {
+let prodApp: admin.app.App;
+if (admin.apps.length === 0) {
+  // Default app for emulators
   admin.initializeApp();
 }
+// Separate app instance to force connection to production
+prodApp = admin.initializeApp({
+  credential: admin.credential.applicationDefault(),
+  databaseURL: `https://${process.env.GCLOUD_PROJECT}.firebaseio.com`,
+}, 'production-app-for-admin-create');
 
 // Type definitions
 interface AdminCreateUserRequest {
@@ -225,7 +235,9 @@ async function adminCreateUserHandlerImpl(
 
     // Step 3: Check Email Uniqueness
     try {
-      const existingUser = await admin.auth().getUserByEmail(requestData.email);
+      // Use the production Auth instance to check for existing users
+      const prodAuth = getAuth(prodApp);
+      const existingUser = await prodAuth.getUserByEmail(requestData.email);
       throw new functions.https.HttpsError(
         'already-exists',
         `User with email ${requestData.email} already exists. UID: ${existingUser.uid}`
@@ -246,7 +258,9 @@ async function adminCreateUserHandlerImpl(
     // Step 4: Create User in Firebase Auth
     let newUser;
     try {
-      newUser = await admin.auth().createUser({
+      // Use the production Auth instance for user creation
+      const prodAuth = getAuth(prodApp);
+      newUser = await prodAuth.createUser({
         email: requestData.email,
         displayName: requestData.displayName,
         disabled: false,

@@ -28,7 +28,11 @@ const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
 const TopicsSeedPicklistPage = lazy(() => import('../pages/admin/TopicsSeedPicklistPage'));
 const TeacherStudentTopicProgressPage = lazy(() => import('../pages/teacher/TeacherStudentTopicProgressPage'));
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
+const LessonLibraryPage = lazy(() => import('../pages/teacher/LessonLibraryPage'));
+const SeedTeacherUserPage = lazy(() => import('../pages/dev/SeedTeacherUserPage'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
+const ParentProfile = lazy(() => import('../pages/parent/Profile'));
+const ParentPayments = lazy(() => import('../pages/parent/Payments'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
 const BetaAnalytics = lazy(
   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -107,6 +111,14 @@ const router = createBrowserRouter(
         { path: 'kid/login', element: <Navigate to="/parent/login" replace /> },
         { path: 'unauthorized', element: <UnauthorizedPage /> },
 
+        // Dev helper: seed current auth user as teacher (DEV only)
+        { path: 'dev/seed-teacher', element: <SeedTeacherUserPage /> },
+        // Also accept an absolute path variant in case the router resolves differently
+        { path: '/dev/seed-teacher', element: <SeedTeacherUserPage /> },
+        // Temporary dev test route to validate client routing quickly
+        { path: 'dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
+        { path: '/dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
+
         // ---------- Admin area – ONLY under /surya ----------
         {
           path: 'surya',
@@ -135,6 +147,7 @@ const router = createBrowserRouter(
           ),
           children: [
             { index: true, element: <TeacherDashboard /> },
+            { path: 'lessons', element: <LessonLibraryPage /> },
             {
               path: 'students/:kidId/topic-progress',
               element: <TeacherStudentTopicProgressPage />,
@@ -163,6 +176,8 @@ const router = createBrowserRouter(
           ),
           children: [
             { index: true, element: <ParentDashboard /> },
+            { path: 'profile', element: <ParentProfile /> },
+            { path: 'payments', element: <ParentPayments /> },
             { path: 'kids', element: <ParentDashboard /> },
             { path: 'payments/:invoiceId', element: <PhonePeCheckout /> },
             { path: 'payments/callback', element: <PaymentCallback /> },

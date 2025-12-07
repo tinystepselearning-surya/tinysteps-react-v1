@@ -46,6 +46,16 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
           variant="ghost"
           className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700"
         >
+          <a href={teacherId ? `/teacher/${teacherId}/lessons` : '/teacher/lessons'}>
+            Lesson Library
+          </a>
+        </Button>
+
+        <Button
+          asChild
+          variant="ghost"
+          className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700"
+        >
           <a href={teacherId ? `/teacher/${teacherId}/worksheet-generator` : '/teacher/worksheet-generator'}>
             Worksheet Generator ✨
           </a>

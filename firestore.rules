@@ -196,6 +196,16 @@ service cloud.firestore {
       // Admin: Read/Write all
       allow read, write: if isAdmin();
     }
+
+    // ===== TEACHER LESSONS COLLECTION =====
+    // Access: Teachers and Admins can read lessons. Only Admins can create/update/delete.
+    match /teacherLessons/{lessonId} {
+      // Allow read if the caller is a teacher or an admin.
+      allow read: if (isTeacher() || isAdmin());
+
+      // Allow only admins to create, update or delete teacher lesson documents.
+      allow create, update, delete: if isAdmin();
+    }
     
     // ===== ADMIN STATS COLLECTION =====
     match /adminStats/{document=**} {
