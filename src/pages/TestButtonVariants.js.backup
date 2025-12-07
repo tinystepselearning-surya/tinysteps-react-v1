@@ -1,0 +1,6 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Button } from "@components/ui/button";
+const TestButtonVariants = () => {
+    return (_jsxs("div", { className: "p-4 space-y-4", children: [_jsx("h1", { className: "text-xl font-bold", children: "Button Variants Test" }), _jsxs("div", { className: "space-x-2", children: [_jsx(Button, { variant: "default", children: "Default" }), _jsx(Button, { variant: "destructive", children: "Destructive" }), _jsx(Button, { variant: "outline", children: "Outline" }), _jsx(Button, { variant: "secondary", children: "Secondary" }), _jsx(Button, { variant: "ghost", children: "Ghost" }), _jsx(Button, { variant: "link", children: "Link" }), _jsx(Button, { variant: "cta", "aria-label": "Call to Action", children: "CTA" })] }), _jsxs("div", { className: "space-x-2", children: [_jsx(Button, { size: "sm", children: "Small" }), _jsx(Button, { size: "default", children: "Default" }), _jsx(Button, { size: "lg", children: "Large" }), _jsx(Button, { size: "icon", "aria-label": "Icon Button", children: _jsx("svg", { xmlns: "http://www.w3.org/2000/svg", fill: "none", viewBox: "0 0 24 24", strokeWidth: "1.5", stroke: "currentColor", className: "w-6 h-6", children: _jsx("path", { strokeLinecap: "round", strokeLinejoin: "round", d: "M12 4.5v15m7.5-7.5h-15" }) }) })] })] }));
+};
+export default TestButtonVariants;

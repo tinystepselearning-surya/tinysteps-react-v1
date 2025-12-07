@@ -10,29 +10,36 @@ import { vi } from 'vitest'
 vi.mock('firebase/auth', () => {
   // Provide both the named exports (connectAuthEmulator) and
   // a getAuth() that returns an `auth` object with `onAuthStateChanged`.
+  const mockUser = {
+    uid: 'test-admin-uid',
+    email: 'admin@example.com',
+    displayName: 'Test Admin',
+    // Some code calls getIdTokenResult() on the user; provide a simple mock
+    getIdTokenResult: async () => ({ claims: {} }),
+  }
+
   return {
     getAuth: () => ({
-      currentUser: { uid: 'test-admin-uid', email: 'admin@example.com' },
+      currentUser: mockUser,
       onAuthStateChanged: (cb: any) => {
-        // call callback immediately with a test user and return an unsubscribe fn
         try {
-          cb({ uid: 'test-admin-uid', email: 'admin@example.com' });
-        }
-        catch (e) {
+          cb(mockUser)
+        } catch (e) {
           // ignore
         }
-        return () => { };
+        return () => {}
       },
     }),
     // Provide emulator connector no-op so firebaseConfig can call it in tests
-    connectAuthEmulator: () => { },
+    connectAuthEmulator: () => {},
     // some code imports onAuthStateChanged directly; provide a noop implementation
     onAuthStateChanged: (auth: any, cb: any) => {
-      if (typeof cb === 'function') cb({ uid: 'test-admin-uid', email: 'admin@example.com' });
-      return () => { };
+      if (typeof cb === 'function') cb(mockUser)
+      return () => {}
     },
-  };
-});
+    signOut: async () => {},
+  }
+})
 // ---------------------------------------------------------------------------
 // 1) Disable Firebase Analytics in the test environment
 // ---------------------------------------------------------------------------
@@ -52,6 +59,21 @@ vi.mock('firebase/analytics', () => ({
 
 // Pretend IndexedDB is not available to silence analytics / persistence attempts.
 ;(globalThis as any).indexedDB = undefined
+
+// Ensure a working localStorage for the jsdom/vitest environment. Some
+// test utilities (and `zustand`'s `persist` middleware) call
+// `localStorage.setItem`/`getItem` during tests; make a minimal mock when
+// it's not already provided by the environment. Use plain JS (no type
+// annotations) to avoid transpilation/runtime edge cases.
+if (typeof (globalThis as any).localStorage === 'undefined' || typeof (globalThis as any).localStorage.setItem !== 'function') {
+  const store: Record<string, string> = {}
+  ;(globalThis as any).localStorage = {
+    getItem: (key: string) => (key in store ? (store as any)[key] : null),
+    setItem: (key: string, value: string) => { (store as any)[key] = String(value) },
+    removeItem: (key: string) => { delete (store as any)[key] },
+    clear: () => { Object.keys(store).forEach(k => delete (store as any)[k]) },
+  }
+}
 
 // ---------------------------------------------------------------------------
 // 2) Filter noisy console output from Firebase + React act() warnings

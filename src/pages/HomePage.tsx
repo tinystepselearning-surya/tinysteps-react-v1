@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { BookOpen, Users, CheckCircle, Star, MessageCircle } from 'lucide-react';
+import { useState } from 'react';
 import Footer from '../components/common/Footer';
 import ConversionHero from '../components/Home/ConversionHero';
 import WhyChooseCollapsibleSection from '../components/Home/WhyChooseCollapsibleSection';

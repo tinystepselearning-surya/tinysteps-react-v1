@@ -75,11 +75,17 @@ export default defineConfig({
   // may be bound to the loopback address. This resolves common "failed to connect to websocket" issues.
   server: {
     host: true,
-    port: 5173,
+    // Do not hardcode the dev server port or HMR port here. When the
+    // configured port is in use Vite will pick a free port; forcing an
+    // HMR port (5173) causes the client to try to connect to the wrong
+    // port and log "failed to connect to websocket" errors. Let Vite
+    // auto-configure HMR so it uses the actual server port.
+    //
+    // If you need to explicitly set HMR host in special environments,
+    // set `server.hmr.host` only and avoid hardcoding `port`.
     hmr: {
       host: 'localhost',
-      port: 5173,
-      protocol: 'ws'
+      protocol: 'ws',
     }
   }
 });
