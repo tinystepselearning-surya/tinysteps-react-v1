@@ -29,6 +29,7 @@ const TopicsSeedPicklistPage = lazy(() => import('../pages/admin/TopicsSeedPickl
 const TeacherStudentTopicProgressPage = lazy(() => import('../pages/teacher/TeacherStudentTopicProgressPage'));
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const LessonLibraryPage = lazy(() => import('../pages/teacher/LessonLibraryPage'));
+const DebugLessonLibrary = lazy(() => import('../pages/DebugLessonLibrary'));
 const SeedTeacherUserPage = lazy(() => import('../pages/dev/SeedTeacherUserPage'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const ParentProfile = lazy(() => import('../pages/parent/Profile'));
@@ -118,6 +119,12 @@ const router = createBrowserRouter(
         // Temporary dev test route to validate client routing quickly
         { path: 'dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
         { path: '/dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
+        // DEBUG: Direct lesson library test (bypasses all routing issues)
+        { path: 'debug-lessons', element: <DebugLessonLibrary /> },
+        // Temporary: public test route for Lesson Library (bypasses RoleGate)
+        { path: 'teacher/lessons-test', element: <LessonLibraryPage /> },
+        // Also accept absolute path variant to avoid any client-side route normalization issues
+        { path: '/teacher/lessons-test', element: <LessonLibraryPage /> },
 
         // ---------- Admin area – ONLY under /surya ----------
         {
@@ -148,6 +155,25 @@ const router = createBrowserRouter(
           children: [
             { index: true, element: <TeacherDashboard /> },
             { path: 'lessons', element: <LessonLibraryPage /> },
+            {
+              path: 'students/:kidId/topic-progress',
+              element: <TeacherStudentTopicProgressPage />,
+            },
+          ],
+        },
+        // Teacher routes with :teacherId param (supports sidebar links)
+        {
+          path: 'teacher/:teacherId',
+          element: (
+            <RoleGate
+              allowedRoles={['teacher']}
+              loginPath="/teacher/login"
+            />
+          ),
+          children: [
+            { index: true, element: <TeacherDashboard /> },
+            { path: 'lessons', element: <LessonLibraryPage /> },
+            { path: 'worksheet-generator', element: <TeacherDashboard /> },
             {
               path: 'students/:kidId/topic-progress',
               element: <TeacherStudentTopicProgressPage />,
