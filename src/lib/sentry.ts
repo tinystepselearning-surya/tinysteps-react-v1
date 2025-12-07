@@ -18,7 +18,6 @@ export async function initSentry() {
   } catch (err) {
     // If Sentry package is missing or fails to load, fail silently.
     // This prevents the monitoring lib from blocking runtime.
-    // eslint-disable-next-line no-console
     console.warn('Sentry init failed', err);
   }
 }

@@ -69,7 +69,6 @@ export default function LessonLibraryPage(): JSX.Element {
               <Card key={lesson.id} className="rounded-2xl overflow-hidden shadow-sm cursor-pointer" onClick={() => setSelected(lesson)}>
                 <div className="h-36 bg-gradient-to-br from-indigo-200 via-sky-100 to-white flex items-center justify-center">
                   {lesson.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
                     <img src={lesson.thumbnailUrl} alt={lesson.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="text-sm text-indigo-700 font-semibold">Canva Lesson Cover</div>
