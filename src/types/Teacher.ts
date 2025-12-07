@@ -14,6 +14,7 @@ export interface TeacherSession {
   kidIds: string[];
   status: SessionStatus;
   joinUrl?: string;
+  lessonPlanUrl?: string; // Canva or other lesson plan embed URL
   notes?: string;
   attendance?: Record<string, AttendanceStatus>;
   updatedAt?: Timestamp;

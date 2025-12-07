@@ -7,6 +7,8 @@ import { Badge } from '@components/ui/badge';
 import { useUpcomingSessions } from '../../hooks/useUpcomingSessions';
 import { TeacherSession } from '../../../../types/Teacher';
 import { format, parseISO } from 'date-fns';
+import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
+import { FileText } from 'lucide-react';
 
 interface UpcomingSessionsViewProps {
   teacherId?: string;
@@ -16,6 +18,13 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   const { sessions, isLoading, error } = useUpcomingSessions(teacherId);
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
+  const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
+  const [isLessonPlanModalOpen, setIsLessonPlanModalOpen] = useState(false);
+
+  const handleViewLessonPlan = (session: TeacherSession) => {
+    setSelectedSession(session);
+    setIsLessonPlanModalOpen(true);
+  };
 
   const groupedSessions = useMemo(() => {
     const groups: Record<string, TeacherSession[]> = {};
@@ -103,7 +112,18 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                           </div>
                           <Badge variant="secondary">Scheduled</Badge>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
+                          {session.lessonPlanUrl && (
+                            <Button 
+                              size="sm" 
+                              variant="default"
+                              onClick={() => handleViewLessonPlan(session)}
+                              className="gap-1"
+                            >
+                              <FileText className="h-3 w-3" />
+                              View Lesson Plan
+                            </Button>
+                          )}
                           <Button size="sm" variant="outline">
                             Set Reminder
                           </Button>
@@ -117,6 +137,20 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
               </div>
             </div>
           ))
+      )}
+
+      {/* Canva Lesson Plan Modal */}
+      {selectedSession?.lessonPlanUrl && (
+        <CanvaLessonPlanModal
+          isOpen={isLessonPlanModalOpen}
+          onClose={() => {
+            setIsLessonPlanModalOpen(false);
+            setSelectedSession(null);
+          }}
+          lessonPlanUrl={selectedSession.lessonPlanUrl}
+          sessionTitle={`${selectedSession.courseName} - ${selectedSession.startTime}`}
+          courseName={selectedSession.courseName}
+        />
       )}
     </div>
   );

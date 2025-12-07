@@ -41,6 +41,10 @@
       "type": "string",
       "description": "External Zoom link for the session."
     },
+    "lessonPlanUrl": {
+      "type": "string",
+      "description": "URL for embedded lesson plan (e.g., Canva design). Teachers can view but not download."
+    },
     "status": {
       "type": "string",
       "enum": ["scheduled", "completed", "cancelled"],
