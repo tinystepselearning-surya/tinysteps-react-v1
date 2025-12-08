@@ -36,7 +36,7 @@ const ConversionHero: React.FC = () => {
         <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-16">
           <div>
             <div className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-1 text-xs font-medium tracking-wide text-slate-900/80 shadow-sm backdrop-blur">
-              Tiny Steps • Foundations Forever
+              Tiny Steps • Building Bright Futures
             </div>
             <motion.h1
               className="mt-6 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] leading-tight max-w-3xl"
