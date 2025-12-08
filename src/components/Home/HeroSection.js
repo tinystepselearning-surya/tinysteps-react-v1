@@ -1,9 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { motion, useScroll, useTransform } from 'framer-motion';
-import Button from '../Button/Button';
-const HeroSection = () => {
-    const { scrollY } = useScroll();
-    const parallaxY = useTransform(scrollY, (value) => value * -0.5);
-    return (_jsxs("section", { className: "relative flex h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-primary-50 to-accent-50 px-6 py-12 text-center md:px-12", children: [_jsxs(motion.div, { className: "pointer-events-none absolute inset-0 opacity-20", style: { y: parallaxY }, "aria-hidden": "true", children: [_jsx("div", { className: "absolute -left-16 top-12 h-40 w-40 rounded-full bg-primary-200 blur-3xl" }), _jsx("div", { className: "absolute right-0 top-32 h-60 w-60 rounded-full bg-secondary-500 blur-3xl" }), _jsx("div", { className: "absolute bottom-12 left-1/3 h-32 w-64 rounded-full bg-accent-500 blur-3xl" })] }), _jsxs("div", { className: "relative z-10 max-w-4xl space-y-6", children: [_jsx(motion.h1, { className: "font-heading text-4xl font-bold text-primary-900 md:text-6xl", initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8 }, children: "Your Child's Voice. Powered by Expert Teaching." }), _jsx(motion.p, { className: "font-body text-lg text-gray-700 md:text-2xl", initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.8, delay: 0.2 }, children: "Phonics, Grammar & Public Speaking | Ages 3-12" }), _jsx(motion.div, { className: "flex justify-center", initial: { opacity: 0, y: 20, scale: 0.8 }, animate: { opacity: 1, y: 0, scale: 1 }, transition: { duration: 0.6, delay: 0.4 }, children: _jsx(Button, { size: "lg", children: "Book Free Assessment Class" }) })] })] }));
-};
-export default HeroSection;

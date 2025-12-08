@@ -38,8 +38,8 @@ export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpe
       </div>
       <div className="flex items-center gap-3">
         <Button variant="default" onClick={onOpenKidsView}>Kids Page</Button>
-        <Button variant="outline">Edit Profile</Button>
-        <Button variant="secondary">Payment Methods</Button>
+        <Button variant="outline" onClick={() => navigate('/parent/profile')}>Edit Profile</Button>
+        <Button variant="secondary" onClick={() => navigate('/parent/payments')}>Payment Methods</Button>
         <Button variant="outline" onClick={handleLogout}>Logout</Button>
       </div>
     </Card>

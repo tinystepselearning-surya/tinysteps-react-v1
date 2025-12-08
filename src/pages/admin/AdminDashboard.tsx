@@ -19,7 +19,7 @@ import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+// Groq callable removed from admin dashboard to avoid runtime dependency in dev
 
 // ---------- Admin stats fetcher ----------
 const fetchAdminStats = async (): Promise<AdminStats> => {
@@ -75,81 +75,7 @@ const AccessMessage = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-// ---------- Groq Live Test Card ----------
-const GroqIdeaTester: React.FC = () => {
-  const [topic, setTopic] = useState('animals');
-  const [idea, setIdea] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleGenerate = async () => {
-    setLoading(true);
-    setError(null);
-    setIdea('');
-
-    try {
-      const functions = getFunctions(undefined, 'asia-south1');
-      const groqFn = httpsCallable<{ topic: string }, { idea: string }>(
-        functions,
-        'groqKidIdea',
-      );
-
-      const trimmedTopic = topic.trim() || 'animals';
-      const result = await groqFn({ topic: trimmedTopic });
-      setIdea(result.data.idea);
-    } catch (err: any) {
-      console.error('groqKidIdea error:', err);
-      setError('Unable to generate idea right now. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Card className="p-4 space-y-4" id="groq-live-test-card">
-      <div className="flex flex-col gap-1">
-        <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
-          Groq Live Test
-        </p>
-        <h3 className="text-lg font-semibold">
-          Tiny Steps AI – Speaking/Activity Idea
-        </h3>
-        <p className="text-sm text-muted-foreground">
-          Type a topic and let Groq generate a short, kid-friendly speaking or activity idea
-          (ages 5–10). This uses the <code className="text-xs">groqKidIdea</code> callable.
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-        <label className="flex-1 text-sm">
-          Topic
-          <input
-            className="mt-1 w-full rounded border px-2 py-1 text-sm bg-white dark:bg-slate-900"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="e.g. rain, pets, birthday, friendship"
-          />
-        </label>
-        <Button
-          className="mt-2 sm:mt-6"
-          size="sm"
-          onClick={handleGenerate}
-          disabled={loading}
-        >
-          {loading ? 'Asking Groq…' : 'Generate Idea'}
-        </Button>
-      </div>
-
-      {error && <p className="text-sm text-red-500">{error}</p>}
-
-      {idea && (
-        <div className="mt-2 rounded border bg-slate-50 dark:bg-slate-900/60 p-3 text-sm whitespace-pre-line">
-          {idea}
-        </div>
-      )}
-    </Card>
-  );
-};
+// Groq live tester removed to avoid external validation and dev-side failures
 
 // ---------- Main Admin Dashboard ----------
 export default function AdminDashboard() {
@@ -164,7 +90,7 @@ export default function AdminDashboard() {
 
   // Debug: confirm this component is being used
   useEffect(() => {
-    console.log('✅ AdminDashboard (Groq version) mounted');
+    console.log('✅ AdminDashboard mounted');
   }, []);
 
   // Sync selected tab with URL path (e.g. /surya/analytics)
@@ -299,8 +225,7 @@ export default function AdminDashboard() {
                   <AnalyticsDashboard />
                 </div>
 
-                {/* Groq real-time test card */}
-                <GroqIdeaTester />
+                {/* Groq real-time test card removed */}
               </div>
             </TabsContent>
           </Tabs>

@@ -12,7 +12,7 @@ import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { collection, getDocs, query, deleteDoc, doc, Timestamp, where, limit, startAfter } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../../lib/firebaseConfig';
+import { db, functions, auth } from '../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Card } from '@components/ui/card';
@@ -142,16 +142,32 @@ export function UserList() {
     const handleDeleteUser = (user) => __awaiter(this, void 0, void 0, function* () {
         if (window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
             try {
+                // Get the current user's ID token
+                const idToken = yield auth.currentUser?.getIdToken();
+                if (!idToken) {
+                    throw new Error('No authentication token available');
+                }
                 // Delete user from Firebase Auth using Cloud Function
-                const deleteUserFunction = httpsCallable(functions, 'adminDeleteUser');
-                yield deleteUserFunction({ uid: user.uid });
+                const response = yield fetch('http://127.0.0.1:5001/tinysteps-react-v1/asia-south1/adminDeleteUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({ uid: user.uid }),
+                });
+                if (!response.ok) {
+                    const errorData = yield response.json();
+                    throw new Error(errorData.error || 'Failed to delete user');
+                }
                 // Delete user document from Firestore
-                yield deleteDoc(doc(db, 'users', user.id));
+                yield deleteDoc(doc(db, 'users', user.uid));
                 toast({
                     title: 'Success',
                     description: 'User deleted successfully',
                 });
-                fetchUsers();
+                // Refresh the user list after deletion
+                fetchUsers(true);
             }
             catch (error) {
                 console.error('Error deleting user:', error);

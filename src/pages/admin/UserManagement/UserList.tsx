@@ -141,7 +141,7 @@ export function UserList() {
   const fetchUsers = async (reset = false) => {
     setIsLoading(true);
     try {
-      let q = query(collection(db, 'users'), limit(PAGE_SIZE));
+      let q = query(collection(db, 'users'), orderBy('createdAt', 'desc'), limit(PAGE_SIZE));
 
       if (searchTerm) {
         q = query(q, where('email', '>=', searchTerm), where('email', '<=', searchTerm + '\uf8ff'));
@@ -216,6 +216,11 @@ export function UserList() {
     }
   };
 
+  useEffect(() => {
+    fetchUsers(true);
+  }, [searchTerm, roleFilter, statusFilter]);
+
+
   const handleLoadMore = () => {
     if (hasMore) {
       fetchUsers();
@@ -227,20 +232,24 @@ export function UserList() {
     fetchUsers(true);
   };
 
+  // This useEffect is now replaced by the one above
+  /*
   useEffect(() => {
     fetchUsers(true);
   }, [searchTerm, roleFilter, statusFilter]);
+  */
 
   const handleUserCreated = async (user?: User) => {
-    try {
-      // Refresh the users list and wait for the new user to appear before closing
-      await fetchUsers(true);
-      toast({ title: 'User created', description: `${user?.name || user?.email || user?.id} created successfully` });
-    } catch (err: any) {
-      toast({ title: 'User created', description: 'User created, but we could not refresh the list immediately. Try refreshing the list manually.' });
-    } finally {
-      setIsCreateDialogOpen(false);
-    }
+    setIsCreateDialogOpen(false);
+    // Add a small delay to ensure Firestore has propagated the write
+    setTimeout(async () => {
+      try {
+        await fetchUsers(true);
+        toast({ title: 'User created', description: `${user?.name || user?.email || user?.id} created successfully` });
+      } catch (err: any) {
+        toast({ title: 'User created', description: 'User created, but we could not refresh the list immediately. Try refreshing the list manually.' });
+      }
+    }, 500);
   };
 
   const handleUserUpdated = () => {
@@ -251,9 +260,27 @@ export function UserList() {
   const handleDeleteUser = async (user: User) => {
     if (window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`)) {
       try {
+        // Get the current user's ID token
+        const idToken = await auth.currentUser?.getIdToken();
+
+        if (!idToken) {
+          throw new Error('No authentication token available');
+        }
+
         // Delete user from Firebase Auth using Cloud Function
-        const deleteUserFunction = httpsCallable(functions, 'adminDeleteUser');
-        await deleteUserFunction({ uid: user.uid });
+        const response = await fetch('http://127.0.0.1:5001/tinysteps-react-v1/asia-south1/adminDeleteUser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ uid: user.uid }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to delete user');
+        }
 
         // Delete user document from Firestore
         await deleteDoc(doc(db, 'users', user.id));

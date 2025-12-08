@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { ParentHeader } from './components/layout/ParentHeader';
 
 export default function ParentDashboard() {
   const { user, isLoading } = useAuthStore();
@@ -19,10 +20,8 @@ export default function ParentDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <h1 className="text-2xl font-bold mb-4">
-        Welcome, {user.displayName || 'Parent'} 👋
-      </h1>
-      <p className="text-sm text-muted-foreground mb-6">
+      <ParentHeader name={user.displayName || 'Parent'} />
+      <p className="text-sm text-muted-foreground mb-6 mt-4">
         This is your parent dashboard. From here you’ll be able to see your child’s Tiny Steps progress.
       </p>
 

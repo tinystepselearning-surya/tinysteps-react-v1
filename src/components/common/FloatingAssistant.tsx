@@ -3,10 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
 import { trackEvent } from '../../lib/analytics';
+import { AskTinyStepsModal } from './AskTinyStepsModal';
 
 const FloatingAssistant = () => {
   const { user } = useAuthStore();
   const [promptVisible, setPromptVisible] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
   // Note: Do not return early before hooks; only check after all hooks declared
 
   useEffect(() => {
@@ -39,7 +41,8 @@ const FloatingAssistant = () => {
                 <button
                   className="rounded-full bg-gradient-to-r from-[#59c3ff] to-[#ff8f5c] px-3 py-1 text-xs font-semibold text-white"
                   onClick={() => {
-                    openWhatsApp('Hi! I have a quick question about Tiny Steps admissions.');
+                    trackEvent('floating_ask_tinysteps_click', { source: 'floating_assistant_prompt' });
+                    setAskOpen(true);
                     setPromptVisible(false);
                   }}
                 >
@@ -54,7 +57,12 @@ const FloatingAssistant = () => {
       <motion.button
         className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-xl ring-1 ring-gray-100"
         whileHover={{ y: -2 }}
-        onClick={() => openWhatsApp('Hi Tiny Steps team! Can you help me choose a course?')}
+        onClick={() => {
+          console.log('Ask TinySteps clicked');
+          alert('Modal should open');
+          trackEvent('floating_ask_tinysteps_click', { source: 'floating_assistant' });
+          setAskOpen(true);
+        }}
       >
         <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#ff8f5c] to-[#59c3ff] text-white">🤖</span>
         Ask TinySteps
@@ -66,6 +74,7 @@ const FloatingAssistant = () => {
       >
         WhatsApp Advisor
       </motion.button>
+      <AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />
     </div>
   );
 };
