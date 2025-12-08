@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import { Link } from 'react-router-dom';
 import { cn } from '@components/lib/utils';
 import { Button } from '@components/ui/button';
 
@@ -44,21 +45,21 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
         <Button
           asChild
           variant="ghost"
-          className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700"
+          className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
         >
-          <a href={teacherId ? `/teacher/${teacherId}/lessons` : '/teacher/lessons'}>
-            Lesson Library
-          </a>
+          <Link to={teacherId ? `/teacher/${teacherId}/lessons` : '/teacher/lessons'}>
+            📚 Lesson Library
+          </Link>
         </Button>
 
         <Button
           asChild
           variant="ghost"
-          className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700"
+          className="w-full justify-between border border-purple-100 bg-purple-50 text-purple-700 hover:bg-purple-100"
         >
-          <a href={teacherId ? `/teacher/${teacherId}/worksheet-generator` : '/teacher/worksheet-generator'}>
-            Worksheet Generator ✨
-          </a>
+          <Link to={teacherId ? `/teacher/${teacherId}/worksheet-generator` : '/teacher/worksheet-generator'}>
+            ✨ Worksheet Generator
+          </Link>
         </Button>
       </div>
     </aside>
