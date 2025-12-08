@@ -25,3 +25,11 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 tinysteps-react-v1-firebase-adminsdk-*.json
+
+# Prevent compiled JS files from shadowing TS/TSX sources
+# Only ignore in src/, allow .js in root (config files like vite.config.js)
+src/**/*.js
+src/**/*.jsx
+!src/**/*.config.js
+*.js.backup
+*.jsx.backup
