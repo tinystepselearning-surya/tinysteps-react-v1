@@ -1,85 +1,59 @@
 # Tiny Steps – Copilot Instructions for a Robust, SOLID App (v3.1)
 
-These instructions tell GitHub Copilot how to help on the Tiny Steps Learning Platform:
+> Purpose: These instructions guide GitHub Copilot to generate maintainable, testable code for the Tiny Steps Learning Platform.
+> North Star: **Clean architecture + SOLID**, not quick hacks.
 
-- React + TypeScript + Vite  
-- Tailwind + shadcn/ui  
-- Firebase (Auth, Firestore, Functions)  
-- Zustand + React Query  
-- Role-based portals: Admin / Teacher / Parent / LP / Kid  
-
-The goal: **a clean, testable, SOLID codebase – not quick hacks.**
-
----
-
-## 1. Architecture & SOLID Principles (Tiny Steps Flavor)
-
-When Copilot generates code, it should follow these adapted SOLID rules:
-
-### S – Single Responsibility
-
-Each file/component/module does **one clear job**.
-
-Examples:
-
-- A React component = one UI unit (page, card, modal).
-- A hook = one concern (e.g., `useKidProgress`, `useAttendance`).
-- A function = one business action (e.g., `updateStudentProgress`, `calculateNextSessionDate`).
-
-**Anti-pattern:** huge “god components” mixing UI, Firestore calls, and complex logic.
-
-### O – Open/Closed
-
-Components & hooks should be **easy to extend** but not constantly modified.
-
-Prefer:
-
-- Config via props/options.  
-- Utility functions that can be combined.
-
-Avoid:
-
-- `if (role === 'admin')` sprinkled everywhere – instead, compose specialized wrappers or role-specific components.
-
-### L – Liskov Substitution
-
-If we create abstractions/interfaces, subtypes should be safely swappable.
-
-In practice:
-
-- Shared types (`StudentSummary`, `ProgressRecord`) should be consistent across hooks and components.
-- Don’t overload one type with role-specific fields that don’t belong.
-
-### I – Interface Segregation
-
-Prefer **small, focused types/hooks** over “mega interfaces”.
-
-Examples:
-
-- `KidProgressSummary`, `AttendanceRecord`, `CurriculumTopicStatus` instead of one giant `StudentEverything` type.
-- Separate hooks: `useKidAttendance`, `useKidProgress`, `useKidCurriculum` instead of one `useKidEverything`.
-
-### D – Dependency Inversion
-
-High-level React components depend on **abstractions**, not on Firestore internals directly.
-
-Prefer:
-
-- Hooks like `useKidProgress(studentId)` that hide Firestore details.
-- Utility functions in `utils/` or service-style modules.
-
-Avoid:
-
-- Firestore calls spread all over UI components.
+## Stack
+- React + TypeScript + Vite
+- Tailwind + shadcn/ui
+- Firebase (Auth, Firestore, Functions)
+- Zustand + React Query
+- Role-based portals: Admin / Teacher / Parent / LP / Kid
 
 ---
 
-## 2. Project Structure (What Copilot Must Respect)
+## 1) Architecture & SOLID Principles (Tiny Steps Flavor)
+
+### S — Single Responsibility
+Each file/module does **one clear job**.
+- Component = one UI unit (page/card/modal)
+- Hook = one concern (`useKidProgress`, `useAttendance`)
+- Function = one business action (`updateStudentProgress`, `calculateNextSessionDate`)
+
+Avoid: “god components” mixing UI + Firestore + business logic.
+
+### O — Open/Closed
+Prefer patterns that are **easy to extend** without rewriting:
+- Configure via props/options
+- Compose small utilities
+
+Avoid:
+- `if (role === 'admin')` sprinkled across UI; instead use role-specific components/routes or wrappers.
+
+### L — Liskov Substitution
+Shared abstractions/types must be safely swappable:
+- Keep shared types consistent across hooks/components
+- Don’t overload global types with role-specific fields
+
+### I — Interface Segregation
+Prefer small focused types/hooks over mega-interfaces:
+- `KidProgressSummary`, `AttendanceRecord`, `CurriculumTopicStatus`
+Avoid:
+- `StudentEverything` and `useKidEverything`
+
+### D — Dependency Inversion
+UI depends on **abstractions**, not Firestore internals:
+- Use hooks/services that hide Firestore details
+- Keep Firestore calls out of UI components
+
+---
+
+## 2) Project Structure (Copilot Must Respect)
 
 ```text
 src/
-  components/          # Reusable UI components (cards, modals, buttons, layout)
-  pages/               # Page-level screens (route-level)
+  components/          # Reusable UI (cards, modals, buttons, layout)
+  pages/               # Route-level screens
   portal/
     admin/
     teacher/
@@ -87,15 +61,14 @@ src/
     lp/
     kid/
   store/               # Zustand slices
-  hooks/               # Reusable hooks: data + UI
-  utils/               # Pure utilities (no React, no Firestore side effects ideally)
+  hooks/               # Reusable hooks (data + UI state helpers)
+  utils/               # Pure utilities / thin service modules
   styles/              # Tailwind config / themes
 functions/
   src/                 # Cloud Functions (TS)
-firestore.rules        # Firestore security
+firestore.rules
 firestore.indexes.json
-
-Copilot rules:
+Placement rules
 
 New reusable UI → src/components/
 
@@ -105,54 +78,52 @@ New shared data hook → src/hooks/
 
 New global state slice → src/store/
 
-New general helper → src/utils/
+New general helper/service → src/utils/
 
-3. React Component Design
-
-Copilot should generate components that are:
-
-Functional + typed:
-
+3) React Component Design
+Typed functional components
+ts
+Copy code
 type Props = { studentId: string };
 
-const KidProgressCard: React.FC<Props> = ({ studentId }) => {
-  // ...
+export const KidProgressCard: React.FC<Props> = ({ studentId }) => {
+  return null;
 };
+Container vs Presentational
+Container: uses hooks, handles loading/error, prepares props
 
+Presentational: dumb, reusable, UI-only
 
-Presentational vs container separated when complexity grows:
+File size discipline
+If a file crosses ~200 lines or mixes concerns, split it.
 
-Container components use hooks and pass data down.
+4) UI Style Rules
+Use shadcn/ui primitives: Card, Button, Input, Tabs, Dialog, ScrollArea, etc.
 
-Pure presentational components stay dumb and reusable.
+Use Tailwind for layout and polish:
 
-Small: If a file crosses ~200 lines, consider splitting.
+rounded corners, soft shadows
 
-UI Style
+kid-friendly pastel palette
 
-Use shadcn/ui for building blocks (cards, modals, buttons, tabs).
+mobile-first (w-full, flex-col, md:flex-row, etc.)
 
-Use Tailwind with:
+Avoid custom CSS unless necessary; if needed, centralize in styles/.
 
-Rounded corners, soft shadows.
+5) State & Data — Robust Patterns
+5.1 Zustand (Global State)
+Use Zustand when state is shared across multiple areas:
 
-Pastel, kid-friendly palette.
+current user + role
 
-Mobile-first responsiveness (w-full, flex-col, md:flex-row, etc.).
+selected kid
 
-No custom CSS unless necessary; if needed, centralise via styles/.
+global UI toggles/modals
 
-4. State & Data – Robust Patterns
-Zustand (Global State)
+Example:
 
-Use Zustand when:
-
-The state is shared across multiple components/pages.
-
-Example: current user, role, kid selection, global modals.
-
-Typical pattern for Copilot:
-
+ts
+Copy code
 // src/store/uiStore.ts
 import { create } from 'zustand';
 
@@ -165,11 +136,19 @@ export const useUiStore = create<UiState>((set) => ({
   isSidebarOpen: false,
   toggleSidebar: () => set((s) => ({ isSidebarOpen: !s.isSidebarOpen })),
 }));
+5.2 React Query + Firestore (via hooks + service layer)
+Rules:
 
-React Query / Firestore Hooks
+Hooks orchestrate queries/mutations
 
-Use hooks for data access:
+Firestore details live in a thin service module in src/utils/*Api.ts
 
+Avoid any; use typed mapping/converters where possible
+
+Example:
+
+ts
+Copy code
 // src/hooks/useKidProgress.ts
 import { useQuery } from '@tanstack/react-query';
 import { getKidProgress } from '../utils/progressApi';
@@ -178,343 +157,261 @@ export function useKidProgress(studentId: string) {
   return useQuery({
     queryKey: ['kid-progress', studentId],
     queryFn: () => getKidProgress(studentId),
+    enabled: !!studentId,
   });
 }
+6) Firestore & Cloud Functions — Safety First
+6.1 Data access code
+All Firestore calls must be in:
 
+src/utils/ (simple reads/writes, thin wrappers)
 
-And keep Firestore details hidden in utils/progressApi.ts or similar.
+src/hooks/ (React Query wrappers)
 
-5. Firestore & Cloud Functions – Safety First
-Data Access Code
+functions/src/ (privileged logic, external API calls, admin ops)
 
-All Firestore calls in:
+Avoid Firestore calls inside UI components.
 
-utils/ (for simple direct reads/writes) or
-
-Dedicated hooks/ + functions/src/ (for backend logic).
-
-Use typed converters or typed mapping so we avoid any.
-
-Security Rules
-
-Copilot may draft, you must review:
+6.2 Security rules (non-negotiable)
+Copilot may draft rules, but you must review.
 
 Principle of least privilege:
 
-Parents: read-only for their child + related records.
+Parents: read-only for their child + related records
 
-Teachers: write attendance, progress, reports for assigned kids.
+Teachers: write attendance/progress only for assigned kids
 
-LP/Admin: broader read; admin broader write.
+LP/Admin: broader read; Admin broader write
 
-Never accept a rule that uses:
+Never accept:
 
+txt
+Copy code
 allow read, write: if true;
+7) Error Handling, Logging & Robustness
+Wrap async operations in try/catch where failure is possible
 
-6. Error Handling, Logging & Robustness
-
-Copilot should:
-
-Wrap async operations in try/catch where failure is possible.
-
-Surface user-friendly messages:
+Show user-friendly messages:
 
 “Something went wrong. Please try again.”
 
-Log technical details to:
+Log technical details:
 
-Console (dev)
+console.error(...) in dev
 
-Future: log service / Cloud Function
+Functions logs on backend
 
-Example pattern:
+Example:
 
+ts
+Copy code
 try {
   await updateStudentProgress(...);
 } catch (error) {
   console.error('Failed to update progress', error);
-  // Show toast / UI error message
+  // show toast / inline error
 }
+8) Testing & Manual Verification
+When adding non-trivial logic:
 
-7. Testing & Manual Verification
+Prefer small pure functions → easy to test
 
-When Copilot adds non-trivial logic:
-
-Prefer small pure functions → easy to test.
-
-Keep side effects at the edges (hooks/components).
+Keep side effects at the edges (hooks/services/functions)
 
 Always manually verify:
 
-Different roles (admin/teacher/parent/kid) when relevant.
+Role behavior (admin/teacher/parent/kid/LP)
 
-Mobile and desktop breakpoints.
+Mobile + desktop breakpoints
 
-Critical flows: login, attendance, progress updates.
+Critical flows (auth, attendance, progress updates, payments if touched)
 
-8. How to Use Copilot in This Repo
-Good Use-Cases
-
+9) How to Use Copilot in This Repo
+Good use-cases
 Ask Copilot for:
 
-Component skeletons:
+Component skeletons (shadcn + Tailwind)
 
-// Card to show today's sessions with Tailwind and shadcn/ui
+React Query hooks
 
+Pure utility functions
 
-Hooks:
+Repetitive JSON/picklists
 
-// Hook to fetch kid progress data from Firestore using React Query
+Copilot must NOT decide alone
+Copilot must not change without explicit instruction:
 
+Firestore collection design/renames/migrations
 
-Utility functions:
+Security rules and auth logic (draft only; you validate)
 
-// Given sessions and today, return the next upcoming session
+Payment/subscription flows
 
+Anything that changes cross-role behavior or permissions
 
-Repetitive JSON/picklists:
+10) Example Copilot Prompts (Paste Into Comments)
+UI component:
 
-// More topic entries following this pattern for phonics topics
+ts
+Copy code
+// Create a responsive shadcn Card showing a student's name, course tags, and progress percentage.
+// Use Tailwind consistent with Tiny Steps styling.
+Data hook:
 
-Things Copilot Must NOT Decide Alone
+ts
+Copy code
+// React Query hook to read a student's progress documents from Firestore and return a summary object.
+// Hide Firestore details in src/utils/progressApi.ts and keep types strict.
+Zustand store:
 
-Firestore collection design or renames.
+ts
+Copy code
+// Zustand slice to manage the currently selected kid in the parent dashboard.
+// Include setSelectedKid(id) and clearSelectedKid().
+Firestore rule draft:
 
-Security rules and auth logic (you must validate).
+txt
+Copy code
+// Firestore rules draft:
+// - parents can read only their own child's student + progress docs
+// - teachers can write progress only for assigned students
+// - deny all by default
+11) Ask TinySteps — Groq API Chatbot (“Ask TinySteps”)
+Build and extend a small, safe, parent-facing chatbot that answers questions about Tiny Steps only
+(courses, pricing, schedules, class format, platform features, policies).
 
-Payment/subscription flows.
+Hard rule: Frontend must never call Groq directly. All Groq calls go through Firebase Cloud Functions.
 
-Anything that changes cross-role behavior (admin vs parent vs kid).
+11.1 High-level architecture
+Frontend
 
-9. Example Copilot Prompts (Copy into Comments)
+AskTinyStepsWidget UI in src/components/AskTinySteps/
 
-UI Component
+Uses useAskTinySteps hook to call a Firebase callable function
 
-// Create a responsive shadcn Card showing a student's name, course tags, and progress percentage, using Tailwind classes consistent with the project style.
+Local-only chat state (messages/loading/error)
 
+Backend
 
-Data Hook
+Callable function: groqAskTinySteps in functions/src/
 
-// React Query hook that reads the student's progress documents from Firestore and returns a summary object for the dashboard.
+Reads GROQ_API_KEY from Firebase secrets/config (never hard-coded)
 
+Validates input, basic rate limiting, safe error handling
 
-Zustand Store
+Optional Firestore logging
 
-// Zustand store slice for managing which kid is currently selected in the parent dashboard.
+aiLogs/askTinySteps/* with minimal PII:
 
+uid (if any), role, timestamp, question snippet, answer snippet, success flag
 
-Firestore Rule Draft
+Do not store raw emails/phone numbers/payment info
 
-// Firestore rule: parents can read only their own child's student document and progress, teachers can write progress only for students they are assigned to.
+11.2 Frontend rules
+Suggested files:
 
-10. Final Rule for Copilot
+src/components/AskTinySteps/AskTinyStepsWidget.tsx
 
-Copilot is here to speed up small, well-defined steps.
-It must never change the architecture, security, or data model on its own.
-## 11. Ask TinySteps – Groq API Chatbot (“Ask TinySteps”)
+src/components/AskTinySteps/AskTinyStepsBubble.tsx (optional)
 
-These instructions tell Copilot how to build and extend the **Ask TinySteps** chatbot powered by the **Groq API**, without breaking security, performance, or app structure.
+src/hooks/useAskTinySteps.ts
 
-Goal:  
-A small, safe, parent-facing chatbot on the Tiny Steps site that answers questions about **Tiny Steps only** (courses, pricing, schedules, features) using Groq via a **Firebase Cloud Function**. Frontend must **never** call Groq directly.
+UI requirements:
 
----
+Title: “Ask Tiny Steps 🤖”
 
-### 11.1 High-Level Architecture
+Scrollable message list (user vs bot styles)
 
-- **Frontend**
-  - React component for the chatbot UI (e.g. `AskTinyStepsWidget`).
-  - Lives in `src/components/` (or `src/components/Home/` if home-page-only).
-  - Uses a **custom hook** to call a **Firebase callable function**.
-  - Maintains local chat state (messages, loading, error) only.
+Input + Ask button
 
-- **Backend**
-  - Firebase Cloud Function (TypeScript) for Groq calls, e.g. `groqAskTinySteps`.
-  - Located in `functions/src/` (e.g. `functions/src/groqAskTinySteps.ts` or added to an existing `groq.ts` module).
-  - Reads `GROQ_API_KEY` from Firebase Functions config/secrets (never hard-coded).
-  - Implements input validation, rate limiting (basic), and safe error handling.
+Loading indicator
 
-- **Data**
-  - Optional logging to Firestore (e.g. `aiLogs/askTinySteps/`) with **minimal PII**.
-  - Logs: timestamp, role (parent/guest), question, truncated answer, status; avoid storing raw emails/phone numbers.
+Friendly error:
 
----
+“I couldn’t answer that. Please try again.”
 
-### 11.2 Frontend – Component & Hook Design
+Use shadcn/ui + Tailwind (Card, Input, Button, ScrollArea), mobile-first.
 
-**Files (suggested):**
+Hook intention:
 
-- `src/components/AskTinySteps/AskTinyStepsWidget.tsx`  
-- `src/components/AskTinySteps/AskTinyStepsBubble.tsx` (optional, if using floating bubble)  
-- `src/hooks/useAskTinySteps.ts` (for calling the Cloud Function)
+ts
+Copy code
+// Hook wrapping httpsCallable('groqAskTinySteps').
+// Expose ask(message: string) plus loading/error state.
+// Keep types strict. No Groq calls from client.
+11.3 Backend rules (callable)
+Function responsibilities:
 
-**Component rules for Copilot:**
+Validate data.message (trim, 1–500 chars)
 
-- Build a **small chat panel** UI:
-  - Title like: “Ask Tiny Steps 🤖”.
-  - Message list area (user vs bot messages styled differently).
-  - Input box + “Ask” button.
-  - Loading indicator while waiting for response.
-  - Error message area for failures (“I couldn’t answer that. Please try again.”).
-- Use **shadcn/ui + Tailwind**:
-  - `Card`, `Button`, `Input`, `ScrollArea`, etc.
-  - Tailwind for layout: `flex`, `gap-2`, `border`, `rounded-lg`, `shadow`, etc.
-- Mobile-first:
-  - If used on home hero: simple embedded card.
-  - If used as floating bubble: bottom-right, full-width or large panel on small screens.
+Read auth context if present (context.auth?.uid)
 
-**Hook (`useAskTinySteps`) – Copilot pattern:**
+Apply strict Tiny Steps-only system prompt
 
-- Use either:
-  - `httpsCallable` from the Firebase client SDK, or
-  - A thin `fetch('/api/ask-tinysteps')` wrapper (if an HTTP function is used).
-- Encapsulate:
-  - `ask(question: string, metadata?: {...})`
-  - State: `isLoading`, `error`, maybe `lastAnswer`.
-- The widget calls `ask()` and appends to local messages.
+Call Groq with safe limits (token cap + timeout)
 
-Example intention comment for Copilot:
+Return { answer, usageMeta? }
 
-```ts
-// Hook to call the groqAskTinySteps callable function and return a promise-based ask() API with loading and error state.
-11.3 Backend – Cloud Function Structure
+On error: log server-side; return safe message
 
-File (example): functions/src/groqAskTinySteps.ts
+Security/config:
 
-Copilot should generate:
+Never commit API keys
 
-A callable or HTTP function, e.g.:
+Use Firebase secrets/config for GROQ_API_KEY
 
-// Firebase callable function: groqAskTinySteps
-// Validates input, calls Groq API with Tiny Steps system prompt, returns a short answer string.
+Don’t echo sensitive user content
 
+Logging must be minimal and privacy-aware
 
-Steps inside the function:
+11.4 System prompt guidance (Tiny Steps tone)
+System prompt must enforce:
 
-Validate data.message (string, length within limit, e.g. 1–500 chars).
+Identity: Ask TinySteps (Tiny Steps Learning assistant)
 
-Optional: read user role / uid from context.auth.
+Scope: only Tiny Steps info (courses, age groups, pricing ranges, schedules, policies, platform features)
 
-Build a system prompt restricting the domain:
+Refuse unrelated domains (medical/legal/financial/personal advice) with gentle redirect
 
-Answer only about: Tiny Steps courses, schedules, pricing, platform features, how classes work, policies, etc.
+Style: warm, parent-friendly, concise
 
-Decline or gently redirect if asked medical, legal, financial, or unrelated personal questions.
+Prompt stays on server, not client.
 
-Style: friendly, concise, parent-facing, clear, no jargon.
+11.5 Reuse existing Groq utilities
+If a Groq client/helper already exists in functions/src/, reuse it. Do not duplicate API setup.
 
-Call Groq using GROQ_API_KEY from environment; keep timeout reasonable.
+Intention comment:
 
-Truncate or limit token count; avoid huge responses.
-
-Return { answer, usageMeta }.
-
-On error: log to Functions logs and return a safe, generic error message.
-
-Security & Config rules for Copilot:
-
-Never commit the API key:
-
-Use functions.config() or secret manager:
-
-e.g. functions.config().groq.api_key or similar.
-
-Input validation:
-
-Reject empty messages.
-
-Limit maximum length and strip obvious dangerous content.
-
-Output safety:
-
-If Groq fails or returns nonsense, return a friendly fallback string.
-
-Logging:
-
-If logging to Firestore, store:
-
-uid (if authenticated),
-
-role (if known),
-
-question (possibly truncated),
-
-createdAt,
-
-success flag,
-
-but no passwords, access tokens, or payment data.
-
-11.4 System Prompt Guidance for Groq (Tiny Steps Tone)
-
-Copilot should embed a short, strict system prompt, for example:
-
-Identity:
-
-“You are Ask TinySteps, a helpful assistant for the Tiny Steps Learning online English school.”
-
-Scope:
-
-Answer only about Tiny Steps: courses (Phonics, Grammar, Public Speaking), age groups, class format, timings, pricing ranges, platform features, and how parents can use the app.
-
-If the user asks unrelated questions (medical, legal, personal advice), respond with a gentle refusal and suggest they talk to an appropriate professional.
-
-Style:
-
-Warm, encouraging, parent-friendly, short paragraphs or bullets.
-
-Avoid technical jargon and internal implementation details.
-
-Safety:
-
-No promises about guaranteed results.
-
-No collection of sensitive personal data; if the user shares it, do not repeat it.
-
-Copilot should keep the prompt in a constant/on the server, not in the client.
-
-11.5 Integration with Existing Groq Usage
-
-If there is already a Groq helper (e.g. for groqKidIdea):
-
-Reuse the existing Groq client and HTTP utilities.
-
-Do not duplicate API client configuration.
-
-Keep all Groq-related helpers in a shared module (e.g. functions/src/groqClient.ts) and import it.
-
-Intention comment for Copilot:
-
-// Reuse the existing Groq client helper instead of creating a new one; only add AskTinySteps-specific prompt and function.
-
-11.6 Example Copilot Prompts (for this feature)
-
+ts
+Copy code
+// Reuse existing Groq client helper; add only AskTinySteps-specific prompt + function wrapper.
+11.6 Ask TinySteps Copilot prompts
 Frontend widget:
 
-// React component: AskTinyStepsWidget - a small chat panel that lets a parent type a question, shows a list of messages, and calls the useAskTinySteps hook. Use shadcn Card, Input, Button and Tailwind for a kid-friendly design.
-
-
+ts
+Copy code
+// Build AskTinyStepsWidget: chat panel with message list + input.
+// Use shadcn Card/Input/Button + Tailwind, mobile-first. Call useAskTinySteps().
 Hook:
 
-// Hook: useAskTinySteps - wraps the Firebase callable function groqAskTinySteps, exposes ask(message: string) and loading/error state.
-
-
+ts
+Copy code
+// Create useAskTinySteps hook wrapping httpsCallable('groqAskTinySteps').
+// Expose ask(message) and loading/error state. Strict types.
 Cloud Function:
 
-// Firebase callable function groqAskTinySteps: validate input, build a Tiny Steps system prompt, call Groq using GROQ_API_KEY from config, return a short safe answer for parents.
+ts
+Copy code
+// Implement callable function groqAskTinySteps:
+// validate input, build strict Tiny Steps-only system prompt,
+// call Groq using GROQ_API_KEY from secrets/config, return short safe answer.
+// Add basic rate limiting and safe error handling.
+Logging helper:
 
-
-Logging:
-
-// Helper to log AskTinySteps usage to Firestore under aiLogs/askTinySteps with minimal PII (uid, role, question snippet, success flag, timestamp).
-
-11.7 Final Rule for Ask TinySteps
-
-The Ask TinySteps chatbot is supporting marketing and parent queries, not a general-purpose AI.
-Copilot must always:
-
-Keep all Groq calls on the backend,
-
-Protect keys and personal data,
-
-And stay within the Tiny Steps topic/domain.
+ts
+Copy code
+// Optional: log AskTinySteps usage to Firestore aiLogs/askTinySteps with minimal PII:
+// uid, role, question snippet, answer snippet, success flag, createdAt.
+12) Final Rule
+Copilot should speed up small, well-defined steps.
+It must never change architecture, security, roles/permissions, or data model on its own.
