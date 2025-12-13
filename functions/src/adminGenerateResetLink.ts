@@ -1,100 +1,191 @@
 import * as fns from 'firebase-functions/v2';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
+import { ensureAdmin } from './helpers/adminGuard'; // ✅ central admin checker
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
+// ---------- Constants ----------
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_RESETS_PER_ADMIN_PER_HOUR = 50;
+
+// ---------- Types ----------
 interface GenerateResetLinkRequest {
   email: string;
 }
 
 interface GenerateResetLinkResponse {
+  success: true;
   resetLink: string;
+  message: string;
+  expiresIn: string;
 }
 
-/**
- * Callable function for admins to generate a password reset link
- * for a given email.
- */
+interface GenerateResetLinkErrorResponse {
+  success: false;
+  error: string;
+  code: string;
+}
+
+// ---------- Rate Limit Helper ----------
+async function checkRateLimit(adminUid: string): Promise<void> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+  const recentResets = await admin
+    .firestore()
+    .collection('password_reset_requests')
+    .where('requestedBy', '==', adminUid)
+    .where('timestamp', '>', oneHourAgo)
+    .count()
+    .get();
+
+  const count = recentResets.data().count;
+
+  if (count >= MAX_RESETS_PER_ADMIN_PER_HOUR) {
+    fns.logger.warn('Rate limit exceeded for password reset', {
+      adminUid,
+      count,
+      limit: MAX_RESETS_PER_ADMIN_PER_HOUR,
+    });
+
+    throw new HttpsError(
+      'resource-exhausted',
+      `Rate limit exceeded. Maximum ${MAX_RESETS_PER_ADMIN_PER_HOUR} resets per hour.`
+    );
+  }
+}
+
+// ---------- Main Function ----------
 export const adminGenerateResetLink = onCall(
   {
     region: 'asia-south1',
-    memory: '128MiB',
-    timeoutSeconds: 30,
+    memory: '256MiB',
+    timeoutSeconds: 60,
   },
-  async (request): Promise<GenerateResetLinkResponse> => {
+  async (
+    request
+  ): Promise<GenerateResetLinkResponse | GenerateResetLinkErrorResponse> => {
     const { data, auth } = request;
 
-    // 1) Authentication check
-    if (!auth) {
-      throw new HttpsError('unauthenticated', 'Must be logged in');
-    }
-
-    const callerUid = auth.uid;
-
-    // 2) Admin check: via custom claims OR Firestore user doc
-    const callerIsAdminClaim =
-      auth.token?.admin === true || auth.token?.role === 'admin';
-
-    let callerIsAdminDoc = false;
     try {
-      const callerDoc = await admin.firestore()
-        .collection('users')
-        .doc(callerUid)
-        .get();
-      const callerData = callerDoc.data();
-      callerIsAdminDoc =
-        !!callerData &&
-        (
-          (Array.isArray(callerData.roles) && callerData.roles.includes('admin')) ||
-          callerData.role === 'admin'
-        );
-    } catch (err) {
-      fns.logger.warn('adminGenerateResetLink: failed to fetch caller user doc', {
-        callerUid,
-        error: String(err),
-      });
-    }
+      // 1. Validate admin
+      await ensureAdmin(auth);
+      const callerUid = auth!.uid;
 
-    if (!(callerIsAdminClaim || callerIsAdminDoc)) {
-      throw new HttpsError('permission-denied', 'Admin access required');
-    }
+      // 2. Rate limit protection
+      await checkRateLimit(callerUid);
 
-    // 3) Validate input
-    const email = (data as GenerateResetLinkRequest | undefined)?.email;
-    if (!email || typeof email !== 'string' || !email.trim()) {
-      throw new HttpsError('invalid-argument', 'Email is required');
-    }
+      // 3. Validate input
+      const email = (data as GenerateResetLinkRequest)?.email?.trim().toLowerCase();
+      if (!email || !EMAIL_REGEX.test(email)) {
+        throw new HttpsError('invalid-argument', 'A valid email is required');
+      }
 
-    const trimmedEmail = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      throw new HttpsError('invalid-argument', 'Invalid email format');
-    }
+      // 4. Check user existence (but don't reveal if not)
+      let exists = true;
+      try {
+        await admin.auth().getUserByEmail(email);
+      } catch (err: any) {
+        if (err?.code === 'auth/user-not-found') {
+          exists = false;
+        } else {
+          fns.logger.error('Unexpected error checking user existence', {
+            email,
+            error: String(err),
+          });
+        }
+      }
 
-    // 4) Generate reset link
-    try {
-      const resetLink = await admin.auth().generatePasswordResetLink(trimmedEmail);
-      fns.logger.info('Generated password reset link', {
-        email: trimmedEmail,
-        callerUid,
-      });
-      return { resetLink };
-    } catch (err: any) {
-      if (err?.code === 'auth/user-not-found') {
+      if (!exists) {
+        // Audit but do not reveal
+        fns.logger.warn('Password reset requested for non-existent user', {
+          email,
+          callerUid,
+        });
         throw new HttpsError(
-          'not-found',
-          `No user found with email ${trimmedEmail}`
+          'invalid-argument',
+          'Unable to generate reset link for this email'
         );
       }
 
-      fns.logger.error(
-        'adminGenerateResetLink: error from generatePasswordResetLink',
-        { email: trimmedEmail, callerUid, error: String(err) }
-      );
-      throw new HttpsError('internal', 'Failed to generate password reset link');
+      // 5. Generate reset link
+      const resetLink = await admin.auth().generatePasswordResetLink(email, {
+        url: process.env.PASSWORD_RESET_URL || 'https://tinysteps.com/reset-password',
+        handleCodeInApp: false,
+      });
+
+      // 6. Audit trail
+      await admin.firestore().collection('password_reset_requests').add({
+        targetEmail: email,
+        requestedBy: callerUid,
+        requestedByEmail: auth?.token?.email || null,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        success: true,
+      });
+
+      fns.logger.info('Generated password reset link', {
+        email,
+        callerUid,
+        callerEmail: auth?.token?.email,
+      });
+
+      return {
+        success: true,
+        resetLink,
+        message: 'Password reset link generated successfully',
+        expiresIn: '1 hour',
+      };
+    } catch (err: any) {
+      // Audit failed attempts
+      if (auth?.uid) {
+        await admin
+          .firestore()
+          .collection('password_reset_requests')
+          .add({
+            targetEmail: data?.email || 'unknown',
+            requestedBy: auth.uid,
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+            success: false,
+            error: err.message || String(err),
+          })
+          .catch((logErr) => {
+            fns.logger.error('Failed to log failed reset attempt', {
+              error: String(logErr),
+            });
+          });
+      }
+
+      // Known errors
+      if (err instanceof HttpsError) {
+        return {
+          success: false,
+          error: err.message,
+          code: err.code,
+        };
+      }
+
+      // Firebase throttle
+      if (err?.code === 'auth/too-many-requests') {
+        return {
+          success: false,
+          error: 'Too many password reset requests. Please try again later.',
+          code: 'resource-exhausted',
+        };
+      }
+
+      // Unexpected
+      fns.logger.error('Unexpected error in adminGenerateResetLink', {
+        error: String(err),
+        stack: err.stack,
+      });
+
+      return {
+        success: false,
+        error: 'Failed to generate password reset link',
+        code: 'internal',
+      };
     }
   }
 );

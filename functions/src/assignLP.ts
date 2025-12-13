@@ -1,88 +1,11 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
+import { ensureAdmin } from './helpers/adminGuard';
 
 if (!admin.apps.length) admin.initializeApp();
 
 type UserRole = 'parent' | 'teacher';
-
-// 🔹 Hard-coded super admins (same idea as isSuperUserEmail on frontend)
-const SUPER_ADMIN_EMAILS = [
-  'thotasuryaprakash@outlook.com', // Surya
-  // 'your-second-admin@example.com',  // add more if needed
-];
-
-/**
- * Ensure the caller is an admin.
- * Checks:
- *  - auth.token.admin === true, OR
- *  - auth.token.role === 'admin', OR
- *  - /users/{uid}.role === 'admin' OR roles includes 'admin', OR
- *  - email is in SUPER_ADMIN_EMAILS
- */
-async function ensureAdmin(auth: any) {
-  if (!auth) {
-    logger.warn('assignLP: unauthenticated callable call');
-    throw new HttpsError('unauthenticated', 'Must be logged in');
-  }
-
-  const callerUid = auth.uid;
-  const claims = auth.token || {};
-  const email = claims.email as string | undefined;
-
-  const tokenIsAdmin =
-    claims.admin === true ||
-    claims.role === 'admin';
-
-  // 1) Custom claims say admin → allow
-  if (tokenIsAdmin) {
-    logger.info('assignLP: caller is admin via custom claims', {
-      callerUid,
-      claimsRole: claims.role,
-    });
-    return;
-  }
-
-  // 2) Super-admin email fallback
-  if (email && SUPER_ADMIN_EMAILS.includes(email.toLowerCase())) {
-    logger.info('assignLP: caller is SUPER ADMIN via email', {
-      callerUid,
-      email,
-    });
-    return;
-  }
-
-  // 3) Fallback: check Firestore /users/{uid}
-  try {
-    const doc = await admin.firestore().collection('users').doc(callerUid).get();
-    const data = doc.data() || {};
-    const docIsAdmin =
-      data.role === 'admin' ||
-      (Array.isArray(data.roles) && data.roles.includes('admin'));
-
-    if (docIsAdmin) {
-      logger.info('assignLP: caller is admin via Firestore doc', {
-        callerUid,
-        docRole: data.role,
-        docRoles: data.roles,
-      });
-      return;
-    }
-
-    logger.warn('assignLP: caller is NOT admin in Firestore doc', {
-      callerUid,
-      docRole: data.role,
-      docRoles: data.roles,
-    });
-    throw new HttpsError('permission-denied', 'Admin access required');
-  } catch (err) {
-    logger.error('assignLP: error verifying admin status via Firestore', {
-      callerUid,
-      error: String(err),
-    });
-    throw new HttpsError('permission-denied', 'Admin access required');
-  }
-}
 
 /**
  * Ensure a user document exists at /users/{uid}

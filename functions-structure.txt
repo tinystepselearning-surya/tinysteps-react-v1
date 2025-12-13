@@ -1,0 +1,40 @@
+.
+├── README.md
+├── firestore-debug.log
+├── package-lock.json
+├── package.json
+├── scripts
+│   ├── set-groq-secret.sh
+│   └── setGroqSecret.js
+├── src
+│   ├── adminCreateUser.ts
+│   ├── adminGenerateResetLink.ts
+│   ├── ai
+│   │   └── askTinySteps.ts
+│   ├── assignLP.ts
+│   ├── global.d.ts
+│   ├── helpers
+│   │   ├── adminGuard.ts
+│   │   ├── auth
+│   │   │   ├── userAuth.ts
+│   │   │   └── userClaims.ts
+│   │   ├── errorHandler.ts
+│   │   ├── firestore
+│   │   │   └── userFirestoreBuilders.ts
+│   │   ├── firestorePaths.ts
+│   │   ├── roleUtils.ts
+│   │   ├── types
+│   │   │   └── createUserTypes.ts
+│   │   ├── userValidator.ts
+│   │   ├── util
+│   │   │   └── sanitize.ts
+│   │   └── validation
+│   │       └── userValidation.ts
+│   ├── index.ts
+│   ├── onSessionComplete.ts
+│   └── parentStudents.ts
+├── tsconfig.dev.json
+├── tsconfig.json
+└── vitest.config.ts
+
+10 directories, 28 files
