@@ -1,5 +1,5 @@
-// CreateCourseForm.tsx
-import { useState } from 'react';
+// src/pages/admin/CourseManagement/CreateCourseForm.tsx
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -31,7 +31,18 @@ import { Badge } from '@components/ui/badge';
 import { toast } from '@components/hooks/use-toast';
 import { Loader2, Plus, X } from 'lucide-react';
 
-const courseSchema = z.object({
+/** Slug → courses/{slug} */
+function slugify(input: string) {
+  return input
+    .trim()
+    .toLowerCase()
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+const baseSchema = z.object({
   name: z.string().min(3, 'Course name must be at least 3 characters'),
   area: z.enum(['Phonics', 'Grammar', 'Speaking']),
   level: z.coerce.number().min(1).max(8),
@@ -41,14 +52,41 @@ const courseSchema = z.object({
   durationMinutes: z.coerce.number().min(15).max(60),
   sessionFrequency: z.enum(['weekly', 'biweekly', 'monthly']),
   maxStudentsPerSession: z.coerce.number().min(1).max(10),
-  targetAge: z.array(z.coerce.number()).min(1, 'At least one target age required'),
-  targetGrade: z.array(z.string()).min(1, 'At least one target grade required'),
-  topics: z.array(z.string()).min(1, 'At least one topic required'),
-  prerequisites: z.array(z.string()).optional(),
+
+  // Allow draft creation with empty arrays (but validate on "active")
+  targetAge: z.array(z.coerce.number()).default([]),
+  targetGrade: z.array(z.string()).default([]),
+  topics: z.array(z.string()).default([]),
+  prerequisites: z.array(z.string()).default([]),
 });
 
-// ✅ IMPORTANT: RHF should use the INPUT type (coerce => input unknown)
-// ✅ Firestore save should use the OUTPUT type (numbers resolved)
+const courseSchema = baseSchema.superRefine((val, ctx) => {
+  // Only enforce strict requirements when activating course
+  if (val.status === 'active') {
+    if (!val.topics?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['topics'],
+        message: 'Add at least one topic before setting course to Active.',
+      });
+    }
+    if (!val.targetAge?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['targetAge'],
+        message: 'Add at least one target age before setting course to Active.',
+      });
+    }
+    if (!val.targetGrade?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['targetGrade'],
+        message: 'Add at least one target grade before setting course to Active.',
+      });
+    }
+  }
+});
+
 type CourseFormInput = z.input<typeof courseSchema>;
 type CourseFormData = z.output<typeof courseSchema>;
 
@@ -65,7 +103,6 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
   const [topicInput, setTopicInput] = useState('');
   const [prereqInput, setPrereqInput] = useState('');
 
-  // TanStack Query v4 uses isLoading; v5 uses isPending
   const isSubmitting =
     (createCourse as any).isPending ?? (createCourse as any).isLoading ?? false;
 
@@ -87,6 +124,9 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
       prerequisites: [],
     },
   });
+
+  const watchedName = form.watch('name');
+  const computedCourseId = useMemo(() => slugify(watchedName || ''), [watchedName]);
 
   const addToArray = (
     field: 'targetAge' | 'targetGrade' | 'topics' | 'prerequisites',
@@ -129,22 +169,43 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
 
   const onSubmit = async (values: CourseFormInput) => {
     if (!user?.uid) {
-      toast({ title: 'Error', description: 'User not authenticated', variant: 'destructive' });
+      toast({
+        title: 'Error',
+        description: 'User not authenticated',
+        variant: 'destructive',
+      });
       return;
     }
 
-    // ✅ Convert to OUTPUT type (numbers guaranteed)
     const data: CourseFormData = courseSchema.parse(values);
+
+    const courseId = slugify(data.name);
+    if (!courseId) {
+      toast({
+        title: 'Error',
+        description: 'Invalid course name. Please use letters/numbers.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     try {
       const res = await createCourse.mutateAsync({
-        data,
+        id: courseId,
+        data: {
+          ...data,
+          courseId, // keep inside doc for convenience
+        },
         createdBy: user.uid,
       });
 
-      toast({ title: 'Success', description: `Course "${data.name}" created successfully!` });
+      toast({
+        title: 'Success',
+        description: `Course "${data.name}" created (id: ${res.id})`,
+      });
+
       onSuccess?.(res.id);
-      // form.reset();
+      // form.reset(); // optional
     } catch (error: any) {
       console.error('Error creating course:', error);
       toast({
@@ -160,6 +221,11 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
       <Card>
         <CardHeader>
           <CardTitle>Create New Course</CardTitle>
+          {computedCourseId ? (
+            <div className="text-xs text-muted-foreground">
+              Course ID will be: <span className="font-mono">{computedCourseId}</span>
+            </div>
+          ) : null}
         </CardHeader>
 
         <CardContent>
@@ -183,7 +249,7 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                         <FormItem>
                           <FormLabel>Course Name *</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g., Phonics Level 1" {...field} />
+                            <Input placeholder="e.g., Phonics Foundations 1" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -221,7 +287,6 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                           <FormLabel>Level *</FormLabel>
                           <Select
                             value={String(field.value ?? '')}
-                            // ✅ keep string; coerce will convert
                             onValueChange={field.onChange}
                           >
                             <FormControl>
@@ -291,57 +356,45 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                     <FormField
                       control={form.control}
                       name="ratePerSession"
-                      render={({ field }) => {
-                        const v = field.value;
-                        const safeValue =
-                          typeof v === 'number' || typeof v === 'string' ? v : '';
-
-                        return (
-                          <FormItem>
-                            <FormLabel>Rate per Session (₹) *</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="500"
-                                value={safeValue as any}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Rate per Session (₹) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="500"
+                              value={(typeof field.value === 'number' || typeof field.value === 'string') ? (field.value as any) : ''}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
 
                     <FormField
                       control={form.control}
                       name="durationMinutes"
-                      render={({ field }) => {
-                        const v = field.value;
-                        const safeValue =
-                          typeof v === 'number' || typeof v === 'string' ? v : '';
-
-                        return (
-                          <FormItem>
-                            <FormLabel>Duration per Session (minutes) *</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="35"
-                                value={safeValue as any}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Duration per Session (minutes) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="35"
+                              value={(typeof field.value === 'number' || typeof field.value === 'string') ? (field.value as any) : ''}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
 
                     <FormField
@@ -370,35 +423,29 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                     <FormField
                       control={form.control}
                       name="maxStudentsPerSession"
-                      render={({ field }) => {
-                        const v = field.value;
-                        const safeValue =
-                          typeof v === 'number' || typeof v === 'string' ? v : '';
-
-                        return (
-                          <FormItem>
-                            <FormLabel>Max Students per Session *</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="3"
-                                value={safeValue as any}
-                                onChange={(e) => field.onChange(e.target.value)}
-                                onBlur={field.onBlur}
-                                name={field.name}
-                                ref={field.ref}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Max Students per Session *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="3"
+                              value={(typeof field.value === 'number' || typeof field.value === 'string') ? (field.value as any) : ''}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              onBlur={field.onBlur}
+                              name={field.name}
+                              ref={field.ref}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
                     />
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <FormLabel>Target Age Range *</FormLabel>
+                      <FormLabel>Target Age Range</FormLabel>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(form.watch('targetAge' as any) ?? []).map((age: any) => (
                           <Badge
@@ -429,7 +476,7 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                     </div>
 
                     <div>
-                      <FormLabel>Target Grades *</FormLabel>
+                      <FormLabel>Target Grades</FormLabel>
                       <div className="flex flex-wrap gap-2 mt-2">
                         {(form.watch('targetGrade' as any) ?? []).map((grade: any) => (
                           <Badge
@@ -466,7 +513,7 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                 {/* -------------------- Topics -------------------- */}
                 <TabsContent value="topics" className="space-y-4">
                   <div>
-                    <FormLabel>Topics *</FormLabel>
+                    <FormLabel>Topics {form.watch('status') === 'active' ? '*' : '(optional for Draft)'}</FormLabel>
 
                     <div className="flex flex-wrap gap-2 mt-2">
                       {(form.watch('topics' as any) ?? []).map((topic: any) => (
@@ -497,6 +544,9 @@ export default function CreateCourseForm({ onSuccess, onCancel }: CreateCourseFo
                         <Plus className="h-4 w-4" />
                       </Button>
                     </div>
+
+                    {/* Show schema error if active */}
+                    <FormMessage>{form.formState.errors.topics?.message as any}</FormMessage>
                   </div>
                 </TabsContent>
 
