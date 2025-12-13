@@ -79,7 +79,7 @@ node scripts/add-lesson-plan-to-session.js abc123 "https://www.canva.com/design/
 - `src/pages/teacher/components/lesson-plan/CanvaLessonPlanModal.tsx`
 - `scripts/add-lesson-plan-to-session.js`
 - `docs/canva-lesson-plan-integration.md`
-- `docs/testing/canva-lesson-plan-test-guide.md`
+- `docs/qa/canva-lesson-plan-test-guide.md`
 
 ### Modified Files
 - `src/types/Teacher.ts` (added `lessonPlanUrl` field)
@@ -98,14 +98,14 @@ node scripts/add-lesson-plan-to-session.js abc123 "https://www.canva.com/design/
 5. Verify modal opens with Canva embed
 
 ### Full Test Checklist
-See: `docs/testing/canva-lesson-plan-test-guide.md`
+See: `docs/qa/canva-lesson-plan-test-guide.md`
 
 ---
 
 ## 📚 Full Documentation
 
 - **Admin Guide**: `docs/canva-lesson-plan-integration.md`
-- **Test Guide**: `docs/testing/canva-lesson-plan-test-guide.md`
+- **Test Guide**: `docs/qa/canva-lesson-plan-test-guide.md`
 - **Script Reference**: `scripts/add-lesson-plan-to-session.js`
 
 ---
@@ -159,7 +159,7 @@ See: `docs/testing/canva-lesson-plan-test-guide.md`
 
 For questions or issues:
 - Check: `docs/canva-lesson-plan-integration.md`
-- Review: `docs/testing/canva-lesson-plan-test-guide.md`
+- Review: `docs/qa/canva-lesson-plan-test-guide.md`
 - Contact: Tiny Steps Tech Team
 
 ---

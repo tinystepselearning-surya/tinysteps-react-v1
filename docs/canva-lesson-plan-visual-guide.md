@@ -308,7 +308,7 @@ MODAL (all sizes)
 4. **Review documentation**
    - `docs/canva-lesson-plan-quickstart.md` (Quick start)
    - `docs/canva-lesson-plan-integration.md` (Full guide)
-   - `docs/testing/canva-lesson-plan-test-guide.md` (Testing)
+   - `docs/qa/canva-lesson-plan-test-guide.md` (Testing)
 
 ---
 
