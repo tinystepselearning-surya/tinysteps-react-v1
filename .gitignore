@@ -33,3 +33,7 @@ src/**/*.jsx
 !src/**/*.config.js
 *.js.backup
 *.jsx.backup
+
+# Firebase Admin SDK keys (NEVER COMMIT)
+*firebase-adminsdk*.json
+serviceAccount*.json
