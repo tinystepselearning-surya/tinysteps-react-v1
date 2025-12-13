@@ -1,56 +1,63 @@
+# =========================
+# Tiny Steps - Root Ignore
+# =========================
+
+# OS / editor
 .DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Dependencies
 **/node_modules/
+
+# Build output
 dist/
 build/
+coverage/
+.cache/
+.sass-cache/
+.parcel-cache/
+.serverless/
+.turbo/
+*.tsbuildinfo
+
+# Firebase / emulators / debug
 .firebase/
-emu-nohup.log
 firebase-debug.log
+firestore-debug.log
+emu*.log
 *.log
+
+# Local env (never commit)
 .env
 .env.*
-.vscode/
-.idea/
-coverage/
-/.cache
-public/assets/
-dist/assets/
-/*.local
-/.sass-cache
-.parcel-cache
-/.serverless
-/.turbo
-/*.tgz
+*.local
+
+# Archives / bundles
+*.tgz
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+
+# Firebase Admin SDK keys (NEVER COMMIT)
+*firebase-adminsdk*.json
+serviceAccount*.json
 tinysteps-react-v1-firebase-adminsdk-*.json
 
-# Prevent compiled JS files from shadowing TS/TSX sources
-# Only ignore in src/, allow .js in root (config files like vite.config.js)
+# Prevent compiled JS files from shadowing TS/TSX sources in src/
 src/**/*.js
 src/**/*.jsx
 !src/**/*.config.js
 *.js.backup
 *.jsx.backup
 
-# Firebase Admin SDK keys (NEVER COMMIT)
-*firebase-adminsdk*.json
-serviceAccount*.json
+# Optional: large local dirs you don't want tracked (keep if used)
+logs/
+reports/
+private/
 
-# Ensure node_modules are ignored
-node_modules/
-functions/node_modules/
-app/node_modules/
-
-# dependencies
-node_modules/
-functions/node_modules/
-app/node_modules/
-tinysteps-app/node_modules/
-tinysteps-mobile/node_modules/
-
-# logs
-*.log
-emu*.log
-firestore-debug.log
+# If you keep generated assets out of git
+public/assets/
+dist/assets/
