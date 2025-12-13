@@ -1,32 +1,44 @@
-// src/hooks/courses/useCreateCourse.ts
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { collection, doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 
-type CreateCourseArgs = {
-  data: Record<string, any>;
+export type CreateCourseArgs = {
+  id: string;                // ✅ slug → courses/{id}
+  data: Record<string, any>;  // you can replace with your Course type later
   createdBy: string;
 };
 
-type CreateCourseResult = { id: string };
+export type CreateCourseResult = { id: string };
 
 export function useCreateCourse() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
 
   return useMutation<CreateCourseResult, Error, CreateCourseArgs>({
-    mutationFn: async ({ data, createdBy }) => {
-      const courseRef = doc(collection(db, 'courses'));
-      await setDoc(courseRef, {
+    mutationFn: async ({ id, data, createdBy }) => {
+      const ref = doc(db, 'courses', id);
+
+      // prevent accidental overwrite
+      const existing = await getDoc(ref);
+      if (existing.exists()) {
+        throw new Error(`Course already exists with id: ${id}`);
+      }
+
+      await setDoc(ref, {
         ...data,
+        id,                 // ✅ keep inside doc too (useful)
+        courseId: id,        // ✅ keep inside doc too (useful)
         createdBy,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
-      return { id: courseRef.id };
+
+      return { id };
     },
+
     onSuccess: () => {
-      // ✅ this is what refreshes CourseList instantly
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      // invalidate anything that lists courses
+      qc.invalidateQueries({ queryKey: ['courses'] });
+      qc.invalidateQueries({ queryKey: ['adminCourses'] });
     },
   });
 }

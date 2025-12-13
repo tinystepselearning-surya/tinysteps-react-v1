@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+// src/pages/admin/EnrollmentManagement/EnrollmentsList.tsx
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   collection,
   getDocs,
@@ -9,168 +11,261 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@components/ui/table';
 import { Badge } from '@components/ui/badge';
 
 type Enrollment = {
   id: string;
-
-  courseId?: string;
-
-  // Your schema uses BOTH
+  courseId?: string; // might be slug / code / docId depending on your data
   kidIds?: string[];
-  studentId?: string;
-
+  kidNames?: string[]; // if you later store names directly (optional)
   status?: string;
-  billingCycle?: string;
-
   creditsRemaining?: number;
   creditsTotal?: number;
-  creditsUsed?: number;
-
-  teacherId?: string;
-  parentId?: string;
-  lpId?: string | null;
-
-  createdAt?: any;
+  billingCycle?: string;
 };
 
-type Kid = {
+type KidDoc = {
   id: string;
+  // try many possible name fields
   name?: string;
   fullName?: string;
   displayName?: string;
+  studentName?: string;
+  firstName?: string;
+  lastName?: string;
+
+  // possible id link fields
+  studentId?: string;
+  uid?: string;
 };
 
-type Course = {
+type CourseDoc = {
   id: string;
+  // try many possible title fields
   name?: string;
-  area?: string;
-  level?: number;
+  title?: string;
+  courseName?: string;
+
+  // possible id link fields
+  courseId?: string;
+  slug?: string;
+  code?: string;
 };
 
-function chunk<T>(arr: T[], size: number) {
+function chunk<T>(arr: T[], size = 10) {
   const out: T[][] = [];
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
 }
 
-async function fetchDocsByIds<T extends { id: string }>(
-  colName: string,
-  ids: string[],
-): Promise<T[]> {
-  if (!ids.length) return [];
-  const idsUnique = Array.from(new Set(ids)).filter(Boolean);
-
-  // Firestore "in" query limit: 10 ids
-  const batches = chunk(idsUnique, 10);
-
-  const results: T[] = [];
-  for (const batch of batches) {
-    const q = query(collection(db, colName), where(documentId(), 'in', batch));
-    const snap = await getDocs(q);
-    snap.forEach((d) => results.push({ id: d.id, ...(d.data() as any) }));
-  }
-  return results;
+async function fetchEnrollments(): Promise<Enrollment[]> {
+  const qy = query(collection(db, 'enrollments'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(qy);
+  return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 }
 
-function prettyCourseId(id?: string) {
-  if (!id) return '—';
-  // "phonics-foundations" -> "Phonics Foundations"
-  return id
-    .replace(/[-_]+/g, ' ')
-    .replace(/\b\w/g, (m) => m.toUpperCase());
+/**
+ * Kids:
+ * 1) docId IN kidIds
+ * 2) studentId IN kidIds (if your kid doc id is different)
+ * 3) uid IN kidIds (if you store auth uid inside kid doc)
+ */
+async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
+  if (!ids.length) return {};
+  const batches = chunk(ids, 10);
+
+  const byAnyKey: Record<string, KidDoc> = {};
+  const addKid = (d: any) => {
+    const kid = { id: d.id, ...(d.data() as any) } as KidDoc;
+    byAnyKey[kid.id] = kid;
+    if (kid.studentId) byAnyKey[kid.studentId] = kid;
+    if (kid.uid) byAnyKey[kid.uid] = kid;
+  };
+
+  // 1) try docId
+  for (const batch of batches) {
+    const q1 = query(collection(db, 'kids'), where(documentId(), 'in', batch));
+    const snap = await getDocs(q1);
+    snap.docs.forEach(addKid);
+  }
+
+  // find missing
+  const missing = ids.filter((id) => !byAnyKey[id]);
+  if (!missing.length) return byAnyKey;
+
+  // 2) try studentId
+  for (const batch of chunk(missing, 10)) {
+    const q2 = query(collection(db, 'kids'), where('studentId', 'in', batch));
+    const snap = await getDocs(q2);
+    snap.docs.forEach(addKid);
+  }
+
+  // recompute missing
+  const stillMissing = ids.filter((id) => !byAnyKey[id]);
+  if (!stillMissing.length) return byAnyKey;
+
+  // 3) try uid
+  for (const batch of chunk(stillMissing, 10)) {
+    const q3 = query(collection(db, 'kids'), where('uid', 'in', batch));
+    const snap = await getDocs(q3);
+    snap.docs.forEach(addKid);
+  }
+
+  return byAnyKey;
+}
+
+/**
+ * Courses:
+ * 1) docId IN courseIds
+ * 2) courseId IN courseIds
+ * 3) slug IN courseIds
+ * 4) id IN courseIds
+ */
+async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDoc>> {
+  if (!ids.length) return {};
+  const batches = chunk(ids, 10);
+
+  const byAnyKey: Record<string, CourseDoc> = {};
+  const addCourse = (d: any) => {
+    const course = { id: d.id, ...(d.data() as any) } as CourseDoc;
+    byAnyKey[course.id] = course;
+    if (course.courseId) byAnyKey[course.courseId] = course;
+    if (course.slug) byAnyKey[course.slug] = course;
+    if (course.code) byAnyKey[course.code] = course;
+  };
+
+  // 1) docId
+  for (const batch of batches) {
+    const q1 = query(collection(db, 'courses'), where(documentId(), 'in', batch));
+    const snap = await getDocs(q1);
+    snap.docs.forEach(addCourse);
+  }
+
+  let missing = ids.filter((id) => !byAnyKey[id]);
+  if (!missing.length) return byAnyKey;
+
+  // 2) courseId
+  for (const batch of chunk(missing, 10)) {
+    const q2 = query(collection(db, 'courses'), where('courseId', 'in', batch));
+    const snap = await getDocs(q2);
+    snap.docs.forEach(addCourse);
+  }
+
+  missing = ids.filter((id) => !byAnyKey[id]);
+  if (!missing.length) return byAnyKey;
+
+  // 3) slug
+  for (const batch of chunk(missing, 10)) {
+    const q3 = query(collection(db, 'courses'), where('slug', 'in', batch));
+    const snap = await getDocs(q3);
+    snap.docs.forEach(addCourse);
+  }
+
+  missing = ids.filter((id) => !byAnyKey[id]);
+  if (!missing.length) return byAnyKey;
+
+  // 4) id field
+  for (const batch of chunk(missing, 10)) {
+    const q4 = query(collection(db, 'courses'), where('id', 'in', batch));
+    const snap = await getDocs(q4);
+    snap.docs.forEach(addCourse);
+  }
+
+  return byAnyKey;
+}
+
+function pickKidName(k?: KidDoc) {
+  if (!k) return '';
+  if (k.name) return k.name;
+  if (k.fullName) return k.fullName;
+  if (k.displayName) return k.displayName;
+  if (k.studentName) return k.studentName;
+  const fn = [k.firstName, k.lastName].filter(Boolean).join(' ').trim();
+  if (fn) return fn;
+  return '';
+}
+
+function pickCourseName(c?: CourseDoc) {
+  if (!c) return '';
+  return c.name || c.title || c.courseName || '';
 }
 
 export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
-  const [loading, setLoading] = useState(true);
-  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
-  const [kidMap, setKidMap] = useState<Record<string, Kid>>({});
-  const [courseMap, setCourseMap] = useState<Record<string, Course>>({});
+  const enrollmentsQuery = useQuery({
+    queryKey: ['adminEnrollments', reloadKey],
+    queryFn: fetchEnrollments,
+  });
 
-  useEffect(() => {
-    let alive = true;
+  const enrollments = enrollmentsQuery.data ?? [];
 
-    async function load() {
-      setLoading(true);
-      try {
-        // 1) Get enrollments
-        const qEnroll = query(collection(db, 'enrollments'), orderBy('createdAt', 'desc'));
-        const snap = await getDocs(qEnroll);
+  const allKidIds = useMemo(() => {
+    const set = new Set<string>();
+    enrollments.forEach((e) => (e.kidIds ?? []).forEach((id) => id && set.add(id)));
+    return Array.from(set);
+  }, [enrollments]);
 
-        const rows: Enrollment[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+  const allCourseIds = useMemo(() => {
+    const set = new Set<string>();
+    enrollments.forEach((e) => e.courseId && set.add(e.courseId));
+    return Array.from(set);
+  }, [enrollments]);
 
-        // 2) Collect kid ids from kidIds[] + studentId
-        const kidIds = rows.flatMap((e) => {
-          const fromArray = Array.isArray(e.kidIds) ? e.kidIds : [];
-          const fromSingle = e.studentId ? [e.studentId] : [];
-          return [...fromArray, ...fromSingle];
-        });
+  const kidsQuery = useQuery({
+    queryKey: ['kidsByIds', allKidIds.join('|')],
+    queryFn: () => fetchKidsByIds(allKidIds),
+    enabled: allKidIds.length > 0,
+  });
 
-        const courseIds = rows.map((e) => e.courseId).filter(Boolean) as string[];
+  const coursesQuery = useQuery({
+    queryKey: ['coursesByIds', allCourseIds.join('|')],
+    queryFn: () => fetchCoursesByIds(allCourseIds),
+    enabled: allCourseIds.length > 0,
+  });
 
-        // 3) Fetch kids (✅ your collection name is kids)
-        const kids = await fetchDocsByIds<Kid>('kids', kidIds);
-        const kidLookup: Record<string, Kid> = {};
-        kids.forEach((k) => (kidLookup[k.id] = k));
+  const kidsMap = kidsQuery.data ?? {};
+  const coursesMap = coursesQuery.data ?? {};
 
-        // 4) OPTIONAL: fetch courses if the collection exists in your project
-        // If 'courses' collection is missing in prod, this will just return [] and we fallback to prettyCourseId.
-        let courseLookup: Record<string, Course> = {};
-        try {
-          const courses = await fetchDocsByIds<Course>('courses', courseIds);
-          courseLookup = {};
-          courses.forEach((c) => (courseLookup[c.id] = c));
-        } catch (e) {
-          courseLookup = {};
-        }
+  const kidLabel = (kidId: string) => {
+    const k = kidsMap[kidId];
+    const name = pickKidName(k);
+    return name || 'Unknown student';
+  };
 
-        if (!alive) return;
-        setEnrollments(rows);
-        setKidMap(kidLookup);
-        setCourseMap(courseLookup);
-      } catch (err) {
-        console.error('EnrollmentsList load error:', err);
-        if (!alive) return;
-        setEnrollments([]);
-        setKidMap({});
-        setCourseMap({});
-      } finally {
-        if (!alive) return;
-        setLoading(false);
-      }
-    }
+  const courseLabel = (courseId?: string) => {
+    if (!courseId) return '—';
+    const c = coursesMap[courseId];
+    const name = pickCourseName(c);
+    return name || 'Unknown course';
+  };
 
-    load();
-    return () => {
-      alive = false;
-    };
-  }, [reloadKey]);
+  if (enrollmentsQuery.isLoading) {
+    return <div className="py-6 text-center">Loading enrollments…</div>;
+  }
 
-  const displayRows = useMemo(() => {
-    return enrollments.map((e) => {
-      const kidIds = [
-        ...(Array.isArray(e.kidIds) ? e.kidIds : []),
-        ...(e.studentId ? [e.studentId] : []),
-      ].filter(Boolean);
-
-      const kidNames = kidIds.map((id) => {
-        const k = kidMap[id];
-        return k?.name || k?.fullName || k?.displayName || id;
-      });
-
-      const courseDoc = e.courseId ? courseMap[e.courseId] : undefined;
-      const courseName = courseDoc?.name || prettyCourseId(e.courseId);
-
-      return { ...e, kidNames, courseName };
-    });
-  }, [enrollments, kidMap, courseMap]);
-
-  if (loading) return <div className="py-6 text-sm text-muted-foreground">Loading enrollments…</div>;
-  if (!displayRows.length) return <div className="py-6 text-sm text-muted-foreground">No enrollments found.</div>;
+  if (enrollmentsQuery.isError) {
+    return (
+      <div className="py-6 text-center text-red-600">
+        Failed to load enrollments.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
+      {(kidsQuery.isLoading || coursesQuery.isLoading) && (
+        <div className="text-xs text-muted-foreground">
+          Resolving names…
+        </div>
+      )}
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -183,29 +278,32 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         </TableHeader>
 
         <TableBody>
-          {displayRows.map((e) => (
-            <TableRow key={e.id}>
-              <TableCell className="font-medium">{e.courseName}</TableCell>
+          {enrollments.map((e) => {
+            const kids = (e.kidIds ?? []).map(kidLabel).join(', ');
+            const status = e.status ?? 'unknown';
 
-              <TableCell>
-                {e.kidNames?.length ? e.kidNames.join(', ') : '—'}
-              </TableCell>
+            return (
+              <TableRow key={e.id}>
+                <TableCell className="font-medium">
+                  {courseLabel(e.courseId)}
+                </TableCell>
 
-              <TableCell>
-                <Badge variant={e.status === 'active' ? 'default' : 'secondary'}>
-                  {e.status ?? 'unknown'}
-                </Badge>
-              </TableCell>
+                <TableCell>{kids || '—'}</TableCell>
 
-              <TableCell>
-                {(e.creditsRemaining ?? 0)} / {(e.creditsTotal ?? 0)}
-              </TableCell>
+                <TableCell>
+                  <Badge variant={status === 'active' ? 'default' : 'secondary'}>
+                    {status}
+                  </Badge>
+                </TableCell>
 
-              <TableCell className="text-sm text-muted-foreground">
-                {e.billingCycle ?? '—'}
-              </TableCell>
-            </TableRow>
-          ))}
+                <TableCell>
+                  {(e.creditsRemaining ?? 0)} / {(e.creditsTotal ?? 0)}
+                </TableCell>
+
+                <TableCell>{e.billingCycle ?? '—'}</TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
     </div>
