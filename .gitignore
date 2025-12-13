@@ -49,3 +49,8 @@ functions/node_modules/
 app/node_modules/
 tinysteps-app/node_modules/
 tinysteps-mobile/node_modules/
+
+# logs
+*.log
+emu*.log
+firestore-debug.log
