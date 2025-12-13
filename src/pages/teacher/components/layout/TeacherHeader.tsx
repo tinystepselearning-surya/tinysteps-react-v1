@@ -1,3 +1,4 @@
+import React, { Suspense } from 'react';
 import type { FC } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
@@ -5,7 +6,9 @@ import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { NotificationsPanel } from '../notifications/NotificationsPanel';
+const NotificationsPanel = React.lazy(() =>
+  import('../notifications/NotificationsPanel').then((module) => ({ default: module.NotificationsPanel }))
+);
 
 interface TeacherHeaderProps {
   name?: string;
@@ -47,7 +50,9 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount }) =
       </div>
       <div className="flex items-center gap-4">
         {/* Notifications panel / bell */}
-        <NotificationsPanel />
+        <Suspense fallback={null}>
+          <NotificationsPanel />
+        </Suspense>
         <div className="h-12 w-12 rounded-full bg-white/80 dark:bg-slate-800 text-blue-600 flex items-center justify-center font-semibold">
           {initials || 'TT'}
         </div>
