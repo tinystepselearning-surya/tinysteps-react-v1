@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
@@ -52,8 +53,13 @@ export default [
         React: 'readonly',
       },
     },
+    plugins: {
+      'react-hooks': reactHooks,
+    },
     rules: {
-      // Add React-specific rules here if needed
+      // enable important react-hooks rules (avoid using `extends` in flat config)
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
     },
   },
   {

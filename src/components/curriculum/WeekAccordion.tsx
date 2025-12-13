@@ -30,6 +30,7 @@ const accents = [
 export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: boolean }> = ({ items, defaultOpenAll = false }) => {
   const [open, setOpen] = useState(() => items.map(() => defaultOpenAll));
   const [openDays, setOpenDays] = useState(() => items.map(() => false));
+  const baseId = useId();
 
   const toggle = (i: number) => setOpen((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
   const expandAll = () => setOpen(items.map(() => true));
@@ -44,7 +45,7 @@ export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: 
       </div>
 
       {items.map((w, i) => {
-        const id = useId();
+        const id = `${baseId}-${i}`;
         const isOpen = open[i];
         const accent = accents[i % accents.length];
 
