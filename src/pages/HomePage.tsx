@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { BookOpen, Users, CheckCircle, Star, MessageCircle } from 'lucide-react';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import Footer from '../components/common/Footer';
 import ConversionHero from '../components/Home/ConversionHero';
 import WhyChooseCollapsibleSection from '../components/Home/WhyChooseCollapsibleSection';
@@ -16,11 +16,21 @@ import TrustSignals from '../components/Trust/TrustSignals';
 import TestimonialsCarousel from '../components/Home/TestimonialsCarousel';
 import TrialForm from '../components/forms/TrialForm';
 import StatsStrip from '../components/Home/StatsStrip';
-import PopularPrograms from '../components/Home/PopularPrograms';
-import GlobalImpactSection from '../components/Home/GlobalImpactSection';
-import DemoShowcase from '../components/Home/DemoShowcase';
-import AIGuidedPracticeSection from '../components/Home/AIGuidedPracticeSection';
-import InteractiveSampleActivitySection from '../components/Home/InteractiveSampleActivitySection';
+const PopularPrograms = lazy(() => import('../components/Home/PopularPrograms'));
+const GlobalImpactSection = lazy(() => import('../components/Home/GlobalImpactSection'));
+const TrustSignalsLazy = lazy(() => import('../components/Trust/TrustSignals'));
+const TestimonialsCarouselLazy = lazy(() => import('../components/Home/TestimonialsCarousel'));
+const DemoShowcase = lazy(() => import('../components/Home/DemoShowcase'));
+const WhyChooseCollapsibleSectionLazy = lazy(() => import('../components/Home/WhyChooseCollapsibleSection'));
+const StepTimelineLazy = lazy(() => import('../components/Home/StepTimeline'));
+const CoursesSectionLazy = lazy(() => import('../components/Home/CoursesSection'));
+const AIGuidedPracticeSection = lazy(() => import('../components/Home/AIGuidedPracticeSection'));
+const InteractiveSampleActivitySection = lazy(() => import('../components/Home/InteractiveSampleActivitySection'));
+const SocialProofCrispSectionLazy = lazy(() => import('../components/Home/SocialProofCrispSection'));
+const PricingCrispSectionLazy = lazy(() => import('../components/Home/PricingCrispSection'));
+const FAQSectionLazy = lazy(() => import('../components/Home/FAQSection'));
+const FinalCTASectionLazy = lazy(() => import('../components/Home/FinalCTASection'));
+const FooterLazy = lazy(() => import('../components/common/Footer'));
 
 const courseCards = [
   {
@@ -167,17 +177,17 @@ export default function HomePage() {
       <MobileLandingView />
       <ConversionHero />
       <StatsStrip />
-      <PopularPrograms />
-      <GlobalImpactSection />
-      <TrustSignals />
-      <TestimonialsCarousel />
-      <DemoShowcase />
-      <WhyChooseCollapsibleSection />
-      <StepTimeline />
-      <CoursesSection />
-      <AIGuidedPracticeSection />
-      <InteractiveSampleActivitySection />
-      <SocialProofCrispSection />
+      <Suspense fallback={null}><PopularPrograms /></Suspense>
+      <Suspense fallback={null}><GlobalImpactSection /></Suspense>
+      <Suspense fallback={null}><TrustSignalsLazy /></Suspense>
+      <Suspense fallback={null}><TestimonialsCarouselLazy /></Suspense>
+      <Suspense fallback={null}><DemoShowcase /></Suspense>
+      <Suspense fallback={null}><WhyChooseCollapsibleSectionLazy /></Suspense>
+      <Suspense fallback={null}><StepTimelineLazy /></Suspense>
+      <Suspense fallback={null}><CoursesSectionLazy /></Suspense>
+      <Suspense fallback={null}><AIGuidedPracticeSection /></Suspense>
+      <Suspense fallback={null}><InteractiveSampleActivitySection /></Suspense>
+      <Suspense fallback={null}><SocialProofCrispSectionLazy /></Suspense>
       <section id="book-trial" className="px-6 py-12">
         <div className="mx-auto max-w-6xl grid gap-8 rounded-3xl bg-white/80 p-8 shadow-card-hover md:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
@@ -199,11 +209,11 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <PricingCrispSection />
+      <Suspense fallback={null}><PricingCrispSectionLazy /></Suspense>
       {/* Gaming subscription removed */}
-      <FAQSection />
-      <FinalCTASection />
-      <Footer />
+      <Suspense fallback={null}><FAQSectionLazy /></Suspense>
+      <Suspense fallback={null}><FinalCTASectionLazy /></Suspense>
+      <Suspense fallback={null}><FooterLazy /></Suspense>
     </>
   );
 }

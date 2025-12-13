@@ -3,7 +3,7 @@ module.exports = {
 	darkMode: ['class'],
 	content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
 	safelist: [
-		{ pattern: /(bg|text|border|ring|from|to)-(primary|secondary|accent)-(50|100|500|600|700)?/ },
+		{ pattern: /(bg|text|border|ring|from|to)-(primary|secondary|accent)-(50|100|500|600|700)/ },
 		{ pattern: /(bg|text|border|from|to)-vibrancy-(orange|purple|pink)/ },
 		{ pattern: /bg-gradient-(hero|card|text-primary|text-secondary|glow)/ },
 		{ pattern: /animate-(fadeInUp|slideDown|scaleUp|shimmer|floatUp|pulse-glow)/ }

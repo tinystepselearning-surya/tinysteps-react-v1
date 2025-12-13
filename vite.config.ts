@@ -47,21 +47,29 @@ export default defineConfig({
     ? [
         mdxPlugin,
         react(),
-        visualizer({
-          open: true,
-          gzipSize: true,
-          brotliSize: true,
-          filename: 'dist/stats.html',
-        }),
+        ...(process.env.ANALYZE === 'true'
+          ? [
+              visualizer({
+                open: false,
+                gzipSize: true,
+                brotliSize: true,
+                filename: 'dist/stats.html',
+              }),
+            ]
+          : []),
       ]
     : [
         react(),
-        visualizer({
-          open: true,
-          gzipSize: true,
-          brotliSize: true,
-          filename: 'dist/stats.html',
-        }),
+        ...(process.env.ANALYZE === 'true'
+          ? [
+              visualizer({
+                open: false,
+                gzipSize: true,
+                brotliSize: true,
+                filename: 'dist/stats.html',
+              }),
+            ]
+          : []),
       ],
 
   resolve: {
@@ -82,6 +90,10 @@ export default defineConfig({
 
           // node_modules -> vendor buckets
           if (id.includes('node_modules')) {
+            if (id.includes('react-router')) return 'vendor-router';
+            if (id.includes('@tanstack/react-query')) return 'vendor-query';
+            if (id.includes('@sentry')) return 'vendor-sentry';
+            if (id.includes('lucide-react')) return 'vendor-icons';
             if (id.includes('firebase')) return 'vendor-firebase';
             if (id.includes('framer-motion')) return 'vendor-framer-motion';
             if (id.includes('react') && id.includes('node_modules')) return 'vendor-react';
@@ -90,16 +102,12 @@ export default defineConfig({
             return 'vendor';
           }
 
-          // Large app areas -> separate dashboards bundle
-          if (
-            id.includes('/src/pages/admin/') ||
-            id.includes('/src/pages/teacher/') ||
-            id.includes('/src/pages/parent/') ||
-            id.includes('/src/pages/lp/') ||
-            id.includes('/src/pages/kid/')
-          ) {
-            return 'dashboards';
-          }
+          // Large app areas -> separate per-portal bundles
+          if (id.includes('/src/pages/admin/')) return 'admin';
+          if (id.includes('/src/pages/teacher/')) return 'teacher';
+          if (id.includes('/src/pages/parent/')) return 'parent';
+          if (id.includes('/src/pages/lp/')) return 'lp';
+          if (id.includes('/src/pages/kid/')) return 'kid';
 
           return undefined;
         },
