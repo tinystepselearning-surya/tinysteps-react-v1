@@ -37,3 +37,15 @@ src/**/*.jsx
 # Firebase Admin SDK keys (NEVER COMMIT)
 *firebase-adminsdk*.json
 serviceAccount*.json
+
+# Ensure node_modules are ignored
+node_modules/
+functions/node_modules/
+app/node_modules/
+
+# dependencies
+node_modules/
+functions/node_modules/
+app/node_modules/
+tinysteps-app/node_modules/
+tinysteps-mobile/node_modules/
