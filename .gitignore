@@ -61,3 +61,7 @@ private/
 # If you keep generated assets out of git
 public/assets/
 dist/assets/
+
+# Firebase Data Connect local data
+/dataconnect/.dataconnect/
+**/.dataconnect/
