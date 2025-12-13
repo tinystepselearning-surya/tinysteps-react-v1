@@ -31,7 +31,6 @@ export default defineConfig({
       // Vitest defaults
       '**/node_modules/**',
       '**/dist/**',
-      '**/cypress/**',
       '**/.{git,svn,hg}/**',
 
       // Old compiled JS test files that clash with vi.mock / __awaiter
