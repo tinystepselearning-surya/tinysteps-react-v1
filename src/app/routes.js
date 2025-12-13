@@ -24,7 +24,7 @@ import AdminDashboard from '../pages/admin/AdminDashboard';
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
-const BetaAnalytics = lazy(() => import('../pages/admin/beta-analytics.jsx'));
+
 
 // Payments
 const PaymentCallback = lazy(() => import('../pages/parent/Payments/PaymentCallback'));
@@ -165,10 +165,7 @@ const router = createBrowserRouter([
             path: 'analytics',
             element: _jsx(AdminDashboard, {}),
           },
-          {
-            path: 'beta-analytics',
-            element: _jsx(BetaAnalytics, {}),
-          },
+          
         ],
       },
       {

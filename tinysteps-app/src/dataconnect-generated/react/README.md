@@ -77,21 +77,7 @@ import { connectorConfig } from '@dataconnect/generated';
 const dataConnect = getDataConnect(connectorConfig);
 ```
 
-## Connecting to the local Emulator
-By default, the connector will connect to the production service.
-
-To connect to the emulator, you can use the following code.
-You can also follow the emulator instructions from the [Data Connect documentation](https://firebase.google.com/docs/data-connect/web-sdk#emulator-react-angular).
-
-```javascript
-import { connectDataConnectEmulator, getDataConnect } from 'firebase/data-connect';
-import { connectorConfig } from '@dataconnect/generated';
-
-const dataConnect = getDataConnect(connectorConfig);
-connectDataConnectEmulator(dataConnect, 'localhost', 9399);
-```
-
-After it's initialized, you can call your Data Connect [queries](#queries) and [mutations](#mutations) using the hooks provided from your generated React SDK.
+<!-- Emulator connection instructions removed to avoid localhost references in the repo. -->
 
 # Queries
 

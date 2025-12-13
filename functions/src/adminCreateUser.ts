@@ -1,161 +1,507 @@
 /**
- * Tiny Steps – Admin Create User (Enterprise Modular Version)
- * Clean, maintainable, SOLID-oriented implementation.
+ * adminCreateUser.ts (Single-file, self-contained)
+ *
+ * Creates Auth user + role docs in Firestore + custom claims.
+ * Only ADMIN can call.
+ *
+ * Roles:
+ * - admin
+ * - teacher
+ * - parent
+ * - learningPartner (alias)
+ * - learning-partner (canonical)
+ *
+ * Canonical role stored in Firestore + claims: "learning-partner"
+ * Raw role stored as provided: "learningPartner" | "learning-partner"
  */
 
-import * as functions from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
+import * as admin from "firebase-admin";
 
-import { ensureAdmin } from "./helpers/adminGuard";
-import { validateCreateUserPayload } from "./helpers/validation/userValidation";
-import {
-  createAuthUser,
-  rollbackAuthUser,
-  maybeGeneratePasswordResetLink,
-  generateEmailVerification,
-} from "./helpers/auth/userAuth";
-import {
-  buildUserDocBase,
-  buildRoleSpecificDocuments,
-} from "./helpers/firestore/userFirestoreBuilders";
-import { setUserClaims } from "./helpers/auth/userClaims";
-import { sanitizeForLogging } from "./helpers/util/sanitize";
-import { CreateUserResponse } from "./helpers/types/createUserTypes";
+// Initialize Firebase Admin SDK once
+if (!admin.apps.length) admin.initializeApp();
 
-// Ensure Admin SDK initialized
-if (admin.apps.length === 0) {
-  admin.initializeApp();
+// ---------- Constants ----------
+
+const REGION = "asia-south1";
+
+const VALID_ROLES = [
+  "admin",
+  "teacher",
+  "parent",
+  "learningPartner",
+  "learning-partner",
+] as const;
+
+type RawRole = (typeof VALID_ROLES)[number];
+type CanonicalRole = "admin" | "teacher" | "parent" | "learning-partner";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^[\d\s\-\+\(\)]+$/;
+
+const MAX_CUSTOM_CLAIMS_BYTES = 1000; // Firebase custom claims limit is ~1KB
+const DEFAULT_STATUS = "active" as const;
+type UserStatus = "active" | "suspended" | "archived";
+
+// ---------- Types ----------
+
+interface AdminCreateUserRequest {
+  email: string;
+  displayName: string;
+  password?: string;
+  phone?: string;
+  role: RawRole;
+
+  // Teacher fields
+  qualification?: string;
+  specialization?: string[];
+  yearsExperience?: number;
+  bio?: string;
+
+  // Parent fields
+  address?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+  communicationLanguage?: string;
+  sessionTime?: string;
+  paymentMethods?: string[];
+
+  // Learning Partner fields
+  region?: string;
+  bankAccountNumber?: string;
+  bankIfscCode?: string;
+  bankAccountHolderName?: string;
+
+  // Common
+  status?: UserStatus;
 }
 
-export const adminCreateUser = functions.onCall(
+interface AdminCreateUserResponse {
+  success: true;
+  uid: string;
+  email: string;
+  displayName: string;
+  role: CanonicalRole;
+  rawRole: RawRole;
+  resetLinkSent: boolean;
+  resetLink?: string | null;
+  emailVerificationLink?: string | null;
+  message: string;
+  timestamp: string;
+  nextSteps: string[];
+}
+
+interface AdminCreateUserErrorResponse {
+  success: false;
+  code: string;
+  error: string;
+}
+
+// ---------- Helpers ----------
+
+function normalizeRole(role: RawRole): CanonicalRole {
+  if (role === "admin" || role === "teacher" || role === "parent") return role;
+  // Both map to canonical "learning-partner"
+  if (role === "learningPartner" || role === "learning-partner")
+    return "learning-partner";
+  throw new HttpsError("invalid-argument", `Unsupported role: ${role}`);
+}
+
+function sanitizeForLogging(input: any) {
+  const obj = { ...(input || {}) };
+  const redact = ["password", "bankAccountNumber", "bankIfscCode"];
+  for (const k of redact) if (k in obj) obj[k] = "[REDACTED]";
+  return obj;
+}
+
+function validateClaimsSize(claims: Record<string, any>) {
+  const bytes = Buffer.byteLength(JSON.stringify(claims), "utf8");
+  if (bytes > MAX_CUSTOM_CLAIMS_BYTES) {
+    throw new HttpsError(
+      "invalid-argument",
+      `Custom claims too large (${bytes} bytes). Max ${MAX_CUSTOM_CLAIMS_BYTES}.`
+    );
+  }
+}
+
+function validateInput(data: AdminCreateUserRequest) {
+  if (!data || typeof data !== "object") {
+    throw new HttpsError("invalid-argument", "Request data is required");
+  }
+
+  if (!data.email || typeof data.email !== "string" || !EMAIL_REGEX.test(data.email.trim().toLowerCase())) {
+    throw new HttpsError("invalid-argument", "Valid email is required");
+  }
+
+  if (!data.displayName || typeof data.displayName !== "string") {
+    throw new HttpsError("invalid-argument", "displayName is required");
+  }
+  const dn = data.displayName.trim();
+  if (dn.length < 2 || dn.length > 100) {
+    throw new HttpsError("invalid-argument", "displayName must be 2–100 chars");
+  }
+
+  if (!data.role || !VALID_ROLES.includes(data.role)) {
+    throw new HttpsError(
+      "invalid-argument",
+      `role must be one of: ${VALID_ROLES.join(", ")}`
+    );
+  }
+
+  if (data.phone && (typeof data.phone !== "string" || !PHONE_REGEX.test(data.phone))) {
+    throw new HttpsError(
+      "invalid-argument",
+      "Invalid phone. Use digits/spaces/+/-/()"
+    );
+  }
+
+  if (data.password && data.password.length < 6) {
+    throw new HttpsError("invalid-argument", "Password must be at least 6 chars");
+  }
+
+  if (data.pincode && !/^\d{6}$/.test(data.pincode)) {
+    throw new HttpsError("invalid-argument", "pincode must be 6 digits");
+  }
+
+  if (data.yearsExperience != null) {
+    if (typeof data.yearsExperience !== "number" || data.yearsExperience < 0 || data.yearsExperience > 100) {
+      throw new HttpsError("invalid-argument", "yearsExperience must be 0–100");
+    }
+  }
+
+  if (data.specialization && (!Array.isArray(data.specialization) || data.specialization.length > 20)) {
+    throw new HttpsError("invalid-argument", "specialization must be an array (max 20)");
+  }
+
+  if (data.qualification && data.qualification.length > 500) {
+    throw new HttpsError("invalid-argument", "qualification must be <= 500 chars");
+  }
+
+  if (data.bankAccountNumber && !/^\d{9,18}$/.test(data.bankAccountNumber)) {
+    throw new HttpsError("invalid-argument", "Invalid bankAccountNumber format");
+  }
+
+  if (data.bankIfscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(data.bankIfscCode)) {
+    throw new HttpsError("invalid-argument", "Invalid IFSC code format");
+  }
+
+  if (data.status && !["active", "suspended", "archived"].includes(data.status)) {
+    throw new HttpsError("invalid-argument", "status must be active|suspended|archived");
+  }
+}
+
+/**
+ * Admin-only guard:
+ * - checks callable auth token claims first
+ * - fallback to /users/{uid}.role === 'admin' or roles includes 'admin'
+ */
+async function ensureAdmin(auth: any) {
+  if (!auth?.uid) throw new HttpsError("unauthenticated", "Authentication required");
+
+  const tokenIsAdmin = auth.token?.role === "admin" || auth.token?.admin === true;
+  if (tokenIsAdmin) return;
+
+  const callerUid = auth.uid;
+  const doc = await admin.firestore().collection("users").doc(callerUid).get();
+  if (!doc.exists) throw new HttpsError("permission-denied", "Admin access required");
+
+  const data = doc.data() || {};
+  const docIsAdmin =
+    data.role === "admin" || (Array.isArray(data.roles) && data.roles.includes("admin"));
+
+  if (!docIsAdmin) throw new HttpsError("permission-denied", "Admin access required");
+}
+
+// ---------- Core ----------
+
+export const adminCreateUser = onCall(
   {
-    region: "asia-south1",
-    timeoutSeconds: 60,
+    region: REGION,
     memory: "256MiB",
+    timeoutSeconds: 60,
     maxInstances: 10,
+    // enforceAppCheck: true, // enable once App Check is configured
   },
-  async (request): Promise<CreateUserResponse> => {
+  async (request): Promise<AdminCreateUserResponse | AdminCreateUserErrorResponse> => {
     const now = new Date().toISOString();
     let createdUid: string | null = null;
 
     try {
-      const caller = request.auth;
-      await ensureAdmin(caller);
+      await ensureAdmin(request.auth);
 
-      const cleanData = validateCreateUserPayload(request.data);
-      const { email, displayName, role } = cleanData;
+      const data = (request.data || {}) as AdminCreateUserRequest;
+      validateInput(data);
 
-      logger.info("AdminCreateUser — Request", {
-        callerUid: caller?.uid,
-        data: sanitizeForLogging(cleanData),
-      });
+      const email = data.email.trim().toLowerCase();
+      const displayName = data.displayName.trim();
+      const rawRole = data.role;
+      const role = normalizeRole(rawRole);
+      const status: UserStatus = data.status || DEFAULT_STATUS;
 
-      // 1) Create Auth User
-      const authUser = await createAuthUser(cleanData);
-      createdUid = authUser.uid;
+      logger.info("adminCreateUser: request", sanitizeForLogging({
+        callerUid: request.auth?.uid,
+        email,
+        displayName,
+        rawRole,
+        role,
+      }));
 
-      logger.info("Auth user created", {
-        uid: authUser.uid,
-        email: authUser.email,
-      });
+      // 1) Ensure email not already in Auth
+      try {
+        const existing = await admin.auth().getUserByEmail(email);
+        throw new HttpsError(
+          "already-exists",
+          `User already exists for ${email} (uid: ${existing.uid})`
+        );
+      } catch (e: any) {
+        if (e?.code !== "auth/user-not-found") {
+          if (e instanceof HttpsError) throw e;
+          throw new HttpsError("internal", "Failed checking existing user");
+        }
+      }
 
-      // 2) Build Firestore docs
+      // 2) Create Auth user
+      const createReq: admin.auth.CreateRequest = {
+        email,
+        displayName,
+        emailVerified: false,
+        disabled: false,
+      };
+      if (data.phone) createReq.phoneNumber = undefined; // keep your decision: do NOT enforce phone uniqueness
+      if (data.password) createReq.password = data.password;
+
+      const user = await admin.auth().createUser(createReq);
+      createdUid = user.uid;
+
+      // 3) Firestore docs (batch)
       const db = admin.firestore();
       const batch = db.batch();
-      const serverTimestamp = admin.firestore.FieldValue.serverTimestamp();
+      const ts = admin.firestore.FieldValue.serverTimestamp();
 
-      const baseUserDoc = buildUserDocBase(cleanData, caller?.uid || 'system');
-      const roleDocs = buildRoleSpecificDocuments(
-        cleanData,
-        authUser.uid,
-        caller?.uid || 'system'
-      );
+      const baseUserDoc: any = {
+        userId: user.uid,
+        email,
+        displayName,
+        name: displayName,
+        phone: data.phone || null,
+        role,              // canonical
+        rawRole,           // requested
+        roles: [role],     // for easy rules / checks
+        status,
+        provider: "admin:create",
+        permissions: [],
+        createdAt: ts,
+        updatedAt: ts,
+        createdBy: request.auth!.uid,
+        updatedBy: request.auth!.uid,
+      };
 
-      // Add main /users/{uid}
-      batch.set(db.collection("users").doc(authUser.uid), {
-        ...baseUserDoc,
-        createdAt: serverTimestamp,
-        updatedAt: serverTimestamp,
-      });
+      // users/{uid}
+      batch.set(db.collection("users").doc(user.uid), baseUserDoc, { merge: true });
 
-      // Add role-specific docs
-      for (const { path, data } of roleDocs) {
-        batch.set(db.doc(path), {
-          ...data,
-          createdAt: serverTimestamp,
-          updatedAt: serverTimestamp,
+      // role collections
+      if (role === "teacher") {
+        batch.set(db.collection("teachers").doc(user.uid), {
+          userId: user.uid,
+          email,
+          displayName,
+          phone: data.phone || null,
+          status,
+          qualification: data.qualification || null,
+          specialization: data.specialization || [],
+          yearsExperience: data.yearsExperience ?? 0,
+          bio: data.bio || null,
+          assignedLPs: [],
+          createdAt: ts,
+          updatedAt: ts,
+          createdBy: request.auth!.uid,
+          updatedBy: request.auth!.uid,
+        }, { merge: true });
+      }
+
+      if (role === "parent") {
+        batch.set(db.collection("parents").doc(user.uid), {
+          userId: user.uid,
+          email,
+          displayName,
+          phone: data.phone || null,
+          status,
+          address: data.address || null,
+          city: data.city || null,
+          state: data.state || null,
+          pincode: data.pincode || null,
+          assignedLPs: [],
+          preferences: {
+            communicationLanguage: data.communicationLanguage || "English",
+            sessionTime: data.sessionTime || null,
+          },
+          paymentMethods: data.paymentMethods || [],
+          createdAt: ts,
+          updatedAt: ts,
+          createdBy: request.auth!.uid,
+          updatedBy: request.auth!.uid,
+        }, { merge: true });
+
+        // NOTE: students are NOT Auth users.
+        // They will be created later under: /parents/{parentId}/students/{studentId}
+      }
+
+      if (role === "learning-partner") {
+        batch.set(db.collection("learningPartners").doc(user.uid), {
+          userId: user.uid,
+          email,
+          displayName,
+          phone: data.phone || null,
+          status,
+          region: data.region || null,
+          qualification: data.qualification || null,
+          specialization: data.specialization || [],
+          yearsExperience: data.yearsExperience ?? 0,
+          assignedParents: [],
+          assignedTeachers: [],
+          creditsBalance: 0,
+          bankDetails: {
+            accountNumber: data.bankAccountNumber || null,
+            ifscCode: data.bankIfscCode || null,
+            accountHolderName: data.bankAccountHolderName || null,
+          },
+          createdAt: ts,
+          updatedAt: ts,
+          createdBy: request.auth!.uid,
+          updatedBy: request.auth!.uid,
+        }, { merge: true });
+      }
+
+      if (role === "admin") {
+        batch.set(db.collection("admins").doc(user.uid), {
+          userId: user.uid,
+          email,
+          displayName,
+          phone: data.phone || null,
+          status,
+          createdAt: ts,
+          updatedAt: ts,
+          createdBy: request.auth!.uid,
+          updatedBy: request.auth!.uid,
+        }, { merge: true });
+      }
+
+      try {
+        await batch.commit();
+      } catch (e) {
+        logger.error("adminCreateUser: firestore batch failed; rolling back auth user", {
+          uid: user.uid,
+          error: String(e),
+        });
+        try {
+          await admin.auth().deleteUser(user.uid);
+        } catch (rollbackErr) {
+          logger.error("adminCreateUser: rollback deleteUser failed", {
+            uid: user.uid,
+            error: String(rollbackErr),
+          });
+        }
+        throw new HttpsError("internal", "Failed to create user documents");
+      }
+
+      // 4) Custom claims (merge, don’t overwrite)
+      try {
+        const authUser = await admin.auth().getUser(user.uid);
+        const existingClaims = authUser.customClaims || {};
+
+        const claims: Record<string, any> = {
+          ...existingClaims,
+          role,          // canonical
+          rawRole,
+          [role]: true,  // flag
+        };
+
+        if (rawRole !== role) claims[rawRole] = true;
+
+        validateClaimsSize(claims);
+        await admin.auth().setCustomUserClaims(user.uid, claims);
+      } catch (e) {
+        logger.error("adminCreateUser: failed to set custom claims (can be fixed later)", {
+          uid: user.uid,
+          error: String(e),
         });
       }
 
-      // Commit write
-      await batch.commit();
-      logger.info("Firestore documents created", { uid: authUser.uid });
+      // 5) Reset link (only if password not provided)
+      let resetLinkSent = false;
+      let resetLink: string | null = null;
 
-      // 3) Set custom claims
-      await setUserClaims(authUser.uid, cleanData.role);
+      if (!data.password) {
+        try {
+          resetLink = await admin.auth().generatePasswordResetLink(email);
+          resetLinkSent = true;
+        } catch (e) {
+          logger.warn("adminCreateUser: failed to generate reset link", {
+            uid: user.uid,
+            error: String(e),
+          });
+        }
+      }
 
-      logger.info("Custom claims set", {
-        uid: authUser.uid,
-        role: cleanData.role,
-      });
+      // 6) Email verification link (optional)
+      let emailVerificationLink: string | null = null;
+      try {
+        emailVerificationLink = await admin.auth().generateEmailVerificationLink(email);
+      } catch (e) {
+        logger.warn("adminCreateUser: failed to generate email verification link", {
+          uid: user.uid,
+          error: String(e),
+        });
+      }
 
-      // 4) Password reset (only if no password input)
-      const resetLink = await maybeGeneratePasswordResetLink(
-        authUser,
-        cleanData
-      );
+      const nextSteps =
+        data.password
+          ? [
+              "Share the login credentials with the user securely.",
+              "User can sign in immediately.",
+              "Ask user to verify email (optional).",
+              "If claims not seen immediately, user must re-login or refresh token.",
+            ]
+          : [
+              "Share the password reset link securely (or email it via your own system).",
+              "User sets password via reset link, then signs in.",
+              "If claims not seen immediately, user must re-login or refresh token.",
+            ];
 
-      // 5) Email verification
-      const verifyLink = await generateEmailVerification(authUser);
-
-      const resp: CreateUserResponse = {
+      return {
         success: true,
-        uid: authUser.uid,
+        uid: user.uid,
         email,
         displayName,
         role,
-        message: `User ${displayName} created successfully`,
+        rawRole,
+        resetLinkSent,
+        resetLink,
+        emailVerificationLink,
+        message: `User "${displayName}" created as ${role}`,
         timestamp: now,
-        resetLink: resetLink,
-        emailVerificationLink: verifyLink,
-        nextSteps: cleanData.password
-          ? [
-              "User can log in using the provided password.",
-              "Advise user to verify their email.",
-            ]
-          : [
-              "User must open the password reset link to set their password.",
-              "Then log in and verify email.",
-            ],
+        nextSteps,
       };
+    } catch (err: any) {
+      if (createdUid) {
+        logger.warn("adminCreateUser: failed after auth creation", {
+          createdUid,
+          error: err?.message || String(err),
+        });
+      }
 
-      return resp;
-    } catch (error: any) {
-      logger.error("adminCreateUser — ERROR", {
-        error: error?.message || String(error),
-        stack: error?.stack,
-        createdUid,
+      if (err instanceof HttpsError) {
+        return { success: false, code: err.code, error: err.message };
+      }
+
+      logger.error("adminCreateUser: unexpected error", {
+        error: err?.message || String(err),
+        stack: err?.stack,
       });
 
-      // Rollback Auth User if Firestore failed
-      if (createdUid) {
-        await rollbackAuthUser(createdUid);
-      }
-
-      if (error instanceof functions.HttpsError) {
-        return {
-          success: false,
-          error: error.message,
-          code: error.code,
-        };
-      }
-
-      return {
-        success: false,
-        error: "Unexpected error occurred.",
-        code: "internal",
-      };
+      return { success: false, code: "internal", error: "An unexpected error occurred" };
     }
   }
 );

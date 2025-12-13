@@ -10,7 +10,11 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { db } from '../../lib/firebaseConfig';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import { UserList } from './UserManagement/UserList';
+
+// 🔁 CHANGE START
+import UserManagement from './UserManagement/UserManagement';
+// 🔁 CHANGE END
+
 import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
@@ -19,7 +23,6 @@ import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
-// Groq callable removed from admin dashboard to avoid runtime dependency in dev
 
 // ---------- Admin stats fetcher ----------
 const fetchAdminStats = async (): Promise<AdminStats> => {
@@ -38,12 +41,6 @@ const fetchAdminStats = async (): Promise<AdminStats> => {
     };
   } catch (err: any) {
     console.warn('Failed to fetch admin stats:', err);
-    if (err && String(err.message).includes('Missing or insufficient permissions')) {
-      console.warn(
-        'Permission error while fetching admin stats — make sure you are signed into Firebase Auth and have admin role/claims.',
-      );
-    }
-
     return {
       totalUsers: 0,
       totalStudents: 0,
@@ -54,16 +51,11 @@ const fetchAdminStats = async (): Promise<AdminStats> => {
 };
 
 const ROLE_SHORTCUTS = [
-  { id: 'admin', label: 'Admin', path: '/surya', description: 'Full control panel' },
-  { id: 'teacher', label: 'Teacher', path: '/teacher', description: 'Classroom & sessions' },
-  { id: 'parent', label: 'Parent', path: '/parent', description: 'Progress & subscriptions' },
-  {
-    id: 'learningPartner',
-    label: 'Learning Partner',
-    path: '/learning-partner',
-    description: 'Relationship hub',
-  },
-  { id: 'kid', label: 'Kid', path: '/parent/kids', description: 'Student view via Parent' },
+  { id: 'admin', label: 'Admin', path: '/surya' },
+  { id: 'teacher', label: 'Teacher', path: '/teacher' },
+  { id: 'parent', label: 'Parent', path: '/parent' },
+  { id: 'learningPartner', label: 'Learning Partner', path: '/learning-partner' },
+  { id: 'kid', label: 'Kid', path: '/parent/kids' },
 ];
 
 const AccessMessage = ({ children }: { children: React.ReactNode }) => (
@@ -74,8 +66,6 @@ const AccessMessage = ({ children }: { children: React.ReactNode }) => (
     </Card>
   </div>
 );
-
-// Groq live tester removed to avoid external validation and dev-side failures
 
 // ---------- Main Admin Dashboard ----------
 export default function AdminDashboard() {
@@ -88,12 +78,10 @@ export default function AdminDashboard() {
   const isSuperUser = isSuperUserEmail(user?.email);
   const canViewAdmin = isSuperUser || user?.role === 'admin';
 
-  // Debug: confirm this component is being used
   useEffect(() => {
     console.log('✅ AdminDashboard mounted');
   }, []);
 
-  // Sync selected tab with URL path (e.g. /surya/analytics)
   useEffect(() => {
     if (location.pathname.includes('/surya/analytics')) {
       setSelectedTab('analytics');
@@ -104,68 +92,40 @@ export default function AdminDashboard() {
     data: stats,
     isLoading: statsLoading,
     error: statsError,
-  } = useQuery<AdminStats, Error>({
+  } = useQuery<AdminStats>({
     queryKey: ['adminStats'],
     queryFn: fetchAdminStats,
     enabled: canViewAdmin,
-    staleTime: 1000 * 60,
   });
 
-  if (authLoading) {
-    return <AccessMessage>Checking your permissions...</AccessMessage>;
-  }
-
-  if (!user) {
-    return <AccessMessage>Login required to access this page.</AccessMessage>;
-  }
-
-  if (!canViewAdmin) {
-    return (
-      <AccessMessage>
-        You do not have permission to access the admin dashboard.
-      </AccessMessage>
-    );
-  }
+  if (authLoading) return <AccessMessage>Checking your permissions...</AccessMessage>;
+  if (!user) return <AccessMessage>Login required.</AccessMessage>;
+  if (!canViewAdmin) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <Header user={user} />
       <div className="flex flex-1">
         <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+
         <main className="flex-1 p-8">
-          {/* BIG BANNER so you can visually confirm this version */}
-          <div className="mb-4 rounded bg-yellow-100 border border-yellow-300 p-3 text-sm font-semibold text-yellow-900">
-            🔧 ADMIN DASHBOARD – GROQ VERSION (Analytics tab has Groq Live Test)
+          <div className="mb-4 rounded bg-yellow-100 border p-3 text-sm font-semibold">
+            🔧 ADMIN DASHBOARD – v2 CLEAN
           </div>
 
           {isSuperUser && (
-            <Card className="p-4 mb-6 border border-dashed border-blue-300 bg-blue-50/40 dark:bg-slate-900/40">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
-                    Superuser Mode
-                  </p>
-                  <p className="text-lg font-bold">Quick role access</p>
-                  <p className="text-sm text-muted-foreground">
-                    Jump into any dashboard view without switching accounts.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {ROLE_SHORTCUTS.map((shortcut) => (
-                    <Button
-                      key={shortcut.id}
-                      variant={shortcut.id === 'admin' ? 'default' : 'secondary'}
-                      onClick={() => navigate(shortcut.path)}
-                    >
-                      {shortcut.label}
-                    </Button>
-                  ))}
-                </div>
+            <Card className="p-4 mb-6">
+              <div className="flex gap-2 flex-wrap">
+                {ROLE_SHORTCUTS.map((r) => (
+                  <Button key={r.id} onClick={() => navigate(r.path)}>
+                    {r.label}
+                  </Button>
+                ))}
               </div>
             </Card>
           )}
 
-          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
+          <Tabs value={selectedTab} onValueChange={setSelectedTab}>
             <TabsList className="mb-6">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="students">Student Management</TabsTrigger>
@@ -175,16 +135,9 @@ export default function AdminDashboard() {
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
+            {/* ✅ FIXED */}
             <TabsContent value="users">
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">User Management</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Manage users, roles, and credentials.
-                  </p>
-                </div>
-                <UserList />
-              </div>
+              <UserManagement />
             </TabsContent>
 
             <TabsContent value="students">
@@ -192,15 +145,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="enrollments">
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Enrollment Management</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Manage enrollments, assignments and lifecycle.
-                  </p>
-                </div>
-                <EnrollmentsList />
-              </div>
+              <EnrollmentsList />
             </TabsContent>
 
             <TabsContent value="relationships">
@@ -212,41 +157,22 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="analytics">
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold">Analytics & Admin Overview</h2>
-                  <p className="text-sm text-muted-foreground">
-                    High-level insights about your Tiny Steps accounts and activity.
-                  </p>
-                </div>
-
-                <div className="grid gap-6 lg:grid-cols-2">
-                  <AdminOverviewCard />
-                  <AnalyticsDashboard />
-                </div>
-
-                {/* Groq real-time test card removed */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <AdminOverviewCard />
+                <AnalyticsDashboard />
               </div>
             </TabsContent>
           </Tabs>
         </main>
       </div>
 
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
-        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-          {statsLoading ? (
-            <div>Loading stats...</div>
-          ) : statsError ? (
-            <div className="text-red-500">Error loading stats</div>
-          ) : (
-            <>
-              <div>Total Users: {stats?.totalUsers || 0}</div>
-              <div>Total Students: {stats?.totalStudents || 0}</div>
-              <div>Total Courses: {stats?.totalCourses || 0}</div>
-              <div>Active Sessions Today: {stats?.activeSessionsToday || 0}</div>
-            </>
-          )}
-        </div>
+      <footer className="border-t p-4 text-sm">
+        {statsLoading ? 'Loading…' : statsError ? 'Error' : (
+          <>
+            Users: {stats?.totalUsers} | Students: {stats?.totalStudents} | Courses:{' '}
+            {stats?.totalCourses}
+          </>
+        )}
       </footer>
     </div>
   );

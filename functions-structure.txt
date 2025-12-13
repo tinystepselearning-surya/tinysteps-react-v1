@@ -9,27 +9,11 @@
 ├── src
 │   ├── adminCreateUser.ts
 │   ├── adminGenerateResetLink.ts
-│   ├── ai
-│   │   └── askTinySteps.ts
 │   ├── assignLP.ts
-│   ├── global.d.ts
 │   ├── helpers
 │   │   ├── adminGuard.ts
-│   │   ├── auth
-│   │   │   ├── userAuth.ts
-│   │   │   └── userClaims.ts
 │   │   ├── errorHandler.ts
-│   │   ├── firestore
-│   │   │   └── userFirestoreBuilders.ts
-│   │   ├── firestorePaths.ts
-│   │   ├── roleUtils.ts
-│   │   ├── types
-│   │   │   └── createUserTypes.ts
-│   │   ├── userValidator.ts
-│   │   ├── util
-│   │   │   └── sanitize.ts
-│   │   └── validation
-│   │       └── userValidation.ts
+│   │   └── util
 │   ├── index.ts
 │   ├── onSessionComplete.ts
 │   └── parentStudents.ts
@@ -37,4 +21,4 @@
 ├── tsconfig.json
 └── vitest.config.ts
 
-10 directories, 28 files
+5 directories, 17 files

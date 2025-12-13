@@ -37,7 +37,7 @@ const silencedPatterns: string[] = [
 
   // Firestore emulator connection noise (when no emulator is running in tests)
   "Firestore (12.5.0): GrpcConnection RPC 'Listen' stream",
-  'No connection established. Last error: connect ECONNREFUSED 127.0.0.1:8085',
+  // Emulator connection string removed to avoid hard-coded localhost references
 
   // React act(...) warnings – these come from components with async state updates
   'Warning: An update to',

@@ -3,34 +3,51 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
 
-if (!admin.apps.length) admin.initializeApp();
-
-type UserRole = 'parent' | 'teacher';
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 /**
- * Ensure a user document exists at /users/{uid}
+ * Canonical roles used across Tiny Steps
  */
-async function ensureUserExists(uid: string) {
+type CanonicalRole = 'parent' | 'teacher' | 'learning-partner';
+
+/**
+ * Fetch and validate a user document
+ */
+async function getUser(uid: string) {
   try {
-    const userDoc = await admin.firestore().collection('users').doc(uid).get();
-    if (!userDoc.exists) {
+    const snap = await admin.firestore().collection('users').doc(uid).get();
+    if (!snap.exists) {
       throw new HttpsError('not-found', `User ${uid} not found`);
     }
-    return userDoc.data();
-  } catch (err: any) {
+    return snap.data() as any;
+  } catch (err) {
     if (err instanceof HttpsError) throw err;
-    logger.error('ensureUserExists error', { uid, error: String(err) });
-    throw new HttpsError('internal', 'Failed to verify user');
+    logger.error('getUser failed', { uid, error: String(err) });
+    throw new HttpsError('internal', 'Failed to fetch user');
   }
 }
 
 /**
- * Assign or unassign a Learning Partner (LP) to/from a Parent or Teacher.
+ * Normalize role values (legacy → canonical)
+ */
+function normalizeRole(role?: string): CanonicalRole | null {
+  if (!role) return null;
+  if (role === 'learningPartner') return 'learning-partner';
+  if (role === 'learning-partner' || role === 'parent' || role === 'teacher') {
+    return role;
+  }
+  return null;
+}
+
+/**
+ * Core assignment logic (shared)
  */
 async function updateAssignment(
   userId: string,
   lpId: string,
-  userRole: UserRole,
+  userRole: 'parent' | 'teacher',
   assign: boolean
 ) {
   const db = admin.firestore();
@@ -39,50 +56,56 @@ async function updateAssignment(
   const userRef = db.collection('users').doc(userId);
   const lpRef = db.collection('users').doc(lpId);
 
-  const lpField = userRole === 'parent' ? 'assignedParents' : 'assignedTeachers';
+  const lpReverseField =
+    userRole === 'parent' ? 'assignedParents' : 'assignedTeachers';
 
-  if (assign) {
-    batch.update(userRef, {
-      assignedLPs: admin.firestore.FieldValue.arrayUnion(lpId) as any,
-    });
-    batch.update(lpRef, {
-      [lpField]: admin.firestore.FieldValue.arrayUnion(userId) as any,
-    });
-  } else {
-    batch.update(userRef, {
-      assignedLPs: admin.firestore.FieldValue.arrayRemove(lpId) as any,
-    });
-    batch.update(lpRef, {
-      [lpField]: admin.firestore.FieldValue.arrayRemove(userId) as any,
-    });
-  }
+  batch.update(userRef, {
+    assignedLPs: assign
+      ? admin.firestore.FieldValue.arrayUnion(lpId)
+      : admin.firestore.FieldValue.arrayRemove(lpId),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  batch.update(lpRef, {
+    [lpReverseField]: assign
+      ? admin.firestore.FieldValue.arrayUnion(userId)
+      : admin.firestore.FieldValue.arrayRemove(userId),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
 
   await batch.commit();
 }
 
-// ---------- assign LP to PARENT ----------
+/* ------------------------------------------------------------------ */
+/* -------------------- ASSIGN LP → PARENT --------------------------- */
+/* ------------------------------------------------------------------ */
+
 export const assignLPToParent = onCall(
   { region: 'asia-south1' },
-  async (request) => {
-    const { data, auth } = request;
-
+  async ({ data, auth }) => {
     await ensureAdmin(auth);
 
-    const { parentId, lpId } = (data || {}) as {
-      parentId?: string;
-      lpId?: string;
-    };
+    const { parentId, lpId } = data || {};
 
     if (!parentId || !lpId) {
       throw new HttpsError('invalid-argument', 'parentId and lpId are required');
     }
 
-    await ensureUserExists(parentId);
-    const lpData = await ensureUserExists(lpId);
+    if (parentId === lpId) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Cannot assign learning partner to themselves'
+      );
+    }
 
-    const lpRole = (lpData as any)?.role;
-    // Accept both legacy 'learningPartner' and new 'learning-partner'
-    if (lpRole !== 'learningPartner' && lpRole !== 'learning-partner') {
+    const parent = await getUser(parentId);
+    const lp = await getUser(lpId);
+
+    if (normalizeRole(parent.role) !== 'parent') {
+      throw new HttpsError('invalid-argument', 'parentId must be a parent');
+    }
+
+    if (normalizeRole(lp.role) !== 'learning-partner') {
       throw new HttpsError(
         'invalid-argument',
         'lpId must be a learning partner'
@@ -90,46 +113,50 @@ export const assignLPToParent = onCall(
     }
 
     await updateAssignment(parentId, lpId, 'parent', true);
+
+    logger.info('LP assigned to parent', {
+      adminUid: auth?.uid,
+      parentId,
+      lpId,
+    });
+
     return { success: true };
   }
 );
 
 export const unassignLPFromParent = onCall(
   { region: 'asia-south1' },
-  async (request) => {
-    const { data, auth } = request;
-
+  async ({ data, auth }) => {
     await ensureAdmin(auth);
 
-    const { parentId, lpId } = (data || {}) as {
-      parentId?: string;
-      lpId?: string;
-    };
+    const { parentId, lpId } = data || {};
 
     if (!parentId || !lpId) {
       throw new HttpsError('invalid-argument', 'parentId and lpId are required');
     }
 
-    await ensureUserExists(parentId);
-    await ensureUserExists(lpId);
-
     await updateAssignment(parentId, lpId, 'parent', false);
+
+    logger.info('LP unassigned from parent', {
+      adminUid: auth?.uid,
+      parentId,
+      lpId,
+    });
+
     return { success: true };
   }
 );
 
-// ---------- assign LP to TEACHER ----------
+/* ------------------------------------------------------------------ */
+/* -------------------- ASSIGN LP → TEACHER -------------------------- */
+/* ------------------------------------------------------------------ */
+
 export const assignLPToTeacher = onCall(
   { region: 'asia-south1' },
-  async (request) => {
-    const { data, auth } = request;
-
+  async ({ data, auth }) => {
     await ensureAdmin(auth);
 
-    const { teacherId, lpId } = (data || {}) as {
-      teacherId?: string;
-      lpId?: string;
-    };
+    const { teacherId, lpId } = data || {};
 
     if (!teacherId || !lpId) {
       throw new HttpsError(
@@ -138,11 +165,21 @@ export const assignLPToTeacher = onCall(
       );
     }
 
-    await ensureUserExists(teacherId);
-    const lpData = await ensureUserExists(lpId);
+    if (teacherId === lpId) {
+      throw new HttpsError(
+        'invalid-argument',
+        'Cannot assign learning partner to themselves'
+      );
+    }
 
-    const lpRole = (lpData as any)?.role;
-    if (lpRole !== 'learningPartner' && lpRole !== 'learning-partner') {
+    const teacher = await getUser(teacherId);
+    const lp = await getUser(lpId);
+
+    if (normalizeRole(teacher.role) !== 'teacher') {
+      throw new HttpsError('invalid-argument', 'teacherId must be a teacher');
+    }
+
+    if (normalizeRole(lp.role) !== 'learning-partner') {
       throw new HttpsError(
         'invalid-argument',
         'lpId must be a learning partner'
@@ -150,21 +187,23 @@ export const assignLPToTeacher = onCall(
     }
 
     await updateAssignment(teacherId, lpId, 'teacher', true);
+
+    logger.info('LP assigned to teacher', {
+      adminUid: auth?.uid,
+      teacherId,
+      lpId,
+    });
+
     return { success: true };
   }
 );
 
 export const unassignLPFromTeacher = onCall(
   { region: 'asia-south1' },
-  async (request) => {
-    const { data, auth } = request;
-
+  async ({ data, auth }) => {
     await ensureAdmin(auth);
 
-    const { teacherId, lpId } = (data || {}) as {
-      teacherId?: string;
-      lpId?: string;
-    };
+    const { teacherId, lpId } = data || {};
 
     if (!teacherId || !lpId) {
       throw new HttpsError(
@@ -173,10 +212,14 @@ export const unassignLPFromTeacher = onCall(
       );
     }
 
-    await ensureUserExists(teacherId);
-    await ensureUserExists(lpId);
-
     await updateAssignment(teacherId, lpId, 'teacher', false);
+
+    logger.info('LP unassigned from teacher', {
+      adminUid: auth?.uid,
+      teacherId,
+      lpId,
+    });
+
     return { success: true };
   }
 );

@@ -1,22 +1,13 @@
 // src/lib/firebaseConfig.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import {
-  getFirestore,
-  connectFirestoreEmulator,
-} from 'firebase/firestore';
-import {
-  getAuth,
-  connectAuthEmulator,
-} from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 import {
   getAnalytics,
   Analytics,
   logEvent as fbLogEvent,
 } from 'firebase/analytics';
-import {
-  getFunctions,
-  connectFunctionsEmulator,
-} from 'firebase/functions';
+import { getFunctions } from 'firebase/functions';
 
 // ---- Core Firebase config (same as before) ----
 const firebaseConfig = {
@@ -64,50 +55,8 @@ export function logCustomEvent(
   }
 }
 
-// ---- Emulator toggles (DEV-only) ----
-const isDev = Boolean(import.meta.env?.DEV);
-const emulatorHost =
-  String(import.meta.env?.VITE_FIREBASE_EMULATOR_HOST || '127.0.0.1');
-const authPort = Number(
-  import.meta.env?.VITE_FIREBASE_AUTH_EMULATOR_PORT || '9099',
-);
-const firestorePort = Number(
-  import.meta.env?.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT || '8085',
-);
-const functionsPort = Number(
-  import.meta.env?.VITE_FIREBASE_FUNCTIONS_EMULATOR_PORT || '5001',
-);
-
-const shouldUseFirestoreEmulator =
-  isDev && import.meta.env?.VITE_USE_FIRESTORE_EMULATOR === 'true';
-const shouldUseAuthEmulator =
-  isDev && import.meta.env?.VITE_USE_AUTH_EMULATOR === 'true';
-const shouldUseFunctionsEmulator =
-  isDev && import.meta.env?.VITE_USE_FUNCTIONS_EMULATOR === 'true';
-
-// 🔴 If you DON’T want emulators right now, set those env vars to 'false' or remove them.
-if (shouldUseFirestoreEmulator) {
-  try {
-    connectFirestoreEmulator(db, emulatorHost, firestorePort);
-  } catch (error) {
-    console.warn('Firestore emulator connection failed', error);
-  }
-}
-
-if (shouldUseAuthEmulator) {
-  try {
-    connectAuthEmulator(auth, `http://${emulatorHost}:${authPort}`);
-  } catch (error) {
-    console.warn('Auth emulator connection failed', error);
-  }
-}
-
-if (shouldUseFunctionsEmulator) {
-  try {
-    connectFunctionsEmulator(functions, emulatorHost, functionsPort);
-  } catch (error) {
-    console.warn('Functions emulator connection failed', error);
-  }
-}
+// ---- Emulator connections disabled for frontend builds ----
+// Emulator helpers intentionally removed to prevent accidental local connections
+// If you need them in development, re-enable by adding environment-based guards.
 
 export { app, db, auth, analytics, functions };
