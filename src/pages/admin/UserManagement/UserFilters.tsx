@@ -33,28 +33,30 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         value={searchTerm}
         onChange={handleSearchChange}
       />
-      <select
-        className="w-[180px] rounded border px-2 py-1 text-sm"
-        value={roleFilter}
-        onChange={(e) => setRoleFilter(e.target.value)}
-      >
-        <option value="all">All Roles</option>
-        <option value="admin">Admin</option>
-        <option value="teacher">Teacher</option>
-        <option value="parent">Parent</option>
-        <option value="learningPartner">Learning Partner</option>
-        <option value="kid">Kid</option>
-      </select>
-      <select
-        className="w-[180px] rounded border px-2 py-1 text-sm"
-        value={statusFilter}
-        onChange={(e) => setStatusFilter(e.target.value)}
-      >
-        <option value="all">All Statuses</option>
-        <option value="active">Active</option>
-        <option value="suspended">Suspended</option>
-        <option value="archived">Archived</option>
-      </select>
+      <Select value={roleFilter} onValueChange={(v: string) => setRoleFilter(v)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Filter by role" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Roles</SelectItem>
+          <SelectItem value="admin">Admin</SelectItem>
+          <SelectItem value="teacher">Teacher</SelectItem>
+          <SelectItem value="parent">Parent</SelectItem>
+          <SelectItem value="learningPartner">Learning Partner</SelectItem>
+          <SelectItem value="kid">Kid</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select value={statusFilter} onValueChange={(v: string) => setStatusFilter(v)}>
+        <SelectTrigger>
+          <SelectValue placeholder="Filter by status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Statuses</SelectItem>
+          <SelectItem value="active">Active</SelectItem>
+          <SelectItem value="suspended">Suspended</SelectItem>
+          <SelectItem value="archived">Archived</SelectItem>
+        </SelectContent>
+      </Select>
       <Button variant="outline" onClick={() => {
         setSearchTerm('');
         setRoleFilter('all');
