@@ -17,11 +17,17 @@ const useRevealAnimations = () => {
     const trackElements = () => {
       const elements = document.querySelectorAll('[data-animate]');
       elements.forEach((el) => {
+        if (el.dataset.revealObserved) return;
         const delay = (el as HTMLElement).dataset.animateDelay;
         if (delay) {
           (el as HTMLElement).style.transitionDelay = delay;
         }
+        const rect = el.getBoundingClientRect();
+        if (rect.bottom > 0 && rect.top < window.innerHeight) {
+          el.classList.add('is-visible');
+        }
         observer.observe(el);
+        el.dataset.revealObserved = '1';
       });
     };
 

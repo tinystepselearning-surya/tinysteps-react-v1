@@ -53,6 +53,11 @@ src/**/*.jsx
 *.js.backup
 *.jsx.backup
 
+# Backup files
+*.backup
+*.ts.backup
+*.tsx.backup
+
 # Optional: large local dirs you don't want tracked (keep if used)
 logs/
 reports/
