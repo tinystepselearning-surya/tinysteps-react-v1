@@ -1,347 +1,213 @@
-// src/pages/admin/EnrollmentManagement/EnrollmentsList.tsx
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   collection,
   getDocs,
   query,
-  doc,
-  updateDoc,
-  serverTimestamp,
+  orderBy,
+  where,
+  documentId,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@components/ui/table';
-import { Button } from '@components/ui/button';
-import { Input } from '@components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/ui/select';
+
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Badge } from '@components/ui/badge';
-import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
-import { Eye } from 'lucide-react';
 
-import EnrollmentDetailView from './EnrollmentDetailView';
-import AssignTeacherModal from './AssignTeacherModal';
-import AssignLPModal from './AssignLPModal';
+type Enrollment = {
+  id: string;
 
-/* ---------------- helpers ---------------- */
+  courseId?: string;
 
-const normalizeId = (value: any): string | null => {
-  if (!value) return null;
-  if (typeof value === 'string') return value;
-  if (typeof value === 'object') {
-    if (typeof value.id === 'string') return value.id;
-    if (typeof value.path === 'string') {
-      const parts = value.path.split('/');
-      return parts[parts.length - 1] || null;
-    }
-  }
-  return null;
+  // Your schema uses BOTH
+  kidIds?: string[];
+  studentId?: string;
+
+  status?: string;
+  billingCycle?: string;
+
+  creditsRemaining?: number;
+  creditsTotal?: number;
+  creditsUsed?: number;
+
+  teacherId?: string;
+  parentId?: string;
+  lpId?: string | null;
+
+  createdAt?: any;
 };
 
-const resolveDate = (value: any): Date | null => {
-  if (!value) return null;
-  if (value instanceof Date && !isNaN(value.getTime())) return value;
-  if (typeof value?.toDate === 'function') {
-    const d = value.toDate();
-    return d instanceof Date && !isNaN(d.getTime()) ? d : null;
-  }
-  const d = new Date(value);
-  return isNaN(d.getTime()) ? null : d;
+type Kid = {
+  id: string;
+  name?: string;
+  fullName?: string;
+  displayName?: string;
 };
 
-const statusBadge = (status?: string) => {
-  switch (status) {
-    case 'pending_teacher':
-      return <Badge variant="secondary">🟡 Pending Teacher</Badge>;
-    case 'pending_lp':
-      return <Badge variant="secondary">🟡 Pending LP</Badge>;
-    case 'active':
-      return <Badge variant="default">🟢 Active</Badge>;
-    case 'completed':
-      return <Badge variant="outline">🔵 Completed</Badge>;
-    case 'cancelled':
-      return <Badge variant="destructive">🔴 Cancelled</Badge>;
-    default:
-      return <Badge>Unknown</Badge>;
-  }
+type Course = {
+  id: string;
+  name?: string;
+  area?: string;
+  level?: number;
 };
 
-interface Props {
-  reloadKey?: number;
+function chunk<T>(arr: T[], size: number) {
+  const out: T[][] = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
 }
 
-export default function EnrollmentsList({ reloadKey }: Props) {
-  const [enrollments, setEnrollments] = useState<any[]>([]);
-  const [studentsMap, setStudentsMap] = useState<Record<string, any>>({});
-  const [coursesMap, setCoursesMap] = useState<Record<string, any>>({});
-  const [usersMap, setUsersMap] = useState<Record<string, any>>({});
+async function fetchDocsByIds<T extends { id: string }>(
+  colName: string,
+  ids: string[],
+): Promise<T[]> {
+  if (!ids.length) return [];
+  const idsUnique = Array.from(new Set(ids)).filter(Boolean);
 
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'__all__' | string>('__all__');
+  // Firestore "in" query limit: 10 ids
+  const batches = chunk(idsUnique, 10);
 
-  const [viewEnrollment, setViewEnrollment] = useState<any | null>(null);
-  const [assignTeacherFor, setAssignTeacherFor] = useState<any | null>(null);
-  const [assignLPFor, setAssignLPFor] = useState<any | null>(null);
+  const results: T[] = [];
+  for (const batch of batches) {
+    const q = query(collection(db, colName), where(documentId(), 'in', batch));
+    const snap = await getDocs(q);
+    snap.forEach((d) => results.push({ id: d.id, ...(d.data() as any) }));
+  }
+  return results;
+}
 
-  /* ---------------- data load ---------------- */
+function prettyCourseId(id?: string) {
+  if (!id) return '—';
+  // "phonics-foundations" -> "Phonics Foundations"
+  return id
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
 
-  const fetchEnrollments = useCallback(async () => {
-    const snap = await getDocs(query(collection(db, 'enrollments')));
-
-    const items: any[] = [];
-    const studentIds = new Set<string>();
-    const courseIds = new Set<string>();
-    const userIds = new Set<string>();
-
-    snap.forEach((d) => {
-      const raw = d.data() as any;
-
-      const studentId =
-        normalizeId(raw.studentId) ||
-        normalizeId(raw.kidId) ||
-        normalizeId(raw.childId) ||
-        (Array.isArray(raw.kidIds) ? normalizeId(raw.kidIds[0]) : null);
-
-      const courseId =
-        normalizeId(raw.courseId) ||
-        normalizeId(raw.course_id) ||
-        normalizeId(raw.course);
-
-      if (studentId) studentIds.add(studentId);
-      if (courseId) courseIds.add(courseId);
-      if (raw.parentId) userIds.add(raw.parentId);
-      if (raw.teacherId) userIds.add(raw.teacherId);
-      if (raw.lpId) userIds.add(raw.lpId);
-
-      items.push({
-        id: d.id,
-        ...raw,
-        studentId,
-        courseId,
-      });
-    });
-
-    const [kidsSnap, coursesSnap, usersSnap] = await Promise.all([
-      getDocs(collection(db, 'kids')),
-      getDocs(collection(db, 'courses')),
-      getDocs(collection(db, 'users')),
-    ]);
-
-    const sMap: Record<string, any> = {};
-    kidsSnap.forEach((k) => {
-      if (studentIds.has(k.id)) sMap[k.id] = { id: k.id, ...k.data() };
-    });
-
-    const cMap: Record<string, any> = {};
-    coursesSnap.forEach((c) => {
-      if (courseIds.has(c.id)) cMap[c.id] = { id: c.id, ...c.data() };
-    });
-
-    const uMap: Record<string, any> = {};
-    usersSnap.forEach((u) => {
-      if (userIds.has(u.id)) uMap[u.id] = { id: u.id, ...u.data() };
-    });
-
-    setEnrollments(items);
-    setStudentsMap(sMap);
-    setCoursesMap(cMap);
-    setUsersMap(uMap);
-  }, []);
+export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
+  const [loading, setLoading] = useState(true);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [kidMap, setKidMap] = useState<Record<string, Kid>>({});
+  const [courseMap, setCourseMap] = useState<Record<string, Course>>({});
 
   useEffect(() => {
-    fetchEnrollments();
-  }, [fetchEnrollments, reloadKey]);
+    let alive = true;
 
-  /* ---------------- filtering (memoized) ---------------- */
+    async function load() {
+      setLoading(true);
+      try {
+        // 1) Get enrollments
+        const qEnroll = query(collection(db, 'enrollments'), orderBy('createdAt', 'desc'));
+        const snap = await getDocs(qEnroll);
 
-  const filteredEnrollments = useMemo(() => {
-    return enrollments.filter((e) => {
-      const student = e.studentId ? studentsMap[e.studentId] : null;
-      const studentName =
-        student?.name ||
-        student?.fullName ||
-        e.studentName ||
-        '';
+        const rows: Enrollment[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 
-      if (
-        search &&
-        !studentName.toLowerCase().includes(search.toLowerCase())
-      )
-        return false;
+        // 2) Collect kid ids from kidIds[] + studentId
+        const kidIds = rows.flatMap((e) => {
+          const fromArray = Array.isArray(e.kidIds) ? e.kidIds : [];
+          const fromSingle = e.studentId ? [e.studentId] : [];
+          return [...fromArray, ...fromSingle];
+        });
 
-      if (statusFilter !== '__all__' && e.status !== statusFilter)
-        return false;
+        const courseIds = rows.map((e) => e.courseId).filter(Boolean) as string[];
 
-      return true;
+        // 3) Fetch kids (✅ your collection name is kids)
+        const kids = await fetchDocsByIds<Kid>('kids', kidIds);
+        const kidLookup: Record<string, Kid> = {};
+        kids.forEach((k) => (kidLookup[k.id] = k));
+
+        // 4) OPTIONAL: fetch courses if the collection exists in your project
+        // If 'courses' collection is missing in prod, this will just return [] and we fallback to prettyCourseId.
+        let courseLookup: Record<string, Course> = {};
+        try {
+          const courses = await fetchDocsByIds<Course>('courses', courseIds);
+          courseLookup = {};
+          courses.forEach((c) => (courseLookup[c.id] = c));
+        } catch (e) {
+          courseLookup = {};
+        }
+
+        if (!alive) return;
+        setEnrollments(rows);
+        setKidMap(kidLookup);
+        setCourseMap(courseLookup);
+      } catch (err) {
+        console.error('EnrollmentsList load error:', err);
+        if (!alive) return;
+        setEnrollments([]);
+        setKidMap({});
+        setCourseMap({});
+      } finally {
+        if (!alive) return;
+        setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      alive = false;
+    };
+  }, [reloadKey]);
+
+  const displayRows = useMemo(() => {
+    return enrollments.map((e) => {
+      const kidIds = [
+        ...(Array.isArray(e.kidIds) ? e.kidIds : []),
+        ...(e.studentId ? [e.studentId] : []),
+      ].filter(Boolean);
+
+      const kidNames = kidIds.map((id) => {
+        const k = kidMap[id];
+        return k?.name || k?.fullName || k?.displayName || id;
+      });
+
+      const courseDoc = e.courseId ? courseMap[e.courseId] : undefined;
+      const courseName = courseDoc?.name || prettyCourseId(e.courseId);
+
+      return { ...e, kidNames, courseName };
     });
-  }, [enrollments, studentsMap, search, statusFilter]);
+  }, [enrollments, kidMap, courseMap]);
 
-  /* ---------------- actions ---------------- */
-
-  const cancelEnrollment = async (id: string) => {
-    if (!confirm('Cancel this enrollment?')) return;
-    await updateDoc(doc(db, 'enrollments', id), {
-      status: 'cancelled',
-      updatedAt: serverTimestamp(),
-    });
-    fetchEnrollments();
-  };
-
-  /* ---------------- UI ---------------- */
+  if (loading) return <div className="py-6 text-sm text-muted-foreground">Loading enrollments…</div>;
+  if (!displayRows.length) return <div className="py-6 text-sm text-muted-foreground">No enrollments found.</div>;
 
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-2 md:items-center md:justify-between">
-        <h2 className="text-xl font-semibold">Enrollments</h2>
-        <div className="flex gap-2">
-          <Input
-            placeholder="Search student"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">All</SelectItem>
-              <SelectItem value="pending_teacher">Pending Teacher</SelectItem>
-              <SelectItem value="pending_lp">Pending LP</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+    <div className="space-y-3">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Course</TableHead>
+            <TableHead>Student(s)</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Credits</TableHead>
+            <TableHead>Billing</TableHead>
+          </TableRow>
+        </TableHeader>
 
-      {/* Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Enrollments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Student</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEnrollments.map((e) => {
-                const student = e.studentId
-                  ? studentsMap[e.studentId]
-                  : null;
-                const course = e.courseId
-                  ? coursesMap[e.courseId]
-                  : null;
+        <TableBody>
+          {displayRows.map((e) => (
+            <TableRow key={e.id}>
+              <TableCell className="font-medium">{e.courseName}</TableCell>
 
-                const tp =
-                  typeof e.topicProgress === 'object'
-                    ? e.topicProgress
-                    : {};
-                const total = Object.keys(tp).length || 0;
-                const completed = Object.values(tp).filter(
-                  (t: any) => t?.status === 'completed',
-                ).length;
-                const progress =
-                  total === 0 ? 0 : Math.round((completed / total) * 100);
+              <TableCell>
+                {e.kidNames?.length ? e.kidNames.join(', ') : '—'}
+              </TableCell>
 
-                return (
-                  <TableRow key={e.id}>
-                    <TableCell>
-                      {student?.name || 'Unknown'}
-                    </TableCell>
-                    <TableCell>
-                      {course?.name || 'Unknown Course'}
-                    </TableCell>
-                    <TableCell>{statusBadge(e.status)}</TableCell>
-                    <TableCell>{progress}%</TableCell>
-                    <TableCell className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setViewEnrollment(e)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
+              <TableCell>
+                <Badge variant={e.status === 'active' ? 'default' : 'secondary'}>
+                  {e.status ?? 'unknown'}
+                </Badge>
+              </TableCell>
 
-                      {e.status === 'pending_teacher' && (
-                        <Button
-                          size="sm"
-                          onClick={() => setAssignTeacherFor(e)}
-                        >
-                          Assign Teacher
-                        </Button>
-                      )}
+              <TableCell>
+                {(e.creditsRemaining ?? 0)} / {(e.creditsTotal ?? 0)}
+              </TableCell>
 
-                      {e.status === 'pending_lp' && (
-                        <Button
-                          size="sm"
-                          onClick={() => setAssignLPFor(e)}
-                        >
-                          Assign LP
-                        </Button>
-                      )}
-
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => cancelEnrollment(e.id)}
-                      >
-                        Cancel
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {viewEnrollment && (
-        <EnrollmentDetailView
-          enrollmentId={viewEnrollment.id}
-          onClose={() => setViewEnrollment(null)}
-        />
-      )}
-
-      {assignTeacherFor && (
-        <AssignTeacherModal
-          enrollment={assignTeacherFor}
-          onClose={() => {
-            setAssignTeacherFor(null);
-            fetchEnrollments();
-          }}
-        />
-      )}
-
-      {assignLPFor && (
-        <AssignLPModal
-          enrollment={assignLPFor}
-          onClose={() => {
-            setAssignLPFor(null);
-            fetchEnrollments();
-          }}
-        />
-      )}
+              <TableCell className="text-sm text-muted-foreground">
+                {e.billingCycle ?? '—'}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }

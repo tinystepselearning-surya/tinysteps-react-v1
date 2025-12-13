@@ -75,6 +75,9 @@ export default function AdminDashboard() {
 
   const [selectedTab, setSelectedTab] = useState('users');
 
+  // ✅ FIX: local reload key for EnrollmentsList (required prop)
+  const [enrollmentsReloadKey] = useState(0);
+
   const isSuperUser = isSuperUserEmail(user?.email);
   const canViewAdmin = isSuperUser || user?.role === 'admin';
 
@@ -135,7 +138,6 @@ export default function AdminDashboard() {
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
-            {/* ✅ FIXED */}
             <TabsContent value="users">
               <UserManagement />
             </TabsContent>
@@ -144,8 +146,9 @@ export default function AdminDashboard() {
               <StudentManagementTab />
             </TabsContent>
 
+            {/* ✅ FIXED: pass required prop */}
             <TabsContent value="enrollments">
-              <EnrollmentsList />
+              <EnrollmentsList reloadKey={enrollmentsReloadKey} />
             </TabsContent>
 
             <TabsContent value="relationships">
@@ -167,7 +170,11 @@ export default function AdminDashboard() {
       </div>
 
       <footer className="border-t p-4 text-sm">
-        {statsLoading ? 'Loading…' : statsError ? 'Error' : (
+        {statsLoading ? (
+          'Loading…'
+        ) : statsError ? (
+          'Error'
+        ) : (
           <>
             Users: {stats?.totalUsers} | Students: {stats?.totalStudents} | Courses:{' '}
             {stats?.totalCourses}

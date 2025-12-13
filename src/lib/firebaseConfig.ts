@@ -1,62 +1,62 @@
 // src/lib/firebaseConfig.ts
-import { initializeApp, getApps, getApp } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
-import {
-  getAnalytics,
-  Analytics,
-  logEvent as fbLogEvent,
-} from 'firebase/analytics';
+import { getAnalytics, type Analytics, logEvent as fbLogEvent } from 'firebase/analytics';
 import { getFunctions } from 'firebase/functions';
 
-// ---- Core Firebase config (same as before) ----
-const firebaseConfig = {
-  apiKey: 'AIzaSyBZ5h2M3hataZjWM7480e76QAiFmEVK37Y',
-  authDomain: 'tinysteps-react-v1.firebaseapp.com',
-  projectId: 'tinysteps-react-v1',
-  storageBucket: 'tinysteps-react-v1.firebasestorage.app',
-  messagingSenderId: '31484691215',
-  appId: '1:31484691215:web:2e8854696bc7e27b63347a',
-  measurementId: 'G-5RMQVF1HGD',
+const env = import.meta.env;
+
+// Small helper to fail fast if env is missing
+const must = (key: string, value: unknown): string => {
+  if (typeof value !== 'string' || !value.trim()) {
+    throw new Error(`Missing/invalid env var: ${key}`);
+  }
+  return value;
 };
 
-// ---- Initialize app (avoid duplicate init) ----
+// Safe string helper (prevents boolean slipping in from env typing)
+const asString = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.trim() ? value : undefined;
+
+const firebaseConfig: FirebaseOptions = {
+  apiKey: must('VITE_FIREBASE_API_KEY', env.VITE_FIREBASE_API_KEY),
+  authDomain: must('VITE_FIREBASE_AUTH_DOMAIN', env.VITE_FIREBASE_AUTH_DOMAIN),
+  projectId: must('VITE_FIREBASE_PROJECT_ID', env.VITE_FIREBASE_PROJECT_ID),
+  storageBucket: must('VITE_FIREBASE_STORAGE_BUCKET', env.VITE_FIREBASE_STORAGE_BUCKET),
+  messagingSenderId: must('VITE_FIREBASE_MESSAGING_SENDER_ID', env.VITE_FIREBASE_MESSAGING_SENDER_ID),
+  appId: must('VITE_FIREBASE_APP_ID', env.VITE_FIREBASE_APP_ID),
+  measurementId: asString(env.VITE_FIREBASE_MEASUREMENT_ID), // ✅ string | undefined only
+};
+
+// Avoid duplicate initialization
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// ---- Core services ----
+// Core services
 const db = getFirestore(app);
 const auth = getAuth(app);
-const functions = getFunctions(app, 'asia-south1');
 
-// ---- Analytics (browser only, safe) ----
+// Use env region (fallback to asia-south1) — guard against boolean
+const functionsRegion = asString(env.VITE_FUNCTIONS_REGION) ?? 'asia-south1';
+const functions = getFunctions(app, functionsRegion);
+
+// Analytics (browser only)
 let analytics: Analytics | null = null;
 if (typeof window !== 'undefined') {
   try {
     analytics = getAnalytics(app);
-  } catch (error) {
-    console.warn(
-      'Firebase Analytics not initialized:',
-      (error as Error).message,
-    );
+  } catch {
     analytics = null;
   }
 }
 
-// ---- Optional: custom analytics helper ----
-export function logCustomEvent(
-  eventName: string,
-  data?: Record<string, unknown>,
-) {
+export function logCustomEvent(eventName: string, data?: Record<string, unknown>) {
   if (!analytics) return;
   try {
     fbLogEvent(analytics, eventName, data || {});
   } catch {
-    // ignore analytics errors
+    // ignore
   }
 }
-
-// ---- Emulator connections disabled for frontend builds ----
-// Emulator helpers intentionally removed to prevent accidental local connections
-// If you need them in development, re-enable by adding environment-based guards.
 
 export { app, db, auth, analytics, functions };
