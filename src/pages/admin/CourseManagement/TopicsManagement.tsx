@@ -61,7 +61,7 @@ export default function TopicsManagement({ courseId, onBack }: TopicsManagementP
   const { data: topicsRaw = [], isLoading, refetch } = useTopics(courseId);
 
   // Cast once so TS knows what a topic looks like
-  const topics = (topicsRaw ?? []) as Topic[];
+  const topics = useMemo(() => (topicsRaw ?? []) as Topic[], [topicsRaw]);
 
   // Always operate on a stable, sequence-sorted list
   const topicsSorted = useMemo(() => {

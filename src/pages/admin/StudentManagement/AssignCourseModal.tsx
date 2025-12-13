@@ -131,12 +131,9 @@ export default function AssignCourseModal({
 
   // Who can assign? Admin OR LP assigned to this student
   useEffect(() => {
-    const check = async () => {
-      if (!user) {
-        setCanAssign(false);
-        return;
-      }
+    if (!student) return;
 
+    const check = async () => {
       if (user.role === 'admin') {
         setCanAssign(true);
         return;
@@ -163,7 +160,7 @@ export default function AssignCourseModal({
     };
 
     void check();
-  }, [user, student.id]);
+  }, [user, student]);
 
   const handleAssign = async () => {
     if (!selected) {

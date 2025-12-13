@@ -204,7 +204,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     queryFn: fetchEnrollments,
   });
 
-  const enrollments = enrollmentsQuery.data ?? [];
+  const enrollments = useMemo(() => enrollmentsQuery.data ?? [], [enrollmentsQuery.data]);
 
   const allKidIds = useMemo(() => {
     const set = new Set<string>();

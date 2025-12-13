@@ -39,7 +39,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
-  const topics = config?.topics ?? [];
+  const topics = useMemo(() => config?.topics ?? [], [config?.topics]);
 
   const selectedTopicDef: TopicDefinition | undefined = useMemo(
     () => topics.find((t) => t.id === selectedTopicId),
@@ -51,7 +51,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     if (!selectedTopicId && topics.length > 0) {
       setSelectedTopicId(topics[0].id);
     }
-  }, [topics, selectedTopicId]);
+  }, [selectedTopicId, topics]);
 
   // When topic changes, load existing progress (if any) or reset form
   useEffect(() => {

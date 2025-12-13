@@ -1,5 +1,5 @@
 // src/pages/admin/StudentManagement/StudentManagement.tsx
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   collection,
   getDocs,
@@ -74,7 +74,7 @@ export default function StudentManagement() {
   const [search, setSearch] = useState('');
   const { toast } = useToast();
 
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true);
       const snap = await getDocs(collection(db, 'kids'));
@@ -112,12 +112,12 @@ export default function StudentManagement() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [db, toast]);
 
   useEffect(() => {
     // Run once on mount to load initial students list
     void fetchStudents();
-  }, []);
+  }, [fetchStudents]);
 
   const filtered = students.filter((s) => {
     if (!search.trim()) return true;

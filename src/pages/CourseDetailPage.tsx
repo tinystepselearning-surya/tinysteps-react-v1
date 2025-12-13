@@ -11,16 +11,17 @@ const CourseDetailPage: FC = () => {
   const { slug } = useParams();
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const base = curriculumBySlug[slug || ''] || {};
-  const [weeks, setWeeks] = useState(base.weeks || []);
+  const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
+  const [weeksState, setWeeks] = useState(weeks);
 
   useEffect(() => {
     (async () => {
       if (!slug) return;
       const override = await getCourseWeeksOverride(slug);
       if (override && override.length) setWeeks(override);
-      else setWeeks(base.weeks || []);
+      else setWeeks(weeks);
     })();
-  }, [slug]);
+  }, [slug, weeks]);
 
   useEffect(() => {
     if (course) document.title = `${course.name} | Tiny Steps`;
@@ -98,9 +99,9 @@ const CourseDetailPage: FC = () => {
 
         <div className="mt-10">
           <h2 className="font-heading text-2xl font-bold">Detailed Curriculum</h2>
-          {weeks && weeks.length ? (
+          {weeksState && weeksState.length ? (
             <div className="mt-3">
-              <WeekAccordion items={weeks} />
+              <WeekAccordion items={weeksState} />
             </div>
           ) : (
             <p className="mt-2 text-sm text-gray-700">Detailed week‑by‑week curriculum coming soon.</p>

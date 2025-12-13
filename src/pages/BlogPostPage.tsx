@@ -12,7 +12,7 @@ const BlogPostPage: FC = () => {
   const [mdxMeta, setMdxMeta] = useState<any>(null);
   useEffect(() => {
     (async () => {
-      if (post || !slug) return;
+      if (!post || !slug) return;
       try {
         // const mod: any = await import(`../content/blog/${slug}.mdx`);
         // setMdxComp(() => mod.default);
@@ -21,7 +21,7 @@ const BlogPostPage: FC = () => {
         // not mdx
       }
     })();
-  }, [slug]);
+  }, [slug, post]);
 
   if (!post && !MdxComp) {
     return (
