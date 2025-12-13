@@ -1,12 +1,30 @@
+/// <reference types="vite/client" />
+
 interface ImportMetaEnv {
-  readonly DEV?: boolean;
-  readonly VITE_USE_FIREBASE_EMULATORS?: string;
+  readonly DEV: boolean;
+  readonly PROD: boolean;
+  readonly MODE: string;
+
+  // Keep all VITE_* as strings (Vite loads them as strings)
+  readonly VITE_USE_FIRESTORE_EMULATOR?: string;
+  readonly VITE_USE_AUTH_EMULATOR?: string;
+  readonly VITE_USE_FUNCTIONS_EMULATOR?: string;
+
+  readonly VITE_FUNCTIONS_REGION?: string;
+
+  readonly VITE_FIREBASE_API_KEY?: string;
+  readonly VITE_FIREBASE_AUTH_DOMAIN?: string;
+  readonly VITE_FIREBASE_PROJECT_ID?: string;
+  readonly VITE_FIREBASE_STORAGE_BUCKET?: string;
+  readonly VITE_FIREBASE_MESSAGING_SENDER_ID?: string;
+  readonly VITE_FIREBASE_APP_ID?: string;
+  readonly VITE_FIREBASE_MEASUREMENT_ID?: string;
+
   readonly VITE_SENTRY_DSN?: string;
   readonly VITE_APP_VERSION?: string;
-  readonly PROD?: boolean;
-  readonly MODE?: string;
-  // add other VITE env keys used across the repo as optional strings
-  readonly [key: string]: string | boolean | undefined;
+
+  // IMPORTANT: do NOT include boolean here
+  readonly [key: string]: string | undefined;
 }
 
 interface ImportMeta {

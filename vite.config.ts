@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 function tryMdxPlugin() {
   try {
@@ -11,14 +12,15 @@ function tryMdxPlugin() {
     const rehypeSlug = safeRequire('rehype-slug');
     const rehypeAutolink = safeRequire('rehype-autolink-headings');
     const rehypePrism = safeRequire('rehype-prism-plus');
+
     return mdx({
       include: /\.mdx?$/,
       remarkPlugins: [filterTruthy(remarkFrontmatter), filterTruthy(remarkGfm)].filter(Boolean),
       rehypePlugins: [
         filterTruthy(rehypeSlug),
         filterTruthy(rehypeAutolink) && [rehypeAutolink, { behavior: 'wrap' }],
-        filterTruthy(rehypePrism)
-      ].filter(Boolean)
+        filterTruthy(rehypePrism),
+      ].filter(Boolean),
     });
   } catch (e) {
     // MDX not installed; skip
@@ -26,21 +28,48 @@ function tryMdxPlugin() {
   }
 }
 
-function safeRequire(name:any) {
-  try { return require(name); } catch { return null; }
+function safeRequire(name: any) {
+  try {
+    return require(name);
+  } catch {
+    return null;
+  }
 }
 
-function filterTruthy(x:any) { return x || null; }
+function filterTruthy(x: any) {
+  return x || null;
+}
 
 const mdxPlugin = tryMdxPlugin();
 
 export default defineConfig({
-  plugins: mdxPlugin ? [mdxPlugin, react()] : [react()],
+  plugins: mdxPlugin
+    ? [
+        mdxPlugin,
+        react(),
+        visualizer({
+          open: true,
+          gzipSize: true,
+          brotliSize: true,
+          filename: 'dist/stats.html',
+        }),
+      ]
+    : [
+        react(),
+        visualizer({
+          open: true,
+          gzipSize: true,
+          brotliSize: true,
+          filename: 'dist/stats.html',
+        }),
+      ],
+
   resolve: {
     alias: {
       '@components': path.resolve(__dirname, './src/components'),
     },
   },
+
   build: {
     // Improve build chunking to keep large bundles split and easier to cache.
     // We add specific vendor groups for React, animation, charting libraries and Firebase.
@@ -50,6 +79,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (!id) return undefined;
+
           // node_modules -> vendor buckets
           if (id.includes('node_modules')) {
             if (id.includes('firebase')) return 'vendor-firebase';
@@ -61,16 +91,22 @@ export default defineConfig({
           }
 
           // Large app areas -> separate dashboards bundle
-          if (id.includes('/src/pages/admin/') || id.includes('/src/pages/teacher/') || id.includes('/src/pages/parent/') || id.includes('/src/pages/lp/') || id.includes('/src/pages/kid/')) {
+          if (
+            id.includes('/src/pages/admin/') ||
+            id.includes('/src/pages/teacher/') ||
+            id.includes('/src/pages/parent/') ||
+            id.includes('/src/pages/lp/') ||
+            id.includes('/src/pages/kid/')
+          ) {
             return 'dashboards';
           }
 
           return undefined;
-        }
-      }
-    }
-  }
-  ,
+        },
+      },
+    },
+  },
+
   // Ensure HMR works reliably on localhost and across environments where the dev server
   // may be bound to the loopback address. This resolves common "failed to connect to websocket" issues.
   server: {
@@ -86,6 +122,6 @@ export default defineConfig({
     hmr: {
       host: 'localhost',
       protocol: 'ws',
-    }
-  }
+    },
+  },
 });
