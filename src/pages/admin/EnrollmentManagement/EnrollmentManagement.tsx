@@ -1,11 +1,11 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentManagement.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
 import CreateEnrollmentForm from './CreateEnrollmentForm';
 import EnrollmentsList from './EnrollmentsList';
 
 export default function EnrollmentManagement() {
-  // when this changes, EnrollmentsList will refetch
+  // Changing this forces EnrollmentsList to refetch
   const [reloadKey, setReloadKey] = useState(0);
 
   const handleEnrollmentCreated = () => {
@@ -15,11 +15,10 @@ export default function EnrollmentManagement() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div>
         <h2 className="text-2xl font-bold">Enrollment Management</h2>
-        <p className="text-sm text-gray-500">
-          Create new enrollments, assign teachers & learning partners, and track
-          progress.
+        <p className="text-sm text-gray-500 mt-1">
+          Create enrollments, assign teachers & learning partners, and track progress.
         </p>
       </div>
 

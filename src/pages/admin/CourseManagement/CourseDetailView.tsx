@@ -1,33 +1,71 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useCourse, useTopics, useCourseEnrollments } from '../../../hooks/useData';
 import { Button } from '@components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Badge } from '@components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
-import { ArrowLeft, Users, BookOpen, Calendar, TrendingUp, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, AlertTriangle } from 'lucide-react';
+
+/* -------------------- helpers -------------------- */
+
+const sessionsPerMonth = (freq?: string) => {
+  switch (freq) {
+    case 'weekly':
+      return 4;
+    case 'biweekly':
+      return 2;
+    case 'monthly':
+      return 1;
+    default:
+      return 4;
+  }
+};
+
+/* -------------------- types -------------------- */
 
 interface CourseDetailViewProps {
   courseId: string;
   onBack: () => void;
-  onEdit: (course: any) => void;
+  onEdit: (courseId: string) => void; // ✅ changed
 }
 
-export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, onBack, onEdit }) => {
+/* -------------------- component -------------------- */
+
+export const CourseDetailView: React.FC<CourseDetailViewProps> = ({
+  courseId,
+  onBack,
+  onEdit,
+}) => {
   const { data: course, isLoading: courseLoading } = useCourse(courseId);
   const { data: topics = [], isLoading: topicsLoading } = useTopics(courseId);
-  const { data: enrollments = [], isLoading: enrollmentsLoading } = useCourseEnrollments(courseId);
+  const { data: enrollments = [], isLoading: enrollmentsLoading } =
+    useCourseEnrollments(courseId);
 
   if (courseLoading) {
-    return <div className="flex justify-center p-8">Loading course details...</div>;
+    return <div className="p-8 text-center">Loading course details…</div>;
   }
 
   if (!course) {
-    return <div className="text-center p-8">Course not found</div>;
+    return <div className="p-8 text-center">Course not found</div>;
   }
 
-    const activeEnrollments = enrollments.filter((e: { status: string }) => e.status === 'active');
-    const completedEnrollments = enrollments.filter((e: { status: string }) => e.status === 'completed');
+  /* -------------------- derived metrics -------------------- */
+
+  const activeEnrollments = enrollments.filter((e: any) => e.status === 'active');
+  const completedEnrollments = enrollments.filter((e: any) => e.status === 'completed');
+
+  const completionRate =
+    enrollments.length > 0
+      ? Math.round((completedEnrollments.length / enrollments.length) * 100)
+      : 0;
+
+  const expectedMonthlySessions = sessionsPerMonth(course.sessionFrequency);
+
+  const hasTopicIssues =
+    topics.length === 0 || topics.some((t: any) => t.sequenceNumber == null);
+
+  /* -------------------- render -------------------- */
 
   return (
     <div className="space-y-6">
@@ -36,63 +74,64 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
         <div className="flex items-center gap-4">
           <Button variant="outline" size="sm" onClick={onBack}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Courses
+            Back
           </Button>
           <div>
             <h1 className="text-2xl font-bold">{course.name}</h1>
-            <p className="text-gray-600">{course.description}</p>
+            <p className="text-sm text-muted-foreground">{course.description}</p>
           </div>
         </div>
-        <Button onClick={() => onEdit(course)}>
+
+        {/* ✅ pass courseId, not course object */}
+        <Button onClick={() => onEdit(courseId)}>
           <Edit className="h-4 w-4 mr-2" />
           Edit Course
         </Button>
       </div>
 
-      {/* Course Stats Cards */}
+      {/* Integrity warnings */}
+      {hasTopicIssues && (
+        <Card className="border-destructive">
+          <CardContent className="flex gap-2 items-center text-sm text-destructive">
+            <AlertTriangle className="h-4 w-4" />
+            Curriculum integrity issue detected. Check topics and sequencing.
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Enrollments</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Total Enrollments</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enrollments.length}</div>
-          </CardContent>
+          <CardContent className="text-2xl font-bold">{enrollments.length}</CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Students</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Active Students</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeEnrollments.length}</div>
-          </CardContent>
+          <CardContent className="text-2xl font-bold">{activeEnrollments.length}</CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Topics</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Topics</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{topics.length}</div>
-          </CardContent>
+          <CardContent className="text-2xl font-bold">{topics.length}</CardContent>
         </Card>
+
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm">Completion Rate</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {enrollments.length > 0 ? Math.round((completedEnrollments.length / enrollments.length) * 100) : 0}%
-            </div>
-          </CardContent>
+          <CardContent className="text-2xl font-bold">{completionRate}%</CardContent>
         </Card>
       </div>
 
-      {/* Course Details Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
+      {/* Tabs */}
+      <Tabs defaultValue="overview">
         <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="topics">Topics</TabsTrigger>
@@ -101,116 +140,74 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
+        {/* Overview */}
+        <TabsContent value="overview">
           <Card>
             <CardHeader>
               <CardTitle>Course Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium">Course Area</label>
-                  <p className="text-sm text-gray-600">{course.area}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Level</label>
-                  <p className="text-sm text-gray-600">{course.level}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Status</label>
-                  <Badge variant={course.status === 'active' ? 'default' : 'secondary'}>
-                    {course.status}
-                  </Badge>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Duration</label>
-                  <p className="text-sm text-gray-600">{course.durationMinutes} minutes</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Session Frequency</label>
-                  <p className="text-sm text-gray-600">{course.sessionFrequency}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Rate per Session</label>
-                  <p className="text-sm text-gray-600">₹{course.ratePerSession}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Max Students</label>
-                  <p className="text-sm text-gray-600">{course.maxStudentsPerSession}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Target Age</label>
-                  <p className="text-sm text-gray-600">{course.targetAge.join('-')} years</p>
-                </div>
+            <CardContent className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <strong>Area:</strong> {course.area}
               </div>
-
-              {course.prerequisites && course.prerequisites.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium">Prerequisites</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {course.prerequisites.map((prereq: string, index: number) => (
-                      <Badge key={index} variant="outline">{prereq}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {course.topics && course.topics.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium">Topics</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                      {course.topics.map((topic: string, index: number) => (
-                        <Badge key={index} variant="outline">{topic}</Badge>
-                      ))}
-                  </div>
-                </div>
-              )}
-
-              {course.targetGrade && course.targetGrade.length > 0 && (
-                <div>
-                  <label className="text-sm font-medium">Target Grades</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {course.targetGrade.map((grade: string, index: number) => (
-                      <Badge key={index} variant="outline">{grade}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div>
+                <strong>Level:</strong> {course.level}
+              </div>
+              <div>
+                <strong>Status:</strong>{' '}
+                <Badge variant={course.status === 'active' ? 'default' : 'secondary'}>
+                  {course.status}
+                </Badge>
+              </div>
+              <div>
+                <strong>Session Frequency:</strong> {course.sessionFrequency}
+              </div>
+              <div>
+                <strong>Duration:</strong> {course.durationMinutes} min
+              </div>
+              <div>
+                <strong>Rate / Session:</strong> ₹{course.ratePerSession}
+              </div>
+              <div>
+                <strong>Expected Sessions / Month:</strong> {expectedMonthlySessions}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="topics" className="space-y-4">
+        {/* Topics */}
+        <TabsContent value="topics">
           <Card>
             <CardHeader>
-              <CardTitle>Course Topics</CardTitle>
+              <CardTitle>Curriculum Topics</CardTitle>
             </CardHeader>
             <CardContent>
               {topicsLoading ? (
-                <div className="text-center py-4">Loading topics...</div>
+                <div className="text-center py-4">Loading topics…</div>
               ) : topics.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">No topics defined for this course</div>
+                <div className="text-sm text-muted-foreground">No topics defined.</div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Sequence</TableHead>
-                      <TableHead>Topic Name</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Duration</TableHead>
+                      <TableHead>#</TableHead>
+                      <TableHead>Topic</TableHead>
+                      <TableHead>Minutes</TableHead>
                       <TableHead>Target Mastery</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {topics
-                      .sort((a: any, b: any) => (a.sequenceNumber || 0) - (b.sequenceNumber || 0))
-                      .map((topic: any) => (
-                        <TableRow key={topic.id}>
-                          <TableCell>{topic.sequenceNumber}</TableCell>
-                          <TableCell className="font-medium">{topic.name}</TableCell>
-                          <TableCell className="max-w-xs truncate">{topic.description}</TableCell>
-                          <TableCell>{topic.estimatedMinutes} min</TableCell>
-                          <TableCell>{topic.targetMastery}%</TableCell>
+                      .sort(
+                        (a: any, b: any) =>
+                          (a.sequenceNumber || 0) - (b.sequenceNumber || 0)
+                      )
+                      .map((t: any) => (
+                        <TableRow key={t.id}>
+                          <TableCell>{t.sequenceNumber}</TableCell>
+                          <TableCell className="font-medium">{t.name}</TableCell>
+                          <TableCell>{t.estimatedMinutes} min</TableCell>
+                          <TableCell>{t.targetMastery}%</TableCell>
                         </TableRow>
                       ))}
                   </TableBody>
@@ -220,46 +217,39 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
           </Card>
         </TabsContent>
 
-        <TabsContent value="enrollments" className="space-y-4">
+        {/* Enrollments */}
+        <TabsContent value="enrollments">
           <Card>
             <CardHeader>
-              <CardTitle>Student Enrollments</CardTitle>
+              <CardTitle>Enrollments</CardTitle>
             </CardHeader>
             <CardContent>
               {enrollmentsLoading ? (
-                <div className="text-center py-4">Loading enrollments...</div>
+                <div className="text-center py-4">Loading…</div>
               ) : enrollments.length === 0 ? (
-                <div className="text-center py-4 text-gray-500">No students enrolled in this course</div>
+                <div className="text-sm text-muted-foreground">No enrollments yet.</div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Students</TableHead>
-                      <TableHead>Parent</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Credits Remaining</TableHead>
-                      <TableHead>Enrollment Status</TableHead>
+                      <TableHead>Credits</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {enrollments.map((enrollment: any) => (
-                      <TableRow key={enrollment.id}>
-                        <TableCell className="font-medium">
-                          {enrollment.kidIds?.join(', ') || 'Unknown Students'}
+                    {enrollments.map((e: any) => (
+                      <TableRow key={e.id}>
+                        <TableCell>
+                          {e.kidNames?.join(', ') || e.kidIds?.join(', ') || 'Unknown'}
                         </TableCell>
                         <TableCell>
-                          {enrollment.parentId || 'Unknown Parent'}
-                        </TableCell>
-                        <TableCell>
-                          {enrollment.status || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
-                          {enrollment.creditsRemaining || 0} credits remaining
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={enrollment.status === 'active' ? 'default' : 'secondary'}>
-                            {enrollment.status}
+                          <Badge variant={e.status === 'active' ? 'default' : 'secondary'}>
+                            {e.status}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {e.creditsRemaining ?? 0} / {e.creditsTotal ?? 0}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -270,28 +260,20 @@ export const CourseDetailView: React.FC<CourseDetailViewProps> = ({ courseId, on
           </Card>
         </TabsContent>
 
-        <TabsContent value="sessions" className="space-y-4">
+        {/* Sessions */}
+        <TabsContent value="sessions">
           <Card>
-            <CardHeader>
-              <CardTitle>Course Sessions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                Session management will be implemented in the Sessions tab
-              </div>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              Session management will be added here.
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="analytics" className="space-y-4">
+        {/* Analytics */}
+        <TabsContent value="analytics">
           <Card>
-            <CardHeader>
-              <CardTitle>Course Analytics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                Detailed analytics and charts will be implemented here
-              </div>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              Advanced analytics coming soon.
             </CardContent>
           </Card>
         </TabsContent>

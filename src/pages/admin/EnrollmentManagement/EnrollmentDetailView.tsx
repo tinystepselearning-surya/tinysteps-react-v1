@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/admin/EnrollmentManagement/EnrollmentDetailView.tsx
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   doc,
   getDoc,
@@ -6,7 +7,12 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
-import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
 import { Textarea } from '@components/ui/textarea';
@@ -31,71 +37,11 @@ export default function EnrollmentDetailView({
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    void loadEnrollment();
-  }, [enrollmentId]);
-
-  const loadEnrollment = async () => {
-    const eSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
-    if (!eSnap.exists()) return;
-
-    const data = { id: eSnap.id, ...(eSnap.data() as any) };
-    setEnrollment(data);
-
-    // ---- resolve student id from multiple possible fields ----
-    const studentId: string | undefined =
-      data.studentId ||
-      data.kidId ||
-      data.childId ||
-      (Array.isArray(data.kidIds) && data.kidIds.length > 0
-        ? data.kidIds[0]
-        : undefined);
-
-    if (studentId) {
-      const s = await getDoc(doc(db, 'kids', studentId));
-      setStudent(s.exists() ? { id: s.id, ...s.data() } : null);
-    } else {
-      setStudent(null);
-    }
-
-    // ---- resolve course id from multiple possible fields ----
-    const courseId: string | undefined =
-      data.courseId || data.course_id || data.course;
-
-    if (courseId) {
-      const c = await getDoc(doc(db, 'courses', courseId));
-      setCourse(c.exists() ? { id: c.id, ...c.data() } : null);
-    } else {
-      setCourse(null);
-    }
-
-    if (data.teacherId) {
-      const t = await getDoc(doc(db, 'users', data.teacherId));
-      setTeacher(t.exists() ? { id: t.id, ...t.data() } : null);
-    } else {
-      setTeacher(null);
-    }
-
-    if (data.lpId) {
-      const l = await getDoc(doc(db, 'users', data.lpId));
-      setLp(l.exists() ? { id: l.id, ...l.data() } : null);
-    } else {
-      setLp(null);
-    }
-
-    if (data.parentId) {
-      const p = await getDoc(doc(db, 'users', data.parentId));
-      setParent(p.exists() ? { id: p.id, ...p.data() } : null);
-    } else {
-      setParent(null);
-    }
-  };
+  /* ---------------- helpers ---------------- */
 
   const toDateOrNull = (value: any): Date | null => {
     if (!value) return null;
-    if (value instanceof Date) {
-      return isNaN(value.getTime()) ? null : value;
-    }
+    if (value instanceof Date && !isNaN(value.getTime())) return value;
     if (typeof value?.toDate === 'function') {
       const d = value.toDate();
       return d instanceof Date && !isNaN(d.getTime()) ? d : null;
@@ -104,12 +50,12 @@ export default function EnrollmentDetailView({
     return isNaN(d.getTime()) ? null : d;
   };
 
-  const formatDate = (value: any, fallback: string) => {
+  const formatDate = (value: any, fallback = '—') => {
     const d = toDateOrNull(value);
     return d ? d.toLocaleDateString() : fallback;
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
       case 'pending_teacher':
         return <Badge variant="secondary">🟡 Pending Teacher</Badge>;
@@ -126,91 +72,139 @@ export default function EnrollmentDetailView({
     }
   };
 
-  const saveNote = async () => {
-    if (!enrollment) return;
-    if (!note.trim()) {
-      toast({
-        title: 'Empty note',
-        description: 'Please type something before saving.',
-      });
-      return;
-    }
+  /* ---------------- load enrollment ---------------- */
 
+  const loadEnrollment = useCallback(async () => {
     try {
-      const notes =
-        (enrollment.notes || '').trim().length > 0
-          ? `${enrollment.notes}\n${note}`
-          : note;
+      const eSnap = await getDoc(
+        doc(db, 'enrollments', enrollmentId),
+      );
 
-      await updateDoc(doc(db, 'enrollments', enrollment.id), {
-        notes,
-        updatedAt: serverTimestamp(),
-      });
+      if (!eSnap.exists()) {
+        toast({
+          title: 'Enrollment not found',
+          description:
+            'This enrollment may have been deleted.',
+          variant: 'destructive',
+        });
+        onClose();
+        return;
+      }
 
-      setNote('');
-      toast({ title: 'Saved', description: 'Note saved' });
-      await loadEnrollment();
+      const data = { id: eSnap.id, ...(eSnap.data() as any) };
+      setEnrollment(data);
+
+      const studentId =
+        data.studentId ||
+        data.kidId ||
+        data.childId ||
+        (Array.isArray(data.kidIds) ? data.kidIds[0] : null);
+
+      const courseId =
+        data.courseId || data.course_id || data.course;
+
+      const fetches = [
+        studentId
+          ? getDoc(doc(db, 'kids', studentId))
+          : null,
+        courseId
+          ? getDoc(doc(db, 'courses', courseId))
+          : null,
+        data.teacherId
+          ? getDoc(doc(db, 'users', data.teacherId))
+          : null,
+        data.lpId
+          ? getDoc(doc(db, 'users', data.lpId))
+          : null,
+        data.parentId
+          ? getDoc(doc(db, 'users', data.parentId))
+          : null,
+      ];
+
+      const [
+        sSnap,
+        cSnap,
+        tSnap,
+        lSnap,
+        pSnap,
+      ] = await Promise.all(fetches);
+
+      setStudent(sSnap?.exists() ? { id: sSnap.id, ...sSnap.data() } : null);
+      setCourse(cSnap?.exists() ? { id: cSnap.id, ...cSnap.data() } : null);
+      setTeacher(tSnap?.exists() ? { id: tSnap.id, ...tSnap.data() } : null);
+      setLp(lSnap?.exists() ? { id: lSnap.id, ...lSnap.data() } : null);
+      setParent(pSnap?.exists() ? { id: pSnap.id, ...pSnap.data() } : null);
     } catch (err: any) {
       console.error(err);
       toast({
         title: 'Error',
-        description: err?.message || 'Failed to save note',
+        description:
+          err?.message || 'Failed to load enrollment',
+        variant: 'destructive',
+      });
+    }
+  }, [enrollmentId, onClose, toast]);
+
+  useEffect(() => {
+    void loadEnrollment();
+  }, [loadEnrollment]);
+
+  /* ---------------- notes ---------------- */
+
+  const saveNote = async () => {
+    if (!enrollment || !note.trim()) return;
+
+    try {
+      const combined = enrollment.notes
+        ? `${enrollment.notes}\n\n${note.trim()}`
+        : note.trim();
+
+      await updateDoc(
+        doc(db, 'enrollments', enrollment.id),
+        {
+          notes: combined,
+          updatedAt: serverTimestamp(),
+        },
+      );
+
+      setNote('');
+      toast({ title: 'Note saved' });
+      await loadEnrollment();
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description:
+          err?.message || 'Failed to save note',
         variant: 'destructive',
       });
     }
   };
 
-  if (!enrollment) return <div>Loading...</div>;
+  if (!enrollment) {
+    return <div className="p-4 text-sm">Loading enrollment…</div>;
+  }
 
-  const topicProgress = enrollment.topicProgress || {};
+  const topicProgress =
+    typeof enrollment.topicProgress === 'object'
+      ? enrollment.topicProgress
+      : {};
 
-  const studentName =
-    student?.name || student?.displayName || student?.fullName || 'Unknown';
-  const studentGrade =
-    student?.grade || student?.class || student?.standard || '';
-
-  const courseName =
-    course?.name || course?.title || course?.courseName || 'Unknown Course';
-  const courseArea = course?.area || course?.track || course?.type || '';
-
-  const parentName =
-    parent?.name ||
-    parent?.displayName ||
-    parent?.fullName ||
-    parent?.email ||
-    'Unknown Parent';
-
-  const teacherName =
-    teacher?.name ||
-    teacher?.displayName ||
-    teacher?.fullName ||
-    'Unassigned';
-
-  const lpName =
-    lp?.name || lp?.displayName || lp?.fullName || 'Unassigned';
-
-  const enrollmentStatus: string = enrollment.status || 'unknown';
-
-  const enrollmentDate = formatDate(
-    enrollment.enrollmentDate,
-    'Unknown',
-  );
-  const startDate = formatDate(enrollment.startDate, 'Not started');
-  const completionDate = formatDate(
-    enrollment.completionDate,
-    'N/A',
-  );
+  /* ---------------- UI ---------------- */
 
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <h3 className="text-xl font-semibold">Enrollment Details</h3>
+      <div className="flex justify-between items-center">
+        <h3 className="text-xl font-semibold">
+          Enrollment Details
+        </h3>
         <div className="flex items-center gap-3">
-          <span className="text-sm flex items-center gap-2">
-            Status: {getStatusBadge(enrollmentStatus)}
-          </span>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          {getStatusBadge(enrollment.status)}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onClose}
+          >
             Close
           </Button>
         </div>
@@ -219,83 +213,39 @@ export default function EnrollmentDetailView({
       {/* Student & Course */}
       <Card>
         <CardHeader>
-          <CardTitle>Student &amp; Course</CardTitle>
+          <CardTitle>Student & Course</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-1 text-sm">
-          <div>
-            <strong>Student:</strong>{' '}
-            {studentName}
-            {studentGrade ? ` – ${studentGrade}` : ''}
-          </div>
-          <div>
-            <strong>Age / DOB:</strong>{' '}
-            {student?.age ??
-              (student?.dob
-                ? formatDate(student.dob, 'Unknown')
-                : 'Unknown')}
-          </div>
-          <div>
-            <strong>Course:</strong>{' '}
-            {courseName}
-            {courseArea ? ` (${courseArea})` : ''}
-          </div>
-          <div>
-            <strong>Teacher:</strong> {teacherName}
-          </div>
-          <div>
-            <strong>Learning Partner:</strong> {lpName}
-          </div>
-          <div>
-            <strong>Parent:</strong> {parentName}
-          </div>
+        <CardContent className="text-sm space-y-1">
+          <div><strong>Student:</strong> {student?.name || student?.fullName || 'Unknown'}</div>
+          <div><strong>Course:</strong> {course?.name || course?.title || 'Unknown'}</div>
+          <div><strong>Teacher:</strong> {teacher?.name || 'Unassigned'}</div>
+          <div><strong>Learning Partner:</strong> {lp?.name || 'Unassigned'}</div>
+          <div><strong>Parent:</strong> {parent?.name || parent?.email || 'Unknown'}</div>
         </CardContent>
       </Card>
 
-      {/* Progress by Topic */}
+      {/* Progress */}
       <Card>
         <CardHeader>
-          <CardTitle>Progress by Topic</CardTitle>
+          <CardTitle>Topic Progress</CardTitle>
         </CardHeader>
         <CardContent>
           {Object.keys(topicProgress).length === 0 ? (
             <div className="text-sm text-gray-500">
-              No topic progress yet.
+              No progress recorded yet.
             </div>
           ) : (
             <div className="space-y-2">
               {Object.entries(topicProgress).map(
-                ([topicId, t]: [string, any]) => (
+                ([topicId, t]: any) => (
                   <div
                     key={topicId}
-                    className="p-2 border rounded text-sm space-y-1"
+                    className="border rounded p-2 text-sm"
                   >
-                    <div>
-                      <strong>Topic:</strong> {t?.name || topicId}
-                    </div>
-                    <div>
-                      Status:{' '}
-                      <Badge
-                        variant={
-                          t?.status === 'completed'
-                            ? 'default'
-                            : 'secondary'
-                        }
-                      >
-                        {t?.status || 'unknown'}
-                      </Badge>
-                    </div>
-                    <div>
-                      Mastery:{' '}
-                      {typeof t?.mastery === 'number'
-                        ? `${t.mastery}%`
-                        : '0%'}
-                    </div>
-                    <div>
-                      Last Updated:{' '}
-                      {t?.lastUpdated
-                        ? formatDate(t.lastUpdated, '-')
-                        : '-'}
-                    </div>
+                    <div><strong>{t?.name || topicId}</strong></div>
+                    <div>Status: {t?.status || 'unknown'}</div>
+                    <div>Mastery: {t?.mastery ?? 0}%</div>
+                    <div>Updated: {formatDate(t?.lastUpdated)}</div>
                   </div>
                 ),
               )}
@@ -304,53 +254,23 @@ export default function EnrollmentDetailView({
         </CardContent>
       </Card>
 
-      {/* Credits & Timeline */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Credits &amp; Timeline</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 text-sm">
-          <div>
-            Credits Used:{' '}
-            {typeof enrollment.creditsUsed === 'number'
-              ? enrollment.creditsUsed
-              : 0}
-          </div>
-          <div>
-            Credits Total:{' '}
-            {typeof enrollment.creditsTotal === 'number'
-              ? enrollment.creditsTotal
-              : 0}
-          </div>
-          <div>
-            Credits Remaining:{' '}
-            {typeof enrollment.creditsRemaining === 'number'
-              ? enrollment.creditsRemaining
-              : 0}
-          </div>
-          <div>Enrollment Date: {enrollmentDate}</div>
-          <div>Start Date: {startDate}</div>
-          <div>Completion Date: {completionDate}</div>
-        </CardContent>
-      </Card>
-
-      {/* Admin Notes */}
+      {/* Notes */}
       <Card>
         <CardHeader>
           <CardTitle>Admin Notes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="mb-2 text-sm whitespace-pre-line">
-            {enrollment.notes || 'No notes'}
+          <div className="whitespace-pre-line text-sm mb-2">
+            {enrollment.notes || 'No notes yet.'}
           </div>
           <Textarea
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Add admin note"
+            placeholder="Add a note"
           />
-          <div className="flex gap-2 mt-2">
-            <Button onClick={saveNote}>Save Note</Button>
-          </div>
+          <Button className="mt-2" onClick={saveNote}>
+            Save Note
+          </Button>
         </CardContent>
       </Card>
     </div>

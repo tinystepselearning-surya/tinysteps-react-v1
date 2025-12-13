@@ -1,89 +1,201 @@
-import React, { useEffect, useState } from 'react';
-import { collection, getDocs, query, where, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
+// src/pages/admin/EnrollmentManagement/AssignLPModal.tsx
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  doc,
+  serverTimestamp,
+} from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
 import { Button } from '@components/ui/button';
 import { toast } from '@components/hooks/use-toast';
 
-export default function AssignLPModal({ enrollment, onClose }: { enrollment: any, onClose: () => void }) {
+interface AssignLPModalProps {
+  enrollment: any;
+  onClose: () => void;
+}
+
+const NONE = '__none__';
+
+export default function AssignLPModal({
+  enrollment,
+  onClose,
+}: AssignLPModalProps) {
   const [lps, setLps] = useState<any[]>([]);
-  const [selectedLP, setSelectedLP] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedLPId, setSelectedLPId] =
+    useState<string>(NONE);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  useEffect(() => { fetchLPs(); }, []);
+  /* ---------------- load LPs ---------------- */
+  useEffect(() => {
+    const load = async () => {
+      const q = query(
+        collection(db, 'users'),
+        where('role', '==', 'learningPartner'),
+      );
+      const snap = await getDocs(q);
+      const arr: any[] = [];
+      snap.forEach((d) =>
+        arr.push({ id: d.id, ...d.data() }),
+      );
+      setLps(arr);
+    };
 
-  const fetchLPs = async () => {
-    const q = query(collection(db, 'users'), where('role', '==', 'learningPartner'));
-    const snap = await getDocs(q);
-    const arr: any[] = [];
-    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
-    setLps(arr);
-  };
+    void load();
+  }, []);
 
+  /* ---------------- filtered LPs ---------------- */
+  const filteredLPs = useMemo(() => {
+    if (!searchTerm) return lps;
+
+    const q = searchTerm.toLowerCase();
+    return lps.filter((lp) => {
+      const text = (
+        lp.name ||
+        lp.email ||
+        ''
+      ).toLowerCase();
+      return text.includes(q);
+    });
+  }, [lps, searchTerm]);
+
+  /* ---------------- confirm ---------------- */
   const handleConfirm = async () => {
-    if (!selectedLP) {
-      toast({ title: 'Select LP', description: 'Please select a Learning Partner', variant: 'destructive' });
+    if (selectedLPId === NONE) {
+      toast({
+        title: 'Select Learning Partner',
+        description:
+          'Please select a Learning Partner',
+        variant: 'destructive',
+      });
       return;
     }
 
     try {
-      await updateDoc(doc(db, 'enrollments', enrollment.id), {
-        lpId: selectedLP,
-        status: 'active',
-        startDate: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      setSaving(true);
+
+      await updateDoc(
+        doc(db, 'enrollments', enrollment.id),
+        {
+          lpId: selectedLPId,
+          status: 'active',
+          startDate: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+      );
+
+      toast({
+        title: 'Learning Partner assigned',
+        description:
+          'Enrollment is now active',
       });
 
-      toast({ title: 'Success', description: 'LP assigned and enrollment activated' });
       onClose();
     } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to assign LP', variant: 'destructive' });
+      console.error(err);
+      toast({
+        title: 'Error',
+        description:
+          err?.message ||
+          'Failed to assign Learning Partner',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
+  /* ---------------- UI ---------------- */
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Assign Learning Partner</DialogTitle>
+          <DialogTitle>
+            Assign Learning Partner
+          </DialogTitle>
           <DialogDescription>
-            Choose a learning partner to manage this enrollment and activate the student&apos;s course.
+            Assign a Learning Partner and
+            activate the enrollment.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
-          <div>Student: {enrollment.studentId}</div>
-          <div>Course: {enrollment.courseId}</div>
-
-          <div className="flex gap-2">
-            <input
-              className="flex-1 px-3 py-2 border rounded"
-              placeholder="Search LP by name or email"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="text-sm text-gray-600">
+            <div>
+              <strong>Student:</strong>{' '}
+              {enrollment.studentId}
+            </div>
+            <div>
+              <strong>Course:</strong>{' '}
+              {enrollment.courseId}
+            </div>
           </div>
 
-          <Select onValueChange={(v) => setSelectedLP(v)}>
+          <input
+            className="w-full px-3 py-2 border rounded"
+            placeholder="Search LP name or email"
+            value={searchTerm}
+            onChange={(e) =>
+              setSearchTerm(e.target.value)
+            }
+          />
+
+          <Select
+            value={selectedLPId}
+            onValueChange={setSelectedLPId}
+          >
             <SelectTrigger>
-              <SelectValue placeholder="Select LP" />
+              <SelectValue placeholder="Select Learning Partner" />
             </SelectTrigger>
             <SelectContent>
-              {lps.filter(lp => {
-                if (!searchTerm) return true;
-                const s = (lp.name || lp.email || '').toLowerCase();
-                return s.includes(searchTerm.toLowerCase());
-              }).map(t => (
-                <SelectItem key={t.id} value={t.id}>{t.name || t.email}</SelectItem>
+              <SelectItem value={NONE}>
+                Select Learning Partner
+              </SelectItem>
+              {filteredLPs.map((lp) => (
+                <SelectItem
+                  key={lp.id}
+                  value={lp.id}
+                >
+                  {lp.name || lp.email}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleConfirm}>Confirm</Button>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            disabled={saving}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirm}
+            disabled={saving}
+          >
+            {saving ? 'Assigning…' : 'Confirm'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

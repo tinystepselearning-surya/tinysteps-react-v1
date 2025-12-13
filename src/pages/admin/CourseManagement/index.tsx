@@ -1,3 +1,4 @@
+// src/pages/admin/CourseManagement/index.tsx
 import React, { useState } from 'react';
 import CourseList from './CourseList';
 import CreateCourseForm from './CreateCourseForm';
@@ -9,71 +10,81 @@ type ViewMode = 'list' | 'create' | 'edit' | 'detail' | 'topics';
 
 export const CourseManagement: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewMode>('list');
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
 
-  const handleViewCourse = (course: any) => {
-    setSelectedCourse(course);
+  const handleViewCourse = (courseId: string) => {
+    setSelectedCourseId(courseId);
     setCurrentView('detail');
   };
 
-  const handleEditCourse = (course: any) => {
-    setSelectedCourse(course);
+  const handleEditCourse = (courseId: string) => {
+    setSelectedCourseId(courseId);
     setCurrentView('edit');
   };
 
-  const handleManageTopics = (course: any) => {
-    setSelectedCourse(course);
+  const handleManageTopics = (courseId: string) => {
+    setSelectedCourseId(courseId);
     setCurrentView('topics');
   };
 
   const handleBackToList = () => {
     setCurrentView('list');
-    setSelectedCourse(null);
+    setSelectedCourseId(null);
   };
 
   const handleCourseCreated = () => {
     setCurrentView('list');
-    setSelectedCourse(null);
+    setSelectedCourseId(null);
   };
 
   const handleCourseUpdated = () => {
     setCurrentView('list');
-    setSelectedCourse(null);
+    setSelectedCourseId(null);
   };
 
   switch (currentView) {
     case 'create':
-      return <CreateCourseForm onSuccess={handleCourseCreated} onCancel={handleBackToList} />;
-    
+      return (
+        <CreateCourseForm
+          onSuccess={handleCourseCreated}
+          onCancel={handleBackToList}
+        />
+      );
+
     case 'edit':
-      return selectedCourse ? (
-        <EditCourseForm 
-          courseId={selectedCourse.id} 
-          onSuccess={handleCourseUpdated} 
+      return selectedCourseId ? (
+        <EditCourseForm
+          courseId={selectedCourseId}
+          onSuccess={handleCourseUpdated}
           onCancel={handleBackToList}
         />
       ) : null;
-    
+
     case 'detail':
-      return selectedCourse ? (
-        <CourseDetailView 
-          courseId={selectedCourse.id} 
+      return selectedCourseId ? (
+        <CourseDetailView
+          courseId={selectedCourseId}
           onBack={handleBackToList}
           onEdit={handleEditCourse}
         />
       ) : null;
-    
+
     case 'topics':
-      return selectedCourse ? (
-        <TopicsManagement courseId={selectedCourse.id} onBack={handleBackToList} />
+      return selectedCourseId ? (
+        <TopicsManagement
+          courseId={selectedCourseId}
+          onBack={handleBackToList}
+        />
       ) : null;
-    
+
     default:
       return (
-        <CourseList 
+        <CourseList
           onCreateCourse={() => setCurrentView('create')}
           onViewCourse={handleViewCourse}
           onEditCourse={handleEditCourse}
+          // Optional: if you later add a "Manage Topics" button in CourseList:
+          // onManageTopics={handleManageTopics}
         />
       );
   }

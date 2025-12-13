@@ -27,13 +27,19 @@ import { useToast } from '@components/hooks/use-toast';
 
 type BillingCycle = 'monthly' | 'quarterly' | 'annual';
 
+const BILLING_CYCLE_OPTIONS: BillingCycle[] = [
+  'monthly',
+  'quarterly',
+  'annual',
+];
+
 const monthsForCycle: Record<BillingCycle, number> = {
   monthly: 1,
   quarterly: 3,
   annual: 12,
 };
 
-const sessionsPerMonthForFrequency = (freq: string | undefined) => {
+const sessionsPerMonthForFrequency = (freq?: string) => {
   switch (freq) {
     case 'weekly':
       return 4;
@@ -42,7 +48,7 @@ const sessionsPerMonthForFrequency = (freq: string | undefined) => {
     case 'monthly':
       return 1;
     default:
-      return 4; // sensible default
+      return 4;
   }
 };
 
@@ -53,69 +59,89 @@ interface CreateEnrollmentFormProps {
 export default function CreateEnrollmentForm({
   onCreated,
 }: CreateEnrollmentFormProps) {
-  const [students, setStudents] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedStudent, setSelectedStudent] = useState<string | undefined>();
-  const [selectedCourse, setSelectedCourse] = useState<string | undefined>();
-  const [billingCycle, setBillingCycle] =
-    useState<BillingCycle>('monthly');
-  const [step, setStep] = useState(1);
-  const [creating, setCreating] = useState(false);
-
   const { toast } = useToast();
 
+  const [students, setStudents] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
+
+  const [selectedStudentId, setSelectedStudentId] =
+    useState<string>('__none__');
+  const [selectedCourseId, setSelectedCourseId] =
+    useState<string>('__none__');
+
+  const [billingCycle, setBillingCycle] =
+    useState<BillingCycle>('monthly');
+
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [creating, setCreating] = useState(false);
+
+  /* -------------------- load data -------------------- */
   useEffect(() => {
     const load = async () => {
-      // students
-      const sSnap = await getDocs(collection(db, 'kids'));
-      const sArr: any[] = [];
-      sSnap.forEach((s) => sArr.push({ id: s.id, ...s.data() }));
-      setStudents(sArr);
+      const studentsSnap = await getDocs(collection(db, 'kids'));
+      const studentsArr: any[] = [];
+      studentsSnap.forEach((s) =>
+        studentsArr.push({ id: s.id, ...s.data() }),
+      );
+      setStudents(studentsArr);
 
-      // courses (only active)
-      const cSnap = await getDocs(collection(db, 'courses'));
-      const cArr: any[] = [];
-      cSnap.forEach((c) => cArr.push({ id: c.id, ...c.data() }));
-      setCourses(cArr.filter((c) => c.status === 'active'));
+      const coursesSnap = await getDocs(collection(db, 'courses'));
+      const coursesArr: any[] = [];
+      coursesSnap.forEach((c) =>
+        coursesArr.push({ id: c.id, ...c.data() }),
+      );
+      setCourses(coursesArr.filter((c) => c.status === 'active'));
     };
 
     void load();
   }, []);
 
-  const selectedStudentObj = useMemo(
-    () => students.find((s) => s.id === selectedStudent) || null,
-    [selectedStudent, students],
+  /* -------------------- derived data -------------------- */
+  const selectedStudent = useMemo(
+    () =>
+      students.find((s) => s.id === selectedStudentId) ||
+      null,
+    [students, selectedStudentId],
   );
 
-  const parentForStudent = useMemo(() => {
-    if (!selectedStudentObj) return null;
+  const selectedCourse = useMemo(
+    () =>
+      courses.find((c) => c.id === selectedCourseId) ||
+      null,
+    [courses, selectedCourseId],
+  );
+
+  const parentLabel = useMemo(() => {
+    if (!selectedStudent) return '—';
     return (
-      selectedStudentObj.parentId ||
-      selectedStudentObj.parentEmail ||
-      selectedStudentObj.parentName ||
-      null
+      selectedStudent.parentName ||
+      selectedStudent.parentEmail ||
+      selectedStudent.parentId ||
+      'Unknown'
     );
-  }, [selectedStudentObj]);
-
-  const selectedCourseData = useMemo(
-    () => courses.find((c) => c.id === selectedCourse),
-    [selectedCourse, courses],
-  );
+  }, [selectedStudent]);
 
   const calculateCredits = () => {
-    if (!selectedCourseData) return 0;
-    const sessionsPerMonth = sessionsPerMonthForFrequency(
-      selectedCourseData.sessionFrequency || 'weekly',
+    if (!selectedCourse) return 0;
+    const perMonth = sessionsPerMonthForFrequency(
+      selectedCourse.sessionFrequency,
     );
-    const months = monthsForCycle[billingCycle];
-    return sessionsPerMonth * months;
+    return perMonth * monthsForCycle[billingCycle];
   };
 
+  const estimatedSessions = calculateCredits();
+  const ratePerSession = selectedCourse?.ratePerSession || 0;
+  const estimatedTotal = estimatedSessions * ratePerSession;
+
+  /* -------------------- create enrollment -------------------- */
   const handleCreate = async () => {
-    if (!selectedStudent || !selectedCourse) {
+    if (
+      selectedStudentId === '__none__' ||
+      selectedCourseId === '__none__'
+    ) {
       toast({
-        title: 'Error',
-        description: 'Select student and course',
+        title: 'Missing data',
+        description: 'Please select student and course',
         variant: 'destructive',
       });
       return;
@@ -124,25 +150,25 @@ export default function CreateEnrollmentForm({
     try {
       setCreating(true);
 
-      // Fetch latest student data to ensure parentId is correct
-      const studentDoc = await getDoc(doc(db, 'kids', selectedStudent));
-      const parentId = studentDoc.exists()
-        ? (studentDoc.data() as any)?.parentId
+      const studentSnap = await getDoc(
+        doc(db, 'kids', selectedStudentId),
+      );
+      const parentId = studentSnap.exists()
+        ? (studentSnap.data() as any)?.parentId || null
         : null;
 
       const enrollmentRef = doc(collection(db, 'enrollments'));
       const credits = calculateCredits();
 
       await setDoc(enrollmentRef, {
-        // canonical fields for new docs
-        studentId: selectedStudent,
-        kidIds: [selectedStudent], // keeps multi-kid flexibility later
-        courseId: selectedCourse,
-        parentId: parentId || null,
+        studentId: selectedStudentId,
+        kidIds: [selectedStudentId],
+        courseId: selectedCourseId,
+        parentId,
         teacherId: null,
         lpId: null,
         status: 'pending_teacher',
-        ratePerSession: selectedCourseData?.ratePerSession || 0,
+        ratePerSession,
         billingCycle,
         creditsTotal: credits,
         creditsUsed: 0,
@@ -153,19 +179,24 @@ export default function CreateEnrollmentForm({
         updatedAt: serverTimestamp(),
       });
 
-      toast({ title: 'Success', description: 'Enrollment created' });
+      toast({
+        title: 'Enrollment created',
+        description: 'Enrollment successfully created',
+      });
+
       onCreated?.();
 
-      // reset form
+      /* reset */
       setStep(1);
-      setSelectedCourse(undefined);
-      setSelectedStudent(undefined);
+      setSelectedStudentId('__none__');
+      setSelectedCourseId('__none__');
       setBillingCycle('monthly');
     } catch (err: any) {
       console.error(err);
       toast({
         title: 'Error',
-        description: err?.message || 'Failed to create enrollment',
+        description:
+          err?.message || 'Failed to create enrollment',
         variant: 'destructive',
       });
     } finally {
@@ -173,108 +204,80 @@ export default function CreateEnrollmentForm({
     }
   };
 
-  const prerequisitesText =
-    selectedCourseData &&
-    (Array.isArray(selectedCourseData.prerequisites)
-      ? selectedCourseData.prerequisites.join(', ')
-      : selectedCourseData.prerequisites || 'None');
-
-  const estimatedSessions = calculateCredits();
-  const estimatedRate = selectedCourseData?.ratePerSession || 0;
-  const estimatedTotal = estimatedSessions * estimatedRate;
-
+  /* -------------------- UI -------------------- */
   return (
     <div className="max-w-3xl mx-auto">
       <Card className="border-0 shadow-none">
         <CardHeader>
           <CardTitle>Create Enrollment</CardTitle>
         </CardHeader>
-        <CardContent>
-          {/* Step 1: Student */}
+        <CardContent className="space-y-6">
+          {/* STEP 1 */}
           {step === 1 && (
-            <div className="space-y-4">
+            <>
               <label className="text-sm font-medium">
                 Select Student
               </label>
               <Select
-                value={selectedStudent}
-                onValueChange={(v) => setSelectedStudent(v)}
+                value={selectedStudentId}
+                onValueChange={setSelectedStudentId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose student" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">
+                    Select student
+                  </SelectItem>
                   {students.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {(s.name ||
+                      {s.name ||
                         s.displayName ||
                         s.fullName ||
-                        'Unnamed') + (s.grade ? ` (${s.grade})` : '')}
+                        'Unnamed'}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              {selectedStudentObj && (
-                <div className="text-sm text-gray-600">
-                  Parent:{' '}
-                  {selectedStudentObj.parentName ||
-                    selectedStudentObj.parentEmail ||
-                    parentForStudent ||
-                    'Unknown'}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setStep(2)}
-                  disabled={!selectedStudent}
-                >
-                  Next
-                </Button>
+              <div className="text-sm text-gray-600">
+                Parent: {parentLabel}
               </div>
-            </div>
+
+              <Button
+                onClick={() => setStep(2)}
+                disabled={selectedStudentId === '__none__'}
+              >
+                Next
+              </Button>
+            </>
           )}
 
-          {/* Step 2: Course */}
+          {/* STEP 2 */}
           {step === 2 && (
-            <div className="space-y-4">
+            <>
               <label className="text-sm font-medium">
                 Select Course
               </label>
               <Select
-                value={selectedCourse}
-                onValueChange={(v) => setSelectedCourse(v)}
+                value={selectedCourseId}
+                onValueChange={setSelectedCourseId}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Choose course" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="__none__">
+                    Select course
+                  </SelectItem>
                   {courses.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.name || c.title || 'Untitled'} — ₹
-                      {c.ratePerSession || 0}/session
+                      {(c.name || c.title || 'Untitled') +
+                        ` — ₹${c.ratePerSession || 0}/session`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-
-              {selectedCourseData && (
-                <div className="p-2 border rounded text-sm space-y-1">
-                  <div>
-                    <strong>Prerequisites:</strong>{' '}
-                    {prerequisitesText}
-                  </div>
-                  <div>
-                    <strong>Rate/session:</strong> ₹
-                    {selectedCourseData.ratePerSession || 0}
-                  </div>
-                  <div>
-                    <strong>Session Frequency:</strong>{' '}
-                    {selectedCourseData.sessionFrequency || 'weekly'}
-                  </div>
-                </div>
-              )}
 
               <div className="flex gap-2">
                 <Button
@@ -285,47 +288,50 @@ export default function CreateEnrollmentForm({
                 </Button>
                 <Button
                   onClick={() => setStep(3)}
-                  disabled={!selectedCourse}
+                  disabled={selectedCourseId === '__none__'}
                 >
                   Next
                 </Button>
               </div>
-            </div>
+            </>
           )}
 
-          {/* Step 3: Billing + Summary */}
+          {/* STEP 3 */}
           {step === 3 && (
-            <div className="space-y-4">
+            <>
               <label className="text-sm font-medium">
                 Billing Cycle
               </label>
               <Select
                 value={billingCycle}
-                onValueChange={(v: BillingCycle) =>
-                  setBillingCycle(v)
+                onValueChange={(v) =>
+                  setBillingCycle(v as BillingCycle)
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select billing cycle" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Monthly</SelectItem>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="annual">Annual</SelectItem>
+                  {BILLING_CYCLE_OPTIONS.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c.charAt(0).toUpperCase() +
+                        c.slice(1)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              <div className="p-2 border rounded text-sm space-y-1">
+              <div className="border rounded p-3 text-sm space-y-1">
                 <div>
-                  Estimated sessions: <strong>{estimatedSessions}</strong>
+                  Estimated sessions:{' '}
+                  <strong>{estimatedSessions}</strong>
                 </div>
                 <div>
-                  Cost per session: ₹
-                  <strong>{estimatedRate}</strong>
+                  Rate/session: ₹
+                  <strong>{ratePerSession}</strong>
                 </div>
-                <div className="mt-2 font-semibold">
-                  Estimated total value:{' '}
-                  <span>₹{estimatedTotal}</span>
+                <div className="font-semibold mt-2">
+                  Estimated total: ₹{estimatedTotal}
                 </div>
               </div>
 
@@ -337,11 +343,16 @@ export default function CreateEnrollmentForm({
                 >
                   Back
                 </Button>
-                <Button onClick={handleCreate} disabled={creating}>
-                  {creating ? 'Creating…' : 'Confirm & Create'}
+                <Button
+                  onClick={handleCreate}
+                  disabled={creating}
+                >
+                  {creating
+                    ? 'Creating…'
+                    : 'Confirm & Create'}
                 </Button>
               </div>
-            </div>
+            </>
           )}
         </CardContent>
       </Card>
