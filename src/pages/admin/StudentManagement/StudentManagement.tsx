@@ -112,7 +112,7 @@ export default function StudentManagement() {
     } finally {
       setLoading(false);
     }
-  }, [db, toast]);
+  }, [toast]);
 
   useEffect(() => {
     // Run once on mount to load initial students list

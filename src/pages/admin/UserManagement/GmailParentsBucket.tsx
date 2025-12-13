@@ -35,7 +35,7 @@ export default function GmailParentsBucket({ open = true }: Props) {
       }
     };
     if (open) loadParents();
-  }, []);
+  }, [open]);
 
   const handleAddKid = (parent: User) => {
     setOpenCreateStudentForParent(parent);
