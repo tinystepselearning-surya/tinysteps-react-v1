@@ -1,6 +1,5 @@
 import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import React from 'react';
-import { Suspense } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
@@ -8,9 +7,7 @@ import { Card } from '@components/ui/card';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 
-const NotificationBell = React.lazy(() => import('../notifications/NotificationsPanel').then(module => ({ default: module.NotificationBell })));
-
-export const TeacherHeader = ({ name, upcomingCount }) => {
+export const TeacherHeader = ({ name, upcomingCount, onToggleNotifications }) => {
     const { clearUser } = useAuthStore();
     const navigate = useNavigate();
     const handleLogout = () => __awaiter(void 0, void 0, void 0, function* () {

@@ -52,7 +52,7 @@ const PhonePeCallback = lazy(
 
 // Layout
 import Header from '../components/common/Header';
-import RoleGate from '../components/common/RoleGate';
+const RoleGate = lazy(() => import('../components/common/RoleGate'));
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
@@ -130,10 +130,12 @@ const router = createBrowserRouter(
         {
           path: 'surya',
           element: (
-            <RoleGate
-              allowedRoles={['admin']}
-              loginPath="/surya/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['admin']}
+                loginPath="/surya/login"
+              />
+            </Suspense>
           ),
           children: [
             { index: true, element: <AdminDashboard /> },
@@ -147,10 +149,12 @@ const router = createBrowserRouter(
         {
           path: 'teacher',
           element: (
-            <RoleGate
-              allowedRoles={['teacher']}
-              loginPath="/teacher/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['teacher']}
+                loginPath="/teacher/login"
+              />
+            </Suspense>
           ),
           children: [
             { index: true, element: <TeacherDashboard /> },
@@ -165,10 +169,12 @@ const router = createBrowserRouter(
         {
           path: 'teacher/:teacherId',
           element: (
-            <RoleGate
-              allowedRoles={['teacher']}
-              loginPath="/teacher/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['teacher']}
+                loginPath="/teacher/login"
+              />
+            </Suspense>
           ),
           children: [
             { index: true, element: <TeacherDashboard /> },
@@ -183,10 +189,12 @@ const router = createBrowserRouter(
         {
           path: 'teachers',
           element: (
-            <RoleGate
-              allowedRoles={['teacher']}
-              loginPath="/teacher/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['teacher']}
+                loginPath="/teacher/login"
+              />
+            </Suspense>
           ),
           children: [{ index: true, element: <TeacherDashboard /> }],
         },
@@ -195,10 +203,12 @@ const router = createBrowserRouter(
         {
           path: 'parent',
           element: (
-            <RoleGate
-              allowedRoles={['parent']}
-              loginPath="/parent/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['parent']}
+                loginPath="/parent/login"
+              />
+            </Suspense>
           ),
           children: [
             { index: true, element: <ParentDashboard /> },
@@ -215,10 +225,12 @@ const router = createBrowserRouter(
         {
           path: 'learning-partner',
           element: (
-            <RoleGate
-              allowedRoles={['learningPartner']}
-              loginPath="/learning-partner/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['learningPartner']}
+                loginPath="/learning-partner/login"
+              />
+            </Suspense>
           ),
           children: [{ index: true, element: <LPDashboard /> }],
         },
@@ -232,10 +244,12 @@ const router = createBrowserRouter(
         {
           path: 'admin/beta-analytics',
           element: (
-            <RoleGate
-              allowedRoles={['admin']}
-              loginPath="/surya/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['admin']}
+                loginPath="/surya/login"
+              />
+            </Suspense>
           ),
           children: [{ index: true, element: <BetaAnalytics /> }],
         },
@@ -244,10 +258,12 @@ const router = createBrowserRouter(
         {
           path: 'admin/topics-seed-picklist',
           element: (
-            <RoleGate
-              allowedRoles={['admin']}
-              loginPath="/surya/login"
-            />
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['admin']}
+                loginPath="/surya/login"
+              />
+            </Suspense>
           ),
           children: [{ index: true, element: <TopicsSeedPicklistPage /> }],
         },

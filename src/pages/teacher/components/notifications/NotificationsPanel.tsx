@@ -17,6 +17,7 @@ import { Button } from '@components/ui/button';
 
 export interface NotificationsPanelProps {
   teacherId?: string | null;
+  onClose?: () => void;
 }
 
 export interface TeacherNotification {
@@ -50,6 +51,7 @@ export interface TeacherNotification {
  */
 export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
   teacherId,
+  onClose,
 }) => {
   const [items, setItems] = useState<TeacherNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,6 +167,16 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
           >
             Mark all as read
           </Button>
+          {onClose && (
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              onClick={onClose}
+            >
+              Close
+            </Button>
+          )}
         </div>
       </div>
 

@@ -106,6 +106,7 @@ type StudentForRow = {
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
   const [tab, setTab] = useState<string>('today');
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const teacherId = user?.uid;
   const { sessions } = useTeacherSessions(teacherId);
@@ -132,6 +133,7 @@ export default function TeacherDashboard() {
       <TeacherHeader
         name={user.displayName || user.email || 'Teacher'}
         upcomingCount={sessions.length}
+        onToggleNotifications={() => setShowNotifications(true)}
       />
 
       <div className="flex gap-6">
@@ -252,6 +254,13 @@ export default function TeacherDashboard() {
           </Tabs>
         </main>
       </div>
+
+      {/* Notifications Modal */}
+      {showNotifications && (
+        <Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
+          <NotificationsPanel teacherId={teacherId} onClose={() => setShowNotifications(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }
