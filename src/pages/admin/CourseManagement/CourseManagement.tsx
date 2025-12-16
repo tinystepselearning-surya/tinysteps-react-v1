@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@components/ui/dialog';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 
@@ -11,12 +11,54 @@ import CourseList from './CourseList';
 export default function CourseManagement() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
+  const [track, setTrack] = useState('phonics');
+  const [level, setLevel] = useState('foundation');
 
-  function handleCreate() {
-    // TODO: call your createCourse mutation here
-    // await createCourse({ title });
-    setTitle('');
-    setOpen(false);
+  function slugify(input: string) {
+    return input
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-');
+  }
+
+  async function handleCreate() {
+    const t = title.trim();
+    if (!t) return;
+    const slug = slugify(t);
+
+    try {
+      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+      const { db } = await import('../../../lib/firebaseConfig');
+
+      await setDoc(
+        doc(db, 'courses', slug),
+        {
+          title: t,
+          code: slug,
+          track: track || 'phonics',
+          level: level || 'foundation',
+          active: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      setTitle('');
+      setOpen(false);
+      // simple feedback
+      // eslint-disable-next-line no-alert
+      alert('Course created');
+      // refresh the list — reload page to ensure CourseList refetches
+      window.location.reload();
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to create course', err);
+      // eslint-disable-next-line no-alert
+      alert('Failed to create course — check console');
+    }
   }
 
   return (
@@ -35,6 +77,9 @@ export default function CourseManagement() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Create a course</DialogTitle>
+            <DialogDescription>
+              Enter a title for the course. You can edit details later.
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-2">
