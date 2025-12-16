@@ -342,31 +342,54 @@ export function useCourses(filters?: { area?: string; level?: number; status?: s
   return useQuery({
     queryKey: ['courses', filters],
     queryFn: async () => {
-      const [{ collection, query, orderBy, getDocs }, { db }] = await Promise.all([
+      const [{ collection, query, getDocs }, { db }] = await Promise.all([
         import('firebase/firestore'),
         import('../lib/firebaseConfig'),
       ] as any);
 
-      let q = query(collection(db, 'courses'), orderBy('name', 'asc'));
-
-      // Note: Firestore doesn't support complex filtering in a single query
-      // We'll fetch all and filter client-side for now
-      const snap = await getDocs(q);
+      // Fetch all courses and perform client-side normalization + filtering.
+      const snap = await getDocs(collection(db, 'courses'));
       let courses = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as Course) })) as any[];
 
+      // Normalize fields so the admin UI can rely on `name`, `area`, `level`, `status`.
+      courses = courses.map((c: any) => {
+        const name = c.name || c.title || c.code || c.id;
+        // area historically used 'Phonics'/'Grammar' etc.; stored docs use 'track' (phonics, grammar)
+        const area = c.area || (c.track ? (typeof c.track === 'string' ?
+          // humanize known tracks
+          (c.track === 'phonics' ? 'Phonics' : c.track === 'grammar' ? 'Grammar' : c.track === 'public_speaking' ? 'Speaking' : c.track === 'spoken_english' ? 'Speaking' : c.track) : c.track) : undefined);
+        // status previously stored as 'status' string; newer docs use boolean 'active'
+        const status = c.status || (typeof c.active === 'boolean' ? (c.active ? 'active' : 'inactive') : undefined);
+
+        return { ...c, name, area, status };
+      });
+
+      if (import.meta.env?.DEV) console.debug('[courses] list fetched', courses.length, courses.map((d: any) => d.id));
+
       if (filters) {
-        if (filters.area) courses = courses.filter((c: any) => c.area === filters.area);
-        if (filters.level) courses = courses.filter((c: any) => c.level === filters.level);
-        if (filters.status) courses = courses.filter((c: any) => c.status === filters.status);
+        if (filters.area) {
+          const areaFilter = String(filters.area).toLowerCase();
+          courses = courses.filter((c: any) => String(c.area || '').toLowerCase() === areaFilter);
+        }
+        if (filters.level) {
+          // allow numeric or string comparison
+          courses = courses.filter((c: any) => String(c.level) === String(filters.level));
+        }
+        if (filters.status) {
+          const statusFilter = String(filters.status).toLowerCase();
+          courses = courses.filter((c: any) => (String(c.status || '') === statusFilter) || (statusFilter === 'active' && c.active === true) || (statusFilter === 'inactive' && c.active === false));
+        }
         if (filters.search) {
           const searchLower = filters.search.toLowerCase();
           courses = courses.filter((c: any) => {
             const name = (c.name || '').toLowerCase();
-            const desc = (c.description || '').toLowerCase();
+            const desc = (c.description || c.shortDescription || '').toLowerCase();
             return name.includes(searchLower) || desc.includes(searchLower);
           });
         }
       }
+
+      if (import.meta.env?.DEV) console.debug('[courses] list after filter', courses.length, courses.map((d: any) => d.id));
 
       return courses;
     },

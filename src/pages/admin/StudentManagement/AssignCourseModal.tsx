@@ -26,6 +26,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { useCourses } from '../../../hooks/useData';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -41,6 +42,7 @@ type Course = {
   name?: string;
   title?: string;
   level?: string;
+  area?: string;
   levelName?: string;
   status?: string;
   ratePerSession?: number;
@@ -91,43 +93,29 @@ export default function AssignCourseModal({
     (student as any).displayName ||
     student.id;
 
-  // Load courses
+  // Load courses from hook (only active by default); keep fallback if none
+  const { data: fetchedCourses = [] } = useCourses({ status: 'active' });
+
   useEffect(() => {
-    const load = async () => {
-      try {
-        const snap = await getDocs(collection(db, 'courses'));
-        const fetched: Course[] = snap.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as any),
-        }));
+    if (Array.isArray(fetchedCourses) && fetchedCourses.length > 0) {
+      setCourses(fetchedCourses as any);
+      return;
+    }
 
-        if (fetched.length === 0) {
-          // Fallback: build in-memory default list with slug ids
-          const mapped: Course[] = defaultCourses.map((title) => ({
-            id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-            title,
-            status: 'active',
-          }));
-          setCourses(mapped);
-        } else {
-          // Prefer only active courses; if none explicitly active, show all
-          const active = fetched.filter(
-            (c) => !c.status || c.status === 'active',
-          );
-          setCourses(active.length ? active : fetched);
-        }
-      } catch (err) {
-        console.error(err);
-        toast({
-          title: 'Error',
-          description: 'Failed to load courses',
-          variant: 'destructive',
-        });
-      }
-    };
+    // In development only: fallback to defaults when no courses exist so dev flows keep working
+    if (import.meta.env?.DEV) {
+      const mapped: Course[] = defaultCourses.map((title) => ({
+        id: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        title,
+        status: 'active',
+      }));
+      setCourses(mapped);
+      return;
+    }
 
-    void load();
-  }, []);
+    // In production/non-DEV: explicitly show empty list (no fallback)
+    setCourses([]);
+  }, [fetchedCourses]);
 
   // Who can assign? Admin OR LP assigned to this student
   useEffect(() => {
@@ -291,22 +279,26 @@ export default function AssignCourseModal({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="py-4 space-y-2">
-          <Select value={selected} onValueChange={setSelected}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select course" />
-            </SelectTrigger>
-            <SelectContent>
-              {courses.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {(c.title || c.name || 'Untitled Course') +
-                    (c.level || c.levelName
-                      ? ` — ${c.level || c.levelName}`
-                      : '')}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="py-4 space-y-2">
+            {courses.length > 0 ? (
+              <Select value={selected} onValueChange={setSelected}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {(c.name || c.title || 'Untitled Course')}
+                      {(c.area || c.level) ? ` — ${c.area || ''}${c.area && c.level ? ' / ' : ''}${c.level || ''}` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <div className="p-4 rounded border border-dashed border-gray-200 text-sm text-muted-foreground">
+                No courses found. Please add courses in Course Management.
+              </div>
+            )}
           {!canAssign && (
             <p className="text-xs text-red-500">
               You are not authorized to assign courses for this

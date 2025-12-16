@@ -36,13 +36,22 @@ export default function CourseManagement() {
 
   async function handleCreate() {
     const t = title.trim();
-    if (!t) return;
+    if (!t) {
+      toast({ title: 'Missing title', description: 'Please enter a course title', variant: 'destructive' });
+      return;
+    }
     const slug = slugify(t);
+    if (!slug) {
+      toast({ title: 'Invalid title', description: 'Title produced an invalid id', variant: 'destructive' });
+      return;
+    }
 
     try {
       setIsSaving(true);
-      const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
+      const { doc, setDoc, serverTimestamp, getDoc } = await import('firebase/firestore');
       const { db } = await import('../../../lib/firebaseConfig');
+
+      if (import.meta.env?.DEV) console.debug('[courses] create start', { title: t, slug, track, level });
 
       await setDoc(
         doc(db, 'courses', slug),
@@ -58,6 +67,14 @@ export default function CourseManagement() {
         { merge: true },
       );
 
+      // verify write
+      try {
+        const snap = await getDoc(doc(db, 'courses', slug));
+        if (import.meta.env?.DEV) console.debug('[courses] create wrote doc exists?', snap.exists());
+      } catch (e) {
+        if (import.meta.env?.DEV) console.debug('[courses] create verify failed', e);
+      }
+
       setTitle('');
       setOpen(false);
       // invalidate courses query so CourseList refetches
@@ -70,7 +87,7 @@ export default function CourseManagement() {
       toast({ title: 'Course created', description: `${t} was added.` });
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Failed to create course', err);
+      console.error('[courses] create failed', err);
       toast({ title: 'Failed to create course', description: String((err as any)?.message || err), variant: 'destructive' });
     } finally {
       setIsSaving(false);
@@ -82,7 +99,7 @@ export default function CourseManagement() {
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Course Management</h2>
 
-        <Button onClick={() => setOpen(true)}>Create New Course</Button>
+        <Button type="button" onClick={() => setOpen(true)}>Create New Course</Button>
       </div>
 
       <Card className="p-6">
@@ -143,10 +160,10 @@ export default function CourseManagement() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={!title.trim() || isSaving}>
+            <Button type="button" onClick={handleCreate} disabled={!title.trim() || isSaving}>
               {isSaving ? 'Creating…' : 'Create'}
             </Button>
           </DialogFooter>
