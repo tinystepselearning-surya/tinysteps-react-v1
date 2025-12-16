@@ -1,6 +1,7 @@
 // CourseManagement.tsx
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from '@components/hooks/use-toast';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@components/ui/dialog';
@@ -58,14 +59,12 @@ export default function CourseManagement() {
       } catch (e) {
         // ignore
       }
-      // simple feedback
-      // eslint-disable-next-line no-alert
-      alert('Course created');
+      // show success toast
+      toast({ title: 'Course created', description: `${t} was added.` });
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to create course', err);
-      // eslint-disable-next-line no-alert
-      alert('Failed to create course — check console');
+      toast({ title: 'Failed to create course', description: String((err as any)?.message || err), variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
