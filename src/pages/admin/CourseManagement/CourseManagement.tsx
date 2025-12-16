@@ -1,5 +1,6 @@
 // CourseManagement.tsx
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@components/ui/dialog';
@@ -13,6 +14,8 @@ export default function CourseManagement() {
   const [title, setTitle] = useState('');
   const [track, setTrack] = useState('phonics');
   const [level, setLevel] = useState('foundation');
+  const queryClient = useQueryClient();
+  const [isSaving, setIsSaving] = useState(false);
 
   function slugify(input: string) {
     return input
@@ -29,6 +32,7 @@ export default function CourseManagement() {
     const slug = slugify(t);
 
     try {
+      setIsSaving(true);
       const { doc, setDoc, serverTimestamp } = await import('firebase/firestore');
       const { db } = await import('../../../lib/firebaseConfig');
 
@@ -48,16 +52,22 @@ export default function CourseManagement() {
 
       setTitle('');
       setOpen(false);
+      // invalidate courses query so CourseList refetches
+      try {
+        await queryClient.invalidateQueries({ queryKey: ['courses'], exact: false });
+      } catch (e) {
+        // ignore
+      }
       // simple feedback
       // eslint-disable-next-line no-alert
       alert('Course created');
-      // refresh the list — reload page to ensure CourseList refetches
-      window.location.reload();
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to create course', err);
       // eslint-disable-next-line no-alert
       alert('Failed to create course — check console');
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -96,8 +106,8 @@ export default function CourseManagement() {
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={!title.trim()}>
-              Create
+            <Button onClick={handleCreate} disabled={!title.trim() || isSaving}>
+              {isSaving ? 'Creating…' : 'Create'}
             </Button>
           </DialogFooter>
         </DialogContent>
