@@ -7,6 +7,13 @@ import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@components/ui/dialog';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
 
 import CourseList from './CourseList';
 
@@ -99,6 +106,40 @@ export default function CourseManagement() {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g., Phonics Foundations"
             />
+          </div>
+
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="courseTrack">Track</Label>
+              <Select value={track} onValueChange={(v) => setTrack(v)}>
+                <SelectTrigger id="courseTrack">
+                  <SelectValue placeholder="Select track" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="phonics">Phonics</SelectItem>
+                  <SelectItem value="grammar">Grammar</SelectItem>
+                  <SelectItem value="public_speaking">Public Speaking</SelectItem>
+                  <SelectItem value="spoken_english">Spoken English</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="courseLevel">Level</Label>
+              <Select value={level} onValueChange={(v) => setLevel(v)}>
+                <SelectTrigger id="courseLevel">
+                  <SelectValue placeholder="Select level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="foundation">Foundation</SelectItem>
+                  <SelectItem value="early">Early</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="crash">Crash Course</SelectItem>
+                  <SelectItem value="basic">Basic</SelectItem>
+                  <SelectItem value="all_levels">All Levels</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <DialogFooter>
