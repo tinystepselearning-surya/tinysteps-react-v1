@@ -9,20 +9,47 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css)",
+        "source": "/",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=0, no-cache, no-store, must-revalidate"
+            "value": "no-cache"
           }
         ]
       },
       {
-        "source": "**/*.@(html)",
+        "source": "**/index.html",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "max-age=0, no-cache, no-store, must-revalidate"
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(png|jpg|jpeg|svg|webp|avif)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
+      },
+      {
+        "source": "**/*.@(woff2|woff|ttf|eot)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
           }
         ]
       }
