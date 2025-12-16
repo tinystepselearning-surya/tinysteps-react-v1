@@ -19,6 +19,7 @@ import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
+import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import { isSuperUserEmail } from '../../constants/accessControl';
@@ -135,6 +136,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="enrollments">Enrollment Management</TabsTrigger>
               <TabsTrigger value="relationships">Relationship Management</TabsTrigger>
               <TabsTrigger value="courses">Course Management</TabsTrigger>
+              <TabsTrigger value="lessons">Lesson Library</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -157,6 +159,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="courses">
               <CourseManagement />
+            </TabsContent>
+
+            <TabsContent value="lessons">
+              <LessonLibrary />
             </TabsContent>
 
             <TabsContent value="analytics">

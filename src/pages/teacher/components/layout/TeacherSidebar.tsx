@@ -47,7 +47,7 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
           variant="ghost"
           className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
         >
-          <Link to={teacherId ? `/teacher/${teacherId}/lessons` : '/teacher/lessons'}>
+          <Link data-testid="teacher-tab-lessons" to={teacherId ? `/teacher/${teacherId}/lessons` : '/teacher/lessons'}>
             📚 Lesson Library
           </Link>
         </Button>

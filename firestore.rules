@@ -158,6 +158,30 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // MESSAGES COLLECTION
+    // Teachers should only read messages where they are a participant
+    // Messages are expected to have a `participants` array containing user uids
+    // and fields `fromId` / `toId` for sender/recipient.
+    // ----------------------------
+    match /messages/{messageId} {
+      // Admin full access
+      allow read, create, update, delete: if isAdmin();
+
+      // Teacher read only if they are a participant
+      allow read: if isTeacher()
+        && ('participants' in resource.data)
+        && (request.auth.uid in resource.data.participants);
+
+      // Allow creating a message if signed in and the sender matches
+      allow create: if isSignedIn()
+        && ('fromId' in request.resource.data)
+        && request.auth.uid == request.resource.data.fromId;
+
+      // Prevent updates/deletes for non-admins
+      allow update, delete: if false;
+    }
+
+    // ----------------------------
     // PROGRESS COLLECTION
     // ----------------------------
     match /progress/{progressId} {
@@ -180,6 +204,22 @@ service cloud.firestore {
     // ----------------------------
     match /courses/{courseId} {
       allow read: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
+    // LESSON LIBRARY: lessonFolders + lessons
+    // Admin: read + write
+    // Teacher: read only
+    // Everyone else: no access
+    // ----------------------------
+    match /lessonFolders/{folderId} {
+      allow read: if isAdmin() || isTeacher();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /lessons/{lessonId} {
+      allow read: if isAdmin() || isTeacher();
       allow create, update, delete: if isAdmin();
     }
 

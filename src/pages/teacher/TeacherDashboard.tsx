@@ -7,6 +7,7 @@ import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
 
 import { useAuthStore } from '../../store/useAuthStore';
+import { useLocation } from 'react-router-dom';
 import { useTeacherSessions } from './hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
@@ -44,9 +45,7 @@ const EarningsSummary = React.lazy(() =>
 );
 
 const TeacherStats = React.lazy(() =>
-  import('./components/analytics/TeacherStats').then((module) => ({
-    default: module.TeacherStats,
-  })),
+  import('./components/analytics/TeacherStats').then((m) => ({ default: m.TeacherStats })),
 );
 
 const MessagesView = React.lazy(() =>
@@ -73,6 +72,9 @@ const NotificationsPanel = React.lazy(() =>
   })),
 );
 
+// Lazy-load Lesson Library page for the lessons tab
+const LessonLibraryPage = React.lazy(() => import('./LessonLibraryPage'));
+
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
     <Card className="p-8 text-center space-y-2 max-w-md">{children}</Card>
@@ -81,6 +83,7 @@ const AccessNotice = ({ children }: { children: React.ReactNode }) => (
 
 const TAB_ITEMS = [
   { id: 'today', label: "Today's Sessions" },
+  { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
   { id: 'progress', label: 'Progress' },
@@ -106,10 +109,25 @@ type StudentForRow = {
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
   const [tab, setTab] = useState<string>('today');
+  const location = useLocation();
+
+  // Allow selecting a tab via `?tab=lessons` (or other tab ids)
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const qTab = params.get('tab');
+      if (qTab) setTab(qTab);
+    } catch {
+      // ignore malformed search
+    }
+  }, [location.search]);
   const [showNotifications, setShowNotifications] = useState(false);
 
   const teacherId = user?.uid;
-  const { sessions } = useTeacherSessions(teacherId);
+  // Defer subscribing to sessions until the "today" tab is active
+  // so heavy listeners don't block other tabs like Lesson Library.
+  // Provide a placeholder empty array for header counts when not active.
+  const sessions = [];
   const { students, loading, error } = useTeacherFilteredStudents();
 
   if (isLoading) {
@@ -149,7 +167,7 @@ export default function TeacherDashboard() {
             {/* Mobile tabs for when sidebar is hidden */}
             <TabsList className="lg:hidden">
               {TAB_ITEMS.map((item) => (
-                <TabsTrigger key={item.id} value={item.id}>
+                <TabsTrigger key={item.id} value={item.id} data-testid={`teacher-tab-${item.id}`}>
                   {item.label}
                 </TabsTrigger>
               ))}
@@ -157,9 +175,11 @@ export default function TeacherDashboard() {
 
             {/* Today */}
             <TabsContent value="today">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
-                <TodaySessionsView teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'today' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
+                  <TodaySessionsView teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Upcoming */}
@@ -219,16 +239,20 @@ export default function TeacherDashboard() {
 
             {/* Analytics */}
             <TabsContent value="analytics">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
-                <TeacherStats teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'analytics' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
+                  <TeacherStats teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Messages */}
             <TabsContent value="messages">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
-                <MessagesView teacherId={teacherId} />
-              </React.Suspense>
+              {tab === 'messages' && (
+                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
+                  <MessagesView teacherId={teacherId} />
+                </React.Suspense>
+              )}
             </TabsContent>
 
             {/* Schedule */}
@@ -249,6 +273,12 @@ export default function TeacherDashboard() {
             <TabsContent value="notifications">
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
                 <NotificationsPanel teacherId={teacherId} />
+              </React.Suspense>
+            </TabsContent>
+            {/* Lesson Library (tab) */}
+            <TabsContent value="lessons">
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading lessons…</div>}>
+                <LessonLibraryPage />
               </React.Suspense>
             </TabsContent>
           </Tabs>

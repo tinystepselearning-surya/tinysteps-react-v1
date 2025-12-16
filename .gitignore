@@ -70,3 +70,8 @@ dist/assets/
 # Firebase Data Connect local data
 /dataconnect/.dataconnect/
 **/.dataconnect/
+
+# Playwright auth + reports
+.auth/
+playwright-report/
+test-results/
