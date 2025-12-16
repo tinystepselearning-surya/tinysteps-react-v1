@@ -12,6 +12,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    // Only include unit tests inside `src/` to avoid picking up Playwright specs
+    include: ['src/**/*.{test,spec}.{ts,tsx,js,jsx}'],
 
     // Run global setup to mock Firebase analytics + silence noisy logs,
     // then your existing RTL/jest-dom setup.
@@ -28,6 +30,8 @@ export default defineConfig({
     // ⚠️ Temporary exclusions to get CI green.
     // These can be revisited one-by-one later and re-enabled.
     exclude: [
+      // Ignore Playwright/E2E specs in the project root
+      'tests/**',
       // Vitest defaults
       '**/node_modules/**',
       '**/dist/**',
