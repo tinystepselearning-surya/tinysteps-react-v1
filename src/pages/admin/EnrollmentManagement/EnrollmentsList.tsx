@@ -66,6 +66,32 @@ function chunk<T>(arr: T[], size = 10) {
   return out;
 }
 
+// Normalize various ID shapes into a plain doc id string or undefined
+function normalizeId(x: any): string | undefined {
+  if (!x) return undefined;
+  if (typeof x === 'string') {
+    const s = x.trim();
+    if (!s) return undefined;
+    const parts = s.split('/').filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : undefined;
+  }
+  if (typeof x === 'object') {
+    // DocumentReference-ish
+    if (typeof x.id === 'string' && x.id) return x.id;
+    // some libs expose a path string
+    if (typeof x.path === 'string' && x.path) {
+      const parts = x.path.split('/').filter(Boolean);
+      return parts.length ? parts[parts.length - 1] : undefined;
+    }
+    // fallback: maybe _path or similar internal structure
+    if (x._path && Array.isArray(x._path.segments)) {
+      const segs = x._path.segments;
+      return segs.length ? segs[segs.length - 1] : undefined;
+    }
+  }
+  return undefined;
+}
+
 async function fetchEnrollments(): Promise<Enrollment[]> {
   const qy = query(collection(db, 'enrollments'), orderBy('createdAt', 'desc'));
   const snap = await getDocs(qy);
@@ -79,8 +105,10 @@ async function fetchEnrollments(): Promise<Enrollment[]> {
  * 3) uid IN kidIds (if you store auth uid inside kid doc)
  */
 async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
-  if (!ids.length) return {};
-  const batches = chunk(ids, 10);
+  // defensively normalize incoming ids (support paths, refs, objects)
+  const normalized = (ids ?? []).map(normalizeId).filter(Boolean) as string[];
+  if (!normalized.length) return {};
+  const batches = chunk(normalized, 10);
 
   const byAnyKey: Record<string, KidDoc> = {};
   const addKid = (d: any) => {
@@ -97,8 +125,8 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
     snap.docs.forEach(addKid);
   }
 
-  // find missing
-  const missing = ids.filter((id) => !byAnyKey[id]);
+  // find missing (against normalized list)
+  const missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
   // 2) try studentId
@@ -107,9 +135,7 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
     const snap = await getDocs(q2);
     snap.docs.forEach(addKid);
   }
-
-  // recompute missing
-  const stillMissing = ids.filter((id) => !byAnyKey[id]);
+  const stillMissing = normalized.filter((id) => !byAnyKey[id]);
   if (!stillMissing.length) return byAnyKey;
 
   // 3) try uid
@@ -118,10 +144,14 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
     const snap = await getDocs(q3);
     snap.docs.forEach(addKid);
   }
+  // final unresolved kid ids
+  const unresolved = normalized.filter((id) => !byAnyKey[id]);
+  if (import.meta.env?.DEV && unresolved.length) {
+    console.debug('Unresolved kidIds:', unresolved.slice(0, 20));
+  }
 
   return byAnyKey;
 }
-
 /**
  * Courses:
  * 1) docId IN courseIds
@@ -130,8 +160,10 @@ async function fetchKidsByIds(ids: string[]): Promise<Record<string, KidDoc>> {
  * 4) id IN courseIds
  */
 async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDoc>> {
-  if (!ids.length) return {};
-  const batches = chunk(ids, 10);
+  // defensively normalize incoming ids (support paths, refs, objects)
+  const normalized = (ids ?? []).map(normalizeId).filter(Boolean) as string[];
+  if (!normalized.length) return {};
+  const batches = chunk(normalized, 10);
 
   const byAnyKey: Record<string, CourseDoc> = {};
   const addCourse = (d: any) => {
@@ -149,7 +181,7 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
     snap.docs.forEach(addCourse);
   }
 
-  let missing = ids.filter((id) => !byAnyKey[id]);
+  let missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
   // 2) courseId
@@ -159,7 +191,17 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
     snap.docs.forEach(addCourse);
   }
 
-  missing = ids.filter((id) => !byAnyKey[id]);
+  missing = normalized.filter((id) => !byAnyKey[id]);
+  if (!missing.length) return byAnyKey;
+
+  // 2b) try code field (some courses use `code`)
+  for (const batch of chunk(missing, 10)) {
+    const q2b = query(collection(db, 'courses'), where('code', 'in', batch));
+    const snap = await getDocs(q2b);
+    snap.docs.forEach(addCourse);
+  }
+
+  missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
   // 3) slug
@@ -169,7 +211,7 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
     snap.docs.forEach(addCourse);
   }
 
-  missing = ids.filter((id) => !byAnyKey[id]);
+  missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
   // 4) id field
@@ -177,6 +219,12 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
     const q4 = query(collection(db, 'courses'), where('id', 'in', batch));
     const snap = await getDocs(q4);
     snap.docs.forEach(addCourse);
+  }
+
+  // final unresolved ids
+  const unresolved = normalized.filter((id) => !byAnyKey[id]);
+  if (import.meta.env?.DEV && unresolved.length) {
+    console.debug('Unresolved courseIds:', unresolved.slice(0, 20));
   }
 
   return byAnyKey;
@@ -208,13 +256,21 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
   const allKidIds = useMemo(() => {
     const set = new Set<string>();
-    enrollments.forEach((e) => (e.kidIds ?? []).forEach((id) => id && set.add(id)));
+    enrollments.forEach((e) =>
+      (e.kidIds ?? [])
+        .map(normalizeId)
+        .filter(Boolean)
+        .forEach((id) => id && set.add(id)),
+    );
     return Array.from(set);
   }, [enrollments]);
 
   const allCourseIds = useMemo(() => {
     const set = new Set<string>();
-    enrollments.forEach((e) => e.courseId && set.add(e.courseId));
+    enrollments.forEach((e) => {
+      const id = normalizeId(e.courseId);
+      if (id) set.add(id);
+    });
     return Array.from(set);
   }, [enrollments]);
 
@@ -236,14 +292,14 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const kidLabel = (kidId: string) => {
     const k = kidsMap[kidId];
     const name = pickKidName(k);
-    return name || 'Unknown student';
+    return name || `Unknown student (${kidId})`;
   };
 
   const courseLabel = (courseId?: string) => {
     if (!courseId) return '—';
     const c = coursesMap[courseId];
     const name = pickCourseName(c);
-    return name || 'Unknown course';
+    return name || `Unknown course (${courseId})`;
   };
 
   if (enrollmentsQuery.isLoading) {
