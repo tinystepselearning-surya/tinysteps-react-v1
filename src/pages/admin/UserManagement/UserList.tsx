@@ -286,6 +286,40 @@ export function UserList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, roleFilter, statusFilter]);
 
+  // If redirected here with a createdUserId query param (e.g. /surya?createdUserId=...),
+  // refresh the users list and clear the param. This avoids relying on any global
+  // `handleUserCreated` function that may not exist in production bundles.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const createdUserId = params.get('createdUserId');
+      if (createdUserId) {
+        (async () => {
+          await fetchUsers(true);
+          try {
+            toast({ title: 'User created', description: `User ${createdUserId} created.` });
+          } catch (e) {
+            // swallow toast errors
+          }
+          // remove query param so refresh doesn't repeat
+          try {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('createdUserId');
+            window.history.replaceState({}, '', url.toString());
+          } catch (e) {
+            // ignore
+          }
+        })();
+      }
+    } catch (err) {
+      // ignore malformed URL or other errors
+      // eslint-disable-next-line no-console
+      console.debug('createdUserId handling failed', err);
+    }
+    // Only run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleLoadMore = () => {
     if (hasMore && !isLoading) fetchUsers(false);
   };

@@ -1,5 +1,5 @@
 // src/pages/teacher/TeacherDashboard.tsx
-import React, { Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 
@@ -157,21 +157,21 @@ export default function TeacherDashboard() {
 
             {/* Today */}
             <TabsContent value="today">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
                 <TodaySessionsView teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Upcoming */}
             <TabsContent value="upcoming">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
                 <UpcomingSessionsView teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Students */}
             <TabsContent value="students">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading students…</div>}>
                 <div className="space-y-6">
                   <h1 className="text-xl font-bold">Teacher Dashboard</h1>
 
@@ -200,56 +200,56 @@ export default function TeacherDashboard() {
                     )}
                   </section>
                 </div>
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Progress */}
             <TabsContent value="progress">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading progress…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading progress…</div>}>
                 <StudentProgressChart teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Earnings */}
             <TabsContent value="earnings">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
                 <EarningsSummary teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Analytics */}
             <TabsContent value="analytics">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
                 <TeacherStats teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Messages */}
             <TabsContent value="messages">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
                 <MessagesView teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Schedule */}
             <TabsContent value="schedule">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
                 <ScheduleView teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Profile */}
             <TabsContent value="profile">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
                 <TeacherProfile teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
 
             {/* Notifications */}
             <TabsContent value="notifications">
-              <Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
                 <NotificationsPanel teacherId={teacherId} />
-              </Suspense>
+              </React.Suspense>
             </TabsContent>
           </Tabs>
         </main>
@@ -257,9 +257,9 @@ export default function TeacherDashboard() {
 
       {/* Notifications Modal */}
       {showNotifications && (
-        <Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
+        <React.Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
           <NotificationsPanel teacherId={teacherId} onClose={() => setShowNotifications(false)} />
-        </Suspense>
+        </React.Suspense>
       )}
     </div>
   );
