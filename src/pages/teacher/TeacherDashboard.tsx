@@ -86,7 +86,7 @@ const TAB_ITEMS = [
   { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
-  { id: 'test', label: 'Test Tab' },
+  
   { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'analytics', label: 'Analytics' },
@@ -161,21 +161,7 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
-      {/* DIAGNOSTIC: Tab state proof */}
-      {import.meta.env.DEV && (
-        <div data-testid="debug-teacher-tab" className="mb-2 text-xs font-bold text-blue-700 bg-blue-100 p-2 rounded border-2 border-blue-600">
-          ✓ TeacherDashboard ACTIVE | tab=<strong>{tab}</strong> | search=<strong>{location.search}</strong> | pathname=<strong>{location.pathname}</strong> | user.role=<strong>{user?.role || 'undefined'}</strong>
-        </div>
-      )}
-      {/* CACHE BUSTER - Version marker */}
-      <div className="mb-2 text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200">
-        ✓ TeacherDashboard v2.0 - Tab sync + Lesson Library
-      </div>
-      {import.meta.env.DEV && (
-        <div className="mb-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
-          [DEBUG] Current tab: <strong>{tab}</strong> | URL search: <strong>{location.search}</strong> | pathname: <strong>{location.pathname}</strong>
-        </div>
-      )}
+      {/* Diagnostic banners removed for production cleanliness */}
       <TeacherHeader
         name={user.displayName || user.email || 'Teacher'}
         upcomingCount={sessions.length}
@@ -251,23 +237,7 @@ export default function TeacherDashboard() {
               </React.Suspense>
             </TabsContent>
 
-            {/* Test Tab - Debug tab switching */}
-            <TabsContent value="test">
-              <Card className="p-6 space-y-4">
-                <div className="text-2xl font-bold text-green-600">
-                  ✅ Test Tab Loaded Successfully
-                </div>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <div><strong>Current tab:</strong> {tab}</div>
-                  <div><strong>URL search:</strong> {location.search}</div>
-                  <div><strong>URL pathname:</strong> {location.pathname}</div>
-                  <div><strong>User role:</strong> {user?.role}</div>
-                </div>
-                <div className="text-xs text-gray-500 border-t pt-4">
-                  This tab verifies that tab switching works correctly. If you see this, the tab system is functional.
-                </div>
-              </Card>
-            </TabsContent>
+            {/* Test tab removed */}
 
             {/* Progress */}
             <TabsContent value="progress">
