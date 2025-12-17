@@ -1,4 +1,4 @@
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
@@ -223,3 +223,43 @@ export const unassignLPFromTeacher = onCall(
     return { success: true };
   }
 );
+
+/* ------------------------------------------------------------------ */
+/* -------------------- ADMIN SET USER ROLE -------------------------- */
+/* ------------------------------------------------------------------ */
+
+export const adminSetUserRole = onCall(async (request, context) => {
+  const { uid, role } = request.data;
+  const callerUid = context?.auth?.uid;
+
+  if (!callerUid) {
+    throw new HttpsError('unauthenticated', 'You must be signed in.');
+  }
+
+  // Ensure caller is an admin
+  const callerSnap = await admin.firestore().collection('users').doc(callerUid).get();
+  const callerData = callerSnap.data();
+  const isAdmin = callerData?.role === 'admin' || callerData?.superUser === true;
+
+  if (!isAdmin) {
+    throw new HttpsError('permission-denied', 'Only admins can set user roles.');
+  }
+
+  // Validate role
+  const validRoles = ['parent', 'kid', 'teacher', 'rm', 'admin'];
+  if (!validRoles.includes(role)) {
+    throw new HttpsError('invalid-argument', `Invalid role: ${role}`);
+  }
+
+  // Update user role
+  await admin.firestore().collection('users').doc(uid).set(
+    {
+      role,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: callerUid,
+    },
+    { merge: true }
+  );
+
+  return { ok: true };
+});

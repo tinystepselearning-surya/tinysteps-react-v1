@@ -1,13 +1,21 @@
 // src/pages/parent/ParentDashboard.tsx
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ParentHeader } from './components/layout/ParentHeader';
 
 export default function ParentDashboard() {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<'overview' | 'kids' | 'payments'>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const activeTab = searchParams.get('tab') ?? 'overview';
+
+  const setTab = (tabName: 'overview' | 'kids' | 'payments') => {
+    const next = new URLSearchParams(searchParams);
+    next.set('tab', tabName);
+    setSearchParams(next);
+  };
 
   if (isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
@@ -18,6 +26,48 @@ export default function ParentDashboard() {
     return null;
   }
 
+  const KidsTabContent = () => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <h1 className="text-xl font-bold mb-4">Kids Dashboard</h1>
+      <div className="p-4 bg-white rounded shadow">
+        <h2 className="text-lg font-semibold mb-2">Games</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Play phonics, grammar, and speaking games. Progress is tracked automatically.
+        </p>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => alert('Coming soon')}
+        >
+          Open Games
+        </button>
+      </div>
+      <div className="p-4 bg-white rounded shadow">
+        <h2 className="text-lg font-semibold mb-2">Join Class</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Join your live class session when it’s time.
+        </p>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => alert('Coming soon')}
+        >
+          Join Class
+        </button>
+      </div>
+      <div className="p-4 bg-white rounded shadow">
+        <h2 className="text-lg font-semibold mb-2">Digital Worksheets</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Complete worksheets on screen — no printing needed.
+        </p>
+        <button
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={() => alert('Coming soon')}
+        >
+          Open Worksheets
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <ParentHeader name={user.displayName || 'Parent'} />
@@ -27,24 +77,27 @@ export default function ParentDashboard() {
 
       <div className="flex gap-2 mb-4">
         <button
+          type="button"
           className={`px-3 py-1 rounded text-sm ${
-            tab === 'overview' ? 'bg-blue-600 text-white' : 'bg-white'
+            activeTab === 'overview' ? 'bg-blue-600 text-white' : 'bg-white'
           }`}
           onClick={() => setTab('overview')}
         >
           Overview
         </button>
         <button
+          type="button"
           className={`px-3 py-1 rounded text-sm ${
-            tab === 'kids' ? 'bg-blue-600 text-white' : 'bg-white'
+            activeTab === 'kids' ? 'bg-blue-600 text-white' : 'bg-white'
           }`}
           onClick={() => setTab('kids')}
         >
           Kids
         </button>
         <button
+          type="button"
           className={`px-3 py-1 rounded text-sm ${
-            tab === 'payments' ? 'bg-blue-600 text-white' : 'bg-white'
+            activeTab === 'payments' ? 'bg-blue-600 text-white' : 'bg-white'
           }`}
           onClick={() => setTab('payments')}
         >
@@ -52,11 +105,11 @@ export default function ParentDashboard() {
         </button>
       </div>
 
-      {tab === 'overview' && (
+      {activeTab === 'overview' && (
         <div>Parent overview content will come here.</div>
       )}
-      {tab === 'kids' && <div>Kid list / progress will come here.</div>}
-      {tab === 'payments' && <div>Subscription & payments info will come here.</div>}
+      {activeTab === 'kids' && <KidsTabContent />}
+      {activeTab === 'payments' && <div>Subscription & payments info will come here.</div>}
     </div>
   );
 }

@@ -34,10 +34,6 @@ const RoleGate: React.FC<RoleGateProps> = ({
   useEffect(() => {
     let cancelled = false;
 
-    // Reset when user changes/logs out
-    setLatestRole(null);
-    setRoleLoading(false);
-
     const fetchLatestRole = async () => {
       if (!user?.uid) return;
 
@@ -57,12 +53,17 @@ const RoleGate: React.FC<RoleGateProps> = ({
 
         if (snap.exists()) {
           const data = snap.data() as any;
-          setLatestRole((data?.role as Role) ?? null);
+          const newRole = (data?.role as Role) ?? null;
+          if (newRole !== latestRole) {
+            setLatestRole(newRole);
+          }
         } else {
-          setLatestRole(null);
+          if (latestRole !== null) {
+            setLatestRole(null);
+          }
         }
       } catch {
-        if (!cancelled) setLatestRole(null);
+        if (!cancelled && latestRole !== null) setLatestRole(null);
       } finally {
         if (!cancelled) setRoleLoading(false);
       }
@@ -73,11 +74,25 @@ const RoleGate: React.FC<RoleGateProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [user?.uid, superUser]);
+  }, [user?.uid, superUser, latestRole]);
+
+  const effectiveRole = latestRole ?? (user?.role as Role | null) ?? null;
+  const isAllowed = superUser || (!!effectiveRole && allowedRoles.includes(effectiveRole));
+
+  if (import.meta.env.DEV) {
+    console.log('[RoleGate] Check access:', {
+      allowedRoles,
+      effectiveRole,
+      latestRole,
+      'user.role': user?.role,
+      superUser,
+      uid: user?.uid,
+    });
+  }
 
   // 1) While auth is loading, show soft loader
   // 2) While role is fetching (only when needed), show soft loader
-  if (isLoading || (user && roleLoading)) {
+  if (!isAllowed && (isLoading || roleLoading)) {
     return (
       <div className="flex h-[60vh] items-center justify-center">
         <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
@@ -98,28 +113,12 @@ const RoleGate: React.FC<RoleGateProps> = ({
     );
   }
 
-  // 4) Determine role (prefer Firestore role; fallback to auth user.role if present)
-  const userRole = latestRole || (user.role as Role | undefined);
-
-  if (import.meta.env.DEV) {
-    console.log('[RoleGate] Check access:', {
-      allowedRoles,
-      userRole,
-      latestRole,
-      'user.role': user.role,
-      superUser,
-      uid: user?.uid,
-    });
-  }
-
-  const canAccess = superUser || (!!userRole && allowedRoles.includes(userRole));
-
-  // 5) Wrong role → unauthorized
-  if (!canAccess) {
+  // 4) Wrong role → unauthorized
+  if (!isAllowed) {
     return <Navigate to={unauthorizedPath} replace />;
   }
 
-  // 6) OK → render nested routes
+  // 5) OK → render nested routes
   return <Outlet />;
 };
 

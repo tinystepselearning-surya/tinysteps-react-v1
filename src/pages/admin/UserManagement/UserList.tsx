@@ -444,6 +444,28 @@ export function UserList() {
     }
   };
 
+  // ---------------- Role Update ----------------
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
+
+  const handleSetUserRole = async (user: User, role: string) => {
+    try {
+      const fn = httpsCallable(functions, 'adminSetUserRole');
+      await fn({ uid: user.uid, role });
+      toast({
+        title: 'Success',
+        description: `Saved role=${role} for uid=${user.uid}.`,
+      });
+      await fetchUsers(true); // Refresh user list
+    } catch (error: any) {
+      console.error('Role update failed:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update role.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // ---------------- Render ----------------
   if (isLoading && users.length === 0) {
     return (
