@@ -252,19 +252,7 @@ const router = createBrowserRouter(
         //   children: [{ index: true, element: <BetaAnalytics /> }],
         // },
 
-        // ---------- Topics seed picklist (admin only) ----------
-        {
-          path: 'admin/topics-seed-picklist',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['admin']}
-                loginPath="/surya/login"
-              />
-            </Suspense>
-          ),
-          children: [{ index: true, element: <TopicsSeedPicklistPage /> }],
-        },
+        // Topics seeding page removed from admin routes
       ],
     },
   ],
