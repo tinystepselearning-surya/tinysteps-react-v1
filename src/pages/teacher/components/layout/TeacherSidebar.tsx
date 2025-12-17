@@ -16,7 +16,7 @@ const items = [
   { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'My Students' },
-  { id: 'test', label: 'Test Tab' },
+  
   { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'analytics', label: 'Analytics' },
@@ -29,10 +29,6 @@ const items = [
 export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount, teacherId }) => {
   return (
     <aside className="hidden lg:block w-64 pr-6">
-      {/* CACHE BUSTER - Version 2.0 with Lesson Library */}
-      <div className="mb-2 text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200">
-        ✓ Sidebar v2.0 - Lesson Library enabled
-      </div>
       <div className="space-y-2">
         {items.map((item) => {
           const Icon = item.icon;
@@ -55,15 +51,7 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
           );
         })}
 
-        <Button
-          asChild
-          variant="ghost"
-          className="w-full justify-between border border-purple-100 bg-purple-50 text-purple-700 hover:bg-purple-100"
-        >
-          <Link to={teacherId ? `/teacher/${teacherId}/worksheet-generator` : '/teacher/worksheet-generator'}>
-            ✨ Worksheet Generator
-          </Link>
-        </Button>
+        {/* Worksheet Generator removed from sidebar */}
       </div>
     </aside>
   );
