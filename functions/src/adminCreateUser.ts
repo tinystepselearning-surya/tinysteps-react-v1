@@ -344,6 +344,17 @@ export const adminCreateUser = onCall(
           updatedBy: request.auth!.uid,
         }, { merge: true });
 
+        // Upsert RBAC doc in users/{uid}
+        batch.set(db.collection("users").doc(user.uid), {
+          role: "parent",
+          email,
+          displayName,
+          status: "active",
+          createdAt: ts,
+          updatedAt: ts,
+          updatedBy: request.auth!.uid,
+        }, { merge: true });
+
         // NOTE: students are NOT Auth users.
         // They will be created later under: /parents/{parentId}/students/{studentId}
       }
