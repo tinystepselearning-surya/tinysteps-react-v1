@@ -177,7 +177,6 @@ const router = createBrowserRouter(
             { index: true, element: <TeacherDashboard /> },
             // Redirect parametric teacher lesson URL into canonical dashboard view
             { path: 'lessons', element: <Navigate to="/teacher?tab=lessons" replace /> },
-            { path: 'worksheet-generator', element: <TeacherDashboard /> },
             {
               path: 'students/:kidId/topic-progress',
               element: <TeacherStudentTopicProgressPage />,
