@@ -229,6 +229,26 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // LESSON VIEW AUDIT: lesson_view_audit
+    // Teachers can create/update only their own audit docs where teacherId == auth.uid
+    // Admin can read all
+    // ----------------------------
+    match /lesson_view_audit/{sessionId} {
+      allow read: if isAdmin();
+      
+      // Teachers can create audit docs where teacherId matches their uid
+      allow create: if isTeacher() 
+        && request.resource.data.teacherId == request.auth.uid;
+      
+      // Teachers can update only their own audit docs
+      allow update: if isTeacher() 
+        && resource.data.teacherId == request.auth.uid
+        && request.resource.data.teacherId == request.auth.uid;
+      
+      allow delete: if isAdmin();
+    }
+
+    // ----------------------------
     // NOTIFICATIONS COLLECTION
     // ----------------------------
     match /notifications/{notificationId} {

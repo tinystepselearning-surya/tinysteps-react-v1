@@ -36,6 +36,11 @@ export function FullScreenCanvaViewer({
   const openedAtRef = useRef<number>(Date.now());
   const hasWrittenOpenLog = useRef(false);
   const viewerRef = useRef<HTMLDivElement>(null);
+  const lastToastTimeRef = useRef<number>(0);
+
+  // Constants for hardening
+  const MAX_VIOLATIONS = 50;
+  const TOAST_THROTTLE_MS = 2000;
 
   // Format watermark timestamp
   const watermarkTimestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
@@ -126,7 +131,11 @@ export function FullScreenCanvaViewer({
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     const violation: Violation = { type: 'RIGHT_CLICK', ts: Date.now() };
-    setViolations((prev) => [...prev, violation]);
+    setViolations((prev) => {
+      const updated = [...prev, violation];
+      // Cap violations at MAX_VIOLATIONS
+      return updated.slice(-MAX_VIOLATIONS);
+    });
     console.log('[FullScreenCanvaViewer] Right-click blocked');
   }, []);
 
@@ -134,13 +143,24 @@ export function FullScreenCanvaViewer({
   const handleControlShieldClick = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const violation: Violation = { type: 'CANVA_CONTROLS_BLOCKED', ts: Date.now() };
-    setViolations((prev) => [...prev, violation]);
+    
+    const now = Date.now();
+    const violation: Violation = { type: 'CANVA_CONTROLS_BLOCKED', ts: now };
+    
+    setViolations((prev) => {
+      const updated = [...prev, violation];
+      // Cap violations at MAX_VIOLATIONS
+      return updated.slice(-MAX_VIOLATIONS);
+    });
+    
     console.log('[FullScreenCanvaViewer] Canva controls blocked');
 
-    // Show message briefly
-    setShowControlsMessage(true);
-    setTimeout(() => setShowControlsMessage(false), 3000);
+    // Throttle toast: show at most once per TOAST_THROTTLE_MS
+    if (now - lastToastTimeRef.current >= TOAST_THROTTLE_MS) {
+      lastToastTimeRef.current = now;
+      setShowControlsMessage(true);
+      setTimeout(() => setShowControlsMessage(false), 3000);
+    }
   }, []);
 
   // Fullscreen toggle handlers
@@ -216,7 +236,11 @@ export function FullScreenCanvaViewer({
         e.preventDefault();
         e.stopPropagation();
         const violation: Violation = { type: violationType, ts: Date.now() };
-        setViolations((prev) => [...prev, violation]);
+        setViolations((prev) => {
+          const updated = [...prev, violation];
+          // Cap violations at MAX_VIOLATIONS
+          return updated.slice(-MAX_VIOLATIONS);
+        });
         console.log('[FullScreenCanvaViewer] Keyboard shortcut blocked:', violationType);
       }
     };
