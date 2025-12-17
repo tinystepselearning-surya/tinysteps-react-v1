@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Button } from '@components/ui/button';
-import { X } from 'lucide-react';
+import { X, Maximize, Minimize } from 'lucide-react';
 import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 
 type Violation = {
-  type: 'RIGHT_CLICK' | 'PRINT' | 'SAVE' | 'VIEW_SOURCE' | 'DEVTOOLS';
+  type: 'RIGHT_CLICK' | 'PRINT' | 'SAVE' | 'VIEW_SOURCE' | 'DEVTOOLS' | 'CANVA_CONTROLS_BLOCKED';
   ts: number;
 };
 
@@ -31,8 +31,11 @@ export function FullScreenCanvaViewer({
   const [showWarning, setShowWarning] = useState(true);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [violations, setViolations] = useState<Violation[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControlsMessage, setShowControlsMessage] = useState(false);
   const openedAtRef = useRef<number>(Date.now());
   const hasWrittenOpenLog = useRef(false);
+  const viewerRef = useRef<HTMLDivElement>(null);
 
   // Format watermark timestamp
   const watermarkTimestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
@@ -78,10 +81,29 @@ export function FullScreenCanvaViewer({
     }
 
     setShowWarning(false);
+
+    // Enter fullscreen after policy acceptance
+    if (viewerRef.current) {
+      try {
+        await viewerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (error) {
+        console.error('[FullScreenCanvaViewer] Failed to enter fullscreen:', error);
+      }
+    }
   }, [agreedToTerms, sessionId]);
 
   // Close handler: write audit log and call onClose
   const handleClose = useCallback(async () => {
+    // Exit fullscreen if active
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch (error) {
+        console.error('[FullScreenCanvaViewer] Failed to exit fullscreen:', error);
+      }
+    }
+
     const closedAt = Date.now();
     const durationSec = Math.floor((closedAt - openedAtRef.current) / 1000);
 
@@ -106,6 +128,55 @@ export function FullScreenCanvaViewer({
     const violation: Violation = { type: 'RIGHT_CLICK', ts: Date.now() };
     setViolations((prev) => [...prev, violation]);
     console.log('[FullScreenCanvaViewer] Right-click blocked');
+  }, []);
+
+  // Handle Canva control shield clicks
+  const handleControlShieldClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const violation: Violation = { type: 'CANVA_CONTROLS_BLOCKED', ts: Date.now() };
+    setViolations((prev) => [...prev, violation]);
+    console.log('[FullScreenCanvaViewer] Canva controls blocked');
+
+    // Show message briefly
+    setShowControlsMessage(true);
+    setTimeout(() => setShowControlsMessage(false), 3000);
+  }, []);
+
+  // Fullscreen toggle handlers
+  const handleEnterFullscreen = useCallback(async () => {
+    if (viewerRef.current && !document.fullscreenElement) {
+      try {
+        await viewerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } catch (error) {
+        console.error('[FullScreenCanvaViewer] Failed to enter fullscreen:', error);
+      }
+    }
+  }, []);
+
+  const handleExitFullscreen = useCallback(async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      } catch (error) {
+        console.error('[FullScreenCanvaViewer] Failed to exit fullscreen:', error);
+      }
+    }
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
   }, []);
 
   // Keyboard protection
@@ -191,6 +262,7 @@ export function FullScreenCanvaViewer({
 
   return (
     <div
+      ref={viewerRef}
       className="fixed inset-0 z-50 bg-white"
       onContextMenu={handleContextMenu}
       style={{ userSelect: 'none' }}
@@ -227,27 +299,48 @@ export function FullScreenCanvaViewer({
       )}
 
       {/* Header Bar */}
-      <div className="h-16 bg-gray-900 text-white flex items-center justify-between px-6">
+      <div className="h-16 bg-gray-900 text-white flex items-center justify-between px-6 relative z-50">
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold truncate max-w-md">{lessonTitle}</h1>
           <span className="text-sm text-gray-400">Full-Screen Viewer</span>
         </div>
-        <Button
-          onClick={handleClose}
-          variant="ghost"
-          className="text-white hover:bg-gray-800"
-        >
-          <X className="w-5 h-5 mr-2" />
-          Close
-        </Button>
+        <div className="flex items-center gap-2">
+          {!isFullscreen ? (
+            <Button
+              onClick={handleEnterFullscreen}
+              variant="ghost"
+              className="text-white hover:bg-gray-800"
+            >
+              <Maximize className="w-5 h-5 mr-2" />
+              Enter Fullscreen
+            </Button>
+          ) : (
+            <Button
+              onClick={handleExitFullscreen}
+              variant="ghost"
+              className="text-white hover:bg-gray-800"
+            >
+              <Minimize className="w-5 h-5 mr-2" />
+              Exit Fullscreen
+            </Button>
+          )}
+          <Button
+            onClick={handleClose}
+            variant="ghost"
+            className="text-white hover:bg-gray-800"
+          >
+            <X className="w-5 h-5 mr-2" />
+            Close
+          </Button>
+        </div>
       </div>
 
-      {/* Main Content Area with Watermark */}
+      {/* Main Content Area with Watermark and Control Shields */}
       <div className="relative" style={{ height: 'calc(100vh - 4rem)' }}>
-        {/* Watermark Overlay */}
+        {/* Watermark Overlay - High Z-Index, No Pointer Events */}
         {!showWarning && (
           <div
-            className="absolute inset-0 z-10 flex flex-wrap items-center justify-center overflow-hidden"
+            className="absolute inset-0 z-40 flex flex-wrap items-center justify-center overflow-hidden"
             style={{
               pointerEvents: 'none',
               background: `repeating-linear-gradient(
@@ -271,6 +364,44 @@ export function FullScreenCanvaViewer({
           </div>
         )}
 
+        {/* Control Shield Message */}
+        {showControlsMessage && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold">
+            🚫 Controls are disabled. This is private content.
+          </div>
+        )}
+
+        {/* Bottom Control Shield - Blocks entire Canva bottom control bar */}
+        {!showWarning && (
+          <div
+            className="absolute left-0 right-0 bottom-0 z-30"
+            style={{
+              height: '140px',
+              background: 'transparent',
+              pointerEvents: 'auto',
+              cursor: 'not-allowed',
+            }}
+            onClick={handleControlShieldClick}
+            onContextMenu={handleControlShieldClick}
+          />
+        )}
+
+        {/* Top-Right Control Shield - Blocks Canva overlay buttons (if any) */}
+        {!showWarning && (
+          <div
+            className="absolute top-0 right-0 z-30"
+            style={{
+              width: '200px',
+              height: '80px',
+              background: 'transparent',
+              pointerEvents: 'auto',
+              cursor: 'not-allowed',
+            }}
+            onClick={handleControlShieldClick}
+            onContextMenu={handleControlShieldClick}
+          />
+        )}
+
         {/* Canva Embed Iframe */}
         {!showWarning && (
           <iframe
@@ -279,6 +410,7 @@ export function FullScreenCanvaViewer({
             className="w-full h-full border-0"
             allow="fullscreen"
             loading="eager"
+            style={{ position: 'relative', zIndex: 10 }}
           />
         )}
       </div>
