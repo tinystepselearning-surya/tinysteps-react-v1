@@ -18,43 +18,48 @@ service cloud.firestore {
     }
 
     // ✅ Safe role getter (only call after exists)
+    // Normalizes to lowercase for case-insensitive comparison
     function userRole(uid) {
-      return get(userDocPath(uid)).data.role;
+      return get(userDocPath(uid)).data.role.lower();
     }
 
     // Admin check:
     // - seeded UID (dev convenience)
     // - OR custom claim role == 'admin'
-    // - OR Firestore users/{uid}.role == 'admin'
+    // - OR Firestore users/{uid}.role == 'admin' (normalized)
     function isAdmin() {
       return isSignedIn() && (
         // dev convenience UID
         request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3' ||
 
-        // custom claim
-        (request.auth.token != null && request.auth.token.role == 'admin') ||
+        // custom claim (normalized)
+        (request.auth.token != null && request.auth.token.role.lower() == 'admin') ||
 
-        // users/{uid}.role == 'admin' (safe)
+        // users/{uid}.role == 'admin' (safe + normalized)
         (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'admin')
       );
     }
 
     function isTeacher() {
+      // ✅ Now accepts 'teacher', 'Teacher', 'TEACHER', etc.
       return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'teacher';
     }
 
     function isParent() {
+      // ✅ Now accepts 'parent', 'Parent', 'PARENT', etc.
       return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'parent';
     }
 
     function isLP() {
+      // ✅ Now accepts both spellings, any casing
       return isSignedIn() && userDocExists(request.auth.uid) && (
-        userRole(request.auth.uid) == 'learningPartner' ||
+        userRole(request.auth.uid) == 'learningpartner' ||
         userRole(request.auth.uid) == 'learning-partner'
       );
     }
 
     function isKid() {
+      // ✅ Now accepts 'kid', 'Kid', 'KID', etc.
       return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'kid';
     }
 
