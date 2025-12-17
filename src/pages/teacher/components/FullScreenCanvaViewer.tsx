@@ -361,30 +361,49 @@ export function FullScreenCanvaViewer({
 
       {/* Main Content Area with Watermark and Control Shields */}
       <div className="relative" style={{ height: 'calc(100vh - 4rem)' }}>
-        {/* Watermark Overlay - High Z-Index, No Pointer Events */}
+        {/* Top Watermark Line */}
         {!showWarning && (
           <div
-            className="absolute inset-0 z-40 flex flex-wrap items-center justify-center overflow-hidden"
+            className="absolute left-1/2 transform -translate-x-1/2 z-40"
             style={{
+              top: '72px',
               pointerEvents: 'none',
-              background: `repeating-linear-gradient(
-                45deg,
-                transparent,
-                transparent 200px,
-                rgba(0, 0, 0, 0.02) 200px,
-                rgba(0, 0, 0, 0.02) 400px
-              )`,
+              opacity: 0.15,
+              maxWidth: '90vw',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
-            {Array.from({ length: 20 }).map((_, i) => (
-              <div
-                key={i}
-                className="text-gray-900/10 font-bold text-xl p-4 transform rotate-[-30deg] whitespace-nowrap"
-                style={{ pointerEvents: 'none' }}
-              >
-                {watermarkText}
-              </div>
-            ))}
+            <div
+              className="text-gray-900 font-bold text-xl transform rotate-[-10deg]"
+              style={{ pointerEvents: 'none' }}
+            >
+              {watermarkText}
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Watermark Line */}
+        {!showWarning && (
+          <div
+            className="absolute left-1/2 transform -translate-x-1/2 z-40"
+            style={{
+              bottom: '170px',
+              pointerEvents: 'none',
+              opacity: 0.15,
+              maxWidth: '90vw',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <div
+              className="text-gray-900 font-bold text-xl transform rotate-[-10deg]"
+              style={{ pointerEvents: 'none' }}
+            >
+              {watermarkText}
+            </div>
           </div>
         )}
 
