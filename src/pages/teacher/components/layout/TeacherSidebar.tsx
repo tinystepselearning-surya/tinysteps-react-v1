@@ -16,6 +16,7 @@ const items = [
   { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'My Students' },
+  { id: 'test', label: 'Test Tab' },
   { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'analytics', label: 'Analytics' },
@@ -41,7 +42,7 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
               variant={active === item.id ? 'default' : 'ghost'}
               className={cn('w-full justify-start gap-2', active === item.id && 'bg-blue-600 text-white')}
               onClick={() => onSelect?.(item.id)}
-              data-testid={item.id === 'lessons' ? 'teacher-tab-lessons' : undefined}
+              data-testid={item.id === 'lessons' ? 'teacher-tab-lessons' : item.id === 'test' ? 'teacher-tab-test' : undefined}
             >
               {Icon && <Icon className="w-4 h-4" />}
               <span>{item.label}</span>

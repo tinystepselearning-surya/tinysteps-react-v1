@@ -1,5 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-const TeachersManagement = () => {
-    return (_jsxs("div", { className: "bg-white shadow-md rounded-lg p-4 mb-6", children: [_jsx("h2", { className: "text-xl font-semibold mb-4", children: "Teachers Management" }), _jsxs("table", { className: "table-auto w-full", children: [_jsx("thead", { children: _jsxs("tr", { children: [_jsx("th", { className: "px-4 py-2", children: "Name" }), _jsx("th", { className: "px-4 py-2", children: "Specializations" }), _jsx("th", { className: "px-4 py-2", children: "Performance Rating" }), _jsx("th", { className: "px-4 py-2", children: "Students Count" }), _jsx("th", { className: "px-4 py-2", children: "Actions" })] }) }), _jsx("tbody", { children: _jsx("tr", { children: _jsx("td", { className: "border px-4 py-2", colSpan: 5, children: _jsx("div", { className: "text-sm text-gray-500 p-2", children: "No teachers found. This list will populate after connecting teacher accounts." }) }) }) })] })] }));
-};
-export default TeachersManagement;

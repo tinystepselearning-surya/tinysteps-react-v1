@@ -86,6 +86,7 @@ const TAB_ITEMS = [
   { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
+  { id: 'test', label: 'Test Tab' },
   { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'analytics', label: 'Analytics' },
@@ -248,6 +249,24 @@ export default function TeacherDashboard() {
                   </section>
                 </div>
               </React.Suspense>
+            </TabsContent>
+
+            {/* Test Tab - Debug tab switching */}
+            <TabsContent value="test">
+              <Card className="p-6 space-y-4">
+                <div className="text-2xl font-bold text-green-600">
+                  ✅ Test Tab Loaded Successfully
+                </div>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div><strong>Current tab:</strong> {tab}</div>
+                  <div><strong>URL search:</strong> {location.search}</div>
+                  <div><strong>URL pathname:</strong> {location.pathname}</div>
+                  <div><strong>User role:</strong> {user?.role}</div>
+                </div>
+                <div className="text-xs text-gray-500 border-t pt-4">
+                  This tab verifies that tab switching works correctly. If you see this, the tab system is functional.
+                </div>
+              </Card>
             </TabsContent>
 
             {/* Progress */}

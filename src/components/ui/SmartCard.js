@@ -1,5 +1,0 @@
-import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
-import { motion } from 'framer-motion';
-export default function SmartCard({ title, description, badge, cta, children, className }) {
-    return (_jsxs(motion.div, { whileHover: { scale: 1.03, y: -5 }, transition: { type: 'spring', stiffness: 300 }, className: `relative rounded-2xl bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6 shadow-lg shadow-blue-500/10 hover:shadow-2xl hover:shadow-blue-500/20 transition-all duration-300 border border-gray-100 ${className || ''}`, children: [badge && (_jsx("div", { className: "absolute right-4 top-4 rounded-full bg-gradient-to-r from-tiny-orange-500 to-tiny-purple-500 px-3 py-1 text-xs font-semibold text-white shadow", children: badge })), _jsx("div", { className: "text-2xl font-bold text-gray-900 tracking-tight", children: title }), description && _jsx("p", { className: "mt-2 text-gray-600 leading-relaxed", children: description }), children && _jsx("div", { className: "mt-3", children: children }), cta && _jsx("div", { className: "mt-4", children: cta })] }));
-}
