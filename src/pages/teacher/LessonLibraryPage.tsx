@@ -111,28 +111,7 @@ export default function LessonLibraryPage(): JSX.Element {
   return (
     <div data-testid="lesson-library" className="min-h-screen py-6">
       <div className="max-w-6xl mx-auto px-4">
-        {/* DIAGNOSTIC: Proof of mount */}
-        {import.meta.env.DEV && (
-          <div data-testid="debug-lessons-mounted" className="mb-2 text-xs font-bold text-green-700 bg-green-100 p-2 rounded border-2 border-green-600">
-            ✓ LessonLibraryPage MOUNTED (activeArea: {activeArea}, loading: {String(loading)}, folders: {folders.length}, lessons: {lessons.length})
-          </div>
-        )}
-        {import.meta.env.DEV && (
-          <div className="mb-4 text-xs text-gray-600 flex flex-wrap gap-2 items-center">
-            <div>Folders: {totalFolders} (active: {activeFolders})</div>
-            <div>|</div>
-            <div>Lessons: {totalLessons} (active: {activeLessons})</div>
-            <div>|</div>
-            <div>Area: {activeArea}</div>
-            <div>|</div>
-            <div>Selected folder: {selectedFolderId ?? 'none'}</div>
-            <div>|</div>
-            <div>Showing: {lessonsForFolder.length}</div>
-            {fetchError && (
-              <div className="ml-2 text-red-600">| Error: {fetchError}</div>
-            )}
-          </div>
-        )}
+        {/* Lesson library debug UI removed for production */}
             <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-sm text-indigo-600 font-semibold">Teacher Portal</p>
