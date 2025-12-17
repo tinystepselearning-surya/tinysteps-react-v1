@@ -73,8 +73,13 @@ export default defineConfig({
       ],
 
   resolve: {
+    // Ensure only one copy of React/ReactDOM is resolved to avoid hook errors
+    dedupe: ['react', 'react-dom'],
     alias: {
       '@components': path.resolve(__dirname, './src/components'),
+      // Explicitly alias React to the root node_modules to prevent duplicate instances
+      'react': path.resolve(__dirname, './node_modules/react'),
+      'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
     },
   },
 

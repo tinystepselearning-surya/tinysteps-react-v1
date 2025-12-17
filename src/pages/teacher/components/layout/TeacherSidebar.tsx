@@ -2,16 +2,18 @@ import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@components/lib/utils';
 import { Button } from '@components/ui/button';
+import { BookOpen } from 'lucide-react';
 
 interface SidebarProps {
-  active: string;
-  onSelect: (value: string) => void;
+  active?: string;
+  onSelect?: (value: string) => void;
   todayCount?: number;
   teacherId?: string;
 }
 
 const items = [
   { id: 'today', label: "Today's Sessions" },
+  { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'My Students' },
   { id: 'progress', label: 'Progress' },
@@ -26,31 +28,31 @@ const items = [
 export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount, teacherId }) => {
   return (
     <aside className="hidden lg:block w-64 pr-6">
+      {/* CACHE BUSTER - Version 2.0 with Lesson Library */}
+      <div className="mb-2 text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200">
+        ✓ Sidebar v2.0 - Lesson Library enabled
+      </div>
       <div className="space-y-2">
-        {items.map((item) => (
-          <Button
-            key={item.id}
-            variant={active === item.id ? 'default' : 'ghost'}
-            className={cn('w-full justify-between', active === item.id && 'bg-blue-600 text-white')}
-            onClick={() => onSelect(item.id)}
-          >
-            <span>{item.label}</span>
-            {item.id === 'today' && typeof todayCount === 'number' && todayCount > 0 && (
-              <span className="text-xs bg-white/20 rounded-full px-2 py-0.5">
-                {todayCount}
-              </span>
-            )}
-          </Button>
-        ))}
-        <Button
-          asChild
-          variant="ghost"
-          className="w-full justify-between border border-indigo-100 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
-        >
-          <Link data-testid="teacher-tab-lessons" to={teacherId ? `/teacher/${teacherId}/lessons` : '/teacher/lessons'}>
-            📚 Lesson Library
-          </Link>
-        </Button>
+        {items.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Button
+              key={item.id}
+              variant={active === item.id ? 'default' : 'ghost'}
+              className={cn('w-full justify-start gap-2', active === item.id && 'bg-blue-600 text-white')}
+              onClick={() => onSelect?.(item.id)}
+              data-testid={item.id === 'lessons' ? 'teacher-tab-lessons' : undefined}
+            >
+              {Icon && <Icon className="w-4 h-4" />}
+              <span>{item.label}</span>
+              {item.id === 'today' && typeof todayCount === 'number' && todayCount > 0 && (
+                <span className="ml-auto text-xs bg-white/20 rounded-full px-2 py-0.5">
+                  {todayCount}
+                </span>
+              )}
+            </Button>
+          );
+        })}
 
         <Button
           asChild

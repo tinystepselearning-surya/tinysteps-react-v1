@@ -40,22 +40,31 @@ export default function LessonLibraryPage(): JSX.Element {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
 
   useEffect(() => {
+    console.log('[LessonLibraryPage] Component mounted - useEffect triggered');
     let mounted = true;
     setLoading(true);
 
     async function load() {
+      console.log('[LessonLibraryPage] load() called - fetching Firestore data...');
       setFetchError(null);
       try {
         const { collection, getDocs, query, orderBy } = await import('firebase/firestore');
         const { db } = await import('../../lib/firebaseConfig');
+        console.log('[LessonLibraryPage] Firestore db loaded:', db.app.options.projectId);
 
         const fQ = query(collection(db, 'lessonFolders'), orderBy('sortOrder', 'asc'));
         const fSnap = await getDocs(fQ);
+        console.log('[LessonLibraryPage] lessonFolders query returned:', fSnap.size, 'docs');
         const fOut: Folder[] = fSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).filter((f) => f.active !== false);
+        console.log('[LessonLibraryPage] After active filter:', fOut.length, 'folders');
+        if (fOut.length > 0) console.log('[LessonLibraryPage] Sample folder:', fOut[0]);
 
         const lQ = query(collection(db, 'lessons'), orderBy('sortOrder', 'asc'));
         const lSnap = await getDocs(lQ);
+        console.log('[LessonLibraryPage] lessons query returned:', lSnap.size, 'docs');
         const lOut: Lesson[] = lSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })).filter((l) => l.active !== false);
+        console.log('[LessonLibraryPage] After active filter:', lOut.length, 'lessons');
+        if (lOut.length > 0) console.log('[LessonLibraryPage] Sample lesson:', lOut[0]);
 
         if (!mounted) return;
         setFolders(fOut);
@@ -65,7 +74,8 @@ export default function LessonLibraryPage(): JSX.Element {
         setSelectedFolderId((prev) => prev ?? first?.id ?? null);
       } catch (err: any) {
         const msg = err?.message || String(err);
-        console.error('TeacherLessonLibrary load failed', err);
+        console.error('[LessonLibraryPage] LOAD FAILED:', err);
+        console.error('[LessonLibraryPage] Error code:', err?.code, 'Error details:', err);
         setFetchError(msg);
         toast({ title: 'Error', description: 'Failed to load lesson library', variant: 'destructive' });
       } finally {
@@ -99,8 +109,14 @@ export default function LessonLibraryPage(): JSX.Element {
   }
 
   return (
-    <div className="min-h-screen py-6">
+    <div data-testid="lesson-library" className="min-h-screen py-6">
       <div className="max-w-6xl mx-auto px-4">
+        {/* DIAGNOSTIC: Proof of mount */}
+        {import.meta.env.DEV && (
+          <div data-testid="debug-lessons-mounted" className="mb-2 text-xs font-bold text-green-700 bg-green-100 p-2 rounded border-2 border-green-600">
+            ✓ LessonLibraryPage MOUNTED (activeArea: {activeArea}, loading: {String(loading)}, folders: {folders.length}, lessons: {lessons.length})
+          </div>
+        )}
         {import.meta.env.DEV && (
           <div className="mb-4 text-xs text-gray-600 flex flex-wrap gap-2 items-center">
             <div>Folders: {totalFolders} (active: {activeFolders})</div>
@@ -157,7 +173,9 @@ export default function LessonLibraryPage(): JSX.Element {
                   ))}
                 </div>
               ) : foldersForArea.length === 0 ? (
-                <div className="text-sm text-gray-600">No folders yet</div>
+                <div className="text-sm text-gray-600 p-4 bg-gray-50 rounded">
+                  No folders found for {activeArea}. Contact admin to add folders.
+                </div>
               ) : (
                 <ul data-testid="lesson-folders-list" className="space-y-2">
                   {foldersForArea.map((f) => (
@@ -197,9 +215,13 @@ export default function LessonLibraryPage(): JSX.Element {
                   ))}
                 </div>
               ) : !selectedFolderId ? (
-                <div className="text-sm text-gray-600">Select a folder to view lessons</div>
+                <div className="text-sm text-gray-600 p-4 bg-gray-50 rounded">
+                  ← Select a folder from the left to view lessons
+                </div>
               ) : lessonsForFolder.length === 0 ? (
-                <div className="text-sm text-gray-600">No lessons yet</div>
+                <div className="text-sm text-gray-600 p-4 bg-gray-50 rounded">
+                  No lessons in this folder yet. Contact admin to add lessons.
+                </div>
               ) : (
                 <div data-testid="lesson-list" className="space-y-2">
                   {lessonsForFolder.map((l) => (

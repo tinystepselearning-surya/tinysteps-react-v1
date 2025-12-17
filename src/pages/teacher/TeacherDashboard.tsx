@@ -7,7 +7,7 @@ import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
 
 import { useAuthStore } from '../../store/useAuthStore';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeacherSessions } from './hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
@@ -110,17 +110,29 @@ export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
   const [tab, setTab] = useState<string>('today');
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Allow selecting a tab via `?tab=lessons` (or other tab ids)
   React.useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
       const qTab = params.get('tab');
-      if (qTab) setTab(qTab);
+      if (qTab && qTab !== tab) {
+        console.log('[TeacherDashboard] URL tab param:', qTab);
+        setTab(qTab);
+      }
     } catch {
       // ignore malformed search
     }
   }, [location.search]);
+
+  // Sync tab changes to URL
+  const setTabAndUrl = React.useCallback((nextTab: string) => {
+    console.log('[TeacherDashboard] setTabAndUrl:', nextTab);
+    setTab(nextTab);
+    navigate(`/teacher?tab=${nextTab}`, { replace: true });
+  }, [navigate]);
+
   const [showNotifications, setShowNotifications] = useState(false);
 
   const teacherId = user?.uid;
@@ -148,6 +160,21 @@ export default function TeacherDashboard() {
 
   return (
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
+      {/* DIAGNOSTIC: Tab state proof */}
+      {import.meta.env.DEV && (
+        <div data-testid="debug-teacher-tab" className="mb-2 text-xs font-bold text-blue-700 bg-blue-100 p-2 rounded border-2 border-blue-600">
+          ✓ TeacherDashboard ACTIVE | tab=<strong>{tab}</strong> | search=<strong>{location.search}</strong> | pathname=<strong>{location.pathname}</strong> | user.role=<strong>{user?.role || 'undefined'}</strong>
+        </div>
+      )}
+      {/* CACHE BUSTER - Version marker */}
+      <div className="mb-2 text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200">
+        ✓ TeacherDashboard v2.0 - Tab sync + Lesson Library
+      </div>
+      {import.meta.env.DEV && (
+        <div className="mb-2 text-xs text-gray-600 bg-yellow-50 p-2 rounded border border-yellow-200">
+          [DEBUG] Current tab: <strong>{tab}</strong> | URL search: <strong>{location.search}</strong> | pathname: <strong>{location.pathname}</strong>
+        </div>
+      )}
       <TeacherHeader
         name={user.displayName || user.email || 'Teacher'}
         upcomingCount={sessions.length}
@@ -157,13 +184,13 @@ export default function TeacherDashboard() {
       <div className="flex gap-6">
         <TeacherSidebar
           active={tab}
-          onSelect={setTab}
+          onSelect={setTabAndUrl}
           todayCount={sessions.length}
           teacherId={teacherId}
         />
 
         <main className="flex-1 space-y-6">
-          <Tabs value={tab} onValueChange={setTab} className="space-y-4">
+          <Tabs value={tab} onValueChange={setTabAndUrl} className="space-y-4">
             {/* Mobile tabs for when sidebar is hidden */}
             <TabsList className="lg:hidden">
               {TAB_ITEMS.map((item) => (

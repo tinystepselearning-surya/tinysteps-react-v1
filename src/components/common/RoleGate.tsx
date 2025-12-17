@@ -101,6 +101,17 @@ const RoleGate: React.FC<RoleGateProps> = ({
   // 4) Determine role (prefer Firestore role; fallback to auth user.role if present)
   const userRole = latestRole || (user.role as Role | undefined);
 
+  if (import.meta.env.DEV) {
+    console.log('[RoleGate] Check access:', {
+      allowedRoles,
+      userRole,
+      latestRole,
+      'user.role': user.role,
+      superUser,
+      uid: user?.uid,
+    });
+  }
+
   const canAccess = superUser || (!!userRole && allowedRoles.includes(userRole));
 
   // 5) Wrong role → unauthorized
