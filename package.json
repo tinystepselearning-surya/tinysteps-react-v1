@@ -7,6 +7,8 @@
     "seed:admin-stats": "node scripts/seed-admin-stats.js",
     "dev": "vite",
     "build": "npm run gen:sitemaps && vite build",
+    "prebuild": "npm run check:shadowing",
+    "check:shadowing": "node scripts/check-shadowing.mjs",
     "preview": "vite preview",
     "gen:sitemaps": "node scripts/generate-sitemaps.js",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",

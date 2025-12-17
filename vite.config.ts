@@ -73,6 +73,8 @@ export default defineConfig({
       ],
 
   resolve: {
+    // Prefer TypeScript extensions over JavaScript to prevent shadowing issues
+    extensions: ['.tsx', '.ts', '.jsx', '.js', '.mjs', '.json'],
     // Ensure only one copy of React/ReactDOM is resolved to avoid hook errors
     dedupe: ['react', 'react-dom'],
     alias: {

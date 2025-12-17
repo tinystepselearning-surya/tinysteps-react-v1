@@ -35,9 +35,10 @@ const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const ParentProfile = lazy(() => import('../pages/parent/Profile'));
 const ParentPayments = lazy(() => import('../pages/parent/Payments'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
-const BetaAnalytics = lazy(
-  () => import('../pages/admin/beta-analytics.jsx') as any,
-);
+// BetaAnalytics component removed - file does not exist
+// const BetaAnalytics = lazy(
+//   () => import('../pages/admin/beta-analytics.jsx') as any,
+// );
 
 // Payment Components
 const PaymentCallback = lazy(
@@ -242,19 +243,19 @@ const router = createBrowserRouter(
         { path: 'kid', element: <Navigate to="/parent/kids" replace /> },
         { path: 'kids/:childId/dashboard', element: <Navigate to="/parent" replace /> },
 
-        // ---------- Beta analytics (admin only) ----------
-        {
-          path: 'admin/beta-analytics',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['admin']}
-                loginPath="/surya/login"
-              />
-            </Suspense>
-          ),
-          children: [{ index: true, element: <BetaAnalytics /> }],
-        },
+        // Beta analytics route removed - component file does not exist
+        // {
+        //   path: 'admin/beta-analytics',
+        //   element: (
+        //     <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+        //       <RoleGate
+        //         allowedRoles={['admin']}
+        //         loginPath="/surya/login"
+        //       />
+        //     </Suspense>
+        //   ),
+        //   children: [{ index: true, element: <BetaAnalytics /> }],
+        // },
 
         // ---------- Topics seed picklist (admin only) ----------
         {
