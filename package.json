@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "seed:admin-stats": "node scripts/seed-admin-stats.js",
+    
     "dev": "vite",
     "build": "npm run gen:sitemaps && vite build",
     "prebuild": "npm run check:shadowing",
@@ -15,13 +15,10 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest",
     "test": "vitest run",
-    "seed:teacher": "node scripts/seed-teacher-dashboard.js",
-    "seed:courses": "node scripts/seed-courses.js",
-    "seed:courses:emulator": "FIRESTORE_EMULATOR_HOST=localhost:8085 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 GOOGLE_CLOUD_PROJECT=demo-tinysteps node scripts/seed-courses.js",
-    "seed:courses:prod": "node scripts/seed-courses.js",
+    
     "serve": "vite preview",
     "dev:emulator": "VITE_USE_FIRESTORE_EMULATOR=true VITE_USE_AUTH_EMULATOR=true VITE_USE_FUNCTIONS_EMULATOR=true VITE_FIREBASE_EMULATOR_HOST=127.0.0.1 VITE_FIREBASE_AUTH_EMULATOR_PORT=9099 VITE_FIREBASE_FIRESTORE_EMULATOR_PORT=8085 VITE_FIREBASE_FUNCTIONS_EMULATOR_PORT=5001 vite",
-    "seed:notifications": "node scripts/seed-notifications.js"
+    
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
