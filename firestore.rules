@@ -126,8 +126,10 @@ service cloud.firestore {
       // Admin full access
       allow read, write: if isAdmin();
 
-      // Parent read own kids
-      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+      // Parent read own kids (check parentIds array)
+      allow read: if isParent() 
+        && ('parentIds' in resource.data)
+        && (request.auth.uid in resource.data.parentIds);
 
       // Teacher conservative read
       allow read: if isTeacher();

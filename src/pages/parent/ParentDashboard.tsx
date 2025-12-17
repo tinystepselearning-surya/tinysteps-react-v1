@@ -3,31 +3,52 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ParentHeader } from './components/layout/ParentHeader';
-import { useEnrollments } from '../../hooks/useData';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ParentDashboard() {
   const { user, isLoading } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   
-  // Fetch enrollments for this parent
-  const enrollmentsQuery = useEnrollments(user?.uid || '');
-  
-  // Extract unique kids from enrollments
-  const kids = useMemo(() => {
-    if (!enrollmentsQuery.data) return [];
-    const kidsMap = new Map();
-    enrollmentsQuery.data.forEach((enrollment: any) => {
-      if (enrollment.kids && Array.isArray(enrollment.kids)) {
-        enrollment.kids.forEach((kid: any) => {
-          if (!kidsMap.has(kid.id)) {
-            kidsMap.set(kid.id, kid);
-          }
-        });
+  // Fetch kids directly from kids collection where parentIds contains this parent's uid
+  const kidsQuery = useQuery({
+    queryKey: ['parent-kids', user?.uid],
+    queryFn: async () => {
+      if (!user?.uid) return [];
+      
+      const [{ collection, query, where, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../../lib/firebaseConfig'),
+      ]);
+      
+      const q = query(
+        collection(db, 'kids'),
+        where('parentIds', 'array-contains', user.uid)
+      );
+      
+      console.log('[ParentDashboard] Querying kids with parentUid:', user.uid);
+      
+      const snapshot = await getDocs(q);
+      const result = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data() as any
+      })) as any[];
+      
+      console.log('[ParentDashboard] Kids query result:', result.length, 'kids found');
+      if (result.length === 0) {
+        console.warn('[ParentDashboard] No kids found. Check Firestore rules and data.');
       }
-    });
-    return Array.from(kidsMap.values());
-  }, [enrollmentsQuery.data]);
+      
+      return result;
+    },
+    enabled: !!user?.uid,
+  });
+  
+  const kids = kidsQuery.data || [];
+  
+  // Debug panel (DEV only)
+  const isDev = import.meta.env.DEV;
+  const showDebug = isDev && user;
   
   // Kid selector state with localStorage persistence
   const [selectedKidId, setSelectedKidId] = useState<string | null>(() => {
@@ -85,7 +106,7 @@ export default function ParentDashboard() {
     setSearchParams(next);
   };
 
-  if (isLoading || enrollmentsQuery.isLoading) {
+  if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
   }
 
@@ -139,6 +160,27 @@ export default function ParentDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <ParentHeader name={user.displayName || 'Parent'} />
+      
+      {/* Debug Panel (DEV only) */}
+      {showDebug && (
+        <div className="mb-6 p-4 bg-gray-800 text-white rounded-lg text-xs font-mono">
+          <div className="font-bold mb-2">🔍 Debug Info (DEV only)</div>
+          <div>Environment: {window.location.host}</div>
+          <div>Auth UID: {user.uid}</div>
+          <div>Query Status: {kidsQuery.status}</div>
+          <div>Query Enabled: {kidsQuery.isEnabled ? 'Yes' : 'No'}</div>
+          <div>Kids Found: {kids.length}</div>
+          {kidsQuery.error && (
+            <div className="mt-2 p-2 bg-red-900 rounded">
+              Error: {String(kidsQuery.error)}
+              {String(kidsQuery.error).includes('permission-denied') && (
+                <div className="mt-1 text-yellow-300">⚠️ Firestore rules blocked reading kids collection</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
       <p className="text-sm text-muted-foreground mb-6 mt-4">
         This is your parent dashboard. From here you'll be able to see your child's Tiny Steps progress.
       </p>
