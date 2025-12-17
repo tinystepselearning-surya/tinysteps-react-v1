@@ -32,7 +32,7 @@ export function TeacherFeedbackForm({ onSubmit, loading, submitted }) {
         Teacher Feedback <span role="img" aria-label="sparkle">✨</span>
       </h3>
       <div className="space-y-1">
-        <label className="text-sm font-semibold text-gray-800">Rate the Worksheet Generator</label>
+        <label className="text-sm font-semibold text-gray-800">Rate this feature</label>
         <input
           type="range"
           min={1}

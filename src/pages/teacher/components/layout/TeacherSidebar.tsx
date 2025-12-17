@@ -51,7 +51,7 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
           );
         })}
 
-        {/* Worksheet Generator removed from sidebar */}
+        
       </div>
     </aside>
   );

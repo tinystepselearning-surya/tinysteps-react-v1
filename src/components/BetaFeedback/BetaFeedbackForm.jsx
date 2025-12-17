@@ -16,7 +16,7 @@ export default function BetaFeedbackForm({ role }) {
             Thank you for testing Tiny Steps AI!
           </h1>
           <p className="text-sm text-gray-600">
-            This form takes under 2 minutes. Your responses help us improve Practice Buddy and Worksheet Generator.
+            This form takes under 2 minutes. Your responses help us improve Practice Buddy and related practice features.
           </p>
         </div>
 

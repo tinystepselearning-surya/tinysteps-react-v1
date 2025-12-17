@@ -237,7 +237,7 @@ export default function TeacherDashboard() {
               </React.Suspense>
             </TabsContent>
 
-            {/* Test tab removed */}
+            
 
             {/* Progress */}
             <TabsContent value="progress">
