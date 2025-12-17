@@ -1,4 +1,4 @@
-import { onCall, HttpsError, CallableRequest } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
@@ -228,9 +228,9 @@ export const unassignLPFromTeacher = onCall(
 /* -------------------- ADMIN SET USER ROLE -------------------------- */
 /* ------------------------------------------------------------------ */
 
-export const adminSetUserRole = onCall(async (request, context) => {
+export const adminSetUserRole = onCall(async (request) => {
   const { uid, role } = request.data;
-  const callerUid = context?.auth?.uid;
+  const callerUid = request.auth?.uid;
 
   if (!callerUid) {
     throw new HttpsError('unauthenticated', 'You must be signed in.');
