@@ -1,9 +1,11 @@
 // src/pages/KidsGamesHub.tsx
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 const KidsGamesHub: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const kidId = searchParams.get('kidId') || '';
 
   return (
     <div
@@ -121,7 +123,7 @@ const KidsGamesHub: React.FC = () => {
 
       {/* Back Button */}
       <Link
-        to="/kids"
+        to={`/kids${kidId ? `?kidId=${kidId}` : ''}`}
         className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
         style={{ zIndex: 40 }}
       >
@@ -132,6 +134,20 @@ const KidsGamesHub: React.FC = () => {
       <div className="w-full max-w-6xl mx-auto text-center mb-10" style={{ zIndex: 10 }}>
         <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">🚀 Games Hub</h1>
         <p className="text-lg text-purple-300 mt-2">Choose your mission</p>
+        
+        {/* Warning Banner */}
+        {!kidId && (
+          <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-2xl mx-auto">
+            <p className="text-yellow-200 font-semibold mb-2">⚠️ No child selected</p>
+            <p className="text-yellow-100/80 text-sm mb-3">Please go back to Parent Dashboard and choose a child.</p>
+            <Link
+              to="/parent"
+              className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
+            >
+              ← Back to Parent Dashboard
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Mission Grid */}
@@ -139,7 +155,7 @@ const KidsGamesHub: React.FC = () => {
         {/* Phonics Mission */}
         <button
           type="button"
-          onClick={() => navigate('/kids/games/phonics')}
+          onClick={() => navigate(`/kids/games/phonics${kidId ? `?kidId=${kidId}` : ''}`)}
           className="mission-card accent-phonics"
           style={{ animation: 'floaty 7s ease-in-out infinite' }}
         >
@@ -158,7 +174,7 @@ const KidsGamesHub: React.FC = () => {
         {/* Grammar Mission */}
         <button
           type="button"
-          onClick={() => navigate('/kids/games/grammar')}
+          onClick={() => navigate(`/kids/games/grammar${kidId ? `?kidId=${kidId}` : ''}`)}
           className="mission-card accent-grammar"
           style={{ animation: 'floaty 7s ease-in-out infinite 0.5s' }}
         >
@@ -177,7 +193,7 @@ const KidsGamesHub: React.FC = () => {
         {/* Speaking Mission */}
         <button
           type="button"
-          onClick={() => navigate('/kids/games/speaking')}
+          onClick={() => navigate(`/kids/games/speaking${kidId ? `?kidId=${kidId}` : ''}`)}
           className="mission-card accent-speaking"
           style={{ animation: 'floaty 7s ease-in-out infinite 1s' }}
         >

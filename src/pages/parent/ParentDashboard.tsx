@@ -239,6 +239,12 @@ export default function ParentDashboard() {
         >
           Open Kids Portal
         </Link>
+        {!selectedKidId && (
+          <span className="ml-3 text-sm text-amber-600">
+            ⚠️ Select a child to track progress.
+          </span>
+        )}
+      </div>
 
       <div className="flex gap-2 mb-4">
         <button
@@ -267,7 +273,6 @@ export default function ParentDashboard() {
         >
           Payments
         </button>
-      </div>
       </div>
 
       {activeTab === 'overview' && (

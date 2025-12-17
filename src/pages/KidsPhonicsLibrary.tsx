@@ -1,9 +1,58 @@
 // src/pages/KidsPhonicsLibrary.tsx
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
+import { db } from '../lib/firebaseConfig';
+
+// Game catalog
+const PHONICS_GAMES = [
+  {
+    id: 'phonics_letter_sound',
+    title: 'Letter → Sound Match',
+    description: 'Age 3–5 — Match letter to its sound',
+    route: '/kids/games/phonics/letter-sound',
+    color: 'text-pink-300',
+  },
+  // More games will be added here later
+];
 
 const KidsPhonicsLibrary: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const kidId = searchParams.get('kidId') || '';
+
+  // Fetch game summaries for the selected kid
+  const gameSummariesQuery = useQuery({
+    queryKey: ['kid-game-summaries', kidId],
+    queryFn: async () => {
+      if (!kidId) return [];
+      
+      const q = query(
+        collection(db, 'kids', kidId, 'gameSummaries'),
+        orderBy('lastPlayedAt', 'desc'),
+        limit(50)
+      );
+      
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as any[];
+    },
+    enabled: !!kidId,
+  });
+
+  // Create lookup map by gameId
+  const summariesByGameId = useMemo(() => {
+    const map: Record<string, any> = {};
+    if (gameSummariesQuery.data) {
+      gameSummariesQuery.data.forEach((summary: any) => {
+        map[summary.gameId || summary.id] = summary;
+      });
+    }
+    return map;
+  }, [gameSummariesQuery.data]);
 
   return (
     <div
@@ -38,7 +87,7 @@ const KidsPhonicsLibrary: React.FC = () => {
         @keyframes comet { 0%{transform:translateX(-120vw) rotate(-20deg); opacity:0}10%{opacity:0.6}90%{opacity:0.6}100%{transform:translateX(160vw) rotate(-20deg); opacity:0} }
 
         /* Cards */
-        .library-card { padding:20px 22px; border-radius:18px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); backdrop-filter:blur(8px); min-height:140px; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
+        .library-card { padding:20px 22px; border-radius:18px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); backdrop-filter:blur(8px); min-height:180px; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease; }
         .library-card:hover { transform:translateY(-6px) scale(1.02); box-shadow:0 12px 40px rgba(0,0,0,0.5); }
         .library-card:active { transform:scale(0.99); }
         .library-card.disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
@@ -50,35 +99,111 @@ const KidsPhonicsLibrary: React.FC = () => {
       <div className="comet" aria-hidden />
 
       <Link
-        to="/kids/games"
+        to={`/kids/games${kidId ? `?kidId=${kidId}` : ''}`}
         className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
         style={{ zIndex: 40 }}
       >
         ← Back to Games Hub
       </Link>
 
-      <div className="w-full max-w-6xl mx-auto text-center mb-10" style={{ zIndex: 10 }}>
+      <div className="w-full max-w-6xl mx-auto text-center mb-6" style={{ zIndex: 10 }}>
         <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">Phonics Library</h1>
         <p className="text-lg text-purple-300 mt-2">Choose a game</p>
       </div>
 
-      <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8" style={{ zIndex: 10 }}>
-        <button
-          type="button"
-          onClick={() => navigate('/kids/games/phonics/letter-sound')}
-          aria-label="Open Letter to Sound Match game"
-          className="library-card"
-        >
-          <div>
-            <h3 className="text-2xl font-bold text-pink-300">Letter → Sound Match</h3>
-            <p className="text-sm text-white/80 mt-2">Age 3–5 — Match letter to its sound</p>
-          </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-yellow-300 font-semibold">Start</div>
-            <div className="text-sm text-white/60">⭐ Simple</div>
-          </div>
-        </button>
+      {/* No kid selected warning */}
+      {!kidId && (
+        <div className="w-full max-w-3xl mx-auto mb-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg" style={{ zIndex: 10 }}>
+          <p className="text-yellow-200 font-semibold mb-2">⚠️ No child selected</p>
+          <p className="text-yellow-100/80 text-sm mb-3">Please go back and choose a child to track progress.</p>
+          <Link
+            to="/parent"
+            className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
+          >
+            ← Back to Parent Dashboard
+          </Link>
+        </div>
+      )}
 
+      <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8" style={{ zIndex: 10 }}>
+        {PHONICS_GAMES.map((game) => {
+          const summary = summariesByGameId[game.id];
+          
+          // Determine status badge
+          let badge = 'Not started';
+          let badgeColor = 'bg-gray-100/20 text-gray-300';
+          
+          if (summary) {
+            if (summary.completionPercent >= 100 || summary.completedLevelCount === 7) {
+              badge = 'Completed';
+              badgeColor = 'bg-green-500/30 text-green-200';
+            } else if (summary.hasResume) {
+              badge = 'Continue';
+              badgeColor = 'bg-yellow-500/30 text-yellow-200';
+            } else if (summary.bestStarsTotal > 0) {
+              badge = 'Started';
+              badgeColor = 'bg-blue-500/30 text-blue-200';
+            }
+          }
+          
+          // Progress bar percentage
+          const progressPercent = summary?.completionPercent || 0;
+          
+          // Button label
+          const buttonLabel = summary?.hasResume ? 'Continue' : 'Play';
+          
+          // Build route with kidId
+          const gameRoute = kidId ? `${game.route}?kidId=${kidId}` : game.route;
+          
+          return (
+            <button
+              key={game.id}
+              type="button"
+              onClick={() => navigate(gameRoute)}
+              aria-label={`Open ${game.title} game`}
+              className="library-card"
+            >
+              <div>
+                <div className="flex items-start justify-between mb-2">
+                  <h3 className={`text-2xl font-bold ${game.color}`}>{game.title}</h3>
+                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${badgeColor}`}>
+                    {badge}
+                  </span>
+                </div>
+                <p className="text-sm text-white/80 mt-2">{game.description}</p>
+                
+                {/* Progress Bar */}
+                {kidId && summary && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-white/60">Progress</span>
+                      <span className="text-xs font-semibold text-white/90">
+                        {Math.round(progressPercent)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-white/10 rounded-full h-1.5">
+                      <div
+                        className="bg-gradient-to-r from-blue-400 to-purple-500 h-1.5 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-yellow-300 font-semibold">{buttonLabel}</div>
+                {summary && (
+                  <div className="text-sm text-white/70">
+                    ⭐ {summary.bestStarsTotal || 0}
+                  </div>
+                )}
+              </div>
+            </button>
+          );
+        })}
+        
+        {/* Coming soon placeholders */}
         <div className="library-card disabled" aria-hidden>
           <div>
             <h3 className="text-2xl font-bold text-blue-300">Picture → Starting Sound</h3>

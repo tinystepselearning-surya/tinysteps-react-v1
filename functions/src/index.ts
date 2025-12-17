@@ -42,6 +42,9 @@ export {
   onSessionCompleteTrigger,
 } from './onSessionComplete';
 
+// Game Progress Summary Generator
+export { onGameProgressWrite } from './gameProgressSummary';
+
 // Health ping (optional small endpoint you may add later)
 // export { healthCheck } from './health'; // Uncomment only if file exists
 

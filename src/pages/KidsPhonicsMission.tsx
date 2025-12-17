@@ -123,6 +123,53 @@ const setUnlockedLevel = (n: number) => {
   try { localStorage.setItem(STORAGE_KEY, String(Math.min(7, Math.max(1, n)))); } catch (e) { /* noop */ }
 };
 
+// --- Firestore Progress Helpers ---
+const GAME_ID = 'phonics_letter_sound';
+
+type GameResume = {
+  level: number;
+  round: number;
+  stars: number;
+  questions: Question[];
+  updatedAt?: any;
+};
+
+type GameProgressDoc = {
+  bestStarsByLevel?: Record<string, number>;
+  completedLevels?: number[];
+  resume?: GameResume;
+  lastPlayedAt?: any;
+  version?: number;
+};
+
+const getGameProgressDoc = async (kidId: string): Promise<GameProgressDoc | null> => {
+  try {
+    const { doc, getDoc, getFirestore } = await import('firebase/firestore');
+    const db = getFirestore();
+    const docRef = doc(db, 'kids', kidId, 'gameProgress', GAME_ID);
+    const snapshot = await getDoc(docRef);
+    return snapshot.exists() ? (snapshot.data() as GameProgressDoc) : null;
+  } catch (e) {
+    console.error('Failed to read game progress:', e);
+    return null;
+  }
+};
+
+const saveGameProgressDoc = async (kidId: string, data: Partial<GameProgressDoc>): Promise<void> => {
+  try {
+    const { doc, setDoc, getFirestore, serverTimestamp } = await import('firebase/firestore');
+    const db = getFirestore();
+    const docRef = doc(db, 'kids', kidId, 'gameProgress', GAME_ID);
+    await setDoc(docRef, { ...data, lastPlayedAt: serverTimestamp() }, { merge: true });
+  } catch (e) {
+    console.error('Failed to save game progress:', e);
+  }
+};
+
+const updateGameSummary = async (_kidId: string): Promise<void> => {
+  // Stub: will implement summary logic later
+};
+
 // --- Helper Functions ---
 const speak = (text: string) => {
   if ('speechSynthesis' in window) {
@@ -161,6 +208,7 @@ const generateQuestionsForLevel = (levelDef: LevelDef): Question[] => {
 // --- Main Component ---
 const KidsPhonicsMission: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const kidId = searchParams.get('kidId') || '';
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [starsEarned, setStarsEarned] = useState(0);
@@ -175,6 +223,8 @@ const KidsPhonicsMission: React.FC = () => {
   const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars());
   const [confettiActive, setConfettiActive] = useState(false);
   const gameRef = useRef<HTMLDivElement | null>(null);
+  const lastFirestoreSaveRef = useRef<number>(0);
+  const firestoreSaveTimeoutRef = useRef<number | null>(null);
 
   const isSmallScreen = () => window.matchMedia('(max-width: 767px)').matches;
 
@@ -231,31 +281,96 @@ const KidsPhonicsMission: React.FC = () => {
   }, []);
 
   // Helper to start a level atomically (no intermediate blank state)
-  const startLevel = useCallback((levelId: number) => {
+  const startLevel = useCallback(async (levelId: number) => {
     clearAllTimeouts();
     setSelectedLevel(levelId);
     setIsComplete(false);
     setFeedback(null);
     setLastTappedChoice(null);
     
-    // Check for saved progress
-    const progressMap = readProgressMap();
-    const saved = progressMap[levelId];
+    let resumeData: SavedProgress | null = null;
+    let firestoreBestStars: Record<number, number> | null = null;
     
-    // Validate saved progress
-    const isValid = saved && 
-      Array.isArray(saved.questions) && 
-      saved.questions.length === TOTAL_ROUNDS &&
-      typeof saved.currentRound === 'number' &&
-      saved.currentRound >= 0 && saved.currentRound < TOTAL_ROUNDS &&
-      typeof saved.starsEarned === 'number' &&
-      saved.starsEarned >= 0 && saved.starsEarned <= TOTAL_ROUNDS;
+    // Try Firestore first if kidId available
+    if (kidId) {
+      try {
+        const fsDoc = await getGameProgressDoc(kidId);
+        if (fsDoc) {
+          // Merge best stars from Firestore
+          if (fsDoc.bestStarsByLevel) {
+            firestoreBestStars = {};
+            Object.entries(fsDoc.bestStarsByLevel).forEach(([k, v]) => {
+              const lvl = parseInt(k, 10);
+              if (!isNaN(lvl)) firestoreBestStars![lvl] = v;
+            });
+          }
+          // Check for resume data matching this level
+          if (fsDoc.resume && fsDoc.resume.level === levelId) {
+            const r = fsDoc.resume;
+            // Strict validation of resume data
+            const levelDef = LEVELS.find(l => l.id === levelId);
+            if (
+              levelDef &&
+              r.round >= 0 && r.round < TOTAL_ROUNDS &&
+              r.stars >= 0 && r.stars <= TOTAL_ROUNDS &&
+              r.questions && Array.isArray(r.questions) &&
+              r.questions.length === TOTAL_ROUNDS
+            ) {
+              // Validate each question in the resume
+              const levelPool = levelDef.items.map(i => i.grapheme);
+              const allQuestionsValid = r.questions.every(q => {
+                return (
+                  q && typeof q === 'object' &&
+                  q.target && levelPool.includes(q.target) &&
+                  Array.isArray(q.choices) &&
+                  q.choices.length === levelDef.choicesCount &&
+                  q.choices.includes(q.target)
+                );
+              });
+              
+              if (allQuestionsValid) {
+                resumeData = {
+                  questions: r.questions,
+                  currentRound: r.round,
+                  starsEarned: r.stars,
+                  updatedAt: r.updatedAt || Date.now()
+                };
+              }
+            }
+            // Silently ignore old seed-based resume or invalid data
+          }
+        }
+      } catch (e) {
+        console.warn('Firestore load failed, falling back to localStorage:', e);
+      }
+    }
     
-    if (isValid) {
+    // Merge Firestore best stars into state
+    if (firestoreBestStars) {
+      const merged = { ...bestStarsMap, ...firestoreBestStars };
+      setBestStarsMap(merged);
+      writeBestStars(merged);
+    }
+    
+    // Fallback to localStorage if Firestore didn't provide resume
+    if (!resumeData) {
+      const progressMap = readProgressMap();
+      const saved = progressMap[levelId];
+      const isValid = saved && 
+        Array.isArray(saved.questions) && 
+        saved.questions.length === TOTAL_ROUNDS &&
+        typeof saved.currentRound === 'number' &&
+        saved.currentRound >= 0 && saved.currentRound < TOTAL_ROUNDS &&
+        typeof saved.starsEarned === 'number' &&
+        saved.starsEarned >= 0 && saved.starsEarned <= TOTAL_ROUNDS;
+      if (isValid) resumeData = saved;
+    }
+    
+    if (resumeData) {
       // Resume from saved progress
-      setQuestions(saved.questions);
-      setCurrentRound(saved.currentRound);
-      setStarsEarned(saved.starsEarned);
+      setQuestions(resumeData.questions);
+      setCurrentRound(resumeData.currentRound);
+      setStarsEarned(resumeData.starsEarned);
     } else {
       // Start fresh
       const levelDef = LEVELS.find(l => l.id === levelId)!;
@@ -264,7 +379,7 @@ const KidsPhonicsMission: React.FC = () => {
       setCurrentRound(0);
       setStarsEarned(0);
     }
-  }, []);
+  }, [kidId, bestStarsMap]);
 
   // Initialize from query param or keep on level select
   useEffect(() => {
@@ -316,6 +431,41 @@ const KidsPhonicsMission: React.FC = () => {
     }
   }, [selectedLevel, starsEarned, currentRound, questions, isComplete]);
 
+  // Throttled Firestore autosave (every 3 seconds max)
+  useEffect(() => {
+    if (!kidId || !selectedLevel || questions.length === 0 || isComplete) return;
+    
+    const now = Date.now();
+    const timeSinceLastSave = now - lastFirestoreSaveRef.current;
+    
+    const doSave = () => {
+      saveGameProgressDoc(kidId, {
+        resume: {
+          level: selectedLevel,
+          round: currentRound,
+          stars: starsEarned,
+          questions,
+          updatedAt: now
+        },
+        version: 1
+      }).catch(e => console.warn('Firestore autosave failed:', e));
+      lastFirestoreSaveRef.current = now;
+    };
+    
+    if (timeSinceLastSave >= 3000) {
+      // Save immediately
+      doSave();
+    } else {
+      // Schedule save after throttle period
+      if (firestoreSaveTimeoutRef.current) clearTimeout(firestoreSaveTimeoutRef.current);
+      firestoreSaveTimeoutRef.current = window.setTimeout(doSave, 3000 - timeSinceLastSave);
+    }
+    
+    return () => {
+      if (firestoreSaveTimeoutRef.current) clearTimeout(firestoreSaveTimeoutRef.current);
+    };
+  }, [kidId, selectedLevel, currentRound, starsEarned, questions, isComplete]);
+
   // Listen for fullscreen changes (e.g., ESC) to ensure cleanup
   useEffect(() => {
     const handler = () => {
@@ -356,6 +506,45 @@ const KidsPhonicsMission: React.FC = () => {
               }
               // Clear progress since level is completed
               clearLevelProgress(selectedLevel);
+              
+              // Save completion to Firestore
+              if (kidId) {
+                const bestByLevel: Record<string, number> = {};
+                Object.entries({ ...bestStarsMap, [selectedLevel]: Math.max(prev, newStars) }).forEach(([k, v]) => {
+                  bestByLevel[k] = v;
+                });
+                
+                const updateData: any = {
+                  bestStarsByLevel: bestByLevel,
+                  resume: null, // Clear resume on completion (explicit null for merge)
+                  version: 1
+                };
+                
+                // Add to completedLevels if 6+ stars
+                if (newStars >= 6) {
+                  (async () => {
+                    try {
+                      const { doc, updateDoc, getFirestore, arrayUnion } = await import('firebase/firestore');
+                      const db = getFirestore();
+                      const docRef = doc(db, 'kids', kidId, 'gameProgress', GAME_ID);
+                      await updateDoc(docRef, {
+                        ...updateData,
+                        completedLevels: arrayUnion(selectedLevel)
+                      });
+                    } catch (e) {
+                      // Fallback to setDoc if doc doesn't exist
+                      const currentCompleted = (await getGameProgressDoc(kidId))?.completedLevels || [];
+                      const updatedCompleted = Array.from(new Set([...currentCompleted, selectedLevel]));
+                      await saveGameProgressDoc(kidId, {
+                        ...updateData,
+                        completedLevels: updatedCompleted
+                      });
+                    }
+                  })().catch(e => console.warn('Firestore completion save failed:', e));
+                } else {
+                  saveGameProgressDoc(kidId, updateData).catch(e => console.warn('Firestore completion save failed:', e));
+                }
+              }
             }
             // Unlock next level if criteria met
             if (selectedLevel && newStars >= 6 && selectedLevel < 7) {
@@ -400,6 +589,19 @@ const KidsPhonicsMission: React.FC = () => {
         <div className="w-full max-w-6xl mx-auto text-center mb-8">
           <h1 className="text-5xl font-bold text-white">Choose Level</h1>
           <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play</p>
+          
+          {!kidId && (
+            <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
+              <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
+              <p className="text-yellow-100/80 text-sm mb-4">Please go back and choose a child to track progress.</p>
+              <Link
+                to="/parent"
+                className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
+              >
+                ← Back to Parent Dashboard
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="level-grid w-full max-w-3xl mx-auto">
@@ -603,6 +805,19 @@ const KidsPhonicsMission: React.FC = () => {
         <button
           type="button"
           onClick={() => {
+            // Save progress immediately before leaving
+            if (kidId && selectedLevel && questions.length > 0 && !isComplete) {
+              saveGameProgressDoc(kidId, {
+                resume: {
+                  level: selectedLevel,
+                  round: currentRound,
+                  stars: starsEarned,
+                  questions,
+                  updatedAt: Date.now()
+                },
+                version: 1
+              }).catch(e => console.warn('Firestore save on exit failed:', e));
+            }
             exitImmersiveMode();
             clearAllTimeouts();
             setSelectedLevel(null);
