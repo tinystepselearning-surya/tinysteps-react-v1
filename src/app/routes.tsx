@@ -32,7 +32,11 @@ const DebugLessonLibrary = lazy(() => import('../pages/DebugLessonLibrary'));
 const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
 const ParentProfile = lazy(() => import('../pages/parent/Profile'));
 const ParentPayments = lazy(() => import('../pages/parent/Payments'));
+const KidsPortal = lazy(() => import('../pages/KidsPortal'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
+const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
+const KidsPhonicsLibrary = lazy(() => import('../pages/KidsPhonicsLibrary'));
+const KidsPhonicsMission = lazy(() => import('../pages/KidsPhonicsMission'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -215,6 +219,25 @@ const router = createBrowserRouter(
             { path: 'payments/:invoiceId', element: <PhonePeCheckout /> },
             { path: 'payments/callback', element: <PaymentCallback /> },
             { path: 'payments/phonepe-callback', element: <PhonePeCallback /> },
+          ],
+        },
+
+        // ---------- Kids Portal (standalone, kid-friendly) ----------
+        {
+          path: 'kids',
+          element: (
+            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+              <RoleGate
+                allowedRoles={['kid', 'parent']}
+                loginPath="/parent/login"
+              />
+            </Suspense>
+          ),
+          children: [
+            { index: true, element: <KidsPortal /> },
+            { path: 'games', element: <KidsGamesHub /> },
+            { path: 'games/phonics', element: <KidsPhonicsLibrary /> },
+            { path: 'games/phonics/letter-sound', element: <KidsPhonicsMission /> },
           ],
         },
 

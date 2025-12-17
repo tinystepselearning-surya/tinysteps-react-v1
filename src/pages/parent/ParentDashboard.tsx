@@ -82,6 +82,12 @@ export default function ParentDashboard() {
         >
           Kids Page
         </Link>
+        <Link
+          to="/kids"
+          className="inline-block ml-3 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded hover:bg-gray-100 mb-4"
+        >
+          Open Kids Portal
+        </Link>
 
       <div className="flex gap-2 mb-4">
         <button
