@@ -75,6 +75,11 @@ const NotificationsPanel = React.lazy(() =>
 // Lazy-load Lesson Library page for the lessons tab
 const LessonLibraryPage = React.lazy(() => import('./LessonLibraryPage'));
 
+// Import FullScreenCanvaViewer
+const FullScreenCanvaViewer = React.lazy(() =>
+  import('./components/FullScreenCanvaViewer').then((m) => ({ default: m.FullScreenCanvaViewer }))
+);
+
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
     <Card className="p-8 text-center space-y-2 max-w-md">{children}</Card>
@@ -113,7 +118,16 @@ export default function TeacherDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Detect full-screen viewer params
+  const [viewerState, setViewerState] = useState<{
+    lessonId: string;
+    lessonTitle: string;
+    canvaEmbedUrl: string;
+    sessionId: string;
+  } | null>(null);
+
   // Allow selecting a tab via `?tab=lessons` (or other tab ids)
+  // Also detect viewer query params
   React.useEffect(() => {
     try {
       const params = new URLSearchParams(location.search);
@@ -121,6 +135,24 @@ export default function TeacherDashboard() {
       if (qTab && qTab !== tab) {
         console.log('[TeacherDashboard] URL tab param:', qTab);
         setTab(qTab);
+      }
+
+      // Check for full-screen viewer params
+      const viewLesson = params.get('viewLesson');
+      const viewMode = params.get('viewMode');
+      const sessionId = params.get('session');
+      const lessonTitle = params.get('lessonTitle');
+      const canvaUrl = params.get('canvaUrl');
+
+      if (viewMode === 'full' && viewLesson && sessionId && lessonTitle && canvaUrl) {
+        setViewerState({
+          lessonId: viewLesson,
+          lessonTitle: decodeURIComponent(lessonTitle),
+          canvaEmbedUrl: decodeURIComponent(canvaUrl),
+          sessionId,
+        });
+      } else {
+        setViewerState(null);
       }
     } catch {
       // ignore malformed search
@@ -132,6 +164,12 @@ export default function TeacherDashboard() {
     console.log('[TeacherDashboard] setTabAndUrl:', nextTab);
     setTab(nextTab);
     navigate(`/teacher?tab=${nextTab}`, { replace: true });
+  }, [navigate]);
+
+  // Close viewer handler: return to /teacher?tab=lessons
+  const handleCloseViewer = React.useCallback(() => {
+    console.log('[TeacherDashboard] Closing viewer, returning to lesson library');
+    navigate('/teacher?tab=lessons', { replace: true });
   }, [navigate]);
 
   const [showNotifications, setShowNotifications] = useState(false);
@@ -156,6 +194,23 @@ export default function TeacherDashboard() {
       <AccessNotice>
         You do not have permission to access the teacher dashboard.
       </AccessNotice>
+    );
+  }
+
+  // Render full-screen viewer if active
+  if (viewerState) {
+    return (
+      <React.Suspense fallback={<div className="flex items-center justify-center h-screen">Loading viewer...</div>}>
+        <FullScreenCanvaViewer
+          lessonId={viewerState.lessonId}
+          lessonTitle={viewerState.lessonTitle}
+          canvaEmbedUrl={viewerState.canvaEmbedUrl}
+          sessionId={viewerState.sessionId}
+          teacherId={user.uid}
+          teacherName={user.displayName || user.email || 'Teacher'}
+          onClose={handleCloseViewer}
+        />
+      </React.Suspense>
     );
   }
 

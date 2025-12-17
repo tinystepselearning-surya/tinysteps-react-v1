@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { cn } from '@components/lib/utils';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
@@ -30,6 +31,7 @@ const CATEGORIES = [
 ];
 
 export default function LessonLibraryPage(): JSX.Element {
+  const navigate = useNavigate();
   const [activeArea, setActiveArea] = useState<string>('phonics');
   const [folders, setFolders] = useState<Folder[]>([]);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -106,6 +108,24 @@ export default function LessonLibraryPage(): JSX.Element {
       return;
     }
     setSelectedLesson(lesson);
+  }
+
+  function openFullScreen(lesson: Lesson) {
+    if (!lesson.canvaEmbedUrl) {
+      toast({ title: 'No Canva link', description: 'No Canva link added yet for this lesson.', variant: 'destructive' });
+      return;
+    }
+    // Generate unique session ID
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const params = new URLSearchParams({
+      tab: 'lessons',
+      viewLesson: lesson.id,
+      viewMode: 'full',
+      session: sessionId,
+      lessonTitle: encodeURIComponent(lesson.title),
+      canvaUrl: encodeURIComponent(lesson.canvaEmbedUrl),
+    });
+    navigate(`/teacher?${params.toString()}`);
   }
 
   return (
@@ -207,7 +227,8 @@ export default function LessonLibraryPage(): JSX.Element {
                     <div key={l.id} data-testid={`lesson-row-${l.id}`} className="flex items-center justify-between px-3 py-2 border rounded">
                       <div className="text-sm">{l.title}</div>
                       <div className="flex items-center gap-2">
-                        <Button data-testid={`lesson-open-${l.id}`} size="sm" onClick={() => openLesson(l)} className="px-3">Open</Button>
+                        <Button data-testid={`lesson-open-${l.id}`} size="sm" onClick={() => openLesson(l)} variant="outline" className="px-3">Preview</Button>
+                        <Button data-testid={`lesson-fullscreen-${l.id}`} size="sm" onClick={() => openFullScreen(l)} className="px-3">Full-Screen View</Button>
                       </div>
                     </div>
                   ))}
