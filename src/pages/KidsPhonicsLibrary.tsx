@@ -14,6 +14,13 @@ const PHONICS_GAMES = [
     route: '/kids/games/phonics/letter-sound',
     color: 'text-pink-300',
   },
+  {
+    id: 'phonics_balloon_pop',
+    title: 'Balloon Pop (Jolly Levels)',
+    description: 'Age 3–8 — Pop the correct letter sound',
+    route: '/kids/games/phonics/balloon-pop',
+    color: 'text-yellow-300',
+  },
   // More games will be added here later
 ];
 
