@@ -66,9 +66,18 @@ type SavedProgress = {
 
 type ProgressMap = Record<number, SavedProgress>;
 
-const readBestStars = (): Record<number, number> => {
+const readBestStars = (kidId?: string): Record<number, number> => {
   try {
-    const raw = localStorage.getItem(BEST_KEY);
+    const key = kidId ? `${BEST_KEY}:${kidId}` : BEST_KEY;
+    let raw = localStorage.getItem(key);
+    // Migration: if kid-specific key missing but legacy exists, copy it once
+    if (!raw && kidId) {
+      const legacy = localStorage.getItem(BEST_KEY);
+      if (legacy) {
+        try { localStorage.setItem(key, legacy); } catch {}
+        raw = legacy;
+      }
+    }
     if (!raw) return {};
     return JSON.parse(raw);
   } catch (e) {
@@ -76,13 +85,22 @@ const readBestStars = (): Record<number, number> => {
   }
 };
 
-const writeBestStars = (map: Record<number, number>) => {
-  try { localStorage.setItem(BEST_KEY, JSON.stringify(map)); } catch (e) { /* noop */ }
+const writeBestStars = (map: Record<number, number>, kidId?: string) => {
+  try { const key = kidId ? `${BEST_KEY}:${kidId}` : BEST_KEY; localStorage.setItem(key, JSON.stringify(map)); } catch (e) { /* noop */ }
 };
 
-const readProgressMap = (): ProgressMap => {
+const readProgressMap = (kidId?: string): ProgressMap => {
   try {
-    const raw = localStorage.getItem(PROGRESS_KEY);
+    const key = kidId ? `${PROGRESS_KEY}:${kidId}` : PROGRESS_KEY;
+    let raw = localStorage.getItem(key);
+    // Migration from legacy
+    if (!raw && kidId) {
+      const legacy = localStorage.getItem(PROGRESS_KEY);
+      if (legacy) {
+        try { localStorage.setItem(key, legacy); } catch {}
+        raw = legacy;
+      }
+    }
     if (!raw) return {};
     return JSON.parse(raw);
   } catch (e) {
@@ -90,29 +108,38 @@ const readProgressMap = (): ProgressMap => {
   }
 };
 
-const writeProgressMap = (map: ProgressMap) => {
-  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(map)); } catch (e) { /* noop */ }
+const writeProgressMap = (map: ProgressMap, kidId?: string) => {
+  try { const key = kidId ? `${PROGRESS_KEY}:${kidId}` : PROGRESS_KEY; localStorage.setItem(key, JSON.stringify(map)); } catch (e) { /* noop */ }
 };
 
-const saveLevelProgress = (levelId: number, data: SavedProgress) => {
+const saveLevelProgress = (levelId: number, data: SavedProgress, kidId?: string) => {
   try {
-    const map = readProgressMap();
+    const map = readProgressMap(kidId);
     map[levelId] = data;
-    writeProgressMap(map);
+    writeProgressMap(map, kidId);
   } catch (e) { /* noop */ }
 };
 
-const clearLevelProgress = (levelId: number) => {
+const clearLevelProgress = (levelId: number, kidId?: string) => {
   try {
-    const map = readProgressMap();
+    const map = readProgressMap(kidId);
     delete map[levelId];
-    writeProgressMap(map);
+    writeProgressMap(map, kidId);
   } catch (e) { /* noop */ }
 };
 
-const getUnlockedLevel = (): number => {
+const getUnlockedLevel = (kidId?: string): number => {
   try {
-    const v = localStorage.getItem(STORAGE_KEY);
+    const key = kidId ? `${STORAGE_KEY}:${kidId}` : STORAGE_KEY;
+    let v = localStorage.getItem(key);
+    // Migrate from legacy key if necessary
+    if (!v && kidId) {
+      const legacy = localStorage.getItem(STORAGE_KEY);
+      if (legacy) {
+        try { localStorage.setItem(key, legacy); } catch {}
+        v = legacy;
+      }
+    }
     const n = v ? parseInt(v, 10) : 1;
     return Number.isFinite(n) && n >= 1 ? Math.min(7, n) : 1;
   } catch (e) {
@@ -120,8 +147,8 @@ const getUnlockedLevel = (): number => {
   }
 };
 
-const setUnlockedLevel = (n: number) => {
-  try { localStorage.setItem(STORAGE_KEY, String(Math.min(7, Math.max(1, n)))); } catch (e) { /* noop */ }
+const setUnlockedLevel = (n: number, kidId?: string) => {
+  try { const key = kidId ? `${STORAGE_KEY}:${kidId}` : STORAGE_KEY; localStorage.setItem(key, String(Math.min(7, Math.max(1, n)))); } catch (e) { /* noop */ }
 };
 
 // --- Firestore Progress Helpers ---
@@ -219,7 +246,7 @@ const KidsPhonicsMission: React.FC = () => {
   const [lastTappedChoice, setLastTappedChoice] = useState<string | null>(null);
   const [isComplete, setIsComplete] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [highestUnlocked, setHighestUnlocked] = useState<number>(getUnlockedLevel());
+  const [highestUnlocked, setHighestUnlocked] = useState<number>(getUnlockedLevel(kidId));
   const navigate = useNavigate();
 
   // Auto-recover kidId from localStorage if missing in URL
@@ -264,9 +291,11 @@ const KidsPhonicsMission: React.FC = () => {
     const sep = path.includes('?') ? '&' : '?';
     return path.includes('kidId=') ? path : `${path}${sep}kidId=${encodeURIComponent(kidId)}`;
   };
+  // Helper to namespace localStorage keys by kidId when present
+  const keyForKid = (base: string) => (kidId ? `${base}:${kidId}` : base);
   const timeoutsRef = useRef<number[]>([]);
   const clearAllTimeouts = () => { timeoutsRef.current.forEach(id => clearTimeout(id)); timeoutsRef.current = []; };
-  const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars());
+  const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars(kidId));
   const [confettiActive, setConfettiActive] = useState(false);
   const gameRef = useRef<HTMLDivElement | null>(null);
   const lastFirestoreSaveRef = useRef<number>(0);
@@ -395,12 +424,12 @@ const KidsPhonicsMission: React.FC = () => {
     if (firestoreBestStars) {
       const merged = { ...bestStarsMap, ...firestoreBestStars };
       setBestStarsMap(merged);
-      writeBestStars(merged);
+      writeBestStars(merged, kidId);
     }
     
     // Fallback to localStorage if Firestore didn't provide resume
     if (!resumeData) {
-      const progressMap = readProgressMap();
+      const progressMap = readProgressMap(kidId);
       const saved = progressMap[levelId];
       const isValid = saved && 
         Array.isArray(saved.questions) && 
@@ -431,7 +460,7 @@ const KidsPhonicsMission: React.FC = () => {
   useEffect(() => {
     const levelParam = searchParams.get('level');
     const lp = levelParam ? parseInt(levelParam, 10) : NaN;
-    const unlocked = getUnlockedLevel();
+    const unlocked = getUnlockedLevel(kidId);
     setHighestUnlocked(unlocked);
     if (!Number.isNaN(lp) && lp >= 1 && lp <= 7 && lp <= unlocked) {
       setSelectedLevel(lp);
@@ -473,7 +502,7 @@ const KidsPhonicsMission: React.FC = () => {
         currentRound,
         questions,
         updatedAt: Date.now()
-      });
+      }, kidId);
     }
   }, [selectedLevel, starsEarned, currentRound, questions, isComplete]);
 
@@ -548,10 +577,10 @@ const KidsPhonicsMission: React.FC = () => {
               if (newStars > prev) {
                 const nextMap = { ...bestStarsMap, [selectedLevel]: newStars };
                 setBestStarsMap(nextMap);
-                writeBestStars(nextMap);
+                writeBestStars(nextMap, kidId);
               }
               // Clear progress since level is completed
-              clearLevelProgress(selectedLevel);
+              clearLevelProgress(selectedLevel, kidId);
               
               // Save completion to Firestore
               if (kidId) {
@@ -594,8 +623,8 @@ const KidsPhonicsMission: React.FC = () => {
             }
             // Unlock next level if criteria met
             if (selectedLevel && newStars >= 6 && selectedLevel < 7) {
-              const newUnlocked = Math.max(getUnlockedLevel(), selectedLevel + 1);
-              setUnlockedLevel(newUnlocked);
+              const newUnlocked = Math.max(getUnlockedLevel(kidId), selectedLevel + 1);
+              setUnlockedLevel(newUnlocked, kidId);
               setHighestUnlocked(newUnlocked);
             }
           }
@@ -654,7 +683,7 @@ const KidsPhonicsMission: React.FC = () => {
           {LEVELS.map(l => {
             const locked = l.id > highestUnlocked;
             const best = bestStarsMap[l.id] || 0;
-            const progressMap = readProgressMap();
+            const progressMap = readProgressMap(kidId);
             const savedProgress = progressMap[l.id];
             
             // Determine status badge
@@ -912,7 +941,7 @@ const KidsPhonicsMission: React.FC = () => {
               <button
                 onClick={() => {
                   const next = selectedLevel + 1;
-                  const unlocked = getUnlockedLevel();
+                  const unlocked = getUnlockedLevel(kidId);
                   if (next <= unlocked) {
                     startLevel(next);
                     // Keep fullscreen active, just update URL
