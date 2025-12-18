@@ -17,8 +17,7 @@ service cloud.firestore {
       return exists(userDocPath(uid));
     }
 
-    // ✅ Safe role getter (only call after exists)
-    // Normalizes to lowercase for case-insensitive comparison
+    // Safe role getter (only call after exists)
     function userRole(uid) {
       return get(userDocPath(uid)).data.role.lower();
     }
@@ -26,41 +25,42 @@ service cloud.firestore {
     // Admin check:
     // - seeded UID (dev convenience)
     // - OR custom claim role == 'admin'
-    // - OR Firestore users/{uid}.role == 'admin' (normalized)
+    // - OR Firestore users/{uid}.role == 'admin'
     function isAdmin() {
       return isSignedIn() && (
-        // dev convenience UID
         request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3' ||
-
-        // custom claim (normalized)
-        (request.auth.token != null && request.auth.token.role.lower() == 'admin') ||
-
-        // users/{uid}.role == 'admin' (safe + normalized)
+        (request.auth.token != null
+          && ('role' in request.auth.token)
+          && request.auth.token.role.lower() == 'admin') ||
         (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'admin')
       );
     }
 
     function isTeacher() {
-      // ✅ Now accepts 'teacher', 'Teacher', 'TEACHER', etc.
-      return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'teacher';
+      return isSignedIn()
+        && userDocExists(request.auth.uid)
+        && userRole(request.auth.uid) == 'teacher';
     }
 
     function isParent() {
-      // ✅ Now accepts 'parent', 'Parent', 'PARENT', etc.
-      return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'parent';
+      return isSignedIn()
+        && userDocExists(request.auth.uid)
+        && userRole(request.auth.uid) == 'parent';
     }
 
     function isLP() {
-      // ✅ Now accepts both spellings, any casing
-      return isSignedIn() && userDocExists(request.auth.uid) && (
-        userRole(request.auth.uid) == 'learningpartner' ||
-        userRole(request.auth.uid) == 'learning-partner'
-      );
+      return isSignedIn()
+        && userDocExists(request.auth.uid)
+        && (
+          userRole(request.auth.uid) == 'learningpartner' ||
+          userRole(request.auth.uid) == 'learning-partner'
+        );
     }
 
     function isKid() {
-      // ✅ Now accepts 'kid', 'Kid', 'KID', etc.
-      return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'kid';
+      return isSignedIn()
+        && userDocExists(request.auth.uid)
+        && userRole(request.auth.uid) == 'kid';
     }
 
     function touchesAssignmentFields() {
@@ -72,6 +72,39 @@ service cloud.firestore {
 
     function touchesRoleField() {
       return ('role' in request.resource.data) && (request.resource.data.role != resource.data.role);
+    }
+
+    // ----------------------------
+    // Kid access helpers (NO "let")
+    // ----------------------------
+    function kidPath(kidId) {
+      return /databases/$(database)/documents/kids/$(kidId);
+    }
+
+    function kidData(kidId) {
+      return get(kidPath(kidId)).data;
+    }
+
+    // IMPORTANT: This does NOT depend on users/{uid}.role existing.
+    // It purely checks the kids/{kidId} document fields.
+    function canAccessKid(kidId) {
+      return isSignedIn()
+        && exists(kidPath(kidId))
+        && (
+          isAdmin() ||
+
+          // parent-style linkage
+          (('primaryParentId' in kidData(kidId)) && kidData(kidId).primaryParentId == request.auth.uid) ||
+          (('parentIds' in kidData(kidId)) && (request.auth.uid in kidData(kidId).parentIds)) ||
+          (('assignedParents' in kidData(kidId)) && (request.auth.uid in kidData(kidId).assignedParents)) ||
+
+          // teacher-style linkage
+          (('teacherId' in kidData(kidId)) && kidData(kidId).teacherId == request.auth.uid) ||
+          (('assignedTeachers' in kidData(kidId)) && (request.auth.uid in kidData(kidId).assignedTeachers)) ||
+
+          // learning partner linkage
+          (('assignedLPs' in kidData(kidId)) && (request.auth.uid in kidData(kidId).assignedLPs))
+        );
     }
 
     // ----------------------------
@@ -110,6 +143,9 @@ service cloud.firestore {
       allow read, write: if isSignedIn() && request.auth.uid == userId;
     }
 
+    // ----------------------------
+    // LEADERBOARDS
+    // ----------------------------
     match /leaderboards/{document=**} {
       allow read: if true;
       allow write: if false;
@@ -124,24 +160,36 @@ service cloud.firestore {
     // ----------------------------
     match /kids/{kidId} {
       // Admin full access
-      allow read, write: if isAdmin();
+      allow read, create, update, delete: if isAdmin();
 
-      // Parent read own kids (check parentIds array)
-      allow read: if isParent() 
-        && ('parentIds' in resource.data)
-        && (request.auth.uid in resource.data.parentIds);
+      // Others: read only if linked to kid
+      allow read: if canAccessKid(kidId);
 
-      // Teacher conservative read
-      allow read: if isTeacher();
+      // Non-admins don't write kid doc directly
+      allow create, update, delete: if false;
 
-      // LP read if assignedLPs array exists & contains uid
-      allow read: if isLP()
-        && ('assignedLPs' in resource.data)
-        && (request.auth.uid in resource.data.assignedLPs);
+      // ✅ Game sessions under the kid
+      match /gameSessions/{sessionId} {
+        allow read: if canAccessKid(kidId);
+
+        // Create: allow if user can access kid
+        // and minimum required fields exist.
+        allow create: if canAccessKid(kidId)
+          && ('gameId' in request.resource.data)
+          && ('createdAt' in request.resource.data)
+          && (
+            !('createdByUid' in request.resource.data) ||
+            request.resource.data.createdByUid == request.auth.uid ||
+            request.resource.data.createdByUid == null
+          );
+
+        // keep sessions immutable (audit trail)
+        allow update, delete: if isAdmin();
+      }
     }
 
     // ----------------------------
-    // ENROLLMENTS COLLECTION
+    // ENROLLMENTS
     // ----------------------------
     match /enrollments/{enrollmentId} {
       allow read, write: if isAdmin();
@@ -151,45 +199,37 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // SESSIONS COLLECTION
+    // SESSIONS
     // ----------------------------
     match /sessions/{sessionId} {
       allow read, write: if isAdmin();
       allow read, write: if isTeacher() && resource.data.teacherId == request.auth.uid;
       allow read: if isParent() && resource.data.parentId == request.auth.uid;
 
-      // Kid read if kidIds exists and contains uid
       allow read: if isKid()
         && ('kidIds' in resource.data)
         && (request.auth.uid in resource.data.kidIds);
     }
 
     // ----------------------------
-    // MESSAGES COLLECTION
-    // Teachers should only read messages where they are a participant
-    // Messages are expected to have a `participants` array containing user uids
-    // and fields `fromId` / `toId` for sender/recipient.
+    // MESSAGES
     // ----------------------------
     match /messages/{messageId} {
-      // Admin full access
       allow read, create, update, delete: if isAdmin();
 
-      // Teacher read only if they are a participant
       allow read: if isTeacher()
         && ('participants' in resource.data)
         && (request.auth.uid in resource.data.participants);
 
-      // Allow creating a message if signed in and the sender matches
       allow create: if isSignedIn()
         && ('fromId' in request.resource.data)
         && request.auth.uid == request.resource.data.fromId;
 
-      // Prevent updates/deletes for non-admins
       allow update, delete: if false;
     }
 
     // ----------------------------
-    // PROGRESS COLLECTION
+    // PROGRESS
     // ----------------------------
     match /progress/{progressId} {
       allow read, write: if isAdmin();
@@ -198,7 +238,7 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // INVOICES COLLECTION
+    // INVOICES
     // ----------------------------
     match /invoices/{invoiceId} {
       allow read, write: if isAdmin();
@@ -207,7 +247,7 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // COURSES COLLECTION
+    // COURSES
     // ----------------------------
     match /courses/{courseId} {
       allow read: if isSignedIn();
@@ -215,10 +255,7 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // LESSON LIBRARY: lessonFolders + lessons
-    // Admin: read + write
-    // Teacher: read only
-    // Everyone else: no access
+    // LESSON LIBRARY
     // ----------------------------
     match /lessonFolders/{folderId} {
       allow read: if isAdmin() || isTeacher();
@@ -231,27 +268,23 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // LESSON VIEW AUDIT: lesson_view_audit
-    // Teachers can create/update only their own audit docs where teacherId == auth.uid
-    // Admin can read all
+    // LESSON VIEW AUDIT
     // ----------------------------
     match /lesson_view_audit/{sessionId} {
       allow read: if isAdmin();
-      
-      // Teachers can create audit docs where teacherId matches their uid
-      allow create: if isTeacher() 
+
+      allow create: if isTeacher()
         && request.resource.data.teacherId == request.auth.uid;
-      
-      // Teachers can update only their own audit docs
-      allow update: if isTeacher() 
+
+      allow update: if isTeacher()
         && resource.data.teacherId == request.auth.uid
         && request.resource.data.teacherId == request.auth.uid;
-      
+
       allow delete: if isAdmin();
     }
 
     // ----------------------------
-    // NOTIFICATIONS COLLECTION
+    // NOTIFICATIONS / ADMIN / DEBUG
     // ----------------------------
     match /notifications/{notificationId} {
       allow read, write: if isAdmin();
