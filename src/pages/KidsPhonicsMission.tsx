@@ -66,6 +66,19 @@ type SavedProgress = {
 
 type ProgressMap = Record<number, SavedProgress>;
 
+type FireworkParticle = {
+  id: number;
+  x: string; // vw units
+  y: string; // vh units
+  dx: number; // pixels
+  dy: number; // pixels
+  rot: number; // degrees
+  delayMs: number;
+  durMs: number;
+  sizePx: number;
+  color: string;
+};
+
 const readBestStars = (kidId?: string): Record<number, number> => {
   try {
     const key = kidId ? `${BEST_KEY}:${kidId}` : BEST_KEY;
@@ -297,6 +310,7 @@ const KidsPhonicsMission: React.FC = () => {
   const clearAllTimeouts = () => { timeoutsRef.current.forEach(id => clearTimeout(id)); timeoutsRef.current = []; };
   const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars(kidId));
   const [confettiActive, setConfettiActive] = useState(false);
+  const [fireworks, setFireworks] = useState<FireworkParticle[]>([]);
   const gameRef = useRef<HTMLDivElement | null>(null);
   const lastFirestoreSaveRef = useRef<number>(0);
   const firestoreSaveTimeoutRef = useRef<number | null>(null);
@@ -561,6 +575,92 @@ const KidsPhonicsMission: React.FC = () => {
     if (choice === currentQuestion.target) {
         setFeedback('correct');
         setConfettiActive(true);
+        
+        // Generate firecracker fireworks from grass line + corners
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReducedMotion) {
+          const particles: FireworkParticle[] = [];
+          let particleId = 0;
+          const colors = ['#FFD54A', '#FF7A59', '#FF4D8D', '#7C5CFF', '#2EE6A6', '#FFFFFF'];
+          
+          // Helper to clamp positions
+          const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+          
+          // Ground bursts (main effect from grass line)
+          const groundBursts = [
+            { x: 14, y: 86, count: 24 }, // Bottom-left
+            { x: 86, y: 86, count: 24 }, // Bottom-right
+            { x: 50, y: 88, count: 24 }, // Bottom-center (slightly lower)
+          ];
+          
+          groundBursts.forEach(burst => {
+            const xClamped = clamp(burst.x, 6, 94);
+            const yClamped = clamp(burst.y, 8, 92);
+            
+            for (let i = 0; i < burst.count; i++) {
+              // Mostly upward fan: angles -140° to -40°
+              const angle = -140 + Math.random() * 100;
+              const angleRad = (angle * Math.PI) / 180;
+              const radius = 220 + Math.random() * 200;
+              const dx = Math.cos(angleRad) * radius;
+              const dy = Math.sin(angleRad) * radius; // negative = upward
+              
+              particles.push({
+                id: particleId++,
+                x: `${xClamped}vw`,
+                y: `${yClamped}vh`,
+                dx,
+                dy,
+                rot: Math.random() * 720 - 360,
+                delayMs: Math.random() * 450,
+                durMs: 1800 + Math.random() * 800,
+                sizePx: 4 + Math.random() * 4,
+                color: colors[Math.floor(Math.random() * colors.length)],
+              });
+            }
+          });
+          
+          // Corner bursts (small pops near balloons/bunting)
+          const cornerBursts = [
+            { x: 92, y: 18, count: 12, angleMin: 140, angleMax: 220 }, // Top-right
+            { x: 8, y: 14, count: 12, angleMin: -40, angleMax: 40 },   // Top-left
+          ];
+          
+          cornerBursts.forEach(burst => {
+            const xClamped = clamp(burst.x, 6, 94);
+            const yClamped = clamp(burst.y, 8, 92);
+            
+            for (let i = 0; i < burst.count; i++) {
+              const angle = burst.angleMin + Math.random() * (burst.angleMax - burst.angleMin);
+              const angleRad = (angle * Math.PI) / 180;
+              const radius = 120 + Math.random() * 120;
+              const dx = Math.cos(angleRad) * radius;
+              const dy = Math.sin(angleRad) * radius;
+              
+              particles.push({
+                id: particleId++,
+                x: `${xClamped}vw`,
+                y: `${yClamped}vh`,
+                dx,
+                dy,
+                rot: Math.random() * 720 - 360,
+                delayMs: Math.random() * 450,
+                durMs: 1800 + Math.random() * 800,
+                sizePx: 4 + Math.random() * 3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+              });
+            }
+          });
+          
+          setFireworks(particles);
+          
+          // Clear fireworks after 3000ms
+          const fireworkTimeout = window.setTimeout(() => {
+            setFireworks([]);
+          }, 3000);
+          timeoutsRef.current.push(fireworkTimeout);
+        }
+        
         const newStars = starsEarned + 1;
         setStarsEarned(s => s + 1);
         const t = window.setTimeout(() => {
@@ -872,6 +972,18 @@ const KidsPhonicsMission: React.FC = () => {
           100% { top: 120%; opacity: 0; }
         }
 
+        @keyframes fireworkBurst {
+          0% { transform: translate3d(0, 0, 0) scale(0.9) rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          100% { transform: translate3d(var(--dx), var(--dy), 0) scale(1) rotate(var(--rot)); opacity: 0; }
+        }
+
+        @keyframes fireworkFlash {
+          0% { transform: scale(0.6); opacity: 0; }
+          20% { opacity: 1; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+
         @media (prefers-reduced-motion: reduce) { 
           * { animation: none !important; transition: none !important; }
           .listen-btn-booming { animation: none !important; transform: scale(1) !important; }
@@ -1096,6 +1208,31 @@ const KidsPhonicsMission: React.FC = () => {
                   />
                 );
               })}
+            </div>
+          )}
+
+          {/* Firecracker Fireworks Overlay */}
+          {fireworks.length > 0 && (
+            <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 60, overflow: 'hidden' }} aria-hidden="true">
+              {fireworks.map(particle => (
+                <div
+                  key={particle.id}
+                  style={{
+                    position: 'absolute',
+                    left: particle.x,
+                    top: particle.y,
+                    width: particle.sizePx,
+                    height: particle.sizePx,
+                    backgroundColor: particle.color,
+                    borderRadius: '2px',
+                    // @ts-ignore - CSS variables work at runtime
+                    '--dx': `${particle.dx}px`,
+                    '--dy': `${particle.dy}px`,
+                    '--rot': `${particle.rot}deg`,
+                    animation: `fireworkBurst ${particle.durMs}ms ease-out ${particle.delayMs}ms forwards`,
+                  } as React.CSSProperties}
+                />
+              ))}
             </div>
           )}
         </div>
