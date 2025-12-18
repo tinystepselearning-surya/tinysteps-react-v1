@@ -907,14 +907,23 @@ const KidsPhonicsMission: React.FC = () => {
       >
       <style>{`
         /* Animations */
+        /* Pop animation used for answer feedback (scale-only, no rotation) */
+        @keyframes pop {
+          0% { transform: scale(1); opacity: 1; }
+          50% { transform: scale(1.08); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Simplified sparkle used for small flashes (scale-only, no rotate)
+           Keeps visual sparkle but avoids any rotation on answer buttons */
         @keyframes sparkle { 
-          0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; } 
-          50% { transform: scale(1.15) rotate(180deg); opacity: 0.9; } 
+          0%, 100% { transform: scale(1); opacity: 1; } 
+          50% { transform: scale(1.15); opacity: 0.95; } 
         }
         @keyframes sparkleBurst {
-          0% { transform: scale(0) rotate(0deg); opacity: 1; }
-          50% { transform: scale(1.2) rotate(180deg); opacity: 0.8; }
-          100% { transform: scale(1.5) rotate(360deg); opacity: 0; }
+          0% { transform: scale(0); opacity: 1; }
+          50% { transform: scale(1.2); opacity: 0.9; }
+          100% { transform: scale(1.5); opacity: 0; }
         }
         @keyframes gentleShake { 
           0%, 100% { transform: translateX(0); } 
@@ -1004,19 +1013,33 @@ const KidsPhonicsMission: React.FC = () => {
           transform: scale(0.98);
         }
         .choice-btn.sparkle-correct {
-          animation: sparkle 0.6s ease-out;
+          animation: pop 220ms cubic-bezier(.2,.9,.2,1);
           background: rgba(45, 212, 191, 0.6) !important;
           border-color: rgba(45, 212, 191, 1) !important;
-          box-shadow: 0 0 60px rgba(45, 212, 191, 0.9), 0 0 120px rgba(45, 212, 191, 0.6) !important;
+          box-shadow: 0 0 60px rgba(45, 212, 191, 0.95), 0 0 140px rgba(45, 212, 191, 0.6) !important;
         }
         .choice-btn.shake-wrong {
           animation: gentleShake 0.35s ease-in-out;
         }
         .choice-btn.glow-wrong {
-          animation: sparkle 0.6s ease-out;
+          animation: pop 220ms cubic-bezier(.2,.9,.2,1);
           background: rgba(239, 68, 68, 0.6) !important;
           border-color: rgba(239, 68, 68, 1) !important;
-          box-shadow: 0 0 60px rgba(239, 68, 68, 0.9), 0 0 120px rgba(239, 68, 68, 0.6) !important;
+          box-shadow: 0 0 60px rgba(239, 68, 68, 0.95), 0 0 140px rgba(239, 68, 68, 0.6) !important;
+        }
+
+        /* Explicit utility classes for answer glow styling (kept for clarity and future use) */
+        .answerGlowGreen {
+          animation: pop 220ms cubic-bezier(.2,.9,.2,1);
+          background: rgba(45, 212, 191, 0.6) !important;
+          border-color: rgba(45, 212, 191, 1) !important;
+          box-shadow: 0 0 60px rgba(45, 212, 191, 0.95), 0 0 140px rgba(45, 212, 191, 0.6) !important;
+        }
+        .answerGlowRed {
+          animation: pop 220ms cubic-bezier(.2,.9,.2,1);
+          background: rgba(239, 68, 68, 0.6) !important;
+          border-color: rgba(239, 68, 68, 1) !important;
+          box-shadow: 0 0 60px rgba(239, 68, 68, 0.95), 0 0 140px rgba(239, 68, 68, 0.6) !important;
         }
         .listen-btn-booming {
           animation: boomingPulse 1.8s ease-in-out infinite;
