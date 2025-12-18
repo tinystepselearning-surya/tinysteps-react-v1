@@ -98,6 +98,16 @@ export default function ParentDashboard() {
     return kids.find((k: any) => k.id === selectedKidId) || null;
   }, [kids, selectedKidId]);
 
+  // Helper to preserve kidId in navigation
+  const withKid = (path: string) => {
+    if (!selectedKidId) return path;
+    const sep = path.includes('?') ? '&' : '?';
+    return path.includes('kidId=') ? path : `${path}${sep}kidId=${encodeURIComponent(selectedKidId)}`;
+  };
+
+  // Compute Kids Portal URL (only valid if selectedKidId exists)
+  const kidsPortalUrl = selectedKidId ? `/kids?kidId=${encodeURIComponent(selectedKidId)}` : null;
+
   const activeTab = searchParams.get('tab') ?? 'overview';
 
   const setTab = (tabName: 'overview' | 'kids' | 'payments') => {
@@ -115,21 +125,41 @@ export default function ParentDashboard() {
     return null;
   }
 
-  const KidsTabContent = () => (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <h1 className="text-xl font-bold mb-4">Kids Dashboard</h1>
-      <div className="p-4 bg-white rounded shadow">
-        <h2 className="text-lg font-semibold mb-2">Games</h2>
-        <p className="text-sm text-muted-foreground mb-4">
-          Play phonics, grammar, and speaking games. Progress is tracked automatically.
-        </p>
-        <button
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          onClick={() => alert('Coming soon')}
-        >
-          Open Games
-        </button>
-      </div>
+  const KidsTabContent = () => {
+    // Compute Games Hub URL (only valid if selectedKidId exists)
+    const gamesHubUrl = selectedKidId ? `/kids/games?kidId=${encodeURIComponent(selectedKidId)}` : null;
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <h1 className="text-xl font-bold mb-4">Kids Dashboard</h1>
+        <div className="p-4 bg-white rounded shadow">
+          <h2 className="text-lg font-semibold mb-2">Games</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Play phonics, grammar, and speaking games. Progress is tracked automatically.
+          </p>
+          {gamesHubUrl ? (
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => {
+                if (isDev) {
+                  console.debug('[ParentDashboard] Opening Games Hub:', { selectedKidId, gamesHubUrl });
+                }
+                navigate(gamesHubUrl);
+              }}
+            >
+              Open Games
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="px-4 py-2 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
+              title="Please select a child first"
+            >
+              Open Games
+            </button>
+          )}
+        </div>
       <div className="p-4 bg-white rounded shadow">
         <h2 className="text-lg font-semibold mb-2">Join Class</h2>
         <p className="text-sm text-muted-foreground mb-4">
@@ -155,7 +185,8 @@ export default function ParentDashboard() {
         </button>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
@@ -233,12 +264,28 @@ export default function ParentDashboard() {
         >
           Kids Page
         </Link>
-        <Link
-          to={`/kids${selectedKidId ? `?kidId=${selectedKidId}` : ''}`}
-          className="inline-block ml-3 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded hover:bg-gray-100 mb-4"
-        >
-          Open Kids Portal
-        </Link>
+        {kidsPortalUrl ? (
+          <Link
+            to={kidsPortalUrl}
+            onClick={() => {
+              if (isDev) {
+                console.debug('[ParentDashboard] Opening Kids Portal:', { selectedKidId, kidsPortalUrl });
+              }
+            }}
+            className="inline-block ml-3 px-4 py-2 bg-white border border-gray-200 text-gray-800 rounded hover:bg-gray-100 mb-4"
+          >
+            Open Kids Portal
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="inline-block ml-3 px-4 py-2 bg-gray-200 border border-gray-300 text-gray-400 rounded cursor-not-allowed mb-4"
+            title="Please select a child first"
+          >
+            Open Kids Portal
+          </button>
+        )}
         {!selectedKidId && (
           <span className="ml-3 text-sm text-amber-600">
             ⚠️ Select a child to track progress.

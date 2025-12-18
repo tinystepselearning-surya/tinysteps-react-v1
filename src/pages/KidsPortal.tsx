@@ -1,11 +1,28 @@
 // src/pages/KidsPortal.tsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 export default function KidsPortal() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const kidId = searchParams.get('kidId') || '';
+  const { user } = useAuth();
+  let kidId = searchParams.get('kidId') || '';
+
+  // Fallback: if no kidId in URL, try localStorage
+  useEffect(() => {
+    if (!kidId && user?.uid) {
+      try {
+        const stored = localStorage.getItem(`ts_parent_selected_kid_v1:${user.uid}`);
+        if (stored) {
+          // Redirect to same page with kidId
+          navigate(`/kids?kidId=${encodeURIComponent(stored)}`, { replace: true });
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [kidId, user?.uid, navigate]);
 
   // Helper to preserve kidId in navigation
   const withKid = (path: string) => {

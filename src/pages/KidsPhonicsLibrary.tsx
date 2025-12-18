@@ -1,6 +1,6 @@
 // src/pages/KidsPhonicsLibrary.tsx
-import React, { useMemo } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import React, { useMemo, useEffect, useState } from 'react';
+import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
@@ -21,6 +21,49 @@ const KidsPhonicsLibrary: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const kidId = searchParams.get('kidId') || '';
+
+  const location = useLocation();
+  const [recovering, setRecovering] = useState(false);
+
+  // Auto-recover kidId from localStorage if missing in URL
+  useEffect(() => {
+    if (!kidId) {
+      try {
+        const stored = localStorage.getItem('ts_active_kid_v1') || null;
+        if (stored) {
+          setRecovering(true);
+          const newParams = new URLSearchParams(searchParams);
+          newParams.set('kidId', stored);
+          // Redirect to same path with kidId appended, replace history to avoid clutter
+          navigate({ pathname: location.pathname, search: newParams.toString() }, { replace: true });
+        }
+      } catch (e) {
+        // ignore storage errors
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist kidId when present so direct opens can recover
+  useEffect(() => {
+    if (kidId) {
+      try {
+        localStorage.setItem('ts_active_kid_v1', kidId);
+      } catch (e) {
+        // ignore storage errors
+      } finally {
+        // if we were recovering, clear the flag
+        if (recovering) setRecovering(false);
+      }
+    }
+  }, [kidId, recovering]);
+
+  // Helper to preserve kidId in all navigation
+  const withKid = (path: string) => {
+    if (!kidId) return path;
+    const sep = path.includes('?') ? '&' : '?';
+    return path.includes('kidId=') ? path : `${path}${sep}kidId=${encodeURIComponent(kidId)}`;
+  };
 
   // Fetch game summaries for the selected kid
   const gameSummariesQuery = useQuery({
@@ -99,7 +142,7 @@ const KidsPhonicsLibrary: React.FC = () => {
       <div className="comet" aria-hidden />
 
       <Link
-        to={`/kids/games${kidId ? `?kidId=${kidId}` : ''}`}
+        to={withKid('/kids/games')}
         className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
         style={{ zIndex: 40 }}
       >
@@ -111,19 +154,25 @@ const KidsPhonicsLibrary: React.FC = () => {
         <p className="text-lg text-purple-300 mt-2">Choose a game</p>
       </div>
 
-      {/* No kid selected warning */}
-      {!kidId && (
-        <div className="w-full max-w-3xl mx-auto mb-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg" style={{ zIndex: 10 }}>
-          <p className="text-yellow-200 font-semibold mb-2">⚠️ No child selected</p>
-          <p className="text-yellow-100/80 text-sm mb-3">Please go back and choose a child to track progress.</p>
-          <Link
-            to="/parent"
-            className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
-          >
-            ← Back to Parent Dashboard
-          </Link>
-        </div>
-      )}
+      {/* No kid selected warning (with recovering state to avoid flash) */}
+      {!kidId ? (
+        recovering ? (
+          <div className="w-full max-w-3xl mx-auto mb-6 p-4 text-center" style={{ zIndex: 10 }}>
+            Loading…
+          </div>
+        ) : (
+          <div className="w-full max-w-3xl mx-auto mb-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg" style={{ zIndex: 10 }}>
+            <p className="text-yellow-200 font-semibold mb-2">⚠️ No child selected</p>
+            <p className="text-yellow-100/80 text-sm mb-3">Please go back and choose a child to track progress.</p>
+            <Link
+              to={withKid('/parent')}
+              className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
+            >
+              ← Back to Parent Dashboard
+            </Link>
+          </div>
+        )
+      ) : null}
 
       <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8" style={{ zIndex: 10 }}>
         {PHONICS_GAMES.map((game) => {
@@ -152,14 +201,11 @@ const KidsPhonicsLibrary: React.FC = () => {
           // Button label
           const buttonLabel = summary?.hasResume ? 'Continue' : 'Play';
           
-          // Build route with kidId
-          const gameRoute = kidId ? `${game.route}?kidId=${kidId}` : game.route;
-          
           return (
             <button
               key={game.id}
               type="button"
-              onClick={() => navigate(gameRoute)}
+              onClick={() => navigate(withKid(game.route))}
               aria-label={`Open ${game.title} game`}
               className="library-card"
             >

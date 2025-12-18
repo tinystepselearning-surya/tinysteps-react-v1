@@ -1,6 +1,7 @@
 // src/pages/KidsPhonicsMission.tsx
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../hooks/useAuth';
 
 // --- Config ---
 const TOTAL_ROUNDS = 8;
@@ -208,7 +209,9 @@ const generateQuestionsForLevel = (levelDef: LevelDef): Question[] => {
 // --- Main Component ---
 const KidsPhonicsMission: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const kidId = searchParams.get('kidId') || '';
+  const location = useLocation();
+  const { user } = useAuth();
+  let kidId = searchParams.get('kidId') || '';
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentRound, setCurrentRound] = useState(0);
   const [starsEarned, setStarsEarned] = useState(0);
@@ -218,6 +221,49 @@ const KidsPhonicsMission: React.FC = () => {
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [highestUnlocked, setHighestUnlocked] = useState<number>(getUnlockedLevel());
   const navigate = useNavigate();
+
+  // Auto-recover kidId from localStorage if missing in URL
+  useEffect(() => {
+    if (!kidId) {
+      try {
+        // Try global fallback first
+        let stored = localStorage.getItem('ts_active_kid_v1');
+        // Then try user-specific storage
+        if (!stored && user?.uid) {
+          stored = localStorage.getItem(`ts_parent_selected_kid_v1:${user.uid}`);
+        }
+        if (stored) {
+          // Redirect to same page with kidId added
+          const newParams = new URLSearchParams(searchParams);
+          newParams.set('kidId', stored);
+          navigate(
+            { pathname: location.pathname, search: newParams.toString() },
+            { replace: true }
+          );
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [kidId, user?.uid, searchParams, location.pathname, navigate]);
+
+  // Persist kidId to localStorage when present
+  useEffect(() => {
+    if (kidId) {
+      try {
+        localStorage.setItem('ts_active_kid_v1', kidId);
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, [kidId]);
+
+  // Helper to preserve kidId in all navigation
+  const withKid = (path: string) => {
+    if (!kidId) return path;
+    const sep = path.includes('?') ? '&' : '?';
+    return path.includes('kidId=') ? path : `${path}${sep}kidId=${encodeURIComponent(kidId)}`;
+  };
   const timeoutsRef = useRef<number[]>([]);
   const clearAllTimeouts = () => { timeoutsRef.current.forEach(id => clearTimeout(id)); timeoutsRef.current = []; };
   const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars());
@@ -579,7 +625,7 @@ const KidsPhonicsMission: React.FC = () => {
 
         {/* Back to Phonics Library (Choose Level screen) */}
         <Link
-          to="/kids/games/phonics"
+          to={withKid('/kids/games/phonics')}
           className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg text-white hover:text-white focus:text-white"
           style={{ zIndex: 50 }}
         >
@@ -595,7 +641,7 @@ const KidsPhonicsMission: React.FC = () => {
               <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
               <p className="text-yellow-100/80 text-sm mb-4">Please go back and choose a child to track progress.</p>
               <Link
-                to="/parent"
+                to={withKid('/parent')}
                 className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
               >
                 ← Back to Parent Dashboard
@@ -795,7 +841,7 @@ const KidsPhonicsMission: React.FC = () => {
       {/* Back Button */}
       {!selectedLevel ? (
         <Link
-          to="/kids/games/phonics"
+          to={withKid('/kids/games/phonics')}
           className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg"
           style={{ zIndex: 50 }}
         >
@@ -827,7 +873,7 @@ const KidsPhonicsMission: React.FC = () => {
             setIsComplete(false);
             setStarsEarned(0);
             setCurrentRound(0);
-            navigate('/kids/games/phonics/letter-sound', { replace: true });
+            navigate(withKid('/kids/games/phonics/letter-sound'), { replace: true });
           }}
           className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg text-white hover:text-white focus:text-white"
           style={{ zIndex: 50 }}
@@ -856,7 +902,7 @@ const KidsPhonicsMission: React.FC = () => {
               Play Again 🚀
             </button>
             <button
-              onClick={() => { exitImmersiveMode(); clearAllTimeouts(); setSelectedLevel(null); setQuestions([]); setFeedback(null); setLastTappedChoice(null); navigate('/kids/games/phonics/letter-sound', { replace: true }); }}
+              onClick={() => { exitImmersiveMode(); clearAllTimeouts(); setSelectedLevel(null); setQuestions([]); setFeedback(null); setLastTappedChoice(null); navigate(withKid('/kids/games/phonics/letter-sound'), { replace: true }); }}
               className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl text-lg font-semibold"
               type="button"
             >
