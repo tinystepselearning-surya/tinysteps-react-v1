@@ -628,7 +628,7 @@ const KidsPhonicsMission: React.FC = () => {
               setHighestUnlocked(newUnlocked);
             }
           }
-        }, 700);
+        }, 4000);
         timeoutsRef.current.push(t);
     } else {
       setFeedback('wrong');
@@ -868,8 +868,8 @@ const KidsPhonicsMission: React.FC = () => {
 
         @keyframes confettiFall {
           0% { top: -10%; opacity: 1; }
-          80% { opacity: 1; }
-          100% { top: 110%; opacity: 0; }
+          85% { opacity: 1; }
+          100% { top: 120%; opacity: 0; }
         }
 
         @media (prefers-reduced-motion: reduce) { 
@@ -968,7 +968,7 @@ const KidsPhonicsMission: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-center px-4" style={{ zIndex: 10 }}>
+        <div className="w-full h-full flex flex-col items-center justify-center px-4" style={{ zIndex: 10, paddingTop: 60 }}>
           {/* Progress Stars - Top center */}
           <div className="absolute top-6 left-1/2 transform -translate-x-1/2 flex justify-center gap-2" aria-label={`Progress: ${starsEarned} of ${TOTAL_ROUNDS} stars earned`} style={{ zIndex: 20 }}>
             {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
@@ -984,8 +984,8 @@ const KidsPhonicsMission: React.FC = () => {
           </div>
 
           {/* Main gameplay: 2 columns on desktop, stacked on mobile */}
-          <div className="w-full flex items-center justify-center mt-8">
-          <div className="flex flex-col md:flex-row items-center justify-center" style={{ gap: '96px' }}>
+          <div className="w-full flex items-center justify-center" style={{ maxWidth: 1280, margin: '0 auto', padding: '0 56px' }}>
+          <div className="flex flex-col md:flex-row items-center justify-center" style={{ gap: '160px', transform: 'translateY(24px)' }}>
             {/* LEFT COLUMN: Listen Button */}
             <div className="flex flex-col items-center justify-center gap-6">
               <button
@@ -1020,7 +1020,7 @@ const KidsPhonicsMission: React.FC = () => {
             </div>
 
             {/* RIGHT COLUMN: Option Buttons */}
-            <div className="flex flex-col items-stretch" style={{ gap: '24px', width: 420 }}>
+            <div className="flex flex-col items-stretch justify-center" style={{ gap: '34px', width: 420 }}>
               {currentQuestion.choices.map(choice => {
                 const allItems = LEVELS.flatMap(l => l.items);
                 const item = allItems.find(x => x.grapheme === choice);
@@ -1072,10 +1072,10 @@ const KidsPhonicsMission: React.FC = () => {
           {/* Confetti Overlay */}
           {confettiActive && (
             <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 60, overflow: 'hidden' }} aria-hidden="true">
-              {Array.from({ length: 24 }).map((_, i) => {
+              {Array.from({ length: 50 }).map((_, i) => {
                 const left = Math.random() * 100;
-                const delay = Math.random() * 0.3;
-                const duration = 1.2 + Math.random() * 0.6;
+                const delay = Math.random() * 0.6;
+                const duration = 2.8 + Math.random() * 1.4;
                 const rotation = Math.random() * 360;
                 const colors = ['#fbbf24', '#34d399', '#60a5fa', '#f87171', '#a78bfa', '#fb923c'];
                 const color = colors[Math.floor(Math.random() * colors.length)];
