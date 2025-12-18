@@ -269,18 +269,32 @@ const updateGameSummary = async (_kidId: string): Promise<void> => {
 // Game session logging helper
 async function logGameSession(kidId: string, payload: any) {
   try {
-    if (!kidId) return;
-    const { collection, addDoc, serverTimestamp, getFirestore } = await import('firebase/firestore');
+    if (!kidId) {
+      console.warn('[gameSessions] No kidId provided, skipping write');
+      return;
+    }
+    
+    console.info('[gameSessions] Attempting write', { gameId: payload.gameId, kidId, level: payload.level });
+    
+    const [{ collection, addDoc, serverTimestamp, getFirestore }, { getAuth }] = await Promise.all([
+      import('firebase/firestore'),
+      import('firebase/auth')
+    ]);
     const db = getFirestore();
+    const auth = getAuth();
 
-    await addDoc(collection(db, 'students', kidId, 'gameSessions'), {
+    const docRef = await addDoc(collection(db, 'kids', kidId, 'gameSessions'), {
       ...payload,
+      appEnv: import.meta.env.MODE,
+      createdByUid: auth.currentUser?.uid || null,
       createdAt: serverTimestamp(),
       startedAt: payload.startedAt ?? serverTimestamp(),
       endedAt: payload.endedAt ?? serverTimestamp(),
     });
-  } catch {
-    // fail silently
+    
+    console.info('[gameSessions] Write successful', { kidId, docId: docRef.id });
+  } catch (err) {
+    console.error('[gameSessions] Write failed', err);
   }
 }
 
@@ -777,7 +791,8 @@ const KidsPhonicsMission: React.FC = () => {
               if (kidId && sessionStartMsRef.current && !sessionLoggedRef.current) {
                 sessionLoggedRef.current = true;
                 const endMs = Date.now();
-                const durationSec = Math.round((endMs - sessionStartMsRef.current) / 1000);
+                const durationMs = endMs - sessionStartMsRef.current;
+                const durationSec = Math.round(durationMs / 1000);
                 const accuracy = attemptsRef.current > 0 ? correctRef.current / attemptsRef.current : 0;
                 
                 const levelDef = LEVELS.find(l => l.id === selectedLevel);
@@ -790,15 +805,17 @@ const KidsPhonicsMission: React.FC = () => {
                 if (hasDigraphs) skills.push('digraphs_advanced');
                 
                 logGameSession(kidId, {
-                  gameId: 'letter_sound_match',
+                  gameId: 'letter-sound-match',
                   mode: 'phonics',
                   level: selectedLevel,
                   skills,
+                  lettersOrGraphemes: graphemes,
                   graphemes,
                   attempts: attemptsRef.current,
                   correct: correctRef.current,
                   wrong: wrongRef.current,
                   accuracy,
+                  durationMs,
                   durationSec,
                 });
               }
