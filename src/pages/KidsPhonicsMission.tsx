@@ -979,7 +979,7 @@ const KidsPhonicsMission: React.FC = () => {
           </div>
 
           {/* Top instructional text */}
-          <div className="absolute top-24 left-8 text-3xl md:text-4xl font-bold text-gray-800 drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(255,255,255,0.5), 0 0 8px rgba(255,255,255,0.3)', zIndex: 20 }}>
+          <div className="absolute top-24 left-1/2 text-3xl md:text-4xl font-bold text-gray-800 drop-shadow-lg text-center" style={{ transform: 'translateX(-50%)', width: 'min(1100px, 92vw)', textShadow: '2px 2px 4px rgba(255,255,255,0.5), 0 0 8px rgba(255,255,255,0.3)', zIndex: 20 }}>
             Tap the letter that says this sound
           </div>
 
