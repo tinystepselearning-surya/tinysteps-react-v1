@@ -765,6 +765,10 @@ const KidsPhonicsMission: React.FC = () => {
           25% { transform: translateX(-8px); } 
           75% { transform: translateX(8px); } 
         }
+        @keyframes boomingPulse {
+          0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 140, 66, 0.4); }
+          50% { transform: scale(1.06); box-shadow: 0 0 40px rgba(255, 140, 66, 0.8), 0 0 60px rgba(255, 107, 53, 0.6); }
+        }
         @keyframes comet { 
           0% { transform: translate(-100vw, 0) rotate(-30deg); opacity: 0; } 
           10% { opacity: 0.6; } 
@@ -852,6 +856,15 @@ const KidsPhonicsMission: React.FC = () => {
         .choice-btn.shake-wrong {
           animation: gentleShake 0.35s ease-in-out;
         }
+        .choice-btn.glow-wrong {
+          animation: sparkle 0.6s ease-out;
+          background: rgba(239, 68, 68, 0.6) !important;
+          border-color: rgba(239, 68, 68, 1) !important;
+          box-shadow: 0 0 60px rgba(239, 68, 68, 0.9), 0 0 120px rgba(239, 68, 68, 0.6) !important;
+        }
+        .listen-btn-booming {
+          animation: boomingPulse 1.8s ease-in-out infinite;
+        }
 
         @keyframes confettiFall {
           0% { top: -10%; opacity: 1; }
@@ -860,7 +873,8 @@ const KidsPhonicsMission: React.FC = () => {
         }
 
         @media (prefers-reduced-motion: reduce) { 
-          * { animation: none !important; transition: none !important; } 
+          * { animation: none !important; transition: none !important; }
+          .listen-btn-booming { animation: none !important; transform: scale(1) !important; }
         }
       `}</style>
       
@@ -970,17 +984,18 @@ const KidsPhonicsMission: React.FC = () => {
           </div>
 
           {/* Main gameplay: 2 columns on desktop, stacked on mobile */}
-          <div className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 mt-16">
+          <div className="w-full flex items-center justify-center mt-8">
+          <div className="flex flex-col md:flex-row items-center justify-center" style={{ gap: '96px' }}>
             {/* LEFT COLUMN: Listen Button */}
             <div className="flex flex-col items-center justify-center gap-6">
               <button
                 onClick={playSound}
                 type="button"
                 aria-label="Listen to sound"
-                className="relative flex items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95"
+                className="listen-btn-booming relative flex items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95"
                 style={{
-                  width: 280,
-                  height: 280,
+                  width: 340,
+                  height: 340,
                   background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)',
                   border: '8px solid rgba(255,255,255,0.9)',
                   touchAction: 'manipulation',
@@ -1005,11 +1020,13 @@ const KidsPhonicsMission: React.FC = () => {
             </div>
 
             {/* RIGHT COLUMN: Option Buttons */}
-            <div className="flex flex-col gap-6 items-stretch" style={{ width: 320 }}>
+            <div className="flex flex-col items-stretch" style={{ gap: '24px', width: 420 }}>
               {currentQuestion.choices.map(choice => {
                 const allItems = LEVELS.flatMap(l => l.items);
                 const item = allItems.find(x => x.grapheme === choice);
                 const displayText = item ? (item.display || item.grapheme) : choice;
+                const isCorrect = choice === currentQuestion.target;
+                const isWrong = choice === lastTappedChoice && !isCorrect;
                 
                 return (
                   <button
@@ -1018,14 +1035,15 @@ const KidsPhonicsMission: React.FC = () => {
                     onClick={() => handleChoice(choice)}
                     aria-label={`Choose ${displayText}`}
                     className={`choice-btn flex items-center justify-center rounded-3xl shadow-xl font-black text-gray-800 transition-all
-                      ${feedback === 'correct' && choice === currentQuestion.target ? 'sparkle-correct' : ''}
-                      ${feedback === 'wrong' && choice === lastTappedChoice ? 'shake-wrong' : ''}
+                      ${feedback === 'correct' && isCorrect ? 'sparkle-correct' : ''}
+                      ${feedback === 'wrong' && isWrong ? 'glow-wrong shake-wrong' : ''}
                     `}
                     style={{
-                      height: 140,
+                      height: 160,
                       background: 'linear-gradient(135deg, #FFDAB9 0%, #FFB88C 100%)',
                       border: '6px solid rgba(139, 69, 19, 0.4)',
-                      fontSize: displayText.length > 1 ? '4rem' : '5rem',
+                      fontSize: displayText.length > 1 ? '5rem' : '6rem',
+                      fontFamily: '"Comic Sans MS","Comic Sans",cursive',
                       touchAction: 'manipulation',
                       userSelect: 'none',
                       WebkitUserSelect: 'none',
@@ -1036,6 +1054,7 @@ const KidsPhonicsMission: React.FC = () => {
                 );
               })}
             </div>
+          </div>
           </div>
 
           {/* Feedback Messages */}
