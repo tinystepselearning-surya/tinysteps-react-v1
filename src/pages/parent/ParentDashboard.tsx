@@ -98,6 +98,32 @@ export default function ParentDashboard() {
     return kids.find((k: any) => k.id === selectedKidId) || null;
   }, [kids, selectedKidId]);
 
+  // Fetch game summaries for the selected kid
+  const gameSummariesQuery = useQuery({
+    queryKey: ['gameSummaries', selectedKidId],
+    queryFn: async () => {
+      if (!selectedKidId) return [];
+      
+      const [{ collection, query, orderBy, limit, getDocs }, { db }] = await Promise.all([
+        import('firebase/firestore'),
+        import('../../lib/firebaseConfig'),
+      ]);
+      
+      const q = query(
+        collection(db, 'kids', selectedKidId, 'gameSummaries'),
+        orderBy('lastPlayedAt', 'desc'),
+        limit(50)
+      );
+      
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as any[];
+    },
+    enabled: !!selectedKidId,
+  });
+
   // Helper to preserve kidId in navigation
   const withKid = (path: string) => {
     if (!selectedKidId) return path;
