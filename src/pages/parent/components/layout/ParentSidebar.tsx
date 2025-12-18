@@ -1,7 +1,7 @@
 import type { FC, ReactNode } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
-import { Home, Users, Calendar, CreditCard, FileText, MessageSquare, Bell, Settings, User, Sparkles } from 'lucide-react';
+import { Home, Users, Calendar, CreditCard, FileText, MessageSquare, Bell, Settings, User, Sparkles, TrendingUp } from 'lucide-react';
 
 interface SidebarItem {
   id: string;
@@ -13,6 +13,7 @@ interface SidebarItem {
 const sidebarItems: SidebarItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <Home className="w-4 h-4" /> },
   { id: 'children', label: 'Children', icon: <Users className="w-4 h-4" /> },
+  { id: 'games-progress', label: 'Games Progress', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'sessions', label: 'Sessions', icon: <Calendar className="w-4 h-4" /> },
   { id: 'payments', label: 'Payments', icon: <CreditCard className="w-4 h-4" />, badge: '2' },
   { id: 'kids', label: 'Kids Page', icon: <Sparkles className="w-4 h-4" /> },
