@@ -266,6 +266,24 @@ const updateGameSummary = async (_kidId: string): Promise<void> => {
   // Stub: will implement summary logic later
 };
 
+// Game session logging helper
+async function logGameSession(kidId: string, payload: any) {
+  try {
+    if (!kidId) return;
+    const { collection, addDoc, serverTimestamp, getFirestore } = await import('firebase/firestore');
+    const db = getFirestore();
+
+    await addDoc(collection(db, 'students', kidId, 'gameSessions'), {
+      ...payload,
+      createdAt: serverTimestamp(),
+      startedAt: payload.startedAt ?? serverTimestamp(),
+      endedAt: payload.endedAt ?? serverTimestamp(),
+    });
+  } catch {
+    // fail silently
+  }
+}
+
 // --- Helper Functions ---
 const speak = (text: string) => {
   if ('speechSynthesis' in window) {
@@ -364,6 +382,12 @@ const KidsPhonicsMission: React.FC = () => {
   const timeoutsRef = useRef<number[]>([]);
   const clearAllTimeouts = () => { timeoutsRef.current.forEach(id => clearTimeout(id)); timeoutsRef.current = []; };
   const [bestStarsMap, setBestStarsMap] = useState<Record<number, number>>(() => readBestStars(kidId));
+  // Session logging refs (not state to avoid render disruption)
+  const sessionStartMsRef = useRef<number | null>(null);
+  const sessionLoggedRef = useRef(false);
+  const attemptsRef = useRef(0);
+  const correctRef = useRef(0);
+  const wrongRef = useRef(0);
   const [confettiActive, setConfettiActive] = useState(false);
   const [fireworks, setFireworks] = useState<FireworkParticle[]>([]);
   const gameRef = useRef<HTMLDivElement | null>(null);
@@ -431,6 +455,13 @@ const KidsPhonicsMission: React.FC = () => {
     setIsComplete(false);
     setFeedback(null);
     setLastTappedChoice(null);
+    
+    // Initialize session tracking
+    sessionStartMsRef.current = Date.now();
+    sessionLoggedRef.current = false;
+    attemptsRef.current = 0;
+    correctRef.current = 0;
+    wrongRef.current = 0;
     
     let resumeData: SavedProgress | null = null;
     let firestoreBestStars: Record<number, number> | null = null;
@@ -626,8 +657,12 @@ const KidsPhonicsMission: React.FC = () => {
     if (feedback) return; // Prevent multiple clicks
 
     setLastTappedChoice(choice);
+    
+    // Track attempts for session logging
+    attemptsRef.current++;
 
     if (choice === currentQuestion.target) {
+        correctRef.current++;
         setFeedback('correct');
         setConfettiActive(true);
         playClaps(); // Kid-friendly clap-clap celebration sound
@@ -738,6 +773,36 @@ const KidsPhonicsMission: React.FC = () => {
               // Clear progress since level is completed
               clearLevelProgress(selectedLevel, kidId);
               
+              // Log session summary (best-effort, fail silently)
+              if (kidId && sessionStartMsRef.current && !sessionLoggedRef.current) {
+                sessionLoggedRef.current = true;
+                const endMs = Date.now();
+                const durationSec = Math.round((endMs - sessionStartMsRef.current) / 1000);
+                const accuracy = attemptsRef.current > 0 ? correctRef.current / attemptsRef.current : 0;
+                
+                const levelDef = LEVELS.find(l => l.id === selectedLevel);
+                const graphemes = levelDef ? levelDef.items.map(i => i.grapheme) : [];
+                
+                // Determine skills based on graphemes
+                const skills = ['letter_sounds'];
+                const digraphSet = new Set(['ai','oa','ie','ee','or','ng','oo','ch','sh','th','qu','ou','oi','ue','er','ar']);
+                const hasDigraphs = graphemes.some(g => g.length > 1 || digraphSet.has(g));
+                if (hasDigraphs) skills.push('digraphs_advanced');
+                
+                logGameSession(kidId, {
+                  gameId: 'letter_sound_match',
+                  mode: 'phonics',
+                  level: selectedLevel,
+                  skills,
+                  graphemes,
+                  attempts: attemptsRef.current,
+                  correct: correctRef.current,
+                  wrong: wrongRef.current,
+                  accuracy,
+                  durationSec,
+                });
+              }
+              
               // Save completion to Firestore
               if (kidId) {
                 const bestByLevel: Record<string, number> = {};
@@ -787,6 +852,7 @@ const KidsPhonicsMission: React.FC = () => {
         }, 4000);
         timeoutsRef.current.push(t);
     } else {
+      wrongRef.current++;
       setFeedback('wrong');
       const t2 = window.setTimeout(() => {
         setFeedback(null);

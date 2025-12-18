@@ -78,6 +78,24 @@ const saveProgress = (kidId: string, progress: Progress) => {
 	}
 };
 
+// Game session logging helper
+async function logGameSession(kidId: string, payload: any) {
+	try {
+		if (!kidId) return;
+		const { collection, addDoc, serverTimestamp, getFirestore } = await import('firebase/firestore');
+		const db = getFirestore();
+
+		await addDoc(collection(db, 'students', kidId, 'gameSessions'), {
+			...payload,
+			createdAt: serverTimestamp(),
+			startedAt: payload.startedAt ?? serverTimestamp(),
+			endedAt: payload.endedAt ?? serverTimestamp(),
+		});
+	} catch {
+		// fail silently
+	}
+}
+
 // Balloon factory using level config
 const makeBalloon = (id: number, letters: string[], speedMin: number, speedMax: number): Balloon => ({
 	id,
@@ -399,6 +417,9 @@ const KidsBalloonPop: React.FC = () => {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const startTimeRef = useRef<number>(Date.now());
 	const confettiGeneratedRef = useRef<boolean>(false);
+	// Session logging refs
+	const sessionStartMsRef = useRef<number | null>(null);
+	const sessionLoggedRef = useRef(false);
 
 	// Enter fullscreen
 	const enterFullscreen = useCallback(async () => {
@@ -430,6 +451,33 @@ const KidsBalloonPop: React.FC = () => {
 
 	// Exit fullscreen
 	const exitFullscreen = useCallback(() => {
+		// Log session if exiting mid-game
+		if (kidId && sessionStartMsRef.current && !sessionLoggedRef.current && currentLevel && hasStarted) {
+			sessionLoggedRef.current = true;
+			const endMs = Date.now();
+			const durationSec = Math.round((endMs - sessionStartMsRef.current) / 1000);
+			const attempts = score + wrongCount;
+			const accuracy = attempts > 0 ? score / attempts : 0;
+			
+			const skills = ['letter_sounds'];
+			const digraphSet = new Set(['sh','ch','th','ai','oa','ee','ie','oi','ou','ue','qu','ng','oo','er','ar']);
+			const hasDigraphs = currentLevel.letters.some(g => g.length > 1 || digraphSet.has(g));
+			if (hasDigraphs) skills.push('digraphs_advanced');
+
+			logGameSession(kidId, {
+				gameId: 'balloon_pop',
+				mode: 'phonics',
+				level: currentLevel.id,
+				skills,
+				graphemes: currentLevel.letters,
+				attempts,
+				correct: score,
+				wrong: wrongCount,
+				accuracy,
+				durationSec,
+			});
+		}
+
 		setFullscreenMode(false);
 		setRunning(false);
 		setHasStarted(false);
@@ -447,7 +495,7 @@ const KidsBalloonPop: React.FC = () => {
 
 		// Navigate back to levels
 		goToLevels();
-	}, [goToLevels]);
+	}, [goToLevels, kidId, currentLevel, hasStarted, score, wrongCount]);
 
 	// Listen for fullscreen changes (user presses Esc, etc.)
 	useEffect(() => {
