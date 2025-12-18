@@ -736,10 +736,17 @@ const KidsPhonicsMission: React.FC = () => {
           Loading Mission...
         </div>
       ) : (
-        <div className="relative min-h-screen overflow-hidden text-white flex flex-col items-center justify-center p-4"
+        <div className="relative overflow-hidden text-white flex flex-col items-center justify-center"
         style={{
-          background: 'linear-gradient(180deg, #0a0618 0%, #1a1040 50%, #0f1b4a 100%)',
-          boxShadow: 'inset 0 0 200px rgba(0,0,0,0.8)'
+          position: 'fixed',
+          inset: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: 40,
+          backgroundImage: 'url("/Games/Phonics/letter-sound-match/bg.png")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
       <style>{`
@@ -857,16 +864,6 @@ const KidsPhonicsMission: React.FC = () => {
         }
       `}</style>
       
-      {/* Starfield Background */}
-      <div className="starfield" aria-hidden="true" />
-      
-      {/* Occasional comet */}
-      <div 
-        className="absolute top-1/3 left-0 w-32 h-1 bg-gradient-to-r from-transparent via-white to-transparent opacity-50"
-        style={{ animation: 'comet 20s linear infinite 3s' }}
-        aria-hidden="true"
-      />
-
       {/* Back Button */}
       {!selectedLevel ? (
         <Link
@@ -957,86 +954,100 @@ const KidsPhonicsMission: React.FC = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full max-w-6xl mx-auto z-10 px-4">
-          {/* Progress Stars */}
-          <div className="mb-6 flex justify-center gap-2" aria-label={`Progress: ${starsEarned} of ${TOTAL_ROUNDS} stars earned`}>
+        <div className="w-full h-full flex flex-col items-center justify-center px-4" style={{ zIndex: 10 }}>
+          {/* Progress Stars - Top center */}
+          <div className="absolute top-6 left-1/2 transform -translate-x-1/2 flex justify-center gap-2" aria-label={`Progress: ${starsEarned} of ${TOTAL_ROUNDS} stars earned`} style={{ zIndex: 20 }}>
             {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
-              <span key={i} className="text-3xl">
+              <span key={i} className="text-4xl drop-shadow-lg" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.5))' }}>
                 {i < starsEarned ? '★' : '☆'}
               </span>
             ))}
           </div>
 
-          {/* Mission Panel - 2 column layout on md+ */}
-          <div className={`mission-panel p-6 md:p-8 bg-black/30 backdrop-blur-md rounded-3xl border border-white/20 shadow-2xl relative ${feedback === 'correct' ? 'show-sparkle' : ''}`}>
-            <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-center md:items-stretch">
-              {/* Left Column: Target Letter + Hear Again */}
-              <div className="flex-1 flex flex-col items-center justify-center text-center">
-                <p className="text-xl md:text-2xl font-semibold mb-4 text-purple-200">
-                  Tap the letter that says this sound:
-                </p>
-                <div className="text-8xl md:text-9xl lg:text-[10rem] font-bold text-white mb-6">
-                  {(() => {
-                    const allItems = LEVELS.flatMap(l => l.items);
-                    const it = allItems.find(x => x.grapheme === currentQuestion.target);
-                    return it ? (it.display || it.grapheme) : currentQuestion.target;
-                  })()}
-                </div>
-                <button 
-                  onClick={playSound} 
-                  className="px-6 py-3 bg-white/20 rounded-xl hover:bg-white/30 text-lg md:text-xl font-semibold transition-colors shadow-lg"
-                  type="button"
-                  aria-label="Hear sound again"
-                >
-                  🔊 Hear Again
-                </button>
-              </div>
+          {/* Top instructional text */}
+          <div className="absolute top-24 left-8 text-3xl md:text-4xl font-bold text-gray-800 drop-shadow-lg" style={{ textShadow: '2px 2px 4px rgba(255,255,255,0.5), 0 0 8px rgba(255,255,255,0.3)', zIndex: 20 }}>
+            Tap the letter that says this sound
+          </div>
 
-              {/* Right Column: Choice Buttons (stacked vertically) */}
-              <div className="flex-1 flex flex-col gap-4 md:gap-6 justify-center">
-                {currentQuestion.choices.map(choice => (
+          {/* Main gameplay: 2 columns on desktop, stacked on mobile */}
+          <div className="w-full max-w-6xl flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16 mt-16">
+            {/* LEFT COLUMN: Listen Button */}
+            <div className="flex flex-col items-center justify-center gap-6">
+              <button
+                onClick={playSound}
+                type="button"
+                aria-label="Listen to sound"
+                className="relative flex items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95"
+                style={{
+                  width: 280,
+                  height: 280,
+                  background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)',
+                  border: '8px solid rgba(255,255,255,0.9)',
+                  touchAction: 'manipulation',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                }}
+              >
+                <img 
+                  src="/Games/Phonics/letter-sound-match/listen.png" 
+                  alt="Listen" 
+                  style={{
+                    width: '70%',
+                    height: '70%',
+                    objectFit: 'contain',
+                    pointerEvents: 'none',
+                  }}
+                />
+              </button>
+              <div className="text-4xl font-bold text-gray-800" style={{ textShadow: '2px 2px 4px rgba(255,255,255,0.6)' }}>
+                listen
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN: Option Buttons */}
+            <div className="flex flex-col gap-6 items-stretch" style={{ width: 320 }}>
+              {currentQuestion.choices.map(choice => {
+                const allItems = LEVELS.flatMap(l => l.items);
+                const item = allItems.find(x => x.grapheme === choice);
+                const displayText = item ? (item.display || item.grapheme) : choice;
+                
+                return (
                   <button
                     key={choice}
                     type="button"
                     onClick={() => handleChoice(choice)}
-                    aria-label={`Choose ${(() => {
-                      const allItems = LEVELS.flatMap(l => l.items);
-                      const it = allItems.find(x => x.grapheme === choice);
-                      return it ? (it.display || it.grapheme) : choice;
-                    })()}`}
-                    className={`choice-btn p-6 md:p-8 rounded-2xl border-4 border-white/30 bg-white/10 flex items-center justify-center min-h-[100px] md:min-h-[120px]
+                    aria-label={`Choose ${displayText}`}
+                    className={`choice-btn flex items-center justify-center rounded-3xl shadow-xl font-black text-gray-800 transition-all
                       ${feedback === 'correct' && choice === currentQuestion.target ? 'sparkle-correct' : ''}
                       ${feedback === 'wrong' && choice === lastTappedChoice ? 'shake-wrong' : ''}
                     `}
+                    style={{
+                      height: 140,
+                      background: 'linear-gradient(135deg, #FFDAB9 0%, #FFB88C 100%)',
+                      border: '6px solid rgba(139, 69, 19, 0.4)',
+                      fontSize: displayText.length > 1 ? '4rem' : '5rem',
+                      touchAction: 'manipulation',
+                      userSelect: 'none',
+                      WebkitUserSelect: 'none',
+                    }}
                   >
-                    <span className="text-6xl md:text-7xl lg:text-8xl font-bold">{(() => {
-                      const allItems = LEVELS.flatMap(l => l.items);
-                      const it = allItems.find(x => x.grapheme === choice);
-                      return it ? (it.display || it.grapheme) : choice;
-                    })()}</span>
+                    {displayText.toLowerCase()}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
           </div>
-          
+
           {/* Feedback Messages */}
           {feedback === 'correct' && (
-            <div className="mt-6 text-center text-3xl text-green-300 font-bold">
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center text-4xl text-green-400 font-bold drop-shadow-lg" style={{ zIndex: 30, textShadow: '2px 2px 6px rgba(0,0,0,0.8)' }}>
               Great job! ✨
             </div>
           )}
           {feedback === 'wrong' && (
-            <div className="mt-6 text-center text-3xl text-yellow-300 font-bold">
+            <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center text-4xl text-yellow-300 font-bold drop-shadow-lg" style={{ zIndex: 30, textShadow: '2px 2px 6px rgba(0,0,0,0.8)' }}>
               Try again! 🌟
             </div>
-          )}
-
-          {/* Fallback hint if speech not available */}
-          {!('speechSynthesis' in window) && (
-            <p className="mt-4 text-center text-sm text-gray-400">
-              Say the sound: /{PHONETIC_MAP[currentQuestion.target]}/
-            </p>
           )}
 
           {/* Confetti Overlay */}
