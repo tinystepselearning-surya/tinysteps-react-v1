@@ -179,7 +179,11 @@ service cloud.firestore {
     // (Optional) future aggregated game progress docs
     match /kids/{kidId}/gameProgress/{docId} {
       allow read: if isSignedIn() && canAccessKid(kidId);
-      allow write: if isAdmin(); // keep server/admin only for aggregates
+
+      // ✅ allow client to save progress (no delete)
+      allow create, update: if isSignedIn() && canAccessKid(kidId);
+
+      allow delete: if false;
     }
 
     // ----------------------------
