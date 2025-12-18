@@ -57,6 +57,61 @@ const BEST_KEY = 'ts_phonics_level_bestStars_v1';
 
 const PROGRESS_KEY = 'ts_phonics_level_progress_v1';
 
+// --- Web Audio Helper: Clap-Clap Sound ---
+let audioCtx: AudioContext | null = null;
+const getAudioContext = () => {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return audioCtx;
+};
+
+const playClaps = () => {
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    // Helper to play one clap
+    const playOneClap = (startTime: number) => {
+      // Create noise burst
+      const bufferSize = ctx.sampleRate * 0.12; // 120ms max
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      // Bandpass filter to simulate hand clap (1200-2200Hz range)
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 1700;
+      filter.Q.value = 2.5;
+
+      // Gain envelope: quick attack, fast decay
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.12, startTime + 0.002); // attack 2ms
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.1); // decay 100ms
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      noise.start(startTime);
+      noise.stop(startTime + 0.12);
+    };
+
+    // Play two claps with 130ms delay
+    playOneClap(now);
+    playOneClap(now + 0.13);
+  } catch (e) {
+    console.warn('Clap sound failed:', e);
+  }
+};
+
 type SavedProgress = {
   starsEarned: number;
   currentRound: number;
@@ -575,6 +630,7 @@ const KidsPhonicsMission: React.FC = () => {
     if (choice === currentQuestion.target) {
         setFeedback('correct');
         setConfettiActive(true);
+        playClaps(); // Kid-friendly clap-clap celebration sound
         
         // Generate firecracker fireworks from grass line + corners
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
