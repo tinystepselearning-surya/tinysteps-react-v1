@@ -113,31 +113,33 @@ export const onGameSessionCreate = onDocumentCreated(
 
     const db = admin.firestore();
 
-    // PROD Safety Guard: Check config/insights for kill switch + allowlist
-    let configData: any = null;
+    // PROD Kill Switch: Check config/insights (auto-create if missing)
+    let enabled = true;
     try {
-      const configSnap = await db.doc('config/insights').get();
+      const configRef = db.doc('config/insights');
+      const configSnap = await configRef.get();
+
       if (!configSnap.exists) {
-        logger.info('[onGameSessionCreate] config/insights not found; treating as disabled', { kidId, sessionId });
-        return;
+        // Auto-create config with enabled=true
+        await configRef.set({
+          enabled: true,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdBy: 'onGameSessionCreate',
+        }, { merge: true });
+        logger.info('[onGameSessionCreate] config/insights auto-created with enabled=true', { kidId, sessionId });
+        enabled = true;
+      } else {
+        const configData = configSnap.data();
+        enabled = configData?.enabled === true;
       }
-      configData = configSnap.data();
     } catch (error) {
-      logger.warn('[onGameSessionCreate] Failed to read config/insights; skipping safely', { kidId, sessionId, error });
+      logger.warn('[onGameSessionCreate] config read failed; skipping safely', { kidId, sessionId, error });
       return;
     }
 
-    // Check enabled flag
-    const enabled = configData?.enabled === true;
+    // Kill switch check
     if (!enabled) {
       logger.info('[onGameSessionCreate] insights disabled; skipping', { kidId, sessionId });
-      return;
-    }
-
-    // Check allowlist
-    const allowKidIds = Array.isArray(configData?.allowKidIds) ? configData.allowKidIds : [];
-    if (allowKidIds.length > 0 && !allowKidIds.includes(kidId)) {
-      logger.info('[onGameSessionCreate] kid not allowlisted; skipping', { kidId, sessionId });
       return;
     }
 
