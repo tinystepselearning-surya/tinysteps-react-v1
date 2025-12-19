@@ -76,30 +76,46 @@ function InsightsKillSwitch() {
   const [enabled, setEnabled] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
 
   // Load current state from Firestore
-  useEffect(() => {
-    const loadConfig = async () => {
-      try {
-        const configRef = doc(db, 'config', 'insights');
-        const configSnap = await getDoc(configRef);
+  const loadConfig = async () => {
+    try {
+      const configRef = doc(db, 'config', 'insights');
+      const configSnap = await getDoc(configRef);
+      
+      if (configSnap.exists()) {
+        const data = configSnap.data();
+        setEnabled(data?.enabled ?? true);
         
-        if (configSnap.exists()) {
-          const data = configSnap.data();
-          setEnabled(data?.enabled ?? true);
-        } else {
-          // Doc doesn't exist, treat as enabled (server will auto-create)
-          setEnabled(true);
+        // Format last updated time
+        if (data?.lastRunAt) {
+          const timestamp = data.lastRunAt.toDate?.() || new Date(data.lastRunAt.seconds * 1000);
+          const formatted = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'Asia/Kolkata',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          }).format(timestamp);
+          setLastUpdated(`${formatted} IST (${data?.lastRunLabel || 'unknown'})`);
         }
-      } catch (err: any) {
-        console.error('[InsightsKillSwitch] Failed to load config:', err);
-        setError('Failed to load config');
-      } finally {
-        setLoading(false);
+      } else {
+        // Doc doesn't exist, treat as enabled (server will auto-create)
+        setEnabled(true);
       }
-    };
+    } catch (err: any) {
+      console.error('[InsightsKillSwitch] Failed to load config:', err);
+      setError('Failed to load config');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadConfig();
   }, []);
 
@@ -139,6 +155,46 @@ function InsightsKillSwitch() {
     }
   };
 
+  const handleRunNow = async () => {
+    setRunning(true);
+    setError(null);
+
+    try {
+      const runInsightsRollupNow = httpsCallable<
+        Record<string, never>,
+        { ok: boolean; message?: string; kidsUpdated?: number; sessionsProcessed?: number }
+      >(functions, 'runInsightsRollupNow');
+
+      const result = await runInsightsRollupNow({});
+
+      if (result.data.ok) {
+        toast({
+          title: 'Insights Updated',
+          description: `Updated ${result.data.kidsUpdated || 0} kids, processed ${result.data.sessionsProcessed || 0} sessions.`,
+          variant: 'default',
+        });
+        
+        // Reload config to show new last updated time
+        await loadConfig();
+      } else {
+        toast({
+          title: 'Update Not Run',
+          description: result.data.message || 'Insights are disabled',
+          variant: 'destructive',
+        });
+      }
+    } catch (err: any) {
+      console.error('[InsightsKillSwitch] Failed to run rollup:', err);
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to run insights update',
+        variant: 'destructive',
+      });
+    } finally {
+      setRunning(false);
+    }
+  };
+
   if (loading) {
     return (
       <Card className="p-6">
@@ -165,16 +221,31 @@ function InsightsKillSwitch() {
                 ? 'Game sessions will update kids/{kidId}.summary'
                 : 'Game sessions will NOT update summaries (trigger skipped)'}
             </p>
+            {lastUpdated && (
+              <p className="text-xs text-gray-500 mt-1">
+                Last updated: {lastUpdated}
+              </p>
+            )}
           </div>
 
-          <Button
-            onClick={handleToggle}
-            disabled={saving}
-            variant={enabled ? 'destructive' : 'default'}
-            className="ml-4"
-          >
-            {saving ? 'Saving...' : enabled ? 'Disable' : 'Enable'}
-          </Button>
+          <div className="flex gap-2 ml-4">
+            <Button
+              onClick={handleRunNow}
+              disabled={running || saving}
+              variant="outline"
+              size="sm"
+            >
+              {running ? 'Running...' : 'Run Update Now'}
+            </Button>
+            
+            <Button
+              onClick={handleToggle}
+              disabled={saving || running}
+              variant={enabled ? 'destructive' : 'default'}
+            >
+              {saving ? 'Saving...' : enabled ? 'Disable' : 'Enable'}
+            </Button>
+          </div>
         </div>
 
         {error && (
@@ -187,6 +258,7 @@ function InsightsKillSwitch() {
           <p>• When disabled, the Cloud Function trigger <code>onGameSessionCreate</code> will skip.</p>
           <p>• Config stored at: <code>config/insights.enabled</code></p>
           <p>• Changes take effect immediately for all new game sessions.</p>
+          <p>• "Run Update Now" triggers batch rollup manually regardless of schedule.</p>
         </div>
       </div>
     </Card>

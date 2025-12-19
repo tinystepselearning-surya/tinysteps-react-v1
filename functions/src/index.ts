@@ -36,6 +36,9 @@ export {
 // Admin: Control Insights Kill Switch
 export { setInsightsEnabled } from './setInsightsEnabled';
 
+// Admin: Manual Insights Rollup
+export { runInsightsRollupNow } from './runInsightsRollupNow';
+
 // Parent → Students Subcollection Operations
 export { createStudentForParent } from './parentStudents';
 

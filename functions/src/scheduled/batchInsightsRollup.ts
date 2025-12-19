@@ -155,11 +155,22 @@ function applySummaryUpdate(
 }
 
 /**
- * Core rollup logic (shared across all schedule times)
+ * Core rollup logic (shared across all schedule times and manual triggers)
+ * 
+ * @param label - Label for logging (e.g., "11am", "5pm", "11pm", "manual")
+ * @param db - Firestore instance
+ * @returns Stats about the rollup execution
  */
-async function performRollup(label: string): Promise<void> {
+export async function runBatchInsightsRollup(
+  label: string,
+  db: admin.firestore.Firestore
+): Promise<{
+  kidsUpdated: number;
+  sessionsProcessed: number;
+  from: admin.firestore.Timestamp;
+  to: admin.firestore.Timestamp;
+}> {
   const startTime = Date.now();
-  const db = admin.firestore();
 
   logger.info(`[batchInsightsRollup:${label}] Starting rollup`);
 
@@ -170,7 +181,7 @@ async function performRollup(label: string): Promise<void> {
 
     if (!configSnap.exists) {
       logger.warn(`[batchInsightsRollup:${label}] config/insights not found; skipping`);
-      return;
+      throw new Error('config/insights not found');
     }
 
     const configData = configSnap.data();
@@ -178,11 +189,13 @@ async function performRollup(label: string): Promise<void> {
 
     if (!enabled) {
       logger.info(`[batchInsightsRollup:${label}] insights disabled; skipping`);
-      return;
+      throw new Error('Insights are currently disabled');
     }
 
     // Determine lastRunAt
     const lastRunAt = configData?.lastRunAt || admin.firestore.Timestamp.fromMillis(Date.now() - 8 * 60 * 60 * 1000);
+    const now = admin.firestore.Timestamp.now();
+    
     logger.info(`[batchInsightsRollup:${label}] Processing sessions since ${lastRunAt.toDate().toISOString()}`);
 
     // Query collectionGroup for sessions since lastRunAt
@@ -200,7 +213,12 @@ async function performRollup(label: string): Promise<void> {
         lastRunLabel: label,
       });
       logger.info(`[batchInsightsRollup:${label}] No sessions to process; updated lastRunAt`);
-      return;
+      return {
+        kidsUpdated: 0,
+        sessionsProcessed: 0,
+        from: lastRunAt,
+        to: now,
+      };
     }
 
     // Group sessions by kidId
@@ -272,6 +290,13 @@ async function performRollup(label: string): Promise<void> {
     const duration = Date.now() - startTime;
     logger.info(`[batchInsightsRollup:${label}] Completed: ${sessionsSnap.size} sessions, ${kidsUpdated} kids updated, ${duration}ms`);
 
+    return {
+      kidsUpdated,
+      sessionsProcessed: sessionsSnap.size,
+      from: lastRunAt,
+      to: now,
+    };
+
   } catch (error) {
     logger.error(`[batchInsightsRollup:${label}] Rollup failed`, error);
     throw error;
@@ -288,7 +313,8 @@ export const batchInsightsRollup11am = onSchedule(
     region: 'asia-south1',
   },
   async () => {
-    await performRollup('11am');
+    const db = admin.firestore();
+    await runBatchInsightsRollup('11am', db);
   }
 );
 
@@ -302,7 +328,8 @@ export const batchInsightsRollup5pm = onSchedule(
     region: 'asia-south1',
   },
   async () => {
-    await performRollup('5pm');
+    const db = admin.firestore();
+    await runBatchInsightsRollup('5pm', db);
   }
 );
 
@@ -316,6 +343,7 @@ export const batchInsightsRollup11pm = onSchedule(
     region: 'asia-south1',
   },
   async () => {
-    await performRollup('11pm');
+    const db = admin.firestore();
+    await runBatchInsightsRollup('11pm', db);
   }
 );
