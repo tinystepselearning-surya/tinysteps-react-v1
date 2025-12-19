@@ -5,9 +5,11 @@ import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { db } from '../../lib/firebaseConfig';
+import { db, functions } from '../../lib/firebaseConfig';
+import { httpsCallable } from 'firebase/functions';
+import { useToast } from '@components/hooks/use-toast';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 
@@ -67,6 +69,129 @@ const AccessMessage = ({ children }: { children: React.ReactNode }) => (
     </Card>
   </div>
 );
+
+// ---------- Insights Kill Switch Component ----------
+function InsightsKillSwitch() {
+  const { toast } = useToast();
+  const [enabled, setEnabled] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load current state from Firestore
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        const configRef = doc(db, 'config', 'insights');
+        const configSnap = await getDoc(configRef);
+        
+        if (configSnap.exists()) {
+          const data = configSnap.data();
+          setEnabled(data?.enabled ?? true);
+        } else {
+          // Doc doesn't exist, treat as enabled (server will auto-create)
+          setEnabled(true);
+        }
+      } catch (err: any) {
+        console.error('[InsightsKillSwitch] Failed to load config:', err);
+        setError('Failed to load config');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadConfig();
+  }, []);
+
+  const handleToggle = async () => {
+    const nextEnabled = !enabled;
+    setSaving(true);
+    setError(null);
+
+    try {
+      const setInsightsEnabled = httpsCallable<{ enabled: boolean }, { ok: boolean; enabled: boolean }>(
+        functions,
+        'setInsightsEnabled'
+      );
+
+      const result = await setInsightsEnabled({ enabled: nextEnabled });
+
+      if (result.data.ok) {
+        setEnabled(nextEnabled);
+        toast({
+          title: nextEnabled ? 'Insights Enabled' : 'Insights Disabled',
+          description: nextEnabled
+            ? 'Game session summaries will now update.'
+            : 'Game session summaries will NOT update.',
+          variant: 'default',
+        });
+      }
+    } catch (err: any) {
+      console.error('[InsightsKillSwitch] Failed to toggle:', err);
+      setError(err.message || 'Failed to update');
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to update kill switch',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Card className="p-6">
+        <p className="text-sm text-gray-500">Loading...</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="p-6">
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-lg font-semibold">Insights Kill Switch</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Control whether game session summaries are updated in real-time.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between border rounded-lg p-4">
+          <div>
+            <p className="font-medium">{enabled ? '✅ Enabled' : '❌ Disabled'}</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {enabled
+                ? 'Game sessions will update kids/{kidId}.summary'
+                : 'Game sessions will NOT update summaries (trigger skipped)'}
+            </p>
+          </div>
+
+          <Button
+            onClick={handleToggle}
+            disabled={saving}
+            variant={enabled ? 'destructive' : 'default'}
+            className="ml-4"
+          >
+            {saving ? 'Saving...' : enabled ? 'Disable' : 'Enable'}
+          </Button>
+        </div>
+
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 dark:bg-red-900/20 p-3 rounded">
+            {error}
+          </div>
+        )}
+
+        <div className="text-xs text-gray-500 space-y-1">
+          <p>• When disabled, the Cloud Function trigger <code>onGameSessionCreate</code> will skip.</p>
+          <p>• Config stored at: <code>config/insights.enabled</code></p>
+          <p>• Changes take effect immediately for all new game sessions.</p>
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 // ---------- Main Admin Dashboard ----------
 export default function AdminDashboard() {
@@ -138,6 +263,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="courses">Course Management</TabsTrigger>
               <TabsTrigger value="lessons">Lesson Library</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="users">
@@ -170,6 +296,10 @@ export default function AdminDashboard() {
                 <AdminOverviewCard />
                 <AnalyticsDashboard />
               </div>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <InsightsKillSwitch />
             </TabsContent>
           </Tabs>
         </main>
