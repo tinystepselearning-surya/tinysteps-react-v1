@@ -1,13 +1,13 @@
 /**
  * Batch Insights Rollup
- * 
+ *
  * Scheduled function that runs 3 times daily (11:00, 17:00, 23:00 IST).
  * Processes all game sessions since last run and updates kids/{kidId}.summary.
  */
 
-import { onSchedule } from 'firebase-functions/v2/scheduler';
-import * as admin from 'firebase-admin';
-import * as logger from 'firebase-functions/logger';
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import * as admin from "firebase-admin";
+import * as logger from "firebase-functions/logger";
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -45,11 +45,11 @@ function toDateKey(timestamp: admin.firestore.Timestamp): string {
   const date = timestamp.toDate();
   const kolkataOffset = 5.5 * 60 * 60 * 1000;
   const kolkataDate = new Date(date.getTime() + kolkataOffset);
-  
+
   const year = kolkataDate.getUTCFullYear();
-  const month = String(kolkataDate.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(kolkataDate.getUTCDate()).padStart(2, '0');
-  
+  const month = String(kolkataDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(kolkataDate.getUTCDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 }
 
@@ -60,15 +60,15 @@ function toWeekKey(timestamp: admin.firestore.Timestamp): string {
   const date = timestamp.toDate();
   const kolkataOffset = 5.5 * 60 * 60 * 1000;
   const kolkataDate = new Date(date.getTime() + kolkataOffset);
-  
+
   const dayOfWeek = kolkataDate.getUTCDay() || 7;
   const nearestThursday = new Date(kolkataDate.getTime());
   nearestThursday.setUTCDate(kolkataDate.getUTCDate() + 4 - dayOfWeek);
-  
+
   const yearStart = new Date(Date.UTC(nearestThursday.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil((((nearestThursday.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  
-  return `${nearestThursday.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+
+  return `${nearestThursday.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
 }
 
 /**
@@ -85,17 +85,8 @@ function isYesterday(dateKey: string, prevDateKey: string): boolean {
 /**
  * Apply a single session to the summary (incremental update logic)
  */
-function applySummaryUpdate(
-  existingSummary: Partial<KidSummary>,
-  session: GameSessionData
-): KidSummary {
-  const {
-    accuracy = 0,
-    durationSec = 0,
-    createdAt,
-    endedAt,
-    gameId = 'unknown',
-  } = session;
+function applySummaryUpdate(existingSummary: Partial<KidSummary>, session: GameSessionData): KidSummary {
+  const { accuracy = 0, durationSec = 0, createdAt, endedAt, gameId = "unknown" } = session;
 
   const lastPlayedAt = endedAt || createdAt || admin.firestore.Timestamp.now();
   const dateKey = toDateKey(lastPlayedAt);
@@ -110,7 +101,7 @@ function applySummaryUpdate(
 
   // Update streakDays
   let streakDays = existingSummary.streakDays || 0;
-  const prevDateKey = existingSummary.lastPlayedDateKey || '';
+  const prevDateKey = existingSummary.lastPlayedDateKey || "";
 
   if (!prevDateKey) {
     streakDays = 1;
@@ -124,7 +115,7 @@ function applySummaryUpdate(
 
   // Update timeSpentWeekSec
   let timeSpentWeekSec = durationSec;
-  const prevWeekKey = existingSummary.weekKey || '';
+  const prevWeekKey = existingSummary.weekKey || "";
 
   if (weekKey === prevWeekKey) {
     timeSpentWeekSec = (existingSummary.timeSpentWeekSec || 0) + durationSec;
@@ -156,10 +147,6 @@ function applySummaryUpdate(
 
 /**
  * Core rollup logic (shared across all schedule times and manual triggers)
- * 
- * @param label - Label for logging (e.g., "11am", "5pm", "11pm", "manual")
- * @param db - Firestore instance
- * @returns Stats about the rollup execution
  */
 export async function runBatchInsightsRollup(
   label: string,
@@ -176,12 +163,12 @@ export async function runBatchInsightsRollup(
 
   try {
     // Read config
-    const configRef = db.doc('config/insights');
+    const configRef = db.doc("config/insights");
     const configSnap = await configRef.get();
 
     if (!configSnap.exists) {
       logger.warn(`[batchInsightsRollup:${label}] config/insights not found; skipping`);
-      throw new Error('config/insights not found');
+      throw new Error("config/insights not found");
     }
 
     const configData = configSnap.data();
@@ -189,19 +176,21 @@ export async function runBatchInsightsRollup(
 
     if (!enabled) {
       logger.info(`[batchInsightsRollup:${label}] insights disabled; skipping`);
-      throw new Error('Insights are currently disabled');
+      throw new Error("Insights are currently disabled");
     }
 
     // Determine lastRunAt
-    const lastRunAt = configData?.lastRunAt || admin.firestore.Timestamp.fromMillis(Date.now() - 8 * 60 * 60 * 1000);
+    const lastRunAt =
+      configData?.lastRunAt || admin.firestore.Timestamp.fromMillis(Date.now() - 8 * 60 * 60 * 1000);
     const now = admin.firestore.Timestamp.now();
-    
+
     logger.info(`[batchInsightsRollup:${label}] Processing sessions since ${lastRunAt.toDate().toISOString()}`);
 
     // Query collectionGroup for sessions since lastRunAt
-    const sessionsQuery = db.collectionGroup('gameSessions')
-      .where('createdAt', '>', lastRunAt)
-      .orderBy('createdAt', 'asc');
+    const sessionsQuery = db
+      .collectionGroup("gameSessions")
+      .where("createdAt", ">", lastRunAt)
+      .orderBy("createdAt", "asc");
 
     const sessionsSnap = await sessionsQuery.get();
     logger.info(`[batchInsightsRollup:${label}] Found ${sessionsSnap.size} sessions to process`);
@@ -212,6 +201,7 @@ export async function runBatchInsightsRollup(
         lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
         lastRunLabel: label,
       });
+
       logger.info(`[batchInsightsRollup:${label}] No sessions to process; updated lastRunAt`);
       return {
         kidsUpdated: 0,
@@ -225,13 +215,11 @@ export async function runBatchInsightsRollup(
     const sessionsByKid = new Map<string, GameSessionData[]>();
 
     for (const doc of sessionsSnap.docs) {
-      const kidId = doc.ref.parent.parent?.id;
+      const kidId = doc.ref.parent.parent?.id; // kids/{kidId}/gameSessions/{sessionId}
       if (!kidId) continue;
 
       const sessionData = doc.data() as GameSessionData;
-      if (!sessionsByKid.has(kidId)) {
-        sessionsByKid.set(kidId, []);
-      }
+      if (!sessionsByKid.has(kidId)) sessionsByKid.set(kidId, []);
       sessionsByKid.get(kidId)!.push(sessionData);
     }
 
@@ -239,11 +227,14 @@ export async function runBatchInsightsRollup(
 
     // Process each kid
     let kidsUpdated = 0;
-    const batch = db.batch();
+
+    // IMPORTANT FIX:
+    // You cannot reuse the same batch after commit(). Create a NEW batch each time.
+    let batch = db.batch();
     let batchCount = 0;
 
     for (const [kidId, sessions] of sessionsByKid) {
-      const kidRef = db.collection('kids').doc(kidId);
+      const kidRef = db.collection("kids").doc(kidId);
       const kidDoc = await kidRef.get();
 
       if (!kidDoc.exists) {
@@ -258,11 +249,17 @@ export async function runBatchInsightsRollup(
         summary = applySummaryUpdate(summary, session);
       }
 
-      // Write back
-      batch.update(kidRef, {
-        summary,
-        'summary.lastUpdatedAt': admin.firestore.FieldValue.serverTimestamp(),
-      });
+      // Write back - use set with merge to avoid "field specified multiple times" error
+      batch.set(
+        kidRef,
+        {
+          summary: {
+            ...summary,
+            lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+        },
+        { merge: true }
+      );
 
       batchCount++;
       kidsUpdated++;
@@ -271,6 +268,9 @@ export async function runBatchInsightsRollup(
       if (batchCount >= 500) {
         await batch.commit();
         logger.info(`[batchInsightsRollup:${label}] Committed batch of ${batchCount} updates`);
+
+        // NEW batch after commit (critical)
+        batch = db.batch();
         batchCount = 0;
       }
     }
@@ -288,7 +288,9 @@ export async function runBatchInsightsRollup(
     });
 
     const duration = Date.now() - startTime;
-    logger.info(`[batchInsightsRollup:${label}] Completed: ${sessionsSnap.size} sessions, ${kidsUpdated} kids updated, ${duration}ms`);
+    logger.info(
+      `[batchInsightsRollup:${label}] Completed: ${sessionsSnap.size} sessions, ${kidsUpdated} kids updated, ${duration}ms`
+    );
 
     return {
       kidsUpdated,
@@ -296,10 +298,15 @@ export async function runBatchInsightsRollup(
       from: lastRunAt,
       to: now,
     };
-
-  } catch (error) {
-    logger.error(`[batchInsightsRollup:${label}] Rollup failed`, error);
-    throw error;
+  } catch (err: any) {
+    // ✅ LOG FULL ERROR DETAILS (so you can see "requires an index" if that's the cause)
+    logger.error(`[batchInsightsRollup:${label}] FAILED`, {
+      code: err?.code,
+      message: err?.message,
+      details: err?.details,
+      stack: err?.stack,
+    });
+    throw err;
   }
 }
 
@@ -308,13 +315,13 @@ export async function runBatchInsightsRollup(
  */
 export const batchInsightsRollup11am = onSchedule(
   {
-    schedule: '30 5 * * *', // 05:30 UTC = 11:00 IST
-    timeZone: 'UTC',
-    region: 'asia-south1',
+    schedule: "30 5 * * *", // 05:30 UTC = 11:00 IST
+    timeZone: "UTC",
+    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
-    await runBatchInsightsRollup('11am', db);
+    await runBatchInsightsRollup("11am", db);
   }
 );
 
@@ -323,13 +330,13 @@ export const batchInsightsRollup11am = onSchedule(
  */
 export const batchInsightsRollup5pm = onSchedule(
   {
-    schedule: '30 11 * * *', // 11:30 UTC = 17:00 IST
-    timeZone: 'UTC',
-    region: 'asia-south1',
+    schedule: "30 11 * * *", // 11:30 UTC = 17:00 IST
+    timeZone: "UTC",
+    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
-    await runBatchInsightsRollup('5pm', db);
+    await runBatchInsightsRollup("5pm", db);
   }
 );
 
@@ -338,12 +345,12 @@ export const batchInsightsRollup5pm = onSchedule(
  */
 export const batchInsightsRollup11pm = onSchedule(
   {
-    schedule: '30 17 * * *', // 17:30 UTC = 23:00 IST
-    timeZone: 'UTC',
-    region: 'asia-south1',
+    schedule: "30 17 * * *", // 17:30 UTC = 23:00 IST
+    timeZone: "UTC",
+    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
-    await runBatchInsightsRollup('11pm', db);
+    await runBatchInsightsRollup("11pm", db);
   }
 );
