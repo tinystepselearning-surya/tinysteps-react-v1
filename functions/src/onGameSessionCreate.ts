@@ -171,8 +171,7 @@ export const onGameSessionCreate = onDocumentCreated(
           // First session ever
           streakDays = 1;
         } else if (dateKey === prevDateKey) {
-          // Same day, no change
-          streakDays = streakDays;
+          // Same day, no change (keep existing value)
         } else if (isYesterday(dateKey, prevDateKey)) {
           // Consecutive day
           streakDays += 1;
