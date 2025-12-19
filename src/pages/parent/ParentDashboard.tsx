@@ -110,7 +110,28 @@ export default function ParentDashboard() {
   // Compute Kids Portal URL (only valid if selectedKidId exists)
   const kidsPortalUrl = selectedKidId ? `/kids?kidId=${encodeURIComponent(selectedKidId)}` : null;
 
-  // Fetch game sessions for selected kid
+  // Fetch kid document with summary
+  const kidSummaryQuery = useQuery({
+    queryKey: ['kid-summary', selectedKidId],
+    queryFn: async () => {
+      if (!selectedKidId) return null;
+      
+      const { doc, getDoc, getFirestore } = await import('firebase/firestore');
+      const db = getFirestore();
+      
+      const kidDoc = await getDoc(doc(db, 'kids', selectedKidId));
+      if (!kidDoc.exists()) return null;
+      
+      return {
+        id: kidDoc.id,
+        ...kidDoc.data(),
+      } as any;
+    },
+    enabled: !!selectedKidId,
+    staleTime: 60000, // 60 seconds
+  });
+
+  // Fetch recent game sessions (optional, for "Recent activity" section)
   const sessionsQuery = useQuery({
     queryKey: ['parent-game-sessions', selectedKidId],
     queryFn: async () => {
@@ -120,60 +141,40 @@ export default function ParentDashboard() {
       const db = getFirestore();
       
       const q = query(
-        collection(db, 'students', selectedKidId, 'gameSessions'),
+        collection(db, 'kids', selectedKidId, 'gameSessions'),
         orderBy('createdAt', 'desc'),
-        limit(50)
+        limit(5) // Only fetch 5 most recent for activity display
       );
       
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        // Ensure createdAt exists (fallback to current time if missing)
         createdAt: doc.data().createdAt || { seconds: Math.floor(Date.now() / 1000) }
       })) as any[];
     },
     enabled: !!selectedKidId,
   });
 
-  // Aggregate sessions into topic proficiency
+  // Compute insights from kid summary (batch-updated)
   const gamesProgress = useMemo(() => {
-    if (!selectedKidId || !sessionsQuery.data) return null;
+    if (!selectedKidId || !kidSummaryQuery.data) return null;
     
-    const sessions = sessionsQuery.data;
-    if (sessions.length === 0) return null;
+    const summary = kidSummaryQuery.data.summary;
+    if (!summary) return null;
 
     // Define topics with their skill mappings
     const topicDefs = [
       { id: 'letter-recognition', name: 'Letter Recognition', skillKeys: [], comingSoon: true },
-      { id: 'letter-sounds', name: 'Letter Sounds', skillKeys: ['letter_sounds'] },
+      { id: 'letter-sounds', name: 'Letter Sounds', skillKeys: ['letter-sounds', 'balloon-pop'] },
       { id: 'cvc-blending', name: 'CVC Blending', skillKeys: [], comingSoon: true },
       { id: 'tricky-words', name: 'Tricky Words', skillKeys: [], comingSoon: true },
       { id: 'digraphs-advanced', name: 'Digraphs & Advanced Sounds', skillKeys: ['digraphs_advanced'] },
     ];
 
-    const topicStats: Record<string, { attempts: number; correct: number; minutes: number; lastPlayed: number }> = {};
+    // Map summary.games to topics
+    const games = summary.games || {};
     
-    // Aggregate stats per topic
-    sessions.forEach((session: any) => {
-      const skills = session.skills || [];
-      const attempts = session.attempts || 0;
-      const correct = session.correct || 0;
-      const durationSec = session.durationSec || 0;
-      const timestamp = session.createdAt?.seconds ? session.createdAt.seconds * 1000 : Date.now();
-      
-      skills.forEach((skill: string) => {
-        if (!topicStats[skill]) {
-          topicStats[skill] = { attempts: 0, correct: 0, minutes: 0, lastPlayed: 0 };
-        }
-        topicStats[skill].attempts += attempts;
-        topicStats[skill].correct += correct;
-        topicStats[skill].minutes += durationSec / 60;
-        topicStats[skill].lastPlayed = Math.max(topicStats[skill].lastPlayed, timestamp);
-      });
-    });
-
-    // Compute status and progress for each topic
     const topics = topicDefs.map(def => {
       if (def.comingSoon) {
         return {
@@ -188,32 +189,33 @@ export default function ParentDashboard() {
         };
       }
 
-      // Aggregate across all matching skills
-      let totalAttempts = 0;
-      let totalCorrect = 0;
-      let totalMinutes = 0;
-      let latestPlayed = 0;
+      // Aggregate per-game stats
+      let totalPlays = 0;
+      let bestAccuracy = 0;
+      let latestPlayed: any = null;
 
-      def.skillKeys.forEach(skillKey => {
-        if (topicStats[skillKey]) {
-          totalAttempts += topicStats[skillKey].attempts;
-          totalCorrect += topicStats[skillKey].correct;
-          totalMinutes += topicStats[skillKey].minutes;
-          latestPlayed = Math.max(latestPlayed, topicStats[skillKey].lastPlayed);
+      def.skillKeys.forEach(gameId => {
+        if (games[gameId]) {
+          totalPlays += games[gameId].plays || 0;
+          bestAccuracy = Math.max(bestAccuracy, games[gameId].bestAccuracy || 0);
+          const gamePlayed = games[gameId].lastPlayedAt;
+          if (gamePlayed && (!latestPlayed || gamePlayed.seconds > latestPlayed.seconds)) {
+            latestPlayed = gamePlayed;
+          }
         }
       });
 
-      const accuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
-      const progress = Math.min(100, Math.max(0, Math.round(accuracy * 100)));
+      const accuracy = bestAccuracy;
+      const progress = Math.min(100, Math.round(accuracy * 100));
 
-      // Determine status based on accuracy and attempts
+      // Determine status
       let status = 'No activity yet';
-      if (totalAttempts >= 8) {
+      if (totalPlays >= 8) {
         if (accuracy >= 0.9) status = 'Mastered';
         else if (accuracy >= 0.75) status = 'Strong';
         else if (accuracy >= 0.55) status = 'Growing';
         else status = 'Learning';
-      } else if (totalAttempts > 0) {
+      } else if (totalPlays > 0) {
         status = 'Getting started';
       }
 
@@ -223,33 +225,42 @@ export default function ParentDashboard() {
         status,
         progress,
         accuracy,
-        attempts: totalAttempts,
-        minutes: Math.round(totalMinutes),
-        lastPlayed: latestPlayed > 0 ? latestPlayed : null,
+        attempts: totalPlays,
+        minutes: 0, // Not tracked per-topic in summary
+        lastPlayed: latestPlayed ? latestPlayed.seconds * 1000 : null,
       };
     });
 
-    // Compute overall stats
-    const allAttempts = sessions.reduce((sum: number, s: any) => sum + (s.attempts || 0), 0);
-    const allCorrect = sessions.reduce((sum: number, s: any) => sum + (s.correct || 0), 0);
-    const allMinutes = Math.round(sessions.reduce((sum: number, s: any) => sum + (s.durationSec || 0), 0) / 60);
-    const overallAccuracy = allAttempts > 0 ? allCorrect / allAttempts : 0;
-
-    // Find most practiced topic
-    const topicMinutes = topics.filter(t => t.minutes > 0);
-    const mostPracticed = topicMinutes.length > 0
-      ? topicMinutes.reduce((max, t) => t.minutes > max.minutes ? t : max, topicMinutes[0])
+    // Overall stats from summary
+    const totalMinutes = Math.round((summary.timeSpentWeekSec || 0) / 60);
+    const overallAccuracy = Math.round((summary.avgAccuracy10 || 0) * 100);
+    
+    // Find most practiced game
+    const gamesWithPlays = Object.entries(games).map(([gameId, stats]: [string, any]) => ({
+      gameId,
+      plays: stats.plays || 0,
+    }));
+    const mostPracticedGame = gamesWithPlays.length > 0
+      ? gamesWithPlays.reduce((max, g) => g.plays > max.plays ? g : max, gamesWithPlays[0])
       : null;
+    
+    const mostPracticed = mostPracticedGame?.gameId 
+      ? (mostPracticedGame.gameId === 'balloon-pop' ? 'Balloon Pop' : 
+         mostPracticedGame.gameId === 'letter-sound-match' ? 'Letter-Sound Match' : 
+         mostPracticedGame.gameId)
+      : 'N/A';
 
     return {
       overall: {
-        totalMinutes: allMinutes,
-        accuracy: Math.round(overallAccuracy * 100),
-        mostPracticed: mostPracticed?.name || 'N/A',
+        totalMinutes,
+        accuracy: overallAccuracy,
+        mostPracticed,
+        totalSessions: summary.totalSessions || 0,
+        streakDays: summary.streakDays || 0,
       },
       topics,
     };
-  }, [selectedKidId, sessionsQuery.data]);
+  }, [selectedKidId, kidSummaryQuery.data]);
 
   if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
@@ -321,29 +332,60 @@ export default function ParentDashboard() {
               <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Games Progress</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 {selectedKid?.fullName || selectedKidId ? (
-                  <>Viewing progress for: <span className="font-semibold">{selectedKid?.fullName || selectedKidId}</span> • Based on recent game practice</>
+                  <>Viewing progress for: <span className="font-semibold">{selectedKid?.fullName || selectedKidId}</span></>
                 ) : (
                   'Select a child to view their progress'
                 )}
               </p>
             </div>
 
+            {/* Update Info Note */}
+            {selectedKidId && kidSummaryQuery.data && (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="text-sm text-blue-900 dark:text-blue-100">
+                    {kidSummaryQuery.data.summary?.lastUpdatedAt ? (
+                      <>
+                        <strong>Last updated:</strong>{' '}
+                        {new Intl.DateTimeFormat('en-US', {
+                          timeZone: 'Asia/Kolkata',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          hour12: true,
+                        }).format(kidSummaryQuery.data.summary.lastUpdatedAt.toDate?.() || new Date(kidSummaryQuery.data.summary.lastUpdatedAt.seconds * 1000))}{' '}
+                        IST. Progress updates run at 11 AM, 5 PM, and 11 PM IST.
+                      </>
+                    ) : (
+                      <>
+                        Progress updates run at <strong>11 AM, 5 PM, and 11 PM IST</strong>. Your child's latest progress will appear after the next update.
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Loading State */}
-            {sessionsQuery.isLoading && (
+            {kidSummaryQuery.isLoading && (
               <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-                Loading game sessions...
+                Loading progress data...
               </div>
             )}
 
             {/* No Data State */}
-            {!sessionsQuery.isLoading && sessionsQuery.data?.length === 0 && selectedKidId && (
+            {!kidSummaryQuery.isLoading && !kidSummaryQuery.data?.summary && selectedKidId && (
               <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
                 <div className="text-gray-500 dark:text-gray-400 mb-4">
                   <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No game activity yet</p>
-                  <p className="text-sm mt-2">Game progress will appear here once {selectedKid?.fullName || 'your child'} starts playing.</p>
+                  <p className="text-sm mt-2">Game progress will appear here once {selectedKid?.fullName || 'your child'} starts playing and the next update runs (11 AM, 5 PM, or 11 PM IST).</p>
                 </div>
               </div>
             )}
@@ -352,18 +394,26 @@ export default function ParentDashboard() {
             {gamesProgress && (
               <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Overall Progress</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Practice Time</div>
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{gamesProgress.overall.totalMinutes}m</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Sessions</div>
+                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{gamesProgress.overall.totalSessions}</div>
                   </div>
                   <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Overall Accuracy</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Practice Time</div>
+                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{gamesProgress.overall.totalMinutes}m</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Accuracy</div>
                     <div className="text-2xl font-bold text-green-600 dark:text-green-400">{gamesProgress.overall.accuracy}%</div>
                   </div>
                   <div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Streak</div>
+                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{gamesProgress.overall.streakDays} {gamesProgress.overall.streakDays === 1 ? 'day' : 'days'}</div>
+                  </div>
+                  <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Most Practiced</div>
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400 truncate">{gamesProgress.overall.mostPracticed}</div>
+                    <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400 truncate">{gamesProgress.overall.mostPracticed}</div>
                   </div>
                 </div>
               </div>
