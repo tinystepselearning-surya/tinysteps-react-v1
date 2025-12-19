@@ -45,6 +45,9 @@ export {
 // Game Progress Summary Generator
 export { onGameProgressWrite } from './gameProgressSummary';
 
+// Game Session Summary Updater
+export { onGameSessionCreate } from './onGameSessionCreate';
+
 // Health ping (optional small endpoint you may add later)
 // export { healthCheck } from './health'; // Uncomment only if file exists
 
