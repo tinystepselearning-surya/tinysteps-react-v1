@@ -51,6 +51,13 @@ export { onGameProgressWrite } from './gameProgressSummary';
 // Game Session Summary Updater
 export { onGameSessionCreate } from './onGameSessionCreate';
 
+// Batch Insights Rollup (Scheduled 3x daily)
+export {
+  batchInsightsRollup11am,
+  batchInsightsRollup5pm,
+  batchInsightsRollup11pm,
+} from './scheduled/batchInsightsRollup';
+
 // Health ping (optional small endpoint you may add later)
 // export { healthCheck } from './health'; // Uncomment only if file exists
 

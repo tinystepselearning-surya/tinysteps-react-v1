@@ -115,22 +115,29 @@ export const onGameSessionCreate = onDocumentCreated(
 
     // PROD Kill Switch: Check config/insights (auto-create if missing)
     let enabled = true;
+    let mode: 'realtime' | 'batch' = 'batch';
+    
     try {
       const configRef = db.doc('config/insights');
       const configSnap = await configRef.get();
 
       if (!configSnap.exists) {
-        // Auto-create config with enabled=true
+        // Auto-create config with enabled=true, mode=batch
         await configRef.set({
           enabled: true,
+          mode: 'batch',
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           createdBy: 'onGameSessionCreate',
         }, { merge: true });
-        logger.info('[onGameSessionCreate] config/insights auto-created with enabled=true', { kidId, sessionId });
+        logger.info('[onGameSessionCreate] config/insights auto-created with enabled=true, mode=batch', { kidId, sessionId });
         enabled = true;
+        mode = 'batch';
       } else {
         const configData = configSnap.data();
         enabled = configData?.enabled === true;
+        mode = (configData?.mode === 'realtime' || configData?.mode === 'batch') 
+          ? configData.mode 
+          : 'batch';
       }
     } catch (error) {
       logger.warn('[onGameSessionCreate] config read failed; skipping safely', { kidId, sessionId, error });
@@ -143,6 +150,13 @@ export const onGameSessionCreate = onDocumentCreated(
       return;
     }
 
+    // Batch mode check
+    if (mode === 'batch') {
+      logger.info('[onGameSessionCreate] batch mode enabled; skipping realtime update', { kidId, sessionId });
+      return;
+    }
+
+    // Only proceed if mode === 'realtime'
     // Proceed with existing logic
     const kidRef = db.collection('kids').doc(kidId);
 
