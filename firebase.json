@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "tinysteps-react-v1",
     "public": "dist",
     "predeploy": ["npm run build"],
     "ignore": [
