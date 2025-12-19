@@ -112,6 +112,36 @@ export const onGameSessionCreate = onDocumentCreated(
     } = sessionData;
 
     const db = admin.firestore();
+
+    // PROD Safety Guard: Check config/insights for kill switch + allowlist
+    let configData: any = null;
+    try {
+      const configSnap = await db.doc('config/insights').get();
+      if (!configSnap.exists) {
+        logger.info('[onGameSessionCreate] config/insights not found; treating as disabled', { kidId, sessionId });
+        return;
+      }
+      configData = configSnap.data();
+    } catch (error) {
+      logger.warn('[onGameSessionCreate] Failed to read config/insights; skipping safely', { kidId, sessionId, error });
+      return;
+    }
+
+    // Check enabled flag
+    const enabled = configData?.enabled === true;
+    if (!enabled) {
+      logger.info('[onGameSessionCreate] insights disabled; skipping', { kidId, sessionId });
+      return;
+    }
+
+    // Check allowlist
+    const allowKidIds = Array.isArray(configData?.allowKidIds) ? configData.allowKidIds : [];
+    if (allowKidIds.length > 0 && !allowKidIds.includes(kidId)) {
+      logger.info('[onGameSessionCreate] kid not allowlisted; skipping', { kidId, sessionId });
+      return;
+    }
+
+    // Proceed with existing logic
     const kidRef = db.collection('kids').doc(kidId);
 
     try {
