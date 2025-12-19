@@ -33,6 +33,9 @@ export {
   unassignLPFromTeacher,
 } from './assignLP';
 
+// Admin: Control Insights Kill Switch
+export { setInsightsEnabled } from './setInsightsEnabled';
+
 // Parent → Students Subcollection Operations
 export { createStudentForParent } from './parentStudents';
 
