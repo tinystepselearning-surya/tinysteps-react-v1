@@ -64,17 +64,24 @@ export const setInsightsEnabled = onCall<SetInsightsEnabledRequest>(
       throw new HttpsError('invalid-argument', 'enabled must be boolean');
     }
 
-    // 4) Write config
+    // 4) Write config (ensure batch mode by default)
     try {
       const configRef = db.doc('config/insights');
+      const configSnap = await configRef.get();
+
+      // Preserve existing mode, or default to 'batch'
+      const existingMode = configSnap.exists ? configSnap.data()?.mode : undefined;
+      const modeToWrite = existingMode ? existingMode : 'batch';
+
       await configRef.set({
         enabled,
+        mode: modeToWrite,
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         updatedBy: uid,
         source: 'callable:setInsightsEnabled',
       }, { merge: true });
 
-      logger.info('[setInsightsEnabled] Config updated', { uid, enabled });
+      logger.info('[setInsightsEnabled] Config updated', { uid, enabled, mode: modeToWrite });
 
       // 5) Return success
       return {
