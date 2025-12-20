@@ -187,6 +187,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Skill stats per tag (written by Cloud Functions, read by parents/admins)
+    match /kids/{kidId}/skillStats/{tagId} {
+      // Parents can read their kids' skill stats
+      allow read: if isSignedIn()
+        && kidExists(kidId)
+        && ('parentIds' in kidDoc(kidId))
+        && (request.auth.uid in kidDoc(kidId).parentIds);
+
+      // Admins can read
+      allow read: if isAdmin();
+
+      // Only backend (Cloud Functions) can write - deny all client writes
+      allow write: if false;
+    }
+
     // ----------------------------
     // ENROLLMENTS COLLECTION
     // ----------------------------
