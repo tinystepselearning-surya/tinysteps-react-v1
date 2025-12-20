@@ -131,6 +131,43 @@ export default function ParentDashboard() {
     staleTime: 60000, // 60 seconds
   });
 
+  // Fetch games catalog
+  const catalogQuery = useQuery({
+    queryKey: ['gamesCatalog'],
+    queryFn: async () => {
+      const { doc, getDoc, getFirestore } = await import('firebase/firestore');
+      const db = getFirestore();
+      
+      const catalogDoc = await getDoc(doc(db, 'config', 'gamesCatalog'));
+      if (!catalogDoc.exists()) return null;
+      
+      return catalogDoc.data() as any;
+    },
+    staleTime: 24 * 60 * 60 * 1000, // 24 hours
+  });
+
+  // Fetch all game progress docs for selected kid
+  const gameProgressQuery = useQuery({
+    queryKey: ['kid-game-progress', selectedKidId],
+    queryFn: async () => {
+      if (!selectedKidId) return {};
+      
+      const { collection, getDocs, getFirestore } = await import('firebase/firestore');
+      const db = getFirestore();
+      
+      const progressSnapshot = await getDocs(collection(db, 'kids', selectedKidId, 'gameProgress'));
+      
+      const progressByDocId: Record<string, any> = {};
+      progressSnapshot.docs.forEach(doc => {
+        progressByDocId[doc.id] = doc.data();
+      });
+      
+      return progressByDocId;
+    },
+    enabled: !!selectedKidId,
+    staleTime: 60000, // 60 seconds
+  });
+
   // Fetch recent game sessions (optional, for "Recent activity" section)
   const sessionsQuery = useQuery({
     queryKey: ['parent-game-sessions', selectedKidId],
@@ -156,87 +193,118 @@ export default function ParentDashboard() {
     enabled: !!selectedKidId,
   });
 
-  // Compute insights from kid summary (batch-updated)
+  // Compute insights from kid summary (batch-updated) and game progress
   const gamesProgress = useMemo(() => {
     if (!selectedKidId || !kidSummaryQuery.data) return null;
+    if (!catalogQuery.data || !gameProgressQuery.data) return null;
     
     const summary = kidSummaryQuery.data.summary;
-    if (!summary) return null;
+    const catalog = catalogQuery.data;
+    const progressByDocId = gameProgressQuery.data;
 
-    // Define topics with their skill mappings
-    const topicDefs = [
-      { id: 'letter-recognition', name: 'Letter Recognition', skillKeys: [], comingSoon: true },
-      { id: 'letter-sounds', name: 'Letter Sounds', skillKeys: ['letter-sounds', 'balloon-pop'] },
-      { id: 'cvc-blending', name: 'CVC Blending', skillKeys: [], comingSoon: true },
-      { id: 'tricky-words', name: 'Tricky Words', skillKeys: [], comingSoon: true },
-      { id: 'digraphs-advanced', name: 'Digraphs & Advanced Sounds', skillKeys: ['digraphs_advanced'] },
-    ];
+    // Build categories (topics) from catalog
+    const categories = catalog.categories || {};
+    const games = catalog.games || {};
 
-    // Map summary.games to topics
-    const games = summary.games || {};
-    
-    const topics = topicDefs.map(def => {
-      if (def.comingSoon) {
-        return {
-          id: def.id,
-          name: def.name,
-          status: 'Coming soon',
-          progress: 0,
-          accuracy: 0,
-          attempts: 0,
-          minutes: 0,
-          lastPlayed: null,
-        };
+    // Group games by category
+    const topicDefs: Array<{
+      id: string;
+      name: string;
+      gameIds: string[];
+    }> = [];
+
+    Object.entries(categories).forEach(([catId, catData]: [string, any]) => {
+      if (catData.active === false) return;
+      
+      const gameIdsInCategory = Object.entries(games)
+        .filter(([gameId, game]: [string, any]) => game.active && game.category === catId)
+        .sort((a, b) => ((a[1] as any).order || 0) - ((b[1] as any).order || 0))
+        .map(([gameId]) => gameId);
+
+      if (gameIdsInCategory.length > 0) {
+        topicDefs.push({
+          id: catId,
+          name: catData.label || catId,
+          gameIds: gameIdsInCategory,
+        });
       }
+    });
 
-      // Aggregate per-game stats
-      let totalPlays = 0;
-      let bestAccuracy = 0;
+    // Sort topics by category order
+    topicDefs.sort((a, b) => {
+      const orderA = categories[a.id]?.order || 0;
+      const orderB = categories[b.id]?.order || 0;
+      return orderA - orderB;
+    });
+
+    // Compute progress per topic
+    const topics = topicDefs.map(def => {
+      let completedSum = 0;
+      let totalSum = 0;
+      let hasAnyActivity = false;
       let latestPlayed: any = null;
 
-      def.skillKeys.forEach(gameId => {
-        if (games[gameId]) {
-          totalPlays += games[gameId].plays || 0;
-          bestAccuracy = Math.max(bestAccuracy, games[gameId].bestAccuracy || 0);
-          const gamePlayed = games[gameId].lastPlayedAt;
+      def.gameIds.forEach(gameId => {
+        const game = games[gameId];
+        if (!game) return;
+
+        const progressDocId = game.progressDocId || gameId;
+        const progress = progressByDocId[progressDocId];
+
+        const totalLevels = game.totalLevels || 0;
+        totalSum += totalLevels;
+
+        if (progress) {
+          const completedLevels = progress.completedLevels || [];
+          const completedCount = Array.isArray(completedLevels) ? completedLevels.length : 0;
+          completedSum += completedCount;
+
+          if (completedCount > 0) {
+            hasAnyActivity = true;
+          }
+
+          const gamePlayed = progress.lastPlayedAt;
           if (gamePlayed && (!latestPlayed || gamePlayed.seconds > latestPlayed.seconds)) {
             latestPlayed = gamePlayed;
           }
         }
       });
 
-      const accuracy = bestAccuracy;
-      const progress = Math.min(100, Math.round(accuracy * 100));
+      const progressPct = totalSum > 0 ? Math.round((completedSum / totalSum) * 100) : 0;
 
-      // Determine status
+      // Determine status based on completedSum
       let status = 'No activity yet';
-      if (totalPlays >= 8) {
-        if (accuracy >= 0.9) status = 'Mastered';
-        else if (accuracy >= 0.75) status = 'Strong';
-        else if (accuracy >= 0.55) status = 'Growing';
-        else status = 'Learning';
-      } else if (totalPlays > 0) {
-        status = 'Getting started';
+      if (completedSum === 0) {
+        status = 'No activity yet';
+      } else if (progressPct >= 90) {
+        status = 'Mastered';
+      } else if (progressPct >= 70) {
+        status = 'Strong';
+      } else if (progressPct >= 40) {
+        status = 'Growing';
+      } else {
+        status = 'Learning';
       }
 
       return {
         id: def.id,
         name: def.name,
         status,
-        progress,
-        accuracy,
-        attempts: totalPlays,
-        minutes: 0, // Not tracked per-topic in summary
+        progress: progressPct,
+        accuracy: 0, // Not computed from completedLevels
+        attempts: completedSum, // Show completed count as "attempts"
+        minutes: 0, // Not tracked per-topic
         lastPlayed: latestPlayed ? latestPlayed.seconds * 1000 : null,
       };
     });
 
-    // Overall stats from summary
-    const totalMinutes = Math.round((summary.timeSpentWeekSec || 0) / 60);
-    const overallAccuracy = Math.round((summary.avgAccuracy10 || 0) * 100);
+    // Overall stats from summary (if available)
+    const totalMinutes = summary ? Math.round((summary.timeSpentWeekSec || 0) / 60) : 0;
+    const overallAccuracy = summary ? Math.round((summary.avgAccuracy10 || 0) * 100) : 0;
     
-    // Find most practiced game
-    const gamesWithPlays = Object.entries(games).map(([gameId, stats]: [string, any]) => ({
+    // Find most practiced game from summary
+    const summaryGames = summary?.games || {};
+    const gamesWithPlays = Object.entries(summaryGames).map(([gameId, stats]: [string, any]) => ({
       gameId,
       plays: stats.plays || 0,
     }));
@@ -245,9 +313,7 @@ export default function ParentDashboard() {
       : null;
     
     const mostPracticed = mostPracticedGame?.gameId 
-      ? (mostPracticedGame.gameId === 'balloon-pop' ? 'Balloon Pop' : 
-         mostPracticedGame.gameId === 'letter-sound-match' ? 'Letter-Sound Match' : 
-         mostPracticedGame.gameId)
+      ? (games[mostPracticedGame.gameId]?.title || mostPracticedGame.gameId)
       : 'N/A';
 
     return {
@@ -255,12 +321,12 @@ export default function ParentDashboard() {
         totalMinutes,
         accuracy: overallAccuracy,
         mostPracticed,
-        totalSessions: summary.totalSessions || 0,
-        streakDays: summary.streakDays || 0,
+        totalSessions: summary?.totalSessions || 0,
+        streakDays: summary?.streakDays || 0,
       },
       topics,
     };
-  }, [selectedKidId, kidSummaryQuery.data]);
+  }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data, gameProgressQuery.data]);
 
   if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
