@@ -110,7 +110,7 @@ export default function ParentDashboard() {
   // Compute Kids Portal URL (only valid if selectedKidId exists)
   const kidsPortalUrl = selectedKidId ? `/kids?kidId=${encodeURIComponent(selectedKidId)}` : null;
 
-  // Fetch kid document with summary
+  // Fetch kid document with summary and progressSummary
   const kidSummaryQuery = useQuery({
     queryKey: ['kid-summary', selectedKidId],
     queryFn: async () => {
@@ -146,28 +146,6 @@ export default function ParentDashboard() {
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
 
-  // Fetch all game progress docs for selected kid
-  const gameProgressQuery = useQuery({
-    queryKey: ['kid-game-progress', selectedKidId],
-    queryFn: async () => {
-      if (!selectedKidId) return {};
-      
-      const { collection, getDocs, getFirestore } = await import('firebase/firestore');
-      const db = getFirestore();
-      
-      const progressSnapshot = await getDocs(collection(db, 'kids', selectedKidId, 'gameProgress'));
-      
-      const progressByDocId: Record<string, any> = {};
-      progressSnapshot.docs.forEach(doc => {
-        progressByDocId[doc.id] = doc.data();
-      });
-      
-      return progressByDocId;
-    },
-    enabled: !!selectedKidId,
-    staleTime: 60000, // 60 seconds
-  });
-
   // Fetch recent game sessions (optional, for "Recent activity" section)
   const sessionsQuery = useQuery({
     queryKey: ['parent-game-sessions', selectedKidId],
@@ -193,24 +171,25 @@ export default function ParentDashboard() {
     enabled: !!selectedKidId,
   });
 
-  // Compute insights from kid summary (batch-updated) and game progress
+  // Compute insights from kid summary and progressSummary (cheap read path)
   const gamesProgress = useMemo(() => {
     if (!selectedKidId || !kidSummaryQuery.data) return null;
-    if (!catalogQuery.data || !gameProgressQuery.data) return null;
+    if (!catalogQuery.data) return null;
     
     const summary = kidSummaryQuery.data.summary;
+    const progressSummary = kidSummaryQuery.data.progressSummary;
     const catalog = catalogQuery.data;
-    const progressByDocId = gameProgressQuery.data;
 
     // Build categories (topics) from catalog
     const categories = catalog.categories || {};
     const games = catalog.games || {};
 
-    // Group games by category
+    // Group games by category for topic definitions
     const topicDefs: Array<{
       id: string;
       name: string;
       gameIds: string[];
+      totalLevels: number;
     }> = [];
 
     Object.entries(categories).forEach(([catId, catData]: [string, any]) => {
@@ -222,10 +201,17 @@ export default function ParentDashboard() {
         .map(([gameId]) => gameId);
 
       if (gameIdsInCategory.length > 0) {
+        // Compute total levels for this topic from catalog
+        const totalLevels = gameIdsInCategory.reduce((sum, gameId) => {
+          const game = games[gameId];
+          return sum + (game?.totalLevels || 0);
+        }, 0);
+
         topicDefs.push({
           id: catId,
           name: catData.label || catId,
           gameIds: gameIdsInCategory,
+          totalLevels,
         });
       }
     });
@@ -237,42 +223,25 @@ export default function ParentDashboard() {
       return orderA - orderB;
     });
 
-    // Compute progress per topic
+    // Build topic progress from progressSummary (cheap read)
+    const progressByTopic = progressSummary?.progressByTopic || {};
+    
     const topics = topicDefs.map(def => {
+      const topicProgress = progressByTopic[def.id];
+      
       let completedSum = 0;
-      let totalSum = 0;
-      let hasAnyActivity = false;
+      let totalSum = def.totalLevels;
+      let progressPct = 0;
       let latestPlayed: any = null;
 
-      def.gameIds.forEach(gameId => {
-        const game = games[gameId];
-        if (!game) return;
+      if (topicProgress) {
+        completedSum = topicProgress.completedLevels || 0;
+        totalSum = topicProgress.totalLevels || def.totalLevels;
+        progressPct = topicProgress.pct || 0;
+        latestPlayed = topicProgress.lastPlayedAt;
+      }
 
-        const progressDocId = game.progressDocId || gameId;
-        const progress = progressByDocId[progressDocId];
-
-        const totalLevels = game.totalLevels || 0;
-        totalSum += totalLevels;
-
-        if (progress) {
-          const completedLevels = progress.completedLevels || [];
-          const completedCount = Array.isArray(completedLevels) ? completedLevels.length : 0;
-          completedSum += completedCount;
-
-          if (completedCount > 0) {
-            hasAnyActivity = true;
-          }
-
-          const gamePlayed = progress.lastPlayedAt;
-          if (gamePlayed && (!latestPlayed || gamePlayed.seconds > latestPlayed.seconds)) {
-            latestPlayed = gamePlayed;
-          }
-        }
-      });
-
-      const progressPct = totalSum > 0 ? Math.round((completedSum / totalSum) * 100) : 0;
-
-      // Determine status based on completedSum
+      // Determine status based on progress percentage
       let status = 'No activity yet';
       if (completedSum === 0) {
         status = 'No activity yet';
@@ -291,7 +260,7 @@ export default function ParentDashboard() {
         name: def.name,
         status,
         progress: progressPct,
-        accuracy: 0, // Not computed from completedLevels
+        accuracy: 0, // Not computed from progressSummary
         attempts: completedSum, // Show completed count as "attempts"
         minutes: 0, // Not tracked per-topic
         lastPlayed: latestPlayed ? latestPlayed.seconds * 1000 : null,
@@ -326,7 +295,7 @@ export default function ParentDashboard() {
       },
       topics,
     };
-  }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data, gameProgressQuery.data]);
+  }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data]);
 
   if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
