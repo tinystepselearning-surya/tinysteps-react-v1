@@ -149,7 +149,8 @@ service cloud.firestore {
       allow read, write: if isAdmin();
 
       // Parent read own kids (check parentIds array)
-      allow read: if isParent()
+      // Allow if authenticated user's uid is in the kid's parentIds array
+      allow read: if isSignedIn()
         && ('parentIds' in resource.data)
         && (request.auth.uid in resource.data.parentIds);
 
@@ -314,6 +315,12 @@ service cloud.firestore {
     // ----------------------------
     // CONFIG COLLECTION
     // ----------------------------
+    // config/gamesCatalog: readable by authenticated users (especially parents for dashboard)
+    match /config/gamesCatalog {
+      allow read: if isSignedIn();
+      allow write: if false; // only server-side/admin SDK should write
+    }
+
     match /config/insights {
       allow read: if isAdmin();
       allow write: if false; // only callable (admin SDK) should write

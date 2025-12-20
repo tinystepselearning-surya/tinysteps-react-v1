@@ -171,8 +171,21 @@ export default function ParentDashboard() {
     enabled: !!selectedKidId,
   });
 
-  // Compute insights from kid summary and progressSummary (cheap read path)
+  // Compute insights from kid summary and progressSummary (optimized read path)
   const gamesProgress = useMemo(() => {
+    // Debug logging (DEV only)
+    if (isDev) {
+      console.log('[ParentDashboard] gamesProgress computation:', {
+        selectedKidId,
+        kidSummaryStatus: kidSummaryQuery.status,
+        kidSummaryError: kidSummaryQuery.error,
+        catalogStatus: catalogQuery.status,
+        catalogError: catalogQuery.error,
+        hasProgressSummary: !!kidSummaryQuery.data?.progressSummary,
+        catalogCategories: Object.keys(catalogQuery.data?.categories || {}),
+      });
+    }
+
     if (!selectedKidId || !kidSummaryQuery.data) return null;
     if (!catalogQuery.data) return null;
     
@@ -216,14 +229,56 @@ export default function ParentDashboard() {
       }
     });
 
-    // Sort topics by category order
-    topicDefs.sort((a, b) => {
-      const orderA = categories[a.id]?.order || 0;
-      const orderB = categories[b.id]?.order || 0;
-      return orderA - orderB;
-    });
+    // Fallback: if no topics built from categories but games exist, derive from games
+    if (topicDefs.length === 0 && Object.keys(games).length > 0) {
+      const topicsByCategory: Record<string, { gameIds: string[]; totalLevels: number }> = {};
+      
+      Object.entries(games).forEach(([gameId, game]: [string, any]) => {
+        if (game.active === false) return;
+        const catId = game.category;
+        if (!catId) return;
+        
+        if (!topicsByCategory[catId]) {
+          topicsByCategory[catId] = { gameIds: [], totalLevels: 0 };
+        }
+        topicsByCategory[catId].gameIds.push(gameId);
+        topicsByCategory[catId].totalLevels += (game.totalLevels || 0);
+      });
+      
+      Object.entries(topicsByCategory).forEach(([catId, data]) => {
+        topicDefs.push({
+          id: catId,
+          name: categories[catId]?.label || catId,
+          gameIds: data.gameIds,
+          totalLevels: data.totalLevels,
+        });
+      });
+      
+      // Sort by category order if available, tie-break by id for stable ordering
+      topicDefs.sort((a, b) => {
+        const orderA = categories[a.id]?.order || 0;
+        const orderB = categories[b.id]?.order || 0;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.id.localeCompare(b.id);
+      });
+    }
 
-    // Build topic progress from progressSummary (cheap read)
+    // Debug: log topic definitions
+    if (isDev) {
+      console.log('[ParentDashboard] topicDefs built:', topicDefs.length, 'topics');
+    }
+
+    // Sort topics by category order with stable tie-break (only if not sorted by fallback)
+    if (!(topicDefs.length > 0 && Object.keys(categories).length === 0)) {
+      topicDefs.sort((a, b) => {
+        const orderA = categories[a.id]?.order || 0;
+        const orderB = categories[b.id]?.order || 0;
+        if (orderA !== orderB) return orderA - orderB;
+        return a.id.localeCompare(b.id);
+      });
+    }
+
+    // Build topic progress from progressSummary (optimized read)
     const progressByTopic = progressSummary?.progressByTopic || {};
     
     const topics = topicDefs.map(def => {
@@ -421,6 +476,30 @@ export default function ParentDashboard() {
                   </svg>
                   <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No game activity yet</p>
                   <p className="text-sm mt-2">Game progress will appear here once {selectedKid?.fullName || 'your child'} starts playing and the next update runs (11 AM, 5 PM, or 11 PM IST).</p>
+                </div>
+              </div>
+            )}
+
+            {/* Debug Fallback: Show what's missing (DEV only) */}
+            {isDev && !kidSummaryQuery.isLoading && !catalogQuery.isLoading && !gamesProgress && selectedKidId && kidSummaryQuery.data && (
+              <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div className="text-sm text-yellow-900 dark:text-yellow-100">
+                    <strong>Topic cards not showing.</strong> Checking dependencies:
+                    <ul className="mt-2 space-y-1 list-disc list-inside">
+                      <li>Kid document: {kidSummaryQuery.data ? '✅ Loaded' : '❌ Not loaded'}</li>
+                      <li>Catalog: {catalogQuery.data ? '✅ Loaded' : '❌ Not loaded'}</li>
+                      <li>progressSummary field: {kidSummaryQuery.data?.progressSummary ? '✅ Present' : '⚠️ Missing (expected for new kids)'}</li>
+                    </ul>
+                    {!kidSummaryQuery.data?.progressSummary && (
+                      <p className="mt-2 text-xs">
+                        This kid hasn't played any games yet. Topic cards will appear after the first game session.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
