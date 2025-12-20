@@ -141,7 +141,7 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
       patchedPaths.push('games.balloon-pop.category');
       needsPatch = true;
     }
-    if (balloonPopPatch.active === undefined) {
+    if (balloonPopGame.active === undefined) {
       balloonPopPatch.active = true;
       patchedPaths.push('games.balloon-pop.active');
       needsPatch = true;
