@@ -33,17 +33,20 @@ let catalogPatchResult: CatalogPatchResult = {
 const CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
- * Ensure gamesCatalog contains letter-sound-match game with correct metadata.
+ * Ensure gamesCatalog contains letter-sound-match and balloon-pop games with correct metadata.
  * 
  * Required fields (never overwritten if correct):
  * - games["letter-sound-match"].progressDocId = 'phonics_letter_sound'
  * - games["letter-sound-match"].totalLevels = 7
  * - games["letter-sound-match"].category = 'letter_sounds'
+ * - games["balloon-pop"].progressDocId = 'phonics_balloon_pop'
+ * - games["balloon-pop"].totalLevels = 7
+ * - games["balloon-pop"].category = 'letter_sounds'
  * 
  * Optional fields (only set if missing):
- * - games["letter-sound-match"].active (default true if undefined)
- * - games["letter-sound-match"].title (preserve existing)
- * - games["letter-sound-match"].order (preserve existing)
+ * - games[...].active (default true if undefined)
+ * - games[...].title (preserve existing)
+ * - games[...].order (preserve existing)
  * - categories["letter_sounds"].label (only if missing)
  * - categories["letter_sounds"].order (only if missing)
  * 
@@ -73,40 +76,69 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
     const games = data?.games || {};
     const categories = data?.categories || {};
     
-    // Get current values
-    const game = games['letter-sound-match'] || {};
+    // Get current values for both games
+    const letterSoundGame = games['letter-sound-match'] || {};
+    const balloonPopGame = games['balloon-pop'] || {};
     const category = categories['letter_sounds'] || {};
     
     // Build patch with only required fields or missing optional fields
     const patch: any = {};
     const patchedPaths: string[] = [];
     
-    // Required game fields (must be correct)
-    if (game.progressDocId !== 'phonics_letter_sound') {
+    // Letter Sound Match - Required fields
+    if (letterSoundGame.progressDocId !== 'phonics_letter_sound') {
       patch['games.letter-sound-match.progressDocId'] = 'phonics_letter_sound';
       patchedPaths.push('games.letter-sound-match.progressDocId');
     }
-    if (game.totalLevels !== 7) {
+    if (letterSoundGame.totalLevels !== 7) {
       patch['games.letter-sound-match.totalLevels'] = 7;
       patchedPaths.push('games.letter-sound-match.totalLevels');
     }
-    if (game.category !== 'letter_sounds') {
+    if (letterSoundGame.category !== 'letter_sounds') {
       patch['games.letter-sound-match.category'] = 'letter_sounds';
       patchedPaths.push('games.letter-sound-match.category');
     }
     
-    // Optional game fields (only set if missing)
-    if (game.active === undefined) {
+    // Letter Sound Match - Optional fields
+    if (letterSoundGame.active === undefined) {
       patch['games.letter-sound-match.active'] = true;
       patchedPaths.push('games.letter-sound-match.active');
     }
-    if (!game.title) {
+    if (!letterSoundGame.title) {
       patch['games.letter-sound-match.title'] = 'Letter Sound Match';
       patchedPaths.push('games.letter-sound-match.title');
     }
-    if (game.order === undefined) {
+    if (letterSoundGame.order === undefined) {
       patch['games.letter-sound-match.order'] = 10;
       patchedPaths.push('games.letter-sound-match.order');
+    }
+    
+    // Balloon Pop - Required fields
+    if (balloonPopGame.progressDocId !== 'phonics_balloon_pop') {
+      patch['games.balloon-pop.progressDocId'] = 'phonics_balloon_pop';
+      patchedPaths.push('games.balloon-pop.progressDocId');
+    }
+    if (balloonPopGame.totalLevels !== 7) {
+      patch['games.balloon-pop.totalLevels'] = 7;
+      patchedPaths.push('games.balloon-pop.totalLevels');
+    }
+    if (balloonPopGame.category !== 'letter_sounds') {
+      patch['games.balloon-pop.category'] = 'letter_sounds';
+      patchedPaths.push('games.balloon-pop.category');
+    }
+    
+    // Balloon Pop - Optional fields
+    if (balloonPopGame.active === undefined) {
+      patch['games.balloon-pop.active'] = true;
+      patchedPaths.push('games.balloon-pop.active');
+    }
+    if (!balloonPopGame.title) {
+      patch['games.balloon-pop.title'] = 'Balloon Pop (Jolly Levels)';
+      patchedPaths.push('games.balloon-pop.title');
+    }
+    if (balloonPopGame.order === undefined) {
+      patch['games.balloon-pop.order'] = 20;
+      patchedPaths.push('games.balloon-pop.order');
     }
     
     // Category fields (only set if missing)

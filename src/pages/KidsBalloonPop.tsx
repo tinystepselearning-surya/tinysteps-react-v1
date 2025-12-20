@@ -626,7 +626,40 @@ const KidsBalloonPop: React.FC = () => {
 		};
 		setProgress(newProgress);
 		saveProgress(kidId, newProgress);
-	}, [currentLevel, wrongCount, score, progress, kidId]);
+		
+		// Record to backend (non-blocking)
+		if (kidId) {
+			(async () => {
+				try {
+					const { recordLevelResult } = await import('../games/engine/recordLevelResult');
+					
+					const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = {
+						'subtopic:letter_sounds': {
+							attempts: correctCount + wrongCount,
+							correct: correctCount,
+							wrong: wrongCount,
+						},
+					};
+					
+					const result = await recordLevelResult({
+						kidId,
+						gameId: 'balloon-pop',
+						progressDocId: 'phonics_balloon_pop',
+						levelId: currentLevel.id,
+						completed: true,
+						stars,
+						score: correctCount,
+						accuracyPct: correctCount > 0 ? (correctCount / (correctCount + wrongCount)) * 100 : 0,
+						tagDeltas,
+					});
+					
+					console.info('[recordLevelResult] Success', result);
+				} catch (err) {
+					console.error('[recordLevelResult] Failed (non-blocking):', err);
+				}
+			})();
+		}
+	}, [currentLevel, wrongCount, correctCount, score, progress, kidId]);
 
 	// Play next level in fullscreen
 	const playNextLevel = useCallback(() => {
