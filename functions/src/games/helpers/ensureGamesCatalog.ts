@@ -9,8 +9,18 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 
+/**
+ * Result of catalog patch check
+ */
+export interface CatalogPatchResult {
+  checked: boolean;
+  patched: boolean;
+  patchedPaths: string[];
+}
+
 // In-memory flag to run once per warm instance
-let catalogPatched = false;
+let catalogChecked = false;
+let catalogPatchResult: CatalogPatchResult = { checked: false, patched: false, patchedPaths: [] };
 
 /**
  * Ensure gamesCatalog contains letter-sound-match game with correct metadata.
@@ -22,11 +32,12 @@ let catalogPatched = false;
  * Only writes if fields are missing/incorrect to minimize writes.
  * 
  * @param db - Firestore instance
+ * @returns Patch result with checked, patched, and patchedPaths
  */
-export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): Promise<void> {
-  // Skip if already patched in this instance
-  if (catalogPatched) {
-    return;
+export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): Promise<CatalogPatchResult> {
+  // Return cached result if already checked in this instance
+  if (catalogChecked) {
+    return catalogPatchResult;
   }
 
   try {
@@ -53,12 +64,17 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
       category.order !== 10;
     
     if (!needsGamePatch && !needsCategoryPatch) {
-      catalogPatched = true;
-      return;
+      catalogChecked = true;
+      catalogPatchResult = { checked: true, patched: false, patchedPaths: [] };
+      
+      logger.info('[ensureGamesCatalog] Catalog already up to date', { patched: false });
+      
+      return catalogPatchResult;
     }
     
     // Apply patch
     const patch: any = {};
+    const patchedPaths: string[] = [];
     
     if (needsGamePatch) {
       patch['games.letter-sound-match'] = {
@@ -69,6 +85,7 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
         title: 'Letter Sound Match',
         order: game.order ?? 10, // Preserve existing order or default
       };
+      patchedPaths.push('games.letter-sound-match');
     }
     
     if (needsCategoryPatch) {
@@ -76,22 +93,31 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
         label: 'Letter Sounds',
         order: 10,
       };
+      patchedPaths.push('categories.letter_sounds');
     }
     
     patch.updatedAt = admin.firestore.FieldValue.serverTimestamp();
     
     await catalogRef.set(patch, { merge: true });
     
+    catalogChecked = true;
+    catalogPatchResult = { checked: true, patched: true, patchedPaths };
+    
     logger.info('[ensureGamesCatalog] Patched config/gamesCatalog', {
-      gamesPatched: needsGamePatch,
-      categoriesPatched: needsCategoryPatch,
+      patched: true,
+      patchedPaths,
     });
     
-    catalogPatched = true;
+    return catalogPatchResult;
   } catch (error: any) {
     // Non-critical: log but don't fail the function
     logger.warn('[ensureGamesCatalog] Failed to patch catalog', {
       error: error.message,
     });
+    
+    catalogChecked = true;
+    catalogPatchResult = { checked: true, patched: false, patchedPaths: [] };
+    
+    return catalogPatchResult;
   }
 }

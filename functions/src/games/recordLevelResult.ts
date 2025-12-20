@@ -113,7 +113,7 @@ export const recordLevelResult = onCall(
     logger.info('[recordLevelResult] Authorized', { uid, kidId });
 
     // 4. Ensure games catalog is patched (once per instance)
-    await ensureGamesCatalogPatched(db);
+    const catalogResult = await ensureGamesCatalogPatched(db);
 
     // 5. Current timestamp
     const nowTs = admin.firestore.Timestamp.now();
@@ -254,6 +254,9 @@ export const recordLevelResult = onCall(
         completedLevelsCount: completedCount,
         tagsUpdated,
         summaryUpdated: true,
+        catalogChecked: catalogResult.checked,
+        catalogPatched: catalogResult.patched,
+        catalogPatchedPaths: catalogResult.patchedPaths,
       };
     } catch (error: any) {
       logger.error('[recordLevelResult] Transaction failed', {

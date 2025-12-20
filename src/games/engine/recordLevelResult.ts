@@ -18,6 +18,9 @@ export interface RecordLevelResultResponse {
   completedLevelsCount: number;
   tagsUpdated: number;
   summaryUpdated: boolean;
+  catalogChecked: boolean;
+  catalogPatched: boolean;
+  catalogPatchedPaths: string[];
 }
 
 /**
@@ -55,6 +58,9 @@ export async function recordLevelResult(result: LevelResult): Promise<RecordLeve
       progressDocId: data.progressDocId,
       completedLevelsCount: data.completedLevelsCount,
       tagsUpdated: data.tagsUpdated,
+      catalogChecked: data.catalogChecked,
+      catalogPatched: data.catalogPatched,
+      catalogPatchedPaths: data.catalogPatchedPaths,
     });
 
     return data;
