@@ -74,10 +74,11 @@ export const cleanupGamesCatalogNow = onCall(
     const games = catalogData.games || {};
     const categories = catalogData.categories || {};
 
-    // 5. Build cleanup payload
-    const updatePayload: any = {};
-    const deletedFields: string[] = [];
+    // 5. Build cleanup operations
+    const updates: Array<[admin.firestore.FieldPath | string, any]> = [];
+    const deletedDotKeys: string[] = [];
     const normalizedGames: string[] = [];
+    let deletedCategoryHyphenKey = false;
 
     // 5a. Normalize category IDs in nested games map
     const normalizedGamesMap: any = {};
@@ -98,30 +99,39 @@ export const cleanupGamesCatalogNow = onCall(
     }
 
     if (gamesNeedUpdate) {
-      updatePayload.games = normalizedGamesMap;
+      updates.push(['games', normalizedGamesMap]);
     }
 
-    // 5b. Delete dot-key fields at top level
+    // 5b. Delete top-level dot-key fields using FieldPath
+    // These are literal field names that contain dots (e.g., "games.letter-sound-match.totalLevels")
     const allKeys = Object.keys(catalogData);
     for (const key of allKeys) {
+      // Skip real nested maps
+      if (key === 'games' || key === 'categories') continue;
+      
       // Delete any field starting with "games." or "categories."
       if (key.startsWith('games.') || key.startsWith('categories.')) {
-        updatePayload[key] = admin.firestore.FieldValue.delete();
-        deletedFields.push(key);
+        // Use FieldPath with single segment for literal dot-key field
+        updates.push([
+          new admin.firestore.FieldPath(key),
+          admin.firestore.FieldValue.delete()
+        ]);
+        deletedDotKeys.push(key);
       }
     }
 
-    // 5c. Remove inconsistent category IDs from categories map
-    if (categories['letter-sounds']) {
-      // Delete the hyphenated version from categories map
-      updatePayload['categories.letter-sounds'] = admin.firestore.FieldValue.delete();
-      deletedFields.push('categories.letter-sounds');
-    }
-
-    // 5d. Ensure correct category exists
+    // 5c. Normalize categories map (remove hyphenated version, ensure underscore version)
     const normalizedCategoriesMap: any = { ...categories };
-    delete normalizedCategoriesMap['letter-sounds']; // Remove hyphenated version
     
+    // Check if hyphenated version exists and mark for tracking
+    if (categories['letter-sounds']) {
+      deletedCategoryHyphenKey = true;
+    }
+    
+    // Remove hyphenated version from our map
+    delete normalizedCategoriesMap['letter-sounds'];
+    
+    // Ensure correct category exists
     if (!normalizedCategoriesMap.letter_sounds) {
       normalizedCategoriesMap.letter_sounds = {
         label: 'Letter Sounds',
@@ -129,19 +139,36 @@ export const cleanupGamesCatalogNow = onCall(
       };
     }
     
-    updatePayload.categories = normalizedCategoriesMap;
-    updatePayload.version = 1;
-    updatePayload.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    // Always update categories to ensure consistency
+    updates.push(['categories', normalizedCategoriesMap]);
+    updates.push(['version', 1]);
+    updates.push(['updatedAt', admin.firestore.FieldValue.serverTimestamp()]);
 
     // 6. Apply cleanup if there are changes
-    if (deletedFields.length > 0 || gamesNeedUpdate || updatePayload.categories) {
-      await catalogRef.update(updatePayload);
-      
-      logger.info('[cleanupGamesCatalogNow] Cleanup applied', {
-        deletedFields,
-        normalizedGames,
-        totalDeleted: deletedFields.length,
-      });
+    if (updates.length > 0) {
+      try {
+        // Flatten to varargs format: field1, value1, field2, value2, ...
+        const flattenedArgs: any[] = [];
+        for (const [field, value] of updates) {
+          flattenedArgs.push(field, value);
+        }
+        
+        // TypeScript requires explicit typing for spread in update()
+        await (catalogRef.update as any)(...flattenedArgs);
+        
+        logger.info('[cleanupGamesCatalogNow] Cleanup applied', {
+          deletedDotKeys,
+          deletedCategoryHyphenKey,
+          normalizedGames,
+          totalDeleted: deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0),
+        });
+      } catch (error) {
+        logger.error('[cleanupGamesCatalogNow] Update failed', error);
+        throw new HttpsError(
+          'internal',
+          `Failed to cleanup catalog: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+      }
     } else {
       logger.info('[cleanupGamesCatalogNow] No cleanup needed');
     }
@@ -155,9 +182,10 @@ export const cleanupGamesCatalogNow = onCall(
       success: true,
       patchResult,
       cleanup: {
-        deletedFields,
+        deletedDotKeys,
+        deletedCategoryHyphenKey,
         normalizedGames,
-        totalDeleted: deletedFields.length,
+        totalDeleted: deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0),
         gamesNormalized: normalizedGames.length,
       },
       finalCatalog: {
@@ -165,8 +193,8 @@ export const cleanupGamesCatalogNow = onCall(
         categories: finalData.categories || {},
         version: finalData.version,
       },
-      message: deletedFields.length > 0 
-        ? `Cleaned up ${deletedFields.length} legacy fields, normalized ${normalizedGames.length} games`
+      message: deletedDotKeys.length > 0 || deletedCategoryHyphenKey
+        ? `Cleaned up ${deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0)} legacy fields, normalized ${normalizedGames.length} games`
         : 'Catalog already clean',
     };
   }
