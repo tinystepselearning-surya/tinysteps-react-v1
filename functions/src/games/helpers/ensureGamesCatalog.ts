@@ -81,77 +81,104 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
     const balloonPopGame = games['balloon-pop'] || {};
     const category = categories['letter_sounds'] || {};
     
-    // Build patch with only required fields or missing optional fields
-    const patch: any = {};
+    // Build nested patch object (NOT dot-key strings)
     const patchedPaths: string[] = [];
+    const patchGames: any = {};
+    const patchCategories: any = {};
+    let needsPatch = false;
     
-    // Letter Sound Match - Required fields
+    // Letter Sound Match game
+    const letterSoundPatch: any = {};
     if (letterSoundGame.progressDocId !== 'phonics_letter_sound') {
-      patch['games.letter-sound-match.progressDocId'] = 'phonics_letter_sound';
+      letterSoundPatch.progressDocId = 'phonics_letter_sound';
       patchedPaths.push('games.letter-sound-match.progressDocId');
+      needsPatch = true;
     }
     if (letterSoundGame.totalLevels !== 7) {
-      patch['games.letter-sound-match.totalLevels'] = 7;
+      letterSoundPatch.totalLevels = 7;
       patchedPaths.push('games.letter-sound-match.totalLevels');
+      needsPatch = true;
     }
     if (letterSoundGame.category !== 'letter_sounds') {
-      patch['games.letter-sound-match.category'] = 'letter_sounds';
+      letterSoundPatch.category = 'letter_sounds';
       patchedPaths.push('games.letter-sound-match.category');
+      needsPatch = true;
     }
-    
-    // Letter Sound Match - Optional fields
     if (letterSoundGame.active === undefined) {
-      patch['games.letter-sound-match.active'] = true;
+      letterSoundPatch.active = true;
       patchedPaths.push('games.letter-sound-match.active');
+      needsPatch = true;
     }
     if (!letterSoundGame.title) {
-      patch['games.letter-sound-match.title'] = 'Letter Sound Match';
+      letterSoundPatch.title = 'Letter Sound Match';
       patchedPaths.push('games.letter-sound-match.title');
+      needsPatch = true;
     }
     if (letterSoundGame.order === undefined) {
-      patch['games.letter-sound-match.order'] = 10;
+      letterSoundPatch.order = 10;
       patchedPaths.push('games.letter-sound-match.order');
+      needsPatch = true;
     }
     
-    // Balloon Pop - Required fields
+    if (Object.keys(letterSoundPatch).length > 0) {
+      patchGames['letter-sound-match'] = letterSoundPatch;
+    }
+    
+    // Balloon Pop game
+    const balloonPopPatch: any = {};
     if (balloonPopGame.progressDocId !== 'phonics_balloon_pop') {
-      patch['games.balloon-pop.progressDocId'] = 'phonics_balloon_pop';
+      balloonPopPatch.progressDocId = 'phonics_balloon_pop';
       patchedPaths.push('games.balloon-pop.progressDocId');
+      needsPatch = true;
     }
     if (balloonPopGame.totalLevels !== 7) {
-      patch['games.balloon-pop.totalLevels'] = 7;
+      balloonPopPatch.totalLevels = 7;
       patchedPaths.push('games.balloon-pop.totalLevels');
+      needsPatch = true;
     }
     if (balloonPopGame.category !== 'letter_sounds') {
-      patch['games.balloon-pop.category'] = 'letter_sounds';
+      balloonPopPatch.category = 'letter_sounds';
       patchedPaths.push('games.balloon-pop.category');
+      needsPatch = true;
     }
-    
-    // Balloon Pop - Optional fields
-    if (balloonPopGame.active === undefined) {
-      patch['games.balloon-pop.active'] = true;
+    if (balloonPopPatch.active === undefined) {
+      balloonPopPatch.active = true;
       patchedPaths.push('games.balloon-pop.active');
+      needsPatch = true;
     }
     if (!balloonPopGame.title) {
-      patch['games.balloon-pop.title'] = 'Balloon Pop (Jolly Levels)';
+      balloonPopPatch.title = 'Balloon Pop (Jolly Levels)';
       patchedPaths.push('games.balloon-pop.title');
+      needsPatch = true;
     }
     if (balloonPopGame.order === undefined) {
-      patch['games.balloon-pop.order'] = 20;
+      balloonPopPatch.order = 20;
       patchedPaths.push('games.balloon-pop.order');
+      needsPatch = true;
     }
     
-    // Category fields (only set if missing)
+    if (Object.keys(balloonPopPatch).length > 0) {
+      patchGames['balloon-pop'] = balloonPopPatch;
+    }
+    
+    // Category fields
+    const categoryPatch: any = {};
     if (!category.label) {
-      patch['categories.letter_sounds.label'] = 'Letter Sounds';
+      categoryPatch.label = 'Letter Sounds';
       patchedPaths.push('categories.letter_sounds.label');
+      needsPatch = true;
     }
     if (category.order === undefined) {
-      patch['categories.letter_sounds.order'] = 10;
+      categoryPatch.order = 10;
       patchedPaths.push('categories.letter_sounds.order');
+      needsPatch = true;
     }
     
-    if (patchedPaths.length === 0) {
+    if (Object.keys(categoryPatch).length > 0) {
+      patchCategories['letter_sounds'] = categoryPatch;
+    }
+    
+    if (!needsPatch) {
       catalogChecked = true;
       catalogCheckTimestamp = now;
       catalogPatchResult = { cached: false, checked: true, patched: false, patchedPaths: [], reason: 'already_up_to_date' };
@@ -166,8 +193,18 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
       return catalogPatchResult;
     }
     
-    // Apply patch with timestamp
-    patch.updatedAt = admin.firestore.FieldValue.serverTimestamp();
+    // Build final nested patch object
+    const patch: any = {
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    
+    if (Object.keys(patchGames).length > 0) {
+      patch.games = patchGames;
+    }
+    
+    if (Object.keys(patchCategories).length > 0) {
+      patch.categories = patchCategories;
+    }
     
     await catalogRef.set(patch, { merge: true });
     
