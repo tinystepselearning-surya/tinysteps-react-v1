@@ -66,6 +66,9 @@ export default function ParentDashboard() {
       return null;
     }
   });
+
+  // Progress view toggle (topics or games)
+  const [progressView, setProgressView] = useState<'topics' | 'games'>('topics');
   
   // Auto-select kid when data loads
   useEffect(() => {
@@ -389,6 +392,47 @@ export default function ParentDashboard() {
     };
   }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data]);
 
+  // Compute games list for Games view (uses same optimized read path)
+  const gamesList = useMemo(() => {
+    if (!selectedKidId || !kidSummaryQuery.data || !catalogQuery.data) return null;
+
+    const catalog = catalogQuery.data;
+    const games = catalog.games || {};
+    const progressSummary = kidSummaryQuery.data.progressSummary;
+    const byGame = progressSummary?.byGame || {};
+
+    // Build game entries from catalog
+    const gameEntries = Object.entries(games)
+      .filter(([_, game]: [string, any]) => game.active !== false)
+      .map(([gameId, game]: [string, any]) => {
+        const gameKey = game.progressDocId || gameId;
+        const progress = byGame[gameKey];
+
+        const completed = progress?.completedLevels || 0;
+        const total = game.totalLevels || 0;
+        const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const lastPlayed = progress?.lastPlayedAt;
+
+        return {
+          id: gameId,
+          title: game.title || gameId,
+          order: game.order || 0,
+          completed,
+          total,
+          progressPct,
+          lastPlayed: lastPlayed ? lastPlayed.seconds * 1000 : null,
+        };
+      });
+
+    // Sort by order, then by gameId for stable ordering
+    gameEntries.sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.id.localeCompare(b.id);
+    });
+
+    return gameEntries;
+  }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data]);
+
   if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
   }
@@ -541,6 +585,36 @@ export default function ParentDashboard() {
               </div>
             )}
 
+            {/* View Toggle */}
+            {gamesProgress && (
+              <div className="flex justify-center">
+                <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 p-1">
+                  <button
+                    type="button"
+                    onClick={() => setProgressView('topics')}
+                    className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                      progressView === 'topics'
+                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Topics
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProgressView('games')}
+                    className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
+                      progressView === 'games'
+                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    }`}
+                  >
+                    Games
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Overall Progress Card */}
             {gamesProgress && (
               <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -571,7 +645,7 @@ export default function ParentDashboard() {
             )}
 
             {/* Topic Cards */}
-            {gamesProgress && (
+            {gamesProgress && progressView === 'topics' && (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {gamesProgress.topics.map((topic: any) => {
                   const statusColors: Record<string, string> = {
@@ -662,6 +736,86 @@ export default function ParentDashboard() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Games Cards */}
+            {progressView === 'games' && gamesList && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {gamesList.map((game: any) => {
+                  const formatDate = (timestamp: number | null) => {
+                    if (!timestamp) return null;
+                    const date = new Date(timestamp);
+                    const now = new Date();
+                    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 0) return 'Today';
+                    if (diffDays === 1) return 'Yesterday';
+                    if (diffDays < 7) return `${diffDays} days ago`;
+                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                  };
+
+                  return (
+                    <div key={game.id} className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg space-y-4">
+                      {/* Game Title */}
+                      <div className="flex items-start justify-between">
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{game.title}</h4>
+                      </div>
+
+                      {/* Progress Bar */}
+                      <div>
+                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                          <span>Progress</span>
+                          <span className="font-semibold">{game.progressPct}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div
+                            className="bg-green-600 dark:bg-green-500 h-2 rounded-full transition-all"
+                            style={{ width: `${game.progressPct}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Stats */}
+                      <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                        <div>Completed: {game.completed} / {game.total} levels</div>
+                        {game.lastPlayed && (
+                          <div>Last played: {formatDate(game.lastPlayed)}</div>
+                        )}
+                        {!game.lastPlayed && (
+                          <div className="italic text-gray-500 dark:text-gray-500">Not played yet</div>
+                        )}
+                      </div>
+
+                      {/* Practice Button */}
+                      <button
+                        type="button"
+                        onClick={() => kidsPortalUrl && navigate(kidsPortalUrl)}
+                        disabled={!kidsPortalUrl}
+                        className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                        title={kidsPortalUrl ? 'Open Kids Portal to practice' : 'Select a kid first'}
+                      >
+                        Practice
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Empty States for Games View */}
+            {progressView === 'games' && !gamesList && selectedKidId && !kidSummaryQuery.isLoading && (
+              <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">Play a game to start tracking progress</p>
+              </div>
+            )}
+
+            {progressView === 'games' && gamesList && gamesList.length === 0 && (
+              <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No games available yet</p>
               </div>
             )}
 
