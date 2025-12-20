@@ -401,7 +401,7 @@ export default function ParentDashboard() {
     const progressSummary = kidSummaryQuery.data.progressSummary;
     const byGame = progressSummary?.byGame || {};
 
-    // Build game entries from catalog
+    // Build game entries from catalog (active means NOT explicitly false)
     const gameEntries = Object.entries(games)
       .filter(([_, game]: [string, any]) => game.active !== false)
       .map(([gameId, game]: [string, any]) => {
@@ -432,6 +432,18 @@ export default function ParentDashboard() {
 
     return gameEntries;
   }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data]);
+
+  // Helper to determine games view state
+  const gamesViewState = useMemo(() => {
+    if (!catalogQuery.data) return 'no-catalog';
+    const games = catalogQuery.data.games || {};
+    const hasAnyCatalogGames = Object.keys(games).length > 0;
+    const hasActiveGames = gamesList && gamesList.length > 0;
+
+    if (!hasAnyCatalogGames) return 'no-games-in-catalog';
+    if (!hasActiveGames) return 'no-active-games';
+    return 'has-games';
+  }, [catalogQuery.data, gamesList]);
 
   if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
@@ -804,18 +816,23 @@ export default function ParentDashboard() {
             )}
 
             {/* Empty States for Games View */}
-            {progressView === 'games' && !gamesList && selectedKidId && !kidSummaryQuery.isLoading && (
+            {progressView === 'games' && gamesViewState === 'no-games-in-catalog' && (
               <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
                 <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">Play a game to start tracking progress</p>
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No games available yet</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Games will appear here once configured</p>
               </div>
             )}
 
-            {progressView === 'games' && gamesList && gamesList.length === 0 && (
+            {progressView === 'games' && gamesViewState === 'no-active-games' && (
               <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No games available yet</p>
+                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No active games configured</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">All games are currently inactive</p>
               </div>
             )}
 
@@ -838,16 +855,25 @@ export default function ParentDashboard() {
                   </div>
                 )}
 
-                {!weakAreasQuery.isLoading && weakAreasQuery.data && weakAreasQuery.data.length === 0 && (
+                {!weakAreasQuery.isLoading && weakAreasQuery.isError && (
+                  <div className="text-center py-4 text-red-600 dark:text-red-400">
+                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="font-medium">Could not load weak areas</p>
+                  </div>
+                )}
+
+                {!weakAreasQuery.isLoading && !weakAreasQuery.isError && weakAreasQuery.data && weakAreasQuery.data.length === 0 && (
                   <div className="text-center py-6 text-green-600 dark:text-green-400">
                     <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="font-medium">No weak areas yet — keep practicing!</p>
+                    <p className="font-medium">No weak areas yet — great job!</p>
                   </div>
                 )}
 
-                {!weakAreasQuery.isLoading && weakAreasQuery.data && weakAreasQuery.data.length > 0 && (
+                {!weakAreasQuery.isLoading && !weakAreasQuery.isError && weakAreasQuery.data && weakAreasQuery.data.length > 0 && (
                   <div className="flex flex-wrap gap-3">
                     {weakAreasQuery.data.map((skill: any) => (
                       <div
