@@ -67,6 +67,9 @@ export { recordLevelResult } from './games/recordLevelResult';
 // Games: Force Catalog Patching (Admin only)
 export { ensureGamesCatalogNow } from './games/ensureGamesCatalogNow';
 
+// Games: Cleanup Catalog Structure (Admin only)
+export { cleanupGamesCatalogNow } from './games/cleanupGamesCatalogNow';
+
 // Health ping (optional small endpoint you may add later)
 // export { healthCheck } from './health'; // Uncomment only if file exists
 
