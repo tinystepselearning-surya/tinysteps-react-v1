@@ -10,12 +10,24 @@
 import type { LevelResult } from './types';
 
 /**
+ * Response from recordLevelResult Cloud Function
+ */
+export interface RecordLevelResultResponse {
+  success: boolean;
+  progressDocId: string;
+  completedLevelsCount: number;
+  tagsUpdated: number;
+  summaryUpdated: boolean;
+}
+
+/**
  * Record a level result by calling the backend Cloud Function.
  *
  * @param result - Complete level result data
+ * @returns Response object with progress details
  * @throws Error if Cloud Function is not deployed or fails
  */
-export async function recordLevelResult(result: LevelResult): Promise<void> {
+export async function recordLevelResult(result: LevelResult): Promise<RecordLevelResultResponse> {
   try {
     const [{ httpsCallable, getFunctions }, firebase] = await Promise.all([
       import('firebase/functions'),
@@ -30,19 +42,22 @@ export async function recordLevelResult(result: LevelResult): Promise<void> {
 
     const response = await callable(result);
 
-    // Support common response shapes: { ok: true } or { success: true }
-    const data: any = response.data;
-    const ok = data?.ok ?? data?.success ?? true;
+    const data = response.data as RecordLevelResultResponse;
 
-    if (!ok) {
-      throw new Error(data?.message || 'Failed to record level result');
+    if (!data?.success) {
+      throw new Error('Failed to record level result');
     }
 
     console.log('[recordLevelResult] Level result recorded successfully:', {
       gameId: result.gameId,
       levelId: result.levelId,
       completed: result.completed,
+      progressDocId: data.progressDocId,
+      completedLevelsCount: data.completedLevelsCount,
+      tagsUpdated: data.tagsUpdated,
     });
+
+    return data;
   } catch (error: any) {
     // Provide helpful error messages for common issues
     if (error?.code === 'functions/not-found') {
