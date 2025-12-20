@@ -10,6 +10,17 @@
 import type { LevelResult } from './types';
 
 /**
+ * Catalog patch status
+ */
+export interface CatalogStatus {
+  cached: boolean;
+  checked: boolean;
+  patched: boolean;
+  patchedPaths?: string[];
+  reason?: string;
+}
+
+/**
  * Response from recordLevelResult Cloud Function
  */
 export interface RecordLevelResultResponse {
@@ -18,9 +29,7 @@ export interface RecordLevelResultResponse {
   completedLevelsCount: number;
   tagsUpdated: number;
   summaryUpdated: boolean;
-  catalogChecked: boolean;
-  catalogPatched: boolean;
-  catalogPatchedPaths: string[];
+  catalogStatus: CatalogStatus;
 }
 
 /**
@@ -58,9 +67,7 @@ export async function recordLevelResult(result: LevelResult): Promise<RecordLeve
       progressDocId: data.progressDocId,
       completedLevelsCount: data.completedLevelsCount,
       tagsUpdated: data.tagsUpdated,
-      catalogChecked: data.catalogChecked,
-      catalogPatched: data.catalogPatched,
-      catalogPatchedPaths: data.catalogPatchedPaths,
+      catalogStatus: data.catalogStatus,
     });
 
     return data;
