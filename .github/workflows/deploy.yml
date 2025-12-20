@@ -106,13 +106,10 @@ jobs:
       - name: Install Functions dependencies
         run: npm ci --prefix functions
 
-      - name: Setup Service Account Auth
-        run: |
-          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}' > /tmp/firebase-sa.json
-          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-sa.json" >> $GITHUB_ENV
-
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Deploy to Firebase Production
         uses: FirebaseExtended/action-hosting-deploy@v0
