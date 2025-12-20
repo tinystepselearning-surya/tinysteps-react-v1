@@ -394,11 +394,13 @@ export default function ParentDashboard() {
 
   // Compute games list for Games view (uses same optimized read path)
   const gamesList = useMemo(() => {
-    if (!selectedKidId || !kidSummaryQuery.data || !catalogQuery.data) return null;
+    if (!catalogQuery.data) return null;
 
     const catalog = catalogQuery.data;
     const games = catalog.games || {};
-    const progressSummary = kidSummaryQuery.data.progressSummary;
+    
+    // Get progress data if available (kid might not have played yet)
+    const progressSummary = kidSummaryQuery.data?.progressSummary;
     const byGame = progressSummary?.byGame || {};
 
     // Build game entries from catalog (active means NOT explicitly false)
@@ -408,19 +410,20 @@ export default function ParentDashboard() {
         const gameKey = game.progressDocId || gameId;
         const progress = byGame[gameKey];
 
-        const completed = progress?.completedLevels || 0;
-        const total = game.totalLevels || 0;
-        const progressPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const completedLevels = progress?.completedLevels || 0;
+        const totalLevels = game.totalLevels || 0;
+        const progressPct = totalLevels > 0 ? Math.round((completedLevels / totalLevels) * 100) : 0;
         const lastPlayed = progress?.lastPlayedAt;
 
         return {
           id: gameId,
           title: game.title || gameId,
           order: game.order || 0,
-          completed,
-          total,
+          completed: completedLevels,
+          total: totalLevels,
           progressPct,
           lastPlayed: lastPlayed ? lastPlayed.seconds * 1000 : null,
+          status: (completedLevels === 0 && !lastPlayed) ? 'Not played yet' : null,
         };
       });
 
@@ -431,19 +434,20 @@ export default function ParentDashboard() {
     });
 
     return gameEntries;
-  }, [selectedKidId, kidSummaryQuery.data, catalogQuery.data]);
+  }, [catalogQuery.data, kidSummaryQuery.data]);
 
   // Helper to determine games view state
   const gamesViewState = useMemo(() => {
     if (!catalogQuery.data) return 'no-catalog';
+    
     const games = catalogQuery.data.games || {};
-    const hasAnyCatalogGames = Object.keys(games).length > 0;
-    const hasActiveGames = gamesList && gamesList.length > 0;
+    const totalGamesInCatalog = Object.keys(games).length;
+    const activeGamesCount = Object.values(games).filter((game: any) => game.active !== false).length;
 
-    if (!hasAnyCatalogGames) return 'no-games-in-catalog';
-    if (!hasActiveGames) return 'no-active-games';
+    if (totalGamesInCatalog === 0) return 'no-games-in-catalog';
+    if (activeGamesCount === 0) return 'no-active-games';
     return 'has-games';
-  }, [catalogQuery.data, gamesList]);
+  }, [catalogQuery.data]);
 
   if (isLoading || kidsQuery.isLoading) {
     return <div className="p-6">Loading parent dashboard…</div>;
