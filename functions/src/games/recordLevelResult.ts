@@ -321,7 +321,7 @@ export const recordLevelResult = onCall(
       logger.info('[recordLevelResult] Transaction committed successfully', { kidId, completedCount });
 
       // 7. Update skill stats (outside transaction - monotonic increments)
-      tagsUpdated = await applyTagStats(db, kidId, tagDeltas, nowTs);
+      tagsUpdated = await applyTagStats(db, kidId, tagDeltas, nowTs, { gameId, levelId });
 
       // 8. Log success (concise commit log)
       logger.info(`[recordLevelResult] committed { kidId: ${kidId}, gameId: ${gameId}, progressDocId: ${progressDocId || gameId}, levelId: ${levelId}, completedLevelsCount: ${completedCount}, tagsUpdated: ${tagsUpdated} }`);

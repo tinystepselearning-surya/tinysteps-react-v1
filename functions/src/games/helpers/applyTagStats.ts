@@ -35,23 +35,34 @@ function sanitizeTagForFirestore(tag: string): string {
  * - wrong: total wrong (incremented)
  * - lastSeenAt: timestamp of last activity
  * - lastWrongAt: timestamp of last wrong answer (if any)
+ * - lastEvidence: { gameId, levelId } (optional) - last game/level where tag appeared
  * 
  * @param db - Firestore instance
  * @param kidId - Kid identifier
  * @param tagDeltas - Map of tag to delta values
  * @param nowTs - Current timestamp
+ * @param evidence - Optional evidence (gameId, levelId) for tracking context
  * @returns Number of tags updated
  */
 export async function applyTagStats(
   db: admin.firestore.Firestore,
   kidId: string,
   tagDeltas: Record<string, TagDelta>,
-  nowTs: admin.firestore.Timestamp
+  nowTs: admin.firestore.Timestamp,
+  evidence?: { gameId: string; levelId: number }
 ): Promise<number> {
+  const MAX_TAGS = 50;
   const batch = db.batch();
   let count = 0;
 
-  for (const [rawTag, delta] of Object.entries(tagDeltas)) {
+  const tags = Object.entries(tagDeltas);
+  
+  // Warn if tag count exceeds limit
+  if (tags.length > MAX_TAGS) {
+    console.warn(`[applyTagStats] Tag count ${tags.length} exceeds max ${MAX_TAGS}, capping to first ${MAX_TAGS} tags`);
+  }
+
+  for (const [rawTag, delta] of tags.slice(0, MAX_TAGS)) {
     // Skip if no attempts
     if (delta.attempts === 0) continue;
 
@@ -76,6 +87,11 @@ export async function applyTagStats(
     // Track last wrong timestamp if there were wrong answers
     if (delta.wrong > 0) {
       updateData.lastWrongAt = nowTs;
+    }
+
+    // Add evidence if provided
+    if (evidence) {
+      updateData.lastEvidence = evidence;
     }
 
     batch.set(docRef, updateData, { merge: true });

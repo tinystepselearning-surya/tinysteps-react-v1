@@ -146,6 +146,43 @@ export default function ParentDashboard() {
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
 
+  // Fetch weak areas (top 5 skills with highest wrong rate)
+  const weakAreasQuery = useQuery({
+    queryKey: ['weak-areas', selectedKidId],
+    queryFn: async () => {
+      if (!selectedKidId) return [];
+      
+      const { collection, query, orderBy, limit, getDocs, getFirestore } = await import('firebase/firestore');
+      const db = getFirestore();
+      
+      const q = query(
+        collection(db, 'kids', selectedKidId, 'skillStats'),
+        orderBy('wrong', 'desc'),
+        limit(5)
+      );
+      
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => {
+        const data = doc.data();
+        const attempts = data.attempts || 0;
+        const wrong = data.wrong || 0;
+        const wrongRate = attempts > 0 ? Math.round((wrong / attempts) * 100) : 0;
+        
+        return {
+          id: doc.id,
+          tag: data.tagLabel || doc.id,
+          attempts,
+          correct: data.correct || 0,
+          wrong,
+          wrongRate,
+          lastSeenAt: data.lastSeenAt,
+          lastWrongAt: data.lastWrongAt,
+        };
+      }).filter(item => item.wrong > 0); // Only show skills with mistakes
+    },
+    enabled: !!selectedKidId && activeTab === 'games',
+  });
+
   // Fetch recent game sessions (optional, for "Recent activity" section)
   const sessionsQuery = useQuery({
     queryKey: ['parent-game-sessions', selectedKidId],
@@ -625,6 +662,64 @@ export default function ParentDashboard() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* Weak Areas Section */}
+            {gamesProgress && selectedKidId && (
+              <div className="mt-8 p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Weak Areas</h3>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    Skills that need more practice
+                  </span>
+                </div>
+
+                {weakAreasQuery.isLoading && (
+                  <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                    Loading weak areas...
+                  </div>
+                )}
+
+                {!weakAreasQuery.isLoading && weakAreasQuery.data && weakAreasQuery.data.length === 0 && (
+                  <div className="text-center py-6 text-green-600 dark:text-green-400">
+                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="font-medium">No weak areas yet — keep practicing!</p>
+                  </div>
+                )}
+
+                {!weakAreasQuery.isLoading && weakAreasQuery.data && weakAreasQuery.data.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
+                    {weakAreasQuery.data.map((skill: any) => (
+                      <div
+                        key={skill.id}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg"
+                      >
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {skill.tag}
+                        </span>
+                        <span className="px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-200 bg-orange-200 dark:bg-orange-900/50 rounded">
+                          {skill.wrongRate}% wrong
+                        </span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          ({skill.wrong}/{skill.attempts})
+                        </span>
+                        <button
+                          type="button"
+                          className="ml-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                          title="Practice this skill"
+                        >
+                          practice
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
