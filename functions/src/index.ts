@@ -61,6 +61,9 @@ export {
   batchInsightsRollup11pm,
 } from './scheduled/batchInsightsRollup';
 
+// Games: Record Level Result
+export { recordLevelResult } from './games/recordLevelResult';
+
 // Health ping (optional small endpoint you may add later)
 // export { healthCheck } from './health'; // Uncomment only if file exists
 

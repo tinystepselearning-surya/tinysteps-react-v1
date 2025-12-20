@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { recordLevelResult } from '../games/engine/recordLevelResult';
 
 // --- Config ---
 const TOTAL_ROUNDS = 8;
@@ -818,6 +819,55 @@ const KidsPhonicsMission: React.FC = () => {
                   durationMs,
                   durationSec,
                 });
+
+                // Call recordLevelResult Cloud Function (best-effort)
+                (async () => {
+                  try {
+                    // Build tagDeltas: one tag per grapheme + one subtopic rollup
+                    const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = {};
+                    
+                    // Per-grapheme tags (simplified: assume uniform distribution for this level)
+                    const attemptsPerGrapheme = Math.floor(attemptsRef.current / (graphemes.length || 1));
+                    const correctPerGrapheme = Math.floor(correctRef.current / (graphemes.length || 1));
+                    const wrongPerGrapheme = attemptsPerGrapheme - correctPerGrapheme;
+                    
+                    graphemes.forEach(g => {
+                      const normalized = g.toLowerCase().replace(/\d+$/, ''); // Remove trailing digits (e.g., oo2 -> oo)
+                      if (normalized && normalized.length > 0) {
+                        const tagKey = `letter:${normalized}`;
+                        tagDeltas[tagKey] = {
+                          attempts: attemptsPerGrapheme,
+                          correct: Math.max(0, correctPerGrapheme),
+                          wrong: Math.max(0, wrongPerGrapheme),
+                        };
+                      }
+                    });
+                    
+                    // Subtopic rollup tag
+                    tagDeltas['subtopic:letter_sounds'] = {
+                      attempts: attemptsRef.current,
+                      correct: correctRef.current,
+                      wrong: wrongRef.current,
+                    };
+
+                    const result = await recordLevelResult({
+                      kidId,
+                      gameId: 'letter-sound-match',
+                      progressDocId: 'phonics_letter_sound',
+                      levelId: selectedLevel,
+                      completed: true,
+                      stars: newStars,
+                      score: correctRef.current,
+                      accuracyPct: accuracy * 100,
+                      durationSec,
+                      tagDeltas,
+                    });
+                    
+                    console.info('[recordLevelResult] Success', result);
+                  } catch (err) {
+                    console.error('[recordLevelResult] Failed (non-blocking):', err);
+                  }
+                })();
               }
               
               // Save completion to Firestore

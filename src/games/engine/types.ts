@@ -40,6 +40,7 @@ export interface TagDelta {
 export interface LevelResult {
   kidId: string;
   gameId: GameId;
+  progressDocId?: string; // Optional override for gameProgress doc ID (e.g., "phonics_letter_sound")
   levelId: LevelId;
   completed: boolean;
   stars?: number;
