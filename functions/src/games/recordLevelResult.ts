@@ -113,12 +113,36 @@ export const recordLevelResult = onCall(
     logger.info('[recordLevelResult] Authorized', { uid, kidId });
 
     // 4. Ensure games catalog is patched (once per instance)
-    const catalogResult = await ensureGamesCatalogPatched(db);
+    const catalogStatus = await ensureGamesCatalogPatched(db);
+    
+    logger.info('[recordLevelResult] Catalog status', { 
+      ensureGamesCatalog: catalogStatus 
+    });
 
-    // 5. Current timestamp
+    // 5. Read catalog for progress summary (category + totalLevels)
+    let catalogData: any = null;
+    let categoryId: string | null = null;
+    let totalLevels: number | null = null;
+    
+    try {
+      const catalogDoc = await db.doc('config/gamesCatalog').get();
+      if (catalogDoc.exists) {
+        catalogData = catalogDoc.data();
+        const gameEntry = catalogData?.games?.[gameId];
+        
+        if (gameEntry) {
+          categoryId = gameEntry.category;
+          totalLevels = gameEntry.totalLevels;
+        }
+      }
+    } catch (error: any) {
+      logger.warn('[recordLevelResult] Failed to read catalog for summary', { error: error.message });
+    }
+
+    // 6. Current timestamp
     const nowTs = admin.firestore.Timestamp.now();
 
-    // 6. Transaction: Update level, game progress, and kid summary
+    // 7. Transaction: Update level, game progress, and kid summary
     let completedCount = 0;
     let tagsUpdated = 0;
 
@@ -222,6 +246,60 @@ export const recordLevelResult = onCall(
           games,
         };
         
+        // 5d. Compute progress summary for cheap Parent Dashboard read (delta-based)
+        const kidUpdateData: any = { summary: updatedSummary };
+        
+        if (categoryId && totalLevels !== null) {
+          const progressSummary = (kidDoc.data()?.progressSummary || {}) as any;
+          
+          // Ensure structure
+          if (!progressSummary.byGame) progressSummary.byGame = {};
+          if (!progressSummary.progressByTopic) progressSummary.progressByTopic = {};
+          if (!progressSummary.overall) {
+            progressSummary.overall = { completedLevels: 0, totalLevels: 0, pct: 0 };
+          }
+          
+          // Determine game key and compute deltas
+          const gameKey = progressDocId || gameId;
+          const newGameCompleted = newCompletedCount;
+          const newGameTotal = totalLevels;
+          const oldGameCompleted = progressSummary.byGame[gameKey]?.completedLevels || 0;
+          const oldGameTotal = progressSummary.byGame[gameKey]?.totalLevels || 0;
+          
+          const deltaCompleted = newGameCompleted - oldGameCompleted;
+          const deltaTotal = newGameTotal - oldGameTotal;
+          
+          // Update per-game entry
+          progressSummary.byGame[gameKey] = {
+            completedLevels: newGameCompleted,
+            totalLevels: newGameTotal,
+            topicId: categoryId,
+            lastPlayedAt: nowTs,
+          };
+          
+          // Update topic using deltas
+          const topic = progressSummary.progressByTopic[categoryId] || {
+            completedLevels: 0,
+            totalLevels: 0,
+            pct: 0,
+          };
+          topic.completedLevels += deltaCompleted;
+          topic.totalLevels += deltaTotal;
+          topic.pct = topic.totalLevels > 0 ? Math.round((topic.completedLevels / topic.totalLevels) * 100) : 0;
+          topic.lastPlayedAt = nowTs;
+          progressSummary.progressByTopic[categoryId] = topic;
+          
+          // Update overall using deltas
+          const overall = progressSummary.overall;
+          overall.completedLevels += deltaCompleted;
+          overall.totalLevels += deltaTotal;
+          overall.pct = overall.totalLevels > 0 ? Math.round((overall.completedLevels / overall.totalLevels) * 100) : 0;
+          overall.lastPlayedAt = nowTs;
+          progressSummary.overall = overall;
+          
+          kidUpdateData.progressSummary = progressSummary;
+        }
+        
         logger.info('[recordLevelResult] Transaction prepared', {
           writes: {
             level: levelRef.path,
@@ -229,6 +307,7 @@ export const recordLevelResult = onCall(
             kidSummary: kidRef.path,
           },
           completedCount: newCompletedCount,
+          progressSummaryUpdated: !!categoryId,
         });
         
         // ===== PHASE 3: ALL WRITES LAST =====
@@ -236,7 +315,7 @@ export const recordLevelResult = onCall(
         
         txn.set(levelRef, levelUpdate, { merge: true });
         txn.set(gameProgressRef, gameProgressUpdate, { merge: true });
-        txn.update(kidRef, { summary: updatedSummary });
+        txn.update(kidRef, kidUpdateData);
       });
 
       logger.info('[recordLevelResult] Transaction committed successfully', { kidId, completedCount });
@@ -254,9 +333,10 @@ export const recordLevelResult = onCall(
         completedLevelsCount: completedCount,
         tagsUpdated,
         summaryUpdated: true,
-        catalogChecked: catalogResult.checked,
-        catalogPatched: catalogResult.patched,
-        catalogPatchedPaths: catalogResult.patchedPaths,
+        catalogStatus,
+        catalogChecked: catalogStatus.checked,
+        catalogPatched: catalogStatus.patched,
+        catalogPatchedPaths: catalogStatus.patchedPaths || [],
       };
     } catch (error: any) {
       logger.error('[recordLevelResult] Transaction failed', {
