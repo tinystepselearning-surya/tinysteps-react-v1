@@ -100,27 +100,19 @@ jobs:
             package-lock.json
             functions/package-lock.json
 
-      - name: Check FIREBASE_TOKEN secret
-        run: |
-          if [ -z "${{ secrets.FIREBASE_TOKEN }}" ]; then
-            echo "❌ ERROR: FIREBASE_TOKEN secret is not set"
-            echo "Please add it to GitHub repository secrets:"
-            echo "1. Run: firebase login:ci"
-            echo "2. Add the token to Settings → Secrets → Actions → FIREBASE_TOKEN"
-            exit 1
-          fi
-          echo "✅ FIREBASE_TOKEN is configured"
-
       - name: Install dependencies
         run: npm ci
 
       - name: Install Functions dependencies
         run: npm ci --prefix functions
 
+      - name: Setup Service Account Auth
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}' > /tmp/firebase-sa.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/firebase-sa.json" >> $GITHUB_ENV
+
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Deploy to Firebase Production
         uses: FirebaseExtended/action-hosting-deploy@v0

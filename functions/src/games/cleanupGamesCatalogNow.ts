@@ -79,6 +79,7 @@ export const cleanupGamesCatalogNow = onCall(
     const deletedDotKeys: string[] = [];
     const normalizedGames: string[] = [];
     let deletedCategoryHyphenKey = false;
+    let deletedLegacyGamesBlock = false;
 
     // 5a. Normalize category IDs in nested games map
     const normalizedGamesMap: any = {};
@@ -120,7 +121,7 @@ export const cleanupGamesCatalogNow = onCall(
       }
     }
 
-    // 5c. Normalize categories map (remove hyphenated version, ensure underscore version)
+    // 5c. Normalize categories map (remove hyphenated version, legacy blocks, ensure underscore version)
     const normalizedCategoriesMap: any = { ...categories };
     
     // Check if hyphenated version exists and mark for tracking
@@ -130,6 +131,24 @@ export const cleanupGamesCatalogNow = onCall(
     
     // Remove hyphenated version from our map
     delete normalizedCategoriesMap['letter-sounds'];
+    
+    // Remove legacy nested games block (not used by frontend)
+    if (normalizedCategoriesMap.games) {
+      delete normalizedCategoriesMap.games;
+      deletedLegacyGamesBlock = true;
+      logger.info('[cleanupGamesCatalogNow] Removing legacy categories.games block');
+    }
+    
+    // Recursively normalize category IDs in any remaining nested objects
+    Object.keys(normalizedCategoriesMap).forEach(key => {
+      const value = normalizedCategoriesMap[key];
+      if (value && typeof value === 'object') {
+        if (value.category === 'letter-sounds') {
+          value.category = 'letter_sounds';
+          logger.info('[cleanupGamesCatalogNow] Normalized category in categories.' + key);
+        }
+      }
+    });
     
     // Ensure correct category exists
     if (!normalizedCategoriesMap.letter_sounds) {
@@ -184,8 +203,9 @@ export const cleanupGamesCatalogNow = onCall(
       cleanup: {
         deletedDotKeys,
         deletedCategoryHyphenKey,
+        deletedLegacyGamesBlock,
         normalizedGames,
-        totalDeleted: deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0),
+        totalDeleted: deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0) + (deletedLegacyGamesBlock ? 1 : 0),
         gamesNormalized: normalizedGames.length,
       },
       finalCatalog: {
@@ -193,8 +213,8 @@ export const cleanupGamesCatalogNow = onCall(
         categories: finalData.categories || {},
         version: finalData.version,
       },
-      message: deletedDotKeys.length > 0 || deletedCategoryHyphenKey
-        ? `Cleaned up ${deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0)} legacy fields, normalized ${normalizedGames.length} games`
+      message: deletedDotKeys.length > 0 || deletedCategoryHyphenKey || deletedLegacyGamesBlock
+        ? `Cleaned up ${deletedDotKeys.length + (deletedCategoryHyphenKey ? 1 : 0) + (deletedLegacyGamesBlock ? 1 : 0)} legacy fields, normalized ${normalizedGames.length} games`
         : 'Catalog already clean',
     };
   }

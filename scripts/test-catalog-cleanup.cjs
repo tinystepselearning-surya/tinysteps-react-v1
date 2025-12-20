@@ -56,19 +56,29 @@ async function testCatalogCleanup() {
     
     if (data.cleanup) {
       console.log('\n🧹 Cleanup Summary:');
-      console.log(`  - Deleted fields: ${data.cleanup.totalDeleted}`);
-      console.log(`  - Normalized games: ${data.cleanup.gamesNormalized}`);
+      console.log(`  - Deleted fields: ${data.cleanup.totalDeleted ?? 0}`);
+      console.log(`  - Normalized games: ${data.cleanup.gamesNormalized ?? 0}`);
       
-      if (data.cleanup.deletedFields.length > 0) {
-        console.log('\n🗑️  Deleted fields:');
-        data.cleanup.deletedFields.forEach(field => {
+      const deletedDotKeys = data.cleanup.deletedDotKeys ?? [];
+      if (deletedDotKeys.length > 0) {
+        console.log('\n🗑️  Deleted dot-key fields:');
+        deletedDotKeys.forEach(field => {
           console.log(`    - ${field}`);
         });
       }
       
-      if (data.cleanup.normalizedGames.length > 0) {
+      if (data.cleanup.deletedCategoryHyphenKey) {
+        console.log('\n🗑️  Deleted: categories["letter-sounds"] (hyphenated version)');
+      }
+      
+      if (data.cleanup.deletedLegacyGamesBlock) {
+        console.log('\n🗑️  Deleted: categories.games (legacy nested block)');
+      }
+      
+      const normalizedGames = data.cleanup.normalizedGames ?? [];
+      if (normalizedGames.length > 0) {
         console.log('\n🔧 Normalized games:');
-        data.cleanup.normalizedGames.forEach(gameId => {
+        normalizedGames.forEach(gameId => {
           console.log(`    - ${gameId}`);
         });
       }
@@ -83,7 +93,7 @@ async function testCatalogCleanup() {
         console.log('\n🎮 Games in catalog:', gameIds.length);
         gameIds.forEach(id => {
           const game = catalog.games[id];
-          console.log(`  - ${id}: ${game.title} (category: ${game.category}, ${game.totalLevels} levels)`);
+          console.log(`  - ${id}: ${game?.title || id} (category: ${game?.category || 'none'}, ${game?.totalLevels || 0} levels)`);
         });
       }
       
@@ -92,7 +102,7 @@ async function testCatalogCleanup() {
         console.log('\n📁 Categories in catalog:', categoryIds.length);
         categoryIds.forEach(id => {
           const category = catalog.categories[id];
-          console.log(`  - ${id}: ${category.label} (order: ${category.order})`);
+          console.log(`  - ${id}: ${category?.label || id} (order: ${category?.order || 0})`);
         });
       }
       
