@@ -15,6 +15,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { parseLevelResult } from './types';
 import { applyTagStats } from './helpers/applyTagStats';
+import { ensureGamesCatalogPatched } from './helpers/ensureGamesCatalog';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -111,10 +112,13 @@ export const recordLevelResult = onCall(
 
     logger.info('[recordLevelResult] Authorized', { uid, kidId });
 
-    // 4. Current timestamp
+    // 4. Ensure games catalog is patched (once per instance)
+    await ensureGamesCatalogPatched(db);
+
+    // 5. Current timestamp
     const nowTs = admin.firestore.Timestamp.now();
 
-    // 5. Transaction: Update level, game progress, and kid summary
+    // 6. Transaction: Update level, game progress, and kid summary
     let completedCount = 0;
     let tagsUpdated = 0;
 
@@ -237,13 +241,13 @@ export const recordLevelResult = onCall(
 
       logger.info('[recordLevelResult] Transaction committed successfully', { kidId, completedCount });
 
-      // 6. Update skill stats (outside transaction - monotonic increments)
+      // 7. Update skill stats (outside transaction - monotonic increments)
       tagsUpdated = await applyTagStats(db, kidId, tagDeltas, nowTs);
 
-      // 7. Log success (concise commit log)
+      // 8. Log success (concise commit log)
       logger.info(`[recordLevelResult] committed { kidId: ${kidId}, gameId: ${gameId}, progressDocId: ${progressDocId || gameId}, levelId: ${levelId}, completedLevelsCount: ${completedCount}, tagsUpdated: ${tagsUpdated} }`);
 
-      // 8. Return rich response object
+      // 9. Return rich response object
       return {
         success: true,
         progressDocId: progressDocId || gameId,
