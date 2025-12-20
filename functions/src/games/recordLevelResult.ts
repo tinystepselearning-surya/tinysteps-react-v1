@@ -20,6 +20,13 @@ import { ensureGamesCatalogPatched } from './helpers/ensureGamesCatalog';
 if (!admin.apps.length) admin.initializeApp();
 
 /**
+ * Helper: Remove keys with undefined values to prevent Firestore validation errors.
+ * Firestore rejects documents containing undefined values.
+ */
+const omitUndefined = <T extends Record<string, any>>(obj: T): Partial<T> =>
+  Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined)) as Partial<T>;
+
+/**
  * Verify caller has permission to write to this kid's data.
  * 
  * Allowed if:
@@ -176,7 +183,7 @@ export const recordLevelResult = onCall(
         const prevBestStars = prevLevelDoc.exists ? prevLevelDoc.data()?.bestStars || 0 : 0;
         const newBestStars = Math.max(prevBestStars, stars || 0);
         
-        const levelUpdate = {
+        const levelUpdateRaw = {
           completed,
           stars,
           score,
@@ -185,6 +192,7 @@ export const recordLevelResult = onCall(
           lastPlayedAt: nowTs,
           bestStars: newBestStars,
         };
+        const levelUpdate = omitUndefined(levelUpdateRaw);
         
         // 5b. Compute game progress update (inline logic from helper)
         const prevSummary = gameProgressDoc.exists ? gameProgressDoc.data() : {};
