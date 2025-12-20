@@ -1,9 +1,9 @@
 /**
  * Tiny Steps Games Engine - Record Level Result
- * 
+ *
  * Client-side wrapper for submitting level completion results.
  * Calls a Cloud Function (recordLevelResult) via Firebase Functions.
- * 
+ *
  * This keeps the client code clean and delegates validation/writes to the backend.
  */
 
@@ -11,26 +11,31 @@ import type { LevelResult } from './types';
 
 /**
  * Record a level result by calling the backend Cloud Function.
- * 
+ *
  * @param result - Complete level result data
  * @throws Error if Cloud Function is not deployed or fails
  */
 export async function recordLevelResult(result: LevelResult): Promise<void> {
   try {
-    const [{ httpsCallable }, { functions }] = await Promise.all([
+    const [{ httpsCallable, getFunctions }, firebase] = await Promise.all([
       import('firebase/functions'),
       import('../../lib/firebaseConfig'),
     ]);
 
-    const callable = httpsCallable<LevelResult, { success: boolean; message?: string }>(
-      functions,
-      'recordLevelResult'
-    );
+    // IMPORTANT: ensure region matches your deployed functions
+    // firebaseConfig should export `app`. If it doesn't, export it there and use it here.
+    const functions = getFunctions(firebase.app, 'asia-south1');
+
+    const callable = httpsCallable(functions, 'recordLevelResult');
 
     const response = await callable(result);
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to record level result');
+    // Support common response shapes: { ok: true } or { success: true }
+    const data: any = response.data;
+    const ok = data?.ok ?? data?.success ?? true;
+
+    if (!ok) {
+      throw new Error(data?.message || 'Failed to record level result');
     }
 
     console.log('[recordLevelResult] Level result recorded successfully:', {
@@ -40,10 +45,10 @@ export async function recordLevelResult(result: LevelResult): Promise<void> {
     });
   } catch (error: any) {
     // Provide helpful error messages for common issues
-    if (error.code === 'functions/not-found') {
+    if (error?.code === 'functions/not-found') {
       throw new Error(
-        'Cloud Function "recordLevelResult" not deployed. ' +
-        'Please deploy backend functions before using game recording.'
+        'Cloud Function "recordLevelResult" not found in asia-south1. ' +
+          'Please deploy backend functions (asia-south1) before using game recording.'
       );
     }
 
