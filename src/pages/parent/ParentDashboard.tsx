@@ -183,7 +183,10 @@ export default function ParentDashboard() {
         };
       }).filter(item => item.wrong > 0); // Only show skills with mistakes
     },
-    enabled: !!selectedKidId && activeTab === 'games',
+    enabled: !!selectedKidId && activeTab === 'games-progress',
+    onError: (error) => {
+      console.error('[ParentDashboard] Weak Areas query failed:', error);
+    },
   });
 
   // Fetch recent game sessions (optional, for "Recent activity" section)
