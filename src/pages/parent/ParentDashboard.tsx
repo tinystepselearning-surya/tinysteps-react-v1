@@ -149,10 +149,22 @@ export default function ParentDashboard() {
     staleTime: 24 * 60 * 60 * 1000, // 24 hours
   });
 
+  // Weak area skill item type
+  type WeakAreaItem = {
+    id: string;
+    tag: string;
+    attempts: number;
+    correct: number;
+    wrong: number;
+    wrongRate: number;
+    lastSeenAt: any;
+    lastWrongAt: any;
+  };
+
   // Fetch weak areas (top 5 skills with highest wrong rate)
-  const weakAreasQuery = useQuery({
+  const weakAreasQuery = useQuery<WeakAreaItem[]>({
     queryKey: ['weak-areas', selectedKidId],
-    queryFn: async () => {
+    queryFn: async (): Promise<WeakAreaItem[]> => {
       if (!selectedKidId) return [];
       
       const { collection, query, orderBy, limit, getDocs, getFirestore } = await import('firebase/firestore');
@@ -184,10 +196,14 @@ export default function ParentDashboard() {
       }).filter(item => item.wrong > 0); // Only show skills with mistakes
     },
     enabled: !!selectedKidId && activeTab === 'games-progress',
-    onError: (error) => {
-      console.error('[ParentDashboard] Weak Areas query failed:', error);
-    },
   });
+
+  // React Query v5: Log errors imperatively instead of onError callback
+  useEffect(() => {
+    if (weakAreasQuery.isError) {
+      console.error('[ParentDashboard] Weak Areas query failed:', weakAreasQuery.error);
+    }
+  }, [weakAreasQuery.isError, weakAreasQuery.error]);
 
   // Fetch recent game sessions (optional, for "Recent activity" section)
   const sessionsQuery = useQuery({
@@ -856,30 +872,37 @@ export default function ParentDashboard() {
                   </span>
                 </div>
 
-                {weakAreasQuery.isError && (
-                  <div className="text-center py-4 text-red-600 dark:text-red-400">
-                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="font-medium">Could not load weak areas</p>
-                  </div>
-                )}
+                {(() => {
+                  const weakAreas = weakAreasQuery.data ?? [];
+                  
+                  if (weakAreasQuery.isError) {
+                    return (
+                      <div className="text-center py-4 text-red-600 dark:text-red-400">
+                        <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="font-medium">Could not load weak areas</p>
+                      </div>
+                    );
+                  }
 
-                {!weakAreasQuery.isError && (!weakAreasQuery.data || weakAreasQuery.data.length === 0) && (
-                  <div className="text-center py-6 text-green-600 dark:text-green-400">
-                    <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="font-medium">No weak areas yet — your child is doing great!</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                      Keep up the excellent work! Skills that need extra practice will appear here.
-                    </p>
-                  </div>
-                )}
+                  if (weakAreas.length === 0) {
+                    return (
+                      <div className="text-center py-6 text-green-600 dark:text-green-400">
+                        <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="font-medium">No weak areas yet — your child is doing great!</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                          Keep up the excellent work! Skills that need extra practice will appear here.
+                        </p>
+                      </div>
+                    );
+                  }
 
-                {!weakAreasQuery.isError && weakAreasQuery.data && weakAreasQuery.data.length > 0 && (
-                  <div className="flex flex-wrap gap-3">
-                    {weakAreasQuery.data.map((skill: any) => (
+                  return (
+                    <div className="flex flex-wrap gap-3">
+                      {weakAreas.map((skill) => (
                       <div
                         key={skill.id}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg"
@@ -901,9 +924,10 @@ export default function ParentDashboard() {
                           practice
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             )}
 
