@@ -331,10 +331,123 @@ export const recordLevelResult = onCall(
       // 7. Update skill stats (outside transaction - monotonic increments)
       tagsUpdated = await applyTagStats(db, kidId, tagDeltas, nowTs, { gameId, levelId });
 
-      // 8. Log success (concise commit log)
+      // 8. Update weak areas summary (bounded reads, no index queries)
+      if (tagDeltas && Object.keys(tagDeltas).length > 0) {
+        try {
+          // Helper: sanitize tag exactly like applyTagStats does
+          const sanitizeTag = (tag: string): string => {
+            return tag
+              .replace(/\//g, '_')
+              .replace(/\\/g, '_')
+              .replace(/\./g, '_')
+              .trim();
+          };
+
+          // Get sanitized tag IDs for tags we just updated
+          const updatedTagIds = Object.keys(tagDeltas)
+            .filter(rawTag => tagDeltas[rawTag].attempts > 0)
+            .map(rawTag => sanitizeTag(rawTag))
+            .filter(safeTag => safeTag.length > 0);
+
+          if (updatedTagIds.length > 0) {
+            // Bounded read 1: kid doc for existing weakTop
+            const kidRef = db.doc(`kids/${kidId}`);
+            const kidSnap = await kidRef.get();
+            const existingWeakTop = kidSnap.data()?.summary?.weakTop ?? [];
+
+            // Bounded read 2: only the tag docs we just updated
+            const tagDocsPromises = updatedTagIds.map(tagId =>
+              db.doc(`kids/${kidId}/skillStats/${tagId}`).get()
+            );
+            const tagDocs = await Promise.all(tagDocsPromises);
+
+            // Build map of updated tags with computed wrongRate
+            const updatedTagsMap: Record<string, any> = {};
+            for (const tagDoc of tagDocs) {
+              if (tagDoc.exists) {
+                const data = tagDoc.data()!;
+                const attempts = data.attempts || 0;
+                const wrong = data.wrong || 0;
+                const wrongRate = attempts > 0 ? Math.round((wrong / attempts) * 100) : 0;
+
+                // Store with tagLabel as key for easier merge
+                const tagLabel = data.tagLabel || tagDoc.id;
+                updatedTagsMap[tagLabel] = {
+                  tag: tagLabel,
+                  attempts,
+                  correct: data.correct || 0,
+                  wrong,
+                  wrongRate,
+                  lastSeenAt: data.lastSeenAt,
+                  lastWrongAt: data.lastWrongAt,
+                  evidence: data.lastEvidence,
+                };
+              }
+            }
+
+            // Merge: replace entries for updated tags, keep others
+            const mergedMap: Record<string, any> = {};
+
+            // Add existing weakTop entries (except those being updated)
+            for (const entry of existingWeakTop) {
+              if (entry && entry.tag && !updatedTagsMap[entry.tag]) {
+                mergedMap[entry.tag] = entry;
+              }
+            }
+
+            // Add/replace updated tags
+            for (const [tagLabel, entry] of Object.entries(updatedTagsMap)) {
+              mergedMap[tagLabel] = entry;
+            }
+
+            // Filter, sort, and slice top 10
+            const sortedWeakTop = Object.values(mergedMap)
+              .filter((entry: any) => entry.attempts >= 3 && entry.wrong > 0)
+              .sort((a: any, b: any) => {
+                // Sort by wrongRate desc
+                if (b.wrongRate !== a.wrongRate) return b.wrongRate - a.wrongRate;
+                // Then by wrong count desc
+                if (b.wrong !== a.wrong) return b.wrong - a.wrong;
+                // Then by attempts desc
+                if (b.attempts !== a.attempts) return b.attempts - a.attempts;
+                // Then by lastWrongAt desc (most recent first)
+                if (a.lastWrongAt && b.lastWrongAt) {
+                  const aTime = a.lastWrongAt.toMillis ? a.lastWrongAt.toMillis() : 0;
+                  const bTime = b.lastWrongAt.toMillis ? b.lastWrongAt.toMillis() : 0;
+                  return bTime - aTime;
+                }
+                return 0;
+              })
+              .slice(0, 10);
+
+            // Build update object without undefined values
+            const weakTopUpdate = omitUndefined({
+              'summary.weakTop': sortedWeakTop,
+              'summary.lastUpdatedAt': admin.firestore.FieldValue.serverTimestamp(),
+            });
+
+            // Write to kid doc
+            await kidRef.update(weakTopUpdate);
+
+            logger.info('[recordLevelResult] Updated weakTop summary', {
+              kidId,
+              weakTopCount: sortedWeakTop.length,
+              tagsProcessed: updatedTagIds.length,
+            });
+          }
+        } catch (error: any) {
+          // Log error but don't fail the entire operation
+          logger.error('[recordLevelResult] Failed to update weakTop summary', {
+            kidId,
+            error: error.message,
+          });
+        }
+      }
+
+      // 9. Log success (concise commit log)
       logger.info(`[recordLevelResult] committed { kidId: ${kidId}, gameId: ${gameId}, progressDocId: ${progressDocId || gameId}, levelId: ${levelId}, completedLevelsCount: ${completedCount}, tagsUpdated: ${tagsUpdated} }`);
 
-      // 9. Return rich response object
+      // 10. Return rich response object
       return {
         success: true,
         progressDocId: progressDocId || gameId,
