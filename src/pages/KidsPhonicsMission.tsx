@@ -403,6 +403,7 @@ const KidsPhonicsMission: React.FC = () => {
   const attemptsRef = useRef(0);
   const correctRef = useRef(0);
   const wrongRef = useRef(0);
+  const perLetterRef = useRef<Record<string, { attempts: number; correct: number; wrong: number }>>({});
   const [confettiActive, setConfettiActive] = useState(false);
   const [fireworks, setFireworks] = useState<FireworkParticle[]>([]);
   const gameRef = useRef<HTMLDivElement | null>(null);
@@ -477,6 +478,7 @@ const KidsPhonicsMission: React.FC = () => {
     attemptsRef.current = 0;
     correctRef.current = 0;
     wrongRef.current = 0;
+    perLetterRef.current = {};
     
     let resumeData: SavedProgress | null = null;
     let firestoreBestStars: Record<number, number> | null = null;
@@ -668,6 +670,23 @@ const KidsPhonicsMission: React.FC = () => {
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  // Helper to track per-letter stats
+  const bumpLetter = (target: string, outcome: 'correct' | 'wrong') => {
+    const normalized = target.toLowerCase().trim().replace(/\d+$/, ''); // Remove trailing digits (e.g., oo2 -> oo)
+    if (!normalized) return;
+    
+    if (!perLetterRef.current[normalized]) {
+      perLetterRef.current[normalized] = { attempts: 0, correct: 0, wrong: 0 };
+    }
+    
+    perLetterRef.current[normalized].attempts += 1;
+    if (outcome === 'correct') {
+      perLetterRef.current[normalized].correct += 1;
+    } else {
+      perLetterRef.current[normalized].wrong += 1;
+    }
+  };
+
   const handleChoice = (choice: string) => {
     if (feedback) return; // Prevent multiple clicks
 
@@ -678,6 +697,7 @@ const KidsPhonicsMission: React.FC = () => {
 
     if (choice === currentQuestion.target) {
         correctRef.current++;
+        bumpLetter(currentQuestion.target, 'correct');
         setFeedback('correct');
         setConfettiActive(true);
         playClaps(); // Kid-friendly clap-clap celebration sound
@@ -823,32 +843,28 @@ const KidsPhonicsMission: React.FC = () => {
                 // Call recordLevelResult Cloud Function (best-effort)
                 (async () => {
                   try {
-                    // Build tagDeltas: one tag per grapheme + one subtopic rollup
+                    // Build tagDeltas: one tag per grapheme (from actual tracked stats) + one subtopic rollup
                     const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = {};
                     
-                    // Per-grapheme tags (simplified: assume uniform distribution for this level)
-                    const attemptsPerGrapheme = Math.floor(attemptsRef.current / (graphemes.length || 1));
-                    const correctPerGrapheme = Math.floor(correctRef.current / (graphemes.length || 1));
-                    const wrongPerGrapheme = attemptsPerGrapheme - correctPerGrapheme;
-                    
-                    graphemes.forEach(g => {
-                      const normalized = g.toLowerCase().replace(/\d+$/, ''); // Remove trailing digits (e.g., oo2 -> oo)
-                      if (normalized && normalized.length > 0) {
-                        const tagKey = `letter:${normalized}`;
-                        tagDeltas[tagKey] = {
-                          attempts: attemptsPerGrapheme,
-                          correct: Math.max(0, correctPerGrapheme),
-                          wrong: Math.max(0, wrongPerGrapheme),
+                    // Per-letter tags from actual tracked stats
+                    Object.entries(perLetterRef.current).forEach(([letter, stats]) => {
+                      if (stats.attempts > 0) {
+                        tagDeltas[`letter:${letter}`] = {
+                          attempts: stats.attempts,
+                          correct: stats.correct,
+                          wrong: stats.wrong,
                         };
                       }
                     });
                     
                     // Subtopic rollup tag
-                    tagDeltas['subtopic:letter_sounds'] = {
-                      attempts: attemptsRef.current,
-                      correct: correctRef.current,
-                      wrong: wrongRef.current,
-                    };
+                    if (attemptsRef.current > 0) {
+                      tagDeltas['subtopic:letter_sounds'] = {
+                        attempts: attemptsRef.current,
+                        correct: correctRef.current,
+                        wrong: wrongRef.current,
+                      };
+                    }
 
                     const result = await recordLevelResult({
                       kidId,
@@ -920,6 +936,7 @@ const KidsPhonicsMission: React.FC = () => {
         timeoutsRef.current.push(t);
     } else {
       wrongRef.current++;
+      bumpLetter(currentQuestion.target, 'wrong');
       setFeedback('wrong');
       const t2 = window.setTimeout(() => {
         setFeedback(null);
