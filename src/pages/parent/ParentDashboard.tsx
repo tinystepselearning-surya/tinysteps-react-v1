@@ -70,6 +70,9 @@ export default function ParentDashboard() {
   // Progress view toggle (topics or games)
   const [progressView, setProgressView] = useState<'topics' | 'games'>('topics');
   
+  // Weak areas timeframe toggle
+  const [weakAreasTimeframe, setWeakAreasTimeframe] = useState<'all-time' | 'this-week'>('all-time');
+  
   // Auto-select kid when data loads
   useEffect(() => {
     if (kids.length === 0) return;
@@ -838,18 +841,76 @@ export default function ParentDashboard() {
               // Read weak areas from kid.summary.weakTop (already loaded in kidSummaryQuery)
               const weakTopRaw = (kidSummaryQuery.data as any)?.summary?.weakTop;
               const weakAreas: WeakTopEntry[] = Array.isArray(weakTopRaw) ? weakTopRaw : [];
-              const weakAreasFiltered = weakAreas.filter((x) => (x?.wrong ?? 0) > 0);
+              
+              // Last session snapshot
+              const lastSessionWeakTopRaw = (kidSummaryQuery.data as any)?.summary?.lastSessionWeakTop;
+              const lastSessionWeakTop: Array<{ tag: string; wrong: number }> = Array.isArray(lastSessionWeakTopRaw) ? lastSessionWeakTopRaw : [];
+              
+              // Build map: tag -> wrong count from last session
+              const lastSessionWrongByTag: Record<string, number> = {};
+              for (const entry of lastSessionWeakTop) {
+                if (entry.tag && entry.wrong > 0) {
+                  lastSessionWrongByTag[entry.tag] = entry.wrong;
+                }
+              }
+              
+              // Compute start of current week (Monday 00:00 local time)
+              const now = new Date();
+              const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
+              const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday -> 6 days back
+              const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
+              startOfWeek.setHours(0, 0, 0, 0);
+              const startOfWeekMs = startOfWeek.getTime();
+              
+              // Filter based on timeframe
+              let weakAreasFiltered = weakAreas.filter((x) => (x?.wrong ?? 0) > 0);
+              
+              if (weakAreasTimeframe === 'this-week') {
+                weakAreasFiltered = weakAreasFiltered.filter((x) => {
+                  if (!x.lastSeenAt) return false; // No timestamp -> exclude
+                  const lastSeenMs = x.lastSeenAt?.toMillis ? x.lastSeenAt.toMillis() : 0;
+                  return lastSeenMs >= startOfWeekMs;
+                });
+              }
 
               return (
                 <div className="mt-8 p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <div className="flex items-center gap-3 mb-4">
-                    <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Weak Areas</h3>
-                    <span className="text-sm text-gray-500 dark:text-gray-400">
-                      Skills that need more practice
-                    </span>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Improvement Areas</h3>
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Skills to practice a little more this week
+                      </span>
+                    </div>
+                    
+                    {/* Timeframe toggle */}
+                    <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
+                      <button
+                        type="button"
+                        onClick={() => setWeakAreasTimeframe('all-time')}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-l-lg transition-colors ${
+                          weakAreasTimeframe === 'all-time'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        All time
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setWeakAreasTimeframe('this-week')}
+                        className={`px-3 py-1.5 text-sm font-medium rounded-r-lg transition-colors ${
+                          weakAreasTimeframe === 'this-week'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
+                        }`}
+                      >
+                        This week
+                      </button>
+                    </div>
                   </div>
 
                   {weakAreasFiltered.length === 0 ? (
@@ -857,36 +918,53 @@ export default function ParentDashboard() {
                       <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <p className="font-medium">No weak areas yet — your child is doing great!</p>
+                      <p className="font-medium">
+                        {weakAreasTimeframe === 'this-week' 
+                          ? 'No improvement areas this week — excellent progress!' 
+                          : 'No improvement areas yet — your child is doing great!'}
+                      </p>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                         Keep up the excellent work! Skills that need extra practice will appear here.
                       </p>
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-3">
-                      {weakAreasFiltered.map((skill, idx) => (
-                        <div
-                          key={skill.tag || idx}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg"
-                        >
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {formatTagLabel(skill.tag)}
-                          </span>
-                          <span className="px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-200 bg-orange-200 dark:bg-orange-900/50 rounded">
-                            {skill.wrongRate}% wrong
-                          </span>
-                          <span className="text-xs text-gray-600 dark:text-gray-400">
-                            ({skill.wrong}/{skill.attempts})
-                          </span>
-                          <button
-                            type="button"
-                            className="ml-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                            title="Practice this skill"
+                      {weakAreasFiltered.map((skill, idx) => {
+                        const lastSessionWrong = lastSessionWrongByTag[skill.tag];
+                        
+                        return (
+                          <div
+                            key={skill.tag || idx}
+                            className="inline-flex flex-col gap-1 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg"
                           >
-                            practice
-                          </button>
-                        </div>
-                      ))}
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {formatTagLabel(skill.tag)}
+                              </span>
+                              <span className="px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-200 bg-orange-200 dark:bg-orange-900/50 rounded">
+                                {skill.wrongRate}% wrong
+                              </span>
+                              <span className="text-xs text-gray-600 dark:text-gray-400">
+                                ({skill.wrong}/{skill.attempts})
+                              </span>
+                              <button
+                                type="button"
+                                className="ml-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                                title="Practice this skill"
+                              >
+                                practice
+                              </button>
+                            </div>
+                            
+                            {/* Last session indicator */}
+                            {lastSessionWrong !== undefined && (
+                              <span className="text-xs text-gray-600 dark:text-gray-400 italic">
+                                Last session: {lastSessionWrong} wrong tries
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

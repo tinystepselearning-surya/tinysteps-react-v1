@@ -87,6 +87,31 @@ export function confusionTag(a: string, b: string): SkillTag {
   return `confusion:${first}-${second}`;
 }
 
+/**
+ * Create a confusion tag preserving the order: target → clicked.
+ * Use this when you want to track "user saw X but clicked Y" directionally.
+ * Spaces are removed from both inputs.
+ * 
+ * @param target - The correct answer (what should have been clicked)
+ * @param clicked - What the user actually clicked
+ * @returns "confusion:target-clicked" (preserves order)
+ * 
+ * @example
+ * tagConfusion('A', 'S') // => "confusion:a-s"
+ * tagConfusion('sh', 'ch') // => "confusion:sh-ch"
+ * tagConfusion('B ', ' D') // => "confusion:b-d"
+ */
+export function tagConfusion(target: string, clicked: string): SkillTag {
+  const normTarget = target.toLowerCase().trim().replace(/\s+/g, '');
+  const normClicked = clicked.toLowerCase().trim().replace(/\s+/g, '');
+  
+  if (!normTarget || !normClicked) {
+    throw new Error('Confusion tag items cannot be empty');
+  }
+  
+  return `confusion:${normTarget}-${normClicked}`;
+}
+
 // ========== Tag Delta Helpers ==========
 
 /**

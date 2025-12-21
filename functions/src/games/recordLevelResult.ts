@@ -244,6 +244,28 @@ export const recordLevelResult = onCall(
         
         games[gameId] = gameStats;
         
+        // 5c-extra. Compute last session weak areas snapshot from tagDeltas
+        const lastSessionWeakTop: Array<{ tag: string; attempts: number; correct: number; wrong: number }> = [];
+        if (tagDeltas && Object.keys(tagDeltas).length > 0) {
+          // Filter for tags with wrong > 0, sort, cap at 5
+          lastSessionWeakTop.push(
+            ...Object.entries(tagDeltas)
+              .filter(([, stats]) => stats.wrong > 0)
+              .map(([tag, stats]) => ({
+                tag,
+                attempts: stats.attempts,
+                correct: stats.correct,
+                wrong: stats.wrong,
+              }))
+              .sort((a, b) => {
+                // Sort by wrong desc, then attempts desc
+                if (b.wrong !== a.wrong) return b.wrong - a.wrong;
+                return b.attempts - a.attempts;
+              })
+              .slice(0, 5)
+          );
+        }
+        
         const updatedSummary = {
           ...existingSummary,
           totalSessions,
@@ -252,6 +274,10 @@ export const recordLevelResult = onCall(
           last10Acc,
           avgAccuracy10: Math.round(avgAccuracy10 * 100) / 100,
           games,
+          lastSessionAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastSessionGameId: gameId,
+          lastSessionLevelId: levelId,
+          lastSessionWeakTop,
         };
         
         // 5d. Compute progress summary for cheap Parent Dashboard read (delta-based)
