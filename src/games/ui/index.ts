@@ -1,8 +1,8 @@
 /**
  * Tiny Steps Games Engine - UI Components
  * 
- * Placeholder for future shared game UI components.
- * Currently empty but reserved for future use.
+ * Shared UI primitives for game scaffolding and hints.
  */
 
-export {};
+export { HintGlow } from './HintGlow';
+export type { HintGlowProps } from './HintGlow';
