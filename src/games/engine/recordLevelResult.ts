@@ -52,7 +52,10 @@ export async function recordLevelResult(result: LevelResult): Promise<RecordLeve
 
     const callable = httpsCallable(functions, 'recordLevelResult');
 
-    const response = await callable(result);
+    // Add schemaVersion required by backend
+    const payload = { ...result, schemaVersion: 1 as const };
+
+    const response = await callable(payload);
 
     const data = response.data as RecordLevelResultResponse;
 
