@@ -5,6 +5,16 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 
+// Stage configuration (matches Parent journey UI)
+const STAGES = [
+  { id: 'sound_foundations', title: 'Sound Foundations', stageNumber: 1 },
+  { id: 'blend_builder', title: 'Blend Builder', stageNumber: 2 },
+  { id: 'cvc_word_reader', title: 'CVC Word Reader', stageNumber: 3 },
+  { id: 'early_reader_fluency', title: 'Early Reader Fluency', stageNumber: 4 },
+  { id: 'rules_track', title: 'Rules Track', stageNumber: 5 },
+  { id: 'confident_reader', title: 'Confident Reader', stageNumber: 6 },
+];
+
 // Game catalog
 const PHONICS_GAMES = [
   {
@@ -13,6 +23,7 @@ const PHONICS_GAMES = [
     description: 'Age 3–5 — Match letter to its sound',
     route: '/kids/games/phonics/letter-sound',
     color: 'text-pink-300',
+    stageId: 'sound_foundations',
   },
   {
     id: 'phonics_balloon_pop',
@@ -20,6 +31,15 @@ const PHONICS_GAMES = [
     description: 'Age 3–8 — Pop the correct letter sound',
     route: '/kids/games/phonics/balloon-pop',
     color: 'text-yellow-300',
+    stageId: 'sound_foundations',
+  },
+  {
+    id: 'sound_detective',
+    title: 'Sound Detective',
+    description: 'Age 3–6 — Hear the sound and tap the picture',
+    route: '/kids/games/phonics/sound-detective',
+    color: 'text-blue-300',
+    stageId: 'sound_foundations',
   },
   // More games will be added here later
 ];
@@ -31,6 +51,7 @@ const KidsPhonicsLibrary: React.FC = () => {
 
   const location = useLocation();
   const [recovering, setRecovering] = useState(false);
+  const [selectedStageId, setSelectedStageId] = useState<string>('sound_foundations');
 
   // Auto-recover kidId from localStorage if missing in URL
   useEffect(() => {
@@ -104,6 +125,11 @@ const KidsPhonicsLibrary: React.FC = () => {
     return map;
   }, [gameSummariesQuery.data]);
 
+  // Filter games by selected stage
+  const filteredGames = useMemo(() => {
+    return PHONICS_GAMES.filter(game => game.stageId === selectedStageId);
+  }, [selectedStageId]);
+
   return (
     <div
       className="relative min-h-screen flex flex-col items-center justify-start py-12 px-4 overflow-hidden"
@@ -159,6 +185,23 @@ const KidsPhonicsLibrary: React.FC = () => {
       <div className="w-full max-w-6xl mx-auto text-center mb-6" style={{ zIndex: 10 }}>
         <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">Phonics Library</h1>
         <p className="text-lg text-purple-300 mt-2">Choose a game</p>
+        
+        {/* Stage selector tabs */}
+        <div className="flex flex-wrap justify-center gap-2 mt-6">
+          {STAGES.map((stage) => (
+            <button
+              key={stage.id}
+              onClick={() => setSelectedStageId(stage.id)}
+              className={`px-4 py-2 rounded-full font-semibold text-sm transition-all ${
+                selectedStageId === stage.id
+                  ? 'bg-white/20 text-white border-2 border-white/40'
+                  : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
+              }`}
+            >
+              {stage.stageNumber}. {stage.title}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* No kid selected warning (with recovering state to avoid flash) */}
@@ -182,7 +225,7 @@ const KidsPhonicsLibrary: React.FC = () => {
       ) : null}
 
       <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8" style={{ zIndex: 10 }}>
-        {PHONICS_GAMES.map((game) => {
+        {filteredGames.map((game) => {
           const summary = summariesByGameId[game.id];
           
           // Determine status badge
@@ -256,28 +299,31 @@ const KidsPhonicsLibrary: React.FC = () => {
           );
         })}
         
-        {/* Coming soon placeholders */}
-        <div className="library-card disabled" aria-hidden>
-          <div>
-            <h3 className="text-2xl font-bold text-blue-300">Picture → Starting Sound</h3>
-            <p className="text-sm text-white/80 mt-2">Coming soon</p>
-          </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-white/60">—</div>
-            <div className="text-sm text-white/60">Coming Soon</div>
-          </div>
-        </div>
-
-        <div className="library-card disabled" aria-hidden>
-          <div>
-            <h3 className="text-2xl font-bold text-teal-300">Blend the Sounds</h3>
-            <p className="text-sm text-white/80 mt-2">Coming soon</p>
-          </div>
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-white/60">—</div>
-            <div className="text-sm text-white/60">Coming Soon</div>
-          </div>
-        </div>
+        {/* Coming soon placeholders for empty stages */}
+        {filteredGames.length === 0 && (
+          <>
+            <div className="library-card disabled" aria-hidden>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-300">More Games Coming</h3>
+                <p className="text-sm text-white/80 mt-2">New games for this stage will be added soon</p>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-white/60">—</div>
+                <div className="text-sm text-white/60">Coming Soon</div>
+              </div>
+            </div>
+            <div className="library-card disabled" aria-hidden>
+              <div>
+                <h3 className="text-2xl font-bold text-gray-300">Stay Tuned</h3>
+                <p className="text-sm text-white/80 mt-2">Exciting new content in development</p>
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-white/60">—</div>
+                <div className="text-sm text-white/60">Coming Soon</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
