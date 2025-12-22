@@ -1,135 +1,159 @@
 // src/pages/parent/components/progress/ParentGamesProgress.tsx
-// REBUILT: Minimal stable component, NO lazy, NO Suspense, NO dynamic imports
-
 import type { FC } from 'react';
 import { Card } from '@components/ui/card';
+
+type TimestampLike = { toMillis?: () => number } | number | null | undefined;
+
+function toMsSafe(t: TimestampLike): number | null {
+  if (!t) return null;
+  if (typeof t === 'number') return t;
+  if (typeof (t as any).toMillis === 'function') {
+    try {
+      return (t as any).toMillis();
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function relTime(ms: number): string {
+  const diff = Date.now() - ms;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
 
 interface KidSummaryData {
   summary?: {
     confidenceNow?: number;
-    weakTop?: Array<{ tag: string; wrong: number }>;
-    recommendedNext?: { gameId?: string; reason?: string };
-    games?: Record<string, { plays?: number; lastPlayedAt?: any }>;
+    weakTop?: Array<{ tag?: string; wrong?: number }>;
+    recommendedNext?: { gameId?: string; levelId?: string; reason?: string };
+    games?: Record<
+      string,
+      { plays?: number; avgAccuracy?: number; bestAccuracy?: number; lastPlayedAt?: TimestampLike }
+    >;
+    lastUpdatedAt?: TimestampLike;
+  };
+  progress?: {
+    byGame?: Record<string, { completedLevels?: number; totalLevels?: number; lastPlayedAt?: TimestampLike }>;
   };
 }
 
 interface GameCatalogEntry {
-  [key: string]: {
-    title?: string;
-    active?: boolean;
-  };
+  id: string;
+  title: string;
+  active?: boolean;
 }
 
-interface ParentGamesProgressProps {
+interface Props {
   kidSummaryData: KidSummaryData | null;
-  gamesCatalog: GameCatalogEntry;
-  onPracticeClick?: () => void;
+  gamesCatalog: GameCatalogEntry[];
+  onPracticeClick?: (gameId?: string, levelId?: string) => void;
 }
 
-export const ParentGamesProgress: FC<ParentGamesProgressProps> = ({
-  kidSummaryData,
-  gamesCatalog,
-}) => {
+export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, onPracticeClick }) => {
   const summary = kidSummaryData?.summary;
-  const confidenceNow = summary?.confidenceNow ?? null;
-  const weakTop = summary?.weakTop || [];
-  const recommendedNext = summary?.recommendedNext;
-  const gamesStats = summary?.games || {};
+  const byGame = kidSummaryData?.progress?.byGame ?? {};
+  const gamesStats = summary?.games ?? {};
+  const updatedMs = toMsSafe(summary?.lastUpdatedAt);
 
-  // Safe helper to format tags
-  const formatTag = (tag: string): string => {
-    if (!tag) return '';
-    const [category, val] = tag.split(':');
-    if (category === 'letter') return `Letter ${(val || '').toUpperCase()}`;
-    if (category === 'sound') return `Sound /${val || ''}/`;
-    return tag;
-  };
+  const confidence = typeof summary?.confidenceNow === 'number' ? summary!.confidenceNow! : null;
+  const weakTop = summary?.weakTop ?? [];
+  const rec = summary?.recommendedNext;
 
-  // Build games list
-  const gamesList = Object.entries(gamesCatalog || {})
-    .filter(([_, game]) => game.active !== false)
-    .map(([gameId, game]) => {
-      const stats = gamesStats[gameId];
-      const plays = stats?.plays ?? 0;
-      let lastPlayed = '—';
-      if (stats?.lastPlayedAt && typeof stats.lastPlayedAt.toMillis === 'function') {
-        try {
-          const ms = stats.lastPlayedAt.toMillis();
-          const days = Math.floor((Date.now() - ms) / 86400000);
-          lastPlayed = days === 0 ? 'Today' : `${days}d ago`;
-        } catch {
-          lastPlayed = '—';
-        }
-      }
-      return {
-        id: gameId,
-        title: game.title || gameId,
-        plays,
-        lastPlayed,
-      };
-    });
+  const activeGames = (gamesCatalog ?? []).filter((g) => g.active !== false).slice(0, 10);
 
   return (
     <div className="space-y-6">
-      {/* Confidence Card */}
-      <Card className="p-6">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Confidence Now</h3>
-        <div className="text-5xl font-bold text-blue-600 dark:text-blue-400">
-          {confidenceNow !== null ? confidenceNow : '—'}
-        </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">out of 100</div>
-      </Card>
+      {/* Top row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="p-6">
+          <div className="text-sm text-gray-500 dark:text-gray-400">Confidence Now</div>
+          <div className="text-5xl font-bold text-blue-600 dark:text-blue-400 mt-2">
+            {confidence !== null ? confidence : '—'}
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">out of 100</div>
+          {updatedMs && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-3">Updated: {relTime(updatedMs)}</div>
+          )}
+        </Card>
 
-      {/* Improvement Areas Card */}
-      <Card className="p-6">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Improvement Areas</h3>
-        {weakTop.length === 0 ? (
-          <p className="text-sm text-gray-600 dark:text-gray-400">All skills confident!</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {weakTop.slice(0, 5).map((skill, idx) => (
-              <div
-                key={idx}
-                className="px-3 py-1 bg-orange-100 dark:bg-orange-900/20 border border-orange-300 dark:border-orange-800 rounded text-sm"
+        <Card className="p-6">
+          <div className="text-sm text-gray-500 dark:text-gray-400">Recommended Next</div>
+          {rec?.gameId ? (
+            <div className="mt-2 space-y-2">
+              <div className="font-semibold text-gray-900 dark:text-gray-100">{rec.gameId}</div>
+              {rec.reason && <div className="text-sm text-gray-600 dark:text-gray-400">{rec.reason}</div>}
+              <button
+                type="button"
+                onClick={() => onPracticeClick?.(rec.gameId, rec.levelId)}
+                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
               >
-                {formatTag(skill.tag)} ({skill.wrong} wrong)
+                Practice Now
+              </button>
+            </div>
+          ) : (
+            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">No recommendation yet.</div>
+          )}
+        </Card>
+      </div>
+
+      {/* Weak skills */}
+      <Card className="p-6">
+        <div className="flex items-center justify-between">
+          <div className="font-bold text-gray-900 dark:text-gray-100">Improvement Areas</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">Top 5</div>
+        </div>
+
+        {weakTop.length === 0 ? (
+          <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">All skills look good!</div>
+        ) : (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {weakTop.slice(0, 5).map((w, idx) => (
+              <div
+                key={`${w.tag ?? 'tag'}-${idx}`}
+                className="px-3 py-1 rounded border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 text-sm text-gray-800 dark:text-gray-200"
+              >
+                {w.tag || '—'} {typeof w.wrong === 'number' ? `(${w.wrong} wrong)` : ''}
               </div>
             ))}
           </div>
         )}
       </Card>
 
-      {/* Recommended Next Card */}
-      <Card className="p-6">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Recommended Next</h3>
-        {recommendedNext?.gameId ? (
-          <div>
-            <div className="font-medium text-gray-900 dark:text-gray-100">{recommendedNext.gameId}</div>
-            {recommendedNext.reason && (
-              <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">{recommendedNext.reason}</div>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-600 dark:text-gray-400">No recommendation yet</p>
-        )}
-      </Card>
+      {/* Games grid */}
+      <div className="space-y-3">
+        <div className="font-bold text-gray-900 dark:text-gray-100">Game Progress</div>
 
-      {/* Games List */}
-      <div>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">Games</h3>
-        {gamesList.length === 0 ? (
-          <Card className="p-6 text-center text-gray-600 dark:text-gray-400">No games found</Card>
+        {activeGames.length === 0 ? (
+          <Card className="p-6 text-sm text-gray-600 dark:text-gray-400">No games available.</Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {gamesList.map((game) => (
-              <Card key={game.id} className="p-4">
-                <div className="font-medium text-gray-900 dark:text-gray-100 mb-2">{game.title}</div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  <div>Plays: {game.plays}</div>
-                  <div>Last: {game.lastPlayed}</div>
-                </div>
-              </Card>
-            ))}
+            {activeGames.map((g) => {
+              const stats = gamesStats[g.id];
+              const prog = byGame[g.id];
+
+              const lastMs = toMsSafe(stats?.lastPlayedAt) ?? toMsSafe(prog?.lastPlayedAt);
+
+              return (
+                <Card key={g.id} className="p-4 space-y-2">
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">{g.title}</div>
+
+                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <div>Plays: {stats?.plays ?? 0}</div>
+                    <div>
+                      Levels: {prog?.completedLevels ?? 0}/{prog?.totalLevels ?? '—'}
+                    </div>
+                    {lastMs ? <div>Last: {relTime(lastMs)}</div> : <div>Last: —</div>}
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
