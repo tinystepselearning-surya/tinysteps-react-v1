@@ -30,8 +30,8 @@ const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'))
 const LessonLibraryPage = lazy(() => import('../pages/teacher/LessonLibraryPage'));
 const DebugLessonLibrary = lazy(() => import('../pages/DebugLessonLibrary'));
 import ParentDashboard from '../pages/parent/ParentDashboard';
-const ParentProfile = lazy(() => import('../pages/parent/Profile'));
-const ParentPayments = lazy(() => import('../pages/parent/Payments'));
+import ParentProfile from '../pages/parent/Profile';
+import ParentPayments from '../pages/parent/Payments';
 const KidsPortal = lazy(() => import('../pages/KidsPortal'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
 const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
@@ -43,16 +43,10 @@ const KidsBalloonPop = lazy(() => import('../pages/KidsBalloonPop'));
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
 // );
 
-// Payment Components
-const PaymentCallback = lazy(
-  () => import('../pages/parent/Payments/PaymentCallback'),
-);
-const PhonePeCheckout = lazy(
-  () => import('../pages/payments/PhonePeCheckout'),
-);
-const PhonePeCallback = lazy(
-  () => import('../pages/payments/PhonePeCallback'),
-);
+// Payment Components (all used in /parent routes - made eager to eliminate #426)
+import PaymentCallback from '../pages/parent/Payments/PaymentCallback';
+import PhonePeCheckout from '../pages/payments/PhonePeCheckout';
+import PhonePeCallback from '../pages/payments/PhonePeCallback';
 
 // Layout
 import Header from '../components/common/Header';
