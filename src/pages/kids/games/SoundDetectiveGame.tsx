@@ -328,8 +328,8 @@ export default function SoundDetectiveGame() {
           {/* Headphones glow + button (overlayed cleanly above board) */}
           <div
             aria-hidden
-            style={{ ...headphoneBtnStyle, width: `calc(${headphoneBtnStyle.width} * 1.12)`, height: `calc(${headphoneBtnStyle.height} * 1.12)` }}
-            className="absolute z-30 flex items-center justify-center"
+            style={{ ...headphoneBtnStyle, width: `calc(${headphoneBtnStyle.width} * 1.30)`, height: `calc(${headphoneBtnStyle.height} * 1.30)` }}
+            className="absolute z-30 flex items-center justify-center hp-pop-wrapper"
           >
             {/* Invisible larger hotspot so kids can tap easily (delegates to playSound) */}
             <button
@@ -369,27 +369,27 @@ export default function SoundDetectiveGame() {
               />
 
               {/* Visible headphone image container: pop + glow animation (icon above glow, crisp) */}
-              <div className={['relative z-10 flex items-center justify-center', isPlaying ? 'hd-pop-playing' : 'hd-pop-idle'].join(' ')} style={{ width: '100%', height: '100%' }}>
+              <div className={['relative z-10 flex items-center justify-center', isPlaying ? 'hp-pop-playing' : 'hp-pop-idle'].join(' ')} style={{ width: '100%', height: '100%' }}>
                 {/* Glow layer behind icon (separate element so icon is not blurred) */}
-                <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
-                  <div style={{ width: '120%', height: '120%', borderRadius: 9999, background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)', filter: 'blur(14px)' }} />
-                </div>
+                  <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
+                    <div className={isPlaying ? 'hp-glow-playing' : 'hp-glow-idle'} style={{ width: '120%', height: '120%', borderRadius: 9999, background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)' }} />
+                  </div>
 
-                {/* Icon (crisp, fully opaque) */}
-                <div className="relative z-10 flex items-center justify-center w-full h-full">
-                  <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[70%] max-w-[70%] object-contain select-none opacity-100" draggable={false} />
-                </div>
+                  {/* Icon (crisp, fully opaque) */}
+                  <div className="relative z-10 flex items-center justify-center w-full h-full">
+                    <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[85%] max-w-[85%] object-contain select-none opacity-100" draggable={false} />
+                  </div>
               </div>
             </div>
           </div>
 
           {/* Letter display (optional) */}
           <div
-            className="absolute text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase"
+            className="absolute z-10 text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase"
             style={{
               left: "52%",
               top: "18%",
-              fontSize: "clamp(72px, 9vw, 140px)",
+              fontSize: "clamp(84px, 10vw, 150px)",
             }}
           >
             {currentLetter}
@@ -422,7 +422,7 @@ export default function SoundDetectiveGame() {
               >
                 {/* Centered inner frame to ensure consistent alignment */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-[72%] h-[72%] flex items-center justify-center">
+                  <div className={`w-[72%] h-[72%] flex items-center justify-center ${opt.id === 'sun' ? '-translate-x-2' : opt.id === 'ball' ? 'translate-x-2' : ''}`}>
                     <img
                       src={opt.imgSrc}
                       alt=""
@@ -518,6 +518,20 @@ export default function SoundDetectiveGame() {
               /* Respect reduced motion */
               @media (prefers-reduced-motion: reduce) {
                 .sd-pop-idle, .sd-pop-playing, .sd-ring-playing { animation: none !important; }
+              }
+
+              /* Headphone pop + glow keyframes (hpPop/hpGlow) */
+              @keyframes hpPop { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.08)} }
+              @keyframes hpGlow { 0%,100%{opacity:.55; filter:blur(14px)} 50%{opacity:1; filter:blur(18px)} }
+
+              .hp-pop-idle { animation: hpPop 1400ms ease-in-out infinite; transform-origin:center; }
+              .hp-pop-playing { animation: hpPop 850ms ease-in-out infinite; transform-origin:center; }
+
+              .hp-glow-idle { animation: hpGlow 1400ms ease-in-out infinite; }
+              .hp-glow-playing { animation: hpGlow 850ms ease-in-out infinite; }
+
+              @media (prefers-reduced-motion: reduce) {
+                .hp-pop-idle, .hp-pop-playing, .hp-glow-playing { animation: none !important; }
               }
 
               /* Headphone pop glow (tsPopGlow) */
