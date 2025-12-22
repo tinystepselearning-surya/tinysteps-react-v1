@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from 'react-router-dom';
 
 const BASE = "/games/phonics/sound-detective";
 
@@ -120,6 +121,11 @@ export default function SoundDetectiveGame() {
     try {
       if (containerRef.current && (containerRef.current as any).requestFullscreen) {
         await (containerRef.current as any).requestFullscreen();
+        return;
+      }
+      // Fallback: request on documentElement
+      if (document.documentElement && (document.documentElement as any).requestFullscreen) {
+        await (document.documentElement as any).requestFullscreen();
       }
     } catch (e) {
       // Ignore failures (browsers may block without gesture)
@@ -136,6 +142,10 @@ export default function SoundDetectiveGame() {
   const [levelGroupIndex, setLevelGroupIndex] = useState(0);
   const [letterIndexWithinGroup, setLetterIndexWithinGroup] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [singleLevelMode, setSingleLevelMode] = useState(false);
+
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -146,6 +156,9 @@ export default function SoundDetectiveGame() {
   // Compute current letter from indexes
   const currentLetter = LETTER_GROUPS[levelGroupIndex]?.[letterIndexWithinGroup] || "s";
   const currentGroup = LETTER_GROUPS[levelGroupIndex] || [];
+
+  // Build simple level defs from LETTER_GROUPS
+  const SOUND_LEVELS = LETTER_GROUPS.map((group, i) => ({ id: i + 1, title: `Level ${i + 1}`, items: group }));
   
   // Build options for current letter
   const options = useMemo(
@@ -159,6 +172,15 @@ export default function SoundDetectiveGame() {
   const audioSrc = `${BASE}/audio/${currentLetter}.mp3`;
 
   useEffect(() => {
+    // If level query param present, start at that level (no fullscreen auto-enter)
+    const levelParam = parseInt(searchParams.get('level') || '', 10);
+    if (!isNaN(levelParam) && levelParam >= 1 && levelParam <= LETTER_GROUPS.length) {
+      setSelectedLevel(levelParam);
+      setLevelGroupIndex(levelParam - 1);
+      setLetterIndexWithinGroup(0);
+      setSingleLevelMode(true);
+    }
+
     // Preload audio if available (optional)
     audioRef.current = new Audio(audioSrc);
     audioRef.current.preload = "auto";
@@ -259,15 +281,20 @@ export default function SoundDetectiveGame() {
           // Next letter in same group
           setLetterIndexWithinGroup(nextLetterIndex);
         } else {
-          // Move to next group
-          const nextGroupIndex = levelGroupIndex + 1;
-          
-          if (nextGroupIndex < LETTER_GROUPS.length) {
-            setLevelGroupIndex(nextGroupIndex);
-            setLetterIndexWithinGroup(0);
-          } else {
-            // All levels complete
+          // End of current group
+          if (singleLevelMode) {
+            // In single-level mode we stop here
             setIsComplete(true);
+          } else {
+            // Move to next group
+            const nextGroupIndex = levelGroupIndex + 1;
+            if (nextGroupIndex < LETTER_GROUPS.length) {
+              setLevelGroupIndex(nextGroupIndex);
+              setLetterIndexWithinGroup(0);
+            } else {
+              // All levels complete
+              setIsComplete(true);
+            }
           }
         }
       }, 900);
@@ -286,6 +313,26 @@ export default function SoundDetectiveGame() {
     setIsComplete(false);
     setAnswerState("idle");
     setSelectedId(null);
+    // exit single-level mode when restarting
+    setSelectedLevel(null);
+    setSingleLevelMode(false);
+  };
+
+  // Start a specific level (called from Choose Level UI). Must be called from a user gesture.
+  const startLevel = async (levelId: number) => {
+    try {
+      await enterFullscreen();
+    } catch {}
+    setSelectedLevel(levelId);
+    setSingleLevelMode(true);
+    setLevelGroupIndex(levelId - 1);
+    setLetterIndexWithinGroup(0);
+    setIsComplete(false);
+    // reflect in URL
+    try {
+      searchParams.set('level', String(levelId));
+      setSearchParams(searchParams);
+    } catch {}
   };
 
   // Positions tuned for your 2048x1152 background (percentage-based so it scales)
@@ -306,13 +353,51 @@ export default function SoundDetectiveGame() {
 
   return (
     <div className="w-full select-none" draggable={false}>
+      {/* Choose Level screen when no level selected */}
+      {!selectedLevel && (
+        <div className="relative min-h-screen flex flex-col items-center justify-start py-12 px-4 overflow-hidden" style={{ background: 'linear-gradient(180deg, #050510 0%, #150a2b 35%, #0b2a5e 100%)', boxShadow: 'inset 0 0 160px rgba(0,0,0,0.75)' }}>
+          <style>{`
+            .level-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:16px; max-width:900px; }
+            .level-card { padding:18px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); cursor:pointer; }
+            .level-card.locked { opacity:0.4; cursor:not-allowed; }
+            @media (prefers-reduced-motion: reduce) { .level-card { transition:none !important } }
+          `}</style>
+
+          <div className="w-full max-w-6xl mx-auto text-center mb-8">
+            <h1 className="text-5xl font-bold text-white">Choose Level</h1>
+            <p className="text-white/70 mt-2">Pick a level to play Sound Detective</p>
+          </div>
+
+          <div className="level-grid w-full max-w-3xl mx-auto">
+            {SOUND_LEVELS.map(l => {
+              const locked = l.id > 1; // lock levels > 1 by default
+              return (
+                <button key={l.id} type="button" aria-label={`Level ${l.id} ${l.title}`} onClick={() => { if (!locked) startLevel(l.id); }} className={`level-card ${locked ? 'locked' : ''}`}>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-2xl font-bold text-white">{l.title}</div>
+                        <div className="text-sm text-white/80 mt-2">{l.items.join(' ')}</div>
+                      </div>
+                      <div className="text-sm text-white/60">{locked ? 'Locked 🔒' : 'Play'}</div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {selectedLevel ? (
       <div className="mx-auto w-full max-w-[1200px] select-none">
         <div
           ref={containerRef}
           onPointerDown={handlePointerDown}
-          className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-lg select-none overscroll-contain"
+          className="w-full h-full"
           style={{ touchAction: 'none' }}
         >
+          <div className={`${isFullscreen ? 'flex items-center justify-center bg-black' : ''} w-full h-full`}>
+            <div className="relative w-full aspect-video max-w-[1800px] max-h-screen overflow-hidden rounded-2xl shadow-lg">
           {/* Background */}
           <img
             src={`${BASE}/bg.png`}
@@ -326,48 +411,33 @@ export default function SoundDetectiveGame() {
             Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
           </div>
 
-          {/* Headphones + Letter shared overlay (keeps them aligned in a single row) */}
-          <div className="absolute left-1/2 top-[22%] -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-[clamp(18px,3vw,42px)]">
-            {/* Headphones area (keeps glow behind and icon crisp) */}
-            <div style={{ width: 'clamp(120px,16vw,190px)', height: 'clamp(120px,16vw,190px)' }} className="relative flex items-center justify-center hp-pop-wrapper">
-              {/* Invisible hotspot */}
-              <button type="button" onClick={playSound} aria-hidden className="absolute inset-0 z-0 bg-transparent" />
+          {/* Headphones absolute (left of S) */}
+          <div className="absolute z-30" style={{ left: '29.3%', top: '25.8%', transform: 'translate(-50%,-50%)' }}>
+            <div style={{ width: 'clamp(110px,12vw,190px)', height: 'clamp(110px,12vw,190px)' }} className="relative">
+              {/* Glow behind icon (separate blurred layer) */}
+              <div className={`absolute inset-[-18%] rounded-full ${isPlaying ? 'hp-glow-playing' : 'hp-glow-idle'}`} style={{ background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)' }} />
 
-              {/* Ring / glow behind icon */}
-              <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-                <div className={isPlaying ? 'hp-glow-playing' : 'hp-glow-idle'} style={{ width: '120%', height: '120%', borderRadius: 9999, background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)' }} />
-                <div className={[
-                  'absolute inset-0 rounded-full pointer-events-none transition-all duration-700 ease-in-out',
-                  !isPlaying ? 'hd-ring-idle' : 'hd-ring-playing',
-                ].join(' ')} style={{ transform: 'scale(1.12)', border: '2px solid rgba(255,255,255,0.12)' }} />
-              </div>
-
-              {/* Icon */}
-              <div className={['relative z-10 flex items-center justify-center', isPlaying ? 'hp-pop-playing' : 'hp-pop-idle'].join(' ')} style={{ width: '100%', height: '100%' }}>
-                <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[85%] max-w-[85%] object-contain select-none opacity-100" draggable={false} />
+              {/* Popping clickable wrapper */}
+              <div className={isPlaying ? 'hp-pop-playing' : 'hp-pop-idle'} style={{ width: '100%', height: '100%' }}>
+                <button type="button" onClick={playSound} className="relative w-full h-full" aria-label="Play sound">
+                  <img src={`${BASE}/headphones.png`} alt="Headphones" className="w-full h-full object-contain select-none opacity-100" draggable={false} />
+                </button>
               </div>
             </div>
+          </div>
 
-            {/* Big Letter aligned to the right of headphones */}
-            <div className="text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase" style={{ fontSize: 'clamp(84px,10vw,150px)' }}>
+          {/* Letter S absolute (right of headphones) */}
+          <div className="absolute z-20" style={{ left: '55.0%', top: '29.9%', transform: 'translate(-50%,-50%)' }}>
+            <div className="text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase" style={{ fontSize: 'clamp(140px,16vw,280px)', lineHeight: 1 }}>
               {currentLetter}
             </div>
           </div>
 
-          {/* Letter display (optional) */}
-          <div
-            className="absolute z-10 text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase"
-            style={{
-              left: "52%",
-              top: "18%",
-              fontSize: "clamp(84px, 10vw, 150px)",
-            }}
-          >
-            {currentLetter}
-          </div>
+          {/* Letter display moved into shared overlay */}
 
           {/* Choice cards */}
           {shuffledOptions.map((opt, i) => {
+            const offset = i === 0 ? '-4%' : i === 2 ? '4%' : '0%';
             const isSelected = selectedId === opt.id;
 
             const isCorrectPick =
@@ -393,7 +463,7 @@ export default function SoundDetectiveGame() {
               >
                 {/* Centered inner frame to ensure consistent alignment */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className={`w-[72%] h-[72%] flex items-center justify-center ${opt.id === 'sun' ? '-translate-x-4' : opt.id === 'igloo' ? 'translate-x-4' : ''}`}>
+                  <div className="w-[70%] h-[70%] flex items-center justify-center" style={{ transform: `translateX(${offset})` }}>
                     <img
                       src={opt.imgSrc}
                       alt=""
@@ -529,7 +599,7 @@ export default function SoundDetectiveGame() {
             Tap 🎧 then choose the picture
           </div>
         </div>
-      </div>
+      </div>) : null}
     </div>
   );
 }
