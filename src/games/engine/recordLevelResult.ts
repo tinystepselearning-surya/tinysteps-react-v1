@@ -52,8 +52,41 @@ export async function recordLevelResult(result: LevelResult): Promise<RecordLeve
 
     const callable = httpsCallable(functions, 'recordLevelResult');
 
-    // Add schemaVersion required by backend
-    const payload = { ...result, schemaVersion: 1 as const };
+    // Generate or retrieve eventId for idempotency
+    const storageKey = `ts:eventId:${result.kidId}:${result.gameId}:${result.levelId}`;
+    let eventId = (result as any).eventId;
+    if (!eventId) {
+      eventId = sessionStorage.getItem(storageKey) ?? crypto.randomUUID();
+      sessionStorage.setItem(storageKey, eventId);
+    }
+
+    // Add required fields for backend validation
+    const payload = {
+      ...result,
+      schemaVersion: 1 as const,
+      eventId,
+      progressDocId: result.progressDocId || result.gameId,
+      accuracy: result.accuracyPct ?? 0,
+      attempts: Object.values(result.tagDeltas).reduce((sum, td) => sum + td.attempts, 0),
+      correct: Object.values(result.tagDeltas).reduce((sum, td) => sum + td.correct, 0),
+      wrong: Object.values(result.tagDeltas).reduce((sum, td) => sum + td.wrong, 0),
+      timeSpentSec: result.durationSec ?? 0,
+      pointsEarned: result.score ?? 0,
+      skillResults: Object.entries(result.tagDeltas).map(([tag, delta]) => ({
+        tag,
+        attempts: delta.attempts,
+        correct: delta.correct,
+        wrong: delta.wrong,
+      })),
+    };
+
+    console.debug('[recordLevelResult] sending', {
+      kidId: result.kidId,
+      gameId: result.gameId,
+      levelId: result.levelId,
+      eventId,
+      schemaVersion: 1,
+    });
 
     const response = await callable(payload);
 
@@ -62,6 +95,9 @@ export async function recordLevelResult(result: LevelResult): Promise<RecordLeve
     if (!data?.success) {
       throw new Error('Failed to record level result');
     }
+
+    // Clear eventId on success (idempotency complete)
+    sessionStorage.removeItem(storageKey);
 
     console.log('[recordLevelResult] Level result recorded successfully:', {
       gameId: result.gameId,

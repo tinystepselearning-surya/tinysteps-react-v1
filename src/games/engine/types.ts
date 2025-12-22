@@ -52,6 +52,9 @@ export interface LevelResult {
     itemId?: string;
     [key: string]: unknown;
   };
+  // Optional fields added by wrapper before sending to backend
+  eventId?: string;
+  schemaVersion?: 1;
 }
 
 // ========== Games Catalog Types ==========
