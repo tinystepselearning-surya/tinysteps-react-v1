@@ -54,6 +54,9 @@ export { onGameProgressWrite } from './gameProgressSummary';
 // Game Session Summary Updater
 export { onGameSessionCreate } from './onGameSessionCreate';
 
+// Game Session Trigger (onCreate rollups)
+export { onGameSessionCreateTrigger } from './triggers/onGameSessionCreate';
+
 // Batch Insights Rollup (Scheduled 3x daily)
 export {
   batchInsightsRollup11am,
