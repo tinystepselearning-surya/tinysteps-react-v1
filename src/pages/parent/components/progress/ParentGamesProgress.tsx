@@ -48,6 +48,7 @@ interface GameCatalogEntry {
   id: string;
   title: string;
   active?: boolean;
+  totalLevels?: number;
 }
 
 interface Props {
@@ -78,6 +79,7 @@ function normalizeCatalog(catalog: any): GameCatalogEntry[] {
         id,
         title: val.title || id,
         active: val.active,
+        totalLevels: val.totalLevels,
       }));
   }
   
@@ -190,9 +192,15 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
               const stats = gamesStats[g.id];
               const prog = byGame[g.id];
 
-              const plays = stats?.plays ?? 0;
+              // Fix plays: ensure finite number, default to 0
+              const rawPlays = stats?.plays;
+              const plays = typeof rawPlays === 'number' && isFinite(rawPlays) ? rawPlays : 0;
+              
               const completedLevels = prog?.completedLevels ?? 0;
-              const totalLevels = prog?.totalLevels ?? 0;
+              
+              // Fix totalLevels: prefer catalog, then progress, then show dash
+              const totalLevels = g.totalLevels ?? prog?.totalLevels ?? null;
+              
               const avgAccuracy = stats?.avgAccuracy ?? null;
               const lastMs = toMsSafe(stats?.lastPlayedAt) ?? toMsSafe(prog?.lastPlayedAt);
 
@@ -200,6 +208,7 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
               const isMastered =
                 avgAccuracy !== null &&
                 avgAccuracy >= 80 &&
+                totalLevels !== null &&
                 totalLevels > 0 &&
                 completedLevels >= totalLevels;
 
@@ -213,7 +222,7 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
                   <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                     <div>Plays: {plays}</div>
                     <div>
-                      Levels: {completedLevels}/{totalLevels || '?'}
+                      Levels: {completedLevels}/{totalLevels ?? '—'}
                     </div>
                     {avgAccuracy !== null && (
                       <div>
