@@ -316,7 +316,7 @@ export default function SoundDetectiveGame() {
           <img
             src={`${BASE}/bg.png`}
             alt="Sound Detective Background"
-            className="absolute inset-0 h-full w-full object-cover select-none"
+            className="absolute inset-0 h-full w-full object-cover select-none z-0"
             draggable={false}
           />
 
@@ -325,11 +325,11 @@ export default function SoundDetectiveGame() {
             Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
           </div>
 
-          {/* Headphones glow + button */}
+          {/* Headphones glow + button (overlayed cleanly above board) */}
           <div
             aria-hidden
             style={{ ...headphoneBtnStyle, width: `calc(${headphoneBtnStyle.width} * 1.12)`, height: `calc(${headphoneBtnStyle.height} * 1.12)` }}
-            className="absolute flex items-center justify-center"
+            className="absolute z-30 flex items-center justify-center"
           >
             {/* Invisible larger hotspot so kids can tap easily (delegates to playSound) */}
             <button
@@ -342,7 +342,7 @@ export default function SoundDetectiveGame() {
             {/* Visual container (keeps visible size slightly smaller than hotspot) */}
             <div className="relative z-10 flex items-center justify-center" style={{ width: '89.2857%', height: '89.2857%' }}>
               {/* Ring layer: centered using inset-0 + transform scale (no offsets) */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
                 <div
                   className={[
                     'absolute inset-0 rounded-full pointer-events-none transition-all duration-700 ease-in-out',
@@ -368,10 +368,16 @@ export default function SoundDetectiveGame() {
                 style={{ width: '100%', height: '100%', borderRadius: 9999 }}
               />
 
-              {/* Visible headphone image container: pop + glow animation */}
+              {/* Visible headphone image container: pop + glow animation (icon above glow, crisp) */}
               <div className={['relative z-10 flex items-center justify-center', isPlaying ? 'hd-pop-playing' : 'hd-pop-idle'].join(' ')} style={{ width: '100%', height: '100%' }}>
+                {/* Glow layer behind icon (separate element so icon is not blurred) */}
+                <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
+                  <div style={{ width: '120%', height: '120%', borderRadius: 9999, background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)', filter: 'blur(14px)' }} />
+                </div>
+
+                {/* Icon (crisp, fully opaque) */}
                 <div className="relative z-10 flex items-center justify-center w-full h-full">
-                  <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[70%] max-w-[70%] object-contain select-none" draggable={false} />
+                  <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[70%] max-w-[70%] object-contain select-none opacity-100" draggable={false} />
                 </div>
               </div>
             </div>
@@ -414,14 +420,16 @@ export default function SoundDetectiveGame() {
                 style={cardSlots[i]}
                 aria-label="Pick answer"
               >
-                {/* Image wrapper */}
-                <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
-                  <img
-                    src={opt.imgSrc}
-                    alt=""
-                    className="max-h-[72%] max-w-[72%] object-contain drop-shadow-md select-none"
-                    draggable={false}
-                  />
+                {/* Centered inner frame to ensure consistent alignment */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-[72%] h-[72%] flex items-center justify-center">
+                    <img
+                      src={opt.imgSrc}
+                      alt=""
+                      className="w-full h-full object-contain block drop-shadow-md select-none"
+                      draggable={false}
+                    />
+                  </div>
                 </div>
               </button>
             );
