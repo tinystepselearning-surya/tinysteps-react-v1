@@ -18,7 +18,7 @@ import { initAnalytics } from './lib/analytics';
 
   // Track fetch-based chunk loads
   const origFetch = window.fetch;
-  window.fetch = async (...args: any[]) => {
+  window.fetch = async (...args: Parameters<typeof fetch>) => {
     try {
       const url = String(args?.[0] ?? '');
       if (url.includes('.js')) {
@@ -68,11 +68,11 @@ initAnalytics();
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <Sentry.ErrorBoundary 
-      fallback={(props) => <ErrorFallback error={props.error} componentStack={props.componentStack} />}
+      fallback={(props) => <ErrorFallback error={props.error as Error} componentStack={props.componentStack} />}
       onError={(error, componentStack) => {
         console.error('[TS_DEBUG] Sentry ErrorBoundary caught error');
         console.error('[TS_DEBUG] Error:', error);
-        console.error('[TS_DEBUG] Message:', error?.message);
+        console.error('[TS_DEBUG] Message:', (error as Error)?.message);
         console.error('[TS_DEBUG] Component stack:', componentStack);
         console.error('[TS_DEBUG] Last JS URL:', (window as any).__ts_last_js_url);
         console.error('[TS_DEBUG] Location:', window.location.href);
