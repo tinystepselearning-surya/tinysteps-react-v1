@@ -22,7 +22,7 @@ function getWeekNumber(date: Date): number {
  * Idempotent via marker doc: kids/{kidId}/rollupsApplied/{eventId}
  * 
  * Rollups:
- * 1. Update kids/{kidId}/progress/byGame/{progressDocId}
+ * 1. Update kids/{kidId}/gameProgress/{progressDocId}
  *    - completedLevels (only if first completion of this level)
  *    - totalLevels (from catalog)
  *    - lastPlayedAt
@@ -132,8 +132,8 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
         });
       }
 
-      // Update progress/byGame
-      const progressRef = db.doc(`kids/${kidId}/progress/byGame/${progressDocId}`);
+      // Update gameProgress
+      const progressRef = db.doc(`kids/${kidId}/gameProgress/${progressDocId}`);
       const progressUpdate: any = {
         lastPlayedAt: FieldValue.serverTimestamp(),
       };
@@ -150,7 +150,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
       await progressRef.set(progressUpdate, { merge: true });
 
-      logger.info(`[onGameSessionCreate] Updated progress/byGame`, {
+      logger.info(`[onGameSessionCreate] Updated gameProgress`, {
         eventId,
         kidId,
         progressDocId,
