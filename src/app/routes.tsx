@@ -29,7 +29,7 @@ const TeacherStudentTopicProgressPage = lazy(() => import('../pages/teacher/Teac
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const LessonLibraryPage = lazy(() => import('../pages/teacher/LessonLibraryPage'));
 const DebugLessonLibrary = lazy(() => import('../pages/DebugLessonLibrary'));
-const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
+import ParentDashboard from '../pages/parent/ParentDashboard';
 const ParentProfile = lazy(() => import('../pages/parent/Profile'));
 const ParentPayments = lazy(() => import('../pages/parent/Payments'));
 const KidsPortal = lazy(() => import('../pages/KidsPortal'));
