@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from 'react-router-dom';
+import { recordLevelResult } from '../../../games/engine/recordLevelResult';
 
 const BASE = "/games/phonics/sound-detective";
 
@@ -99,8 +100,8 @@ function buildOptions(
   const decoy2Idx = (seed + 7) % others.length;
 
   const decoy1 = others[decoy1Idx];
-  const decoy2 = others[decoy2Idx === decoy1Idx ? (decoy1Idx + 1) % others.length : decoy2Idx];
-
+  const decoy2 = others[decoy2Idx === decoy1Idx ? (decoy1Idx + 1) % others.length : decoy2Idx]
+;                                                                                             
   return [
     correct,
     { id: decoy1.id, imgSrc: decoy1.img },
@@ -111,34 +112,56 @@ function buildOptions(
 type AnswerState = "idle" | "correct" | "wrong";
 
 export default function SoundDetectiveGame() {
-  // Fullscreen & gesture refs/states
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasUserGesture, setHasUserGesture] = useState(false);
+  const levelStartMsRef = useRef<number>(Date.now());
+  const levelResultSentRef = useRef<boolean>(false);
+
+  // Tracking state
+  const [attempts, setAttempts] = useState(0);
+  const [correctCount, setCorrectCount] = useState(0);
+  const [wrongCount, setWrongCount] = useState(0);
+  const masteredTagsRef = useRef<Set<string>>(new Set());
+  const skillMapRef = useRef<Map<string, { attempts: number; correct: number; wrong: number }>>(new Map());
+
+  // Confetti
+  const [confettiActive, setConfettiActive] = useState(false);
+  // resetLevelTracking defined earlier near tracking state
 
   const isDocFullscreen = () => !!document.fullscreenElement;
-  const enterFullscreen = async () => {
+
+  const enterFullscreen = React.useCallback(async () => {
     try {
-      if (containerRef.current && (containerRef.current as any).requestFullscreen) {
-        await (containerRef.current as any).requestFullscreen();
-        return;
-      }
-      // Fallback: request on documentElement
-      if (document.documentElement && (document.documentElement as any).requestFullscreen) {
+      const el = containerRef.current || document.documentElement;
+      if (!el) return;
+
+      if ((el as any).requestFullscreen) {
+        await (el as any).requestFullscreen();
+      } else if ((el as any).webkitRequestFullscreen) {
+        await (el as any).webkitRequestFullscreen();
+      } else if ((el as any).webkitEnterFullscreen) {
+        await (el as any).webkitEnterFullscreen();
+      } else if (document.documentElement && (document.documentElement as any).requestFullscreen) {
+        // Fallback: request on documentElement
         await (document.documentElement as any).requestFullscreen();
       }
     } catch (e) {
       // Ignore failures (browsers may block without gesture)
-      // console.warn('enterFullscreen failed', e);
     }
-  };
-  const exitFullscreen = () => {
+  }, []);
+
+  const exitFullscreen = React.useCallback(() => {
     try {
-      document.exitFullscreen?.();
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
     } catch (e) {
       // ignore
     }
-  };
+  }, []);
   const [levelGroupIndex, setLevelGroupIndex] = useState(0);
   const [letterIndexWithinGroup, setLetterIndexWithinGroup] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -146,6 +169,10 @@ export default function SoundDetectiveGame() {
   const [singleLevelMode, setSingleLevelMode] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  // Prefer kidId from URL, fall back to persistent storage (same pattern used elsewhere)
+  const urlKidId = searchParams.get('kidId') || '';
+  const storedKidId = typeof window !== 'undefined' ? (localStorage.getItem('ts_active_kid_v1') || '') : '';
+  const kidId = urlKidId || storedKidId;
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -171,8 +198,18 @@ export default function SoundDetectiveGame() {
 
   const audioSrc = `${BASE}/audio/${currentLetter}.mp3`;
 
+  const resetLevelTracking = React.useCallback(() => {
+    levelStartMsRef.current = Date.now();
+    levelResultSentRef.current = false;
+    setAttempts(0);
+    setCorrectCount(0);
+    setWrongCount(0);
+    masteredTagsRef.current = new Set();
+    skillMapRef.current = new Map();
+  }, []);
+
+  // Effect A: read level query param (watch for changes to searchParams)
   useEffect(() => {
-    // If level query param present, start at that level (no fullscreen auto-enter)
     const levelParam = parseInt(searchParams.get('level') || '', 10);
     if (!isNaN(levelParam) && levelParam >= 1 && levelParam <= LETTER_GROUPS.length) {
       setSelectedLevel(levelParam);
@@ -180,15 +217,85 @@ export default function SoundDetectiveGame() {
       setLetterIndexWithinGroup(0);
       setSingleLevelMode(true);
     }
+  }, [searchParams]);
 
-    // Preload audio if available (optional)
+  // Effect B: preload audio (depends only on audioSrc)
+  useEffect(() => {
     audioRef.current = new Audio(audioSrc);
-    audioRef.current.preload = "auto";
+    audioRef.current.preload = 'auto';
     return () => {
       audioRef.current?.pause();
       audioRef.current = null;
     };
   }, [audioSrc]);
+
+  // Reset tracking when a level selection starts
+  useEffect(() => {
+    if (selectedLevel != null) {
+      resetLevelTracking();
+    }
+  }, [selectedLevel, resetLevelTracking]);
+
+  // Reset tracking when entering a new group/level
+  useEffect(() => {
+    // only reset if we're inside play (selectedLevel set) or we're progressing through groups
+    if (selectedLevel != null || !singleLevelMode) {
+      resetLevelTracking();
+    }
+  }, [levelGroupIndex, resetLevelTracking, selectedLevel, singleLevelMode]);
+
+  // Submit a level result once per level end
+  const submitLevelResult = async (levelId: number, completed: boolean) => {
+    if (!kidId) {
+      console.warn('[SoundDetective] No kidId present; skipping recordLevelResult');
+      return;
+    }
+    if (levelResultSentRef.current) return;
+    levelResultSentRef.current = true;
+
+    const eventId = (typeof crypto !== 'undefined' && (crypto as any).randomUUID) ? (crypto as any).randomUUID() : `${Date.now()}-${Math.floor(Math.random()*100000)}`;
+    const durationSec = Math.max(1, Math.round((Date.now() - (levelStartMsRef.current || Date.now())) / 1000));
+    const accuracyPct = attempts ? Math.round((correctCount / attempts) * 100) : 0;
+    const score = correctCount;
+
+    // Build tagDeltas from skillMapRef and skillResults array
+    const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = {};
+    const skillResults: Array<{ tag: string; attempts: number; correct: number; wrong: number }> = [];
+    skillMapRef.current.forEach((v, k) => {
+      tagDeltas[k] = { attempts: v.attempts, correct: v.correct, wrong: v.wrong };
+      skillResults.push({ tag: k, attempts: v.attempts, correct: v.correct, wrong: v.wrong });
+    });
+
+    const payload = {
+      kidId,
+      gameId: 'sound-detective',
+      progressDocId: 'phonics_sound_detective',
+      levelId,
+      completed,
+      stars: undefined,
+      score,
+      accuracy: accuracyPct,
+      accuracyPct,
+      timeSpentSec: durationSec,
+      durationSec,
+      attempts,
+      correct: correctCount,
+      wrong: wrongCount,
+      pointsEarned: score,
+      tagDeltas,
+      skillResults,
+      evidence: { itemId: currentLetter },
+      eventId,
+      schemaVersion: 1,
+    } as const;
+
+    try {
+      const res = await recordLevelResult(payload as any);
+      console.info('[SoundDetective] recordLevelResult Success', res);
+    } catch (err) {
+      console.error('[SoundDetective] recordLevelResult failed (non-blocking):', err);
+    }
+  };
 
   // Fullscreen change listener + mount attempt
   useEffect(() => {
@@ -206,8 +313,7 @@ export default function SoundDetectiveGame() {
     return () => {
       document.removeEventListener('fullscreenchange', onFsChange);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [enterFullscreen]);
 
   // Handle initial user gesture to enable fullscreen
   const handlePointerDown = async () => {
@@ -268,20 +374,49 @@ export default function SoundDetectiveGame() {
   const onPick = (optionId: string) => {
     if (answerState !== "idle") return;
 
+    // Record attempt
+    setAttempts((s) => s + 1);
+
     setSelectedId(optionId);
     const correct = optionId === correctOption.id;
     setAnswerState(correct ? "correct" : "wrong");
 
+    // Tags for this attempt
+    const letterTag = `letter:${currentLetter}`;
+    const subtopicTag = `subtopic:sound_detective`;
+    const tags = [letterTag, subtopicTag];
+
+    // Update skillMapRef
+    tags.forEach((tag) => {
+      const prev = skillMapRef.current.get(tag) ?? { attempts: 0, correct: 0, wrong: 0 };
+      prev.attempts += 1;
+      if (correct) prev.correct += 1; else prev.wrong += 1;
+      skillMapRef.current.set(tag, prev);
+    });
+
     if (correct) {
-      window.setTimeout(() => {
+      setCorrectCount((s) => s + 1);
+      tags.forEach((t) => masteredTagsRef.current.add(t));
+
+      // show confetti briefly
+      try {
+        setConfettiActive(true);
+        setTimeout(() => setConfettiActive(false), 2200);
+      } catch {}
+
+      window.setTimeout(async () => {
         // Move to next letter
         const nextLetterIndex = letterIndexWithinGroup + 1;
-        
+
         if (nextLetterIndex < currentGroup.length) {
           // Next letter in same group
           setLetterIndexWithinGroup(nextLetterIndex);
+          // keep the levelStartMsRef (ongoing level)
         } else {
-          // End of current group
+          // End of current group - submit results for this level
+          const levelId = levelGroupIndex + 1;
+          await submitLevelResult(levelId, true);
+
           if (singleLevelMode) {
             // In single-level mode we stop here
             setIsComplete(true);
@@ -291,6 +426,8 @@ export default function SoundDetectiveGame() {
             if (nextGroupIndex < LETTER_GROUPS.length) {
               setLevelGroupIndex(nextGroupIndex);
               setLetterIndexWithinGroup(0);
+              // reset counters for next level
+              resetLevelTracking();
             } else {
               // All levels complete
               setIsComplete(true);
@@ -299,6 +436,8 @@ export default function SoundDetectiveGame() {
         }
       }, 900);
     } else {
+      // wrong pick
+      setWrongCount((s) => s + 1);
       // allow retry after short pause
       window.setTimeout(() => {
         setAnswerState("idle");
@@ -316,6 +455,7 @@ export default function SoundDetectiveGame() {
     // exit single-level mode when restarting
     setSelectedLevel(null);
     setSingleLevelMode(false);
+    resetLevelTracking();
   };
 
   // Start a specific level (called from Choose Level UI). Must be called from a user gesture.
@@ -336,13 +476,7 @@ export default function SoundDetectiveGame() {
   };
 
   // Positions tuned for your 2048x1152 background (percentage-based so it scales)
-  const headphoneBtnStyle: React.CSSProperties = {
-    left: "28%",
-    top: "22%",
-    width: "20%",
-    height: "33%",
-    transform: 'translate(-50%, -50%)',
-  };
+  // NOTE: headphone positions are inline in the stage for flexible tuning — removed unused headphoneBtnStyle
 
   // Three card slots (left, middle, right)
   const cardSlots: React.CSSProperties[] = [
@@ -350,6 +484,216 @@ export default function SoundDetectiveGame() {
     { left: "39%", top: "57%", width: "22%", height: "32%" },
     { left: "64%", top: "57%", width: "22%", height: "32%" },
   ];
+
+  // Stage content (rendered when a level is selected)
+  const stageContent = selectedLevel ? (
+    <div className="mx-auto w-full max-w-[1200px] select-none">
+      <div
+        ref={containerRef}
+        onPointerDown={handlePointerDown}
+        className="w-full h-full"
+        style={{ touchAction: "none" }}
+      >
+        <div className={`${isFullscreen ? "flex items-center justify-center bg-black" : ""} w-full h-full`}>
+          <div className="relative w-full aspect-video max-w-[1800px] max-h-screen overflow-hidden rounded-2xl shadow-lg">
+            {/* Background */}
+            <img
+              src={`${BASE}/bg.png`}
+              alt="Sound Detective Background"
+              className="absolute inset-0 h-full w-full object-cover select-none z-0"
+              draggable={false}
+            />
+
+            {/* Progress indicator */}
+            <div className="absolute top-3 left-3 rounded-full bg-black/40 px-3 py-1 text-xs text-white font-medium">
+              Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
+            </div>
+
+            {/* Headphones absolute (left of S) */}
+              <div
+                className="absolute z-30"
+                style={{ left: "35%", top: "30.0%", transform: "translate(-50%,-50%)" }}
+              >
+              <div
+                style={{ width: "clamp(110px,12vw,190px)", height: "clamp(110px,12vw,190px)" }}
+                className="relative"
+              >
+                {/* Glow behind icon */}
+                <div
+                  className={`absolute inset-[-18%] rounded-full ${isPlaying ? "hp-glow-playing" : "hp-glow-idle"}`}
+                  style={{
+                    background:
+                      "radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)",
+                  }}
+                />
+
+                <div className={isPlaying ? "hp-pop-playing" : "hp-pop-idle"} style={{ width: "100%", height: "100%" }}>
+                  <button type="button" onClick={playSound} className="relative w-full h-full" aria-label="Play sound">
+                    <img
+                      src={`${BASE}/headphones.png`}
+                      alt="Headphones"
+                      className="w-full h-full object-contain select-none opacity-100"
+                      draggable={false}
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Letter */}
+            <div className="absolute z-20" style={{ left: "55.0%", top: "29.9%", transform: "translate(-50%,-50%)" }}>
+                <div
+                  className="text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase"
+                  style={{ fontSize: "clamp(110px,12vw,220px)", lineHeight: 1 }}
+                >
+                  {currentLetter}
+                </div>
+            </div>
+
+            {/* Choice cards */}
+            {shuffledOptions.map((opt, i) => {
+              const offset = i === 0 ? "-4%" : i === 2 ? "4%" : "0%";
+              const isSelected = selectedId === opt.id;
+
+              const isCorrectPick = answerState === "correct" && opt.id === correctOption.id;
+              const isWrongPick = answerState === "wrong" && isSelected;
+
+              return (
+                <button
+                  key={`${opt.id}-${i}`}
+                  type="button"
+                  onClick={() => onPick(opt.id)}
+                  disabled={isPlaying}
+                  className={[
+                    "absolute rounded-2xl",
+                    "transition-transform duration-150",
+                    "active:scale-[0.98]",
+                    "hover:shadow-xl",
+                    isCorrectPick ? "ring-8 ring-green-400/80" : "",
+                    isWrongPick ? "animate-[shake_0.25s_ease-in-out_0s_2]" : "",
+                  ].join(" ")}
+                  style={cardSlots[i]}
+                  aria-label="Pick answer"
+                >
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div
+                      className="w-[70%] h-[70%] flex items-center justify-center"
+style={{ transform: `translate(${offset}, -22%)` }}
+                    >
+                      <img
+                        src={opt.imgSrc}
+                        alt=""
+                        className="w-full h-full object-contain block drop-shadow-md select-none"
+                        draggable={false}
+                      />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+
+            {/* Fullscreen start overlay */}
+            {!isFullscreen && !hasUserGesture && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setHasUserGesture(true);
+                    await enterFullscreen();
+                    setIsFullscreen(isDocFullscreen());
+                  }}
+                  className="pointer-events-auto px-4 py-2 bg-black/60 text-white rounded-full backdrop-blur-sm text-sm font-semibold"
+                  aria-label="Start Full Screen"
+                >
+                  Tap to Start (Full Screen)
+                </button>
+              </div>
+            )}
+
+            {/* Exit fullscreen button */}
+            {isFullscreen && (
+              <div className="absolute top-3 right-3">
+                <button
+                  type="button"
+                  onClick={() => exitFullscreen()}
+                  className="px-3 py-1 bg-white/10 text-white text-xs rounded-full hover:bg-white/20"
+                  aria-label="Exit Full Screen"
+                >
+                  Exit
+                </button>
+              </div>
+            )}
+
+            {/* Completion overlay */}
+            {isComplete && (
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                <div className="bg-white rounded-2xl p-8 max-w-sm text-center shadow-2xl">
+                  <div className="text-6xl mb-4">🎉</div>
+                  <h2 className="text-3xl font-bold text-gray-800 mb-2">All Done!</h2>
+                  <p className="text-gray-600 mb-6">You completed all 5 levels!</p>
+                  <button
+                    type="button"
+                    onClick={handleRestart}
+                    className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
+                  >
+                    Play Again
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Helper hint */}
+            <div className="absolute bottom-3 left-4 rounded-full bg-black/35 px-3 py-1 text-xs text-white">
+              Tap 🎧 then choose the picture
+            </div>
+
+            {/* Confetti overlay (triggered on correct) */}
+            {confettiActive && (() => {
+              const colors = ['#FFD54A', '#FF7A59', '#FF4D8D', '#7C5CFF', '#2EE6A6', '#FFFFFF'];
+              const confettiPieces = Array.from({ length: 22 }, (_, i) => ({ id: i, left: Math.random() * 100, color: colors[i % colors.length], delay: Math.random() * 0.6, duration: 1 + Math.random() * 0.8 }));
+              return (
+                <div className="absolute inset-0 pointer-events-none z-40">
+                  {confettiPieces.map(p => (
+                    <div key={p.id} style={{ left: `${p.left}%`, top: 0, width: 10, height: 10, backgroundColor: p.color, position: 'absolute', animation: `confettiFall ${p.duration}s linear forwards`, animationDelay: `${p.delay}s` }} />
+                  ))}
+                </div>
+              );
+            })()}
+
+            {/* Animations */}
+            <style>{`
+              @keyframes shake {
+                0% { transform: translateX(0); }
+                25% { transform: translateX(-6px); }
+                50% { transform: translateX(6px); }
+                75% { transform: translateX(-6px); }
+                100% { transform: translateX(0); }
+              }
+
+              @keyframes hpPop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+              @keyframes hpGlow { 0%,100%{opacity:.55; filter:blur(14px)} 50%{opacity:1; filter:blur(18px)} }
+
+              .hp-pop-idle { animation: hpPop 1400ms ease-in-out infinite; transform-origin:center; }
+              .hp-pop-playing { animation: hpPop 850ms ease-in-out infinite; transform-origin:center; }
+
+              .hp-glow-idle { animation: hpGlow 1400ms ease-in-out infinite; }
+              .hp-glow-playing { animation: hpGlow 850ms ease-in-out infinite; }
+
+              @media (prefers-reduced-motion: reduce) {
+                .hp-pop-idle, .hp-pop-playing, .hp-glow-playing { animation: none !important; }
+              }
+
+              /* Simple confetti fall */
+              @keyframes confettiFall {
+                0% { transform: translateY(-8vh) rotate(0deg); opacity: 1 }
+                100% { transform: translateY(110vh) rotate(360deg); opacity: 0 }
+              }
+            `}</style>
+          </div>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <div className="w-full select-none" draggable={false}>
@@ -388,218 +732,7 @@ export default function SoundDetectiveGame() {
           </div>
         </div>
       )}
-      {selectedLevel ? (
-      <div className="mx-auto w-full max-w-[1200px] select-none">
-        <div
-          ref={containerRef}
-          onPointerDown={handlePointerDown}
-          className="w-full h-full"
-          style={{ touchAction: 'none' }}
-        >
-          <div className={`${isFullscreen ? 'flex items-center justify-center bg-black' : ''} w-full h-full`}>
-            <div className="relative w-full aspect-video max-w-[1800px] max-h-screen overflow-hidden rounded-2xl shadow-lg">
-          {/* Background */}
-          <img
-            src={`${BASE}/bg.png`}
-            alt="Sound Detective Background"
-            className="absolute inset-0 h-full w-full object-cover select-none z-0"
-            draggable={false}
-          />
-
-          {/* Progress indicator */}
-          <div className="absolute top-3 left-3 rounded-full bg-black/40 px-3 py-1 text-xs text-white font-medium">
-            Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
-          </div>
-
-          {/* Headphones absolute (left of S) */}
-          <div className="absolute z-30" style={{ left: '29.3%', top: '25.8%', transform: 'translate(-50%,-50%)' }}>
-            <div style={{ width: 'clamp(110px,12vw,190px)', height: 'clamp(110px,12vw,190px)' }} className="relative">
-              {/* Glow behind icon (separate blurred layer) */}
-              <div className={`absolute inset-[-18%] rounded-full ${isPlaying ? 'hp-glow-playing' : 'hp-glow-idle'}`} style={{ background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)' }} />
-
-              {/* Popping clickable wrapper */}
-              <div className={isPlaying ? 'hp-pop-playing' : 'hp-pop-idle'} style={{ width: '100%', height: '100%' }}>
-                <button type="button" onClick={playSound} className="relative w-full h-full" aria-label="Play sound">
-                  <img src={`${BASE}/headphones.png`} alt="Headphones" className="w-full h-full object-contain select-none opacity-100" draggable={false} />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Letter S absolute (right of headphones) */}
-          <div className="absolute z-20" style={{ left: '55.0%', top: '29.9%', transform: 'translate(-50%,-50%)' }}>
-            <div className="text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase" style={{ fontSize: 'clamp(140px,16vw,280px)', lineHeight: 1 }}>
-              {currentLetter}
-            </div>
-          </div>
-
-          {/* Letter display moved into shared overlay */}
-
-          {/* Choice cards */}
-          {shuffledOptions.map((opt, i) => {
-            const offset = i === 0 ? '-4%' : i === 2 ? '4%' : '0%';
-            const isSelected = selectedId === opt.id;
-
-            const isCorrectPick =
-              answerState === "correct" && opt.id === correctOption.id;
-            const isWrongPick = answerState === "wrong" && isSelected;
-
-            return (
-              <button
-                key={`${opt.id}-${i}`}
-                type="button"
-                onClick={() => onPick(opt.id)}
-                disabled={isPlaying}
-                className={[
-                  "absolute rounded-2xl",
-                  "transition-transform duration-150",
-                  "active:scale-[0.98]",
-                  "hover:shadow-xl",
-                  isCorrectPick ? "ring-8 ring-green-400/80" : "",
-                  isWrongPick ? "animate-[shake_0.25s_ease-in-out_0s_2]" : "",
-                ].join(" ")}
-                style={cardSlots[i]}
-                aria-label="Pick answer"
-              >
-                {/* Centered inner frame to ensure consistent alignment */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-[70%] h-[70%] flex items-center justify-center" style={{ transform: `translateX(${offset})` }}>
-                    <img
-                      src={opt.imgSrc}
-                      alt=""
-                      className="w-full h-full object-contain block drop-shadow-md select-none"
-                      draggable={false}
-                    />
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-
-          {/* Fullscreen start overlay (non-intrusive) */}
-          {!isFullscreen && !hasUserGesture && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <button
-                type="button"
-                onClick={async () => { setHasUserGesture(true); await enterFullscreen(); setIsFullscreen(isDocFullscreen()); }}
-                className="pointer-events-auto px-4 py-2 bg-black/60 text-white rounded-full backdrop-blur-sm text-sm font-semibold"
-                aria-label="Start Full Screen"
-              >
-                Tap to Start (Full Screen)
-              </button>
-            </div>
-          )}
-
-          {/* Exit fullscreen button */}
-          {isFullscreen && (
-            <div className="absolute top-3 right-3">
-              <button
-                type="button"
-                onClick={() => exitFullscreen()}
-                className="px-3 py-1 bg-white/10 text-white text-xs rounded-full hover:bg-white/20"
-                aria-label="Exit Full Screen"
-              >
-                Exit
-              </button>
-            </div>
-          )}
-
-          {/* Completion overlay */}
-          {isComplete && (
-            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-              <div className="bg-white rounded-2xl p-8 max-w-sm text-center shadow-2xl">
-                <div className="text-6xl mb-4">🎉</div>
-                <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                  All Done!
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  You completed all 5 levels!
-                </p>
-                <button
-                  type="button"
-                  onClick={handleRestart}
-                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
-                >
-                  Play Again
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Simple keyframes for shake */}
-          <style>
-            {`
-              @keyframes shake {
-                0% { transform: translateX(0); }
-                25% { transform: translateX(-6px); }
-                50% { transform: translateX(6px); }
-                75% { transform: translateX(-6px); }
-                100% { transform: translateX(0); }
-              }
-
-              /* Pop + Glow keyframes */
-              @keyframes sdPopGlowIdle {
-                0% { transform: scale(1); box-shadow: 0 8px 30px rgba(59,130,246,0.06); }
-                50% { transform: scale(1.03); box-shadow: 0 14px 40px rgba(59,130,246,0.10); }
-                100% { transform: scale(1); box-shadow: 0 8px 30px rgba(59,130,246,0.06); }
-              }
-
-              @keyframes sdPopGlowPlay {
-                0% { transform: scale(1); box-shadow: 0 12px 44px rgba(59,130,246,0.16); }
-                50% { transform: scale(1.06); box-shadow: 0 20px 64px rgba(59,130,246,0.22); }
-                100% { transform: scale(1); box-shadow: 0 12px 44px rgba(59,130,246,0.16); }
-              }
-
-              .sd-pop-idle { animation: sdPopGlowIdle 3300ms ease-in-out infinite; }
-              .sd-pop-playing { animation: sdPopGlowPlay 1200ms ease-in-out infinite; }
-
-              .sd-ring-idle { opacity: .75; transform-origin: center; }
-              .sd-ring-playing { opacity: 1; transform-origin: center; animation: sdPopGlowPlay 1200ms ease-in-out infinite; }
-
-              /* Respect reduced motion */
-              @media (prefers-reduced-motion: reduce) {
-                .sd-pop-idle, .sd-pop-playing, .sd-ring-playing { animation: none !important; }
-              }
-
-              /* Headphone pop + glow keyframes (hpPop/hpGlow) */
-              @keyframes hpPop { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.08)} }
-              @keyframes hpGlow { 0%,100%{opacity:.55; filter:blur(14px)} 50%{opacity:1; filter:blur(18px)} }
-
-              .hp-pop-idle { animation: hpPop 1400ms ease-in-out infinite; transform-origin:center; }
-              .hp-pop-playing { animation: hpPop 850ms ease-in-out infinite; transform-origin:center; }
-
-              .hp-glow-idle { animation: hpGlow 1400ms ease-in-out infinite; }
-              .hp-glow-playing { animation: hpGlow 850ms ease-in-out infinite; }
-
-              @media (prefers-reduced-motion: reduce) {
-                .hp-pop-idle, .hp-pop-playing, .hp-glow-playing { animation: none !important; }
-              }
-
-              /* Headphone pop glow (tsPopGlow) */
-              @keyframes tsPopGlow {
-                0% { transform: scale(1); filter: blur(10px); box-shadow: 0 8px 30px rgba(59,130,246,0.08); }
-                50% { transform: scale(1.06); filter: blur(18px); box-shadow: 0 20px 60px rgba(59,130,246,0.20); }
-                100% { transform: scale(1); filter: blur(10px); box-shadow: 0 8px 30px rgba(59,130,246,0.08); }
-              }
-
-              .hd-pop-idle { animation: tsPopGlow 1400ms ease-in-out infinite; transform-origin: center; }
-              .hd-pop-playing { animation: tsPopGlow 850ms ease-in-out infinite; transform-origin: center; }
-
-              .hd-ring-idle { opacity: .8; transform-origin: center; }
-              .hd-ring-playing { opacity: 1; transform-origin: center; animation: tsPopGlow 850ms ease-in-out infinite; }
-
-              @media (prefers-reduced-motion: reduce) {
-                .hd-pop-idle, .hd-pop-playing, .hd-ring-playing { animation: none !important; }
-              }
-            `}
-          </style>
-
-          {/* Helper hint */}
-          <div className="absolute bottom-3 left-4 rounded-full bg-black/35 px-3 py-1 text-xs text-white">
-            Tap 🎧 then choose the picture
-          </div>
-        </div>
-      </div>) : null}
+      {stageContent}
     </div>
   );
 }

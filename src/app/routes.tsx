@@ -235,6 +235,8 @@ const router = createBrowserRouter(
             { path: 'games/phonics', element: <KidsPhonicsLibrary /> },
             { path: 'games/phonics/letter-sound', element: <KidsPhonicsMission /> },
             { path: 'games/phonics/balloon-pop', element: <KidsBalloonPop /> },
+            // Temporary: make /kids/games/speaking safe (redirect to games hub)
+            { path: 'games/speaking', element: <KidsGamesHub /> },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },
           ],
         },

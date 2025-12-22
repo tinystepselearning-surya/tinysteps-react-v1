@@ -135,7 +135,6 @@ export default defineConfig({
     // If you need to explicitly set HMR host in special environments,
     // set `server.hmr.host` only and avoid hardcoding `port`.
     hmr: {
-      host: 'localhost',
       protocol: 'ws',
     },
   },
