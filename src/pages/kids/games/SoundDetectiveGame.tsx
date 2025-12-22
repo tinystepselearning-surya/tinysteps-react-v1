@@ -341,55 +341,49 @@ export default function SoundDetectiveGame() {
 
             {/* Visual container (keeps visible size slightly smaller than hotspot) */}
             <div className="relative z-10 flex items-center justify-center" style={{ width: '89.2857%', height: '89.2857%' }}>
-              {/* Soft radial glow behind the button */}
-              <div
-                className={[
-                  'absolute rounded-full pointer-events-none transition-all duration-500 ease-out',
-                  isPlaying
-                    ? 'opacity-100 scale-[1.06] animate-pulse'
-                    : 'opacity-70',
-                ].join(' ')}
-                style={{
-                  width: '130%',
-                  height: '130%',
-                  borderRadius: 9999,
-                  background: 'radial-gradient(closest-side, rgba(59,130,246,0.18), rgba(59,130,246,0) 60%)',
-                  filter: 'blur(14px)'
-                }}
-              />
+              {/* Ring layer: centered using inset-0 + transform scale (no offsets) */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div
+                  className={[
+                    'absolute inset-0 rounded-full pointer-events-none transition-all duration-700 ease-in-out',
+                    !isPlaying ? 'hd-ring-idle' : 'hd-ring-playing',
+                  ].join(' ')}
+                  style={{
+                    transform: 'scale(1.12)',
+                    border: '2px solid rgba(255,255,255,0.12)',
+                    background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)',
+                    filter: 'blur(12px)'
+                  }}
+                />
+              </div>
 
               {/* subtle inner shadow ring */}
               <div
                 className={[
                   'absolute rounded-full pointer-events-none transition-shadow duration-300',
                   isPlaying
-                    ? 'shadow-[0_14px_40px_rgba(59,130,246,0.18)]'
+                    ? 'shadow-[0_18px_48px_rgba(59,130,246,0.22)]'
                     : 'shadow-[0_8px_30px_rgba(59,130,246,0.06)]',
                 ].join(' ')}
                 style={{ width: '100%', height: '100%', borderRadius: 9999 }}
               />
 
-              {/* Visible button (smaller than hotspot, supports focus ring) */}
-              <button
-                type="button"
-                onClick={playSound}
-                className={[
-                  'relative rounded-full z-10 focus:outline-none focus:ring-4 focus:ring-white/40',
-                  isPlaying ? 'animate-pulse' : '',
-                ].join(' ')}
-                style={{ width: '100%', height: '100%' }}
-                aria-label="Play sound"
-              />
+              {/* Visible headphone image container: pop + glow animation */}
+              <div className={['relative z-10 flex items-center justify-center', isPlaying ? 'hd-pop-playing' : 'hd-pop-idle'].join(' ')} style={{ width: '100%', height: '100%' }}>
+                <div className="relative z-10 flex items-center justify-center w-full h-full">
+                  <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[70%] max-w-[70%] object-contain select-none" draggable={false} />
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Letter display (optional) */}
           <div
-            className="absolute text-white/95 font-extrabold drop-shadow-md select-none uppercase"
+            className="absolute text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase"
             style={{
               left: "52%",
               top: "18%",
-              fontSize: "clamp(44px, 6vw, 96px)",
+              fontSize: "clamp(72px, 9vw, 140px)",
             }}
           >
             {currentLetter}
@@ -413,18 +407,19 @@ export default function SoundDetectiveGame() {
                   "absolute rounded-2xl",
                   "transition-transform duration-150",
                   "active:scale-[0.98]",
+                  "hover:shadow-xl",
                   isCorrectPick ? "ring-8 ring-green-400/80" : "",
                   isWrongPick ? "animate-[shake_0.25s_ease-in-out_0s_2]" : "",
                 ].join(" ")}
                 style={cardSlots[i]}
                 aria-label="Pick answer"
               >
-                {/* Image inside the frame area - center and contain */}
-                <div className="w-full h-full flex items-center justify-center p-3">
+                {/* Image wrapper */}
+                <div className="relative z-10 w-full h-full flex items-center justify-center p-3">
                   <img
                     src={opt.imgSrc}
                     alt=""
-                    className="max-h-[78%] max-w-[78%] object-contain select-none"
+                    className="max-h-[72%] max-w-[72%] object-contain drop-shadow-md select-none"
                     draggable={false}
                   />
                 </div>
@@ -491,6 +486,47 @@ export default function SoundDetectiveGame() {
                 50% { transform: translateX(6px); }
                 75% { transform: translateX(-6px); }
                 100% { transform: translateX(0); }
+              }
+
+              /* Pop + Glow keyframes */
+              @keyframes sdPopGlowIdle {
+                0% { transform: scale(1); box-shadow: 0 8px 30px rgba(59,130,246,0.06); }
+                50% { transform: scale(1.03); box-shadow: 0 14px 40px rgba(59,130,246,0.10); }
+                100% { transform: scale(1); box-shadow: 0 8px 30px rgba(59,130,246,0.06); }
+              }
+
+              @keyframes sdPopGlowPlay {
+                0% { transform: scale(1); box-shadow: 0 12px 44px rgba(59,130,246,0.16); }
+                50% { transform: scale(1.06); box-shadow: 0 20px 64px rgba(59,130,246,0.22); }
+                100% { transform: scale(1); box-shadow: 0 12px 44px rgba(59,130,246,0.16); }
+              }
+
+              .sd-pop-idle { animation: sdPopGlowIdle 3300ms ease-in-out infinite; }
+              .sd-pop-playing { animation: sdPopGlowPlay 1200ms ease-in-out infinite; }
+
+              .sd-ring-idle { opacity: .75; transform-origin: center; }
+              .sd-ring-playing { opacity: 1; transform-origin: center; animation: sdPopGlowPlay 1200ms ease-in-out infinite; }
+
+              /* Respect reduced motion */
+              @media (prefers-reduced-motion: reduce) {
+                .sd-pop-idle, .sd-pop-playing, .sd-ring-playing { animation: none !important; }
+              }
+
+              /* Headphone pop glow (tsPopGlow) */
+              @keyframes tsPopGlow {
+                0% { transform: scale(1); filter: blur(10px); box-shadow: 0 8px 30px rgba(59,130,246,0.08); }
+                50% { transform: scale(1.06); filter: blur(18px); box-shadow: 0 20px 60px rgba(59,130,246,0.20); }
+                100% { transform: scale(1); filter: blur(10px); box-shadow: 0 8px 30px rgba(59,130,246,0.08); }
+              }
+
+              .hd-pop-idle { animation: tsPopGlow 1400ms ease-in-out infinite; transform-origin: center; }
+              .hd-pop-playing { animation: tsPopGlow 850ms ease-in-out infinite; transform-origin: center; }
+
+              .hd-ring-idle { opacity: .8; transform-origin: center; }
+              .hd-ring-playing { opacity: 1; transform-origin: center; animation: tsPopGlow 850ms ease-in-out infinite; }
+
+              @media (prefers-reduced-motion: reduce) {
+                .hd-pop-idle, .hd-pop-playing, .hd-ring-playing { animation: none !important; }
               }
             `}
           </style>
