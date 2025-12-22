@@ -110,6 +110,29 @@ function buildOptions(
 type AnswerState = "idle" | "correct" | "wrong";
 
 export default function SoundDetectiveGame() {
+  // Fullscreen & gesture refs/states
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [hasUserGesture, setHasUserGesture] = useState(false);
+
+  const isDocFullscreen = () => !!document.fullscreenElement;
+  const enterFullscreen = async () => {
+    try {
+      if (containerRef.current && (containerRef.current as any).requestFullscreen) {
+        await (containerRef.current as any).requestFullscreen();
+      }
+    } catch (e) {
+      // Ignore failures (browsers may block without gesture)
+      // console.warn('enterFullscreen failed', e);
+    }
+  };
+  const exitFullscreen = () => {
+    try {
+      document.exitFullscreen?.();
+    } catch (e) {
+      // ignore
+    }
+  };
   const [levelGroupIndex, setLevelGroupIndex] = useState(0);
   const [letterIndexWithinGroup, setLetterIndexWithinGroup] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -145,6 +168,36 @@ export default function SoundDetectiveGame() {
     };
   }, [audioSrc]);
 
+  // Fullscreen change listener + mount attempt
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(isDocFullscreen());
+    document.addEventListener('fullscreenchange', onFsChange);
+
+    // Try best-effort enter fullscreen on mount (may be blocked)
+    (async () => {
+      try {
+        await enterFullscreen();
+      } catch {}
+      setIsFullscreen(isDocFullscreen());
+    })();
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handle initial user gesture to enable fullscreen
+  const handlePointerDown = async () => {
+    if (!hasUserGesture) {
+      setHasUserGesture(true);
+      try {
+        await enterFullscreen();
+      } catch {}
+      setIsFullscreen(isDocFullscreen());
+    }
+  };
+
   useEffect(() => {
     // reset UI when letter changes
     setAnswerState("idle");
@@ -153,6 +206,12 @@ export default function SoundDetectiveGame() {
   }, [currentLetter]);
 
   const playSound = async () => {
+    // treat headphone click as a user gesture for fullscreen
+    if (!hasUserGesture) {
+      setHasUserGesture(true);
+      try { await enterFullscreen(); } catch {}
+      setIsFullscreen(isDocFullscreen());
+    }
     setIsPlaying(true);
 
     // Try mp3 first if available
@@ -245,9 +304,14 @@ export default function SoundDetectiveGame() {
   ];
 
   return (
-    <div className="w-full">
-      <div className="mx-auto w-full max-w-[1200px]">
-        <div className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-lg">
+    <div className="w-full select-none" draggable={false}>
+      <div className="mx-auto w-full max-w-[1200px] select-none">
+        <div
+          ref={containerRef}
+          onPointerDown={handlePointerDown}
+          className="relative w-full aspect-video overflow-hidden rounded-2xl shadow-lg select-none overscroll-contain"
+          style={{ touchAction: 'none' }}
+        >
           {/* Background */}
           <img
             src={`${BASE}/bg.png`}
@@ -261,18 +325,63 @@ export default function SoundDetectiveGame() {
             Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
           </div>
 
-          {/* Headphones button (invisible clickable area) */}
-          <button
-            type="button"
-            onClick={playSound}
-            className={[
-              "absolute rounded-full",
-              "focus:outline-none focus:ring-4 focus:ring-white/40",
-              isPlaying ? "animate-pulse" : "",
-            ].join(" ")}
-            style={headphoneBtnStyle}
-            aria-label="Play sound"
-          />
+          {/* Headphones glow + button */}
+          <div
+            aria-hidden
+            style={{ ...headphoneBtnStyle, width: `calc(${headphoneBtnStyle.width} * 1.12)`, height: `calc(${headphoneBtnStyle.height} * 1.12)` }}
+            className="absolute flex items-center justify-center"
+          >
+            {/* Invisible larger hotspot so kids can tap easily (delegates to playSound) */}
+            <button
+              type="button"
+              onClick={playSound}
+              aria-hidden
+              className="absolute inset-0 z-0 bg-transparent"
+            />
+
+            {/* Visual container (keeps visible size slightly smaller than hotspot) */}
+            <div className="relative z-10 flex items-center justify-center" style={{ width: '89.2857%', height: '89.2857%' }}>
+              {/* Soft radial glow behind the button */}
+              <div
+                className={[
+                  'absolute rounded-full pointer-events-none transition-all duration-500 ease-out',
+                  isPlaying
+                    ? 'opacity-100 scale-[1.06] animate-pulse'
+                    : 'opacity-70',
+                ].join(' ')}
+                style={{
+                  width: '130%',
+                  height: '130%',
+                  borderRadius: 9999,
+                  background: 'radial-gradient(closest-side, rgba(59,130,246,0.18), rgba(59,130,246,0) 60%)',
+                  filter: 'blur(14px)'
+                }}
+              />
+
+              {/* subtle inner shadow ring */}
+              <div
+                className={[
+                  'absolute rounded-full pointer-events-none transition-shadow duration-300',
+                  isPlaying
+                    ? 'shadow-[0_14px_40px_rgba(59,130,246,0.18)]'
+                    : 'shadow-[0_8px_30px_rgba(59,130,246,0.06)]',
+                ].join(' ')}
+                style={{ width: '100%', height: '100%', borderRadius: 9999 }}
+              />
+
+              {/* Visible button (smaller than hotspot, supports focus ring) */}
+              <button
+                type="button"
+                onClick={playSound}
+                className={[
+                  'relative rounded-full z-10 focus:outline-none focus:ring-4 focus:ring-white/40',
+                  isPlaying ? 'animate-pulse' : '',
+                ].join(' ')}
+                style={{ width: '100%', height: '100%' }}
+                aria-label="Play sound"
+              />
+            </div>
+          </div>
 
           {/* Letter display (optional) */}
           <div
@@ -310,16 +419,46 @@ export default function SoundDetectiveGame() {
                 style={cardSlots[i]}
                 aria-label="Pick answer"
               >
-                {/* Image inside the frame area */}
-                <img
-                  src={opt.imgSrc}
-                  alt=""
-                  className="h-full w-full object-contain p-[10%] select-none"
-                  draggable={false}
-                />
+                {/* Image inside the frame area - center and contain */}
+                <div className="w-full h-full flex items-center justify-center p-3">
+                  <img
+                    src={opt.imgSrc}
+                    alt=""
+                    className="max-h-[78%] max-w-[78%] object-contain select-none"
+                    draggable={false}
+                  />
+                </div>
               </button>
             );
           })}
+
+          {/* Fullscreen start overlay (non-intrusive) */}
+          {!isFullscreen && !hasUserGesture && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <button
+                type="button"
+                onClick={async () => { setHasUserGesture(true); await enterFullscreen(); setIsFullscreen(isDocFullscreen()); }}
+                className="pointer-events-auto px-4 py-2 bg-black/60 text-white rounded-full backdrop-blur-sm text-sm font-semibold"
+                aria-label="Start Full Screen"
+              >
+                Tap to Start (Full Screen)
+              </button>
+            </div>
+          )}
+
+          {/* Exit fullscreen button */}
+          {isFullscreen && (
+            <div className="absolute top-3 right-3">
+              <button
+                type="button"
+                onClick={() => exitFullscreen()}
+                className="px-3 py-1 bg-white/10 text-white text-xs rounded-full hover:bg-white/20"
+                aria-label="Exit Full Screen"
+              >
+                Exit
+              </button>
+            </div>
+          )}
 
           {/* Completion overlay */}
           {isComplete && (
