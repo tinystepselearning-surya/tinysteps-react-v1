@@ -27,7 +27,7 @@ function getWeekNumber(date: Date): number {
  *    - totalLevels (from catalog)
  *    - lastPlayedAt
  * 
- * 2. Update kids/{kidId}/summary
+ * 2. Update kids/{kidId}/summary/overall
  *    - games.{gameId}.plays
  *    - games.{gameId}.lastPlayedAt
  *    - totalPoints
@@ -159,7 +159,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       });
 
       // Update summary
-      const summaryRef = db.doc(`kids/${kidId}/summary`);
+      const summaryRef = db.doc(`kids/${kidId}/summary/overall`);
       const summaryUpdate: any = {
         [`games.${gameId}.plays`]: FieldValue.increment(1),
         [`games.${gameId}.lastPlayedAt`]: FieldValue.serverTimestamp(),
