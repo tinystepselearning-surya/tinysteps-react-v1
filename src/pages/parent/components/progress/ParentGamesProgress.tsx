@@ -138,19 +138,46 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
               const stats = gamesStats[g.id];
               const prog = byGame[g.id];
 
+              const plays = stats?.plays ?? 0;
+              const completedLevels = prog?.completedLevels ?? 0;
+              const totalLevels = prog?.totalLevels ?? 0;
+              const avgAccuracy = stats?.avgAccuracy ?? null;
               const lastMs = toMsSafe(stats?.lastPlayedAt) ?? toMsSafe(prog?.lastPlayedAt);
 
+              // Mastery badge: ✅ if avgAccuracy >= 80 AND completedLevels >= totalLevels (and totalLevels > 0)
+              const isMastered =
+                avgAccuracy !== null &&
+                avgAccuracy >= 80 &&
+                totalLevels > 0 &&
+                completedLevels >= totalLevels;
+
               return (
-                <Card key={g.id} className="p-4 space-y-2">
-                  <div className="font-semibold text-gray-900 dark:text-gray-100">{g.title}</div>
+                <Card key={g.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div className="font-semibold text-gray-900 dark:text-gray-100">{g.title}</div>
+                    <div className="text-xl">{isMastered ? '✅' : '🔄'}</div>
+                  </div>
 
                   <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    <div>Plays: {stats?.plays ?? 0}</div>
+                    <div>Plays: {plays}</div>
                     <div>
-                      Levels: {prog?.completedLevels ?? 0}/{prog?.totalLevels ?? '—'}
+                      Levels: {completedLevels}/{totalLevels || '?'}
                     </div>
-                    {lastMs ? <div>Last: {relTime(lastMs)}</div> : <div>Last: —</div>}
+                    {avgAccuracy !== null && (
+                      <div>
+                        Avg Score: <span className="font-semibold">{Math.round(avgAccuracy)}%</span>
+                      </div>
+                    )}
+                    {lastMs ? <div className="text-xs">Last: {relTime(lastMs)}</div> : <div className="text-xs">Last: —</div>}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onPracticeClick?.(g.id, undefined)}
+                    className="w-full px-3 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700"
+                  >
+                    Practice
+                  </button>
                 </Card>
               );
             })}

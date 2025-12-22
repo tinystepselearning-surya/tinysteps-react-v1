@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { ParentGamesProgress } from './components/progress/ParentGamesProgress';
+import { ParentOverviewCards } from './components/overview/ParentOverviewCards';
+import { Card } from '@/components/ui/card';
 
 type TabKey = 'dashboard' | 'games-progress';
 
@@ -79,6 +81,56 @@ export default function ParentDashboard() {
     },
   });
 
+  // Compute overview metrics
+  const overviewMetrics = useMemo(() => {
+    const data = kidSummaryQuery.data;
+    if (!data) return null;
+
+    const summary = data.summary;
+    const progress = data.progress;
+
+    // Confidence
+    const confidenceNow = summary?.confidenceNow ?? null;
+
+    // Games completed (games with completedLevels > 0)
+    const byGame = progress?.byGame || {};
+    const gamesCompleted = Object.values(byGame).filter(
+      (g: any) => (g?.completedLevels ?? 0) > 0
+    ).length;
+
+    // Average score (average of avgAccuracy from summary.games)
+    const gamesStats = summary?.games || {};
+    const accuracies = Object.values(gamesStats)
+      .map((g: any) => g?.avgAccuracy)
+      .filter((a): a is number => typeof a === 'number');
+    const avgScore = accuracies.length > 0
+      ? accuracies.reduce((sum, a) => sum + a, 0) / accuracies.length
+      : null;
+
+    // Total points
+    const totalPoints = summary?.totalPoints ?? null;
+
+    // Stage message
+    const stageId = summary?.stage?.currentStageId;
+    let stageMessage = 'Keep practicing to unlock new challenges!';
+    if (stageId === 1) stageMessage = 'Building foundation skills';
+    else if (stageId === 2) stageMessage = 'Growing stronger every day';
+    else if (stageId === 3) stageMessage = 'Making excellent progress';
+    else if (stageId === 4) stageMessage = 'Mastering advanced concepts';
+
+    // Last updated
+    const lastUpdatedAt = summary?.lastUpdatedAt?.toMillis?.() ?? null;
+
+    return {
+      confidenceNow,
+      gamesCompleted,
+      avgScore,
+      totalPoints,
+      stageMessage,
+      lastUpdatedAt,
+    };
+  }, [kidSummaryQuery.data]);
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">Loading…</div>;
   }
@@ -150,12 +202,48 @@ export default function ParentDashboard() {
 
         {/* Content */}
         {activeTab === 'dashboard' && (
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Dashboard</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-              Switch to “Games Progress”. If React #426 still happens here, the lazy component is
-              outside these two files.
-            </p>
+          <div className="space-y-6">
+            {/* Overview Cards */}
+            {overviewMetrics ? (
+              <ParentOverviewCards
+                confidenceNow={overviewMetrics.confidenceNow}
+                gamesCompleted={overviewMetrics.gamesCompleted}
+                avgScore={overviewMetrics.avgScore}
+                totalPoints={overviewMetrics.totalPoints}
+                stageMessage={overviewMetrics.stageMessage}
+                lastUpdatedAt={overviewMetrics.lastUpdatedAt}
+              />
+            ) : (
+              <Card className="p-6">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {kidSummaryQuery.isLoading ? 'Loading overview...' : 'No data available yet.'}
+                </p>
+              </Card>
+            )}
+
+            {/* Today's Recommendation */}
+            {kidSummaryQuery.data?.summary?.recommendedNext && (
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                  Today's Recommendation
+                </h3>
+                <div className="space-y-2">
+                  <div className="font-medium text-blue-600 dark:text-blue-400">
+                    {kidSummaryQuery.data.summary.recommendedNext.gameId || 'Practice time!'}
+                  </div>
+                  {kidSummaryQuery.data.summary.recommendedNext.reason && (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {kidSummaryQuery.data.summary.recommendedNext.reason}
+                    </p>
+                  )}
+                  {kidSummaryQuery.data.summary.recommendedNext.estMinutes && (
+                    <div className="text-xs text-gray-500">
+                      Estimated: {kidSummaryQuery.data.summary.recommendedNext.estMinutes} minutes
+                    </div>
+                  )}
+                </div>
+              </Card>
+            )}
           </div>
         )}
 
