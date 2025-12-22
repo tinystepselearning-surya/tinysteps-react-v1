@@ -49,6 +49,8 @@ interface GameCatalogEntry {
   title: string;
   active?: boolean;
   totalLevels?: number;
+  progressDocId?: string;
+  order?: number;
 }
 
 interface Props {
@@ -71,7 +73,7 @@ function normalizeCatalog(catalog: any): GameCatalogEntry[] {
     return catalog.games.filter((g: any) => g && typeof g === 'object' && g.id);
   }
   
-  // Record map: {"gameId":{title,active,...}}
+  // Record map: {"gameId":{title,active,totalLevels,progressDocId,order,...}}
   if (typeof catalog === 'object') {
     return Object.entries(catalog)
       .filter(([_, val]) => val && typeof val === 'object')
@@ -80,6 +82,8 @@ function normalizeCatalog(catalog: any): GameCatalogEntry[] {
         title: val.title || id,
         active: val.active,
         totalLevels: val.totalLevels,
+        progressDocId: val.progressDocId,
+        order: val.order,
       }));
   }
   
@@ -120,7 +124,16 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
     }));
   }
   
-  activeGames = activeGames.slice(0, 10);
+  // Sort by order (ascending), then by title
+  activeGames.sort((a, b) => {
+    const orderA = a.order ?? 999;
+    const orderB = b.order ?? 999;
+    if (orderA !== orderB) return orderA - orderB;
+    return (a.title || a.id).localeCompare(b.title || b.id);
+  });
+  
+  // Show games (no arbitrary limit)
+  const hasAnyProgress = activeGames.length > 0 || Object.keys(gamesStats).length > 0 || Object.keys(byGame).length > 0;
 
   return (
     <div className="space-y-6">
@@ -184,13 +197,19 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
       <div className="space-y-3">
         <div className="font-bold text-gray-900 dark:text-gray-100">Game Progress</div>
 
-        {activeGames.length === 0 ? (
-          <Card className="p-6 text-sm text-gray-600 dark:text-gray-400">No games available.</Card>
+        {!hasAnyProgress ? (
+          <Card className="p-6 text-sm text-gray-600 dark:text-gray-400">No games or progress data yet.</Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {activeGames.map((g) => {
-              const stats = gamesStats[g.id];
-              const prog = byGame[g.id];
+              // Determine progressKey: prefer progressDocId, fallback to id
+              const progressKey = g.progressDocId || g.id;
+              
+              // Try reading progress with progressKey first, then fallback to g.id
+              const prog = byGame[progressKey] || byGame[g.id];
+              
+              // Try reading stats with g.id first, then fallback to progressKey
+              const stats = gamesStats[g.id] || gamesStats[progressKey];
 
               // Fix plays: ensure finite number, default to 0
               const rawPlays = stats?.plays;
@@ -198,25 +217,35 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
               
               const completedLevels = prog?.completedLevels ?? 0;
               
-              // Fix totalLevels: prefer catalog, then progress, then show dash
+              // Fix totalLevels: prefer catalog, then progress, then null
               const totalLevels = g.totalLevels ?? prog?.totalLevels ?? null;
               
               const avgAccuracy = stats?.avgAccuracy ?? null;
               const lastMs = toMsSafe(stats?.lastPlayedAt) ?? toMsSafe(prog?.lastPlayedAt);
 
-              // Mastery badge: ✅ if avgAccuracy >= 80 AND completedLevels >= totalLevels (and totalLevels > 0)
-              const isMastered =
+              // Status badge logic
+              let statusEmoji = '🔄';
+              let statusText = 'In progress';
+              
+              if (plays === 0 && completedLevels === 0) {
+                statusEmoji = '⏳';
+                statusText = 'Coming soon';
+              } else if (
                 avgAccuracy !== null &&
                 avgAccuracy >= 80 &&
                 totalLevels !== null &&
                 totalLevels > 0 &&
-                completedLevels >= totalLevels;
+                completedLevels >= totalLevels
+              ) {
+                statusEmoji = '✅';
+                statusText = 'Mastered';
+              }
 
               return (
                 <Card key={g.id} className="p-4 space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="font-semibold text-gray-900 dark:text-gray-100">{g.title}</div>
-                    <div className="text-xl">{isMastered ? '✅' : '🔄'}</div>
+                    <div className="text-xl" title={statusText}>{statusEmoji}</div>
                   </div>
 
                   <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">

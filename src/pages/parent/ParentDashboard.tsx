@@ -9,10 +9,11 @@ import { ParentGamesProgress } from './components/progress/ParentGamesProgress';
 import { ParentOverviewCards } from './components/overview/ParentOverviewCards';
 import { Card } from '@/components/ui/card';
 
-type TabKey = 'dashboard' | 'games-progress';
+type TabKey = 'dashboard' | 'games-progress' | 'skills' | 'weekly' | 'reports' | 'profile' | 'payments';
 
 function safeTab(value: string | null): TabKey {
-  return value === 'games-progress' ? 'games-progress' : 'dashboard';
+  const validTabs: TabKey[] = ['dashboard', 'games-progress', 'skills', 'weekly', 'reports', 'profile', 'payments'];
+  return validTabs.includes(value as TabKey) ? (value as TabKey) : 'dashboard';
 }
 
 export default function ParentDashboard() {
@@ -175,7 +176,7 @@ export default function ParentDashboard() {
         </div>
 
         {/* Tabs */}
-        <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden">
+        <div className="inline-flex flex-wrap rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden">
           <button
             type="button"
             onClick={() => setTab('dashboard')}
@@ -185,7 +186,7 @@ export default function ParentDashboard() {
                 : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
             }`}
           >
-            Dashboard
+            Overview
           </button>
           <button
             type="button"
@@ -197,6 +198,61 @@ export default function ParentDashboard() {
             }`}
           >
             Games Progress
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('skills')}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === 'skills'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Skills
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('weekly')}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === 'weekly'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Weekly
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('reports')}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === 'reports'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Reports
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('profile')}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === 'profile'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Profile
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab('payments')}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === 'payments'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            Payments
           </button>
         </div>
 
@@ -267,6 +323,76 @@ export default function ParentDashboard() {
                 onPracticeClick={() => {}}
               />
             )}
+          </div>
+        )}
+
+        {activeTab === 'skills' && (
+          <div className="space-y-4">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Skills</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {selectedKid?.fullName ? `Viewing: ${selectedKid.fullName}` : 'Select a child'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This section will show insights once backend rollups are enabled.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'weekly' && (
+          <div className="space-y-4">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Weekly</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {selectedKid?.fullName ? `Viewing: ${selectedKid.fullName}` : 'Select a child'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This section will show insights once backend rollups are enabled.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'reports' && (
+          <div className="space-y-4">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Reports</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {selectedKid?.fullName ? `Viewing: ${selectedKid.fullName}` : 'Select a child'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This section will show insights once backend rollups are enabled.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'profile' && (
+          <div className="space-y-4">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Profile</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {selectedKid?.fullName ? `Viewing: ${selectedKid.fullName}` : 'Select a child'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This section will show insights once backend rollups are enabled.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === 'payments' && (
+          <div className="space-y-4">
+            <Card className="p-6">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">Payments</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                {selectedKid?.fullName ? `Viewing: ${selectedKid.fullName}` : 'Select a child'}
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                This section will show insights once backend rollups are enabled.
+              </p>
+            </Card>
           </div>
         )}
       </div>

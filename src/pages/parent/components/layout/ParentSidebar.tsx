@@ -1,27 +1,21 @@
 import type { FC, ReactNode } from 'react';
 import { Button } from '../../../../components/ui/button';
-import { Badge } from '../../../../components/ui/badge';
-import { Home, Users, Calendar, CreditCard, FileText, MessageSquare, Bell, Settings, User, Sparkles, TrendingUp } from 'lucide-react';
+import { Home, TrendingUp, Lightbulb, Calendar, FileText, User, CreditCard } from 'lucide-react';
 
 interface SidebarItem {
   id: string;
   label: string;
   icon: ReactNode;
-  badge?: string;
 }
 
 const sidebarItems: SidebarItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <Home className="w-4 h-4" /> },
-  { id: 'children', label: 'Children', icon: <Users className="w-4 h-4" /> },
+  { id: 'dashboard', label: 'Overview', icon: <Home className="w-4 h-4" /> },
   { id: 'games-progress', label: 'Games Progress', icon: <TrendingUp className="w-4 h-4" /> },
-  { id: 'sessions', label: 'Sessions', icon: <Calendar className="w-4 h-4" /> },
-  { id: 'payments', label: 'Payments', icon: <CreditCard className="w-4 h-4" />, badge: '2' },
-  { id: 'kids', label: 'Kids Page', icon: <Sparkles className="w-4 h-4" /> },
+  { id: 'skills', label: 'Skills', icon: <Lightbulb className="w-4 h-4" /> },
+  { id: 'weekly', label: 'Weekly', icon: <Calendar className="w-4 h-4" /> },
   { id: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
-  { id: 'messages', label: 'Messages', icon: <MessageSquare className="w-4 h-4" />, badge: '1' },
-  { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" />, badge: '3' },
-  { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
+  { id: 'payments', label: 'Payments', icon: <CreditCard className="w-4 h-4" /> },
 ];
 
 interface ParentSidebarProps {
@@ -47,11 +41,6 @@ const ParentSidebar: FC<ParentSidebarProps> = ({ activeTab, onTabChange }) => {
           >
             {item.icon}
             <span className="ml-3">{item.label}</span>
-            {item.badge && (
-              <Badge variant="secondary" className="ml-auto">
-                {item.badge}
-              </Badge>
-            )}
           </Button>
         ))}
       </nav>
