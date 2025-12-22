@@ -2,8 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 
 const BASE = "/games/phonics/sound-detective";
 
-// Catalog of all available assets (a-z)
-const CATALOG = [
+// 5 Level groups as per the plan
+const LETTER_GROUPS = [
+  ["s", "a", "t", "p", "i", "n"],
+  ["m", "d", "g", "o", "c"],
+  ["k", "e", "r", "h", "b"],
+  ["f", "l", "u", "j", "w"],
+  ["v", "y", "x", "q", "z"],
+] as const;
+
+// Image catalog mapping letter to asset
+const IMAGE_CATALOG = [
   { id: "apple", letter: "a", img: `${BASE}/apple.png` },
   { id: "ball", letter: "b", img: `${BASE}/ball.png` },
   { id: "cat", letter: "c", img: `${BASE}/cat.png` },
@@ -32,15 +41,7 @@ const CATALOG = [
   { id: "zebra", letter: "z", img: `${BASE}/zebra.png` },
 ];
 
-type Option = { id: string; imgSrc: string; label?: string };
-type Level = {
-  id: string;
-  letter: string;
-  audioSrc?: string; // optional mp3
-  tts: string; // TTS fallback text
-  options: Option[];
-  correctOptionId: string;
-};
+type Option = { id: string; imgSrc: string };
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -51,37 +52,67 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// Generate levels from catalog with deterministic decoys
-function buildLevels(): Level[] {
-  return CATALOG.map((item, idx) => {
-    // Pick 2 decoys: previous 2 items in circular fashion
-    const decoy1Idx = (idx - 1 + CATALOG.length) % CATALOG.length;
-    const decoy2Idx = (idx - 2 + CATALOG.length) % CATALOG.length;
-    const decoy1 = CATALOG[decoy1Idx];
-    const decoy2 = CATALOG[decoy2Idx];
-
-    return {
-      id: `${item.letter}-1`,
-      letter: item.letter,
-      audioSrc: `${BASE}/audio/${item.letter}.mp3`,
-      tts: item.letter, // Simple TTS: just say the letter name
-      options: [
-        { id: item.id, imgSrc: item.img },
-        { id: decoy1.id, imgSrc: decoy1.img },
-        { id: decoy2.id, imgSrc: decoy2.img },
-      ],
-      correctOptionId: item.id,
-    };
-  });
+// Simple hash for deterministic decoy selection
+function simpleHash(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash = hash & hash;
+  }
+  return Math.abs(hash);
 }
 
-const LEVELS: Level[] = buildLevels();
+// Get correct option for a letter
+function getCorrectOption(letter: string): Option | null {
+  const item = IMAGE_CATALOG.find((c) => c.letter === letter);
+  if (!item) return null;
+  return { id: item.id, imgSrc: item.img };
+}
+
+// Build 3 options: 1 correct + 2 deterministic decoys
+function buildOptions(
+  letter: string,
+  levelGroupIndex: number,
+  letterIndexWithinGroup: number
+): Option[] {
+  const correct = getCorrectOption(letter);
+  if (!correct) {
+    // Fallback: return placeholder
+    return [
+      { id: "missing", imgSrc: `${BASE}/sun.png` },
+      { id: "missing2", imgSrc: `${BASE}/apple.png` },
+      { id: "missing3", imgSrc: `${BASE}/ball.png` },
+    ];
+  }
+
+  // Get all other catalog items (excluding current letter)
+  const others = IMAGE_CATALOG.filter((c) => c.letter !== letter);
+  if (others.length < 2) {
+    // Not enough decoys, duplicate for safety
+    return [correct, correct, correct];
+  }
+
+  // Deterministic seed from current position
+  const seed = simpleHash(`${letter}${levelGroupIndex}${letterIndexWithinGroup}`);
+  const decoy1Idx = seed % others.length;
+  const decoy2Idx = (seed + 7) % others.length;
+
+  const decoy1 = others[decoy1Idx];
+  const decoy2 = others[decoy2Idx === decoy1Idx ? (decoy1Idx + 1) % others.length : decoy2Idx];
+
+  return [
+    correct,
+    { id: decoy1.id, imgSrc: decoy1.img },
+    { id: decoy2.id, imgSrc: decoy2.img },
+  ];
+}
 
 type AnswerState = "idle" | "correct" | "wrong";
 
 export default function SoundDetectiveGame() {
-  const [levelIndex, setLevelIndex] = useState(0);
-  const level = LEVELS[levelIndex];
+  const [levelGroupIndex, setLevelGroupIndex] = useState(0);
+  const [letterIndexWithinGroup, setLetterIndexWithinGroup] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -89,33 +120,43 @@ export default function SoundDetectiveGame() {
   const [answerState, setAnswerState] = useState<AnswerState>("idle");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // Shuffle options per level (stable until level changes)
-  const shuffledOptions = useMemo(() => shuffle(level.options), [level.id]);
+  // Compute current letter from indexes
+  const currentLetter = LETTER_GROUPS[levelGroupIndex]?.[letterIndexWithinGroup] || "s";
+  const currentGroup = LETTER_GROUPS[levelGroupIndex] || [];
+  
+  // Build options for current letter
+  const options = useMemo(
+    () => buildOptions(currentLetter, levelGroupIndex, letterIndexWithinGroup),
+    [currentLetter, levelGroupIndex, letterIndexWithinGroup]
+  );
+
+  const correctOption = options[0]; // First option is always correct
+  const shuffledOptions = useMemo(() => shuffle(options), [options]);
+
+  const audioSrc = `${BASE}/audio/${currentLetter}.mp3`;
 
   useEffect(() => {
     // Preload audio if available (optional)
-    if (level.audioSrc) {
-      audioRef.current = new Audio(level.audioSrc);
-      audioRef.current.preload = "auto";
-    }
+    audioRef.current = new Audio(audioSrc);
+    audioRef.current.preload = "auto";
     return () => {
       audioRef.current?.pause();
       audioRef.current = null;
     };
-  }, [level.audioSrc]);
+  }, [audioSrc]);
 
   useEffect(() => {
-    // reset UI when level changes
+    // reset UI when letter changes
     setAnswerState("idle");
     setSelectedId(null);
     setIsPlaying(false);
-  }, [level.id]);
+  }, [currentLetter]);
 
   const playSound = async () => {
     setIsPlaying(true);
 
     // Try mp3 first if available
-    if (audioRef.current && level.audioSrc) {
+    if (audioRef.current && audioSrc) {
       try {
         audioRef.current.currentTime = 0;
         await audioRef.current.play();
@@ -131,7 +172,7 @@ export default function SoundDetectiveGame() {
     if ('speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(level.tts);
+        const utterance = new SpeechSynthesisUtterance(currentLetter);
         utterance.rate = 0.9;
         utterance.onend = () => setIsPlaying(false);
         window.speechSynthesis.speak(utterance);
@@ -147,17 +188,28 @@ export default function SoundDetectiveGame() {
     if (answerState !== "idle") return;
 
     setSelectedId(optionId);
-    const correct = optionId === level.correctOptionId;
+    const correct = optionId === correctOption.id;
     setAnswerState(correct ? "correct" : "wrong");
 
-    // Optional: auto move to next after correct
     if (correct) {
       window.setTimeout(() => {
-        const next = levelIndex + 1;
-        if (next < LEVELS.length) setLevelIndex(next);
-        else {
-          // end of game
-          setLevelIndex(0);
+        // Move to next letter
+        const nextLetterIndex = letterIndexWithinGroup + 1;
+        
+        if (nextLetterIndex < currentGroup.length) {
+          // Next letter in same group
+          setLetterIndexWithinGroup(nextLetterIndex);
+        } else {
+          // Move to next group
+          const nextGroupIndex = levelGroupIndex + 1;
+          
+          if (nextGroupIndex < LETTER_GROUPS.length) {
+            setLevelGroupIndex(nextGroupIndex);
+            setLetterIndexWithinGroup(0);
+          } else {
+            // All levels complete
+            setIsComplete(true);
+          }
         }
       }, 900);
     } else {
@@ -167,6 +219,14 @@ export default function SoundDetectiveGame() {
         setSelectedId(null);
       }, 700);
     }
+  };
+
+  const handleRestart = () => {
+    setLevelGroupIndex(0);
+    setLetterIndexWithinGroup(0);
+    setIsComplete(false);
+    setAnswerState("idle");
+    setSelectedId(null);
   };
 
   // Positions tuned for your 2048x1152 background (percentage-based so it scales)
@@ -196,6 +256,11 @@ export default function SoundDetectiveGame() {
             draggable={false}
           />
 
+          {/* Progress indicator */}
+          <div className="absolute top-3 left-3 rounded-full bg-black/40 px-3 py-1 text-xs text-white font-medium">
+            Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
+          </div>
+
           {/* Headphones button (invisible clickable area) */}
           <button
             type="button"
@@ -211,28 +276,27 @@ export default function SoundDetectiveGame() {
 
           {/* Letter display (optional) */}
           <div
-            className="absolute text-white/95 font-extrabold drop-shadow-md select-none"
+            className="absolute text-white/95 font-extrabold drop-shadow-md select-none uppercase"
             style={{
               left: "52%",
               top: "18%",
               fontSize: "clamp(44px, 6vw, 96px)",
             }}
           >
-            {level.letter}
+            {currentLetter}
           </div>
 
           {/* Choice cards */}
-          {cardSlots.map((slot, i) => {
-            const opt = shuffledOptions[i];
+          {shuffledOptions.map((opt, i) => {
             const isSelected = selectedId === opt.id;
 
             const isCorrectPick =
-              answerState === "correct" && opt.id === level.correctOptionId;
+              answerState === "correct" && opt.id === correctOption.id;
             const isWrongPick = answerState === "wrong" && isSelected;
 
             return (
               <button
-                key={opt.id}
+                key={`${opt.id}-${i}`}
                 type="button"
                 onClick={() => onPick(opt.id)}
                 disabled={isPlaying}
@@ -243,7 +307,7 @@ export default function SoundDetectiveGame() {
                   isCorrectPick ? "ring-8 ring-green-400/80" : "",
                   isWrongPick ? "animate-[shake_0.25s_ease-in-out_0s_2]" : "",
                 ].join(" ")}
-                style={slot}
+                style={cardSlots[i]}
                 aria-label="Pick answer"
               >
                 {/* Image inside the frame area */}
@@ -256,6 +320,28 @@ export default function SoundDetectiveGame() {
               </button>
             );
           })}
+
+          {/* Completion overlay */}
+          {isComplete && (
+            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+              <div className="bg-white rounded-2xl p-8 max-w-sm text-center shadow-2xl">
+                <div className="text-6xl mb-4">🎉</div>
+                <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                  All Done!
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  You completed all 5 levels!
+                </p>
+                <button
+                  type="button"
+                  onClick={handleRestart}
+                  className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
+                >
+                  Play Again
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Simple keyframes for shake */}
           <style>
