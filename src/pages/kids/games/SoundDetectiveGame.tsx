@@ -290,10 +290,11 @@ export default function SoundDetectiveGame() {
 
   // Positions tuned for your 2048x1152 background (percentage-based so it scales)
   const headphoneBtnStyle: React.CSSProperties = {
-    left: "23%",
-    top: "12%",
+    left: "28%",
+    top: "22%",
     width: "20%",
     height: "33%",
+    transform: 'translate(-50%, -50%)',
   };
 
   // Three card slots (left, middle, right)
@@ -422,7 +423,7 @@ export default function SoundDetectiveGame() {
               >
                 {/* Centered inner frame to ensure consistent alignment */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className={`w-[72%] h-[72%] flex items-center justify-center ${opt.id === 'sun' ? '-translate-x-2' : opt.id === 'ball' ? 'translate-x-2' : ''}`}>
+                  <div className={`w-[72%] h-[72%] flex items-center justify-center ${opt.id === 'sun' ? '-translate-x-4' : opt.id === 'igloo' ? 'translate-x-4' : ''}`}>
                     <img
                       src={opt.imgSrc}
                       alt=""
