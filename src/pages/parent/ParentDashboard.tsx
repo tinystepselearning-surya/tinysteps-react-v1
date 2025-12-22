@@ -113,6 +113,7 @@ export default function ParentDashboard() {
 
     // Stage message
     const stageId = summary?.stage?.currentStageId;
+    const stageProgressPct = summary?.stage?.stageProgressPct ?? null;
     let stageMessage = 'Keep practicing to unlock new challenges!';
     if (stageId === 1) stageMessage = 'Building foundation skills';
     else if (stageId === 2) stageMessage = 'Growing stronger every day';
@@ -129,6 +130,8 @@ export default function ParentDashboard() {
       totalPoints,
       stageMessage,
       lastUpdatedAt,
+      currentStageId: stageId ?? null,
+      stageProgressPct,
     };
   }, [kidSummaryQuery.data]);
 
@@ -143,10 +146,14 @@ export default function ParentDashboard() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Parent</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Debug-safe build (no Suspense / no lazy / no transitions)
-            </p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+              Hi, {user?.displayName || 'Parent'} 👋
+            </h1>
+            {selectedKid && (
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Viewing: {selectedKid.fullName || 'Child'}
+              </p>
+            )}
           </div>
 
           {/* Kid selector */}
@@ -268,6 +275,8 @@ export default function ParentDashboard() {
                 totalPoints={overviewMetrics.totalPoints}
                 stageMessage={overviewMetrics.stageMessage}
                 lastUpdatedAt={overviewMetrics.lastUpdatedAt}
+                currentStageId={overviewMetrics.currentStageId}
+                stageProgressPct={overviewMetrics.stageProgressPct}
               />
             ) : (
               <Card className="p-6">

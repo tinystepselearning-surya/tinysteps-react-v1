@@ -1,6 +1,7 @@
 // src/pages/parent/components/progress/ParentGamesProgress.tsx
 import type { FC } from 'react';
 import { Card } from '@components/ui/card';
+import { Button } from '@components/ui/button';
 
 type TimestampLike = { toMillis?: () => number } | number | null | undefined;
 
@@ -27,6 +28,20 @@ function relTime(ms: number): string {
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
 }
+
+// Local games catalog
+const GAMES_CATALOG = [
+  { id: 'sound-detective', title: 'Sound Detective', area: 'Sounds', totalLevels: 5 },
+  { id: 'rhyme-time', title: 'Rhyme Time', area: 'Sounds', totalLevels: 5 },
+  { id: 'letter-sound-match', title: 'Letter–Sound Match', area: 'Sounds', totalLevels: 5 },
+  { id: 'cvc-word-builder', title: 'CVC Word Builder', area: 'CVC Words', totalLevels: 5 },
+  { id: 'sound-sequencer', title: 'Sound Sequencer', area: 'Blending', totalLevels: 5 },
+  { id: 'blend-slide', title: 'Blend & Slide', area: 'Blending', totalLevels: 5 },
+  { id: 'blend-build', title: 'Blend & Build', area: 'Blending', totalLevels: 5 },
+  { id: 'vowel-explorer', title: 'Vowel Explorer', area: 'Vowels', totalLevels: 5 },
+  { id: 'word-quest', title: 'Word Quest', area: 'Words', totalLevels: 5 },
+  { id: 'story-builder', title: 'Story Builder', area: 'Reading', totalLevels: 5 },
+];
 
 interface KidSummaryData {
   summary?: {
@@ -94,185 +109,97 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
   const summary = kidSummaryData?.summary;
   const byGame = kidSummaryData?.progress?.byGame ?? {};
   const gamesStats = summary?.games ?? {};
-  const updatedMs = toMsSafe(summary?.lastUpdatedAt);
 
-  const confidence = typeof summary?.confidenceNow === 'number' ? summary!.confidenceNow! : null;
-  const weakTop = summary?.weakTop ?? [];
-  const rec = summary?.recommendedNext;
-
-  // Normalize catalog
-  let activeGames = normalizeCatalog(gamesCatalog).filter((g) => g.active !== false);
-  
-  // Fallback: build games list from kidSummaryData if catalog is empty
-  if (activeGames.length === 0 && kidSummaryData) {
-    const fallbackIds = new Set<string>();
+  // Merge catalog with progress data
+  const mergedGames = GAMES_CATALOG.map((catalogGame) => {
+    const prog = byGame[catalogGame.id];
+    const stats = gamesStats[catalogGame.id];
     
-    // Add from summary.games
-    if (gamesStats) {
-      Object.keys(gamesStats).forEach((id) => fallbackIds.add(id));
+    const completedLevels = prog?.completedLevels ?? 0;
+    const plays = stats?.plays ?? 0;
+    const avgAccuracy = stats?.avgAccuracy ?? null;
+    const lastMs = toMsSafe(stats?.lastPlayedAt) ?? toMsSafe(prog?.lastPlayedAt);
+    
+    // Determine status
+    let status = 'Not started';
+    let statusColor = 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+    
+    if (plays > 0 || completedLevels > 0) {
+      if (avgAccuracy !== null && avgAccuracy >= 80 && completedLevels >= catalogGame.totalLevels) {
+        status = 'Mastered';
+        statusColor = 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
+      } else {
+        status = 'In progress';
+        statusColor = 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300';
+      }
     }
     
-    // Add from progress.byGame
-    if (byGame) {
-      Object.keys(byGame).forEach((id) => fallbackIds.add(id));
-    }
-    
-    activeGames = Array.from(fallbackIds).map((id) => ({
-      id,
-      title: id,
-      active: true,
-    }));
-  }
-  
-  // Sort by order (ascending), then by title
-  activeGames.sort((a, b) => {
-    const orderA = a.order ?? 999;
-    const orderB = b.order ?? 999;
-    if (orderA !== orderB) return orderA - orderB;
-    return (a.title || a.id).localeCompare(b.title || b.id);
+    return {
+      ...catalogGame,
+      completedLevels,
+      plays,
+      avgAccuracy,
+      lastMs,
+      status,
+      statusColor,
+    };
   });
-  
-  // Show games (no arbitrary limit)
-  const hasAnyProgress = activeGames.length > 0 || Object.keys(gamesStats).length > 0 || Object.keys(byGame).length > 0;
 
   return (
-    <div className="space-y-6">
-      {/* Top row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card className="p-6">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Confidence Now</div>
-          <div className="text-5xl font-bold text-blue-600 dark:text-blue-400 mt-2">
-            {confidence !== null ? confidence : '—'}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">out of 100</div>
-          {updatedMs && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-3">Updated: {relTime(updatedMs)}</div>
-          )}
-        </Card>
+    <div className="space-y-4">
+      <div className="font-bold text-gray-900 dark:text-gray-100 text-lg">Game Progress</div>
 
-        <Card className="p-6">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Recommended Next</div>
-          {rec?.gameId ? (
-            <div className="mt-2 space-y-2">
-              <div className="font-semibold text-gray-900 dark:text-gray-100">{rec.gameId}</div>
-              {rec.reason && <div className="text-sm text-gray-600 dark:text-gray-400">{rec.reason}</div>}
-              <button
-                type="button"
-                onClick={() => onPracticeClick?.(rec.gameId, rec.levelId)}
-                className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
-              >
-                Practice Now
-              </button>
-            </div>
-          ) : (
-            <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">No recommendation yet.</div>
-          )}
-        </Card>
-      </div>
-
-      {/* Weak skills */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between">
-          <div className="font-bold text-gray-900 dark:text-gray-100">Improvement Areas</div>
-          <div className="text-xs text-gray-500 dark:text-gray-400">Top 5</div>
-        </div>
-
-        {weakTop.length === 0 ? (
-          <div className="mt-3 text-sm text-gray-600 dark:text-gray-400">All skills look good!</div>
-        ) : (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {weakTop.slice(0, 5).map((w, idx) => (
-              <div
-                key={`${w.tag ?? 'tag'}-${idx}`}
-                className="px-3 py-1 rounded border border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 text-sm text-gray-800 dark:text-gray-200"
-              >
-                {w.tag || '—'} {typeof w.wrong === 'number' ? `(${w.wrong} wrong)` : ''}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {mergedGames.map((game) => {
+          const progressPct = game.totalLevels > 0 ? Math.round((game.completedLevels / game.totalLevels) * 100) : 0;
+          
+          return (
+            <Card key={game.id} className="p-4 space-y-2">
+              {/* Top row: Title + Status Badge */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-tight">
+                  {game.title}
+                </div>
+                <div className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${game.statusColor}`}>
+                  {game.status}
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </Card>
 
-      {/* Games grid */}
-      <div className="space-y-3">
-        <div className="font-bold text-gray-900 dark:text-gray-100">Game Progress</div>
+              {/* Area label */}
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {game.area}
+              </div>
 
-        {!hasAnyProgress ? (
-          <Card className="p-6 text-sm text-gray-600 dark:text-gray-400">No games or progress data yet.</Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {activeGames.map((g) => {
-              // Determine progressKey: prefer progressDocId, fallback to id
-              const progressKey = g.progressDocId || g.id;
-              
-              // Try reading progress with progressKey first, then fallback to g.id
-              const prog = byGame[progressKey] || byGame[g.id];
-              
-              // Try reading stats with g.id first, then fallback to progressKey
-              const stats = gamesStats[g.id] || gamesStats[progressKey];
+              {/* Levels + Last played */}
+              <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+                <span>Levels {game.completedLevels}/{game.totalLevels}</span>
+                <span>Last: {game.lastMs ? relTime(game.lastMs) : '—'}</span>
+              </div>
 
-              // Fix plays: ensure finite number, default to 0
-              const rawPlays = stats?.plays;
-              const plays = typeof rawPlays === 'number' && isFinite(rawPlays) ? rawPlays : 0;
-              
-              const completedLevels = prog?.completedLevels ?? 0;
-              
-              // Fix totalLevels: prefer catalog, then progress, then null
-              const totalLevels = g.totalLevels ?? prog?.totalLevels ?? null;
-              
-              const avgAccuracy = stats?.avgAccuracy ?? null;
-              const lastMs = toMsSafe(stats?.lastPlayedAt) ?? toMsSafe(prog?.lastPlayedAt);
+              {/* Progress bar */}
+              {progressPct > 0 && (
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div
+                    className="bg-indigo-600 dark:bg-indigo-500 h-full rounded-full transition-all"
+                    style={{ width: `${Math.min(progressPct, 100)}%` }}
+                  />
+                </div>
+              )}
 
-              // Status badge logic
-              let statusEmoji = '🔄';
-              let statusText = 'In progress';
-              
-              if (plays === 0 && completedLevels === 0) {
-                statusEmoji = '⏳';
-                statusText = 'Coming soon';
-              } else if (
-                avgAccuracy !== null &&
-                avgAccuracy >= 80 &&
-                totalLevels !== null &&
-                totalLevels > 0 &&
-                completedLevels >= totalLevels
-              ) {
-                statusEmoji = '✅';
-                statusText = 'Mastered';
-              }
-
-              return (
-                <Card key={g.id} className="p-4 space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div className="font-semibold text-gray-900 dark:text-gray-100">{g.title}</div>
-                    <div className="text-xl" title={statusText}>{statusEmoji}</div>
-                  </div>
-
-                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    <div>Plays: {plays}</div>
-                    <div>
-                      Levels: {completedLevels}/{totalLevels ?? '—'}
-                    </div>
-                    {avgAccuracy !== null && (
-                      <div>
-                        Avg Score: <span className="font-semibold">{Math.round(avgAccuracy)}%</span>
-                      </div>
-                    )}
-                    {lastMs ? <div className="text-xs">Last: {relTime(lastMs)}</div> : <div className="text-xs">Last: —</div>}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => onPracticeClick?.(g.id, undefined)}
-                    className="w-full px-3 py-2 text-sm font-medium text-white bg-green-600 rounded hover:bg-green-700"
-                  >
-                    Practice
-                  </button>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+              {/* Play button */}
+              <div className="flex justify-end pt-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7 px-3"
+                  onClick={() => onPracticeClick?.(game.id, undefined)}
+                >
+                  Play
+                </Button>
+              </div>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );
