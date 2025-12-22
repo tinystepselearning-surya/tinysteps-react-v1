@@ -4,6 +4,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ParentHeader } from './components/layout/ParentHeader';
 import ParentSidebar from './components/layout/ParentSidebar';
+import { ParentGamesProgress } from './components/progress/ParentGamesProgress';
 import { useQuery } from '@tanstack/react-query';
 
 export default function ParentDashboard() {
@@ -522,37 +523,6 @@ export default function ParentDashboard() {
               </p>
             </div>
 
-            {/* Update Info Note */}
-            {selectedKidId && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="text-sm text-blue-900 dark:text-blue-100">
-                    {kidSummaryQuery.data?.summary?.lastUpdatedAt ? (
-                      <>
-                        <strong>Last updated:</strong>{' '}
-                        {new Intl.DateTimeFormat('en-US', {
-                          timeZone: 'Asia/Kolkata',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                          hour12: true,
-                        }).format(kidSummaryQuery.data.summary.lastUpdatedAt.toDate?.() || new Date(kidSummaryQuery.data.summary.lastUpdatedAt.seconds * 1000))}{' '}
-                        IST. Progress updates run at 11 AM, 5 PM, and 11 PM IST.
-                      </>
-                    ) : (
-                      <>
-                        Progress updates run at <strong>11 AM, 5 PM, and 11 PM IST</strong>. Your child's latest progress will appear after the next update.
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Loading State */}
             {kidSummaryQuery.isLoading && (
               <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
@@ -560,8 +530,29 @@ export default function ParentDashboard() {
               </div>
             )}
 
+            {/* No Kid Selected */}
+            {!selectedKidId && !kidSummaryQuery.isLoading && (
+              <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center text-gray-600 dark:text-gray-400">
+                Please select a child to view their games progress.
+              </div>
+            )}
+
+            {/* Games Progress Component */}
+            {selectedKidId && !kidSummaryQuery.isLoading && kidSummaryQuery.data && (
+              <ParentGamesProgress
+                kidSummaryData={kidSummaryQuery.data}
+                gamesCatalog={catalogQuery.data || []}
+                onPracticeClick={(gameId, levelId) => {
+                  // Navigate to kid portal with optional deep link
+                  if (kidsPortalUrl) {
+                    navigate(kidsPortalUrl);
+                  }
+                }}
+              />
+            )}
+
             {/* No Data State */}
-            {!kidSummaryQuery.isLoading && !kidSummaryQuery.data?.summary && selectedKidId && (
+            {selectedKidId && !kidSummaryQuery.isLoading && !kidSummaryQuery.data?.summary && (
               <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
                 <div className="text-gray-500 dark:text-gray-400 mb-4">
                   <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -570,411 +561,6 @@ export default function ParentDashboard() {
                   <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No game activity yet</p>
                   <p className="text-sm mt-2">Game progress will appear here once {selectedKid?.fullName || 'your child'} starts playing and the next update runs (11 AM, 5 PM, or 11 PM IST).</p>
                 </div>
-              </div>
-            )}
-
-            {/* Debug Fallback: Show what's missing (DEV only) */}
-            {isDev && !kidSummaryQuery.isLoading && !catalogQuery.isLoading && !gamesProgress && selectedKidId && kidSummaryQuery.data && (
-              <div className="p-6 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <div className="text-sm text-yellow-900 dark:text-yellow-100">
-                    <strong>Topic cards not showing.</strong> Checking dependencies:
-                    <ul className="mt-2 space-y-1 list-disc list-inside">
-                      <li>Kid document: {kidSummaryQuery.data ? '✅ Loaded' : '❌ Not loaded'}</li>
-                      <li>Catalog: {catalogQuery.data ? '✅ Loaded' : '❌ Not loaded'}</li>
-                      <li>progressSummary field: {kidSummaryQuery.data?.progressSummary ? '✅ Present' : '⚠️ Missing (expected for new kids)'}</li>
-                    </ul>
-                    {!kidSummaryQuery.data?.progressSummary && (
-                      <p className="mt-2 text-xs">
-                        This kid hasn't played any games yet. Topic cards will appear after the first game session.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* View Toggle */}
-            {gamesProgress && (
-              <div className="flex justify-center">
-                <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setProgressView('topics')}
-                    className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
-                      progressView === 'topics'
-                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    Topics
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setProgressView('games')}
-                    className={`px-6 py-2 text-sm font-medium rounded-md transition-colors ${
-                      progressView === 'games'
-                        ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-                    }`}
-                  >
-                    Games
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Overall Progress Card */}
-            {gamesProgress && (
-              <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">Overall Progress</h3>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Total Sessions</div>
-                    <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{gamesProgress.overall.totalSessions}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Practice Time</div>
-                    <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{gamesProgress.overall.totalMinutes}m</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Accuracy</div>
-                    <div className="text-2xl font-bold text-green-600 dark:text-green-400">{gamesProgress.overall.accuracy}%</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Streak</div>
-                    <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{gamesProgress.overall.streakDays} {gamesProgress.overall.streakDays === 1 ? 'day' : 'days'}</div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">Most Practiced</div>
-                    <div className="text-lg font-bold text-indigo-600 dark:text-indigo-400 truncate">{gamesProgress.overall.mostPracticed}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Topic Cards */}
-            {gamesProgress && progressView === 'topics' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {gamesProgress.topics.map((topic: any) => {
-                  const statusColors: Record<string, string> = {
-                    'Mastered': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-                    'Strong': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-                    'Growing': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-                    'Learning': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-                    'Getting started': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-                    'Coming soon': 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-                    'No activity yet': 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400',
-                  };
-
-                  const formatDate = (timestamp: number | null) => {
-                    if (!timestamp) return null;
-                    const date = new Date(timestamp);
-                    const now = new Date();
-                    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays === 0) return 'Today';
-                    if (diffDays === 1) return 'Yesterday';
-                    if (diffDays < 7) return `${diffDays} days ago`;
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  };
-
-                  return (
-                    <div key={topic.id} className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg space-y-4">
-                      {/* Topic Name & Status */}
-                      <div className="flex items-start justify-between">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{topic.name}</h4>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap ${statusColors[topic.status] || statusColors['No activity yet']}`}>
-                          {topic.status}
-                        </span>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          <span>Progress</span>
-                          <span className="font-semibold">{topic.progress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className="bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all"
-                            style={{ width: `${topic.progress}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Stats Line */}
-                      {topic.attempts > 0 && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Accuracy: {Math.round(topic.accuracy * 100)}% • Practice: {topic.minutes}m
-                          {topic.lastPlayed && (
-                            <> • Last played: {formatDate(topic.lastPlayed)}</>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Coming Soon or No Activity */}
-                      {topic.status === 'Coming soon' && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                          Game coming soon!
-                        </div>
-                      )}
-                      {topic.status === 'No activity yet' && (
-                        <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                          No practice sessions yet
-                        </div>
-                      )}
-
-                      {/* Action Buttons */}
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          type="button"
-                          disabled={topic.status === 'Coming soon'}
-                          className="flex-1 px-3 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        >
-                          Practice
-                        </button>
-                        <button
-                          type="button"
-                          disabled={topic.status === 'Coming soon' || topic.attempts === 0}
-                          className="flex-1 px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
-                        >
-                          View details
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Games Cards */}
-            {progressView === 'games' && gamesList && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {gamesList.map((game: any) => {
-                  const formatDate = (timestamp: number | null) => {
-                    if (!timestamp) return null;
-                    const date = new Date(timestamp);
-                    const now = new Date();
-                    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays === 0) return 'Today';
-                    if (diffDays === 1) return 'Yesterday';
-                    if (diffDays < 7) return `${diffDays} days ago`;
-                    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                  };
-
-                  return (
-                    <div key={game.id} className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg space-y-4">
-                      {/* Game Title */}
-                      <div className="flex items-start justify-between">
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{game.title}</h4>
-                      </div>
-
-                      {/* Progress Bar */}
-                      <div>
-                        <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                          <span>Progress</span>
-                          <span className="font-semibold">{game.progressPct}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className="bg-green-600 dark:bg-green-500 h-2 rounded-full transition-all"
-                            style={{ width: `${game.progressPct}%` }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                        <div>Completed: {game.completed} / {game.total} levels</div>
-                        {game.lastPlayed && (
-                          <div>Last played: {formatDate(game.lastPlayed)}</div>
-                        )}
-                        {!game.lastPlayed && (
-                          <div className="italic text-gray-500 dark:text-gray-500">Not played yet</div>
-                        )}
-                      </div>
-
-                      {/* Practice Button */}
-                      <button
-                        type="button"
-                        onClick={() => kidsPortalUrl && navigate(kidsPortalUrl)}
-                        disabled={!kidsPortalUrl}
-                        className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
-                        title={kidsPortalUrl ? 'Open Kids Portal to practice' : 'Select a kid first'}
-                      >
-                        Practice
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Empty States for Games View */}
-            {progressView === 'games' && gamesViewState === 'no-games-in-catalog' && (
-              <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No games available yet</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Games will appear here once configured</p>
-              </div>
-            )}
-
-            {progressView === 'games' && gamesViewState === 'no-active-games' && (
-              <div className="p-8 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center">
-                <svg className="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No active games configured</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">All games are currently inactive</p>
-              </div>
-            )}
-
-            {/* Weak Areas Section */}
-            {gamesProgress && selectedKidId && (() => {
-              // Read weak areas from kid.summary.weakTop (already loaded in kidSummaryQuery)
-              const weakTopRaw = (kidSummaryQuery.data as any)?.summary?.weakTop;
-              const weakAreas: WeakTopEntry[] = Array.isArray(weakTopRaw) ? weakTopRaw : [];
-              
-              // Last session snapshot
-              const lastSessionWeakTopRaw = (kidSummaryQuery.data as any)?.summary?.lastSessionWeakTop;
-              const lastSessionWeakTop: Array<{ tag: string; wrong: number }> = Array.isArray(lastSessionWeakTopRaw) ? lastSessionWeakTopRaw : [];
-              
-              // Build map: tag -> wrong count from last session
-              const lastSessionWrongByTag: Record<string, number> = {};
-              for (const entry of lastSessionWeakTop) {
-                if (entry.tag && entry.wrong > 0) {
-                  lastSessionWrongByTag[entry.tag] = entry.wrong;
-                }
-              }
-              
-              // Compute start of current week (Monday 00:00 local time)
-              const now = new Date();
-              const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
-              const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Sunday -> 6 days back
-              const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
-              startOfWeek.setHours(0, 0, 0, 0);
-              const startOfWeekMs = startOfWeek.getTime();
-              
-              // Filter based on timeframe
-              let weakAreasFiltered = weakAreas.filter((x) => (x?.wrong ?? 0) > 0);
-              
-              if (weakAreasTimeframe === 'this-week') {
-                weakAreasFiltered = weakAreasFiltered.filter((x) => {
-                  if (!x.lastSeenAt) return false; // No timestamp -> exclude
-                  const lastSeenMs = x.lastSeenAt?.toMillis ? x.lastSeenAt.toMillis() : 0;
-                  return lastSeenMs >= startOfWeekMs;
-                });
-              }
-
-              return (
-                <div className="mt-8 p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Improvement Areas</h3>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        Skills to practice a little more this week
-                      </span>
-                    </div>
-                    
-                    {/* Timeframe toggle */}
-                    <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700">
-                      <button
-                        type="button"
-                        onClick={() => setWeakAreasTimeframe('all-time')}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-l-lg transition-colors ${
-                          weakAreasTimeframe === 'all-time'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        All time
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setWeakAreasTimeframe('this-week')}
-                        className={`px-3 py-1.5 text-sm font-medium rounded-r-lg transition-colors ${
-                          weakAreasTimeframe === 'this-week'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
-                        }`}
-                      >
-                        This week
-                      </button>
-                    </div>
-                  </div>
-
-                  {weakAreasFiltered.length === 0 ? (
-                    <div className="text-center py-6 text-green-600 dark:text-green-400">
-                      <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="font-medium">
-                        {weakAreasTimeframe === 'this-week' 
-                          ? 'No improvement areas this week — excellent progress!' 
-                          : 'No improvement areas yet — your child is doing great!'}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                        Keep up the excellent work! Skills that need extra practice will appear here.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-3">
-                      {weakAreasFiltered.map((skill, idx) => {
-                        const lastSessionWrong = lastSessionWrongByTag[skill.tag];
-                        
-                        return (
-                          <div
-                            key={skill.tag || idx}
-                            className="inline-flex flex-col gap-1 px-4 py-2 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg"
-                          >
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {formatTagLabel(skill.tag)}
-                              </span>
-                              <span className="px-2 py-0.5 text-xs font-semibold text-orange-800 dark:text-orange-200 bg-orange-200 dark:bg-orange-900/50 rounded">
-                                {skill.wrongRate}% wrong
-                              </span>
-                              <span className="text-xs text-gray-600 dark:text-gray-400">
-                                ({skill.wrong}/{skill.attempts})
-                              </span>
-                              <button
-                                type="button"
-                                className="ml-1 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                                title="Practice this skill"
-                              >
-                                practice
-                              </button>
-                            </div>
-                            
-                            {/* Last session indicator */}
-                            {lastSessionWrong !== undefined && (
-                              <span className="text-xs text-gray-600 dark:text-gray-400 italic">
-                                Last session: {lastSessionWrong} wrong tries
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-
-            {/* No Kid Selected */}
-            {!selectedKidId && !sessionsQuery.isLoading && (
-              <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center text-gray-600 dark:text-gray-400">
-                Please select a child to view their games progress.
               </div>
             )}
           </div>
