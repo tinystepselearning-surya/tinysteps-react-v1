@@ -74,6 +74,15 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       levelId,
     });
 
+    // TEMPORARY DEBUG LOG
+    console.log('[onGameSessionCreate] DEBUG:', {
+      eventId,
+      kidId,
+      gameId,
+      skillResultsLength: Array.isArray(skillResults) ? skillResults.length : 0,
+      skillResultsSample: Array.isArray(skillResults) ? skillResults.slice(0, 2) : null,
+    });
+
     // Check idempotency marker
     const markerRef = db.doc(`kids/${kidId}/rollupsApplied/${eventId}`);
     const markerSnap = await markerRef.get();
@@ -179,27 +188,59 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
       // Update skill tag stats
       if (Array.isArray(skillResults) && skillResults.length > 0) {
-        const skillUpdatePromises = skillResults.map(async (skill: any) => {
-          const { tag, attempts, correct, wrong } = skill;
-          if (!tag || typeof attempts !== 'number') return;
+        console.log('[onGameSessionCreate] SKILL ROLLUP START:', {
+          eventId,
+          kidId,
+          skillResultsCount: skillResults.length,
+          firstTwoTags: skillResults.slice(0, 2).map((s: any) => s.tag),
+        });
 
-          // Sanitize tag for Firestore doc ID (replace / with _)
-          const safeTag = tag.replace(/\//g, '_').replace(/\\/g, '_').replace(/\./g, '_');
-          const skillRef = db.doc(`kids/${kidId}/skillTagStats/${safeTag}`);
+        const skillUpdatePromises = skillResults.map(async (skill: any, index: number) => {
+          try {
+            const { tag, attempts, correct, wrong } = skill;
+            if (!tag || typeof attempts !== 'number') {
+              console.log('[onGameSessionCreate] SKILL SKIPPED:', { eventId, tag, attempts, index });
+              return;
+            }
 
-          const skillUpdate: any = {
-            tag,
-            attempts: FieldValue.increment(attempts),
-            correct: FieldValue.increment(correct || 0),
-            wrong: FieldValue.increment(wrong || 0),
-            lastSeenAt: FieldValue.serverTimestamp(),
-          };
+            // Sanitize tag for Firestore doc ID (replace /, \, ., : with _)
+            const safeTag = tag.replace(/\//g, '_').replace(/\\/g, '_').replace(/\./g, '_').replace(/:/g, '_');
+            const skillRef = db.doc(`kids/${kidId}/skillTagStats/${safeTag}`);
 
-          if (wrong > 0) {
-            skillUpdate.lastWrongAt = FieldValue.serverTimestamp();
+            console.log('[onGameSessionCreate] SKILL WRITE:', {
+              eventId,
+              index,
+              originalTag: tag,
+              safeTag,
+              path: `kids/${kidId}/skillTagStats/${safeTag}`,
+              increments: { attempts, correct, wrong },
+            });
+
+            const skillUpdate: any = {
+              tag,
+              attempts: FieldValue.increment(attempts),
+              correct: FieldValue.increment(correct || 0),
+              wrong: FieldValue.increment(wrong || 0),
+              lastSeenAt: FieldValue.serverTimestamp(),
+            };
+
+            if (wrong > 0) {
+              skillUpdate.lastWrongAt = FieldValue.serverTimestamp();
+            }
+
+            await skillRef.set(skillUpdate, { merge: true });
+            console.log('[onGameSessionCreate] SKILL WRITE SUCCESS:', { eventId, safeTag });
+          } catch (skillError: any) {
+            logger.error('[onGameSessionCreate] SKILL WRITE FAILED:', {
+              eventId,
+              kidId,
+              index,
+              tag: skill?.tag,
+              errorMessage: skillError.message,
+              errorCode: skillError.code || 'unknown',
+            });
+            // Don't throw - allow other skills to process
           }
-
-          await skillRef.set(skillUpdate, { merge: true });
         });
 
         await Promise.all(skillUpdatePromises);
@@ -258,8 +299,12 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       logger.error(`[onGameSessionCreate] Failed to apply rollups`, {
         eventId,
         kidId,
-        error: error.message,
-        stack: error.stack,
+        gameId,
+        progressDocId,
+        levelId,
+        errorMessage: error.message,
+        errorCode: error.code || 'unknown',
+        errorStack: error.stack,
       });
       // Don't throw - let the marker absence allow retry on next trigger
     }
