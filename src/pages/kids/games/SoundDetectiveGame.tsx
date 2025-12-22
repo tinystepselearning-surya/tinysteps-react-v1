@@ -326,61 +326,31 @@ export default function SoundDetectiveGame() {
             Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
           </div>
 
-          {/* Headphones glow + button (overlayed cleanly above board) */}
-          <div
-            aria-hidden
-            style={{ ...headphoneBtnStyle, width: `calc(${headphoneBtnStyle.width} * 1.30)`, height: `calc(${headphoneBtnStyle.height} * 1.30)` }}
-            className="absolute z-30 flex items-center justify-center hp-pop-wrapper"
-          >
-            {/* Invisible larger hotspot so kids can tap easily (delegates to playSound) */}
-            <button
-              type="button"
-              onClick={playSound}
-              aria-hidden
-              className="absolute inset-0 z-0 bg-transparent"
-            />
+          {/* Headphones + Letter shared overlay (keeps them aligned in a single row) */}
+          <div className="absolute left-1/2 top-[22%] -translate-x-1/2 -translate-y-1/2 z-30 flex items-center gap-[clamp(18px,3vw,42px)]">
+            {/* Headphones area (keeps glow behind and icon crisp) */}
+            <div style={{ width: 'clamp(120px,16vw,190px)', height: 'clamp(120px,16vw,190px)' }} className="relative flex items-center justify-center hp-pop-wrapper">
+              {/* Invisible hotspot */}
+              <button type="button" onClick={playSound} aria-hidden className="absolute inset-0 z-0 bg-transparent" />
 
-            {/* Visual container (keeps visible size slightly smaller than hotspot) */}
-            <div className="relative z-10 flex items-center justify-center" style={{ width: '89.2857%', height: '89.2857%' }}>
-              {/* Ring layer: centered using inset-0 + transform scale (no offsets) */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-                <div
-                  className={[
-                    'absolute inset-0 rounded-full pointer-events-none transition-all duration-700 ease-in-out',
-                    !isPlaying ? 'hd-ring-idle' : 'hd-ring-playing',
-                  ].join(' ')}
-                  style={{
-                    transform: 'scale(1.12)',
-                    border: '2px solid rgba(255,255,255,0.12)',
-                    background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)',
-                    filter: 'blur(12px)'
-                  }}
-                />
+              {/* Ring / glow behind icon */}
+              <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
+                <div className={isPlaying ? 'hp-glow-playing' : 'hp-glow-idle'} style={{ width: '120%', height: '120%', borderRadius: 9999, background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)' }} />
+                <div className={[
+                  'absolute inset-0 rounded-full pointer-events-none transition-all duration-700 ease-in-out',
+                  !isPlaying ? 'hd-ring-idle' : 'hd-ring-playing',
+                ].join(' ')} style={{ transform: 'scale(1.12)', border: '2px solid rgba(255,255,255,0.12)' }} />
               </div>
 
-              {/* subtle inner shadow ring */}
-              <div
-                className={[
-                  'absolute rounded-full pointer-events-none transition-shadow duration-300',
-                  isPlaying
-                    ? 'shadow-[0_18px_48px_rgba(59,130,246,0.22)]'
-                    : 'shadow-[0_8px_30px_rgba(59,130,246,0.06)]',
-                ].join(' ')}
-                style={{ width: '100%', height: '100%', borderRadius: 9999 }}
-              />
-
-              {/* Visible headphone image container: pop + glow animation (icon above glow, crisp) */}
+              {/* Icon */}
               <div className={['relative z-10 flex items-center justify-center', isPlaying ? 'hp-pop-playing' : 'hp-pop-idle'].join(' ')} style={{ width: '100%', height: '100%' }}>
-                {/* Glow layer behind icon (separate element so icon is not blurred) */}
-                  <div className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center">
-                    <div className={isPlaying ? 'hp-glow-playing' : 'hp-glow-idle'} style={{ width: '120%', height: '120%', borderRadius: 9999, background: 'radial-gradient(closest-side, rgba(59,130,246,0.14), rgba(59,130,246,0) 55%)' }} />
-                  </div>
-
-                  {/* Icon (crisp, fully opaque) */}
-                  <div className="relative z-10 flex items-center justify-center w-full h-full">
-                    <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[85%] max-w-[85%] object-contain select-none opacity-100" draggable={false} />
-                  </div>
+                <img src={`${BASE}/headphones.png`} alt="Headphones" className="max-h-[85%] max-w-[85%] object-contain select-none opacity-100" draggable={false} />
               </div>
+            </div>
+
+            {/* Big Letter aligned to the right of headphones */}
+            <div className="text-white font-extrabold tracking-wide drop-shadow-lg select-none uppercase" style={{ fontSize: 'clamp(84px,10vw,150px)' }}>
+              {currentLetter}
             </div>
           </div>
 
