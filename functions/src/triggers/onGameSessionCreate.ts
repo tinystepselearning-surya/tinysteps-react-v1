@@ -5,6 +5,17 @@ import * as logger from 'firebase-functions/logger';
 const db = getFirestore();
 
 /**
+ * Get ISO week number for a date
+ */
+function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/**
  * onGameSessionCreate - Firestore trigger for gameSessions/{eventId}
  * 
  * Applies minimal rollups when a new game session is recorded.
@@ -39,6 +50,8 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       progressDocId,
       levelId,
       pointsEarned,
+      accuracy,
+      skillResults,
     } = sessionData;
 
     // Validate required fields
@@ -149,6 +162,12 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
         summaryUpdate.totalPoints = FieldValue.increment(pointsEarned);
       }
 
+      // Add accuracy for average calculation
+      if (typeof accuracy === 'number') {
+        summaryUpdate[`games.${gameId}.totalAccuracy`] = FieldValue.increment(accuracy);
+        summaryUpdate[`games.${gameId}.avgAccuracy`] = FieldValue.increment(accuracy / (sessionData.attempts || 1));
+      }
+
       await summaryRef.set(summaryUpdate, { merge: true });
 
       logger.info(`[onGameSessionCreate] Updated summary`, {
@@ -156,6 +175,69 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
         kidId,
         gameId,
         pointsEarned: pointsEarned || 0,
+      });
+
+      // Update skill tag stats
+      if (Array.isArray(skillResults) && skillResults.length > 0) {
+        const skillUpdatePromises = skillResults.map(async (skill: any) => {
+          const { tag, attempts, correct, wrong } = skill;
+          if (!tag || typeof attempts !== 'number') return;
+
+          // Sanitize tag for Firestore doc ID (replace / with _)
+          const safeTag = tag.replace(/\//g, '_').replace(/\\/g, '_').replace(/\./g, '_');
+          const skillRef = db.doc(`kids/${kidId}/skillTagStats/${safeTag}`);
+
+          const skillUpdate: any = {
+            tag,
+            attempts: FieldValue.increment(attempts),
+            correct: FieldValue.increment(correct || 0),
+            wrong: FieldValue.increment(wrong || 0),
+            lastSeenAt: FieldValue.serverTimestamp(),
+          };
+
+          if (wrong > 0) {
+            skillUpdate.lastWrongAt = FieldValue.serverTimestamp();
+          }
+
+          await skillRef.set(skillUpdate, { merge: true });
+        });
+
+        await Promise.all(skillUpdatePromises);
+
+        logger.info(`[onGameSessionCreate] Updated skill tag stats`, {
+          eventId,
+          kidId,
+          skillsCount: skillResults.length,
+        });
+      }
+
+      // Update weekly rollup
+      const now = new Date();
+      const year = now.getFullYear();
+      const weekNum = getWeekNumber(now);
+      const weekKey = `${year}-W${String(weekNum).padStart(2, '0')}`;
+      
+      const weeklyRef = db.doc(`kids/${kidId}/weekly/${weekKey}`);
+      const weeklyUpdate: any = {
+        year,
+        week: weekNum,
+        levelsCompleted: FieldValue.increment(isFirstCompletion ? 1 : 0),
+        gamesPlayed: FieldValue.increment(1),
+        totalPoints: FieldValue.increment(pointsEarned || 0),
+        lastUpdatedAt: FieldValue.serverTimestamp(),
+      };
+
+      if (typeof accuracy === 'number') {
+        weeklyUpdate.totalAccuracy = FieldValue.increment(accuracy);
+        weeklyUpdate.sessionsCount = FieldValue.increment(1);
+      }
+
+      await weeklyRef.set(weeklyUpdate, { merge: true });
+
+      logger.info(`[onGameSessionCreate] Updated weekly rollup`, {
+        eventId,
+        kidId,
+        weekKey,
       });
 
       // Write idempotency marker

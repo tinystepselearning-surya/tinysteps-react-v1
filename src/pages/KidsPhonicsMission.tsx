@@ -817,30 +817,8 @@ const KidsPhonicsMission: React.FC = () => {
                 const accuracy = attemptsRef.current > 0 ? correctRef.current / attemptsRef.current : 0;
                 
                 const levelDef = LEVELS.find(l => l.id === selectedLevel);
-                const graphemes = levelDef ? levelDef.items.map(i => i.grapheme) : [];
-                
-                // Determine skills based on graphemes
-                const skills = ['letter_sounds'];
-                const digraphSet = new Set(['ai','oa','ie','ee','or','ng','oo','ch','sh','th','qu','ou','oi','ue','er','ar']);
-                const hasDigraphs = graphemes.some(g => g.length > 1 || digraphSet.has(g));
-                if (hasDigraphs) skills.push('digraphs_advanced');
-                
-                logGameSession(kidId, {
-                  gameId: 'letter-sound-match',
-                  mode: 'phonics',
-                  level: selectedLevel,
-                  skills,
-                  lettersOrGraphemes: graphemes,
-                  graphemes,
-                  attempts: attemptsRef.current,
-                  correct: correctRef.current,
-                  wrong: wrongRef.current,
-                  accuracy,
-                  durationMs,
-                  durationSec,
-                });
-
                 // Call recordLevelResult Cloud Function (best-effort)
+                // NOTE: Removed legacy logGameSession - recordLevelResult now handles all session tracking
                 (async () => {
                   try {
                     // Build tagDeltas: one tag per grapheme (from actual tracked stats) + one subtopic rollup

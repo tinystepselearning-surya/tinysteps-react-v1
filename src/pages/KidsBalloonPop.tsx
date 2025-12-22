@@ -465,36 +465,7 @@ const KidsBalloonPop: React.FC = () => {
 
 	// Exit fullscreen
 	const exitFullscreen = useCallback(() => {
-		// Log session if exiting mid-game
-		if (kidId && sessionStartMsRef.current && !sessionLoggedRef.current && currentLevel && hasStarted) {
-			sessionLoggedRef.current = true;
-			const endMs = Date.now();
-			const durationMs = endMs - sessionStartMsRef.current;
-			const durationSec = Math.round(durationMs / 1000);
-			const attempts = score + wrongCount;
-			const accuracy = attempts > 0 ? score / attempts : 0;
-			
-			const skills = ['letter_sounds'];
-			const digraphSet = new Set(['sh','ch','th','ai','oa','ee','ie','oi','ou','ue','qu','ng','oo','er','ar']);
-			const hasDigraphs = currentLevel.letters.some(g => g.length > 1 || digraphSet.has(g));
-			if (hasDigraphs) skills.push('digraphs_advanced');
-
-			logGameSession(kidId, {
-				gameId: 'balloon-pop',
-				mode: 'phonics',
-				level: currentLevel.id,
-				skills,
-				lettersOrGraphemes: currentLevel.letters,
-				graphemes: currentLevel.letters,
-				attempts,
-				correct: score,
-				wrong: wrongCount,
-				accuracy,
-				durationMs,
-				durationSec,
-			});
-		}
-
+		// NOTE: Removed legacy logGameSession - recordLevelResult now handles all session tracking
 		setFullscreenMode(false);
 		setRunning(false);
 		setHasStarted(false);
