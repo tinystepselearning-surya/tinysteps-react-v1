@@ -1,5 +1,5 @@
 // src/pages/parent/ParentDashboard.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense, startTransition } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ParentHeader } from './components/layout/ParentHeader';
@@ -15,7 +15,9 @@ export default function ParentDashboard() {
   // Tab handling
   const activeTab = searchParams.get('tab') || 'dashboard';
   const handleTabChange = (tab: string) => {
-    setSearchParams({ tab });
+    startTransition(() => {
+      setSearchParams({ tab });
+    });
   };
   
   // Fetch kids directly from kids collection where parentIds contains this parent's uid
@@ -472,7 +474,7 @@ export default function ParentDashboard() {
           <select
             id="kid-selector"
             value={selectedKidId || ''}
-            onChange={(e) => setSelectedKidId(e.target.value)}
+            onChange={(e) => startTransition(() => setSelectedKidId(e.target.value))}
             className="w-full md:w-auto px-4 py-2 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {kids.map((kid: any) => (
@@ -539,16 +541,18 @@ export default function ParentDashboard() {
 
             {/* Games Progress Component */}
             {selectedKidId && !kidSummaryQuery.isLoading && kidSummaryQuery.data && (
-              <ParentGamesProgress
-                kidSummaryData={kidSummaryQuery.data}
-                gamesCatalog={catalogQuery.data || []}
-                onPracticeClick={(gameId, levelId) => {
-                  // Navigate to kid portal with optional deep link
-                  if (kidsPortalUrl) {
-                    navigate(kidsPortalUrl);
-                  }
-                }}
-              />
+              <Suspense fallback={<div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-center text-gray-600 dark:text-gray-400">Loading insights…</div>}>
+                <ParentGamesProgress
+                  kidSummaryData={kidSummaryQuery.data}
+                  gamesCatalog={catalogQuery.data || []}
+                  onPracticeClick={(gameId, levelId) => {
+                    // Navigate to kid portal with optional deep link
+                    if (kidsPortalUrl) {
+                      navigate(kidsPortalUrl);
+                    }
+                  }}
+                />
+              </Suspense>
             )}
 
             {/* No Data State */}
