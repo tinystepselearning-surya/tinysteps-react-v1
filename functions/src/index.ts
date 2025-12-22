@@ -7,8 +7,8 @@ import { setGlobalOptions } from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 
-// Global settings (prevent runaway cost)
-setGlobalOptions({ maxInstances: 10 });
+// Global settings (prevent runaway cost + force asia-south1 region)
+setGlobalOptions({ maxInstances: 10, region: 'asia-south1' });
 
 // Initialize Firebase Admin SDK only once
 if (!admin.apps.length) {
