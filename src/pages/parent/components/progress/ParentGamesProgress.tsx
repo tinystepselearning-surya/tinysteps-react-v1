@@ -52,8 +52,36 @@ interface GameCatalogEntry {
 
 interface Props {
   kidSummaryData: KidSummaryData | null;
-  gamesCatalog: GameCatalogEntry[];
+  gamesCatalog: GameCatalogEntry[] | any;
   onPracticeClick?: (gameId?: string, levelId?: string) => void;
+}
+
+// Normalize gamesCatalog to array format
+function normalizeCatalog(catalog: any): GameCatalogEntry[] {
+  if (!catalog) return [];
+  
+  // Already an array
+  if (Array.isArray(catalog)) {
+    return catalog.filter((g) => g && typeof g === 'object' && g.id);
+  }
+  
+  // Object with games array: {games:[...]}
+  if (catalog.games && Array.isArray(catalog.games)) {
+    return catalog.games.filter((g: any) => g && typeof g === 'object' && g.id);
+  }
+  
+  // Record map: {"gameId":{title,active,...}}
+  if (typeof catalog === 'object') {
+    return Object.entries(catalog)
+      .filter(([_, val]) => val && typeof val === 'object')
+      .map(([id, val]: [string, any]) => ({
+        id,
+        title: val.title || id,
+        active: val.active,
+      }));
+  }
+  
+  return [];
 }
 
 export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, onPracticeClick }) => {
@@ -66,7 +94,31 @@ export const ParentGamesProgress: FC<Props> = ({ kidSummaryData, gamesCatalog, o
   const weakTop = summary?.weakTop ?? [];
   const rec = summary?.recommendedNext;
 
-  const activeGames = (gamesCatalog ?? []).filter((g) => g.active !== false).slice(0, 10);
+  // Normalize catalog
+  let activeGames = normalizeCatalog(gamesCatalog).filter((g) => g.active !== false);
+  
+  // Fallback: build games list from kidSummaryData if catalog is empty
+  if (activeGames.length === 0 && kidSummaryData) {
+    const fallbackIds = new Set<string>();
+    
+    // Add from summary.games
+    if (gamesStats) {
+      Object.keys(gamesStats).forEach((id) => fallbackIds.add(id));
+    }
+    
+    // Add from progress.byGame
+    if (byGame) {
+      Object.keys(byGame).forEach((id) => fallbackIds.add(id));
+    }
+    
+    activeGames = Array.from(fallbackIds).map((id) => ({
+      id,
+      title: id,
+      active: true,
+    }));
+  }
+  
+  activeGames = activeGames.slice(0, 10);
 
   return (
     <div className="space-y-6">
