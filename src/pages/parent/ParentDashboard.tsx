@@ -4,7 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs, query, where, doc, getDoc, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebaseConfig';
+import { db, auth } from '../../lib/firebaseConfig';
+import { signOut } from 'firebase/auth';
 import { ParentGamesProgress } from './components/progress/ParentGamesProgress';
 import { ParentOverviewCards } from './components/overview/ParentOverviewCards';
 import { Card } from '@/components/ui/card';
@@ -21,9 +22,19 @@ function safeTab(value: string | null): TabKey {
 }
 
 export default function ParentDashboard() {
-  const { user, isLoading } = useAuthStore();
+  const { user, isLoading, clearUser } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      clearUser();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const activeTab = safeTab(searchParams.get('tab'));
 
@@ -188,39 +199,70 @@ export default function ParentDashboard() {
       {/* Minimal header */}
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              Hi, {user?.displayName || 'Parent'} 👋
-            </h1>
-            {selectedKid && (
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Viewing: {selectedKid.fullName || 'Child'}
-              </p>
-            )}
+          <div className="flex-1">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                  Hi, {user?.displayName || 'Parent'} 👋
+                </h1>
+                {selectedKid && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Viewing: {selectedKid.fullName || 'Child'}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleLogout}
+                className="md:hidden"
+              >
+                Logout
+              </Button>
+            </div>
           </div>
 
           {/* Kid selector */}
           <div className="w-full md:w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              Select Child
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Select Child
+              </label>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="hidden md:inline-flex text-xs"
+              >
+                Logout
+              </Button>
+            </div>
 
             {kidsQuery.isLoading ? (
               <div className="text-sm text-gray-600 dark:text-gray-400">Loading kids…</div>
             ) : kids.length === 0 ? (
               <div className="text-sm text-gray-600 dark:text-gray-400">No kids linked yet.</div>
             ) : (
-              <select
-                value={selectedKidId}
-                onChange={(e) => setSelectedKidId(e.target.value)}
-                className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-              >
-                {kids.map((k: any) => (
-                  <option key={k.id} value={k.id}>
-                    {k.fullName || 'Unnamed'}
-                  </option>
-                ))}
-              </select>
+              <>
+                <select
+                  value={selectedKidId}
+                  onChange={(e) => setSelectedKidId(e.target.value)}
+                  className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 mb-3"
+                >
+                  {kids.map((k: any) => (
+                    <option key={k.id} value={k.id}>
+                      {k.fullName || 'Unnamed'}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  onClick={() => navigate(`/kids?kidId=${selectedKidId}`)}
+                  disabled={!selectedKidId}
+                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                >
+                  Open Games Portal
+                </Button>
+              </>
             )}
           </div>
         </div>
