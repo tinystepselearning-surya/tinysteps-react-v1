@@ -56,10 +56,10 @@ const PhonePeCallback = lazy(
 
 // Layout
 import Header from '../components/common/Header';
-const RoleGate = lazy(() => import('../components/common/RoleGate'));
+import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
-const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
-const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
+import FloatingAssistant from '../components/common/FloatingAssistant';
+import BackToTopButton from '../components/common/BackToTopButton';
 import ScrollToTop from '../components/common/ScrollToTop';
 
 const Layout: FC = () => (
