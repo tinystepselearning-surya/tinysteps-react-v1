@@ -451,7 +451,7 @@ export default function ParentDashboard() {
 
               // Group skills by stage
               const stageGroups: Record<string, Array<{ tag: string; wrong: number }>> = {};
-              weakTop.forEach((skill) => {
+              weakTop.forEach((skill: { tag?: string; wrong?: number }) => {
                 const tag = skill.tag || '';
                 const stage = tagToStage(tag);
                 if (!stageGroups[stage]) stageGroups[stage] = [];
@@ -1018,7 +1018,7 @@ export default function ParentDashboard() {
                       </h3>
                       {weakTop.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {weakTop.slice(0, 3).map((skill, idx) => {
+                          {weakTop.slice(0, 3).map((skill: { tag?: string; wrong?: number }, idx: number) => {
                             const tag = skill.tag || '—';
                             const wrong = typeof skill.wrong === 'number' ? skill.wrong : 0;
                             return (
