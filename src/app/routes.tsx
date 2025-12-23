@@ -38,7 +38,7 @@ const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
 const KidsPhonicsLibrary = lazy(() => import('../pages/KidsPhonicsLibrary'));
 const KidsPhonicsMission = lazy(() => import('../pages/KidsPhonicsMission'));
 const KidsBalloonPop = lazy(() => import('../pages/KidsBalloonPop'));
-const SoundDetectiveGame = lazy(() => import('../pages/kids/games/SoundDetectiveGame'));
+const SoundDetectiveGame = lazy(() => import('../pages/kids/games/phonics/SoundDetectiveGame'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,

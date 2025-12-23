@@ -1,7 +1,7 @@
 // src/pages/kid/KidDashboard.tsx
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '../../components/ui/card';
-import SoundDetectiveGame from './SoundDetectiveGame';
+import SoundDetectiveGame from '../kids/games/phonics/SoundDetectiveGame';
 
 import {
   Tabs,
