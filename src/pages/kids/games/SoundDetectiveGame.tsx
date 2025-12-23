@@ -115,10 +115,10 @@ type AnswerState = "idle" | "correct" | "wrong";
 
 export default function SoundDetectiveGame() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  // Shell wrapper that exists in both the Levels screen and the Game stage
-  const shellRef = useRef<HTMLDivElement | null>(null);
+  // Fullscreen wrapper ref
+  const fsRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
-  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isFs, setIsFs] = useState<boolean>(() => !!document.fullscreenElement);
   const [hasUserGesture, setHasUserGesture] = useState(false);
   const levelStartMsRef = useRef<number>(Date.now());
   const levelResultSentRef = useRef<boolean>(false);
@@ -306,33 +306,27 @@ export default function SoundDetectiveGame() {
   // Fullscreen change listener + mount attempt
   useEffect(() => {
     const onFsChange = () => {
-      const isFs = isDocFullscreen();
-      setIsFullscreen(isFs);
-      if (!isFs) {
+      const isFsNow = document.fullscreenElement === fsRef.current;
+      setIsFs(isFsNow);
+      if (!isFsNow) {
         try { document.body.classList.remove('ts-immersive-game'); } catch (e) {}
         try { if ((screen.orientation as any)?.unlock) { (screen.orientation as any).unlock(); } } catch (e) {}
+      } else {
+        try { document.body.classList.add('ts-immersive-game'); } catch (e) {}
       }
     };
     document.addEventListener('fullscreenchange', onFsChange);
 
     // initialize fullscreen state
-    setIsFullscreen(isDocFullscreen());
+    setIsFs(document.fullscreenElement === fsRef.current);
 
     return () => {
       document.removeEventListener('fullscreenchange', onFsChange);
     };
   }, [enterFullscreen]);
 
-  // Handle initial user gesture to enable fullscreen
-  const handlePointerDown = async () => {
-    if (!hasUserGesture) {
-      setHasUserGesture(true);
-      try {
-        await enterFullscreen();
-      } catch {}
-      setIsFullscreen(isDocFullscreen());
-    }
-  };
+  // (No-op) we do not auto-enter fullscreen from pointer events; fullscreen must be user-initiated from Play click
+  const handlePointerDown = () => {};
 
   useEffect(() => {
     // reset UI when letter changes
@@ -342,12 +336,7 @@ export default function SoundDetectiveGame() {
   }, [currentLetter]);
 
   const playSound = async () => {
-    // treat headphone click as a user gesture for fullscreen
-    if (!hasUserGesture) {
-      setHasUserGesture(true);
-      try { await enterFullscreen(); } catch {}
-      setIsFullscreen(isDocFullscreen());
-    }
+    // Do not enter fullscreen here; Play click on Levels must handle fullscreen
     setIsPlaying(true);
 
     // Try mp3 first if available
@@ -470,7 +459,7 @@ export default function SoundDetectiveGame() {
   const startLevel = async (levelId: number) => {
     // Ensure fullscreen request is invoked synchronously from the click handler
     try {
-      const el = shellRef.current || containerRef.current || document.documentElement;
+      const el = fsRef.current || containerRef.current || document.documentElement;
       if (el && (el as any).requestFullscreen) {
         await (el as any).requestFullscreen();
       } else if (el && (el as any).webkitRequestFullscreen) {
@@ -496,20 +485,19 @@ export default function SoundDetectiveGame() {
   };
 
   // Call fullscreen request synchronously (must run inside user gesture)
-  const safeEnterFullscreen = () => {
+  const safeEnterFullscreen = async () => {
     try {
-      const el = containerRef.current || shellRef.current || document.documentElement;
+      const el = fsRef.current || containerRef.current || document.documentElement;
       if (!el) return;
       if ((el as any).requestFullscreen) {
-        // call without awaiting to keep inside user gesture stack
-        (el as any).requestFullscreen();
+        await (el as any).requestFullscreen({ navigationUI: 'hide' } as any);
       } else if ((el as any).webkitRequestFullscreen) {
         (el as any).webkitRequestFullscreen();
       } else if ((el as any).webkitEnterFullscreen) {
         (el as any).webkitEnterFullscreen();
       }
-      // set state — some browsers will only set fullscreen after promise resolves
-      setIsFullscreen(!!document.fullscreenElement);
+      setIsFs(document.fullscreenElement === el);
+      try { document.body.classList.add('ts-immersive-game'); } catch (e) {}
     } catch (e) {
       // ignore
     }
@@ -527,7 +515,7 @@ export default function SoundDetectiveGame() {
     } finally {
       try { document.body.classList.remove('ts-immersive-game'); } catch (e) {}
       try { if ((screen.orientation as any)?.unlock) { (screen.orientation as any).unlock(); } } catch (e) {}
-      setIsFullscreen(false);
+      setIsFs(false);
     }
   };
 
@@ -572,8 +560,8 @@ export default function SoundDetectiveGame() {
         className="w-full h-full"
         style={{ touchAction: "none" }}
       >
-        <div className={`${isFullscreen ? "flex items-center justify-center bg-black" : ""} w-full h-full`}>
-          <div className="relative w-full aspect-video max-w-[1800px] max-h-screen overflow-hidden rounded-2xl shadow-lg">
+        <div className={`${isFs ? "flex items-center justify-center bg-black" : ""} w-full h-full`}>
+          <div className={`${isFs ? 'relative w-full h-full overflow-hidden' : 'relative w-full aspect-video max-w-[1800px] max-h-screen overflow-hidden rounded-2xl shadow-lg'}`}>
             {/* Background */}
             <img
               src={`${BASE}/bg.png`}
@@ -673,7 +661,7 @@ style={{ transform: `translate(${offset}, -22%)` }}
             {/* Fullscreen gating removed — Play button now initiates fullscreen directly */}
 
             {/* Exit fullscreen button */}
-            {isFullscreen && (
+            {isFs && (
               <div className="absolute top-3 right-3">
                 <button
                   type="button"
@@ -796,7 +784,7 @@ style={{ transform: `translate(${offset}, -22%)` }}
   ) : null;
 
   return (
-    <div ref={shellRef} className="w-full select-none" draggable={false}>
+    <div ref={fsRef} className={isFs ? "fixed inset-0 z-[9999] w-screen h-screen bg-black select-none" : "relative w-full select-none"} draggable={false}>
       {/* Choose Level screen when no level selected */}
       {!selectedLevel && (
         <div className="relative min-h-screen flex flex-col items-center justify-start py-12 px-4 overflow-hidden" style={{ background: 'linear-gradient(180deg, #050510 0%, #150a2b 35%, #0b2a5e 100%)', boxShadow: 'inset 0 0 160px rgba(0,0,0,0.75)' }}>
