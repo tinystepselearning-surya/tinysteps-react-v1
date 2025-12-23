@@ -113,6 +113,8 @@ type AnswerState = "idle" | "correct" | "wrong";
 
 export default function SoundDetectiveGame() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  // Shell wrapper that exists in both the Levels screen and the Game stage
+  const shellRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasUserGesture, setHasUserGesture] = useState(false);
   const levelStartMsRef = useRef<number>(Date.now());
@@ -460,9 +462,8 @@ export default function SoundDetectiveGame() {
 
   // Start a specific level (called from Choose Level UI). Must be called from a user gesture.
   const startLevel = async (levelId: number) => {
-    try {
-      await enterFullscreen();
-    } catch {}
+    // Ensure fullscreen request is invoked synchronously from the click handler
+    safeEnterFullscreen();
     setSelectedLevel(levelId);
     setSingleLevelMode(true);
     setLevelGroupIndex(levelId - 1);
@@ -473,6 +474,62 @@ export default function SoundDetectiveGame() {
       searchParams.set('level', String(levelId));
       setSearchParams(searchParams);
     } catch {}
+  };
+
+  // Call fullscreen request synchronously (must run inside user gesture)
+  const safeEnterFullscreen = () => {
+    try {
+      const el = containerRef.current || shellRef.current || document.documentElement;
+      if (!el) return;
+      if ((el as any).requestFullscreen) {
+        // call without awaiting to keep inside user gesture stack
+        (el as any).requestFullscreen();
+      } else if ((el as any).webkitRequestFullscreen) {
+        (el as any).webkitRequestFullscreen();
+      } else if ((el as any).webkitEnterFullscreen) {
+        (el as any).webkitEnterFullscreen();
+      }
+      // set state — some browsers will only set fullscreen after promise resolves
+      setIsFullscreen(!!document.fullscreenElement);
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const safeExitFullscreen = async () => {
+    try {
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      }
+    } catch (e) {
+      // ignore
+    } finally {
+      setIsFullscreen(false);
+    }
+  };
+
+  const goBackToLevels = async () => {
+    // Exit fullscreen first
+    try {
+      await safeExitFullscreen();
+    } catch (e) {}
+
+    // Remove level / letter / fs params and return to level chooser
+    try {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('level');
+      newParams.delete('letter');
+      newParams.delete('fs');
+      setSearchParams(newParams);
+    } catch (e) {
+      // ignore
+    }
+
+    setSelectedLevel(null);
+    setSingleLevelMode(false);
+    setIsComplete(false);
   };
 
   // Positions tuned for your 2048x1152 background (percentage-based so it scales)
@@ -615,11 +672,11 @@ style={{ transform: `translate(${offset}, -22%)` }}
               <div className="absolute top-3 right-3">
                 <button
                   type="button"
-                  onClick={() => exitFullscreen()}
-                  className="px-3 py-1 bg-white/10 text-white text-xs rounded-full hover:bg-white/20"
-                  aria-label="Exit Full Screen"
+                  onClick={() => goBackToLevels()}
+                  className="px-4 py-2 bg-black/65 text-white rounded-full text-sm font-semibold shadow-md backdrop-blur-sm"
+                  aria-label="Back to Levels"
                 >
-                  Exit
+                  ← Back to Levels
                 </button>
               </div>
             )}
