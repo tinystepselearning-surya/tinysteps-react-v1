@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { recordLevelResult } from '../../../games/engine/recordLevelResult';
 
 const BASE = "/games/phonics/sound-detective";
@@ -115,10 +117,12 @@ export default function SoundDetectiveGame() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   // Shell wrapper that exists in both the Levels screen and the Game stage
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [hasUserGesture, setHasUserGesture] = useState(false);
   const levelStartMsRef = useRef<number>(Date.now());
   const levelResultSentRef = useRef<boolean>(false);
+  const location = useLocation();
 
   // Tracking state
   const [attempts, setAttempts] = useState(0);
@@ -301,16 +305,18 @@ export default function SoundDetectiveGame() {
 
   // Fullscreen change listener + mount attempt
   useEffect(() => {
-    const onFsChange = () => setIsFullscreen(isDocFullscreen());
+    const onFsChange = () => {
+      const isFs = isDocFullscreen();
+      setIsFullscreen(isFs);
+      if (!isFs) {
+        try { document.body.classList.remove('ts-immersive-game'); } catch (e) {}
+        try { if ((screen.orientation as any)?.unlock) { (screen.orientation as any).unlock(); } } catch (e) {}
+      }
+    };
     document.addEventListener('fullscreenchange', onFsChange);
 
-    // Try best-effort enter fullscreen on mount (may be blocked)
-    (async () => {
-      try {
-        await enterFullscreen();
-      } catch {}
-      setIsFullscreen(isDocFullscreen());
-    })();
+    // initialize fullscreen state
+    setIsFullscreen(isDocFullscreen());
 
     return () => {
       document.removeEventListener('fullscreenchange', onFsChange);
@@ -463,17 +469,30 @@ export default function SoundDetectiveGame() {
   // Start a specific level (called from Choose Level UI). Must be called from a user gesture.
   const startLevel = async (levelId: number) => {
     // Ensure fullscreen request is invoked synchronously from the click handler
-    safeEnterFullscreen();
-    setSelectedLevel(levelId);
-    setSingleLevelMode(true);
-    setLevelGroupIndex(levelId - 1);
-    setLetterIndexWithinGroup(0);
-    setIsComplete(false);
-    // reflect in URL
     try {
-      searchParams.set('level', String(levelId));
-      setSearchParams(searchParams);
-    } catch {}
+      const el = shellRef.current || containerRef.current || document.documentElement;
+      if (el && (el as any).requestFullscreen) {
+        await (el as any).requestFullscreen();
+      } else if (el && (el as any).webkitRequestFullscreen) {
+        (el as any).webkitRequestFullscreen();
+      }
+
+      try { document.body.classList.add('ts-immersive-game'); } catch (e) {}
+      if (window.matchMedia('(max-width: 767px)').matches && (screen.orientation as any)?.lock) {
+        try { await (screen.orientation as any).lock('landscape'); } catch (e) {}
+      }
+    } catch (e) {
+      // ignore fullscreen failure
+    }
+
+    // reflect level in URL (this drives state via the searchParams effect)
+    try {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.set('level', String(levelId));
+      setSearchParams(newParams, { replace: false });
+    } catch (e) {
+      // ignore
+    }
   };
 
   // Call fullscreen request synchronously (must run inside user gesture)
@@ -506,6 +525,8 @@ export default function SoundDetectiveGame() {
     } catch (e) {
       // ignore
     } finally {
+      try { document.body.classList.remove('ts-immersive-game'); } catch (e) {}
+      try { if ((screen.orientation as any)?.unlock) { (screen.orientation as any).unlock(); } } catch (e) {}
       setIsFullscreen(false);
     }
   };
@@ -516,20 +537,20 @@ export default function SoundDetectiveGame() {
       await safeExitFullscreen();
     } catch (e) {}
 
-    // Remove level / letter / fs params and return to level chooser
+    // Remove level / letter / fs params and return to level chooser (replace history)
     try {
       const newParams = new URLSearchParams(searchParams);
       newParams.delete('level');
       newParams.delete('letter');
       newParams.delete('fs');
-      setSearchParams(newParams);
+      const to = `${location.pathname}${newParams.toString() ? `?${newParams.toString()}` : ''}`;
+      navigate(to, { replace: true });
     } catch (e) {
-      // ignore
+      // fallback: clear local state
+      setSelectedLevel(null);
+      setSingleLevelMode(false);
+      setIsComplete(false);
     }
-
-    setSelectedLevel(null);
-    setSingleLevelMode(false);
-    setIsComplete(false);
   };
 
   // Positions tuned for your 2048x1152 background (percentage-based so it scales)
@@ -649,23 +670,7 @@ style={{ transform: `translate(${offset}, -22%)` }}
               );
             })}
 
-            {/* Fullscreen start overlay */}
-            {!isFullscreen && !hasUserGesture && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setHasUserGesture(true);
-                    await enterFullscreen();
-                    setIsFullscreen(isDocFullscreen());
-                  }}
-                  className="pointer-events-auto px-4 py-2 bg-black/60 text-white rounded-full backdrop-blur-sm text-sm font-semibold"
-                  aria-label="Start Full Screen"
-                >
-                  Tap to Start (Full Screen)
-                </button>
-              </div>
-            )}
+            {/* Fullscreen gating removed — Play button now initiates fullscreen directly */}
 
             {/* Exit fullscreen button */}
             {isFullscreen && (
@@ -681,19 +686,57 @@ style={{ transform: `translate(${offset}, -22%)` }}
               </div>
             )}
 
-            {/* Completion overlay */}
+            {/* Completion overlay (Next / Replay / Back to Levels) */}
             {isComplete && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <div className="bg-white rounded-2xl p-8 max-w-sm text-center shadow-2xl">
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h2 className="text-3xl font-bold text-gray-800 mb-2">All Done!</h2>
-                  <p className="text-gray-600 mb-6">You completed all 5 levels!</p>
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-600/95 via-pink-500/95 to-orange-500/95 flex flex-col items-center justify-center text-center z-50 backdrop-blur-sm">
+                <div className="text-8xl mb-4 animate-bounce">🎉</div>
+                <h2 className="text-4xl font-bold text-white mb-2">Level Complete!</h2>
+                <p className="text-white/90 mb-6">Great job — you finished this level.</p>
+                <div className="flex gap-4 mb-6">
                   <button
                     type="button"
-                    onClick={handleRestart}
-                    className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors"
+                    onClick={async () => {
+                      // Next: advance to next letter or next level, or go back to levels
+                      const nextLetterIndex = letterIndexWithinGroup + 1;
+                      if (nextLetterIndex < currentGroup.length) {
+                        setLetterIndexWithinGroup(nextLetterIndex);
+                        setIsComplete(false);
+                        resetLevelTracking();
+                      } else {
+                        const nextLevelIndex = levelGroupIndex + 1;
+                        if (nextLevelIndex < LETTER_GROUPS.length) {
+                          const newParams = new URLSearchParams(searchParams);
+                          newParams.set('level', String(nextLevelIndex + 1));
+                          setSearchParams(newParams, { replace: false });
+                          setIsComplete(false);
+                          resetLevelTracking();
+                        } else {
+                          await goBackToLevels();
+                        }
+                      }
+                    }}
+                    className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-2xl shadow-lg"
                   >
-                    Play Again
+                    Next
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Replay current level: restart group
+                      setLetterIndexWithinGroup(0);
+                      setIsComplete(false);
+                      resetLevelTracking();
+                    }}
+                    className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg"
+                  >
+                    Replay
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goBackToLevels()}
+                    className="px-6 py-3 bg-black/65 text-white rounded-2xl font-bold shadow-lg"
+                  >
+                    ← Back to Levels
                   </button>
                 </div>
               </div>
@@ -753,7 +796,7 @@ style={{ transform: `translate(${offset}, -22%)` }}
   ) : null;
 
   return (
-    <div className="w-full select-none" draggable={false}>
+    <div ref={shellRef} className="w-full select-none" draggable={false}>
       {/* Choose Level screen when no level selected */}
       {!selectedLevel && (
         <div className="relative min-h-screen flex flex-col items-center justify-start py-12 px-4 overflow-hidden" style={{ background: 'linear-gradient(180deg, #050510 0%, #150a2b 35%, #0b2a5e 100%)', boxShadow: 'inset 0 0 160px rgba(0,0,0,0.75)' }}>
