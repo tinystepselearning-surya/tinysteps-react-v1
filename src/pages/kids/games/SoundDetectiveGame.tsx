@@ -461,15 +461,27 @@ export default function SoundDetectiveGame() {
     try {
       const el = fsRef.current || containerRef.current || document.documentElement;
       if (el && (el as any).requestFullscreen) {
-        await (el as any).requestFullscreen();
+        await (el as any).requestFullscreen({ navigationUI: 'hide' } as any);
       } else if (el && (el as any).webkitRequestFullscreen) {
         (el as any).webkitRequestFullscreen();
       }
 
-      try { document.body.classList.add('ts-immersive-game'); } catch (e) {}
-      if (window.matchMedia('(max-width: 767px)').matches && (screen.orientation as any)?.lock) {
-        try { await (screen.orientation as any).lock('landscape'); } catch (e) {}
-      }
+      // Wait for the fullscreenchange to confirm fsRef is active (avoid black screen if DOM changes occur)
+      await new Promise<void>((resolve) => {
+        if (document.fullscreenElement === fsRef.current) return resolve();
+        const onChange = () => {
+          if (document.fullscreenElement === fsRef.current) {
+            document.removeEventListener('fullscreenchange', onChange);
+            resolve();
+          }
+        };
+        document.addEventListener('fullscreenchange', onChange);
+        // safety timeout
+        setTimeout(() => {
+          document.removeEventListener('fullscreenchange', onChange);
+          resolve();
+        }, 600);
+      });
     } catch (e) {
       // ignore fullscreen failure
     }
@@ -496,8 +508,8 @@ export default function SoundDetectiveGame() {
       } else if ((el as any).webkitEnterFullscreen) {
         (el as any).webkitEnterFullscreen();
       }
+      // Wait for confirmation
       setIsFs(document.fullscreenElement === el);
-      try { document.body.classList.add('ts-immersive-game'); } catch (e) {}
     } catch (e) {
       // ignore
     }
