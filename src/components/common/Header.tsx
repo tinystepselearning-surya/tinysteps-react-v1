@@ -172,25 +172,17 @@ export default function Header() {
           </div>
           <Link
             to={ctaLink.href}
-            className="ml-4 inline-flex items-center rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 py-2 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.35)] transition hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+            className="ml-4 inline-flex items-center justify-center h-12 rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.35)] transition hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
           >
             {ctaLink.label}
           </Link>
         </div>
 
         <div className="hidden md:flex items-center gap-4">
-          {!user && (
-            <a
-              href="https://wa.me/919618398383"
-              className="flex items-center gap-2 rounded-full border border-tiny-green-200/70 bg-white/80 px-4 py-1.5 text-sm font-semibold text-tiny-green-700 shadow-sm"
-            >
-              💬 +91 96183 98383
-            </a>
-          )}
           <button
             onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}
             aria-label="Book Free Assessment Class"
-            className="rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] px-5 py-2 text-sm font-semibold text-white shadow-[0_12px_25px_rgba(255,143,92,0.35)]"
+            className="inline-flex items-center justify-center h-12 rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] px-5 text-sm font-semibold text-white shadow-[0_12px_25px_rgba(255,143,92,0.35)]"
           >
             Book Free Assessment Class
           </button>
@@ -248,9 +240,7 @@ export default function Header() {
               Sign in
             </button>
           )}
-          {!user && (
-            <a href="https://wa.me/919618398383" className="block text-tiny-green-700">WhatsApp: +91 96183 98383</a>
-          )}
+          {/* phone/whatsapp removed from mobile menu per design */}
         </div>
       </motion.div>
     </motion.nav>

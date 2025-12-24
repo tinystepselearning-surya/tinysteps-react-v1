@@ -26,7 +26,7 @@ type Decoration = {
 
 type DragState = {
   id: string;
-  pointerId: number;
+  pointerId: number; // pointerId OR touch.identifier
   fromAnchor: number | null;
   startedOnTray: boolean;
   startX: number;
@@ -34,6 +34,7 @@ type DragState = {
   x: number;
   y: number;
   moved: boolean;
+  input: "pointer" | "touch";
 };
 
 type Layout = {
@@ -82,28 +83,23 @@ type ConfettiPiece = {
 };
 
 // ✅ 16 anchors (so all 16 items can be placed)
-// Normalized (0..1) inside the tree image box.
 const TREE_ANCHORS: Array<{ x: number; y: number }> = [
   { x: 0.5, y: 0.055 }, // 0 top (star)
-
-  { x: 0.42, y: 0.16 }, // 1
-  { x: 0.58, y: 0.16 }, // 2
-  { x: 0.50, y: 0.22 }, // 3
-
-  { x: 0.36, y: 0.30 }, // 4
-  { x: 0.50, y: 0.32 }, // 5
-  { x: 0.64, y: 0.30 }, // 6
-  { x: 0.44, y: 0.38 }, // 7
-
-  { x: 0.34, y: 0.49 }, // 8
-  { x: 0.50, y: 0.51 }, // 9
-  { x: 0.66, y: 0.49 }, // 10
-  { x: 0.40, y: 0.58 }, // 11
-
-  { x: 0.42, y: 0.70 }, // 12
-  { x: 0.58, y: 0.72 }, // 13
-  { x: 0.50, y: 0.78 }, // 14
-  { x: 0.64, y: 0.66 }, // 15
+  { x: 0.42, y: 0.16 },
+  { x: 0.58, y: 0.16 },
+  { x: 0.5, y: 0.22 },
+  { x: 0.36, y: 0.3 },
+  { x: 0.5, y: 0.32 },
+  { x: 0.64, y: 0.3 },
+  { x: 0.44, y: 0.38 },
+  { x: 0.34, y: 0.49 },
+  { x: 0.5, y: 0.51 },
+  { x: 0.66, y: 0.49 },
+  { x: 0.4, y: 0.58 },
+  { x: 0.42, y: 0.7 },
+  { x: 0.58, y: 0.72 },
+  { x: 0.5, y: 0.78 },
+  { x: 0.64, y: 0.66 },
 ];
 
 const DEFAULT_DECORATIONS: Decoration[] = Array.from({ length: 16 }).map((_, i) => {
@@ -113,7 +109,7 @@ const DEFAULT_DECORATIONS: Decoration[] = Array.from({ length: 16 }).map((_, i) 
     label: `Decoration ${n}`,
     src: `/seasonal/christmas/${n}.PNG`,
     srcFallback: `/seasonal/christmas/${n}.png`,
-    preferredAnchor: n === 1 ? 0 : undefined, // 1 is star
+    preferredAnchor: n === 1 ? 0 : undefined,
     anchorId: null,
     homeIndex: i,
   };
@@ -139,6 +135,15 @@ async function exitFullscreenSafe() {
     const d: any = document;
     if (document.exitFullscreen) await document.exitFullscreen();
     else if (d?.webkitExitFullscreen) await d.webkitExitFullscreen();
+  } catch {
+    // ignore
+  }
+}
+
+async function lockLandscapeSafe() {
+  try {
+    const o: any = (screen as any).orientation;
+    if (o?.lock) await o.lock("landscape");
   } catch {
     // ignore
   }
@@ -182,18 +187,8 @@ function VolumeOnIcon({ className }: { className?: string }) {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path
-        d="M16 8.5c1.3 1.3 1.3 5.7 0 7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M18.5 6c2.6 2.6 2.6 9.4 0 12"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M16 8.5c1.3 1.3 1.3 5.7 0 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M18.5 6c2.6 2.6 2.6 9.4 0 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -207,18 +202,8 @@ function VolumeOffIcon({ className }: { className?: string }) {
         strokeWidth="2"
         strokeLinejoin="round"
       />
-      <path
-        d="M16 9l5 6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <path
-        d="M21 9l-5 6"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
+      <path d="M16 9l5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M21 9l-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -239,6 +224,21 @@ export default function ChristmasTreeDecoratePublic() {
   const [layout, setLayout] = useState<Layout | null>(null);
   const [isComplete, setIsComplete] = useState(false);
 
+  // Refs for stable event handlers (iOS friendly)
+  const dragRef = useRef<DragState | null>(null);
+  const decorationsRef = useRef<Decoration[]>(DEFAULT_DECORATIONS);
+  const layoutRef = useRef<Layout | null>(null);
+
+  useEffect(() => {
+    dragRef.current = drag;
+  }, [drag]);
+  useEffect(() => {
+    decorationsRef.current = decorations;
+  }, [decorations]);
+  useEffect(() => {
+    layoutRef.current = layout;
+  }, [layout]);
+
   // Effects
   const [bursts, setBursts] = useState<Burst[]>([]);
   const [twinkles, setTwinkles] = useState<Twinkle[]>([]);
@@ -248,7 +248,29 @@ export default function ChristmasTreeDecoratePublic() {
   const [showWin, setShowWin] = useState(false);
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
 
-  // Brighter, slow, glowing ambient snow
+  // Start + Landscape helpers
+  const [started, setStarted] = useState(false);
+  const [needLandscape, setNeedLandscape] = useState(false);
+
+  const computeNeedLandscape = useCallback(() => {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const phoneLike = Math.min(w, h) < 520; // phones only; iPad won't be blocked
+    const portrait = h > w;
+    setNeedLandscape(phoneLike && portrait);
+  }, []);
+
+  useEffect(() => {
+    computeNeedLandscape();
+    window.addEventListener("resize", computeNeedLandscape);
+    window.addEventListener("orientationchange", computeNeedLandscape);
+    return () => {
+      window.removeEventListener("resize", computeNeedLandscape);
+      window.removeEventListener("orientationchange", computeNeedLandscape);
+    };
+  }, [computeNeedLandscape]);
+
+  // Ambient snow
   const ambientSnow = useMemo(() => {
     return Array.from({ length: 56 }).map((_, i) => {
       const leftPct = Math.random() * 100;
@@ -268,70 +290,74 @@ export default function ChristmasTreeDecoratePublic() {
     try {
       a.pause();
       a.currentTime = 0;
-    } catch {
-      // ignore
-    }
+    } catch {}
     setBgPlaying(false);
   }, []);
 
-  const tryStartBgMusic = useCallback(async () => {
+  const tryStartBgMusic = useCallback(async (): Promise<boolean> => {
     const a = bgAudioRef.current;
-    if (!a) return;
+    if (!a) return false;
     try {
       a.muted = bgMuted;
-      // If user muted, it can still "play" silently (useful to satisfy autoplay policies later)
+      // iOS: must be called from user gesture (we ensure with Start overlay + retry listeners)
       await a.play();
       setBgPlaying(true);
+      return true;
     } catch {
-      // Autoplay may be blocked; we'll retry on first user gesture.
       setBgPlaying(false);
+      return false;
     }
   }, [bgMuted]);
 
-  // ✅ Initialize background music on mount (best-effort)
+  // ✅ Initialize bg music once
   useEffect(() => {
     const a = new Audio("/seasonal/christmas/jinglebells.mp3");
     a.loop = true;
+    a.preload = "auto";
     a.volume = 0.35;
     a.muted = bgMuted;
+    try {
+      a.load();
+    } catch {}
     bgAudioRef.current = a;
-
-    // Try to play immediately; if blocked, we will "kick" on first user gesture
-    tryStartBgMusic();
 
     return () => {
       try {
         a.pause();
         a.currentTime = 0;
-      } catch {
-        // ignore
-      }
+      } catch {}
       bgAudioRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // only once
+  }, []); // once
 
-  // Keep muted flag in sync
+  // Keep muted in sync
   useEffect(() => {
     if (bgAudioRef.current) bgAudioRef.current.muted = bgMuted;
   }, [bgMuted]);
 
-  // ✅ Autoplay fallback: kick music on first interaction if it didn't start
+  // ✅ Critical fix: keep retrying on ANY user gesture UNTIL it succeeds (don’t remove after a failed attempt)
   useEffect(() => {
-    const handler = () => {
-      if (bgPlaying) return;
-      // try again on user gesture
-      tryStartBgMusic();
-      // remove listeners after attempt
-      window.removeEventListener("pointerdown", handler, true);
-      window.removeEventListener("keydown", handler, true);
+    if (bgPlaying) return;
+
+    const kick = async () => {
+      // only attempt if we have audio and not playing
+      const ok = await tryStartBgMusic();
+      if (ok) {
+        window.removeEventListener("pointerdown", kick, true);
+        window.removeEventListener("touchstart", kick, true);
+        window.removeEventListener("keydown", kick, true);
+      }
     };
 
-    window.addEventListener("pointerdown", handler, true);
-    window.addEventListener("keydown", handler, true);
+    window.addEventListener("pointerdown", kick, true);
+    window.addEventListener("touchstart", kick, true);
+    window.addEventListener("keydown", kick, true);
+
     return () => {
-      window.removeEventListener("pointerdown", handler, true);
-      window.removeEventListener("keydown", handler, true);
+      window.removeEventListener("pointerdown", kick, true);
+      window.removeEventListener("touchstart", kick, true);
+      window.removeEventListener("keydown", kick, true);
     };
   }, [bgPlaying, tryStartBgMusic]);
 
@@ -358,11 +384,6 @@ export default function ChristmasTreeDecoratePublic() {
     });
   }, []);
 
-  useEffect(() => {
-    document.body.classList.add("ts-game-fullscreen");
-    return () => document.body.classList.remove("ts-game-fullscreen");
-  }, []);
-
   // Layout measuring
   useEffect(() => {
     measure();
@@ -386,11 +407,10 @@ export default function ChristmasTreeDecoratePublic() {
 
   // Completion check
   useEffect(() => {
-    const filled = decorations.every((d) => d.anchorId !== null);
-    setIsComplete(filled);
+    setIsComplete(decorations.every((d) => d.anchorId !== null));
   }, [decorations]);
 
-  // Brighter twinkling “shine + boom”
+  // Twinkles
   useEffect(() => {
     const t = window.setInterval(() => {
       const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -409,7 +429,7 @@ export default function ChristmasTreeDecoratePublic() {
     return () => window.clearInterval(t);
   }, []);
 
-  // ✅ TS fix: ctx is never null here
+  // Chime (uses AudioContext; iOS needs resume)
   const playChime = useCallback((kind: "place" | "complete") => {
     try {
       const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as any;
@@ -423,19 +443,17 @@ export default function ChristmasTreeDecoratePublic() {
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0001, now);
       gain.gain.exponentialRampToValueAtTime(kind === "complete" ? 0.22 : 0.13, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + (kind === "complete" ? 0.70 : 0.30));
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + (kind === "complete" ? 0.7 : 0.3));
       gain.connect(ctx.destination);
 
       const o1 = ctx.createOscillator();
       o1.type = "sine";
       o1.frequency.setValueAtTime(kind === "complete" ? 784 : 660, now);
-      o1.frequency.exponentialRampToValueAtTime(kind === "complete" ? 1318 : 880, now + 0.20);
+      o1.frequency.exponentialRampToValueAtTime(kind === "complete" ? 1318 : 880, now + 0.2);
       o1.connect(gain);
       o1.start(now);
       o1.stop(now + (kind === "complete" ? 0.75 : 0.34));
-    } catch {
-      // ignore
-    }
+    } catch {}
   }, []);
 
   const spawnSnowBurst = useCallback(() => {
@@ -464,52 +482,6 @@ export default function ChristmasTreeDecoratePublic() {
     setConfetti([]);
   }, []);
 
-  const stagePointerToTreeNorm = useCallback(
-    (clientX: number, clientY: number) => {
-      if (!layout || !stageRef.current) return null;
-      const stageRect = stageRef.current.getBoundingClientRect();
-      const x = clientX - stageRect.left;
-      const y = clientY - stageRect.top;
-
-      const tx = (x - layout.treeLeft) / layout.treeW;
-      const ty = (y - layout.treeTop) / layout.treeH;
-
-      return { x, y, tx, ty };
-    },
-    [layout]
-  );
-
-  const nextFreeAnchor = useCallback(() => {
-    for (let i = 0; i < TREE_ANCHORS.length; i += 1) {
-      const occupied = decorations.some((d) => d.anchorId === i);
-      if (!occupied) return i;
-    }
-    return null;
-  }, [decorations]);
-
-  const findNearestAnchor = useCallback(
-    (tx: number, ty: number, fromAnchor: number | null) => {
-      let best: { idx: number; dist: number } | null = null;
-      const threshold = 0.16; // ✅ easier drop
-
-      for (let i = 0; i < TREE_ANCHORS.length; i += 1) {
-        const occupied = decorations.some((d) => d.anchorId === i);
-        const allowed = !occupied || i === fromAnchor;
-        if (!allowed) continue;
-
-        const a = TREE_ANCHORS[i];
-        const dx = a.x - tx;
-        const dy = a.y - ty;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < threshold && (!best || dist < best.dist)) best = { idx: i, dist };
-      }
-
-      return best ? best.idx : null;
-    },
-    [decorations]
-  );
-
   const placeDecoration = useCallback(
     (id: string, anchorId: number | null) => {
       setDecorations((prev) => prev.map((d) => (d.id === id ? { ...d, anchorId } : d)));
@@ -523,100 +495,160 @@ export default function ChristmasTreeDecoratePublic() {
     [playChime, spawnSnowBurst]
   );
 
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent, id: string) => {
-      e.preventDefault();
-      e.stopPropagation();
+  // Helpers for drop logic using latest state (via refs)
+  const nextFreeAnchorNow = useCallback(() => {
+    const decos = decorationsRef.current;
+    for (let i = 0; i < TREE_ANCHORS.length; i += 1) {
+      const occupied = decos.some((d) => d.anchorId === i);
+      if (!occupied) return i;
+    }
+    return null;
+  }, []);
 
-      const d = decorations.find((x) => x.id === id);
+  const findNearestAnchorNow = useCallback((tx: number, ty: number, fromAnchor: number | null) => {
+    const decos = decorationsRef.current;
+    let best: { idx: number; dist: number } | null = null;
+    const threshold = 0.16;
+
+    for (let i = 0; i < TREE_ANCHORS.length; i += 1) {
+      const occupied = decos.some((d) => d.anchorId === i);
+      const allowed = !occupied || i === fromAnchor;
+      if (!allowed) continue;
+
+      const a = TREE_ANCHORS[i];
+      const dx = a.x - tx;
+      const dy = a.y - ty;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < threshold && (!best || dist < best.dist)) best = { idx: i, dist };
+    }
+    return best ? best.idx : null;
+  }, []);
+
+  const stagePointerToTreeNorm = useCallback((clientX: number, clientY: number) => {
+    const lay = layoutRef.current;
+    const stage = stageRef.current;
+    if (!lay || !stage) return null;
+    const stageRect = stage.getBoundingClientRect();
+    const x = clientX - stageRect.left;
+    const y = clientY - stageRect.top;
+    const tx = (x - lay.treeLeft) / lay.treeW;
+    const ty = (y - lay.treeTop) / lay.treeH;
+    return { x, y, tx, ty, stageRect };
+  }, []);
+
+  const startDrag = useCallback(
+    (id: string, pointerId: number, clientX: number, clientY: number, input: "pointer" | "touch") => {
+      const d = decorationsRef.current.find((x) => x.id === id);
       if (!d) return;
 
-      (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      // unlock audio context + bg music on first real interaction
+      tryStartBgMusic();
 
-      // If dragging an already placed item, detach immediately so anchor becomes free
       const fromAnchor = d.anchorId;
       if (fromAnchor !== null) placeDecoration(id, null);
 
       setDrag({
         id,
-        pointerId: e.pointerId,
+        pointerId,
         fromAnchor,
         startedOnTray: fromAnchor === null,
-        startX: e.clientX,
-        startY: e.clientY,
-        x: e.clientX,
-        y: e.clientY,
+        startX: clientX,
+        startY: clientY,
+        x: clientX,
+        y: clientY,
         moved: false,
+        input,
       });
     },
-    [decorations, placeDecoration]
+    [placeDecoration, tryStartBgMusic]
   );
 
-  // Pointer move/up listeners (global)
-  useEffect(() => {
-    const onMove = (ev: PointerEvent) => {
-      if (!drag) return;
-      const dx = ev.clientX - drag.startX;
-      const dy = ev.clientY - drag.startY;
-      const moved = drag.moved || Math.hypot(dx, dy) > 6;
-      setDrag((prev) => (prev ? { ...prev, x: ev.clientX, y: ev.clientY, moved } : prev));
-    };
+  // Pointer down (desktop + modern mobile)
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent, id: string) => {
+      if (!started) return;
+      e.preventDefault();
+      e.stopPropagation();
+      try {
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+      } catch {}
+      startDrag(id, e.pointerId, e.clientX, e.clientY, "pointer");
+    },
+    [startDrag, started]
+  );
 
-    const onUp = (ev: PointerEvent) => {
-      if (!drag) return;
+  // Touch fallback (iOS-safe)
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent, id: string) => {
+      if (!started) return;
+      const t = e.changedTouches?.[0];
+      if (!t) return;
+      e.preventDefault();
+      e.stopPropagation();
+      startDrag(id, t.identifier, t.clientX, t.clientY, "touch");
+    },
+    [startDrag, started]
+  );
 
-      const current = stagePointerToTreeNorm(ev.clientX, ev.clientY);
-      const d = decorations.find((x) => x.id === drag.id);
+  const endDragAt = useCallback(
+    (clientX: number, clientY: number) => {
+      const dstate = dragRef.current;
+      if (!dstate) return;
+
+      const decos = decorationsRef.current;
+      const d = decos.find((x) => x.id === dstate.id);
       if (!d) {
         setDrag(null);
         return;
       }
 
-      // ✅ Tap a placed item -> keep it in tray (do NOT auto-snap back)
-      if (!drag.moved && !drag.startedOnTray) {
+      const current = stagePointerToTreeNorm(clientX, clientY);
+      const lay = layoutRef.current;
+
+      // Tap placed item -> remove to tray
+      if (!dstate.moved && !dstate.startedOnTray) {
         placeDecoration(d.id, null);
         setDrag(null);
         return;
       }
 
       // Tap tray item -> auto-place
-      if (!drag.moved && drag.startedOnTray) {
+      if (!dstate.moved && dstate.startedOnTray) {
         const preferred =
-          typeof d.preferredAnchor === "number" && !decorations.some((x) => x.anchorId === d.preferredAnchor)
+          typeof d.preferredAnchor === "number" && !decos.some((x) => x.anchorId === d.preferredAnchor)
             ? d.preferredAnchor
             : null;
-
-        const free = preferred ?? nextFreeAnchor();
+        const free = preferred ?? nextFreeAnchorNow();
         if (free !== null) placeDecoration(d.id, free);
         setDrag(null);
         return;
       }
 
-      if (current && layout) {
-        const { x, tx, ty } = current;
+      if (current && lay) {
+        const { x, tx, ty, stageRect } = current;
 
-        // If dropped in left tray zone => remove to tray
-        const stageRect = stageRef.current?.getBoundingClientRect();
-        const localX = stageRect ? ev.clientX - stageRect.left : x;
-        const trayZoneRight = Math.max(210, layout.stageW * 0.30);
+        // Drop in left tray zone => remove
+        const localX = stageRect ? clientX - stageRect.left : x;
+        const trayZoneRight = Math.max(210, lay.stageW * 0.3);
         if (localX < trayZoneRight) {
           placeDecoration(d.id, null);
           setDrag(null);
           return;
         }
 
+        // Outside tree => revert or tray
         const insideTree = tx >= 0 && tx <= 1 && ty >= 0 && ty <= 1;
         if (!insideTree) {
-          if (drag.fromAnchor !== null) placeDecoration(d.id, drag.fromAnchor);
+          if (dstate.fromAnchor !== null) placeDecoration(d.id, dstate.fromAnchor);
           else placeDecoration(d.id, null);
           setDrag(null);
           return;
         }
 
-        const nearest = findNearestAnchor(tx, ty, drag.fromAnchor);
+        const nearest = findNearestAnchorNow(tx, ty, dstate.fromAnchor);
         if (nearest !== null) placeDecoration(d.id, nearest);
         else {
-          if (drag.fromAnchor !== null) placeDecoration(d.id, drag.fromAnchor);
+          if (dstate.fromAnchor !== null) placeDecoration(d.id, dstate.fromAnchor);
           else placeDecoration(d.id, null);
         }
 
@@ -624,19 +656,89 @@ export default function ChristmasTreeDecoratePublic() {
         return;
       }
 
-      if (drag.fromAnchor !== null) placeDecoration(d.id, drag.fromAnchor);
+      // fallback revert
+      if (dstate.fromAnchor !== null) placeDecoration(d.id, dstate.fromAnchor);
       setDrag(null);
+    },
+    [findNearestAnchorNow, nextFreeAnchorNow, placeDecoration, stagePointerToTreeNorm]
+  );
+
+  // ✅ Global listeners ONCE (stable) + iOS scroll prevention
+  useEffect(() => {
+    const onPointerMove = (ev: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d || d.input !== "pointer") return;
+      if (ev.pointerId !== d.pointerId) return;
+      ev.preventDefault?.();
+      const dx = ev.clientX - d.startX;
+      const dy = ev.clientY - d.startY;
+      const moved = d.moved || Math.hypot(dx, dy) > 6;
+      setDrag((prev) => (prev ? { ...prev, x: ev.clientX, y: ev.clientY, moved } : prev));
     };
 
-    window.addEventListener("pointermove", onMove, { passive: false });
-    window.addEventListener("pointerup", onUp, { passive: false });
+    const onPointerUp = (ev: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d || d.input !== "pointer") return;
+      if (ev.pointerId !== d.pointerId) return;
+      ev.preventDefault?.();
+      endDragAt(ev.clientX, ev.clientY);
+    };
+
+    const onPointerCancel = (ev: PointerEvent) => {
+      const d = dragRef.current;
+      if (!d || d.input !== "pointer") return;
+      if (ev.pointerId !== d.pointerId) return;
+      // revert safely
+      endDragAt(d.x, d.y);
+    };
+
+    const onTouchMove = (ev: TouchEvent) => {
+      const d = dragRef.current;
+      if (!d || d.input !== "touch") return;
+
+      const t = Array.from(ev.changedTouches).find((x) => x.identifier === d.pointerId);
+      if (!t) return;
+
+      // ✅ iOS: MUST be passive:false + preventDefault to stop scrolling/bounce
+      ev.preventDefault();
+
+      const dx = t.clientX - d.startX;
+      const dy = t.clientY - d.startY;
+      const moved = d.moved || Math.hypot(dx, dy) > 6;
+      setDrag((prev) => (prev ? { ...prev, x: t.clientX, y: t.clientY, moved } : prev));
+    };
+
+    const onTouchEnd = (ev: TouchEvent) => {
+      const d = dragRef.current;
+      if (!d || d.input !== "touch") return;
+
+      const t = Array.from(ev.changedTouches).find((x) => x.identifier === d.pointerId);
+      if (!t) return;
+
+      ev.preventDefault();
+      endDragAt(t.clientX, t.clientY);
+    };
+
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", onPointerUp, { passive: false });
+    window.addEventListener("pointercancel", onPointerCancel, { passive: false });
+
+    window.addEventListener("touchmove", onTouchMove, { passive: false });
+    window.addEventListener("touchend", onTouchEnd, { passive: false });
+    window.addEventListener("touchcancel", onTouchEnd, { passive: false });
+
     return () => {
-      window.removeEventListener("pointermove", onMove as any);
-      window.removeEventListener("pointerup", onUp as any);
-    };
-  }, [drag, decorations, findNearestAnchor, layout, nextFreeAnchor, placeDecoration, stagePointerToTreeNorm]);
+      window.removeEventListener("pointermove", onPointerMove as any);
+      window.removeEventListener("pointerup", onPointerUp as any);
+      window.removeEventListener("pointercancel", onPointerCancel as any);
 
-  // Completion chime once + show WOW popup + confetti
+      window.removeEventListener("touchmove", onTouchMove as any);
+      window.removeEventListener("touchend", onTouchEnd as any);
+      window.removeEventListener("touchcancel", onTouchEnd as any);
+    };
+  }, [endDragAt]);
+
+  // Completion -> wow
   useEffect(() => {
     if (!isComplete) return;
     playChime("complete");
@@ -662,8 +764,6 @@ export default function ChristmasTreeDecoratePublic() {
     if (!layout || !stageRect) return null;
 
     const isMobile = layout.stageW < 640;
-
-    // ✅ Two vertical panes: 8 items each (2 columns, 8 rows)
     const cols = 2;
     const rows = 8;
 
@@ -688,21 +788,20 @@ export default function ChristmasTreeDecoratePublic() {
     const sizeById = (id: string, onTree: boolean) => {
       const n = Number(id.replace("d", ""));
       if (!onTree) return trayCell;
-      if (isMobile) {
-        if (n === 1) return 86; // star
-        return 78;
-      }
-      if (n === 1) return 100;
-      return 86;
+      if (isMobile) return n === 1 ? 86 : 78;
+      return n === 1 ? 100 : 86;
     };
 
     const getPosForDecoration = (d: Decoration) => {
-      if (drag?.id === d.id) {
-        const x = drag.x - stageRect.left;
-        const y = drag.y - stageRect.top;
+      // dragging follows pointer
+      const dstate = dragRef.current;
+      if (dstate?.id === d.id) {
+        const x = dstate.x - stageRect.left;
+        const y = dstate.y - stageRect.top;
         return { left: x, top: y, z: 90 };
       }
 
+      // placed on tree
       if (d.anchorId !== null) {
         const a = TREE_ANCHORS[d.anchorId];
         const left = layout.treeLeft + a.x * layout.treeW;
@@ -710,13 +809,13 @@ export default function ChristmasTreeDecoratePublic() {
         return { left, top, z: 60 };
       }
 
-      const idx = d.homeIndex; // 0..15
+      // tray
+      const idx = d.homeIndex;
       const col = idx < 8 ? 0 : 1;
       const row = idx % 8;
 
       const left = panelLeft + panelPadding + col * (trayCell + colGap) + trayCell / 2;
       const top = panelTop + panelPadding + row * (trayCell + rowGap) + trayCell / 2;
-
       return { left, top, z: 55 };
     };
 
@@ -724,8 +823,6 @@ export default function ChristmasTreeDecoratePublic() {
 
     return {
       isMobile,
-      cols,
-      rows,
       panelLeft,
       panelTop,
       panelW,
@@ -733,18 +830,17 @@ export default function ChristmasTreeDecoratePublic() {
       panelPadding,
       trayCell,
       colGap,
-      rowGap,
       trayZoneRight,
       sizeById,
       getPosForDecoration,
     };
-  }, [drag, layout]);
+  }, [layout]);
 
-  // ✅ Position win popup BESIDE the tree (desktop), center on small screens
+  // Win popup beside tree (desktop), center on small
   const winStyle = useMemo<React.CSSProperties>(() => {
     if (!layout) return { left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: 420 };
 
-    const isSmall = layout.stageW < 900; // keep center on small screens
+    const isSmall = layout.stageW < 900;
     const cardW = isSmall ? 340 : 460;
     const cardH = isSmall ? 260 : 280;
     if (isSmall) return { left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: cardW };
@@ -753,12 +849,8 @@ export default function ChristmasTreeDecoratePublic() {
     const rightSpace = layout.stageW - (layout.treeLeft + layout.treeW) - margin;
     const leftSpace = layout.treeLeft - margin;
 
-    // Prefer right side; if not enough, go left side.
     let left = layout.treeLeft + layout.treeW + margin;
-    if (rightSpace < cardW + 10 && leftSpace >= cardW + 10) {
-      left = layout.treeLeft - cardW - margin;
-    }
-
+    if (rightSpace < cardW + 10 && leftSpace >= cardW + 10) left = layout.treeLeft - cardW - margin;
     left = Math.max(12, Math.min(left, layout.stageW - cardW - 12));
 
     const preferredTop = layout.treeTop + layout.treeH * 0.32;
@@ -767,18 +859,23 @@ export default function ChristmasTreeDecoratePublic() {
     return { left, top, transform: "translate(0,0)", width: cardW };
   }, [layout]);
 
-  const needFullscreen = useMemo(() => !isFullscreenNow(), []);
-  const [showFsHint, setShowFsHint] = useState(needFullscreen);
+  const startGame = useCallback(async () => {
+    setStarted(true);
 
-  useEffect(() => {
-    const onFs = () => setShowFsHint(!isFullscreenNow());
-    document.addEventListener("fullscreenchange", onFs);
-    document.addEventListener("webkitfullscreenchange", onFs as any);
-    return () => {
-      document.removeEventListener("fullscreenchange", onFs);
-      document.removeEventListener("webkitfullscreenchange", onFs as any);
-    };
-  }, []);
+    // Best-effort: fullscreen + landscape (Android works; iOS may ignore)
+    await requestFullscreenSafe();
+    await lockLandscapeSafe();
+
+    // Must be inside user gesture -> this is called from Start button
+    await tryStartBgMusic();
+
+    // iOS AudioContext resume for chimes (safe)
+    try {
+      if (audioCtxRef.current?.state === "suspended") {
+        await audioCtxRef.current.resume();
+      }
+    } catch {}
+  }, [tryStartBgMusic]);
 
   return (
     <div className="fixed inset-0 z-[99999] bg-black text-white">
@@ -787,8 +884,7 @@ export default function ChristmasTreeDecoratePublic() {
           .ts-snow-layer { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
 
           .ts-snowflake {
-            position:absolute;
-            top:-12%;
+            position:absolute; top:-12%;
             border-radius:9999px;
             background: rgba(255,255,255,0.98);
             filter: drop-shadow(0 0 var(--glow, 18px) rgba(255,255,255,0.70));
@@ -801,8 +897,7 @@ export default function ChristmasTreeDecoratePublic() {
           @keyframes tsSnowDrift { from { transform: translateX(0); } to { transform: translateX(var(--drift, 18px)); } }
 
           .ts-burstflake {
-            position:absolute;
-            top:-10%;
+            position:absolute; top:-10%;
             border-radius:9999px;
             background: rgba(255,255,255,0.98);
             filter: drop-shadow(0 0 var(--glow, 22px) rgba(255,255,255,0.80));
@@ -891,7 +986,16 @@ export default function ChristmasTreeDecoratePublic() {
         `}
       </style>
 
-      <div ref={stageRef} className="relative h-full w-full overflow-hidden" style={{ touchAction: "none" }}>
+      <div
+        ref={stageRef}
+        className="relative h-full w-full overflow-hidden"
+        style={{
+          touchAction: "none",
+          WebkitUserSelect: "none",
+          userSelect: "none",
+          WebkitTouchCallout: "none",
+        }}
+      >
         {/* Background */}
         <img
           src="/seasonal/christmas/gamebg.jpeg"
@@ -901,12 +1005,12 @@ export default function ChristmasTreeDecoratePublic() {
           onLoad={measure}
         />
 
-        {/* Stronger vignette + glow */}
+        {/* Vignette */}
         <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/10 via-transparent to-black/45" />
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.22),rgba(255,255,255,0.0)_55%)]" />
         <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_70%_30%,rgba(255,240,180,0.16),rgba(255,255,255,0.0)_55%)]" />
 
-        {/* Ambient slow glowing snow */}
+        {/* Ambient snow */}
         <div className="ts-snow-layer z-10">
           {ambientSnow.map((f) => (
             <div
@@ -926,7 +1030,7 @@ export default function ChristmasTreeDecoratePublic() {
           ))}
         </div>
 
-        {/* Placement snowfall burst */}
+        {/* Placement burst */}
         <div className="ts-snow-layer z-20">
           {bursts.map((b) =>
             b.flakes.map((f) => (
@@ -948,7 +1052,7 @@ export default function ChristmasTreeDecoratePublic() {
           )}
         </div>
 
-        {/* Twinkle stars + boom */}
+        {/* Twinkles */}
         <div className="absolute inset-0 z-20 pointer-events-none">
           {twinkles.map((t) => (
             <div
@@ -976,12 +1080,19 @@ export default function ChristmasTreeDecoratePublic() {
         </div>
 
         <div className="absolute top-4 right-4 z-60 flex items-center gap-2">
-          {/* ✅ Volume toggle (next to Exit) */}
+          {/* Volume */}
           <button
             className="rounded-full bg-white/90 text-slate-900 h-9 w-9 grid place-items-center shadow-sm hover:bg-white"
             aria-label={bgMuted ? "Unmute music" : "Mute music"}
             title={bgMuted ? "Unmute music" : "Mute music"}
-            onClick={() => setBgMuted((m) => !m)}
+            onClick={() => {
+              setBgMuted((m) => {
+                const next = !m;
+                // if unmuting, try play again immediately
+                if (!next) setTimeout(() => void tryStartBgMusic(), 0);
+                return next;
+              });
+            }}
           >
             {bgMuted ? <VolumeOffIcon className="h-5 w-5" /> : <VolumeOnIcon className="h-5 w-5" />}
           </button>
@@ -998,28 +1109,62 @@ export default function ChristmasTreeDecoratePublic() {
           </button>
         </div>
 
-        {/* Fullscreen helper */}
-        {showFsHint && (
-          <div className="absolute inset-0 z-70 flex items-center justify-center">
-            <div className="rounded-3xl bg-black/55 p-6 text-center shadow-2xl border border-white/15 backdrop-blur">
-              <div className="text-xl font-bold">Tap to Start Fullscreen</div>
-              <div className="mt-1 text-sm text-white/85">For the best experience, play in full screen.</div>
+        {/* ✅ Start overlay (fixes iOS audio + sets best landscape/fullscreen) */}
+        {!started && (
+          <div className="absolute inset-0 z-[999] flex items-center justify-center bg-black/55">
+            <div className="rounded-3xl bg-black/55 p-6 text-center shadow-2xl border border-white/15 backdrop-blur max-w-[520px] mx-4">
+              <div className="text-2xl font-extrabold">🎄 Christmas Tree Decorator</div>
+              <div className="mt-2 text-sm text-white/85">
+                Tap Start to enable music and touch controls. On phones, rotate to landscape for the best experience.
+              </div>
+
               <button
-                className="mt-4 inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 hover:bg-white/95"
+                className="mt-5 inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 hover:bg-white/95"
                 onClick={async () => {
-                  await requestFullscreenSafe();
-                  setShowFsHint(false);
-                  // also helps start music (counts as a user gesture)
-                  tryStartBgMusic();
+                  await startGame();
                 }}
               >
-                Enter Fullscreen
+                Start Game
               </button>
+
+              <div className="mt-3 text-[11px] text-white/70">
+                If your device doesn’t enter landscape automatically, just rotate your phone.
+              </div>
             </div>
           </div>
         )}
 
-        {/* ✅ Tray panel (2 vertical panes, 8 each) */}
+        {/* ✅ Landscape overlay (phones in portrait) */}
+        {started && needLandscape && (
+          <div className="absolute inset-0 z-[998] flex items-center justify-center bg-black/70">
+            <div className="rounded-3xl bg-black/60 p-6 text-center shadow-2xl border border-white/15 backdrop-blur max-w-[520px] mx-4">
+              <div className="text-xl font-bold">Rotate to Landscape 📱➡️</div>
+              <div className="mt-2 text-sm text-white/85">
+                This game works best in landscape mode. Please rotate your phone.
+              </div>
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <button
+                  className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 hover:bg-white/95"
+                  onClick={async () => {
+                    await requestFullscreenSafe();
+                    await lockLandscapeSafe();
+                    computeNeedLandscape();
+                  }}
+                >
+                  Try Auto-Landscape
+                </button>
+                <button
+                  className="rounded-full bg-white/10 px-5 py-2 text-sm font-semibold text-white border border-white/20"
+                  onClick={() => setNeedLandscape(false)}
+                >
+                  Continue
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Tray panel */}
         {ui && (
           <div
             className="absolute z-30 rounded-3xl border border-white/12 bg-white/10 backdrop-blur"
@@ -1037,12 +1182,9 @@ export default function ChristmasTreeDecoratePublic() {
               <div className="text-[10px] text-white/70">drag or tap</div>
             </div>
 
-            {/* subtle column divider */}
             <div
               className="absolute top-11 bottom-3 w-px bg-white/10"
-              style={{
-                left: ui.panelPadding + ui.trayCell + ui.colGap / 2,
-              }}
+              style={{ left: ui.panelPadding + ui.trayCell + ui.colGap / 2 }}
             />
           </div>
         )}
@@ -1057,7 +1199,7 @@ export default function ChristmasTreeDecoratePublic() {
           className="absolute left-1/2 bottom-0 -translate-x-1/2 h-[86%] md:h-[92%] w-auto object-contain drop-shadow-2xl select-none pointer-events-none"
         />
 
-        {/* Brighter ambient “tree lights” */}
+        {/* Tree lights */}
         {layout &&
           TREE_ANCHORS.slice(1).map((a, i) => {
             const left = layout.treeLeft + a.x * layout.treeW;
@@ -1071,11 +1213,7 @@ export default function ChristmasTreeDecoratePublic() {
             const c = colors[i % colors.length];
             const delay = `${(i * 190) % 1100}ms`;
             return (
-              <div
-                key={`light-${i}`}
-                className="absolute z-25 pointer-events-none"
-                style={{ left, top, transform: "translate(-50%, -50%)" }}
-              >
+              <div key={`light-${i}`} className="absolute z-25 pointer-events-none" style={{ left, top, transform: "translate(-50%, -50%)" }}>
                 <div
                   className="h-2.5 w-2.5 rounded-full"
                   style={{
@@ -1089,7 +1227,7 @@ export default function ChristmasTreeDecoratePublic() {
             );
           })}
 
-        {/* Decorations (your real PNGs) */}
+        {/* Decorations */}
         {ui &&
           decorations.map((d) => {
             const pos = ui.getPosForDecoration(d);
@@ -1112,12 +1250,15 @@ export default function ChristmasTreeDecoratePublic() {
                   transform: "translate(-50%, -50%)",
                   touchAction: "none",
                   userSelect: "none",
+                  WebkitUserSelect: "none",
                 }}
               >
                 <button
                   type="button"
                   aria-label={d.label}
                   onPointerDown={(e) => handlePointerDown(e, d.id)}
+                  onTouchStart={(e) => handleTouchStart(e, d.id)}
+                  onContextMenu={(e) => e.preventDefault()}
                   className={[
                     "transition-transform",
                     isDragging ? "scale-[1.06]" : "",
@@ -1128,6 +1269,7 @@ export default function ChristmasTreeDecoratePublic() {
                     width: size,
                     height: size,
                     cursor: "grab",
+                    WebkitTapHighlightColor: "transparent",
 
                     background: onTree ? "transparent" : trayBg,
                     border: onTree ? "none" : `1px solid ${trayBorder}`,
@@ -1136,7 +1278,6 @@ export default function ChristmasTreeDecoratePublic() {
 
                     backdropFilter: "none",
                     WebkitBackdropFilter: "none",
-
                     boxShadow: onTree ? "none" : "0 10px 18px rgba(0,0,0,0.22)",
                   }}
                 >
@@ -1154,10 +1295,9 @@ export default function ChristmasTreeDecoratePublic() {
             );
           })}
 
-        {/* ✅ WOW WIN POPUP (BESIDE TREE) */}
+        {/* Win popup */}
         {showWin && isComplete && (
           <div className="absolute inset-0 z-80">
-            {/* Confetti overlay */}
             <div className="absolute inset-0 pointer-events-none">
               {confetti.map((p) => (
                 <div
@@ -1180,10 +1320,8 @@ export default function ChristmasTreeDecoratePublic() {
               ))}
             </div>
 
-            {/* Dim + glow */}
             <div className="absolute inset-0 bg-black/30" />
 
-            {/* Card (positioned beside the tree using winStyle) */}
             <div className="absolute ts-win-pop pointer-events-auto" style={winStyle}>
               <div
                 className="rounded-[32px] p-[2px] shadow-2xl"
@@ -1203,28 +1341,20 @@ export default function ChristmasTreeDecoratePublic() {
                   <div className="text-4xl font-extrabold" style={{ textShadow: "0 8px 22px rgba(0,0,0,0.25)" }}>
                     🎄 Merry Christmas! 🎁
                   </div>
-                  <div className="mt-2 text-lg font-semibold text-white/95">
-                    WOW! Your tree looks super magical ✨
-                  </div>
+                  <div className="mt-2 text-lg font-semibold text-white/95">WOW! Your tree looks super magical ✨</div>
                   <div className="mt-1 text-sm text-white/85">You placed all the decorations perfectly!</div>
 
                   <div className="mt-6 flex items-center justify-center gap-3">
                     <button
                       className="rounded-full px-6 py-2 text-sm font-semibold text-slate-900"
-                      style={{
-                        background: "rgba(255,255,255,0.92)",
-                        boxShadow: "0 14px 28px rgba(0,0,0,0.28)",
-                      }}
+                      style={{ background: "rgba(255,255,255,0.92)", boxShadow: "0 14px 28px rgba(0,0,0,0.28)" }}
                       onClick={() => resetAll()}
                     >
                       Play Again
                     </button>
                     <button
                       className="rounded-full px-6 py-2 text-sm font-semibold text-white"
-                      style={{
-                        background: "rgba(0,0,0,0.25)",
-                        border: "1px solid rgba(255,255,255,0.25)",
-                      }}
+                      style={{ background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.25)" }}
                       onClick={async () => {
                         stopBgMusic();
                         await exitFullscreenSafe();
@@ -1235,18 +1365,16 @@ export default function ChristmasTreeDecoratePublic() {
                     </button>
                   </div>
 
-                  <div className="mt-4 text-[11px] text-white/75">
-                    Tip: Tap any tree decoration to send it back to the tray.
-                  </div>
+                  <div className="mt-4 text-[11px] text-white/75">Tip: Tap any tree decoration to send it back to the tray.</div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* tiny hidden indicator (optional) - keeps state visible in dev */}
+        {/* hidden debug */}
         <div className="hidden">
-          bgPlaying:{String(bgPlaying)} muted:{String(bgMuted)}
+          bgPlaying:{String(bgPlaying)} muted:{String(bgMuted)} fullscreen:{String(isFullscreenNow())}
         </div>
       </div>
     </div>
