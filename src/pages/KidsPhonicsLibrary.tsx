@@ -41,6 +41,14 @@ const PHONICS_GAMES = [
     color: 'text-blue-300',
     stageId: 'sound_foundations',
   },
+  {
+    id: 'phonics_letter_tracing',
+    title: 'Letter Tracing',
+    description: 'Age 3–6 — Trace letters from dot to star',
+    route: '/kids/games/phonics/letter-tracing',
+    color: 'text-green-300',
+    stageId: 'sound_foundations',
+  },
   // More games will be added here later
 ];
 

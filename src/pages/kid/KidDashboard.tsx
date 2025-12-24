@@ -385,13 +385,14 @@ const KidDashboard: React.FC = () => {
             </Card>
 
             <SoundDetectiveGame
-              kidId={selectedKid.uid ?? selectedKid.id ?? undefined}
-              kidName={
-                selectedKid.fullName ||
-                selectedKid.displayName ||
-                selectedKid.name ||
-                'your child'
-              }
+              {...({
+                kidId: selectedKid.uid ?? selectedKid.id ?? undefined,
+                kidName:
+                  selectedKid.fullName ||
+                  selectedKid.displayName ||
+                  selectedKid.name ||
+                  'your child',
+              } as any)}
             />
           </TabsContent>
         </Tabs>

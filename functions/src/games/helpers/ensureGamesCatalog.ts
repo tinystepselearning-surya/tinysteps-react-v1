@@ -207,6 +207,43 @@ export async function ensureGamesCatalogPatched(db: admin.firestore.Firestore): 
     if (Object.keys(soundDetectivePatch).length > 0) {
       patchGames['sound-detective'] = soundDetectivePatch;
     }
+
+    // Letter Tracing game (new)
+    const letterTracingGame = games['letter-tracing'] || {};
+    const letterTracingPatch: any = {};
+    if (letterTracingGame.progressDocId !== 'phonics_letter_tracing') {
+      letterTracingPatch.progressDocId = 'phonics_letter_tracing';
+      patchedPaths.push('games.letter-tracing.progressDocId');
+      needsPatch = true;
+    }
+    if (letterTracingGame.totalLevels !== 5) {
+      letterTracingPatch.totalLevels = 5;
+      patchedPaths.push('games.letter-tracing.totalLevels');
+      needsPatch = true;
+    }
+    if (letterTracingGame.category !== 'letter_sounds') {
+      letterTracingPatch.category = 'letter_sounds';
+      patchedPaths.push('games.letter-tracing.category');
+      needsPatch = true;
+    }
+    if (letterTracingGame.active === undefined) {
+      letterTracingPatch.active = true;
+      patchedPaths.push('games.letter-tracing.active');
+      needsPatch = true;
+    }
+    if (!letterTracingGame.title) {
+      letterTracingPatch.title = 'Letter Tracing';
+      patchedPaths.push('games.letter-tracing.title');
+      needsPatch = true;
+    }
+    if (letterTracingGame.order === undefined) {
+      letterTracingPatch.order = 35;
+      patchedPaths.push('games.letter-tracing.order');
+      needsPatch = true;
+    }
+    if (Object.keys(letterTracingPatch).length > 0) {
+      patchGames['letter-tracing'] = letterTracingPatch;
+    }
     
     // Rhyme Time game
     const rhymeTimeGame = games['rhyme-time'] || {};
