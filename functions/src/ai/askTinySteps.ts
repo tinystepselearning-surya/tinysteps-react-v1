@@ -11,10 +11,10 @@ export const askTinySteps = onCall(
     region: 'asia-south1',
     memory: '256MiB',
     timeoutSeconds: 60,
-    secrets: ['groq-api-key'],
+secrets: ["GROQ_API_KEY", "groq-api-key"],
   },
   async (request) => {
-    const apiKey = process.env.GROQ_API_KEY;
+const apiKey = process.env.GROQ_API_KEY || process.env["groq-api-key"];
     if (!apiKey) {
       logger.error('askTinySteps: GROQ_API_KEY missing');
       throw new HttpsError('failed-precondition', 'GROQ_API_KEY is not set.');
