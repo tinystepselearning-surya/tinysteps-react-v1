@@ -15,7 +15,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import TrustSignals from '../components/Trust/TrustSignals';
 import TestimonialsCarousel from '../components/Home/TestimonialsCarousel';
 import TrialForm from '../components/forms/TrialForm';
-import StatsStrip from '../components/Home/StatsStrip';
+// StatsStrip removed per seasonal changes
 const PopularPrograms = lazy(() => import('../components/Home/PopularPrograms'));
 const GlobalImpactSection = lazy(() => import('../components/Home/GlobalImpactSection'));
 const TrustSignalsLazy = lazy(() => import('../components/Trust/TrustSignals'));
@@ -176,7 +176,6 @@ export default function HomePage() {
       />
       <MobileLandingView />
       <ConversionHero />
-      <StatsStrip />
       {/* Christmas banner — seasonal tile */}
       <section className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
