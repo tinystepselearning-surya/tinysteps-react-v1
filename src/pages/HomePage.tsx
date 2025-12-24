@@ -177,6 +177,42 @@ export default function HomePage() {
       <MobileLandingView />
       <ConversionHero />
       <StatsStrip />
+      {/* Christmas banner — seasonal tile */}
+      <section className="px-6 py-6">
+        <div className="mx-auto max-w-6xl">
+          <a
+            href="/seasonal/christmas-tree"
+            className="group block rounded-2xl overflow-hidden border bg-white p-0 shadow-lg hover:shadow-xl transition"
+            aria-label="Open Christmas Tree Decorator"
+          >
+            <div className="relative flex items-center justify-between h-28 md:h-32">
+              <img
+                src="/seasonal/christmas/homepagetile.jpg"
+                alt="Christmas banner"
+                className="absolute inset-0 w-full h-full object-cover"
+                draggable={false}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30" />
+
+              <div className="relative z-10 flex items-center justify-between w-full px-6">
+                <div className="text-white">
+                  <div className="text-xl font-semibold">Merry Christmas</div>
+                  <div className="text-sm opacity-90">Festive fun: decorate the tree and celebrate!</div>
+                </div>
+
+                <div className="relative z-10">
+                  <a
+                    href="/seasonal/christmas-tree"
+                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
+                  >
+                    Open Game
+                  </a>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>
       <Suspense fallback={null}><PopularPrograms /></Suspense>
       <Suspense fallback={null}><GlobalImpactSection /></Suspense>
       <Suspense fallback={null}><TrustSignalsLazy /></Suspense>

@@ -13,6 +13,7 @@ const CourseDetailPage = lazy(() => import('../pages/CourseDetailPage'));
 const BlogPage = lazy(() => import('../pages/BlogPage'));
 const BlogPostPage = lazy(() => import('../pages/BlogPostPage'));
 const PricingPage = lazy(() => import('../pages/PricingPage'));
+const ChristmasTreeDecoratePublic = lazy(() => import('../pages/public/seasonal/ChristmasTreeDecoratePublic'));
 const FAQPage = lazy(() => import('../pages/FAQPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
 const WhyTinyStepsPage = lazy(() => import('../pages/WhyTinyStepsPage'));
@@ -85,6 +86,7 @@ const router = createBrowserRouter(
         { index: true, element: <HomePage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
+        { path: 'seasonal/christmas-tree', element: <ChristmasTreeDecoratePublic /> },
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
