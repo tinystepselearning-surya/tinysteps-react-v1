@@ -70,6 +70,9 @@ export { ensureGamesCatalogNow } from './games/ensureGamesCatalogNow';
 // Games: Cleanup Catalog Structure (Admin only)
 export { cleanupGamesCatalogNow } from './games/cleanupGamesCatalogNow';
 
+// AI: Ask TinySteps callable
+export { askTinySteps } from './ai/askTinySteps';
+
 // Health ping (optional small endpoint you may add later)
 // export { healthCheck } from './health'; // Uncomment only if file exists
 
