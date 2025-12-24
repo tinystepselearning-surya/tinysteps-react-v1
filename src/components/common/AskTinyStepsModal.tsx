@@ -1,31 +1,30 @@
 // src/components/common/AskTinyStepsModal.tsx
-import React, { useEffect } from 'react';
-import { useAskTinyStepsChat } from '../../hooks/useAskTinyStepsChat';
+import React, { useEffect } from "react";
+import { useAskTinyStepsChat } from "../../hooks/useAskTinyStepsChat";
 
 type AskTinyStepsModalProps = {
   open: boolean;
   onClose: () => void;
 };
 
-export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({ open, onClose }) => {
-  const { messages, input, setInput, loading, error, sendMessage, resetChat } = useAskTinyStepsChat();
+export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({
+  open,
+  onClose,
+}) => {
+  const { messages, input, setInput, loading, error, sendMessage, resetChat } =
+    useAskTinyStepsChat();
 
   useEffect(() => {
     if (!open) return;
-    console.log('Modal opened');
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === "Escape") onClose();
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [open, onClose]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
+    if (e.target === e.currentTarget) onClose();
   };
 
   const handleSend = () => {
@@ -33,7 +32,7 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({ open, onCl
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
     }
@@ -59,7 +58,9 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({ open, onCl
               ×
             </button>
           </div>
-          <p className="text-sm text-gray-600 mt-1">Ask about classes, timings, pricing, curriculum…</p>
+          <p className="text-sm text-gray-600 mt-1">
+            Ask about classes, timings, pricing, curriculum…
+          </p>
         </div>
 
         {/* Body */}
@@ -69,24 +70,30 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({ open, onCl
               Example: "What are your fees for 1:1 phonics classes?"
             </div>
           )}
+
           {messages.map((msg, index) => (
             <div
               key={index}
-              className={`mb-3 flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              className={`mb-3 flex ${
+                msg.role === "user" ? "justify-end" : "justify-start"
+              }`}
             >
               <div
-                className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
-                  msg.role === 'user'
-                    ? 'bg-orange-100 text-orange-900'
-                    : 'bg-gray-100 text-gray-900 border'
+                className={`max-w-xs px-3 py-2 rounded-lg text-sm whitespace-pre-line ${
+                  msg.role === "user"
+                    ? "bg-orange-100 text-orange-900"
+                    : "bg-gray-100 text-gray-900 border"
                 }`}
               >
                 {msg.content}
               </div>
             </div>
           ))}
+
           {loading && (
-            <div className="text-center text-gray-500 text-sm">Tiny Steps is typing…</div>
+            <div className="text-center text-gray-500 text-sm">
+              Tiny Steps is typing…
+            </div>
           )}
           {error && (
             <div className="text-center text-red-500 text-sm mt-2">{error}</div>
@@ -113,20 +120,35 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({ open, onCl
               Send
             </button>
           </div>
+
+          {/* Small disclosure */}
+          <div className="text-[11px] text-gray-500 text-center mb-2">
+            Chats may be stored to improve responses.
+          </div>
+
           <div className="text-center">
             <a
-              href="https://wa.me/91961839833"
+              href="https://wa.me/919618398383"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 hover:underline"
             >
               Talk to a human advisor on WhatsApp →
             </a>
+
+            {/* Optional: Clear chat (uncomment if you want) */}
+            {/*
+            <button
+              onClick={resetChat}
+              className="ml-3 text-sm text-gray-500 hover:underline"
+              type="button"
+            >
+              Clear chat
+            </button>
+            */}
           </div>
         </div>
       </div>
     </div>
   );
 };
-
-// Named export already provided above.
