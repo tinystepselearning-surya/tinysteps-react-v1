@@ -78,6 +78,8 @@ const Layout: FC = () => (
 
 const router = createBrowserRouter(
   [
+    // Public chrome-less seasonal route (renders without main Layout/header)
+    { path: 'seasonal/christmas-tree', element: <ChristmasTreeDecoratePublic /> },
     {
       element: <Layout />,
       errorElement: <NotFoundPage />,

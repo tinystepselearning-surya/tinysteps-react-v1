@@ -317,3 +317,32 @@ body.custom-cursor-enabled .hover-highlight:hover {
 .card {
   will-change: transform;
 }
+
+/* Hide site header when a chrome-less game is active */
+body.ts-game-fullscreen header,
+body.ts-game-fullscreen [data-site-header],
+body.ts-game-fullscreen .site-header,
+body.ts-game-fullscreen nav[aria-label="Primary"] {
+  display: none !important;
+}
+
+/* Small confetti animation for celebrations */
+.confetti-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 16px;
+  opacity: 0.95;
+  transform-origin: center;
+  will-change: transform, opacity;
+  animation: confetti-fall 1200ms linear forwards;
+}
+@keyframes confetti-fall {
+  0% { transform: translateY(-20vh) rotate(0deg) scale(1); opacity: 1; }
+  100% { transform: translateY(120vh) rotate(720deg) scale(0.9); opacity: 0; }
+}

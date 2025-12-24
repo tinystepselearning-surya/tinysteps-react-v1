@@ -7,7 +7,7 @@ const ConversionHero: React.FC = () => {
   return (
     <section
       data-animate="fade-up"
-      className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffe6cc,_#fff8ec,_#dff2ff_70%)] pt-10 pb-16 md:pt-12 md:pb-20 lg:pt-14 lg:pb-24"
+      className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffe6cc,_#fff8ec,_#dff2ff_70%)] pt-6 pb-10 md:pt-8 md:pb-12 lg:pt-10 lg:pb-14"
     >
       <div className="pointer-events-none absolute inset-0 opacity-30">
         <div
@@ -33,13 +33,13 @@ const ConversionHero: React.FC = () => {
       </div>
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-16">
+        <div className="grid gap-6 lg:grid-cols-2 lg:items-start lg:gap-8">
           <div>
             <div className="inline-flex items-center rounded-full border border-white/40 bg-white/10 px-4 py-1 text-xs font-medium tracking-wide text-slate-900/80 shadow-sm backdrop-blur">
               Tiny Steps • Building Bright Futures
             </div>
             <motion.h1
-              className="mt-6 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] leading-tight max-w-3xl"
+              className="mt-4 text-balance text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] leading-tight max-w-3xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -52,7 +52,7 @@ const ConversionHero: React.FC = () => {
               <span className="whitespace-nowrap">3–12.</span>
             </motion.h1>
             <motion.p
-              className="mt-4 text-base sm:text-lg text-slate-700 max-w-xl"
+              className="mt-3 text-base sm:text-lg text-slate-700 max-w-xl"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -61,7 +61,7 @@ const ConversionHero: React.FC = () => {
               simple weekly progress updates.
             </motion.p>
             <motion.div
-              className="mt-6 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3"
+              className="mt-4 flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-3"
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.4 }}
@@ -82,13 +82,13 @@ const ConversionHero: React.FC = () => {
               </p>
             </motion.div>
 
-            <div className="mt-5 space-y-3 text-sm text-gray-600">
+            <div className="mt-4 space-y-3 text-sm text-gray-600">
               {/* Removed repetitive stats */}
             </div>
           </div>
 
           <div className="w-full max-w-md lg:justify-self-end lg:self-start">
-            <div className="w-full max-w-md rounded-3xl bg-white shadow-xl shadow-slate-900/5 border border-slate-100 p-6 sm:p-7 lg:p-8 space-y-4">
+            <div className="w-full max-w-md rounded-3xl bg-white shadow-xl shadow-slate-900/5 border border-slate-100 p-5 sm:p-6 lg:p-7 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm uppercase tracking-widest text-gray-500">
