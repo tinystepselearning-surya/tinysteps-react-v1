@@ -1,17 +1,33 @@
 // src/hooks/useAskTinyStepsChat.ts
 import { useCallback, useMemo, useState } from "react";
 import { db } from "../lib/firebaseConfig";
-import { addDoc, collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 
 type ChatRole = "user" | "assistant";
 export type AskChatMessage = { role: ChatRole; content: string };
 
+/**
+ * ✅ Curated, deterministic KB (no model calls).
+ * Keep this aligned with website copy.
+ */
 export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
   {
-    id: "pricing",
-    title: "Pricing",
+    id: "assessment",
+    title: "Free Assessment Class (Demo)",
     text:
-      "1:1 classes (35 minutes). Packages: 8 classes ₹4,400; 16 classes ₹8,400; 24 classes ₹12,000. Single class/trial: ₹599.",
+      "Free Assessment Class / Demo is FREE (₹0). We check the child’s level and recommend the right track + level, then confirm a suitable slot on WhatsApp.",
+  },
+  {
+    id: "pricing",
+    title: "Pricing & Packages",
+    text:
+      "1:1 classes (35 minutes). Free Assessment Class (Demo) is FREE (₹0). Packages: 8 classes ₹4,400; 16 classes ₹8,400; 24 classes ₹12,000. Optional single paid class: ₹599.",
   },
   {
     id: "timings",
@@ -26,30 +42,36 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
       "Tracks: Phonics (3–10), Grammar (5–10), Public Speaking (5–12). Personalized 1:1 learning with activities and worksheets.",
   },
   {
-    id: "trial",
-    title: "Trial Class",
-    text:
-      "You can book a paid trial class (₹599). WhatsApp Advisor will help confirm the right level and slot.",
-  },
-  {
     id: "how_it_works",
     title: "How it works",
     text:
-      "Parents share the child’s age/level. We recommend the best track + level, then confirm slots and start 1:1 sessions.",
+      "Parents share the child’s age/level. We do a FREE assessment, recommend the best track + level, confirm slots, then start 1:1 sessions with weekly progress updates.",
   },
 ];
 
 export const ASK_TINYSTEPS_FACTS = {
+  classDurationMins: 35,
+  classModes: ["1:1"] as const,
+
+  // ✅ Important: keep these consistent with website CTA.
+  freeAssessmentPrice: 0,
+
+  // Optional paid single class (not the demo)
+  paidSingleClassPrice: 599,
+
   pricingPackages: [
     { classes: 8, price: 4400, perClass: 550 },
     { classes: 16, price: 8400, perClass: 525 },
     { classes: 24, price: 12000, perClass: 500 },
   ],
-  singleClassPrice: 599,
-  classDurationMins: 35,
-  classModes: ["1:1"] as const,
-  ageRange: "3–10",
-  tracks: ["Phonics", "Grammar", "Public Speaking"] as const,
+
+  ageRangeOverall: "3–12",
+  tracks: [
+    { name: "Phonics", ageRange: "3–10" },
+    { name: "Grammar", ageRange: "5–10" },
+    { name: "Public Speaking", ageRange: "5–12" },
+  ] as const,
+
   whatsappCtaText: "Chat with our WhatsApp Advisor",
   whatsappLink: "https://wa.me/919618398383",
 } as const;
@@ -87,7 +109,14 @@ function retrieve(query: string, topN = 2) {
 // --------------------
 // Intent detection + strict facts formatting
 // --------------------
-type Intent = "greeting" | "pricing" | "timings" | "courses" | "trial" | "general";
+type Intent =
+  | "greeting"
+  | "assessment" // free demo/free assessment
+  | "pricing"
+  | "single_class" // paid one class
+  | "timings"
+  | "courses"
+  | "general";
 
 function detectIntent(q: string): Intent {
   const s = q.toLowerCase();
@@ -95,17 +124,43 @@ function detectIntent(q: string): Intent {
 
   // ✅ Greeting intent (short hi/hello type messages)
   if (
-    /^(hi|hello|hey|hii+|heyy+|hola|namaste|good morning|good afternoon|good evening)\b/.test(trimmed) &&
+    /^(hi|hello|hey|hii+|heyy+|hola|namaste|good morning|good afternoon|good evening)\b/.test(
+      trimmed
+    ) &&
     trimmed.length <= 30
   ) {
     return "greeting";
   }
 
-  // put TRIAL first so "trial price" doesn't get classified as pricing
-  if (/(trial|trial class|single class|try)/.test(s)) return "trial";
-  if (/(price|prices|cost|fee|fees|pricing|package|packages)/.test(s)) return "pricing";
-  if (/(minute|minutes|min|duration|how long|time per class)/.test(s)) return "timings";
-  if (/(phonics|grammar|public speaking|course|track|classes|do you teach)/.test(s)) return "courses";
+  /**
+   * ✅ Very important ordering:
+   * “demo / free assessment / free trial” must be answered as FREE (₹0)
+   * and must NOT fall through to pricing or paid class.
+   */
+  if (
+    /(free\s*assessment|assessment\s*class|demo\s*class|demo|free\s*demo|free\s*trial)/.test(
+      s
+    )
+  ) {
+    return "assessment";
+  }
+
+  // Paid single class (only when explicitly asked)
+  if (
+    /(single\s*class|one\s*class|paid\s*class|paid\s*trial|trial\s*price|trial\s*fee)/.test(
+      s
+    )
+  ) {
+    return "single_class";
+  }
+
+  // Packages / pricing
+  if (/(price|prices|cost|fee|fees|pricing|package|packages|plan|plans)/.test(s))
+    return "pricing";
+  if (/(minute|minutes|min|duration|how long|time per class)/.test(s))
+    return "timings";
+  if (/(phonics|grammar|public speaking|course|track|classes|do you teach)/.test(s))
+    return "courses";
 
   return "general";
 }
@@ -113,37 +168,56 @@ function detectIntent(q: string): Intent {
 function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: string[] } {
   const wa = `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
 
+  if (intent === "assessment") {
+    return {
+      text:
+        `✅ Free Assessment Class (Demo): FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice}).\n` +
+        `We check your child’s level and recommend the right track + level, then confirm a suitable slot.\n\n` +
+        `${wa}`,
+      sourcesUsed: ["assessment"],
+    };
+  }
+
   if (intent === "pricing") {
     const lines = ASK_TINYSTEPS_FACTS.pricingPackages.map(
       (p) => `• ${p.classes} classes — ₹${p.price} (₹${p.perClass}/class)`
     );
-    lines.push(`• Single class / trial — ₹${ASK_TINYSTEPS_FACTS.singleClassPrice}`);
+
+    lines.unshift(
+      `✅ Free Assessment Class (Demo): FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice})`
+    );
+    lines.push(`• Optional single paid class — ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}`);
     lines.push(`\n${wa}`);
-    return { text: lines.join("\n"), sourcesUsed: ["pricing"] };
+
+    return { text: lines.join("\n"), sourcesUsed: ["pricing", "assessment"] };
+  }
+
+  if (intent === "single_class") {
+    return {
+      text:
+        `Optional single paid class: ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice} (35 minutes, 1:1).\n` +
+        `✅ Free Assessment Class (Demo) is FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice}) — recommended first to pick the right level.\n\n` +
+        `${wa}`,
+      sourcesUsed: ["pricing", "assessment"],
+    };
   }
 
   if (intent === "timings") {
     return {
-      text: `Each class is ${ASK_TINYSTEPS_FACTS.classDurationMins} minutes (${ASK_TINYSTEPS_FACTS.classModes.join(
-        ", "
-      )}).\n\n${wa}`,
+      text:
+        `Each class is ${ASK_TINYSTEPS_FACTS.classDurationMins} minutes ` +
+        `(${ASK_TINYSTEPS_FACTS.classModes.join(", ")}).\n\n${wa}`,
       sourcesUsed: ["timings"],
     };
   }
 
   if (intent === "courses") {
+    const trackLines = ASK_TINYSTEPS_FACTS.tracks
+      .map((t) => `• ${t.name} (${t.ageRange})`)
+      .join("\n");
     return {
-      text: `We offer: ${ASK_TINYSTEPS_FACTS.tracks.join(", ")}.\nAge range: ${
-        ASK_TINYSTEPS_FACTS.ageRange
-      }.\n\n${wa}`,
+      text: `We offer:\n${trackLines}\n\nOverall age range: ${ASK_TINYSTEPS_FACTS.ageRangeOverall}.\n\n${wa}`,
       sourcesUsed: ["courses"],
-    };
-  }
-
-  if (intent === "trial") {
-    return {
-      text: `You can book a trial class for ₹${ASK_TINYSTEPS_FACTS.singleClassPrice}.\n\n${wa}`,
-      sourcesUsed: ["trial"],
     };
   }
 
@@ -155,10 +229,10 @@ function greetingReply(): { text: string; sourcesUsed: string[] } {
     text:
       "Hi! 👋 I’m Ask TinySteps.\n\n" +
       "You can ask me:\n" +
+      "• Free assessment / demo\n" +
       "• Pricing / packages\n" +
-      "• Class duration (minutes)\n" +
-      "• Courses (Phonics / Grammar / Public Speaking)\n" +
-      "• Trial class details\n\n" +
+      "• Class duration\n" +
+      "• Courses (Phonics / Grammar / Public Speaking)\n\n" +
       "Tell me your child’s age and what you’re looking for.",
     sourcesUsed: [],
   };
@@ -175,19 +249,43 @@ function getPagePathSafe(): string {
   }
 }
 
-function makeSessionId(): string {
+function readSessionId(): string | null {
   try {
-    if (typeof window !== "undefined") {
-      const existing = localStorage.getItem("ts_ask_session_v1");
-      if (existing) return existing;
-      const sid = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
-      localStorage.setItem("ts_ask_session_v1", sid);
-      return sid;
-    }
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("ts_ask_session_v1");
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionId(id: string) {
+  try {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("ts_ask_session_v1", id);
   } catch {
     // ignore
   }
-  return `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function clearSessionId() {
+  try {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem("ts_ask_session_v1");
+  } catch {
+    // ignore
+  }
+}
+
+function newSessionId(): string {
+  const sid = `s_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+  writeSessionId(sid);
+  return sid;
+}
+
+function getOrCreateSessionId(): string {
+  const existing = readSessionId();
+  if (existing) return existing;
+  return newSessionId();
 }
 
 // --------------------
@@ -199,103 +297,118 @@ export function useAskTinyStepsChat() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sessionId = useMemo(() => makeSessionId(), []);
+  // ✅ IMPORTANT FIX:
+  // sessionId is STATE (not useMemo) so resetChat can truly start a fresh session.
+  const [sessionId, setSessionId] = useState<string>(() => getOrCreateSessionId());
 
   const resetChat = useCallback(() => {
     setMessages([]);
     setError(null);
     setInput("");
-    try {
-      if (typeof window !== "undefined") localStorage.removeItem("ts_ask_session_v1");
-    } catch {
-      // ignore
-    }
+    clearSessionId();
+    setSessionId(newSessionId());
   }, []);
 
-  const sendMessage = useCallback(async () => {
-    const trimmed = input.trim();
-    if (!trimmed || loading) return;
+  // ✅ Allow optionally sending an explicit text (useful for quick-reply chips)
+  const sendMessage = useCallback(
+    async (textOverride?: string) => {
+      const trimmed = (textOverride ?? input).trim();
+      if (!trimmed || loading) return;
 
-    const userMsg: AskChatMessage = { role: "user", content: trimmed };
-    setMessages((prev) => [...prev, userMsg]);
-    setInput("");
-    setLoading(true);
-    setError(null);
+      const userMsg: AskChatMessage = { role: "user", content: trimmed };
+      setMessages((prev) => [...prev, userMsg]);
+      setInput("");
+      setLoading(true);
+      setError(null);
 
-    const intent = detectIntent(trimmed);
+      const intent = detectIntent(trimmed);
 
-    let assistantText = "";
-    let sourcesUsed: string[] = [];
+      let assistantText = "";
+      let sourcesUsed: string[] = [];
 
-    // ✅ Greeting first
-    if (intent === "greeting") {
-      const res = greetingReply();
-      assistantText = res.text;
-      sourcesUsed = res.sourcesUsed;
-    }
-    // Guardrails: pricing/timings/courses/trial must be facts-only
-    else if (intent === "pricing" || intent === "timings" || intent === "courses" || intent === "trial") {
-      const res = formatFactsForIntent(intent);
-      assistantText = res.text;
-      sourcesUsed = res.sourcesUsed;
-    } else {
-      // General: retrieve from curated KB deterministically (no Groq call here)
-      const { results, sourcesUsed: s } = retrieve(trimmed, 2);
-      if (results.length > 0) {
-        assistantText = results.map((r) => `• ${r.title}: ${r.text}`).join("\n\n");
-        assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-        sourcesUsed = s;
-      } else {
-        assistantText = `I don’t have that confirmed in my notes yet.\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-        sourcesUsed = [];
+      // ✅ Greeting first
+      if (intent === "greeting") {
+        const res = greetingReply();
+        assistantText = res.text;
+        sourcesUsed = res.sourcesUsed;
       }
-    }
+      // ✅ Guardrails: structured facts for known intents
+      else if (
+        intent === "assessment" ||
+        intent === "pricing" ||
+        intent === "single_class" ||
+        intent === "timings" ||
+        intent === "courses"
+      ) {
+        const res = formatFactsForIntent(intent);
+        assistantText = res.text;
+        sourcesUsed = res.sourcesUsed;
+      } else {
+        // General: retrieve from curated KB deterministically
+        const { results, sourcesUsed: s } = retrieve(trimmed, 2);
+        if (results.length > 0) {
+          assistantText = results
+            .map((r) => `• ${r.title}: ${r.text}`)
+            .join("\n\n");
+          assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
+          sourcesUsed = s;
+        } else {
+          assistantText =
+            `I don’t have that confirmed in my notes yet.\n\n` +
+            `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
+          sourcesUsed = [];
+        }
+      }
 
-    const assistantMsg: AskChatMessage = { role: "assistant", content: assistantText };
-    setMessages((prev) => [...prev, assistantMsg]);
+      const assistantMsg: AskChatMessage = { role: "assistant", content: assistantText };
+      setMessages((prev) => [...prev, assistantMsg]);
 
-    // Firestore logging (best effort)
-    try {
-      const sessionRef = doc(collection(db, "askTinysteps_sessions"), sessionId);
+      // Firestore logging (best effort)
+      try {
+        const pagePath = getPagePathSafe();
+        const sessionRef = doc(db, "askTinysteps_sessions", sessionId);
 
-      await setDoc(
-        sessionRef,
-        {
-          sessionId,
-          lastSeenAt: serverTimestamp(),
-          pagePath: getPagePathSafe(),
-        },
-        { merge: true }
-      );
+        await setDoc(
+          sessionRef,
+          {
+            sessionId,
+            lastSeenAt: serverTimestamp(),
+            pagePath,
+          },
+          { merge: true }
+        );
 
-      const msgsCol = collection(sessionRef, "messages");
-      const pagePath = getPagePathSafe();
+        const msgsCol = collection(sessionRef, "messages");
 
-      await addDoc(msgsCol, {
-        role: "user",
-        text: trimmed,
-        createdAt: serverTimestamp(),
-        pagePath,
-        sourcesUsed: [],
-        intent,
-      });
+        await addDoc(msgsCol, {
+          role: "user",
+          text: trimmed,
+          createdAt: serverTimestamp(),
+          pagePath,
+          sourcesUsed: [],
+          intent,
+        });
 
-      await addDoc(msgsCol, {
-        role: "assistant",
-        text: assistantText,
-        createdAt: serverTimestamp(),
-        pagePath,
-        sourcesUsed,
-        intent,
-      });
-    } catch (e) {
-      // Do not break chat UX if logging fails
-      // eslint-disable-next-line no-console
-      console.error("AskTinySteps logging error:", e);
-    } finally {
-      setLoading(false);
-    }
-  }, [input, loading, sessionId]);
+        await addDoc(msgsCol, {
+          role: "assistant",
+          text: assistantText,
+          createdAt: serverTimestamp(),
+          pagePath,
+          sourcesUsed,
+          intent,
+        });
+      } catch (e) {
+        // Do not break chat UX if logging fails
+        // eslint-disable-next-line no-console
+        console.error("AskTinySteps logging error:", e);
+        // Optional lightweight UI hint:
+        // setError("Chat saved locally, but logging failed.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [input, loading, sessionId]
+  );
 
   return { messages, input, setInput, loading, error, sendMessage, resetChat };
 }
