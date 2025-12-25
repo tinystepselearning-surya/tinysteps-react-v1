@@ -1,12 +1,18 @@
+// functions/src/ai/refreshPublicKb.ts
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions";
 import * as admin from "firebase-admin";
 
 if (!admin.apps.length) admin.initializeApp();
 
+type KbEntry = {
+  path: string;
+  title: string;
+  text: string;
+};
+
 type ChunkDoc = {
   url: string;
-  path: string;
   title: string;
   text: string;
   tokens: string[];
@@ -19,30 +25,32 @@ type ChunkDoc = {
 // Config
 // --------------------
 const SITE_ORIGIN = "https://tinystepslearning.com";
+const KB_JSON_URL = `${SITE_ORIGIN}/kb.json`;
 
 // Keep list small + high-signal pages first.
 const DEFAULT_PATHS = [
   "/",
   "/pricing",
   "/courses",
-  "/curriculum",
-  "/blog",
-  "/why-tiny-steps",
-  "/how-it-works",
   "/faq",
+  "/how-it-works",
+  "/why-tiny-steps",
+  "/curriculum",
 ];
 
 // --------------------
 // Admin check helpers
 // --------------------
 async function assertAdmin(request: any) {
-  if (!request.auth?.uid) throw new HttpsError("unauthenticated", "Login required.");
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Login required.");
+  }
+
   const uid = request.auth.uid;
 
   // Prefer custom claims if you use them
   const tokenRole = request.auth.token?.role;
   const tokenIsAdmin = request.auth.token?.admin === true;
-
   if (tokenIsAdmin || tokenRole === "admin" || tokenRole === "superadmin") return;
 
   // Fallback: users/{uid}.role in Firestore
@@ -51,84 +59,10 @@ async function assertAdmin(request: any) {
     const role = snap.exists ? (snap.data() as any)?.role : null;
     if (role === "admin" || role === "superadmin") return;
   } catch (e) {
-    logger.warn("refreshPublicKb: admin role check failed", e as any);
+    logger.warn("refreshPublicKb: admin role check failed", e);
   }
 
   throw new HttpsError("permission-denied", "Admin only.");
-}
-
-// --------------------
-// URL/path helpers
-// --------------------
-function normalizePath(p: string) {
-  const s = String(p || "").trim();
-  if (!s) return "/";
-  if (s.startsWith("http://") || s.startsWith("https://")) return s;
-  return s.startsWith("/") ? s : `/${s}`;
-}
-
-function toUrl(pathOrUrl: string) {
-  const s = normalizePath(pathOrUrl);
-  if (s.startsWith("http://") || s.startsWith("https://")) return s;
-  return `${SITE_ORIGIN}${s}`;
-}
-
-function toPath(pathOrUrl: string) {
-  const s = String(pathOrUrl || "").trim();
-  if (!s) return "/";
-  if (s.startsWith("http://") || s.startsWith("https://")) {
-    try {
-      const u = new URL(s);
-      return u.pathname || "/";
-    } catch {
-      return "/";
-    }
-  }
-  return normalizePath(s);
-}
-
-// --------------------
-// HTML -> text helpers (no deps)
-// --------------------
-function decodeEntities(s: string) {
-  return s
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
-}
-
-function extractTitle(html: string) {
-  const m = String(html || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  return m ? decodeEntities(m[1]).replace(/\s+/g, " ").trim().slice(0, 140) : "";
-}
-
-function stripHtmlToText(html: string) {
-  let s = String(html || "");
-
-  // remove scripts/styles/noscript/svg
-  s = s.replace(/<script[\s\S]*?<\/script>/gi, " ");
-  s = s.replace(/<style[\s\S]*?<\/style>/gi, " ");
-  s = s.replace(/<noscript[\s\S]*?<\/noscript>/gi, " ");
-  s = s.replace(/<svg[\s\S]*?<\/svg>/gi, " ");
-
-  // add line breaks for structure
-  s = s.replace(/<(br|BR)\s*\/?>/g, "\n");
-  s = s.replace(/<\/(p|div|section|article|li|h1|h2|h3|h4|h5|h6)>/gi, "\n");
-
-  // remove tags
-  s = s.replace(/<[^>]+>/g, " ");
-
-  // decode entities and normalize
-  s = decodeEntities(s);
-  s = s.replace(/\r/g, " ");
-  s = s.replace(/[ \t]+/g, " ");
-  s = s.replace(/\n\s*\n\s*\n+/g, "\n\n");
-  s = s.trim();
-
-  return s;
 }
 
 // --------------------
@@ -140,11 +74,11 @@ function tokenize(text: string): string[] {
     .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean)
-    .filter((t) => t.length >= 2) // drop 1-letter noise
-    .slice(0, 6000);
+    .filter((t) => t.length >= 2)
+    .slice(0, 5000);
 }
 
-function uniqTokenCap(tokens: string[], max = 140) {
+function uniqTokenCap(tokens: string[], max = 120) {
   const set = new Set<string>();
   const out: string[] = [];
   for (const t of tokens) {
@@ -157,7 +91,7 @@ function uniqTokenCap(tokens: string[], max = 140) {
   return out;
 }
 
-function chunkText(text: string, maxLen = 1100, minLen = 650): string[] {
+function chunkText(text: string, maxLen = 1100, minLen = 450): string[] {
   const t = String(text || "").trim();
   if (!t) return [];
 
@@ -173,7 +107,6 @@ function chunkText(text: string, maxLen = 1100, minLen = 650): string[] {
   };
 
   for (const p of paras) {
-    // huge paragraph -> split by sentences
     if (p.length > maxLen * 1.5) {
       const sentences = p.split(/(?<=[.!?])\s+/);
       for (const s of sentences) {
@@ -195,14 +128,30 @@ function chunkText(text: string, maxLen = 1100, minLen = 650): string[] {
   return chunks.slice(0, 40);
 }
 
-// --------------------
-// Firestore helpers
-// --------------------
-async function deactivateAllForUrl(url: string, runId: string) {
-  const col = admin.firestore().collection("public_kb_chunks");
+function normalizePath(p: string) {
+  const s = String(p || "").trim();
+  if (!s) return "/";
+  return s.startsWith("/") ? s : `/${s}`;
+}
 
+function pageUrlFromPath(path: string) {
+  return `${SITE_ORIGIN}${normalizePath(path)}`;
+}
+
+function chunkDocId(url: string, idx: number) {
+  const safe = url
+    .replace(/https?:\/\//, "")
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .slice(0, 120);
+  return `${safe}__${String(idx).padStart(3, "0")}`;
+}
+
+// --------------------
+// Firestore write helpers
+// --------------------
+async function deactivateAllForUrl(url: string) {
+  const col = admin.firestore().collection("public_kb_chunks");
   let last: admin.firestore.QueryDocumentSnapshot | null = null;
-  let updated = 0;
 
   while (true) {
     let q = col
@@ -216,30 +165,40 @@ async function deactivateAllForUrl(url: string, runId: string) {
     if (snap.empty) break;
 
     const batch = admin.firestore().batch();
-    snap.docs.forEach((d) => {
-      batch.update(d.ref, {
-        active: false,
-        runId,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      updated += 1;
-    });
-
+    snap.docs.forEach((d) => batch.update(d.ref, { active: false }));
     await batch.commit();
 
     last = snap.docs[snap.docs.length - 1];
     if (snap.size < 400) break;
   }
-
-  return updated;
 }
 
-function chunkDocId(url: string, idx: number) {
-  const safe = url
-    .replace(/https?:\/\//, "")
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .slice(0, 120);
-  return `${safe}__${String(idx).padStart(3, "0")}`;
+// --------------------
+// Fetch kb.json
+// --------------------
+async function fetchKbJson(): Promise<KbEntry[]> {
+  const res = await fetch(KB_JSON_URL, {
+    method: "GET",
+    headers: { accept: "application/json" },
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`kb.json fetch failed: ${res.status}`);
+  }
+
+  const data = (await res.json()) as any;
+  if (!Array.isArray(data)) throw new Error("kb.json is not an array");
+
+  const out: KbEntry[] = data
+    .map((x: any) => ({
+      path: normalizePath(x?.path),
+      title: String(x?.title || "").trim(),
+      text: String(x?.text || "").trim(),
+    }))
+    .filter((e) => e.path && e.title && e.text);
+
+  return out;
 }
 
 // --------------------
@@ -250,124 +209,96 @@ export const refreshPublicKb = onCall(
     region: "asia-south1",
     timeoutSeconds: 180,
     memory: "512MiB",
-    // If you ever still see CORS issues after deploy, uncomment:
-    // cors: ["https://tinystepslearning.com", "https://tinysteps-react-v1.web.app", /localhost:\d+$/],
   },
   async (request) => {
     await assertAdmin(request);
 
-    const rawPaths =
+    const runId = `run_${Date.now().toString(36)}`;
+
+    // If caller passes paths, index only those. Else index DEFAULT_PATHS.
+    const requestedPaths: string[] =
       Array.isArray(request.data?.paths) && request.data.paths.length
-        ? request.data.paths
+        ? request.data.paths.map(normalizePath)
         : DEFAULT_PATHS;
 
-    // normalize + cap
-    const paths = rawPaths
-      .map((p: any) => String(p || "").trim())
-      .filter(Boolean)
-      .slice(0, 25);
+    const wanted = new Set(requestedPaths.map(normalizePath));
 
-    const runId = `run_${Date.now().toString(36)}`;
+    let entries: KbEntry[] = [];
+    try {
+      entries = await fetchKbJson();
+    } catch (e: any) {
+      logger.error("refreshPublicKb: failed to load kb.json", {
+        error: e?.message || String(e),
+      });
+      throw new HttpsError("internal", "Failed to load kb.json from hosting.");
+    }
+
+    const selected = entries.filter((e) => wanted.has(normalizePath(e.path)));
 
     const results: any[] = [];
     let totalChunks = 0;
     let pagesOk = 0;
 
-    for (const p of paths) {
-      const url = toUrl(p);
-      const path = toPath(p);
+    for (const entry of selected) {
+      const url = pageUrlFromPath(entry.path);
+      const title = entry.title;
+      const rawText = entry.text;
 
-      logger.info("refreshPublicKb: fetching", { url, path });
+      // kb.json is curated; allow smaller pages too
+      if (!rawText || rawText.length < 80) {
+        results.push({ url, path: entry.path, ok: false, reason: "too_little_text" });
+        continue;
+      }
 
       try {
-        const res = await fetch(url, {
-          method: "GET",
-          headers: {
-            "user-agent": "TinyStepsBotIndexer/1.0",
-            accept: "text/html",
-          },
-        });
+        const chunks = chunkText(rawText, 1100, 450);
 
-        if (!res.ok) {
-          results.push({ url, path, ok: false, status: res.status });
-          continue;
-        }
+        await deactivateAllForUrl(url);
 
-        const html = await res.text();
-        const title = extractTitle(html) || "Tiny Steps";
-        const text = stripHtmlToText(html);
-
-        if (!text || text.length < 200) {
-          results.push({ url, path, ok: false, reason: "too_little_text" });
-          continue;
-        }
-
-        const chunks = chunkText(text, 1100, 650);
-        if (chunks.length === 0) {
-          results.push({ url, path, ok: false, reason: "no_chunks" });
-          continue;
-        }
-
-        // deactivate old docs
-        const deactivated = await deactivateAllForUrl(url, runId);
-
-        // write new chunks deterministically (await every commit ✅)
         const col = admin.firestore().collection("public_kb_chunks");
+        const batch = admin.firestore().batch();
 
-        const batchSize = 400;
-        let batch = admin.firestore().batch();
-        let ops = 0;
-
-        for (let idx = 0; idx < chunks.length; idx++) {
-          const chunk = chunks[idx];
-          const docId = chunkDocId(url, idx);
-          const ref = col.doc(docId);
-
-          const tokens = uniqTokenCap(tokenize(`${title} ${chunk}`), 140);
+        chunks.forEach((chunk, idx) => {
+          const ref = col.doc(chunkDocId(url, idx));
 
           const doc: ChunkDoc = {
             url,
-            path,
             title,
             text: chunk,
-            tokens,
+            tokens: uniqTokenCap(tokenize(chunk), 120),
             active: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             runId,
           };
 
           batch.set(ref, doc, { merge: true });
-          ops += 1;
           totalChunks += 1;
+        });
 
-          if (ops >= batchSize) {
-            await batch.commit();
-            batch = admin.firestore().batch();
-            ops = 0;
-          }
-        }
-
-        if (ops > 0) await batch.commit();
+        if (chunks.length > 0) await batch.commit();
 
         pagesOk += 1;
-        results.push({
-          url,
-          path,
-          ok: true,
-          title,
-          chunks: chunks.length,
-          deactivated,
-        });
+        results.push({ url, path: entry.path, ok: true, chunks: chunks.length, title });
       } catch (e: any) {
-        logger.error("refreshPublicKb: failed", { url, path, error: e?.message || String(e) });
-        results.push({ url, path, ok: false, error: e?.message || String(e) });
+        logger.error("refreshPublicKb: write failed", { url, error: e?.message || String(e) });
+        results.push({ url, path: entry.path, ok: false, error: e?.message || String(e) });
       }
+    }
+
+    // Helpful warning if nothing matched
+    if (selected.length === 0) {
+      logger.warn("refreshPublicKb: no entries selected from kb.json", {
+        requestedPaths,
+        kbCount: entries.length,
+      });
     }
 
     return {
       ok: true,
       runId,
-      pagesRequested: paths.length,
+      source: "kb.json",
+      pagesRequested: requestedPaths.length,
+      pagesSelected: selected.length,
       pagesOk,
       totalChunks,
       results,
