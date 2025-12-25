@@ -2,6 +2,11 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 import Groq from "groq-sdk";
+import * as admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
 // ✅ Secret Manager key name: "groq-api-key"
 const GROQ_API_KEY = defineSecret("groq-api-key");
@@ -44,6 +49,42 @@ export const askTinySteps = onCall(
 
     const groqClient = new Groq({ apiKey });
 
+    // Helper: simple tokenizer for retrieval (keeps only word tokens)
+    function tokenizeForRetrieval(text: string) {
+      return (String(text || '')
+        .toLowerCase()
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean));
+    }
+
+    // Retrieve top snippets from Firestore `public_kb_chunks` by token overlap
+    async function retrieveSnippets(question: string) {
+      if (!question) return [];
+      const qTokens = tokenizeForRetrieval(question);
+      const uniq = Array.from(new Set(qTokens)).slice(0, 10);
+      if (uniq.length === 0) return [];
+
+      const col = admin.firestore().collection('public_kb_chunks');
+      // query by tokens field using array-contains-any (limited to 25 docs)
+      const snapshot = await col.where('tokens', 'array-contains-any', uniq).limit(25).get();
+      const candidates: { url: string; title: string; text: string; tokens: string[] }[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data() as any;
+        candidates.push({ url: data.url || '', title: data.title || '', text: data.text || '', tokens: Array.isArray(data.tokens) ? data.tokens : [] });
+      });
+
+      // score by overlap
+      const qSet = new Set(qTokens);
+      const scored = candidates.map(c => {
+        let overlap = 0;
+        for (const t of c.tokens) if (qSet.has(t)) overlap += 1;
+        return { ...c, score: overlap };
+      }).filter(c => c.score > 0).sort((a, b) => b.score - a.score);
+
+      return scored.slice(0, 4).map(s => ({ url: s.url, title: s.title, text: s.text }));
+    }
+
     const systemPrompt = `You are "Ask TinySteps", the official assistant for Tiny Steps Learning, a premium 1:1 online English school for kids (phonics, grammar, public speaking), ages 3–12.
 
 GOALS:
@@ -68,12 +109,42 @@ GUARDRAILS:
 - Never ask for or handle sensitive information such as Aadhaar numbers, addresses, passwords, OTPs, or card details.
 - Keep the tone positive. Do not criticise or speak negatively about other schools or competitors.`;
 
-    const fullMessages = [{ role: "system", content: systemPrompt }, ...cleanMessages];
+    // Check whether the caller requested retrieval-based grounding
+    const useRetrieval = Boolean(request.data?.useRetrieval);
+
+    let fullMessages: any[] = [];
+
+    if (useRetrieval) {
+      // find last user message for retrieval
+      const lastUser = [...cleanMessages].reverse().find((m: any) => m.role === 'user');
+      const question = lastUser ? String(lastUser.content) : '';
+      let snippets: { url: string; title: string; text: string }[] = [];
+      try {
+        snippets = await retrieveSnippets(question);
+      } catch (err) {
+        logger.warn('askTinySteps: retrieval error', err);
+        snippets = [];
+      }
+
+      if (!snippets || snippets.length === 0) {
+        // fallback: no reliable snippets found — return safe fallback to caller
+        const fallback = `I’m not fully sure about this detail. Our team will confirm this for you on WhatsApp: https://wa.me/919618398383`;
+        return { reply: { role: 'assistant', content: fallback } };
+      }
+
+      // include retrieval instruction + snippets as an extra system message
+      const retrievalInstructionSuffix = `\nRETRIEVAL RULES (when retrieval is provided):\n- Use ONLY the provided snippets and the FACTS above to form your answer. Do not use any outside knowledge or make assumptions.\n- Keep answers concise (3-6 short sentences).\n- At the end of the response include a short "Sources:" line listing the snippet URLs used.\n- If the provided snippets are insufficient to answer confidently, say you are not sure and provide the WhatsApp CTA: https://wa.me/919618398383`;
+      const snippetBundle = snippets.map((s, i) => `[${i + 1}] ${s.url}\n${s.title}\n${s.text}`).join('\n---\n');
+      const retrievalSystem = systemPrompt + '\n\n' + retrievalInstructionSuffix + '\n\nProvided snippets:\n' + snippetBundle;
+      fullMessages = [{ role: 'system', content: retrievalSystem }, ...cleanMessages];
+    } else {
+      fullMessages = [{ role: "system", content: systemPrompt }, ...cleanMessages];
+    }
 
     try {
       const response = await groqClient.chat.completions.create({
         model: "llama-3.3-70b-versatile",
-        temperature: 0.6,
+        temperature: 0.0,
         max_tokens: 300,
         messages: fullMessages as any,
       });

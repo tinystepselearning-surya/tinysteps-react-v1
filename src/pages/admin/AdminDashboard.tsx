@@ -17,6 +17,8 @@ import Sidebar from './components/Sidebar';
 import UserManagement from './UserManagement/UserManagement';
 // 🔁 CHANGE END
 
+import RefreshPublicKbTool from './RefreshPublicKbTool';
+
 import StudentManagementTab from './StudentManagement/StudentManagementTab';
 import RelationshipManagement from './RelationshipManagement/RelationshipManagement';
 import CourseManagement from './CourseManagement/CourseManagement';
@@ -371,7 +373,10 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="settings">
-              <InsightsKillSwitch />
+              <div className="space-y-4">
+                <InsightsKillSwitch />
+                <RefreshPublicKbTool />
+              </div>
             </TabsContent>
           </Tabs>
         </main>
