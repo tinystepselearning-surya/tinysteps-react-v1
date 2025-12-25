@@ -1,9 +1,11 @@
 // @ts-nocheck
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/useAuthStore";
 import { trackEvent } from "../../lib/analytics";
 import { AskTinyStepsModal } from "./AskTinyStepsModal";
+import { useLocation } from 'react-router-dom';
 
 const FloatingAssistant = () => {
   const { user } = useAuthStore();
@@ -21,11 +23,27 @@ const FloatingAssistant = () => {
     window.open(`https://wa.me/919618398383?text=${encoded}`, "_blank", "noopener,noreferrer");
   };
 
-  // ✅ If logged in, do not show floating assistant (but AFTER hooks)
-  if (user) return null;
+  // ✅ If logged in, hide floating assistant only on app dashboard routes
+  const location = useLocation();
+  const pathname = location?.pathname || '';
 
-  return (
-    <div className="fixed bottom-6 right-4 z-40 flex flex-col items-end gap-3">
+  // Routes where we should hide the public floating assistant (app dashboards)
+  const DASHBOARD_PREFIXES = [
+    '/surya',
+    '/teacher',
+    '/parent',
+    '/kids',
+    '/learning-partner',
+    '/learningpartner',
+    '/admin',
+  ];
+
+  const isDashboardRoute = DASHBOARD_PREFIXES.some((p) => pathname.startsWith(p));
+
+  if (user && isDashboardRoute) return null;
+
+  const content = (
+    <div className="fixed bottom-5 right-5 z-[99999] flex flex-col items-end gap-3 pointer-events-auto">
       {/* Prompt bubble */}
       {promptVisible && (
         <motion.div
@@ -101,6 +119,13 @@ const FloatingAssistant = () => {
       <AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />
     </div>
   );
+
+  // Render via portal to avoid parent stacking/overflow issues
+  if (typeof document !== 'undefined') {
+    return createPortal(content, document.body);
+  }
+
+  return content;
 };
 
 export default FloatingAssistant;
