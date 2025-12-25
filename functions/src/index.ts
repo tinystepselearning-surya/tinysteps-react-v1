@@ -39,6 +39,9 @@ export { setInsightsEnabled } from './setInsightsEnabled';
 // Admin: Manual Insights Rollup
 export { runInsightsRollupNow } from './runInsightsRollupNow';
 
+export { refreshPublicKb } from "./ai/refreshPublicKb";
+
+
 // Parent → Students Subcollection Operations
 export { createStudentForParent } from './parentStudents';
 
