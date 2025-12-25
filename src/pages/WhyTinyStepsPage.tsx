@@ -1,8 +1,11 @@
-import type { FC } from 'react';
+import type { FC } from "react";
+import React, { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 
-type Feature = {
+type Item = {
   title: string;
   desc: string;
+  icon: React.ReactNode;
 };
 
 type ComparisonRow = {
@@ -10,227 +13,815 @@ type ComparisonRow = {
   right: string;
 };
 
-const features: Feature[] = [
+const WHATSAPP_URL = "https://wa.me/919618398383";
+
+const valuePills = [
+  "Phonics + Grammar + Speaking together",
+  "Confidence-first teaching",
+  "Clear progress & parent updates",
+];
+
+type Outcome = {
+  title: string;
+  desc: string;
+  tag: string;
+  bullets: string[];
+  accent: {
+    bg: string;
+    glow: string;
+    icon: string;
+    pill: string;
+    ring: string;
+  };
+};
+
+const outcomes: Outcome[] = [
   {
-    title: "Joy + Rigor in Every Class",
-    desc: "Storytelling, games, and actions blend with structured teaching-so children have fun and develop powerful skills.",
+    tag: "Reading",
+    title: "Reads with confidence",
+    desc: "Stronger decoding, blending, and fluency—without fear of mistakes.",
+    bullets: [
+      "Systematic phonics + blending practice (step-by-step).",
+      "Guided reading + instant feedback to build fluency.",
+      "High-frequency words introduced in context (not rote).",
+    ],
+    accent: {
+      bg: "from-emerald-50 to-white",
+      glow: "bg-emerald-400/20",
+      icon: "bg-emerald-600",
+      pill: "bg-emerald-50 text-emerald-800 border-emerald-200",
+      ring: "ring-emerald-500/20",
+    },
   },
   {
-    title: "Brain-Friendly, Age-Right Lessons",
-    desc: "Activities are broken into tiny, just-right steps matched to your child's age. Never overloaded, never bored.",
+    tag: "Speaking",
+    title: "Speaks clearly",
+    desc: "Daily speaking practice and gentle correction builds clarity and courage.",
+    bullets: [
+      "Every class includes speaking prompts + guided models.",
+      "Pronunciation practice in small, safe steps.",
+      "Confidence grows through encouragement—not pressure.",
+    ],
+    accent: {
+      bg: "from-sky-50 to-white",
+      glow: "bg-sky-400/20",
+      icon: "bg-sky-600",
+      pill: "bg-sky-50 text-sky-800 border-sky-200",
+      ring: "ring-sky-500/20",
+    },
   },
   {
-    title: "Multisensory Phonics & Grammar",
-    desc: 'Children see, hear, say, trace, act, and use their learning. Grammar is lived through stories, not dry rules.',
+    tag: "Writing",
+    title: "Writes better sentences",
+    desc: "Children learn structure naturally through activities—no rote rules.",
+    bullets: [
+      "Grammar taught through activities and sentence building.",
+      "Vocabulary + sentence frames for confident writing.",
+      "Correctness improves through guided practice, not drilling.",
+    ],
+    accent: {
+      bg: "from-violet-50 to-white",
+      glow: "bg-violet-400/20",
+      icon: "bg-violet-600",
+      pill: "bg-violet-50 text-violet-800 border-violet-200",
+      ring: "ring-violet-500/20",
+    },
   },
   {
-    title: "Public Speaking from the Start",
-    desc: "Show & tell, picture talks, and small speeches right from the beginning-so children grow up confident and clear.",
-  },
-  {
-    title: "Personalized Pathways",
-    desc: "No \"one size fits all.\" We adapt the pace, challenge, and approach to each child's needs for real mastery.",
-  },
-  {
-    title: "Confidence Over Perfection",
-    desc: 'We gently correct, celebrate progress, and help every child see mistakes as part of the journey, not shame.',
+    tag: "Independence",
+    title: "Learns independently",
+    desc: "Designed to reduce parent pressure—kids can practice with minimal help.",
+    bullets: [
+      "Clear routines so kids know what to do next.",
+      "Small goals + frequent wins keep motivation high.",
+      "Parents get updates without needing to teach at home.",
+    ],
+    accent: {
+      bg: "from-orange-50 to-white",
+      glow: "bg-orange-400/20",
+      icon: "bg-orange-600",
+      pill: "bg-orange-50 text-orange-800 border-orange-200",
+      ring: "ring-orange-500/20",
+    },
   },
 ];
 
-const highlights: ComparisonRow[] = [
+const trustPillars: Item[] = [
   {
-    left: 'Focus on finishing portions and worksheets',
-    right: 'Deep, strong foundation before speed',
+    title: "Live classes (not passive videos)",
+    desc: "Real teacher interaction, real attention, real improvement.",
+    icon: <IconUsers />,
   },
   {
-    left: 'Lecture + slides, little practice',
-    right: 'Playful, multisensory (see-say-move-use)',
+    title: "Age-right, brain-friendly steps",
+    desc: "Tiny, guided activities—never overloaded, never bored.",
+    icon: <IconSpark />,
   },
   {
-    left: 'Phonics, grammar, and speaking taught separately',
-    right: 'Integrated learning-real English, real life',
+    title: "Multisensory practice",
+    desc: "See • say • move • use—so children remember through experience.",
+    icon: <IconHand />,
   },
   {
-    left: 'Success = marks + homework',
-    right: 'Success = confidence, fluency, understanding',
-  },
-  {
-    left: 'Parents must fill learning gaps',
-    right: 'Classes designed for independence-minimum parent help needed',
+    title: "Parent-friendly communication",
+    desc: "You always know what was covered and what comes next.",
+    icon: <IconMessage />,
   },
 ];
 
-const testimonials: string[] = [
-  '"My child now wants to read aloud and speak in English. Earlier she was scared to even try."',
-  "\"The classes are structured, but my son feels like he's playing, not studying-and his phonics and reading have improved so much.\"",
-  '"I finally feel like someone understands how my child learns. The teacher is patient, observant, and keeps updating me."',
+const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
+  {
+    title: "Build the foundation",
+    desc: "Sounds → words → sentences → confident speaking.",
+    icon: <IconBlocks />,
+    accent: {
+      bg: "from-slate-50 to-white",
+      glow: "bg-slate-400/15",
+      icon: "bg-slate-900",
+      pill: "bg-slate-50 text-slate-800 border-slate-200",
+      ring: "ring-slate-500/15",
+    },
+  },
+  {
+    title: "Practice in tiny steps",
+    desc: "Short, guided activities that keep children engaged.",
+    icon: <IconSpark />,
+    accent: {
+      bg: "from-indigo-50 to-white",
+      glow: "bg-indigo-400/20",
+      icon: "bg-indigo-700",
+      pill: "bg-indigo-50 text-indigo-800 border-indigo-200",
+      ring: "ring-indigo-500/20",
+    },
+  },
+  {
+    title: "Use it in real life",
+    desc: "Stories and speaking tasks turn learning into real English.",
+    icon: <IconMic />,
+    accent: {
+      bg: "from-sky-50 to-white",
+      glow: "bg-sky-400/20",
+      icon: "bg-sky-700",
+      pill: "bg-sky-50 text-sky-800 border-sky-200",
+      ring: "ring-sky-500/20",
+    },
+  },
+  {
+    title: "Strengthen gaps early",
+    desc: "We notice patterns and fix weak areas before they become habits.",
+    icon: <IconChart />,
+    accent: {
+      bg: "from-emerald-50 to-white",
+      glow: "bg-emerald-400/20",
+      icon: "bg-emerald-700",
+      pill: "bg-emerald-50 text-emerald-800 border-emerald-200",
+      ring: "ring-emerald-500/20",
+    },
+  },
 ];
 
-const ctaOptions = ['Book a Free Trial Class', 'Talk to Us About Your Child', 'Explore Our Courses'];
+const comparison: ComparisonRow[] = [
+  { left: "Finish portions & worksheets fast", right: "Build a strong foundation before speed" },
+  { left: "Lecture + slides, little practice", right: "See–say–move–use (multisensory practice)" },
+  { left: "Phonics/grammar/speaking taught separately", right: "Integrated English — real-life usage" },
+  { left: "Success = marks + homework", right: "Success = confidence, fluency, understanding" },
+  { left: "Parents fill gaps at home", right: "Designed for independence with minimal parent pressure" },
+];
 
 const WhyTinyStepsPage: FC = () => {
+  const [activeOutcome, setActiveOutcome] = useState(0);
+
+  const active = useMemo(() => outcomes[activeOutcome], [activeOutcome]);
+
   return (
-    <main className="min-h-screen bg-white text-gray-900">
-      <section className="text-center py-10 px-4 max-w-4xl mx-auto">
-        <p className="text-sm uppercase tracking-[0.4em] text-gray-400">How Tiny Steps Ensures Joyful, Effective Learning</p>
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight mt-4">
-          Our Child-Centered Methodology
-        </h1>
-        <h2 className="text-xl md:text-2xl text-gray-600 font-medium mb-6">
-          Kids don't just memorize-they discover, explore, and master foundational skills through joyful, scientific teaching.
-        </h2>
-      </section>
-
-      <section className="py-10 px-4 max-w-5xl mx-auto">
-        <h3 className="text-2xl font-semibold mb-2">Why Parents Trust Tiny Steps</h3>
-        <p className="text-gray-700 mb-6 max-w-2xl">
-          Parents don't just trust us with English-they trust us with their child's confidence, voice, and future.
-        </p>
-        <div className="grid gap-5 md:grid-cols-2">
-          <TrustCard
-            title="Real teachers, real connection"
-            desc="Every class is live, interactive, and child-centered-never passive."
-          />
-          <TrustCard
-            title="Clear learning plan"
-            desc="Our curriculum covers phonics, grammar, and speaking-so you always know what your child is learning and why."
-          />
-          <TrustCard
-            title="Small groups & 1:1 attention"
-            desc="Your child is seen, heard, and guided-never lost in a crowd."
-          />
-          <TrustCard
-            title="Regular parent updates"
-            desc="We share what's covered, strengths, and next steps-no guessing."
-          />
-          <TrustCard
-            title="Safe, encouraging environment"
-            desc="Kindness, patience, and positivity are intentional norms-so children are free to try, err, and grow."
-          />
+    <main className="min-h-screen bg-white text-slate-900">
+      {/* HERO */}
+      <section className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-sky-200/60 blur-3xl" />
+          <div className="absolute -top-20 right-0 h-72 w-72 rounded-full bg-orange-200/60 blur-3xl" />
+          <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-indigo-200/40 blur-3xl" />
         </div>
-      </section>
 
-      <section className="bg-gray-50 py-12 px-4 mt-10 max-w-5xl mx-auto rounded-lg shadow-sm">
-        <h3 className="text-2xl font-semibold mb-4">How Tiny Steps Is Different from Typical Online Classes</h3>
-        <div className="max-w-3xl mx-auto">
-          <ComparisonTable highlights={highlights} />
-          <div className="mt-4 text-center">
-            <span className="inline-block bg-blue-100 text-blue-700 rounded-full px-4 py-2 text-sm font-medium">
-              Tiny Steps isn't just "another online tuition." It's specialised English foundation education for children.
+        <div className="relative mx-auto max-w-6xl px-4 pt-12 pb-10 md:pt-16 md:pb-12">
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="inline-flex items-center rounded-full border bg-white/70 px-4 py-2 text-xs font-bold tracking-[0.2em] text-slate-600 shadow-sm backdrop-blur">
+              WHY TINY STEPS • FOUNDATIONS FOREVER
             </span>
+
+            <h1 className="mt-5 text-4xl md:text-6xl font-extrabold tracking-tight">
+              English foundations your child can actually use
+            </h1>
+
+            <p className="mt-4 text-lg md:text-xl text-slate-600">
+              Tiny Steps builds strong phonics, grammar, reading, and speaking through joyful, structured teaching—so
+              children become confident and independent learners.
+            </p>
+
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              {valuePills.map((t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-sm"
+                >
+                  <span className="text-emerald-700">
+                    <IconCheck />
+                  </span>
+                  {t}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+              <a href="#book-trial" className="w-full sm:w-auto">
+                <PrimaryButton>Book Free Assessment Class</PrimaryButton>
+              </a>
+
+              <Link to="/courses" className="w-full sm:w-auto">
+                <SecondaryButton>View Courses</SecondaryButton>
+              </Link>
+
+              <Link to="/curriculum" className="w-full sm:w-auto">
+                <SecondaryButton>See Curriculum</SecondaryButton>
+              </Link>
+            </div>
+
+            <div className="mt-3">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
+              >
+                <span className="text-emerald-700">
+                  <IconWhatsapp />
+                </span>
+                WhatsApp Advisor
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="py-12 px-4 max-w-5xl mx-auto">
-        <h3 className="text-2xl font-semibold mb-4">What's Special About Tiny Steps for Your Child</h3>
-        <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3">
-          {features.map((feature) => (
-            <FeatureCard key={feature.title} title={feature.title} desc={feature.desc} />
+      {/* METHOD (premium tiles) */}
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <div className="rounded-3xl border bg-gradient-to-br from-slate-50 to-white p-6 md:p-10 shadow-sm">
+          <SectionHeading
+            kicker="How learning happens"
+            title="The Tiny Steps Method"
+            desc="Simple, structured, and child-friendly — designed for steady progress."
+            center
+          />
+
+          <div className="mt-10 grid gap-4 md:grid-cols-4">
+            {methodSteps.map((it, idx) => (
+              <PremiumTile key={it.title} {...it} step={idx + 1} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* OUTCOMES (professional + interactive) */}
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <SectionHeading
+          kicker="What your child gains"
+          title="Results parents can see (and children feel)"
+          desc="Select an outcome to see what we do in class to build it."
+        />
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-12">
+          {/* left: selectable outcomes */}
+          <div className="lg:col-span-7 grid gap-4 md:grid-cols-2">
+            {outcomes.map((o, idx) => {
+              const isActive = idx === activeOutcome;
+              return (
+                <OutcomeSelectCard
+                  key={o.title}
+                  outcome={o}
+                  active={isActive}
+                  onClick={() => setActiveOutcome(idx)}
+                />
+              );
+            })}
+          </div>
+
+          {/* right: detail panel */}
+          <div className="lg:col-span-5">
+            <div className="relative overflow-hidden rounded-2xl border bg-white shadow-sm">
+              <div className={`absolute -top-14 -right-14 h-44 w-44 rounded-full blur-2xl ${active.accent.glow}`} />
+              <div className={`absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-2xl ${active.accent.glow}`} />
+
+              <div className="relative p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${active.accent.pill}`}>
+                    {active.tag}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-500">How we build it</span>
+                </div>
+
+                <div className="mt-3 text-2xl font-extrabold tracking-tight">{active.title}</div>
+                <div className="mt-2 text-slate-600 leading-relaxed">{active.desc}</div>
+
+                <div className="mt-5 space-y-3">
+                  {active.bullets.map((b) => (
+                    <div key={b} className="flex items-start gap-3">
+                      <span className={`mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-white ${active.accent.icon}`}>
+                        <IconCheck />
+                      </span>
+                      <div className="text-slate-700">{b}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <Link to="/curriculum" className="block" onClick={(e) => e.stopPropagation()}>
+                    <SecondaryButton>View Curriculum</SecondaryButton>
+                  </Link>
+                  <a href="#book-trial" className="block" onClick={(e) => e.stopPropagation()}>
+                    <PrimaryButton>Book Assessment</PrimaryButton>
+                  </a>
+                </div>
+
+                <div className="mt-4 text-xs text-slate-500">
+                  Tip: parents usually see progress first in <b>confidence</b>—then speed follows.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DIFFERENCE (Comparison) */}
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <SectionHeading
+          kicker="What makes us different"
+          title="Typical online tuition vs Tiny Steps"
+          desc="Same time spent — very different outcomes."
+        />
+
+        <div className="mt-8 grid gap-4 lg:grid-cols-2">
+          <CompareCard
+            title="Many online classes…"
+            tone="muted"
+            rows={comparison.map((r) => ({ text: r.left, ok: false }))}
+          />
+          <CompareCard
+            title="Tiny Steps…"
+            tone="bright"
+            rows={comparison.map((r) => ({ text: r.right, ok: true }))}
+          />
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <div className="rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
+            Specialised English foundation education — not “just tuition”.
+          </div>
+        </div>
+      </section>
+
+      {/* TRUST */}
+      <section className="mx-auto max-w-6xl px-4 py-12">
+        <SectionHeading
+          kicker="Why parents trust Tiny Steps"
+          title="Trust is built into the system"
+          desc="Clear plan, strong teaching, and child confidence — all together."
+        />
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {trustPillars.map((it) => (
+            <IconCard key={it.title} {...it} />
           ))}
         </div>
       </section>
 
-      <section className="py-10 px-4 bg-gray-50 max-w-4xl mx-auto rounded-xl shadow-md mt-10 text-center">
-        <h3 className="text-2xl font-semibold mb-2">Our Teaching Philosophy - In Simple Words</h3>
-        <p className="text-gray-800 text-lg mt-2 leading-relaxed">
-          Children learn best when they feel happy, safe, and capable. We mix playful activities, strong structure, and loving guidance. So your child doesn't just remember for a test-they understand, use, and enjoy English every day.
-        </p>
-      </section>
+      {/* FINAL CTA */}
+      <section id="book-trial" className="mx-auto max-w-6xl px-4 pb-16 scroll-mt-28">
+        <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-700 to-violet-700 p-[1px] shadow-xl">
+          <div className="rounded-3xl bg-white/95 p-8 md:p-10">
+            <div className="grid gap-8 lg:grid-cols-2 items-center">
+              <div>
+                <div className="text-xs font-bold tracking-[0.22em] uppercase text-slate-500">
+                  Book free assessment class
+                </div>
+                <h3 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
+                  Let’s find the right starting point for your child
+                </h3>
+                <p className="mt-4 text-slate-600 leading-relaxed">
+                  We’ll understand your child’s current level and recommend the best path—so progress feels easy and
+                  motivating.
+                </p>
 
-      <section className="py-12 px-4 max-w-4xl mx-auto">
-        <h3 className="text-2xl font-semibold mb-4">Why Tiny Steps Is a Better Choice for Online English Learning</h3>
-        <ul className="list-disc list-inside space-y-2 text-base font-semibold text-gray-700">
-          <li>We specialise in English only-phonics, grammar, reading, speaking.</li>
-          <li>Foundation-first: strong skills before "big words" or "fancy writing."</li>
-          <li>Integrated LRWS-every class covers listening, reading, writing, and speaking.</li>
-          <li>Built for children in non-English-speaking homes-our classes provide the input and support needed to grow.</li>
-          <li>Our aim: not to "finish 30 classes" but to raise confident, independent learners.</li>
-        </ul>
-      </section>
+                <ul className="mt-6 space-y-3 text-slate-700">
+                  <CheckItem>Quick level check</CheckItem>
+                  <CheckItem>Clear course recommendation</CheckItem>
+                  <CheckItem>Simple next steps for parents</CheckItem>
+                </ul>
+              </div>
 
-      <section className="py-10 px-4 max-w-3xl mx-auto text-center">
-        <h3 className="text-2xl font-semibold mb-4">What Parents Love About Tiny Steps</h3>
-        <div className="flex flex-col gap-6">
-          {testimonials.map((testimonial) => (
-            <blockquote
-              key={testimonial}
-              className="bg-gray-100 rounded-xl p-6 text-gray-800 text-lg italic shadow-sm"
-            >
-              {testimonial}
-            </blockquote>
-          ))}
-        </div>
-        <div className="text-gray-400 text-base mt-2">* Real testimonials coming soon *</div>
-      </section>
+              <div className="rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-6">
+                <div className="flex flex-col gap-3">
+                  <a href="#book-trial">
+                    <PrimaryButton>Book Free Assessment Class</PrimaryButton>
+                  </a>
 
-      <section className="py-12 px-4 bg-blue-50 max-w-4xl mx-auto rounded-lg text-center shadow-lg mt-10">
-        <h3 className="text-2xl font-semibold mb-4">Our Promise to You as a Parent</h3>
-        <p className="text-lg mb-6 text-gray-800 leading-relaxed">
-          We will treat your child's confidence and learning journey with the same care we give to our lessons. At Tiny Steps, your child will:
-        </p>
-        <ul className="list-disc list-inside mb-6 text-gray-700 text-base text-left max-w-xl mx-auto space-y-1.5">
-          <li>Feel safe and happy in class</li>
-          <li>Get personal attention and thoughtful feedback</li>
-          <li>Build strong English foundations step by step</li>
-          <li>Learn to use their voice proudly-in reading, writing, and speaking</li>
-        </ul>
-        <div className="text-xl font-semibold mb-8 text-gray-900">That's the Tiny Steps difference.</div>
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-center">
-          {ctaOptions.map((cta) => (
-            <button
-              key={cta}
-              type="button"
-              className="bg-gradient-to-r from-[#111827] via-[#2563eb] to-[#7c3aed] hover:from-[#0f172a] hover:via-[#1d4ed8] hover:to-[#6d28d9] text-white font-semibold py-3 px-6 rounded-full text-lg shadow-lg transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-            >
-              {cta}
-            </button>
-          ))}
+                  <Link to="/courses">
+                    <SecondaryButton>Explore Courses</SecondaryButton>
+                  </Link>
+
+                  <Link to="/curriculum">
+                    <SecondaryButton>View Curriculum</SecondaryButton>
+                  </Link>
+
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center gap-2"
+                  >
+                    <span className="text-emerald-700">
+                      <IconWhatsapp />
+                    </span>
+                    WhatsApp Advisor
+                  </a>
+                </div>
+
+                <div className="mt-4 text-xs text-slate-500">
+                  Your nav item “Book Free Assessment Class” can link to <b>#book-trial</b>.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
   );
 };
 
-type TrustCardProps = Feature;
+/* -------------------- UI blocks -------------------- */
 
-const TrustCard: React.FC<TrustCardProps> = ({ title, desc }) => (
-  <div className="bg-white rounded-xl shadow-md p-5 border border-gray-100 flex flex-col">
-    <span className="font-semibold text-lg mb-1">{title}</span>
-    <span className="text-gray-600">{desc}</span>
-  </div>
-);
+function SectionHeading({
+  kicker,
+  title,
+  desc,
+  center,
+}: {
+  kicker: string;
+  title: string;
+  desc?: string;
+  center?: boolean;
+}) {
+  return (
+    <div className={center ? "text-center" : ""}>
+      <div className="text-xs font-bold tracking-[0.22em] text-slate-500 uppercase">{kicker}</div>
+      <h2 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">{title}</h2>
+      {desc ? (
+        <p className={`mt-3 text-slate-600 ${center ? "mx-auto max-w-2xl" : "max-w-2xl"}`}>{desc}</p>
+      ) : null}
+    </div>
+  );
+}
 
-const FeatureCard: React.FC<Feature> = ({ title, desc }) => (
-  <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-5 h-full flex flex-col">
-    <span className="font-semibold text-lg mb-2">{title}</span>
-    <span className="text-gray-600">{desc}</span>
-  </div>
-);
+function PrimaryButton({ children }: { children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      className="w-full rounded-xl bg-gradient-to-r from-slate-900 via-blue-700 to-violet-700 px-5 py-3 text-sm md:text-base font-bold text-white shadow-lg hover:opacity-95 active:opacity-90 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+    >
+      {children}
+    </button>
+  );
+}
 
-type ComparisonTableProps = {
-  highlights: ComparisonRow[];
-};
+function SecondaryButton({ children }: { children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      className="w-full rounded-xl border bg-white px-5 py-3 text-sm md:text-base font-bold text-slate-800 shadow-sm hover:bg-slate-50 active:bg-slate-100 transition"
+    >
+      {children}
+    </button>
+  );
+}
 
-const ComparisonTable: React.FC<ComparisonTableProps> = ({ highlights }) => (
-  <div className="overflow-x-auto">
-    <table className="min-w-full border border-gray-200 rounded-lg overflow-hidden">
-      <thead>
-        <tr>
-          <th className="bg-gray-100 font-semibold px-4 py-3 text-gray-800 text-left w-1/2">Many Online Classes...</th>
-          <th className="bg-blue-100 font-semibold px-4 py-3 text-blue-800 text-left w-1/2">Tiny Steps...</th>
-        </tr>
-      </thead>
-      <tbody>
-        {highlights.map((row) => (
-          <tr key={row.left}>
-            <td className="border-t border-gray-200 px-4 py-3 align-top text-gray-700">{row.left}</td>
-            <td className="border-t border-gray-200 px-4 py-3 align-top text-gray-900">{row.right}</td>
-          </tr>
+function IconCard({ title, desc, icon }: Item) {
+  return (
+    <div className="rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-0.5">
+      <div className="flex items-start gap-4">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm">
+          {icon}
+        </div>
+        <div>
+          <div className="text-lg font-extrabold">{title}</div>
+          <div className="mt-1 text-slate-600">{desc}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PremiumTile({
+  title,
+  desc,
+  icon,
+  step,
+  accent,
+}: Item & { step: number; accent: Outcome["accent"] }) {
+  return (
+    <div
+      className={[
+        "group relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm",
+        "transition hover:shadow-md hover:-translate-y-0.5",
+        "focus-within:ring-2 focus-within:ring-blue-500/30",
+      ].join(" ")}
+    >
+      <div className={`absolute inset-0 opacity-0 transition duration-200 group-hover:opacity-100 bg-gradient-to-br ${accent.bg}`} />
+      <div className={`absolute -top-14 -right-14 h-44 w-44 rounded-full blur-2xl ${accent.glow}`} />
+      <div className={`absolute -bottom-16 -left-16 h-48 w-48 rounded-full blur-2xl ${accent.glow}`} />
+
+      <div className="relative">
+        <div className="flex items-center justify-between">
+          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${accent.pill}`}>
+            Step {step}
+          </span>
+
+          <div
+            className={[
+              "flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-sm",
+              accent.icon,
+              "ring-1",
+              accent.ring,
+              "transition-transform duration-200 group-hover:scale-[1.03]",
+            ].join(" ")}
+          >
+            {icon}
+          </div>
+        </div>
+
+        <div className="mt-3 text-lg font-extrabold">{title}</div>
+        <div className="mt-1 text-slate-600 text-sm leading-relaxed">{desc}</div>
+
+        <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <span className="opacity-70 group-hover:opacity-100 transition">Learn more</span>
+          <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+            <IconArrow />
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OutcomeSelectCard({
+  outcome,
+  active,
+  onClick,
+}: {
+  outcome: Outcome;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick();
+      }}
+      className={[
+        "group relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm cursor-pointer select-none",
+        "transition hover:shadow-md hover:-translate-y-0.5",
+        active ? "ring-2 ring-blue-500/25" : "",
+      ].join(" ")}
+      aria-pressed={active}
+    >
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition bg-gradient-to-br ${outcome.accent.bg}`} />
+      <div className={`absolute -top-16 -right-16 h-48 w-48 rounded-full blur-2xl ${outcome.accent.glow}`} />
+
+      <div className="relative">
+        <div className="flex items-center justify-between gap-3">
+          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-bold ${outcome.accent.pill}`}>
+            {outcome.tag}
+          </span>
+
+          <div
+            className={[
+              "flex h-9 w-9 items-center justify-center rounded-xl text-white shadow-sm",
+              outcome.accent.icon,
+              "transition-transform duration-200",
+              active ? "scale-[1.03]" : "group-hover:scale-[1.03]",
+            ].join(" ")}
+          >
+            <IconCheck />
+          </div>
+        </div>
+
+        <div className="mt-3 text-lg font-extrabold">{outcome.title}</div>
+        <div className="mt-1 text-slate-600 text-sm leading-relaxed">{outcome.desc}</div>
+
+        <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <span className="opacity-70 group-hover:opacity-100 transition">{active ? "Selected" : "Select"}</span>
+          <span className="transition-transform duration-200 group-hover:translate-x-0.5">
+            <IconArrow />
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompareCard({
+  title,
+  tone,
+  rows,
+}: {
+  title: string;
+  tone: "muted" | "bright";
+  rows: { text: string; ok: boolean }[];
+}) {
+  const header =
+    tone === "bright"
+      ? "bg-gradient-to-r from-blue-600 to-violet-600 text-white"
+      : "bg-slate-100 text-slate-900";
+
+  return (
+    <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+      <div className={`px-5 py-4 font-extrabold ${header}`}>{title}</div>
+      <div className="p-5 space-y-3">
+        {rows.map((r, idx) => (
+          <div key={idx} className="flex items-start gap-3">
+            <div
+              className={[
+                "mt-0.5 flex h-6 w-6 items-center justify-center rounded-full text-white",
+                r.ok ? "bg-emerald-600" : "bg-slate-400",
+              ].join(" ")}
+            >
+              {r.ok ? <IconCheck /> : <IconX />}
+            </div>
+            <div className="text-slate-700">{r.text}</div>
+          </div>
         ))}
-      </tbody>
-    </table>
-  </div>
-);
+      </div>
+    </div>
+  );
+}
+
+function CheckItem({ children }: { children: React.ReactNode }) {
+  return (
+    <li className="flex items-start gap-3">
+      <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+        <IconCheck />
+      </span>
+      <span className="text-slate-700">{children}</span>
+    </li>
+  );
+}
+
+/* -------------------- Icons (no deps) -------------------- */
+
+function IconArrow() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M8 5l5 5-5 5"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconCheck() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path
+        d="M16.5 5.5L8.2 13.8 3.5 9.1"
+        stroke="currentColor"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconX() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconUsers() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M16 11a4 4 0 1 0-8 0" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M4 21c1.2-3.6 4.3-6 8-6s6.8 2.4 8 6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconSpark() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 2l1.5 6L20 10l-6.5 2L12 22l-1.5-10L4 10l6.5-2L12 2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconHand() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 12V6a1 1 0 0 1 2 0v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M9 12V5a1 1 0 0 1 2 0v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M11 12V6a1 1 0 0 1 2 0v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M13 12V7a1 1 0 0 1 2 0v7c0 3-2 6-6 6H8a4 4 0 0 1-4-4v-2a1 1 0 0 1 2 0v1"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function IconMessage() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 5h16v11H7l-3 3V5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function IconBlocks() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 7h10v10H7V7z" stroke="currentColor" strokeWidth="2" />
+      <path d="M4 4h6v6H4V4zM14 14h6v6h-6v-6z" stroke="currentColor" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function IconMic() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3z"
+        stroke="currentColor"
+        strokeWidth="2"
+      />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconChart() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 20V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M4 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M7 15l3-3 3 2 5-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconWhatsapp() {
+  // simple chat bubble icon (no brand claim)
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 export default WhyTinyStepsPage;
