@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { useAuthStore } from "../../store/useAuthStore";
 import { trackEvent } from "../../lib/analytics";
 import { AskTinyStepsModal } from "./AskTinyStepsModal";
-import { useLocation } from 'react-router-dom';
 
 const FloatingAssistant = () => {
   const { user } = useAuthStore();
@@ -24,8 +23,9 @@ const FloatingAssistant = () => {
   };
 
   // ✅ If logged in, hide floating assistant only on app dashboard routes
-  const location = useLocation();
-  const pathname = location?.pathname || '';
+  // Use window.location.pathname as a safe fallback so tests that render
+  // components outside a Router do not throw with useLocation().
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
 
   // Routes where we should hide the public floating assistant (app dashboards)
   const DASHBOARD_PREFIXES = [
