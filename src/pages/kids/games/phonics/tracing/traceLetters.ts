@@ -224,27 +224,111 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     skillTags: ["letter:e", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ e: Stroke 1 = main loop (looks good on screen), Stroke 2 = small bar
+  // ✅ e: simple 2-stroke (bar, then anticlockwise c from bar end)
   e: {
     id: "e",
     label: "e",
     viewBox: "0 0 100 100",
     strokes: [
-      {
-        id: "e_1",
-        kind: "trace",
-        // Main loop (no spiral, no crossing, ends on baseline ~86)
-        pathD:
-          "M 70 54 C 58 40, 36 44, 34 66 C 32 92, 74 94, 74 66 C 74 52, 54 50, 44 64 C 36 76, 50 92, 70 86",
-      },
+      // 1) bar (left -> right)
+      { id: "e_1", kind: "trace", pathD: "M 34 52 L 64 52" },
+
+      // 2) start exactly at bar end, draw anticlockwise c-shape
       {
         id: "e_2",
         kind: "trace",
-        // Small middle bar (simple + clear)
-        pathD: "M 36 56 L 66 56",
+        pathD:
+          "M 64 52 " +
+          "C 58 24, 34 28, 28 48 " + // go up/left
+          "C 26 82, 48 92, 64 78",   // come down and finish lower-right (open)
       },
     ],
     skillTags: ["letter:e", "case:lower", "subtopic:tracing"],
+  },
+
+  // --------------------
+  // F / f
+  // --------------------
+  F: {
+    id: "F",
+    label: "F",
+    // ✅ IMPORTANT: if your other letters use a different viewBox (like "0 0 120 120"),
+    // use the SAME value here for consistency.
+    viewBox: "0 0 100 100",
+    skillTags: ["letter:F", "sound:/f/"],
+    strokes: [
+      // Stroke 1: big down line
+      { id: "F1", kind: "trace", pathD: "M 32 14 L 32 88" },
+      // Stroke 2: top line
+      { id: "F2", kind: "trace", pathD: "M 32 14 L 76 14" },
+      // Stroke 3: middle line
+      { id: "F3", kind: "trace", pathD: "M 32 50 L 64 50" },
+    ],
+  },
+
+  f: {
+  id: "f",
+  label: "f",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:f", "sound:f", "case:lower"],
+  strokes: [
+    {
+      id: "f-main",
+      kind: "trace",
+      // ✅ TOP CURVE IS ONLY THIS SMALL PART (then straight down)
+      // Start point = (64,16)  → hook into stem at (50,28)
+      pathD: "M 64 16 C 58 10 50 12 50 28 L 50 92",
+    },
+    {
+      id: "f-bar",
+      kind: "trace",
+      // middle bar, left → right
+      pathD: "M 34 54 L 66 54",
+    },
+  ],
+},
+
+  "G": {
+    id: "G",
+    label: "G",
+    viewBox: "0 0 100 100",
+    skillTags: ["letter:g", "sound:g", "case:upper"],
+    strokes: [
+      {
+        id: "G-curve",
+        kind: "trace",
+        // Stroke 1: big curve (like C), start near top-right, go around, end near mid-right
+        pathD: "M 70 30 C 60 18 42 18 32 30 C 22 44 22 60 32 74 C 42 86 60 86 70 74",
+      },
+      {
+        id: "G-bar-down",
+        kind: "trace",
+        // Stroke 2: middle bar THEN a short vertical line DOWN at the end
+        pathD: "M 48 56 L 72 56 L 72 94",
+      },
+    ],
+  },
+
+  "g": {
+    id: "g",
+    label: "g",
+    viewBox: "0 0 100 140",
+    skillTags: ["letter:g", "sound:g", "case:lower"],
+    strokes: [
+      {
+        id: "g-bowl",
+        kind: "trace",
+        // Stroke 1: bowl (like 'o'), BUT end on the right side where the downstroke starts
+pathD: "M 68 34 C 48 20, 28 32, 28 52 C 28 74, 52 82, 68 70",
+      },
+      {
+        id: "g-tail",
+        kind: "trace",
+        // Stroke 2: downstroke + hook tail (descender)
+pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
+
+      },
+    ],
   },
 };
 
@@ -272,7 +356,7 @@ export const TRACE_LEVELS: TraceLevel[] = [
       { upper: "D", lower: "d" },
     ],
   },
-  { levelId: 2, title: "Level 2", subtitle: "E–H", pairs: [{ upper: "E", lower: "e" }] },
+  { levelId: 2, title: "Level 2", subtitle: "E–H", pairs: [{ upper: "E", lower: "e" }, { upper: "F", lower: "f" }, { upper: "G", lower: "g" }] },
   { levelId: 3, title: "Level 3", subtitle: "I–L", pairs: [] },
   { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
   { levelId: 5, title: "Level 5", subtitle: "Q–Z", pairs: [] },
