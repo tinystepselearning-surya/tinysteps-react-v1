@@ -1,22 +1,18 @@
 // src/pages/kids/games/phonics/tracing/traceLetters.ts
-// A+B temporary build (no Hershey import) so we can verify tracing logic + pedagogy.
-// ✅ a: 2-stroke (anticlockwise "c" shape, then straight downstroke on right)
-// ✅ B: 3-stroke (spine, top belly, bottom belly)
-// ✅ b: 2-stroke (downstroke, then OPEN belly curve like inverted "c" — not a circle)
+// Pure TS data/types ONLY (no JSX). If you put JSX here, Vite will crash.
 
-export type LetterId = "A" | "a" | "B" | "b";
-
-export type TraceStrokeKind = "trace" | "tap";
-
-export type TraceStroke = {
+type BaseStroke = {
   id: string;
-  kind: TraceStrokeKind;
-  /** SVG path. For tap strokes use: "M x y" */
   pathD: string;
-  /** Optional trim window 0..1 used by LetterTracingGame sampling */
+  // Optional trimming window used by the game sampler.
+  // Keep on BOTH variants so TS never complains in the game file.
   startT?: number;
   endT?: number;
 };
+
+export type TraceStroke =
+  | (BaseStroke & { kind: "trace" })
+  | (BaseStroke & { kind: "tap" }); // tap uses "M x y"
 
 export type TraceLetter = {
   id: string;
@@ -26,18 +22,27 @@ export type TraceLetter = {
   skillTags?: string[];
 };
 
-export type TracePair = { upper: LetterId; lower: LetterId };
+export const LETTER_IDS = [
+  "A","a","B","b","C","c","D","d",
+  "E","e","F","f","G","g","H","h",
+  "I","i","J","j","K","k","L","l",
+  "M","m","N","n","O","o","P","p",
+  "Q","q","R","r","S","s","T","t",
+  "U","u","V","v","W","w","X","x",
+  "Y","y","Z","z",
+] as const;
 
-export type PreTraceId = "line" | "slant" | "curve" | "zigzag";
+export type LetterId = (typeof LETTER_IDS)[number];
 
-// --------------------
-// Pretrace (Level 0)
-// --------------------
+export type TracePair = { upper: LetterId; lower?: LetterId };
+
+export type PreTraceId = "line" | "curve" | "circle";
+
 export const PRETRACE_LEVEL = {
   levelId: 0 as const,
   title: "Level 0 — Warm-up Tracing",
-  subtitle: "Lines, slants, curves",
-  items: ["line", "slant", "curve", "zigzag"] as PreTraceId[],
+  subtitle: "Lines, curves, circles",
+  items: ["line", "curve", "circle"] as PreTraceId[],
 };
 
 export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
@@ -45,141 +50,249 @@ export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
     id: "pre_line",
     label: "Straight line",
     viewBox: "0 0 100 100",
-    strokes: [{ id: "line_1", kind: "trace", pathD: "M 20 50 L 80 50" }],
+    strokes: [{ id: "line_1", kind: "trace", pathD: "M 50 18 L 50 88" }],
     skillTags: ["subtopic:pretracing", "shape:line"],
-  },
-  slant: {
-    id: "pre_slant",
-    label: "Slant line",
-    viewBox: "0 0 100 100",
-    strokes: [{ id: "slant_1", kind: "trace", pathD: "M 30 70 L 70 30" }],
-    skillTags: ["subtopic:pretracing", "shape:slant"],
   },
   curve: {
     id: "pre_curve",
     label: "Curve",
     viewBox: "0 0 100 100",
-    strokes: [{ id: "curve_1", kind: "trace", pathD: "M 25 60 C 40 20, 60 20, 75 60" }],
+    strokes: [
+      {
+        id: "curve_1",
+        kind: "trace",
+        pathD: "M 72 26 C 44 18, 26 34, 26 54 C 26 78, 52 90, 72 74",
+      },
+    ],
     skillTags: ["subtopic:pretracing", "shape:curve"],
   },
-  zigzag: {
-    id: "pre_zigzag",
-    label: "Zigzag",
+  circle: {
+    id: "pre_circle",
+    label: "Circle",
     viewBox: "0 0 100 100",
-    strokes: [{ id: "zigzag_1", kind: "trace", pathD: "M 20 30 L 40 70 L 60 30 L 80 70" }],
-    skillTags: ["subtopic:pretracing", "shape:zigzag"],
+    strokes: [
+      {
+        id: "circle_1",
+        kind: "trace",
+        pathD:
+          "M 70 34 C 58 18, 34 20, 26 38 C 18 56, 26 80, 48 84 C 72 88, 84 62, 76 44 C 74 40, 72 36, 70 34",
+      },
+    ],
+    skillTags: ["subtopic:pretracing", "shape:circle"],
   },
 };
 
 // --------------------
-// Letters (A, a, B, b)
+// Letters (manual, kid-friendly) — Level 1 only for now
+// Baseline ≈ y=86 (so bowls end cleanly on the lower line).
 // --------------------
-export const TRACE_LETTERS: Record<LetterId, TraceLetter> = {
-  // -------- A --------
+export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
+  // ✅ A: stroke 1 starts at TOP (start point = first "M")
   A: {
     id: "A",
     label: "A",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "A_1", kind: "trace", pathD: "M 50 18 L 30 82" }, // left slant
-      { id: "A_2", kind: "trace", pathD: "M 50 18 L 70 82" }, // right slant
-      { id: "A_3", kind: "trace", pathD: "M 38 55 L 62 55" }, // crossbar
+      { id: "A_1", kind: "trace", pathD: "M 50 18 L 30 88" }, // top -> bottom
+      { id: "A_2", kind: "trace", pathD: "M 50 18 L 70 88" }, // top -> bottom
+      { id: "A_3", kind: "trace", pathD: "M 38 58 L 62 58" }, // bar
     ],
-    skillTags: ["letter:A", "case:upper", "sound:/a/", "subtopic:tracing"],
+    skillTags: ["letter:a", "case:upper", "subtopic:tracing"],
   },
 
-  // -------- a --------
+  // ✅ a: make bowl curve like "c" (two smooth cubics) AND end at baseline + same x as stem
   a: {
     id: "a",
     label: "a",
     viewBox: "0 0 100 100",
     strokes: [
-      // Stroke 1: anticlockwise "c" (OPEN — not a closed circle)
-      // Start near top, curve left/down/around, end near top-right (start/end nicely separated)
       {
         id: "a_1",
         kind: "trace",
-        pathD:
-          "M 50 34 " +
-          "C 38 34, 32 46, 32 58 " + // go left + down
-          "C 32 78, 56 86, 66 70 " + // round bottom
-          "C 74 58, 72 40, 66 42", // finish near top-right (open end)
+        // Smooth "c-like" bowl, OPEN on right, ends at (68,86) to meet lower line
+        pathD: "M 68 40 C 48 24, 28 36, 28 58 C 28 84, 52 92, 68 86",
       },
-
-      // Stroke 2: standing line from top-right down (kid handwriting)
-      { id: "a_2", kind: "trace", pathD: "M 66 42 L 66 86" },
+      {
+        id: "a_2",
+        kind: "trace",
+        // Right stem: EXACT same x=68 and ends at y=86 so it joins perfectly
+        pathD: "M 68 40 L 68 86",
+      },
     ],
-    skillTags: ["letter:a", "case:lower", "sound:/a/", "subtopic:tracing"],
+    skillTags: ["letter:a", "case:lower", "subtopic:tracing"],
   },
 
-  // -------- B --------
   B: {
     id: "B",
     label: "B",
     viewBox: "0 0 100 100",
     strokes: [
-      // Stroke 1: spine (top → bottom)
-      { id: "B_1", kind: "trace", pathD: "M 35 18 L 35 82" },
-
-      // Stroke 2: top belly (start at top of spine → end at mid of spine), open
-      { id: "B_2", kind: "trace", pathD: "M 35 18 C 66 18, 70 28, 70 36 C 70 46, 60 46, 35 46" },
-
-      // Stroke 3: bottom belly (start at mid of spine → end at bottom of spine), open
-      { id: "B_3", kind: "trace", pathD: "M 35 46 C 68 46, 72 58, 72 66 C 72 80, 60 82, 35 82" },
+      { id: "B_1", kind: "trace", pathD: "M 32 16 L 32 86" },
+      { id: "B_2", kind: "trace", pathD: "M 32 16 C 74 16, 74 46, 32 46" },
+      { id: "B_3", kind: "trace", pathD: "M 32 46 C 78 46, 78 86, 32 86" },
     ],
-    skillTags: ["letter:B", "case:upper", "sound:/b/", "subtopic:tracing"],
+    skillTags: ["letter:b", "case:upper", "subtopic:tracing"],
   },
 
-  // -------- b --------
+  // ✅ b: belly must meet the lower line (baseline) + return to stem cleanly
   b: {
     id: "b",
     label: "b",
     viewBox: "0 0 100 100",
     strokes: [
-      // Stroke 1: long downstroke (top → bottom)
-      { id: "b_1", kind: "trace", pathD: "M 45 16 L 45 86" },
-
-      // Stroke 2: belly = OPEN curve (inverted "c"), NOT a circle/loop
-      // Start at midline, curve out to the right, finish at bottom of the stem.
+      { id: "b_1", kind: "trace", pathD: "M 40 16 L 40 86" }, // stem ends at baseline
       {
         id: "b_2",
         kind: "trace",
-        pathD: "M 45 50 C 78 50, 78 86, 45 86",
+        // Start on stem (40,52) and end on stem at baseline (40,86)
+        // Two-cubic style (smoother than the old “messy” one)
+        pathD: "M 40 52 C 68 48, 78 64, 74 76 C 70 92, 52 94, 40 86",
       },
     ],
-    skillTags: ["letter:b", "case:lower", "sound:/b/", "subtopic:tracing"],
+    skillTags: ["letter:b", "case:lower", "subtopic:tracing"],
+  },
+
+  C: {
+    id: "C",
+    label: "C",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "C_1", kind: "trace", pathD: "M 72 28 C 48 12, 24 28, 24 52 C 24 78, 52 92, 72 74" },
+    ],
+    skillTags: ["letter:c", "case:upper", "subtopic:tracing"],
+  },
+
+  // ✅ c (your good reference curve — keep as-is)
+  c: {
+    id: "c",
+    label: "c",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "c_1", kind: "trace", pathD: "M 68 34 C 48 20, 28 32, 28 52 C 28 74, 52 82, 68 70" },
+    ],
+    skillTags: ["letter:c", "case:lower", "subtopic:tracing"],
+  },
+
+  D: {
+    id: "D",
+    label: "D",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "D_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+      {
+        id: "D_2",
+        kind: "trace",
+        pathD: "M 34 16 C 78 16, 86 30, 86 51 C 86 72, 78 86, 34 86",
+      },
+    ],
+    skillTags: ["letter:d", "case:upper", "subtopic:tracing"],
+  },
+
+  // ✅ d: bowl like "c" AND end at baseline (66,86) + stem shares same x + same bottom y
+  d: {
+    id: "d",
+    label: "d",
+    viewBox: "0 0 100 100",
+    strokes: [
+      {
+        id: "d_1",
+        kind: "trace",
+        // Smooth open bowl, endpoints on x=66; ends at baseline y=86
+        pathD: "M 66 48 C 46 34, 28 46, 28 66 C 28 86, 50 94, 66 86",
+      },
+      {
+        id: "d_2",
+        kind: "trace",
+        // stem exactly x=66, ends exactly y=86 so bowl meets perfectly
+        pathD: "M 66 16 L 66 86",
+      },
+    ],
+    skillTags: ["letter:d", "case:lower", "subtopic:tracing"],
+  },
+
+  // ✅ E: 4 strokes (vertical + top/middle/bottom bars)
+  E: {
+    id: "E",
+    label: "E",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "E_1", kind: "trace", pathD: "M 34 16 L 34 86" }, // spine
+      { id: "E_2", kind: "trace", pathD: "M 34 16 L 74 16" }, // top bar
+      { id: "E_3", kind: "trace", pathD: "M 34 51 L 66 51" }, // middle bar
+      { id: "E_4", kind: "trace", pathD: "M 34 86 L 74 86" }, // bottom bar (baseline)
+    ],
+    skillTags: ["letter:e", "case:upper", "subtopic:tracing"],
+  },
+
+  // ✅ e: "c-like" bowl + small cross stroke (simple handwriting-style)
+  e: {
+    id: "e",
+    label: "e",
+    viewBox: "0 0 100 100",
+    strokes: [
+      {
+        id: "e_1",
+        kind: "trace",
+        // Start near middle-right, loop like a "c", finish at baseline (66,86)
+        pathD: "M 66 52 C 58 40, 38 40, 32 56 C 24 78, 46 94, 66 86 C 78 80, 78 64, 66 60 C 54 56, 42 60, 42 68",
+      },
+      {
+        id: "e_2",
+        kind: "trace",
+        // Small top stroke (like writing e)
+        pathD: "M 34 54 L 62 54",
+      },
+    ],
+    skillTags: ["letter:e", "case:lower", "subtopic:tracing"],
   },
 };
+
+
 
 // --------------------
 // Levels
 // --------------------
-export const TRACE_LEVELS = [
+export type TraceLevel = {
+  levelId: number;
+  title: string;
+  subtitle?: string;
+  pairs: TracePair[];
+};
+
+export const TRACE_LEVELS: TraceLevel[] = [
   {
     levelId: 1,
     title: "Level 1",
-    subtitle: "Trace Capital → Small",
+    subtitle: "A–D",
     pairs: [
-      { upper: "A" as const, lower: "a" as const },
-      { upper: "B" as const, lower: "b" as const },
+      { upper: "A", lower: "a" },
+      { upper: "B", lower: "b" },
+      { upper: "C", lower: "c" },
+      { upper: "D", lower: "d" },
     ],
   },
+  { levelId: 2, title: "Level 2", subtitle: "E–H", pairs: [{ upper: "E", lower: "e" }] },
+  { levelId: 3, title: "Level 3", subtitle: "I–L", pairs: [] },
+  { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
+  { levelId: 5, title: "Level 5", subtitle: "Q–Z", pairs: [] },
 ];
 
+export function isLetterReady(letterId: LetterId): boolean {
+  const l = TRACE_LETTERS[letterId];
+  return Boolean(l?.strokes?.length);
+}
+
 export function getEnabledPairsForLevel(levelId: number): TracePair[] {
-  const level = TRACE_LEVELS.find((l) => l.levelId === levelId);
-  if (!level) return [];
-  return (level.pairs ?? []).filter((p) => {
-    const up = TRACE_LETTERS[p.upper];
-    const lo = TRACE_LETTERS[p.lower];
-    return Boolean(up?.strokes?.length && lo?.strokes?.length);
+  const lv = TRACE_LEVELS.find((x) => x.levelId === levelId);
+  if (!lv) return [];
+  return (lv.pairs ?? []).filter((p) => {
+    const upOk = isLetterReady(p.upper);
+    const loOk = p.lower ? isLetterReady(p.lower) : true;
+    return upOk && loOk;
   });
 }
 
 export function isLevelReady(levelId: number): boolean {
+  if (levelId === 0) return true;
   return getEnabledPairsForLevel(levelId).length > 0;
-}
-
-export function isLetterReady(letterId: LetterId): boolean {
-  return Boolean(TRACE_LETTERS[letterId]?.strokes?.length);
 }
