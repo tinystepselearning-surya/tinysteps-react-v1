@@ -1,6 +1,4 @@
 import React from 'react';
-import TestimonialsCarousel from './TestimonialsCarousel';
-
 const items = [
   { value: '3500+', label: 'Learners guided since 2020' },
   { value: '9+ countries', label: 'Families across India and 8+ other countries' },
@@ -31,7 +29,6 @@ const SocialProofCrispSection: React.FC = () => {
           ))}
         </div>
         <div className="mt-12">
-          <TestimonialsCarousel />
         </div>
       </div>
     </section>
