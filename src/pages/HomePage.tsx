@@ -15,8 +15,6 @@ const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSe
 const DemoShowcase = lazy(() => import("../components/Home/DemoShowcase"));
 const WhyChooseCollapsibleSectionLazy = lazy(() => import("../components/Home/WhyChooseCollapsibleSection"));
 const StepTimelineLazy = lazy(() => import("../components/Home/StepTimeline"));
-const CoursesSectionLazy = lazy(() => import("../components/Home/CoursesSection"));
-const AIGuidedPracticeSection = lazy(() => import("../components/Home/AIGuidedPracticeSection"));
 const SocialProofCrispSectionLazy = lazy(() => import("../components/Home/SocialProofCrispSection"));
 const PricingCrispSectionLazy = lazy(() => import("../components/Home/PricingCrispSection"));
 const FAQSectionLazy = lazy(() => import("../components/Home/FAQSection"));
@@ -125,13 +123,7 @@ export default function HomePage() {
         <StepTimelineLazy />
       </Suspense>
 
-      <Suspense fallback={null}>
-        <CoursesSectionLazy />
-      </Suspense>
 
-      <Suspense fallback={null}>
-        <AIGuidedPracticeSection />
-      </Suspense>
 
       <Suspense fallback={null}>
         <SocialProofCrispSectionLazy />
