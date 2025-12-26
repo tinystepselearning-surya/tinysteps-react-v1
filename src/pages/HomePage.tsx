@@ -12,7 +12,6 @@ import TrialForm from "../components/forms/TrialForm";
 // - TestimonialsCarousel (Parent Testimonials)
 
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
-const TrustSignalsLazy = lazy(() => import("../components/trust/trustsignals"));
 const DemoShowcase = lazy(() => import("../components/Home/DemoShowcase"));
 const WhyChooseCollapsibleSectionLazy = lazy(() => import("../components/Home/WhyChooseCollapsibleSection"));
 const StepTimelineLazy = lazy(() => import("../components/Home/StepTimeline"));
@@ -112,9 +111,7 @@ export default function HomePage() {
         <GlobalImpactSection />
       </Suspense>
 
-      <Suspense fallback={null}>
-        <TrustSignalsLazy />
-      </Suspense>
+    
 
       <Suspense fallback={null}>
         <DemoShowcase />
