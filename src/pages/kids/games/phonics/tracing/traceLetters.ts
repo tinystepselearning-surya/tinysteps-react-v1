@@ -224,7 +224,7 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     skillTags: ["letter:e", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ e: "c-like" bowl + small cross stroke (simple handwriting-style)
+  // ✅ e: Stroke 1 = main loop (looks good on screen), Stroke 2 = small bar
   e: {
     id: "e",
     label: "e",
@@ -233,14 +233,15 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
       {
         id: "e_1",
         kind: "trace",
-        // Start near middle-right, loop like a "c", finish at baseline (66,86)
-        pathD: "M 66 52 C 58 40, 38 40, 32 56 C 24 78, 46 94, 66 86 C 78 80, 78 64, 66 60 C 54 56, 42 60, 42 68",
+        // Main loop (no spiral, no crossing, ends on baseline ~86)
+        pathD:
+          "M 70 54 C 58 40, 36 44, 34 66 C 32 92, 74 94, 74 66 C 74 52, 54 50, 44 64 C 36 76, 50 92, 70 86",
       },
       {
         id: "e_2",
         kind: "trace",
-        // Small top stroke (like writing e)
-        pathD: "M 34 54 L 62 54",
+        // Small middle bar (simple + clear)
+        pathD: "M 36 56 L 66 56",
       },
     ],
     skillTags: ["letter:e", "case:lower", "subtopic:tracing"],
