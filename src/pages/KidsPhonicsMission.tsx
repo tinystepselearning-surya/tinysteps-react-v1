@@ -1027,7 +1027,7 @@ const KidsPhonicsMission: React.FC = () => {
           width: '100vw',
           height: '100vh',
           zIndex: 40,
-          backgroundImage: 'url("/Games/Phonics/letter-sound-match/bg.png")',
+          backgroundImage: 'url("/games/phonics/letter-sound-match/bg.png")',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -1323,7 +1323,7 @@ const KidsPhonicsMission: React.FC = () => {
                 }}
               >
                 <img 
-                  src="/Games/Phonics/letter-sound-match/listen.png" 
+                  src="/games/phonics/letter-sound-match/listen.png" 
                   alt="Listen" 
                   style={{
                     width: '70%',

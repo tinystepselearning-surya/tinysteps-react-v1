@@ -3,9 +3,10 @@
 // ✅ Completed strokes stay visible (proper letter formation).
 // ✅ Forces a “lift and start again” between strokes.
 // ✅ Fullscreen stable.
-// ✅ NEW: removes puppy/cloud emojis; uses ONE glowing ⭐ guide that animates along path when idle.
-// ✅ NEW: more colorful stroke palette.
-// ✅ NEW: completion popup sits at bottom (letter stays visible).
+// ✅ NEW: dropdown to jump to any letter in this level
+// ✅ NEW: Next Letter button (skip current letter for testing)
+//
+// IMPORTANT: traceLetters.ts must be PURE TS (no JSX). JSX belongs here (.tsx).
 
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -92,7 +93,28 @@ function hexToRgba(hex: string, a: number) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
+// Slightly expand viewBox so letters sit more centered with breathing room
+function expandViewBox(vb: string, pad = 10) {
+  const parts = vb
+    .trim()
+    .split(/[\s,]+/)
+    .map((s) => Number(s));
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return vb;
+  const [x, y, w, h] = parts;
+  const p = Math.max(0, pad);
+  return `${x - p} ${y - p} ${w + p * 2} ${h + p * 2}`;
+}
+
 const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
+
+// ⭐ Your Canva asset (saved in /public/star.png)
+const STAR_SRC = "/star.png";
+// ⭐ sizes (reduce here)
+const STAR_START_SIZE = 18;
+const STAR_GUIDE_SIZE = 16;
+const STAR_END_SIZE = 14;
+// viewBox padding (center feel)
+const VIEWBOX_PAD = 10;
 
 function ConfettiBurst({ fire }: { fire: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -114,6 +136,7 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     };
 
     resize();
+
     const W0 = canvas.width;
     const H0 = canvas.height;
 
@@ -166,7 +189,13 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     };
   }, [fire]);
 
-  return <canvas ref={canvasRef} className="pointer-events-none absolute inset-0" style={{ width: "100%", height: "100%" }} />;
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0"
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
 }
 
 export default function LetterTracingGame() {
@@ -222,7 +251,7 @@ export default function LetterTracingGame() {
       ? PRETRACE_ITEMS[pretraceId]
       : null
     : currentLetterId
-      ? TRACE_LETTERS[currentLetterId] ?? null
+      ? (TRACE_LETTERS[currentLetterId] as TraceLetter | undefined) ?? null
       : null;
 
   // --------------------
@@ -234,23 +263,21 @@ export default function LetterTracingGame() {
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
   const [trimStartLen, setTrimStartLen] = useState(0);
-  const [trimWindowLen, setTrimWindowLen] = useState(0);
 
   const [started, setStarted] = useState(false);
-  const [activePointerId, setActivePointerId] = useState<number | null>(null);
   const [lastIndex, setLastIndex] = useState(0);
 
   const [letterDone, setLetterDone] = useState(false);
   const [confetti, setConfetti] = useState(false);
   const [timeStart, setTimeStart] = useState<number | null>(null);
 
-  // ✅ Refs to avoid “state update timing” issues between strokes
+  // refs (avoid timing issues)
   const startedRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
   const ignoreMovesRef = useRef(false);
   const capturedElRef = useRef<SVGSVGElement | null>(null);
 
-  // ⭐ hint star auto-move index (when idle)
+  // ⭐ hint star index
   const [hintIndex, setHintIndex] = useState(0);
   const hintIndexRef = useRef(0);
 
@@ -258,6 +285,20 @@ export default function LetterTracingGame() {
     if (!letterData) return null;
     return letterData.strokes[strokeIndex] ?? null;
   }, [letterData, strokeIndex]);
+
+  const renderViewBox = useMemo(() => {
+    const vb = (letterData?.viewBox ?? "0 0 100 100").trim();
+    return expandViewBox(vb, VIEWBOX_PAD);
+  }, [letterData?.viewBox]);
+
+  // ✅ Safe startT/endT (prevents TS error on union type)
+  const strokeStartT = useMemo(() => {
+    return currentStroke && currentStroke.kind === "trace" ? currentStroke.startT : undefined;
+  }, [currentStroke]);
+
+  const strokeEndT = useMemo(() => {
+    return currentStroke && currentStroke.kind === "trace" ? currentStroke.endT : undefined;
+  }, [currentStroke]);
 
   const toSvg = useSvgPoint(svgRef);
 
@@ -289,12 +330,11 @@ export default function LetterTracingGame() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, [setSearchParams]);
 
-  // Reset interaction state when switching item
+  // Reset state when switching item
   useEffect(() => {
     setStrokeIndex(0);
 
     setStarted(false);
-    setActivePointerId(null);
     setLastIndex(0);
 
     startedRef.current = false;
@@ -310,10 +350,9 @@ export default function LetterTracingGame() {
     hintIndexRef.current = 0;
   }, [currentLetterId, pretraceId]);
 
-  // Reset interaction state when switching stroke
+  // Reset state when switching stroke
   useEffect(() => {
     setStarted(false);
-    setActivePointerId(null);
     setLastIndex(0);
 
     startedRef.current = false;
@@ -321,16 +360,14 @@ export default function LetterTracingGame() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
-    // IMPORTANT: keep ignoreMovesRef as-is; it will clear on pointer up.
   }, [strokeIndex]);
 
-  // Sampling owned ONLY by this layout effect (for CURRENT stroke)
+  // Sampling for CURRENT stroke only
   useLayoutEffect(() => {
     if (!currentStroke || currentStroke.kind === "tap") {
       setSamples([]);
       setRawLen(0);
       setTrimStartLen(0);
-      setTrimWindowLen(0);
       return;
     }
 
@@ -339,12 +376,11 @@ export default function LetterTracingGame() {
       setSamples([]);
       setRawLen(0);
       setTrimStartLen(0);
-      setTrimWindowLen(0);
       return;
     }
 
-    const startT0 = typeof currentStroke.startT === "number" ? currentStroke.startT : 0;
-    const endT0 = typeof currentStroke.endT === "number" ? currentStroke.endT : 1;
+    const startT0 = typeof strokeStartT === "number" ? strokeStartT : 0;
+    const endT0 = typeof strokeEndT === "number" ? strokeEndT : 1;
     const startT = clamp(startT0, 0, 0.999);
     const endT = clamp(endT0, startT + 0.001, 1);
 
@@ -365,7 +401,6 @@ export default function LetterTracingGame() {
         setSamples([]);
         setRawLen(0);
         setTrimStartLen(0);
-        setTrimWindowLen(0);
         return;
       }
 
@@ -390,7 +425,6 @@ export default function LetterTracingGame() {
 
       setRawLen(realLen);
       setTrimStartLen(sLen);
-      setTrimWindowLen(wLen);
       setSamples(pts);
       setLastIndex(0);
       return;
@@ -412,10 +446,9 @@ export default function LetterTracingGame() {
 
     setRawLen(len);
     setTrimStartLen(sLen);
-    setTrimWindowLen(wLen);
     setSamples(pts);
     setLastIndex(0);
-  }, [currentStroke?.pathD, currentStroke?.kind, currentStroke?.startT, currentStroke?.endT]);
+  }, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
 
   const isTap = currentStroke?.kind === "tap";
 
@@ -432,39 +465,36 @@ export default function LetterTracingGame() {
     return last ? { x: last.x, y: last.y } : { x: 0, y: 0 };
   }, [currentStroke, samples, startPt]);
 
-  // ⭐ animate hint star along the path while idle (no drawing yet)
-useEffect(() => {
-  if (letterDone) return;
-  if (!currentStroke || currentStroke.kind === "tap") return;
-  if (!samples.length) return;
+  // ⭐ animate hint along path while idle
+  useEffect(() => {
+    if (letterDone) return;
+    if (!currentStroke || currentStroke.kind === "tap") return;
+    if (!samples.length) return;
+    if (started || lastIndex > 0) return;
 
-  // pause hint once kid starts (or once they've moved)
-  if (started || lastIndex > 0) return;
+    let raf = 0;
+    const durMs = 5200;
+    const t0 = performance.now();
 
-  let raf = 0;
+    const tick = (now: number) => {
+      const frac = ((now - t0) % durMs) / durMs;
+      const idx = Math.floor(frac * (samples.length - 1));
+      if (idx !== hintIndexRef.current) {
+        hintIndexRef.current = idx;
+        setHintIndex(idx);
+      }
+      raf = requestAnimationFrame(tick);
+    };
 
-  // ✅ slower + smoother: increase duration
-  const durMs = 5200; // was 2600
-  const t0 = performance.now();
-
-  const tick = (now: number) => {
-    const frac = ((now - t0) % durMs) / durMs;
-    const idx = Math.floor(frac * (samples.length - 1));
-    if (idx !== hintIndexRef.current) {
-      hintIndexRef.current = idx;
-      setHintIndex(idx);
-    }
     raf = requestAnimationFrame(tick);
-  };
-
-  raf = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(raf);
-}, [letterDone, currentStroke?.id, currentStroke?.pathD, samples.length, started, lastIndex]);
+    return () => cancelAnimationFrame(raf);
+  }, [letterDone, currentStroke?.id, currentStroke?.kind, currentStroke?.pathD, samples.length, started, lastIndex]);
 
   const guideIndex = useMemo(() => {
     if (!samples.length) return 0;
-    // when kid is drawing, use their progress; otherwise show the hint star motion
-    return started || lastIndex > 0 ? clamp(lastIndex, 0, samples.length - 1) : clamp(hintIndex, 0, samples.length - 1);
+    return started || lastIndex > 0
+      ? clamp(lastIndex, 0, samples.length - 1)
+      : clamp(hintIndex, 0, samples.length - 1);
   }, [samples.length, started, lastIndex, hintIndex]);
 
   const guidePt = useMemo(() => {
@@ -495,9 +525,10 @@ useEffect(() => {
     return dots;
   }, [currentStroke, samples]);
 
-  // ✅ Keep completed strokes visible so the letter forms on screen
+  // completed strokes stay visible
   const totalStrokes = letterData?.strokes?.length ?? 0;
   const completedCount = letterDone ? totalStrokes : strokeIndex;
+
   const completedStrokes = useMemo(() => {
     if (!letterData) return [];
     return (letterData.strokes ?? []).slice(0, Math.max(0, Math.min(completedCount, letterData.strokes.length)));
@@ -511,6 +542,18 @@ useEffect(() => {
   const showProgress = !letterDone && !isTap && lastIndex > 0 && rawLen > 0;
   const dashArray = rawLen > 0 ? `${progressLen} ${rawLen}` : undefined;
   const dashOffset = rawLen > 0 ? `${-trimStartLen}` : undefined;
+
+  // ✅ dropdown options (jump to any letter in this level) — hook MUST be before any return
+  const jumpOptions = useMemo(() => {
+    if (mode !== "play" || isPretrace) return [];
+    const lv = levelId ?? 1;
+    return enabledPairs.flatMap((p, idx) => {
+      const opts: { value: string; label: string }[] = [];
+      if (p.upper) opts.push({ value: `${idx}|0`, label: `${p.upper} (Capital · L${lv})` });
+      if (p.lower) opts.push({ value: `${idx}|1`, label: `${p.lower} (Small · L${lv})` });
+      return opts;
+    });
+  }, [mode, isPretrace, levelId, enabledPairs]);
 
   // --------------------
   // Navigation helpers
@@ -596,7 +639,6 @@ useEffect(() => {
   function replay() {
     setStrokeIndex(0);
     setStarted(false);
-    setActivePointerId(null);
     setLastIndex(0);
 
     startedRef.current = false;
@@ -612,6 +654,7 @@ useEffect(() => {
     hintIndexRef.current = 0;
   }
 
+  // ✅ Next Letter button uses this (skip without completing)
   function goNext() {
     if (mode !== "play") return;
 
@@ -662,12 +705,15 @@ useEffect(() => {
     startedRef.current = false;
     activePointerIdRef.current = null;
     setStarted(false);
-    setActivePointerId(null);
     setLastIndex(0);
 
     const nextStroke = strokeIndex + 1;
     if (letterData && nextStroke < letterData.strokes.length) {
-      setTimeout(() => setStrokeIndex((prev) => prev + 1), 220);
+      // ✅ force "lift and start again" between strokes
+      setTimeout(() => {
+        ignoreMovesRef.current = false;
+        setStrokeIndex((prev) => prev + 1);
+      }, 220);
       return;
     }
 
@@ -733,7 +779,6 @@ useEffect(() => {
     activePointerIdRef.current = e.pointerId;
 
     setStarted(true);
-    setActivePointerId(e.pointerId);
     (e.currentTarget as any).setPointerCapture?.(e.pointerId);
     setLastIndex(0);
   }
@@ -785,7 +830,6 @@ useEffect(() => {
       startedRef.current = false;
       capturedElRef.current = null;
 
-      setActivePointerId(null);
       setStarted(false);
 
       ignoreMovesRef.current = false;
@@ -892,6 +936,29 @@ useEffect(() => {
           <div className="rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">{headerLabel}</div>
 
           <div className="flex items-center gap-2">
+            {/* ✅ Jump dropdown */}
+            {!isPretrace && jumpOptions.length > 0 && (
+              <select
+                value={`${safePairIndex}|${step}`}
+                onChange={(e) => {
+                  const [pi, st] = e.target.value.split("|").map((x) => Number(x));
+                  navigatePlay(levelId ?? 1, Number.isFinite(pi) ? pi : 0, st === 1 ? 1 : 0, false);
+                }}
+                className="rounded-full border bg-white px-3 py-2 text-sm font-semibold text-slate-800"
+              >
+                {jumpOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {/* ✅ Skip for testing */}
+            <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
+              Next Letter
+            </button>
+
             {fs ? (
               <button onClick={() => setFs(false)} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
                 Exit Fullscreen
@@ -908,7 +975,6 @@ useEffect(() => {
           </div>
         </div>
 
-        {/* 🌈 softer, colorful background */}
         <div
           className={`relative mt-4 overflow-hidden rounded-2xl border shadow-sm ${fs ? "flex-1" : ""}`}
           style={{
@@ -921,7 +987,8 @@ useEffect(() => {
           <div className="relative w-full h-full" style={!fs ? { aspectRatio: "16 / 9" } : {}}>
             <svg
               ref={svgRef}
-              viewBox={letterData.viewBox ?? "0 0 100 100"}
+              viewBox={renderViewBox}
+              preserveAspectRatio="xMidYMid meet"
               className="absolute inset-0 h-full w-full"
               style={{ touchAction: "none" }}
               onPointerDown={handlePointerDown}
@@ -929,28 +996,7 @@ useEffect(() => {
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
             >
-              <defs>
-                {/* glow for the ⭐ */}
-                <filter id="tsStarGlow" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur stdDeviation="2.2" result="blur" />
-                  <feColorMatrix
-                    in="blur"
-                    type="matrix"
-                    values="
-                      1 0 0 0 0
-                      0 1 0 0 0
-                      0 0 1 0 0
-                      0 0 0 0.65 0"
-                    result="glow"
-                  />
-                  <feMerge>
-                    <feMergeNode in="glow" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {/* 1) Full letter outline (faint, pastel) */}
+              {/* 1) Full letter outline */}
               {allTraceStrokes.map((s, i) => {
                 const c = STROKE_COLORS[i % STROKE_COLORS.length];
                 return (
@@ -966,7 +1012,7 @@ useEffect(() => {
                 );
               })}
 
-              {/* 2) Completed strokes (ink, colorful per stroke) */}
+              {/* 2) Completed strokes */}
               {completedStrokes.map((s, i) => {
                 if (s.kind === "tap") {
                   const p = parseTapPoint(s.pathD);
@@ -1021,40 +1067,64 @@ useEffect(() => {
                 </>
               )}
 
-              {/* 4) Start marker + ⭐ guide + end marker */}
+              {/* 4) Start marker + guide + end marker */}
               {!letterDone && (
                 <>
-                  {/* start dot */}
-                  <circle cx={startPt.x} cy={startPt.y} r={9} fill="rgba(239,68,68,1)" />
-
-                  {/* ⭐ guide (glowing, moves along path hint when idle, and during tracing follows progress) */}
-{!isTap && (
-  <g transform={`translate(${guidePt.x}, ${guidePt.y})`} filter="url(#tsStarGlow)">
-    {/* soft halo */}
-    <circle cx="0" cy="0" r="12" fill="rgba(250,204,21,0.18)">
-      <animate attributeName="r" values="10;13;10" dur="1.0s" repeatCount="indefinite" />
-      <animate attributeName="opacity" values="0.22;0.38;0.22" dur="1.0s" repeatCount="indefinite" />
-    </circle>
-    <text x="-10" y="10" fontSize="22">
-      ⭐
-    </text>
-  </g>
-)}
-
-
-                  {/* end marker (small star, simple) */}
-                  {!isTap && (
-                    <g transform={`translate(${endPt.x - 10}, ${endPt.y - 8})`} filter="url(#tsStarGlow)">
-                      <text x="0" y="18" fontSize="18">
-                        ⭐
-                      </text>
-                    </g>
-                  )}
-
-                  {isTap && (
+                  {isTap ? (
                     <>
                       <circle cx={startPt.x} cy={startPt.y} r={10} fill={hexToRgba(currentColor, 0.18)} />
                       <circle cx={startPt.x} cy={startPt.y} r={6.5} fill={hexToRgba(currentColor, 0.9)} />
+                    </>
+                  ) : (
+                    <>
+                      {/* START (only your PNG, no extra glow circles) */}
+                      <g transform={`translate(${startPt.x}, ${startPt.y})`}>
+                        <image
+                          href={STAR_SRC}
+                          xlinkHref={STAR_SRC}
+                          x={-STAR_START_SIZE / 2}
+                          y={-STAR_START_SIZE / 2}
+                          width={STAR_START_SIZE}
+                          height={STAR_START_SIZE}
+                          preserveAspectRatio="xMidYMid meet"
+                        />
+                      </g>
+
+                      {/* MOVING GUIDE STAR (small + subtle pulse, no blurred circle) */}
+                      <g transform={`translate(${guidePt.x}, ${guidePt.y})`}>
+                        <g>
+                          <animateTransform
+                            attributeName="transform"
+                            type="scale"
+                            values="1;1.12;1"
+                            dur="0.9s"
+                            repeatCount="indefinite"
+                          />
+                          <image
+                            href={STAR_SRC}
+                            xlinkHref={STAR_SRC}
+                            x={-STAR_GUIDE_SIZE / 2}
+                            y={-STAR_GUIDE_SIZE / 2}
+                            width={STAR_GUIDE_SIZE}
+                            height={STAR_GUIDE_SIZE}
+                            preserveAspectRatio="xMidYMid meet"
+                          />
+                        </g>
+                      </g>
+
+                      {/* END STAR (smaller) */}
+                      <g transform={`translate(${endPt.x}, ${endPt.y})`}>
+                        <image
+                          href={STAR_SRC}
+                          xlinkHref={STAR_SRC}
+                          x={-STAR_END_SIZE / 2}
+                          y={-STAR_END_SIZE / 2}
+                          width={STAR_END_SIZE}
+                          height={STAR_END_SIZE}
+                          preserveAspectRatio="xMidYMid meet"
+                          opacity={0.85}
+                        />
+                      </g>
                     </>
                   )}
                 </>
@@ -1063,10 +1133,10 @@ useEffect(() => {
           </div>
 
           <div className="absolute bottom-0 left-0 right-0 px-4 py-3 text-center text-sm font-semibold text-slate-700 bg-white/55 backdrop-blur">
-            {isTap ? "Tap the glowing dot." : "Start at the red dot. Follow the ⭐ and trace the line."}
+            {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
           </div>
 
-          {/* ✅ Completion popup at bottom (does NOT cover the letter) */}
+          {/* Completion popup */}
           {letterDone && (
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute bottom-16 left-1/2 w-[92%] max-w-xl -translate-x-1/2 pointer-events-auto">
@@ -1092,29 +1162,6 @@ useEffect(() => {
             </div>
           )}
         </div>
-
-        {!isPretrace && !fs && enabledPairs.length > 0 && (
-          <div className="mt-4 rounded-xl border bg-white p-4">
-            <div className="text-sm font-semibold text-slate-800">Enabled pairs in this level:</div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {enabledPairs.map((p, pi) => {
-                const active = pi === safePairIndex;
-                return (
-                  <button
-                    key={`${p.upper}${p.lower}-${pi}`}
-                    onClick={() => navigatePlay(levelId ?? 1, pi, 0, false)}
-                    className={[
-                      "rounded-full px-3 py-1 text-sm font-semibold transition",
-                      active ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200",
-                    ].join(" ")}
-                  >
-                    {p.upper} {p.lower}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
