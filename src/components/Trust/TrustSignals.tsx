@@ -1,3 +1,4 @@
+export { default } from '../trust/trustsignals';
 // @ts-nocheck
 import React, { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';

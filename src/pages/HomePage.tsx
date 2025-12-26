@@ -12,7 +12,7 @@ import TrialForm from "../components/forms/TrialForm";
 // - TestimonialsCarousel (Parent Testimonials)
 
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
-const TrustSignalsLazy = lazy(() => import("../components/Trust/TrustSignals"));
+const TrustSignalsLazy = lazy(() => import("../components/trust/trustsignals"));
 const DemoShowcase = lazy(() => import("../components/Home/DemoShowcase"));
 const WhyChooseCollapsibleSectionLazy = lazy(() => import("../components/Home/WhyChooseCollapsibleSection"));
 const StepTimelineLazy = lazy(() => import("../components/Home/StepTimeline"));
