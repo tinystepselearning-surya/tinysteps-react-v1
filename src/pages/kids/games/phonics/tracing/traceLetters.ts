@@ -330,6 +330,34 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
       },
     ],
   },
+
+  H: {
+    id: "H",
+    label: "H",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "H_1", kind: "trace", pathD: "M 32 16 L 32 86" }, // left stem
+      { id: "H_2", kind: "trace", pathD: "M 68 16 L 68 86" }, // right stem
+      { id: "H_3", kind: "trace", pathD: "M 32 51 L 68 51" }, // middle bar
+    ],
+    skillTags: ["letter:h", "case:upper", "subtopic:tracing"],
+  },
+
+  h: {
+    id: "h",
+    label: "h",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "h_1", kind: "trace", pathD: "M 40 16 L 40 86" }, // tall stem
+      {
+        id: "h_2",
+        kind: "trace",
+        // hump: start on stem midline, arch, then straight down to baseline
+        pathD: "M 40 52 C 40 34, 60 34, 60 52 L 60 86",
+      },
+    ],
+    skillTags: ["letter:h", "case:lower", "subtopic:tracing"],
+  },
 };
 
 
@@ -356,7 +384,17 @@ export const TRACE_LEVELS: TraceLevel[] = [
       { upper: "D", lower: "d" },
     ],
   },
-  { levelId: 2, title: "Level 2", subtitle: "E–H", pairs: [{ upper: "E", lower: "e" }, { upper: "F", lower: "f" }, { upper: "G", lower: "g" }] },
+  {
+    levelId: 2,
+    title: "Level 2",
+    subtitle: "E–H",
+    pairs: [
+      { upper: "E", lower: "e" },
+      { upper: "F", lower: "f" },
+      { upper: "G", lower: "g" },
+      { upper: "H", lower: "h" },
+    ],
+  },
   { levelId: 3, title: "Level 3", subtitle: "I–L", pairs: [] },
   { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
   { levelId: 5, title: "Level 5", subtitle: "Q–Z", pairs: [] },
