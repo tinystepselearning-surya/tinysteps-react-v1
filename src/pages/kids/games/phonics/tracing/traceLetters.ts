@@ -454,16 +454,40 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     ],
     skillTags: ["letter:k", "case:lower", "subtopic:tracing"],
   },
+  L: {
+    id: "L",
+    label: "L",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) standing line (top -> bottom)
+      { id: "L_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+
+      // 2) bottom sleeping line (left -> right)
+      { id: "L_2", kind: "trace", pathD: "M 34 86 L 76 86" },
+    ],
+    skillTags: ["letter:l", "case:upper", "subtopic:tracing"],
+  },
+
+  l: {
+    id: "l",
+    label: "l",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) tall standing line (top -> bottom)
+      { id: "l_1", kind: "trace", pathD: "M 50 16 L 50 86" },
+    ],
+    skillTags: ["letter:l", "case:lower", "subtopic:tracing"],
+  },
   // Uppercase M
   M: {
     id: "M",
     label: "M",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "M_1", kind: "trace", pathD: "M 30 16 L 30 86" },
-      { id: "M_2", kind: "trace", pathD: "M 30 86 L 50 16" },
-      { id: "M_3", kind: "trace", pathD: "M 50 16 L 70 86" },
-      { id: "M_4", kind: "trace", pathD: "M 70 16 L 70 86" },
+      { id: "M_1", kind: "trace", pathD: "M 24 16 L 24 86" },
+      { id: "M_2", kind: "trace", pathD: "M 24 16 L 50 86" },
+      { id: "M_3", kind: "trace", pathD: "M 50 86 L 76 16" },
+      { id: "M_4", kind: "trace", pathD: "M 76 16 L 76 86" },
     ],
     skillTags: ["letter:m", "case:upper", "subtopic:tracing"],
   },
@@ -474,9 +498,9 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "m",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "m_1", kind: "trace", pathD: "M 30 40 L 30 86" },
-      { id: "m_2", kind: "trace", pathD: "M 30 52 C 30 44, 50 44, 50 52 L 50 86" },
-      { id: "m_3", kind: "trace", pathD: "M 50 52 C 50 44, 70 44, 70 52 L 70 86" },
+      { id: "m_1", kind: "trace", pathD: "M 24 40 L 24 86" },
+      { id: "m_2", kind: "trace", pathD: "M 24 52 C 20 44, 50 44, 50 52 L 50 86" },
+      { id: "m_3", kind: "trace", pathD: "M 50 52 C 50 44, 76 44, 76 52 L 76 86" },
     ],
     skillTags: ["letter:m", "case:lower", "subtopic:tracing"],
   },
@@ -531,6 +555,7 @@ export const TRACE_LEVELS: TraceLevel[] = [
       { upper: "I", lower: "i" },
       { upper: "J", lower: "j" },
       { upper: "K", lower: "k" },
+      { upper: "L", lower: "l" },
     ],
   },
   { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
