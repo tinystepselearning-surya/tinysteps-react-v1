@@ -551,10 +551,10 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
         kind: "trace",
         pathD:
           "M 50 18 " +
-          "C 72 18, 86 34, 86 52 " +
-          "C 86 72, 72 86, 50 86 " +
-          "C 28 86, 14 72, 14 52 " +
-          "C 14 34, 28 18, 50 18",
+    "C 28 18, 14 34, 14 52 " +
+    "C 14 72, 28 86, 50 86 " +
+    "C 72 86, 86 72, 86 52 " +
+    "C 86 34, 72 18, 50 18",
       },
     ],
     skillTags: ["letter:o", "case:upper", "subtopic:tracing"],
@@ -570,14 +570,44 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
         id: "o_1",
         kind: "trace",
         pathD:
-          "M 50 40 " +
-          "C 68 40, 78 52, 78 64 " +
-          "C 78 80, 66 86, 50 86 " +
-          "C 34 86, 22 80, 22 64 " +
-          "C 22 52, 32 40, 50 40",
+         "M 50 40 " +
+    "C 37.3 40, 27 50.3, 27 63 " +
+    "C 27 75.7, 37.3 86, 50 86 " +
+    "C 62.7 86, 73 75.7, 73 63 " +
+    "C 73 50.3, 62.7 40, 50 40",
       },
     ],
     skillTags: ["letter:o", "case:lower", "subtopic:tracing"],
+  },
+  // --------------------
+  // P / p
+  // --------------------
+  P: {
+    id: "P",
+    label: "P",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) main stem (top -> baseline)
+      { id: "P_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+
+      // 2) top bowl (start at top-left, curve to right, come back to midline)
+      { id: "P_2", kind: "trace", pathD: "M 34 16 C 78 16, 78 52, 34 52" },
+    ],
+    skillTags: ["letter:p", "case:upper", "subtopic:tracing"],
+  },
+
+  p: {
+    id: "p",
+    label: "p",
+    viewBox: "0 0 100 140",
+    strokes: [
+      // 1) stem with descender (x-height -> below baseline)
+      { id: "p_1", kind: "trace", pathD: "M 40 40 L 40 110" },
+
+      // 2) bowl (attach at midline, end at baseline)
+      { id: "p_2", kind: "trace", pathD: "M 40 52 C 68 48, 78 64, 74 76 C 70 92, 52 94, 40 86" },
+    ],
+    skillTags: ["letter:p", "case:lower", "subtopic:tracing"],
   },
 };
 
@@ -613,6 +643,7 @@ export const TRACE_LEVELS: TraceLevel[] = [
         { upper: "M", lower: "m" },
         { upper: "N", lower: "n" },
         { upper: "O", lower: "o" },
+        { upper: "P", lower: "p" },
       ],
     },
   {
