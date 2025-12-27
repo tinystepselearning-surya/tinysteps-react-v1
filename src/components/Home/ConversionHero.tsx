@@ -107,8 +107,17 @@ const ConversionHero: React.FC = () => {
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   }, [form]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // ✅ Submit via WhatsApp ONLY (no form posting)
+  const handleSubmitWhatsApp = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Minimal guardrails (prevents empty submissions)
+    if (!form.parentName.trim() || !form.whatsapp.trim()) {
+      // Simple UX: you can replace with toast if you have one
+      alert("Please enter Parent Name and WhatsApp Number.");
+      return;
+    }
+
     window.open(waLink, "_blank", "noopener,noreferrer");
   };
 
@@ -246,10 +255,11 @@ const ConversionHero: React.FC = () => {
                 <p className="text-sm text-slate-500">Takes ~20s • Reply via WhatsApp</p>
               </div>
 
-              <form onSubmit={handleSubmit} className="relative space-y-4">
+              {/* ✅ IMPORTANT: onSubmit uses WhatsApp-only handler */}
+              <form onSubmit={handleSubmitWhatsApp} className="relative space-y-4">
                 <div className="group space-y-1">
                   <label className="text-[10px] font-bold uppercase text-slate-400 transition-colors group-focus-within:text-orange-600">
-                    Parent Name
+                    Parent Name *
                   </label>
                   <input
                     type="text"
@@ -259,12 +269,13 @@ const ConversionHero: React.FC = () => {
                       setForm((p) => ({ ...p, parentName: e.target.value }))
                     }
                     className="w-full border-b border-slate-200 bg-transparent py-2 text-sm outline-none transition-all focus:border-orange-500"
+                    required
                   />
                 </div>
 
                 <div className="group space-y-1">
                   <label className="text-[10px] font-bold uppercase text-slate-400 transition-colors group-focus-within:text-orange-600">
-                    WhatsApp Number
+                    WhatsApp Number *
                   </label>
                   <input
                     type="tel"
@@ -274,6 +285,7 @@ const ConversionHero: React.FC = () => {
                       setForm((p) => ({ ...p, whatsapp: e.target.value }))
                     }
                     className="w-full border-b border-slate-200 bg-transparent py-2 text-sm outline-none transition-all focus:border-orange-500"
+                    required
                   />
                 </div>
 
@@ -374,14 +386,26 @@ const ConversionHero: React.FC = () => {
                   )}
                 </AnimatePresence>
 
+                {/* ✅ Primary CTA: WhatsApp submit */}
                 <Button
+                  type="submit"
                   className="mt-6 w-full rounded-2xl py-6 text-base font-bold shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80"
                   style={{
                     background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
                   }}
                 >
-                  Confirm Free Assessment
+                  Submit via WhatsApp
                 </Button>
+
+                {/* ✅ Small fallback link (same action) */}
+                <a
+                  href={waLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center text-xs font-semibold text-slate-600 hover:text-slate-800"
+                >
+                  Having trouble? Open WhatsApp in a new tab →
+                </a>
 
                 <p className="text-center text-[10px] text-slate-400">
                   🔒 We value your privacy. No spam, ever.
