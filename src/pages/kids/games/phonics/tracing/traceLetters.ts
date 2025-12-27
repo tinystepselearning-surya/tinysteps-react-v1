@@ -67,40 +67,6 @@ export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
     skillTags: ["subtopic:pretracing", "shape:curve"],
   },
   circle: {
-
-  K: {
-    id: "K",
-    label: "K",
-    viewBox: "0 0 100 100",
-    strokes: [
-      // 1) main stem (top -> baseline)
-      { id: "K_1", kind: "trace", pathD: "M 34 16 L 34 86" },
-
-      // 2) upper arm (from middle to top-right)
-      { id: "K_2", kind: "trace", pathD: "M 34 52 L 74 18" },
-
-      // 3) lower arm (from middle to bottom-right)
-      { id: "K_3", kind: "trace", pathD: "M 34 52 L 74 86" },
-    ],
-    skillTags: ["letter:k", "case:upper", "subtopic:tracing"],
-  },
-
-  k: {
-    id: "k",
-    label: "k",
-    viewBox: "0 0 100 100",
-    strokes: [
-      // 1) tall stem (top -> baseline)
-      { id: "k_1", kind: "trace", pathD: "M 40 16 L 40 86" },
-
-      // 2) small upper arm (middle -> up-right)
-      { id: "k_2", kind: "trace", pathD: "M 40 54 L 66 38" },
-
-      // 3) lower leg (middle -> down-right)
-      { id: "k_3", kind: "trace", pathD: "M 40 54 L 72 86" },
-    ],
-    skillTags: ["letter:k", "case:lower", "subtopic:tracing"],
-  },
     id: "pre_circle",
     label: "Circle",
     viewBox: "0 0 100 100",
