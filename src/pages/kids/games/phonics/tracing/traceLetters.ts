@@ -353,7 +353,7 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
         id: "h_2",
         kind: "trace",
         // hump: start on stem midline, arch, then straight down to baseline
-        pathD: "M 40 52 C 40 34, 60 34, 60 52 L 60 86",
+        pathD: "M 40 52 C 40 44, 66 46, 66 52 L 66 86",
       },
     ],
     skillTags: ["letter:h", "case:lower", "subtopic:tracing"],
@@ -395,7 +395,12 @@ export const TRACE_LEVELS: TraceLevel[] = [
       { upper: "H", lower: "h" },
     ],
   },
-  { levelId: 3, title: "Level 3", subtitle: "I–L", pairs: [] },
+  {
+    levelId: 3,
+    title: "Level 3",
+    subtitle: "I–L",
+    pairs: [{ upper: "I", lower: "i" }],
+  },
   { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
   { levelId: 5, title: "Level 5", subtitle: "Q–Z", pairs: [] },
 ];
