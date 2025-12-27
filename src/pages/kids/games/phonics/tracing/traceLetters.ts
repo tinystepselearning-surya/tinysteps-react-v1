@@ -504,6 +504,39 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     ],
     skillTags: ["letter:m", "case:lower", "subtopic:tracing"],
   },
+  // --------------------
+  // N / n
+  // --------------------
+  N: {
+    id: "N",
+    label: "N",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) left stem (top -> baseline)
+      { id: "N_1", kind: "trace", pathD: "M 30 16 L 30 86" },
+
+      // 2) diagonal (top-left -> bottom-right)
+      { id: "N_2", kind: "trace", pathD: "M 30 16 L 70 86" },
+
+      // 3) right stem (top -> baseline)
+      { id: "N_3", kind: "trace", pathD: "M 70 16 L 70 86" },
+    ],
+    skillTags: ["letter:n", "case:upper", "subtopic:tracing"],
+  },
+
+  n: {
+    id: "n",
+    label: "n",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) stem (top -> baseline)
+      { id: "n_1", kind: "trace", pathD: "M 40 40 L 40 86" },
+
+      // 2) hump (start on stem midline -> arch -> down to baseline)
+      { id: "n_2", kind: "trace", pathD: "M 40 52 C 44 38, 66 38, 66 52 L 66 86" },
+    ],
+    skillTags: ["letter:n", "case:lower", "subtopic:tracing"],
+  },
 };
 
 
@@ -534,7 +567,10 @@ export const TRACE_LEVELS: TraceLevel[] = [
       levelId: 4,
       title: "Level 4",
       subtitle: "M–P",
-      pairs: [{ upper: "M", lower: "m" }],
+      pairs: [
+        { upper: "M", lower: "m" },
+        { upper: "N", lower: "n" },
+      ],
     },
   {
     levelId: 2,
