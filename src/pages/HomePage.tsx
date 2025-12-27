@@ -1,31 +1,123 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
-import TrialForm from "../components/forms/TrialForm";
 
-// ✅ Removed sections:
-// - PopularPrograms (Pick a track...)
-// - InteractiveSampleActivitySection (Try a tiny activity...)
-// - TestimonialsCarousel (Parent Testimonials)
+/**
+ * Safe optional sections loader:
+ * - prevents Vite 500 if a section component was deleted/renamed
+ * - missing section renders nothing (no crash)
+ */
 
-const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
-const DemoShowcase = lazy(() => import("../components/Home/DemoShowcase"));
-const WhyChooseCollapsibleSectionLazy = lazy(() => import("../components/Home/WhyChooseCollapsibleSection"));
-const StepTimelineLazy = lazy(() => import("../components/Home/StepTimeline"));
-const SocialProofCrispSectionLazy = lazy(() => import("../components/Home/SocialProofCrispSection"));
-const PricingCrispSectionLazy = lazy(() => import("../components/Home/PricingCrispSection"));
-const FAQSectionLazy = lazy(() => import("../components/Home/FAQSection"));
-const FinalCTASectionLazy = lazy(() => import("../components/Home/FinalCTASection"));
-const FooterLazy = lazy(() => import("../components/common/Footer"));
+const modules = {
+  ...import.meta.glob("../components/Home/**/*.{tsx,ts,jsx,js}"),
+  ...import.meta.glob("../components/common/**/*.{tsx,ts,jsx,js}"),
+  ...import.meta.glob("../components/**/*.{tsx,ts,jsx,js}"),
+};
+
+const NullSection = () => null;
+
+function pick(candidates: string[]) {
+  for (const key of candidates) {
+    if (modules[key]) return modules[key];
+  }
+  return null;
+}
+
+function safeLazy(modFn: any) {
+  return lazy(async () => {
+    try {
+      if (!modFn) return { default: NullSection };
+      const mod = await modFn();
+      return { default: mod?.default || NullSection };
+    } catch (e) {
+      console.warn("[HomePage] Optional section failed to load:", e);
+      return { default: NullSection };
+    }
+  });
+}
+
+// ✅ Sections (restored) — loaded safely
+const GlobalImpactSection = safeLazy(
+  pick([
+    "../components/Home/GlobalImpactSection.tsx",
+    "../components/Home/GlobalImpactSection.jsx",
+    "../components/Home/GlobalImpactSection/index.tsx",
+    "../components/Home/GlobalImpactSection/index.jsx",
+  ])
+);
+
+const DemoShowcase = safeLazy(
+  pick([
+    "../components/Home/DemoShowcase.tsx",
+    "../components/Home/DemoShowcase.jsx",
+    "../components/Home/DemoShowcase/index.tsx",
+    "../components/Home/DemoShowcase/index.jsx",
+  ])
+);
+
+const WhyChooseCollapsibleSection = safeLazy(
+  pick([
+    "../components/Home/WhyChooseCollapsibleSection.tsx",
+    "../components/Home/WhyChooseCollapsibleSection.jsx",
+    "../components/Home/WhyChooseCollapsibleSection/index.tsx",
+    "../components/Home/WhyChooseCollapsibleSection/index.jsx",
+  ])
+);
+
+const StepTimeline = safeLazy(
+  pick([
+    "../components/Home/StepTimeline.tsx",
+    "../components/Home/StepTimeline.jsx",
+    "../components/Home/StepTimeline/index.tsx",
+    "../components/Home/StepTimeline/index.jsx",
+  ])
+);
+
+const SocialProofCrispSection = safeLazy(
+  pick([
+    "../components/Home/SocialProofCrispSection.tsx",
+    "../components/Home/SocialProofCrispSection.jsx",
+    "../components/Home/SocialProofCrispSection/index.tsx",
+    "../components/Home/SocialProofCrispSection/index.jsx",
+  ])
+);
+
+const PricingCrispSection = safeLazy(
+  pick([
+    "../components/Home/PricingCrispSection.tsx",
+    "../components/Home/PricingCrispSection.jsx",
+    "../components/Home/PricingCrispSection/index.tsx",
+    "../components/Home/PricingCrispSection/index.jsx",
+  ])
+);
+
+
+const FinalCTASection = safeLazy(
+  pick([
+    "../components/Home/FinalCTASection.tsx",
+    "../components/Home/FinalCTASection.jsx",
+    "../components/Home/FinalCTASection/index.tsx",
+    "../components/Home/FinalCTASection/index.jsx",
+  ])
+);
+
+const Footer = safeLazy(
+  pick([
+    "../components/common/Footer.tsx",
+    "../components/common/Footer.jsx",
+    "../components/common/Footer/index.tsx",
+    "../components/common/Footer/index.jsx",
+  ])
+);
 
 function requestFullscreenSafe() {
   try {
     const el: any = document.documentElement;
     if (el?.requestFullscreen) return el.requestFullscreen();
-    if (el?.webkitRequestFullscreen) return el.webkitRequestFullscreen(); // Safari
+    if (el?.webkitRequestFullscreen) return el.webkitRequestFullscreen?.(); // Safari
   } catch {
     // ignore
   }
@@ -35,42 +127,48 @@ function requestFullscreenSafe() {
 export default function HomePage() {
   const navigate = useNavigate();
 
-  const goToChristmasTree = () => {
-    // ✅ SPA navigation so fullscreen doesn't get dropped by reload
-    navigate("/seasonal/christmas-tree");
+  const goToChristmasTree = () => navigate("/seasonal/christmas-tree");
+
+  const scrollToHeroForm = () => {
+    try {
+      const el = document.getElementById("hero-lead-parentName") as any;
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => el?.focus?.(), 350);
+    } catch {
+      // no-op
+    }
   };
+
+  useEffect(() => {
+    const run = () => {
+      if (window.location.hash === "#book-trial") scrollToHeroForm();
+    };
+    run();
+    window.addEventListener("hashchange", run);
+    return () => window.removeEventListener("hashchange", run);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
       <Meta
         title="Tiny Steps Online English School | 1:1 Phonics, Grammar & Public Speaking for Kids (3–12)"
         description="Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class."
-        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India, best English coaching India"
+        keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India"
         canonical="https://tinystepslearning.com/"
       />
 
+      {/* Anchor used by Header CTA */}
+      <div id="book-trial" style={{ position: "relative", top: "-90px" }} aria-hidden="true" />
+
+      {/* HERO */}
       <ConversionHero />
 
-      {/* Christmas banner — seasonal tile */}
+      {/* Optional seasonal tile */}
       <section className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
-          <div
-            role="button"
-            tabIndex={0}
-            className="group block cursor-pointer overflow-hidden rounded-2xl border bg-white p-0 shadow-lg transition hover:shadow-xl"
-            aria-label="Open Christmas Tree Decorator"
-            onKeyDown={async (e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                await requestFullscreenSafe();
-                goToChristmasTree();
-              }
-            }}
-            onClick={async () => {
-              await requestFullscreenSafe();
-              goToChristmasTree();
-            }}
-          >
+          <div className="overflow-hidden rounded-2xl border bg-white shadow-lg">
             <div className="relative flex h-28 items-center justify-between md:h-32">
               <img
                 src="/seasonal/christmas/homepagetile.jpg"
@@ -86,92 +184,54 @@ export default function HomePage() {
                   <div className="text-sm opacity-90">Festive fun: decorate the tree and celebrate!</div>
                 </div>
 
-                <div className="relative z-10">
-                  <button
-                    type="button"
-                    className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
-                    onClick={async (e) => {
-                      e.stopPropagation();
-                      await requestFullscreenSafe();
-                      goToChristmasTree();
-                    }}
-                  >
-                    Open Game
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
+                  onClick={async () => {
+                    await requestFullscreenSafe();
+                    goToChristmasTree();
+                  }}
+                >
+                  Open Game
+                </button>
               </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* ✅ Restored sections */}
       <Suspense fallback={null}>
         <GlobalImpactSection />
       </Suspense>
-
-    
 
       <Suspense fallback={null}>
         <DemoShowcase />
       </Suspense>
 
       <Suspense fallback={null}>
-        <WhyChooseCollapsibleSectionLazy />
+        <WhyChooseCollapsibleSection />
       </Suspense>
 
       <Suspense fallback={null}>
-        <StepTimelineLazy />
-      </Suspense>
-
-
-
-      <Suspense fallback={null}>
-        <SocialProofCrispSectionLazy />
-      </Suspense>
-
-      {/* Book trial */}
-      <section id="book-trial" className="px-6 py-12">
-        <div className="mx-auto grid max-w-6xl gap-8 rounded-3xl bg-white/80 p-8 shadow-card-hover md:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-4">
-            <div className="gradient-chip w-max">AI-curated learning journey</div>
-            <h2 className="text-3xl font-semibold text-gray-900">Empowering 3500+ students across 9 countries</h2>
-            <p className="text-gray-700">
-              Our AI engine maps your child’s current mastery, curates the weekly plan, and sends parents actionable
-              insights every Friday.
-            </p>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li>🌅 Bright-sky lessons that feel joyful and calm</li>
-              <li>🌍 Learners in India, US, UK, Canada, Singapore, Malaysia, Vietnam, UAE, Australia</li>
-              <li>📊 Parent dashboard with AI-driven learning path insights</li>
-            </ul>
-          </div>
-
-          <div className="glass-panel p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Book Your Free Assessment Class</h3>
-            <p className="mt-1 text-sm text-gray-600">
-              Fill out the form below, and our team will contact you shortly. Your privacy is our priority.
-            </p>
-            <div className="mt-4">
-              <TrialForm context="home_book_trial" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <Suspense fallback={null}>
-        <PricingCrispSectionLazy />
+        <StepTimeline />
       </Suspense>
 
       <Suspense fallback={null}>
-        <FAQSectionLazy />
+        <SocialProofCrispSection />
       </Suspense>
 
       <Suspense fallback={null}>
-        <FinalCTASectionLazy />
+        <PricingCrispSection />
+      </Suspense>
+
+
+      <Suspense fallback={null}>
+        <FinalCTASection />
       </Suspense>
 
       <Suspense fallback={null}>
-        <FooterLazy />
+        <Footer />
       </Suspense>
     </>
   );

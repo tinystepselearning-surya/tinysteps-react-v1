@@ -1,9 +1,7 @@
 // React default import removed (using new JSX transform)
 import { Link } from 'react-router-dom';
 import CountUp from '@components/CountUp'; // Use alias for consistency
-import WhyChooseUs from '@components/WhyChooseUs';
 import Layout from '@components/Layout';
-import FounderArticleCard from '@components/FounderArticleCard';
 
 // Hero Component
 const Hero = () => (
@@ -229,7 +227,6 @@ const Home = () => (
     <WhySection />
     <CoursesSection />
     <HighlightsSection />
-    <WhyChooseUs />
     <TeachersSection />
     <StatsSection />
     <TestimonialsSection />
@@ -237,7 +234,6 @@ const Home = () => (
 
     {/* Founder article card: placed above FAQ */}
     <div className="px-4">
-      <FounderArticleCard />
     </div>
 
     <FAQSection />
