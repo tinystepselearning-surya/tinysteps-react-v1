@@ -419,6 +419,40 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     ],
     skillTags: ["letter:j", "case:lower", "subtopic:tracing"],
   },
+
+  K: {
+    id: "K",
+    label: "K",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) main stem (top -> baseline)
+      { id: "K_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+
+      // 2) upper arm (from middle -> top-right)
+      { id: "K_2", kind: "trace", pathD: "M 34 52 L 74 18" },
+
+      // 3) lower arm (from middle -> bottom-right)
+      { id: "K_3", kind: "trace", pathD: "M 34 52 L 74 86" },
+    ],
+    skillTags: ["letter:k", "case:upper", "subtopic:tracing"],
+  },
+
+  k: {
+    id: "k",
+    label: "k",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) tall stem (top -> baseline)
+      { id: "k_1", kind: "trace", pathD: "M 40 16 L 40 86" },
+
+      // 2) small upper arm (middle -> up-right)
+      { id: "k_2", kind: "trace", pathD: "M 40 54 L 66 38" },
+
+      // 3) lower leg (middle -> down-right)
+      { id: "k_3", kind: "trace", pathD: "M 40 54 L 72 86" },
+    ],
+    skillTags: ["letter:k", "case:lower", "subtopic:tracing"],
+  },
 };
 
 
