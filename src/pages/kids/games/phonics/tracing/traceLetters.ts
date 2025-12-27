@@ -67,6 +67,40 @@ export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
     skillTags: ["subtopic:pretracing", "shape:curve"],
   },
   circle: {
+
+  K: {
+    id: "K",
+    label: "K",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) main stem (top -> baseline)
+      { id: "K_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+
+      // 2) upper arm (from middle to top-right)
+      { id: "K_2", kind: "trace", pathD: "M 34 52 L 74 18" },
+
+      // 3) lower arm (from middle to bottom-right)
+      { id: "K_3", kind: "trace", pathD: "M 34 52 L 74 86" },
+    ],
+    skillTags: ["letter:k", "case:upper", "subtopic:tracing"],
+  },
+
+  k: {
+    id: "k",
+    label: "k",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) tall stem (top -> baseline)
+      { id: "k_1", kind: "trace", pathD: "M 40 16 L 40 86" },
+
+      // 2) small upper arm (middle -> up-right)
+      { id: "k_2", kind: "trace", pathD: "M 40 54 L 66 38" },
+
+      // 3) lower leg (middle -> down-right)
+      { id: "k_3", kind: "trace", pathD: "M 40 54 L 72 86" },
+    ],
+    skillTags: ["letter:k", "case:lower", "subtopic:tracing"],
+  },
     id: "pre_circle",
     label: "Circle",
     viewBox: "0 0 100 100",
@@ -395,9 +429,11 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     viewBox: "0 0 100 100",
     strokes: [
       // 1) top sleeping line (left -> right)
-      { id: "J_1", kind: "trace", pathD: "M 30 18 L 70 18" },
+      { id: "J_1", kind: "trace", pathD: "M 40 18 L 85 18" },
+
 
       // 2) down + hook (start at top-right, curve to the left at bottom)
+
       { id: "J_2", kind: "trace", pathD: "M 62 18 L 62 70 C 62 90, 38 92, 34 72" },
     ],
     skillTags: ["letter:j", "case:upper", "subtopic:tracing"],
@@ -410,10 +446,10 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     viewBox: "0 0 100 140",
     strokes: [
       // 1) stem + tail (descender) with a small left hook
-      { id: "j_1", kind: "trace", pathD: "M 50 40 L 50 108 C 50 126, 32 126, 32 110" },
+      { id: "j_1", kind: "trace", pathD: "M 50 50 L 50 108 C 50 126, 22 126, 22 110" },
 
       // 2) dot (tap) — a bit higher for nice gap
-      { id: "j_2", kind: "tap", pathD: "M 50 20" },
+      { id: "j_2", kind: "tap", pathD: "M 50 30" },
     ],
     skillTags: ["letter:j", "case:lower", "subtopic:tracing"],
   },
@@ -461,6 +497,7 @@ export const TRACE_LEVELS: TraceLevel[] = [
     pairs: [
       { upper: "I", lower: "i" },
       { upper: "J", lower: "j" },
+      { upper: "K", lower: "k" },
     ],
   },
   { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
