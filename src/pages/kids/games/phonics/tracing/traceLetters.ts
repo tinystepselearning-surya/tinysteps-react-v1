@@ -537,6 +537,48 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     ],
     skillTags: ["letter:n", "case:lower", "subtopic:tracing"],
   },
+  // --------------------
+  // O / o
+  // --------------------
+  O: {
+    id: "O",
+    label: "O",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // One continuous oval (start at top)
+      {
+        id: "O_1",
+        kind: "trace",
+        pathD:
+          "M 50 18 " +
+          "C 72 18, 86 34, 86 52 " +
+          "C 86 72, 72 86, 50 86 " +
+          "C 28 86, 14 72, 14 52 " +
+          "C 14 34, 28 18, 50 18",
+      },
+    ],
+    skillTags: ["letter:o", "case:upper", "subtopic:tracing"],
+  },
+
+  o: {
+    id: "o",
+    label: "o",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // One continuous small oval (baseline at y=86)
+      {
+        id: "o_1",
+        kind: "trace",
+        pathD:
+          "M 50 40 " +
+          "C 68 40, 78 52, 78 64 " +
+          "C 78 80, 66 86, 50 86 " +
+          "C 34 86, 22 80, 22 64 " +
+          "C 22 52, 32 40, 50 40",
+      },
+    ],
+    skillTags: ["letter:o", "case:lower", "subtopic:tracing"],
+  },
 };
 
 
@@ -570,6 +612,7 @@ export const TRACE_LEVELS: TraceLevel[] = [
       pairs: [
         { upper: "M", lower: "m" },
         { upper: "N", lower: "n" },
+        { upper: "O", lower: "o" },
       ],
     },
   {
