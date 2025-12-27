@@ -358,6 +358,31 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     ],
     skillTags: ["letter:h", "case:lower", "subtopic:tracing"],
   },
+  I: {
+    id: "I",
+    label: "I",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "I_1", kind: "trace", pathD: "M 34 16 L 66 16" }, // top bar
+      { id: "I_2", kind: "trace", pathD: "M 50 16 L 50 86" }, // main down stroke
+      { id: "I_3", kind: "trace", pathD: "M 34 86 L 66 86" }, // bottom bar
+    ],
+    skillTags: ["letter:i", "case:upper", "subtopic:tracing"],
+  },
+
+  i: {
+    id: "i",
+    label: "i",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // Stroke 1: stem
+      { id: "i_1", kind: "trace", pathD: "M 50 40 L 50 86" },
+
+      // Stroke 2: dot (tap)
+      { id: "i_2", kind: "tap", pathD: "M 50 26" },
+    ],
+    skillTags: ["letter:i", "case:lower", "subtopic:tracing"],
+  },
 };
 
 
