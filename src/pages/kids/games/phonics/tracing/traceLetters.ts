@@ -362,11 +362,16 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     id: "I",
     label: "I",
     viewBox: "0 0 100 100",
-    strokes: [
-      { id: "I_1", kind: "trace", pathD: "M 34 16 L 66 16" }, // top bar
-      { id: "I_2", kind: "trace", pathD: "M 50 16 L 50 86" }, // main down stroke
-      { id: "I_3", kind: "trace", pathD: "M 34 86 L 66 86" }, // bottom bar
-    ],
+     strokes: [
+    // 1) standing line (top -> bottom) ✅ reduced height ~20%
+    { id: "I_1", kind: "trace", pathD: "M 50 22 L 50 78" },
+
+    // 2) top sleeping line (right -> left)
+    { id: "I_2", kind: "trace", pathD: "M 34 22 L 66 22" },
+
+    // 3) bottom sleeping line (right -> left)
+    { id: "I_3", kind: "trace", pathD: "M 34 78 L 66 78" },
+  ],
     skillTags: ["letter:i", "case:upper", "subtopic:tracing"],
   },
 
@@ -379,9 +384,38 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
       { id: "i_1", kind: "trace", pathD: "M 50 40 L 50 86" },
 
       // Stroke 2: dot (tap)
-      { id: "i_2", kind: "tap", pathD: "M 50 26" },
+      { id: "i_2", kind: "tap", pathD: "M 50 20" },
     ],
     skillTags: ["letter:i", "case:lower", "subtopic:tracing"],
+  },
+
+  J: {
+    id: "J",
+    label: "J",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) top sleeping line (left -> right)
+      { id: "J_1", kind: "trace", pathD: "M 30 18 L 70 18" },
+
+      // 2) down + hook (start at top-right, curve to the left at bottom)
+      { id: "J_2", kind: "trace", pathD: "M 62 18 L 62 70 C 62 90, 38 92, 34 72" },
+    ],
+    skillTags: ["letter:j", "case:upper", "subtopic:tracing"],
+  },
+
+  j: {
+    id: "j",
+    label: "j",
+    // needs extra height because j goes below the baseline
+    viewBox: "0 0 100 140",
+    strokes: [
+      // 1) stem + tail (descender) with a small left hook
+      { id: "j_1", kind: "trace", pathD: "M 50 40 L 50 108 C 50 126, 32 126, 32 110" },
+
+      // 2) dot (tap) — a bit higher for nice gap
+      { id: "j_2", kind: "tap", pathD: "M 50 20" },
+    ],
+    skillTags: ["letter:j", "case:lower", "subtopic:tracing"],
   },
 };
 
@@ -424,7 +458,10 @@ export const TRACE_LEVELS: TraceLevel[] = [
     levelId: 3,
     title: "Level 3",
     subtitle: "I–L",
-    pairs: [{ upper: "I", lower: "i" }],
+    pairs: [
+      { upper: "I", lower: "i" },
+      { upper: "J", lower: "j" },
+    ],
   },
   { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
   { levelId: 5, title: "Level 5", subtitle: "Q–Z", pairs: [] },
