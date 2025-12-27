@@ -80,6 +80,7 @@ export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
     ],
     skillTags: ["subtopic:pretracing", "shape:circle"],
   },
+
 };
 
 // --------------------
@@ -429,7 +430,7 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
       { id: "K_1", kind: "trace", pathD: "M 34 16 L 34 86" },
 
       // 2) upper arm (from middle -> top-right)
-      { id: "K_2", kind: "trace", pathD: "M 34 52 L 74 18" },
+      { id: "K_2", kind: "trace", pathD: "M 74 18 L 34 52" },
 
       // 3) lower arm (from middle -> bottom-right)
       { id: "K_3", kind: "trace", pathD: "M 34 52 L 74 86" },
@@ -446,12 +447,38 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
       { id: "k_1", kind: "trace", pathD: "M 40 16 L 40 86" },
 
       // 2) small upper arm (middle -> up-right)
-      { id: "k_2", kind: "trace", pathD: "M 40 54 L 66 38" },
+      { id: "k_2", kind: "trace", pathD: "M 66 48 L 40 64" },
 
       // 3) lower leg (middle -> down-right)
-      { id: "k_3", kind: "trace", pathD: "M 40 54 L 72 86" },
+      { id: "k_3", kind: "trace", pathD: "M 40 64 L 68 86" },
     ],
     skillTags: ["letter:k", "case:lower", "subtopic:tracing"],
+  },
+  // Uppercase M
+  M: {
+    id: "M",
+    label: "M",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "M_1", kind: "trace", pathD: "M 30 16 L 30 86" },
+      { id: "M_2", kind: "trace", pathD: "M 30 86 L 50 16" },
+      { id: "M_3", kind: "trace", pathD: "M 50 16 L 70 86" },
+      { id: "M_4", kind: "trace", pathD: "M 70 16 L 70 86" },
+    ],
+    skillTags: ["letter:m", "case:upper", "subtopic:tracing"],
+  },
+
+  // Lowercase m
+  m: {
+    id: "m",
+    label: "m",
+    viewBox: "0 0 100 100",
+    strokes: [
+      { id: "m_1", kind: "trace", pathD: "M 30 40 L 30 86" },
+      { id: "m_2", kind: "trace", pathD: "M 30 52 C 30 44, 50 44, 50 52 L 50 86" },
+      { id: "m_3", kind: "trace", pathD: "M 50 52 C 50 44, 70 44, 70 52 L 70 86" },
+    ],
+    skillTags: ["letter:m", "case:lower", "subtopic:tracing"],
   },
 };
 
@@ -479,6 +506,12 @@ export const TRACE_LEVELS: TraceLevel[] = [
       { upper: "D", lower: "d" },
     ],
   },
+  {
+      levelId: 4,
+      title: "Level 4",
+      subtitle: "M–P",
+      pairs: [{ upper: "M", lower: "m" }],
+    },
   {
     levelId: 2,
     title: "Level 2",
