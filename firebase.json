@@ -3,14 +3,10 @@
     "site": "tinysteps-react-v1",
     "public": "dist",
     "predeploy": ["npm run build"],
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [
       {
-        "source": "/",
+        "source": "**",
         "headers": [
           {
             "key": "Cache-Control",
@@ -19,11 +15,11 @@
         ]
       },
       {
-        "source": "**/index.html",
+        "source": "/service-worker.js",
         "headers": [
           {
             "key": "Cache-Control",
-            "value": "no-cache"
+            "value": "no-cache, no-store, must-revalidate"
           }
         ]
       },
@@ -37,7 +33,7 @@
         ]
       },
       {
-        "source": "**/*.@(png|jpg|jpeg|svg|webp|avif)",
+        "source": "**/*.@(png|jpg|jpeg|svg|webp|avif|ico)",
         "headers": [
           {
             "key": "Cache-Control",
