@@ -80,12 +80,8 @@ export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
     ],
     skillTags: ["subtopic:pretracing", "shape:circle"],
   },
-
 };
 
-// --------------------
-// Letters (manual, kid-friendly) — Level 1 only for now
-// Baseline ≈ y=86 (so bowls end cleanly on the lower line).
 // --------------------
 export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
   // ✅ A: stroke 1 starts at TOP (start point = first "M")
@@ -94,31 +90,20 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     label: "A",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "A_1", kind: "trace", pathD: "M 50 18 L 30 88" }, // top -> bottom
-      { id: "A_2", kind: "trace", pathD: "M 50 18 L 70 88" }, // top -> bottom
-      { id: "A_3", kind: "trace", pathD: "M 38 58 L 62 58" }, // bar
+      { id: "A_1", kind: "trace", pathD: "M 50 18 L 30 88" },
+      { id: "A_2", kind: "trace", pathD: "M 50 18 L 70 88" },
+      { id: "A_3", kind: "trace", pathD: "M 38 58 L 62 58" },
     ],
     skillTags: ["letter:a", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ a: make bowl curve like "c" (two smooth cubics) AND end at baseline + same x as stem
   a: {
     id: "a",
     label: "a",
     viewBox: "0 0 100 100",
     strokes: [
-      {
-        id: "a_1",
-        kind: "trace",
-        // Smooth "c-like" bowl, OPEN on right, ends at (68,86) to meet lower line
-        pathD: "M 68 40 C 48 24, 28 36, 28 58 C 28 84, 52 92, 68 86",
-      },
-      {
-        id: "a_2",
-        kind: "trace",
-        // Right stem: EXACT same x=68 and ends at y=86 so it joins perfectly
-        pathD: "M 68 40 L 68 86",
-      },
+      { id: "a_1", kind: "trace", pathD: "M 68 40 C 48 24, 28 36, 28 58 C 28 84, 52 92, 68 86" },
+      { id: "a_2", kind: "trace", pathD: "M 68 40 L 68 86" },
     ],
     skillTags: ["letter:a", "case:lower", "subtopic:tracing"],
   },
@@ -135,20 +120,13 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     skillTags: ["letter:b", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ b: belly must meet the lower line (baseline) + return to stem cleanly
   b: {
     id: "b",
     label: "b",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "b_1", kind: "trace", pathD: "M 40 16 L 40 86" }, // stem ends at baseline
-      {
-        id: "b_2",
-        kind: "trace",
-        // Start on stem (40,52) and end on stem at baseline (40,86)
-        // Two-cubic style (smoother than the old “messy” one)
-        pathD: "M 40 52 C 68 48, 78 64, 74 76 C 70 92, 52 94, 40 86",
-      },
+      { id: "b_1", kind: "trace", pathD: "M 40 16 L 40 86" },
+      { id: "b_2", kind: "trace", pathD: "M 40 52 C 68 48, 78 64, 74 76 C 70 92, 52 94, 40 86" },
     ],
     skillTags: ["letter:b", "case:lower", "subtopic:tracing"],
   },
@@ -163,7 +141,6 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     skillTags: ["letter:c", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ c (your good reference curve — keep as-is)
   c: {
     id: "c",
     label: "c",
@@ -180,155 +157,95 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     viewBox: "0 0 100 100",
     strokes: [
       { id: "D_1", kind: "trace", pathD: "M 34 16 L 34 86" },
-      {
-        id: "D_2",
-        kind: "trace",
-        pathD: "M 34 16 C 78 16, 86 30, 86 51 C 86 72, 78 86, 34 86",
-      },
+      { id: "D_2", kind: "trace", pathD: "M 34 16 C 78 16, 86 30, 86 51 C 86 72, 78 86, 34 86" },
     ],
     skillTags: ["letter:d", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ d: bowl like "c" AND end at baseline (66,86) + stem shares same x + same bottom y
   d: {
     id: "d",
     label: "d",
     viewBox: "0 0 100 100",
     strokes: [
-      {
-        id: "d_1",
-        kind: "trace",
-        // Smooth open bowl, endpoints on x=66; ends at baseline y=86
-        pathD: "M 66 48 C 46 34, 28 46, 28 66 C 28 86, 50 94, 66 86",
-      },
-      {
-        id: "d_2",
-        kind: "trace",
-        // stem exactly x=66, ends exactly y=86 so bowl meets perfectly
-        pathD: "M 66 16 L 66 86",
-      },
+            { id: "d_2", kind: "trace", pathD: "M 66 16 L 66 86" },
+      { id: "d_1", kind: "trace", pathD: "M 66 48 C 46 34, 28 46, 28 66 C 28 86, 50 94, 66 86" },
     ],
     skillTags: ["letter:d", "case:lower", "subtopic:tracing"],
   },
 
-  // ✅ E: 4 strokes (vertical + top/middle/bottom bars)
   E: {
     id: "E",
     label: "E",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "E_1", kind: "trace", pathD: "M 34 16 L 34 86" }, // spine
-      { id: "E_2", kind: "trace", pathD: "M 34 16 L 74 16" }, // top bar
-      { id: "E_3", kind: "trace", pathD: "M 34 51 L 66 51" }, // middle bar
-      { id: "E_4", kind: "trace", pathD: "M 34 86 L 74 86" }, // bottom bar (baseline)
+      { id: "E_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+      { id: "E_2", kind: "trace", pathD: "M 34 16 L 74 16" },
+      { id: "E_3", kind: "trace", pathD: "M 34 51 L 66 51" },
+      { id: "E_4", kind: "trace", pathD: "M 34 86 L 74 86" },
     ],
     skillTags: ["letter:e", "case:upper", "subtopic:tracing"],
   },
 
-  // ✅ e: simple 2-stroke (bar, then anticlockwise c from bar end)
   e: {
     id: "e",
     label: "e",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) bar (left -> right)
       { id: "e_1", kind: "trace", pathD: "M 34 52 L 64 52" },
-
-      // 2) start exactly at bar end, draw anticlockwise c-shape
       {
         id: "e_2",
         kind: "trace",
         pathD:
           "M 64 52 " +
-          "C 58 24, 34 28, 28 48 " + // go up/left
-          "C 26 82, 48 92, 64 78",   // come down and finish lower-right (open)
+          "C 58 24, 34 28, 28 48 " +
+          "C 26 82, 48 92, 64 78",
       },
     ],
     skillTags: ["letter:e", "case:lower", "subtopic:tracing"],
   },
 
-  // --------------------
-  // F / f
-  // --------------------
   F: {
     id: "F",
     label: "F",
-    // ✅ IMPORTANT: if your other letters use a different viewBox (like "0 0 120 120"),
-    // use the SAME value here for consistency.
     viewBox: "0 0 100 100",
     skillTags: ["letter:F", "sound:/f/"],
     strokes: [
-      // Stroke 1: big down line
       { id: "F1", kind: "trace", pathD: "M 32 14 L 32 88" },
-      // Stroke 2: top line
       { id: "F2", kind: "trace", pathD: "M 32 14 L 76 14" },
-      // Stroke 3: middle line
       { id: "F3", kind: "trace", pathD: "M 32 50 L 64 50" },
     ],
   },
 
   f: {
-  id: "f",
-  label: "f",
-  viewBox: "0 0 100 100",
-  skillTags: ["letter:f", "sound:f", "case:lower"],
-  strokes: [
-    {
-      id: "f-main",
-      kind: "trace",
-      // ✅ TOP CURVE IS ONLY THIS SMALL PART (then straight down)
-      // Start point = (64,16)  → hook into stem at (50,28)
-      pathD: "M 64 16 C 58 10 50 12 50 28 L 50 92",
-    },
-    {
-      id: "f-bar",
-      kind: "trace",
-      // middle bar, left → right
-      pathD: "M 34 54 L 66 54",
-    },
-  ],
-},
+    id: "f",
+    label: "f",
+    viewBox: "0 0 100 100",
+    skillTags: ["letter:f", "sound:f", "case:lower"],
+    strokes: [
+      { id: "f-main", kind: "trace", pathD: "M 64 16 C 58 10 50 12 50 28 L 50 92" },
+      { id: "f-bar", kind: "trace", pathD: "M 34 54 L 66 54" },
+    ],
+  },
 
-  "G": {
+  G: {
     id: "G",
     label: "G",
     viewBox: "0 0 100 100",
     skillTags: ["letter:g", "sound:g", "case:upper"],
     strokes: [
-      {
-        id: "G-curve",
-        kind: "trace",
-        // Stroke 1: big curve (like C), start near top-right, go around, end near mid-right
-        pathD: "M 70 30 C 60 18 42 18 32 30 C 22 44 22 60 32 74 C 42 86 60 86 70 74",
-      },
-      {
-        id: "G-bar-down",
-        kind: "trace",
-        // Stroke 2: middle bar THEN a short vertical line DOWN at the end
-        pathD: "M 48 56 L 72 56 L 72 94",
-      },
+      { id: "G-curve", kind: "trace", pathD: "M 70 30 C 60 18 42 18 32 30 C 22 44 22 60 32 74 C 42 86 60 86 70 74" },
+      { id: "G-bar-down", kind: "trace", pathD: "M 48 56 L 72 56 L 72 94" },
     ],
   },
 
-  "g": {
+  g: {
     id: "g",
     label: "g",
     viewBox: "0 0 100 140",
     skillTags: ["letter:g", "sound:g", "case:lower"],
     strokes: [
-      {
-        id: "g-bowl",
-        kind: "trace",
-        // Stroke 1: bowl (like 'o'), BUT end on the right side where the downstroke starts
-pathD: "M 68 34 C 48 20, 28 32, 28 52 C 28 74, 52 82, 68 70",
-      },
-      {
-        id: "g-tail",
-        kind: "trace",
-        // Stroke 2: downstroke + hook tail (descender)
-pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
-
-      },
+      { id: "g-bowl", kind: "trace", pathD: "M 68 34 C 48 20, 28 32, 28 52 C 28 74, 52 82, 68 70" },
+      { id: "g-tail", kind: "trace", pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100" },
     ],
   },
 
@@ -337,9 +254,9 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "H",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "H_1", kind: "trace", pathD: "M 32 16 L 32 86" }, // left stem
-      { id: "H_2", kind: "trace", pathD: "M 68 16 L 68 86" }, // right stem
-      { id: "H_3", kind: "trace", pathD: "M 32 51 L 68 51" }, // middle bar
+      { id: "H_1", kind: "trace", pathD: "M 32 16 L 32 86" },
+      { id: "H_2", kind: "trace", pathD: "M 68 16 L 68 86" },
+      { id: "H_3", kind: "trace", pathD: "M 32 51 L 68 51" },
     ],
     skillTags: ["letter:h", "case:upper", "subtopic:tracing"],
   },
@@ -349,30 +266,21 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "h",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "h_1", kind: "trace", pathD: "M 40 16 L 40 86" }, // tall stem
-      {
-        id: "h_2",
-        kind: "trace",
-        // hump: start on stem midline, arch, then straight down to baseline
-        pathD: "M 40 52 C 40 44, 66 46, 66 52 L 66 86",
-      },
+      { id: "h_1", kind: "trace", pathD: "M 40 16 L 40 86" },
+      { id: "h_2", kind: "trace", pathD: "M 40 52 C 40 44, 66 46, 66 52 L 66 86" },
     ],
     skillTags: ["letter:h", "case:lower", "subtopic:tracing"],
   },
+
   I: {
     id: "I",
     label: "I",
     viewBox: "0 0 100 100",
-     strokes: [
-    // 1) standing line (top -> bottom) ✅ reduced height ~20%
-    { id: "I_1", kind: "trace", pathD: "M 50 22 L 50 78" },
-
-    // 2) top sleeping line (right -> left)
-    { id: "I_2", kind: "trace", pathD: "M 34 22 L 66 22" },
-
-    // 3) bottom sleeping line (right -> left)
-    { id: "I_3", kind: "trace", pathD: "M 34 78 L 66 78" },
-  ],
+    strokes: [
+      { id: "I_1", kind: "trace", pathD: "M 50 22 L 50 78" },
+      { id: "I_2", kind: "trace", pathD: "M 34 22 L 66 22" },
+      { id: "I_3", kind: "trace", pathD: "M 34 78 L 66 78" },
+    ],
     skillTags: ["letter:i", "case:upper", "subtopic:tracing"],
   },
 
@@ -381,10 +289,7 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "i",
     viewBox: "0 0 100 100",
     strokes: [
-      // Stroke 1: stem
       { id: "i_1", kind: "trace", pathD: "M 50 40 L 50 86" },
-
-      // Stroke 2: dot (tap)
       { id: "i_2", kind: "tap", pathD: "M 50 20" },
     ],
     skillTags: ["letter:i", "case:lower", "subtopic:tracing"],
@@ -395,12 +300,7 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "J",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) top sleeping line (left -> right)
       { id: "J_1", kind: "trace", pathD: "M 40 18 L 85 18" },
-
-
-      // 2) down + hook (start at top-right, curve to the left at bottom)
-
       { id: "J_2", kind: "trace", pathD: "M 62 18 L 62 70 C 62 90, 38 92, 34 72" },
     ],
     skillTags: ["letter:j", "case:upper", "subtopic:tracing"],
@@ -409,13 +309,9 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
   j: {
     id: "j",
     label: "j",
-    // needs extra height because j goes below the baseline
     viewBox: "0 0 100 140",
     strokes: [
-      // 1) stem + tail (descender) with a small left hook
       { id: "j_1", kind: "trace", pathD: "M 50 50 L 50 108 C 50 126, 22 126, 22 110" },
-
-      // 2) dot (tap) — a bit higher for nice gap
       { id: "j_2", kind: "tap", pathD: "M 50 30" },
     ],
     skillTags: ["letter:j", "case:lower", "subtopic:tracing"],
@@ -426,13 +322,8 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "K",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) main stem (top -> baseline)
       { id: "K_1", kind: "trace", pathD: "M 34 16 L 34 86" },
-
-      // 2) upper arm (from middle -> top-right)
       { id: "K_2", kind: "trace", pathD: "M 74 18 L 34 52" },
-
-      // 3) lower arm (from middle -> bottom-right)
       { id: "K_3", kind: "trace", pathD: "M 34 52 L 74 86" },
     ],
     skillTags: ["letter:k", "case:upper", "subtopic:tracing"],
@@ -443,26 +334,19 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "k",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) tall stem (top -> baseline)
       { id: "k_1", kind: "trace", pathD: "M 40 16 L 40 86" },
-
-      // 2) small upper arm (middle -> up-right)
       { id: "k_2", kind: "trace", pathD: "M 66 48 L 40 64" },
-
-      // 3) lower leg (middle -> down-right)
       { id: "k_3", kind: "trace", pathD: "M 40 64 L 68 86" },
     ],
     skillTags: ["letter:k", "case:lower", "subtopic:tracing"],
   },
+
   L: {
     id: "L",
     label: "L",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) standing line (top -> bottom)
       { id: "L_1", kind: "trace", pathD: "M 34 16 L 34 86" },
-
-      // 2) bottom sleeping line (left -> right)
       { id: "L_2", kind: "trace", pathD: "M 34 86 L 76 86" },
     ],
     skillTags: ["letter:l", "case:upper", "subtopic:tracing"],
@@ -472,13 +356,10 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     id: "l",
     label: "l",
     viewBox: "0 0 100 100",
-    strokes: [
-      // 1) tall standing line (top -> bottom)
-      { id: "l_1", kind: "trace", pathD: "M 50 16 L 50 86" },
-    ],
+    strokes: [{ id: "l_1", kind: "trace", pathD: "M 50 16 L 50 86" }],
     skillTags: ["letter:l", "case:lower", "subtopic:tracing"],
   },
-  // Uppercase M
+
   M: {
     id: "M",
     label: "M",
@@ -492,7 +373,6 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     skillTags: ["letter:m", "case:upper", "subtopic:tracing"],
   },
 
-  // Lowercase m
   m: {
     id: "m",
     label: "m",
@@ -504,21 +384,14 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     ],
     skillTags: ["letter:m", "case:lower", "subtopic:tracing"],
   },
-  // --------------------
-  // N / n
-  // --------------------
+
   N: {
     id: "N",
     label: "N",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) left stem (top -> baseline)
       { id: "N_1", kind: "trace", pathD: "M 30 16 L 30 86" },
-
-      // 2) diagonal (top-left -> bottom-right)
       { id: "N_2", kind: "trace", pathD: "M 30 16 L 70 86" },
-
-      // 3) right stem (top -> baseline)
       { id: "N_3", kind: "trace", pathD: "M 70 16 L 70 86" },
     ],
     skillTags: ["letter:n", "case:upper", "subtopic:tracing"],
@@ -529,32 +402,26 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "n",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) stem (top -> baseline)
       { id: "n_1", kind: "trace", pathD: "M 40 40 L 40 86" },
-
-      // 2) hump (start on stem midline -> arch -> down to baseline)
       { id: "n_2", kind: "trace", pathD: "M 40 52 C 44 38, 66 38, 66 52 L 66 86" },
     ],
     skillTags: ["letter:n", "case:lower", "subtopic:tracing"],
   },
-  // --------------------
-  // O / o
-  // --------------------
+
   O: {
     id: "O",
     label: "O",
     viewBox: "0 0 100 100",
     strokes: [
-      // One continuous oval (start at top)
       {
         id: "O_1",
         kind: "trace",
         pathD:
           "M 50 18 " +
-    "C 28 18, 14 34, 14 52 " +
-    "C 14 72, 28 86, 50 86 " +
-    "C 72 86, 86 72, 86 52 " +
-    "C 86 34, 72 18, 50 18",
+          "C 28 18, 14 34, 14 52 " +
+          "C 14 72, 28 86, 50 86 " +
+          "C 72 86, 86 72, 86 52 " +
+          "C 86 34, 72 18, 50 18",
       },
     ],
     skillTags: ["letter:o", "case:upper", "subtopic:tracing"],
@@ -565,32 +432,26 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "o",
     viewBox: "0 0 100 100",
     strokes: [
-      // One continuous small oval (baseline at y=86)
       {
         id: "o_1",
         kind: "trace",
         pathD:
-         "M 50 40 " +
-    "C 37.3 40, 27 50.3, 27 63 " +
-    "C 27 75.7, 37.3 86, 50 86 " +
-    "C 62.7 86, 73 75.7, 73 63 " +
-    "C 73 50.3, 62.7 40, 50 40",
+          "M 50 40 " +
+          "C 37.3 40, 27 50.3, 27 63 " +
+          "C 27 75.7, 37.3 86, 50 86 " +
+          "C 62.7 86, 73 75.7, 73 63 " +
+          "C 73 50.3, 62.7 40, 50 40",
       },
     ],
     skillTags: ["letter:o", "case:lower", "subtopic:tracing"],
   },
-  // --------------------
-  // P / p
-  // --------------------
+
   P: {
     id: "P",
     label: "P",
     viewBox: "0 0 100 100",
     strokes: [
-      // 1) main stem (top -> baseline)
       { id: "P_1", kind: "trace", pathD: "M 34 16 L 34 86" },
-
-      // 2) top bowl (start at top-left, curve to right, come back to midline)
       { id: "P_2", kind: "trace", pathD: "M 34 16 C 78 16, 78 52, 34 52" },
     ],
     skillTags: ["letter:p", "case:upper", "subtopic:tracing"],
@@ -601,16 +462,200 @@ pathD: "M 68 34 L 68 106 C 68 124 30 124 30 100",
     label: "p",
     viewBox: "0 0 100 140",
     strokes: [
-      // 1) stem with descender (x-height -> below baseline)
-      { id: "p_1", kind: "trace", pathD: "M 40 40 L 40 110" },
-
-      // 2) bowl (attach at midline, end at baseline)
-      { id: "p_2", kind: "trace", pathD: "M 40 52 C 68 48, 78 64, 74 76 C 70 92, 52 94, 40 86" },
+      { id: "p_1", kind: "trace", pathD: "M 40 40 L 40 112" },
+      { id: "p_2", kind: "trace", pathD: "M 40 40 C 74 40, 74 74, 40 74" },
     ],
     skillTags: ["letter:p", "case:lower", "subtopic:tracing"],
   },
-};
 
+  // --------------------
+  // Q / q
+  // --------------------
+  Q: {
+    id: "Q",
+    label: "Q",
+    viewBox: "0 0 100 100",
+    strokes: [
+      {
+        id: "Q_1",
+        kind: "trace",
+        pathD:
+          "M 50 18 " +
+          "C 28 18, 14 34, 14 52 " +
+          "C 14 72, 28 86, 50 86 " +
+          "C 72 86, 86 72, 86 52 " +
+          "C 86 34, 72 18, 50 18",
+      },
+      { id: "Q_2", kind: "trace", pathD: "M 58 66 L 78 92" },
+    ],
+    skillTags: ["letter:q", "case:upper", "subtopic:tracing"],
+  },
+
+  q: {
+    id: "q",
+    label: "q",
+    viewBox: "0 0 100 140",
+    strokes: [
+    // 1) c-curve bowl (anti-clockwise feel; open like "c")
+    {
+      id: "q_1",
+      kind: "trace",
+      // start near top-right, curve around to bottom-right (open on right)
+      pathD: "M 68 48 C 48 34, 28 46, 28 66 C 28 90, 52 94, 68 84",
+    },
+
+    // 2) standing line (starts just ABOVE the curve start point, then comes down)
+    {
+      id: "q_2",
+      kind: "trace",
+      // start slightly above q_1 start (x=68), go down into descender
+      pathD: "M 68 42 L 68 112",
+    },
+  ],
+    skillTags: ["letter:q", "case:lower", "subtopic:tracing"],
+  },
+  // --------------------
+  // R / r
+  // --------------------
+  R: {
+    id: "R",
+    label: "R",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) main stem (top -> baseline)
+      { id: "R_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+
+      // 2) top bowl (like P)
+      { id: "R_2", kind: "trace", pathD: "M 34 16 C 78 16, 78 52, 34 52" },
+
+      // 3) diagonal leg (mid -> bottom-right)
+      { id: "R_3", kind: "trace", pathD: "M 50 52 L 76 86" },
+    ],
+    skillTags: ["letter:r", "case:upper", "subtopic:tracing"],
+  },
+
+  r: {
+    id: "r",
+    label: "r",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) stem (x-height -> baseline)
+      { id: "r_1", kind: "trace", pathD: "M 40 40 L 40 86" },
+
+      // 2) small shoulder (starts at midline, small curve to the right)
+      { id: "r_2", kind: "trace", pathD: "M 40 52 C 42 38, 62 40, 66 44" },
+    ],
+    skillTags: ["letter:r", "case:lower", "subtopic:tracing"],
+  },
+
+// --------------------
+  // S / s
+  // --------------------
+  S: {
+    id: "S",
+    label: "S",
+    viewBox: "0 0 100 100",
+    strokes: [
+      {
+        id: "S_1",
+        kind: "trace",
+pathD:
+          "M 72 24 " +
+  "C 60 10, 34 12, 28 28 " +
+  "C 22 42, 36 48, 52 52 " +
+  "C 68 56, 82 62, 76 76 " +
+  "C 70 92, 44 94, 22 80",      },
+    ],
+    skillTags: ["letter:s", "case:upper", "subtopic:tracing"],
+  },
+
+  s: {
+    id: "s",
+    label: "s",
+    viewBox: "0 0 100 140",
+    strokes: [
+      {
+        id: "s_1",
+        kind: "trace",
+        pathD:  "M 72 24 " +
+  "C 60 10, 34 12, 28 28 " +
+  "C 22 42, 36 48, 52 52 " +
+  "C 68 56, 82 62, 76 76 " +
+  "C 70 92, 44 94, 22 80", 
+      },
+    ],
+    skillTags: ["letter:s", "case:lower", "subtopic:tracing"],
+  },
+  // --------------------
+  // T / t
+  // --------------------
+  T: {
+    id: "T",
+    label: "T",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) top bar
+            { id: "T_2", kind: "trace", pathD: "M 50 18 L 50 86" },
+
+      { id: "T_1", kind: "trace", pathD: "M 26 18 L 74 18" },
+      // 2) center stem (top -> baseline)
+    ],
+    skillTags: ["letter:t", "case:upper", "subtopic:tracing"],
+  },
+
+  t: {
+    id: "t",
+    label: "t",
+    viewBox: "0 0 100 100",
+    strokes: [
+      // 1) tall stem (top -> baseline)
+{ id: "t_1", kind: "trace", pathD: "M 50 16 L 50 84 C 50 96, 74 96, 74 84" },
+      // 2) cross bar (left -> right)
+      { id: "t_2", kind: "trace", pathD: "M 34 50 L 66 50" },
+    ],
+    skillTags: ["letter:t", "case:lower", "subtopic:tracing"],
+  },
+// --------------------
+// U / u
+// --------------------
+U: {
+  id: "U",
+  label: "U",
+  viewBox: "0 0 100 100",
+  strokes: [
+    // 1) down left → rounded bottom → up right (single stroke)
+    {
+      id: "U_1",
+      kind: "trace",
+      pathD: "M 32 16 L 32 62 C 32 86, 68 86, 68 62 L 68 16",
+    },
+  ],
+  skillTags: ["letter:u", "case:upper", "subtopic:tracing"],
+},
+
+u: {
+  id: "u",
+  label: "u",
+  viewBox: "0 0 100 120",
+  strokes: [
+    // 1) left down → bottom curve → up to mid (like your reference stroke 1)
+    {
+      id: "u_1",
+      kind: "trace",
+      pathD: "M 32 46 L 32 58 C 30 98, 72 90, 72 86",
+    },
+    // 2) right down stroke
+    {
+      id: "u_2",
+      kind: "trace",
+      pathD: "M 72 46 L 72 94",
+    },
+  ],
+  skillTags: ["letter:u", "case:lower", "subtopic:tracing"],
+},
+
+
+};
 
 
 // --------------------
@@ -636,16 +681,16 @@ export const TRACE_LEVELS: TraceLevel[] = [
     ],
   },
   {
-      levelId: 4,
-      title: "Level 4",
-      subtitle: "M–P",
-      pairs: [
-        { upper: "M", lower: "m" },
-        { upper: "N", lower: "n" },
-        { upper: "O", lower: "o" },
-        { upper: "P", lower: "p" },
-      ],
-    },
+    levelId: 4,
+    title: "Level 4",
+    subtitle: "M–P",
+    pairs: [
+      { upper: "M", lower: "m" },
+      { upper: "N", lower: "n" },
+      { upper: "O", lower: "o" },
+      { upper: "P", lower: "p" },
+    ],
+  },
   {
     levelId: 2,
     title: "Level 2",
@@ -668,8 +713,21 @@ export const TRACE_LEVELS: TraceLevel[] = [
       { upper: "L", lower: "l" },
     ],
   },
-  { levelId: 4, title: "Level 4", subtitle: "M–P", pairs: [] },
-  { levelId: 5, title: "Level 5", subtitle: "Q–Z", pairs: [] },
+  {
+    levelId: 5,
+    title: "Level 5",
+    subtitle: "Q–Z",
+    pairs: [
+      { upper: "Q", lower: "q" },
+      { upper: "R", lower: "r" },
+      { upper: "S", lower: "s" },
+            { upper: "T", lower: "t" },
+            { upper: "U", lower: "u" },
+
+
+
+    ],
+  },
 ];
 
 export function isLetterReady(letterId: LetterId): boolean {
