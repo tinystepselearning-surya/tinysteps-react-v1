@@ -1,7 +1,7 @@
 // Minimal ScrollReveal component used by a few sections.
 // Keeps behavior light-weight: reveals children when they enter viewport.
 import React, { useRef, useEffect, useState } from 'react';
-import { motion, Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 type Props = {
   children: React.ReactNode;
@@ -10,7 +10,7 @@ type Props = {
   threshold?: number;
 };
 
-const VARIANTS: Record<string, Variants> = {
+const VARIANTS: Record<string, any> = {
   fadeUp: {
     hidden: { opacity: 0, y: 12 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] } },
