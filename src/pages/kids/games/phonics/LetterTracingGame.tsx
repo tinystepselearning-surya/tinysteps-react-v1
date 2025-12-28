@@ -44,6 +44,9 @@ type Sparkle = {
   dx: number;
   dy: number;
   s: number; // scale
+  a: number; // alpha (opacity)
+  life: number; // frames remaining
+  c: string; // color
 };
 
 // --------------------
@@ -352,6 +355,85 @@ export default function LetterTracingGame() {
   const [sparkles, setSparkles] = useState<Sparkle[]>([]);
   const sparkleIdRef = useRef(1);
   const lastSparkleIndexRef = useRef(0);
+
+  // Sparkle constants
+  const SPARKLE_MAX = 220;
+  const SPARKLE_STEP = 3; // emit every N sample points
+  const SPARKLE_PER_POINT = 3; // sparkles per emitted point
+  const SPARKLE_COLORS = ["#FDE047", "#FBBF24", "#93C5FD", "#A7F3D0", "#F9A8D4"] as const;
+
+  const rand = (a: number, b: number) => a + Math.random() * (b - a);
+
+  function emitSparklesAlongProgress(fromI: number, toI: number) {
+    if (!samples.length) return;
+
+    const start = clamp(fromI, 0, samples.length - 1);
+    const end = clamp(toI, 0, samples.length - 1);
+    if (end <= start) return;
+
+    const newParts: Sparkle[] = [];
+
+    for (let i = start + SPARKLE_STEP; i <= end; i += SPARKLE_STEP) {
+      const p = samples[i];
+      for (let k = 0; k < SPARKLE_PER_POINT; k++) {
+        const c = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+        newParts.push({
+          id: sparkleIdRef.current++,
+          x: p.x + rand(-1.2, 1.2),
+          y: p.y + rand(-1.2, 1.2),
+          dx: rand(-0.18, 0.18),
+          dy: rand(-0.35, -0.05),
+          s: rand(0.8, 1.25),
+          a: rand(0.75, 1),
+          life: Math.floor(rand(18, 30)),
+          c,
+        });
+      }
+    }
+
+    if (!newParts.length) return;
+
+    setSparkles((prev) => {
+      const next = [...prev, ...newParts];
+      if (next.length > SPARKLE_MAX) next.splice(0, next.length - SPARKLE_MAX);
+      return next;
+    });
+  }
+
+  // ✨ Animate sparkles (runs once)
+  useEffect(() => {
+    let raf = 0;
+
+    const tick = () => {
+      setSparkles((prev) => {
+        if (prev.length === 0) return prev;
+
+        const next = prev
+          .map((p) => {
+            const life = p.life - 1;
+            const a = Math.max(0, p.a - 0.05);
+
+            return {
+              ...p,
+              x: p.x + p.dx,
+              y: p.y + p.dy,
+              dx: p.dx * 0.98,
+              dy: p.dy * 0.98 + 0.04,
+              life,
+              a,
+            };
+          })
+          .filter((p) => p.life > 0 && p.a > 0.05);
+
+        return next;
+      });
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   const currentStroke: TraceStroke | null = useMemo(() => {
     if (!letterData) return null;
@@ -928,6 +1010,13 @@ if (!hasProgress) setLastIndex(0);
     }
 
     if (bestD <= tolerance) {
+      // ✨ emit sparkles only when forward progress happens
+      const lastEmit = lastSparkleIndexRef.current;
+      if (bestI > lastEmit) {
+        emitSparklesAlongProgress(lastEmit, bestI);
+        lastSparkleIndexRef.current = bestI;
+      }
+
       setLastIndex(bestI);
       if (bestI >= samples.length - 2) completeStroke();
     }
@@ -1314,6 +1403,15 @@ if (mode === "levels") {
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
             >
+              <defs>
+                <filter id="sparkleGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="1.35" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
               {/* 1) Full letter outline */}
               {allTraceStrokes.map((s, i) => {
                 const c = STROKE_COLORS[i % STROKE_COLORS.length];
@@ -1381,6 +1479,15 @@ if (mode === "levels") {
                       strokeDasharray={dashArray}
                       strokeDashoffset={dashOffset}
                     />
+                  )}
+
+                  {/* ✨ Sparkle glitter trail (fills traced part) */}
+                  {sparkles.length > 0 && (
+                    <g filter="url(#sparkleGlow)">
+                      {sparkles.map((sp) => (
+                        <circle key={sp.id} cx={sp.x} cy={sp.y} r={2.2 * sp.s} fill={sp.c} opacity={sp.a} />
+                      ))}
+                    </g>
                   )}
                 </>
               )}
