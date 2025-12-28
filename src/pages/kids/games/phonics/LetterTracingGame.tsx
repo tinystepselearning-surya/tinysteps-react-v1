@@ -37,6 +37,15 @@ type Pt = { x: number; y: number; t: number; len: number };
 type LevelPairView = { upper?: LetterId; lower?: LetterId };
 type TraceLevelView = { levelId: number; title: string; subtitle?: string; pairs?: LevelPairView[] };
 
+type Sparkle = {
+  id: number;
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  s: number; // scale
+};
+
 // --------------------
 // Helpers
 // --------------------
@@ -119,8 +128,28 @@ const VIEWBOX_PAD = 10;
 function ConfettiBurst({ fire }: { fire: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
+  // rising-edge trigger so every "true" creates a fresh burst
+  const prevFireRef = useRef(false);
+  const [burstId, setBurstId] = useState(0);
+
   useEffect(() => {
-    if (!fire) return;
+    const was = prevFireRef.current;
+    if (fire && !was) setBurstId((n) => n + 1);
+    prevFireRef.current = fire;
+  }, [fire]);
+
+  // Always clear immediately when fire turns off (prevents leftover pieces)
+  useEffect(() => {
+    if (fire) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }, [fire]);
+
+  useEffect(() => {
+    if (!burstId) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -130,37 +159,52 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
 
     let raf = 0;
 
+    // DPR for crisp/confident confetti (important on retina screens)
     const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const w = Math.max(1, canvas.clientWidth);
+      const h = Math.max(1, canvas.clientHeight);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
     };
 
     resize();
 
-    const W0 = canvas.width;
-    const H0 = canvas.height;
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
 
-    const pieces = Array.from({ length: 140 }).map(() => ({
-      x: W0 / 2,
-      y: H0 / 2,
-      vx: (Math.random() - 0.5) * 10,
-      vy: (Math.random() - 0.8) * 12,
-      g: 0.25 + Math.random() * 0.25,
-      r: 2 + Math.random() * 3,
-      a: 1,
-      rot: Math.random() * Math.PI,
-      vr: (Math.random() - 0.5) * 0.3,
-      hue: Math.floor(Math.random() * 360),
-    }));
+    // Stronger burst: more pieces + bigger sizes + better motion
+    const COUNT = 240;
+    const pieces = Array.from({ length: COUNT }).map(() => {
+      const isStreamer = Math.random() < 0.35;
+      const size = isStreamer ? 6 + Math.random() * 10 : 3 + Math.random() * 6;
+
+      return {
+        x: W * (0.45 + Math.random() * 0.10), // near center (letter)
+        y: H * (0.40 + Math.random() * 0.10),
+        vx: (Math.random() - 0.5) * (10 + Math.random() * 6),
+        vy: -(7 + Math.random() * 10),
+        g: 0.24 + Math.random() * 0.22,
+        w: isStreamer ? size * 1.8 : size,
+        h: isStreamer ? size * 0.55 : size,
+        a: 1,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.35,
+        hue: Math.floor(Math.random() * 360),
+      };
+    });
 
     const start = performance.now();
-    const dur = 1200;
+    const dur = 1600; // longer so it's noticeable
 
     const tick = (now: number) => {
       const t = now - start;
-      const fade = 1 - clamp(t / dur, 0, 1);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Fade starts later (more "pop" first)
+      const fade = 1 - clamp((t - 350) / (dur - 350), 0, 1);
+
+      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
       for (const p of pieces) {
         p.x += p.vx;
@@ -169,15 +213,35 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
         p.rot += p.vr;
         p.a = fade;
 
+        // slight air resistance
+        p.vx *= 0.992;
+        p.vy *= 0.995;
+
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
-        ctx.fillStyle = `hsla(${p.hue}, 90%, 60%, ${p.a})`;
-        ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
+
+        // vivid fill with better opacity
+        ctx.fillStyle = `hsla(${p.hue}, 92%, 58%, ${0.95 * p.a})`;
+
+        // subtle highlight stroke (makes it visible on light bg)
+        ctx.strokeStyle = `hsla(${p.hue}, 92%, 40%, ${0.35 * p.a})`;
+        ctx.lineWidth = 1;
+
+        ctx.beginPath();
+        ctx.rect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.fill();
+        ctx.stroke();
+
         ctx.restore();
       }
 
-      if (t < dur) raf = requestAnimationFrame(tick);
+      if (t < dur) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        // final clear to ensure absolutely no leftovers
+        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      }
     };
 
     raf = requestAnimationFrame(tick);
@@ -186,8 +250,10 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     return () => {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(raf);
+      // cleanup clear (extra safety)
+      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
     };
-  }, [fire]);
+  }, [burstId]);
 
   return (
     <canvas
@@ -197,6 +263,7 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     />
   );
 }
+
 
 export default function LetterTracingGame() {
   const navigate = useNavigate();
@@ -281,6 +348,11 @@ export default function LetterTracingGame() {
   const [hintIndex, setHintIndex] = useState(0);
   const hintIndexRef = useRef(0);
 
+  // ✨ Sparkles (must be TOP-LEVEL hooks — used for celebration + hints)
+  const [sparkles, setSparkles] = useState<Sparkle[]>([]);
+  const sparkleIdRef = useRef(1);
+  const lastSparkleIndexRef = useRef(0);
+
   const currentStroke: TraceStroke | null = useMemo(() => {
     if (!letterData) return null;
     return letterData.strokes[strokeIndex] ?? null;
@@ -330,109 +402,96 @@ export default function LetterTracingGame() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, [setSearchParams]);
 
-  // Reset state when switching item
-  useEffect(() => {
-    setStrokeIndex(0);
+ // ✅ Reset state when switching item (letter / pretrace item)
+useEffect(() => {
+  setStrokeIndex(0);
 
-    setStarted(false);
-    setLastIndex(0);
+  setStarted(false);
+  setLastIndex(0);
 
-    startedRef.current = false;
-    activePointerIdRef.current = null;
-    ignoreMovesRef.current = false;
-    capturedElRef.current = null;
+  startedRef.current = false;
+  activePointerIdRef.current = null;
+  ignoreMovesRef.current = false;
+  capturedElRef.current = null;
 
-    setLetterDone(false);
-    setConfetti(false);
-    setTimeStart(null);
+  setLetterDone(false);
+  setConfetti(false);
+  setTimeStart(null);
 
-    setHintIndex(0);
-    hintIndexRef.current = 0;
-  }, [currentLetterId, pretraceId]);
+  setHintIndex(0);
+  hintIndexRef.current = 0;
+  // ✨ sparkles reset
+  setSparkles([]);
+  sparkleIdRef.current = 1;
+  lastSparkleIndexRef.current = 0;
+}, [currentLetterId, pretraceId]);
 
-  // Reset state when switching stroke
-  useEffect(() => {
-    setStarted(false);
-    setLastIndex(0);
+// ✅ Reset state when switching stroke (within same letter)
+useEffect(() => {
+  setStarted(false);
+  setLastIndex(0);
 
-    startedRef.current = false;
-    activePointerIdRef.current = null;
+  startedRef.current = false;
+  activePointerIdRef.current = null;
+  capturedElRef.current = null;
+  ignoreMovesRef.current = false;
 
-    setHintIndex(0);
-    hintIndexRef.current = 0;
-  }, [strokeIndex]);
+  setHintIndex(0);
+  hintIndexRef.current = 0;
 
-  // Sampling for CURRENT stroke only
-  useLayoutEffect(() => {
-    if (!currentStroke || currentStroke.kind === "tap") {
+  // ✨ sparkles reset
+  setSparkles([]);
+  lastSparkleIndexRef.current = 0;
+}, [strokeIndex]);
+
+// Sampling for CURRENT stroke only
+useLayoutEffect(() => {
+  if (!currentStroke || currentStroke.kind === "tap") {
+    setSamples([]);
+    setRawLen(0);
+    setTrimStartLen(0);
+    return;
+  }
+
+  const d = (currentStroke.pathD ?? "").trim();
+  if (!d) {
+    setSamples([]);
+    setRawLen(0);
+    setTrimStartLen(0);
+    return;
+  }
+
+  const startT0 = typeof strokeStartT === "number" ? strokeStartT : 0;
+  const endT0 = typeof strokeEndT === "number" ? strokeEndT : 1;
+  const startT = clamp(startT0, 0, 0.999);
+  const endT = clamp(endT0, startT + 0.001, 1);
+
+  const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  pathEl.setAttribute("d", d);
+
+  let len = 0;
+  try {
+    len = pathEl.getTotalLength();
+  } catch {
+    len = 0;
+  }
+
+  // Straight line fallback
+  if (!len || len <= 0) {
+    const line = parseLine(d);
+    if (!line) {
       setSamples([]);
       setRawLen(0);
       setTrimStartLen(0);
       return;
     }
 
-    const d = (currentStroke.pathD ?? "").trim();
-    if (!d) {
-      setSamples([]);
-      setRawLen(0);
-      setTrimStartLen(0);
-      return;
-    }
+    const dx = line.b.x - line.a.x;
+    const dy = line.b.y - line.a.y;
+    const realLen = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
 
-    const startT0 = typeof strokeStartT === "number" ? strokeStartT : 0;
-    const endT0 = typeof strokeEndT === "number" ? strokeEndT : 1;
-    const startT = clamp(startT0, 0, 0.999);
-    const endT = clamp(endT0, startT + 0.001, 1);
-
-    const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    pathEl.setAttribute("d", d);
-
-    let len = 0;
-    try {
-      len = pathEl.getTotalLength();
-    } catch {
-      len = 0;
-    }
-
-    // Straight line fallback
-    if (!len || len <= 0) {
-      const line = parseLine(d);
-      if (!line) {
-        setSamples([]);
-        setRawLen(0);
-        setTrimStartLen(0);
-        return;
-      }
-
-      const dx = line.b.x - line.a.x;
-      const dy = line.b.y - line.a.y;
-      const realLen = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
-
-      const sLen = realLen * startT;
-      const eLen = realLen * endT;
-      const wLen = Math.max(0.0001, eLen - sLen);
-
-      const count = 220;
-      const pts: Pt[] = [];
-      for (let i = 0; i <= count; i++) {
-        const t = i / count;
-        const l = sLen + wLen * t;
-        const along = l / realLen;
-        const x = line.a.x + dx * along;
-        const y = line.a.y + dy * along;
-        pts.push({ x, y, t, len: l - sLen });
-      }
-
-      setRawLen(realLen);
-      setTrimStartLen(sLen);
-      setSamples(pts);
-      setLastIndex(0);
-      return;
-    }
-
-    // General SVG path sampling
-    const sLen = len * startT;
-    const eLen = len * endT;
+    const sLen = realLen * startT;
+    const eLen = realLen * endT;
     const wLen = Math.max(0.0001, eLen - sLen);
 
     const count = 220;
@@ -440,90 +499,127 @@ export default function LetterTracingGame() {
     for (let i = 0; i <= count; i++) {
       const t = i / count;
       const l = sLen + wLen * t;
-      const p = pathEl.getPointAtLength(l);
-      pts.push({ x: p.x, y: p.y, t, len: l - sLen });
+      const along = l / realLen;
+      const x = line.a.x + dx * along;
+      const y = line.a.y + dy * along;
+      pts.push({ x, y, t, len: l - sLen });
     }
 
-    setRawLen(len);
+    setRawLen(realLen);
     setTrimStartLen(sLen);
     setSamples(pts);
+
+    // NOTE: keep reset here (new stroke item = fresh start)
     setLastIndex(0);
-  }, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
+    return;
+  }
 
-  const isTap = currentStroke?.kind === "tap";
+  // General SVG path sampling
+  const sLen = len * startT;
+  const eLen = len * endT;
+  const wLen = Math.max(0.0001, eLen - sLen);
 
-  const startPt = useMemo(() => {
-    if (!currentStroke) return { x: 0, y: 0 };
-    if (currentStroke.kind === "tap") return parseTapPoint(currentStroke.pathD) ?? { x: 0, y: 0 };
-    return samples[0] ? { x: samples[0].x, y: samples[0].y } : { x: 0, y: 0 };
-  }, [currentStroke, samples]);
+  const count = 220;
+  const pts: Pt[] = [];
+  for (let i = 0; i <= count; i++) {
+    const t = i / count;
+    const l = sLen + wLen * t;
+    const p = pathEl.getPointAtLength(l);
+    pts.push({ x: p.x, y: p.y, t, len: l - sLen });
+  }
 
-  const endPt = useMemo(() => {
-    if (!currentStroke) return { x: 0, y: 0 };
-    if (currentStroke.kind === "tap") return startPt;
-    const last = samples[samples.length - 1];
-    return last ? { x: last.x, y: last.y } : { x: 0, y: 0 };
-  }, [currentStroke, samples, startPt]);
+  setRawLen(len);
+  setTrimStartLen(sLen);
+  setSamples(pts);
 
-  // ⭐ animate hint along path while idle
-  useEffect(() => {
-    if (letterDone) return;
-    if (!currentStroke || currentStroke.kind === "tap") return;
-    if (!samples.length) return;
-    if (started || lastIndex > 0) return;
+  // NOTE: keep reset here (new stroke item = fresh start)
+  setLastIndex(0);
+}, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
 
-    let raf = 0;
-    const durMs = 5200;
-    const t0 = performance.now();
+const isTap = currentStroke?.kind === "tap";
 
-    const tick = (now: number) => {
-      const frac = ((now - t0) % durMs) / durMs;
-      const idx = Math.floor(frac * (samples.length - 1));
-      if (idx !== hintIndexRef.current) {
-        hintIndexRef.current = idx;
-        setHintIndex(idx);
-      }
-      raf = requestAnimationFrame(tick);
-    };
+const startPt = useMemo(() => {
+  if (!currentStroke) return { x: 0, y: 0 };
+  if (currentStroke.kind === "tap") return parseTapPoint(currentStroke.pathD) ?? { x: 0, y: 0 };
+  return samples[0] ? { x: samples[0].x, y: samples[0].y } : { x: 0, y: 0 };
+}, [currentStroke, samples]);
 
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [letterDone, currentStroke?.id, currentStroke?.kind, currentStroke?.pathD, samples.length, started, lastIndex]);
+const endPt = useMemo(() => {
+  if (!currentStroke) return { x: 0, y: 0 };
+  if (currentStroke.kind === "tap") return startPt;
+  const last = samples[samples.length - 1];
+  return last ? { x: last.x, y: last.y } : { x: 0, y: 0 };
+}, [currentStroke, samples, startPt]);
 
-  const guideIndex = useMemo(() => {
-    if (!samples.length) return 0;
-    return started || lastIndex > 0
-      ? clamp(lastIndex, 0, samples.length - 1)
-      : clamp(hintIndex, 0, samples.length - 1);
-  }, [samples.length, started, lastIndex, hintIndex]);
+// ⭐ animate hint along path while idle (SLOWER now)
+useEffect(() => {
+  if (letterDone) return;
+  if (!currentStroke || currentStroke.kind === "tap") return;
+  if (!samples.length) return;
+  if (started || lastIndex > 0) return;
 
-  const guidePt = useMemo(() => {
-    if (!currentStroke) return startPt;
-    if (currentStroke.kind === "tap") return startPt;
-    if (!samples.length) return startPt;
-    const i = guideIndex;
-    return { x: samples[i].x, y: samples[i].y };
-  }, [currentStroke, samples, guideIndex, startPt]);
+  let raf = 0;
+  const durMs = 7600; // ✅ slower than 5200
+  const t0 = performance.now();
 
-  const progressLen = useMemo(() => {
-    if (!currentStroke || currentStroke.kind === "tap") return 0;
-    if (!samples.length) return 0;
-    const i = clamp(lastIndex, 0, samples.length - 1);
-    return samples[i].len;
-  }, [currentStroke, samples, lastIndex]);
-
-  const guideDots = useMemo(() => {
-    if (!currentStroke || currentStroke.kind === "tap") return [];
-    if (!samples.length) return [];
-    const count = 14;
-    const dots: { x: number; y: number; key: number }[] = [];
-    for (let i = 0; i < count; i++) {
-      const ii = Math.floor((i / (count - 1)) * (samples.length - 1));
-      const p = samples[ii];
-      dots.push({ x: p.x, y: p.y, key: ii });
+  const tick = (now: number) => {
+    const frac = ((now - t0) % durMs) / durMs;
+    const idx = Math.floor(frac * (samples.length - 1));
+    if (idx !== hintIndexRef.current) {
+      hintIndexRef.current = idx;
+      setHintIndex(idx);
     }
-    return dots;
-  }, [currentStroke, samples]);
+    raf = requestAnimationFrame(tick);
+  };
+
+  raf = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(raf);
+}, [
+  letterDone,
+  currentStroke?.id,
+  currentStroke?.kind,
+  currentStroke?.pathD,
+  samples.length,
+  started,
+  lastIndex,
+]);
+
+const guideIndex = useMemo(() => {
+  if (!samples.length) return 0;
+  // ✅ if child already traced some part, star stays at stopping point (no restart)
+  return started || lastIndex > 0
+    ? clamp(lastIndex, 0, samples.length - 1)
+    : clamp(hintIndex, 0, samples.length - 1);
+}, [samples.length, started, lastIndex, hintIndex]);
+
+const guidePt = useMemo(() => {
+  if (!currentStroke) return startPt;
+  if (currentStroke.kind === "tap") return startPt;
+  if (!samples.length) return startPt;
+  const i = guideIndex;
+  return { x: samples[i].x, y: samples[i].y };
+}, [currentStroke, samples, guideIndex, startPt]);
+
+const progressLen = useMemo(() => {
+  if (!currentStroke || currentStroke.kind === "tap") return 0;
+  if (!samples.length) return 0;
+  const i = clamp(lastIndex, 0, samples.length - 1);
+  return samples[i].len;
+}, [currentStroke, samples, lastIndex]);
+
+const guideDots = useMemo(() => {
+  if (!currentStroke || currentStroke.kind === "tap") return [];
+  if (!samples.length) return [];
+  const count = 14;
+  const dots: { x: number; y: number; key: number }[] = [];
+  for (let i = 0; i < count; i++) {
+    const ii = Math.floor((i / (count - 1)) * (samples.length - 1));
+    const p = samples[ii];
+    dots.push({ x: p.x, y: p.y, key: ii });
+  }
+  return dots;
+}, [currentStroke, samples]);
+
 
   // completed strokes stay visible
   const totalStrokes = letterData?.strokes?.length ?? 0;
@@ -652,6 +748,10 @@ export default function LetterTracingGame() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
+    // reset sparkles state/ids
+    setSparkles([]);
+    sparkleIdRef.current = 1;
+    lastSparkleIndexRef.current = 0;
   }
 
   // ✅ Next Letter button uses this (skip without completing)
@@ -717,9 +817,12 @@ export default function LetterTracingGame() {
       return;
     }
 
-    setLetterDone(true);
-    setConfetti(true);
-    setTimeout(() => setConfetti(false), 1100);
+   setLetterDone(true);
+
+// stronger + ensures it always turns off
+setConfetti(true);
+setTimeout(() => setConfetti(false), 1700);
+
 
     if (!kidId) return;
 
@@ -755,10 +858,9 @@ export default function LetterTracingGame() {
   function handlePointerDown(e: React.PointerEvent) {
     if (letterDone) return;
     if (!currentStroke) return;
-
+    // enforce lift-lock: do not start while moves are ignored
+    if (ignoreMovesRef.current) return;
     e.preventDefault();
-
-    ignoreMovesRef.current = false;
     capturedElRef.current = e.currentTarget as unknown as SVGSVGElement;
 
     if (timeStart === null) setTimeStart(performance.now());
@@ -772,15 +874,26 @@ export default function LetterTracingGame() {
       return;
     }
 
-    const startRadius = 14;
-    if (dist(p, startPt) > startRadius) return;
+    // ✅ allow resume: if already traced some part, allow starting near the last traced point
+const startRadius = 14;
+const resumeRadius = 18;
 
-    startedRef.current = true;
-    activePointerIdRef.current = e.pointerId;
+const hasProgress = lastIndex > 0 && samples.length > 0;
+const resumePt = hasProgress ? samples[clamp(lastIndex, 0, samples.length - 1)] : startPt;
+const allowedR = hasProgress ? resumeRadius : startRadius;
 
-    setStarted(true);
-    (e.currentTarget as any).setPointerCapture?.(e.pointerId);
-    setLastIndex(0);
+if (dist(p, resumePt) > allowedR) return;
+
+startedRef.current = true;
+activePointerIdRef.current = e.pointerId;
+
+setStarted(true);
+
+// ✅ IMPORTANT: do NOT reset lastIndex when resuming
+if (!hasProgress) setLastIndex(0);
+
+(e.currentTarget as any).setPointerCapture?.(e.pointerId);
+
   }
 
   function handlePointerMove(e: React.PointerEvent) {
@@ -831,79 +944,278 @@ export default function LetterTracingGame() {
       capturedElRef.current = null;
 
       setStarted(false);
-
-      ignoreMovesRef.current = false;
     }
   }
 
   // --------------------
-  // Levels screen
-  // --------------------
-  if (mode === "levels") {
-    const LEVELS = TRACE_LEVELS as unknown as readonly TraceLevelView[];
+// Levels screen (UX upgrade only — no logic changes)
+// --------------------
+if (mode === "levels") {
+  const LEVELS = TRACE_LEVELS as any[];
 
-    return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-10">
-        <h1 className="text-2xl font-semibold text-slate-900">Letter Tracing</h1>
-        <p className="mt-1 text-slate-600">Start with Level 0, then trace Capital → Small.</p>
+  const pretraceChips = (PRETRACE_LEVEL.items ?? [])
+  .map((id) => PRETRACE_ITEMS[id]?.label ?? "")
+  .filter(Boolean)
+  .slice(0, 6);
 
-        <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <button
-            onClick={() => handlePlayButtonClick(0, 0, 0)}
-            className="rounded-xl border bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-slate-300"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-lg font-semibold text-slate-900">{PRETRACE_LEVEL.title}</div>
-                <div className="text-sm text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 py-10">
+      {/* Hero / Header */}
+      <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
+        {/* soft blobs */}
+        <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
+
+        <div className="relative">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-white/60">
+                <span className="animate-pulse">✨</span>
+                Choose your path
               </div>
-              <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Ready</span>
+
+              <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
+                Letter Tracing Adventure
+              </h1>
+
+              <p className="mt-2 max-w-2xl text-sm text-slate-700">
+                Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
+                <span className="font-semibold">Small</span> letters.
+              </p>
             </div>
-            <div className="mt-2 text-sm text-slate-600">{PRETRACE_LEVEL.items.length} activities</div>
-          </button>
 
-          {LEVELS.map((lv: TraceLevelView) => {
-            const ready = isLevelReady(lv.levelId);
-            return (
-              <button
-                key={lv.levelId}
-                disabled={!ready}
-                onClick={() => handlePlayButtonClick(lv.levelId, 0, 0)}
-                className={[
-                  "rounded-xl border bg-white p-5 text-left shadow-sm transition",
-                  ready ? "hover:shadow-md hover:border-slate-300" : "opacity-50 cursor-not-allowed",
-                ].join(" ")}
-              >
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                ⭐ Start at the star
+              </span>
+              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                ✋ Lift between strokes
+              </span>
+              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                🎉 Earn confetti
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Learning Path */}
+            <div className="lg:col-span-2">
+              <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
+                {/* vertical “path” line */}
+                <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
+
+                <div className="space-y-4 pl-12">
+                  {/* Level 0 */}
+                  <button
+                    onClick={() => handlePlayButtonClick(0, 0, 0)}
+                    className={[
+                      "group relative w-full rounded-3xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-4 text-left shadow-sm transition",
+                      "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
+                    ].join(" ")}
+                  >
+                    {/* node */}
+                    <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
+                        <span className="animate-bounce text-lg">🚀</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-lg font-extrabold text-slate-900">
+                          {PRETRACE_LEVEL.title}
+                        </div>
+                        <div className="mt-0.5 text-sm font-semibold text-slate-600">
+                          {PRETRACE_LEVEL.subtitle}
+                        </div>
+                      </div>
+
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                        <span className="animate-pulse">●</span> Ready
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {pretraceChips.map((c, i) => (
+                        <span
+                          key={`${c}-${i}`}
+                          className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                      <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
+                        {PRETRACE_LEVEL.items.length} activities
+                      </span>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between">
+                      <div className="text-xs font-semibold text-slate-600">
+                        Start here to make hands ready ✨
+                      </div>
+                      <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">
+                        →
+                      </div>
+                    </div>
+                  </button>
+
+                  {/* Levels 1+ */}
+                  {LEVELS.map((lv, idx) => {
+                    const ready = isLevelReady(lv.levelId);
+
+                    const pairLabels = (lv.pairs ?? [])
+                      .map((p: any) => (p?.upper && p?.lower ? `${p.upper}${p.lower}` : ""))
+                      .filter(Boolean);
+
+                    const shownPairs = pairLabels.slice(0, 6);
+                    const more = Math.max(0, pairLabels.length - shownPairs.length);
+
+                    return (
+                      <button
+                        key={lv.levelId}
+                        disabled={!ready}
+                        onClick={() => handlePlayButtonClick(lv.levelId, 0, 0)}
+                        className={[
+                          "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
+                          ready
+                            ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
+                            : "cursor-not-allowed border-white/40 bg-white/50 opacity-60",
+                        ].join(" ")}
+                      >
+                        {/* node */}
+                        <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
+                          <div
+                            className={[
+                              "flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4",
+                              ready ? "ring-fuchsia-100" : "ring-slate-100",
+                            ].join(" ")}
+                          >
+                            <span className="text-lg">{ready ? "⭐" : "🔒"}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-lg font-extrabold text-slate-900">
+                              {lv.title}
+                            </div>
+                            {lv.subtitle && (
+                              <div className="mt-0.5 text-sm font-semibold text-slate-600">
+                                {lv.subtitle}
+                              </div>
+                            )}
+                          </div>
+
+                          {ready ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                              <span className="animate-pulse">●</span> Ready
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-600 ring-1 ring-slate-200">
+                              Coming soon
+                            </span>
+                          )}
+                        </div>
+
+                        {pairLabels.length > 0 && (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {shownPairs.map((t: string) => (
+                              <span
+                                key={t}
+                                className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                            {more > 0 && (
+                              <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
+                                +{more} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="text-xs font-semibold text-slate-600">
+                            {ready ? "Tap to begin this level" : "Locked for now"}
+                          </div>
+                          <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">
+                            →
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right “How to play” panel */}
+            <div className="lg:col-span-1">
+              <div className="rounded-3xl border border-white/60 bg-white/65 p-5 shadow-sm backdrop-blur">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-lg font-semibold text-slate-900">{lv.title}</div>
-                    {lv.subtitle && <div className="text-sm text-slate-600">{lv.subtitle}</div>}
-                  </div>
-                  {ready ? (
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">Ready</span>
-                  ) : (
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-                      Coming soon
-                    </span>
-                  )}
+                  <div className="text-sm font-extrabold text-slate-900">How to play</div>
+                  <div className="text-xs font-semibold text-slate-600">Quick tips</div>
                 </div>
 
-                <div className="mt-2 text-sm text-slate-600">
-                  Pairs:{" "}
-                  {(lv.pairs ?? [])
-                    .map((p: LevelPairView) => (p?.upper && p?.lower ? `${p.upper}${p.lower}` : ""))
-                    .filter(Boolean)
-                    .join("  ")}
+                <ol className="mt-4 space-y-3 text-sm text-slate-700">
+                  <li className="flex gap-3">
+                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
+                      1
+                    </span>
+                    <div>
+                      <div className="font-bold text-slate-900">Warm-up first</div>
+                      <div className="text-slate-600">Lines & curves make handwriting easy.</div>
+                    </div>
+                  </li>
+
+                  <li className="flex gap-3">
+                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
+                      2
+                    </span>
+                    <div>
+                      <div className="font-bold text-slate-900">Capital → Small</div>
+                      <div className="text-slate-600">Trace big letter, then small letter.</div>
+                    </div>
+                  </li>
+
+                  <li className="flex gap-3">
+                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
+                      3
+                    </span>
+                    <div>
+                      <div className="font-bold text-slate-900">Slow & steady</div>
+                      <div className="text-slate-600">Follow the moving star carefully.</div>
+                    </div>
+                  </li>
+                </ol>
+
+                <div className="mt-5 rounded-2xl bg-slate-900/90 p-4 text-white">
+                  <div className="text-sm font-extrabold">Pro tip</div>
+                  <p className="mt-1 text-sm text-white/80">
+                    Use <span className="font-semibold text-white">Fullscreen</span> for the best tracing experience.
+                  </p>
                 </div>
-              </button>
-            );
-          })}
+
+                <div className="mt-4 text-xs font-semibold text-slate-500">
+                  🌟 This screen is a “learning path” — kids feel like they’re moving forward level by level.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* bottom note */}
+          <div className="mt-5 text-center text-xs font-semibold text-slate-600">
+            Tip: Start from Level 0 even if the child knows letters — it improves pencil control ✍️
+          </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  // --------------------
+    // --------------------
   // Play guards
   // --------------------
   if (!letterData || !currentStroke) {
@@ -932,7 +1244,7 @@ export default function LetterTracingGame() {
   return (
     <div ref={fsRef} className={wrapperClass}>
       <div className={fs ? "flex h-full w-full flex-col p-4" : ""}>
-        <div className="flex items-center justify-between flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center justify-between">
           <div className="rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">{headerLabel}</div>
 
           <div className="flex items-center gap-2">
@@ -960,11 +1272,17 @@ export default function LetterTracingGame() {
             </button>
 
             {fs ? (
-              <button onClick={() => setFs(false)} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
+              <button
+                onClick={() => setFs(false)}
+                className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
+              >
                 Exit Fullscreen
               </button>
             ) : (
-              <button onClick={() => setFs(true)} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
+              <button
+                onClick={() => setFs(true)}
+                className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
+              >
                 Fullscreen
               </button>
             )}
@@ -984,7 +1302,7 @@ export default function LetterTracingGame() {
         >
           <ConfettiBurst fire={confetti} />
 
-          <div className="relative w-full h-full" style={!fs ? { aspectRatio: "16 / 9" } : {}}>
+          <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9" } : {}}>
             <svg
               ref={svgRef}
               viewBox={renderViewBox}
@@ -1077,7 +1395,7 @@ export default function LetterTracingGame() {
                     </>
                   ) : (
                     <>
-                      {/* START (only your PNG, no extra glow circles) */}
+                      {/* START */}
                       <g transform={`translate(${startPt.x}, ${startPt.y})`}>
                         <image
                           href={STAR_SRC}
@@ -1090,7 +1408,7 @@ export default function LetterTracingGame() {
                         />
                       </g>
 
-                      {/* MOVING GUIDE STAR (small + subtle pulse, no blurred circle) */}
+                      {/* MOVING GUIDE STAR */}
                       <g transform={`translate(${guidePt.x}, ${guidePt.y})`}>
                         <g>
                           <animateTransform
@@ -1112,7 +1430,7 @@ export default function LetterTracingGame() {
                         </g>
                       </g>
 
-                      {/* END STAR (smaller) */}
+                      {/* END STAR */}
                       <g transform={`translate(${endPt.x}, ${endPt.y})`}>
                         <image
                           href={STAR_SRC}
@@ -1132,30 +1450,69 @@ export default function LetterTracingGame() {
             </svg>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 px-4 py-3 text-center text-sm font-semibold text-slate-700 bg-white/55 backdrop-blur">
+          {/* Instruction bar */}
+          <div className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur">
             {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
           </div>
 
-          {/* Completion popup */}
+          {/* Completion popup (bottom-right, not covering the letter) */}
           {letterDone && (
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute bottom-16 left-1/2 w-[92%] max-w-xl -translate-x-1/2 pointer-events-auto">
-                <div className="rounded-2xl bg-white/95 backdrop-blur p-5 shadow-xl border">
-                  <div className="text-xl font-semibold text-slate-900">Nice tracing! 🎉</div>
-                  <p className="mt-1 text-slate-600">Next step?</p>
+              <div className="absolute bottom-20 right-4 sm:bottom-24 sm:right-6 pointer-events-auto">
+                <div className="relative w-[320px] max-w-[calc(100vw-2rem)]">
+                  <div className="absolute -inset-[2px] rounded-[26px] bg-gradient-to-r from-sky-400 via-fuchsia-400 to-emerald-400 opacity-70 blur-[10px]" />
+                  <div className="relative overflow-hidden rounded-[26px] border border-white/60 bg-white/92 p-5 shadow-2xl backdrop-blur">
+                    <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-sky-200/40 blur-2xl" />
+                    <div className="pointer-events-none absolute -bottom-8 -left-8 h-28 w-28 rounded-full bg-pink-200/40 blur-2xl" />
 
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button onClick={replay} className="rounded-lg bg-slate-900 px-4 py-2 font-semibold text-white">
-                      Replay
-                    </button>
+                    <div className="pointer-events-none absolute right-3 top-3">
+                      <span className="inline-flex h-3 w-3 animate-ping rounded-full bg-emerald-400/70" />
+                    </div>
+                    <div className="pointer-events-none absolute left-4 top-4">
+                      <span className="inline-flex items-center justify-center rounded-full bg-slate-900/90 px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">
+                        🎉 Perfect!
+                      </span>
+                    </div>
 
-                    <button onClick={goLevels} className="rounded-lg border bg-white px-4 py-2 font-semibold">
-                      Back to Levels
-                    </button>
+                    <div className="mt-2 flex items-start gap-3">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-200 via-pink-200 to-sky-200 shadow-sm ring-1 ring-white/70">
+                        <span className="animate-bounce text-2xl">⭐</span>
+                      </div>
 
-                    <button onClick={goNext} className="rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white">
-                      {isPretrace ? "Next shape" : step === 0 ? "Next: small letter" : "Next pair"}
-                    </button>
+                      <div className="min-w-0">
+                        <div className="text-lg font-extrabold text-slate-900">
+                          Nice tracing! <span className="ml-1 inline-block animate-pulse">✨</span>
+                        </div>
+                        <p className="mt-0.5 text-sm font-semibold text-slate-600">What do you want to do next?</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-3 gap-2">
+                      <button
+                        onClick={replay}
+                        className="rounded-full bg-slate-900 px-3 py-2 text-sm font-extrabold text-white shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
+                      >
+                        Replay
+                      </button>
+
+                      <button
+                        onClick={goLevels}
+                        className="rounded-full border bg-white px-3 py-2 text-sm font-extrabold text-slate-800 shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
+                      >
+                        Levels
+                      </button>
+
+                      <button
+                        onClick={goNext}
+                        className="rounded-full bg-gradient-to-r from-emerald-500 to-sky-500 px-3 py-2 text-sm font-extrabold text-white shadow-sm transition hover:scale-[1.02] active:scale-[0.99]"
+                      >
+                        {isPretrace ? "Next shape" : step === 0 ? "Small letter" : "Next pair"}
+                      </button>
+                    </div>
+
+                    <div className="mt-3 text-center text-xs font-semibold text-slate-500">
+                      Tip: tap <span className="font-extrabold text-slate-700">Replay</span> to practice again ✍️
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1166,3 +1523,4 @@ export default function LetterTracingGame() {
     </div>
   );
 }
+
