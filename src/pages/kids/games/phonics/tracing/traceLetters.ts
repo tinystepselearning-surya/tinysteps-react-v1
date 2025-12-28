@@ -36,51 +36,108 @@ export type LetterId = (typeof LETTER_IDS)[number];
 
 export type TracePair = { upper: LetterId; lower?: LetterId };
 
-export type PreTraceId = "line" | "curve" | "circle";
+// --------------------
+// Pre-trace (Warm-up)
+// --------------------
+export type PreTraceId =
+  | "standing_line"
+  | "slanting_line"
+  | "sleeping_line"
+  | "c_curve"
+  | "c_curve_inverted"
+  | "circle_anticlockwise";
 
 export const PRETRACE_LEVEL = {
   levelId: 0 as const,
   title: "Level 0 — Warm-up Tracing",
-  subtitle: "Lines, curves, circles",
-  items: ["line", "curve", "circle"] as PreTraceId[],
+  subtitle: "Lines • Curves • Circle",
+  items: [
+    "standing_line",
+    "slanting_line",
+    "sleeping_line",
+    "c_curve",
+    "c_curve_inverted",
+    "circle_anticlockwise",
+  ] as PreTraceId[],
 };
 
 export const PRETRACE_ITEMS: Record<PreTraceId, TraceLetter> = {
-  line: {
-    id: "pre_line",
-    label: "Straight line",
+  standing_line: {
+    id: "pre_standing_line",
+    label: "Standing line",
     viewBox: "0 0 100 100",
-    strokes: [{ id: "line_1", kind: "trace", pathD: "M 50 18 L 50 88" }],
-    skillTags: ["subtopic:pretracing", "shape:line"],
+    strokes: [{ id: "standing_1", kind: "trace", pathD: "M 50 18 L 50 88" }],
+    skillTags: ["subtopic:pretracing", "shape:standing_line"],
   },
-  curve: {
-    id: "pre_curve",
-    label: "Curve",
+
+  slanting_line: {
+    id: "pre_slanting_line",
+    label: "Slanting line",
+    viewBox: "0 0 100 100",
+    strokes: [{ id: "slant_1", kind: "trace", pathD: "M 30 22 L 70 88" }],
+    skillTags: ["subtopic:pretracing", "shape:slanting_line"],
+  },
+
+  sleeping_line: {
+    id: "pre_sleeping_line",
+    label: "Sleeping line",
+    viewBox: "0 0 100 100",
+    strokes: [{ id: "sleep_1", kind: "trace", pathD: "M 22 55 L 78 55" }],
+    skillTags: ["subtopic:pretracing", "shape:sleeping_line"],
+  },
+
+  c_curve: {
+    id: "pre_c_curve",
+    label: "C curve",
     viewBox: "0 0 100 100",
     strokes: [
       {
-        id: "curve_1",
+        id: "c_1",
         kind: "trace",
-        pathD: "M 72 26 C 44 18, 26 34, 26 54 C 26 78, 52 90, 72 74",
+        // C shape (opens on right)
+        pathD: "M 72 30 C 58 16, 34 18, 28 36 C 22 52, 28 72, 44 80 C 58 86, 68 80, 72 72",
       },
     ],
-    skillTags: ["subtopic:pretracing", "shape:curve"],
+    skillTags: ["subtopic:pretracing", "shape:c_curve"],
   },
-  circle: {
-    id: "pre_circle",
-    label: "Circle",
+
+  c_curve_inverted: {
+    id: "pre_c_curve_inverted",
+    label: "Inverted C curve",
     viewBox: "0 0 100 100",
     strokes: [
       {
-        id: "circle_1",
+        id: "c_inv_1",
         kind: "trace",
+        // Reverse C (opens on left)
+        pathD: "M 28 30 C 42 16, 66 18, 72 36 C 78 52, 72 72, 56 80 C 42 86, 32 80, 28 72",
+      },
+    ],
+    skillTags: ["subtopic:pretracing", "shape:c_curve_inverted"],
+  },
+
+  circle_anticlockwise: {
+    id: "pre_circle_anticlockwise",
+    label: "Circle (anti-clockwise)",
+    viewBox: "0 0 100 100",
+    strokes: [
+      {
+        id: "circle_ccw_1",
+        kind: "trace",
+        // Start at TOP, go around like ⟲ (anti-clockwise feel)
+        // Top -> Left -> Bottom -> Right -> Top
         pathD:
-          "M 70 34 C 58 18, 34 20, 26 38 C 18 56, 26 80, 48 84 C 72 88, 84 62, 76 44 C 74 40, 72 36, 70 34",
+          "M 50 20 " +
+          "C 33.4 20, 20 33.4, 20 50 " +
+          "C 20 66.6, 33.4 80, 50 80 " +
+          "C 66.6 80, 80 66.6, 80 50 " +
+          "C 80 33.4, 66.6 20, 50 20",
       },
     ],
     skillTags: ["subtopic:pretracing", "shape:circle"],
   },
 };
+
 
 // --------------------
 export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
@@ -653,14 +710,261 @@ u: {
   ],
   skillTags: ["letter:u", "case:lower", "subtopic:tracing"],
 },
+V: {
+  id: "V",
+  label: "V",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:V", "sound:v", "case:upper", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "V-left",
+      kind: "trace",
+      // top-left → bottom point (easy down stroke)
+      pathD: "M 30 18 L 50 88",
+    },
+    {
+      id: "V-right",
+      kind: "trace",
+      // top-right → bottom point (easy down stroke)
+      pathD: "M 70 18 L 50 88",
+    },
+  ],
+},
+
+v: {
+  id: "v",
+  label: "v",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:v", "sound:v", "case:lower", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "v-left",
+      kind: "trace",
+      // small top-left → small bottom point (down stroke)
+      pathD: "M 38 34 L 50 78",
+    },
+    {
+      id: "v-right",
+      kind: "trace",
+      // small top-right → small bottom point (down stroke)
+      pathD: "M 62 34 L 50 78",
+    },
+  ],
+},
+W: {
+  id: "W",
+  label: "W",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:W", "sound:w", "case:upper", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "W-1-down-left",
+      kind: "trace",
+      // 1) top → bottom
+      pathD: "M 20 18 L 38 88",
+    },
+    {
+      id: "W-2-up-to-mid",
+      kind: "trace",
+      // 2) bottom → top  ✅ (reversed)
+      pathD: "M 38 88 L 50 18",
+    },
+    {
+      id: "W-3-down-right",
+      kind: "trace",
+      // 3) top → bottom
+      pathD: "M 50 18 L 62 88",
+    },
+    {
+      id: "W-4-up-to-right",
+      kind: "trace",
+      // 4) bottom → top ✅ (reversed)
+      pathD: "M 62 88 L 80 18",
+    },
+  ],
+},
+
+w: {
+  id: "w",
+  label: "w",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:w", "sound:w", "case:lower", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "w-1-down-left",
+      kind: "trace",
+      // wider w: 1) top → bottom
+      pathD: "M 28 36 L 42 78",
+    },
+    {
+      id: "w-2-up-to-mid",
+      kind: "trace",
+      // wider w: 2) bottom → top
+      pathD: "M 42 78 L 52 36",
+    },
+    {
+      id: "w-3-down-right",
+      kind: "trace",
+      // wider w: 3) top → bottom
+      pathD: "M 52 34 L 62 78",
+    },
+    {
+      id: "w-4-up-to-right",
+      kind: "trace",
+      // wider w: 4) bottom → top
+      pathD: "M 62 78 L 74 36",
+    },
+  ],
+},
+
+X: {
+  id: "X",
+  label: "X",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:X", "sound:x", "case:upper", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "X-1-down-diag",
+      kind: "trace",
+      // 1) top-left → bottom-right
+      pathD: "M 28 18 L 72 88",
+    },
+    {
+      id: "X-2-down-diag",
+      kind: "trace",
+      // 2) top-right → bottom-left
+      pathD: "M 72 18 L 28 88",
+    },
+  ],
+},
+
+x: {
+  id: "x",
+  label: "x",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:x", "sound:x", "case:lower", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "x-1-down-diag",
+      kind: "trace",
+      // wider small x: top-left → bottom-right
+      pathD: "M 34 34 L 66 78",
+    },
+    {
+      id: "x-2-down-diag",
+      kind: "trace",
+      // wider small x: top-right → bottom-left
+      pathD: "M 66 34 L 34 78",
+    },
+  ],
+},
+
+Y: {
+  id: "Y",
+  label: "Y",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:Y", "sound:y", "case:upper", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "Y-1-left-arm",
+      kind: "trace",
+      // top-left → center join
+      pathD: "M 28 18 L 50 46",
+    },
+    {
+      id: "Y-2-right-arm",
+      kind: "trace",
+      // top-right → center join
+      pathD: "M 72 18 L 50 46",
+    },
+    {
+      id: "Y-3-stem",
+      kind: "trace",
+      // center join → bottom
+      pathD: "M 50 46 L 50 88",
+    },
+  ],
+},
+
+y: {
+  id: "y",
+  label: "y",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:y", "sound:y", "case:lower", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "y-1-arms",
+      kind: "trace",
+      // Stroke 1: like capital Y (top arms) -> V shape, ending at top-right
+      pathD: "M 36 32 L 50 62",
+    },
+    {
+      id: "y-2-tail-hook",
+      kind: "trace",
+      // Stroke 2: start top-right -> slant down to lower-left with a small hook to the left
+      pathD: "M 64 32 L 46 82 C 40 92 30 92 28 88",
+    },
+  ],
+},
+
+Z: {
+  id: "Z",
+  label: "Z",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:Z", "sound:z", "case:upper", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "Z-1-top",
+      kind: "trace",
+      // 1) top line: left → right
+      pathD: "M 28 22 L 72 22",
+    },
+    {
+      id: "Z-2-diagonal",
+      kind: "trace",
+      // 2) diagonal: top-right → bottom-left
+      pathD: "M 72 22 L 28 86",
+    },
+    {
+      id: "Z-3-bottom",
+      kind: "trace",
+      // 3) bottom line: left → right
+      pathD: "M 28 86 L 72 86",
+    },
+  ],
+},
+
+z: {
+  id: "z",
+  label: "z",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:z", "sound:z", "case:lower", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "z-1-top",
+      kind: "trace",
+      // 1) small top line: left → right
+      pathD: "M 36 38 L 64 38",
+    },
+    {
+      id: "z-2-diagonal",
+      kind: "trace",
+      // 2) small diagonal: top-right → bottom-left
+      pathD: "M 64 38 L 36 78",
+    },
+    {
+      id: "z-3-bottom",
+      kind: "trace",
+      // 3) small bottom line: left → right
+      pathD: "M 36 78 L 64 78",
+    },
+  ],
+},
+
 
 
 };
 
-
-// --------------------
-// Levels
-// --------------------
 export type TraceLevel = {
   levelId: number;
   title: string;
@@ -668,67 +972,74 @@ export type TraceLevel = {
   pairs: TracePair[];
 };
 
+
+// --------------------
+// Levels
+// --------------------
 export const TRACE_LEVELS: TraceLevel[] = [
   {
     levelId: 1,
     title: "Level 1",
-    subtitle: "A–D",
+    subtitle: "A–E",
     pairs: [
       { upper: "A", lower: "a" },
       { upper: "B", lower: "b" },
       { upper: "C", lower: "c" },
       { upper: "D", lower: "d" },
-    ],
-  },
-  {
-    levelId: 4,
-    title: "Level 4",
-    subtitle: "M–P",
-    pairs: [
-      { upper: "M", lower: "m" },
-      { upper: "N", lower: "n" },
-      { upper: "O", lower: "o" },
-      { upper: "P", lower: "p" },
+      { upper: "E", lower: "e" },
     ],
   },
   {
     levelId: 2,
     title: "Level 2",
-    subtitle: "E–H",
+    subtitle: "F–J",
     pairs: [
-      { upper: "E", lower: "e" },
       { upper: "F", lower: "f" },
       { upper: "G", lower: "g" },
       { upper: "H", lower: "h" },
+      { upper: "I", lower: "i" },
+      { upper: "J", lower: "j" },
     ],
   },
   {
     levelId: 3,
     title: "Level 3",
-    subtitle: "I–L",
+    subtitle: "K–O",
     pairs: [
-      { upper: "I", lower: "i" },
-      { upper: "J", lower: "j" },
       { upper: "K", lower: "k" },
       { upper: "L", lower: "l" },
+      { upper: "M", lower: "m" },
+      { upper: "N", lower: "n" },
+      { upper: "O", lower: "o" },
+    ],
+  },
+  {
+    levelId: 4,
+    title: "Level 4",
+    subtitle: "P–T",
+    pairs: [
+      { upper: "P", lower: "p" },
+      { upper: "Q", lower: "q" },
+      { upper: "R", lower: "r" },
+      { upper: "S", lower: "s" },
+      { upper: "T", lower: "t" },
     ],
   },
   {
     levelId: 5,
     title: "Level 5",
-    subtitle: "Q–Z",
+    subtitle: "U–Z",
     pairs: [
-      { upper: "Q", lower: "q" },
-      { upper: "R", lower: "r" },
-      { upper: "S", lower: "s" },
-            { upper: "T", lower: "t" },
-            { upper: "U", lower: "u" },
-
-
-
+      { upper: "U", lower: "u" },
+      { upper: "V", lower: "v" },
+      { upper: "W", lower: "w" },
+      { upper: "X", lower: "x" },
+      { upper: "Y", lower: "y" },
+      { upper: "Z", lower: "z" },
     ],
   },
 ];
+
 
 export function isLetterReady(letterId: LetterId): boolean {
   const l = TRACE_LETTERS[letterId];
