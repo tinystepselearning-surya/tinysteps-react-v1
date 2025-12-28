@@ -9,7 +9,7 @@
 //
 // IMPORTANT: traceLetters.ts must be PURE TS (no JSX). JSX belongs here (.tsx).
 
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   TRACE_LETTERS,
@@ -370,6 +370,25 @@ export default function LetterTracingGame() {
   const ignoreMovesRef = useRef(false);
   const capturedElRef = useRef<SVGSVGElement | null>(null);
 
+  // --- timers (prevents old timeouts firing after navigation/reset) ---
+  const timersRef = useRef<{ strokeAdvance?: number; confettiOff?: number }>({});
+
+  const clearTimers = useCallback(() => {
+    if (timersRef.current.strokeAdvance) {
+      window.clearTimeout(timersRef.current.strokeAdvance);
+      timersRef.current.strokeAdvance = undefined;
+    }
+    if (timersRef.current.confettiOff) {
+      window.clearTimeout(timersRef.current.confettiOff);
+      timersRef.current.confettiOff = undefined;
+    }
+  }, []);
+
+  // unmount safety
+  useEffect(() => {
+    return () => clearTimers();
+  }, [clearTimers]);
+
   // ⭐ hint star index
   const [hintIndex, setHintIndex] = useState(0);
   const hintIndexRef = useRef(0);
@@ -424,6 +443,8 @@ export default function LetterTracingGame() {
     };
   }, [mode]);
 
+
+
   // ✅ If user exits *native* fullscreen (ESC), sync fs=1 only when we truly were native-fullscreen
   useEffect(() => {
     const onFsChange = () => {
@@ -454,6 +475,7 @@ export default function LetterTracingGame() {
 
   // ✅ Reset state when switching item (letter / pretrace item)
   useEffect(() => {
+    clearTimers();
     setStrokeIndex(0);
 
     setStarted(false);
@@ -471,7 +493,7 @@ export default function LetterTracingGame() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
-  }, [currentLetterId, pretraceId]);
+  }, [currentLetterId, pretraceId, clearTimers]);
 
   // ✅ Reset state when switching stroke (within same letter)
   useEffect(() => {
@@ -658,7 +680,9 @@ export default function LetterTracingGame() {
 
   // completed strokes stay visible
   const totalStrokes = letterData?.strokes?.length ?? 0;
-  const completedCount = letterDone ? totalStrokes : strokeIndex;
+  const completedCount = letterDone
+    ? totalStrokes
+    : Math.min(totalStrokes, strokeIndex + (ignoreMovesRef.current ? 1 : 0));
 
   const completedStrokes = useMemo(() => {
     if (!letterData) return [];
@@ -707,6 +731,7 @@ export default function LetterTracingGame() {
   }
 
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
+    clearTimers();
     // Always navigate first
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -732,6 +757,7 @@ export default function LetterTracingGame() {
   }
 
   async function setFs(on: boolean) {
+    clearTimers();
     if (on) {
       // Always set fs=1 (immersive mode), then try native fullscreen (if supported)
       const sp = new URLSearchParams(window.location.search);
@@ -758,6 +784,7 @@ export default function LetterTracingGame() {
   }
 
   function goLevels() {
+    clearTimers();
     // Exit both immersive mode and native fullscreen, then go to levels
     setFs(false);
     const sp = new URLSearchParams();
@@ -766,6 +793,7 @@ export default function LetterTracingGame() {
   }
 
   function replay() {
+    clearTimers();
     setStrokeIndex(0);
     setStarted(false);
 
@@ -787,6 +815,7 @@ export default function LetterTracingGame() {
 
   // ✅ Next Letter button uses this (skip without completing)
   function goNext() {
+    clearTimers();
     if (mode !== "play") return;
 
     if (isPretrace) {
@@ -823,6 +852,7 @@ export default function LetterTracingGame() {
   }
 
   function completeStroke() {
+    clearTimers();
     ignoreMovesRef.current = true;
 
     const pid = activePointerIdRef.current;
@@ -846,7 +876,7 @@ export default function LetterTracingGame() {
     const nextStroke = strokeIndex + 1;
     if (letterData && nextStroke < letterData.strokes.length) {
       // ✅ force "lift and start again" between strokes
-      setTimeout(() => {
+      timersRef.current.strokeAdvance = window.setTimeout(() => {
         ignoreMovesRef.current = false;
         setStrokeIndex((prev) => prev + 1);
       }, 220);
@@ -857,7 +887,7 @@ export default function LetterTracingGame() {
 
     // stronger + ensures it always turns off
     setConfetti(true);
-    setTimeout(() => setConfetti(false), 1700);
+    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 1700);
 
     if (!kidId) return;
 
@@ -866,24 +896,43 @@ export default function LetterTracingGame() {
       const levelForTracking = isPretrace ? 0 : levelId ?? 1;
       const mastered = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
 
-      recordLevelResult(
-        {
-          gameId: GAME_ID,
-          progressDocId: PROGRESS_DOC_ID,
-          kidId,
-          levelId: levelForTracking,
-          attempts: 1,
-          scorePct: 100,
-          points: 100,
-          timeSpentMs: spentMs,
-          masteredItems: [mastered].filter(Boolean),
-          skillTags: [
-            ...(letterData?.skillTags ?? []),
-            isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${levelForTracking}`,
-          ],
-          completedAt: Date.now(),
-        } as any
-      );
+      const skillTags: string[] = [
+  ...(letterData?.skillTags ?? []),
+  isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${levelForTracking}`,
+];
+
+// ✅ Build tagDeltas so your backend can update skill counters reliably
+const tagDeltas = Object.fromEntries(
+  skillTags.map((tag) => [
+    tag,
+    { attempts: 1, correct: 1, wrong: 0 },
+  ])
+);
+
+void recordLevelResult({
+  gameId: GAME_ID,
+  progressDocId: PROGRESS_DOC_ID,
+  kidId,
+  levelId: levelForTracking,
+
+  // ✅ unified fields your engine/backend likes
+  completed: true,
+  accuracyPct: 100,
+  durationSec: Math.round(spentMs / 1000),
+  score: 100,
+
+  // ✅ skill analytics
+  skillTags,
+  tagDeltas,
+
+  // ✅ for “mastered items” display in dashboard
+  masteredItems: [mastered].filter(Boolean),
+
+  completedAt: Date.now(),
+} as any).catch(() => {
+  // ignore (game should not break if network fails)
+});
+
     } catch {
       // ignore
     }
@@ -996,12 +1045,13 @@ export default function LetterTracingGame() {
   // Levels screen (UX upgrade only — no logic changes)
   // --------------------
   if (mode === "levels") {
-    const LEVELS = TRACE_LEVELS as any[];
+    const LEVELS = TRACE_LEVELS as unknown as TraceLevelView[];
 
-    const pretraceChips = (PRETRACE_LEVEL.items ?? [])
-  .map((id: PreTraceId) => PRETRACE_ITEMS[id]?.label ?? "")
-  .filter(Boolean)
+const pretraceChips = (PRETRACE_LEVEL.items ?? [])
+  .map((id) => PRETRACE_ITEMS[id]?.label ?? "")
+  .filter((x): x is string => Boolean(x))
   .slice(0, 6);
+
 
 
     return (
