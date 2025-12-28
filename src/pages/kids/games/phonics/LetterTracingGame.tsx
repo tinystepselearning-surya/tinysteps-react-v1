@@ -1,8 +1,9 @@
 // src/pages/kids/games/phonics/LetterTracingGame.tsx
+// ✅ Mobile/tablet compatible (iPad/iPhone/Android): pointer-safe, gesture-safe, fullscreen-safe
 // ✅ Fix: prevents auto-completing the whole letter after stroke 1.
 // ✅ Completed strokes stay visible (proper letter formation).
 // ✅ Forces a “lift and start again” between strokes.
-// ✅ Fullscreen stable.
+// ✅ Fullscreen stable (native fullscreen when supported, “immersive mode” fallback when not).
 // ✅ NEW: dropdown to jump to any letter in this level
 // ✅ NEW: Next Letter button (skip current letter for testing)
 //
@@ -36,21 +37,6 @@ type Pt = { x: number; y: number; t: number; len: number };
 // (prevents implicit-any even if TRACE_LEVELS is loosely typed)
 type LevelPairView = { upper?: LetterId; lower?: LetterId };
 type TraceLevelView = { levelId: number; title: string; subtitle?: string; pairs?: LevelPairView[] };
-
-type Sparkle = {
-  id: number;
-  x: number;
-  y: number;
-  dx: number;
-  dy: number;
-  s: number; // scale
-  a: number; // alpha (opacity)
-  life: number; // frames remaining
-  c: string; // color
-  r: number; // radius
-  twDur: number; // twinkle duration (seconds)
-  twDelay: number; // twinkle delay (seconds)
-};
 
 // --------------------
 // Helpers
@@ -118,6 +104,44 @@ function expandViewBox(vb: string, pad = 10) {
   const [x, y, w, h] = parts;
   const p = Math.max(0, pad);
   return `${x - p} ${y - p} ${w + p * 2} ${h + p * 2}`;
+}
+
+// Native fullscreen helpers (Safari desktop uses webkit*; iOS Safari has no fullscreen API)
+function getNativeFullscreenEl(): Element | null {
+  const d: any = document;
+  return document.fullscreenElement || d.webkitFullscreenElement || null;
+}
+
+async function requestFullscreenSafe(el: any) {
+  try {
+    if (el?.requestFullscreen) {
+      await el.requestFullscreen({ navigationUI: "hide" } as any);
+      return true;
+    }
+    if (el?.webkitRequestFullscreen) {
+      el.webkitRequestFullscreen(); // Safari
+      return true;
+    }
+  } catch {
+    // ignore
+  }
+  return false;
+}
+
+async function exitFullscreenSafe() {
+  try {
+    const d: any = document;
+    if (document.exitFullscreen) {
+      await document.exitFullscreen();
+      return;
+    }
+    if (d.webkitExitFullscreen) {
+      d.webkitExitFullscreen();
+      return;
+    }
+  } catch {
+    // ignore
+  }
 }
 
 const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
@@ -262,14 +286,9 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
   }, [burstId]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="pointer-events-none absolute inset-0"
-      style={{ width: "100%", height: "100%" }}
-    />
+    <canvas ref={canvasRef} className="pointer-events-none absolute inset-0" style={{ width: "100%", height: "100%" }} />
   );
 }
-
 
 export default function LetterTracingGame() {
   const navigate = useNavigate();
@@ -339,6 +358,7 @@ export default function LetterTracingGame() {
 
   const [started, setStarted] = useState(false);
   const [lastIndex, setLastIndex] = useState(0);
+  const lastIndexRef = useRef(0);
 
   const [letterDone, setLetterDone] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -354,59 +374,8 @@ export default function LetterTracingGame() {
   const [hintIndex, setHintIndex] = useState(0);
   const hintIndexRef = useRef(0);
 
-  // ✨ Sparkles (must be TOP-LEVEL hooks — used for celebration + hints)
-  const [sparkles, setSparkles] = useState<Sparkle[]>([]);
-  const sparkleIdRef = useRef(1);
-  const lastSparkleIndexRef = useRef(0);
-
-  // Sparkle constants (denser, persistent glitter)
-  const SPARKLE_MAX = 900; // more glitters for "filled" look
-  const SPARKLE_STEP = 1; // emit on every sample point (dense)
-  const SPARKLE_PER_POINT = 2; // 2 glitters per point (~400-500 total)
-  const SPARKLE_COLORS = ["#FFFFFF", "#FDE047", "#FBBF24", "#93C5FD", "#F9A8D4"] as const;
-
-  const rand = (a: number, b: number) => a + Math.random() * (b - a);
-
-  function emitSparklesAlongProgress(fromI: number, toI: number) {
-    if (!samples.length) return;
-
-    const start = clamp(fromI, 0, samples.length - 1);
-    const end = clamp(toI, 0, samples.length - 1);
-    if (end <= start) return;
-
-    const newParts: Sparkle[] = [];
-
-    for (let i = start + SPARKLE_STEP; i <= end; i += SPARKLE_STEP) {
-      const p = samples[i];
-        for (let k = 0; k < SPARKLE_PER_POINT; k++) {
-          const c = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
-          newParts.push({
-            id: sparkleIdRef.current++,
-            x: p.x + rand(-4.2, 4.2),
-            y: p.y + rand(-4.2, 4.2),
-            dx: 0,
-            dy: 0,
-            s: rand(0.85, 1.25),
-            a: rand(0.55, 1),
-            life: 999999, // keep forever until reset
-            c,
-            r: rand(1.2, 2.4),
-            twDur: rand(0.7, 1.6),
-            twDelay: rand(0, 0.6),
-          });
-      }
-    }
-
-    if (!newParts.length) return;
-
-    setSparkles((prev) => {
-      const next = [...prev, ...newParts];
-      if (next.length > SPARKLE_MAX) next.splice(0, next.length - SPARKLE_MAX);
-      return next;
-    });
-  }
-
-  // Sparkles are persistent (no RAF loop) — they're cleared on stroke/letter change
+  // Tracks whether we successfully entered *native* fullscreen (so we can sync on ESC)
+  const nativeFsEnteredRef = useRef(false);
 
   const currentStroke: TraceStroke | null = useMemo(() => {
     if (!letterData) return null;
@@ -433,120 +402,166 @@ export default function LetterTracingGame() {
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
-  // Lock body scroll in fullscreen
+  // ✅ Stop page scrolling/selection while playing (important for phones/tablets)
   useEffect(() => {
-    if (!fs) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [fs]);
+    if (mode !== "play") return;
 
-  // If user exits fullscreen (ESC), remove fs=1
+    const prevOverflow = document.body.style.overflow;
+    const prevTouchAction = (document.body.style as any).touchAction;
+    const prevWebkitUserSelect = (document.body.style as any).webkitUserSelect;
+    const prevUserSelect = (document.body.style as any).userSelect;
+
+    document.body.style.overflow = "hidden";
+    (document.body.style as any).touchAction = "none";
+    (document.body.style as any).webkitUserSelect = "none";
+    (document.body.style as any).userSelect = "none";
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      (document.body.style as any).touchAction = prevTouchAction;
+      (document.body.style as any).webkitUserSelect = prevWebkitUserSelect;
+      (document.body.style as any).userSelect = prevUserSelect;
+    };
+  }, [mode]);
+
+  // ✅ If user exits *native* fullscreen (ESC), sync fs=1 only when we truly were native-fullscreen
   useEffect(() => {
     const onFsChange = () => {
-      if (document.fullscreenElement) return;
-      const sp = new URLSearchParams(window.location.search);
-      if (sp.get("fs") === "1") {
-        sp.delete("fs");
-        setSearchParams(sp, { replace: true });
+      const nativeNow = !!getNativeFullscreenEl();
+      if (nativeNow) return;
+
+      if (nativeFsEnteredRef.current) {
+        nativeFsEnteredRef.current = false;
+
+        const sp = new URLSearchParams(window.location.search);
+        // If you want immersive-mode to remain even after ESC, remove this block.
+        if (sp.get("fs") === "1") {
+          sp.delete("fs");
+          setSearchParams(sp, { replace: true });
+        }
       }
     };
+
     document.addEventListener("fullscreenchange", onFsChange);
-    return () => document.removeEventListener("fullscreenchange", onFsChange);
+    // Safari desktop
+    document.addEventListener("webkitfullscreenchange" as any, onFsChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
+    };
   }, [setSearchParams]);
 
- // ✅ Reset state when switching item (letter / pretrace item)
-useEffect(() => {
-  setStrokeIndex(0);
+  // ✅ Reset state when switching item (letter / pretrace item)
+  useEffect(() => {
+    setStrokeIndex(0);
 
-  setStarted(false);
-  setLastIndex(0);
+    setStarted(false);
+    setLastIndex(0);
+    lastIndexRef.current = 0;
 
-  startedRef.current = false;
-  activePointerIdRef.current = null;
-  ignoreMovesRef.current = false;
-  capturedElRef.current = null;
+    startedRef.current = false;
+    activePointerIdRef.current = null;
+    ignoreMovesRef.current = false;
+    capturedElRef.current = null;
 
-  setLetterDone(false);
-  setConfetti(false);
-  setTimeStart(null);
+    setLetterDone(false);
+    setConfetti(false);
+    setTimeStart(null);
 
-  setHintIndex(0);
-  hintIndexRef.current = 0;
-  // ✨ sparkles reset
-  setSparkles([]);
-  sparkleIdRef.current = 1;
-  lastSparkleIndexRef.current = 0;
-}, [currentLetterId, pretraceId]);
+    setHintIndex(0);
+    hintIndexRef.current = 0;
+  }, [currentLetterId, pretraceId]);
 
-// ✅ Reset state when switching stroke (within same letter)
-useEffect(() => {
-  setStarted(false);
-  setLastIndex(0);
+  // ✅ Reset state when switching stroke (within same letter)
+  useEffect(() => {
+    setStarted(false);
+    setLastIndex(0);
+    lastIndexRef.current = 0;
 
-  startedRef.current = false;
-  activePointerIdRef.current = null;
-  capturedElRef.current = null;
-  ignoreMovesRef.current = false;
+    startedRef.current = false;
+    activePointerIdRef.current = null;
+    capturedElRef.current = null;
+    ignoreMovesRef.current = false;
 
-  setHintIndex(0);
-  hintIndexRef.current = 0;
+    setHintIndex(0);
+    hintIndexRef.current = 0;
+  }, [strokeIndex]);
 
-  // ✨ sparkles reset
-  setSparkles([]);
-  lastSparkleIndexRef.current = 0;
-}, [strokeIndex]);
-
-// Sampling for CURRENT stroke only
-useLayoutEffect(() => {
-  if (!currentStroke || currentStroke.kind === "tap") {
-    setSamples([]);
-    setRawLen(0);
-    setTrimStartLen(0);
-    return;
-  }
-
-  const d = (currentStroke.pathD ?? "").trim();
-  if (!d) {
-    setSamples([]);
-    setRawLen(0);
-    setTrimStartLen(0);
-    return;
-  }
-
-  const startT0 = typeof strokeStartT === "number" ? strokeStartT : 0;
-  const endT0 = typeof strokeEndT === "number" ? strokeEndT : 1;
-  const startT = clamp(startT0, 0, 0.999);
-  const endT = clamp(endT0, startT + 0.001, 1);
-
-  const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  pathEl.setAttribute("d", d);
-
-  let len = 0;
-  try {
-    len = pathEl.getTotalLength();
-  } catch {
-    len = 0;
-  }
-
-  // Straight line fallback
-  if (!len || len <= 0) {
-    const line = parseLine(d);
-    if (!line) {
+  // Sampling for CURRENT stroke only
+  useLayoutEffect(() => {
+    if (!currentStroke || currentStroke.kind === "tap") {
       setSamples([]);
       setRawLen(0);
       setTrimStartLen(0);
       return;
     }
 
-    const dx = line.b.x - line.a.x;
-    const dy = line.b.y - line.a.y;
-    const realLen = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
+    const d = (currentStroke.pathD ?? "").trim();
+    if (!d) {
+      setSamples([]);
+      setRawLen(0);
+      setTrimStartLen(0);
+      return;
+    }
 
-    const sLen = realLen * startT;
-    const eLen = realLen * endT;
+    const startT0 = typeof strokeStartT === "number" ? strokeStartT : 0;
+    const endT0 = typeof strokeEndT === "number" ? strokeEndT : 1;
+    const startT = clamp(startT0, 0, 0.999);
+    const endT = clamp(endT0, startT + 0.001, 1);
+
+    const pathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathEl.setAttribute("d", d);
+
+    let len = 0;
+    try {
+      len = pathEl.getTotalLength();
+    } catch {
+      len = 0;
+    }
+
+    // Straight line fallback
+    if (!len || len <= 0) {
+      const line = parseLine(d);
+      if (!line) {
+        setSamples([]);
+        setRawLen(0);
+        setTrimStartLen(0);
+        return;
+      }
+
+      const dx = line.b.x - line.a.x;
+      const dy = line.b.y - line.a.y;
+      const realLen = Math.max(0.0001, Math.sqrt(dx * dx + dy * dy));
+
+      const sLen = realLen * startT;
+      const eLen = realLen * endT;
+      const wLen = Math.max(0.0001, eLen - sLen);
+
+      const count = 220;
+      const pts: Pt[] = [];
+      for (let i = 0; i <= count; i++) {
+        const t = i / count;
+        const l = sLen + wLen * t;
+        const along = l / realLen;
+        const x = line.a.x + dx * along;
+        const y = line.a.y + dy * along;
+        pts.push({ x, y, t, len: l - sLen });
+      }
+
+      setRawLen(realLen);
+      setTrimStartLen(sLen);
+      setSamples(pts);
+
+      // NOTE: keep reset here (new stroke item = fresh start)
+      setLastIndex(0);
+      lastIndexRef.current = 0;
+      return;
+    }
+
+    // General SVG path sampling
+    const sLen = len * startT;
+    const eLen = len * endT;
     const wLen = Math.max(0.0001, eLen - sLen);
 
     const count = 220;
@@ -554,127 +569,92 @@ useLayoutEffect(() => {
     for (let i = 0; i <= count; i++) {
       const t = i / count;
       const l = sLen + wLen * t;
-      const along = l / realLen;
-      const x = line.a.x + dx * along;
-      const y = line.a.y + dy * along;
-      pts.push({ x, y, t, len: l - sLen });
+      const p = pathEl.getPointAtLength(l);
+      pts.push({ x: p.x, y: p.y, t, len: l - sLen });
     }
 
-    setRawLen(realLen);
+    setRawLen(len);
     setTrimStartLen(sLen);
     setSamples(pts);
 
     // NOTE: keep reset here (new stroke item = fresh start)
     setLastIndex(0);
-    return;
-  }
+    lastIndexRef.current = 0;
+  }, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
 
-  // General SVG path sampling
-  const sLen = len * startT;
-  const eLen = len * endT;
-  const wLen = Math.max(0.0001, eLen - sLen);
+  const isTap = currentStroke?.kind === "tap";
 
-  const count = 220;
-  const pts: Pt[] = [];
-  for (let i = 0; i <= count; i++) {
-    const t = i / count;
-    const l = sLen + wLen * t;
-    const p = pathEl.getPointAtLength(l);
-    pts.push({ x: p.x, y: p.y, t, len: l - sLen });
-  }
+  const startPt = useMemo(() => {
+    if (!currentStroke) return { x: 0, y: 0 };
+    if (currentStroke.kind === "tap") return parseTapPoint(currentStroke.pathD) ?? { x: 0, y: 0 };
+    return samples[0] ? { x: samples[0].x, y: samples[0].y } : { x: 0, y: 0 };
+  }, [currentStroke, samples]);
 
-  setRawLen(len);
-  setTrimStartLen(sLen);
-  setSamples(pts);
+  const endPt = useMemo(() => {
+    if (!currentStroke) return { x: 0, y: 0 };
+    if (currentStroke.kind === "tap") return startPt;
+    const last = samples[samples.length - 1];
+    return last ? { x: last.x, y: last.y } : { x: 0, y: 0 };
+  }, [currentStroke, samples, startPt]);
 
-  // NOTE: keep reset here (new stroke item = fresh start)
-  setLastIndex(0);
-}, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
+  // ⭐ animate hint along path while idle (SLOWER now)
+  useEffect(() => {
+    if (letterDone) return;
+    if (!currentStroke || currentStroke.kind === "tap") return;
+    if (!samples.length) return;
+    if (started || lastIndex > 0) return;
 
-const isTap = currentStroke?.kind === "tap";
+    let raf = 0;
+    const durMs = 7600; // ✅ slower than 5200
+    const t0 = performance.now();
 
-const startPt = useMemo(() => {
-  if (!currentStroke) return { x: 0, y: 0 };
-  if (currentStroke.kind === "tap") return parseTapPoint(currentStroke.pathD) ?? { x: 0, y: 0 };
-  return samples[0] ? { x: samples[0].x, y: samples[0].y } : { x: 0, y: 0 };
-}, [currentStroke, samples]);
+    const tick = (now: number) => {
+      const frac = ((now - t0) % durMs) / durMs;
+      const idx = Math.floor(frac * (samples.length - 1));
+      if (idx !== hintIndexRef.current) {
+        hintIndexRef.current = idx;
+        setHintIndex(idx);
+      }
+      raf = requestAnimationFrame(tick);
+    };
 
-const endPt = useMemo(() => {
-  if (!currentStroke) return { x: 0, y: 0 };
-  if (currentStroke.kind === "tap") return startPt;
-  const last = samples[samples.length - 1];
-  return last ? { x: last.x, y: last.y } : { x: 0, y: 0 };
-}, [currentStroke, samples, startPt]);
-
-// ⭐ animate hint along path while idle (SLOWER now)
-useEffect(() => {
-  if (letterDone) return;
-  if (!currentStroke || currentStroke.kind === "tap") return;
-  if (!samples.length) return;
-  if (started || lastIndex > 0) return;
-
-  let raf = 0;
-  const durMs = 7600; // ✅ slower than 5200
-  const t0 = performance.now();
-
-  const tick = (now: number) => {
-    const frac = ((now - t0) % durMs) / durMs;
-    const idx = Math.floor(frac * (samples.length - 1));
-    if (idx !== hintIndexRef.current) {
-      hintIndexRef.current = idx;
-      setHintIndex(idx);
-    }
     raf = requestAnimationFrame(tick);
-  };
+    return () => cancelAnimationFrame(raf);
+  }, [letterDone, currentStroke?.id, currentStroke?.kind, currentStroke?.pathD, samples.length, started, lastIndex]);
 
-  raf = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(raf);
-}, [
-  letterDone,
-  currentStroke?.id,
-  currentStroke?.kind,
-  currentStroke?.pathD,
-  samples.length,
-  started,
-  lastIndex,
-]);
+  const guideIndex = useMemo(() => {
+    if (!samples.length) return 0;
+    // ✅ if child already traced some part, star stays at stopping point (no restart)
+    return started || lastIndex > 0 ? clamp(lastIndex, 0, samples.length - 1) : clamp(hintIndex, 0, samples.length - 1);
+  }, [samples.length, started, lastIndex, hintIndex]);
 
-const guideIndex = useMemo(() => {
-  if (!samples.length) return 0;
-  // ✅ if child already traced some part, star stays at stopping point (no restart)
-  return started || lastIndex > 0
-    ? clamp(lastIndex, 0, samples.length - 1)
-    : clamp(hintIndex, 0, samples.length - 1);
-}, [samples.length, started, lastIndex, hintIndex]);
+  const guidePt = useMemo(() => {
+    if (!currentStroke) return startPt;
+    if (currentStroke.kind === "tap") return startPt;
+    if (!samples.length) return startPt;
+    const i = guideIndex;
+    return { x: samples[i].x, y: samples[i].y };
+  }, [currentStroke, samples, guideIndex, startPt]);
 
-const guidePt = useMemo(() => {
-  if (!currentStroke) return startPt;
-  if (currentStroke.kind === "tap") return startPt;
-  if (!samples.length) return startPt;
-  const i = guideIndex;
-  return { x: samples[i].x, y: samples[i].y };
-}, [currentStroke, samples, guideIndex, startPt]);
+  const progressLen = useMemo(() => {
+    if (!currentStroke || currentStroke.kind === "tap") return 0;
+    if (!samples.length) return 0;
+    const i = clamp(lastIndex, 0, samples.length - 1);
+    return samples[i].len;
+  }, [currentStroke, samples, lastIndex]);
 
-const progressLen = useMemo(() => {
-  if (!currentStroke || currentStroke.kind === "tap") return 0;
-  if (!samples.length) return 0;
-  const i = clamp(lastIndex, 0, samples.length - 1);
-  return samples[i].len;
-}, [currentStroke, samples, lastIndex]);
-
-const guideDots = useMemo(() => {
-  if (!currentStroke || currentStroke.kind === "tap") return [];
-  if (!samples.length) return [];
-  const count = 14;
-  const dots: { x: number; y: number; key: number }[] = [];
-  for (let i = 0; i < count; i++) {
-    const ii = Math.floor((i / (count - 1)) * (samples.length - 1));
-    const p = samples[ii];
-    dots.push({ x: p.x, y: p.y, key: ii });
-  }
-  return dots;
-}, [currentStroke, samples]);
-
+  const guideDots = useMemo(() => {
+    if (!currentStroke || currentStroke.kind === "tap") return [];
+    if (!samples.length) return [];
+    const count = 14;
+    const dots: { x: number; y: number; key: number }[] = [];
+    for (let i = 0; i < count; i++) {
+      const ii = Math.floor((i / (count - 1)) * (samples.length - 1));
+      const p = samples[ii];
+      dots.push({ x: p.x, y: p.y, key: ii });
+    }
+    return dots;
+  }, [currentStroke, samples]);
 
   // completed strokes stay visible
   const totalStrokes = letterData?.strokes?.length ?? 0;
@@ -721,67 +701,65 @@ const guideDots = useMemo(() => {
     sp.set("level", String(levelNum));
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
-    if (document.fullscreenElement || fs) sp.set("fs", "1");
+    // fs=1 is UI “immersive mode” (native fullscreen may or may not be available)
+    if (getNativeFullscreenEl() || fs) sp.set("fs", "1");
     navigateTo(sp, replace);
   }
 
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
+    // Always navigate first
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
     sp.set("level", String(levelNum));
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
+
+    // Turn on immersive mode by default (works even on iOS where native FS is unavailable)
+    sp.set("fs", "1");
     navigateTo(sp, false);
 
+    // Let layout paint before trying fullscreen
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     });
 
-    if (document.fullscreenElement) {
-      sp.set("fs", "1");
-      navigateTo(sp, true);
-      return;
-    }
-
     const wrapper = fsRef.current;
-    if (!wrapper?.requestFullscreen) return;
+    if (!wrapper) return;
 
-    try {
-      await wrapper.requestFullscreen({ navigationUI: "hide" } as any);
-      sp.set("fs", "1");
-      navigateTo(sp, true);
-    } catch {}
+    // Try native fullscreen if supported; if it fails, immersive mode still works.
+    const ok = await requestFullscreenSafe(wrapper as any);
+    if (ok) nativeFsEnteredRef.current = true;
   }
 
   async function setFs(on: boolean) {
     if (on) {
-      if (document.fullscreenElement) {
-        const sp = new URLSearchParams(window.location.search);
-        sp.set("fs", "1");
-        setSearchParams(sp, { replace: true });
-        return;
-      }
+      // Always set fs=1 (immersive mode), then try native fullscreen (if supported)
+      const sp = new URLSearchParams(window.location.search);
+      sp.set("fs", "1");
+      setSearchParams(sp, { replace: true });
+
       const wrapper = fsRef.current;
-      if (!wrapper?.requestFullscreen) return;
-      try {
-        await wrapper.requestFullscreen({ navigationUI: "hide" } as any);
-        const sp = new URLSearchParams(window.location.search);
-        sp.set("fs", "1");
-        setSearchParams(sp, { replace: true });
-      } catch {}
+      if (wrapper) {
+        const ok = await requestFullscreenSafe(wrapper as any);
+        if (ok) nativeFsEnteredRef.current = true;
+      }
       return;
     }
 
+    // Turn off immersive mode and exit native fullscreen if active
     const sp = new URLSearchParams(window.location.search);
     sp.delete("fs");
     setSearchParams(sp, { replace: true });
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.().catch(() => {});
+
+    if (getNativeFullscreenEl()) {
+      await exitFullscreenSafe();
     }
+    nativeFsEnteredRef.current = false;
   }
 
   function goLevels() {
-    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    // Exit both immersive mode and native fullscreen, then go to levels
+    setFs(false);
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
     navigateTo(sp, true);
@@ -790,7 +768,9 @@ const guideDots = useMemo(() => {
   function replay() {
     setStrokeIndex(0);
     setStarted(false);
+
     setLastIndex(0);
+    lastIndexRef.current = 0;
 
     startedRef.current = false;
     activePointerIdRef.current = null;
@@ -803,10 +783,6 @@ const guideDots = useMemo(() => {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
-    // reset sparkles state/ids
-    setSparkles([]);
-    sparkleIdRef.current = 1;
-    lastSparkleIndexRef.current = 0;
   }
 
   // ✅ Next Letter button uses this (skip without completing)
@@ -854,13 +830,18 @@ const guideDots = useMemo(() => {
     if (pid !== null && el) {
       try {
         (el as any).releasePointerCapture?.(pid);
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
 
     startedRef.current = false;
     activePointerIdRef.current = null;
+    capturedElRef.current = null;
+
     setStarted(false);
     setLastIndex(0);
+    lastIndexRef.current = 0;
 
     const nextStroke = strokeIndex + 1;
     if (letterData && nextStroke < letterData.strokes.length) {
@@ -872,12 +853,11 @@ const guideDots = useMemo(() => {
       return;
     }
 
-   setLetterDone(true);
+    setLetterDone(true);
 
-// stronger + ensures it always turns off
-setConfetti(true);
-setTimeout(() => setConfetti(false), 1700);
-
+    // stronger + ensures it always turns off
+    setConfetti(true);
+    setTimeout(() => setConfetti(false), 1700);
 
     if (!kidId) return;
 
@@ -904,7 +884,9 @@ setTimeout(() => setConfetti(false), 1700);
           completedAt: Date.now(),
         } as any
       );
-    } catch {}
+    } catch {
+      // ignore
+    }
   }
 
   // --------------------
@@ -915,6 +897,7 @@ setTimeout(() => setConfetti(false), 1700);
     if (!currentStroke) return;
     // enforce lift-lock: do not start while moves are ignored
     if (ignoreMovesRef.current) return;
+
     e.preventDefault();
     capturedElRef.current = e.currentTarget as unknown as SVGSVGElement;
 
@@ -930,25 +913,27 @@ setTimeout(() => setConfetti(false), 1700);
     }
 
     // ✅ allow resume: if already traced some part, allow starting near the last traced point
-const startRadius = 14;
-const resumeRadius = 18;
+    const startRadius = 14;
+    const resumeRadius = 18;
 
-const hasProgress = lastIndex > 0 && samples.length > 0;
-const resumePt = hasProgress ? samples[clamp(lastIndex, 0, samples.length - 1)] : startPt;
-const allowedR = hasProgress ? resumeRadius : startRadius;
+    const hasProgress = lastIndexRef.current > 0 && samples.length > 0;
+    const resumePt = hasProgress ? samples[clamp(lastIndexRef.current, 0, samples.length - 1)] : startPt;
+    const allowedR = hasProgress ? resumeRadius : startRadius;
 
-if (dist(p, resumePt) > allowedR) return;
+    if (dist(p, resumePt) > allowedR) return;
 
-startedRef.current = true;
-activePointerIdRef.current = e.pointerId;
+    startedRef.current = true;
+    activePointerIdRef.current = e.pointerId;
 
-setStarted(true);
+    setStarted(true);
 
-// ✅ IMPORTANT: do NOT reset lastIndex when resuming
-if (!hasProgress) setLastIndex(0);
+    // ✅ IMPORTANT: do NOT reset lastIndex when resuming
+    if (!hasProgress) {
+      setLastIndex(0);
+      lastIndexRef.current = 0;
+    }
 
-(e.currentTarget as any).setPointerCapture?.(e.pointerId);
-
+    (e.currentTarget as any).setPointerCapture?.(e.pointerId);
   }
 
   function handlePointerMove(e: React.PointerEvent) {
@@ -965,7 +950,7 @@ if (!hasProgress) setLastIndex(0);
     const p = toSvg(e.clientX, e.clientY);
 
     const tolerance = 12;
-    const i0 = clamp(lastIndex, 0, samples.length - 1);
+    const i0 = clamp(lastIndexRef.current, 0, samples.length - 1);
     const window = 34;
 
     let bestI = i0;
@@ -983,14 +968,10 @@ if (!hasProgress) setLastIndex(0);
     }
 
     if (bestD <= tolerance) {
-      // ✨ emit sparkles only when forward progress happens
-      const lastEmit = lastSparkleIndexRef.current;
-      if (bestI > lastEmit) {
-        emitSparklesAlongProgress(lastEmit, bestI);
-        lastSparkleIndexRef.current = bestI;
-      }
-
+      // keep both state + ref in sync (avoids stale closure on mobile)
+      lastIndexRef.current = bestI;
       setLastIndex(bestI);
+
       if (bestI >= samples.length - 2) completeStroke();
     }
   }
@@ -999,7 +980,9 @@ if (!hasProgress) setLastIndex(0);
     if (activePointerIdRef.current === e.pointerId) {
       try {
         (e.currentTarget as any).releasePointerCapture?.(e.pointerId);
-      } catch {}
+      } catch {
+        // ignore
+      }
 
       activePointerIdRef.current = null;
       startedRef.current = false;
@@ -1010,274 +993,257 @@ if (!hasProgress) setLastIndex(0);
   }
 
   // --------------------
-// Levels screen (UX upgrade only — no logic changes)
-// --------------------
-if (mode === "levels") {
-  const LEVELS = TRACE_LEVELS as any[];
+  // Levels screen (UX upgrade only — no logic changes)
+  // --------------------
+  if (mode === "levels") {
+    const LEVELS = TRACE_LEVELS as any[];
 
-  const pretraceChips = (PRETRACE_LEVEL.items ?? [])
-  .map((id) => PRETRACE_ITEMS[id]?.label ?? "")
+    const pretraceChips = (PRETRACE_LEVEL.items ?? [])
+  .map((id: PreTraceId) => PRETRACE_ITEMS[id]?.label ?? "")
   .filter(Boolean)
   .slice(0, 6);
 
-  return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10">
-      {/* Hero / Header */}
-      <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
-        {/* soft blobs */}
-        <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
 
-        <div className="relative">
-          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-white/60">
-                <span className="animate-pulse">✨</span>
-                Choose your path
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-10">
+        {/* Hero / Header */}
+        <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
+          {/* soft blobs */}
+          <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
+
+          <div className="relative">
+            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-white/60">
+                  <span className="animate-pulse">✨</span>
+                  Choose your path
+                </div>
+
+                <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">Letter Tracing Adventure</h1>
+
+                <p className="mt-2 max-w-2xl text-sm text-slate-700">
+                  Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
+                  <span className="font-semibold">Small</span> letters.
+                </p>
               </div>
 
-              <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
-                Letter Tracing Adventure
-              </h1>
-
-              <p className="mt-2 max-w-2xl text-sm text-slate-700">
-                Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
-                <span className="font-semibold">Small</span> letters.
-              </p>
+              <div className="flex flex-wrap gap-2">
+                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                  ⭐ Start at the star
+                </span>
+                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                  ✋ Lift between strokes
+                </span>
+                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                  🎉 Earn confetti
+                </span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                ⭐ Start at the star
-              </span>
-              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                ✋ Lift between strokes
-              </span>
-              <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                🎉 Earn confetti
-              </span>
-            </div>
-          </div>
+            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+              {/* Learning Path */}
+              <div className="lg:col-span-2">
+                <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
+                  {/* vertical “path” line */}
+                  <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
 
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Learning Path */}
-            <div className="lg:col-span-2">
-              <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
-                {/* vertical “path” line */}
-                <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
-
-                <div className="space-y-4 pl-12">
-                  {/* Level 0 */}
-                  <button
-                    onClick={() => handlePlayButtonClick(0, 0, 0)}
-                    className={[
-                      "group relative w-full rounded-3xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-4 text-left shadow-sm transition",
-                      "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
-                    ].join(" ")}
-                  >
-                    {/* node */}
-                    <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
-                        <span className="animate-bounce text-lg">🚀</span>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <div className="text-lg font-extrabold text-slate-900">
-                          {PRETRACE_LEVEL.title}
-                        </div>
-                        <div className="mt-0.5 text-sm font-semibold text-slate-600">
-                          {PRETRACE_LEVEL.subtitle}
+                  <div className="space-y-4 pl-12">
+                    {/* Level 0 */}
+                    <button
+                      onClick={() => handlePlayButtonClick(0, 0, 0)}
+                      className={[
+                        "group relative w-full rounded-3xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-4 text-left shadow-sm transition",
+                        "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
+                      ].join(" ")}
+                    >
+                      {/* node */}
+                      <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
+                          <span className="animate-bounce text-lg">🚀</span>
                         </div>
                       </div>
 
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                        <span className="animate-pulse">●</span> Ready
-                      </span>
-                    </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-lg font-extrabold text-slate-900">{PRETRACE_LEVEL.title}</div>
+                          <div className="mt-0.5 text-sm font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
+                        </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {pretraceChips.map((c, i) => (
-                        <span
-                          key={`${c}-${i}`}
-                          className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
-                        >
-                          {c}
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                          <span className="animate-pulse">●</span> Ready
                         </span>
-                      ))}
-                      <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
-                        {PRETRACE_LEVEL.items.length} activities
-                      </span>
-                    </div>
-
-                    <div className="mt-3 flex items-center justify-between">
-                      <div className="text-xs font-semibold text-slate-600">
-                        Start here to make hands ready ✨
                       </div>
-                      <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">
-                        →
-                      </div>
-                    </div>
-                  </button>
 
-                  {/* Levels 1+ */}
-                  {LEVELS.map((lv, idx) => {
-                    const ready = isLevelReady(lv.levelId);
-
-                    const pairLabels = (lv.pairs ?? [])
-                      .map((p: any) => (p?.upper && p?.lower ? `${p.upper}${p.lower}` : ""))
-                      .filter(Boolean);
-
-                    const shownPairs = pairLabels.slice(0, 6);
-                    const more = Math.max(0, pairLabels.length - shownPairs.length);
-
-                    return (
-                      <button
-                        key={lv.levelId}
-                        disabled={!ready}
-                        onClick={() => handlePlayButtonClick(lv.levelId, 0, 0)}
-                        className={[
-                          "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
-                          ready
-                            ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-                            : "cursor-not-allowed border-white/40 bg-white/50 opacity-60",
-                        ].join(" ")}
-                      >
-                        {/* node */}
-                        <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                          <div
-                            className={[
-                              "flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4",
-                              ready ? "ring-fuchsia-100" : "ring-slate-100",
-                            ].join(" ")}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {pretraceChips.map((c, i) => (
+                          <span
+                            key={`${c}-${i}`}
+                            className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
                           >
-                            <span className="text-lg">{ready ? "⭐" : "🔒"}</span>
-                          </div>
-                        </div>
+                            {c}
+                          </span>
+                        ))}
+                        <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
+                          {PRETRACE_LEVEL.items.length} activities
+                        </span>
+                      </div>
 
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="text-lg font-extrabold text-slate-900">
-                              {lv.title}
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="text-xs font-semibold text-slate-600">Start here to make hands ready ✨</div>
+                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
+                      </div>
+                    </button>
+
+                    {/* Levels 1+ */}
+                    {LEVELS.map((lv: any) => {
+                      const ready = isLevelReady(lv.levelId);
+
+                      const pairLabels = (lv.pairs ?? [])
+                        .map((p: any) => (p?.upper && p?.lower ? `${p.upper}${p.lower}` : ""))
+                        .filter(Boolean);
+
+                      const shownPairs = pairLabels.slice(0, 6);
+                      const more = Math.max(0, pairLabels.length - shownPairs.length);
+
+                      return (
+                        <button
+                          key={lv.levelId}
+                          disabled={!ready}
+                          onClick={() => handlePlayButtonClick(lv.levelId, 0, 0)}
+                          className={[
+                            "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
+                            ready
+                              ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
+                              : "cursor-not-allowed border-white/40 bg-white/50 opacity-60",
+                          ].join(" ")}
+                        >
+                          {/* node */}
+                          <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
+                            <div
+                              className={[
+                                "flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4",
+                                ready ? "ring-fuchsia-100" : "ring-slate-100",
+                              ].join(" ")}
+                            >
+                              <span className="text-lg">{ready ? "⭐" : "🔒"}</span>
                             </div>
-                            {lv.subtitle && (
-                              <div className="mt-0.5 text-sm font-semibold text-slate-600">
-                                {lv.subtitle}
-                              </div>
+                          </div>
+
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-lg font-extrabold text-slate-900">{lv.title}</div>
+                              {lv.subtitle && (
+                                <div className="mt-0.5 text-sm font-semibold text-slate-600">{lv.subtitle}</div>
+                              )}
+                            </div>
+
+                            {ready ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                                <span className="animate-pulse">●</span> Ready
+                              </span>
+                            ) : (
+                              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-600 ring-1 ring-slate-200">
+                                Coming soon
+                              </span>
                             )}
                           </div>
 
-                          {ready ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                              <span className="animate-pulse">●</span> Ready
-                            </span>
-                          ) : (
-                            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-600 ring-1 ring-slate-200">
-                              Coming soon
-                            </span>
+                          {pairLabels.length > 0 && (
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {shownPairs.map((t: string) => (
+                                <span
+                                  key={t}
+                                  className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
+                                >
+                                  {t}
+                                </span>
+                              ))}
+                              {more > 0 && (
+                                <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
+                                  +{more} more
+                                </span>
+                              )}
+                            </div>
                           )}
-                        </div>
 
-                        {pairLabels.length > 0 && (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {shownPairs.map((t: string) => (
-                              <span
-                                key={t}
-                                className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                            {more > 0 && (
-                              <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
-                                +{more} more
-                              </span>
-                            )}
+                          <div className="mt-3 flex items-center justify-between">
+                            <div className="text-xs font-semibold text-slate-600">{ready ? "Tap to begin this level" : "Locked for now"}</div>
+                            <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
                           </div>
-                        )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
 
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="text-xs font-semibold text-slate-600">
-                            {ready ? "Tap to begin this level" : "Locked for now"}
-                          </div>
-                          <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">
-                            →
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
+              {/* Right “How to play” panel */}
+              <div className="lg:col-span-1">
+                <div className="rounded-3xl border border-white/60 bg-white/65 p-5 shadow-sm backdrop-blur">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-extrabold text-slate-900">How to play</div>
+                    <div className="text-xs font-semibold text-slate-600">Quick tips</div>
+                  </div>
+
+                  <ol className="mt-4 space-y-3 text-sm text-slate-700">
+                    <li className="flex gap-3">
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
+                        1
+                      </span>
+                      <div>
+                        <div className="font-bold text-slate-900">Warm-up first</div>
+                        <div className="text-slate-600">Lines & curves make handwriting easy.</div>
+                      </div>
+                    </li>
+
+                    <li className="flex gap-3">
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
+                        2
+                      </span>
+                      <div>
+                        <div className="font-bold text-slate-900">Capital → Small</div>
+                        <div className="text-slate-600">Trace big letter, then small letter.</div>
+                      </div>
+                    </li>
+
+                    <li className="flex gap-3">
+                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
+                        3
+                      </span>
+                      <div>
+                        <div className="font-bold text-slate-900">Slow & steady</div>
+                        <div className="text-slate-600">Follow the moving star carefully.</div>
+                      </div>
+                    </li>
+                  </ol>
+
+                  <div className="mt-5 rounded-2xl bg-slate-900/90 p-4 text-white">
+                    <div className="text-sm font-extrabold">Pro tip</div>
+                    <p className="mt-1 text-sm text-white/80">
+                      Use <span className="font-semibold text-white">Fullscreen</span> (or immersive mode) for the best tracing experience.
+                    </p>
+                  </div>
+
+                  <div className="mt-4 text-xs font-semibold text-slate-500">
+                    🌟 This screen is a “learning path” — kids feel like they’re moving forward level by level.
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Right “How to play” panel */}
-            <div className="lg:col-span-1">
-              <div className="rounded-3xl border border-white/60 bg-white/65 p-5 shadow-sm backdrop-blur">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-extrabold text-slate-900">How to play</div>
-                  <div className="text-xs font-semibold text-slate-600">Quick tips</div>
-                </div>
-
-                <ol className="mt-4 space-y-3 text-sm text-slate-700">
-                  <li className="flex gap-3">
-                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
-                      1
-                    </span>
-                    <div>
-                      <div className="font-bold text-slate-900">Warm-up first</div>
-                      <div className="text-slate-600">Lines & curves make handwriting easy.</div>
-                    </div>
-                  </li>
-
-                  <li className="flex gap-3">
-                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
-                      2
-                    </span>
-                    <div>
-                      <div className="font-bold text-slate-900">Capital → Small</div>
-                      <div className="text-slate-600">Trace big letter, then small letter.</div>
-                    </div>
-                  </li>
-
-                  <li className="flex gap-3">
-                    <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
-                      3
-                    </span>
-                    <div>
-                      <div className="font-bold text-slate-900">Slow & steady</div>
-                      <div className="text-slate-600">Follow the moving star carefully.</div>
-                    </div>
-                  </li>
-                </ol>
-
-                <div className="mt-5 rounded-2xl bg-slate-900/90 p-4 text-white">
-                  <div className="text-sm font-extrabold">Pro tip</div>
-                  <p className="mt-1 text-sm text-white/80">
-                    Use <span className="font-semibold text-white">Fullscreen</span> for the best tracing experience.
-                  </p>
-                </div>
-
-                <div className="mt-4 text-xs font-semibold text-slate-500">
-                  🌟 This screen is a “learning path” — kids feel like they’re moving forward level by level.
-                </div>
-              </div>
+            {/* bottom note */}
+            <div className="mt-5 text-center text-xs font-semibold text-slate-600">
+              Tip: Start from Level 0 even if the child knows letters — it improves pencil control ✍️
             </div>
-          </div>
-
-          {/* bottom note */}
-          <div className="mt-5 text-center text-xs font-semibold text-slate-600">
-            Tip: Start from Level 0 even if the child knows letters — it improves pencil control ✍️
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
-    // --------------------
+  // --------------------
   // Play guards
   // --------------------
   if (!letterData || !currentStroke) {
@@ -1301,15 +1267,42 @@ if (mode === "levels") {
         step === 0 ? "Capital" : "Small"
       } • Letter: ${currentLetterId ?? ""} • Stroke ${strokeNo}/${totalStrokes}`;
 
-  const wrapperClass = fs ? "fixed inset-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
+  // fs=1 is immersive mode (fixed), even if native fullscreen isn't supported (iOS)
+  const wrapperClass = fs ? "fixed left-0 right-0 top-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
 
   return (
-    <div ref={fsRef} className={wrapperClass}>
-      <div className={fs ? "flex h-full w-full flex-col p-4" : ""}>
-        <div className="flex flex-shrink-0 items-center justify-between">
-          <div className="rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">{headerLabel}</div>
+    <div
+      ref={fsRef}
+      className={wrapperClass}
+      style={
+        fs
+          ? {
+              height: "100dvh",
+              paddingTop: "calc(16px + env(safe-area-inset-top))",
+              paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
+              paddingLeft: "calc(16px + env(safe-area-inset-left))",
+              paddingRight: "calc(16px + env(safe-area-inset-right))",
+              touchAction: "none",
+              WebkitUserSelect: "none",
+              userSelect: "none",
+              WebkitTapHighlightColor: "transparent",
+            }
+          : {
+              touchAction: "none",
+              WebkitUserSelect: "none",
+              userSelect: "none",
+              WebkitTapHighlightColor: "transparent",
+            }
+      }
+      onContextMenu={(e) => e.preventDefault()}
+    >
+      <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
+        <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
+          <div className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+            {headerLabel}
+          </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* ✅ Jump dropdown */}
             {!isPretrace && jumpOptions.length > 0 && (
               <select
@@ -1318,7 +1311,7 @@ if (mode === "levels") {
                   const [pi, st] = e.target.value.split("|").map((x) => Number(x));
                   navigatePlay(levelId ?? 1, Number.isFinite(pi) ? pi : 0, st === 1 ? 1 : 0, false);
                 }}
-                className="rounded-full border bg-white px-3 py-2 text-sm font-semibold text-slate-800"
+                className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800"
               >
                 {jumpOptions.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -1329,34 +1322,28 @@ if (mode === "levels") {
             )}
 
             {/* ✅ Skip for testing */}
-            <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
-              Next Letter
+            <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              Next
             </button>
 
             {fs ? (
-              <button
-                onClick={() => setFs(false)}
-                className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
-              >
-                Exit Fullscreen
+              <button onClick={() => setFs(false)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+                Exit
               </button>
             ) : (
-              <button
-                onClick={() => setFs(true)}
-                className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
-              >
+              <button onClick={() => setFs(true)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
                 Fullscreen
               </button>
             )}
 
-            <button onClick={goLevels} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
-              Back to Levels
+            <button onClick={goLevels} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              Levels
             </button>
           </div>
         </div>
 
         <div
-          className={`relative mt-4 overflow-hidden rounded-2xl border shadow-sm ${fs ? "flex-1" : ""}`}
+          className={`relative overflow-hidden rounded-2xl border shadow-sm ${fs ? "flex-1 min-h-0" : ""}`}
           style={{
             background:
               "radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)",
@@ -1364,44 +1351,24 @@ if (mode === "levels") {
         >
           <ConfettiBurst fire={confetti} />
 
-          <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9" } : {}}>
+          <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9", minHeight: "55vh" } : {}}>
             <svg
               ref={svgRef}
               viewBox={renderViewBox}
               preserveAspectRatio="xMidYMid meet"
-              className="absolute inset-0 h-full w-full"
-              style={{ touchAction: "none" }}
+              className="absolute inset-0 h-full w-full touch-none select-none"
+              style={{
+                touchAction: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none",
+                WebkitTouchCallout: "none",
+              }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={handlePointerUp}
+              onContextMenu={(e) => e.preventDefault()}
             >
-              <defs>
-                <filter id="sparkleGlow" x="-60%" y="-60%" width="220%" height="220%">
-                  <feGaussianBlur stdDeviation="1.35" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                {showProgress && (
-                  <mask id="traceProgressMask">
-                    {/* black = hidden */}
-                    <rect x="-1000" y="-1000" width="3000" height="3000" fill="black" />
-                    {/* white stroke = visible area */}
-                    <path
-                      d={(currentStroke?.pathD ?? "").trim()}
-                      fill="none"
-                      stroke="white"
-                      strokeWidth={14}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeDasharray={dashArray}
-                      strokeDashoffset={dashOffset}
-                    />
-                  </mask>
-                )}
-              </defs>
               {/* 1) Full letter outline */}
               {allTraceStrokes.map((s, i) => {
                 const c = STROKE_COLORS[i % STROKE_COLORS.length];
@@ -1414,6 +1381,7 @@ if (mode === "levels") {
                     strokeWidth={10}
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    pointerEvents="none"
                   />
                 );
               })}
@@ -1424,7 +1392,16 @@ if (mode === "levels") {
                   const p = parseTapPoint(s.pathD);
                   if (!p) return null;
                   const c = STROKE_COLORS[i % STROKE_COLORS.length];
-                  return <circle key={`done-tap-${s.id ?? i}`} cx={p.x} cy={p.y} r={7} fill={hexToRgba(c, 0.75)} />;
+                  return (
+                    <circle
+                      key={`done-tap-${s.id ?? i}`}
+                      cx={p.x}
+                      cy={p.y}
+                      r={7}
+                      fill={hexToRgba(c, 0.75)}
+                      pointerEvents="none"
+                    />
+                  );
                 }
                 const d = (s.pathD ?? "").trim();
                 if (!d) return null;
@@ -1438,6 +1415,7 @@ if (mode === "levels") {
                     strokeWidth={12}
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    pointerEvents="none"
                   />
                 );
               })}
@@ -1452,10 +1430,11 @@ if (mode === "levels") {
                     strokeWidth={10}
                     strokeLinecap="round"
                     strokeLinejoin="round"
+                    pointerEvents="none"
                   />
 
                   {guideDots.map((d) => (
-                    <circle key={d.key} cx={d.x} cy={d.y} r={4.6} fill={hexToRgba(currentColor, 0.18)} />
+                    <circle key={d.key} cx={d.x} cy={d.y} r={4.6} fill={hexToRgba(currentColor, 0.18)} pointerEvents="none" />
                   ))}
 
                   {showProgress && (
@@ -1468,28 +1447,8 @@ if (mode === "levels") {
                       strokeLinejoin="round"
                       strokeDasharray={dashArray}
                       strokeDashoffset={dashOffset}
+                      pointerEvents="none"
                     />
-                  )}
-
-                  {/* ✨ Sparkle glitter trail (fills traced part) */}
-                  {showProgress && sparkles.length > 0 && (
-                    <g
-                      filter="url(#sparkleGlow)"
-                      mask="url(#traceProgressMask)"
-                      style={{ mixBlendMode: "screen" as any }}
-                    >
-                      {sparkles.map((sp) => (
-                        <circle key={sp.id} cx={sp.x} cy={sp.y} r={sp.r * sp.s} fill={sp.c} opacity={sp.a}>
-                          <animate
-                            attributeName="opacity"
-                            values={`${sp.a * 0.25};${sp.a};${sp.a * 0.25}`}
-                            dur={`${sp.twDur}s`}
-                            begin={`${sp.twDelay}s`}
-                            repeatCount="indefinite"
-                          />
-                        </circle>
-                      ))}
-                    </g>
                   )}
                 </>
               )}
@@ -1499,13 +1458,13 @@ if (mode === "levels") {
                 <>
                   {isTap ? (
                     <>
-                      <circle cx={startPt.x} cy={startPt.y} r={10} fill={hexToRgba(currentColor, 0.18)} />
-                      <circle cx={startPt.x} cy={startPt.y} r={6.5} fill={hexToRgba(currentColor, 0.9)} />
+                      <circle cx={startPt.x} cy={startPt.y} r={10} fill={hexToRgba(currentColor, 0.18)} pointerEvents="none" />
+                      <circle cx={startPt.x} cy={startPt.y} r={6.5} fill={hexToRgba(currentColor, 0.9)} pointerEvents="none" />
                     </>
                   ) : (
                     <>
                       {/* START */}
-                      <g transform={`translate(${startPt.x}, ${startPt.y})`}>
+                      <g transform={`translate(${startPt.x}, ${startPt.y})`} pointerEvents="none">
                         <image
                           href={STAR_SRC}
                           xlinkHref={STAR_SRC}
@@ -1518,7 +1477,7 @@ if (mode === "levels") {
                       </g>
 
                       {/* MOVING GUIDE STAR */}
-                      <g transform={`translate(${guidePt.x}, ${guidePt.y})`}>
+                      <g transform={`translate(${guidePt.x}, ${guidePt.y})`} pointerEvents="none">
                         <g>
                           <animateTransform
                             attributeName="transform"
@@ -1540,7 +1499,7 @@ if (mode === "levels") {
                       </g>
 
                       {/* END STAR */}
-                      <g transform={`translate(${endPt.x}, ${endPt.y})`}>
+                      <g transform={`translate(${endPt.x}, ${endPt.y})`} pointerEvents="none">
                         <image
                           href={STAR_SRC}
                           xlinkHref={STAR_SRC}
@@ -1632,4 +1591,3 @@ if (mode === "levels") {
     </div>
   );
 }
-
