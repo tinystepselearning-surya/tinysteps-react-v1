@@ -31,6 +31,8 @@ function relTime(ms: number): string {
 
 // Local games catalog
 const GAMES_CATALOG = [
+    { id: 'letter-tracing', title: 'Letter Tracing', area: 'Writing', totalLevels: 6 },
+
   { id: 'sound-detective', title: 'Sound Detective', area: 'Sounds', totalLevels: 5 },
   { id: 'rhyme-time', title: 'Rhyme Time', area: 'Sounds', totalLevels: 5 },
   { id: 'letter-sound-match', title: 'Letter–Sound Match', area: 'Sounds', totalLevels: 5 },

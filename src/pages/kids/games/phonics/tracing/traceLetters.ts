@@ -160,7 +160,7 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     viewBox: "0 0 100 100",
     strokes: [
       { id: "a_1", kind: "trace", pathD: "M 68 40 C 48 24, 28 36, 28 58 C 28 84, 52 92, 68 86" },
-      { id: "a_2", kind: "trace", pathD: "M 68 40 L 68 86" },
+      { id: "a_2", kind: "trace", pathD: "M 68 36 L 68 93" },
     ],
     skillTags: ["letter:a", "case:lower", "subtopic:tracing"],
   },
@@ -224,8 +224,9 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     label: "d",
     viewBox: "0 0 100 100",
     strokes: [
-            { id: "d_2", kind: "trace", pathD: "M 66 16 L 66 86" },
       { id: "d_1", kind: "trace", pathD: "M 66 48 C 46 34, 28 46, 28 66 C 28 86, 50 94, 66 86" },
+                  { id: "d_2", kind: "trace", pathD: "M 66 16 L 66 86" },
+
     ],
     skillTags: ["letter:d", "case:lower", "subtopic:tracing"],
   },
@@ -357,8 +358,9 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     label: "J",
     viewBox: "0 0 100 100",
     strokes: [
-      { id: "J_1", kind: "trace", pathD: "M 40 18 L 85 18" },
       { id: "J_2", kind: "trace", pathD: "M 62 18 L 62 70 C 62 90, 38 92, 34 72" },
+            { id: "J_1", kind: "trace", pathD: "M 40 18 L 85 18" },
+
     ],
     skillTags: ["letter:j", "case:upper", "subtopic:tracing"],
   },
