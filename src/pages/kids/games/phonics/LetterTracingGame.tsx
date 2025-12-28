@@ -148,6 +148,8 @@ const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as
 
 // ⭐ Your Canva asset (saved in /public/star.png)
 const STAR_SRC = "/star.png";
+// 🔊 Tracing sound (put tracing.mp3 in /public)
+const TRACE_AUDIO_SRC = "/tracing.mp3";
 // ⭐ sizes (reduce here)
 const STAR_START_SIZE = 18;
 const STAR_GUIDE_SIZE = 16;
@@ -393,6 +395,39 @@ export default function LetterTracingGame() {
   const [hintIndex, setHintIndex] = useState(0);
   const hintIndexRef = useRef(0);
 
+  // 🔊 Tracing audio
+  const traceAudioRef = useRef<HTMLAudioElement | null>(null);
+  const traceAudioPlayingRef = useRef(false);
+
+  const startTraceAudio = useCallback(async () => {
+    const a = traceAudioRef.current;
+    if (!a) return;
+    if (traceAudioPlayingRef.current) return;
+
+    try {
+      a.loop = true;
+      a.volume = 0.7; // adjust if needed
+      // Start fresh each time tracing begins
+      a.currentTime = 0;
+      await a.play(); // may reject if not initiated by user gesture
+      traceAudioPlayingRef.current = true;
+    } catch {
+      // autoplay restrictions or other issues — ignore (game should not break)
+    }
+  }, []);
+
+  const stopTraceAudio = useCallback(() => {
+    const a = traceAudioRef.current;
+    if (!a) return;
+    try {
+      a.pause();
+      a.currentTime = 0;
+    } catch {
+      // ignore
+    }
+    traceAudioPlayingRef.current = false;
+  }, []);
+
   // Tracks whether we successfully entered *native* fullscreen (so we can sync on ESC)
   const nativeFsEnteredRef = useRef(false);
 
@@ -494,6 +529,11 @@ export default function LetterTracingGame() {
     setHintIndex(0);
     hintIndexRef.current = 0;
   }, [currentLetterId, pretraceId, clearTimers]);
+
+  // Stop trace audio on navigation or when changing strokes/letters
+  useEffect(() => {
+    stopTraceAudio();
+  }, [mode, currentLetterId, pretraceId, strokeIndex, stopTraceAudio]);
 
   // ✅ Reset state when switching stroke (within same letter)
   useEffect(() => {
@@ -869,6 +909,7 @@ export default function LetterTracingGame() {
 
   function completeStroke() {
     clearTimers();
+    stopTraceAudio(); // 🔊 ensure it stops immediately at stroke end
     ignoreMovesRef.current = true;
 
     const pid = activePointerIdRef.current;
@@ -987,6 +1028,9 @@ void recordLevelResult({
 
     if (dist(p, resumePt) > allowedR) return;
 
+    // 🔊 start tracing sound (user gesture)
+    void startTraceAudio();
+
     startedRef.current = true;
     activePointerIdRef.current = e.pointerId;
 
@@ -1043,6 +1087,7 @@ void recordLevelResult({
 
   function handlePointerUp(e: React.PointerEvent) {
     if (activePointerIdRef.current === e.pointerId) {
+      stopTraceAudio(); // 🔊 stop when lifting
       try {
         (e.currentTarget as any).releasePointerCapture?.(e.pointerId);
       } catch {
@@ -1082,19 +1127,7 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
           <div className="relative">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <div className="mb-2 flex items-center gap-3">
-                  <button
-                    onClick={goGamesPortal}
-                    className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
-                  >
-                    ← Back to Games
-                  </button>
-                </div>
-
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-white/60">
-                  <span className="animate-pulse">✨</span>
-                  Choose your path
-                </div>
+                
 
                 <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">Letter Tracing Adventure</h1>
 
@@ -1378,6 +1411,7 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
       }
       onContextMenu={(e) => e.preventDefault()}
     >
+        <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
       <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
           <div className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800">
