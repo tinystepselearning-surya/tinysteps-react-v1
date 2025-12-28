@@ -47,6 +47,9 @@ type Sparkle = {
   a: number; // alpha (opacity)
   life: number; // frames remaining
   c: string; // color
+  r: number; // radius
+  twDur: number; // twinkle duration (seconds)
+  twDelay: number; // twinkle delay (seconds)
 };
 
 // --------------------
@@ -356,11 +359,11 @@ export default function LetterTracingGame() {
   const sparkleIdRef = useRef(1);
   const lastSparkleIndexRef = useRef(0);
 
-  // Sparkle constants
-  const SPARKLE_MAX = 220;
-  const SPARKLE_STEP = 3; // emit every N sample points
-  const SPARKLE_PER_POINT = 3; // sparkles per emitted point
-  const SPARKLE_COLORS = ["#FDE047", "#FBBF24", "#93C5FD", "#A7F3D0", "#F9A8D4"] as const;
+  // Sparkle constants (denser, persistent glitter)
+  const SPARKLE_MAX = 900; // more glitters for "filled" look
+  const SPARKLE_STEP = 1; // emit on every sample point (dense)
+  const SPARKLE_PER_POINT = 2; // 2 glitters per point (~400-500 total)
+  const SPARKLE_COLORS = ["#FFFFFF", "#FDE047", "#FBBF24", "#93C5FD", "#F9A8D4"] as const;
 
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
 
@@ -375,19 +378,22 @@ export default function LetterTracingGame() {
 
     for (let i = start + SPARKLE_STEP; i <= end; i += SPARKLE_STEP) {
       const p = samples[i];
-      for (let k = 0; k < SPARKLE_PER_POINT; k++) {
-        const c = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
-        newParts.push({
-          id: sparkleIdRef.current++,
-          x: p.x + rand(-1.2, 1.2),
-          y: p.y + rand(-1.2, 1.2),
-          dx: rand(-0.18, 0.18),
-          dy: rand(-0.35, -0.05),
-          s: rand(0.8, 1.25),
-          a: rand(0.75, 1),
-          life: Math.floor(rand(18, 30)),
-          c,
-        });
+        for (let k = 0; k < SPARKLE_PER_POINT; k++) {
+          const c = SPARKLE_COLORS[Math.floor(Math.random() * SPARKLE_COLORS.length)];
+          newParts.push({
+            id: sparkleIdRef.current++,
+            x: p.x + rand(-4.2, 4.2),
+            y: p.y + rand(-4.2, 4.2),
+            dx: 0,
+            dy: 0,
+            s: rand(0.85, 1.25),
+            a: rand(0.55, 1),
+            life: 999999, // keep forever until reset
+            c,
+            r: rand(1.2, 2.4),
+            twDur: rand(0.7, 1.6),
+            twDelay: rand(0, 0.6),
+          });
       }
     }
 
@@ -400,40 +406,7 @@ export default function LetterTracingGame() {
     });
   }
 
-  // ✨ Animate sparkles (runs once)
-  useEffect(() => {
-    let raf = 0;
-
-    const tick = () => {
-      setSparkles((prev) => {
-        if (prev.length === 0) return prev;
-
-        const next = prev
-          .map((p) => {
-            const life = p.life - 1;
-            const a = Math.max(0, p.a - 0.05);
-
-            return {
-              ...p,
-              x: p.x + p.dx,
-              y: p.y + p.dy,
-              dx: p.dx * 0.98,
-              dy: p.dy * 0.98 + 0.04,
-              life,
-              a,
-            };
-          })
-          .filter((p) => p.life > 0 && p.a > 0.05);
-
-        return next;
-      });
-
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
+  // Sparkles are persistent (no RAF loop) — they're cleared on stroke/letter change
 
   const currentStroke: TraceStroke | null = useMemo(() => {
     if (!letterData) return null;
@@ -1411,6 +1384,23 @@ if (mode === "levels") {
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+                {showProgress && (
+                  <mask id="traceProgressMask">
+                    {/* black = hidden */}
+                    <rect x="-1000" y="-1000" width="3000" height="3000" fill="black" />
+                    {/* white stroke = visible area */}
+                    <path
+                      d={(currentStroke?.pathD ?? "").trim()}
+                      fill="none"
+                      stroke="white"
+                      strokeWidth={14}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeDasharray={dashArray}
+                      strokeDashoffset={dashOffset}
+                    />
+                  </mask>
+                )}
               </defs>
               {/* 1) Full letter outline */}
               {allTraceStrokes.map((s, i) => {
@@ -1482,10 +1472,22 @@ if (mode === "levels") {
                   )}
 
                   {/* ✨ Sparkle glitter trail (fills traced part) */}
-                  {sparkles.length > 0 && (
-                    <g filter="url(#sparkleGlow)">
+                  {showProgress && sparkles.length > 0 && (
+                    <g
+                      filter="url(#sparkleGlow)"
+                      mask="url(#traceProgressMask)"
+                      style={{ mixBlendMode: "screen" as any }}
+                    >
                       {sparkles.map((sp) => (
-                        <circle key={sp.id} cx={sp.x} cy={sp.y} r={2.2 * sp.s} fill={sp.c} opacity={sp.a} />
+                        <circle key={sp.id} cx={sp.x} cy={sp.y} r={sp.r * sp.s} fill={sp.c} opacity={sp.a}>
+                          <animate
+                            attributeName="opacity"
+                            values={`${sp.a * 0.25};${sp.a};${sp.a * 0.25}`}
+                            dur={`${sp.twDur}s`}
+                            begin={`${sp.twDelay}s`}
+                            repeatCount="indefinite"
+                          />
+                        </circle>
                       ))}
                     </g>
                   )}
