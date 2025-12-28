@@ -719,6 +719,22 @@ export default function LetterTracingGame() {
     navigate(url, { replace });
   }
 
+  // Navigate back to the games portal (prefer history back, otherwise explicit route)
+  function goGamesPortal() {
+    try {
+      const s = (window.history && (window.history.state as any)) || null;
+      if (s && typeof s.idx === "number" && s.idx > 0) {
+        navigate(-1);
+        return;
+      }
+    } catch {}
+
+    const sp = new URLSearchParams();
+    if (kidId) sp.set("kidId", kidId);
+    const url = sp.toString() ? `/kids/games/phonics?${sp.toString()}` : "/kids/games/phonics";
+    navigate(url, { replace: true });
+  }
+
   function navigatePlay(levelNum: number, pairIdx: number, stepNum: CaseStep, replace = false) {
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -1066,6 +1082,15 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
           <div className="relative">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
+                <div className="mb-2 flex items-center gap-3">
+                  <button
+                    onClick={goGamesPortal}
+                    className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
+                  >
+                    ← Back to Games
+                  </button>
+                </div>
+
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-white/60">
                   <span className="animate-pulse">✨</span>
                   Choose your path
@@ -1079,7 +1104,14 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex items-center flex-wrap gap-2">
+                <button
+                  onClick={goGamesPortal}
+                  className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
+                >
+                  ← Back to Games
+                </button>
+
                 <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
                   ⭐ Start at the star
                 </span>
