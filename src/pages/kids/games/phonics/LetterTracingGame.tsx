@@ -150,6 +150,8 @@ const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as
 const STAR_SRC = "/star.png";
 // 🔊 Tracing sound (put tracing.mp3 in /public)
 const TRACE_AUDIO_SRC = "/tracing.mp3";
+// 🔊 Confetti sound (put confetti.mp3 in /public)
+const CONFETTI_AUDIO_SRC = "/confetti.mp3";
 // ⭐ sizes (reduce here)
 const STAR_START_SIZE = 18;
 const STAR_GUIDE_SIZE = 16;
@@ -158,9 +160,9 @@ const STAR_END_SIZE = 14;
 const VIEWBOX_PAD = 10;
 
 function ConfettiBurst({ fire }: { fire: boolean }) {
+  // Continuous corner shower + center burst (4s total)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  // rising-edge trigger so every "true" creates a fresh burst
   const prevFireRef = useRef(false);
   const [burstId, setBurstId] = useState(0);
 
@@ -170,7 +172,6 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     prevFireRef.current = fire;
   }, [fire]);
 
-  // Always clear immediately when fire turns off (prevents leftover pieces)
   useEffect(() => {
     if (fire) return;
     const canvas = canvasRef.current;
@@ -185,94 +186,172 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     let raf = 0;
+    let W = 0;
+    let H = 0;
 
-    // DPR for crisp/confident confetti (important on retina screens)
     const resize = () => {
       const dpr = Math.max(1, window.devicePixelRatio || 1);
       const w = Math.max(1, canvas.clientWidth);
       const h = Math.max(1, canvas.clientHeight);
+      W = w;
+      H = h;
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
+
+    const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 
     resize();
 
-    const W = canvas.clientWidth;
-    const H = canvas.clientHeight;
+    const dur = 4000;
 
-    // Stronger burst: more pieces + bigger sizes + better motion
-    const COUNT = 240;
-    const pieces = Array.from({ length: COUNT }).map(() => {
-      const isStreamer = Math.random() < 0.35;
-      const size = isStreamer ? 6 + Math.random() * 10 : 3 + Math.random() * 6;
+    type Piece = {
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      g: number;
+      w: number;
+      h: number;
+      rot: number;
+      vr: number;
+      hue: number;
+      born: number;
+      life: number;
+    };
 
-      return {
-        x: W * (0.45 + Math.random() * 0.10), // near center (letter)
-        y: H * (0.40 + Math.random() * 0.10),
-        vx: (Math.random() - 0.5) * (10 + Math.random() * 6),
-        vy: -(7 + Math.random() * 10),
-        g: 0.24 + Math.random() * 0.22,
-        w: isStreamer ? size * 1.8 : size,
-        h: isStreamer ? size * 0.55 : size,
-        a: 1,
-        rot: Math.random() * Math.PI,
-        vr: (Math.random() - 0.5) * 0.35,
-        hue: Math.floor(Math.random() * 360),
-      };
-    });
+    let pieces: Piece[] = [];
+
+    const spawnRect = (p: Omit<Piece, "born" | "life">, now: number, life: number) => {
+      pieces.push({ ...p, born: now, life });
+    };
+
+    const spawnCenterBurst = (now: number) => {
+      const CENTER_COUNT = 220;
+      for (let k = 0; k < CENTER_COUNT; k++) {
+        const isStreamer = Math.random() < 0.35;
+        const size = isStreamer ? 6 + Math.random() * 10 : 3 + Math.random() * 6;
+
+        spawnRect(
+          {
+            x: W * (0.45 + Math.random() * 0.10),
+            y: H * (0.40 + Math.random() * 0.10),
+            vx: (Math.random() - 0.5) * (10 + Math.random() * 6),
+            vy: -(7 + Math.random() * 10),
+            g: 0.22 + Math.random() * 0.20,
+            w: isStreamer ? size * 1.8 : size,
+            h: isStreamer ? size * 0.55 : size,
+            rot: Math.random() * Math.PI,
+            vr: (Math.random() - 0.5) * 0.35,
+            hue: Math.floor(Math.random() * 360),
+          },
+          now,
+          2200 + Math.random() * 900
+        );
+      }
+    };
+
+    const spawnShower = (side: "left" | "right", count: number, now: number) => {
+      for (let k = 0; k < count; k++) {
+        const isStreamer = Math.random() < 0.25;
+        const size = isStreamer ? 6 + Math.random() * 9 : 3 + Math.random() * 6;
+        const x = side === "left" ? W * rnd(0.05, 0.22) : W * rnd(0.78, 0.95);
+        spawnRect(
+          {
+            x,
+            y: rnd(-50, -10),
+            vx: side === "left" ? rnd(0.6, 2.4) : rnd(-2.4, -0.6),
+            vy: rnd(1.2, 3.8),
+            g: 0.12 + Math.random() * 0.10,
+            w: isStreamer ? size * 1.9 : size,
+            h: isStreamer ? size * 0.55 : size,
+            rot: Math.random() * Math.PI,
+            vr: (Math.random() - 0.5) * 0.25,
+            hue: Math.floor(Math.random() * 360),
+          },
+          now,
+          2400 + Math.random() * 900
+        );
+      }
+    };
 
     const start = performance.now();
-    const dur = 1600; // longer so it's noticeable
+    spawnCenterBurst(start);
+
+    const LEFT_RATE = 40;
+    const RIGHT_RATE = 40;
+    let leftAcc = 0;
+    let rightAcc = 0;
+    let prevNow = start;
 
     const tick = (now: number) => {
       const t = now - start;
+      const dtMs = Math.max(0, now - prevNow);
+      prevNow = now;
+      const dtF = clamp(dtMs / 16.67, 0.5, 2.0);
 
-      // Fade starts later (more "pop" first)
-      const fade = 1 - clamp((t - 350) / (dur - 350), 0, 1);
+      if (t < dur) {
+        leftAcc += (LEFT_RATE * dtMs) / 1000;
+        rightAcc += (RIGHT_RATE * dtMs) / 1000;
+        const l = Math.floor(leftAcc);
+        const r = Math.floor(rightAcc);
+        if (l > 0) {
+          leftAcc -= l;
+          spawnShower("left", l, now);
+        }
+        if (r > 0) {
+          rightAcc -= r;
+          spawnShower("right", r, now);
+        }
+      }
 
-      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      const globalFade = 1 - clamp((t - dur * 0.7) / (dur * 0.3), 0, 1);
+
+      ctx.clearRect(0, 0, W, H);
 
       for (const p of pieces) {
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += p.g;
-        p.rot += p.vr;
-        p.a = fade;
-
-        // slight air resistance
+        p.x += p.vx * dtF;
+        p.y += p.vy * dtF;
+        p.vy += p.g * dtF;
+        p.rot += p.vr * dtF;
         p.vx *= 0.992;
-        p.vy *= 0.995;
-
+        p.vy *= 0.996;
+        const age = now - p.born;
+        const lifeFade = 1 - clamp(age / p.life, 0, 1);
+        const a = globalFade * lifeFade;
+        if (a <= 0) continue;
+        if (p.y > H + 120) continue;
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
-
-        // vivid fill with better opacity
-        ctx.fillStyle = `hsla(${p.hue}, 92%, 58%, ${0.95 * p.a})`;
-
-        // subtle highlight stroke (makes it visible on light bg)
-        ctx.strokeStyle = `hsla(${p.hue}, 92%, 40%, ${0.35 * p.a})`;
+        ctx.fillStyle = `hsla(${p.hue}, 92%, 58%, ${0.95 * a})`;
+        ctx.strokeStyle = `hsla(${p.hue}, 92%, 40%, ${0.35 * a})`;
         ctx.lineWidth = 1;
-
         ctx.beginPath();
         ctx.rect(-p.w / 2, -p.h / 2, p.w, p.h);
         ctx.fill();
         ctx.stroke();
-
         ctx.restore();
       }
+
+      pieces = pieces.filter((p) => {
+        const age = now - p.born;
+        if (age >= p.life) return false;
+        if (p.y > H + 200) return false;
+        return true;
+      });
+
+      if (pieces.length > 900) pieces = pieces.slice(pieces.length - 900);
 
       if (t < dur) {
         raf = requestAnimationFrame(tick);
       } else {
-        // final clear to ensure absolutely no leftovers
-        ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+        ctx.clearRect(0, 0, W, H);
       }
     };
 
@@ -282,8 +361,7 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     return () => {
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(raf);
-      // cleanup clear (extra safety)
-      ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+      ctx.clearRect(0, 0, W, H);
     };
   }, [burstId]);
 
@@ -430,6 +508,20 @@ export default function LetterTracingGame() {
 
   // Tracks whether we successfully entered *native* fullscreen (so we can sync on ESC)
   const nativeFsEnteredRef = useRef(false);
+
+  // 🔊 Confetti audio
+  const confettiAudioRef = useRef<HTMLAudioElement | null>(null);
+  const playConfettiSound = useCallback(async () => {
+    const a = confettiAudioRef.current;
+    if (!a) return;
+    try {
+      a.volume = 1;
+      a.currentTime = 0;
+      await a.play();
+    } catch {
+      // ignore autoplay/restriction issues
+    }
+  }, []);
 
   const currentStroke: TraceStroke | null = useMemo(() => {
     if (!letterData) return null;
@@ -944,7 +1036,9 @@ export default function LetterTracingGame() {
 
     // stronger + ensures it always turns off
     setConfetti(true);
-    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 1700);
+    // run for full 4s to match the continuous corner shower duration
+    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
+    void playConfettiSound();
 
     if (!kidId) return;
 
@@ -1412,6 +1506,7 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
       onContextMenu={(e) => e.preventDefault()}
     >
         <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
+        <audio ref={confettiAudioRef} src={CONFETTI_AUDIO_SRC} preload="auto" />
       <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
           <div className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800">
