@@ -1,10 +1,3 @@
-/**
- * Batch Insights Rollup
- *
- * Scheduled function that runs 3 times daily (11:00, 17:00, 23:00 IST).
- * Processes all game sessions since last run and updates kids/{kidId}.summary.
- */
-
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
@@ -17,6 +10,13 @@ interface GameSessionData {
   createdAt?: admin.firestore.Timestamp;
   endedAt?: admin.firestore.Timestamp;
   gameId?: string;
+
+  // for tracing/skill rollups
+  skillTags?: string[];
+  tagDeltas?: Record<string, { attempts?: number; correct?: number; wrong?: number }>;
+  attempts?: number;
+  correct?: number;
+  wrong?: number;
 }
 
 interface GameStats {
@@ -38,97 +38,77 @@ interface KidSummary {
   games: Record<string, GameStats>;
 }
 
-/**
- * Converts a Firestore Timestamp to YYYY-MM-DD in Asia/Kolkata timezone
- */
+type LetterMaps = {
+  lowerDone: Record<string, true>;
+  lowerPerfect: Record<string, true>;
+  upperDone: Record<string, true>;
+  upperPerfect: Record<string, true>;
+};
+
 function toDateKey(timestamp: admin.firestore.Timestamp): string {
   const date = timestamp.toDate();
   const kolkataOffset = 5.5 * 60 * 60 * 1000;
   const kolkataDate = new Date(date.getTime() + kolkataOffset);
-
-  const year = kolkataDate.getUTCFullYear();
-  const month = String(kolkataDate.getUTCMonth() + 1).padStart(2, "0");
-  const day = String(kolkataDate.getUTCDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  const y = kolkataDate.getUTCFullYear();
+  const m = String(kolkataDate.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(kolkataDate.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-/**
- * Converts a Firestore Timestamp to YYYY-WW (ISO week) in Asia/Kolkata timezone
- */
 function toWeekKey(timestamp: admin.firestore.Timestamp): string {
   const date = timestamp.toDate();
   const kolkataOffset = 5.5 * 60 * 60 * 1000;
   const kolkataDate = new Date(date.getTime() + kolkataOffset);
-
   const dayOfWeek = kolkataDate.getUTCDay() || 7;
   const nearestThursday = new Date(kolkataDate.getTime());
   nearestThursday.setUTCDate(kolkataDate.getUTCDate() + 4 - dayOfWeek);
-
   const yearStart = new Date(Date.UTC(nearestThursday.getUTCFullYear(), 0, 1));
   const weekNo = Math.ceil((((nearestThursday.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-
   return `${nearestThursday.getUTCFullYear()}-W${String(weekNo).padStart(2, "0")}`;
 }
 
-/**
- * Checks if dateKey is exactly one day after prevDateKey
- */
 function isYesterday(dateKey: string, prevDateKey: string): boolean {
   const date = new Date(dateKey);
   const prevDate = new Date(prevDateKey);
   const diffMs = date.getTime() - prevDate.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-  return diffDays === 1;
+  return diffMs / (1000 * 60 * 60 * 24) === 1;
 }
 
-/**
- * Apply a single session to the summary (incremental update logic)
- */
 function applySummaryUpdate(existingSummary: Partial<KidSummary>, session: GameSessionData): KidSummary {
-  const { accuracy = 0, durationSec = 0, createdAt, endedAt, gameId = "unknown" } = session;
+  const accuracy = session.accuracy ?? 0;
+  const durationSec = session.durationSec ?? 0;
+  const createdAt = session.createdAt;
+  const endedAt = session.endedAt;
+  const gameId = session.gameId || "unknown";
 
   const lastPlayedAt = endedAt || createdAt || admin.firestore.Timestamp.now();
   const dateKey = toDateKey(lastPlayedAt);
   const weekKey = toWeekKey(lastPlayedAt);
 
-  // Update totalSessions
   const totalSessions = (existingSummary.totalSessions || 0) + 1;
 
-  // Update last10Acc array (prepend, max 10)
   const last10Acc = [accuracy, ...(existingSummary.last10Acc || [])].slice(0, 10);
-  const avgAccuracy10 = last10Acc.reduce((sum, acc) => sum + acc, 0) / last10Acc.length;
+  const avgAccuracy10 = last10Acc.reduce((s, a) => s + a, 0) / last10Acc.length;
 
-  // Update streakDays
   let streakDays = existingSummary.streakDays || 0;
   const prevDateKey = existingSummary.lastPlayedDateKey || "";
 
-  if (!prevDateKey) {
-    streakDays = 1;
-  } else if (dateKey === prevDateKey) {
-    // Same day, no change
-  } else if (isYesterday(dateKey, prevDateKey)) {
-    streakDays += 1;
-  } else {
-    streakDays = 1;
-  }
+  if (!prevDateKey) streakDays = 1;
+  else if (dateKey === prevDateKey) {
+    // same day
+  } else if (isYesterday(dateKey, prevDateKey)) streakDays += 1;
+  else streakDays = 1;
 
-  // Update timeSpentWeekSec
   let timeSpentWeekSec = durationSec;
   const prevWeekKey = existingSummary.weekKey || "";
+  if (weekKey === prevWeekKey) timeSpentWeekSec = (existingSummary.timeSpentWeekSec || 0) + durationSec;
 
-  if (weekKey === prevWeekKey) {
-    timeSpentWeekSec = (existingSummary.timeSpentWeekSec || 0) + durationSec;
-  }
-
-  // Update per-game stats
   const games = existingSummary.games || {};
   const gameStats = games[gameId] || { plays: 0, bestAccuracy: 0, lastPlayedAt };
 
   gameStats.plays += 1;
   gameStats.bestAccuracy = Math.max(gameStats.bestAccuracy, accuracy);
   gameStats.lastPlayedAt = lastPlayedAt;
-
   games[gameId] = gameStats;
 
   return {
@@ -145,194 +125,244 @@ function applySummaryUpdate(existingSummary: Partial<KidSummary>, session: GameS
   };
 }
 
-/**
- * Core rollup logic (shared across all schedule times and manual triggers)
- */
-export async function runBatchInsightsRollup(
-  label: string,
-  db: admin.firestore.Firestore
-): Promise<{
-  kidsUpdated: number;
-  sessionsProcessed: number;
-  from: admin.firestore.Timestamp;
-  to: admin.firestore.Timestamp;
-}> {
-  const startTime = Date.now();
+function uniq<T>(arr: T[]): T[] {
+  return Array.from(new Set(arr));
+}
 
+function getTags(session: GameSessionData): string[] {
+  const a = Array.isArray(session.skillTags) ? session.skillTags.map(String) : [];
+  const b = session.tagDeltas && typeof session.tagDeltas === "object" ? Object.keys(session.tagDeltas).map(String) : [];
+  return uniq([...a, ...b]).filter(Boolean);
+}
+
+function extractLetterAndCase(tags: string[]): { letter: string | null; letterCase: "lower" | "upper" | null } {
+  const lower = tags.map((t) => t.toLowerCase());
+
+  const letterTag = lower.find((t) => t.startsWith("letter:"));
+  const caseTag = lower.find((t) => t === "case:lower" || t === "case:upper");
+
+  let letter: string | null = null;
+  if (letterTag) {
+    const raw = letterTag.split("letter:")[1] || "";
+    const ch = raw.trim().slice(0, 1);
+    if (ch >= "a" && ch <= "z") letter = ch;
+  }
+
+  const letterCase = caseTag ? (caseTag.endsWith("lower") ? "lower" : "upper") : null;
+  return { letter, letterCase };
+}
+
+function isPerfect(session: GameSessionData): boolean {
+  // Prefer explicit accuracy if provided
+  if (typeof session.accuracy === "number" && Number.isFinite(session.accuracy)) {
+    return session.accuracy >= 100; // or >= 95 if you want
+  }
+
+  // Or derive from tagDeltas (if the game sends it)
+  if (session.tagDeltas && typeof session.tagDeltas === "object") {
+    const anyWrong = Object.values(session.tagDeltas).some((d) => (d?.wrong ?? 0) > 0);
+    return !anyWrong;
+  }
+
+  // LetterTracing currently doesn't send accuracy/tagDeltas → don't assume perfect
+  return false;
+}
+
+
+function normalizeLetterMaps(existing: any): LetterMaps {
+  const letters = existing?.letters || {};
+  const ld = letters?.lower?.done || existing?.lowerDoneMap || {};
+  const lp = letters?.lower?.perfect || existing?.lowerPerfectMap || {};
+  const ud = letters?.upper?.done || existing?.upperDoneMap || {};
+  const up = letters?.upper?.perfect || existing?.upperPerfectMap || {};
+
+  return {
+    lowerDone: { ...(ld || {}) },
+    lowerPerfect: { ...(lp || {}) },
+    upperDone: { ...(ud || {}) },
+    upperPerfect: { ...(up || {}) },
+  };
+}
+
+function countMap(m: Record<string, true>): number {
+  return Object.keys(m || {}).length;
+}
+
+function unionCount(a: Record<string, true>, b: Record<string, true>): number {
+  const keys = new Set([...Object.keys(a || {}), ...Object.keys(b || {})]);
+  return keys.size;
+}
+
+/**
+ * Core rollup logic
+ */
+export async function runBatchInsightsRollup(label: string, db: admin.firestore.Firestore) {
   logger.info(`[batchInsightsRollup:${label}] Starting rollup`);
 
-  try {
-    // Read config
-    const configRef = db.doc("config/insights");
-    const configSnap = await configRef.get();
+  const configRef = db.doc("config/insights");
+  const configSnap = await configRef.get();
+  if (!configSnap.exists) throw new Error("config/insights not found");
 
-    if (!configSnap.exists) {
-      logger.warn(`[batchInsightsRollup:${label}] config/insights not found; skipping`);
-      throw new Error("config/insights not found");
-    }
+  const configData = configSnap.data();
+  if (configData?.enabled !== true) throw new Error("Insights are currently disabled");
 
-    const configData = configSnap.data();
-    const enabled = configData?.enabled === true;
+  const lastRunAt =
+    configData?.lastRunAt || admin.firestore.Timestamp.fromMillis(Date.now() - 8 * 60 * 60 * 1000);
+  const now = admin.firestore.Timestamp.now();
 
-    if (!enabled) {
-      logger.info(`[batchInsightsRollup:${label}] insights disabled; skipping`);
-      throw new Error("Insights are currently disabled");
-    }
+  logger.info(`[batchInsightsRollup:${label}] Processing sessions since ${lastRunAt.toDate().toISOString()}`);
 
-    // Determine lastRunAt
-    const lastRunAt =
-      configData?.lastRunAt || admin.firestore.Timestamp.fromMillis(Date.now() - 8 * 60 * 60 * 1000);
-    const now = admin.firestore.Timestamp.now();
+  const sessionsQuery = db
+    .collectionGroup("gameSessions")
+    .where("createdAt", ">", lastRunAt)
+    .orderBy("createdAt", "asc");
 
-    logger.info(`[batchInsightsRollup:${label}] Processing sessions since ${lastRunAt.toDate().toISOString()}`);
+  const sessionsSnap = await sessionsQuery.get();
+  logger.info(`[batchInsightsRollup:${label}] Found ${sessionsSnap.size} sessions`);
 
-    // Query collectionGroup for sessions since lastRunAt
-    const sessionsQuery = db
-      .collectionGroup("gameSessions")
-      .where("createdAt", ">", lastRunAt)
-      .orderBy("createdAt", "asc");
-
-    const sessionsSnap = await sessionsQuery.get();
-    logger.info(`[batchInsightsRollup:${label}] Found ${sessionsSnap.size} sessions to process`);
-
-    if (sessionsSnap.empty) {
-      // Update lastRunAt even if no sessions
-      await configRef.update({
-        lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
-        lastRunLabel: label,
-      });
-
-      logger.info(`[batchInsightsRollup:${label}] No sessions to process; updated lastRunAt`);
-      return {
-        kidsUpdated: 0,
-        sessionsProcessed: 0,
-        from: lastRunAt,
-        to: now,
-      };
-    }
-
-    // Group sessions by kidId
-    const sessionsByKid = new Map<string, GameSessionData[]>();
-
-    for (const doc of sessionsSnap.docs) {
-      const kidId = doc.ref.parent.parent?.id; // kids/{kidId}/gameSessions/{sessionId}
-      if (!kidId) continue;
-
-      const sessionData = doc.data() as GameSessionData;
-      if (!sessionsByKid.has(kidId)) sessionsByKid.set(kidId, []);
-      sessionsByKid.get(kidId)!.push(sessionData);
-    }
-
-    logger.info(`[batchInsightsRollup:${label}] Processing ${sessionsByKid.size} kids`);
-
-    // Process each kid
-    let kidsUpdated = 0;
-
-    // IMPORTANT FIX:
-    // You cannot reuse the same batch after commit(). Create a NEW batch each time.
-    let batch = db.batch();
-    let batchCount = 0;
-
-    for (const [kidId, sessions] of sessionsByKid) {
-      const kidRef = db.collection("kids").doc(kidId);
-      const kidDoc = await kidRef.get();
-
-      if (!kidDoc.exists) {
-        logger.warn(`[batchInsightsRollup:${label}] Kid ${kidId} not found; skipping`);
-        continue;
-      }
-
-      let summary = (kidDoc.data()?.summary || {}) as Partial<KidSummary>;
-
-      // Apply each session in order
-      for (const session of sessions) {
-        summary = applySummaryUpdate(summary, session);
-      }
-
-      // Write back - use set with merge to avoid "field specified multiple times" error
-      batch.set(
-        kidRef,
-        {
-          summary: {
-            ...summary,
-            lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-        },
-        { merge: true }
-      );
-
-      batchCount++;
-      kidsUpdated++;
-
-      // Commit batch every 500 writes (Firestore limit)
-      if (batchCount >= 500) {
-        await batch.commit();
-        logger.info(`[batchInsightsRollup:${label}] Committed batch of ${batchCount} updates`);
-
-        // NEW batch after commit (critical)
-        batch = db.batch();
-        batchCount = 0;
-      }
-    }
-
-    // Commit remaining
-    if (batchCount > 0) {
-      await batch.commit();
-      logger.info(`[batchInsightsRollup:${label}] Committed final batch of ${batchCount} updates`);
-    }
-
-    // Update config lastRunAt
+  if (sessionsSnap.empty) {
     await configRef.update({
       lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
       lastRunLabel: label,
     });
+    return { kidsUpdated: 0, sessionsProcessed: 0, from: lastRunAt, to: now };
+  }
 
-    const duration = Date.now() - startTime;
-    logger.info(
-      `[batchInsightsRollup:${label}] Completed: ${sessionsSnap.size} sessions, ${kidsUpdated} kids updated, ${duration}ms`
+  // group by kidId (works for kids/{kidId}/gameSessions/{id})
+  const sessionsByKid = new Map<string, GameSessionData[]>();
+  for (const doc of sessionsSnap.docs) {
+    const kidId = doc.ref.parent.parent?.id;
+    if (!kidId) continue;
+    const d = doc.data() as GameSessionData;
+    if (!sessionsByKid.has(kidId)) sessionsByKid.set(kidId, []);
+    sessionsByKid.get(kidId)!.push(d);
+  }
+
+  let kidsUpdated = 0;
+  let batch = db.batch();
+  let batchCount = 0;
+
+  for (const [kidId, sessions] of sessionsByKid) {
+    const kidRef = db.collection("kids").doc(kidId);
+    const kidDoc = await kidRef.get();
+    if (!kidDoc.exists) continue;
+
+    // existing doc state
+    let summary = (kidDoc.data()?.summary || {}) as Partial<KidSummary>;
+    const existingProgress = (kidDoc.data()?.progress || {}) as any;
+    const existingByGame = (existingProgress.byGame || {}) as any;
+
+    // letter tracing progress state (dedup)
+    const existingLT = existingByGame["letter-tracing"] || {};
+    const maps = normalizeLetterMaps(existingLT);
+
+    // apply sessions
+    for (const session of sessions) {
+      summary = applySummaryUpdate(summary, session);
+
+      if ((session.gameId || "") === "letter-tracing") {
+        const tags = getTags(session);
+        const { letter, letterCase } = extractLetterAndCase(tags);
+        if (letter && letterCase) {
+          const perfect = isPerfect(session);
+          if (letterCase === "lower") {
+            maps.lowerDone[letter] = true;
+            if (perfect) maps.lowerPerfect[letter] = true;
+          } else {
+            maps.upperDone[letter] = true;
+            if (perfect) maps.upperPerfect[letter] = true;
+          }
+        }
+      }
+    }
+
+    // compute counts
+    const lowerDone = countMap(maps.lowerDone);
+    const upperDone = countMap(maps.upperDone);
+    const lowerPerfect = countMap(maps.lowerPerfect);
+    const upperPerfect = countMap(maps.upperPerfect);
+
+    const overallDone = unionCount(maps.lowerDone, maps.upperDone);
+    const overallPerfect = unionCount(maps.lowerPerfect, maps.upperPerfect);
+
+    const ltOut = {
+      totalLevels: 26,
+      completedLevels: overallDone,
+
+      overallDone,
+      overallPerfect,
+      lowerDone,
+      lowerPerfect,
+      upperDone,
+      upperPerfect,
+
+      letters: {
+        lower: { done: maps.lowerDone, perfect: maps.lowerPerfect },
+        upper: { done: maps.upperDone, perfect: maps.upperPerfect },
+      },
+
+      lastPlayedAt: summary.lastPlayedAt || admin.firestore.Timestamp.now(),
+      lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    const nextByGame = {
+      ...existingByGame,
+      "letter-tracing": ltOut,
+    };
+
+    batch.set(
+      kidRef,
+      {
+        summary: {
+          ...summary,
+          lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        progress: {
+          ...existingProgress,
+          byGame: nextByGame,
+        },
+      },
+      { merge: true }
     );
 
-    return {
-      kidsUpdated,
-      sessionsProcessed: sessionsSnap.size,
-      from: lastRunAt,
-      to: now,
-    };
-  } catch (err: any) {
-    // ✅ LOG FULL ERROR DETAILS (so you can see "requires an index" if that's the cause)
-    logger.error(`[batchInsightsRollup:${label}] FAILED`, {
-      code: err?.code,
-      message: err?.message,
-      details: err?.details,
-      stack: err?.stack,
-    });
-    throw err;
+    batchCount++;
+    kidsUpdated++;
+
+    if (batchCount >= 500) {
+      await batch.commit();
+      batch = db.batch();
+      batchCount = 0;
+    }
   }
+
+  if (batchCount > 0) await batch.commit();
+
+  await configRef.update({
+    lastRunAt: admin.firestore.FieldValue.serverTimestamp(),
+    lastRunLabel: label,
+  });
+
+  return { kidsUpdated, sessionsProcessed: sessionsSnap.size, from: lastRunAt, to: now };
 }
 
 /**
- * Scheduled function: 11:00 AM IST (05:30 UTC)
+ * Scheduled runs (IST aligned via UTC times)
  */
 export const batchInsightsRollup11am = onSchedule(
   {
     schedule: "30 5 * * *", // 05:30 UTC = 11:00 IST
     timeZone: "UTC",
-    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
-    await runBatchInsightsRollup("11am", db);
+    await runBatchInsightsRollup("11am", db); // ✅ await only, don't return
   }
 );
 
-/**
- * Scheduled function: 5:00 PM IST (11:30 UTC)
- */
 export const batchInsightsRollup5pm = onSchedule(
   {
     schedule: "30 11 * * *", // 11:30 UTC = 17:00 IST
     timeZone: "UTC",
-    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
@@ -340,14 +370,10 @@ export const batchInsightsRollup5pm = onSchedule(
   }
 );
 
-/**
- * Scheduled function: 11:00 PM IST (17:30 UTC)
- */
 export const batchInsightsRollup11pm = onSchedule(
   {
     schedule: "30 17 * * *", // 17:30 UTC = 23:00 IST
     timeZone: "UTC",
-    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();

@@ -244,13 +244,23 @@ export default function ParentDashboard() {
     ).length;
 
     const gamesStats = summary?.games || {};
-    const accuracies = Object.values(gamesStats)
-      .map((g: any) => g?.avgAccuracy)
-      .filter((a): a is number => typeof a === "number");
-    const avgScore =
-      accuracies.length > 0
-        ? accuracies.reduce((sum, a) => sum + a, 0) / accuracies.length
-        : null;
+const nums = Object.values(gamesStats)
+  .map((g: any) =>
+    typeof g?.avgAccuracy === "number"
+      ? g.avgAccuracy
+      : typeof g?.bestAccuracy === "number"
+        ? g.bestAccuracy
+        : null
+  )
+  .filter((n): n is number => typeof n === "number");
+
+const avgScore =
+  typeof summary?.avgAccuracy10 === "number"
+    ? summary.avgAccuracy10
+    : nums.length > 0
+      ? nums.reduce((sum, a) => sum + a, 0) / nums.length
+      : null;
+
 
     const totalPoints = summary?.totalPoints ?? null;
 

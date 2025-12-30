@@ -6,11 +6,14 @@
 // ✅ Fullscreen stable (native fullscreen when supported, “immersive mode” fallback when not).
 // ✅ NEW: dropdown to jump to any letter in this level
 // ✅ NEW: Next Letter button (skip current letter for testing)
+// ✅ NEW: Confetti audio + center burst + continuous top-left/top-right shower (4s)
+// ✅ NEW: Levels page shows game progress (no polling; manual refresh button)
 //
 // IMPORTANT: traceLetters.ts must be PURE TS (no JSX). JSX belongs here (.tsx).
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { doc, getDoc, getFirestore } from "firebase/firestore";
 import {
   TRACE_LETTERS,
   TRACE_LEVELS,
@@ -144,6 +147,79 @@ async function exitFullscreenSafe() {
   }
 }
 
+/** -------- Progress helpers (flexible, works with multiple doc shapes) -------- */
+function isUpperLetterId(x: string) {
+  return /^[A-Z]$/.test(x);
+}
+function isLowerLetterId(x: string) {
+  return /^[a-z]$/.test(x);
+}
+
+function extractMasteredItems(data: any): string[] {
+  const candidates = [
+    data?.masteredItems,
+    data?.mastered,
+    data?.itemsMastered,
+    data?.summary?.masteredItems,
+    data?.summary?.mastered,
+    data?.stats?.masteredItems,
+    data?.stats?.mastered,
+    data?.progress?.masteredItems,
+    data?.progress?.mastered,
+  ];
+
+  for (const c of candidates) {
+    if (Array.isArray(c)) return c.map((v) => String(v)).filter(Boolean);
+    if (c && typeof c === "object") {
+      // map/object-set style { A:true, a:true } OR { A:{...} }
+      return Object.keys(c).filter(Boolean);
+    }
+  }
+
+  // last fallback: try scanning a "levels" object
+  const levels = data?.levels;
+  if (levels && typeof levels === "object") {
+    const out: string[] = [];
+    for (const k of Object.keys(levels)) {
+      const lv = (levels as any)[k];
+      const arr = lv?.masteredItems;
+      if (Array.isArray(arr)) out.push(...arr.map((v: any) => String(v)));
+    }
+    return out.filter(Boolean);
+  }
+
+  return [];
+}
+
+function extractUpdatedAtMs(data: any): number | undefined {
+  const candidates = [
+    data?.updatedAt,
+    data?.lastUpdatedAt,
+    data?.refreshedAt,
+    data?.syncedAt,
+    data?.lastPlayedAt,
+    data?.summary?.updatedAt,
+    data?.stats?.updatedAt,
+  ];
+
+  for (const v of candidates) {
+    if (!v) continue;
+    if (typeof v === "number") return v;
+    if (v instanceof Date) return v.getTime();
+    if (typeof v?.toMillis === "function") return v.toMillis();
+    if (typeof v?.seconds === "number") return v.seconds * 1000;
+  }
+  return undefined;
+}
+
+type ProgressState = {
+  status: "idle" | "loading" | "ready" | "error";
+  mastered: Set<string>;
+  sourcePath?: string;
+  updatedAtMs?: number;
+  error?: string;
+};
+
 const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
 
 // ⭐ Your Canva asset (saved in /public/star.png)
@@ -239,11 +315,11 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
 
         spawnRect(
           {
-            x: W * (0.45 + Math.random() * 0.10),
-            y: H * (0.40 + Math.random() * 0.10),
+            x: W * (0.45 + Math.random() * 0.1),
+            y: H * (0.4 + Math.random() * 0.1),
             vx: (Math.random() - 0.5) * (10 + Math.random() * 6),
             vy: -(7 + Math.random() * 10),
-            g: 0.22 + Math.random() * 0.20,
+            g: 0.22 + Math.random() * 0.2,
             w: isStreamer ? size * 1.8 : size,
             h: isStreamer ? size * 0.55 : size,
             rot: Math.random() * Math.PI,
@@ -267,7 +343,7 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
             y: rnd(-50, -10),
             vx: side === "left" ? rnd(0.6, 2.4) : rnd(-2.4, -0.6),
             vy: rnd(1.2, 3.8),
-            g: 0.12 + Math.random() * 0.10,
+            g: 0.12 + Math.random() * 0.1,
             w: isStreamer ? size * 1.9 : size,
             h: isStreamer ? size * 0.55 : size,
             rot: Math.random() * Math.PI,
@@ -427,6 +503,74 @@ export default function LetterTracingGame() {
       : null;
 
   // --------------------
+  // Progress (Levels page only, no polling)
+  // --------------------
+  const [progress, setProgress] = useState<ProgressState>({
+    status: "idle",
+    mastered: new Set<string>(),
+  });
+
+  const fetchProgress = useCallback(async () => {
+    if (!kidId) {
+      setProgress({ status: "idle", mastered: new Set<string>() });
+      return;
+    }
+
+    setProgress((p) => ({
+      ...p,
+      status: "loading",
+      error: undefined,
+    }));
+
+    const db = getFirestore();
+
+    // We try a few likely doc locations so it works even if your backend stores it differently.
+    const candidates: Array<{ path: string[]; label: string }> = [
+      { path: ["kids", kidId, "progress", PROGRESS_DOC_ID], label: "kids/{kidId}/progress/{docId}" },
+      { path: ["kids", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "kids/{kidId}/gamesProgress/{docId}" },
+      { path: ["kids", kidId, "progress", GAME_ID], label: "kids/{kidId}/progress/{gameId}" },
+      { path: ["kids", kidId, "gameSummaries", GAME_ID], label: "kids/{kidId}/gameSummaries/{gameId}" },
+      { path: ["students", kidId, "progress", PROGRESS_DOC_ID], label: "students/{kidId}/progress/{docId}" },
+      { path: ["students", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "students/{kidId}/gamesProgress/{docId}" },
+    ];
+
+    for (const c of candidates) {
+      try {
+const snap = await getDoc(doc(db, c.path.join("/")));
+        if (!snap.exists()) continue;
+
+        const data = snap.data();
+        const items = extractMasteredItems(data);
+        const updatedAtMs = extractUpdatedAtMs(data);
+
+        setProgress({
+          status: "ready",
+          mastered: new Set(items),
+          sourcePath: c.label,
+          updatedAtMs,
+        });
+        return;
+      } catch {
+        // try next
+      }
+    }
+
+    // nothing found yet (first-time users)
+    setProgress({
+      status: "ready",
+      mastered: new Set<string>(),
+      sourcePath: "not-found",
+      updatedAtMs: undefined,
+    });
+  }, [kidId]);
+
+  // Fetch ONCE when Levels page loads/returns. No polling.
+  useEffect(() => {
+    if (mode !== "levels") return;
+    void fetchProgress();
+  }, [mode, fetchProgress]);
+
+  // --------------------
   // Stroke engine state
   // --------------------
   const [strokeIndex, setStrokeIndex] = useState(0);
@@ -485,12 +629,11 @@ export default function LetterTracingGame() {
     try {
       a.loop = true;
       a.volume = 0.7; // adjust if needed
-      // Start fresh each time tracing begins
       a.currentTime = 0;
       await a.play(); // may reject if not initiated by user gesture
       traceAudioPlayingRef.current = true;
     } catch {
-      // autoplay restrictions or other issues — ignore (game should not break)
+      // ignore autoplay restrictions
     }
   }, []);
 
@@ -533,7 +676,7 @@ export default function LetterTracingGame() {
     return expandViewBox(vb, VIEWBOX_PAD);
   }, [letterData?.viewBox]);
 
-  // ✅ Safe startT/endT (prevents TS error on union type)
+  // ✅ Safe startT/endT
   const strokeStartT = useMemo(() => {
     return currentStroke && currentStroke.kind === "trace" ? currentStroke.startT : undefined;
   }, [currentStroke]);
@@ -570,8 +713,6 @@ export default function LetterTracingGame() {
     };
   }, [mode]);
 
-
-
   // ✅ If user exits *native* fullscreen (ESC), sync fs=1 only when we truly were native-fullscreen
   useEffect(() => {
     const onFsChange = () => {
@@ -582,7 +723,6 @@ export default function LetterTracingGame() {
         nativeFsEnteredRef.current = false;
 
         const sp = new URLSearchParams(window.location.search);
-        // If you want immersive-mode to remain even after ESC, remove this block.
         if (sp.get("fs") === "1") {
           sp.delete("fs");
           setSearchParams(sp, { replace: true });
@@ -591,7 +731,6 @@ export default function LetterTracingGame() {
     };
 
     document.addEventListener("fullscreenchange", onFsChange);
-    // Safari desktop
     document.addEventListener("webkitfullscreenchange" as any, onFsChange);
 
     return () => {
@@ -707,7 +846,6 @@ export default function LetterTracingGame() {
       setTrimStartLen(sLen);
       setSamples(pts);
 
-      // NOTE: keep reset here (new stroke item = fresh start)
       setLastIndex(0);
       lastIndexRef.current = 0;
       return;
@@ -731,7 +869,6 @@ export default function LetterTracingGame() {
     setTrimStartLen(sLen);
     setSamples(pts);
 
-    // NOTE: keep reset here (new stroke item = fresh start)
     setLastIndex(0);
     lastIndexRef.current = 0;
   }, [currentStroke?.pathD, currentStroke?.kind, strokeStartT, strokeEndT]);
@@ -759,7 +896,7 @@ export default function LetterTracingGame() {
     if (started || lastIndex > 0) return;
 
     let raf = 0;
-    const durMs = 7600; // ✅ slower than 5200
+    const durMs = 7600;
     const t0 = performance.now();
 
     const tick = (now: number) => {
@@ -778,7 +915,6 @@ export default function LetterTracingGame() {
 
   const guideIndex = useMemo(() => {
     if (!samples.length) return 0;
-    // ✅ if child already traced some part, star stays at stopping point (no restart)
     return started || lastIndex > 0 ? clamp(lastIndex, 0, samples.length - 1) : clamp(hintIndex, 0, samples.length - 1);
   }, [samples.length, started, lastIndex, hintIndex]);
 
@@ -812,9 +948,7 @@ export default function LetterTracingGame() {
 
   // completed strokes stay visible
   const totalStrokes = letterData?.strokes?.length ?? 0;
-  const completedCount = letterDone
-    ? totalStrokes
-    : Math.min(totalStrokes, strokeIndex + (ignoreMovesRef.current ? 1 : 0));
+  const completedCount = letterDone ? totalStrokes : Math.min(totalStrokes, strokeIndex + (ignoreMovesRef.current ? 1 : 0));
 
   const completedStrokes = useMemo(() => {
     if (!letterData) return [];
@@ -830,7 +964,7 @@ export default function LetterTracingGame() {
   const dashArray = rawLen > 0 ? `${progressLen} ${rawLen}` : undefined;
   const dashOffset = rawLen > 0 ? `${-trimStartLen}` : undefined;
 
-  // ✅ dropdown options (jump to any letter in this level) — hook MUST be before any return
+  // ✅ dropdown options (jump to any letter in this level)
   const jumpOptions = useMemo(() => {
     if (mode !== "play" || isPretrace) return [];
     const lv = levelId ?? 1;
@@ -851,7 +985,6 @@ export default function LetterTracingGame() {
     navigate(url, { replace });
   }
 
-  // Navigate back to the games portal (prefer history back, otherwise explicit route)
   function goGamesPortal() {
     try {
       const s = (window.history && (window.history.state as any)) || null;
@@ -873,25 +1006,21 @@ export default function LetterTracingGame() {
     sp.set("level", String(levelNum));
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
-    // fs=1 is UI “immersive mode” (native fullscreen may or may not be available)
     if (getNativeFullscreenEl() || fs) sp.set("fs", "1");
     navigateTo(sp, replace);
   }
 
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
-    // Always navigate first
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
     sp.set("level", String(levelNum));
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
-    // Turn on immersive mode by default (works even on iOS where native FS is unavailable)
     sp.set("fs", "1");
     navigateTo(sp, false);
 
-    // Let layout paint before trying fullscreen
     await new Promise<void>((resolve) => {
       requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
     });
@@ -899,7 +1028,6 @@ export default function LetterTracingGame() {
     const wrapper = fsRef.current;
     if (!wrapper) return;
 
-    // Try native fullscreen if supported; if it fails, immersive mode still works.
     const ok = await requestFullscreenSafe(wrapper as any);
     if (ok) nativeFsEnteredRef.current = true;
   }
@@ -907,7 +1035,6 @@ export default function LetterTracingGame() {
   async function setFs(on: boolean) {
     clearTimers();
     if (on) {
-      // Always set fs=1 (immersive mode), then try native fullscreen (if supported)
       const sp = new URLSearchParams(window.location.search);
       sp.set("fs", "1");
       setSearchParams(sp, { replace: true });
@@ -920,7 +1047,6 @@ export default function LetterTracingGame() {
       return;
     }
 
-    // Turn off immersive mode and exit native fullscreen if active
     const sp = new URLSearchParams(window.location.search);
     sp.delete("fs");
     setSearchParams(sp, { replace: true });
@@ -933,7 +1059,6 @@ export default function LetterTracingGame() {
 
   function goLevels() {
     clearTimers();
-    // Exit both immersive mode and native fullscreen, then go to levels
     setFs(false);
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -961,7 +1086,6 @@ export default function LetterTracingGame() {
     hintIndexRef.current = 0;
   }
 
-  // ✅ Next Letter button uses this (skip without completing)
   function goNext() {
     clearTimers();
     if (mode !== "play") return;
@@ -1001,7 +1125,7 @@ export default function LetterTracingGame() {
 
   function completeStroke() {
     clearTimers();
-    stopTraceAudio(); // 🔊 ensure it stops immediately at stroke end
+    stopTraceAudio();
     ignoreMovesRef.current = true;
 
     const pid = activePointerIdRef.current;
@@ -1009,9 +1133,7 @@ export default function LetterTracingGame() {
     if (pid !== null && el) {
       try {
         (el as any).releasePointerCapture?.(pid);
-      } catch {
-        // ignore
-      }
+      } catch {}
     }
 
     startedRef.current = false;
@@ -1024,7 +1146,6 @@ export default function LetterTracingGame() {
 
     const nextStroke = strokeIndex + 1;
     if (letterData && nextStroke < letterData.strokes.length) {
-      // ✅ force "lift and start again" between strokes
       timersRef.current.strokeAdvance = window.setTimeout(() => {
         ignoreMovesRef.current = false;
         setStrokeIndex((prev) => prev + 1);
@@ -1034,9 +1155,7 @@ export default function LetterTracingGame() {
 
     setLetterDone(true);
 
-    // stronger + ensures it always turns off
     setConfetti(true);
-    // run for full 4s to match the continuous corner shower duration
     timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
     void playConfettiSound();
 
@@ -1048,45 +1167,27 @@ export default function LetterTracingGame() {
       const mastered = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
 
       const skillTags: string[] = [
-  ...(letterData?.skillTags ?? []),
-  isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${levelForTracking}`,
-];
+        ...(letterData?.skillTags ?? []),
+        isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${levelForTracking}`,
+      ];
 
-// ✅ Build tagDeltas so your backend can update skill counters reliably
-const tagDeltas = Object.fromEntries(
-  skillTags.map((tag) => [
-    tag,
-    { attempts: 1, correct: 1, wrong: 0 },
-  ])
-);
+      const tagDeltas = Object.fromEntries(skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }]));
 
-void recordLevelResult({
-  gameId: GAME_ID,
-  progressDocId: PROGRESS_DOC_ID,
-  kidId,
-  levelId: levelForTracking,
-
-  // ✅ unified fields your engine/backend likes
-  completed: true,
-  accuracyPct: 100,
-  durationSec: Math.round(spentMs / 1000),
-  score: 100,
-
-  // ✅ skill analytics
-  skillTags,
-  tagDeltas,
-
-  // ✅ for “mastered items” display in dashboard
-  masteredItems: [mastered].filter(Boolean),
-
-  completedAt: Date.now(),
-} as any).catch(() => {
-  // ignore (game should not break if network fails)
-});
-
-    } catch {
-      // ignore
-    }
+      void recordLevelResult({
+        gameId: GAME_ID,
+        progressDocId: PROGRESS_DOC_ID,
+        kidId,
+        levelId: levelForTracking,
+        completed: true,
+        accuracyPct: 100,
+        durationSec: Math.round(spentMs / 1000),
+        score: 100,
+        skillTags,
+        tagDeltas,
+        masteredItems: [mastered].filter(Boolean),
+        completedAt: Date.now(),
+      } as any).catch(() => {});
+    } catch {}
   }
 
   // --------------------
@@ -1095,7 +1196,6 @@ void recordLevelResult({
   function handlePointerDown(e: React.PointerEvent) {
     if (letterDone) return;
     if (!currentStroke) return;
-    // enforce lift-lock: do not start while moves are ignored
     if (ignoreMovesRef.current) return;
 
     e.preventDefault();
@@ -1112,7 +1212,6 @@ void recordLevelResult({
       return;
     }
 
-    // ✅ allow resume: if already traced some part, allow starting near the last traced point
     const startRadius = 14;
     const resumeRadius = 18;
 
@@ -1122,7 +1221,6 @@ void recordLevelResult({
 
     if (dist(p, resumePt) > allowedR) return;
 
-    // 🔊 start tracing sound (user gesture)
     void startTraceAudio();
 
     startedRef.current = true;
@@ -1130,7 +1228,6 @@ void recordLevelResult({
 
     setStarted(true);
 
-    // ✅ IMPORTANT: do NOT reset lastIndex when resuming
     if (!hasProgress) {
       setLastIndex(0);
       lastIndexRef.current = 0;
@@ -1171,7 +1268,6 @@ void recordLevelResult({
     }
 
     if (bestD <= tolerance) {
-      // keep both state + ref in sync (avoids stale closure on mobile)
       lastIndexRef.current = bestI;
       setLastIndex(bestI);
 
@@ -1181,12 +1277,10 @@ void recordLevelResult({
 
   function handlePointerUp(e: React.PointerEvent) {
     if (activePointerIdRef.current === e.pointerId) {
-      stopTraceAudio(); // 🔊 stop when lifting
+      stopTraceAudio();
       try {
         (e.currentTarget as any).releasePointerCapture?.(e.pointerId);
-      } catch {
-        // ignore
-      }
+      } catch {}
 
       activePointerIdRef.current = null;
       startedRef.current = false;
@@ -1201,19 +1295,56 @@ void recordLevelResult({
   // --------------------
   if (mode === "levels") {
     const LEVELS = TRACE_LEVELS as unknown as TraceLevelView[];
+    const mastered = progress.mastered;
 
-const pretraceChips = (PRETRACE_LEVEL.items ?? [])
-  .map((id) => PRETRACE_ITEMS[id]?.label ?? "")
-  .filter((x): x is string => Boolean(x))
-  .slice(0, 6);
+    // chips for warmup (keep ids so we can show completion state)
+    const pretraceChips = (PRETRACE_LEVEL.items ?? [])
+      .map((id) => ({ id, label: PRETRACE_ITEMS[id]?.label ?? String(id) }))
+      .filter((x) => Boolean(x.label))
+      .slice(0, 6);
 
+    // overall counts
+    const preTotal = PRETRACE_LEVEL.items.length;
+    const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
 
+    const upperSet = new Set<string>();
+    const lowerSet = new Set<string>();
+    for (const lv of LEVELS) {
+      for (const p of lv.pairs ?? []) {
+        if (p.upper) upperSet.add(String(p.upper));
+        if (p.lower) lowerSet.add(String(p.lower));
+      }
+    }
+    const upperTotal = upperSet.size;
+    const lowerTotal = lowerSet.size;
+    const upperDone = Array.from(upperSet).filter((id) => mastered.has(id)).length;
+    const lowerDone = Array.from(lowerSet).filter((id) => mastered.has(id)).length;
+
+    const letterTotal = upperTotal + lowerTotal;
+    const letterDoneCount = upperDone + lowerDone;
+    const letterPct = letterTotal > 0 ? Math.round((letterDoneCount / letterTotal) * 100) : 0;
+
+    const updatedLabel =
+      progress.updatedAtMs && Number.isFinite(progress.updatedAtMs)
+        ? new Date(progress.updatedAtMs).toLocaleString()
+        : undefined;
+
+    const levelProgress = (lv: TraceLevelView) => {
+      const ids: string[] = [];
+      for (const p of lv.pairs ?? []) {
+        if (p.upper) ids.push(String(p.upper));
+        if (p.lower) ids.push(String(p.lower));
+      }
+      const unique = Array.from(new Set(ids));
+      const done = unique.filter((id) => mastered.has(id)).length;
+      const total = unique.length;
+      const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+      return { done, total, pct };
+    };
 
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-10">
-        {/* Hero / Header */}
         <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
-          {/* soft blobs */}
           <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
@@ -1221,14 +1352,40 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
           <div className="relative">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                
-
                 <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">Letter Tracing Adventure</h1>
 
                 <p className="mt-2 max-w-2xl text-sm text-slate-700">
                   Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
                   <span className="font-semibold">Small</span> letters.
                 </p>
+
+                {/* Progress summary */}
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    🎯 Letters: {letterDoneCount}/{letterTotal} ({letterPct}%)
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    🔠 Capital: {upperDone}/{upperTotal}
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    🔡 Small: {lowerDone}/{lowerTotal}
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    ✍️ Warm-up: {preDone}/{preTotal}
+                  </span>
+                  {updatedLabel && (
+                    <span className="rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-white/60">
+                      Last synced: {updatedLabel}
+                    </span>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                <div className="mt-3 w-full max-w-xl">
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
+                    <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${letterPct}%` }} />
+                  </div>
+                </div>
               </div>
 
               <div className="flex items-center flex-wrap gap-2">
@@ -1237,6 +1394,17 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                   className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
                 >
                   ← Back to Games
+                </button>
+
+                <button
+                  onClick={() => void fetchProgress()}
+                  disabled={!kidId || progress.status === "loading"}
+                  className={[
+                    "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
+                    (!kidId || progress.status === "loading") ? "opacity-60 cursor-not-allowed" : "",
+                  ].join(" ")}
+                >
+                  {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
                 </button>
 
                 <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
@@ -1255,7 +1423,6 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
               {/* Learning Path */}
               <div className="lg:col-span-2">
                 <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
-                  {/* vertical “path” line */}
                   <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
 
                   <div className="space-y-4 pl-12">
@@ -1267,7 +1434,6 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                         "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
                       ].join(" ")}
                     >
-                      {/* node */}
                       <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
                         <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
                           <span className="animate-bounce text-lg">🚀</span>
@@ -1280,23 +1446,44 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                           <div className="mt-0.5 text-sm font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
                         </div>
 
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
                           <span className="animate-pulse">●</span> Ready
+                          <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
+                            {preDone}/{preTotal}
+                          </span>
                         </span>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {pretraceChips.map((c, i) => (
-                          <span
-                            key={`${c}-${i}`}
-                            className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
-                          >
-                            {c}
-                          </span>
-                        ))}
+                        {pretraceChips.map((c, i) => {
+                          const done = mastered.has(String(c.id));
+                          return (
+                            <span
+                              key={`${c.label}-${i}`}
+                              className={[
+                                "rounded-full px-3 py-1 text-xs font-semibold ring-1",
+                                done
+                                  ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
+                                  : "bg-white/80 text-slate-700 ring-white/70",
+                              ].join(" ")}
+                            >
+                              {c.label}
+                              {done ? " ✓" : ""}
+                            </span>
+                          );
+                        })}
                         <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
                           {PRETRACE_LEVEL.items.length} activities
                         </span>
+                      </div>
+
+                      <div className="mt-3">
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
+                          <div
+                            className="h-full rounded-full bg-emerald-500/70"
+                            style={{ width: `${preTotal > 0 ? Math.round((preDone / preTotal) * 100) : 0}%` }}
+                          />
+                        </div>
                       </div>
 
                       <div className="mt-3 flex items-center justify-between">
@@ -1308,13 +1495,20 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                     {/* Levels 1+ */}
                     {LEVELS.map((lv: any) => {
                       const ready = isLevelReady(lv.levelId);
+                      const lp = levelProgress(lv);
 
-                      const pairLabels = (lv.pairs ?? [])
-                        .map((p: any) => (p?.upper && p?.lower ? `${p.upper}${p.lower}` : ""))
-                        .filter(Boolean);
+                      const pairBadges = (lv.pairs ?? [])
+                        .map((p: any) => {
+                          const label = p?.upper && p?.lower ? `${p.upper}${p.lower}` : p?.upper ? String(p.upper) : p?.lower ? String(p.lower) : "";
+                          if (!label) return null;
+                          const done =
+                            (p?.upper ? mastered.has(String(p.upper)) : true) && (p?.lower ? mastered.has(String(p.lower)) : true);
+                          return { label, done };
+                        })
+                        .filter(Boolean) as Array<{ label: string; done: boolean }>;
 
-                      const shownPairs = pairLabels.slice(0, 6);
-                      const more = Math.max(0, pairLabels.length - shownPairs.length);
+                      const shownPairs = pairBadges.slice(0, 6);
+                      const more = Math.max(0, pairBadges.length - shownPairs.length);
 
                       return (
                         <button
@@ -1328,7 +1522,6 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                               : "cursor-not-allowed border-white/40 bg-white/50 opacity-60",
                           ].join(" ")}
                         >
-                          {/* node */}
                           <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
                             <div
                               className={[
@@ -1349,8 +1542,11 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                             </div>
 
                             {ready ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
                                 <span className="animate-pulse">●</span> Ready
+                                <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
+                                  {lp.done}/{lp.total}
+                                </span>
                               </span>
                             ) : (
                               <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-extrabold text-slate-600 ring-1 ring-slate-200">
@@ -1359,14 +1555,20 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                             )}
                           </div>
 
-                          {pairLabels.length > 0 && (
+                          {pairBadges.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-2">
-                              {shownPairs.map((t: string) => (
+                              {shownPairs.map((t) => (
                                 <span
-                                  key={t}
-                                  className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/70"
+                                  key={t.label}
+                                  className={[
+                                    "rounded-full px-3 py-1 text-xs font-semibold ring-1",
+                                    t.done
+                                      ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
+                                      : "bg-white/80 text-slate-700 ring-white/70",
+                                  ].join(" ")}
                                 >
-                                  {t}
+                                  {t.label}
+                                  {t.done ? " ✓" : ""}
                                 </span>
                               ))}
                               {more > 0 && (
@@ -1377,8 +1579,18 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                             </div>
                           )}
 
+                          {ready && lp.total > 0 && (
+                            <div className="mt-3">
+                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
+                                <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${lp.pct}%` }} />
+                              </div>
+                            </div>
+                          )}
+
                           <div className="mt-3 flex items-center justify-between">
-                            <div className="text-xs font-semibold text-slate-600">{ready ? "Tap to begin this level" : "Locked for now"}</div>
+                            <div className="text-xs font-semibold text-slate-600">
+                              {ready ? "Tap to begin this level" : "Locked for now"}
+                            </div>
                             <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
                           </div>
                         </button>
@@ -1438,11 +1650,17 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                   <div className="mt-4 text-xs font-semibold text-slate-500">
                     🌟 This screen is a “learning path” — kids feel like they’re moving forward level by level.
                   </div>
+
+                  {/* Debug hint (safe to keep, helps you validate which doc it read) */}
+                  {progress.status === "ready" && progress.sourcePath && progress.sourcePath !== "not-found" && (
+                    <div className="mt-3 text-[11px] font-semibold text-slate-400">
+                      Progress source: {progress.sourcePath}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* bottom note */}
             <div className="mt-5 text-center text-xs font-semibold text-slate-600">
               Tip: Start from Level 0 even if the child knows letters — it improves pencil control ✍️
             </div>
@@ -1505,8 +1723,9 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
       }
       onContextMenu={(e) => e.preventDefault()}
     >
-        <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
-        <audio ref={confettiAudioRef} src={CONFETTI_AUDIO_SRC} preload="auto" />
+      <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
+      <audio ref={confettiAudioRef} src={CONFETTI_AUDIO_SRC} preload="auto" />
+
       <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
           <div className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800">
@@ -1514,7 +1733,6 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* ✅ Jump dropdown */}
             {!isPretrace && jumpOptions.length > 0 && (
               <select
                 value={`${safePairIndex}|${step}`}
@@ -1532,17 +1750,22 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
               </select>
             )}
 
-            {/* ✅ Skip for testing */}
             <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
               Next
             </button>
 
             {fs ? (
-              <button onClick={() => setFs(false)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              <button
+                onClick={() => setFs(false)}
+                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+              >
                 Exit
               </button>
             ) : (
-              <button onClick={() => setFs(true)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              <button
+                onClick={() => setFs(true)}
+                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+              >
                 Fullscreen
               </button>
             )}
@@ -1588,7 +1811,7 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                     key={`outline-${s.id ?? i}`}
                     d={(s.pathD ?? "").trim()}
                     fill="none"
-                    stroke={hexToRgba(c, 0.10)}
+                    stroke={hexToRgba(c, 0.1)}
                     strokeWidth={10}
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -1645,7 +1868,14 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                   />
 
                   {guideDots.map((d) => (
-                    <circle key={d.key} cx={d.x} cy={d.y} r={4.6} fill={hexToRgba(currentColor, 0.18)} pointerEvents="none" />
+                    <circle
+                      key={d.key}
+                      cx={d.x}
+                      cy={d.y}
+                      r={4.6}
+                      fill={hexToRgba(currentColor, 0.18)}
+                      pointerEvents="none"
+                    />
                   ))}
 
                   {showProgress && (
@@ -1690,13 +1920,7 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
                       {/* MOVING GUIDE STAR */}
                       <g transform={`translate(${guidePt.x}, ${guidePt.y})`} pointerEvents="none">
                         <g>
-                          <animateTransform
-                            attributeName="transform"
-                            type="scale"
-                            values="1;1.12;1"
-                            dur="0.9s"
-                            repeatCount="indefinite"
-                          />
+                          <animateTransform attributeName="transform" type="scale" values="1;1.12;1" dur="0.9s" repeatCount="indefinite" />
                           <image
                             href={STAR_SRC}
                             xlinkHref={STAR_SRC}
@@ -1734,7 +1958,7 @@ const pretraceChips = (PRETRACE_LEVEL.items ?? [])
             {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
           </div>
 
-          {/* Completion popup (bottom-right, not covering the letter) */}
+          {/* Completion popup */}
           {letterDone && (
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute bottom-20 right-4 sm:bottom-24 sm:right-6 pointer-events-auto">
