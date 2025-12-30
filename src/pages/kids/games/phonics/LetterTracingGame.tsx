@@ -212,6 +212,58 @@ function extractUpdatedAtMs(data: any): number | undefined {
   return undefined;
 }
 
+/** -------- Skill tag helpers (fixes upper/lower progress rollup) -------- */
+function normalizeLetterTagFromId(letterId: string | null | undefined): string | null {
+  if (!letterId) return null;
+  const ch = String(letterId).trim().charAt(0);
+  if (!/^[A-Za-z]$/.test(ch)) return null;
+  return `letter:${ch.toLowerCase()}`; // ✅ always a-z
+}
+
+function caseTagFromStep(step: CaseStep): "case:upper" | "case:lower" {
+  return step === 0 ? "case:upper" : "case:lower";
+}
+
+function stripLetterAndCaseTags(tags: string[]) {
+  return (Array.isArray(tags) ? tags : []).filter((t) => {
+    const s = String(t).toLowerCase();
+    if (s.startsWith("letter:")) return false;
+    if (s.startsWith("case:")) return false;
+    return true;
+  });
+}
+
+function uniqTags(tags: Array<string | null | undefined>) {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const t of tags) {
+    const v = (t ?? "").trim();
+    if (!v) continue;
+    if (seen.has(v)) continue;
+    seen.add(v);
+    out.push(v);
+  }
+  return out;
+}
+
+function buildLetterTracingSkillTags(args: {
+  baseTags: string[];
+  isPretrace: boolean;
+  levelForTracking: number;
+  step: CaseStep;
+  currentLetterId: LetterId | null;
+}) {
+  const cleanedBase = stripLetterAndCaseTags(args.baseTags);
+
+  const letterTag = args.isPretrace ? null : normalizeLetterTagFromId(args.currentLetterId);
+  const caseTag = args.isPretrace ? null : caseTagFromStep(args.step);
+  const subtopicTag = args.isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${args.levelForTracking}`;
+
+  // ✅ Final tags used by rollup (case + normalized letter)
+  return uniqTags([...cleanedBase, letterTag, caseTag, subtopicTag]);
+}
+
+
 type ProgressState = {
   status: "idle" | "loading" | "ready" | "error";
   mastered: Set<string>;
@@ -535,8 +587,9 @@ export default function LetterTracingGame() {
     ];
 
     for (const c of candidates) {
-      try {
-const snap = await getDoc(doc(db, c.path.join("/")));
+            try {
+        const snap = await getDoc(doc(db, c.path.join("/")));
+
         if (!snap.exists()) continue;
 
         const data = snap.data();
@@ -1159,21 +1212,28 @@ const snap = await getDoc(doc(db, c.path.join("/")));
     timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
     void playConfettiSound();
 
-    if (!kidId) return;
+        if (!kidId) return;
 
     try {
       const spentMs = timeStart ? Math.max(0, Math.round(performance.now() - timeStart)) : 0;
       const levelForTracking = isPretrace ? 0 : levelId ?? 1;
       const mastered = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
 
-      const skillTags: string[] = [
-        ...(letterData?.skillTags ?? []),
-        isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${levelForTracking}`,
-      ];
+      const baseTags = Array.isArray(letterData?.skillTags) ? letterData!.skillTags : [];
 
-      const tagDeltas = Object.fromEntries(skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }]));
+      const skillTags = buildLetterTracingSkillTags({
+        baseTags,
+        isPretrace,
+        levelForTracking,
+        step,
+        currentLetterId,
+      });
 
-      void recordLevelResult({
+      const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> =
+        Object.fromEntries(skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }]));
+
+      // Fire-and-forget progress write
+      recordLevelResult({
         gameId: GAME_ID,
         progressDocId: PROGRESS_DOC_ID,
         kidId,
@@ -1187,8 +1247,12 @@ const snap = await getDoc(doc(db, c.path.join("/")));
         masteredItems: [mastered].filter(Boolean),
         completedAt: Date.now(),
       } as any).catch(() => {});
-    } catch {}
+    } catch {
+      // never block gameplay for tracking errors
+    }
   }
+
+
 
   // --------------------
   // Pointer handling

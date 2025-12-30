@@ -1,5 +1,5 @@
 // src/pages/parent/components/progress/ParentGamesProgress.tsx
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -112,40 +112,27 @@ function getStatusBadge(completed: number, total: number) {
   return { label: "In progress", cls: "bg-amber-100 text-amber-800 dark:bg-amber-900/25 dark:text-amber-200" };
 }
 
-type LetterBreakdown = {
-  overallDone: number;
-  overallPerfect: number;
+type LetterPractice = {
   lowerDone: number;
-  lowerPerfect: number;
   upperDone: number;
-  upperPerfect: number;
-  source: "rollup" | "skillTagStats" | "none";
+  overallDone: number;
+  lowerLetters: string[]; // a..z (lowercase)
+  upperLetters: string[]; // A..Z
+  sourceCounts: "rollup" | "skillTagStats" | "none";
+  sourceLetters: "skillTagStats" | "none";
 };
 
 /**
- * Fallback compute from skillTagStats if rollup fields are not present.
- * Perfect = wrong==0 and (attempts>0 OR correct>0)
- * Case detection: doc id contains case:lower / case:upper OR data.case
+ * Extract practiced letters from skillTagStats.
+ * Practiced = attempts>0 OR correct>0 OR wrong>0.
+ * Tag format expected somewhere in key: "letter:a" and "case:lower|upper".
  */
-function computeFromSkillTagStats(skillTagStats: Record<string, any> | null): LetterBreakdown {
-  const lowerDone = new Set<string>();
-  const upperDone = new Set<string>();
-  const overallDone = new Set<string>();
-
-  const lowerPerfect = new Set<string>();
-  const upperPerfect = new Set<string>();
-  const overallPerfect = new Set<string>();
+function lettersFromSkillTagStats(skillTagStats: Record<string, any> | null) {
+  const lower = new Set<string>();
+  const upper = new Set<string>();
 
   if (!skillTagStats) {
-    return {
-      overallDone: 0,
-      overallPerfect: 0,
-      lowerDone: 0,
-      lowerPerfect: 0,
-      upperDone: 0,
-      upperPerfect: 0,
-      source: "none",
-    };
+    return { lowerLetters: [] as string[], upperLetters: [] as string[], source: "none" as const };
   }
 
   for (const [rawId, data] of Object.entries(skillTagStats)) {
@@ -156,43 +143,43 @@ function computeFromSkillTagStats(skillTagStats: Record<string, any> | null): Le
     if (!mLetter) continue;
     const letter = mLetter[1];
 
-    const mCase = key.match(/case:(lower|upper)/);
-    const dataCase = String(data?.case || data?.letterCase || "").toLowerCase();
-    const isLower = mCase?.[1] === "lower" || dataCase === "lower" || key.includes("lowercase");
-    const isUpper = mCase?.[1] === "upper" || dataCase === "upper" || key.includes("uppercase");
-
     const attempts = safeNum(data?.attempts ?? data?.tries ?? data?.count ?? data?.totalAttempts);
     const correct = safeNum(data?.correct ?? data?.right ?? data?.success ?? data?.correctCount);
     const wrong = safeNum(data?.wrong ?? data?.incorrect ?? data?.fail ?? data?.wrongCount);
 
-    overallDone.add(letter);
-    if (isLower) lowerDone.add(letter);
-    if (isUpper) upperDone.add(letter);
+    const practiced = attempts > 0 || correct > 0 || wrong > 0;
+    if (!practiced) continue;
 
-    const isPerfect = wrong === 0 && (attempts > 0 || correct > 0);
-    if (isPerfect) {
-      overallPerfect.add(letter);
-      if (isLower) lowerPerfect.add(letter);
-      if (isUpper) upperPerfect.add(letter);
-    }
+    const mCase = key.match(/case:(lower|upper)/);
+    const dataCase = String(data?.case || data?.letterCase || "").toLowerCase();
+
+    const isLower = mCase?.[1] === "lower" || dataCase === "lower" || key.includes("lowercase");
+    const isUpper = mCase?.[1] === "upper" || dataCase === "upper" || key.includes("uppercase");
+
+    // If case is missing, we still treat it as practiced in both? No — safer: count only overall via lower list.
+    // But for tracing, case SHOULD exist. We'll default to lowercase if missing.
+    if (isUpper) upper.add(letter.toUpperCase());
+    else lower.add(letter);
   }
 
-  return {
-    overallDone: overallDone.size,
-    overallPerfect: overallPerfect.size,
-    lowerDone: lowerDone.size,
-    lowerPerfect: lowerPerfect.size,
-    upperDone: upperDone.size,
-    upperPerfect: upperPerfect.size,
-    source: "skillTagStats",
-  };
+  const lowerLetters = Array.from(lower).sort();
+  const upperLetters = Array.from(upper).sort();
+
+  return { lowerLetters, upperLetters, source: "skillTagStats" as const };
+}
+
+function formatLetterPreview(list: string[], max = 10) {
+  const arr = Array.isArray(list) ? list : [];
+  const shown = arr.slice(0, max);
+  const extra = Math.max(0, arr.length - shown.length);
+  return { shown, extra };
 }
 
 /**
- * Primary: read from your scheduled rollup output (kids/{kidId} doc).
- * Supports multiple possible field names so it works with your existing structure.
+ * Primary: read counts from scheduled rollup (kids/{kidId} doc).
+ * (We only read COUNTS from rollup; letter LIST comes from skillTagStats.)
  */
-function readFromRollup(kidSummaryData: any | null): Omit<LetterBreakdown, "source"> | null {
+function readCountsFromRollup(kidSummaryData: any | null) {
   if (!kidSummaryData) return null;
 
   const summary = kidSummaryData?.summary || {};
@@ -201,7 +188,6 @@ function readFromRollup(kidSummaryData: any | null): Omit<LetterBreakdown, "sour
   const summaryGames = summary?.games || {};
   const byGame = progress?.byGame || {};
 
-  // Possible locations
   const sLT =
     summaryGames?.["letter-tracing"] ||
     summaryGames?.letterTracing ||
@@ -214,7 +200,6 @@ function readFromRollup(kidSummaryData: any | null): Omit<LetterBreakdown, "sour
     byGame?.letter_tracing ||
     null;
 
-  // Try to extract with many likely names
   const lowerDone = pickNum(
     pLT?.lowerDone, pLT?.lowercaseDone, pLT?.lcDone,
     pLT?.case?.lower?.done, pLT?.cases?.lower?.done,
@@ -229,54 +214,21 @@ function readFromRollup(kidSummaryData: any | null): Omit<LetterBreakdown, "sour
     sLT?.case?.upper?.done, sLT?.cases?.upper?.done
   );
 
-  const lowerPerfect = pickNum(
-    pLT?.lowerPerfect, pLT?.lowercasePerfect, pLT?.lcPerfect,
-    pLT?.case?.lower?.perfect, pLT?.cases?.lower?.perfect,
-    sLT?.lowerPerfect, sLT?.lowercasePerfect, sLT?.lcPerfect,
-    sLT?.case?.lower?.perfect, sLT?.cases?.lower?.perfect
-  );
-
-  const upperPerfect = pickNum(
-    pLT?.upperPerfect, pLT?.uppercasePerfect, pLT?.ucPerfect,
-    pLT?.case?.upper?.perfect, pLT?.cases?.upper?.perfect,
-    sLT?.upperPerfect, sLT?.uppercasePerfect, sLT?.ucPerfect,
-    sLT?.case?.upper?.perfect, sLT?.cases?.upper?.perfect
-  );
-
   const overallDone = pickNum(
     pLT?.overallDone, pLT?.lettersDone, pLT?.completedLetters, pLT?.completedLevels,
     sLT?.overallDone, sLT?.lettersDone, sLT?.completedLetters, sLT?.completedLevels
   );
 
-  const overallPerfect = pickNum(
-    pLT?.overallPerfect, pLT?.perfectLetters,
-    sLT?.overallPerfect, sLT?.perfectLetters
-  );
-
-  // If rollup has NOTHING, return null
-  const hasAny =
-    lowerDone !== null ||
-    upperDone !== null ||
-    lowerPerfect !== null ||
-    upperPerfect !== null ||
-    overallDone !== null ||
-    overallPerfect !== null;
-
+  const hasAny = lowerDone !== null || upperDone !== null || overallDone !== null;
   if (!hasAny) return null;
 
-  // If overall not provided, be conservative: at least max(lower,upper)
   const ld = lowerDone ?? 0;
   const ud = upperDone ?? 0;
-  const lp = lowerPerfect ?? 0;
-  const up = upperPerfect ?? 0;
 
   return {
     lowerDone: ld,
     upperDone: ud,
-    lowerPerfect: lp,
-    upperPerfect: up,
-    overallDone: overallDone ?? Math.max(ld, ud),
-    overallPerfect: overallPerfect ?? Math.max(lp, up),
+    overallDone: overallDone ?? (ld + ud ? Math.max(ld, ud) : 0),
   };
 }
 
@@ -286,12 +238,25 @@ export function ParentGamesProgress({ kidSummaryData, gamesCatalog, onPracticeCl
 
   const lastUpdated = formatDateMaybe(summary?.lastUpdatedAt);
 
-  const letterBreakdown: LetterBreakdown = useMemo(() => {
-    const rollup = readFromRollup(kidSummaryData);
-    if (rollup) {
-      return { ...rollup, source: "rollup" };
-    }
-    return computeFromSkillTagStats(skillTagStats);
+  const letterPractice: LetterPractice = useMemo(() => {
+    const rollupCounts = readCountsFromRollup(kidSummaryData);
+    const fromStats = lettersFromSkillTagStats(skillTagStats);
+
+    const countsSource = rollupCounts ? "rollup" : (fromStats.source === "skillTagStats" ? "skillTagStats" : "none");
+
+    const lowerDone = rollupCounts ? rollupCounts.lowerDone : fromStats.lowerLetters.length;
+    const upperDone = rollupCounts ? rollupCounts.upperDone : fromStats.upperLetters.length;
+    const overallDone = rollupCounts ? rollupCounts.overallDone : Math.max(lowerDone, upperDone);
+
+    return {
+      lowerDone,
+      upperDone,
+      overallDone,
+      lowerLetters: fromStats.lowerLetters,
+      upperLetters: fromStats.upperLetters,
+      sourceCounts: countsSource,
+      sourceLetters: fromStats.source === "skillTagStats" ? "skillTagStats" : "none",
+    };
   }, [kidSummaryData, skillTagStats]);
 
   const games = useMemo(() => {
@@ -317,6 +282,10 @@ export function ParentGamesProgress({ kidSummaryData, gamesCatalog, onPracticeCl
 
   const byGame = progress?.byGame || {};
   const summaryGames = summary?.games || {};
+
+  // tiny “expand” UI only for tracing tile
+  const [showAllLower, setShowAllLower] = useState(false);
+  const [showAllUpper, setShowAllUpper] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -351,9 +320,7 @@ export function ParentGamesProgress({ kidSummaryData, gamesCatalog, onPracticeCl
 
           if (isLetterTracing) {
             total = TOTAL_LETTERS;
-
-            // For letter tracing, prefer scheduled rollup values (or fallback skillTagStats)
-            completed = letterBreakdown.overallDone || 0;
+            completed = letterPractice.overallDone || 0;
           } else {
             if (!total) total = game.totalLevels || 5;
           }
@@ -410,56 +377,132 @@ export function ParentGamesProgress({ kidSummaryData, gamesCatalog, onPracticeCl
 
                   <ProgressBar pct={pct} from={theme.pillFrom} to={theme.pillTo} />
 
-                  {/* Letter tracing: lower/upper + perfect */}
+                  {/* Letter tracing: lower/upper + letters practiced */}
                   {isLetterTracing ? (
-                    <div className="pt-2 space-y-2">
+                    <div className="pt-2 space-y-3">
                       {/* Lowercase */}
-                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
-                        <span className="font-medium">Lowercase</span>
-                        <span className="flex items-center gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+                          <span className="font-medium">Lowercase practiced</span>
                           <span className="font-semibold">
-                            {letterBreakdown.lowerDone}/{TOTAL_LETTERS}
+                            {letterPractice.lowerDone}/{TOTAL_LETTERS}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-200">
-                            Perfect: {letterBreakdown.lowerPerfect}
-                          </span>
-                        </span>
+                        </div>
+                        <ProgressBar
+                          pct={(letterPractice.lowerDone / TOTAL_LETTERS) * 100}
+                          from="from-indigo-500"
+                          to="to-sky-500"
+                        />
+
+                        {letterPractice.sourceLetters === "skillTagStats" && letterPractice.lowerLetters.length > 0 ? (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            {(() => {
+                              const list = showAllLower
+                                ? { shown: letterPractice.lowerLetters, extra: 0 }
+                                : formatLetterPreview(letterPractice.lowerLetters, 10);
+                              const txt = list.shown.join(", ");
+                              return (
+                                <>
+                                  <span className="font-medium text-gray-600 dark:text-gray-300">Letters:</span>{" "}
+                                  <span>{txt}</span>
+                                  {list.extra > 0 ? (
+                                    <>
+                                      {" "}
+                                      <button
+                                        type="button"
+                                        className="underline underline-offset-2 ml-1"
+                                        onClick={() => setShowAllLower(true)}
+                                      >
+                                        +{list.extra} more
+                                      </button>
+                                    </>
+                                  ) : null}
+                                  {showAllLower ? (
+                                    <button
+                                      type="button"
+                                      className="underline underline-offset-2 ml-2"
+                                      onClick={() => setShowAllLower(false)}
+                                    >
+                                      show less
+                                    </button>
+                                  ) : null}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            Letters list will appear after the next stats update.
+                          </div>
+                        )}
                       </div>
-                      <ProgressBar
-                        pct={(letterBreakdown.lowerDone / TOTAL_LETTERS) * 100}
-                        from="from-indigo-500"
-                        to="to-sky-500"
-                      />
 
                       {/* Uppercase */}
-                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
-                        <span className="font-medium">Uppercase</span>
-                        <span className="flex items-center gap-2">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+                          <span className="font-medium">Uppercase practiced</span>
                           <span className="font-semibold">
-                            {letterBreakdown.upperDone}/{TOTAL_LETTERS}
+                            {letterPractice.upperDone}/{TOTAL_LETTERS}
                           </span>
-                          <span className="px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-200">
-                            Perfect: {letterBreakdown.upperPerfect}
-                          </span>
-                        </span>
-                      </div>
-                      <ProgressBar
-                        pct={(letterBreakdown.upperDone / TOTAL_LETTERS) * 100}
-                        from="from-fuchsia-500"
-                        to="to-rose-500"
-                      />
+                        </div>
+                        <ProgressBar
+                          pct={(letterPractice.upperDone / TOTAL_LETTERS) * 100}
+                          from="from-fuchsia-500"
+                          to="to-rose-500"
+                        />
 
-                      <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 pt-1">
-                        <span>Overall Perfect</span>
-                        <span className="font-semibold">
-                          {letterBreakdown.overallPerfect}/{TOTAL_LETTERS}
-                        </span>
+                        {letterPractice.sourceLetters === "skillTagStats" && letterPractice.upperLetters.length > 0 ? (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            {(() => {
+                              const list = showAllUpper
+                                ? { shown: letterPractice.upperLetters, extra: 0 }
+                                : formatLetterPreview(letterPractice.upperLetters, 10);
+                              const txt = list.shown.join(", ");
+                              return (
+                                <>
+                                  <span className="font-medium text-gray-600 dark:text-gray-300">Letters:</span>{" "}
+                                  <span>{txt}</span>
+                                  {list.extra > 0 ? (
+                                    <>
+                                      {" "}
+                                      <button
+                                        type="button"
+                                        className="underline underline-offset-2 ml-1"
+                                        onClick={() => setShowAllUpper(true)}
+                                      >
+                                        +{list.extra} more
+                                      </button>
+                                    </>
+                                  ) : null}
+                                  {showAllUpper ? (
+                                    <button
+                                      type="button"
+                                      className="underline underline-offset-2 ml-2"
+                                      onClick={() => setShowAllUpper(false)}
+                                    >
+                                      show less
+                                    </button>
+                                  ) : null}
+                                </>
+                              );
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            Letters list will appear after the next stats update.
+                          </div>
+                        )}
                       </div>
 
                       <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                        Source:{" "}
+                        Counts source:{" "}
                         <span className="font-semibold">
-                          {letterBreakdown.source === "rollup" ? "Scheduled rollup" : "SkillTagStats fallback"}
+                          {letterPractice.sourceCounts === "rollup" ? "Scheduled rollup" : "SkillTagStats fallback"}
+                        </span>
+                        {" · "}
+                        Letters source:{" "}
+                        <span className="font-semibold">
+                          {letterPractice.sourceLetters === "skillTagStats" ? "SkillTagStats" : "—"}
                         </span>
                       </div>
                     </div>
