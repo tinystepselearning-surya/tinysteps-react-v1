@@ -596,7 +596,7 @@ const allLetterPairs: TracePair[] = useMemo(() => {
 
     for (const c of candidates) {
             try {
-        const snap = await getDoc(doc(db, c.path.join("/")));
+        const snap = await getDoc(doc(db, ...c.path));
 
         if (!snap.exists()) continue;
 
@@ -1378,13 +1378,13 @@ await new Promise<void>((resolve) =>
 
     const tolerance = 12;
     const i0 = clamp(lastIndexRef.current, 0, samples.length - 1);
-    const window = 34;
+    const lookahead = 34;
 
     let bestI = i0;
     let bestD = Infinity;
 
     const startI = i0;
-    const endI = clamp(i0 + window, 0, samples.length - 1);
+    const endI = clamp(i0 + lookahead, 0, samples.length - 1);
 
     for (let i = startI; i <= endI; i++) {
       const d = dist(p, samples[i]);
