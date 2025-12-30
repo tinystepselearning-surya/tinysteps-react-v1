@@ -16,17 +16,15 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
 import {
   TRACE_LETTERS,
-  TRACE_LEVELS,
   PRETRACE_ITEMS,
   PRETRACE_LEVEL,
-  getEnabledPairsForLevel,
-  isLevelReady,
   type LetterId,
   type PreTraceId,
   type TraceLetter,
   type TraceStroke,
   type TracePair,
 } from "./tracing/traceLetters";
+
 import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing";
@@ -148,12 +146,7 @@ async function exitFullscreenSafe() {
 }
 
 /** -------- Progress helpers (flexible, works with multiple doc shapes) -------- */
-function isUpperLetterId(x: string) {
-  return /^[A-Z]$/.test(x);
-}
-function isLowerLetterId(x: string) {
-  return /^[a-z]$/.test(x);
-}
+
 
 function extractMasteredItems(data: any): string[] {
   const candidates = [
@@ -521,13 +514,28 @@ export default function LetterTracingGame() {
   const stepNumRaw = stepParam ? Number(stepParam) : 0;
   const step: CaseStep = stepNumRaw === 1 ? 1 : 0;
 
-  const isPretrace = mode === "play" && levelId === 0;
+// ✅ Only two levels:
+// level 0 = pretrace
+// level 1 = ALL letters A–Z
+const normalizedLevelId = mode === "play" ? (levelId === 0 ? 0 : 1) : null;
+const isPretrace = mode === "play" && normalizedLevelId === 0;
+
+// ✅ Build A–Z pairs once (A+a, B+b, ... Z+z)
+const allLetterPairs: TracePair[] = useMemo(() => {
+  const out: TracePair[] = [];
+  for (let i = 0; i < 26; i++) {
+    const upper = String.fromCharCode(65 + i) as unknown as LetterId;
+    const lower = String.fromCharCode(97 + i) as unknown as LetterId;
+    out.push({ upper, lower } as TracePair);
+  }
+  return out;
+}, []);
 
   const enabledPairs: TracePair[] = useMemo(() => {
-    if (mode !== "play" || isPretrace) return [];
-    const lv = typeof levelId === "number" ? levelId : 1;
-    return getEnabledPairsForLevel(lv);
-  }, [mode, isPretrace, levelId]);
+  if (mode !== "play" || isPretrace) return [];
+  return allLetterPairs; // ✅ Level 1 = all letters
+}, [mode, isPretrace, allLetterPairs]);
+
 
   const safePairIndex = useMemo(() => {
     if (isPretrace) return clamp(pairIndex, 0, PRETRACE_LEVEL.items.length - 1);
@@ -618,10 +626,39 @@ export default function LetterTracingGame() {
   }, [kidId]);
 
   // Fetch ONCE when Levels page loads/returns. No polling.
+    // Fetch ONCE when kid changes (works for both Levels + Play). No polling.
   useEffect(() => {
-    if (mode !== "levels") return;
+    if (!kidId) return;
     void fetchProgress();
-  }, [mode, fetchProgress]);
+  }, [kidId, fetchProgress]);
+
+  // --------------------
+  // Progress counts memo (used in Play header)
+  // --------------------
+  const progressCounts = useMemo(() => {
+    const mastered = progress.mastered;
+
+    const preTotal = PRETRACE_LEVEL.items.length;
+    const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
+
+    let upperDone = 0;
+    let lowerDone = 0;
+
+    for (const p of allLetterPairs) {
+      if (p.upper && mastered.has(String(p.upper))) upperDone++;
+      if (p.lower && mastered.has(String(p.lower))) lowerDone++;
+    }
+
+    return {
+      preDone,
+      preTotal,
+      upperDone,
+      upperTotal: 26,
+      lowerDone,
+      lowerTotal: 26,
+    };
+  }, [progress.mastered, allLetterPairs]);
+
 
   // --------------------
   // Stroke engine state
@@ -1020,7 +1057,7 @@ export default function LetterTracingGame() {
   // ✅ dropdown options (jump to any letter in this level)
   const jumpOptions = useMemo(() => {
     if (mode !== "play" || isPretrace) return [];
-    const lv = levelId ?? 1;
+const lv = 1;
     return enabledPairs.flatMap((p, idx) => {
       const opts: { value: string; label: string }[] = [];
       if (p.upper) opts.push({ value: `${idx}|0`, label: `${p.upper} (Capital · L${lv})` });
@@ -1054,36 +1091,51 @@ export default function LetterTracingGame() {
   }
 
   function navigatePlay(levelNum: number, pairIdx: number, stepNum: CaseStep, replace = false) {
-    const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
-    sp.set("level", String(levelNum));
-    sp.set("pair", String(pairIdx));
-    sp.set("step", String(stepNum));
-    if (getNativeFullscreenEl() || fs) sp.set("fs", "1");
-    navigateTo(sp, replace);
-  }
+  const sp = new URLSearchParams();
+  if (kidId) sp.set("kidId", kidId);
+
+  const lvl = levelNum === 0 ? 0 : 1; // ✅ clamp to {0,1}
+  sp.set("level", String(lvl));
+  sp.set("pair", String(pairIdx));
+  sp.set("step", String(stepNum));
+
+  if (getNativeFullscreenEl() || fs) sp.set("fs", "1");
+  navigateTo(sp, replace);
+}
+
 
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
-    clearTimers();
-    const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
-    sp.set("level", String(levelNum));
-    sp.set("pair", String(pairIdx));
-    sp.set("step", String(stepNum));
+  clearTimers();
 
-    sp.set("fs", "1");
-    navigateTo(sp, false);
+  // ✅ Try native fullscreen first (desktop Chrome/Safari). On iOS Safari this will just fail safely.
+  const ok = await requestFullscreenSafe(document.documentElement);
+  if (ok) nativeFsEnteredRef.current = true;
 
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-    });
+  const sp = new URLSearchParams();
+  if (kidId) sp.set("kidId", kidId);
 
-    const wrapper = fsRef.current;
-    if (!wrapper) return;
+  // ✅ Only two levels: 0=pretrace, 1=all letters
+  sp.set("level", String(levelNum === 0 ? 0 : 1));
+  sp.set("pair", String(pairIdx));
+  sp.set("step", String(stepNum));
 
-    const ok = await requestFullscreenSafe(wrapper as any);
-    if (ok) nativeFsEnteredRef.current = true;
+  // ✅ Always use immersive mode flag (also acts as fullscreen fallback on iOS)
+  sp.set("fs", "1");
+
+  navigateTo(sp, false);
+
+  // ✅ Let the UI render before any follow-up attempts
+await new Promise<void>((resolve) =>
+  requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+);
+
+  // Optional: if we did NOT enter native fullscreen, try fullscreen again after render (some browsers behave better)
+  if (!getNativeFullscreenEl()) {
+    const ok2 = await requestFullscreenSafe(document.documentElement);
+    if (ok2) nativeFsEnteredRef.current = true;
   }
+}
+
 
   async function setFs(on: boolean) {
     clearTimers();
@@ -1110,13 +1162,15 @@ export default function LetterTracingGame() {
     nativeFsEnteredRef.current = false;
   }
 
-  function goLevels() {
-    clearTimers();
-    setFs(false);
-    const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
-    navigateTo(sp, true);
-  }
+  async function goLevels() {
+  clearTimers();
+  await setFs(false);
+
+  const sp = new URLSearchParams();
+  if (kidId) sp.set("kidId", kidId);
+  navigateTo(sp, true);
+}
+
 
   function replay() {
     clearTimers();
@@ -1140,41 +1194,36 @@ export default function LetterTracingGame() {
   }
 
   function goNext() {
-    clearTimers();
-    if (mode !== "play") return;
+  clearTimers();
+  if (mode !== "play") return;
 
-    if (isPretrace) {
-      const nextIdx = safePairIndex + 1;
-      if (nextIdx < PRETRACE_LEVEL.items.length) {
-        navigatePlay(0, nextIdx, 0, false);
-        return;
-      }
-      navigatePlay(1, 0, 0, false);
+  // Level 0: move through warmup shapes, then go to Level 1
+  if (isPretrace) {
+    const nextIdx = safePairIndex + 1;
+    if (nextIdx < PRETRACE_LEVEL.items.length) {
+      navigatePlay(0, nextIdx, 0, false);
       return;
     }
-
-    const currentLevelId = levelId ?? 1;
-
-    if (step === 0) {
-      if (currentPair?.lower) navigatePlay(currentLevelId, safePairIndex, 1, false);
-      else navigatePlay(currentLevelId, safePairIndex + 1, 0, false);
-      return;
-    }
-
-    const nextPair = safePairIndex + 1;
-    if (nextPair < enabledPairs.length) {
-      navigatePlay(currentLevelId, nextPair, 0, false);
-      return;
-    }
-
-    const nextLevelId = currentLevelId + 1;
-    if (nextLevelId <= (TRACE_LEVELS as unknown as TraceLevelView[]).length) {
-      navigatePlay(nextLevelId, 0, 0, false);
-      return;
-    }
-
-    goLevels();
+    navigatePlay(1, 0, 0, false);
+    return;
   }
+
+  // Level 1: each pair = Capital → Small → next pair
+  if (step === 0) {
+    navigatePlay(1, safePairIndex, 1, false);
+    return;
+  }
+
+  const nextPair = safePairIndex + 1;
+  if (nextPair < enabledPairs.length) {
+    navigatePlay(1, nextPair, 0, false);
+    return;
+  }
+
+  // Done A–Z
+  goLevels();
+}
+
 
   function completeStroke() {
     clearTimers();
@@ -1216,8 +1265,8 @@ export default function LetterTracingGame() {
 
     try {
       const spentMs = timeStart ? Math.max(0, Math.round(performance.now() - timeStart)) : 0;
-      const levelForTracking = isPretrace ? 0 : levelId ?? 1;
-      const mastered = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
+  const levelForTracking = isPretrace ? 0 : 1;
+  const masteredItem = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
 
       const baseTags = Array.isArray(letterData?.skillTags) ? letterData!.skillTags : [];
 
@@ -1244,9 +1293,23 @@ export default function LetterTracingGame() {
         score: 100,
         skillTags,
         tagDeltas,
-        masteredItems: [mastered].filter(Boolean),
+        masteredItems: [masteredItem].filter(Boolean),
         completedAt: Date.now(),
       } as any).catch(() => {});
+
+      // ✅ Optimistic UI update (so progress shows immediately without refresh)
+      if (masteredItem) {
+        setProgress((prev) => {
+          const next = new Set(prev.mastered);
+          next.add(String(masteredItem));
+          return {
+            ...prev,
+            status: prev.status === "idle" ? "ready" : prev.status,
+            mastered: next,
+            updatedAtMs: Date.now(),
+          };
+        });
+      }
     } catch {
       // never block gameplay for tracking errors
     }
@@ -1358,8 +1421,17 @@ export default function LetterTracingGame() {
   // Levels screen (UX upgrade only — no logic changes)
   // --------------------
   if (mode === "levels") {
-    const LEVELS = TRACE_LEVELS as unknown as TraceLevelView[];
-    const mastered = progress.mastered;
+  // ✅ Show ONLY Level 1 (A–Z) here (Level 0 is rendered separately above)
+  const LEVELS: TraceLevelView[] = [
+    {
+      levelId: 1,
+      title: "Level 1 — A to Z Letters",
+      subtitle: "Capital & Small",
+      pairs: allLetterPairs.map((p) => ({ upper: p.upper, lower: p.lower })),
+    },
+  ];
+  const mastered = progress.mastered;
+
 
     // chips for warmup (keep ids so we can show completion state)
     const pretraceChips = (PRETRACE_LEVEL.items ?? [])
@@ -1452,35 +1524,84 @@ export default function LetterTracingGame() {
                 </div>
               </div>
 
-              <div className="flex items-center flex-wrap gap-2">
-                <button
-                  onClick={goGamesPortal}
-                  className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
-                >
-                  ← Back to Games
-                </button>
+              {kidId ? (
+                <div className="flex items-center flex-wrap gap-2">
+                  <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+                    🔠 {progressCounts.upperDone}/{progressCounts.upperTotal}
+                  </span>
+                  <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+                    🔡 {progressCounts.lowerDone}/{progressCounts.lowerTotal}
+                  </span>
+                  <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+                    ✍️ {progressCounts.preDone}/{progressCounts.preTotal}
+                  </span>
 
-                <button
-                  onClick={() => void fetchProgress()}
-                  disabled={!kidId || progress.status === "loading"}
-                  className={[
-                    "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
-                    (!kidId || progress.status === "loading") ? "opacity-60 cursor-not-allowed" : "",
-                  ].join(" ")}
-                >
-                  {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
-                </button>
+                  {((isPretrace && pretraceId && progress.mastered.has(String(pretraceId))) ||
+                    (!isPretrace && currentLetterId && progress.mastered.has(String(currentLetterId)))) && (
+                    <span className="rounded-full bg-emerald-50 px-3 py-2 text-xs sm:text-sm font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                      ✅ Already perfect
+                    </span>
+                  )}
 
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  ⭐ Start at the star
-                </span>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  ✋ Lift between strokes
-                </span>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  🎉 Earn confetti
-                </span>
-              </div>
+                  <button
+                    onClick={goGamesPortal}
+                    className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
+                  >
+                    ← Back to Games
+                  </button>
+
+                  <button
+                    onClick={() => void fetchProgress()}
+                    disabled={!kidId || progress.status === "loading"}
+                    className={[
+                      "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
+                      (!kidId || progress.status === "loading") ? "opacity-60 cursor-not-allowed" : "",
+                    ].join(" ")}
+                  >
+                    {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
+                  </button>
+
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                    ⭐ Start at the star
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                    ✋ Lift between strokes
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                    🎉 Earn confetti
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center flex-wrap gap-2">
+                  <button
+                    onClick={goGamesPortal}
+                    className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
+                  >
+                    ← Back to Games
+                  </button>
+
+                  <button
+                    onClick={() => void fetchProgress()}
+                    disabled={!kidId || progress.status === "loading"}
+                    className={[
+                      "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
+                      (!kidId || progress.status === "loading") ? "opacity-60 cursor-not-allowed" : "",
+                    ].join(" ")}
+                  >
+                    {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
+                  </button>
+
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                    ⭐ Start at the star
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                    ✋ Lift between strokes
+                  </span>
+                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
+                    🎉 Earn confetti
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -1498,11 +1619,11 @@ export default function LetterTracingGame() {
                         "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
                       ].join(" ")}
                     >
-                      <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
-                          <span className="animate-bounce text-lg">🚀</span>
-                        </div>
-                      </div>
+<div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
+  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
+    <span className="text-lg">🚀</span>
+  </div>
+</div>
 
                       <div className="flex items-start justify-between gap-3">
                         <div>
@@ -1558,7 +1679,7 @@ export default function LetterTracingGame() {
 
                     {/* Levels 1+ */}
                     {LEVELS.map((lv: any) => {
-                      const ready = isLevelReady(lv.levelId);
+const ready = true; // ✅ always ready (only Level 1)
                       const lp = levelProgress(lv);
 
                       const pairBadges = (lv.pairs ?? [])
@@ -1753,10 +1874,11 @@ export default function LetterTracingGame() {
   const strokeNo = strokeIndex + 1;
 
   const headerLabel = isPretrace
-    ? `Level 0 • ${letterData.label} • Stroke ${strokeNo}/${totalStrokes}`
-    : `Level ${levelId ?? 1} • Pair ${safePairIndex + 1}/${enabledPairs.length || 1} • ${
-        step === 0 ? "Capital" : "Small"
-      } • Letter: ${currentLetterId ?? ""} • Stroke ${strokeNo}/${totalStrokes}`;
+  ? `Level 0 • ${letterData.label} • Stroke ${strokeNo}/${totalStrokes}`
+  : `Level 1 • Pair ${safePairIndex + 1}/${enabledPairs.length} • ${step === 0 ? "Capital" : "Small"} • Letter: ${
+      currentLetterId ?? ""
+    } • Stroke ${strokeNo}/${totalStrokes}`;
+
 
   // fs=1 is immersive mode (fixed), even if native fullscreen isn't supported (iOS)
   const wrapperClass = fs ? "fixed left-0 right-0 top-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
@@ -1802,7 +1924,7 @@ export default function LetterTracingGame() {
                 value={`${safePairIndex}|${step}`}
                 onChange={(e) => {
                   const [pi, st] = e.target.value.split("|").map((x) => Number(x));
-                  navigatePlay(levelId ?? 1, Number.isFinite(pi) ? pi : 0, st === 1 ? 1 : 0, false);
+navigatePlay(1, Number.isFinite(pi) ? pi : 0, st === 1 ? 1 : 0, false);
                 }}
                 className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800"
               >
