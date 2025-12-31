@@ -41,6 +41,7 @@ const KidsPhonicsMission = lazy(() => import('../pages/KidsPhonicsMission'));
 const KidsBalloonPop = lazy(() => import('../pages/KidsBalloonPop'));
 const SoundDetectiveGame = lazy(() => import('../pages/kids/games/phonics/SoundDetectiveGame'));
 const LetterTracingGame = lazy(() => import('../pages/kids/games/phonics/LetterTracingGame'));
+const LetterTracingWithSounds = lazy(() => import('../pages/kids/games/phonics/LetterTracingWithSounds'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -241,6 +242,7 @@ const router = createBrowserRouter(
             { path: 'games/phonics/letter-sound', element: <KidsPhonicsMission /> },
             { path: 'games/phonics/balloon-pop', element: <KidsBalloonPop /> },
             { path: 'games/phonics/letter-tracing', element: <LetterTracingGame /> },
+            { path: 'games/phonics/letter-tracing-sounds', element: <LetterTracingWithSounds /> },
             // Temporary: make /kids/games/speaking safe (redirect to games hub)
             { path: 'games/speaking', element: <KidsGamesHub /> },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },

@@ -139,6 +139,12 @@ export async function recordLevelResult(
       })),
     };
 
+    // Ensure resume/lastPos timestamp is present when lastPos is provided
+    if ((r as any).lastPos) {
+      (payload as any).lastPos = (r as any).lastPos;
+      (payload as any).lastPosUpdatedAt = (r as any).lastPosUpdatedAt ?? Date.now();
+    }
+
     console.debug("[recordLevelResult] sending", {
       kidId: result.kidId,
       gameId: result.gameId,

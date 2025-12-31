@@ -52,6 +52,9 @@ export interface LevelResult {
     itemId?: string;
     [key: string]: unknown;
   };
+  // Optional resume position stored alongside progress
+  lastPos?: { level: number; pair: number; step: 0 | 1 };
+  lastPosUpdatedAt?: number;
   // Optional fields added by wrapper before sending to backend
   eventId?: string;
   schemaVersion?: 1;

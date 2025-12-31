@@ -49,6 +49,14 @@ const PHONICS_GAMES = [
     color: 'text-green-300',
     stageId: 'sound_foundations',
   },
+  {
+    id: 'phonics_letter_tracing_sounds',
+    title: 'Letter Tracing + Sounds',
+    description: 'Age 4+ — Trace letters with sound feedback',
+    route: '/kids/games/phonics/letter-tracing-sounds',
+    color: 'text-green-300',
+    stageId: 'sound_foundations',
+  },
   // More games will be added here later
 ];
 
