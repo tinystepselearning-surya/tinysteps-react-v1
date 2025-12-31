@@ -1,1 +1,0 @@
-import{a8 as a,j as t}from"./index-uo92nVyq.js";import{Toast as m}from"./toast-MALB3itz.js";import"./index-CCWjiW8H.js";import"./index-D35V8LQR.js";function f(){const{toasts:o}=a();return t.jsx("div",{children:o.map(function({id:r,title:s,description:i,action:n,...e}){return t.jsx(m,{title:s||"",description:i||"",action:n,...e},r)})})}export{f as Toaster};

@@ -1,1 +1,0 @@
-import{j as t,C as s,B as e}from"./index-uo92nVyq.js";function a(){return t.jsxs(s,{className:"p-6",children:[t.jsx("h1",{className:"text-2xl font-bold mb-4",children:"Tiny Steps Learning"}),t.jsx(e,{children:"Test Button"})]})}export{a as default};

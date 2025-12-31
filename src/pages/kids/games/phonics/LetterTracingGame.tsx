@@ -71,117 +71,160 @@ function parseLine(pathD: string): { a: { x: number; y: number }; b: { x: number
   };
 }
 
+// --------------------
+// Missing helpers (fixes TS2304)
+// --------------------
+
+function hexToRgba(hex: string, alpha: number): string {
+  const h = String(hex || "").trim().replace("#", "");
+  const a = clamp(alpha, 0, 1);
+
+  // #RGB
+  if (h.length === 3) {
+    const r = parseInt(h[0] + h[0], 16);
+    const g = parseInt(h[1] + h[1], 16);
+    const b = parseInt(h[2] + h[2], 16);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+
+  // #RRGGBB
+  if (h.length === 6) {
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${a})`;
+  }
+
+  // fallback
+  return `rgba(0, 0, 0, ${a})`;
+}
+
+function expandViewBox(viewBox: string, pad: number): string {
+  const vb = String(viewBox || "").trim();
+  const parts = vb.split(/\s+/).map((x) => Number(x));
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return vb || "0 0 100 100";
+
+  const [minX, minY, w, h] = parts;
+  const p = Number.isFinite(pad) ? pad : 0;
+
+  const nx = minX - p;
+  const ny = minY - p;
+  const nw = w + p * 2;
+  const nh = h + p * 2;
+
+  return `${nx} ${ny} ${nw} ${nh}`;
+}
+
+function getNativeFullscreenEl(): Element | null {
+  const d: any = document as any;
+  return (
+    document.fullscreenElement ||
+    d.webkitFullscreenElement ||
+    d.mozFullScreenElement ||
+    d.msFullscreenElement ||
+    null
+  );
+}
+
+async function requestFullscreenSafe(el: Element): Promise<boolean> {
+  try {
+    const anyEl: any = el as any;
+
+    const fn =
+      anyEl.requestFullscreen ||
+      anyEl.webkitRequestFullscreen ||
+      anyEl.mozRequestFullScreen ||
+      anyEl.msRequestFullscreen;
+
+    if (!fn) return false;
+
+    // Some browsers require binding
+    await fn.call(anyEl);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function exitFullscreenSafe(): Promise<boolean> {
+  try {
+    const d: any = document as any;
+
+    const fn =
+      document.exitFullscreen ||
+      d.webkitExitFullscreen ||
+      d.mozCancelFullScreen ||
+      d.msExitFullscreen;
+
+    if (!fn) return false;
+
+    await fn.call(document);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function extractMasteredItems(data: any): string[] {
+  const out: string[] = [];
+
+  const pushMany = (arr: any) => {
+    if (!Array.isArray(arr)) return;
+    for (const v of arr) {
+      const s = String(v ?? "").trim();
+      if (s) out.push(s);
+    }
+  };
+
+  const pushFromTruthMap = (obj: any) => {
+    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return;
+    for (const [k, v] of Object.entries(obj)) {
+      if (!v) continue;
+      const s = String(k ?? "").trim();
+      if (s) out.push(s);
+    }
+  };
+
+  // Most common shapes
+  pushMany(data?.masteredItems);
+  pushMany(data?.mastered);
+  pushMany(data?.itemsMastered);
+  pushMany(data?.summary?.masteredItems);
+  pushMany(data?.stats?.masteredItems);
+
+  // If stored as map { "A": true, "b": true }
+  pushFromTruthMap(data?.masteredItemsMap);
+  pushFromTruthMap(data?.masteredMap);
+  pushFromTruthMap(data?.masteredItemsById);
+
+  // If stored per level (best-effort)
+  if (Array.isArray(data?.levels)) {
+    for (const lv of data.levels) {
+      pushMany(lv?.masteredItems);
+      pushFromTruthMap(lv?.masteredItemsMap);
+    }
+  }
+
+  // Unique
+  return Array.from(new Set(out));
+}
+
+
 function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
   return (clientX: number, clientY: number) => {
     const svg = svgRef.current;
     if (!svg) return { x: 0, y: 0 };
+
     const pt = svg.createSVGPoint();
     pt.x = clientX;
     pt.y = clientY;
+
     const ctm = svg.getScreenCTM();
     if (!ctm) return { x: 0, y: 0 };
-    const inv = ctm.inverse();
-    const sp = pt.matrixTransform(inv);
-    return { x: sp.x, y: sp.y };
+
+    const p = pt.matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
   };
-}
-
-function hexToRgba(hex: string, a: number) {
-  const h = hex.replace("#", "").trim();
-  if (h.length !== 6) return `rgba(59,130,246,${a})`;
-  const n = parseInt(h, 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  return `rgba(${r},${g},${b},${a})`;
-}
-
-// Slightly expand viewBox so letters sit more centered with breathing room
-function expandViewBox(vb: string, pad = 10) {
-  const parts = vb
-    .trim()
-    .split(/[\s,]+/)
-    .map((s) => Number(s));
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return vb;
-  const [x, y, w, h] = parts;
-  const p = Math.max(0, pad);
-  return `${x - p} ${y - p} ${w + p * 2} ${h + p * 2}`;
-}
-
-// Native fullscreen helpers (Safari desktop uses webkit*; iOS Safari has no fullscreen API)
-function getNativeFullscreenEl(): Element | null {
-  const d: any = document;
-  return document.fullscreenElement || d.webkitFullscreenElement || null;
-}
-
-async function requestFullscreenSafe(el: any) {
-  try {
-    if (el?.requestFullscreen) {
-      await el.requestFullscreen({ navigationUI: "hide" } as any);
-      return true;
-    }
-    if (el?.webkitRequestFullscreen) {
-      el.webkitRequestFullscreen(); // Safari
-      return true;
-    }
-  } catch {
-    // ignore
-  }
-  return false;
-}
-
-async function exitFullscreenSafe() {
-  try {
-    const d: any = document;
-    if (document.exitFullscreen) {
-      await document.exitFullscreen();
-      return;
-    }
-    if (d.webkitExitFullscreen) {
-      d.webkitExitFullscreen();
-      return;
-    }
-  } catch {
-    // ignore
-  }
-}
-
-/** -------- Progress helpers (flexible, works with multiple doc shapes) -------- */
-
-function extractMasteredItems(data: any): string[] {
-  const candidates = [
-    data?.masteredItems,
-    data?.mastered,
-    data?.itemsMastered,
-    data?.summary?.masteredItems,
-    data?.summary?.mastered,
-    data?.stats?.masteredItems,
-    data?.stats?.mastered,
-    data?.progress?.masteredItems,
-    data?.progress?.mastered,
-  ];
-
-  for (const c of candidates) {
-    if (Array.isArray(c)) return c.map((v) => String(v)).filter(Boolean);
-    if (c && typeof c === "object") {
-      // map/object-set style { A:true, a:true } OR { A:{...} }
-      return Object.keys(c).filter(Boolean);
-    }
-  }
-
-  // last fallback: try scanning a "levels" object
-  const levels = data?.levels;
-  if (levels && typeof levels === "object") {
-    const out: string[] = [];
-    for (const k of Object.keys(levels)) {
-      const lv = (levels as any)[k];
-      const arr = lv?.masteredItems;
-      if (Array.isArray(arr)) out.push(...arr.map((v: any) => String(v)));
-    }
-    return out.filter(Boolean);
-  }
-
-  return [];
 }
 
 function extractUpdatedAtMs(data: any): number | undefined {
@@ -497,6 +540,7 @@ export default function LetterTracingGame() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const fsRef = useRef<HTMLDivElement | null>(null);
+  
 
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
   const fs = searchParams.get("fs") === "1";
@@ -1072,18 +1116,19 @@ export default function LetterTracingGame() {
     navigate(url, { replace });
   }
 
+  // ✅ Always go to Games list (no history back)
+  const GAMES_PORTAL_ROUTE = "/kids/games/phonics"; 
+  // If your main games page is "/kids/games", change it to that.
+
   function goGamesPortal() {
-    try {
-      const s = (window.history && (window.history.state as any)) || null;
-      if (s && typeof s.idx === "number" && s.idx > 0) {
-        navigate(-1);
-        return;
-      }
-    } catch {}
+    clearTimers();
 
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
-    const url = sp.toString() ? `/kids/games/phonics?${sp.toString()}` : "/kids/games/phonics";
+
+    const url = sp.toString() ? `${GAMES_PORTAL_ROUTE}?${sp.toString()}` : GAMES_PORTAL_ROUTE;
+
+    // replace:true prevents landing back into letter tracing when pressing browser back
     navigate(url, { replace: true });
   }
 
@@ -1634,37 +1679,25 @@ export default function LetterTracingGame() {
                       const ready = true;
                       const lp = levelProgress(lv);
 
-                      const pairBadges = (lv.pairs ?? [])
-                        .map((p) => {
-                          const label =
-                            p?.upper && p?.lower
-                              ? `${p.upper}${p.lower}`
-                              : p?.upper
-                                ? String(p.upper)
-                                : p?.lower
-                                  ? String(p.lower)
-                                  : "";
-                          if (!label) return null;
-                          const done =
-                            (p?.upper ? mastered.has(String(p.upper)) : true) &&
-                            (p?.lower ? mastered.has(String(p.lower)) : true);
-                          return { label, done };
-                        })
-                        .filter(Boolean) as Array<{ label: string; done: boolean }>;
+                      const upperLetters = (lv.pairs ?? [])
+                        .map((p) => (p?.upper ? String(p.upper) : null))
+                        .filter(Boolean) as string[];
 
-                      const shownPairs = pairBadges.slice(0, 6);
-                      const more = Math.max(0, pairBadges.length - shownPairs.length);
+                      const lowerLetters = (lv.pairs ?? [])
+                        .map((p) => (p?.lower ? String(p.lower) : null))
+                        .filter(Boolean) as string[];
+
+                      const upperDoneLv = upperLetters.filter((ch) => mastered.has(ch)).length;
+                      const lowerDoneLv = lowerLetters.filter((ch) => mastered.has(ch)).length;
 
                       return (
-                        <button
+                        <div
                           key={lv.levelId}
-                          disabled={!ready}
-                          onClick={() => void handlePlayButtonClick(lv.levelId, 0, 0)}
                           className={[
                             "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
                             ready
-                              ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-                              : "cursor-not-allowed border-white/40 bg-white/50 opacity-60",
+                              ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg"
+                              : "border-white/40 bg-white/50 opacity-60",
                           ].join(" ")}
                         >
                           <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
@@ -1681,40 +1714,145 @@ export default function LetterTracingGame() {
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="text-lg font-extrabold text-slate-900">{lv.title}</div>
-                              {lv.subtitle && <div className="mt-0.5 text-sm font-semibold text-slate-600">{lv.subtitle}</div>}
-                            </div>
-
-                            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                              <span className="animate-pulse">●</span> Ready
-                              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
-                                {lp.done}/{lp.total}
-                              </span>
-                            </span>
-                          </div>
-
-                          {pairBadges.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {shownPairs.map((t) => (
-                                <span
-                                  key={t.label}
-                                  className={[
-                                    "rounded-full px-3 py-1 text-xs font-semibold ring-1",
-                                    t.done
-                                      ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
-                                      : "bg-white/80 text-slate-700 ring-white/70",
-                                  ].join(" ")}
-                                >
-                                  {t.label}
-                                  {t.done ? " ✓" : ""}
-                                </span>
-                              ))}
-                              {more > 0 && (
-                                <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
-                                  +{more} more
-                                </span>
+                              {lv.subtitle && (
+                                <div className="mt-0.5 text-sm font-semibold text-slate-600">{lv.subtitle}</div>
                               )}
                             </div>
-                          )}
+
+                            <div className="flex flex-col items-end gap-2">
+                              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                                <span className="animate-pulse">●</span> Ready
+                                <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
+                                  {lp.done}/{lp.total}
+                                </span>
+                              </span>
+
+                              <button
+                                type="button"
+                                disabled={!ready}
+                                onClick={() => void handlePlayButtonClick(lv.levelId, 0, 0)}
+                                className={[
+                                  "rounded-full px-4 py-2 text-sm font-extrabold shadow-sm transition",
+                                  ready
+                                    ? "bg-slate-900 text-white hover:bg-slate-800"
+                                    : "cursor-not-allowed bg-slate-400 text-white",
+                                ].join(" ")}
+                              >
+                                Start →
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* ✅ Letters (no scroll) — show all at once */}
+                          <div className="mt-3 space-y-3">
+                            {/* Capital */}
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-[11px] font-extrabold text-slate-600">🔠 Capital</div>
+                                <div className="text-[11px] font-semibold text-slate-500">{upperDoneLv}/{upperLetters.length}</div>
+                              </div>
+
+                              {/* Desktop: 13 columns → exactly 2 rows */}
+                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
+                                {upperLetters.map((ch) => {
+                                  const done = mastered.has(ch);
+                                  return (
+                                    <div
+                                      key={`U-${ch}`}
+                                      className={[
+                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                      ].join(" ")}
+                                    >
+                                      {ch}
+                                      {done && (
+                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Mobile: wraps automatically (no horizontal scroll) */}
+                              <div className="mt-2 grid md:hidden gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}>
+                                {upperLetters.map((ch) => {
+                                  const done = mastered.has(ch);
+                                  return (
+                                    <div
+                                      key={`U-m-${ch}`}
+                                      className={[
+                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                      ].join(" ")}
+                                    >
+                                      {ch}
+                                      {done && (
+                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Small */}
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-[11px] font-extrabold text-slate-600">🔡 Small</div>
+                                <div className="text-[11px] font-semibold text-slate-500">{lowerDoneLv}/{lowerLetters.length}</div>
+                              </div>
+
+                              {/* Desktop: 13 columns → exactly 2 rows */}
+                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
+                                {lowerLetters.map((ch) => {
+                                  const done = mastered.has(ch);
+                                  return (
+                                    <div
+                                      key={`L-${ch}`}
+                                      className={[
+                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                      ].join(" ")}
+                                    >
+                                      {ch}
+                                      {done && (
+                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Mobile: wraps automatically (no horizontal scroll) */}
+                              <div className="mt-2 grid md:hidden gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}>
+                                {lowerLetters.map((ch) => {
+                                  const done = mastered.has(ch);
+                                  return (
+                                    <div
+                                      key={`L-m-${ch}`}
+                                      className={[
+                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                      ].join(" ")}
+                                    >
+                                      {ch}
+                                      {done && (
+                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
 
                           {lp.total > 0 && (
                             <div className="mt-3">
@@ -1725,10 +1863,10 @@ export default function LetterTracingGame() {
                           )}
 
                           <div className="mt-3 flex items-center justify-between">
-                            <div className="text-xs font-semibold text-slate-600">Tap to begin this level</div>
-                            <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
+                            <div className="text-xs font-semibold text-slate-600">All letters are shown — tap Start to begin</div>
+                            <div className="text-sm font-black text-slate-900/50">→</div>
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>

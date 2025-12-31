@@ -10,7 +10,7 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { doc, getDoc, getFirestore } from "firebase/firestore";
+import { doc, getDoc, getDocFromServer, getFirestore } from "firebase/firestore";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import {
@@ -295,22 +295,36 @@ function waitForAuthInit(timeoutMs = 5000) {
 }
 
 function outboxKey(kidId: string) {
-  return `ts_progress_outbox_v1:${kidId}:${PROGRESS_DOC_ID}`;
+  return `ts_progress_outbox_v2:${kidId}:${PROGRESS_DOC_ID}`;
 }
 
-function readOutbox(kidId: string): { masteredItem?: string; lastPos?: LastPos; updatedAtMs?: number } | null {
+type Outbox = {
+  // ✅ SHADOW progress (UI must survive refresh until scheduler updates Firestore progress doc)
+  shadowMasteredItems?: string[]; // e.g., ["A","a","line"]
+  shadowLastPos?: LastPos;
+  shadowUpdatedAtMs?: number;
+
+  // ✅ Retry only (if recordLevelResult fails)
+  pendingPayload?: any;
+
+  // Optional: throttle replay attempts
+  lastReplayAtMs?: number;
+  replayCount?: number;
+};
+
+function readOutbox(kidId: string): Outbox | null {
   try {
     const raw = localStorage.getItem(outboxKey(kidId));
     if (!raw) return null;
     const obj = JSON.parse(raw);
     if (!obj || typeof obj !== "object") return null;
-    return obj;
+    return obj as Outbox;
   } catch {
     return null;
   }
 }
 
-function writeOutbox(kidId: string, data: { masteredItem?: string; lastPos?: LastPos; updatedAtMs?: number }) {
+function writeOutbox(kidId: string, data: Outbox) {
   try {
     localStorage.setItem(outboxKey(kidId), JSON.stringify(data));
   } catch {}
@@ -320,6 +334,20 @@ function clearOutbox(kidId: string) {
   try {
     localStorage.removeItem(outboxKey(kidId));
   } catch {}
+}
+
+function uniqStrings(arr: any): string[] {
+  if (!Array.isArray(arr)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const v of arr) {
+    const s = String(v ?? "").trim();
+    if (!s) continue;
+    if (seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+  }
+  return out;
 }
 
 function coerceLastPos(v: any): LastPos | null {
@@ -473,23 +501,23 @@ const LETTER_IMAGE_FILE: Record<string, string> = {
   g: "grape",
   h: "hat",
   i: "igloo",
-  j: "jug",
-  k: "kite",
+  j: "juice",
+  k: "kangaroo",
   l: "lion",
-  m: "mango",
-  n: "nest",
-  o: "orange",
-  p: "parrot",
+  m: "monkey",
+  n: "nose",
+  o: "octopus",
+  p: "pig",
   q: "queen",
-  r: "rabbit",
+  r: "ring",
   s: "sun",
   t: "tiger",
   u: "umbrella",
   v: "van",
-  w: "whale",
-  x: "xylophone",
+  w: "watch",
+  x: "box",
   y: "yoyo",
-  z: "zebra",
+  z: "zoo",
 };
 
 const LETTER_REWARD: Record<string, { word: string; emoji: string }> = {
@@ -497,28 +525,28 @@ const LETTER_REWARD: Record<string, { word: string; emoji: string }> = {
   b: { word: "Ball", emoji: "🏀" },
   c: { word: "Cat", emoji: "🐱" },
   d: { word: "Dog", emoji: "🐶" },
-  e: { word: "Egg", emoji: "🥚" },
+  e: { word: "Elephant", emoji: "🐘" },
   f: { word: "Fish", emoji: "🐟" },
   g: { word: "Grapes", emoji: "🍇" },
   h: { word: "Hat", emoji: "🧢" },
-  i: { word: "Ice cream", emoji: "🍦" },
+  i: { word: "Igloo", emoji: "🧊" },
   j: { word: "Juice", emoji: "🧃" },
-  k: { word: "Kite", emoji: "🪁" },
+  k: { word: "Kangaroo", emoji: "🦘" },
   l: { word: "Lion", emoji: "🦁" },
   m: { word: "Monkey", emoji: "🐵" },
-  n: { word: "Nest", emoji: "🪹" },
-  o: { word: "Orange", emoji: "🍊" },
-  p: { word: "Parrot", emoji: "🦜" },
+  n: { word: "Nose", emoji: "👃" },
+  o: { word: "Octopus", emoji: "🐙" },
+  p: { word: "Pig", emoji: "🐷" },
   q: { word: "Queen", emoji: "👑" },
-  r: { word: "Rabbit", emoji: "🐰" },
+  r: { word: "ring", emoji: "💍" },
   s: { word: "Sun", emoji: "🌞" },
   t: { word: "Tiger", emoji: "🐯" },
   u: { word: "Umbrella", emoji: "☂️" },
   v: { word: "Van", emoji: "🚐" },
-  w: { word: "Whale", emoji: "🐋" },
-  x: { word: "Xylophone", emoji: "🎶" },
+  w: { word: "Watch", emoji: "⌚" },
+  x: { word: "Box", emoji: "📦" },
   y: { word: "Yoyo", emoji: "🪀" },
-  z: { word: "Zebra", emoji: "🦓" },
+  z: { word: "Zoo", emoji: "🦓" },
 };
 
 function getLetterImageCandidates(letterId: LetterId | null): string[] {
@@ -771,6 +799,8 @@ export default function LetterTracingWithSounds() {
   const fsRef = useRef<HTMLDivElement | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  
+
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
   const fs = searchParams.get("fs") === "1";
 
@@ -850,94 +880,191 @@ export default function LetterTracingWithSounds() {
     lastPos: null,
   });
 
-  const fetchProgress = useCallback(async () => {
-    if (!kidId) {
-      setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
-      return;
-    }
-
-    setProgress((p) => ({ ...p, status: "loading", error: undefined }));
-
-    // ✅ Critical: wait until Firebase Auth finishes initializing (hard refresh issue)
-    await waitForAuthInit(5000);
-
-    const db = getFirestore();
-
-    // ✅ Include BOTH docId and gameId variants (covers recordLevelResult implementations)
-    const candidates: Array<{ path: string[]; label: string }> = [
-      { path: ["kids", kidId, "progress", PROGRESS_DOC_ID], label: "kids/{kidId}/progress/{docId}" },
-      { path: ["kids", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "kids/{kidId}/gamesProgress/{docId}" },
-
-      { path: ["kids", kidId, "progress", GAME_ID], label: "kids/{kidId}/progress/{gameId}" },
-      { path: ["kids", kidId, "gamesProgress", GAME_ID], label: "kids/{kidId}/gamesProgress/{gameId}" },
-      { path: ["kids", kidId, "gameSummaries", GAME_ID], label: "kids/{kidId}/gameSummaries/{gameId}" },
-
-      { path: ["students", kidId, "progress", PROGRESS_DOC_ID], label: "students/{kidId}/progress/{docId}" },
-      { path: ["students", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "students/{kidId}/gamesProgress/{docId}" },
-      { path: ["students", kidId, "progress", GAME_ID], label: "students/{kidId}/progress/{gameId}" },
-      { path: ["students", kidId, "gamesProgress", GAME_ID], label: "students/{kidId}/gamesProgress/{gameId}" },
-    ];
-
-    let lastErr: any = null;
-
-    for (const c of candidates) {
-      try {
-        const snap = await getDoc(doc(db, ...(c.path as [string, ...string[]])));
-        if (!snap.exists()) continue;
-
-        const data = snap.data();
-
-        let items = extractMasteredItems(data);
-        let updatedAtMs = extractUpdatedAtMs(data);
-        let lastPos = extractLastPos(data);
-
-        // ✅ Merge local “outbox” (covers hard-refresh right after completion)
-        const ob = readOutbox(kidId);
-        if (ob?.masteredItem) items = Array.from(new Set([...items, String(ob.masteredItem)]));
-        if (ob?.lastPos && (!updatedAtMs || (ob.updatedAtMs ?? 0) >= updatedAtMs)) {
-          lastPos = ob.lastPos;
-          updatedAtMs = ob.updatedAtMs ?? updatedAtMs;
-        }
-
-        setProgress({
-          status: "ready",
-          mastered: new Set(items),
-          lastPos,
-          sourcePath: c.label,
-          updatedAtMs,
-        });
+  const fetchProgress = useCallback(
+    async (opts?: { forceServer?: boolean }) => {
+      if (!kidId) {
+        setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
         return;
-      } catch (err: any) {
-        lastErr = err;
-        // If auth/rules temporarily block during boot, we already waited once above.
-        // We just try the next candidate; if all fail we’ll show a safe fallback.
       }
-    }
 
-    // If nothing found, still merge outbox (so UI doesn’t “lose” just-completed items)
-    const ob = readOutbox(kidId);
-    const merged = new Set<string>();
-    let lastPos: LastPos | null = null;
-    let updatedAtMs: number | undefined = undefined;
+      setProgress((p) => ({ ...p, status: "loading", error: undefined }));
 
-    if (ob?.masteredItem) merged.add(String(ob.masteredItem));
-    if (ob?.lastPos) lastPos = ob.lastPos;
-    if (ob?.updatedAtMs) updatedAtMs = ob.updatedAtMs;
+      await waitForAuthInit(5000);
+      const db = getFirestore();
 
-    setProgress({
-      status: "ready",
-      mastered: merged,
-      lastPos,
-      sourcePath: "not-found",
-      updatedAtMs,
-      error: lastErr ? String(lastErr?.code || lastErr?.message || lastErr) : undefined,
-    });
-  }, [kidId]);
+      const candidates: Array<{ path: string[]; label: string }> = [
+        { path: ["kids", kidId, "progress", PROGRESS_DOC_ID], label: "kids/{kidId}/progress/{docId}" },
+        { path: ["kids", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "kids/{kidId}/gamesProgress/{docId}" },
+        { path: ["kids", kidId, "progress", GAME_ID], label: "kids/{kidId}/progress/{gameId}" },
+        { path: ["kids", kidId, "gamesProgress", GAME_ID], label: "kids/{kidId}/gamesProgress/{gameId}" },
+        { path: ["kids", kidId, "gameSummaries", GAME_ID], label: "kids/{kidId}/gameSummaries/{gameId}" },
+        { path: ["students", kidId, "progress", PROGRESS_DOC_ID], label: "students/{kidId}/progress/{docId}" },
+        { path: ["students", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "students/{kidId}/gamesProgress/{docId}" },
+        { path: ["students", kidId, "progress", GAME_ID], label: "students/{kidId}/progress/{gameId}" },
+        { path: ["students", kidId, "gamesProgress", GAME_ID], label: "students/{kidId}/gamesProgress/{gameId}" },
+      ];
+
+      const ob = readOutbox(kidId);
+      const shadowItems = uniqStrings(ob?.shadowMasteredItems);
+      const shadowLastPos = ob?.shadowLastPos ? coerceLastPos(ob.shadowLastPos) : null;
+      const shadowUpdatedAtMs = typeof ob?.shadowUpdatedAtMs === "number" ? ob.shadowUpdatedAtMs : undefined;
+
+      let lastErr: any = null;
+
+      for (const c of candidates) {
+        try {
+          const ref = doc(db, ...(c.path as [string, ...string[]]));
+          const snap = opts?.forceServer ? await getDocFromServer(ref) : await getDoc(ref);
+          if (!snap.exists()) continue;
+
+          const data = snap.data();
+
+          let items = extractMasteredItems(data);
+          let updatedAtMs = extractUpdatedAtMs(data);
+          let lastPos = extractLastPos(data);
+
+          // ✅ MERGE SHADOW into UI (so refresh never "loses" progress)
+          const serverSet = new Set(items);
+          if (shadowItems.length) {
+            for (const s of shadowItems) {
+              if (!serverSet.has(s)) items.push(s);
+            }
+          }
+
+          // ✅ Prefer shadow lastPos (because it represents latest local resume point)
+          if (shadowLastPos) lastPos = shadowLastPos;
+
+          // ✅ updatedAtMs best-effort
+          if (shadowUpdatedAtMs && (!updatedAtMs || shadowUpdatedAtMs > updatedAtMs)) {
+            updatedAtMs = shadowUpdatedAtMs;
+          }
+
+          // ✅ PRUNE SHADOW when server progress doc finally contains it
+          if (ob) {
+            const remainingShadow = shadowItems.filter((s) => !serverSet.has(s));
+            const nextOb: Outbox = { ...ob, shadowMasteredItems: remainingShadow };
+
+            // if server caught up fully, we can drop shadowUpdatedAtMs too
+            if (remainingShadow.length === 0) {
+              delete nextOb.shadowMasteredItems;
+              delete nextOb.shadowUpdatedAtMs;
+              // keep shadowLastPos only if you want, but usually safe to drop once caught up
+              delete nextOb.shadowLastPos;
+            }
+
+            const hasAnything =
+              (nextOb.shadowMasteredItems && nextOb.shadowMasteredItems.length > 0) ||
+              !!nextOb.pendingPayload;
+
+            if (hasAnything) writeOutbox(kidId, nextOb);
+            else clearOutbox(kidId);
+          }
+
+          setProgress({
+            status: "ready",
+            mastered: new Set(items),
+            lastPos,
+            sourcePath: c.label,
+            updatedAtMs,
+          });
+          return;
+        } catch (err: any) {
+          lastErr = err;
+        }
+      }
+
+      // Not found anywhere → show SHADOW (still survives hard refresh)
+      const shadowItemsFallback = uniqStrings(ob?.shadowMasteredItems);
+      const shadowLastPosFallback = ob?.shadowLastPos ? coerceLastPos(ob.shadowLastPos) : null;
+      const shadowUpdatedAtMsFallback = typeof ob?.shadowUpdatedAtMs === "number" ? ob.shadowUpdatedAtMs : undefined;
+
+      const merged = new Set<string>();
+      let lastPos: LastPos | null = null;
+      let updatedAtMs: number | undefined = undefined;
+
+      for (const s of shadowItemsFallback) merged.add(s);
+      if (shadowLastPosFallback) lastPos = shadowLastPosFallback;
+      if (shadowUpdatedAtMsFallback) updatedAtMs = shadowUpdatedAtMsFallback;
+
+      setProgress({
+        status: "ready",
+        mastered: merged,
+        lastPos,
+        sourcePath: "not-found",
+        updatedAtMs,
+        error: lastErr ? String(lastErr?.code || lastErr?.message || lastErr) : undefined,
+      });
+    },
+    [kidId]
+  );
 
   useEffect(() => {
     if (!kidId) return;
     void fetchProgress();
   }, [kidId, fetchProgress]);
+
+  // Replay pending payload (retry only) with throttling
+  const flushOutboxIfNeeded = useCallback(async () => {
+    if (!kidId) return;
+    await waitForAuthInit(5000);
+
+    const ob = readOutbox(kidId);
+    const payload = ob?.pendingPayload;
+    if (!payload) return;
+
+    // throttle retries (avoid spam on repeated reloads)
+    const now = Date.now();
+    const last = typeof ob?.lastReplayAtMs === "number" ? ob.lastReplayAtMs : 0;
+    if (now - last < 20_000) return; // 20s throttle
+
+    const masteredItem = String(payload?.masteredItems?.[0] ?? "").trim();
+
+    // If server already has it, drop pending retry
+    try {
+      const db = getFirestore();
+      const ref = doc(db, "kids", kidId, "progress", PROGRESS_DOC_ID);
+      const snap = await getDocFromServer(ref);
+      if (snap.exists() && masteredItem) {
+        const serverItems = new Set(extractMasteredItems(snap.data()));
+        if (serverItems.has(masteredItem)) {
+          const next: Outbox = { ...(ob as Outbox) };
+          delete next.pendingPayload;
+          next.lastReplayAtMs = now;
+          writeOutbox(kidId, next);
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Attempt replay once
+    try {
+      const next: Outbox = { ...(ob as Outbox), lastReplayAtMs: now, replayCount: (ob?.replayCount ?? 0) + 1 };
+      writeOutbox(kidId, next);
+
+      await recordLevelResult(payload);
+
+      const cur = readOutbox(kidId);
+      if (!cur) return;
+      const after: Outbox = { ...cur };
+      delete after.pendingPayload;
+
+      const hasAnything =
+        (after.shadowMasteredItems && after.shadowMasteredItems.length > 0) ||
+        !!after.pendingPayload;
+
+      if (hasAnything) writeOutbox(kidId, after);
+      else clearOutbox(kidId);
+    } catch {
+      // keep pendingPayload
+    }
+  }, [kidId]);
+
+  useEffect(() => {
+    if (!kidId) return;
+    void flushOutboxIfNeeded();
+  }, [kidId, flushOutboxIfNeeded]);
 
   type ProgressCounts = {
     preDone: number;
@@ -1769,35 +1896,59 @@ export default function LetterTracingWithSounds() {
         return { level: 1, pair: 0, step: 0 };
       })();
 
-      // Persist an outbox entry first so a hard-refresh won't lose this completion
+      // Persist SHADOW progress first (so hard-refresh never loses UI progress)
       try {
-        writeOutbox(kidId, { masteredItem: masteredItem ?? undefined, lastPos: nextPos, updatedAtMs: Date.now() });
-      } catch {}
+        const payload = {
+          gameId: GAME_ID,
+          progressDocId: PROGRESS_DOC_ID,
+          kidId,
+          levelId: levelForTracking,
+          completed: true,
+          accuracyPct: 100,
+          durationSec: Math.round(spentMs / 1000),
+          score: 100,
+          skillTags,
+          tagDeltas,
+          masteredItems: [masteredItem].filter(Boolean),
+          completedAt: Date.now(),
+          lastPos: nextPos,
+          lastPosUpdatedAt: Date.now(),
+        } as any;
 
-      recordLevelResult({
-        gameId: GAME_ID,
-        progressDocId: PROGRESS_DOC_ID,
-        kidId,
-        levelId: levelForTracking,
-        completed: true,
-        accuracyPct: 100,
-        durationSec: Math.round(spentMs / 1000),
-        score: 100,
-        skillTags,
-        tagDeltas,
-        masteredItems: [masteredItem].filter(Boolean),
-        completedAt: Date.now(),
-        lastPos: nextPos,
-        lastPosUpdatedAt: Date.now(),
-      } as any)
-        .then(() => {
-          try {
-            clearOutbox(kidId);
-          } catch {}
-        })
-        .catch(() => {
-          // keep outbox so fetchProgress can merge it on next load
+        const prev = readOutbox(kidId) ?? {};
+        const prevShadow = uniqStrings((prev as Outbox).shadowMasteredItems);
+        const nextShadow = Array.from(new Set([...prevShadow, String(masteredItem || "")].filter(Boolean)));
+
+        // ✅ keep SHADOW always, and only use pendingPayload for retry
+        writeOutbox(kidId, {
+          ...(prev as Outbox),
+          shadowMasteredItems: nextShadow,
+          shadowLastPos: nextPos,
+          shadowUpdatedAtMs: Date.now(),
+          pendingPayload: payload,
         });
+
+        recordLevelResult(payload)
+          .then(() => {
+            // ✅ DO NOT clear shadow here — server progress doc may update only 3×/day
+            const cur = readOutbox(kidId);
+            if (!cur) return;
+
+            // remove pending retry only
+            const next: Outbox = { ...cur };
+            delete next.pendingPayload;
+
+            const hasAnything =
+              (next.shadowMasteredItems && next.shadowMasteredItems.length > 0) ||
+              !!next.pendingPayload;
+
+            if (hasAnything) writeOutbox(kidId, next);
+            else clearOutbox(kidId);
+          })
+          .catch(() => {
+            // keep pendingPayload so we can retry later
+          });
+      } catch {}
 
       if (masteredItem) {
         setProgress((prev) => {
@@ -2035,7 +2186,7 @@ export default function LetterTracingWithSounds() {
                 </button>
 
                 <button
-                  onClick={() => void fetchProgress()}
+                  onClick={() => void fetchProgress({ forceServer: true })}
                   disabled={!kidId || progress.status === "loading"}
                   className={[
                     "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
@@ -2136,21 +2287,27 @@ export default function LetterTracingWithSounds() {
                     {LEVELS.map((lv) => {
                       const lp = levelProgress(lv);
 
-                      // show small chips sample
-                      const pairBadges = (lv.pairs ?? [])
+                      // ✅ show Upper and Lower separately
+                      const upperBadges = (lv.pairs ?? [])
                         .map((p) => {
-                          const label =
-                            p?.upper && p?.lower ? `${p.upper}${p.lower}` : p?.upper ? String(p.upper) : p?.lower ? String(p.lower) : "";
+                          const label = p?.upper ? String(p.upper) : "";
                           if (!label) return null;
-
-                          const done =
-                            (p?.upper ? mastered.has(String(p.upper)) : true) && (p?.lower ? mastered.has(String(p.lower)) : true);
+                          const done = mastered.has(label);
                           return { label, done };
                         })
                         .filter(Boolean) as Array<{ label: string; done: boolean }>;
 
-                      const shownPairs = pairBadges.slice(0, 6);
-                      const more = Math.max(0, pairBadges.length - shownPairs.length);
+                      const lowerBadges = (lv.pairs ?? [])
+                        .map((p) => {
+                          const label = p?.lower ? String(p.lower) : "";
+                          if (!label) return null;
+                          const done = mastered.has(label);
+                          return { label, done };
+                        })
+                        .filter(Boolean) as Array<{ label: string; done: boolean }>;
+
+                      const upperDone = upperBadges.filter((b) => b.done).length;
+                      const lowerDone = lowerBadges.filter((b) => b.done).length;
 
                       return (
                         <button
@@ -2184,29 +2341,110 @@ export default function LetterTracingWithSounds() {
                             </span>
                           </div>
 
-                          {pairBadges.length > 0 && (
-                            <div className="mt-3 flex flex-wrap gap-2">
-                              {shownPairs.map((t) => (
-                                <span
-                                  key={t.label}
-                                  className={[
-                                    "rounded-full px-3 py-1 text-xs font-semibold ring-1",
-                                    t.done
-                                      ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
-                                      : "bg-white/80 text-slate-700 ring-white/70",
-                                  ].join(" ")}
-                                >
-                                  {t.label}
-                                  {t.done ? " ✓" : ""}
-                                </span>
-                              ))}
-                              {more > 0 && (
-                                <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
-                                  +{more} more
-                                </span>
-                              )}
+                          {/* ✅ Letters (no scroll) — show all at once */}
+                          <div className="mt-3 space-y-3">
+                            {/* Capital */}
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-[11px] font-extrabold text-slate-600">🔠 Capital</div>
+                                <div className="text-[11px] font-semibold text-slate-500">{upperDone}/26</div>
+                              </div>
+
+                              {/* Desktop: exactly 13 columns → 2 rows */}
+                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
+                                {upperBadges.map((t) => (
+                                  <div
+                                    key={`U-${t.label}`}
+                                    className={[
+                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                    ].join(" ")}
+                                  >
+                                    {t.label}
+                                    {t.done && (
+                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Mobile: auto-fit (no horizontal scroll) */}
+                              <div
+                                className="mt-2 grid md:hidden gap-2"
+                                style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}
+                              >
+                                {upperBadges.map((t) => (
+                                  <div
+                                    key={`U-m-${t.label}`}
+                                    className={[
+                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                    ].join(" ")}
+                                  >
+                                    {t.label}
+                                    {t.done && (
+                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          )}
+
+                            {/* Small */}
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <div className="text-[11px] font-extrabold text-slate-600">🔡 Small</div>
+                                <div className="text-[11px] font-semibold text-slate-500">{lowerDone}/26</div>
+                              </div>
+
+                              {/* Desktop: exactly 13 columns → 2 rows */}
+                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
+                                {lowerBadges.map((t) => (
+                                  <div
+                                    key={`L-${t.label}`}
+                                    className={[
+                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                    ].join(" ")}
+                                  >
+                                    {t.label}
+                                    {t.done && (
+                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Mobile: auto-fit (no horizontal scroll) */}
+                              <div
+                                className="mt-2 grid md:hidden gap-2"
+                                style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}
+                              >
+                                {lowerBadges.map((t) => (
+                                  <div
+                                    key={`L-m-${t.label}`}
+                                    className={[
+                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
+                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
+                                    ].join(" ")}
+                                  >
+                                    {t.label}
+                                    {t.done && (
+                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
+                                        ✓
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
 
                           {lp.total > 0 && (
                             <div className="mt-3">
@@ -2383,6 +2621,14 @@ export default function LetterTracingWithSounds() {
 .tsNextPulse { animation: tsNextPulse 1.1s ease-in-out infinite; }
 .tsNextHalo  { animation: tsNextHalo  1.1s ease-in-out infinite; }
 .tsNextNudge { animation: tsNextNudge 1.1s ease-in-out infinite; }
+@keyframes tsTickPop {
+  0%   { transform: translateY(-10px) scale(0.6); opacity: 0; }
+  55%  { transform: translateY(0px) scale(1.08); opacity: 1; }
+  100% { transform: translateY(0px) scale(1); opacity: 1; }
+}
+.tsTickPop {
+  animation: tsTickPop 420ms cubic-bezier(.2,.9,.2,1) both;
+}
 `}</style>
 
       <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
@@ -2465,6 +2711,18 @@ export default function LetterTracingWithSounds() {
           }}
         >
           <ConfettiBurst fire={confetti} />
+
+          {/* ✅ Green tick on completion */}
+          {letterDone && (
+            <div className="pointer-events-none absolute left-1/2 top-5 z-[10025] -translate-x-1/2">
+              <div className="tsTickPop flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-white shadow-lg">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-lg font-black leading-none">
+                  ✓
+                </span>
+                <span className="text-sm font-extrabold">Done!</span>
+              </div>
+            </div>
+          )}
 
           {/* Reward image */}
           {letterDone && !isPretrace && rewardImgSrc && (

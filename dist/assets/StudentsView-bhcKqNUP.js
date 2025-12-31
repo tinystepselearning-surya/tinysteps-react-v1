@@ -1,1 +1,0 @@
-import{j as e,C as s,A as t,D as d,E as l}from"./index-uo92nVyq.js";const a=()=>e.jsxs("div",{className:"p-6",children:[e.jsx("h1",{className:"text-2xl font-bold mb-6",children:"Students"}),e.jsxs(s,{children:[e.jsx(t,{children:e.jsx(d,{children:"All Students"})}),e.jsx(l,{children:e.jsx("p",{children:"Student list will be displayed here."})})]})]});export{a as default};
