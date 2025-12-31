@@ -1,19 +1,17 @@
-// src/pages/kids/games/phonics/LetterTracingGame.tsx
-// ✅ Mobile/tablet compatible (iPad/iPhone/Android): pointer-safe, gesture-safe, fullscreen-safe
-// ✅ Fix: prevents auto-completing the whole letter after stroke 1.
-// ✅ Completed strokes stay visible (proper letter formation).
-// ✅ Forces a “lift and start again” between strokes.
-// ✅ Fullscreen stable (native fullscreen when supported, “immersive mode” fallback when not).
-// ✅ NEW: dropdown to jump to any letter in this level
-// ✅ NEW: Next Letter button (skip current letter for testing)
-// ✅ NEW: Confetti audio + center burst + continuous top-left/top-right shower (4s)
-// ✅ NEW: Levels page shows game progress (no polling; manual refresh button)
-//
-// IMPORTANT: traceLetters.ts must be PURE TS (no JSX). JSX belongs here (.tsx).
+// src/pages/kids/games/phonics/LetterTracingWithSounds.tsx
+// ✅ SAME engine + UI as old LetterTracingGame (single-stroke-at-a-time + lift between strokes)
+// ✅ Uses /tracing.mp3 while tracing (loop)
+// ✅ Uses /star.png for start/guide/end markers
+// ✅ Level 0 = pretrace, Level 1 = ALL letters A–Z (Capital → Small)
+// ✅ Dropdown jump + Next button like old game
+// ✅ Adds a Sound button to play letter sound (expects /public/games/phonics/a.mp3 ... z.mp3)
+// ✅ On letter completion → auto plays letter sound + shows a reward image (best-effort from /public paths)
+// ✅ Saves progress via recordLevelResult + stores resume point (lastPos)
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import {
   TRACE_LETTERS,
@@ -28,7 +26,7 @@ import {
 
 import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 
-const BASE_ROUTE = "/kids/games/phonics/letter-tracing";
+const BASE_ROUTE = "/kids/games/phonics/letter-tracing-sounds";
 const GAME_ID = "letter-tracing";
 const PROGRESS_DOC_ID = "phonics_letter_tracing";
 
@@ -36,13 +34,45 @@ type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
 type Pt = { x: number; y: number; t: number; len: number };
 
-// (prevents implicit-any even if TRACE_LEVELS is loosely typed)
 type LevelPairView = { upper?: LetterId; lower?: LetterId };
 type TraceLevelView = { levelId: number; title: string; subtitle?: string; pairs?: LevelPairView[] };
 
-// --------------------
-// Helpers
-// --------------------
+/** -------- Resume position helpers (stored in SAME progress doc) -------- */
+type LastPos = { level: 0 | 1; pair: number; step: CaseStep };
+
+type ProgressState = {
+  status: "idle" | "loading" | "ready" | "error";
+  mastered: Set<string>;
+  lastPos?: LastPos | null;
+  sourcePath?: string;
+  updatedAtMs?: number;
+  error?: string;
+};
+
+// ⭐ asset in /public/star.png
+const STAR_SRC = "/star.png";
+// 🔊 tracing sound in /public/tracing.mp3
+const TRACE_AUDIO_SRC = "/tracing.mp3";
+// 🔊 confetti sound in /public/confetti.mp3
+const CONFETTI_AUDIO_SRC = "/confetti.mp3";
+// ▶️ next arrow asset
+const NEXT_ARROW_SRC = "/games/phonics/sound-detective/nextarrow.png";
+
+// 🖼️ reward image best-effort — prefer the sound-detective folder used by existing assets
+const SOUND_DETECTIVE_DIR = "/games/phonics/sound-detective";
+
+const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
+
+// ⭐ sizes
+const STAR_START_SIZE = 18;
+const STAR_GUIDE_SIZE = 16;
+const STAR_END_SIZE = 14;
+// viewBox padding
+const VIEWBOX_PAD = 10;
+
+/* --------------------
+   Small helpers
+-------------------- */
 function clamp(n: number, a: number, b: number): number {
   return Math.max(a, Math.min(b, n));
 }
@@ -53,156 +83,321 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-function parseTapPoint(pathD: string): { x: number; y: number } | null {
-  const m = pathD.match(/M\s*([-\d.]+)\s+([-\d.]+)/i);
-  if (!m) return null;
-  return { x: Number(m[1]), y: Number(m[2]) };
-}
-
-// robust "M x y L x y" parser (accepts commas/newlines)
-function parseLine(pathD: string): { a: { x: number; y: number }; b: { x: number; y: number } } | null {
-  const m = pathD
-    .trim()
-    .match(/M\s*([-\d.]+)[\s,]+([-\d.]+)\s*L\s*([-\d.]+)[\s,]+([-\d.]+)/i);
-  if (!m) return null;
-  return {
-    a: { x: Number(m[1]), y: Number(m[2]) },
-    b: { x: Number(m[3]), y: Number(m[4]) },
-  };
-}
-
-function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
-  return (clientX: number, clientY: number) => {
-    const svg = svgRef.current;
-    if (!svg) return { x: 0, y: 0 };
-    const pt = svg.createSVGPoint();
-    pt.x = clientX;
-    pt.y = clientY;
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 };
-    const inv = ctm.inverse();
-    const sp = pt.matrixTransform(inv);
-    return { x: sp.x, y: sp.y };
-  };
-}
-
-function hexToRgba(hex: string, a: number) {
-  const h = hex.replace("#", "").trim();
-  if (h.length !== 6) return `rgba(59,130,246,${a})`;
-  const n = parseInt(h, 16);
+function hexToRgba(hex: string, alpha: number) {
+  const h = String(hex || "").replace("#", "").trim();
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const n = parseInt(full, 16);
+  if (!Number.isFinite(n) || full.length !== 6) return `rgba(0,0,0,${clamp(alpha, 0, 1)})`;
   const r = (n >> 16) & 255;
   const g = (n >> 8) & 255;
   const b = n & 255;
-  return `rgba(${r},${g},${b},${a})`;
+  return `rgba(${r},${g},${b},${clamp(alpha, 0, 1)})`;
 }
 
-// Slightly expand viewBox so letters sit more centered with breathing room
-function expandViewBox(vb: string, pad = 10) {
-  const parts = vb
+function expandViewBox(vb: string, pad: number) {
+  const parts = String(vb || "0 0 100 100")
     .trim()
-    .split(/[\s,]+/)
-    .map((s) => Number(s));
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return vb;
-  const [x, y, w, h] = parts;
-  const p = Math.max(0, pad);
+    .split(/[ ,]+/)
+    .map((x) => Number(x));
+  const [x, y, w, h] = parts.length >= 4 ? parts : [0, 0, 100, 100];
+  const p = Number.isFinite(pad) ? pad : 0;
   return `${x - p} ${y - p} ${w + p * 2} ${h + p * 2}`;
 }
 
-// Native fullscreen helpers (Safari desktop uses webkit*; iOS Safari has no fullscreen API)
+function parseTapPoint(pathD: string): { x: number; y: number } | null {
+  // Accepts strings like: "M 50 50" or "M50 50" etc.
+  const s = String(pathD || "").trim();
+  const m = s.match(/M\s*([-0-9.]+)[ ,]+([-0-9.]+)/i);
+  if (!m) return null;
+  const x = Number(m[1]);
+  const y = Number(m[2]);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return { x, y };
+}
+
+function parseLine(pathD: string): { a: { x: number; y: number }; b: { x: number; y: number } } | null {
+  const s = String(pathD || "").trim();
+  const m = s.match(/M\s*([-0-9.]+)[ ,]+([-0-9.]+)\s*L\s*([-0-9.]+)[ ,]+([-0-9.]+)/i);
+  if (!m) return null;
+  const ax = Number(m[1]);
+  const ay = Number(m[2]);
+  const bx = Number(m[3]);
+  const by = Number(m[4]);
+  if (![ax, ay, bx, by].every((v) => Number.isFinite(v))) return null;
+  return { a: { x: ax, y: ay }, b: { x: bx, y: by } };
+}
+
 function getNativeFullscreenEl(): Element | null {
-  const d: any = document;
-  return document.fullscreenElement || d.webkitFullscreenElement || null;
+  return (
+    (document.fullscreenElement as any) ||
+    (document as any).webkitFullscreenElement ||
+    (document as any).mozFullScreenElement ||
+    (document as any).msFullscreenElement ||
+    null
+  );
 }
 
-async function requestFullscreenSafe(el: any) {
+async function requestFullscreenSafe(el: any): Promise<boolean> {
   try {
-    if (el?.requestFullscreen) {
-      await el.requestFullscreen({ navigationUI: "hide" } as any);
-      return true;
-    }
-    if (el?.webkitRequestFullscreen) {
-      el.webkitRequestFullscreen(); // Safari
-      return true;
-    }
+    if (!el) return false;
+    const fn =
+      el.requestFullscreen ||
+      el.webkitRequestFullscreen ||
+      el.mozRequestFullScreen ||
+      el.msRequestFullscreen ||
+      null;
+    if (!fn) return false;
+    await fn.call(el);
+    return true;
   } catch {
-    // ignore
-  }
-  return false;
-}
-
-async function exitFullscreenSafe() {
-  try {
-    const d: any = document;
-    if (document.exitFullscreen) {
-      await document.exitFullscreen();
-      return;
-    }
-    if (d.webkitExitFullscreen) {
-      d.webkitExitFullscreen();
-      return;
-    }
-  } catch {
-    // ignore
+    return false;
   }
 }
 
-/** -------- Progress helpers (flexible, works with multiple doc shapes) -------- */
+async function exitFullscreenSafe(): Promise<void> {
+  try {
+    const fn =
+      document.exitFullscreen ||
+      (document as any).webkitExitFullscreen ||
+      (document as any).mozCancelFullScreen ||
+      (document as any).msExitFullscreen ||
+      null;
+    if (!fn) return;
+    await fn.call(document);
+  } catch {
+    // ignore
+  }
+}
 
+/** Convert clientX/clientY into SVG coordinates */
+function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
+  return useCallback(
+    (clientX: number, clientY: number) => {
+      const svg = svgRef.current;
+      if (!svg) return { x: 0, y: 0 };
+      const pt = (svg as any).createSVGPoint ? (svg as any).createSVGPoint() : null;
+      if (pt) {
+        pt.x = clientX;
+        pt.y = clientY;
+        const ctm = svg.getScreenCTM?.();
+        if (!ctm) return { x: 0, y: 0 };
+        const inv = ctm.inverse();
+        const p = pt.matrixTransform(inv);
+        return { x: p.x, y: p.y };
+      }
+
+      // Fallback (rare)
+      const rect = svg.getBoundingClientRect();
+      const x = ((clientX - rect.left) / Math.max(1, rect.width)) * 100;
+      const y = ((clientY - rect.top) / Math.max(1, rect.height)) * 100;
+      return { x, y };
+    },
+    [svgRef]
+  );
+}
+
+/** Pull mastered items from different possible Firestore shapes */
 function extractMasteredItems(data: any): string[] {
-  const candidates = [
-    data?.masteredItems,
-    data?.mastered,
-    data?.itemsMastered,
-    data?.summary?.masteredItems,
-    data?.summary?.mastered,
-    data?.stats?.masteredItems,
-    data?.stats?.mastered,
-    data?.progress?.masteredItems,
-    data?.progress?.mastered,
-  ];
+  const out: string[] = [];
 
-  for (const c of candidates) {
-    if (Array.isArray(c)) return c.map((v) => String(v)).filter(Boolean);
-    if (c && typeof c === "object") {
-      // map/object-set style { A:true, a:true } OR { A:{...} }
-      return Object.keys(c).filter(Boolean);
+  const pushArr = (arr: any) => {
+    if (!Array.isArray(arr)) return;
+    for (const v of arr) {
+      const s = String(v ?? "").trim();
+      if (s) out.push(s);
     }
-  }
+  };
 
-  // last fallback: try scanning a "levels" object
-  const levels = data?.levels;
+  // Common shapes
+  pushArr(data?.masteredItems);
+  pushArr(data?.summary?.masteredItems);
+  pushArr(data?.stats?.masteredItems);
+
+  // Per-level map (levels)
+  const levels = data?.levels ?? data?.byLevel ?? data?.progressByLevel ?? data?.levelProgress;
   if (levels && typeof levels === "object") {
-    const out: string[] = [];
     for (const k of Object.keys(levels)) {
       const lv = (levels as any)[k];
-      const arr = lv?.masteredItems;
-      if (Array.isArray(arr)) out.push(...arr.map((v: any) => String(v)));
+      pushArr(lv?.masteredItems);
+      pushArr(lv?.stats?.masteredItems);
+      pushArr(lv?.summary?.masteredItems);
     }
-    return out.filter(Boolean);
   }
 
-  return [];
+  // Sometimes stored as arrays of objects
+  const levelArr = data?.levelsArr ?? data?.levelsArray;
+  if (Array.isArray(levelArr)) {
+    for (const lv of levelArr) pushArr(lv?.masteredItems);
+  }
+
+  return Array.from(new Set(out)).filter(Boolean);
 }
 
+/** Best-effort updatedAt extraction */
 function extractUpdatedAtMs(data: any): number | undefined {
   const candidates = [
+    data?.updatedAtMs,
     data?.updatedAt,
     data?.lastUpdatedAt,
-    data?.refreshedAt,
-    data?.syncedAt,
-    data?.lastPlayedAt,
+    data?.summary?.updatedAtMs,
     data?.summary?.updatedAt,
+    data?.stats?.updatedAtMs,
     data?.stats?.updatedAt,
+    data?.lastPosUpdatedAt,
   ];
 
   for (const v of candidates) {
     if (!v) continue;
-    if (typeof v === "number") return v;
+    // Firestore Timestamp
+    if (typeof v?.toMillis === "function") {
+      const ms = v.toMillis();
+      if (Number.isFinite(ms)) return ms;
+    }
+    // number ms
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    // Date
     if (v instanceof Date) return v.getTime();
-    if (typeof v?.toMillis === "function") return v.toMillis();
-    if (typeof v?.seconds === "number") return v.seconds * 1000;
   }
+
   return undefined;
+}
+
+// --------- Auth + Outbox helpers (survive hard-refresh) ---------
+function waitForAuthInit(timeoutMs = 5000) {
+  const auth = getAuth();
+  if (auth.currentUser) return Promise.resolve();
+
+  return new Promise<void>((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      try {
+        unsub();
+      } catch {}
+      resolve();
+    };
+
+    const timer = window.setTimeout(finish, Math.max(500, timeoutMs));
+
+    const unsub = onAuthStateChanged(
+      auth,
+      () => {
+        window.clearTimeout(timer);
+        finish();
+      },
+      () => {
+        window.clearTimeout(timer);
+        finish();
+      }
+    );
+  });
+}
+
+function outboxKey(kidId: string) {
+  return `ts_progress_outbox_v1:${kidId}:${PROGRESS_DOC_ID}`;
+}
+
+function readOutbox(kidId: string): { masteredItem?: string; lastPos?: LastPos; updatedAtMs?: number } | null {
+  try {
+    const raw = localStorage.getItem(outboxKey(kidId));
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return null;
+    return obj;
+  } catch {
+    return null;
+  }
+}
+
+function writeOutbox(kidId: string, data: { masteredItem?: string; lastPos?: LastPos; updatedAtMs?: number }) {
+  try {
+    localStorage.setItem(outboxKey(kidId), JSON.stringify(data));
+  } catch {}
+}
+
+function clearOutbox(kidId: string) {
+  try {
+    localStorage.removeItem(outboxKey(kidId));
+  } catch {}
+}
+
+function coerceLastPos(v: any): LastPos | null {
+  if (!v || typeof v !== "object") return null;
+
+  const lvlRaw = Number(v.level ?? v.levelId ?? v.lvl ?? v.levelNum);
+  const pairRaw = Number(v.pair ?? v.pairIndex ?? v.index ?? v.i);
+  const stepRaw = Number(v.step ?? v.caseStep ?? v.case ?? v.s);
+
+  const level: 0 | 1 = lvlRaw === 0 ? 0 : 1;
+  const pair = Number.isFinite(pairRaw) ? Math.max(0, Math.floor(pairRaw)) : 0;
+  const step: CaseStep = stepRaw === 1 ? 1 : 0;
+
+  return { level, pair, step };
+}
+
+function extractLastPos(data: any): LastPos | null {
+  const candidates = [
+    data?.lastPos,
+    data?.resumePos,
+    data?.resume,
+    data?.lastPosition,
+    data?.summary?.lastPos,
+    data?.stats?.lastPos,
+  ];
+  for (const c of candidates) {
+    const lp = coerceLastPos(c);
+    if (lp) return lp;
+  }
+  return null;
+}
+
+function firstIncompletePretraceIndex(mastered: Set<string>) {
+  for (let i = 0; i < PRETRACE_LEVEL.items.length; i++) {
+    const id = String(PRETRACE_LEVEL.items[i]);
+    if (!mastered.has(id)) return i;
+  }
+  return 0;
+}
+
+// Order: A(upper), a(lower), B(upper), b(lower), ...
+function firstIncompleteLetterPos(
+  mastered: Set<string>,
+  startPair = 0,
+  startStep: CaseStep = 0
+): { pair: number; step: CaseStep } {
+  const totalPairs = 26;
+  const startLinear = clamp(startPair, 0, totalPairs - 1) * 2 + (startStep === 1 ? 1 : 0);
+
+  for (let lin = startLinear; lin < totalPairs * 2; lin++) {
+    const pair = Math.floor(lin / 2);
+    const step = (lin % 2) as CaseStep;
+    const upper = String.fromCharCode(65 + pair);
+    const lower = String.fromCharCode(97 + pair);
+    const id = step === 0 ? upper : lower;
+    if (!mastered.has(id)) return { pair, step };
+  }
+
+  return { pair: clamp(startPair, 0, totalPairs - 1), step: startStep };
+}
+
+function getResumeStartLevel0(mastered: Set<string>, lastPos: LastPos | null) {
+  if (lastPos?.level === 0) {
+    return { pair: clamp(lastPos.pair, 0, PRETRACE_LEVEL.items.length - 1), step: 0 as const };
+  }
+  return { pair: firstIncompletePretraceIndex(mastered), step: 0 as const };
+}
+
+function getResumeStartLevel1(mastered: Set<string>, lastPos: LastPos | null) {
+  if (lastPos?.level === 1) {
+    return firstIncompleteLetterPos(mastered, lastPos.pair, lastPos.step);
+  }
+  return firstIncompleteLetterPos(mastered, 0, 0);
+}
+
+function labelForLevel1Pos(pos: { pair: number; step: CaseStep }) {
+  const ch = pos.step === 0 ? String.fromCharCode(65 + pos.pair) : String.fromCharCode(97 + pos.pair);
+  return `${ch} (${pos.step === 0 ? "Capital" : "Small"})`;
 }
 
 /** -------- Skill tag helpers (fixes upper/lower progress rollup) -------- */
@@ -252,39 +447,109 @@ function buildLetterTracingSkillTags(args: {
   const caseTag = args.isPretrace ? null : caseTagFromStep(args.step);
   const subtopicTag = args.isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${args.levelForTracking}`;
 
-  // ✅ Final tags used by rollup (case + normalized letter)
   return uniqTags([...cleanedBase, letterTag, caseTag, subtopicTag]);
 }
 
-type ProgressState = {
-  status: "idle" | "loading" | "ready" | "error";
-  mastered: Set<string>;
-  sourcePath?: string;
-  updatedAtMs?: number;
-  error?: string;
+// 🔊 letter sound expected in /public/games/phonics/a.mp3 ... z.mp3
+function getLetterSoundCandidates(letterId: LetterId | null): string[] {
+  if (!letterId) return [];
+  const ch = String(letterId).trim().charAt(0).toLowerCase();
+  if (!/^[a-z]$/.test(ch)) return [];
+  return [
+    `/games/phonics/${ch}.mp3`,
+    `/phonics/${ch}.mp3`,
+    `/sounds/phonics/${ch}.mp3`,
+    `/${ch}.mp3`,
+  ];
+}
+
+const LETTER_IMAGE_FILE: Record<string, string> = {
+  a: "apple",
+  b: "ball",
+  c: "cat",
+  d: "dog",
+  e: "elephant",
+  f: "fish",
+  g: "grape",
+  h: "hat",
+  i: "igloo",
+  j: "jug",
+  k: "kite",
+  l: "lion",
+  m: "mango",
+  n: "nest",
+  o: "orange",
+  p: "parrot",
+  q: "queen",
+  r: "rabbit",
+  s: "sun",
+  t: "tiger",
+  u: "umbrella",
+  v: "van",
+  w: "whale",
+  x: "xylophone",
+  y: "yoyo",
+  z: "zebra",
 };
 
-const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
+const LETTER_REWARD: Record<string, { word: string; emoji: string }> = {
+  a: { word: "Apple", emoji: "🍎" },
+  b: { word: "Ball", emoji: "🏀" },
+  c: { word: "Cat", emoji: "🐱" },
+  d: { word: "Dog", emoji: "🐶" },
+  e: { word: "Egg", emoji: "🥚" },
+  f: { word: "Fish", emoji: "🐟" },
+  g: { word: "Grapes", emoji: "🍇" },
+  h: { word: "Hat", emoji: "🧢" },
+  i: { word: "Ice cream", emoji: "🍦" },
+  j: { word: "Juice", emoji: "🧃" },
+  k: { word: "Kite", emoji: "🪁" },
+  l: { word: "Lion", emoji: "🦁" },
+  m: { word: "Monkey", emoji: "🐵" },
+  n: { word: "Nest", emoji: "🪹" },
+  o: { word: "Orange", emoji: "🍊" },
+  p: { word: "Parrot", emoji: "🦜" },
+  q: { word: "Queen", emoji: "👑" },
+  r: { word: "Rabbit", emoji: "🐰" },
+  s: { word: "Sun", emoji: "🌞" },
+  t: { word: "Tiger", emoji: "🐯" },
+  u: { word: "Umbrella", emoji: "☂️" },
+  v: { word: "Van", emoji: "🚐" },
+  w: { word: "Whale", emoji: "🐋" },
+  x: { word: "Xylophone", emoji: "🎶" },
+  y: { word: "Yoyo", emoji: "🪀" },
+  z: { word: "Zebra", emoji: "🦓" },
+};
 
-// ⭐ Your Canva asset (saved in /public/star.png)
-const STAR_SRC = "/star.png";
-// 🔊 Tracing sound (put tracing.mp3 in /public)
-const TRACE_AUDIO_SRC = "/tracing.mp3";
-// 🔊 Confetti sound (put confetti.mp3 in /public)
-const CONFETTI_AUDIO_SRC = "/confetti.mp3";
-// ▶️ Next arrow image (same as the newer tracing game)
-const NEXT_ARROW_SRC = "/games/phonics/sound-detective/nextarrow.png";
-// ⭐ sizes (reduce here)
-const STAR_START_SIZE = 18;
-const STAR_GUIDE_SIZE = 16;
-const STAR_END_SIZE = 14;
-// viewBox padding (center feel)
-const VIEWBOX_PAD = 10;
+function getLetterImageCandidates(letterId: LetterId | null): string[] {
+  if (!letterId) return [];
+  const ch = String(letterId).trim().charAt(0).toLowerCase();
+  if (!/^[a-z]$/.test(ch)) return [];
 
+  const exts = ["png", "webp", "jpg"];
+  const fileBase = LETTER_IMAGE_FILE[ch] ?? ch;
+
+  const rewardSlug =
+    (LETTER_REWARD[ch]?.word ?? "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "") || "";
+
+  const names = [fileBase, rewardSlug, ch].filter(Boolean);
+
+  const out: string[] = [];
+  for (const name of names) {
+    for (const ext of exts) {
+      out.push(`${SOUND_DETECTIVE_DIR}/${name}.${ext}`);
+    }
+  }
+  return out;
+}
+
+/* --------------------
+   Confetti
+-------------------- */
 function ConfettiBurst({ fire }: { fire: boolean }) {
-  // Continuous corner shower + center burst (4s total)
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const prevFireRef = useRef(false);
   const [burstId, setBurstId] = useState(0);
 
@@ -433,7 +698,6 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
       }
 
       const globalFade = 1 - clamp((t - dur * 0.7) / (dur * 0.3), 0, 1);
-
       ctx.clearRect(0, 0, W, H);
 
       for (const p of pieces) {
@@ -443,11 +707,13 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
         p.rot += p.vr * dtF;
         p.vx *= 0.992;
         p.vy *= 0.996;
+
         const age = now - p.born;
         const lifeFade = 1 - clamp(age / p.life, 0, 1);
         const a = globalFade * lifeFade;
         if (a <= 0) continue;
         if (p.y > H + 120) continue;
+
         ctx.save();
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rot);
@@ -478,7 +744,6 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     };
 
     raf = requestAnimationFrame(tick);
-
     window.addEventListener("resize", resize);
     return () => {
       window.removeEventListener("resize", resize);
@@ -488,18 +753,34 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
   }, [burstId]);
 
   return (
-    <canvas ref={canvasRef} className="pointer-events-none absolute inset-0" style={{ width: "100%", height: "100%" }} />
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0"
+      style={{ width: "100%", height: "100%" }}
+    />
   );
 }
 
-export default function LetterTracingGame() {
+/* --------------------
+   Main component
+-------------------- */
+export default function LetterTracingWithSounds() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const fsRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
 
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
   const fs = searchParams.get("fs") === "1";
+
+  useEffect(() => {
+    if (kidId) {
+      try {
+        localStorage.setItem("ts_active_kid_v1", kidId);
+      } catch {}
+    }
+  }, [kidId]);
 
   const levelParam = searchParams.get("level");
   const pairParam = searchParams.get("pair");
@@ -515,9 +796,7 @@ export default function LetterTracingGame() {
   const stepNumRaw = stepParam ? Number(stepParam) : 0;
   const step: CaseStep = stepNumRaw === 1 ? 1 : 0;
 
-  // ✅ Only two levels:
-  // level 0 = pretrace
-  // level 1 = ALL letters A–Z
+  // ✅ only two levels
   const normalizedLevelId = mode === "play" ? (levelId === 0 ? 0 : 1) : null;
   const isPretrace = mode === "play" && normalizedLevelId === 0;
 
@@ -534,7 +813,7 @@ export default function LetterTracingGame() {
 
   const enabledPairs: TracePair[] = useMemo(() => {
     if (mode !== "play" || isPretrace) return [];
-    return allLetterPairs; // ✅ Level 1 = all letters
+    return allLetterPairs; // Level 1 = all letters
   }, [mode, isPretrace, allLetterPairs]);
 
   const safePairIndex = useMemo(() => {
@@ -562,86 +841,135 @@ export default function LetterTracingGame() {
       ? (TRACE_LETTERS[currentLetterId] as TraceLetter | undefined) ?? null
       : null;
 
-  // --------------------
-  // Progress (no polling)
-  // --------------------
+  /* --------------------
+     Progress (no polling)
+  -------------------- */
   const [progress, setProgress] = useState<ProgressState>({
     status: "idle",
     mastered: new Set<string>(),
+    lastPos: null,
   });
 
   const fetchProgress = useCallback(async () => {
     if (!kidId) {
-      setProgress({ status: "idle", mastered: new Set<string>() });
+      setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
       return;
     }
 
-    setProgress((p) => ({
-      ...p,
-      status: "loading",
-      error: undefined,
-    }));
+    setProgress((p) => ({ ...p, status: "loading", error: undefined }));
+
+    // ✅ Critical: wait until Firebase Auth finishes initializing (hard refresh issue)
+    await waitForAuthInit(5000);
 
     const db = getFirestore();
 
-    // Try common doc locations (supports multiple backend shapes).
-    const candidates: Array<{ path: [string, ...string[]]; label: string }> = [
+    // ✅ Include BOTH docId and gameId variants (covers recordLevelResult implementations)
+    const candidates: Array<{ path: string[]; label: string }> = [
       { path: ["kids", kidId, "progress", PROGRESS_DOC_ID], label: "kids/{kidId}/progress/{docId}" },
       { path: ["kids", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "kids/{kidId}/gamesProgress/{docId}" },
+
       { path: ["kids", kidId, "progress", GAME_ID], label: "kids/{kidId}/progress/{gameId}" },
+      { path: ["kids", kidId, "gamesProgress", GAME_ID], label: "kids/{kidId}/gamesProgress/{gameId}" },
       { path: ["kids", kidId, "gameSummaries", GAME_ID], label: "kids/{kidId}/gameSummaries/{gameId}" },
+
       { path: ["students", kidId, "progress", PROGRESS_DOC_ID], label: "students/{kidId}/progress/{docId}" },
       { path: ["students", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "students/{kidId}/gamesProgress/{docId}" },
+      { path: ["students", kidId, "progress", GAME_ID], label: "students/{kidId}/progress/{gameId}" },
+      { path: ["students", kidId, "gamesProgress", GAME_ID], label: "students/{kidId}/gamesProgress/{gameId}" },
     ];
+
+    let lastErr: any = null;
 
     for (const c of candidates) {
       try {
-        const snap = await getDoc(doc(db, ...c.path));
+        const snap = await getDoc(doc(db, ...(c.path as [string, ...string[]])));
         if (!snap.exists()) continue;
 
         const data = snap.data();
-        const items = extractMasteredItems(data);
-        const updatedAtMs = extractUpdatedAtMs(data);
+
+        let items = extractMasteredItems(data);
+        let updatedAtMs = extractUpdatedAtMs(data);
+        let lastPos = extractLastPos(data);
+
+        // ✅ Merge local “outbox” (covers hard-refresh right after completion)
+        const ob = readOutbox(kidId);
+        if (ob?.masteredItem) items = Array.from(new Set([...items, String(ob.masteredItem)]));
+        if (ob?.lastPos && (!updatedAtMs || (ob.updatedAtMs ?? 0) >= updatedAtMs)) {
+          lastPos = ob.lastPos;
+          updatedAtMs = ob.updatedAtMs ?? updatedAtMs;
+        }
 
         setProgress({
           status: "ready",
           mastered: new Set(items),
+          lastPos,
           sourcePath: c.label,
           updatedAtMs,
         });
         return;
-      } catch {
-        // try next
+      } catch (err: any) {
+        lastErr = err;
+        // If auth/rules temporarily block during boot, we already waited once above.
+        // We just try the next candidate; if all fail we’ll show a safe fallback.
       }
     }
 
-    // nothing found yet (first-time users)
+    // If nothing found, still merge outbox (so UI doesn’t “lose” just-completed items)
+    const ob = readOutbox(kidId);
+    const merged = new Set<string>();
+    let lastPos: LastPos | null = null;
+    let updatedAtMs: number | undefined = undefined;
+
+    if (ob?.masteredItem) merged.add(String(ob.masteredItem));
+    if (ob?.lastPos) lastPos = ob.lastPos;
+    if (ob?.updatedAtMs) updatedAtMs = ob.updatedAtMs;
+
     setProgress({
       status: "ready",
-      mastered: new Set<string>(),
+      mastered: merged,
+      lastPos,
       sourcePath: "not-found",
-      updatedAtMs: undefined,
+      updatedAtMs,
+      error: lastErr ? String(lastErr?.code || lastErr?.message || lastErr) : undefined,
     });
   }, [kidId]);
 
-  // Fetch ONCE when kid changes. No polling.
   useEffect(() => {
     if (!kidId) return;
     void fetchProgress();
   }, [kidId, fetchProgress]);
 
-  // --------------------
-  // Progress counts memo (used in Levels header)
-  // --------------------
-  const progressCounts = useMemo(() => {
+  type ProgressCounts = {
+    preDone: number;
+    preTotal: number;
+    upperDone: number;
+    upperTotal: number;
+    lowerDone: number;
+    lowerTotal: number;
+
+    resume0: { pair: number; step: 0 };
+    resume0Label: string;
+
+    resume1: { pair: number; step: CaseStep };
+    resume1Label: string;
+  };
+
+  const progressCounts = useMemo((): ProgressCounts => {
     const mastered = progress.mastered;
+    const lastPos = progress.lastPos ?? null;
+
+    const resume0 = getResumeStartLevel0(mastered, lastPos);
+    const resume0Id = PRETRACE_LEVEL.items[clamp(resume0.pair, 0, PRETRACE_LEVEL.items.length - 1)];
+    const resume0Label = PRETRACE_ITEMS[resume0Id]?.label ?? String(resume0Id);
+
+    const resume1 = getResumeStartLevel1(mastered, lastPos);
+    const resume1Label = labelForLevel1Pos(resume1);
 
     const preTotal = PRETRACE_LEVEL.items.length;
-    const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
+    const preDone = PRETRACE_LEVEL.items.reduce((acc, id) => acc + (mastered.has(String(id)) ? 1 : 0), 0);
 
     let upperDone = 0;
     let lowerDone = 0;
-
     for (const p of allLetterPairs) {
       if (p.upper && mastered.has(String(p.upper))) upperDone++;
       if (p.lower && mastered.has(String(p.lower))) lowerDone++;
@@ -654,14 +982,17 @@ export default function LetterTracingGame() {
       upperTotal: 26,
       lowerDone,
       lowerTotal: 26,
+      resume0,
+      resume0Label,
+      resume1,
+      resume1Label,
     };
-  }, [progress.mastered, allLetterPairs]);
+  }, [progress.mastered, progress.lastPos, allLetterPairs]);
 
-  // --------------------
-  // Stroke engine state
-  // --------------------
+  /* --------------------
+     Engine state
+  -------------------- */
   const [strokeIndex, setStrokeIndex] = useState(0);
-  const svgRef = useRef<SVGSVGElement | null>(null);
 
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
@@ -674,17 +1005,19 @@ export default function LetterTracingGame() {
   const [letterDone, setLetterDone] = useState(false);
   const [confetti, setConfetti] = useState(false);
   const [timeStart, setTimeStart] = useState<number | null>(null);
+  const [showNextArrow, setShowNextArrow] = useState(false);
+  const [letterSoundPlaying, setLetterSoundPlaying] = useState(false);
 
-  // refs (avoid timing issues)
   const startedRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
   const ignoreMovesRef = useRef(false);
-  const capturedElRef = useRef<SVGSVGElement | null>(null);
+  const strokePendingRef = useRef(false); // lock between strokes
 
-  // --- timers (prevents old timeouts firing after navigation/reset) ---
   const timersRef = useRef<{ strokeAdvance?: number; confettiOff?: number }>({});
+  const celebrateTokenRef = useRef(0);
 
   const clearTimers = useCallback(() => {
+    celebrateTokenRef.current += 1;
     if (timersRef.current.strokeAdvance) {
       window.clearTimeout(timersRef.current.strokeAdvance);
       timersRef.current.strokeAdvance = undefined;
@@ -695,16 +1028,11 @@ export default function LetterTracingGame() {
     }
   }, []);
 
-  // unmount safety
-  useEffect(() => {
-    return () => clearTimers();
-  }, [clearTimers]);
+  useEffect(() => () => clearTimers(), [clearTimers]);
 
-  // ⭐ hint star index
   const [hintIndex, setHintIndex] = useState(0);
   const hintIndexRef = useRef(0);
 
-  // 🔊 Tracing audio
   const traceAudioRef = useRef<HTMLAudioElement | null>(null);
   const traceAudioPlayingRef = useRef(false);
 
@@ -712,7 +1040,6 @@ export default function LetterTracingGame() {
     const a = traceAudioRef.current;
     if (!a) return;
     if (traceAudioPlayingRef.current) return;
-
     try {
       a.loop = true;
       a.volume = 0.7;
@@ -730,16 +1057,101 @@ export default function LetterTracingGame() {
     try {
       a.pause();
       a.currentTime = 0;
-    } catch {
-      // ignore
-    }
+    } catch {}
     traceAudioPlayingRef.current = false;
   }, []);
 
-  // Tracks whether we successfully entered *native* fullscreen
-  const nativeFsEnteredRef = useRef(false);
+  const letterSoundAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 🔊 Confetti audio
+  const stopLetterSound = useCallback(() => {
+    const a = letterSoundAudioRef.current;
+    try {
+      if (a) {
+        a.pause();
+        a.currentTime = 0;
+      }
+    } catch {}
+    try {
+      setLetterSoundPlaying(false);
+    } catch {}
+  }, []);
+
+  const playLetterSound = useCallback(async (): Promise<boolean> => {
+    if (!currentLetterId || isPretrace) return false;
+
+    const a = letterSoundAudioRef.current;
+    if (!a) return false;
+
+    const candidates = getLetterSoundCandidates(currentLetterId);
+    if (!candidates.length) return false;
+
+    try {
+      a.pause();
+      a.currentTime = 0;
+    } catch {}
+
+    for (const src of candidates) {
+      try {
+        a.src = src;
+        a.load();
+        a.volume = 1;
+        a.currentTime = 0;
+        await a.play();
+
+        try {
+          setLetterSoundPlaying(true);
+        } catch {}
+
+        const onDone = () => {
+          try {
+            setLetterSoundPlaying(false);
+          } catch {}
+        };
+        a.addEventListener("ended", onDone, { once: true });
+        a.addEventListener("error", onDone, { once: true });
+
+        return true;
+      } catch {
+        // try next candidate
+      }
+    }
+
+    return false;
+  }, [currentLetterId, isPretrace]);
+
+  const waitForAudioEnd = useCallback((a: HTMLAudioElement, maxMs = 15000) => {
+    return new Promise<void>((resolve) => {
+      let done = false;
+
+      const onDone = () => {
+        if (done) return;
+        done = true;
+        cleanup();
+        resolve();
+      };
+
+      const cleanup = () => {
+        try {
+          a.removeEventListener("ended", onDone);
+          a.removeEventListener("error", onDone);
+        } catch {}
+        if (timer) window.clearTimeout(timer);
+      };
+
+      a.addEventListener("ended", onDone, { once: true });
+      a.addEventListener("error", onDone, { once: true });
+
+      let timer: number | undefined;
+      try {
+        const remainingMs =
+          isFinite(a.duration) && a.duration > 0 ? Math.max(0, (a.duration - a.currentTime) * 1000) : undefined;
+        timer = window.setTimeout(onDone, Math.min(maxMs, remainingMs ?? maxMs));
+      } catch {
+        timer = window.setTimeout(onDone, maxMs);
+      }
+    });
+  }, []);
+
   const confettiAudioRef = useRef<HTMLAudioElement | null>(null);
   const playConfettiSound = useCallback(async () => {
     const a = confettiAudioRef.current;
@@ -748,10 +1160,14 @@ export default function LetterTracingGame() {
       a.volume = 1;
       a.currentTime = 0;
       await a.play();
-    } catch {
-      // ignore autoplay restrictions
-    }
+    } catch {}
   }, []);
+
+  const triggerConfetti = useCallback(() => {
+    setConfetti(true);
+    void playConfettiSound();
+    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
+  }, [playConfettiSound]);
 
   const currentStroke: TraceStroke | null = useMemo(() => {
     if (!letterData) return null;
@@ -763,7 +1179,6 @@ export default function LetterTracingGame() {
     return expandViewBox(vb, VIEWBOX_PAD);
   }, [letterData?.viewBox]);
 
-  // ✅ Safe startT/endT
   const strokeStartT = useMemo(() => {
     return currentStroke && currentStroke.kind === "trace" ? currentStroke.startT : undefined;
   }, [currentStroke]);
@@ -778,7 +1193,7 @@ export default function LetterTracingGame() {
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
-  // ✅ Stop page scrolling/selection while playing
+  // Prevent page scrolling while playing
   useEffect(() => {
     if (mode !== "play") return;
 
@@ -800,75 +1215,46 @@ export default function LetterTracingGame() {
     };
   }, [mode]);
 
-  // ✅ If user exits *native* fullscreen (ESC), sync fs=1 only if we truly were native-fullscreen
-  useEffect(() => {
-    const onFsChange = () => {
-      const nativeNow = !!getNativeFullscreenEl();
-      if (nativeNow) return;
-
-      if (nativeFsEnteredRef.current) {
-        nativeFsEnteredRef.current = false;
-
-        const sp = new URLSearchParams(window.location.search);
-        if (sp.get("fs") === "1") {
-          sp.delete("fs");
-          setSearchParams(sp, { replace: true });
-        }
-      }
-    };
-
-    document.addEventListener("fullscreenchange", onFsChange);
-    document.addEventListener("webkitfullscreenchange" as any, onFsChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFsChange);
-      document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
-    };
-  }, [setSearchParams]);
-
-  // ✅ Reset state when switching item (letter / pretrace item)
+  // Reset state on item change
   useEffect(() => {
     clearTimers();
-    setStrokeIndex(0);
+    stopTraceAudio();
+    stopLetterSound();
 
+    setStrokeIndex(0);
     setStarted(false);
     setLastIndex(0);
     lastIndexRef.current = 0;
-
     startedRef.current = false;
     activePointerIdRef.current = null;
     ignoreMovesRef.current = false;
-    capturedElRef.current = null;
+    strokePendingRef.current = false;
 
     setLetterDone(false);
     setConfetti(false);
     setTimeStart(null);
+    setShowNextArrow(false);
 
     setHintIndex(0);
     hintIndexRef.current = 0;
-  }, [currentLetterId, pretraceId, clearTimers]);
+  }, [currentLetterId, pretraceId, clearTimers, stopTraceAudio, stopLetterSound]);
 
-  // Stop trace audio on navigation or when changing strokes/letters
-  useEffect(() => {
-    stopTraceAudio();
-  }, [mode, currentLetterId, pretraceId, strokeIndex, stopTraceAudio]);
-
-  // ✅ Reset state when switching stroke (within same letter)
+  // Reset on stroke change
   useEffect(() => {
     setStarted(false);
     setLastIndex(0);
     lastIndexRef.current = 0;
-
     startedRef.current = false;
     activePointerIdRef.current = null;
-    capturedElRef.current = null;
+
     ignoreMovesRef.current = false;
+    strokePendingRef.current = false;
 
     setHintIndex(0);
     hintIndexRef.current = 0;
   }, [strokeIndex]);
 
-  // Sampling for CURRENT stroke only
+  // Sampling for current stroke
   useLayoutEffect(() => {
     if (!currentStroke || currentStroke.kind === "tap") {
       setSamples([]);
@@ -900,7 +1286,7 @@ export default function LetterTracingGame() {
       len = 0;
     }
 
-    // Straight line fallback
+    // straight-line fallback
     if (!len || len <= 0) {
       const line = parseLine(d);
       if (!line) {
@@ -938,7 +1324,6 @@ export default function LetterTracingGame() {
       return;
     }
 
-    // General SVG path sampling
     const sLen = len * startT;
     const eLen = len * endT;
     const wLen = Math.max(0.0001, eLen - sLen);
@@ -975,7 +1360,7 @@ export default function LetterTracingGame() {
     return last ? { x: last.x, y: last.y } : { x: 0, y: 0 };
   }, [currentStroke, samples, startPt]);
 
-  // ⭐ animate hint along path while idle (slower)
+  // idle hint animation
   useEffect(() => {
     if (letterDone) return;
     if (!currentStroke || currentStroke.kind === "tap") return;
@@ -1033,9 +1418,8 @@ export default function LetterTracingGame() {
     return dots;
   }, [currentStroke, samples]);
 
-  // completed strokes stay visible
   const totalStrokes = letterData?.strokes?.length ?? 0;
-  const completedCount = letterDone ? totalStrokes : Math.min(totalStrokes, strokeIndex + (ignoreMovesRef.current ? 1 : 0));
+  const completedCount = letterDone ? totalStrokes : Math.min(totalStrokes, strokeIndex);
 
   const completedStrokes = useMemo(() => {
     if (!letterData) return [];
@@ -1051,21 +1435,67 @@ export default function LetterTracingGame() {
   const dashArray = rawLen > 0 ? `${progressLen} ${rawLen}` : undefined;
   const dashOffset = rawLen > 0 ? `${-trimStartLen}` : undefined;
 
-  // ✅ dropdown options (jump to any letter)
+  // Jump dropdown (letters only)
   const jumpOptions = useMemo(() => {
     if (mode !== "play" || isPretrace) return [];
-    const lv = 1;
     return enabledPairs.flatMap((p, idx) => {
       const opts: { value: string; label: string }[] = [];
-      if (p.upper) opts.push({ value: `${idx}|0`, label: `${p.upper} (Capital · L${lv})` });
-      if (p.lower) opts.push({ value: `${idx}|1`, label: `${p.lower} (Small · L${lv})` });
+      if (p.upper) opts.push({ value: `${idx}|0`, label: `${p.upper} (Capital)` });
+      if (p.lower) opts.push({ value: `${idx}|1`, label: `${p.lower} (Small)` });
       return opts;
     });
   }, [mode, isPretrace, enabledPairs]);
 
-  // --------------------
-  // Navigation helpers
-  // --------------------
+  // Reward image: choose first existing candidate
+  const [rewardImgSrc, setRewardImgSrc] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRewardImgSrc(null);
+    if (!currentLetterId || isPretrace) return;
+
+    const candidates = getLetterImageCandidates(currentLetterId);
+    if (!candidates.length) return;
+
+    let cancelled = false;
+
+    const tryOne = (src: string) =>
+      new Promise<boolean>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+
+    (async () => {
+      for (const src of candidates) {
+        const ok = await tryOne(src);
+        if (cancelled) return;
+        if (ok) {
+          setRewardImgSrc(src);
+          return;
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentLetterId, isPretrace]);
+
+  const rewardMeta = useMemo(() => {
+    if (!currentLetterId || isPretrace) return null;
+    const ch = String(currentLetterId).trim().charAt(0).toLowerCase();
+    if (!/^[a-z]$/.test(ch)) return null;
+    return { ch, ...(LETTER_REWARD[ch] ?? { word: "Nice!", emoji: "⭐" }) };
+  }, [currentLetterId, isPretrace]);
+
+  // Shift only while reward visible AND sound is playing
+  const showReward = letterDone && !isPretrace && !!rewardImgSrc;
+  const shiftRightForSound = showReward && letterSoundPlaying;
+
+  /* --------------------
+     Navigation helpers
+  -------------------- */
   function navigateTo(sp: URLSearchParams, replace: boolean) {
     const query = sp.toString();
     const url = query ? `${BASE_ROUTE}?${query}` : BASE_ROUTE;
@@ -1073,14 +1503,6 @@ export default function LetterTracingGame() {
   }
 
   function goGamesPortal() {
-    try {
-      const s = (window.history && (window.history.state as any)) || null;
-      if (s && typeof s.idx === "number" && s.idx > 0) {
-        navigate(-1);
-        return;
-      }
-    } catch {}
-
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
     const url = sp.toString() ? `/kids/games/phonics?${sp.toString()}` : "/kids/games/phonics";
@@ -1091,7 +1513,7 @@ export default function LetterTracingGame() {
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
 
-    const lvl = levelNum === 0 ? 0 : 1; // ✅ clamp to {0,1}
+    const lvl = levelNum === 0 ? 0 : 1;
     sp.set("level", String(lvl));
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
@@ -1100,10 +1522,11 @@ export default function LetterTracingGame() {
     navigateTo(sp, replace);
   }
 
+  const nativeFsEnteredRef = useRef(false);
+
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
 
-    // ✅ Try native fullscreen first (desktop). On iOS it will fail safely.
     const ok = await requestFullscreenSafe(document.documentElement);
     if (ok) nativeFsEnteredRef.current = true;
 
@@ -1114,15 +1537,10 @@ export default function LetterTracingGame() {
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
-    // ✅ Always immersive flag (also acts as fullscreen fallback on iOS)
     sp.set("fs", "1");
-
     navigateTo(sp, false);
 
-    // ✅ Let UI render before follow-up attempt
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-
-    // Optional: if not in native fullscreen, try again after render
     if (!getNativeFullscreenEl()) {
       const ok2 = await requestFullscreenSafe(document.documentElement);
       if (ok2) nativeFsEnteredRef.current = true;
@@ -1163,32 +1581,40 @@ export default function LetterTracingGame() {
     navigateTo(sp, true);
   }
 
-  function replay() {
+  // Sync fs=1 when user exits native fullscreen via ESC
+  useEffect(() => {
+    const onFsChange = () => {
+      const nativeNow = !!getNativeFullscreenEl();
+      if (nativeNow) return;
+
+      if (nativeFsEnteredRef.current) {
+        nativeFsEnteredRef.current = false;
+
+        const sp = new URLSearchParams(window.location.search);
+        if (sp.get("fs") === "1") {
+          sp.delete("fs");
+          setSearchParams(sp, { replace: true });
+        }
+      }
+    };
+
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange" as any, onFsChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
+    };
+  }, [setSearchParams]);
+
+  // Next item navigation (skip)
+  function goNextItem() {
     clearTimers();
-    setStrokeIndex(0);
-    setStarted(false);
+    stopTraceAudio();
+    stopLetterSound();
 
-    setLastIndex(0);
-    lastIndexRef.current = 0;
-
-    startedRef.current = false;
-    activePointerIdRef.current = null;
-    ignoreMovesRef.current = false;
-    capturedElRef.current = null;
-
-    setLetterDone(false);
-    setConfetti(false);
-    setTimeStart(null);
-
-    setHintIndex(0);
-    hintIndexRef.current = 0;
-  }
-
-  function goNext() {
-    clearTimers();
     if (mode !== "play") return;
 
-    // Level 0: move through warmup shapes, then go to Level 1
     if (isPretrace) {
       const nextIdx = safePairIndex + 1;
       if (nextIdx < PRETRACE_LEVEL.items.length) {
@@ -1199,7 +1625,6 @@ export default function LetterTracingGame() {
       return;
     }
 
-    // Level 1: each pair = Capital → Small → next pair
     if (step === 0) {
       navigatePlay(1, safePairIndex, 1, false);
       return;
@@ -1211,46 +1636,104 @@ export default function LetterTracingGame() {
       return;
     }
 
-    // Done A–Z
     void goLevels();
   }
 
-  function completeStroke() {
+  function replay() {
     clearTimers();
     stopTraceAudio();
-    ignoreMovesRef.current = true;
+    stopLetterSound();
 
-    const pid = activePointerIdRef.current;
-    const el = capturedElRef.current;
-    if (pid !== null && el) {
-      try {
-        (el as any).releasePointerCapture?.(pid);
-      } catch {}
-    }
-
-    startedRef.current = false;
-    activePointerIdRef.current = null;
-    capturedElRef.current = null;
-
+    setStrokeIndex(0);
     setStarted(false);
     setLastIndex(0);
     lastIndexRef.current = 0;
 
+    startedRef.current = false;
+    activePointerIdRef.current = null;
+    ignoreMovesRef.current = false;
+    strokePendingRef.current = false;
+
+    setLetterDone(false);
+    setConfetti(false);
+    setTimeStart(null);
+    setHintIndex(0);
+    hintIndexRef.current = 0;
+    setShowNextArrow(false);
+  }
+
+  /* --------------------
+     Finish stroke / letter
+  -------------------- */
+  const finishStroke = useCallback(() => {
+    if (letterDone) return;
+    if (mode !== "play") return;
+    if (!letterData) return;
+
+    clearTimers();
+    stopTraceAudio();
+
+    // lock moves until lift + next stroke advances
+    ignoreMovesRef.current = true;
+    strokePendingRef.current = true;
+
+    startedRef.current = false;
+    setStarted(false);
+
+    setLastIndex(0);
+    lastIndexRef.current = 0;
+
     const nextStroke = strokeIndex + 1;
-    if (letterData && nextStroke < letterData.strokes.length) {
+
+    // advance to next stroke
+    if (nextStroke < letterData.strokes.length) {
       timersRef.current.strokeAdvance = window.setTimeout(() => {
-        ignoreMovesRef.current = false;
-        setStrokeIndex((prev) => prev + 1);
+        setStrokeIndex(nextStroke);
+        strokePendingRef.current = false;
+
+        // if finger already lifted, unlock now
+        if (activePointerIdRef.current === null) {
+          ignoreMovesRef.current = false;
+        }
       }, 220);
+
       return;
     }
 
+    // LETTER COMPLETE
+    strokePendingRef.current = false;
+    ignoreMovesRef.current = false;
+
     setLetterDone(true);
+    setShowNextArrow(false);
 
-    setConfetti(true);
-    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
-    void playConfettiSound();
+    const token = ++celebrateTokenRef.current;
 
+    void (async () => {
+      if (!isPretrace) {
+        const audioEl = letterSoundAudioRef.current;
+        const played = await playLetterSound();
+
+        if (token !== celebrateTokenRef.current) return;
+
+        if (played && audioEl) {
+          try {
+            setLetterSoundPlaying(true);
+          } catch {}
+          await waitForAudioEnd(audioEl, 15000);
+          try {
+            setLetterSoundPlaying(false);
+          } catch {}
+        }
+      }
+
+      if (token !== celebrateTokenRef.current) return;
+
+      setShowNextArrow(true);
+      triggerConfetti();
+    })();
+
+    // Save progress
     if (!kidId) return;
 
     try {
@@ -1259,7 +1742,6 @@ export default function LetterTracingGame() {
       const masteredItem = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
 
       const baseTags = Array.isArray(letterData?.skillTags) ? letterData!.skillTags : [];
-
       const skillTags = buildLetterTracingSkillTags({
         baseTags,
         isPretrace,
@@ -1268,11 +1750,30 @@ export default function LetterTracingGame() {
         currentLetterId,
       });
 
-      const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = Object.fromEntries(
-        skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }])
-      );
+      const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> =
+        Object.fromEntries(skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }]));
 
-      // Fire-and-forget progress write
+      // ✅ resume point
+      const nextPos: LastPos = (() => {
+        if (isPretrace) {
+          const nextIdx = safePairIndex + 1;
+          if (nextIdx < PRETRACE_LEVEL.items.length) return { level: 0, pair: nextIdx, step: 0 };
+          return { level: 1, pair: 0, step: 0 };
+        }
+
+        if (step === 0) return { level: 1, pair: safePairIndex, step: 1 };
+
+        const nextPair = safePairIndex + 1;
+        if (nextPair < enabledPairs.length) return { level: 1, pair: nextPair, step: 0 };
+
+        return { level: 1, pair: 0, step: 0 };
+      })();
+
+      // Persist an outbox entry first so a hard-refresh won't lose this completion
+      try {
+        writeOutbox(kidId, { masteredItem: masteredItem ?? undefined, lastPos: nextPos, updatedAtMs: Date.now() });
+      } catch {}
+
       recordLevelResult({
         gameId: GAME_ID,
         progressDocId: PROGRESS_DOC_ID,
@@ -1286,9 +1787,18 @@ export default function LetterTracingGame() {
         tagDeltas,
         masteredItems: [masteredItem].filter(Boolean),
         completedAt: Date.now(),
-      } as any).catch(() => {});
+        lastPos: nextPos,
+        lastPosUpdatedAt: Date.now(),
+      } as any)
+        .then(() => {
+          try {
+            clearOutbox(kidId);
+          } catch {}
+        })
+        .catch(() => {
+          // keep outbox so fetchProgress can merge it on next load
+        });
 
-      // ✅ Optimistic UI update (so progress shows immediately without refresh)
       if (masteredItem) {
         setProgress((prev) => {
           const next = new Set(prev.mastered);
@@ -1297,25 +1807,43 @@ export default function LetterTracingGame() {
             ...prev,
             status: prev.status === "idle" ? "ready" : prev.status,
             mastered: next,
+            lastPos: nextPos,
             updatedAtMs: Date.now(),
           };
         });
       }
     } catch {
-      // never block gameplay for tracking errors
+      // never block gameplay
     }
-  }
+  }, [
+    letterDone,
+    mode,
+    letterData,
+    clearTimers,
+    stopTraceAudio,
+    strokeIndex,
+    isPretrace,
+    playLetterSound,
+    waitForAudioEnd,
+    triggerConfetti,
+    kidId,
+    timeStart,
+    pretraceId,
+    currentLetterId,
+    step,
+    safePairIndex,
+    enabledPairs.length,
+  ]);
 
-  // --------------------
-  // Pointer handling
-  // --------------------
+  /* --------------------
+     Pointer handling
+  -------------------- */
   function handlePointerDown(e: React.PointerEvent) {
     if (letterDone) return;
     if (!currentStroke) return;
     if (ignoreMovesRef.current) return;
 
     e.preventDefault();
-    capturedElRef.current = e.currentTarget as unknown as SVGSVGElement;
 
     if (timeStart === null) setTimeStart(performance.now());
 
@@ -1324,7 +1852,7 @@ export default function LetterTracingGame() {
     if (currentStroke.kind === "tap") {
       const target = parseTapPoint(currentStroke.pathD);
       if (!target) return;
-      if (dist(p, target) <= 10) completeStroke();
+      if (dist(p, target) <= 10) finishStroke();
       return;
     }
 
@@ -1341,7 +1869,6 @@ export default function LetterTracingGame() {
 
     startedRef.current = true;
     activePointerIdRef.current = e.pointerId;
-
     setStarted(true);
 
     if (!hasProgress) {
@@ -1372,10 +1899,8 @@ export default function LetterTracingGame() {
     let bestI = i0;
     let bestD = Infinity;
 
-    const startI = i0;
     const endI = clamp(i0 + lookahead, 0, samples.length - 1);
-
-    for (let i = startI; i <= endI; i++) {
+    for (let i = i0; i <= endI; i++) {
       const d = dist(p, samples[i]);
       if (d < bestD) {
         bestD = d;
@@ -1387,7 +1912,7 @@ export default function LetterTracingGame() {
       lastIndexRef.current = bestI;
       setLastIndex(bestI);
 
-      if (bestI >= samples.length - 2) completeStroke();
+      if (bestI >= samples.length - 2) finishStroke();
     }
   }
 
@@ -1400,17 +1925,19 @@ export default function LetterTracingGame() {
 
       activePointerIdRef.current = null;
       startedRef.current = false;
-      capturedElRef.current = null;
-
       setStarted(false);
+
+      // unlock only if we're not waiting to advance stroke
+      if (!strokePendingRef.current) {
+        ignoreMovesRef.current = false;
+      }
     }
   }
 
-  // --------------------
-  // Levels screen
-  // --------------------
+  /* --------------------
+     LEVELS screen
+  -------------------- */
   if (mode === "levels") {
-    // ✅ Show ONLY Level 1 (A–Z) here (Level 0 is rendered separately)
     const LEVELS: TraceLevelView[] = [
       {
         levelId: 1,
@@ -1422,37 +1949,25 @@ export default function LetterTracingGame() {
 
     const mastered = progress.mastered;
 
-    // chips for warmup
     const pretraceChips = (PRETRACE_LEVEL.items ?? [])
       .map((id) => ({ id, label: PRETRACE_ITEMS[id]?.label ?? String(id) }))
       .filter((x) => Boolean(x.label))
       .slice(0, 6);
 
-    // overall counts
     const preTotal = PRETRACE_LEVEL.items.length;
     const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
 
-    const upperSet = new Set<string>();
-    const lowerSet = new Set<string>();
-    for (const lv of LEVELS) {
-      for (const p of lv.pairs ?? []) {
-        if (p.upper) upperSet.add(String(p.upper));
-        if (p.lower) lowerSet.add(String(p.lower));
-      }
-    }
-    const upperTotal = upperSet.size;
-    const lowerTotal = lowerSet.size;
-    const upperDone = Array.from(upperSet).filter((id) => mastered.has(id)).length;
-    const lowerDone = Array.from(lowerSet).filter((id) => mastered.has(id)).length;
+    const upperTotal = 26;
+    const lowerTotal = 26;
+    const upperDone = progressCounts.upperDone;
+    const lowerDone = progressCounts.lowerDone;
 
     const letterTotal = upperTotal + lowerTotal;
     const letterDoneCount = upperDone + lowerDone;
     const letterPct = letterTotal > 0 ? Math.round((letterDoneCount / letterTotal) * 100) : 0;
 
     const updatedLabel =
-      progress.updatedAtMs && Number.isFinite(progress.updatedAtMs)
-        ? new Date(progress.updatedAtMs).toLocaleString()
-        : undefined;
+      progress.updatedAtMs && Number.isFinite(progress.updatedAtMs) ? new Date(progress.updatedAtMs).toLocaleString() : undefined;
 
     const levelProgress = (lv: TraceLevelView) => {
       const ids: string[] = [];
@@ -1472,21 +1987,18 @@ export default function LetterTracingGame() {
         <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
           <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
 
           <div className="relative">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
                 <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
-                  Letter Tracing Adventure
+                  Letter Tracing Adventure (With Sounds)
                 </h1>
-
                 <p className="mt-2 max-w-2xl text-sm text-slate-700">
                   Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
                   <span className="font-semibold">Small</span> letters.
                 </p>
 
-                {/* Progress summary */}
                 <div className="mt-4 flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🎯 Letters: {letterDoneCount}/{letterTotal} ({letterPct}%)
@@ -1507,7 +2019,6 @@ export default function LetterTracingGame() {
                   )}
                 </div>
 
-                {/* Progress bar */}
                 <div className="mt-3 w-full max-w-xl">
                   <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
                     <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${letterPct}%` }} />
@@ -1516,16 +2027,6 @@ export default function LetterTracingGame() {
               </div>
 
               <div className="flex items-center flex-wrap gap-2">
-                <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-                  🔠 {progressCounts.upperDone}/{progressCounts.upperTotal}
-                </span>
-                <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-                  🔡 {progressCounts.lowerDone}/{progressCounts.lowerTotal}
-                </span>
-                <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-                  ✍️ {progressCounts.preDone}/{progressCounts.preTotal}
-                </span>
-
                 <button
                   onClick={goGamesPortal}
                   className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
@@ -1551,13 +2052,12 @@ export default function LetterTracingGame() {
                   ✋ Lift between strokes
                 </span>
                 <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  🎉 Earn confetti
+                  🔊 Sound plays on completion
                 </span>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Learning Path */}
               <div className="lg:col-span-2">
                 <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
                   <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
@@ -1565,7 +2065,7 @@ export default function LetterTracingGame() {
                   <div className="space-y-4 pl-12">
                     {/* Level 0 */}
                     <button
-                      onClick={() => void handlePlayButtonClick(0, 0, 0)}
+                      onClick={() => handlePlayButtonClick(0, progressCounts.resume0.pair, 0)}
                       className={[
                         "group relative w-full rounded-3xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-4 text-left shadow-sm transition",
                         "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
@@ -1581,6 +2081,9 @@ export default function LetterTracingGame() {
                         <div>
                           <div className="text-lg font-extrabold text-slate-900">{PRETRACE_LEVEL.title}</div>
                           <div className="mt-0.5 text-sm font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
+                          <div className="mt-1 text-xs font-semibold text-slate-600">
+                            Resume: {progressCounts.resume0Label}
+                          </div>
                         </div>
 
                         <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
@@ -1631,23 +2134,17 @@ export default function LetterTracingGame() {
 
                     {/* Level 1 */}
                     {LEVELS.map((lv) => {
-                      const ready = true;
                       const lp = levelProgress(lv);
 
+                      // show small chips sample
                       const pairBadges = (lv.pairs ?? [])
                         .map((p) => {
                           const label =
-                            p?.upper && p?.lower
-                              ? `${p.upper}${p.lower}`
-                              : p?.upper
-                                ? String(p.upper)
-                                : p?.lower
-                                  ? String(p.lower)
-                                  : "";
+                            p?.upper && p?.lower ? `${p.upper}${p.lower}` : p?.upper ? String(p.upper) : p?.lower ? String(p.lower) : "";
                           if (!label) return null;
+
                           const done =
-                            (p?.upper ? mastered.has(String(p.upper)) : true) &&
-                            (p?.lower ? mastered.has(String(p.lower)) : true);
+                            (p?.upper ? mastered.has(String(p.upper)) : true) && (p?.lower ? mastered.has(String(p.lower)) : true);
                           return { label, done };
                         })
                         .filter(Boolean) as Array<{ label: string; done: boolean }>;
@@ -1658,23 +2155,15 @@ export default function LetterTracingGame() {
                       return (
                         <button
                           key={lv.levelId}
-                          disabled={!ready}
-                          onClick={() => void handlePlayButtonClick(lv.levelId, 0, 0)}
+                          onClick={() => handlePlayButtonClick(lv.levelId, progressCounts.resume1.pair, progressCounts.resume1.step)}
                           className={[
                             "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
-                            ready
-                              ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
-                              : "cursor-not-allowed border-white/40 bg-white/50 opacity-60",
+                            "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
                           ].join(" ")}
                         >
                           <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                            <div
-                              className={[
-                                "flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4",
-                                ready ? "ring-fuchsia-100" : "ring-slate-100",
-                              ].join(" ")}
-                            >
-                              <span className="text-lg">{ready ? "⭐" : "🔒"}</span>
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-fuchsia-100">
+                              <span className="text-lg">⭐</span>
                             </div>
                           </div>
 
@@ -1682,6 +2171,9 @@ export default function LetterTracingGame() {
                             <div>
                               <div className="text-lg font-extrabold text-slate-900">{lv.title}</div>
                               {lv.subtitle && <div className="mt-0.5 text-sm font-semibold text-slate-600">{lv.subtitle}</div>}
+                              <div className="mt-1 text-xs font-semibold text-slate-600">
+                                Resume: {progressCounts.resume1Label}
+                              </div>
                             </div>
 
                             <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
@@ -1735,7 +2227,6 @@ export default function LetterTracingGame() {
                 </div>
               </div>
 
-              {/* Right “How to play” panel */}
               <div className="lg:col-span-1">
                 <div className="rounded-3xl border border-white/60 bg-white/65 p-5 shadow-sm backdrop-blur">
                   <div className="flex items-center justify-between">
@@ -1769,8 +2260,8 @@ export default function LetterTracingGame() {
                         3
                       </span>
                       <div>
-                        <div className="font-bold text-slate-900">Slow & steady</div>
-                        <div className="text-slate-600">Follow the moving star carefully.</div>
+                        <div className="font-bold text-slate-900">Sound</div>
+                        <div className="text-slate-600">Plays on completion (and via 🔊 button).</div>
                       </div>
                     </li>
                   </ol>
@@ -1782,11 +2273,6 @@ export default function LetterTracingGame() {
                     </p>
                   </div>
 
-                  <div className="mt-4 text-xs font-semibold text-slate-500">
-                    🌟 This screen is a “learning path” — kids feel like they’re moving forward level by level.
-                  </div>
-
-                  {/* Debug hint */}
                   {progress.status === "ready" && progress.sourcePath && progress.sourcePath !== "not-found" && (
                     <div className="mt-3 text-[11px] font-semibold text-slate-400">Progress source: {progress.sourcePath}</div>
                   )}
@@ -1803,15 +2289,15 @@ export default function LetterTracingGame() {
     );
   }
 
-  // --------------------
-  // Play guards
-  // --------------------
+  /* --------------------
+     Play guards
+  -------------------- */
   if (!letterData || !currentStroke) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-10">
         <div className="rounded-xl border bg-white p-6">
           <div className="text-lg font-semibold text-slate-900">This item isn't ready yet.</div>
-          <button onClick={() => void goLevels()} className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-white">
+          <button onClick={goLevels} className="mt-3 rounded-lg bg-slate-900 px-4 py-2 text-white">
             Back to Levels
           </button>
         </div>
@@ -1823,19 +2309,8 @@ export default function LetterTracingGame() {
 
   const headerLabel = isPretrace
     ? `Level 0 • ${letterData.label} • Stroke ${strokeNo}/${totalStrokes}`
-    : `Level 1 • Pair ${safePairIndex + 1}/${enabledPairs.length} • ${step === 0 ? "Capital" : "Small"} • Letter: ${
-        currentLetterId ?? ""
-      } • Stroke ${strokeNo}/${totalStrokes}`;
+    : `Level 1 • ${step === 0 ? "Capital" : "Small"} • Letter: ${currentLetterId ?? ""} • Stroke ${strokeNo}/${totalStrokes}`;
 
-  const nextCtaLabel = isPretrace ? "Next shape" : step === 0 ? "Small letter" : "Next letter";
-
-  const instructionText = letterDone
-    ? `Perfect! Tap the arrow for ${nextCtaLabel}.`
-    : isTap
-      ? "Tap the glowing dot."
-      : "Start at the star. Follow the star and trace the line.";
-
-  // fs=1 is immersive mode, even if native fullscreen isn't supported (iOS)
   const wrapperClass = fs ? "fixed left-0 right-0 top-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
 
   return (
@@ -1866,9 +2341,20 @@ export default function LetterTracingGame() {
     >
       <audio ref={traceAudioRef} src={TRACE_AUDIO_SRC} preload="auto" />
       <audio ref={confettiAudioRef} src={CONFETTI_AUDIO_SRC} preload="auto" />
+      <audio ref={letterSoundAudioRef} preload="auto" />
 
-      {/* Next-arrow animations (match LetterTracingWithSounds) */}
       <style>{`
+@keyframes tsRewardPop {
+  0%   { transform: scale(0.15) translateY(-12px) rotate(-8deg); opacity: 0; }
+  45%  { transform: scale(1.18) translateY(0) rotate(2deg); opacity: 1; }
+  70%  { transform: scale(0.96) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+@keyframes tsRewardBoomRing {
+  0%   { transform: scale(0.35); opacity: 0; }
+  18%  { opacity: 0.55; }
+  100% { transform: scale(2.0); opacity: 0; }
+}
 @keyframes tsNextPulse {
   0%   { transform: scale(1); }
   50%  { transform: scale(1.10); }
@@ -1883,15 +2369,39 @@ export default function LetterTracingGame() {
   0%,100% { transform: translateX(0); }
   50%     { transform: translateX(8px); }
 }
+
+.tsRewardRing {
+  position: absolute;
+  inset: -28px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(16,185,129,.26), rgba(59,130,246,.18), transparent 60%);
+  animation: tsRewardBoomRing 900ms ease-out both;
+}
+.tsRewardPop {
+  animation: tsRewardPop 650ms cubic-bezier(.2,.9,.2,1) both;
+}
 .tsNextPulse { animation: tsNextPulse 1.1s ease-in-out infinite; }
 .tsNextHalo  { animation: tsNextHalo  1.1s ease-in-out infinite; }
 .tsNextNudge { animation: tsNextNudge 1.1s ease-in-out infinite; }
-      `}</style>
+`}</style>
 
       <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
+        {/* Header */}
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
           <div className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-slate-800">
             {headerLabel}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+              🔠 {progressCounts.upperDone}/{progressCounts.upperTotal}
+            </span>
+            <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+              🔡 {progressCounts.lowerDone}/{progressCounts.lowerTotal}
+            </span>
+            <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
+              ✍️ {progressCounts.preDone}/{progressCounts.preTotal}
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -1912,35 +2422,41 @@ export default function LetterTracingGame() {
               </select>
             )}
 
-            <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+            {!isPretrace && (
+              <button
+                onClick={playLetterSound}
+                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+                title="Play letter sound"
+              >
+                🔊 Sound
+              </button>
+            )}
+
+            <button onClick={replay} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              Replay
+            </button>
+
+            <button onClick={goNextItem} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
               Next
             </button>
 
             {fs ? (
-              <button
-                onClick={() => void setFs(false)}
-                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-              >
+              <button onClick={() => setFs(false)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
                 Exit
               </button>
             ) : (
-              <button
-                onClick={() => void setFs(true)}
-                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-              >
+              <button onClick={() => setFs(true)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
                 Fullscreen
               </button>
             )}
 
-            <button
-              onClick={() => void goLevels()}
-              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-            >
+            <button onClick={goLevels} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
               Levels
             </button>
           </div>
         </div>
 
+        {/* Main board */}
         <div
           className={`relative overflow-hidden rounded-2xl border shadow-sm ${fs ? "flex-1 min-h-0" : ""}`}
           style={{
@@ -1949,6 +2465,29 @@ export default function LetterTracingGame() {
           }}
         >
           <ConfettiBurst fire={confetti} />
+
+          {/* Reward image */}
+          {letterDone && !isPretrace && rewardImgSrc && (
+            <div
+              className="pointer-events-none absolute z-[10020]"
+              style={{ left: "24%", top: "52%", transform: "translate(-50%, -50%)" }}
+            >
+              <div className="tsRewardPop relative">
+                <div className="tsRewardRing absolute inset-[-40px] rounded-full" />
+                <img
+                  src={rewardImgSrc}
+                  alt="reward"
+                  draggable={false}
+                  className="h-[220px] w-[220px] sm:h-[280px] sm:w-[280px] lg:h-[340px] lg:w-[340px] object-contain drop-shadow-2xl"
+                />
+                {rewardMeta?.word ? (
+                  <div className="mt-2 text-center text-lg font-extrabold text-slate-900 drop-shadow">
+                    {rewardMeta.emoji} {rewardMeta.word}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
 
           <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9", minHeight: "55vh" } : {}}>
             <svg
@@ -1961,6 +2500,8 @@ export default function LetterTracingGame() {
                 WebkitUserSelect: "none",
                 userSelect: "none",
                 WebkitTouchCallout: "none",
+                transform: shiftRightForSound ? "translateX(clamp(12px, 3vw, 56px))" : "translateX(0px)",
+                transition: "transform 220ms ease",
               }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -1968,7 +2509,7 @@ export default function LetterTracingGame() {
               onPointerCancel={handlePointerUp}
               onContextMenu={(e) => e.preventDefault()}
             >
-              {/* 1) Full letter outline */}
+              {/* Full letter outline */}
               {allTraceStrokes.map((s, i) => {
                 const c = STROKE_COLORS[i % STROKE_COLORS.length];
                 return (
@@ -1985,7 +2526,7 @@ export default function LetterTracingGame() {
                 );
               })}
 
-              {/* 2) Completed strokes */}
+              {/* Completed strokes */}
               {completedStrokes.map((s, i) => {
                 if (s.kind === "tap") {
                   const p = parseTapPoint(s.pathD);
@@ -2019,7 +2560,7 @@ export default function LetterTracingGame() {
                 );
               })}
 
-              {/* 3) Current stroke guides */}
+              {/* Current stroke guides */}
               {!letterDone && !isTap && (
                 <>
                   <path
@@ -2059,7 +2600,7 @@ export default function LetterTracingGame() {
                 </>
               )}
 
-              {/* 4) Start marker + guide + end marker */}
+              {/* Start + guide + end markers */}
               {!letterDone && (
                 <>
                   {isTap ? (
@@ -2098,7 +2639,7 @@ export default function LetterTracingGame() {
                         </g>
                       </g>
 
-                      {/* END STAR */}
+                      {/* END */}
                       <g transform={`translate(${endPt.x}, ${endPt.y})`} pointerEvents="none">
                         <image
                           href={STAR_SRC}
@@ -2120,24 +2661,20 @@ export default function LetterTracingGame() {
 
           {/* Instruction bar */}
           <div className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur">
-            {instructionText}
+            {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
           </div>
 
-          {/* ✅ Completion: big animated next arrow (match new game) */}
-          {letterDone && (
+          {/* Completion: big next arrow */}
+          {letterDone && showNextArrow && (
             <div className="absolute inset-0 pointer-events-none z-[10030]">
-              <div className="pointer-events-auto absolute right-4 sm:right-6 top-1/2 -translate-y-1/2 flex flex-col items-end gap-2">
-                <div className="rounded-full bg-white/85 px-3 py-1 text-xs font-extrabold text-slate-800 shadow-sm ring-1 ring-white/60 backdrop-blur">
-                  {nextCtaLabel} →
-                </div>
-
+              <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-auto">
                 <button
-                  onClick={goNext}
-                  title={nextCtaLabel}
-                  aria-label={nextCtaLabel}
+                  onClick={goNextItem}
+                  aria-label="Next"
+                  title="Next"
                   className={[
                     "tsNextPulse relative",
-                    "h-[92px] w-[92px] sm:h-[112px] sm:w-[112px] lg:h-[132px] lg:w-[132px]",
+                    "h-[112px] w-[112px] sm:h-[136px] sm:w-[136px] lg:h-[156px] lg:w-[156px]",
                     "rounded-full bg-white/85 backdrop-blur-md",
                     "shadow-[0_18px_50px_rgba(0,0,0,0.22)]",
                     "ring-4 ring-emerald-200/70",
@@ -2146,7 +2683,7 @@ export default function LetterTracingGame() {
                   ].join(" ")}
                 >
                   <span
-                    className="tsNextHalo absolute inset-[-20px] rounded-full"
+                    className="tsNextHalo absolute inset-[-22px] rounded-full"
                     style={{
                       background:
                         "radial-gradient(circle, rgba(34,197,94,0.28), rgba(59,130,246,0.18), transparent 62%)",
@@ -2162,6 +2699,11 @@ export default function LetterTracingGame() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Footer small info */}
+        <div className="mt-2 text-center text-xs font-semibold text-slate-600">
+          {isPretrace ? "Warm-up builds control for writing." : "Capital → Small. Lift between strokes."}
         </div>
       </div>
     </div>
