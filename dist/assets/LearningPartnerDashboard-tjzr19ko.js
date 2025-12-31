@@ -1,0 +1,1 @@
+import{j as r}from"./index-uo92nVyq.js";import s from"./SupportTickets-B3DR9vz2.js";import t from"./PerformanceMetrics-De9vmIaT.js";const i=()=>r.jsxs("div",{className:"p-6",children:[r.jsx(s,{}),r.jsx(t,{})]});export{i as default};
