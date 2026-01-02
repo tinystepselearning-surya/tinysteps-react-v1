@@ -130,59 +130,7 @@ function parseLine(pathD: string): { a: { x: number; y: number }; b: { x: number
   return { a: { x: ax, y: ay }, b: { x: bx, y: by } };
 }
 
-function getNativeFullscreenEl(): Element | null {
-  return (
-    (document.fullscreenElement as any) ||
-    (document as any).webkitFullscreenElement ||
-    (document as any).mozFullScreenElement ||
-    (document as any).msFullscreenElement ||
-    null
-  );
-}
 
-async function requestFullscreenSafe(el: any): Promise<boolean> {
-  try {
-    if (!el) return false;
-    // Standards: try to hide navigation UI when supported
-    if (el.requestFullscreen) {
-      try {
-        // Some browsers accept an options object to hide navigation UI
-        // (e.g. { navigationUI: 'hide' }) — try that first.
-        try {
-          await el.requestFullscreen({ navigationUI: "hide" } as any);
-        } catch {
-          await el.requestFullscreen();
-        }
-      } catch {
-        // fallthrough to vendor prefixed
-      }
-      return true;
-    }
-
-    // Vendor-prefixed fallbacks
-    const fn = el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen || null;
-    if (!fn) return false;
-    await fn.call(el);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function exitFullscreenSafe(): Promise<void> {
-  try {
-    const fn =
-      document.exitFullscreen ||
-      (document as any).webkitExitFullscreen ||
-      (document as any).mozCancelFullScreen ||
-      (document as any).msExitFullscreen ||
-      null;
-    if (!fn) return;
-    await fn.call(document);
-  } catch {
-    // ignore
-  }
-}
 
 /** Convert clientX/clientY into SVG coordinates */
 function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
@@ -841,20 +789,7 @@ export default function LetterTracingWithSounds() {
     return iOS || iPadOS;
   }, []);
 
-  const canNativeFullscreen = useMemo(() => {
-    if (typeof document === "undefined") return false;
-    const d: any = document;
-    const el: any = document.documentElement;
-
-    const enabled =
-      !!(document.fullscreenEnabled || d.webkitFullscreenEnabled || d.mozFullScreenEnabled || d.msFullscreenEnabled);
-
-    const hasRequest =
-      !!(el?.requestFullscreen || el?.webkitRequestFullscreen || el?.mozRequestFullScreen || el?.msRequestFullscreen);
-
-    // Use native fullscreen if the API exists; don't block iOS outright.
-    return enabled || hasRequest;
-  }, []);
+  
 
   // -------- iPad viewport fix: use visualViewport height so the game fits 100% --------
   useEffect(() => {
@@ -1792,6 +1727,23 @@ export default function LetterTracingWithSounds() {
     navigate(url, { replace: true });
   }
 
+  /* --------------------
+     Navigation helpers (IMMERSIVE ONLY — no native fullscreen)
+  -------------------- */
+  function navigateTo(sp: URLSearchParams, replace: boolean) {
+    const query = sp.toString();
+    const url = query ? `${BASE_ROUTE}?${query}` : BASE_ROUTE;
+    navigate(url, { replace });
+  }
+
+  function goGamesPortal() {
+    const sp = new URLSearchParams();
+    if (kidId) sp.set("kidId", kidId);
+    const url = sp.toString() ? `/kids/games/phonics?${sp.toString()}` : "/kids/games/phonics";
+    navigate(url, { replace: true });
+  }
+
+  // ✅ Preserve immersive if already ON
   function navigatePlay(levelNum: number, pairIdx: number, stepNum: CaseStep, replace = false) {
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -1801,35 +1753,13 @@ export default function LetterTracingWithSounds() {
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
-    if (getNativeFullscreenEl() || fs) sp.set("fs", "1");
+    if (fs) sp.set("fs", "1"); // ✅ immersive stays on during Next/Jump
     navigateTo(sp, replace);
   }
 
-  const nativeFsEnteredRef = useRef(false);
-
-  // Helps browsers that require fullscreen inside a user gesture.
-  // We store a timestamp when the user tapped Play/Fullscreen.
-  const fsGestureAtMsRef = useRef<number>(0);
-
-  // Prefer fullscreen on our wrapper in Play mode (more stable), fallback to documentElement.
-  const getFsTargetEl = useCallback((): Element => {
-    return (fsRef.current as any) || document.documentElement;
-  }, []);
-  
-  // Guard to avoid double-navigation when native fullscreen exits
-  const fsExitNavRef = useRef(false);
-
-  async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
+  // ✅ Play always starts in Immersive (best for kids)
+  function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
-
-    // Mark a user-gesture moment (helps retry fullscreen after route changes)
-    fsGestureAtMsRef.current = Date.now();
-
-    // Try native fullscreen inside the click gesture (best chance to succeed)
-    if (canNativeFullscreen) {
-      const ok = await requestFullscreenSafe(document.documentElement);
-      if (ok) nativeFsEnteredRef.current = true;
-    }
 
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -1838,120 +1768,29 @@ export default function LetterTracingWithSounds() {
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
-    // Immersive mode always on (even if native fullscreen is blocked)
-    sp.set("fs", "1");
+    sp.set("fs", "1"); // ✅ always immersive (NO native fullscreen)
     navigateTo(sp, false);
   }
 
-  async function setFs(on: boolean) {
+  // ✅ Toggle immersive by URL param only (NO native fullscreen)
+  function setFs(on: boolean) {
     clearTimers();
-
-    // Mark user gesture moment for retry logic
-    fsGestureAtMsRef.current = Date.now();
-
-    if (on) {
-      // Request native fullscreen first (inside gesture), but still set fs=1 regardless.
-      if (canNativeFullscreen) {
-        const ok = await requestFullscreenSafe(getFsTargetEl() as any);
-        if (ok) nativeFsEnteredRef.current = true;
-      }
-
-      const sp = new URLSearchParams(searchParams);
-      sp.set("fs", "1");
-      setSearchParams(sp, { replace: true });
-      return;
-    }
-
-    // Turn off immersive param
     const sp = new URLSearchParams(searchParams);
-    sp.delete("fs");
+    if (on) sp.set("fs", "1");
+    else sp.delete("fs");
     setSearchParams(sp, { replace: true });
-
-    // Exit native fullscreen if we were the ones who entered it
-    if (getNativeFullscreenEl() && nativeFsEnteredRef.current) {
-      await exitFullscreenSafe();
-    }
-    nativeFsEnteredRef.current = false;
   }
 
-  async function goLevels() {
+  // ✅ Back to levels always exits immersive
+  function goLevels() {
     clearTimers();
-    await setFs(false);
 
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
+
+    // ✅ no level/pair/step, and no fs
     navigateTo(sp, true);
   }
-
-  // Keep URL fs=1 in sync with native fullscreen changes (ESC/back gesture etc.)
-  useEffect(() => {
-    const onFsChange = () => {
-      const nativeNow = !!getNativeFullscreenEl();
-
-      const sp = new URLSearchParams(window.location.search);
-      const hasFs = sp.get("fs") === "1";
-
-      // If native fullscreen exited, remove fs=1 (only when native fullscreen is supported)
-      if (!nativeNow) {
-        if (nativeFsEnteredRef.current) nativeFsEnteredRef.current = false;
-
-        // If we were playing in fs=1 and fullscreen just exited (ESC/back/system),
-        // exit the GAME to Levels (not just immersive)
-        if (mode === "play" && hasFs && !fsExitNavRef.current) {
-          fsExitNavRef.current = true;
-          void goLevels();
-          return;
-        }
-
-        // Otherwise just clear fs=1 if it was set
-        if (hasFs && canNativeFullscreen) {
-          sp.delete("fs");
-          setSearchParams(sp, { replace: true });
-        }
-        return;
-      }
-
-      // If native fullscreen entered and URL doesn't have fs=1, set it (Play mode only)
-      if (nativeNow && !hasFs && mode === "play") {
-        sp.set("fs", "1");
-        setSearchParams(sp, { replace: true });
-      }
-    };
-
-    document.addEventListener("fullscreenchange", onFsChange);
-    document.addEventListener("webkitfullscreenchange" as any, onFsChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", onFsChange);
-      document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
-    };
-  }, [setSearchParams, canNativeFullscreen, mode]);
-
-  // Reset the fs-exit navigation guard when mode changes
-  useEffect(() => {
-    fsExitNavRef.current = false;
-  }, [mode]);
-
-  // Best-effort: if fs=1 is set but native fullscreen didn't stick (route change),
-  // retry quickly within a short user-gesture window.
-  useEffect(() => {
-    if (mode !== "play") return;
-    if (!fs) return;
-    if (!canNativeFullscreen) return;
-    if (getNativeFullscreenEl()) return;
-
-    const lastGesture = fsGestureAtMsRef.current || 0;
-    const age = Date.now() - lastGesture;
-
-    // Only retry shortly after a real user click/tap.
-    if (age > 1500) return;
-
-    // Try fullscreen on our wrapper element (more stable than documentElement)
-    const el = getFsTargetEl();
-    requestFullscreenSafe(el as any).then((ok) => {
-      if (ok) nativeFsEnteredRef.current = true;
-    });
-  }, [fs, mode, canNativeFullscreen, getFsTargetEl]);
 
   // Next item navigation (skip)
   function goNextItem() {
@@ -2921,7 +2760,7 @@ export default function LetterTracingWithSounds() {
                 onClick={() => void setFs(true)}
                 className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
               >
-                Fullscreen
+                Immersive
               </button>
             )}
 
