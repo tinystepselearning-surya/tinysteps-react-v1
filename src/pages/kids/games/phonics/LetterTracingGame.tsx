@@ -2176,6 +2176,7 @@ const futureTapTargets = useMemo(() => {
                 ))}
 
               {/* 4) Start marker + guide + end marker */}
+              {!letterDone && (
                 <>
                   {isTap ? (
                     <>
