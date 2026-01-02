@@ -58,14 +58,7 @@ const DemoShowcase = safeLazy(
   ])
 );
 
-const WhyChooseCollapsibleSection = safeLazy(
-  pick([
-    "../components/Home/WhyChooseCollapsibleSection.tsx",
-    "../components/Home/WhyChooseCollapsibleSection.jsx",
-    "../components/Home/WhyChooseCollapsibleSection/index.tsx",
-    "../components/Home/WhyChooseCollapsibleSection/index.jsx",
-  ])
-);
+// WhyChooseCollapsibleSection removed from homepage (do not render)
 
 const StepTimeline = safeLazy(
   pick([
@@ -209,9 +202,7 @@ export default function HomePage() {
         <DemoShowcase />
       </Suspense>
 
-      <Suspense fallback={null}>
-        <WhyChooseCollapsibleSection />
-      </Suspense>
+      {/* WhyChooseCollapsibleSection intentionally removed */}
 
       <Suspense fallback={null}>
         <StepTimeline />
