@@ -70,6 +70,9 @@ const STAR_END_SIZE = 14;
 // viewBox padding
 const VIEWBOX_PAD = 10;
 
+// Reserve space for the bottom instruction bar so SVG doesn't get covered
+const INSTRUCTION_BAR_H = 56;
+
 /* --------------------
    Small helpers
 -------------------- */
@@ -804,6 +807,80 @@ export default function LetterTracingWithSounds() {
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
   const fs = searchParams.get("fs") === "1";
 
+  // ✅ Route params / derived mode (must be declared before hooks that reference `mode`)
+  const levelParam = searchParams.get("level");
+  const pairParam = searchParams.get("pair");
+  const stepParam = searchParams.get("step");
+  const mode: Mode = levelParam === null ? "levels" : "play";
+  const levelIdRaw = levelParam === null ? null : Number(levelParam);
+  const levelId = levelIdRaw === null || Number.isNaN(levelIdRaw) ? null : levelIdRaw;
+  const pairIndexRaw = pairParam ? Number(pairParam) : 0;
+  const pairIndex = Number.isNaN(pairIndexRaw) ? 0 : pairIndexRaw;
+  const stepNumRaw = stepParam ? Number(stepParam) : 0;
+  const step: CaseStep = stepNumRaw === 1 ? 1 : 0;
+
+  // -------- iPad / iOS detection (Safari fullscreen is flaky) --------
+  const isIOS = useMemo(() => {
+    if (typeof navigator === "undefined") return false;
+    const ua = navigator.userAgent || "";
+    const iOS = /iPad|iPhone|iPod/.test(ua);
+    // iPadOS 13+ reports as MacIntel but has touch points
+    const iPadOS = (navigator as any).platform === "MacIntel" && (navigator as any).maxTouchPoints > 1;
+    return iOS || iPadOS;
+  }, []);
+
+  const canNativeFullscreen = useMemo(() => {
+    if (typeof document === "undefined") return false;
+    const d: any = document;
+    const enabled = !!(document.fullscreenEnabled || d.webkitFullscreenEnabled || d.mozFullScreenEnabled || d.msFullscreenEnabled);
+    // ✅ disable native fullscreen on iPad/iOS to prevent "exits on touch"
+    return enabled && !isIOS;
+  }, [isIOS]);
+
+  // -------- iPad viewport fix: use visualViewport height so the game fits 100% --------
+  useEffect(() => {
+    if (!fs) return;
+
+    const setVh = () => {
+      const vv = window.visualViewport;
+      const h = Math.round(vv?.height ?? window.innerHeight);
+      document.documentElement.style.setProperty("--ts-vh", `${h}px`);
+    };
+
+    setVh();
+    window.addEventListener("resize", setVh);
+    window.visualViewport?.addEventListener("resize", setVh);
+    window.visualViewport?.addEventListener("scroll", setVh);
+
+    return () => {
+      window.removeEventListener("resize", setVh);
+      window.visualViewport?.removeEventListener("resize", setVh);
+      window.visualViewport?.removeEventListener("scroll", setVh);
+    };
+  }, [fs]);
+
+  // -------- block pinch/zoom/scroll gestures while fullscreen playing (iOS Safari) --------
+  useEffect(() => {
+    if (mode !== "play" || !fs) return;
+
+    const prevent = (e: Event) => {
+      e.preventDefault();
+    };
+    const opts = { passive: false } as any;
+
+    document.addEventListener("touchmove", prevent, opts);
+    document.addEventListener("gesturestart" as any, prevent, opts);
+    document.addEventListener("gesturechange" as any, prevent, opts);
+    document.addEventListener("gestureend" as any, prevent, opts);
+
+    return () => {
+      document.removeEventListener("touchmove", prevent as any, opts);
+      document.removeEventListener("gesturestart" as any, prevent as any, opts);
+      document.removeEventListener("gesturechange" as any, prevent as any, opts);
+      document.removeEventListener("gestureend" as any, prevent as any, opts);
+    };
+  }, [mode, fs]);
+
   useEffect(() => {
     if (kidId) {
       try {
@@ -812,19 +889,7 @@ export default function LetterTracingWithSounds() {
     }
   }, [kidId]);
 
-  const levelParam = searchParams.get("level");
-  const pairParam = searchParams.get("pair");
-  const stepParam = searchParams.get("step");
-
-  const mode: Mode = levelParam === null ? "levels" : "play";
-  const levelIdRaw = levelParam === null ? null : Number(levelParam);
-  const levelId = levelIdRaw === null || Number.isNaN(levelIdRaw) ? null : levelIdRaw;
-
-  const pairIndexRaw = pairParam ? Number(pairParam) : 0;
-  const pairIndex = Number.isNaN(pairIndexRaw) ? 0 : pairIndexRaw;
-
-  const stepNumRaw = stepParam ? Number(stepParam) : 0;
-  const step: CaseStep = stepNumRaw === 1 ? 1 : 0;
+  
 
   // ✅ only two levels
   const normalizedLevelId = mode === "play" ? (levelId === 0 ? 0 : 1) : null;
@@ -1320,27 +1385,69 @@ export default function LetterTracingWithSounds() {
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
-  // Prevent page scrolling while playing
+  // Prevent scrolling + iOS bounce while playing (especially in fullscreen)
   useEffect(() => {
     if (mode !== "play") return;
 
-    const prevOverflow = document.body.style.overflow;
-    const prevTouchAction = (document.body.style as any).touchAction;
-    const prevWebkitUserSelect = (document.body.style as any).webkitUserSelect;
-    const prevUserSelect = (document.body.style as any).userSelect;
+    const body = document.body;
+    const html = document.documentElement;
 
-    document.body.style.overflow = "hidden";
-    (document.body.style as any).touchAction = "none";
-    (document.body.style as any).webkitUserSelect = "none";
-    (document.body.style as any).userSelect = "none";
+    const prev = {
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyWidth: body.style.width,
+      htmlOverflow: html.style.overflow,
+      touchAction: (body.style as any).touchAction,
+      webkitUserSelect: (body.style as any).webkitUserSelect,
+      userSelect: (body.style as any).userSelect,
+      webkitTouchCallout: (body.style as any).webkitTouchCallout,
+      overscrollBehavior: (body.style as any).overscrollBehavior,
+    };
+
+    const scrollY = window.scrollY || 0;
+
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    (body.style as any).touchAction = "none";
+    (body.style as any).webkitUserSelect = "none";
+    (body.style as any).userSelect = "none";
+    (body.style as any).webkitTouchCallout = "none";
+    (body.style as any).overscrollBehavior = "none";
+
+    // ✅ iOS Safari: prevents rubber-band + URL bar resizing from breaking layout
+    if (fs) {
+      body.style.position = "fixed";
+      body.style.top = `-${scrollY}px`;
+      body.style.left = "0";
+      body.style.right = "0";
+      body.style.width = "100%";
+    }
 
     return () => {
-      document.body.style.overflow = prevOverflow;
-      (document.body.style as any).touchAction = prevTouchAction;
-      (document.body.style as any).webkitUserSelect = prevWebkitUserSelect;
-      (document.body.style as any).userSelect = prevUserSelect;
+      let restoreY = 0;
+      if (fs) {
+        restoreY = Math.abs(parseInt(body.style.top || "0", 10)) || 0;
+      }
+
+      body.style.overflow = prev.bodyOverflow;
+      html.style.overflow = prev.htmlOverflow;
+      body.style.position = prev.bodyPosition;
+      body.style.top = prev.bodyTop;
+      body.style.left = prev.bodyLeft;
+      body.style.right = prev.bodyRight;
+      body.style.width = prev.bodyWidth;
+      (body.style as any).touchAction = prev.touchAction;
+      (body.style as any).webkitUserSelect = prev.webkitUserSelect;
+      (body.style as any).userSelect = prev.userSelect;
+      (body.style as any).webkitTouchCallout = prev.webkitTouchCallout;
+      (body.style as any).overscrollBehavior = prev.overscrollBehavior;
+
+      if (fs) window.scrollTo(0, restoreY);
     };
-  }, [mode]);
+  }, [mode, fs]);
 
   // Reset state on item change
   useEffect(() => {
@@ -1654,7 +1761,7 @@ export default function LetterTracingWithSounds() {
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
 
-    const ok = await requestFullscreenSafe(document.documentElement);
+    const ok = canNativeFullscreen ? await requestFullscreenSafe(document.documentElement) : false;
     if (ok) nativeFsEnteredRef.current = true;
 
     const sp = new URLSearchParams();
@@ -1668,7 +1775,7 @@ export default function LetterTracingWithSounds() {
     navigateTo(sp, false);
 
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    if (!getNativeFullscreenEl()) {
+    if (canNativeFullscreen && !getNativeFullscreenEl()) {
       const ok2 = await requestFullscreenSafe(document.documentElement);
       if (ok2) nativeFsEnteredRef.current = true;
     }
@@ -1682,7 +1789,7 @@ export default function LetterTracingWithSounds() {
       setSearchParams(sp, { replace: true });
 
       const wrapper = fsRef.current;
-      if (wrapper) {
+      if (canNativeFullscreen && wrapper) {
         const ok = await requestFullscreenSafe(wrapper as any);
         if (ok) nativeFsEnteredRef.current = true;
       }
@@ -2549,7 +2656,7 @@ export default function LetterTracingWithSounds() {
     ? `Level 0 • ${letterData.label} • Stroke ${strokeNo}/${totalStrokes}`
     : `Level 1 • ${step === 0 ? "Capital" : "Small"} • Letter: ${currentLetterId ?? ""} • Stroke ${strokeNo}/${totalStrokes}`;
 
-  const wrapperClass = fs ? "fixed left-0 right-0 top-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
+  const wrapperClass = fs ? "fixed inset-0 z-[9999] bg-slate-50" : "mx-auto w-full max-w-6xl px-4 py-6";
 
   return (
     <div
@@ -2558,7 +2665,11 @@ export default function LetterTracingWithSounds() {
       style={
         fs
           ? {
-              height: "100dvh",
+              // ✅ iPad stable height using visualViewport
+              height: "var(--ts-vh)" as any,
+              minHeight: "100svh",
+              width: "100vw",
+              overflow: "hidden",
               paddingTop: "calc(16px + env(safe-area-inset-top))",
               paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
               paddingLeft: "calc(16px + env(safe-area-inset-left))",
@@ -2752,7 +2863,7 @@ export default function LetterTracingWithSounds() {
               ref={svgRef}
               viewBox={renderViewBox}
               preserveAspectRatio="xMidYMid meet"
-              className="absolute inset-0 h-full w-full touch-none select-none"
+              className="absolute left-0 top-0 right-0 touch-none select-none"
               style={{
                 touchAction: "none",
                 WebkitUserSelect: "none",
@@ -2760,6 +2871,7 @@ export default function LetterTracingWithSounds() {
                 WebkitTouchCallout: "none",
                 transform: shiftRightForSound ? "translateX(clamp(12px, 3vw, 56px))" : "translateX(0px)",
                 transition: "transform 220ms ease",
+                bottom: INSTRUCTION_BAR_H,
               }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -2918,7 +3030,10 @@ export default function LetterTracingWithSounds() {
           </div>
 
           {/* Instruction bar */}
-          <div className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur">
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur"
+            style={{ height: INSTRUCTION_BAR_H }}
+          >
             {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
           </div>
 
