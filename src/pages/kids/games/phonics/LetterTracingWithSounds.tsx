@@ -1711,22 +1711,7 @@ export default function LetterTracingWithSounds() {
   const showReward = letterDone && !isPretrace && !!rewardImgSrc;
   const shiftRightForSound = showReward && letterSoundPlaying;
 
-  /* --------------------
-     Navigation helpers
-  -------------------- */
-  function navigateTo(sp: URLSearchParams, replace: boolean) {
-    const query = sp.toString();
-    const url = query ? `${BASE_ROUTE}?${query}` : BASE_ROUTE;
-    navigate(url, { replace });
-  }
-
-  function goGamesPortal() {
-    const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
-    const url = sp.toString() ? `/kids/games/phonics?${sp.toString()}` : "/kids/games/phonics";
-    navigate(url, { replace: true });
-  }
-
+  
   /* --------------------
      Navigation helpers (IMMERSIVE ONLY — no native fullscreen)
   -------------------- */
