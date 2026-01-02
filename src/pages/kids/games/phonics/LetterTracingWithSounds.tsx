@@ -143,12 +143,24 @@ function getNativeFullscreenEl(): Element | null {
 async function requestFullscreenSafe(el: any): Promise<boolean> {
   try {
     if (!el) return false;
-    const fn =
-      el.requestFullscreen ||
-      el.webkitRequestFullscreen ||
-      el.mozRequestFullScreen ||
-      el.msRequestFullscreen ||
-      null;
+    // Standards: try to hide navigation UI when supported
+    if (el.requestFullscreen) {
+      try {
+        // Some browsers accept an options object to hide navigation UI
+        // (e.g. { navigationUI: 'hide' }) — try that first.
+        try {
+          await el.requestFullscreen({ navigationUI: "hide" } as any);
+        } catch {
+          await el.requestFullscreen();
+        }
+      } catch {
+        // fallthrough to vendor prefixed
+      }
+      return true;
+    }
+
+    // Vendor-prefixed fallbacks
+    const fn = el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen || null;
     if (!fn) return false;
     await fn.call(el);
     return true;
@@ -832,10 +844,17 @@ export default function LetterTracingWithSounds() {
   const canNativeFullscreen = useMemo(() => {
     if (typeof document === "undefined") return false;
     const d: any = document;
-    const enabled = !!(document.fullscreenEnabled || d.webkitFullscreenEnabled || d.mozFullScreenEnabled || d.msFullscreenEnabled);
-    // ✅ disable native fullscreen on iPad/iOS to prevent "exits on touch"
-    return enabled && !isIOS;
-  }, [isIOS]);
+    const el: any = document.documentElement;
+
+    const enabled =
+      !!(document.fullscreenEnabled || d.webkitFullscreenEnabled || d.mozFullScreenEnabled || d.msFullscreenEnabled);
+
+    const hasRequest =
+      !!(el?.requestFullscreen || el?.webkitRequestFullscreen || el?.mozRequestFullScreen || el?.msRequestFullscreen);
+
+    // Use native fullscreen if the API exists; don't block iOS outright.
+    return enabled || hasRequest;
+  }, []);
 
   // -------- iPad viewport fix: use visualViewport height so the game fits 100% --------
   useEffect(() => {
@@ -1796,6 +1815,9 @@ export default function LetterTracingWithSounds() {
   const getFsTargetEl = useCallback((): Element => {
     return (fsRef.current as any) || document.documentElement;
   }, []);
+  
+  // Guard to avoid double-navigation when native fullscreen exits
+  const fsExitNavRef = useRef(false);
 
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
@@ -1873,7 +1895,15 @@ export default function LetterTracingWithSounds() {
       if (!nativeNow) {
         if (nativeFsEnteredRef.current) nativeFsEnteredRef.current = false;
 
-        // If URL still says fs=1, clear it (avoid being "stuck" in immersive)
+        // If we were playing in fs=1 and fullscreen just exited (ESC/back/system),
+        // exit the GAME to Levels (not just immersive)
+        if (mode === "play" && hasFs && !fsExitNavRef.current) {
+          fsExitNavRef.current = true;
+          void goLevels();
+          return;
+        }
+
+        // Otherwise just clear fs=1 if it was set
         if (hasFs && canNativeFullscreen) {
           sp.delete("fs");
           setSearchParams(sp, { replace: true });
@@ -1896,6 +1926,11 @@ export default function LetterTracingWithSounds() {
       document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
     };
   }, [setSearchParams, canNativeFullscreen, mode]);
+
+  // Reset the fs-exit navigation guard when mode changes
+  useEffect(() => {
+    fsExitNavRef.current = false;
+  }, [mode]);
 
   // Best-effort: if fs=1 is set but native fullscreen didn't stick (route change),
   // retry quickly within a short user-gesture window.
@@ -2875,11 +2910,17 @@ export default function LetterTracingWithSounds() {
             </button>
 
             {fs ? (
-              <button onClick={() => setFs(false)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              <button
+                onClick={() => void goLevels()}
+                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+              >
                 Exit
               </button>
             ) : (
-              <button onClick={() => setFs(true)} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+              <button
+                onClick={() => void setFs(true)}
+                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+              >
                 Fullscreen
               </button>
             )}
