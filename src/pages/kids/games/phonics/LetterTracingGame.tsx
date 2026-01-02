@@ -115,56 +115,6 @@ function expandViewBox(viewBox: string, pad: number): string {
   return `${nx} ${ny} ${nw} ${nh}`;
 }
 
-function getNativeFullscreenEl(): Element | null {
-  const d: any = document as any;
-  return (
-    document.fullscreenElement ||
-    d.webkitFullscreenElement ||
-    d.mozFullScreenElement ||
-    d.msFullscreenElement ||
-    null
-  );
-}
-
-async function requestFullscreenSafe(el: Element): Promise<boolean> {
-  try {
-    const anyEl: any = el as any;
-
-    const fn =
-      anyEl.requestFullscreen ||
-      anyEl.webkitRequestFullscreen ||
-      anyEl.mozRequestFullScreen ||
-      anyEl.msRequestFullscreen;
-
-    if (!fn) return false;
-
-    // Some browsers require binding
-    await fn.call(anyEl);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function exitFullscreenSafe(): Promise<boolean> {
-  try {
-    const d: any = document as any;
-
-    const fn =
-      document.exitFullscreen ||
-      d.webkitExitFullscreen ||
-      d.mozCancelFullScreen ||
-      d.msExitFullscreen;
-
-    if (!fn) return false;
-
-    await fn.call(document);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function extractMasteredItems(data: any): string[] {
   const out: string[] = [];
 
@@ -780,8 +730,7 @@ export default function LetterTracingGame() {
     traceAudioPlayingRef.current = false;
   }, []);
 
-  // Tracks whether we successfully entered *native* fullscreen
-  const nativeFsEnteredRef = useRef(false);
+  // (native fullscreen removed — we use immersive mode only)
 
   // 🔊 Confetti audio
   const confettiAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -845,30 +794,57 @@ export default function LetterTracingGame() {
   }, [mode]);
 
   // ✅ If user exits *native* fullscreen (ESC), sync fs=1 only if we truly were native-fullscreen
+  
+  // -------- iPad viewport fix (match LetterTracingWithSounds) --------
   useEffect(() => {
-    const onFsChange = () => {
-      const nativeNow = !!getNativeFullscreenEl();
-      if (nativeNow) return;
+    if (mode !== "play" || !fs) return;
 
-      if (nativeFsEnteredRef.current) {
-        nativeFsEnteredRef.current = false;
+    const root = document.documentElement;
 
-        const sp = new URLSearchParams(window.location.search);
-        if (sp.get("fs") === "1") {
-          sp.delete("fs");
-          setSearchParams(sp, { replace: true });
-        }
-      }
+    const setVh = () => {
+      const vv = (window as any).visualViewport;
+      const h = vv?.height ?? window.innerHeight;
+      root.style.setProperty("--ts-vh", `${Math.max(1, Math.round(h))}px`);
     };
 
-    document.addEventListener("fullscreenchange", onFsChange);
-    document.addEventListener("webkitfullscreenchange" as any, onFsChange);
+    setVh();
+
+    const vv = (window as any).visualViewport;
+    vv?.addEventListener?.("resize", setVh);
+    vv?.addEventListener?.("scroll", setVh);
+    window.addEventListener("orientationchange", setVh);
+    window.addEventListener("resize", setVh);
 
     return () => {
-      document.removeEventListener("fullscreenchange", onFsChange);
-      document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
+      vv?.removeEventListener?.("resize", setVh);
+      vv?.removeEventListener?.("scroll", setVh);
+      window.removeEventListener("orientationchange", setVh);
+      window.removeEventListener("resize", setVh);
     };
-  }, [setSearchParams]);
+  }, [mode, fs]);
+
+  // -------- block pinch/zoom/scroll gestures (match LetterTracingWithSounds) --------
+  useEffect(() => {
+    if (mode !== "play" || !fs) return;
+
+    const prevent = (e: Event) => {
+      try {
+        (e as any).preventDefault?.();
+      } catch {}
+    };
+
+    document.addEventListener("gesturestart", prevent as any, { passive: false } as any);
+    document.addEventListener("gesturechange", prevent as any, { passive: false } as any);
+    document.addEventListener("gestureend", prevent as any, { passive: false } as any);
+    document.addEventListener("touchmove", prevent as any, { passive: false } as any);
+
+    return () => {
+      document.removeEventListener("gesturestart", prevent as any);
+      document.removeEventListener("gesturechange", prevent as any);
+      document.removeEventListener("gestureend", prevent as any);
+      document.removeEventListener("touchmove", prevent as any);
+    };
+  }, [mode, fs]);
 
   // ✅ Reset state when switching item (letter / pretrace item)
   useEffect(() => {
@@ -1141,16 +1117,15 @@ export default function LetterTracingGame() {
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
-    if (getNativeFullscreenEl() || fs) sp.set("fs", "1");
+    // ✅ Preserve immersive if already ON (match WithSounds)
+    const prev = new URLSearchParams(window.location.search);
+    if (prev.get("fs") === "1" || fs) sp.set("fs", "1");
+
     navigateTo(sp, replace);
   }
 
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
-
-    // ✅ Try native fullscreen first (desktop). On iOS it will fail safely.
-    const ok = await requestFullscreenSafe(document.documentElement);
-    if (ok) nativeFsEnteredRef.current = true;
 
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -1159,49 +1134,25 @@ export default function LetterTracingGame() {
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
-    // ✅ Always immersive flag (also acts as fullscreen fallback on iOS)
+    // ✅ Always immersive flag (iOS-safe, no native fullscreen)
     sp.set("fs", "1");
 
     navigateTo(sp, false);
-
-    // ✅ Let UI render before follow-up attempt
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-
-    // Optional: if not in native fullscreen, try again after render
-    if (!getNativeFullscreenEl()) {
-      const ok2 = await requestFullscreenSafe(document.documentElement);
-      if (ok2) nativeFsEnteredRef.current = true;
-    }
   }
 
-  async function setFs(on: boolean) {
+  function setFs(on: boolean) {
     clearTimers();
-    if (on) {
-      const sp = new URLSearchParams(window.location.search);
-      sp.set("fs", "1");
-      setSearchParams(sp, { replace: true });
-
-      const wrapper = fsRef.current;
-      if (wrapper) {
-        const ok = await requestFullscreenSafe(wrapper as any);
-        if (ok) nativeFsEnteredRef.current = true;
-      }
-      return;
-    }
-
     const sp = new URLSearchParams(window.location.search);
-    sp.delete("fs");
-    setSearchParams(sp, { replace: true });
 
-    if (getNativeFullscreenEl()) {
-      await exitFullscreenSafe();
-    }
-    nativeFsEnteredRef.current = false;
+    if (on) sp.set("fs", "1");
+    else sp.delete("fs");
+
+    setSearchParams(sp, { replace: true });
   }
 
-  async function goLevels() {
+  function goLevels() {
     clearTimers();
-    await setFs(false);
+    setFs(false);
 
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -1982,8 +1933,8 @@ export default function LetterTracingGame() {
       className={wrapperClass}
       style={
         fs
-          ? {
-              height: "100dvh",
+            ? {
+              height: "var(--ts-vh, 100dvh)",
               paddingTop: "calc(16px + env(safe-area-inset-top))",
               paddingBottom: "calc(16px + env(safe-area-inset-bottom))",
               paddingLeft: "calc(16px + env(safe-area-inset-left))",
