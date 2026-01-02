@@ -154,16 +154,32 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
     skillTags: ["letter:a", "case:upper", "subtopic:tracing"],
   },
 
-  a: {
-    id: "a",
-    label: "a",
-    viewBox: "0 0 100 100",
-    strokes: [
-      { id: "a_1", kind: "trace", pathD: "M 68 40 C 48 24, 28 36, 28 58 C 28 84, 52 92, 68 86" },
-      { id: "a_2", kind: "trace", pathD: "M 68 36 L 68 93" },
-    ],
-    skillTags: ["letter:a", "case:lower", "subtopic:tracing"],
-  },
+     a: {
+  id: "a",
+  label: "a",
+  viewBox: "0 0 100 100",
+  strokes: [
+    {
+      id: "a_1",
+      kind: "trace",
+      // wider belly in the middle (still a c-curve, not a circle)
+      pathD:
+        "M 64 34 " +
+        "C 46 16, 22 30, 22 56 " +
+        "C 22 88, 52 94, 64 80",
+    },
+    {
+      id: "a_2",
+      kind: "trace",
+      // stem aligned with bowl right edge
+      pathD: "M 64 30 L 64 88",
+    },
+  ],
+  skillTags: ["letter:a", "case:lower", "subtopic:tracing"],
+},
+
+
+
 
   B: {
     id: "B",
@@ -209,15 +225,26 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
   },
 
   D: {
-    id: "D",
-    label: "D",
-    viewBox: "0 0 100 100",
-    strokes: [
-      { id: "D_1", kind: "trace", pathD: "M 34 16 L 34 86" },
-      { id: "D_2", kind: "trace", pathD: "M 34 16 C 78 16, 86 30, 86 51 C 86 72, 78 86, 34 86" },
-    ],
-    skillTags: ["letter:d", "case:upper", "subtopic:tracing"],
-  },
+  id: "D",
+  label: "D",
+  viewBox: "0 0 100 100",
+  strokes: [
+    // 1) straight down
+    { id: "D_1", kind: "trace", pathD: "M 34 16 L 34 86" },
+
+    // 2) smoother outer bowl (less bulge, more "D" shape)
+    {
+      id: "D_2",
+      kind: "trace",
+      pathD:
+        "M 34 16 " +
+        "C 68 16, 82 30, 82 51 " +
+        "C 82 72, 68 86, 34 86",
+    },
+  ],
+  skillTags: ["letter:d", "case:upper", "subtopic:tracing"],
+},
+
 
   d: {
     id: "d",
@@ -245,22 +272,27 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
   },
 
   e: {
-    id: "e",
-    label: "e",
-    viewBox: "0 0 100 100",
-    strokes: [
-      { id: "e_1", kind: "trace", pathD: "M 34 52 L 64 52" },
-      {
-        id: "e_2",
-        kind: "trace",
-        pathD:
-          "M 64 52 " +
-          "C 58 24, 34 28, 28 48 " +
-          "C 26 82, 48 92, 64 78",
-      },
-    ],
-    skillTags: ["letter:e", "case:lower", "subtopic:tracing"],
-  },
+  id: "e",
+  label: "e",
+  viewBox: "0 0 100 100",
+  strokes: [
+    // bar (keep)
+    { id: "e_1", kind: "trace", pathD: "M 36 54 L 68 54" },
+
+    // curve: slightly higher top + cleaner small-e shape
+    {
+      id: "e_2",
+      kind: "trace",
+      pathD:
+        "M 68 54 " +
+        "C 66 22, 36 24, 28 50 " +
+        "C 18 80, 42 94, 66 82",
+    },
+  ],
+  skillTags: ["letter:e", "case:lower", "subtopic:tracing"],
+},
+
+
 
   F: {
     id: "F",
@@ -275,15 +307,24 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
   },
 
   f: {
-    id: "f",
-    label: "f",
-    viewBox: "0 0 100 100",
-    skillTags: ["letter:f", "sound:f", "case:lower"],
-    strokes: [
-      { id: "f-main", kind: "trace", pathD: "M 64 16 C 58 10 50 12 50 28 L 50 92" },
-      { id: "f-bar", kind: "trace", pathD: "M 34 54 L 66 54" },
-    ],
-  },
+  id: "f",
+  label: "f",
+  viewBox: "0 0 100 100",
+  skillTags: ["letter:f", "sound:f", "case:lower", "subtopic:tracing"],
+  strokes: [
+    {
+      id: "f-main",
+      kind: "trace",
+      // neat top hook → smooth join into straight stem (no S-curve)
+      pathD: "M 72 10 C 58 4, 50 9, 50 26 L 50 92",
+    },
+    {
+      id: "f-bar",
+      kind: "trace",
+      pathD: "M 34 45 L 66 45",
+    },
+  ],
+},
 
   G: {
     id: "G",
@@ -468,42 +509,43 @@ export const TRACE_LETTERS: Partial<Record<LetterId, TraceLetter>> = {
   },
 
   O: {
-    id: "O",
-    label: "O",
-    viewBox: "0 0 100 100",
-    strokes: [
-      {
-        id: "O_1",
-        kind: "trace",
-        pathD:
-          "M 50 18 " +
-          "C 28 18, 14 34, 14 52 " +
-          "C 14 72, 28 86, 50 86 " +
-          "C 72 86, 86 72, 86 52 " +
-          "C 86 34, 72 18, 50 18",
-      },
-    ],
-    skillTags: ["letter:o", "case:upper", "subtopic:tracing"],
-  },
+  id: "O",
+  label: "O",
+  viewBox: "0 0 100 100",
+  strokes: [
+    {
+      id: "O_1",
+      kind: "trace",
+      pathD:
+        "M 50 12 " +
+        "C 34 12, 22 28, 22 50 " +
+        "C 21 74, 34 88, 50 88 " +
+        "C 66 88, 78 74, 78 50 " +
+        "C 79 28, 66 12, 50 12",
+    },
+  ],
+  skillTags: ["letter:o", "case:upper", "subtopic:tracing"],
+},
 
   o: {
-    id: "o",
-    label: "o",
-    viewBox: "0 0 100 100",
-    strokes: [
-      {
-        id: "o_1",
-        kind: "trace",
-        pathD:
-          "M 50 40 " +
-          "C 37.3 40, 27 50.3, 27 63 " +
-          "C 27 75.7, 37.3 86, 50 86 " +
-          "C 62.7 86, 73 75.7, 73 63 " +
-          "C 73 50.3, 62.7 40, 50 40",
-      },
-    ],
-    skillTags: ["letter:o", "case:lower", "subtopic:tracing"],
-  },
+  id: "o",
+  label: "o",
+  viewBox: "0 0 100 100",
+  strokes: [
+    {
+      id: "o_1",
+      kind: "trace",
+      pathD:
+        "M 50 40 " +
+        "C 39 40, 30 50, 30 63 " +
+        "C 30 78, 39 86, 50 86 " +
+        "C 61 86, 70 78, 70 63 " +
+        "C 70 50, 61 40, 50 40",
+    },
+  ],
+  skillTags: ["letter:o", "case:lower", "subtopic:tracing"],
+},
+
 
   P: {
     id: "P",
@@ -743,16 +785,17 @@ v: {
       id: "v-left",
       kind: "trace",
       // small top-left → small bottom point (down stroke)
-      pathD: "M 38 34 L 50 78",
+      pathD: "M 34 34 L 50 78",
     },
     {
       id: "v-right",
       kind: "trace",
       // small top-right → small bottom point (down stroke)
-      pathD: "M 62 34 L 50 78",
+      pathD: "M 66 34 L 50 78",
     },
   ],
 },
+
 W: {
   id: "W",
   label: "W",
