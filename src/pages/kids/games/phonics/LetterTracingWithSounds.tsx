@@ -1208,6 +1208,36 @@ export default function LetterTracingWithSounds() {
   const timersRef = useRef<{ strokeAdvance?: number; confettiOff?: number }>({});
   const celebrateTokenRef = useRef(0);
 
+  // measure the instruction bar's real height (handles iPad safe-area / font scaling)
+  const instructionBarRef = useRef<HTMLDivElement | null>(null);
+  const [instructionBarH, setInstructionBarH] = useState(INSTRUCTION_BAR_H);
+
+  useLayoutEffect(() => {
+    const el = instructionBarRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const h = el.getBoundingClientRect().height;
+      setInstructionBarH(h > 0 ? Math.ceil(h) : INSTRUCTION_BAR_H);
+    };
+
+    update();
+
+    let ro: ResizeObserver | null = null;
+    try {
+      ro = new ResizeObserver(() => update());
+      ro.observe(el);
+    } catch {
+      // ResizeObserver not available → fall back to resize only
+    }
+
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("resize", update);
+      ro?.disconnect();
+    };
+  }, [fs, isPretrace, currentLetterId, strokeIndex, letterDone]);
+
   const clearTimers = useCallback(() => {
     celebrateTokenRef.current += 1;
     if (timersRef.current.strokeAdvance) {
@@ -1758,11 +1788,26 @@ export default function LetterTracingWithSounds() {
 
   const nativeFsEnteredRef = useRef(false);
 
+  // Helps browsers that require fullscreen inside a user gesture.
+  // We store a timestamp when the user tapped Play/Fullscreen.
+  const fsGestureAtMsRef = useRef<number>(0);
+
+  // Prefer fullscreen on our wrapper in Play mode (more stable), fallback to documentElement.
+  const getFsTargetEl = useCallback((): Element => {
+    return (fsRef.current as any) || document.documentElement;
+  }, []);
+
   async function handlePlayButtonClick(levelNum: number, pairIdx: number, stepNum: CaseStep) {
     clearTimers();
 
-    const ok = canNativeFullscreen ? await requestFullscreenSafe(document.documentElement) : false;
-    if (ok) nativeFsEnteredRef.current = true;
+    // Mark a user-gesture moment (helps retry fullscreen after route changes)
+    fsGestureAtMsRef.current = Date.now();
+
+    // Try native fullscreen inside the click gesture (best chance to succeed)
+    if (canNativeFullscreen) {
+      const ok = await requestFullscreenSafe(document.documentElement);
+      if (ok) nativeFsEnteredRef.current = true;
+    }
 
     const sp = new URLSearchParams();
     if (kidId) sp.set("kidId", kidId);
@@ -1771,36 +1816,37 @@ export default function LetterTracingWithSounds() {
     sp.set("pair", String(pairIdx));
     sp.set("step", String(stepNum));
 
+    // Immersive mode always on (even if native fullscreen is blocked)
     sp.set("fs", "1");
     navigateTo(sp, false);
-
-    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    if (canNativeFullscreen && !getNativeFullscreenEl()) {
-      const ok2 = await requestFullscreenSafe(document.documentElement);
-      if (ok2) nativeFsEnteredRef.current = true;
-    }
   }
 
   async function setFs(on: boolean) {
     clearTimers();
-    if (on) {
-      const sp = new URLSearchParams(window.location.search);
-      sp.set("fs", "1");
-      setSearchParams(sp, { replace: true });
 
-      const wrapper = fsRef.current;
-      if (canNativeFullscreen && wrapper) {
-        const ok = await requestFullscreenSafe(wrapper as any);
+    // Mark user gesture moment for retry logic
+    fsGestureAtMsRef.current = Date.now();
+
+    if (on) {
+      // Request native fullscreen first (inside gesture), but still set fs=1 regardless.
+      if (canNativeFullscreen) {
+        const ok = await requestFullscreenSafe(getFsTargetEl() as any);
         if (ok) nativeFsEnteredRef.current = true;
       }
+
+      const sp = new URLSearchParams(searchParams);
+      sp.set("fs", "1");
+      setSearchParams(sp, { replace: true });
       return;
     }
 
-    const sp = new URLSearchParams(window.location.search);
+    // Turn off immersive param
+    const sp = new URLSearchParams(searchParams);
     sp.delete("fs");
     setSearchParams(sp, { replace: true });
 
-    if (getNativeFullscreenEl()) {
+    // Exit native fullscreen if we were the ones who entered it
+    if (getNativeFullscreenEl() && nativeFsEnteredRef.current) {
       await exitFullscreenSafe();
     }
     nativeFsEnteredRef.current = false;
@@ -1815,20 +1861,30 @@ export default function LetterTracingWithSounds() {
     navigateTo(sp, true);
   }
 
-  // Sync fs=1 when user exits native fullscreen via ESC
+  // Keep URL fs=1 in sync with native fullscreen changes (ESC/back gesture etc.)
   useEffect(() => {
     const onFsChange = () => {
       const nativeNow = !!getNativeFullscreenEl();
-      if (nativeNow) return;
 
-      if (nativeFsEnteredRef.current) {
-        nativeFsEnteredRef.current = false;
+      const sp = new URLSearchParams(window.location.search);
+      const hasFs = sp.get("fs") === "1";
 
-        const sp = new URLSearchParams(window.location.search);
-        if (sp.get("fs") === "1") {
+      // If native fullscreen exited, remove fs=1 (only when native fullscreen is supported)
+      if (!nativeNow) {
+        if (nativeFsEnteredRef.current) nativeFsEnteredRef.current = false;
+
+        // If URL still says fs=1, clear it (avoid being "stuck" in immersive)
+        if (hasFs && canNativeFullscreen) {
           sp.delete("fs");
           setSearchParams(sp, { replace: true });
         }
+        return;
+      }
+
+      // If native fullscreen entered and URL doesn't have fs=1, set it (Play mode only)
+      if (nativeNow && !hasFs && mode === "play") {
+        sp.set("fs", "1");
+        setSearchParams(sp, { replace: true });
       }
     };
 
@@ -1839,7 +1895,28 @@ export default function LetterTracingWithSounds() {
       document.removeEventListener("fullscreenchange", onFsChange);
       document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
     };
-  }, [setSearchParams]);
+  }, [setSearchParams, canNativeFullscreen, mode]);
+
+  // Best-effort: if fs=1 is set but native fullscreen didn't stick (route change),
+  // retry quickly within a short user-gesture window.
+  useEffect(() => {
+    if (mode !== "play") return;
+    if (!fs) return;
+    if (!canNativeFullscreen) return;
+    if (getNativeFullscreenEl()) return;
+
+    const lastGesture = fsGestureAtMsRef.current || 0;
+    const age = Date.now() - lastGesture;
+
+    // Only retry shortly after a real user click/tap.
+    if (age > 1500) return;
+
+    // Try fullscreen on our wrapper element (more stable than documentElement)
+    const el = getFsTargetEl();
+    requestFullscreenSafe(el as any).then((ok) => {
+      if (ok) nativeFsEnteredRef.current = true;
+    });
+  }, [fs, mode, canNativeFullscreen, getFsTargetEl]);
 
   // Next item navigation (skip)
   function goNextItem() {
@@ -2815,7 +2892,7 @@ export default function LetterTracingWithSounds() {
 
         {/* Main board */}
         <div
-          className={`relative overflow-hidden rounded-2xl border shadow-sm ${fs ? "flex-1 min-h-0" : ""}`}
+          className={`relative overflow-hidden rounded-2xl border shadow-sm flex flex-col ${fs ? "flex-1 min-h-0" : ""}`}
           style={{
             background:
               "radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)",
@@ -2858,20 +2935,35 @@ export default function LetterTracingWithSounds() {
             </div>
           )}
 
-          <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9", minHeight: "55vh" } : {}}>
+          {/* Stage (IMPORTANT: no h-full when using aspectRatio in non-fs) */}
+          <div
+            className={fs ? "relative flex-1 min-h-0 w-full" : "relative w-full"}
+            style={
+              fs
+                ? { minHeight: 0 }
+                : { aspectRatio: "16 / 9", minHeight: "55vh" }
+            }
+          >
             <svg
               ref={svgRef}
               viewBox={renderViewBox}
               preserveAspectRatio="xMidYMid meet"
-              className="absolute left-0 top-0 right-0 touch-none select-none"
+              width="100%"
+              height="100%"
+              className="absolute inset-0 w-full h-full touch-none select-none"
               style={{
                 touchAction: "none",
                 WebkitUserSelect: "none",
                 userSelect: "none",
                 WebkitTouchCallout: "none",
-                transform: shiftRightForSound ? "translateX(clamp(12px, 3vw, 56px))" : "translateX(0px)",
+
+                // reserve exactly the instruction bar's REAL height
+                bottom: instructionBarH,
+
+                transform: shiftRightForSound
+                  ? "translateX(clamp(12px, 3vw, 56px))"
+                  : "translateX(0px)",
                 transition: "transform 220ms ease",
-                bottom: INSTRUCTION_BAR_H,
               }}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
@@ -3027,14 +3119,14 @@ export default function LetterTracingWithSounds() {
                 </>
               )}
             </svg>
-          </div>
 
-          {/* Instruction bar */}
-          <div
-            className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur"
-            style={{ height: INSTRUCTION_BAR_H }}
-          >
-            {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
+            {/* Instruction bar (let it auto-size; we measure it) */}
+            <div
+              ref={instructionBarRef}
+              className="absolute bottom-0 left-0 right-0 bg-white/55 px-4 py-3 text-center text-sm font-semibold text-slate-700 backdrop-blur"
+            >
+              {isTap ? "Tap the glowing dot." : "Start at the star. Follow the star and trace the line."}
+            </div>
           </div>
 
           {/* Completion: big next arrow */}
