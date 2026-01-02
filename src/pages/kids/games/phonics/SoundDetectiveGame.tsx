@@ -4,15 +4,21 @@ import { useSearchParams } from "react-router-dom";
 import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 
 const BASE = "/games/phonics/sound-detective";
+const CONFETTI_SFX_SRC = "/confetti.mp3";
 
-// 5 Level groups
-const LETTER_GROUPS = [
-  ["s", "a", "t", "p", "i", "n"],
-  ["m", "d", "g", "o", "c"],
-  ["k", "e", "r", "h", "b"],
-  ["f", "l", "u", "j", "w"],
-  ["v", "y", "x", "q", "z"],
-] as const;
+// 7 Jolly Phonics Levels (26 letters total)
+type LevelDef = { id: number; title: string; focus: string[]; };
+const LEVELS: LevelDef[] = [
+  { id: 1, title: "Level 1 (s a t i p n)", focus: ["s", "a", "t", "i", "p", "n"] },
+  { id: 2, title: "Level 2 (c k e h r m d)", focus: ["c", "k", "e", "h", "r", "m", "d"] },
+  { id: 3, title: "Level 3 (g o u l f b)", focus: ["g", "o", "u", "l", "f", "b"] },
+  { id: 4, title: "Level 4 (j)", focus: ["j"] },
+  { id: 5, title: "Level 5 (z w v)", focus: ["z", "w", "v"] },
+  { id: 6, title: "Level 6 (y x)", focus: ["y", "x"] },
+  { id: 7, title: "Level 7 (q)", focus: ["q"] },
+];
+
+const TOTAL_ROUNDS = 8;
 
 // Image catalog mapping letter to asset
 const IMAGE_CATALOG = [
@@ -22,26 +28,26 @@ const IMAGE_CATALOG = [
   { id: "dog", letter: "d", img: `${BASE}/dog.png` },
   { id: "elephant", letter: "e", img: `${BASE}/elephant.png` },
   { id: "fish", letter: "f", img: `${BASE}/fish.png` },
-  { id: "grape", letter: "g", img: `${BASE}/grape.png` },
+  { id: "girl", letter: "g", img: `${BASE}/girl.png` },
   { id: "hat", letter: "h", img: `${BASE}/hat.png` },
   { id: "igloo", letter: "i", img: `${BASE}/igloo.png` },
-  { id: "jug", letter: "j", img: `${BASE}/jug.png` },
-  { id: "kite", letter: "k", img: `${BASE}/kite.png` },
+  { id: "juice", letter: "j", img: `${BASE}/juice.png` },
+  { id: "kangaroo", letter: "k", img: `${BASE}/kangaroo.png` },
   { id: "lion", letter: "l", img: `${BASE}/lion.png` },
-  { id: "mango", letter: "m", img: `${BASE}/mango.png` },
-  { id: "nest", letter: "n", img: `${BASE}/nest.png` },
+  { id: "monkey", letter: "m", img: `${BASE}/monkey.png` },
+  { id: "nose", letter: "n", img: `${BASE}/nose.png` },
   { id: "orange", letter: "o", img: `${BASE}/orange.png` },
   { id: "pig", letter: "p", img: `${BASE}/pig.png` },
   { id: "queen", letter: "q", img: `${BASE}/queen.png` },
-  { id: "rabbit", letter: "r", img: `${BASE}/rabbit.png` },
+  { id: "ring", letter: "r", img: `${BASE}/ring.png` },
   { id: "sun", letter: "s", img: `${BASE}/sun.png` },
-  { id: "tiger", letter: "t", img: `${BASE}/tiger.png` },
+  { id: "train", letter: "t", img: `${BASE}/train.png` },
   { id: "umbrella", letter: "u", img: `${BASE}/umbrella.png` },
   { id: "van", letter: "v", img: `${BASE}/van.png` },
-  { id: "whale", letter: "w", img: `${BASE}/whale.png` },
-  { id: "xray", letter: "x", img: `${BASE}/xray.png` },
+  { id: "watch", letter: "w", img: `${BASE}/watch.png` },
+  { id: "box", letter: "x", img: `${BASE}/box.png` },
   { id: "yoyo", letter: "y", img: `${BASE}/yoyo.png` },
-  { id: "zebra", letter: "z", img: `${BASE}/zebra.png` },
+  { id: "zoo", letter: "z", img: `${BASE}/zoo.png` },
 ];
 
 type Option = { id: string; imgSrc: string };
@@ -72,7 +78,7 @@ function getCorrectOption(letter: string): Option | null {
 }
 
 // Build 3 options: 1 correct + 2 deterministic decoys
-function buildOptions(letter: string, levelGroupIndex: number, letterIndexWithinGroup: number): Option[] {
+function buildOptions(letter: string, levelIndex: number, roundIndex: number): Option[] {
   const correct = getCorrectOption(letter);
   if (!correct) {
     return [
@@ -83,7 +89,7 @@ function buildOptions(letter: string, levelGroupIndex: number, letterIndexWithin
   }
 
   const others = IMAGE_CATALOG.filter((c) => c.letter !== letter);
-  const seed = simpleHash(`${letter}${levelGroupIndex}${letterIndexWithinGroup}`);
+  const seed = simpleHash(`${letter}${levelIndex}${roundIndex}`);
   const decoy1Idx = seed % others.length;
   const decoy2IdxRaw = (seed + 7) % others.length;
   const decoy2Idx = decoy2IdxRaw === decoy1Idx ? (decoy1Idx + 1) % others.length : decoy2IdxRaw;
@@ -98,9 +104,77 @@ function buildOptions(letter: string, levelGroupIndex: number, letterIndexWithin
   ];
 }
 
+// Helper: introduced letters up to a level
+const getIntroducedLetters = (levelId: number) =>
+  LEVELS.filter((l) => l.id <= levelId).flatMap((l) => l.focus);
+
+// Rule: in a level (8 rounds) any letter can appear max 2 times.
+const scheduleRoundsForLevel = (levelId: number): string[] => {
+  const level = LEVELS.find((l) => l.id === levelId);
+  const focus = level?.focus ?? ["s"];
+  const introduced = getIntroducedLetters(levelId);
+  const review = introduced.filter((g) => !focus.includes(g));
+
+  const counts: Record<string, number> = {};
+  const out: string[] = [];
+
+  const add = (g: string) => {
+    counts[g] = (counts[g] || 0) + 1;
+    out.push(g);
+  };
+
+  // 1) Ensure each focus letter appears once (as long as we have room)
+  const focusOnce = shuffle(focus);
+  for (const g of focusOnce) {
+    if (out.length >= TOTAL_ROUNDS) break;
+    add(g);
+  }
+
+  // 2) Add 2nd appearance for focus letters (but never exceed 2)
+  const maxFocusSlots = Math.min(TOTAL_ROUNDS, focus.length * 2);
+  while (out.length < maxFocusSlots) {
+    const candidates = shuffle(focus).filter((g) => (counts[g] || 0) < 2);
+    if (!candidates.length) break;
+    add(candidates[0]);
+  }
+
+  // 3) Fill remaining with review letters (cap 2 per letter)
+  const pool = shuffle(review.length ? review : introduced);
+  while (out.length < TOTAL_ROUNDS && pool.length) {
+    const g = pool.shift()!;
+    if ((counts[g] || 0) >= 2) continue;
+    add(g);
+  }
+
+  // 4) Last resort fill (should not happen)
+  while (out.length < TOTAL_ROUNDS) {
+    const candidates = introduced.filter((g) => (counts[g] || 0) < 2);
+    const g = candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : focus[0];
+    add(g);
+  }
+
+  // 5) Shuffle final order + avoid immediate repeats when possible
+  const rounds = shuffle(out);
+  for (let i = 1; i < rounds.length; i++) {
+    if (rounds[i] === rounds[i - 1]) {
+      const j = rounds.findIndex((v, idx) => idx > i && v !== rounds[i - 1]);
+      if (j !== -1) {
+        const tmp = rounds[i];
+        rounds[i] = rounds[j];
+        rounds[j] = tmp;
+      }
+    }
+  }
+
+  return rounds;
+};
+
 export default function SoundDetectiveGame() {
   const fsRef = useRef<HTMLDivElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const confettiSfxRef = useRef<HTMLAudioElement | null>(null);
+  const autoPlayNextRef = useRef(false);
+  const lastAutoPlayedKeyRef = useRef<string | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -123,19 +197,21 @@ export default function SoundDetectiveGame() {
   const [isFs, setIsFs] = useState(false);
 
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
-  const [levelGroupIndex, setLevelGroupIndex] = useState(0);
-  const [letterIndexWithinGroup, setLetterIndexWithinGroup] = useState(0);
+  const [levelIndex, setLevelIndex] = useState(0); // 0-based
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [roundLetters, setRoundLetters] = useState<string[]>([]);
   const [isComplete, setIsComplete] = useState(false);
 
-  // Stable refs to avoid stale closures (THIS FIXES "stuck on m")
+  // Stable refs to avoid stale closures
   const selectedLevelRef = useRef<number | null>(null);
-  const levelGroupIndexRef = useRef(0);
-  const letterIndexRef = useRef(0);
-  const groupLenRef = useRef(0);
+  const levelIndexRef = useRef(0);
+  const roundIndexRef = useRef(0);
+  const roundsLenRef = useRef(TOTAL_ROUNDS);
 
   useEffect(() => { selectedLevelRef.current = selectedLevel; }, [selectedLevel]);
-  useEffect(() => { levelGroupIndexRef.current = levelGroupIndex; }, [levelGroupIndex]);
-  useEffect(() => { letterIndexRef.current = letterIndexWithinGroup; }, [letterIndexWithinGroup]);
+  useEffect(() => { levelIndexRef.current = levelIndex; }, [levelIndex]);
+  useEffect(() => { roundIndexRef.current = roundIndex; }, [roundIndex]);
+  useEffect(() => { roundsLenRef.current = roundLetters.length || TOTAL_ROUNDS; }, [roundLetters.length]);
 
   // Tracking (use refs for accuracy in submit even if state hasn't flushed yet)
   const levelStartMsRef = useRef<number>(Date.now());
@@ -171,28 +247,49 @@ export default function SoundDetectiveGame() {
         audioRef.current?.pause();
       } catch {}
       audioRef.current = null;
+
+      try {
+        confettiSfxRef.current?.pause();
+      } catch {}
+      confettiSfxRef.current = null;
     };
   }, []);
 
   const SOUND_LEVELS = useMemo(
-    () => LETTER_GROUPS.map((group, i) => ({ id: i + 1, title: `Level ${i + 1}`, items: group })),
+    () => LEVELS.map((l) => ({ id: l.id, title: l.title, items: l.focus })),
     []
   );
 
-  const currentGroup = LETTER_GROUPS[levelGroupIndex] || [];
-  useEffect(() => {
-    groupLenRef.current = currentGroup.length;
-  }, [currentGroup.length]);
+  const currentLetter = (roundLetters[roundIndex] || "s").toLowerCase();
 
-  const currentLetter = currentGroup[letterIndexWithinGroup] || "s";
-  const audioSrc = `${BASE}/audio/${currentLetter}.mp3`;
+  // ✅ your files are in /sound-detective root: a.mp3, b.mp3, ...
+  const audioSrc = `${BASE}/${currentLetter}.mp3`;
 
   const options = useMemo(
-    () => buildOptions(currentLetter, levelGroupIndex, letterIndexWithinGroup),
-    [currentLetter, levelGroupIndex, letterIndexWithinGroup]
+    () => buildOptions(currentLetter, levelIndex, roundIndex),
+    [currentLetter, levelIndex, roundIndex]
   );
   const correctOption = options[0];
   const shuffledOptions = useMemo(() => shuffle(options), [options]);
+
+  const playConfettiSfx = useCallback(() => {
+    try {
+      if (!confettiSfxRef.current) {
+        const a = new Audio(CONFETTI_SFX_SRC);
+        a.preload = "auto";
+        confettiSfxRef.current = a;
+      }
+      const a = confettiSfxRef.current;
+      if (!a) return;
+
+      try { a.currentTime = 0; } catch {}
+      a.play().catch(() => {
+        // usually allowed because this happens on user tap
+      });
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const resetLevelTracking = useCallback(() => {
     levelStartMsRef.current = Date.now();
@@ -222,16 +319,19 @@ export default function SoundDetectiveGame() {
     const raw = searchParams.get("level");
     const n = raw ? parseInt(raw, 10) : NaN;
 
-    if (!Number.isNaN(n) && n >= 1 && n <= LETTER_GROUPS.length) {
+    if (!Number.isNaN(n) && n >= 1 && n <= LEVELS.length) {
       setSelectedLevel(n);
-      setLevelGroupIndex(n - 1);
-      setLetterIndexWithinGroup(0);
+      setLevelIndex(n - 1);
+      setRoundIndex(0);
+      setRoundLetters(scheduleRoundsForLevel(n));
       resetLevelTracking();
     } else {
       setSelectedLevel(null);
       setIsComplete(false);
       setAnswerState("idle");
       setSelectedId(null);
+      setRoundLetters([]);
+      setRoundIndex(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -245,10 +345,29 @@ export default function SoundDetectiveGame() {
       try {
         a.pause();
       } catch {}
-      // Only clear if it's still the same instance
       if (audioRef.current === a) audioRef.current = null;
     };
   }, [audioSrc]);
+
+  // Auto-play next letter sound after a correct answer advances the round
+  useEffect(() => {
+    if (!selectedLevel) return;
+    if (isComplete) return;
+    if (!autoPlayNextRef.current) return;
+
+    const key = `${selectedLevel}:${roundIndex}`;
+    if (lastAutoPlayedKeyRef.current === key) {
+      autoPlayNextRef.current = false;
+      return;
+    }
+
+    lastAutoPlayedKeyRef.current = key;
+    autoPlayNextRef.current = false;
+
+    // Best-effort autoplay (some browsers may still block it)
+    playSoundInternal({ allowTTS: false }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLevel, roundIndex, audioSrc, isComplete]);
 
   // Fullscreenchange: keep isFs in sync + ESC => go back to levels
   const searchParamsRef = useRef(searchParams);
@@ -259,7 +378,6 @@ export default function SoundDetectiveGame() {
       const nowFs = document.fullscreenElement === fsRef.current;
       setIsFs(nowFs);
 
-      // If user pressed ESC while playing -> return to levels
       if (!document.fullscreenElement && selectedLevelRef.current != null) {
         const sp = new URLSearchParams(searchParamsRef.current);
         sp.delete("level");
@@ -271,17 +389,19 @@ export default function SoundDetectiveGame() {
         setAnswerState("idle");
         setSelectedId(null);
         setIsPlaying(false);
+        setRoundLetters([]);
+        setRoundIndex(0);
       }
     };
 
     document.addEventListener("fullscreenchange", onFsChange);
-    // init
     setIsFs(document.fullscreenElement === fsRef.current);
 
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, [setSearchParams]);
 
-  const playSound = async () => {
+  const playSoundInternal = async (opts?: { allowTTS?: boolean }) => {
+    const allowTTS = opts?.allowTTS ?? true;
     setIsPlaying(true);
 
     const a = audioRef.current;
@@ -292,11 +412,12 @@ export default function SoundDetectiveGame() {
         a.onended = () => setIsPlaying(false);
         return;
       } catch {
-        // fall back to TTS
+        // fall through
       }
     }
 
-    if ("speechSynthesis" in window) {
+    // For AUTO-play we don't want TTS fallback (it can feel weird)
+    if (allowTTS && "speechSynthesis" in window) {
       try {
         window.speechSynthesis.cancel();
         const u = new SpeechSynthesisUtterance(currentLetter);
@@ -311,6 +432,9 @@ export default function SoundDetectiveGame() {
 
     setIsPlaying(false);
   };
+
+  // Headphones button uses this (manual tap)
+  const playSound = () => playSoundInternal({ allowTTS: true });
 
   const submitLevelResult = async (levelId: number, completed: boolean) => {
     if (!kidId) return;
@@ -347,7 +471,6 @@ export default function SoundDetectiveGame() {
     if (answerState !== "idle") return;
     if (isComplete) return;
 
-    // increment attempts immediately in refs (so submit is accurate)
     attemptsRef.current += 1;
     setAttempts((s) => s + 1);
 
@@ -371,26 +494,27 @@ export default function SoundDetectiveGame() {
       correctRef.current += 1;
       setCorrectCount((s) => s + 1);
 
-      // confetti (clear old timer first)
+      // confetti + ✅ sound
       if (confettiTimeoutRef.current) window.clearTimeout(confettiTimeoutRef.current);
       setConfettiActive(true);
+      playConfettiSfx();
       confettiTimeoutRef.current = window.setTimeout(() => setConfettiActive(false), 2200);
 
-      // ADVANCE (ref-safe, fixes "stuck on m")
+      // ADVANCE (ref-safe)
       if (advanceTimeoutRef.current) window.clearTimeout(advanceTimeoutRef.current);
       advanceTimeoutRef.current = window.setTimeout(async () => {
-        const nextIdx = letterIndexRef.current + 1;
-        const groupLen = groupLenRef.current;
+        const nextIdx = roundIndexRef.current + 1;
+        const len = roundsLenRef.current;
 
-        if (nextIdx < groupLen) {
-          setLetterIndexWithinGroup(nextIdx);
+        if (nextIdx < len) {
+          autoPlayNextRef.current = true; // ✅ trigger auto sound for the NEXT letter
+          setRoundIndex(nextIdx);
           setAnswerState("idle");
           setSelectedId(null);
           return;
         }
 
-        // End of level
-        await submitLevelResult(levelGroupIndexRef.current + 1, true);
+        await submitLevelResult(levelIndexRef.current + 1, true);
         setIsComplete(true);
       }, 850);
     } else {
@@ -405,18 +529,16 @@ export default function SoundDetectiveGame() {
     }
   };
 
-  // IMPORTANT: startLevel mounts gameplay FIRST, then requests fullscreen after paint, then updates URL
+  // startLevel: mounts gameplay first, requests fullscreen, updates URL
   const startLevel = async (levelId: number) => {
-    // Mount gameplay immediately
     setSelectedLevel(levelId);
-    setLevelGroupIndex(levelId - 1);
-    setLetterIndexWithinGroup(0);
+    setLevelIndex(levelId - 1);
+    setRoundIndex(0);
+    setRoundLetters(scheduleRoundsForLevel(levelId));
     resetLevelTracking();
 
-    // Wait 2 frames so gameplay is painted before fullscreen (prevents black/blank screen)
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
 
-    // Request fullscreen on stable wrapper
     try {
       const target = fsRef.current || document.documentElement;
       if ((target as any)?.requestFullscreen) {
@@ -425,10 +547,9 @@ export default function SoundDetectiveGame() {
         (target as any).webkitRequestFullscreen();
       }
     } catch {
-      // ignore: browser may block if not a direct gesture
+      // ignore
     }
 
-    // Update URL (source of truth)
     const sp = new URLSearchParams(searchParams);
     sp.set("level", String(levelId));
     if (kidId) sp.set("kidId", kidId);
@@ -454,6 +575,8 @@ export default function SoundDetectiveGame() {
       setAnswerState("idle");
       setSelectedId(null);
       setIsPlaying(false);
+      setRoundLetters([]);
+      setRoundIndex(0);
 
       if (advanceTimeoutRef.current) window.clearTimeout(advanceTimeoutRef.current);
       if (confettiTimeoutRef.current) window.clearTimeout(confettiTimeoutRef.current);
@@ -485,7 +608,7 @@ export default function SoundDetectiveGame() {
 
       <div className="w-full max-w-6xl mx-auto text-center mb-8">
         <h1 className="text-5xl font-bold text-white">Choose Level</h1>
-        <p className="text-white/70 mt-2">Pick a level to play Sound Detective</p>
+        <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play Sound Detective</p>
       </div>
 
       <div className="level-grid w-full max-w-3xl mx-auto">
@@ -518,7 +641,7 @@ export default function SoundDetectiveGame() {
           >
             {/* Background */}
             <img
-              src={`${BASE}/bg.png`}
+              src={`${BASE}/bg.jpg`}
               alt="Sound Detective Background"
               className="absolute inset-0 h-full w-full object-cover select-none z-0"
               draggable={false}
@@ -526,7 +649,7 @@ export default function SoundDetectiveGame() {
 
             {/* Progress */}
             <div className="absolute top-3 left-3 rounded-full bg-black/40 px-3 py-1 text-xs text-white font-medium z-20">
-              Level {levelGroupIndex + 1}/5 • Letter {letterIndexWithinGroup + 1}/{currentGroup.length}
+              Level {levelIndex + 1}/{LEVELS.length} • Round {roundIndex + 1}/{roundLetters.length || TOTAL_ROUNDS}
             </div>
 
             {/* Back button */}
@@ -565,7 +688,7 @@ export default function SoundDetectiveGame() {
             <div className="absolute z-20" style={{ left: "55%", top: "30%", transform: "translate(-50%,-50%)" }}>
               <div
                 className="text-white font-extrabold tracking-wide drop-shadow-lg select-none"
-                style={{ fontSize: "clamp(92px,10vw,190px)", lineHeight: 1 }}
+                style={{ fontSize: "clamp(120px,12vw,240px)", lineHeight: 1 }}
               >
                 {currentLetter}
               </div>
@@ -622,8 +745,8 @@ export default function SoundDetectiveGame() {
                   <button
                     type="button"
                     onClick={() => {
-                      const next = levelGroupIndex + 2;
-                      if (next <= LETTER_GROUPS.length) {
+                      const next = levelIndex + 2;
+                      if (next <= LEVELS.length) {
                         const sp = new URLSearchParams(searchParams);
                         sp.set("level", String(next));
                         if (kidId) sp.set("kidId", kidId);
@@ -641,7 +764,8 @@ export default function SoundDetectiveGame() {
                   <button
                     type="button"
                     onClick={() => {
-                      setLetterIndexWithinGroup(0);
+                      setRoundIndex(0);
+                      setRoundLetters(scheduleRoundsForLevel(levelIndex + 1));
                       resetLevelTracking();
                     }}
                     className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-lg"
@@ -718,7 +842,6 @@ export default function SoundDetectiveGame() {
   ) : null;
 
   return (
-    // fsRef wraps BOTH levels + gameplay (stable element for fullscreen)
     <div
       ref={fsRef}
       className={isFs ? "fixed inset-0 z-[9999] w-screen h-screen select-none" : "relative w-full select-none"}
