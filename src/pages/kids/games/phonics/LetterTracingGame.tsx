@@ -982,6 +982,22 @@ export default function LetterTracingGame() {
 
   const isTap = currentStroke?.kind === "tap";
 
+  // Show upcoming "tap" targets (like i/j dot) faintly even before that stroke starts
+const futureTapTargets = useMemo(() => {
+  if (!letterData) return [];
+  const pts: { id: string; x: number; y: number }[] = [];
+
+  letterData.strokes.forEach((s, idx) => {
+    if (s.kind !== "tap") return;
+    if (idx < strokeIndex) return; // already completed
+    const p = parseTapPoint(s.pathD);
+    if (!p) return;
+    pts.push({ id: s.id, x: p.x, y: p.y });
+  });
+
+  return pts;
+}, [letterData, strokeIndex]);
+
   const startPt = useMemo(() => {
     if (!currentStroke) return { x: 0, y: 0 };
     if (currentStroke.kind === "tap") return parseTapPoint(currentStroke.pathD) ?? { x: 0, y: 0 };
@@ -2149,7 +2165,17 @@ export default function LetterTracingGame() {
               )}
 
               {/* 4) Start marker + guide + end marker */}
-              {!letterDone && (
+              {/* 3.5) Faint preview of upcoming tap dots (i/j dot) */}
+              {!letterDone &&
+                !isTap &&
+                futureTapTargets.map((p) => (
+                  <g key={p.id} pointerEvents="none">
+                    <circle cx={p.x} cy={p.y} r={10} fill="rgba(37,99,235,0.10)" />
+                    <circle cx={p.x} cy={p.y} r={6.5} fill="rgba(37,99,235,0.55)" />
+                  </g>
+                ))}
+
+              {/* 4) Start marker + guide + end marker */}
                 <>
                   {isTap ? (
                     <>
