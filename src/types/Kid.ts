@@ -1,11 +1,44 @@
+// src/types/kid.ts
+
 export interface Kid {
   id: string; // Unique identifier for the kid document
-  name: string; // Full name of the child
-  birthdate: string; // ISO date string for the child's birthdate
-  parentId: string; // UID of the parent user
+
+  // ✅ Prefer one consistent field name going forward
+  fullName: string; // Full name of the child
+
+  // ✅ NEW: store age (years) instead of DOB/birthdate
+  ageYears: number;
+
+  // ✅ Your newer schema uses parentIds + primaryParentId.
+  // Keep parentId optional only for legacy docs.
+  parentIds: string[];
+  primaryParentId: string;
+
   teacherId?: string; // UID of the assigned teacher (optional)
-  sessionId?: string; // ID of the current session the child is enrolled in (optional)
-  progressSummary?: string; // Summary of the child's progress (optional)
-  createdAt: string; // ISO date string for when the document was created
-  updatedAt: string; // ISO date string for the last update to the document
+  lpId?: string; // UID of assigned learning partner (optional)
+
+  sessionId?: string; // optional (legacy/feature-specific)
+  progressSummary?: string; // optional
+
+  status?: 'active' | 'suspended' | 'archived';
+
+  summary?: {
+    phonicsMastery: number;
+    grammarMastery: number;
+    speakingMastery: number;
+    attendanceRate30d: number;
+    creditsRemaining: number;
+  };
+
+  createdAt: any;
+  updatedAt: any;
+
+  /**
+   * Optional legacy fields (old docs may still have these).
+   * Keep optional so TypeScript doesn’t break while you migrate.
+   */
+  name?: string; // legacy alias of fullName
+  parentId?: string; // legacy single parent id
+  birthdate?: string; // legacy DOB
+  dob?: string; // legacy DOB
 }

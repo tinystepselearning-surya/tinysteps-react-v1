@@ -1,10 +1,13 @@
+// src/pages/admin/StudentManagement/CreateStudentForm.tsx
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { collection, getDocs, query, where } from 'firebase/firestore';
+
 import { db } from '../../../lib/firebaseConfig';
 import { createKid } from '../../../services/kidsService';
+
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import {
@@ -32,19 +35,33 @@ import {
   FormMessage,
 } from '@components/ui/form';
 import { toast } from '@components/hooks/use-toast';
+
 import { User } from '../../../types/User';
 
 const createStudentSchema = z.object({
   parentId: z.string().min(1, 'Select a parent'),
   fullName: z.string().min(2, 'Name required'),
-  dob: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD'),
+
+  // ✅ Age in years (2–15), stored as number
+  ageYears: z.preprocess(
+    (v) => {
+      // RHF Input gives string; convert safely to number
+      if (v === '' || v === null || v === undefined) return undefined;
+      const n = Number(v);
+      return Number.isFinite(n) ? n : undefined;
+    },
+    // ✅ FIX: your zod version doesn't support required_error
+    z
+      .number({ message: 'Age required' })
+      .int('Age must be a whole number')
+      .min(2, 'Age must be at least 2')
+      .max(15, 'Age must be 15 or less'),
+  ),
+
   grade: z.string().min(1, 'Select grade'),
+
   // With default() zod makes this optional in the TS type
-  status: z
-    .enum(['active', 'suspended', 'archived'])
-    .default('active'),
+  status: z.enum(['active', 'suspended', 'archived']).default('active'),
 });
 
 type FormData = z.infer<typeof createStudentSchema>;
@@ -54,10 +71,7 @@ interface Props {
   defaultParentId?: string | null;
 }
 
-export function CreateStudentForm({
-  onStudentCreated,
-  defaultParentId,
-}: Props) {
+export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) {
   const [open, setOpen] = useState(false);
   const [parents, setParents] = useState<User[]>([]);
 
@@ -69,10 +83,10 @@ export function CreateStudentForm({
     defaultValues: {
       parentId: defaultParentId || '',
       fullName: '',
-      dob: '',
+      ageYears: '' as any, // start empty, validated by schema on submit
       grade: '',
       status: 'active',
-    } as FormData,
+    } as any,
   });
 
   const { isSubmitting } = form.formState;
@@ -108,7 +122,7 @@ export function CreateStudentForm({
   // Apply defaultParentId when opening or when prop changes
   useEffect(() => {
     if (open && defaultParentId) {
-      form.setValue('parentId', defaultParentId);
+      form.setValue('parentId', defaultParentId as any);
     }
   }, [open, defaultParentId, form]);
 
@@ -116,9 +130,10 @@ export function CreateStudentForm({
     try {
       const status = values.status ?? 'active';
 
-      const newKidId = await createKid({
+      // ✅ IMPORTANT: Do NOT send dob at all (no undefined either)
+      const payload: any = {
         fullName: values.fullName,
-        dob: values.dob,
+        ageYears: values.ageYears,
         grade: values.grade,
         parentIds: [values.parentId],
         primaryParentId: values.parentId,
@@ -130,20 +145,24 @@ export function CreateStudentForm({
           attendanceRate30d: 0,
           creditsRemaining: 0,
         },
-      });
+      };
+
+      const newKidId = await createKid(payload);
 
       toast({
         title: 'Student created',
         description: `${values.fullName} created successfully`,
       });
+
       setOpen(false);
       form.reset({
         parentId: defaultParentId || '',
         fullName: '',
-        dob: '',
+        ageYears: '' as any,
         grade: '',
         status: 'active',
-      } as FormData);
+      } as any);
+
       onStudentCreated?.(newKidId);
     } catch (err: any) {
       console.error(err);
@@ -160,20 +179,22 @@ export function CreateStudentForm({
       <DialogTrigger asChild>
         <Button>Create Student</Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Create Student</DialogTitle>
           <DialogDescription>
-            Fill in basic information to create a new student
-            profile and associate it with a parent.
+            Fill in basic information to create a new student profile and associate it with a parent.
+            <br />
+            <span className="text-xs text-muted-foreground">
+              We only ask for age (years). Date of birth is not required.
+            </span>
           </DialogDescription>
         </DialogHeader>
 
         <Form {...(form as any)}>
           <form
-            onSubmit={form.handleSubmit((values) =>
-              onSubmit(values as FormData),
-            )}
+            onSubmit={form.handleSubmit((values) => onSubmit(values as any))}
             className="space-y-4"
           >
             {/* Parent */}
@@ -184,10 +205,7 @@ export function CreateStudentForm({
                 <FormItem>
                   <FormLabel>Select Primary Parent</FormLabel>
                   <FormControl>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select parent" />
                       </SelectTrigger>
@@ -224,15 +242,24 @@ export function CreateStudentForm({
               )}
             />
 
-            {/* DOB */}
+            {/* ✅ Age (years) */}
             <FormField
               control={form.control as any}
-              name="dob"
+              name="ageYears"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date of Birth</FormLabel>
+                  <FormLabel>Age (years)</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} />
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      min={2}
+                      max={15}
+                      step={1}
+                      placeholder="e.g., 5"
+                      value={(field.value ?? '') as any}
+                      onChange={(e) => field.onChange(e.target.value)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -247,10 +274,7 @@ export function CreateStudentForm({
                 <FormItem>
                   <FormLabel>Grade</FormLabel>
                   <FormControl>
-                    <Select
-                      value={field.value}
-                      onValueChange={field.onChange}
-                    >
+                    <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select grade" />
                       </SelectTrigger>

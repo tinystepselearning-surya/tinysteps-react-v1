@@ -1,40 +1,17 @@
 // src/pages/admin/StudentManagement/StudentManagement.tsx
 import { useCallback, useEffect, useState } from 'react';
-import {
-  collection,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-} from 'firebase/firestore';
+import { collection, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from '@components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@components/ui/card';
 import { Button } from '@components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
 import { useToast } from '@components/hooks/use-toast';
 import { Plus, X } from 'lucide-react';
 import StudentBulkUploader from './StudentBulkUploader';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 
 type Kid = {
   id: string;
@@ -42,11 +19,24 @@ type Kid = {
   fullName?: string;
   displayName?: string;
   grade?: string;
+
+  // ✅ new canonical
+  ageYears?: number;
+
+  // legacy (keep read fallback)
   age?: number | string;
+
+  // parent link patterns (app has multiple)
+  parentIds?: string[];
+  primaryParentId?: string | null;
+
+  // legacy parent field
   parentId?: string | null;
+
   parentName?: string;
   parentEmail?: string;
   parentPhone?: string;
+
   status?: string;
   createdAt?: any;
   updatedAt?: any;
@@ -66,6 +56,38 @@ type ParentUser = {
   [key: string]: any;
 };
 
+function getStudentDisplayName(s: Kid) {
+  return s.fullName || s.name || s.displayName || 'Unnamed';
+}
+
+function getLinkedParentId(s: Kid): string | null {
+  // Prefer new fields
+  if (s.primaryParentId) return String(s.primaryParentId);
+  if (s.parentId) return String(s.parentId);
+  if (Array.isArray(s.parentIds) && s.parentIds.length > 0) return String(s.parentIds[0]);
+  return null;
+}
+
+function displayAgeYears(s: Kid): string {
+  // Prefer new field
+  if (typeof s.ageYears === 'number' && Number.isFinite(s.ageYears)) return String(s.ageYears);
+
+  // fallback to legacy "age"
+  const a = s.age;
+  if (typeof a === 'number' && Number.isFinite(a)) return String(a);
+  if (typeof a === 'string' && a.trim()) return a.trim();
+
+  return '-';
+}
+
+function parseAgeYears(input: string): number | null {
+  const n = Number(input);
+  if (!Number.isFinite(n)) return null;
+  const i = Math.trunc(n);
+  if (i < 2 || i > 15) return null;
+  return i;
+}
+
 export default function StudentManagement() {
   const [students, setStudents] = useState<Kid[]>([]);
   const [parentsMap, setParentsMap] = useState<Record<string, ParentUser>>({});
@@ -84,14 +106,19 @@ export default function StudentManagement() {
       snap.forEach((s) => {
         const data = { id: s.id, ...(s.data() as any) } as Kid;
         arr.push(data);
-        if (data.parentId) {
-          parentIds.add(String(data.parentId));
+
+        // Collect possible parent ids (support multiple schemas)
+        const pid = getLinkedParentId(data);
+        if (pid) parentIds.add(pid);
+
+        if (Array.isArray(data.parentIds)) {
+          data.parentIds.forEach((x) => x && parentIds.add(String(x)));
         }
       });
 
       setStudents(arr);
 
-      // fetch linked parent user docs if any parentId references exist
+      // fetch linked parent user docs if any parent references exist
       const pMap: Record<string, ParentUser> = {};
       if (parentIds.size > 0) {
         const usersSnap = await getDocs(collection(db, 'users'));
@@ -115,7 +142,6 @@ export default function StudentManagement() {
   }, [toast]);
 
   useEffect(() => {
-    // Run once on mount to load initial students list
     void fetchStudents();
   }, [fetchStudents]);
 
@@ -123,9 +149,9 @@ export default function StudentManagement() {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
 
-    const studentName =
-      s.name || s.fullName || s.displayName || '';
-    const parentUser = s.parentId ? parentsMap[String(s.parentId)] : undefined;
+    const studentName = getStudentDisplayName(s);
+    const pid = getLinkedParentId(s);
+    const parentUser = pid ? parentsMap[String(pid)] : undefined;
 
     const parentDisplayName =
       parentUser?.name ||
@@ -136,9 +162,7 @@ export default function StudentManagement() {
       s.parentPhone ||
       '';
 
-    const haystack =
-      (studentName + ' ' + parentDisplayName).toLowerCase();
-
+    const haystack = (studentName + ' ' + parentDisplayName).toLowerCase();
     return haystack.includes(q);
   });
 
@@ -172,9 +196,7 @@ export default function StudentManagement() {
       {showCreate && (
         <Card className="p-4">
           <CardHeader className="px-0 pt-0 pb-2">
-            <CardTitle className="text-lg">
-              New Student Details
-            </CardTitle>
+            <CardTitle className="text-lg">New Student Details</CardTitle>
           </CardHeader>
           <CardContent className="px-0 pb-0">
             <CreateStudentForm
@@ -206,13 +228,10 @@ export default function StudentManagement() {
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-500 py-8">
-            Loading students…
-          </div>
+          <div className="text-center text-gray-500 py-8">Loading students…</div>
         ) : filtered.length === 0 ? (
           <div className="text-center text-gray-500 py-8">
-            No students found. Try adjusting your search or add a new
-            student.
+            No students found. Try adjusting your search or add a new student.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -228,15 +247,9 @@ export default function StudentManagement() {
               </TableHeader>
               <TableBody>
                 {filtered.map((s) => {
-                  const name =
-                    s.name ||
-                    s.fullName ||
-                    s.displayName ||
-                    'Unnamed';
-
-                  const parentUser = s.parentId
-                    ? parentsMap[String(s.parentId)]
-                    : undefined;
+                  const name = getStudentDisplayName(s);
+                  const pid = getLinkedParentId(s);
+                  const parentUser = pid ? parentsMap[String(pid)] : undefined;
 
                   const parentName =
                     parentUser?.name ||
@@ -256,11 +269,9 @@ export default function StudentManagement() {
 
                   return (
                     <TableRow key={s.id}>
-                      <TableCell className="font-medium">
-                        {name}
-                      </TableCell>
+                      <TableCell className="font-medium">{name}</TableCell>
                       <TableCell>{s.grade || '-'}</TableCell>
-                      <TableCell>{s.age ?? '-'}</TableCell>
+                      <TableCell>{displayAgeYears(s)}</TableCell>
                       <TableCell>{parentName}</TableCell>
                       <TableCell>{parentContact}</TableCell>
                     </TableRow>
@@ -277,18 +288,14 @@ export default function StudentManagement() {
 
 /**
  * Inline Create Student form
- * - Now supports linking to an existing parent user (users collection) via parentId
- * - Still stores parentName, parentEmail, parentPhone for display
+ * - Stores AGE ONLY (ageYears) — no DOB
+ * - Links child to parent via parentIds + primaryParentId (and keeps parentId as legacy for safety)
  */
-function CreateStudentForm({
-  onCreated,
-}: {
-  onCreated?: () => void;
-}) {
+function CreateStudentForm({ onCreated }: { onCreated?: () => void }) {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [grade, setGrade] = useState('');
-  const [age, setAge] = useState<string>('');
+  const [ageYearsInput, setAgeYearsInput] = useState<string>('');
   const [parentName, setParentName] = useState('');
   const [parentEmail, setParentEmail] = useState('');
   const [parentPhone, setParentPhone] = useState('');
@@ -301,15 +308,10 @@ function CreateStudentForm({
       try {
         const snap = await getDocs(collection(db, 'users'));
         const arr: ParentUser[] = [];
-        snap.forEach((u) =>
-          arr.push({ id: u.id, ...(u.data() as any) }),
-        );
+        snap.forEach((u) => arr.push({ id: u.id, ...(u.data() as any) }));
 
-        // prefer users with role="parent" but fall back if not present
-        const parentCandidates =
-          arr.filter((u) => u.role === 'parent') || arr;
-
-        setParents(parentCandidates);
+        const parentCandidates = arr.filter((u) => u.role === 'parent');
+        setParents(parentCandidates.length ? parentCandidates : arr);
       } catch (err) {
         console.error('Failed to load parent users', err);
       }
@@ -322,15 +324,11 @@ function CreateStudentForm({
     setParentId(id);
     const p = parents.find((x) => x.id === id);
     if (p) {
-      const displayName =
-        p.name || p.displayName || p.fullName || '';
-
-      // If manual fields are empty, prefill from parent user
+      const displayName = p.name || p.displayName || p.fullName || '';
       if (!parentName) setParentName(displayName);
       if (!parentEmail && p.email) setParentEmail(p.email);
       if (!parentPhone) {
-        const phone =
-          p.phone || p.mobile || p.contactNumber || '';
+        const phone = p.phone || p.mobile || p.contactNumber || '';
         if (phone) setParentPhone(phone);
       }
     }
@@ -346,16 +344,41 @@ function CreateStudentForm({
       return;
     }
 
+    const ageYears = parseAgeYears(ageYearsInput);
+    if (ageYearsInput.trim() && ageYears == null) {
+      toast({
+        title: 'Invalid age',
+        description: 'Enter age in years (whole number) between 2 and 15.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       setSaving(true);
+
       await addDoc(collection(db, 'kids'), {
+        // ✅ write both, so all UI works
+        fullName: name.trim(),
         name: name.trim(),
+
         grade: grade.trim() || null,
-        age: age ? Number(age) || age : null,
+
+        // ✅ canonical age field
+        ageYears: ageYears ?? null,
+
+        // ✅ canonical parent linking used elsewhere
+        parentIds: parentId ? [parentId] : [],
+        primaryParentId: parentId || null,
+
+        // legacy (keep for older pages if any)
         parentId: parentId || null,
+
+        // display copies
         parentName: parentName.trim() || null,
         parentEmail: parentEmail.trim() || null,
         parentPhone: parentPhone.trim() || null,
+
         status: 'active',
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -368,7 +391,7 @@ function CreateStudentForm({
 
       setName('');
       setGrade('');
-      setAge('');
+      setAgeYearsInput('');
       setParentId(undefined);
       setParentName('');
       setParentEmail('');
@@ -409,12 +432,16 @@ function CreateStudentForm({
         />
       </div>
 
-      {/* Age */}
+      {/* Age (years) */}
       <div className="space-y-1">
-        <Label>Age</Label>
+        <Label>Age (years)</Label>
         <Input
-          value={age}
-          onChange={(e) => setAge(e.target.value)}
+          type="number"
+          min={2}
+          max={15}
+          step={1}
+          value={ageYearsInput}
+          onChange={(e) => setAgeYearsInput(e.target.value)}
           placeholder="e.g., 7"
         />
       </div>
@@ -422,17 +449,13 @@ function CreateStudentForm({
       {/* Link to parent account */}
       <div className="space-y-1">
         <Label>Link to Parent Account (optional)</Label>
-        <Select
-          value={parentId}
-          onValueChange={(v) => handleSelectParent(v)}
-        >
+        <Select value={parentId} onValueChange={(v) => handleSelectParent(v)}>
           <SelectTrigger>
             <SelectValue placeholder="Select existing parent (if any)" />
           </SelectTrigger>
           <SelectContent>
             {parents.map((p) => {
-              const displayName =
-                p.name || p.displayName || p.fullName || 'Unnamed';
+              const displayName = p.name || p.displayName || p.fullName || 'Unnamed';
               const email = p.email || '';
               return (
                 <SelectItem key={p.id} value={p.id}>
@@ -444,7 +467,7 @@ function CreateStudentForm({
           </SelectContent>
         </Select>
         <p className="text-xs text-gray-500">
-          This links the child to a parent user (from the users collection) so enrollments and dashboards show correct parent details.
+          Links the child to a parent user so dashboards and enrollments work correctly.
         </p>
       </div>
 
