@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
-Allow: /blog/
-Allow: /courses/
-Allow: /curriculum/
-Allow: /newsletter/
+
+# Explicitly allow favicons/manifest (safe for all crawlers)
+Allow: /favicon.ico
+Allow: /favicon-*.png
+Allow: /apple-touch-icon.png
+Allow: /site.webmanifest
 
 Disallow: /admin/
 Disallow: /private/
@@ -12,5 +14,3 @@ Disallow: /email/
 Sitemap: https://tinystepslearning.com/sitemap.xml
 Sitemap: https://tinystepslearning.com/sitemap-blog.xml
 Sitemap: https://tinystepslearning.com/sitemap-courses.xml
-
-Crawl-delay: 1
