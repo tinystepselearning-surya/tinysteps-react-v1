@@ -72,7 +72,6 @@ const CoursesHero = () => (
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>
-          <span className="rounded-full bg-white/20 px-4 py-1">₹550 per live session</span>
           <span className="rounded-full bg-white/20 px-4 py-1">Parent-rated ★★★★★</span>
         </div>
       </div>

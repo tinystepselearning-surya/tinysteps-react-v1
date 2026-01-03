@@ -94,6 +94,17 @@ export default function Header() {
     navigate(destination);
   };
 
+  const handleBookAssessment = () => {
+    // If already on homepage → just scroll
+    if (location.pathname === '/') {
+      document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    // If on any other page → go to homepage with a query param so Home can auto-scroll
+    navigate('/?book=1');
+  };
+
   const navbarVariants = {
     hidden: { opacity: 0, y: -12 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } }
@@ -178,9 +189,9 @@ export default function Header() {
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
           <button
-            onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={handleBookAssessment}
             aria-label="Book Free Assessment Class"
             className="inline-flex items-center justify-center h-12 rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] px-5 text-sm font-semibold text-white shadow-[0_12px_25px_rgba(255,143,92,0.35)]"
           >
@@ -190,7 +201,7 @@ export default function Header() {
 
         <div className="flex items-center gap-3 lg:hidden">
           <button
-            onClick={() => document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' })}
+            onClick={handleBookAssessment}
             aria-label="Book Free Assessment Class"
             className="rounded-full bg-gradient-to-r from-[#ff8f5c] to-[#59c3ff] px-4 py-2 text-xs font-semibold text-white"
           >

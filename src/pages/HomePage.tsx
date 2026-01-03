@@ -1,7 +1,7 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 
@@ -119,29 +119,25 @@ function requestFullscreenSafe() {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const goToChristmasTree = () => navigate("/seasonal/christmas-tree");
 
-  const scrollToHeroForm = () => {
-    try {
-      const el = document.getElementById("hero-lead-parentName") as any;
-      if (!el) return;
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => el?.focus?.(), 350);
-    } catch {
-      // no-op
-    }
-  };
-
   useEffect(() => {
-    const run = () => {
-      if (window.location.hash === "#book-trial") scrollToHeroForm();
-    };
-    run();
-    window.addEventListener("hashchange", run);
-    return () => window.removeEventListener("hashchange", run);
+    if (location.search && location.search.includes("book=1")) {
+      // wait one tick so the page can render, then scroll and remove the query
+      setTimeout(() => {
+        document.getElementById("book-trial")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        // replace the URL to remove the query param without adding history
+        try {
+          navigate("/", { replace: true });
+        } catch {
+          // ignore navigation errors in SSR/test envs
+        }
+      }, 0);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [location.search]);
 
   return (
     <>
