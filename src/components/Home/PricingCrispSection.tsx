@@ -1,6 +1,16 @@
 import React from 'react';
 import Button from '../Button/Button';
 
+// --- pricing helpers (local, minimal) ---
+const DEFAULT_PER_CLASS_PRICE = 599;
+
+const formatINR = (value: number) =>
+  new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(value);
+
 const PricingCrispSection: React.FC = () => {
   return (
     <section
