@@ -23,11 +23,13 @@ const parseClassesPerWeek = (frequency: string) => {
 
 const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`;
 
-const plans = [
+  import { DEFAULT_PER_CLASS_PRICE } from '../constants/pricing';
+
+  const plans = [
   {
     name: 'Starter',
     sessions: 8,
-    rate: 600, // ₹4,800
+    rate: DEFAULT_PER_CLASS_PRICE, // ₹4,800
     duration: '4 weeks • 2 live classes/week',
     badge: 'New families',
     highlight: false,
@@ -40,7 +42,7 @@ const plans = [
     ],
   },
   {
-    name: 'Growth',
+      name: 'Growth',
     sessions: 16,
     rate: 575, // ₹9,200
     duration: '8 weeks • 2 live classes/week',

@@ -26,10 +26,10 @@ const PricingCrispSection: React.FC = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               Starter · 8 classes / month
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
-              ₹600<span className="text-sm font-normal text-slate-500"> / class</span>
-            </p>
-            <p className="mt-1 text-xs text-slate-500">₹4,800 total · billed monthly</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-900">
+                  {formatINR(DEFAULT_PER_CLASS_PRICE)}<span className="text-sm font-normal text-slate-500"> / class</span>
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{formatINR(DEFAULT_PER_CLASS_PRICE * 8)} total · billed monthly</p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 2 classes per week</li>

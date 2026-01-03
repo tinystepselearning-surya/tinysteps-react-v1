@@ -5,6 +5,7 @@ import { CourseCard } from "../components/courses/CourseCard";
 import { ParentReportPreview } from "../components/courses/ParentReportPreview";
 import Meta from "../components/common/Meta";
 import { catalogs } from "../content/courses";
+import { DEFAULT_PER_CLASS_PRICE, formatINR } from '../constants/pricing';
 
 const DASH_RE = /[\u2010\u2011\u2012\u2013\u2014\u2212]/g; // hyphen variants
 const norm = (v: any) =>
@@ -73,6 +74,8 @@ const CoursesHero = () => (
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>
           <span className="rounded-full bg-white/20 px-4 py-1">Parent-rated ★★★★★</span>
+          {/* show per-class price from shared constant */}
+          <span className="rounded-full bg-white/20 px-4 py-1">{formatINR(DEFAULT_PER_CLASS_PRICE)} per live session</span>
         </div>
       </div>
     </div>
