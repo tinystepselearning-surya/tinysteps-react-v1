@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { FC } from 'react';
 import Meta from '../components/common/Meta';
 import { useAuthStore } from '../store/useAuthStore';
@@ -112,6 +113,8 @@ const PricingPage: FC = () => {
     []
   );
 
+  const navigate = useNavigate();
+
   const offerCatalog = {
     '@context': 'https://schema.org',
     '@type': 'OfferCatalog',
@@ -204,11 +207,7 @@ const PricingPage: FC = () => {
                     ? 'bg-gray-900 text-white shadow-2xl'
                     : 'bg-white text-gray-900 shadow'
                 }`}
-                onClick={() =>
-                  document
-                    .getElementById('book-trial')
-                    ?.scrollIntoView({ behavior: 'smooth' })
-                }
+                onClick={() => navigate('/?book=1')}
               >
                 Enroll now
               </button>

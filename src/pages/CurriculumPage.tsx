@@ -9,7 +9,7 @@ import type { WeekItem } from '../components/curriculum/WeekAccordion';
 import { CollapsibleCard } from '../components/common/CollapsibleCard';
 import SmartCard from '../components/ui/SmartCard';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
 
@@ -154,7 +154,7 @@ const CurriculumPage: FC = () => {
               <li>• Fun games & songs</li>
             </ul>
             <div className="mt-4">
-              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</a>
+              <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
 
@@ -167,7 +167,7 @@ const CurriculumPage: FC = () => {
               <li>• School-aligned reinforcement</li>
             </ul>
             <div className="mt-4">
-              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</a>
+              <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
 
@@ -180,7 +180,7 @@ const CurriculumPage: FC = () => {
               <li>• Confidence-building activities</li>
             </ul>
             <div className="mt-4">
-              <a href="#signup" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</a>
+              <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
         </div>
@@ -368,7 +368,7 @@ const CurriculumPage: FC = () => {
 
       {/* Sticky CTA for mobile */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 md:hidden z-50">
-        <a href="#signup" className="block w-full text-center bg-primary-500 text-white py-3 rounded font-semibold">Book Free Assessment Class</a>
+        <Link to="/?book=1" className="block w-full text-center bg-primary-500 text-white py-3 rounded font-semibold">Book Free Assessment Class</Link>
       </div>
 
     </div>

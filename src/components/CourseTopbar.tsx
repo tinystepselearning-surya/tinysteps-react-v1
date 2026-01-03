@@ -14,7 +14,7 @@ const CourseTopbar: React.FC<{ title: string; subtitle?: string }> = ({ title, s
           {subtitle && <p className="text-sm text-gray-600 mt-1">{subtitle}</p>}
         </div>
         <div>
-          <Link to="#book-trial" className="inline-block px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm">Book a Trial</Link>
+          <Link to="/?book=1" className="inline-block px-3 py-1.5 rounded-md bg-blue-600 text-white text-sm">Book a Trial</Link>
         </div>
       </div>
     </div>

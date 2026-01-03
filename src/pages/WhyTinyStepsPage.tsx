@@ -233,9 +233,9 @@ const WhyTinyStepsPage: FC = () => {
             </div>
 
             <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-              <a href="#book-trial" className="w-full sm:w-auto">
+              <Link to="/?book=1" className="w-full sm:w-auto">
                 <PrimaryButton>Book Free Assessment Class</PrimaryButton>
-              </a>
+              </Link>
 
               <Link to="/courses" className="w-full sm:w-auto">
                 <SecondaryButton>View Courses</SecondaryButton>
@@ -337,9 +337,9 @@ const WhyTinyStepsPage: FC = () => {
                   <Link to="/curriculum" className="block" onClick={(e) => e.stopPropagation()}>
                     <SecondaryButton>View Curriculum</SecondaryButton>
                   </Link>
-                  <a href="#book-trial" className="block" onClick={(e) => e.stopPropagation()}>
+                  <Link to="/?book=1" className="block" onClick={(e) => e.stopPropagation()}>
                     <PrimaryButton>Book Assessment</PrimaryButton>
-                  </a>
+                  </Link>
                 </div>
 
                 <div className="mt-4 text-xs text-slate-500">
