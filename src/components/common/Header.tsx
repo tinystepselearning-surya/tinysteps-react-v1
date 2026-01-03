@@ -10,7 +10,7 @@ type LinkItem = { label: string; href: string };
 const dashboardPaths: Record<string, string> = {
   admin: '/surya',
   teacher: '/teacher',
-  parent: '/parent/dashboard', // if you don't have this route yet, change to '/parent/kids'
+  parent: '/parent',
   kid: '/kids',
   learningPartner: '/learning-partner',
   learningpartner: '/learning-partner',
@@ -27,10 +27,12 @@ export default function Header() {
 
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
+  const parentHref = user?.role === 'parent' ? '/parent' : '/parent/login';
+
   const primaryLinks: LinkItem[] = [
     { label: 'Courses', href: '/courses' },
     { label: 'Curriculum', href: '/curriculum' },
-    { label: 'Parent', href: '/parent/login' },
+    { label: 'Parent', href: parentHref },
     { label: 'Blog', href: '/blog' },
     { label: 'Pricing', href: '/pricing' },
   ];
