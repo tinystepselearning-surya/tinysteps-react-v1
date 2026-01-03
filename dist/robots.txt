@@ -1,40 +1,33 @@
 User-agent: *
 Allow: /
-
-# Public pages (optional, but fine)
+Allow: /blog
 Allow: /blog/
+Allow: /courses
 Allow: /courses/
+Allow: /curriculum
 Allow: /curriculum/
+Allow: /pricing
 Allow: /pricing/
+Allow: /contact
 Allow: /contact/
+Allow: /faq
 Allow: /faq/
-Allow: /phonics/
-Allow: /grammar/
-Allow: /speaking/
-Allow: /why-tiny-steps/
-Allow: /for-schools/
-Allow: /seasonal/
+Allow: /phonics
+Allow: /grammar
+Allow: /speaking
+Allow: /for-schools
 
-# Block all private / portal / dev areas
-Disallow: /surya/
 Disallow: /admin/
+Disallow: /surya/
 Disallow: /teacher/
-Disallow: /teachers/
 Disallow: /parent/
 Disallow: /kids/
 Disallow: /learning-partner/
-Disallow: /learningpartner/
-Disallow: /login
-Disallow: /kid/
-Disallow: /unauthorized
 Disallow: /dev/
 Disallow: /debug-lessons
-Disallow: /teacher/lessons-test
-Disallow: /email/
 Disallow: /private/
+Disallow: /email/
 
 Sitemap: https://tinystepslearning.com/sitemap.xml
 Sitemap: https://tinystepslearning.com/sitemap-blog.xml
 Sitemap: https://tinystepslearning.com/sitemap-courses.xml
-
-Crawl-delay: 1

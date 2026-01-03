@@ -1,34 +1,3 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Blog landing page -->
-  <url>
-    <loc>https://tinystepslearning.com/blog</loc>
-  </url>
-
-  <!-- Weekly posts -->
-  <url><loc>https://tinystepslearning.com/blog/week-1-phonics-satpin-launch</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-2-phonics-blending-club</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-3-phonics-tricky-words</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-4-phonics-long-vowels</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-5-phonics-r-controlled</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-6-phonics-comprehension</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-8-grammar-tenses</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-9-grammar-conjunctions</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-10-grammar-subject-verb</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-11-grammar-creative-writing</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-13-speaking-structure</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-14-speaking-visual-aids</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-15-speaking-debate-starters</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-16-phonics-summer-plan</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-17-grammar-assessment</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-18-speaking-video-feedback</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-19-phonics-multisyllabic</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-20-grammar-editing-camp</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-21-speaking-competition-prep</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-22-phonics-diagnostics</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-23-grammar-speaking-bridge</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-24-speaking-family-showcase</loc></url>
-  <url><loc>https://tinystepslearning.com/blog/week-25-back-to-school-plan</loc></url>
 </urlset>
