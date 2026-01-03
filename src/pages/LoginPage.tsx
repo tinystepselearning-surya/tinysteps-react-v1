@@ -66,11 +66,7 @@ export default function LoginPage() {
     setIsSubmitting(true);
     try {
       const normalizedEmail = email.trim();
-      await handleLogin(
-        normalizedEmail,
-        password,
-        expectedRole || undefined,
-      );
+      await handleLogin(normalizedEmail, password, expectedRole || undefined);
       // handleLogin will redirect based on role
     } catch (err: any) {
       setError(err?.message || 'Login failed');
@@ -91,53 +87,82 @@ export default function LoginPage() {
       : 'Login';
 
   const showGoogleButton = expectedRole === 'parent';
+  const isParent = expectedRole === 'parent';
+  const emailPlaceholder = isParent ? 'parent@tinysteps.com' : 'Email';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-8 bg-white rounded shadow">
-        <h1 className="text-2xl font-bold mb-6">{title}</h1>
-
-        {expectedRole && (
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-blue-800 text-sm">
-            {getRoleMessage()}
+    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-orange-50">
+      <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/85 p-7 shadow-[0_18px_60px_rgba(2,6,23,0.12)] backdrop-blur sm:p-8">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
+              {title}
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Use the login details shared by Tiny Steps.
+            </p>
           </div>
-        )}
 
-        {error && <div className="mb-4 text-red-600">{error}</div>}
+          {expectedRole && (
+            <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+              {getRoleMessage()}
+            </div>
+          )}
 
-        <form className="space-y-4" onSubmit={onSubmit}>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            type="email"
-            placeholder="Email"
-            className="w-full px-3 py-2 border rounded"
-            required
-            aria-label="email"
-          />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            placeholder="Password"
-            className="w-full px-3 py-2 border rounded"
-            required
-            aria-label="password"
-          />
+          {error && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
 
-          <button
-            type="submit"
-            className={`w-full px-4 py-2 rounded ${
-              isSubmitting ? 'bg-gray-400' : 'bg-blue-600 text-white'
-            }`}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? 'Signing in…' : 'Sign In'}
-          </button>
-
-          {/* Google Sign-in for parent role only */}
-          {showGoogleButton && (
+          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
             <div>
+              <label className="block text-sm font-medium text-slate-700">
+                Email
+              </label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder={emailPlaceholder}
+                autoComplete="username"
+                inputMode="email"
+                className="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-900 placeholder:text-slate-400 shadow-sm outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                required
+                aria-label="email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <input
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                placeholder="Password"
+                autoComplete="current-password"
+                className="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-900 placeholder:text-slate-400 shadow-sm outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
+                required
+                aria-label="password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className={`h-11 w-full rounded-xl font-semibold shadow-sm transition ${
+                isSubmitting
+                  ? 'cursor-not-allowed bg-slate-300 text-slate-600'
+                  : 'bg-sky-600 text-white hover:bg-sky-700 active:scale-[0.99]'
+              }`}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Signing in…' : 'Sign In'}
+            </button>
+
+            {/* Google Sign-in for parent role only */}
+            {showGoogleButton && (
               <button
                 type="button"
                 onClick={async () => {
@@ -151,15 +176,21 @@ export default function LoginPage() {
                     setIsSubmitting(false);
                   }
                 }}
-                className={`w-full mt-2 px-4 py-2 rounded border ${
-                  isSubmitting ? 'opacity-60' : 'bg-white'
+                className={`h-11 w-full rounded-xl border font-semibold transition ${
+                  isSubmitting
+                    ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+                    : 'border-slate-300 bg-white text-slate-900 hover:bg-slate-50'
                 }`}
               >
                 Sign in with Google
               </button>
-            </div>
-          )}
-        </form>
+            )}
+          </form>
+
+          <p className="mt-5 text-center text-xs text-slate-500">
+            Trouble signing in? Message us on WhatsApp and we’ll help.
+          </p>
+        </div>
       </div>
     </div>
   );

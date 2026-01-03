@@ -6,7 +6,11 @@ type NavItem = { label: string; to: string };
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Home", to: "/" },
-  // ✅ Removed CTA from NAV_ITEMS to avoid duplication + underline confusion with hashes
+  { label: "Courses", to: "/courses" },
+  { label: "Curriculum", to: "/curriculum" },
+  { label: "Blog", to: "/blog" },
+  { label: "Pricing", to: "/pricing" },
+  { label: "Parent Login", to: "/parent/login" },
 ];
 
 export default function NavBar(): JSX.Element {

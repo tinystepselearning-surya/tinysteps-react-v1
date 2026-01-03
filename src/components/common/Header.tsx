@@ -1,44 +1,50 @@
+// src/components/common/Header.tsx
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+
+type LinkItem = { label: string; href: string };
+
+const dashboardPaths: Record<string, string> = {
+  admin: '/surya',
+  teacher: '/teacher',
+  parent: '/parent/dashboard', // if you don't have this route yet, change to '/parent/kids'
+  kid: '/kids',
+  learningPartner: '/learning-partner',
+  learningpartner: '/learning-partner',
+};
 
 export default function Header() {
   const { user, clearUser } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+
   const [isOpen, setIsOpen] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [showMore, setShowMore] = useState(false);
-  const scrollRef = useRef(0);
+
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const primaryLinks = [
+  const primaryLinks: LinkItem[] = [
     { label: 'Courses', href: '/courses' },
     { label: 'Curriculum', href: '/curriculum' },
+    { label: 'Parent', href: '/parent/login' },
     { label: 'Blog', href: '/blog' },
-    { label: 'Pricing', href: '/pricing' }
+    { label: 'Pricing', href: '/pricing' },
   ];
 
-  const moreLinks = [
+  const moreLinks: LinkItem[] = [
     { label: 'Teachers', href: '/teacher' },
     { label: 'Learning Partner', href: '/learning-partner' },
     { label: 'Kids', href: '/parent/kids' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Contact', href: '/contact' },
-    { label: 'Parent', href: '/parent/login' },
   ];
 
-  const ctaLink = { label: 'Why Tiny Steps', href: '/why-tiny-steps' };
-
-  const dashboardPaths: Record<string, string> = {
-    admin: '/surya',
-    teacher: '/teacher',
-    parent: '/parent',
-    learningPartner: '/learning-partner',
-    kid: '/parent/kids',
-  };
+  // ✅ This is the blue gradient button in header (like your screenshot)
+  const ctaLink: LinkItem = { label: 'Why Tiny Steps', href: '/why-us' };
 
   const isHomePage = location.pathname === '/';
 
@@ -55,21 +61,15 @@ export default function Header() {
   useEffect(() => {
     const handleScroll = () => {
       const current = window.scrollY;
-      if (isHomePage) {
-        setIsSticky(current > 50);
-      } else {
-        setIsSticky(true);
-      }
-      scrollRef.current = current;
+      if (isHomePage) setIsSticky(current > 50);
+      else setIsSticky(true);
     };
     window.addEventListener('scroll', handleScroll);
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [isHomePage]);
 
   const handleLogout = async () => {
-    // Sign out via firebase only when user actually logs out. Importing
-    // firebase/auth and the app config lazily keeps the public pages free
-    // of the Firebase SDK until needed.
     try {
       const [{ signOut }, { auth }] = await Promise.all([
         import('firebase/auth'),
@@ -77,12 +77,12 @@ export default function Header() {
       ]);
       await signOut(auth);
     } catch (err) {
-      // ignore firebase signout error (we still clear local state)
       console.error('Error signing out of Firebase', err);
     }
-    // capture role first
+
     const currentRole = user?.role;
-  clearUser();
+    clearUser();
+
     const loginMap: Record<string, string> = {
       admin: '/surya/login',
       teacher: '/teacher/login',
@@ -90,24 +90,22 @@ export default function Header() {
       learningPartner: '/learning-partner/login',
       kid: '/parent/login',
     };
+
     const destination = currentRole ? (loginMap[currentRole] || '/login') : '/login';
     navigate(destination);
   };
 
   const handleBookAssessment = () => {
-    // If already on homepage → just scroll
     if (location.pathname === '/') {
       document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
-
-    // If on any other page → go to homepage with a query param so Home can auto-scroll
     navigate('/?book=1');
   };
 
   const navbarVariants = {
     hidden: { opacity: 0, y: -12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' } },
   };
 
   return (
@@ -116,7 +114,9 @@ export default function Header() {
       animate="visible"
       variants={navbarVariants}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isSticky ? 'bg-white/85 backdrop-blur-lg shadow-[0_15px_35px_rgba(8,15,40,0.12)]' : 'bg-transparent'
+        isSticky
+          ? 'bg-white/85 backdrop-blur-lg shadow-[0_15px_35px_rgba(8,15,40,0.12)]'
+          : 'bg-transparent'
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
@@ -129,20 +129,26 @@ export default function Header() {
           <img src="/logo.png" alt="Tiny Steps Logo" className="h-11 w-11 object-contain" />
           <div>
             <div className="font-bold text-gray-900">Tiny Steps</div>
-            <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
+            <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">
+              Foundations Forever
+            </div>
           </div>
         </motion.div>
 
+        {/* Desktop nav */}
         <div className="hidden lg:flex items-center gap-6 text-sm font-semibold text-gray-700">
           {primaryLinks.map((link) => (
             <Link key={link.href} to={link.href} className="hover:text-tiny-blue-600 transition-colors">
               {link.label}
             </Link>
           ))}
+
+          {/* More */}
           <div
             className="relative"
             ref={moreMenuRef}
             onMouseEnter={() => setShowMore(true)}
+            onMouseLeave={() => setShowMore(false)}
           >
             <button
               type="button"
@@ -155,6 +161,7 @@ export default function Header() {
             >
               More ▾
             </button>
+
             {showMore && (
               <div className="absolute left-0 mt-3 w-56 rounded-2xl border border-gray-100 bg-white/95 p-4 shadow-2xl backdrop-blur">
                 <div className="flex flex-col gap-2 text-sm text-gray-700">
@@ -168,6 +175,7 @@ export default function Header() {
                       {link.label}
                     </Link>
                   ))}
+
                   {user && (
                     <Link
                       to={dashboardPaths[user.role] || `/${user.role}`}
@@ -181,6 +189,8 @@ export default function Header() {
               </div>
             )}
           </div>
+
+          {/* Blue CTA */}
           <Link
             to={ctaLink.href}
             className="ml-4 inline-flex items-center justify-center h-12 rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.35)] transition hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
@@ -189,7 +199,8 @@ export default function Header() {
           </Link>
         </div>
 
-          <div className="hidden md:flex items-center gap-4">
+        {/* Desktop book button */}
+        <div className="hidden md:flex items-center gap-4">
           <button
             onClick={handleBookAssessment}
             aria-label="Book Free Assessment Class"
@@ -199,6 +210,7 @@ export default function Header() {
           </button>
         </div>
 
+        {/* Mobile */}
         <div className="flex items-center gap-3 lg:hidden">
           <button
             onClick={handleBookAssessment}
@@ -207,6 +219,7 @@ export default function Header() {
           >
             Book Free Assessment Class
           </button>
+
           <motion.button onClick={() => setIsOpen(!isOpen)} className="flex flex-col gap-1">
             {[0, 1, 2].map((line) => (
               <motion.div
@@ -224,7 +237,8 @@ export default function Header() {
         </div>
       </div>
 
-          <motion.div
+      {/* Mobile drawer */}
+      <motion.div
         initial={{ height: 0 }}
         animate={{ height: isOpen ? 'auto' : 0 }}
         className="md:hidden overflow-hidden bg-white/95 backdrop-blur"
@@ -235,6 +249,7 @@ export default function Header() {
               {link.label}
             </Link>
           ))}
+
           <Link
             to={ctaLink.href}
             onClick={() => setIsOpen(false)}
@@ -242,16 +257,28 @@ export default function Header() {
           >
             {ctaLink.label}
           </Link>
+
           {user ? (
-            <button className="text-left text-red-600" onClick={() => { handleLogout(); setIsOpen(false); }}>
+            <button
+              className="text-left text-red-600"
+              onClick={() => {
+                handleLogout();
+                setIsOpen(false);
+              }}
+            >
               Logout
             </button>
           ) : (
-            <button className="text-left" onClick={() => { navigate('/login'); setIsOpen(false); }}>
+            <button
+              className="text-left"
+              onClick={() => {
+                navigate('/login');
+                setIsOpen(false);
+              }}
+            >
               Sign in
             </button>
           )}
-          {/* phone/whatsapp removed from mobile menu per design */}
         </div>
       </motion.div>
     </motion.nav>
