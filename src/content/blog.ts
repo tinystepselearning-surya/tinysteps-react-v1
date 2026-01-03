@@ -34,7 +34,7 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'p', content: 'Each day: warm-up (1 min), teach/practice (6–7 min), celebrate & stop (1–2 min). Keep sessions playful and routine-based so your child knows what to expect.' },
       { type: 'h3', content: 'Day 1 — s, a' },
       { type: 'p', content: 'Introduce /s/ and /a/. Show the letters, say the sound, let your child repeat, then trace each letter once with a finger.' },
-      { type: 'p', content: 'Example words to say: sat, as. Success: child says /s/ and /a/ when you show the letters.' },
+      { type: 'p', content: 'Example words to say: sat, pat. Success: child says /s/ and /a/ when you show the letters.' },
 
       { type: 'h3', content: 'Day 2 — t, p' },
       { type: 'p', content: 'Introduce /t/ and /p/. Play a quick I-Spy: “I spy something that starts with /t/.” Trace and tap as you say each sound.' },
@@ -50,10 +50,10 @@ const rawBlogPosts: BlogPost[] = [
 
       { type: 'h3', content: 'Day 5 — More blending practice' },
       { type: 'p', content: 'Blend two or three CVC words together. Use letter cards or toys as markers for each sound.' },
-      { type: 'p', content: 'Example words: mat, pan, tin. Success: child blends independently or with minimal help.' },
+      { type: 'p', content: 'Example words: sat, pat, pin. Success: child blends independently or with minimal help.' },
 
       { type: 'h3', content: 'Day 6 — Little reading practice' },
-      { type: 'p', content: 'Read a very short decodable sentence using learned words: “The cat sat.” (use familiar names if needed). Point to each word and blend as you go.' },
+      { type: 'p', content: 'Read a very short decodable sentence using learned words: “Pat sat.” Point to each word and blend as you go.' },
       { type: 'p', content: 'Success: child recognizes at least one word when you point and sound it out.' },
 
       { type: 'h3', content: 'Day 7 — Game day + celebrate' },
@@ -123,7 +123,7 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'h3', content: 'Day 2 — Continuous blending practice' },
       { type: 'p', content: 'Practice continuous blends where you do not pause between sounds: /s-a-t/ → sat. Support with sliding finger under the word.' },
       { type: 'h3', content: 'Day 3 — Snap blends and short sentences' },
-      { type: 'p', content: 'Introduce a “snap” blend after slow practice. Then read a short decodable line together: “The cat sat.”' },
+      { type: 'p', content: 'Introduce a “snap” blend after slow practice. Parent reads a short sentence aloud; child points to or echoes the word "sat".' },
       { type: 'h3', content: 'Day 4 — Mix practice with little games' },
       { type: 'p', content: 'Use blend baskets and I-Spy games to practise blending without pressure. Keep it playful.' },
       { type: 'h3', content: 'Day 5 — Quick timed wins (2-minute challenge)' },
@@ -153,7 +153,7 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'li', content: 'Sticker Ladder — earn a sticker for each successful blend.' },
 
       { type: 'h2', content: 'What words to practice (SATPIN CVC list + how to choose 5/day)' },
-      { type: 'p', content: 'Use SATPIN CVC words: sat, sit, sap, sip, pat, pan, pin, pit, tap, tin, tan, mat, man, nap, nip.' },
+      { type: 'p', content: 'Use SATPIN CVC words: sat, sit, sip, sap, pat, pan, pin, pit, tap, tin, tan, nap, nip, sin.' },
       { type: 'p', content: 'Choose five words a day: three new + two review. Pick words that use sounds your child already knows and relate to familiar objects at home.' },
 
       { type: 'h2', content: 'Troubleshooting' },
@@ -193,11 +193,11 @@ const rawBlogPosts: BlogPost[] = [
 
       { type: 'h2', content: 'The 3-part method: Read it / Build it / Fix the tricky part' },
       { type: 'h3', content: '1) Read it' },
-      { type: 'p', content: 'Show the word in a short sentence and read it together. Keep sentences familiar: “The cat sat.” Point to the word each time.' },
+      { type: 'p', content: 'Show the word in a short sentence and read it together. Parent reads the sentence aloud; child points to or echoes the word "sat".' },
       { type: 'h3', content: '2) Build it' },
       { type: 'p', content: 'Use letter cards or magnetic letters to build the word. For “the”, you might point out that the letters don’t blend like a normal CVC word — that’s OK.' },
       { type: 'h3', content: '3) Fix the tricky part' },
-      { type: 'p', content: 'Give a simple memory cue for the irregular part. Example script: “This part is tricky — we remember it with a little picture in our brain. For ‘the’ think of a tiny hat on the e.”' },
+      { type: 'p', content: "Give a simple memory cue for the irregular part. For 'the' try this clear parent script: 'th' is one new sound and the final 'e' often sounds like /uh/ — so we learn 'the' as a whole word (say it and spot it)." },
 
       { type: 'h2', content: 'Week 3 plan (7 days, 10 minutes/day)' },
       { type: 'p', content: 'Each day: warm-up (2–3 min), tricky word focus (4–5 min), playful review (2–3 min). Keep the 2‑minute rule in mind: stop while it’s happy.' },
@@ -259,6 +259,8 @@ const rawBlogPosts: BlogPost[] = [
     readTime: '9 min',
     excerpt: "Seven short lessons for long vowels: magic‑e and vowel teams taught with quick visuals, short games and decodable reading so patterns stick without stress.",
     body: [
+      { type: 'h3', content: 'Prerequisite' },
+      { type: 'p', content: 'This week is for children who can already read 30–50 CVC words with short vowels and know most letter sounds.' },
       { type: 'h2', content: 'Why long vowels confuse children (short vs long, “name” vowel idea)' },
       { type: 'p', content: 'Long vowels are confusing because letters can say two things: a short sound (kit = /ɪ/) and a long “name” sound (kite = /aɪ/). Children who learned short vowel decoding are surprised when the same letters change sound.' },
       { type: 'p', content: 'This is not a failure — it’s a new pattern. The aim is to give a clear visual and a tiny rule so the child recognises the change quickly.' },
@@ -332,7 +334,9 @@ const rawBlogPosts: BlogPost[] = [
     readTime: '9 min',
     excerpt: "Seven quick sessions to teach R‑controlled vowels with clear action hooks and multisensory cues: short, playful practice that helps children remember bossy‑R patterns calmly.",
     body: [
-      { type: 'h2', content: 'What “bossy R” does (why the vowel changes)' },
+      { type: 'h3', content: 'Prerequisite' },
+      { type: 'p', content: 'This week is for children who can already read 30–50 CVC words with short vowels and know most letter sounds.' },
+      { type: 'h2', content: 'What "bossy R" does (why the vowel changes)' },
       { type: 'p', content: 'When R follows a vowel (as in “ar”, “or”, “er”), it changes the vowel sound. Instead of a clear short or long vowel, the R pulls the vowel toward its own sound — children hear a new combined sound.' },
       { type: 'p', content: 'This “bossy R” effect can feel odd after weeks of simple CVC decoding. The goal in Week 5 is to make these shifts predictable with movement and simple cues so the child doesn’t guess or get confused.' },
 
@@ -711,6 +715,7 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'h2', content: 'What is subject–verb agreement (SVA) in kid language' },
       { type: 'p', content: 'Subject–verb agreement simply means the doing word (verb) matches who is doing it (the subject). In child language: one person needs a different verb form than many people.' },
       { type: 'p', content: 'For example: “I run,” “He runs,” “They run.” The tiny change in the verb helps the sentence sound right and clear.' },
+      { type: 'p', content: 'Note: this rule is for present tense everyday actions (e.g., He runs; She eats). Other tenses follow different patterns.' },
 
       { type: 'h2', content: 'The single vs many rule (he/she/it vs they/we)' },
       { type: 'p', content: 'Teach a simple rule: if it is one person or thing (he/she/it), the verb often gets an extra sound (often an “s”). If it is many (they/we/you), the verb stays in its base form.' },
@@ -783,6 +788,8 @@ const rawBlogPosts: BlogPost[] = [
     readTime: '9 min',
     excerpt: "Story Mountain scaffolds to help 8–10 year‑olds plan and write short stories: picture prompts, two brief writing sprints and a friendly two‑step edit to protect motivation.",
     body: [
+      { type: 'h2', content: 'Track B — Ages 8–10 (advanced track)' },
+      { type: 'p', content: 'This week is part of Track B (Ages 8–10): a separate, more advanced creative-writing track. If your child is younger or still practising CVC fluency, continue the early phonics track instead.' },
       { type: 'h2', content: 'Why kids say “I don’t know what to write” (and how to help)' },
       { type: 'p', content: 'When a child says “I don’t know what to write,” it often means they are unsure where to begin, worried about getting it “right,” or simply overwhelmed by the blank page. Parents can remove those barriers with low-pressure routines and modelling. Say this is practice, not a test; invite them to tell the story out loud first; and praise the idea, even before any spelling is fixed. Small changes — reducing time, offering a prompt, and treating the first draft as talk captured on paper — turn a freeze into a try.' },
 
