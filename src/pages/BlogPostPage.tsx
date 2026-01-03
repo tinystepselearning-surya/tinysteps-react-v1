@@ -48,6 +48,9 @@ const BlogPostPage: FC = () => {
     <div className="bg-white">
       <Meta title={`${metaSource.title} | Tiny Steps Blog`} description={metaSource.excerpt || ''} canonical={`https://tinystepslearning.com/blog/${slug}`} jsonLd={jsonLd} />
       <div className="mx-auto max-w-3xl px-6 py-10">
+        <div className="mb-4">
+          <Link to="/blog" className="inline-flex items-center text-primary-600 text-sm">← Back to Blogs</Link>
+        </div>
         <div className="text-xs text-primary-600">{metaSource.category || 'Parent Tips'}</div>
         <h1 className="mt-1 text-3xl font-bold text-gray-900">{metaSource.title}</h1>
         <div className="mt-1 text-sm text-gray-600">by {metaSource.author || 'Tiny Steps'} • {metaSource.readTime || '5 min'} • {new Date(metaSource.date || Date.now()).toLocaleDateString()}</div>

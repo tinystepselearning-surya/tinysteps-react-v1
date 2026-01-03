@@ -17,10 +17,16 @@ type CourseCardProps = {
   outcomes: string[];
   price: string;
   reviews?: string;
+  ibLens?: string[];
 };
 
 export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, duration, frequency, level, overview, outcomes, price, reviews, slug, ibLens = [] }) => {
   const [open, setOpen] = useState(false);
+  const tab = encodeURIComponent(track);
+  const courseSlug = slug ? encodeURIComponent(slug) : '';
+  const curriculumHref = courseSlug
+    ? `/curriculum?tab=${tab}&course=${courseSlug}`
+    : `/curriculum?tab=${tab}`;
   return (
     <div
       className={cn(
@@ -41,12 +47,36 @@ export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, 
           </ul>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          {slug ? (
-            <Link to={`/courses/${slug}`} className="interactive-link text-sm font-semibold text-primary-600">View Full Curriculum →</Link>
+          {/* ✅ Don’t toggle the card when clicking the link */}
+          {!slug ? (
+            <Button
+              size="sm"
+              variant="outline"
+              className="min-w-[150px] whitespace-nowrap"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View Curriculum
+            </Button>
           ) : (
-            <Button size="sm" variant="outline" className="min-w-[150px] whitespace-nowrap">View Curriculum</Button>
+            <Link
+              to={curriculumHref}
+              onClick={(e) => e.stopPropagation()}
+              className="mt-0 inline-flex items-center gap-1 text-sm font-semibold text-primary-600 hover:text-primary-700"
+            >
+              View Full Curriculum <span aria-hidden>→</span>
+            </Link>
           )}
-          <Button size="sm" className="min-w-[170px] whitespace-nowrap">Enroll · {price}</Button>
+
+          <Button
+            size="sm"
+            className="min-w-[170px] whitespace-nowrap"
+            onClick={(e) => {
+              e.stopPropagation();
+              // TODO: hook your enroll flow here (WhatsApp / booking / checkout)
+            }}
+          >
+            Enroll · {price}
+          </Button>
         </div>
         {ibLens.length > 0 && (
           <div className="mt-3 text-xs text-gray-600">

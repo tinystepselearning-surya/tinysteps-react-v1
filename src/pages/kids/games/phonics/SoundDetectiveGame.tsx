@@ -1,6 +1,6 @@
 // src/pages/kids/games/phonics/SoundDetectiveGame.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 
 const BASE = "/games/phonics/sound-detective";
@@ -609,6 +609,17 @@ export default function SoundDetectiveGame() {
       <div className="w-full max-w-6xl mx-auto text-center mb-8">
         <h1 className="text-5xl font-bold text-white">Choose Level</h1>
         <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play Sound Detective</p>
+      </div>
+
+      {/* Back to Phonics Library */}
+      <div className="absolute top-5 right-5">
+        <Link
+          to={kidId ? `/kids/games/phonics?kidId=${encodeURIComponent(kidId)}` : "/kids/games/phonics"}
+          className="px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold text-white"
+          style={{ zIndex: 50 }}
+        >
+          ← Back to Phonics Library
+        </Link>
       </div>
 
       <div className="level-grid w-full max-w-3xl mx-auto">

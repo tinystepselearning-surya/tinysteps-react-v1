@@ -35,6 +35,7 @@ const BlogPage: FC = () => {
   }));
 
   const combined = useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
+  const combinedFiltered = useMemo(() => combined.filter((p) => topic === 'All' || p.category === topic), [combined, topic]);
   const blogSchema = useMemo(() => ({
     '@context': 'https://schema.org',
     '@type': 'Blog',
@@ -47,9 +48,11 @@ const BlogPage: FC = () => {
       url: `https://tinystepslearning.com/blog/${post.slug}`
     }))
   }), [combined]);
-  const featured = combined
-    .filter((p) => topic === 'All' || p.category === topic)
-    .sort((a,b) => (sort==='Newest' ? (a.date<b.date?1:-1) : 0))[0];
+  const featured = useMemo(() => {
+    const list = [...combinedFiltered];
+    if (sort === 'Newest') list.sort((a,b)=> (a.date<b.date?1:-1));
+    return list[0];
+  }, [combinedFiltered, sort]);
 
   useEffect(() => { document.title = 'Insights for Indian Parents | Tiny Steps Blog'; }, []);
 
@@ -84,15 +87,23 @@ const BlogPage: FC = () => {
                 <div className="mt-1 text-sm text-gray-600">by {featured.author} • {featured.readTime} • {new Date(featured.date).toLocaleDateString()}</div>
                 <p className="mt-3 text-gray-700">{featured.excerpt}</p>
               </div>
-              <div className="aspect-video w-full rounded-xl bg-slate-100" style={{backgroundImage: `url(${featured.hero||''})`, backgroundSize: 'cover'}} />
+              {featured.hero ? (
+                <div className="aspect-video w-full rounded-xl bg-slate-100" style={{backgroundImage: `url(${featured.hero})`, backgroundSize: 'cover'}} />
+              ) : (
+                <div className="aspect-video w-full rounded-xl bg-gradient-to-r from-sky-50 to-orange-50" />
+              )}
             </div>
           </Link>
         )}
 
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {combined.slice(1).map((p) => (
+          {(featured ? combinedFiltered.filter(p => p.slug !== featured.slug) : combinedFiltered).map((p) => (
             <Link key={p.slug} to={`/blog/${p.slug}`} className="rounded-2xl bg-white p-5 shadow ring-1 ring-slate-200 transition-transform hover:-translate-y-1">
-              <div className="aspect-video w-full rounded-xl bg-slate-100 mb-4" style={{backgroundImage: `url(${p.hero||''})`, backgroundSize: 'cover'}} />
+              {p.hero ? (
+                <div className="aspect-video w-full rounded-xl bg-slate-100 mb-4" style={{backgroundImage: `url(${p.hero})`, backgroundSize: 'cover'}} />
+              ) : (
+                <div className="aspect-video w-full rounded-xl mb-4 bg-gradient-to-r from-sky-50 to-orange-50" />
+              )}
               <div className="text-xs text-primary-600">{p.category}</div>
               <div className="mt-1 font-semibold text-gray-900">{p.title}</div>
               <div className="text-xs text-gray-600">{p.readTime} • {new Date(p.date).toLocaleDateString()}</div>

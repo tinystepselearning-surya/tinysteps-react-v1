@@ -9,11 +9,50 @@ import type { WeekItem } from '../components/curriculum/WeekAccordion';
 import { CollapsibleCard } from '../components/common/CollapsibleCard';
 import SmartCard from '../components/ui/SmartCard';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
+import { useSearchParams } from 'react-router-dom';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
 
+const VALID_TABS = ['phonics', 'grammar', 'speaking'] as const;
+type ValidTab = (typeof VALID_TABS)[number];
+
+function isValidTab(v: any): v is ValidTab {
+  return VALID_TABS.includes(v);
+}
+
+function inferTabFromCourseSlug(courseSlug: string): ValidTab {
+  const s = (courseSlug || '').toLowerCase();
+  if (s.startsWith('grammar')) return 'grammar';
+  if (s.startsWith('public-speaking') || s.startsWith('speaking')) return 'speaking';
+  return 'phonics';
+}
+
+// Aliases to tolerate slug differences between Courses and Curriculum
+const COURSE_SLUG_ALIASES: Record<string, string> = {
+  'phonics-foundation': 'phonics-early',
+  'phonics-early': 'phonics-foundation',
+};
+
+function safeTab(value: string | null): Tab {
+  const v = (value ?? '').trim() as Tab;
+  return (['phonics', 'grammar', 'speaking'] as Tab[]).includes(v) ? v : 'phonics';
+}
+
+function safeCourse(value: string | null): string | null {
+  const raw = (value ?? '').trim();
+  if (!raw) return null;
+  if (curriculumBySlug?.[raw]) return raw;
+  const alt = COURSE_SLUG_ALIASES[raw];
+  if (alt && curriculumBySlug?.[alt]) return alt;
+  return raw;
+}
+
 const CurriculumPage: FC = () => {
-  const [tab, setTab] = useState<Tab>('phonics');
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const [tab, setTab] = useState<Tab>(() => safeTab(searchParams.get('tab')));
+  const [focusedCourse, setFocusedCourse] = useState<string | null>(() => safeCourse(searchParams.get('course')));
+
   const [curriculumData, setCurriculumData] = useState<CurriculumOverride | null>(null);
 
   useEffect(() => {
@@ -23,17 +62,63 @@ const CurriculumPage: FC = () => {
   }, []);
 
   const getWeeks = (courseSlug: string): WeekItem[] => {
-    const overrideWeeks = curriculumData?.courses?.[courseSlug]?.weeks ?? [];
-    const baseWeeks = curriculumBySlug[courseSlug]?.weeks ?? [];
+    const pickWeeks = (slug: string): WeekItem[] => {
+      const overrideWeeks = curriculumData?.courses?.[slug]?.weeks ?? [];
+      const baseWeeks = curriculumBySlug?.[slug]?.weeks ?? [];
+      return (overrideWeeks.length ? overrideWeeks : baseWeeks) as WeekItem[];
+    };
 
-    console.log('[CurriculumPage:getWeeks]', {
-      courseSlug,
-      overrideCount: overrideWeeks.length,
-      baseCount: baseWeeks.length,
-    });
+    const primary = pickWeeks(courseSlug);
+    if (primary?.length) return primary;
 
-    return (overrideWeeks.length ? overrideWeeks : baseWeeks) as WeekItem[];
+    const alt = COURSE_SLUG_ALIASES[courseSlug];
+    if (alt) {
+      const secondary = pickWeeks(alt);
+      if (secondary?.length) return secondary;
+    }
+
+    return [];
   };
+
+  // Keep URL tab in sync when user clicks tabs
+  const setTabAndUrl = (nextTab: Tab, courseSlug?: string | null) => {
+    const nextSafeTab = safeTab(nextTab as string);
+    const nextSafeCourse = courseSlug ? safeCourse(courseSlug) : null;
+
+    setTab(nextSafeTab);
+    setFocusedCourse(nextSafeCourse);
+
+    const sp = new URLSearchParams(searchParams);
+    sp.set('tab', nextSafeTab);
+
+    if (nextSafeCourse) sp.set('course', nextSafeCourse);
+    else sp.delete('course');
+
+    setSearchParams(sp, { replace: true });
+  };
+
+  // If URL changes (e.g., coming from Courses page), update tab accordingly
+  useEffect(() => {
+    const urlTab = safeTab(searchParams.get('tab'));
+    const urlCourse = safeCourse(searchParams.get('course'));
+
+    if (urlTab !== tab) setTab(urlTab);
+    if (urlCourse !== focusedCourse) setFocusedCourse(urlCourse);
+  }, [searchParams, tab, focusedCourse]);
+
+  // After render + after overrides loaded, scroll to the right course section
+  useEffect(() => {
+    if (!focusedCourse) return;
+
+    const id = `course-${focusedCourse}`;
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    // small delay so layout settles (accordions/tabs/sticky header)
+    window.setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }, [tab, focusedCourse, curriculumData]);
 
   return (
     <div className="page-gradient relative overflow-hidden">
@@ -129,7 +214,7 @@ const CurriculumPage: FC = () => {
           {(['phonics','grammar','speaking'] as Tab[]).map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
+              onClick={() => setTabAndUrl(t)}
               className={`pointer-events-auto hover-highlight rounded-full px-4 py-2 text-sm font-semibold transition ${tab===t?'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg':'bg-white text-gray-700 hover:bg-gray-50'}`}
             >
               {t[0].toUpperCase()+t.slice(1)}
@@ -170,14 +255,19 @@ const CurriculumPage: FC = () => {
               </div>
             </CollapsibleCard>
 
-            <div className="glass-panel p-6">
+            <div id="course-phonics-foundation" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-foundation' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Early Phonics (12 weeks)</h3>
               <WeekAccordion key="phonics-foundation" items={getWeeks('phonics-foundation')} />
             </div>
 
-            <div className="glass-panel p-6">
+            <div id="course-phonics-advanced" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-advanced' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Phonics (12 weeks)</h3>
               <WeekAccordion key="phonics-advanced" items={getWeeks('phonics-advanced')} />
+            </div>
+
+            <div id="course-phonics-foundations" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-foundations' ? 'ring-2 ring-primary-300' : ''}`}>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Foundations (Brush-Up) (8–12 weeks)</h3>
+              <WeekAccordion key="phonics-foundations" items={getWeeks('phonics-foundations')} />
             </div>
           </div>
         )}
@@ -203,12 +293,12 @@ const CurriculumPage: FC = () => {
               </div>
             </CollapsibleCard>
 
-            <div className="glass-panel p-6">
+            <div id="course-grammar-essentials" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'grammar-essentials' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Basic Grammar (12 weeks)</h3>
               <WeekAccordion key="grammar-essentials" items={getWeeks('grammar-essentials')} />
             </div>
 
-            <div className="glass-panel p-6">
+            <div id="course-grammar-mastery" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'grammar-mastery' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Grammar (12 weeks)</h3>
               <WeekAccordion key="grammar-mastery" items={getWeeks('grammar-mastery')} />
             </div>
@@ -236,12 +326,12 @@ const CurriculumPage: FC = () => {
               </div>
             </CollapsibleCard>
 
-            <div className="glass-panel p-6">
+            <div id="course-public-speaking-foundations" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'public-speaking-foundations' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Basic Public Speaking (12 weeks)</h3>
               <WeekAccordion key="public-speaking-foundations" items={getWeeks('public-speaking-foundations')} />
             </div>
 
-            <div className="glass-panel p-6">
+            <div id="course-public-speaking-excellence" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'public-speaking-excellence' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Public Speaking (12 weeks)</h3>
               <WeekAccordion key="public-speaking-excellence" items={getWeeks('public-speaking-excellence')} />
             </div>

@@ -2,18 +2,18 @@
 import { useAuthStore } from '../../store/useAuthStore';
 
 const socialLinks = [
-  { label: 'Instagram', href: 'https://instagram.com', icon: '📸' },
+  { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
   { label: 'YouTube', href: 'https://youtube.com', icon: '▶️' },
   { label: 'LinkedIn', href: 'https://linkedin.com', icon: '💼' }
 ];
 
 const courseLinks = [
-  { label: 'Phonics Foundation', href: '/courses/phonics-foundation' },
-  { label: 'Phonics Advanced', href: '/courses/phonics-advanced' },
-  { label: 'Grammar Essentials', href: '/courses/grammar-essentials' },
-  { label: 'Grammar Mastery', href: '/courses/grammar-mastery' },
-  { label: 'Public Speaking Foundations', href: '/courses/public-speaking-foundations' },
-  { label: 'Public Speaking Excellence', href: '/courses/public-speaking-excellence' }
+  { label: "Phonics Foundation", href: "/courses" },
+  { label: "Phonics Advanced", href: "/courses" },
+  { label: "Grammar Essentials", href: "/courses" },
+  { label: "Grammar Mastery", href: "/courses" },
+  { label: "Public Speaking Foundations", href: "/courses" },
+  { label: "Public Speaking Excellence", href: "/courses" },
 ];
 
 const resourceLinks = [
@@ -64,7 +64,14 @@ const Footer = () => {
             <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 9 countries, 95% satisfaction. Foundations today, confidence forever.</p>
             <div className="mt-4 flex gap-4">
               {socialLinks.map((link) => (
-                <a key={link.label} href={link.href} className="text-white/70 hover:text-white transition" aria-label={link.label}>
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="text-white/70 hover:text-white transition"
+                  aria-label={link.label}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {link.icon}
                 </a>
               ))}

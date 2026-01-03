@@ -24,14 +24,17 @@ type LevelConfig = {
 	speedMax: number;
 };
 
+// 7 levels, 26 letters (a–z) split in a Jolly-friendly early progression
 const JOLLY_LEVELS: LevelConfig[] = [
-	{ id: 1, title: 'Level 1', letters: ['s', 'a', 't', 'i', 'p', 'n'], balloonCount: 6, speedMin: 8, speedMax: 14 },
-	{ id: 2, title: 'Level 2', letters: ['c', 'k', 'e', 'h', 'r', 'm'], balloonCount: 6, speedMin: 8, speedMax: 15 },
-	{ id: 3, title: 'Level 3', letters: ['d', 'g', 'o', 'u', 'l', 'f', 'b'], balloonCount: 7, speedMin: 9, speedMax: 16 },
-	{ id: 4, title: 'Level 4', letters: ['ai', 'j', 'oa', 'ie', 'ee', 'or'], balloonCount: 6, speedMin: 9, speedMax: 16 },
-	{ id: 5, title: 'Level 5', letters: ['z', 'w', 'ng', 'v', 'oo'], balloonCount: 5, speedMin: 10, speedMax: 17 },
-	{ id: 6, title: 'Level 6', letters: ['y', 'x', 'ch', 'sh', 'th'], balloonCount: 5, speedMin: 10, speedMax: 18 },
-	{ id: 7, title: 'Level 7', letters: ['qu', 'ou', 'oi', 'ue', 'er', 'ar'], balloonCount: 6, speedMin: 11, speedMax: 18 },
+	{ id: 1, title: "Level 1", letters: ["s", "a", "t", "i", "p", "n"], balloonCount: 6, speedMin: 8, speedMax: 14 },
+	{ id: 2, title: "Level 2", letters: ["c", "k", "e", "h", "r", "m"], balloonCount: 6, speedMin: 8, speedMax: 15 },
+	{ id: 3, title: "Level 3", letters: ["d", "g", "o", "u", "l", "f"], balloonCount: 6, speedMin: 9, speedMax: 16 },
+
+	// Remaining 8 letters split into 4 small levels (2 letters each)
+	{ id: 4, title: "Level 4", letters: ["b", "j"], balloonCount: 6, speedMin: 9, speedMax: 16 },
+	{ id: 5, title: "Level 5", letters: ["v", "w"], balloonCount: 6, speedMin: 10, speedMax: 17 },
+	{ id: 6, title: "Level 6", letters: ["x", "y"], balloonCount: 6, speedMin: 10, speedMax: 18 },
+	{ id: 7, title: "Level 7", letters: ["q", "z"], balloonCount: 6, speedMin: 11, speedMax: 18 },
 ];
 
 // Progress tracking per kid
@@ -41,7 +44,13 @@ type Progress = {
 };
 
 const TARGET_CORRECT = 10; // Correct pops needed to complete level
-const BALLOON_SIZE = 90; // px width
+
+// Bigger balloons
+const BALLOON_BODY_W = 120; // was 95
+const BALLOON_BODY_H = 145; // was 115
+const STRING_H = 48;
+const BALLOON_BTN_W = BALLOON_BODY_W;
+const BALLOON_BTN_H = BALLOON_BODY_H + STRING_H + 8;
 
 const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -121,8 +130,8 @@ const makeBalloon = (id: number, letters: string[], speedMin: number, speedMax: 
 });
 
 // Non-overlapping spawn - prevent balloons from stacking
-const MIN_DX = 12; // minimum horizontal gap (percent)
-const MIN_DY = 16; // minimum vertical gap (percent)
+const MIN_DX = 16;
+const MIN_DY = 22;
 
 const makeBalloonNoOverlap = (id: number, letters: string[], speedMin: number, speedMax: number, existingBalloons: Balloon[]): Balloon => {
 	// Try up to 25 times to find non-overlapping position
@@ -194,6 +203,117 @@ const BALLOON_COLORS = [
 	'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
 	'linear-gradient(135deg, #30cfd0 0%, #330867 100%)',
 ];
+
+// Audio SFX config + helper
+type SfxKey = "pop" | "correct" | "wrong" | "confetti";
+
+const SFX_BASE = "/games/phonics/balloon-pop";
+
+// Letter sounds for Balloon Pop:
+// /public/games/phonics/balloon-pop/a.mp3 ... z.mp3
+const LETTER_BASE = "/games/phonics/balloon-pop";
+
+const SFX_URLS: Record<SfxKey, string> = {
+	pop: `${SFX_BASE}/pop.mp3`,
+	correct: `${SFX_BASE}/correct.mp3`,
+	wrong: `${SFX_BASE}/wrong.mp3`,
+	confetti: `${SFX_BASE}/confetti.mp3`,
+};
+
+const letterSoundUrl = (letter: string) => `${LETTER_BASE}/${(letter || "").toLowerCase()}.mp3`;
+
+function makePool(src: string, poolSize = 4) {
+	const pool = Array.from({ length: poolSize }, () => {
+		const a = new Audio(src);
+		a.preload = "auto";
+		a.volume = 0.8;
+		return a;
+	});
+
+	let idx = 0;
+
+	async function tryPlay(a: HTMLAudioElement) {
+		try {
+			a.pause();
+			a.currentTime = 0;
+
+			const p = a.play();
+			if (p && typeof (p as any).then === "function") {
+				await p; // IMPORTANT: catches Safari/iOS blocks
+			}
+			return true;
+		} catch (err) {
+			console.warn("[audio] play failed:", src, err);
+			return false;
+		}
+	}
+
+	return {
+		prime: async () => {
+			try {
+				const a = pool[0];
+				a.muted = true;
+				const ok = await tryPlay(a);
+				a.pause();
+				a.currentTime = 0;
+				a.muted = false;
+				return ok;
+			} catch {
+				return false;
+			}
+		},
+		play: async (volume = 0.85) => {
+			const a = pool[idx];
+			idx = (idx + 1) % pool.length;
+			a.volume = volume;
+			return await tryPlay(a);
+		},
+	};
+}
+
+function useBalloonPopSfx() {
+	const poolsRef = React.useRef<{
+		sfx: Record<SfxKey, ReturnType<typeof makePool>>;
+		letters: Record<string, ReturnType<typeof makePool>>;
+	} | null>(null);
+
+	if (!poolsRef.current) {
+		poolsRef.current = {
+			sfx: {
+				pop: makePool(SFX_URLS.pop, 5),
+				correct: makePool(SFX_URLS.correct, 4),
+				wrong: makePool(SFX_URLS.wrong, 3),
+				confetti: makePool(SFX_URLS.confetti, 2),
+			},
+			letters: {},
+		};
+	}
+
+	const prime = React.useCallback(async () => {
+		const p = poolsRef.current!;
+		await Promise.all([
+			p.sfx.pop.prime(),
+			p.sfx.correct.prime(),
+			p.sfx.wrong.prime(),
+			p.sfx.confetti.prime(),
+		]);
+	}, []);
+
+	const playSfx = React.useCallback(async (key: SfxKey, volume?: number) => {
+		return await poolsRef.current!.sfx[key].play(volume);
+	}, []);
+
+	const playLetter = React.useCallback(async (letter: string, volume = 0.9) => {
+		const p = poolsRef.current!;
+		const key = (letter || "").toLowerCase();
+		if (!key) return false;
+
+		if (!p.letters[key]) p.letters[key] = makePool(letterSoundUrl(key), 2);
+		return await p.letters[key].play(volume);
+	}, []);
+
+	return { prime, playSfx, playLetter };
+}
 
 // Web Audio pop sound generator (no files needed)
 const playPopSound = () => {
@@ -299,29 +419,25 @@ const playTaDa = () => {
 	});
 };
 
-// Phonics target cue
-const playTargetCue = (target: string) => {
-	// Play a simple beep
-	playTone({ freq: 600, durMs: 150, gain: 0.08 });
-	
-	// Optionally speak the sound
-	if (typeof window !== 'undefined' && 'speechSynthesis' in window && !prefersReducedMotion) {
-		try {
-			const utterance = new SpeechSynthesisUtterance(SOUND_MAP[target] || target);
-			utterance.volume = 0.3;
-			utterance.rate = 0.9;
-			utterance.pitch = 1.1;
-			setTimeout(() => window.speechSynthesis.speak(utterance), 200);
-		} catch (e) {
-			console.debug('Speech synthesis error', e);
-		}
-	}
+// Target cue fallback (NO system voice). Just a gentle beep if MP3 fails.
+const playTargetCue = (_target: string) => {
+	playTone({ freq: 600, durMs: 140, gain: 0.06 });
 };
 
 const KidsBalloonPop: React.FC = () => {
 	const [searchParams] = useSearchParams();
 	const navigate = useNavigate();
 	const kidId = searchParams.get('kidId') || '';
+
+	// SFX helper (real mp3s)
+	const sfx = useBalloonPopSfx();
+
+	const audioPrimedRef = useRef(false);
+	const ensureAudioPrimed = useCallback(async () => {
+		if (audioPrimedRef.current) return;
+		audioPrimedRef.current = true;
+		await sfx.prime();
+	}, [sfx]);
 	const levelParam = searchParams.get('level');
 	const currentLevelId = levelParam ? parseInt(levelParam, 10) : null;
 
@@ -508,12 +624,7 @@ const KidsBalloonPop: React.FC = () => {
 		};
 	}, [fullscreenMode, goToLevels]);
 
-	// Play target phonics cue when target changes
-	useEffect(() => {
-		if (hasStarted && fullscreenMode && target && !levelComplete && lives > 0) {
-			playTargetCue(target);
-		}
-	}, [target, hasStarted, fullscreenMode, levelComplete, lives]);
+	// Removed automatic target playback on change. Playback only occurs on user interactions.
 
 	// Lock body scroll when in fullscreen mode
 	useEffect(() => {
@@ -527,15 +638,24 @@ const KidsBalloonPop: React.FC = () => {
 		};
 	}, [fullscreenMode]);
 
-	// Respawn balloon by id with non-overlapping logic
-	const respawn = useCallback((id: number) => {
+	// Respawn balloon by id with non-overlapping logic. Optionally ensure a given target letter exists.
+	const respawn = useCallback((id: number, ensureTarget?: string) => {
 		if (!currentLevel) return;
 		setBalloons(prev => {
 			const others = prev.filter(b => b.id !== id);
-			const newBalloon = makeBalloonNoOverlap(id, currentLevel.letters, currentLevel.speedMin, currentLevel.speedMax, others);
-			const updated = prev.map(b => b.id === id ? newBalloon : b);
+			const newBalloon = makeBalloonNoOverlap(
+				id,
+				currentLevel.letters,
+				currentLevel.speedMin,
+				currentLevel.speedMax,
+				others
+			);
+
+			const updated = prev.map(b => (b.id === id ? newBalloon : b));
 			const desiredTargetCount = Math.min(2, currentLevel.balloonCount, currentLevel.letters.length);
-			return ensureTargetCount(updated, target, desiredTargetCount);
+
+			const t = (ensureTarget ?? target) || "";
+			return t ? ensureTargetCount(updated, t, desiredTargetCount) : updated;
 		});
 	}, [currentLevel, target]);
 
@@ -565,7 +685,7 @@ const KidsBalloonPop: React.FC = () => {
 		confettiGeneratedRef.current = false; // Reset for confetti generation
 
 		// Play celebration sound
-		playTaDa();
+		sfx.playSfx("confetti", 1.0);
 		
 		// Speak celebration
 		if (typeof window !== 'undefined' && 'speechSynthesis' in window && !prefersReducedMotion) {
@@ -630,7 +750,7 @@ const KidsBalloonPop: React.FC = () => {
 				}
 			})();
 		}
-	}, [currentLevel, wrongCount, correctCount, score, progress, kidId]);
+	}, [currentLevel, wrongCount, correctCount, score, progress, kidId, sfx]);
 
 	// Play next level in fullscreen
 	const playNextLevel = useCallback(() => {
@@ -692,52 +812,74 @@ const KidsBalloonPop: React.FC = () => {
 		const b = balloons.find(x => x.id === id);
 		if (!b || b.isPopping) return;
 
-		playPopSound();
+		sfx.playSfx("pop", 0.85);
 		setBalloons(prev => prev.map(x => (x.id === id ? { ...x, isPopping: true, popAt: Date.now() } : x)));
 
 		setTimeout(() => {
-			if (b.letter === target) {
+			const wasCorrect = b.letter === target;
+
+			// We'll pass this to respawn so balloons match the displayed target
+			let targetForRespawn = target;
+
+			if (wasCorrect) {
 				// Correct balloon - play ding + sparkle
-				playCorrectDing();
+				sfx.playSfx("correct", 0.9);
 				lastCorrectPopRef.current = Date.now();
-				
-				// Add sparkle effect at balloon position
+
+				// Sparkle effect at balloon position
 				if (containerRef.current) {
 					const rect = containerRef.current.getBoundingClientRect();
 					const sparkleX = (b.x / 100) * rect.width;
-					const sparkleY = (Math.max(5, Math.min(85, b.y)) / 100) * rect.height;
+					const sparkleY = (b.y / 100) * rect.height;
 					setSparkles(prev => [...prev, { id: Date.now(), x: sparkleX, y: sparkleY, until: Date.now() + 300 }]);
 				}
-				
+
 				setScore(s => s + 1);
 				setCorrectCount(c => {
 					const newCount = c + 1;
 					if (newCount >= TARGET_CORRECT) {
-						// Level complete!
 						setTimeout(() => completeLevel(), 300);
 					}
 					return newCount;
 				});
-				setTarget(prev => pickNewTarget(prev));
+
+				// Pick NEXT target ONCE
+				const nextTarget = pickNewTarget(target);
+				setTarget(nextTarget);
+				targetForRespawn = nextTarget;
+
+				// ✅ Play the *new* target sound so audio matches what's shown
+				(async () => {
+					await ensureAudioPrimed();
+					const ok = await sfx.playLetter(nextTarget, 0.95);
+					if (!ok) playTargetCue(nextTarget);
+				})();
 			} else {
-				// Wrong balloon - play oops + shake target button
-				playWrongOops();
+				// Wrong balloon
+				sfx.playSfx("wrong", 0.9);
 				setShakeUntil(Date.now() + 250);
 				setWrongCount(w => w + 1);
 				setLives(l => l - 1);
-				setFeedback('Try again!');
+				setFeedback("Try again!");
 				setTimeout(() => setFeedback(null), 800);
 			}
-			
-			respawn(id);
+
+			// ✅ Respawn ensuring balloons match the CURRENT displayed target
+			respawn(id, targetForRespawn);
 		}, 220);
-	}, [balloons, target, completeLevel, pickNewTarget, respawn]);
+	}, [balloons, target, completeLevel, pickNewTarget, respawn, sfx, ensureAudioPrimed]);
 
 	// Handle target button click (focus cue bounce)
-	const handleTargetBounce = () => {
+	const handleTargetBounce = useCallback(async () => {
 		setTargetBounce(true);
 		setTimeout(() => setTargetBounce(false), 400);
-	};
+
+		if (!target) return;
+
+		await ensureAudioPrimed();
+		const ok = await sfx.playLetter(target, 0.95);
+		if (!ok) playTargetCue(target);
+	}, [target, ensureAudioPrimed, sfx]);
 
 	// Authoritative animation loop - smooth float with stable balloon count and hint pulse
 	useEffect(() => {
@@ -863,7 +1005,7 @@ const KidsBalloonPop: React.FC = () => {
 				{/* Back to Phonics Library */}
 				<Link
 					to={kidId ? `/kids/games/phonics?kidId=${encodeURIComponent(kidId)}` : '/kids/games/phonics'}
-					className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg text-white"
+					className="absolute top-3 right-3 px-4 py-2 bg-black/90 hover:bg-black/95 text-white font-semibold rounded-full shadow-lg transition-all duration-200"
 					style={{ zIndex: 50 }}
 				>
 					← Back to Phonics Library
@@ -887,7 +1029,7 @@ const KidsBalloonPop: React.FC = () => {
 					)}
 				</div>
 
-				<div className="w-full max-w-3xl mx-auto grid grid-cols-1 gap-4">
+				<div className="w-full max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
 					{JOLLY_LEVELS.map(level => {
 						const locked = level.id > progress.unlocked;
 						const completed = progress.completed[level.id];
@@ -1121,6 +1263,18 @@ const KidsBalloonPop: React.FC = () => {
 					animation: popBurst 0.22s ease-out forwards;
 				}
 
+				/* Balloon button focus-visible helper; remove mobile tap highlight */
+				.balloon-btn {
+				  border-radius: 9999px;
+				  -webkit-tap-highlight-color: transparent;
+				  tap-highlight-color: transparent;
+				  outline: none;
+				}
+				.balloon-btn:focus-visible {
+				  box-shadow: 0 0 0 10px rgba(253, 224, 71, 0.14);
+				  outline: none;
+				}
+
 				@media (prefers-reduced-motion: reduce) {
 					.cloud, .bird, .sun-core, .sun-rays, .target-button { animation: none !important; }
 				}
@@ -1143,7 +1297,15 @@ const KidsBalloonPop: React.FC = () => {
 			{!hasStarted && !levelComplete && lives > 0 && (
 				<div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
 					<button
-						onClick={() => setHasStarted(true)}
+						onClick={async () => {
+							await ensureAudioPrimed();
+							setHasStarted(true);
+
+							if (target) {
+								const ok = await sfx.playLetter(target, 0.95);
+								if (!ok) playTargetCue(target);
+							}
+						}}
 						className="px-16 py-8 bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 text-white text-5xl font-black rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-200 animate-bounce"
 						style={{
 							animation: 'bounce 1.5s ease-in-out infinite',
@@ -1177,7 +1339,11 @@ const KidsBalloonPop: React.FC = () => {
 					👆 Tap the balloon with letter: <span className="font-bold text-white text-lg">{target}</span>
 				</div>
 				<button
-					onClick={() => playTargetCue(target)}
+					onClick={async () => {
+						await ensureAudioPrimed();
+						const ok = await sfx.playLetter(target, 0.95);
+						if (!ok) playTargetCue(target);
+					}}
 					className="px-3 py-1.5 bg-blue-500/90 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-lg backdrop-blur-sm transition-all"
 					style={{ touchAction: 'manipulation' }}
 				>
@@ -1246,9 +1412,9 @@ const KidsBalloonPop: React.FC = () => {
 								className="absolute"
 								style={{
 									left: `calc(${b.x}% + ${wobbleOffset}px)`,
-									top: `${Math.max(5, Math.min(85, b.y))}%`,
-									width: 95,
-									height: 115,
+									top: `${b.y}%`,
+									width: BALLOON_BODY_W,
+									height: BALLOON_BODY_H,
 									pointerEvents: 'none',
 									zIndex: 25,
 								}}
@@ -1264,13 +1430,13 @@ const KidsBalloonPop: React.FC = () => {
 							key={b.id}
 							onClick={() => { if (lives > 0 && hasStarted && !b.isPopping) handlePop(b.id); }}
 							aria-label={`Balloon ${b.letter}`}
-							className="absolute focus:outline-none focus:ring-4 focus:ring-yellow-400"
+							className="absolute balloon-btn focus:outline-none focus-visible:ring-4 focus-visible:ring-yellow-400"
 							style={{
 								left: `${b.x}%`,
-								top: `${Math.max(5, Math.min(85, b.y))}%`,
+								top: `${b.y}%`,
 								transform: `translate3d(${wobbleOffset}px, -50%, 0) translateX(-50%)`,
-								width: 95,
-								height: 140,
+								width: BALLOON_BTN_W,
+								height: BALLOON_BTN_H,
 								zIndex: 20,
 								background: 'transparent',
 								border: 'none',
@@ -1283,19 +1449,28 @@ const KidsBalloonPop: React.FC = () => {
 								WebkitUserSelect: 'none',
 							}}
 						>
-							{/* String - thin line from knot downward */}
-							<div
+							{/* Curved string (SVG) */}
+							<svg
+								width={44}
+								height={STRING_H}
+								viewBox="0 0 44 46"
 								style={{
 									position: 'absolute',
 									left: '50%',
-									bottom: 0,
-									width: 2,
-									height: 25,
-									background: 'linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.1))',
+									top: BALLOON_BODY_H + 2,
 									transform: 'translateX(-50%)',
-									borderRadius: '1px',
+									pointerEvents: 'none',
+									opacity: 0.6,
 								}}
-							/>
+							>
+								<path
+									d="M22 0 C 14 10, 30 18, 19 28 C 10 36, 28 40, 22 46"
+									fill="none"
+									stroke="rgba(0,0,0,0.35)"
+									strokeWidth={2}
+									strokeLinecap="round"
+								/>
+							</svg>
 
 							{/* Balloon body */}
 							<div
@@ -1304,8 +1479,8 @@ const KidsBalloonPop: React.FC = () => {
 									left: '50%',
 									top: 0,
 									transform: 'translateX(-50%)',
-									width: 95,
-									height: 115,
+									width: BALLOON_BODY_W,
+									height: BALLOON_BODY_H,
 									borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
 									background: BALLOON_COLORS[b.id % BALLOON_COLORS.length],
 									boxShadow: '0 12px 35px rgba(0,0,0,0.35), inset 0 -3px 10px rgba(0,0,0,0.2)',
@@ -1332,7 +1507,7 @@ const KidsBalloonPop: React.FC = () => {
 								{/* Letter */}
 								<span
 									style={{
-										fontSize: b.letter.length > 1 ? 32 : 38,
+										fontSize: b.letter.length > 1 ? 40 : 50,
 										fontWeight: 900,
 										color: '#fff',
 										textShadow: '2px 2px 8px rgba(0,0,0,0.5), 0 0 4px rgba(0,0,0,0.3)',
@@ -1343,17 +1518,20 @@ const KidsBalloonPop: React.FC = () => {
 								</span>
 							</div>
 
-							{/* Knot - small diamond at bottom center of balloon */}
+							{/* Knot (small triangle) */}
 							<div
 								style={{
 									position: 'absolute',
 									left: '50%',
-									bottom: 22,
-									width: 8,
-									height: 10,
-									background: 'rgba(0,0,0,0.4)',
-									transform: 'translateX(-50%) rotate(45deg)',
-									borderRadius: '2px',
+									top: BALLOON_BODY_H - 12,
+									transform: 'translateX(-50%)',
+									width: 0,
+									height: 0,
+									borderLeft: '10px solid transparent',
+									borderRight: '10px solid transparent',
+									borderTop: '14px solid rgba(0,0,0,0.35)',
+									filter: 'drop-shadow(0 2px 2px rgba(0,0,0,0.25))',
+									pointerEvents: 'none',
 								}}
 							/>
 						</button>

@@ -4,6 +4,8 @@ import Button from "../Button/Button";
 
 // Constants
 const WHATSAPP_NUMBER = "919618398383";
+const CALL_DISPLAY = "+91 96183 98383";
+const CALL_HREF = `tel:+${WHATSAPP_NUMBER}`;
 const SUN_ORANGE = "#ff6a00";
 
 type FormState = {
@@ -252,7 +254,17 @@ const ConversionHero: React.FC = () => {
 
               <div className="relative mb-6">
                 <h2 className="text-2xl font-bold text-slate-900">Book Assessment</h2>
-                <p className="text-sm text-slate-500">Takes ~20s • Reply via WhatsApp</p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <span>Takes ~20s • Reply via WhatsApp</span>
+                  <span className="text-slate-300">•</span>
+                  <a
+                    href={CALL_HREF}
+                    className="font-semibold text-slate-700 hover:text-slate-900 underline decoration-slate-300/70 underline-offset-4"
+                  >
+                    Call {CALL_DISPLAY}
+                  </a>
+                </div>
               </div>
 
               {/* ✅ IMPORTANT: onSubmit uses WhatsApp-only handler */}
