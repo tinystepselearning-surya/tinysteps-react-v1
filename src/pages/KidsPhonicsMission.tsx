@@ -8,6 +8,9 @@ import { recordLevelResult } from "../games/engine/recordLevelResult";
 const TOTAL_ROUNDS = 8;
 const QUESTION_SET_VERSION = 3; // bump when question generation logic changes
 
+const KIDS_FONT_STACK =
+  '"Fredoka", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+
 // Optional fallback only (we normally use LEVELS[].items[].cue)
 const PHONETIC_MAP: Record<string, string> = {
   a: "aaa",
@@ -1192,7 +1195,11 @@ const KidsPhonicsMission: React.FC = () => {
 
   // --- UI ---
   return (
-    <div ref={gameRef} className="ts-phonics-mission-root">
+    <div
+      ref={gameRef}
+      className="ts-phonics-mission-root"
+      style={{ fontFamily: KIDS_FONT_STACK }}
+    >
       {!selectedLevel ? (
         <div
           className="relative min-h-screen flex flex-col items-center justify-start py-12 px-4 overflow-hidden"
@@ -1555,7 +1562,7 @@ const KidsPhonicsMission: React.FC = () => {
                             background: "linear-gradient(135deg, #FFDAB9 0%, #FFB88C 100%)",
                             border: "6px solid rgba(139, 69, 19, 0.4)",
                             fontSize: displayText.length > 1 ? "5rem" : "6rem",
-                            fontFamily: '"Comic Sans MS","Comic Sans",cursive',
+                            fontWeight: 700,
                             touchAction: "manipulation",
                             userSelect: "none",
                             WebkitUserSelect: "none",

@@ -7,6 +7,8 @@
   --accent-core: #3b82f6;
   --accent-outer: #1d4ed8;
   --streak: #dbeafe;
+  --transition-speed: 360ms;
+  --ease: cubic-bezier(0.2,0.9,0.2,1);
 }
 
 .ts-nav-wrapper{
@@ -14,6 +16,8 @@
   padding: 0;
   color: var(--text);
   border-bottom: none;
+  position: relative;
+  z-index: 100;
 }
 
 .ts-nav{
@@ -46,11 +50,23 @@
   text-decoration: none;
   position: relative;
   z-index: 3; /* above underline */
+  transition: color 0.18s var(--ease);
 }
 
 /* active text slightly brighter */
 .ts-nav-link.active {
   color: #000000;
+}
+
+/* Keep More button visually active when portal is open */
+.ts-nav-more-btn.active,
+.ts-nav-more-btn:hover {
+  color: #000000;
+}
+
+/* Caret rotates when active */
+.ts-nav-more-btn.active .ts-nav-caret {
+  transform: rotate(180deg);
 }
 
 /* Underline container */
@@ -61,7 +77,7 @@
   height: var(--underline-h);
   width: 0;
   transform: translateX(0);
-  transition: transform 360ms cubic-bezier(.2,.9,.2,1), width 360ms cubic-bezier(.2,.9,.2,1);
+  transition: transform var(--transition-speed) var(--ease), width var(--transition-speed) var(--ease);
   border-radius: 999px;
   z-index: 2;
   pointer-events: none;
@@ -95,7 +111,7 @@
   mix-blend-mode: screen;
 }
 
-/* tiny particles flicker along underline - create with CSS gradient trick */
+/* tiny particles flicker along underline */
 .ts-underline .particles{
   position: absolute;
   left: 0;
@@ -115,7 +131,6 @@
   mix-blend-mode: screen;
 }
 
-/* streak movement keyframes: sweeps left-to-right while scaling */
 @keyframes streak-move {
   0% { transform: translateX(-110%) scaleX(.6); opacity: 0; }
   10% { opacity: 1; transform: translateX(-60%) scaleX(1.05); }
@@ -124,7 +139,6 @@
   100% { transform: translateX(110%) scaleX(.6); opacity: 0; }
 }
 
-/* particles sheen */
 @keyframes particles-sheen {
   0% { transform: translateX(-20%); opacity: 0.85; }
   40% { transform: translateX(10%); opacity: 1; }
@@ -132,11 +146,68 @@
   100% { transform: translateX(120%); opacity: 0; }
 }
 
-/* some responsive adjustments */
 @media (max-width: 720px){
   :root { --gap: 22px; --underline-h: 5px; }
   .ts-nav-wrapper { padding: 18px 16px; }
   .ts-nav-link { font-size: 15px; }
   .ts-underline .streak { top: -8px; height: 5px; }
   .ts-underline .particles { top: -18px; height: 36px; }
+}
+
+/* -----------------------------
+   MORE dropdown (PORTAL + BACKDROP)
+------------------------------ */
+.ts-nav-more {
+  position: relative;
+}
+
+.ts-nav-more-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.ts-nav-caret {
+  margin-left: 6px;
+  font-size: 0.9em;
+  opacity: 0.85;
+}
+
+/* Fullscreen invisible backdrop so clicks never get stolen by hero overlays */
+.ts-nav-more-backdrop {
+  position: fixed;
+  inset: 0;
+  background: transparent;
+  z-index: 2147483000;
+}
+
+/* The menu itself lives in body, fixed positioned */
+.ts-nav-more-portal {
+  position: fixed;
+  padding: 10px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  z-index: 2147483647;
+  margin-top: -6px; /* slight overlap to bridge mouse gap */
+  animation: portal-appear 200ms var(--ease);
+}
+
+@keyframes portal-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ts-nav-more-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: rgba(0, 0, 0, 0.92);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.ts-nav-more-link:hover {
+  background: rgba(15, 23, 42, 0.06);
 }
