@@ -29,7 +29,6 @@ export default function NavBar(): JSX.Element {
   const underlineRef = useRef<HTMLDivElement | null>(null);
 
   const moreBtnRef = useRef<HTMLButtonElement | null>(null);
-  const closeTimeoutRef = useRef<number | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -153,29 +152,9 @@ export default function NavBar(): JSX.Element {
     moveUnderlineTo(activeIndex);
   };
 
-  // Helpers to open/close the More portal with a small buffer to bridge gap
-  const openMore = () => {
-    if (closeTimeoutRef.current) {
-      window.clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    setMoreOpen(true);
-  };
-
-  const closeMore = () => {
-    if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current);
-    closeTimeoutRef.current = window.setTimeout(() => {
-      setMoreOpen(false);
-      closeTimeoutRef.current = null;
-    }, 120);
-  };
-
-  // clear timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (closeTimeoutRef.current) window.clearTimeout(closeTimeoutRef.current);
-    };
-  }, []);
+  // Simple open/close helpers — dropdown stays open after click until closed by button or selecting an item
+  const openMore = () => setMoreOpen(true);
+  const closeMore = () => setMoreOpen(false);
 
   // --- portal positioning for More ---
   function computeMorePos() {
@@ -230,8 +209,6 @@ export default function NavBar(): JSX.Element {
               role="menu"
               style={{ left: morePos.left, top: morePos.top, minWidth: morePos.minWidth }}
               onMouseDown={(e) => e.stopPropagation()}
-              onMouseEnter={openMore}
-              onMouseLeave={closeMore}
             >
               {MORE_ITEMS.map((it) => (
                 <NavLink
@@ -273,11 +250,7 @@ export default function NavBar(): JSX.Element {
           ))}
 
           {/* ✅ More (CLICK ONLY, stays open) */}
-          <li
-            className="ts-nav-item ts-nav-more"
-            onMouseEnter={openMore}
-            onMouseLeave={closeMore}
-          >
+          <li className="ts-nav-item ts-nav-more">
             <button
               ref={moreBtnRef}
               type="button"
