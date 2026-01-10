@@ -1,6 +1,7 @@
-// Lightweight meta + JSON-LD injector without extra deps
-import { useEffect } from "react";
-import type { FC } from "react";
+// Thin wrapper around applySeo to keep Meta API compatible while delegating
+import { useEffect } from 'react';
+import type { FC } from 'react';
+import { applySeo } from '../../lib/seo';
 
 type MetaProps = {
   title?: string;
@@ -10,95 +11,65 @@ type MetaProps = {
   jsonLd?: Record<string, any> | Record<string, any>[];
 };
 
-const DEFAULT_TITLE = "Tiny Steps Learning | 1:1 Online English Classes for Kids";
+const DEFAULT_TITLE = 'Tiny Steps Learning | 1:1 Online English Classes for Kids';
 const DEFAULT_DESCRIPTION =
-  "Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class.";
-
-const upsertMetaByName = (name: string, content?: string) => {
-  const existing = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-
-  // Remove if empty/undefined so old tags don't “stick” across SPA navigation.
-  if (!content) {
-    if (existing) existing.remove();
-    return;
-  }
-
-  const el = existing ?? document.createElement("meta");
-  el.setAttribute("name", name);
-  el.setAttribute("content", content);
-  if (!existing) document.head.appendChild(el);
-};
-
-const upsertMetaByProperty = (property: string, content?: string) => {
-  const existing = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
-
-  if (!content) {
-    if (existing) existing.remove();
-    return;
-  }
-
-  const el = existing ?? document.createElement("meta");
-  el.setAttribute("property", property);
-  el.setAttribute("content", content);
-  if (!existing) document.head.appendChild(el);
-};
-
-const setCanonical = (href?: string) => {
-  const existing = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-
-  if (!href) {
-    if (existing) existing.remove();
-    return;
-  }
-
-  const el = existing ?? document.createElement("link");
-  el.setAttribute("rel", "canonical");
-  el.setAttribute("href", href);
-  if (!existing) document.head.appendChild(el);
-};
-
-const computeCanonical = () => {
-  try {
-    const u = new URL(window.location.href);
-    // strip query + hash
-    return `${u.origin}${u.pathname}`;
-  } catch {
-    return undefined;
-  }
-};
+  'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class.';
 
 const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }) => {
   useEffect(() => {
     const finalTitle = title?.trim() || DEFAULT_TITLE;
     const finalDescription = (description ?? DEFAULT_DESCRIPTION).trim();
 
-    document.title = finalTitle;
+    // compute canonical path per rules
+    let canonicalPath: string | undefined;
+    try {
+      if (canonical && canonical.trim()) {
+        const c = canonical.trim();
+        if (c.startsWith('http')) {
+          try {
+            canonicalPath = new URL(c).pathname || '/';
+          } catch {
+            canonicalPath = c;
+          }
+        } else if (c.startsWith('/')) {
+          canonicalPath = c;
+        } else {
+          canonicalPath = c;
+        }
+      } else if (typeof window !== 'undefined') {
+        canonicalPath = window.location.pathname;
+      }
+    } catch {
+      canonicalPath = undefined;
+    }
 
-    upsertMetaByName("description", finalDescription);
+    applySeo({
+      title: finalTitle,
+      description: finalDescription,
+      canonicalPath,
+      robots: 'index, follow',
+      ogType: 'website',
+      jsonLd,
+    });
 
-    // NOTE: Google generally ignores meta keywords for ranking, but we keep it optional.
-    upsertMetaByName("keywords", keywords?.trim());
-
-    const finalCanonical = (canonical && canonical.trim()) || computeCanonical();
-    setCanonical(finalCanonical);
-
-    // Open Graph (helps WhatsApp / social previews)
-    upsertMetaByProperty("og:title", finalTitle);
-    upsertMetaByProperty("og:description", finalDescription);
-    upsertMetaByProperty("og:url", finalCanonical);
-    upsertMetaByProperty("og:type", "website");
-
-    // JSON-LD: replace blocks each route change
-    const existing = Array.from(document.querySelectorAll('script[data-meta-jsonld="true"]'));
-    existing.forEach((n) => n.remove());
-
-    const blocks = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
-    for (const block of blocks) {
-      const script = document.createElement("script");
-      script.type = "application/ld+json";
-      script.setAttribute("data-meta-jsonld", "true");
-      script.text = JSON.stringify(block);
-      document.head.appendChild(script);
+    // keywords: keep optional behavior — set/remove meta[name="keywords"]
+    try {
+      const existing = typeof document !== 'undefined' ? document.querySelector('meta[name="keywords"]') as HTMLMetaElement | null : null;
+      const kw = keywords?.trim();
+      if (!kw) {
+        if (existing) existing.remove();
+      } else {
+        if (existing) {
+          existing.setAttribute('content', kw);
+        } else if (typeof document !== 'undefined') {
+          const el = document.createElement('meta');
+          el.setAttribute('name', 'keywords');
+          el.setAttribute('content', kw);
+          document.head.appendChild(el);
+        }
+      }
+    } catch {
+      // no-op
     }
   }, [title, description, keywords, canonical, jsonLd]);
 
