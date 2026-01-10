@@ -76,8 +76,8 @@ const BlogPage: FC = () => {
 
   useEffect(() => {
     applySeo({
-      title: 'Blog | Tiny Steps Learning',
-      description: "Read Tiny Steps Learning blog for Indian parents: phonics, blending, reading, writing, and simple home practice tips for kids aged 3–12.",
+      title: 'Tiny Steps Blog | Insights for Indian Parents',
+      description: 'Practical, research-backed guidance for Indian parents helping children ages 3–12 learn English — phonics, reading, grammar, speaking, and simple at-home practice tips.',
       canonicalPath: '/blog',
       ogType: 'website',
       jsonLd: [breadcrumb, blogSchema],
