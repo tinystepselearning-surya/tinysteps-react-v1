@@ -26,22 +26,7 @@ const BlogPostPage: FC = () => {
 
   useEffect(() => {
     if (!slug) return;
-    if (post) {
-      applySeo({
-        title: `${post.title} | Tiny Steps Learning`,
-        description: post.metaDescription || post.excerpt || 'Tiny Steps Learning blog post.',
-        canonicalPath: `/blog/${slug}`,
-        ogType: 'article',
-      });
-    } else {
-      // slug present but post not found — safe fallback
-      applySeo({
-        title: 'Blog | Tiny Steps Learning',
-        description: 'Phonics and grammar tips for parents and kids.',
-        canonicalPath: '/blog',
-        ogType: 'website',
-      });
-    }
+    // noop here — applySeo with JSON-LD happens after jsonLd is computed below
   }, [slug, post]);
 
   if (!post && !MdxComp) {
@@ -64,6 +49,47 @@ const BlogPostPage: FC = () => {
     wordCount: 2500,
     articleBody: post ? post.body.map(b => b.content).join('\n') : ''
   };
+
+  useEffect(() => {
+    if (!slug) return;
+    const canonical = `/blog/${slug}`;
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
+        { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: `https://tinystepslearning.com${canonical}` },
+      ],
+    };
+
+    if (post) {
+      applySeo({
+        title: `${post.title} | Tiny Steps Learning`,
+        description: post.metaDescription || post.excerpt || 'Tiny Steps Learning blog post.',
+        canonicalPath: canonical,
+        ogType: 'article',
+        jsonLd: [breadcrumb, jsonLd],
+      });
+    } else {
+      applySeo({
+        title: 'Blog | Tiny Steps Learning',
+        description: 'Phonics and grammar tips for parents and kids.',
+        canonicalPath: '/blog',
+        ogType: 'website',
+        jsonLd: [
+          {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+              { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
+            ],
+          },
+        ],
+      });
+    }
+  }, [slug, post, jsonLd, metaSource]);
 
   return (
     <div className="bg-white">

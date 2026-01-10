@@ -147,6 +147,20 @@ export default function HomePage() {
         "Tiny Steps Learning helps children build strong phonics and grammar foundations through simple, fun, step-by-step learning.",
       canonicalPath: "/",
       ogType: "website",
+      jsonLd: [
+        {
+          '@context': 'https://schema.org',
+          '@type': 'Organization',
+          name: 'Tiny Steps Learning',
+          url: 'https://tinystepslearning.com',
+        },
+        {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: 'Tiny Steps Learning',
+          url: 'https://tinystepslearning.com',
+        },
+      ],
     });
   }, []);
 

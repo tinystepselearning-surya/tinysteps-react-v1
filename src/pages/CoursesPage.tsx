@@ -91,12 +91,33 @@ const CoursesPage: FC = () => {
   const [level, setLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("all");
 
   useEffect(() => {
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Courses', item: 'https://tinystepslearning.com/courses' },
+      ],
+    };
+
+    const itemList = {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      itemListElement: catalogs.map((c, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: c.name,
+        url: `https://tinystepslearning.com/courses#${encodeURIComponent(c.slug || c.name)}`,
+      })),
+    };
+
     applySeo({
       title: "Courses | Tiny Steps Learning",
       description:
         "Explore Tiny Steps phonics and grammar courses designed for kids (3–12), with guided practice and clear progress.",
       canonicalPath: "/courses",
       ogType: "website",
+      jsonLd: [breadcrumb, itemList],
     });
   }, []);
 

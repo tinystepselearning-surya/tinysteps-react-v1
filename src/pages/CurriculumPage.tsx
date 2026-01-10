@@ -63,12 +63,22 @@ const CurriculumPage: FC = () => {
   }, []);
 
   useEffect(() => {
+    const breadcrumb = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Curriculum', item: 'https://tinystepslearning.com/curriculum' },
+      ],
+    };
+
     applySeo({
       title: "Curriculum | Tiny Steps Learning",
       description:
         "A clear, step-by-step curriculum covering letter sounds, blending, reading, spelling patterns, and grammar foundations.",
       canonicalPath: "/curriculum",
       ogType: "website",
+      jsonLd: [breadcrumb],
     });
   }, []);
 

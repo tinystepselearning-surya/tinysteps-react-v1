@@ -1,9 +1,10 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
+import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import FAQAccordion, { FAQItem } from '../components/FAQ/FAQAccordion';
-import Meta from '../components/common/Meta';
+// Meta removed — use applySeo as single source of truth
 
 const items: FAQItem[] = [
   { id: 'q1', category: 'phonics', question: 'How to teach phonics to my child at home?', answer: 'Start with sound recognition (not letter names). Use SATPIN sequence first, then blend into words like sat/pin/tap. Keep sessions short (10–15 minutes) and playful with games rather than worksheets. Best age: 3–4. Common mistake: teaching letter names first.' , relatedBlog: '/blog/parents-guide-phonics', relatedCourse: '/courses' },
@@ -49,10 +50,28 @@ const faqSchema = {
   }))
 };
 
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+    { '@type': 'ListItem', position: 2, name: 'FAQ', item: 'https://tinystepslearning.com/faq' },
+  ],
+};
+
 const FAQPage: FC = () => {
   const [selected, setSelected] = useState<string>('all');
   const [search, setSearch] = useState('');
-  useEffect(() => { document.title = 'Frequently Asked Questions | Tiny Steps'; }, []);
+
+  useEffect(() => {
+    applySeo({
+      title: 'FAQ | Tiny Steps Learning',
+      description: 'Answers to common parent questions about phonics, grammar, public speaking and online learning at Tiny Steps.',
+      canonicalPath: '/faq',
+      robots: 'index, follow',
+      jsonLd: [breadcrumbSchema, faqSchema],
+    });
+  }, []);
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
@@ -67,7 +86,7 @@ const FAQPage: FC = () => {
 
   return (
     <div className="page-gradient min-h-screen">
-      <Meta title="FAQ | Tiny Steps Online School" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/faq" jsonLd={faqSchema} />
+      {/* Meta removed — SEO handled by applySeo in useEffect */}
       <section className="px-6 pt-24 pb-10">
         <div className="mx-auto max-w-4xl glass-panel soft-grid px-8 py-10 text-center">
           <div className="gradient-chip mx-auto w-max">Help centre</div>
