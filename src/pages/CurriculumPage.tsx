@@ -47,15 +47,13 @@ function safeCourse(value: string | null): string | null {
   if (alt && curriculumBySlug?.[alt]) return alt;
   return raw;
 }
+  const CurriculumPage: FC = () => {
+    const [searchParams, setSearchParams] = useSearchParams();
 
-const CurriculumPage: FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+    const [tab, setTab] = useState<Tab>(() => safeTab(searchParams.get('tab')));
+    const [focusedCourse, setFocusedCourse] = useState<string | null>(() => safeCourse(searchParams.get('course')));
 
-  const [tab, setTab] = useState<Tab>(() => safeTab(searchParams.get('tab')));
-  const [focusedCourse, setFocusedCourse] = useState<string | null>(() => safeCourse(searchParams.get('course')));
-
-  const [curriculumData, setCurriculumData] = useState<CurriculumOverride | null>(null);
-
+    const [curriculumData, setCurriculumData] = useState<CurriculumOverride | null>(null);
   useEffect(() => {
     loadCurriculumOverrides()
       .then((data) => setCurriculumData(data))
@@ -73,14 +71,15 @@ const CurriculumPage: FC = () => {
     };
 
     applySeo({
-      title: "Curriculum | Tiny Steps Learning",
+      title: "English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps",
       description:
-        "A clear, step-by-step curriculum covering letter sounds, blending, reading, spelling patterns, and grammar foundations.",
+        "A clear, week-by-week English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones.",
       canonicalPath: "/curriculum",
       ogType: "website",
       jsonLd: [breadcrumb],
     });
   }, []);
+
 
   const getWeeks = (courseSlug: string): WeekItem[] => {
     const pickWeeks = (slug: string): WeekItem[] => {
@@ -144,14 +143,15 @@ const CurriculumPage: FC = () => {
   return (
     <div className="page-gradient relative overflow-hidden">
       <Meta
-        title="Online English Classes for Kids (Ages 3–12) | Tiny Steps"
-        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors and weekly parent progress insights."
+        title="English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps"
+        description="A clear, week-by-week English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones."
+        canonical="https://tinystepslearning.com/curriculum"
       />
 
       <div className="mx-auto max-w-6xl px-6 pt-8 pb-10">
         <div className="glass-panel soft-grid overflow-hidden px-6 py-10 text-center">
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3-15</div>
-          <h1 className="font-heading text-3xl md:text-4xl">1-on-1 Online English Classes for Kids (Ages 3–12)</h1>
+          <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
           <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive week-by-week details so parents know exactly what’s next.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
             <span className="rounded-full bg-white/80 px-4 py-1">Phonics mastery</span>

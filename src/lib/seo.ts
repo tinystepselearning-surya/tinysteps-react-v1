@@ -85,9 +85,23 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: cfg.ogType ?? 'website' });
 
-  if (cfg.ogImage) {
-    const img = cfg.ogImage.startsWith('http') ? cfg.ogImage : `${CANONICAL_ORIGIN}${cfg.ogImage}`;
-    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: img });
+  // Twitter metadata: keep in sync with OG but allow pages to override via cfg
+  upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });
+  upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: cfg.description ?? undefined });
+
+  // Resolve OG image: prefer explicit cfg.ogImage, else provide a parents default for /parents routes
+  const resolvedOgImage = (function () {
+    if (cfg.ogImage) return cfg.ogImage.startsWith('http') ? cfg.ogImage : `${CANONICAL_ORIGIN}${cfg.ogImage}`;
+    try {
+      if (path && path.startsWith('/parents')) return `${CANONICAL_ORIGIN}/og-parents.png`;
+    } catch (e) {
+      /* ignore */
+    }
+    return undefined;
+  })();
+
+  if (resolvedOgImage) {
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: resolvedOgImage });
     upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
   } else {
     upsertMeta('meta[property="og:image"]', { property: 'og:image', content: undefined });

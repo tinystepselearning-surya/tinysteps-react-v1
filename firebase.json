@@ -166,6 +166,9 @@
     "redirects": [
       { "source": "/main/courses", "destination": "/courses", "type": 301 },
       { "source": "/main/courses/**", "destination": "/courses", "type": 301 }
+      ,
+      { "source": "/blog/week6.html", "destination": "/blog/week-6-phonics-comprehension", "type": 301 },
+      { "source": "/blog/week8", "destination": "/blog/week-8-grammar-tenses", "type": 301 }
     ],
     "rewrites": [
       {

@@ -31,3 +31,15 @@ Disallow: /email/
 Sitemap: https://tinystepslearning.com/sitemap.xml
 Sitemap: https://tinystepslearning.com/sitemap-blog.xml
 Sitemap: https://tinystepslearning.com/sitemap-courses.xml
+
+# Explicitly allow some AI search/retrieval bots used by LLM toolchains
+# We permit OAI-SearchBot and PerplexityBot to crawl public pages for improved
+# indexing by AI assistants. Keep GPTBot allowed for now.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Perplexity
+Allow: /
+
+User-agent: GPTBot
+Allow: /

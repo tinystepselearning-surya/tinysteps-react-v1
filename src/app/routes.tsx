@@ -23,6 +23,18 @@ const ForSchoolsPage = lazy(() => import('../pages/ForSchoolsPage'));
 const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
+// Parents / Help hub
+const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
+const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
+const ParentChoosingCourse = lazy(() => import('../pages/parents/choosing-course'));
+const ParentScheduling = lazy(() => import('../pages/parents/scheduling'));
+const ParentPaymentsPage = lazy(() => import('../pages/parents/payments'));
+const ParentTracking = lazy(() => import('../pages/parents/tracking-progress'));
+const ParentHomework = lazy(() => import('../pages/parents/helping-with-homework'));
+const ParentPhonicsMission = lazy(() => import('../pages/parents/phonics-mission'));
+const ParentReading = lazy(() => import('../pages/parents/reading-at-home'));
+const ParentSpeaking = lazy(() => import('../pages/parents/speech-confidence'));
+const ParentCommonMistakes = lazy(() => import('../pages/parents/common-mistakes'));
 
 // Dashboards
 const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
@@ -96,6 +108,18 @@ const router = createBrowserRouter(
         { path: 'courses', element: <CoursesPage /> },
         { path: 'courses/:courseId', element: <CourseDetailPage /> },
         { path: 'curriculum', element: <CurriculumPage /> },
+        // Parents / Help hub
+        { path: 'parents', element: <ParentsHubPage /> },
+        { path: 'parents/getting-started', element: <ParentGettingStarted /> },
+        { path: 'parents/choosing-course', element: <ParentChoosingCourse /> },
+        { path: 'parents/scheduling', element: <ParentScheduling /> },
+        { path: 'parents/payments', element: <ParentPaymentsPage /> },
+        { path: 'parents/tracking-progress', element: <ParentTracking /> },
+        { path: 'parents/helping-with-homework', element: <ParentHomework /> },
+        { path: 'parents/phonics-mission', element: <ParentPhonicsMission /> },
+        { path: 'parents/reading-at-home', element: <ParentReading /> },
+        { path: 'parents/speech-confidence', element: <ParentSpeaking /> },
+        { path: 'parents/common-mistakes', element: <ParentCommonMistakes /> },
         { path: 'why-us', element: <Navigate to="/why-tiny-steps" replace /> },
         { path: 'faq', element: <FAQPage /> },
         { path: 'phonics', element: <PhonicsPage /> },

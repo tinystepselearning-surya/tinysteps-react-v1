@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <rect width="100%" height="100%" fill="#FDE68A" />
+  <g transform="translate(48,48)">
+    <rect width="1104" height="534" rx="24" fill="#fff" />
+    <text x="48" y="120" font-family="Arial, Helvetica, sans-serif" font-size="56" fill="#0f172a">Tiny Steps</text>
+    <text x="48" y="200" font-family="Arial, Helvetica, sans-serif" font-size="36" fill="#0f172a">Parents Help Hub</text>
+    <text x="48" y="260" font-family="Arial, Helvetica, sans-serif" font-size="20" fill="#334155">Practical guides for phonics, reading and schedules</text>
+  </g>
+</svg>

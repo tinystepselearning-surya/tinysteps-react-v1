@@ -28,6 +28,37 @@ const BlogPostPage: FC = () => {
   // hooks must run before any early returns
   const metaSource = useMemo(() => post || mdxMeta || {}, [post, mdxMeta]);
 
+  // Small helper: derive a safe meta description (150-160 chars) from post data
+  function buildMetaDescription(src: any) {
+    if (!src) return '';
+    const raw = src.metaDescription || src.excerpt;
+    if (raw && typeof raw === 'string' && raw.trim().length > 0) {
+      return truncate(raw.trim(), 155);
+    }
+
+    // Try to extract first paragraph from body (if present)
+    const body = src.body;
+    if (Array.isArray(body)) {
+      for (const b of body) {
+        if (b && (b.type === 'p' || b.type === 'para' || b.type === undefined) && typeof b.content === 'string' && b.content.trim()) {
+          return truncate(b.content.trim(), 155);
+        }
+      }
+    }
+
+    // fallback to title
+    if (src.title) return truncate(src.title, 155);
+    return '';
+  }
+
+  function truncate(s: string, n: number) {
+    if (s.length <= n) return s;
+    const trimmed = s.slice(0, n);
+    const lastSpace = trimmed.lastIndexOf(' ');
+    if (lastSpace > Math.floor(n * 0.6)) return trimmed.slice(0, lastSpace) + '…';
+    return trimmed + '…';
+  }
+
   const breadcrumbSchema = useMemo(() => ({
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -46,8 +77,15 @@ const BlogPostPage: FC = () => {
       headline: metaSource.title,
       author: { '@type': 'Person', name: metaSource.author || 'Tiny Steps' },
       datePublished: metaSource.date ? isoDateFromYMD(metaSource.date) : new Date().toISOString(),
-      image: metaSource.hero ? `${location.origin}${metaSource.hero}` : undefined,
-      wordCount: 2500,
+      // Prefer absolute hero URL when available; fall back to site origin if running in browser.
+      image: metaSource.hero ? (metaSource.hero.startsWith('http') ? metaSource.hero : `https://tinystepslearning.com${metaSource.hero}`) : undefined,
+      description: buildMetaDescription(metaSource) || undefined,
+      articleSection: metaSource.category || undefined,
+      mainEntityOfPage: {
+        '@type': 'WebPage',
+        '@id': `https://tinystepslearning.com/blog/${slug}`,
+      },
+      wordCount: post && Array.isArray(post.body) ? post.body.map((b) => (b.content || '')).join('\n').split(/\s+/).length : 2500,
       articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
     };
   }, [post, metaSource]);
@@ -63,24 +101,19 @@ const BlogPostPage: FC = () => {
     if (!slug) return;
     const canonical = `/blog/${slug}`;
 
-    if (post) {
-      applySeo({
-        title: `${post.title} | Tiny Steps Learning`,
-        description: post.metaDescription || post.excerpt || 'Tiny Steps Learning blog post.',
-        canonicalPath: canonical,
-        ogType: 'article',
-        jsonLd,
-      });
-    } else {
-      applySeo({
-        title: 'Blog | Tiny Steps Learning',
-        description: 'Phonics and grammar tips for parents and kids.',
-        canonicalPath: '/blog',
-        ogType: 'website',
-        jsonLd: [breadcrumbSchema],
-      });
-    }
-  }, [slug, post, jsonLd, breadcrumbSchema]);
+    const source = metaSource || {};
+    const title = source.title ? `${source.title} | Tiny Steps Blog` : 'Blog | Tiny Steps Blog';
+    const description = buildMetaDescription(source) || 'Tiny Steps Learning blog post.';
+    const isArticle = Boolean(source.title || post);
+
+    applySeo({
+      title,
+      description,
+      canonicalPath: isArticle ? canonical : '/blog',
+      ogType: isArticle ? 'article' : 'website',
+      jsonLd,
+    });
+  }, [slug, metaSource, jsonLd, breadcrumbSchema, post]);
 
   if (!post && !MdxComp) {
     return (

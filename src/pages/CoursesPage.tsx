@@ -112,9 +112,9 @@ const CoursesPage: FC = () => {
     };
 
     applySeo({
-      title: "Courses | Tiny Steps Learning",
+      title: "Online English Courses for Kids: Phonics, Grammar & Public Speaking | Tiny Steps",
       description:
-        "Explore Tiny Steps phonics and grammar courses designed for kids (3–12), with guided practice and clear progress.",
+        "1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured week-by-week courses with clear progress and parent updates.",
       canonicalPath: "/courses",
       ogType: "website",
       jsonLd: [breadcrumb, itemList],
@@ -157,8 +157,8 @@ const CoursesPage: FC = () => {
   return (
     <div className="page-gradient relative overflow-hidden">
       <Meta
-        title="Online English Courses for Kids | Phonics, Grammar, Public Speaking"
-        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights."
+        title="Online English Courses for Kids: Phonics, Grammar & Public Speaking | Tiny Steps"
+        description="1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured week-by-week courses with clear progress and parent updates."
         canonical="https://tinystepslearning.com/courses"
         jsonLd={{
           "@context": "https://schema.org",

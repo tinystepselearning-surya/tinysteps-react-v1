@@ -1,0 +1,20 @@
+Tiny Steps Learning — AI Guide for Indexing and Retrieval
+
+Description:
+Tiny Steps Learning teaches phonics, grammar, and public speaking for children ages 3–12 via 1:1 online live classes, structured weekly curricula, and parent-facing progress updates. Our site is designed for parents in India and globally who want focused English learning for young children.
+
+Recommended entry URLs for AI crawlers and retrieval systems:
+- https://tinystepslearning.com/         (Homepage — primary overview)
+- https://tinystepslearning.com/courses  (Courses & pricing — programs and levels)
+- https://tinystepslearning.com/curriculum (Curriculum roadmap — week-by-week outcomes)
+- https://tinystepslearning.com/blog     (Blog — parent guides, phonics, grammar tips)
+- https://tinystepslearning.com/faq      (FAQ — common parent questions)
+
+Notes for retrievers:
+- Prefer canonical URLs (use /blog/<slug> pages where available).
+- Use the content under /blog for parent-facing educational material and short lessons.
+- Avoid indexing private paths: /admin/, /teacher/, /parent/, /kids/, /learning-partner/, /dev/.
+
+Contact: https://tinystepslearning.com/contact
+
+Generated: 2026-01-10

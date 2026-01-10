@@ -54,6 +54,18 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
     toUrl('https://tinystepslearning.com/blog', fmt(new Date()), '0.8', 'daily')+
     toUrl('https://tinystepslearning.com/pricing', fmt(new Date()), '0.8', 'monthly')+
     toUrl('https://tinystepslearning.com/about', fmt(new Date()), '0.7', 'monthly')+
+    // Parents hub and help pages
+    toUrl('https://tinystepslearning.com/parents', fmt(new Date()), '0.85', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/getting-started', fmt(new Date()), '0.75', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/choosing-course', fmt(new Date()), '0.75', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/scheduling', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/payments', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/tracking-progress', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/helping-with-homework', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/phonics-mission', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/reading-at-home', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/speech-confidence', fmt(new Date()), '0.7', 'weekly')+
+    toUrl('https://tinystepslearning.com/parents/common-mistakes', fmt(new Date()), '0.7', 'weekly')+
   `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap.xml'), base);
 

@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && vite build",
+    "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs",
     "prebuild": "npm run check:shadowing",
     "check:shadowing": "node scripts/check-shadowing.mjs",
     "preview": "vite preview",
