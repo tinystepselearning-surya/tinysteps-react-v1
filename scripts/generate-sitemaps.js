@@ -46,28 +46,32 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 
   
 
-  // sitemap.xml
-  const base = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+
+  // sitemap-static.xml (top-level static pages)
+  const staticXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+
     toUrl('https://tinystepslearning.com/', fmt(new Date()), '1.0', 'weekly')+
     toUrl('https://tinystepslearning.com/courses', lastmodFrom(coursesTs), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/curriculum', lastmodFrom(path.join(publicDir, 'curriculum-v2.1.json')), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/blog', fmt(new Date()), '0.8', 'daily')+
     toUrl('https://tinystepslearning.com/pricing', fmt(new Date()), '0.8', 'monthly')+
     toUrl('https://tinystepslearning.com/about', fmt(new Date()), '0.7', 'monthly')+
-    // Parents hub and help pages
-    toUrl('https://tinystepslearning.com/parents', fmt(new Date()), '0.85', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/getting-started', fmt(new Date()), '0.75', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/choosing-course', fmt(new Date()), '0.75', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/scheduling', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/payments', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/tracking-progress', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/helping-with-homework', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/phonics-mission', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/reading-at-home', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/speech-confidence', fmt(new Date()), '0.7', 'weekly')+
-    toUrl('https://tinystepslearning.com/parents/common-mistakes', fmt(new Date()), '0.7', 'weekly')+
   `\n</urlset>`;
-  writeXml(path.join(publicDir, 'sitemap.xml'), base);
+  writeXml(path.join(publicDir, 'sitemap-static.xml'), staticXml);
+
+  // sitemap-parents.xml (separate file for parents hub)
+  let parentsXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+  parentsXml += toUrl('https://tinystepslearning.com/parents', fmt(new Date()), '0.85', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/getting-started', fmt(new Date()), '0.75', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/choosing-course', fmt(new Date()), '0.75', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/scheduling', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/payments', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/tracking-progress', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/helping-with-homework', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/phonics-mission', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/reading-at-home', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/speech-confidence', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += toUrl('https://tinystepslearning.com/parents/common-mistakes', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += `\n</urlset>`;
+  writeXml(path.join(publicDir, 'sitemap-parents.xml'), parentsXml);
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
@@ -87,6 +91,14 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   }
   courseXml += `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-courses.xml'), courseXml);
+  // sitemap index (sitemap.xml) referencing section sitemaps
+  const idx = `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+
+    `\n  <sitemap>\n    <loc>https://tinystepslearning.com/sitemap-static.xml</loc>\n    <lastmod>${fmt(new Date())}</lastmod>\n  </sitemap>`+
+    `\n  <sitemap>\n    <loc>https://tinystepslearning.com/sitemap-blog.xml</loc>\n    <lastmod>${lastmodFrom(path.join(publicDir, 'sitemap-blog.xml'))}</lastmod>\n  </sitemap>`+
+    `\n  <sitemap>\n    <loc>https://tinystepslearning.com/sitemap-courses.xml</loc>\n    <lastmod>${lastmodFrom(path.join(publicDir, 'sitemap-courses.xml'))}</lastmod>\n  </sitemap>`+
+    `\n  <sitemap>\n    <loc>https://tinystepslearning.com/sitemap-parents.xml</loc>\n    <lastmod>${lastmodFrom(path.join(publicDir, 'sitemap-parents.xml'))}</lastmod>\n  </sitemap>`+
+  `\n</sitemapindex>`;
+  writeXml(path.join(publicDir, 'sitemap.xml'), idx);
 
   console.log('Sitemaps generated.');
 })();
