@@ -69,7 +69,16 @@ async function prerender() {
     console.log('Waiting for server at', baseUrl);
     await waitForServer(baseUrl, 45000);
 
-    const browser = await chromium.launch();
+    let browser;
+    try {
+      browser = await chromium.launch();
+    } catch (launchErr) {
+      // Friendly hint for missing Playwright browsers
+      if (String(launchErr?.message || '').includes("Executable doesn't exist") || String(launchErr?.message || '').toLowerCase().includes('playwright') || String(launchErr?.message || '').toLowerCase().includes('executable')) {
+        console.error('Playwright browsers not installed. Run: npx playwright install --with-deps chromium');
+      }
+      throw launchErr;
+    }
     const page = await browser.newPage();
 
     for (const route of ROUTES) {
