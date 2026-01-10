@@ -65,8 +65,8 @@ const FAQPage: FC = () => {
 
   useEffect(() => {
     applySeo({
-      title: 'Frequently Asked Questions | Tiny Steps Learning',
-      description: 'Clear answers for Indian parents on phonics, reading, grammar, speaking, online classes, assessments, payments and tracking progress for ages 3–12.',
+      title: 'FAQs | Tiny Steps Learning (Phonics, Grammar & Public Speaking)',
+      description: 'Answers to common parent questions: phonics blending, tricky words, grammar basics, class format, scheduling, fees & progress tracking at Tiny Steps.',
       canonicalPath: '/faq',
       robots: 'index, follow',
       jsonLd: [breadcrumbSchema, faqSchema],
