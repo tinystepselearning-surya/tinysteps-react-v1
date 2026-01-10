@@ -16,6 +16,7 @@
     "test": "vitest run",
     "serve": "vite preview",
     "dev:emulator": "VITE_USE_FIRESTORE_EMULATOR=true VITE_USE_AUTH_EMULATOR=true VITE_USE_FUNCTIONS_EMULATOR=true VITE_FIREBASE_EMULATOR_HOST=127.0.0.1 VITE_FIREBASE_AUTH_EMULATOR_PORT=9099 VITE_FIREBASE_FIRESTORE_EMULATOR_PORT=8085 VITE_FIREBASE_FUNCTIONS_EMULATOR_PORT=5001 vite"
+    ,"pw:install": "playwright install --with-deps chromium"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
