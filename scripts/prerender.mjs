@@ -25,6 +25,9 @@ const ROUTES = [
   '/parents/reading-at-home',
   '/parents/speech-confidence',
   '/parents/common-mistakes',
+  // Individual blog posts we want prerendered for AEO checks
+  '/blog/week-1-phonics-satpin-launch',
+  '/blog/week-2-phonics-blending-club',
 ];
 
 function startPreview() {
