@@ -164,11 +164,12 @@
       }
     ],
     "redirects": [
-      { "source": "/main/courses", "destination": "/courses", "type": 301 },
-      { "source": "/main/courses/**", "destination": "/courses", "type": 301 }
-      ,
-      { "source": "/blog/week6.html", "destination": "/blog/week-6-phonics-comprehension", "type": 301 },
-      { "source": "/blog/week8", "destination": "/blog/week-8-grammar-tenses", "type": 301 }
+      { "source": "/main/parents/**", "destination": "/parents/:splat", "type": 301 },
+      { "source": "/main/blog/**", "destination": "/blog/:splat", "type": 301 },
+      { "source": "/main/courses/**", "destination": "/courses/:splat", "type": 301 },
+      { "source": "/main/curriculum/**", "destination": "/curriculum", "type": 301 },
+      { "source": "/main/faq/**", "destination": "/faq", "type": 301 },
+      { "source": "/main/**", "destination": "/", "type": 301 }
     ],
     "rewrites": [
       {
