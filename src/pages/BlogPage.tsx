@@ -93,6 +93,21 @@ const BlogPage: FC = () => {
           <p className="mt-2 text-base text-gray-700">Expert tips, research‑backed articles, success stories</p>
         </div>
 
+        {/* Slim Parents Help Hub CTA — above blog list to surface parents guides */}
+        <div className="mb-6 mx-auto max-w-6xl px-6">
+          <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <h2 className="text-xl font-semibold">Parents Help Hub</h2>
+            <p className="mt-1 text-sm text-gray-700">Step-by-step phonics and home practice guides for ages 3–12.</p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link to="/parents" className="text-primary-600 font-medium">View all guides</Link>
+              <Link to="/parents/getting-started" className="text-primary-600">Getting started with phonics at home</Link>
+              <Link to="/parents/reading-at-home" className="text-primary-600">10-minute daily reading routine</Link>
+              <Link to="/parents/phonics-mission" className="text-primary-600">How to use Phonics Mission games</Link>
+              <Link to="/parents/common-mistakes" className="text-primary-600">Common phonics mistakes to avoid</Link>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap gap-2">
             {['All','Phonics','Grammar','Public Speaking','Parent Tips','Research'].map((t) => (

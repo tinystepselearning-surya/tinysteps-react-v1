@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect } from "react";
 import { applySeo } from "../lib/seo";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 
@@ -237,6 +237,33 @@ export default function HomePage() {
         <PricingCrispSection />
       </Suspense>
 
+      {/* Parents Help Hub CTA — small, calm, AEO-friendly */}
+      <section className="px-6 py-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold">Parents Help Hub</h2>
+            <p className="mt-2 text-gray-700">Step-by-step phonics and home practice guides for ages 3–12.</p>
+
+            <ul className="mt-4 space-y-2">
+              <li>
+                <Link to="/parents" className="text-primary-600 font-medium">View all guides</Link>
+              </li>
+              <li>
+                <Link to="/parents/getting-started" className="text-primary-600">Getting started with phonics at home</Link>
+              </li>
+              <li>
+                <Link to="/parents/reading-at-home" className="text-primary-600">10-minute daily reading routine</Link>
+              </li>
+              <li>
+                <Link to="/parents/phonics-mission" className="text-primary-600">How to use Phonics Mission games</Link>
+              </li>
+              <li>
+                <Link to="/parents/common-mistakes" className="text-primary-600">Common phonics mistakes to avoid</Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
 
       <Suspense fallback={null}>
         <FinalCTASection />
