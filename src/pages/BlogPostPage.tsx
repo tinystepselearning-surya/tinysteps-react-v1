@@ -71,13 +71,15 @@ function buildMetaDescription(src: any) {
 
   const articleSchema = useMemo(() => {
     if (!post && !metaSource) return null;
-    return {
+    const obj: any = {
       '@context': 'https://schema.org',
       '@type': 'BlogPosting',
       headline: metaSource.title,
-      author: { '@type': 'Person', name: metaSource.author || 'Tiny Steps' },
-      datePublished: metaSource.date ? isoDateFromYMD(metaSource.date) : new Date().toISOString(),
-      // Prefer absolute hero URL when available; fall back to site origin if running in browser.
+      // Use Person when author provided, else use Organization as site author
+      author: metaSource.author
+        ? { '@type': 'Person', name: metaSource.author }
+        : { '@type': 'Organization', name: 'Tiny Steps Learning' },
+      // Add dates only when present in metadata (do not invent dates)
       image: metaSource.hero ? (metaSource.hero.startsWith('http') ? metaSource.hero : `https://tinystepslearning.com${metaSource.hero}`) : undefined,
       description: buildMetaDescription(metaSource) || undefined,
       articleSection: metaSource.category || undefined,
@@ -88,6 +90,29 @@ function buildMetaDescription(src: any) {
       wordCount: post && Array.isArray(post.body) ? post.body.map((b) => (b.content || '')).join('\n').split(/\s+/).length : 2500,
       articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
     };
+
+    if (metaSource.date) {
+      try {
+        obj.datePublished = isoDateFromYMD(metaSource.date);
+        // dateModified: prefer explicit modified date, else reuse published if available
+        if (metaSource.modifiedDate) obj.dateModified = isoDateFromYMD(metaSource.modifiedDate);
+        else obj.dateModified = isoDateFromYMD(metaSource.date);
+      } catch (e) {
+        // if conversion fails, omit dates rather than inventing
+      }
+    }
+
+    // Publisher information (use existing site identity/logo if present)
+    obj.publisher = {
+      '@type': 'Organization',
+      name: 'Tiny Steps Learning',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://tinystepslearning.com/logo.png',
+      },
+    };
+
+    return obj;
   }, [post, metaSource]);
 
   const jsonLd = useMemo(() => {
@@ -180,6 +205,39 @@ function buildMetaDescription(src: any) {
           })()}
           {MdxComp && <MdxComp />}
         </article>
+
+        {/* Parents Help Hub cross-link block (small, minimal) */}
+        <section className="mt-10 px-0">
+          <div className="mx-auto max-w-3xl">
+            <div className="rounded-2xl bg-white p-4 shadow-sm">
+              <h2 className="text-xl font-semibold">Parents Help Hub</h2>
+              <p className="mt-1 text-sm text-gray-700">Need a step-by-step plan at home? Use our parent guides (ages 3–12).</p>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm">
+                <Link to="/parents" className="text-primary-600 font-medium">View all parent guides</Link>
+                {
+                  // map some post slugs to the most relevant guide
+                }
+                {(() => {
+                  const guideMap: Record<string, string> = {
+                    'week-1-phonics-satpin-launch': '/parents/getting-started',
+                    'week-2-phonics-blending-club': '/parents/phonics-mission',
+                    'week-3-phonics-tricky-words': '/parents/common-mistakes',
+                  };
+                  const mapped = guideMap[slug || ''];
+                  if (mapped) return <Link to={mapped} className="text-primary-600">Most relevant guide</Link>;
+                  // fallback: show three helpful guides
+                  return (
+                    <>
+                      <Link to="/parents/getting-started" className="text-primary-600">Getting started with phonics at home</Link>
+                      <Link to="/parents/reading-at-home" className="text-primary-600">10-minute daily reading routine</Link>
+                      <Link to="/parents/phonics-mission" className="text-primary-600">How to use Phonics Mission games</Link>
+                    </>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div className="mt-8 flex justify-between text-sm">
           <Link className="text-primary-600" to="/courses">Learn more about our courses →</Link>
