@@ -5,8 +5,8 @@ import path from 'path';
 import { chromium } from 'playwright';
 
 const DIST = path.resolve(process.cwd(), 'dist');
-const HOST = 'http://127.0.0.1:5173';
-const PORT = 5173;
+const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4173;
+const HOST = `http://127.0.0.1:${PORT}`;
 const ROUTES = [
   '/',
   '/courses',
@@ -29,31 +29,45 @@ const ROUTES = [
 
 function startPreview() {
   const bin = path.resolve(process.cwd(), 'node_modules', '.bin', 'vite');
-  const proc = spawn(bin, ['preview', '--port', String(PORT), '--strictPort'], {
+  const args = ['preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'];
+  console.log('Starting vite preview:', bin, args.join(' '));
+  const proc = spawn(bin, args, {
     stdio: ['ignore', 'inherit', 'inherit'],
     shell: process.platform === 'win32',
   });
   return proc;
 }
 
-async function waitForServer(url, timeout = 15000) {
+async function waitForServer(url, timeout = 45000) {
   const start = Date.now();
+  const alt = url.replace('127.0.0.1', 'localhost');
+  let attempt = 0;
+  const maxAttempts = Math.ceil(timeout / 500);
   while (Date.now() - start < timeout) {
-    try {
-      const res = await fetch(url, { method: 'HEAD' });
-      if (res.ok) return true;
-    } catch (e) {
-      // ignore
+    attempt++;
+    for (const u of [url, alt]) {
+      try {
+        const res = await fetch(u, { method: 'GET' });
+        if (res && (res.status === 200 || res.status === 204 || res.status === 301 || res.status === 302)) {
+          console.log('Server responded at', u);
+          return true;
+        }
+      } catch (e) {
+        // ignore
+      }
     }
-    await new Promise((r) => setTimeout(r, 200));
+    // back off a little after a few attempts
+    await new Promise((r) => setTimeout(r, attempt > 6 ? 1000 : 500));
   }
-  throw new Error('Server did not start in time: ' + url);
+  throw new Error('Server did not start in time: ' + url + ' (waited ' + timeout + 'ms)');
 }
 
 async function prerender() {
   const proc = startPreview();
   try {
-    await waitForServer(HOST + '/');
+    const baseUrl = HOST + '/';
+    console.log('Waiting for server at', baseUrl);
+    await waitForServer(baseUrl, 45000);
 
     const browser = await chromium.launch();
     const page = await browser.newPage();

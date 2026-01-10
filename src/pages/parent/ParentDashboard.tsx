@@ -98,7 +98,7 @@ export default function ParentDashboard() {
     },
   });
 
-  const kids = kidsQuery.data ?? [];
+  const kids = useMemo(() => kidsQuery.data ?? [], [kidsQuery.data]);
   const [selectedKidId, setSelectedKidId] = useState<string>("");
 
   useEffect(() => {

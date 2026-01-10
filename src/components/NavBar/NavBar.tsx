@@ -100,7 +100,7 @@ export default function NavBar(): JSX.Element {
   };
 
   // --- underline helpers ---
-  function moveUnderlineToEl(el: HTMLElement | null) {
+  const moveUnderlineToEl = React.useCallback((el: HTMLElement | null) => {
     const container = containerRef.current;
     const u = underlineRef.current;
     if (!container || !el || !u) return;
@@ -112,13 +112,13 @@ export default function NavBar(): JSX.Element {
     const targetWidth = Math.max(28, Math.round(eRect.width));
     u.style.width = `${targetWidth}px`;
     u.style.transform = `translateX(${left}px)`;
-  }
+  }, []);
 
-  function moveUnderlineTo(index: number) {
+  const moveUnderlineTo = React.useCallback((index: number) => {
     const el = itemRefs.current[index];
     if (!el) return;
     moveUnderlineToEl(el);
-  }
+  }, [moveUnderlineToEl]);
 
   // underline placement on activeIndex + resize
   useEffect(() => {
