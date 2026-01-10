@@ -72,34 +72,34 @@ async function prerender() {
     let browser;
     try {
       browser = await chromium.launch();
-    } catch (launchErr) {
-      // Friendly hint for missing Playwright browsers
-      if (String(launchErr?.message || '').includes("Executable doesn't exist") || String(launchErr?.message || '').toLowerCase().includes('playwright') || String(launchErr?.message || '').toLowerCase().includes('executable')) {
-        console.error('Playwright browsers not installed. Run: npx playwright install --with-deps chromium');
+      const page = await browser.newPage();
+
+      for (const route of ROUTES) {
+        const url = `${HOST}${route}`;
+        console.log('Prerendering', url);
+        await page.goto(url, { waitUntil: 'networkidle' });
+        const html = await page.content();
+
+        if (route === '/') {
+          await fs.writeFile(path.join(DIST, 'index.html'), html, 'utf8');
+          console.log('Wrote', path.join(DIST, 'index.html'));
+        } else {
+          const outDir = path.join(DIST, route.replace(/^\//, ''));
+          await fs.mkdir(outDir, { recursive: true });
+          const outFile = path.join(outDir, 'index.html');
+          await fs.writeFile(outFile, html, 'utf8');
+          console.log('Wrote', outFile);
+        }
       }
+
+      await browser.close();
+    } catch (launchErr) {
+      // Log full error stack for debugging and hint how to fix in CI
+      console.error('Prerender failed with error:');
+      console.error(launchErr && launchErr.stack ? launchErr.stack : launchErr);
+      console.error("Tip: run `npx playwright install --with-deps chromium` in CI to ensure Playwright browsers are available.");
       throw launchErr;
     }
-    const page = await browser.newPage();
-
-    for (const route of ROUTES) {
-      const url = `${HOST}${route}`;
-      console.log('Prerendering', url);
-      await page.goto(url, { waitUntil: 'networkidle' });
-      const html = await page.content();
-
-      if (route === '/') {
-        await fs.writeFile(path.join(DIST, 'index.html'), html, 'utf8');
-        console.log('Wrote', path.join(DIST, 'index.html'));
-      } else {
-        const outDir = path.join(DIST, route.replace(/^\//, ''));
-        await fs.mkdir(outDir, { recursive: true });
-        const outFile = path.join(outDir, 'index.html');
-        await fs.writeFile(outFile, html, 'utf8');
-        console.log('Wrote', outFile);
-      }
-    }
-
-    await browser.close();
   } finally {
     try {
       proc.kill();
