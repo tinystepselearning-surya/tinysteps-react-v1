@@ -1350,6 +1350,12 @@ export default function LetterTracingWithSounds() {
     return letterData.strokes[strokeIndex] ?? null;
   }, [letterData, strokeIndex]);
 
+  // Stable ref for currentStroke to avoid re-running effects when lint nags
+  const currentStrokeRef = useRef<TraceStroke | null>(currentStroke);
+  useEffect(() => {
+    currentStrokeRef.current = currentStroke;
+  }, [currentStroke]);
+
   const renderViewBox = useMemo(() => {
     const vb = (letterData?.viewBox ?? "0 0 100 100").trim();
     return expandViewBox(vb, VIEWBOX_PAD);
@@ -1474,14 +1480,15 @@ export default function LetterTracingWithSounds() {
 
   // Sampling for current stroke
   useLayoutEffect(() => {
-    if (!currentStroke || currentStroke.kind === "tap") {
+    const cs = currentStrokeRef.current;
+    if (!cs || cs.kind === "tap") {
       setSamples([]);
       setRawLen(0);
       setTrimStartLen(0);
       return;
     }
 
-    const d = (currentStroke.pathD ?? "").trim();
+    const d = (cs.pathD ?? "").trim();
     if (!d) {
       setSamples([]);
       setRawLen(0);
@@ -1580,8 +1587,9 @@ export default function LetterTracingWithSounds() {
 
   // idle hint animation
   useEffect(() => {
+    const cs = currentStrokeRef.current;
     if (letterDone) return;
-    if (!currentStroke || currentStroke.kind === "tap") return;
+    if (!cs || cs.kind === "tap") return;
     if (!samples.length) return;
     if (started || lastIndex > 0) return;
 

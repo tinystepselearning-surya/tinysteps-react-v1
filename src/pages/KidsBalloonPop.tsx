@@ -599,7 +599,7 @@ const KidsBalloonPop: React.FC = () => {
 
 		// Navigate back to levels
 		goToLevels();
-	}, [goToLevels, kidId, currentLevel, hasStarted, score, wrongCount]);
+	}, [goToLevels]);
 
 	// Listen for fullscreen changes (user presses Esc, etc.)
 	useEffect(() => {
