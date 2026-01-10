@@ -55,16 +55,16 @@ const BlogPage: FC = () => {
     return list[0];
   }, [combinedFiltered, sort]);
 
-  useEffect(() => {
-    const breadcrumb = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
-      ],
-    };
+  const breadcrumb = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
+    ],
+  }), []);
 
+  useEffect(() => {
     applySeo({
       title: 'Blog | Tiny Steps Learning',
       description: "Read Tiny Steps Learning blog for Indian parents: phonics, blending, reading, writing, and simple home practice tips for kids aged 3–12.",
@@ -72,7 +72,7 @@ const BlogPage: FC = () => {
       ogType: 'website',
       jsonLd: [breadcrumb, blogSchema],
     });
-  }, []);
+  }, [breadcrumb, blogSchema]);
 
   return (
     <div className="bg-white">

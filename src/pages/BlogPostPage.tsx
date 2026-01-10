@@ -4,7 +4,7 @@ import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
-import Meta from '../components/common/Meta';
+// Meta removed — use applySeo as single source of truth
 
 const BlogPostPage: FC = () => {
   const { slug } = useParams();
@@ -24,10 +24,62 @@ const BlogPostPage: FC = () => {
     })();
   }, [slug, post]);
 
+  // hooks must run before any early returns
+  const metaSource = useMemo(() => post || mdxMeta || {}, [post, mdxMeta]);
+
+  const breadcrumbSchema = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
+      { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: `https://tinystepslearning.com/blog/${slug}` },
+    ],
+  }), [metaSource, slug]);
+
+  const articleSchema = useMemo(() => {
+    if (!post && !metaSource) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BlogPosting',
+      headline: metaSource.title,
+      author: { '@type': 'Person', name: metaSource.author || 'Tiny Steps' },
+      datePublished: new Date(metaSource.date || Date.now()).toISOString(),
+      image: metaSource.hero ? `${location.origin}${metaSource.hero}` : undefined,
+      wordCount: 2500,
+      articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
+    };
+  }, [post, metaSource]);
+
+  const jsonLd = useMemo(() => {
+    const blocks: any[] = [];
+    blocks.push(breadcrumbSchema);
+    if (articleSchema) blocks.push(articleSchema);
+    return blocks;
+  }, [breadcrumbSchema, articleSchema]);
+
   useEffect(() => {
     if (!slug) return;
-    // noop here — applySeo with JSON-LD happens after jsonLd is computed below
-  }, [slug, post]);
+    const canonical = `/blog/${slug}`;
+
+    if (post) {
+      applySeo({
+        title: `${post.title} | Tiny Steps Learning`,
+        description: post.metaDescription || post.excerpt || 'Tiny Steps Learning blog post.',
+        canonicalPath: canonical,
+        ogType: 'article',
+        jsonLd,
+      });
+    } else {
+      applySeo({
+        title: 'Blog | Tiny Steps Learning',
+        description: 'Phonics and grammar tips for parents and kids.',
+        canonicalPath: '/blog',
+        ogType: 'website',
+        jsonLd: [breadcrumbSchema],
+      });
+    }
+  }, [slug, post, jsonLd, breadcrumbSchema]);
 
   if (!post && !MdxComp) {
     return (
@@ -38,62 +90,9 @@ const BlogPostPage: FC = () => {
     );
   }
 
-  const metaSource = post || mdxMeta || {};
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: metaSource.title,
-    author: { '@type': 'Person', name: metaSource.author || 'Tiny Steps' },
-    datePublished: new Date(metaSource.date || Date.now()).toISOString(),
-    image: metaSource.hero ? `${location.origin}${metaSource.hero}` : undefined,
-    wordCount: 2500,
-    articleBody: post ? post.body.map(b => b.content).join('\n') : ''
-  };
-
-  useEffect(() => {
-    if (!slug) return;
-    const canonical = `/blog/${slug}`;
-    const breadcrumb = {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
-        { '@type': 'ListItem', position: 3, name: metaSource.title || 'Article', item: `https://tinystepslearning.com${canonical}` },
-      ],
-    };
-
-    if (post) {
-      applySeo({
-        title: `${post.title} | Tiny Steps Learning`,
-        description: post.metaDescription || post.excerpt || 'Tiny Steps Learning blog post.',
-        canonicalPath: canonical,
-        ogType: 'article',
-        jsonLd: [breadcrumb, jsonLd],
-      });
-    } else {
-      applySeo({
-        title: 'Blog | Tiny Steps Learning',
-        description: 'Phonics and grammar tips for parents and kids.',
-        canonicalPath: '/blog',
-        ogType: 'website',
-        jsonLd: [
-          {
-            '@context': 'https://schema.org',
-            '@type': 'BreadcrumbList',
-            itemListElement: [
-              { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-              { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
-            ],
-          },
-        ],
-      });
-    }
-  }, [slug, post, jsonLd, metaSource]);
-
   return (
     <div className="bg-white">
-      <Meta title={`${metaSource.title} | Tiny Steps Blog`} description={metaSource.excerpt || ''} canonical={`https://tinystepslearning.com/blog/${slug}`} jsonLd={jsonLd} />
+      {/* Meta removed — SEO handled by applySeo in useEffect */}
       <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="mb-4">
           <Link to="/blog" className="inline-flex items-center text-primary-600 text-sm">← Back to Blogs</Link>
