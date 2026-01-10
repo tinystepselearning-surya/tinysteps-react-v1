@@ -14,7 +14,6 @@
           }
         ]
       },
-
       {
         "source": "/robots.txt",
         "headers": [
@@ -33,7 +32,6 @@
           }
         ]
       },
-
       {
         "source": "/parent/**",
         "headers": [
@@ -115,7 +113,6 @@
           }
         ]
       },
-
       {
         "source": "/service-worker.js",
         "headers": [
@@ -152,7 +149,6 @@
           }
         ]
       },
-
       {
         "source": "/favicon.ico",
         "headers": [
@@ -164,8 +160,8 @@
       }
     ],
     "redirects": [
-      { "source": "/main", "destination": "/", "type": 301 },
-      { "source": "/main/:path*", "destination": "/:path", "type": 301 }
+      { "regex": "/main/?$", "destination": "/", "type": 301 },
+      { "regex": "/main/(?P<path>.+)", "destination": "/:path", "type": 301 }
     ],
     "rewrites": [
       {
