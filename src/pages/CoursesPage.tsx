@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
+import { applySeo } from "../lib/seo";
 import type { FC } from "react";
 import { CourseCard } from "../components/courses/CourseCard";
 import { ParentReportPreview } from "../components/courses/ParentReportPreview";
@@ -90,7 +91,13 @@ const CoursesPage: FC = () => {
   const [level, setLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("all");
 
   useEffect(() => {
-    document.title = "Choose Your Course | Tiny Steps";
+    applySeo({
+      title: "Courses | Tiny Steps Learning",
+      description:
+        "Explore Tiny Steps phonics and grammar courses designed for kids (3–12), with guided practice and clear progress.",
+      canonicalPath: "/courses",
+      ogType: "website",
+    });
   }, []);
 
   const filtered = useMemo(() => {

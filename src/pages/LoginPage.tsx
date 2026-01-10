@@ -1,5 +1,6 @@
 // src/pages/LoginPage.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { applySeo } from '../lib/seo';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { handleLogin, handleLoginWithGoogle } from '../lib/auth';
 import type { AuthRole } from '../store/useAuthStore';
@@ -85,6 +86,14 @@ export default function LoginPage() {
     expectedRole && ROLE_LABELS[expectedRole]
       ? `${ROLE_LABELS[expectedRole]} Login`
       : 'Login';
+
+  useEffect(() => {
+    applySeo({
+      title,
+      canonicalPath: location.pathname || '/login',
+      robots: 'noindex, nofollow',
+    });
+  }, [title, location.pathname]);
 
   const showGoogleButton = expectedRole === 'parent';
   const isParent = expectedRole === 'parent';

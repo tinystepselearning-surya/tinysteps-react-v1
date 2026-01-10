@@ -1,6 +1,15 @@
-// React import removed (unused; using new JSX transform)
+import { useEffect } from 'react';
+import { applySeo } from '../lib/seo';
 
 export default function UnauthorizedPage() {
+  useEffect(() => {
+    applySeo({
+      title: '403 - Unauthorized | Tiny Steps Learning',
+      canonicalPath: '/unauthorized',
+      robots: 'noindex, nofollow',
+    });
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">

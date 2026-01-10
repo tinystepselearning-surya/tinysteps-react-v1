@@ -1,0 +1,10 @@
+import fs from 'fs';
+import path from 'path';
+const root = path.resolve(new URL(import.meta.url).pathname, '..', '..');
+const blogTs = path.join(root, 'src', 'content', 'blog.ts');
+const src = fs.readFileSync(blogTs, 'utf8');
+const regex = new RegExp(`slug\\s*:\\s*'([^']+)'`, 'g');
+let match; const slugs = [];
+while ((match = regex.exec(src))) slugs.push(match[1]);
+console.log('slugs count', slugs.length);
+console.log(slugs.join('\n'));

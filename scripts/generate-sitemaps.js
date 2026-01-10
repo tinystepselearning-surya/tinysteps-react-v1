@@ -8,7 +8,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 function extractSlugsFromFile(filePath, key) {
   try {
     const src = fs.readFileSync(filePath, 'utf-8');
-    const regex = new RegExp(`${key}\s*:\s*'([^']+)'`, 'g');
+    // match slug: 'value' or slug: "value" (simple robust literal)
+    const regex = /slug\s*:\s*['"`"]([^'"`]+)['"`]/g;
     const slugs = [];
     let match;
     while ((match = regex.exec(src))) slugs.push(match[1]);
@@ -42,6 +43,8 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   const blogSlugs = extractSlugsFromFile(blogTs, 'slug');
   const mdxSlugs = listMdxSlugs(mdxDir);
   const courseSlugs = extractSlugsFromFile(coursesTs, 'slug');
+
+  
 
   // sitemap.xml
   const base = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+

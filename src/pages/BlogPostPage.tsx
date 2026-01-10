@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
+import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
@@ -21,6 +22,26 @@ const BlogPostPage: FC = () => {
         // not mdx
       }
     })();
+  }, [slug, post]);
+
+  useEffect(() => {
+    if (!slug) return;
+    if (post) {
+      applySeo({
+        title: `${post.title} | Tiny Steps Learning`,
+        description: post.metaDescription || post.excerpt || 'Tiny Steps Learning blog post.',
+        canonicalPath: `/blog/${slug}`,
+        ogType: 'article',
+      });
+    } else {
+      // slug present but post not found — safe fallback
+      applySeo({
+        title: 'Blog | Tiny Steps Learning',
+        description: 'Phonics and grammar tips for parents and kids.',
+        canonicalPath: '/blog',
+        ogType: 'website',
+      });
+    }
   }, [slug, post]);
 
   if (!post && !MdxComp) {

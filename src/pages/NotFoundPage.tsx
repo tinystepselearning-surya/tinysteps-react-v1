@@ -1,5 +1,16 @@
 
+import { useEffect } from 'react';
+import { applySeo } from '../lib/seo';
+
 export default function NotFoundPage() {
+  useEffect(() => {
+    applySeo({
+      title: '404 - Page Not Found | Tiny Steps Learning',
+      canonicalPath: '/',
+      robots: 'noindex, nofollow',
+    });
+  }, []);
+
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">

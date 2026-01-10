@@ -1,6 +1,7 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect } from "react";
+import { applySeo } from "../lib/seo";
 import { useNavigate, useLocation } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -138,6 +139,16 @@ export default function HomePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.search]);
+
+  useEffect(() => {
+    applySeo({
+      title: "Tiny Steps Learning | Phonics & Grammar for Kids (3–12)",
+      description:
+        "Tiny Steps Learning helps children build strong phonics and grammar foundations through simple, fun, step-by-step learning.",
+      canonicalPath: "/",
+      ogType: "website",
+    });
+  }, []);
 
   return (
     <>

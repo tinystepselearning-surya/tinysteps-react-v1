@@ -1,5 +1,6 @@
 // @ts-nocheck
 import React, { useEffect, useState } from 'react';
+import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import Meta from '../components/common/Meta';
@@ -59,6 +60,16 @@ const CurriculumPage: FC = () => {
     loadCurriculumOverrides()
       .then((data) => setCurriculumData(data))
       .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    applySeo({
+      title: "Curriculum | Tiny Steps Learning",
+      description:
+        "A clear, step-by-step curriculum covering letter sounds, blending, reading, spelling patterns, and grammar foundations.",
+      canonicalPath: "/curriculum",
+      ogType: "website",
+    });
   }, []);
 
   const getWeeks = (courseSlug: string): WeekItem[] => {

@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
+import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
@@ -54,7 +55,15 @@ const BlogPage: FC = () => {
     return list[0];
   }, [combinedFiltered, sort]);
 
-  useEffect(() => { document.title = 'Insights for Indian Parents | Tiny Steps Blog'; }, []);
+  useEffect(() => {
+    applySeo({
+      title: 'Blog | Tiny Steps Learning',
+      description:
+        'Parent-friendly phonics and grammar tips to help children learn step-by-step with less confusion and more confidence.',
+      canonicalPath: '/blog',
+      ogType: 'website',
+    });
+  }, []);
 
   return (
     <div className="bg-white">
