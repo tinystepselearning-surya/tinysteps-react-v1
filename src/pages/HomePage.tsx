@@ -242,6 +242,26 @@ export default function HomePage() {
         <FinalCTASection />
       </Suspense>
 
+      {/* Locations served — helps 'near me' intent while clarifying we're online */}
+      <section className="px-6 py-10">
+        <div className="mx-auto max-w-6xl">
+          <div className="rounded-2xl bg-white p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold">English classes for kids across India</h2>
+            <p className="mt-2 text-gray-700">“Searching for ‘kids English classes near me’? Tiny Steps is 1:1 online, so children can learn from anywhere in India—Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, Ahmedabad and more.”</p>
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              {['Hyderabad','Bengaluru','Chennai','Mumbai','Delhi NCR','Pune','Kolkata','Ahmedabad','Jaipur','Lucknow','Indore'].map((c) => (
+                <span key={c} className="rounded-full bg-slate-100 px-3 py-1 text-sm">{c}</span>
+              ))}
+            </div>
+
+            <div className="mt-4">
+              <a href="/courses" className="inline-flex items-center rounded-full bg-primary-600 px-4 py-2 text-sm font-semibold text-white">See courses</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Suspense fallback={null}>
         <Footer />
       </Suspense>

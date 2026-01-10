@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
 import { applySeo } from '../lib/seo';
+import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
@@ -44,7 +45,7 @@ const BlogPostPage: FC = () => {
       '@type': 'BlogPosting',
       headline: metaSource.title,
       author: { '@type': 'Person', name: metaSource.author || 'Tiny Steps' },
-      datePublished: new Date(metaSource.date || Date.now()).toISOString(),
+      datePublished: metaSource.date ? isoDateFromYMD(metaSource.date) : new Date().toISOString(),
       image: metaSource.hero ? `${location.origin}${metaSource.hero}` : undefined,
       wordCount: 2500,
       articleBody: post ? post.body.map((b) => b.content).join('\n') : '',
@@ -99,16 +100,51 @@ const BlogPostPage: FC = () => {
         </div>
         <div className="text-xs text-primary-600">{metaSource.category || 'Parent Tips'}</div>
         <h1 className="mt-1 text-3xl font-bold text-gray-900">{metaSource.title}</h1>
-        <div className="mt-1 text-sm text-gray-600">by {metaSource.author || 'Tiny Steps'} • {metaSource.readTime || '5 min'} • {new Date(metaSource.date || Date.now()).toLocaleDateString()}</div>
+        <div className="mt-1 text-sm text-gray-600">by {metaSource.author || 'Tiny Steps'} • {metaSource.readTime || '5 min'} • {formatBlogDate(metaSource.date)}</div>
         {metaSource.hero && <div className="mt-4 aspect-video w-full rounded-xl bg-slate-100" style={{backgroundImage: `url(${metaSource.hero})`, backgroundSize: 'cover'}} />}
 
         <article className="prose prose-slate mt-6 max-w-none">
-          {post && post.body.map((b, i) => {
-            if (b.type === 'h2') return <h2 key={i}>{b.content}</h2>;
-            if (b.type === 'h3') return <h3 key={i}>{b.content}</h3>;
-            if (b.type === 'li') return <li key={i}>{b.content}</li>;
-            return <p key={i}>{b.content}</p>;
-          })}
+          {post && (() => {
+            const nodes: any[] = [];
+            const blocks = post.body || [];
+            for (let i = 0; i < blocks.length; i += 1) {
+              const b = blocks[i];
+              if (b.type === 'h2') {
+                nodes.push(<h2 key={`h2-${i}`}>{b.content}</h2>);
+                continue;
+              }
+              if (b.type === 'h3') {
+                nodes.push(<h3 key={`h3-${i}`}>{b.content}</h3>);
+                continue;
+              }
+
+              if (b.type === 'li') {
+                // collect consecutive li items
+                const items: any[] = [];
+                let j = i;
+                for (; j < blocks.length && blocks[j].type === 'li'; j += 1) {
+                  items.push(blocks[j].content);
+                }
+                // render a single ul for this run
+                const ulKey = `ul-${slug || (post && post.slug) || i}-${i}`;
+                nodes.push(
+                  <ul key={ulKey}>
+                    {items.map((txt, k) => (
+                      <li key={`${ulKey}-li-${k}`}>{txt}</li>
+                    ))}
+                  </ul>
+                );
+                // advance the outer loop to the last consumed li (j-1), outer loop will i++ so set i = j-1
+                i = j - 1;
+                continue;
+              }
+
+              // default paragraph
+              nodes.push(<p key={`p-${i}`}>{b.content}</p>);
+            }
+
+            return nodes;
+          })()}
           {MdxComp && <MdxComp />}
         </article>
 

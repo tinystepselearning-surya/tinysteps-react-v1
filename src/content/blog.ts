@@ -18,7 +18,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 1: SATPIN Launch Plan for Confident Readers',
     category: 'Phonics',
     author: 'Surya',
-    date: '2025-01-01',
+    date: '2026-01-01',
     readTime: '9 min',
     excerpt: "Seven short SATPIN sessions for busy parents: 10‑minute daily activities to teach s/a/t/p/i/n, begin blending, read decodables and build steady early reading confidence.",
     body: [
@@ -100,7 +100,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 2: Build a Blending Club at Home',
     category: 'Phonics',
     author: 'Surya',
-    date: '2025-01-08',
+    date: '2026-01-08',
     readTime: '9 min',
     excerpt: "Seven-day Blending Club for busy parents: two-minute setups, playful micro-games and ready scripts that build blending fluency, boost reading confidence, and create a simple daily habit.",
     body: [
@@ -174,12 +174,94 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'p', content: 'Week 3 introduces tricky words and high-frequency words while keeping blending practice alive. If you want guided lesson plans that follow this progression, Tiny Steps has structured lessons and short daily activities to help.' }
     ]
   },
+      // New SEO-targeted posts (Jan 2026)
+      {
+        slug: 'online-english-classes-for-kids-india',
+        title: 'Online English classes for kids in India: how to choose the right program (ages 3–12)',
+        category: 'Parent Tips',
+        author: 'Tiny Steps Learning',
+        date: '2026-01-10',
+        readTime: '7 min',
+        excerpt:
+          "If you’re searching online English classes for kids in India, here’s a simple parent checklist: phonics-first reading, speaking confidence, writing, and weekly progress updates—without overwhelm.",
+        hero: '/blog/hero-parent-tips.jpg',
+        body: [
+          { type: 'p', content: "If you’re typing “online English classes for kids India” into Google, you’re not alone. Most parents want the same outcome: better communication, stronger reading, fewer writing struggles—and confidence in school." },
+          { type: 'p', content: "The problem is that many programs look similar on the outside. So here’s a clear, parent-friendly way to choose the right one (especially for ages 3–12)." },
+          { type: 'h2', content: '1) First check: does the program build reading, not just speaking?' },
+          { type: 'p', content: 'Speaking improves faster when children can decode words confidently. A good program doesn’t treat reading as “extra.” It teaches phonics (letter sounds), blending, and simple reading routines alongside speaking practice.' },
+          { type: 'h2', content: '2) 1:1 vs group: what works better for most Indian kids?' },
+          { type: 'p', content: 'Many children are shy in groups, especially in English. In 1:1 sessions, the teacher can correct gently, prompt the child, and build confidence faster.' },
+          { type: 'h2', content: '3) Look for a clear age-wise pathway (not random topics)' },
+          { type: 'p', content: 'Parents often get confused because children learn best in a sequence. Ask the institute: “What will my child learn in the next 4 weeks?”' },
+          { type: 'h2', content: '4) Speaking confidence needs a method (not just “talk more”)' },
+          { type: 'p', content: 'Good spoken English classes for kids scaffold speaking: 10–15s → 30s → 60s using prompts and roleplay.' },
+          { type: 'h2', content: '5) Grammar should show up inside real sentences' },
+          { type: 'p', content: 'Grammar is learned through use, not lectures. Look for sentence games and speaking-to-writing activities.' },
+          { type: 'h2', content: '6) Demand weekly progress updates (simple and clear)' },
+          { type: 'p', content: 'Ask for weekly updates: what was taught, what the child can do now, what to practice, and the next goal.' },
+          { type: 'h2', content: 'If you want, start with a free level check' },
+          { type: 'p', content: 'A good online English tutor for kids will first identify your child’s level then recommend a plan. Explore our courses and FAQs.' },
+        ]
+      },
+      {
+        slug: 'best-phonics-classes-for-kids',
+        title: 'Best phonics classes for kids: the parent checklist (plus a 10-minute daily routine)',
+        category: 'Phonics',
+        author: 'Tiny Steps Learning',
+        date: '2026-01-10',
+        readTime: '8 min',
+        excerpt:
+          'Choosing the best phonics classes for kids? Use this simple checklist: sound-first teaching, blending support, correct letter formation, decodable reading, and clear progress updates.',
+        hero: '/blog/hero-phonics.jpg',
+        body: [
+          { type: 'p', content: 'Parents often say: “My child knows ABC but can’t read.” That’s exactly what phonics is designed to solve—by teaching children how to decode words using sounds.' },
+          { type: 'p', content: 'If you’re comparing the best online phonics programs, here’s a clean checklist (no confusion, no jargon).' },
+          { type: 'h2', content: 'What good phonics looks like (in one line)' },
+          { type: 'p', content: 'Sound → blend → read → spell → fluency. If any step is missing, progress becomes slow.' },
+          { type: 'h2', content: '1) Sound-first teaching (not letter names first)' },
+          { type: 'p', content: 'Early readers must hear and say sounds clearly. If a program starts with A-B-C names and long worksheets, kids often struggle to blend later.' },
+          { type: 'h2', content: '2) A smart sequence (SATPIN style progression)' },
+          { type: 'p', content: 'Phonics learning for children works best when letters are introduced in a sequence that quickly forms words.' },
+          { type: 'h2', content: '3) Blending support (most kids need this!)' },
+          { type: 'p', content: 'Many children know letter sounds but still cannot blend. That doesn’t mean they’re weak—it means blending needs separate teaching.' },
+          { type: 'h2', content: '4) Decodable reading (not guessing from pictures)' },
+          { type: 'p', content: 'Decodable reading uses words the child can actually decode. That builds real reading.' },
+          { type: 'h2', content: '5) Correct letter formation + tracing guidance' },
+          { type: 'p', content: 'Writing supports reading. When children form letters correctly, they remember sounds better and reduce reversals over time.' },
+          { type: 'h2', content: '6) Progress tracking parents can understand' },
+          { type: 'p', content: 'Parents need clarity: sounds mastered, blending ability, words read, next goal.' },
+          { type: 'h2', content: 'A simple 10-minute daily routine (at home)' },
+          { type: 'p', content: 'Try this: 1 minute revise 3 sounds; 2 minutes blend 5 words; 3 minutes read a tiny list; 2 minutes write 2–3 words; 2 minutes read one short sentence.' },
+        ]
+      },
+      {
+        slug: 'spoken-english-classes-for-kids-confidence',
+        title: 'Spoken English classes for kids: a simple confidence plan for shy children (ages 4–12)',
+        category: 'Public Speaking',
+        author: 'Tiny Steps Learning',
+        date: '2026-01-10',
+        readTime: '7 min',
+        excerpt:
+          'If your child understands English but hesitates to speak, this step-by-step confidence plan helps: short prompts, sentence frames, gentle corrections, and weekly practice.',
+        hero: '/blog/hero-speaking.jpg',
+        body: [
+          { type: 'p', content: 'Many children in India understand English but don’t speak confidently. This is usually not a “knowledge problem”—it’s a confidence + practice design problem.' },
+          { type: 'p', content: 'If you’re searching for spoken English classes for kids, use this simple plan to check whether a program will actually help your child speak.' },
+          { type: 'h2', content: 'Why kids stay silent (even when they know the answer)' },
+          { type: 'p', content: 'Common reasons: fear of mistakes, being corrected too sharply, not having the words ready, being forced to speak for too long.' },
+          { type: 'h2', content: 'A 4-step confidence ladder (what good classes follow)' },
+          { type: 'p', content: 'Step 1: 10–15 second answers; Step 2: 2-sentence speaking; Step 3: 30–60 second picture talk; Step 4: 1–2 minute structured speaking.' },
+          { type: 'h2', content: 'Sentence frames help kids speak instantly' },
+          { type: 'p', content: 'Ask if the teacher uses sentence frames like: “I can see…”, “My favourite… because…”.' },
+        ]
+      },
   {
     slug: 'week-3-phonics-tricky-words',
     title: 'Week 3: Introduce Tricky Words the Smart Way',
     category: 'Phonics',
     author: 'Surya',
-    date: '2025-01-15',
+    date: '2026-01-15',
     readTime: '9 min',
     excerpt: "A seven‑day tricky‑word plan: gentle memory hooks, short context practice and brief spaced reviews to help children recognise high‑frequency words without heavy drilling or pressure.",
     body: [
@@ -193,7 +275,7 @@ const rawBlogPosts: BlogPost[] = [
 
       { type: 'h2', content: 'The 3-part method: Read it / Build it / Fix the tricky part' },
       { type: 'h3', content: '1) Read it' },
-      { type: 'p', content: 'Show the word in a short sentence and read it together. Parent reads the sentence aloud; child points to or echoes the word "sat".' },
+      { type: 'p', content: 'Show the word in a short sentence and read it together. Parent reads the sentence aloud; child points to or echoes the word "the".' },
       { type: 'h3', content: '2) Build it' },
       { type: 'p', content: 'Use letter cards or magnetic letters to build the word. For “the”, you might point out that the letters don’t blend like a normal CVC word — that’s OK.' },
       { type: 'h3', content: '3) Fix the tricky part' },
@@ -255,7 +337,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 4: Long Vowel Patterns Without Tears',
     category: 'Phonics',
     author: 'Surya',
-    date: '2025-01-22',
+    date: '2026-01-22',
     readTime: '9 min',
     excerpt: "Seven short lessons for long vowels: magic‑e and vowel teams taught with quick visuals, short games and decodable reading so patterns stick without stress.",
     body: [
@@ -330,7 +412,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 5: R-Controlled Vowels Made Simple',
     category: 'Phonics',
     author: 'Surya',
-    date: '2025-01-29',
+    date: '2026-01-29',
     readTime: '9 min',
     excerpt: "Seven quick sessions to teach R‑controlled vowels with clear action hooks and multisensory cues: short, playful practice that helps children remember bossy‑R patterns calmly.",
     body: [
@@ -408,7 +490,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 6: From Sounding Out to Understanding',
     category: 'Phonics',
     author: 'Surya',
-    date: '2025-02-05',
+    date: '2026-02-05',
     readTime: '9 min',
     excerpt: "Move from decoding to understanding in seven days: adopt a 3‑question habit, stop‑and‑talk prompts and short review routines that make reading meaningful and motivating.",
     body: [
@@ -489,7 +571,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 7: Grammar Week-by-Week – Nouns to Paragraphs',
     category: 'Grammar',
     author: 'Surya',
-    date: '2025-02-12',
+    date: '2026-02-12',
     readTime: '9 min',
     excerpt: "One‑week paragraph scaffold: naming games and a simple 4‑sentence frame with guided practice to help Grades 1–2 write clear, confident paragraphs at home.",
     body: [
@@ -563,7 +645,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 8: Tenses Without Tears',
     category: 'Grammar',
     author: 'Surya',
-    date: '2025-02-19',
+    date: '2026-02-19',
     readTime: '9 min',
     excerpt: "Seven short 'tense talks' using a simple timeline and colour cues to make past, present and future visible and usable in everyday family sentences.",
     body: [
@@ -635,7 +717,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 9: Conjunction Toolkits',
     category: 'Grammar',
     author: 'Surya',
-    date: '2025-02-26',
+    date: '2026-02-26',
     readTime: '9 min',
     excerpt: "Seven days of connector practice (AND / BUT / BECAUSE / SO): DIY sentence strips, quick games and gentle writing tasks that help children join ideas and expand expression.",
     body: [
@@ -708,7 +790,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 10: Subject-Verb Agreement Rescue Plan',
     category: 'Grammar',
     author: 'Surya',
-    date: '2025-03-05',
+    date: '2026-03-05',
     readTime: '9 min',
     excerpt: "A short SVA rescue plan: stick‑figure anchors and quick daily drills with warm correction to fix subject‑verb slips and build clearer sentence habits.",
     body: [
@@ -784,7 +866,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 11: Creative Writing Scaffolds for Ages 8–10',
     category: 'Grammar',
     author: 'Surya',
-    date: '2025-03-12',
+    date: '2026-03-12',
     readTime: '9 min',
     excerpt: "Story Mountain scaffolds to help 8–10 year‑olds plan and write short stories: picture prompts, two brief writing sprints and a friendly two‑step edit to protect motivation.",
     body: [
@@ -863,7 +945,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 12: Speaking Confidence Seeds for Shy Kids',
     category: 'Public Speaking',
     author: 'Surya',
-    date: '2025-03-19',
+    date: '2026-03-19',
     readTime: '9 min',
     excerpt: "Short, safe daily routines and 15‑second spotlights to help shy children build calm speaking confidence: playful warmups, parent scripts and a small bravery ladder.",
     body: [
@@ -935,7 +1017,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 13: Hook-Body-Close for Kids',
     category: 'Public Speaking',
     author: 'Surya',
-    date: '2025-03-26',
+    date: '2026-03-26',
     readTime: '9 min',
     excerpt: "A Hook–Body–Close template to help children plan short talks: one‑line hooks, two clear points and a tidy close practised through daily 10‑minute rehearsals for steady confidence.",
     body: [
@@ -1006,7 +1088,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 14: Visual Aids That Wow',
     category: 'Public Speaking',
     author: 'Surya',
-    date: '2025-04-02',
+    date: '2026-04-02',
     readTime: '9 min',
     excerpt: "One‑prop visual aid week: simple props, chart templates and quick routines that reduce cognitive load and help young speakers present with clarity and calm.",
     body: [
@@ -1077,7 +1159,7 @@ const rawBlogPosts: BlogPost[] = [
     title: 'Week 15: Debate Starters for Tweens',
     category: 'Public Speaking',
     author: 'Surya',
-    date: '2025-04-09',
+    date: '2026-04-09',
     readTime: '9 min',
     excerpt: "Gentle debate starters and short timed rounds for tweens: Claim→Reason→Example frames, calm moderation and simple timers to practise respectful reasoning and clear speaking.",
     body: [
@@ -1767,10 +1849,12 @@ const DEFAULT_HERO_BY_CATEGORY: Record<BlogPost['category'], string> = {
   Research: '/blog/hero-research.jpg',
 };
 
-export const blogPosts: BlogPost[] = rawBlogPosts.map((p) => ({
-  ...p,
-  hero: p.hero ?? DEFAULT_HERO_BY_CATEGORY[p.category],
-}));
+export const blogPosts: BlogPost[] = [...rawBlogPosts]
+  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  .map((p) => ({
+    ...p,
+    hero: p.hero ?? DEFAULT_HERO_BY_CATEGORY[p.category],
+  }));
 
 // --- DEV-only excerpt length checker (keeps blog cards clean) ---
 const EXCERPT_MIN = 120; // adjust if your UI needs tighter/longer

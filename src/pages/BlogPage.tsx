@@ -4,6 +4,7 @@ import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
+import { formatBlogDate } from '../lib/date';
 import { fetchMdxPosts } from '../content/blogMdx';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
@@ -37,6 +38,19 @@ const BlogPage: FC = () => {
 
   const combined = useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
   const combinedFiltered = useMemo(() => combined.filter((p) => topic === 'All' || p.category === topic), [combined, topic]);
+
+  // Ensure the rendered list respects the selected `sort` option.
+  const sortedPosts = useMemo(() => {
+    const list = [...combinedFiltered];
+    if (sort === 'Newest') {
+      list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    } else if (sort === 'Most Popular') {
+      list.sort((a, b) => (b.popularScore || 0) - (a.popularScore || 0));
+    } else if (sort === 'Most Read') {
+      list.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
+    }
+    return list;
+  }, [combinedFiltered, sort]);
   const blogSchema = useMemo(() => ({
     '@context': 'https://schema.org',
     '@type': 'Blog',
@@ -49,11 +63,7 @@ const BlogPage: FC = () => {
       url: `https://tinystepslearning.com/blog/${post.slug}`
     }))
   }), [combined]);
-  const featured = useMemo(() => {
-    const list = [...combinedFiltered];
-    if (sort === 'Newest') list.sort((a,b)=> (a.date<b.date?1:-1));
-    return list[0];
-  }, [combinedFiltered, sort]);
+  const featured = useMemo(() => sortedPosts[0], [sortedPosts]);
 
   const breadcrumb = useMemo(() => ({
     '@context': 'https://schema.org',
@@ -102,7 +112,7 @@ const BlogPage: FC = () => {
             <div className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
               <div>
                 <h2 className="text-2xl font-bold">{featured.title}</h2>
-                <div className="mt-1 text-sm text-gray-600">by {featured.author} • {featured.readTime} • {new Date(featured.date).toLocaleDateString()}</div>
+                <div className="mt-1 text-sm text-gray-600">by {featured.author} • {featured.readTime} • {formatBlogDate(featured.date)}</div>
                 <p className="mt-3 text-gray-700">{featured.excerpt}</p>
               </div>
               {featured.hero ? (
@@ -115,7 +125,7 @@ const BlogPage: FC = () => {
         )}
 
         <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {(featured ? combinedFiltered.filter(p => p.slug !== featured.slug) : combinedFiltered).map((p) => (
+          {(featured ? sortedPosts.filter(p => p.slug !== featured.slug) : sortedPosts).map((p) => (
             <Link key={p.slug} to={`/blog/${p.slug}`} className="rounded-2xl bg-white p-5 shadow ring-1 ring-slate-200 transition-transform hover:-translate-y-1">
               {p.hero ? (
                 <div className="aspect-video w-full rounded-xl bg-slate-100 mb-4" style={{backgroundImage: `url(${p.hero})`, backgroundSize: 'cover'}} />
@@ -124,7 +134,7 @@ const BlogPage: FC = () => {
               )}
               <div className="text-xs text-primary-600">{p.category}</div>
               <div className="mt-1 font-semibold text-gray-900">{p.title}</div>
-              <div className="text-xs text-gray-600">{p.readTime} • {new Date(p.date).toLocaleDateString()}</div>
+              <div className="text-xs text-gray-600">{p.readTime} • {formatBlogDate(p.date)}</div>
               <p className="mt-2 text-sm text-gray-700 line-clamp-3">{p.excerpt}</p>
             </Link>
           ))}
