@@ -257,7 +257,25 @@ type ProgressState = {
   error?: string;
 };
 
+// Quick dots (shown in the top bar)
 const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
+
+// Big child-friendly palette (shown in the "More" sheet)
+const PALETTE_COLORS: string[] = [
+  ...STROKE_COLORS,
+  "#0EA5E9", "#06B6D4", "#14B8A6", "#10B981",
+  "#84CC16", "#A3E635",
+  "#EAB308", "#FACC15",
+  "#F97316", "#FB7185",
+  "#EF4444", "#DC2626",
+  "#A855F7", "#9333EA",
+  "#6366F1", "#4F46E5",
+  "#64748B", "#334155",
+  "#0F172A",
+  // soft pastels (kids love these)
+  "#BAE6FD", "#CFFAFE", "#BBF7D0", "#DCFCE7",
+  "#FDE68A", "#FFE4E6", "#E9D5FF", "#C7D2FE",
+];
 
 // ⭐ Your Canva asset (saved in /public/star.png)
 const STAR_SRC = "/star.png";
@@ -273,6 +291,87 @@ const STAR_GUIDE_SIZE = 16;
 const STAR_END_SIZE = 14;
 // viewBox padding (center feel)
 const VIEWBOX_PAD = 10;
+
+function ColorPickerSheet(props: {
+  open: boolean;
+  value: string;
+  onChange: (hex: string) => void;
+  onClose: () => void;
+}) {
+  const { open, value, onChange, onClose } = props;
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[10060] flex items-end justify-center bg-black/40 p-3"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="w-full max-w-xl rounded-3xl bg-white p-4 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <div className="text-base font-extrabold text-slate-900">Pick a color</div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full border bg-white px-3 py-1 text-sm font-bold"
+          >
+            Done
+          </button>
+        </div>
+
+        <div className="mt-3 flex items-center gap-3">
+          <div
+            className="h-10 w-10 rounded-full border shadow-sm"
+            style={{ background: value }}
+            aria-label="Selected color preview"
+          />
+          <div className="text-sm font-semibold text-slate-700">Selected</div>
+
+          {/* Unlimited: native color picker (iPad/iPhone/Android friendly) */}
+          <label className="ml-auto flex items-center gap-2 rounded-2xl border bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800">
+            More colors
+            <input
+              type="color"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              className="h-10 w-10 cursor-pointer rounded-lg border bg-white"
+              aria-label="Choose any color"
+            />
+          </label>
+        </div>
+
+        {/* Big palette grid */}
+        <div className="mt-4 grid grid-cols-6 gap-3 sm:grid-cols-8">
+          {PALETTE_COLORS.map((c) => {
+            const active = c.toLowerCase() === value.toLowerCase();
+            return (
+              <button
+                key={`pal-${c}`}
+                type="button"
+                onClick={() => onChange(c)}
+                className={[
+                  "h-10 w-10 rounded-full border shadow-sm",
+                  active ? "ring-4 ring-slate-900/20" : "",
+                ].join(" ")}
+                style={{ background: c }}
+                aria-label={`Choose ${c}`}
+              />
+            );
+          })}
+        </div>
+
+        <div className="mt-4 text-xs font-semibold text-slate-500">
+          Tip: Kids can pick a fun color each letter ⭐
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function ConfettiBurst({ fire }: { fire: boolean }) {
   // Continuous corner shower + center burst (4s total)
@@ -657,6 +756,13 @@ export default function LetterTracingGame() {
   const [strokeIndex, setStrokeIndex] = useState(0);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  // 🎨 Color selection
+  const [inkColor, setInkColor] = useState<string>(STROKE_COLORS[0]);
+  const [colorOpen, setColorOpen] = useState(false);
+
+  // store the chosen ink color per stroke so completed strokes keep their color
+  const [strokeColorByIndex, setStrokeColorByIndex] = useState<Record<number, string>>({});
+
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
   const [trimStartLen, setTrimStartLen] = useState(0);
@@ -767,7 +873,7 @@ export default function LetterTracingGame() {
 
   const toSvg = useSvgPoint(svgRef);
 
-  const currentColor = STROKE_COLORS[strokeIndex % STROKE_COLORS.length];
+  const currentColor = inkColor;
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
@@ -850,6 +956,7 @@ export default function LetterTracingGame() {
   useEffect(() => {
     clearTimers();
     setStrokeIndex(0);
+    setStrokeColorByIndex({});
 
     setStarted(false);
     setLastIndex(0);
@@ -1059,14 +1166,33 @@ const futureTapTargets = useMemo(() => {
   const guideDots = useMemo(() => {
     if (!currentStroke || currentStroke.kind === "tap") return [];
     if (!samples.length) return [];
-    const count = 14;
-    const dots: { x: number; y: number; key: number }[] = [];
-    for (let i = 0; i < count; i++) {
+
+    const count = 10; // fewer arrows = cleaner for kids
+    const arrows: { x: number; y: number; key: number; angle: number }[] = [];
+
+    for (let i = 1; i < count - 1; i++) {
       const ii = Math.floor((i / (count - 1)) * (samples.length - 1));
       const p = samples[ii];
-      dots.push({ x: p.x, y: p.y, key: ii });
+
+      const next = samples[Math.min(samples.length - 1, ii + 2)] ?? p;
+      const prev = samples[Math.max(0, ii - 2)] ?? p;
+
+      // direction vector along the stroke
+      let dx = next.x - p.x;
+      let dy = next.y - p.y;
+
+      // if we're at the end, fallback to previous
+      if (Math.abs(dx) + Math.abs(dy) < 0.0001) {
+        dx = p.x - prev.x;
+        dy = p.y - prev.y;
+      }
+
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI; // degrees
+
+      arrows.push({ x: p.x, y: p.y, key: ii, angle });
     }
-    return dots;
+
+    return arrows;
   }, [currentStroke, samples]);
 
   // completed strokes stay visible
@@ -1178,6 +1304,7 @@ const futureTapTargets = useMemo(() => {
   function replay() {
     clearTimers();
     setStrokeIndex(0);
+    setStrokeColorByIndex({});
     setStarted(false);
 
     setLastIndex(0);
@@ -1230,6 +1357,10 @@ const futureTapTargets = useMemo(() => {
   function completeStroke() {
     clearTimers();
     stopTraceAudio();
+
+    // lock this stroke's color so it stays the same after completion
+    setStrokeColorByIndex((prev) => ({ ...prev, [strokeIndex]: inkColor }));
+
     ignoreMovesRef.current = true;
 
     const pid = activePointerIdRef.current;
@@ -2017,6 +2148,39 @@ const futureTapTargets = useMemo(() => {
               </select>
             )}
 
+            {/* 🎨 Color picker (quick dots + More sheet) */}
+            <div className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 flex items-center gap-2">
+              <span className="mr-1">Color</span>
+
+              {STROKE_COLORS.map((c) => {
+                const active = c.toLowerCase() === inkColor.toLowerCase();
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setInkColor(c)}
+                    className={[
+                      "h-5 w-5 rounded-full",
+                      active ? "ring-2 ring-slate-900 ring-offset-2 ring-offset-white" : "ring-1 ring-slate-200",
+                    ].join(" ")}
+                    style={{ background: c }}
+                    aria-label={`Choose color ${c}`}
+                    title="Pick color"
+                  />
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => setColorOpen(true)}
+                className="ml-1 rounded-full border bg-white px-2 py-1 text-xs font-extrabold shadow-sm hover:shadow"
+                aria-label="More colors"
+                title="More colors"
+              >
+                🎨
+              </button>
+            </div>
+
             <button onClick={goNext} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
               Next
             </button>
@@ -2054,6 +2218,13 @@ const futureTapTargets = useMemo(() => {
           }}
         >
           <ConfettiBurst fire={confetti} />
+
+          <ColorPickerSheet
+            open={colorOpen}
+            value={inkColor}
+            onChange={(c) => setInkColor(c)}
+            onClose={() => setColorOpen(false)}
+          />
 
           <div className="relative h-full w-full" style={!fs ? { aspectRatio: "16 / 9", minHeight: "55vh" } : {}}>
             <svg
@@ -2095,7 +2266,7 @@ const futureTapTargets = useMemo(() => {
                 if (s.kind === "tap") {
                   const p = parseTapPoint(s.pathD);
                   if (!p) return null;
-                  const c = STROKE_COLORS[i % STROKE_COLORS.length];
+                  const c = strokeColorByIndex[i] ?? inkColor;
                   return (
                     <circle
                       key={`done-tap-${s.id ?? i}`}
@@ -2109,7 +2280,7 @@ const futureTapTargets = useMemo(() => {
                 }
                 const d = (s.pathD ?? "").trim();
                 if (!d) return null;
-                const c = STROKE_COLORS[i % STROKE_COLORS.length];
+                const c = strokeColorByIndex[i] ?? inkColor;
                 return (
                   <path
                     key={`done-${s.id ?? i}`}
@@ -2138,14 +2309,22 @@ const futureTapTargets = useMemo(() => {
                   />
 
                   {guideDots.map((d) => (
-                    <circle
+                    <g
                       key={d.key}
-                      cx={d.x}
-                      cy={d.y}
-                      r={4.6}
-                      fill={hexToRgba(currentColor, 0.18)}
+                      transform={`translate(${d.x}, ${d.y}) rotate(${d.angle}) scale(0.78)`}
                       pointerEvents="none"
-                    />
+                      opacity={0.55}
+                    >
+                      {/* Slim arrow: a small shaft + chevron head (points RIGHT before rotate) */}
+                      <path
+                        d="M -7 0 L 4 0 M 4 0 L 0 -3.2 M 4 0 L 0 3.2"
+                        fill="none"
+                        stroke={hexToRgba(currentColor, 0.38)}
+                        strokeWidth={2.1}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </g>
                   ))}
 
                   {showProgress && (
