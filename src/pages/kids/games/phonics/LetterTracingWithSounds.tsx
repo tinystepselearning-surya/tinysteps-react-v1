@@ -128,6 +128,385 @@ function expandViewBox(vb: string, pad: number) {
   return `${x - p} ${y - p} ${w + p * 2} ${h + p * 2}`;
 }
 
+/* --------------------
+   Color helpers + modal picker (NEW)
+-------------------- */
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const h = String(hex || "").replace("#", "").trim();
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  if (full.length !== 6) return null;
+  const n = parseInt(full, 16);
+  if (!Number.isFinite(n)) return null;
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgbToHex(r: number, g: number, b: number) {
+  const rr = clamp(Math.round(r), 0, 255).toString(16).padStart(2, "0");
+  const gg = clamp(Math.round(g), 0, 255).toString(16).padStart(2, "0");
+  const bb = clamp(Math.round(b), 0, 255).toString(16).padStart(2, "0");
+  return `#${rr}${gg}${bb}`.toUpperCase();
+}
+
+// HSV: h [0..360), s [0..1], v [0..1]
+function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
+  const rr = clamp(r / 255, 0, 1);
+  const gg = clamp(g / 255, 0, 1);
+  const bb = clamp(b / 255, 0, 1);
+
+  const max = Math.max(rr, gg, bb);
+  const min = Math.min(rr, gg, bb);
+  const d = max - min;
+
+  let h = 0;
+  if (d !== 0) {
+    if (max === rr) h = ((gg - bb) / d) % 6;
+    else if (max === gg) h = (bb - rr) / d + 2;
+    else h = (rr - gg) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  const s = max === 0 ? 0 : d / max;
+  const v = max;
+
+  return { h, s, v };
+}
+
+function hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
+  const hh = ((h % 360) + 360) % 360;
+  const ss = clamp(s, 0, 1);
+  const vv = clamp(v, 0, 1);
+
+  const c = vv * ss;
+  const x = c * (1 - Math.abs(((hh / 60) % 2) - 1));
+  const m = vv - c;
+
+  let rp = 0, gp = 0, bp = 0;
+  if (hh < 60) [rp, gp, bp] = [c, x, 0];
+  else if (hh < 120) [rp, gp, bp] = [x, c, 0];
+  else if (hh < 180) [rp, gp, bp] = [0, c, x];
+  else if (hh < 240) [rp, gp, bp] = [0, x, c];
+  else if (hh < 300) [rp, gp, bp] = [x, 0, c];
+  else [rp, gp, bp] = [c, 0, x];
+
+  return {
+    r: Math.round((rp + m) * 255),
+    g: Math.round((gp + m) * 255),
+    b: Math.round((bp + m) * 255),
+  };
+}
+
+// A bigger kid-friendly palette (used in the modal)
+const PALETTE_COLORS = [
+  "#2563EB", "#3B82F6", "#60A5FA", "#0EA5E9", "#06B6D4", "#14B8A6", "#10B981", "#22C55E",
+  "#84CC16", "#A3E635", "#FDE047", "#FBBF24", "#F59E0B", "#F97316", "#FB7185", "#F43F5E",
+  "#EC4899", "#D946EF", "#A855F7", "#8B5CF6", "#6366F1", "#EF4444", "#DC2626", "#7F1D1D",
+  "#111827", "#334155", "#64748B", "#94A3B8", "#CBD5E1", "#E2E8F0",
+] as const;
+
+type ColorPickerModalProps = {
+  open: boolean;
+  initialValue: string | null;     // current selectedColor
+  onClose: () => void;             // dismiss without applying
+  onDone: (color: string) => void; // apply chosen color
+};
+
+function ColorPickerModal({ open, initialValue, onClose, onDone }: ColorPickerModalProps) {
+  const [tab, setTab] = useState<"palette" | "advanced">("palette");
+  const [tempColor, setTempColor] = useState<string>(initialValue ?? PALETTE_COLORS[0]);
+  const [chosen, setChosen] = useState<boolean>(!!initialValue);
+
+  const svRef = useRef<HTMLDivElement | null>(null);
+  const [hsv, setHsv] = useState<{ h: number; s: number; v: number }>(() => {
+    const rgb = initialValue ? hexToRgb(initialValue) : hexToRgb(PALETTE_COLORS[0]);
+    if (!rgb) return { h: 210, s: 0.7, v: 0.9 };
+    return rgbToHsv(rgb.r, rgb.g, rgb.b);
+  });
+
+  // Reset each time modal opens
+  useEffect(() => {
+    if (!open) return;
+    setTab("palette");
+
+    const base = initialValue ?? PALETTE_COLORS[0];
+    setTempColor(base);
+    setChosen(!!initialValue);
+
+    const rgb = hexToRgb(base);
+    if (rgb) setHsv(rgbToHsv(rgb.r, rgb.g, rgb.b));
+  }, [open, initialValue]);
+
+  // Keep tempColor in sync when HSV changes (advanced tab)
+  useEffect(() => {
+    if (!open) return;
+    if (tab !== "advanced") return;
+    const { r, g, b } = hsvToRgb(hsv.h, hsv.s, hsv.v);
+    const next = rgbToHex(r, g, b);
+    setTempColor(next);
+    setChosen(true);
+  }, [hsv.h, hsv.s, hsv.v, open, tab]);
+
+  // ESC to close
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const rgb = hexToRgb(tempColor) ?? { r: 0, g: 0, b: 0 };
+
+  const setFromRgb = (r: number, g: number, b: number) => {
+    const hex = rgbToHex(r, g, b);
+    setTempColor(hex);
+    setChosen(true);
+    setHsv(rgbToHsv(r, g, b));
+  };
+
+  const pickFromPalette = (c: string) => {
+    setTempColor(c);
+    setChosen(true);
+    const rr = hexToRgb(c);
+    if (rr) setHsv(rgbToHsv(rr.r, rr.g, rr.b));
+  };
+
+  const handleSVPointer = (clientX: number, clientY: number) => {
+    const el = svRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = clamp((clientX - rect.left) / Math.max(1, rect.width), 0, 1);
+    const y = clamp((clientY - rect.top) / Math.max(1, rect.height), 0, 1);
+    setHsv((p) => ({ ...p, s: x, v: 1 - y }));
+  };
+
+  const satX = hsv.s * 100;
+  const valY = (1 - hsv.v) * 100;
+
+  return (
+    <div className="fixed inset-0 z-[10050] flex items-center justify-center">
+      {/* Backdrop */}
+      <button
+        type="button"
+        aria-label="Close color picker"
+        className="absolute inset-0 bg-black/20 backdrop-blur-[2px]"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative w-[min(760px,92vw)] rounded-[24px] border bg-white shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4">
+          <div className="text-sm font-extrabold text-slate-900">Pick a color</div>
+
+          <div className="flex items-center gap-2">
+            {tab === "advanced" && (
+              <button
+                type="button"
+                onClick={() => setTab("palette")}
+                className="rounded-full border bg-white px-4 py-2 text-xs font-bold hover:bg-slate-50"
+              >
+                ← Back
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => chosen && onDone(tempColor)}
+              disabled={!chosen}
+              className={[
+                "rounded-full px-4 py-2 text-xs font-extrabold",
+                chosen ? "bg-slate-900 text-white hover:bg-slate-800" : "bg-slate-200 text-slate-500 cursor-not-allowed",
+              ].join(" ")}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+
+        <div className="px-5 pb-5">
+          {/* Selected row */}
+          <div className="mb-4 flex items-center gap-3">
+            <div
+              className="h-10 w-10 rounded-full border shadow-sm"
+              style={{
+                backgroundColor: chosen ? tempColor : "#E2E8F0",
+                borderColor: "rgba(0,0,0,0.12)",
+              }}
+            />
+            <div className="text-xs font-semibold text-slate-700">
+              {chosen ? "Selected" : "Pick a color to start"}
+              <div className="text-[11px] font-mono text-slate-500">{chosen ? tempColor : ""}</div>
+            </div>
+          </div>
+
+          {tab === "palette" ? (
+            <>
+              {/* Palette grid */}
+              <div className="grid grid-cols-8 gap-3 sm:grid-cols-10 md:grid-cols-12">
+                {PALETTE_COLORS.map((c) => {
+                  const active = chosen && tempColor.toUpperCase() === c.toUpperCase();
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => pickFromPalette(c)}
+                      className={[
+                        "h-9 w-9 rounded-full border shadow-sm transition active:scale-95",
+                        active ? "ring-2 ring-slate-900/20" : "hover:scale-[1.04]",
+                      ].join(" ")}
+                      style={{
+                        backgroundColor: c,
+                        borderColor: active ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.12)",
+                      }}
+                      aria-label={`Select ${c}`}
+                      title={c}
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="mt-4 flex items-center justify-between">
+                <div className="text-[11px] font-semibold text-slate-500">Tip: Kids can pick a fun color each letter ✨</div>
+
+                <button
+                  type="button"
+                  onClick={() => setTab("advanced")}
+                  className="rounded-full border bg-white px-4 py-2 text-xs font-extrabold hover:bg-slate-50"
+                >
+                  More colors
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Advanced adjustments (Hue + SV + RGB) */}
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_220px]">
+                <div>
+                  {/* SV square */}
+                  <div
+                    ref={svRef}
+                    className="relative h-[220px] w-full rounded-2xl border overflow-hidden touch-none select-none"
+                    style={{
+                      background: `linear-gradient(to right, #fff, hsl(${hsv.h} 100% 50%))`,
+                    }}
+                    onPointerDown={(e) => {
+                      (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+                      handleSVPointer(e.clientX, e.clientY);
+                    }}
+                    onPointerMove={(e) => {
+                      if (e.buttons !== 1) return;
+                      handleSVPointer(e.clientX, e.clientY);
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0"
+                      style={{ background: "linear-gradient(to top, #000, transparent)" }}
+                    />
+                    <div
+                      className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow"
+                      style={{
+                        left: `${satX}%`,
+                        top: `${valY}%`,
+                        backgroundColor: "transparent",
+                      }}
+                    />
+                  </div>
+
+                  {/* Hue slider */}
+                  <div className="mt-4">
+                    <div className="mb-2 text-[11px] font-extrabold text-slate-600">Hue</div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={360}
+                      value={Math.round(hsv.h)}
+                      onChange={(e) => setHsv((p) => ({ ...p, h: Number(e.target.value) }))}
+                      className="w-full"
+                      style={{
+                        background:
+                          "linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00)",
+                        borderRadius: 9999,
+                        height: 10,
+                        appearance: "none",
+                      } as any}
+                    />
+                  </div>
+                </div>
+
+                {/* Right side: preview + RGB */}
+                <div className="rounded-2xl border bg-slate-50 p-4">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="h-12 w-12 rounded-full border shadow-sm"
+                      style={{ backgroundColor: tempColor, borderColor: "rgba(0,0,0,0.12)" }}
+                    />
+                    <div>
+                      <div className="text-xs font-extrabold text-slate-900">Custom</div>
+                      <div className="text-[11px] font-mono text-slate-600">{tempColor}</div>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-2">
+                    {(["R", "G", "B"] as const).map((k) => {
+                      const v = k === "R" ? rgb.r : k === "G" ? rgb.g : rgb.b;
+                      return (
+                        <div key={k}>
+                          <div className="mb-1 text-[10px] font-extrabold text-slate-600">{k}</div>
+                          <input
+                            type="number"
+                            min={0}
+                            max={255}
+                            value={v}
+                            onChange={(e) => {
+                              const n = clamp(Number(e.target.value), 0, 255);
+                              const rr = k === "R" ? n : rgb.r;
+                              const gg = k === "G" ? n : rgb.g;
+                              const bb = k === "B" ? n : rgb.b;
+                              setFromRgb(rr, gg, bb);
+                            }}
+                            className="w-full rounded-xl border bg-white px-2 py-2 text-sm font-bold text-slate-800"
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-3">
+                    <div className="mb-1 text-[10px] font-extrabold text-slate-600">HEX</div>
+                    <input
+                      value={tempColor}
+                      onChange={(e) => {
+                        const v = e.target.value.trim();
+                        if (!/^#?[0-9a-fA-F]{0,6}$/.test(v)) return;
+                        const withHash = v.startsWith("#") ? v : `#${v}`;
+                        setTempColor(withHash.toUpperCase());
+                        const rr = hexToRgb(withHash);
+                        if (rr && withHash.length === 7) {
+                          setChosen(true);
+                          setHsv(rgbToHsv(rr.r, rr.g, rr.b));
+                        }
+                      }}
+                      className="w-full rounded-xl border bg-white px-3 py-2 text-sm font-bold text-slate-800"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 text-[11px] font-semibold text-slate-500">
+                Adjust the square + hue to fine-tune the color.
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function parseTapPoint(pathD: string): { x: number; y: number } | null {
   // Accepts strings like: "M 50 50" or "M50 50" etc.
   const s = String(pathD || "").trim();
@@ -1161,10 +1540,9 @@ export default function LetterTracingWithSounds() {
   -------------------- */
   const [strokeIndex, setStrokeIndex] = useState(0);
 
-  const colorInputRef = useRef<HTMLInputElement | null>(null);
-
   // ✅ NO auto-selection: child must choose a color
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [colorModalOpen, setColorModalOpen] = useState(false);
 
   const effectiveColor = selectedColor ?? "#94A3B8"; // slate fallback for UI (not "selected")
   const canTrace = !!selectedColor;
@@ -2721,6 +3099,16 @@ export default function LetterTracingWithSounds() {
 }
 `}</style>
 
+      <ColorPickerModal
+        open={colorModalOpen}
+        initialValue={selectedColor}
+        onClose={() => setColorModalOpen(false)}
+        onDone={(c) => {
+          setSelectedColor(c);
+          setColorModalOpen(false);
+        }}
+      />
+
       <div className={fs ? "flex h-full w-full flex-col gap-3" : ""}>
         {/* Header */}
         <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-2">
@@ -2787,10 +3175,10 @@ export default function LetterTracingWithSounds() {
                   );
                 })}
 
-                {/* More */}
+                {/* More (opens center modal) */}
                 <button
                   type="button"
-                  onClick={() => colorInputRef.current?.click()}
+                  onClick={() => setColorModalOpen(true)}
                   className={[
                     "h-7 rounded-full border px-3 text-xs font-bold",
                     "bg-white shadow-sm transition active:scale-95 hover:bg-slate-50",
@@ -2802,14 +3190,6 @@ export default function LetterTracingWithSounds() {
                 >
                   More
                 </button>
-
-                <input
-                  ref={colorInputRef}
-                  type="color"
-                  className="sr-only"
-                  value={selectedColor ?? QUICK_COLORS[0]}
-                  onChange={(e) => setSelectedColor(e.target.value)}
-                />
               </div>
             </div>
 
