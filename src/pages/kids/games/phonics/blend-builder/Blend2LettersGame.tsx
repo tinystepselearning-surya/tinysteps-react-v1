@@ -420,7 +420,16 @@ export default function Blend2LettersGame() {
       : "transform 220ms ease-out";
 
   return (
-    <div ref={wrapperRef} className="fixed inset-0 z-[999] bg-slate-950 flex flex-col">
+    <div 
+      ref={wrapperRef} 
+      className="fixed inset-0 z-[999] flex flex-col"
+      style={{
+        backgroundImage: `url(${BG_URL})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
       <style>
         {`
           @keyframes tsPulseGlow {
@@ -448,7 +457,7 @@ export default function Blend2LettersGame() {
       </style>
 
       {/* Top bar */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-3 bg-white/90 backdrop-blur">
+      <div className="shrink-0 flex items-center justify-between px-4 py-3 bg-white/80 backdrop-blur">
         <button onClick={goBack} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
           ← Back
         </button>
@@ -481,21 +490,29 @@ export default function Blend2LettersGame() {
         </div>
       </div>
 
-      {/* Main */}
-      <div className="flex-1 min-h-0">
-        <div className="mx-auto h-full w-full max-w-6xl px-4 py-4 flex flex-col min-h-0">
-          <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-[#0b1220] shadow-sm overflow-hidden">
-            <div
-              ref={arenaRef}
-              className="relative h-full w-full"
-              style={{
-                touchAction: "none",
-                backgroundImage: `url(${BG_URL})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
+      {/* Main arena */}
+      <div className="flex-1 min-h-0 relative">
+        <div
+          ref={arenaRef}
+          className="relative h-full w-full"
+          style={{
+            touchAction: "none",
+          }}
+        >
+          {/* Subtle dark overlay for contrast */}
+          <div className="absolute inset-0 bg-black/10" />
+
+          {/* Top instructions (show when started) */}
+          {started && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-white/80 backdrop-blur-md rounded-xl shadow-lg">
+              <div className="text-center">
+                <div className="text-sm font-semibold text-slate-900">{instruction}</div>
+                {!merged && !merging && (
+                  <div className="mt-1 text-xs text-slate-700">Tip: drag a → both dots slide into the middle.</div>
+                )}
+              </div>
+            </div>
+          )}
 
               {/* line */}
               <div className="absolute left-1/2 top-1/2 h-[6px] w-[56%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10" />
@@ -523,13 +540,10 @@ export default function Blend2LettersGame() {
                       speak(item.right);
                       setAttempts((a) => a + 1);
                     }}
-                    className={[
-                      "absolute left-[68%] top-1/2 -translate-x-1/2 -translate-y-1/2",
-                      "h-[116px] w-[116px]",
-                      "bg-transparent border-0 p-0",
-                      "relative flex items-center justify-center select-none",
-                    ].join(" ")}
+                    className="absolute h-[116px] w-[116px] bg-transparent border-0 p-0 relative flex items-center justify-center select-none"
                     style={{
+                      left: "68%",
+                      top: "46%",
                       transform: `translate(calc(-50% + ${rightX}px), -50%)`,
                       transition: dotTransition,
                       willChange: "transform",
@@ -554,9 +568,9 @@ export default function Blend2LettersGame() {
                     </span>
 
                     {/* labels under bubble */}
-                    <div className="absolute left-1/2 top-full mt-3 -translate-x-1/2 text-center pointer-events-none">
+                    <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 text-center pointer-events-none">
                       <div className="text-[26px] md:text-[30px] font-extrabold text-slate-900">sound 2</div>
-                      <div className="mt-6 text-[34px] md:text-[38px] font-semibold italic text-slate-900">
+                      <div className="mt-2 text-[34px] md:text-[38px] font-semibold italic text-slate-900">
                         /{item.right}/
                       </div>
                     </div>
@@ -575,13 +589,10 @@ export default function Blend2LettersGame() {
                         setAttempts((a) => a + 1);
                       }
                     }}
-                    className={[
-                      "absolute left-[32%] top-1/2 -translate-x-1/2 -translate-y-1/2",
-                      "h-[116px] w-[116px]",
-                      "bg-transparent border-0 p-0",
-                      "relative flex items-center justify-center select-none",
-                    ].join(" ")}
+                    className="absolute h-[116px] w-[116px] bg-transparent border-0 p-0 relative flex items-center justify-center select-none"
                     style={{
+                      left: "32%",
+                      top: "46%",
                       transform: `translate(calc(-50% + ${leftX}px), -50%)`,
                       transition: dotTransition,
                       touchAction: "none",
@@ -609,9 +620,9 @@ export default function Blend2LettersGame() {
                     </span>
 
                     {/* labels under bubble */}
-                    <div className="absolute left-1/2 top-full mt-3 -translate-x-1/2 text-center pointer-events-none">
+                    <div className="absolute left-1/2 top-full mt-2 -translate-x-1/2 text-center pointer-events-none">
                       <div className="text-[26px] md:text-[30px] font-extrabold text-slate-900">sound 1</div>
-                      <div className="mt-6 text-[34px] md:text-[38px] font-semibold italic text-slate-900">
+                      <div className="mt-2 text-[34px] md:text-[38px] font-semibold italic text-slate-900">
                         /{item.left}/
                       </div>
                     </div>
@@ -624,8 +635,11 @@ export default function Blend2LettersGame() {
                 <button
                   type="button"
                   onClick={() => speak(item.word)}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[132px] w-[132px] bg-transparent border-0 p-0 relative flex items-center justify-center"
+                  className="absolute h-[132px] w-[132px] bg-transparent border-0 p-0 relative flex items-center justify-center"
                   style={{
+                    left: "50%",
+                    top: "46%",
+                    transform: "translate(-50%, -50%)",
                     animation: "tsPopIn 220ms ease-out forwards, tsMergedPulse 1500ms ease-in-out infinite 280ms",
                   }}
                 >
@@ -645,14 +659,6 @@ export default function Blend2LettersGame() {
                 </button>
               )}
 
-              {/* bottom instruction */}
-              <div className="absolute bottom-0 left-0 right-0 bg-black/35 px-4 py-3 text-center">
-                <div className="text-sm font-semibold text-white">{instruction}</div>
-                {started && !merged && !merging && (
-                  <div className="mt-1 text-xs text-white/80">Tip: drag a → both dots slide into the middle.</div>
-                )}
-              </div>
-
               {/* start overlay */}
               {!started && (
                 <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -669,46 +675,44 @@ export default function Blend2LettersGame() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
+        </div>
+      </div>
 
-          {/* Bottom controls */}
-          <div
-            className="shrink-0 mt-3 flex flex-wrap gap-3"
-            style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
-          >
-            <button onClick={reset} className="rounded-xl border bg-white px-4 py-2 font-semibold" disabled={!started}>
-              Reset
-            </button>
+      {/* Bottom controls */}
+      <div
+        className="shrink-0 px-4 py-3 flex flex-wrap gap-3 bg-white/80 backdrop-blur"
+        style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
+      >
+        <button onClick={reset} className="rounded-xl border bg-white px-4 py-2 font-semibold" disabled={!started}>
+          Reset
+        </button>
 
-            <button
-              onClick={() => {
-                if (!started || merged || merging) return;
-                speak(item.left);
-                setAttempts((a) => a + 1);
-              }}
-              className="rounded-xl bg-white/90 px-4 py-2 font-semibold border"
-              disabled={!started}
-            >
-              🔊 Sound "{item.left}"
-            </button>
+        <button
+          onClick={() => {
+            if (!started || merged || merging) return;
+            speak(item.left);
+            setAttempts((a) => a + 1);
+          }}
+          className="rounded-xl bg-white/90 px-4 py-2 font-semibold border"
+          disabled={!started}
+        >
+          🔊 Sound "{item.left}"
+        </button>
 
-            <button
-              onClick={() => {
-                if (!started || merged || merging) return;
-                speak(item.right);
-                setAttempts((a) => a + 1);
-              }}
-              className="rounded-xl bg-white/90 px-4 py-2 font-semibold border"
-              disabled={!started}
-            >
-              🔊 Sound "{item.right}"
-            </button>
+        <button
+          onClick={() => {
+            if (!started || merged || merging) return;
+            speak(item.right);
+            setAttempts((a) => a + 1);
+          }}
+          className="rounded-xl bg-white/90 px-4 py-2 font-semibold border"
+          disabled={!started}
+        >
+          🔊 Sound "{item.right}"
+        </button>
 
-            <div className="ml-auto rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700">
-              Attempts: {attempts}
-            </div>
-          </div>
+        <div className="ml-auto rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700">
+          Attempts: {attempts}
         </div>
       </div>
     </div>
