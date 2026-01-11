@@ -76,6 +76,14 @@ const STROKE_COLORS = [
   "#F43F5E",
 ] as const;
 
+const QUICK_COLORS = [
+  "#2563EB", // blue
+  "#EC4899", // pink
+  "#22C55E", // green
+  "#F59E0B", // orange
+  "#8B5CF6", // purple
+] as const;
+
 // ⭐ sizes
 const STAR_START_SIZE = 18;
 const STAR_GUIDE_SIZE = 16;
@@ -1153,17 +1161,13 @@ export default function LetterTracingWithSounds() {
   -------------------- */
   const [strokeIndex, setStrokeIndex] = useState(0);
 
-  // Auto-color per letter
-  const autoColor = useMemo(() => {
-    const safePairIndex = Math.max(0, pairIndex);
-    const seed = isPretrace
-      ? safePairIndex
-      : safePairIndex * 2 + step;
-    return STROKE_COLORS[seed % STROKE_COLORS.length];
-  }, [pairIndex, isPretrace, step]);
+  const colorInputRef = useRef<HTMLInputElement | null>(null);
 
-  const [selectedColor, setSelectedColor] =
-    useState<(typeof STROKE_COLORS)[number]>(autoColor);
+  // ✅ NO auto-selection: child must choose a color
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
+  const effectiveColor = selectedColor ?? "#94A3B8"; // slate fallback for UI (not "selected")
+  const canTrace = !!selectedColor;
 
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
@@ -1390,7 +1394,7 @@ export default function LetterTracingWithSounds() {
 
   const toSvg = useSvgPoint(svgRef);
 
-  const currentColor = selectedColor;
+  const currentColor = effectiveColor;
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
@@ -1480,9 +1484,7 @@ export default function LetterTracingWithSounds() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
-
-    setSelectedColor(autoColor);
-  }, [currentLetterId, pretraceId, clearTimers, stopTraceAudio, stopLetterSound, autoColor]);
+  }, [currentLetterId, pretraceId, clearTimers, stopTraceAudio, stopLetterSound]);
 
   // Reset on stroke change
   useEffect(() => {
@@ -2073,6 +2075,7 @@ export default function LetterTracingWithSounds() {
      Pointer handling
   -------------------- */
   function handlePointerDown(e: React.PointerEvent) {
+    if (!canTrace) return; // ✅ must select a color first
     if (letterDone) return;
     if (!currentStroke) return;
     if (ignoreMovesRef.current) return;
@@ -2755,13 +2758,15 @@ export default function LetterTracingWithSounds() {
               </select>
             )}
 
-            {/* 🎨 Color picker */}
+            {/* 🎨 Color picker (5 quick + More) */}
             <div className="flex items-center gap-2 rounded-full border bg-white px-3 py-2">
-              <span className="text-xs sm:text-sm font-semibold text-slate-700">Color</span>
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">
+                Color
+              </span>
 
-              <div className="flex items-center gap-1.5 flex-wrap max-w-[280px]">
-                {STROKE_COLORS.map((c) => {
-                  const active = c === selectedColor;
+              <div className="flex items-center gap-1.5 flex-wrap max-w-[260px]">
+                {QUICK_COLORS.map((c) => {
+                  const active = selectedColor === c;
                   return (
                     <button
                       key={c}
@@ -2781,6 +2786,30 @@ export default function LetterTracingWithSounds() {
                     />
                   );
                 })}
+
+                {/* More */}
+                <button
+                  type="button"
+                  onClick={() => colorInputRef.current?.click()}
+                  className={[
+                    "h-7 rounded-full border px-3 text-xs font-bold",
+                    "bg-white shadow-sm transition active:scale-95 hover:bg-slate-50",
+                    selectedColor && !(QUICK_COLORS as readonly string[]).includes(selectedColor)
+                      ? "ring-2 ring-slate-900/20"
+                      : "",
+                  ].join(" ")}
+                  title="More colors"
+                >
+                  More
+                </button>
+
+                <input
+                  ref={colorInputRef}
+                  type="color"
+                  className="sr-only"
+                  value={selectedColor ?? QUICK_COLORS[0]}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                />
               </div>
             </div>
 
@@ -2828,10 +2857,18 @@ export default function LetterTracingWithSounds() {
         <div
           className={`relative overflow-hidden rounded-2xl border shadow-sm flex flex-col ${fs ? "flex-1 min-h-0" : ""}`}
           style={{
-            background: `radial-gradient(circle at 50% 50%, ${hexToRgba(selectedColor, 0.08)}, transparent 60%), radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)`,
+            background: `radial-gradient(circle at 50% 50%, ${hexToRgba(effectiveColor, 0.08)}, transparent 60%), radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)`,
           }}
         >
           <ConfettiBurst fire={confetti} />
+
+          {!canTrace && (
+            <div className="pointer-events-none absolute inset-0 z-[10005] flex items-center justify-center">
+              <div className="rounded-2xl bg-white/80 px-5 py-3 text-sm font-extrabold text-slate-800 shadow-lg backdrop-blur">
+                🎨 Pick a color above to start tracing
+              </div>
+            </div>
+          )}
 
           {/* ✅ Green tick on completion */}
           {letterDone && (
@@ -2926,27 +2963,25 @@ export default function LetterTracingWithSounds() {
                 if (s.kind === "tap") {
                   const p = parseTapPoint(s.pathD);
                   if (!p) return null;
-                  const c = STROKE_COLORS[i % STROKE_COLORS.length];
                   return (
                     <circle
                       key={`done-tap-${s.id ?? i}`}
                       cx={p.x}
                       cy={p.y}
                       r={7}
-                      fill={hexToRgba(c, 0.75)}
+                      fill={hexToRgba(currentColor, 0.75)}
                       pointerEvents="none"
                     />
                   );
                 }
                 const d = (s.pathD ?? "").trim();
                 if (!d) return null;
-                const c = STROKE_COLORS[i % STROKE_COLORS.length];
                 return (
                   <path
                     key={`done-${s.id ?? i}`}
                     d={d}
                     fill="none"
-                    stroke={hexToRgba(c, 0.78)}
+                    stroke={hexToRgba(currentColor, 0.78)}
                     strokeWidth={12}
                     strokeLinecap="round"
                     strokeLinejoin="round"
