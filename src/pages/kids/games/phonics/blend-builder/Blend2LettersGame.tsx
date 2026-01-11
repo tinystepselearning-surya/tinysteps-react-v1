@@ -968,10 +968,11 @@ export default function Blend2LettersGame() {
         </div>
       )}
 
-      {/* Main arena */}
-      <div className="flex-1 min-h-0 relative">
-        <div ref={arenaRef} className="relative h-full w-full" style={{ touchAction: "none" }}>
-          <div className="absolute inset-0 bg-black/10" />
+      {/* Main arena - ONLY render during gameplay */}
+      {isInGameplay ? (
+        <div className="flex-1 min-h-0 relative">
+          <div ref={arenaRef} className="relative h-full w-full" style={{ touchAction: "none" }}>
+            <div className="absolute inset-0 bg-black/10" />
 
           {/* ✅ Side arrows centered */}
           <button
@@ -1200,108 +1201,8 @@ export default function Blend2LettersGame() {
             </div>
           )}
 
-          {/* Group selection overlay (show when not in gameplay) */}
-          {!isInGameplay && (
-            <div className="absolute inset-0 z-20 overflow-auto flex flex-col items-center justify-start py-12 px-4">
-              {/* Dark overlay to block background letters/elements */}
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" aria-hidden />
-              
-              {/* Back button */}
-              <button
-                onClick={goBack}
-                className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200 z-10"
-              >
-                ← Back to Phonics Library
-              </button>
-
-              <div className="w-full max-w-6xl mx-auto text-center mb-8 relative z-10">
-                <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">{BLEND_BUILDER_META.title}</h1>
-                <p className="text-lg text-purple-300 mt-2 drop-shadow-lg">{BLEND_BUILDER_META.tagline}</p>
-                
-                {/* Tab pills section with enhanced visibility */}
-                <div className="mt-8 inline-block">
-                  <div className="text-xs font-semibold text-white/70 mb-3 tracking-wider uppercase">Choose Blend Size</div>
-                  <div className="flex flex-wrap justify-center gap-3 px-6 py-4 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-md shadow-2xl">
-                    {BLEND_BUILDER_TABS.map((tab) => {
-                      const active = activeTabId === tab.id;
-                      return (
-                        <button
-                          key={tab.id}
-                          onClick={() => {
-                            setActiveTabId(tab.id);
-                            setActiveGroupId(null);
-                          }}
-                          className={`px-6 py-3 rounded-full font-bold text-base md:text-lg transition-all whitespace-nowrap ${
-                            active
-                              ? 'bg-white/25 text-white border-2 border-white/60 ring-2 ring-white/30 shadow-xl scale-105'
-                              : 'bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/12 hover:border-white/40 hover:text-white/90'
-                          }`}
-                        >
-                          {tab.title}
-                          {tab.subtitle && <span className="ml-2 text-sm opacity-80">({tab.subtitle})</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Colorful gradient tiles */}
-              <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6" style={{ zIndex: 10 }}>
-                {activeTab.groups.map((group, idx) => {
-                  const sampleWords = group.words.slice(0, 3).join(", ");
-                  const moreCount = Math.max(0, group.words.length - 3);
-                  
-                  // Colorful gradient backgrounds (calm, kid-friendly)
-                  const gradients = [
-                    'bg-gradient-to-br from-pink-400/20 to-purple-400/20',
-                    'bg-gradient-to-br from-blue-400/20 to-cyan-400/20',
-                    'bg-gradient-to-br from-green-400/20 to-emerald-400/20',
-                    'bg-gradient-to-br from-yellow-400/20 to-orange-400/20',
-                    'bg-gradient-to-br from-purple-400/20 to-indigo-400/20',
-                    'bg-gradient-to-br from-rose-400/20 to-pink-400/20',
-                    'bg-gradient-to-br from-violet-400/20 to-purple-400/20',
-                  ];
-                  const bgGradient = gradients[idx % gradients.length];
-                  
-                  return (
-                    <button
-                      key={group.id}
-                      onClick={() => {
-                        setActiveGroupId(group.id);
-                        setIsInGameplay(true);
-                        setIdx(0);
-                        reset();
-                      }}
-                      className={`blend-family-card ${bgGradient} p-5 rounded-2xl border border-white/20 backdrop-blur-md transition-all hover:-translate-y-1 hover:shadow-2xl cursor-pointer text-left`}
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-2xl font-bold text-white drop-shadow-lg">{group.title}</h3>
-                        {group.hint && (
-                          <span className="ml-2 px-2 py-1 text-xs font-semibold bg-white/30 text-white rounded-full backdrop-blur-sm">
-                            {group.hint}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-white/90 mt-2 drop-shadow">
-                        {sampleWords}
-                        {moreCount > 0 && ` +${moreCount} more`}
-                      </p>
-                      <div className="mt-4 flex items-center justify-between">
-                        <div className="text-yellow-300 font-semibold drop-shadow">Play</div>
-                        <div className="text-sm text-white/80 drop-shadow">
-                          {group.words.length} word{group.words.length !== 1 ? "s" : ""}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
           {/* Start overlay (show after group selected but before started) */}
-          {isInGameplay && !started && activeGroup && (
+          {!started && activeGroup && (
             <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div className="w-full max-w-xl rounded-2xl bg-white px-6 py-6 shadow-xl">
                 <div className="text-center">
@@ -1326,6 +1227,102 @@ export default function Blend2LettersGame() {
           )}
         </div>
       </div>
+      ) : (
+        /* Menu view - clean background with no gameplay elements */
+        <div className="flex-1 min-h-0 relative overflow-auto flex flex-col items-center justify-start py-12 px-4">
+          {/* Back button */}
+          <button
+            onClick={goBack}
+            className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200 z-10"
+          >
+            ← Back to Phonics Library
+          </button>
+
+          <div className="w-full max-w-6xl mx-auto text-center mb-8 relative z-10">
+            <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">{BLEND_BUILDER_META.title}</h1>
+            <p className="text-lg text-purple-300 mt-2 drop-shadow-lg">{BLEND_BUILDER_META.tagline}</p>
+            
+            {/* Tab pills section with enhanced visibility */}
+            <div className="mt-8 inline-block">
+              <div className="text-xs font-semibold text-white/70 mb-3 tracking-wider uppercase">Choose Blend Size</div>
+              <div className="flex flex-wrap justify-center gap-3 px-6 py-4 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-md shadow-2xl">
+                {BLEND_BUILDER_TABS.map((tab) => {
+                  const active = activeTabId === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTabId(tab.id);
+                        setActiveGroupId(null);
+                      }}
+                      className={`px-6 py-3 rounded-full font-bold text-base md:text-lg transition-all whitespace-nowrap ${
+                        active
+                          ? 'bg-white/25 text-white border-2 border-white/60 ring-2 ring-white/30 shadow-xl scale-105'
+                          : 'bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/12 hover:border-white/40 hover:text-white/90'
+                      }`}
+                    >
+                      {tab.title}
+                      {tab.subtitle && <span className="ml-2 text-sm opacity-80">({tab.subtitle})</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Colorful gradient tiles */}
+          <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
+            {activeTab.groups.map((group, idx) => {
+              const sampleWords = group.words.slice(0, 3).join(", ");
+              const moreCount = Math.max(0, group.words.length - 3);
+              
+              // Colorful gradient backgrounds (calm, kid-friendly)
+              const gradients = [
+                'bg-gradient-to-br from-pink-400/20 to-purple-400/20',
+                'bg-gradient-to-br from-blue-400/20 to-cyan-400/20',
+                'bg-gradient-to-br from-green-400/20 to-emerald-400/20',
+                'bg-gradient-to-br from-yellow-400/20 to-orange-400/20',
+                'bg-gradient-to-br from-purple-400/20 to-indigo-400/20',
+                'bg-gradient-to-br from-rose-400/20 to-pink-400/20',
+                'bg-gradient-to-br from-violet-400/20 to-purple-400/20',
+              ];
+              const bgGradient = gradients[idx % gradients.length];
+              
+              return (
+                <button
+                  key={group.id}
+                  onClick={() => {
+                    setActiveGroupId(group.id);
+                    setIsInGameplay(true);
+                    setIdx(0);
+                    reset();
+                  }}
+                  className={`blend-family-card ${bgGradient} p-5 rounded-2xl border border-white/20 backdrop-blur-md transition-all hover:-translate-y-1 hover:shadow-2xl cursor-pointer text-left`}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="text-2xl font-bold text-white drop-shadow-lg">{group.title}</h3>
+                    {group.hint && (
+                      <span className="ml-2 px-2 py-1 text-xs font-semibold bg-white/30 text-white rounded-full backdrop-blur-sm">
+                        {group.hint}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-white/90 mt-2 drop-shadow">
+                    {sampleWords}
+                    {moreCount > 0 && ` +${moreCount} more`}
+                  </p>
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="text-yellow-300 font-semibold drop-shadow">Play</div>
+                    <div className="text-sm text-white/80 drop-shadow">
+                      {group.words.length} word{group.words.length !== 1 ? "s" : ""}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Bottom controls - only show in gameplay */}
       {isInGameplay && (
