@@ -1203,40 +1203,46 @@ export default function Blend2LettersGame() {
           {/* Group selection overlay (show when not in gameplay) */}
           {!isInGameplay && (
             <div className="absolute inset-0 z-20 overflow-auto flex flex-col items-center justify-start py-12 px-4">
+              {/* Dark overlay to block background letters/elements */}
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" aria-hidden />
+              
               {/* Back button */}
               <button
                 onClick={goBack}
-                className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
+                className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200 z-10"
               >
                 ← Back to Phonics Library
               </button>
 
-              <div className="w-full max-w-6xl mx-auto text-center mb-6" style={{ zIndex: 10 }}>
+              <div className="w-full max-w-6xl mx-auto text-center mb-8 relative z-10">
                 <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">{BLEND_BUILDER_META.title}</h1>
-                <p className="text-lg text-purple-300 mt-2">{BLEND_BUILDER_META.tagline}</p>
+                <p className="text-lg text-purple-300 mt-2 drop-shadow-lg">{BLEND_BUILDER_META.tagline}</p>
                 
-                {/* Tab pills - library style */}
-                <div className="flex flex-wrap justify-center gap-2 mt-6">
-                  {BLEND_BUILDER_TABS.map((tab) => {
-                    const active = activeTabId === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveTabId(tab.id);
-                          setActiveGroupId(null);
-                        }}
-                        className={`px-4 py-2 rounded-full font-semibold text-sm transition-all ${
-                          active
-                            ? 'bg-white/20 text-white border-2 border-white/40'
-                            : 'bg-white/5 text-white/60 border border-white/10 hover:bg-white/10'
-                        }`}
-                      >
-                        {tab.title}
-                        {tab.subtitle && <span className="ml-1.5 text-xs opacity-75">({tab.subtitle})</span>}
-                      </button>
-                    );
-                  })}
+                {/* Tab pills section with enhanced visibility */}
+                <div className="mt-8 inline-block">
+                  <div className="text-xs font-semibold text-white/70 mb-3 tracking-wider uppercase">Choose Blend Size</div>
+                  <div className="flex flex-wrap justify-center gap-3 px-6 py-4 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-md shadow-2xl">
+                    {BLEND_BUILDER_TABS.map((tab) => {
+                      const active = activeTabId === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            setActiveTabId(tab.id);
+                            setActiveGroupId(null);
+                          }}
+                          className={`px-6 py-3 rounded-full font-bold text-base md:text-lg transition-all whitespace-nowrap ${
+                            active
+                              ? 'bg-white/25 text-white border-2 border-white/60 ring-2 ring-white/30 shadow-xl scale-105'
+                              : 'bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/12 hover:border-white/40 hover:text-white/90'
+                          }`}
+                        >
+                          {tab.title}
+                          {tab.subtitle && <span className="ml-2 text-sm opacity-80">({tab.subtitle})</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 
