@@ -553,7 +553,7 @@ export default function Blend2LettersGame() {
                     style={{
                       transform: `translate(calc(-50% + ${leftX}px), -50%)`,
                       transition: dotTransition,
-                      animation: started && !merging && !draggingRef.current ? "tsPulseGlow 1600ms ease-in-out infinite" : undefined,
+                      animation: started && !merging && !isDragging ? "tsPulseGlow 1600ms ease-in-out infinite" : undefined,
                       touchAction: "none",
                       userSelect: "none",
                       WebkitUserSelect: "none",
