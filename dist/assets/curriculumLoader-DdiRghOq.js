@@ -1,1 +1,0 @@
-async function a(){try{const r=await fetch(`/curriculum-v2.1.json?ts=${Date.now()}`,{cache:"no-store"});return r.ok?await r.json():null}catch(r){return console.warn("[curriculumLoader] Failed to load overrides",r),null}}async function t(r){return(await a())?.courses?.[r]?.weeks??null}export{t as g,a as l};
