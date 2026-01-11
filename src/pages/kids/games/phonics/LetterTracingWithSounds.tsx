@@ -1140,6 +1140,9 @@ export default function LetterTracingWithSounds() {
   -------------------- */
   const [strokeIndex, setStrokeIndex] = useState(0);
 
+  const [selectedColor, setSelectedColor] =
+    useState<(typeof STROKE_COLORS)[number]>(STROKE_COLORS[0]);
+
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
   const [trimStartLen, setTrimStartLen] = useState(0);
@@ -1365,7 +1368,7 @@ export default function LetterTracingWithSounds() {
 
   const toSvg = useSvgPoint(svgRef);
 
-  const currentColor = STROKE_COLORS[strokeIndex % STROKE_COLORS.length];
+  const currentColor = selectedColor;
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
@@ -1623,17 +1626,30 @@ export default function LetterTracingWithSounds() {
     return samples[i].len;
   }, [currentStroke, samples, lastIndex]);
 
-  const guideDots = useMemo(() => {
+  const guideArrows = useMemo(() => {
     if (!currentStroke || currentStroke.kind === "tap") return [];
-    if (!samples.length) return [];
-    const count = 14;
-    const dots: { x: number; y: number; key: number }[] = [];
-    for (let i = 0; i < count; i++) {
+    if (!samples.length || samples.length < 3) return [];
+
+    const count = 10; // fewer + cleaner
+    const out: { x: number; y: number; angle: number; key: number }[] = [];
+
+    // skip start + end so arrows don't clash with stars
+    for (let i = 1; i < count - 1; i++) {
       const ii = Math.floor((i / (count - 1)) * (samples.length - 1));
       const p = samples[ii];
-      dots.push({ x: p.x, y: p.y, key: ii });
+
+      const prev = samples[Math.max(0, ii - 1)];
+      const next = samples[Math.min(samples.length - 1, ii + 1)];
+
+      const dx = next.x - prev.x;
+      const dy = next.y - prev.y;
+
+      const angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+
+      out.push({ x: p.x, y: p.y, angle, key: ii });
     }
-    return dots;
+
+    return out;
   }, [currentStroke, samples]);
 
   const totalStrokes = letterData?.strokes?.length ?? 0;
@@ -2715,6 +2731,35 @@ export default function LetterTracingWithSounds() {
               </select>
             )}
 
+            {/* 🎨 Color picker */}
+            <div className="flex items-center gap-2 rounded-full border bg-white px-3 py-2">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">Color</span>
+
+              <div className="flex items-center gap-2">
+                {STROKE_COLORS.map((c) => {
+                  const active = c === selectedColor;
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      className={[
+                        "h-7 w-7 rounded-full border",
+                        "shadow-sm transition active:scale-95",
+                        active ? "ring-2 ring-slate-900/20" : "hover:scale-[1.04]",
+                      ].join(" ")}
+                      style={{
+                        backgroundColor: c,
+                        borderColor: active ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.12)",
+                      }}
+                      aria-label={`Select color ${c}`}
+                      title="Change tracing color"
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
             {!isPretrace && (
               <button
                 onClick={playLetterSound}
@@ -2900,15 +2945,23 @@ export default function LetterTracingWithSounds() {
                     pointerEvents="none"
                   />
 
-                  {guideDots.map((d) => (
-                    <circle
+                  {guideArrows.map((d) => (
+                    <g
                       key={d.key}
-                      cx={d.x}
-                      cy={d.y}
-                      r={4.6}
-                      fill={hexToRgba(currentColor, 0.18)}
+                      transform={`translate(${d.x}, ${d.y}) rotate(${d.angle}) scale(0.70)`}
                       pointerEvents="none"
-                    />
+                      opacity={0.45}
+                    >
+                      <path
+                        // small shaft + chevron head (points RIGHT before rotation)
+                        d="M -6 0 L 3 0 M 3 0 L 0 -2.8 M 3 0 L 0 2.8"
+                        fill="none"
+                        stroke={hexToRgba(currentColor, 0.30)}
+                        strokeWidth={1.8}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </g>
                   ))}
 
                   {showProgress && (
