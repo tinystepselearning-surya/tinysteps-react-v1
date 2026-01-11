@@ -94,6 +94,45 @@ function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
 
+// --- Phonics labels (simple + child-friendly) ---
+const PHONICS_MAP: Record<string, string> = {
+  a: "/ă/",
+  e: "/ĕ/",
+  i: "/ĭ/",
+  o: "/ŏ/",
+  u: "/ŭ/",
+};
+
+function phonicLabel(letter: string) {
+  const k = (letter || "").toLowerCase();
+  if (!k) return "";
+  // vowel symbols for short vowels, consonants just show /t/ etc
+  return PHONICS_MAP[k] ?? `/${k}/`;
+}
+
+// --- Small RAF animator (for snap-back / snap-to-merge) ---
+function animateNumber(
+  from: number,
+  to: number,
+  ms: number,
+  onUpdate: (v: number) => void,
+  onDone?: () => void
+) {
+  const t0 = performance.now();
+  const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+
+  let raf = 0;
+  const tick = (now: number) => {
+    const p = Math.min(1, (now - t0) / ms);
+    const v = from + (to - from) * easeOut(p);
+    onUpdate(v);
+    if (p < 1) raf = requestAnimationFrame(tick);
+    else onDone?.();
+  };
+  raf = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(raf);
+}
+
 function splitVC(word: string): Item {
   return { left: word.slice(0, 1), right: word.slice(1), word };
 }
@@ -186,8 +225,17 @@ export default function MyFirstWordsGame() {
   // ===== UI refs =====
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const arenaRef = useRef<HTMLDivElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
 
   const [started, setStarted] = useState(false);
+
+  // ✅ NEW: Stage dimensions for responsive positioning
+  const [stageW, setStageW] = useState(0);
+  const [hasDraggedOnce, setHasDraggedOnce] = useState(false);
+
+  // ✅ NEW: Animation cancellation ref
+  const cancelAnimRef = useRef<null | (() => void)>(null);
+  const dragStartRef = useRef<{ x: number; p: number } | null>(null);
 
   // Slide/join engine state
   const [merged, setMerged] = useState(false);
@@ -201,8 +249,6 @@ export default function MyFirstWordsGame() {
   const progressRef = useRef(0);
 
   const [isDragging, setIsDragging] = useState(false);
-
-  const [travelPx, setTravelPx] = useState(220);
 
   const [showBurst, setShowBurst] = useState(false);
 
@@ -429,29 +475,22 @@ export default function MyFirstWordsGame() {
   useEffect(() => { mergedRef.current = merged; }, [merged]);
   useEffect(() => { mergingRef.current = merging; }, [merging]);
 
-  // Keep travel distance correct on every screen size
+  // ✅ Track stage width for responsive positioning
   useEffect(() => {
-    const el = arenaRef.current;
+    const el = stageRef.current;
     if (!el) return;
 
-    const update = () => {
+    const ro = new ResizeObserver(() => {
       const r = el.getBoundingClientRect();
-      setTravelPx(Math.max(140, r.width * 0.18)); // 32% -> 50%
-    };
+      setStageW(r.width);
+    });
+    ro.observe(el);
 
-    update();
+    // initial
+    const r = el.getBoundingClientRect();
+    setStageW(r.width);
 
-    let ro: ResizeObserver | null = null;
-    try {
-      ro = new ResizeObserver(() => update());
-      ro.observe(el);
-    } catch {
-      const onResize = () => update();
-      window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
-    }
-
-    return () => ro?.disconnect();
+    return () => ro.disconnect();
   }, []);
 
   // preload audio when item changes (slide_join) and when tap target changes (tap_word)
@@ -518,12 +557,29 @@ export default function MyFirstWordsGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ✅ Auto-trigger merge when progress reaches 1
+  useEffect(() => {
+    if (mergedRef.current || mergingRef.current) return;
+    if (progress >= 0.99) {
+      stopDragLoop();
+      setMerging(true);
+      mergingRef.current = true;
+      window.setTimeout(() => {
+        setMerging(false);
+        mergingRef.current = false;
+        setMerged(true);
+        mergedRef.current = true;
+        fireSuccessFX();
+        popMerged();
+        playWord(item.word);
+        recordProgress(item.word);
+      }, 260);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress]);
+
   function cleanupDragListeners() {
-    window.removeEventListener("mousemove", onWinMouseMove as any);
-    window.removeEventListener("mouseup", onWinMouseUp as any);
-    window.removeEventListener("touchmove", onWinTouchMove as any);
-    window.removeEventListener("touchend", onWinTouchEnd as any);
-    window.removeEventListener("touchcancel", onWinTouchEnd as any);
+    // No-op: pointer events use setPointerCapture, no window listeners needed
   }
 
   function onPickMode(next: LevelId) {
@@ -581,6 +637,9 @@ export default function MyFirstWordsGame() {
     cleanupDragListeners();
     stopDragLoop();
     
+    cancelAnimRef.current?.();
+    cancelAnimRef.current = null;
+    
     // CRITICAL: clear merge state BEFORE idx changes
     setMerged(false);
     mergedRef.current = false;
@@ -590,6 +649,7 @@ export default function MyFirstWordsGame() {
     setProgress(0);
     progressRef.current = 0;
     setIsDragging(false);
+    setHasDraggedOnce(false);
     
     setShowBurst(false);
     setShowConfetti(false);
@@ -597,6 +657,7 @@ export default function MyFirstWordsGame() {
     setAttempts(0);
     setStartTs(performance.now());
     dragSessionRef.current = { active: false, startX: 0, moved: false };
+    dragStartRef.current = null;
   }
 
   function next() {
@@ -686,162 +747,78 @@ export default function MyFirstWordsGame() {
     }
   }
 
-  // ===== Slide & Join merge flow =====
-  function finishMerge() {
-    setMerging(false);
-    setMerged(true);
+  // ✅ NEW: Pointer-based drag system (works on desktop + touch)
+  const MERGE_THRESHOLD = 0.92;
 
-    fireSuccessFX();
-    popMerged();
+  function onLeftBubblePointerDown(e: React.PointerEvent) {
+    if (!started) return;
+    if (mergedRef.current || mergingRef.current) return;
 
-    playWord(item.word);
-    recordProgress(item.word);
+    e.preventDefault();
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+
+    cancelAnimRef.current?.();
+    cancelAnimRef.current = null;
+
+    setIsDragging(true);
+    setHasDraggedOnce(true);
+    dragStartRef.current = { x: e.clientX, p: progress };
   }
 
-  function setProgressFromDx(dx: number) {
-    const p = clamp(dx / travelPx, 0, 1);
+  function onStagePointerMove(e: React.PointerEvent) {
+    if (!isDragging) return;
+    if (!stageRef.current) return;
 
-    if (p < MAGNET_THRESHOLD) {
-      setProgress(p);
-      progressRef.current = p;
-      return;
-    }
+    const start = dragStartRef.current;
+    if (!start) return;
 
-    if (!mergedRef.current && !mergingRef.current) {
-      stopDragLoop();
-      cleanupDragListeners();
-      dragSessionRef.current.active = false;
-      setIsDragging(false);
+    // Define where bubbles start/end in pixels
+    const bubbleSize = Math.min(180, Math.max(120, Math.round(stageW * 0.14)));
+    const leftStartX = stageW * 0.35;
+    const rightStartX = stageW * 0.65;
+    const centerX = (leftStartX + rightStartX) / 2;
 
-      setProgress(1);
-      progressRef.current = 1;
+    // left bubble needs to travel from leftStartX -> centerX
+    const travel = Math.max(1, centerX - leftStartX);
 
-      setMerging(true);
-      window.setTimeout(() => finishMerge(), 260);
+    const dx = e.clientX - start.x;
+    const nextP = clamp(start.p + dx / travel, 0, 1);
+    setProgress(nextP);
+    progressRef.current = nextP;
+  }
+
+  function endDragAndSnap() {
+    setIsDragging(false);
+    dragStartRef.current = null;
+
+    // if close enough, snap to merge
+    if (progress >= MERGE_THRESHOLD) {
+      cancelAnimRef.current = animateNumber(progress, 1, 180, (v) => {
+        setProgress(v);
+        progressRef.current = v;
+      }, () => {
+        // Merge will be triggered by useEffect watching progress
+      });
+    } else {
+      // snap back
+      cancelAnimRef.current = animateNumber(progress, 0, 220, (v) => {
+        setProgress(v);
+        progressRef.current = v;
+      });
     }
   }
 
-  function endDragTapOrSnap() {
-    const moved = dragSessionRef.current.moved;
-    dragSessionRef.current.active = false;
-    cleanupDragListeners();
-
+  function onStagePointerUp() {
+    if (!isDragging) return;
     stopDragLoop();
-
-    // tap (not drag)
-    if (!moved && !mergedRef.current && !mergingRef.current) {
-      popLeft();
-      playTap();
-      setAttempts((a) => a + 1);
-    }
-
-    // dragged but not merged => snap back
-    if (moved && progressRef.current < MAGNET_THRESHOLD && !mergedRef.current && !mergingRef.current) {
-      setProgress(0);
-      progressRef.current = 0;
-    }
-
-    setIsDragging(false);
-
-    suppressClickRef.current = true;
-    window.setTimeout(() => (suppressClickRef.current = false), 0);
+    endDragAndSnap();
   }
 
-  function onWinMouseMove(e: MouseEvent) {
-    if (!dragSessionRef.current.active) return;
-    if (mergedRef.current || mergingRef.current) return;
-
-    const dx = e.clientX - dragSessionRef.current.startX;
-
-    if (!dragSessionRef.current.moved) {
-      if (Math.abs(dx) >= 6) {
-        dragSessionRef.current.moved = true;
-        setIsDragging(true);
-        startDragLoop();
-      } else return;
-    }
-
-    setProgressFromDx(dx);
+  function onStagePointerCancel() {
+    if (!isDragging) return;
+    stopDragLoop();
+    endDragAndSnap();
   }
-
-  function onWinMouseUp() {
-    if (!dragSessionRef.current.active) return;
-    endDragTapOrSnap();
-  }
-
-  function onWinTouchMove(e: TouchEvent) {
-    if (!dragSessionRef.current.active) return;
-    if (mergedRef.current || mergingRef.current) return;
-
-    e.preventDefault();
-
-    const t = e.touches[0];
-    if (!t) return;
-
-    const dx = t.clientX - dragSessionRef.current.startX;
-
-    if (!dragSessionRef.current.moved) {
-      if (Math.abs(dx) >= 6) {
-        dragSessionRef.current.moved = true;
-        setIsDragging(true);
-        startDragLoop();
-      } else return;
-    }
-
-    setProgressFromDx(dx);
-  }
-
-  function onWinTouchEnd() {
-    if (!dragSessionRef.current.active) return;
-    endDragTapOrSnap();
-  }
-
-  function beginDragAt(clientX: number) {
-    if (!started) return;
-    if (mergedRef.current || mergingRef.current) return;
-
-    dragSessionRef.current = { active: true, startX: clientX, moved: false };
-    setIsDragging(false);
-
-    cleanupDragListeners();
-    window.addEventListener("mousemove", onWinMouseMove as any);
-    window.addEventListener("mouseup", onWinMouseUp as any);
-    window.addEventListener("touchmove", onWinTouchMove as any, { passive: false });
-    window.addEventListener("touchend", onWinTouchEnd as any);
-    window.addEventListener("touchcancel", onWinTouchEnd as any);
-  }
-
-  function onLeftMouseDown(e: React.MouseEvent) {
-    if (!started) return;
-    e.preventDefault();
-    e.stopPropagation();
-    beginDragAt(e.clientX);
-  }
-
-  function onLeftTouchStart(e: React.TouchEvent) {
-    if (!started) return;
-    const t = e.touches[0];
-    if (!t) return;
-    e.preventDefault();
-    e.stopPropagation();
-    beginDragAt(t.clientX);
-  }
-
-  // ✅ IMPORTANT FIX: BOTH move towards center at same pace
-  const leftX = progress * travelPx;
-  const rightX = -progress * travelPx;
-
-  const dotTransition = merging
-    ? "transform 260ms cubic-bezier(0.2, 1, 0.2, 1)"
-    : isDragging
-      ? "transform 0ms"
-      : "transform 240ms ease-out";
-
-  const showHint = started && activeLevelId === "slide_join" && !merged && !merging && !isDragging && progress < 0.02;
-
-  // sizes
-  const bubbleSize = "clamp(140px, 16vw, 190px)";
-  const mergedSize = "clamp(240px, 30vw, 360px)";
 
   const confettiPieces = useMemo(() => {
     const count = 28;
@@ -1063,183 +1040,217 @@ export default function MyFirstWordsGame() {
             )}
 
             {/* ===== Level 1: Slide & Join ===== */}
-            {activeLevelId === "slide_join" && (
-              <>
-                {/* Side arrows centered */}
-                <button
-                  className="ts-side-btn"
-                  style={{ left: 16 }}
-                  onClick={prev}
-                  disabled={!started || idx === 0}
-                  aria-label="Previous"
-                >
-                  <span style={{ opacity: !started || idx === 0 ? 0.35 : 1 }}>‹</span>
-                </button>
+            {activeLevelId === "slide_join" && (() => {
+              // ✅ Compute responsive positions
+              const bubbleSize = Math.min(180, Math.max(120, Math.round(stageW * 0.14)));
+              const leftStartX = stageW * 0.35;
+              const rightStartX = stageW * 0.65;
+              const centerX = (leftStartX + rightStartX) / 2;
+              const travel = Math.max(1, centerX - leftStartX);
 
-                <button
-                  className="ts-side-btn"
-                  style={{
-                    right: 16,
-                    animation: started && merged && !isLast ? "tsArrowPulse 900ms ease-in-out infinite" : undefined,
-                  }}
-                  onClick={() => {
-                    // only allow next after merge (keeps it pedagogical)
-                    if (!merged || !started) return;
-                    next();
-                  }}
-                  disabled={!started || isLast}
-                  aria-label="Next"
-                >
-                  <span style={{ opacity: !started || isLast ? 0.35 : 1 }}>›</span>
-                </button>
+              const leftX = leftStartX + travel * progress;
+              const rightX = rightStartX - travel * progress;
 
-                {/* center line */}
-                <div className="absolute left-1/2 top-1/2 h-[6px] w-[56%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10" />
+              return (
+                <>
+                  <style>{`
+                    @keyframes nudge {
+                      0%,100% { transform: translateX(0); opacity: .55; }
+                      50% { transform: translateX(18px); opacity: .85; }
+                    }
+                  `}</style>
 
-                {/* hint */}
-                {showHint && (
-                  <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10" aria-hidden="true">
-                    <div className="ts-hint-wrap">
-                      <div className="ts-chevrons">
-                        <span className="ts-chevron" />
-                        <span className="ts-chevron" />
-                        <span className="ts-chevron" />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* dots */}
-                {!merged && (
-                  <>
-                    {/* right bubble */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (!started || merging) return;
-                        popRight();
-                        setAttempts((a) => a + 1);
-                      }}
-                      className="absolute bg-transparent border-0 p-0 select-none"
-                      style={{
-                        width: bubbleSize,
-                        height: bubbleSize,
-                        left: "68%",
-                        top: "50%",
-                        transform: `translate(calc(-50% + ${rightX}px), -50%)`,
-                        transition: dotTransition,
-                        willChange: "transform",
-                        zIndex: 5,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div key={rightPopKey} className="ts-bubble-inner" style={{ animation: "tsTapPop 220ms ease-out" }}>
-                        <img src={BUBBLE_RIGHT} alt="" draggable={false} className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }} />
-                        <span className="relative z-10 font-extrabold text-[64px] md:text-[72px] leading-none text-white" style={{ textShadow: "0 6px 14px rgba(0,0,0,0.35)" }}>
-                          {item.right}
-                        </span>
-                      </div>
-                    </button>
-
-                    {/* left bubble */}
-                    <button
-                      type="button"
-                      onMouseDown={onLeftMouseDown}
-                      onTouchStart={onLeftTouchStart}
-                      onClick={() => {
-                        if (!started) return;
-                        if (suppressClickRef.current) return;
-                        if (!merging) {
-                          popLeft();
-                          playTap();
-                          setAttempts((a) => a + 1);
-                        }
-                      }}
-                      className="absolute bg-transparent border-0 p-0 select-none"
-                      style={{
-                        width: bubbleSize,
-                        height: bubbleSize,
-                        left: "32%",
-                        top: "50%",
-                        transform: `translate(calc(-50% + ${leftX}px), -50%)`,
-                        transition: dotTransition,
-                        touchAction: "none",
-                        userSelect: "none",
-                        WebkitUserSelect: "none",
-                        cursor: "grab",
-                        willChange: "transform",
-                        zIndex: 5,
-                      }}
-                    >
-                      <div key={leftPopKey} className="ts-bubble-inner" style={{ animation: "tsTapPop 220ms ease-out" }}>
-                        <img src={BUBBLE_LEFT} alt="" draggable={false} className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }} />
-                        <span className="relative z-10 font-extrabold text-[64px] md:text-[72px] leading-none text-white" style={{ textShadow: "0 6px 14px rgba(0,0,0,0.35)" }}>
-                          {item.left}
-                        </span>
-                      </div>
-                    </button>
-                  </>
-                )}
-
-                {/* merged bubble */}
-                {merged && (
+                  {/* Side arrows */}
                   <button
-                    type="button"
-                    onClick={() => {
-                      popMerged();
-                      playWord(item.word);
-                    }}
-                    className="absolute bg-transparent border-0 p-0"
-                    style={{
-                      left: "50%",
-                      top: "50%",
-                      width: mergedSize,
-                      height: mergedSize,
-                      transform: "translate(-50%, -50%)",
-                      animation: "tsPopIn 220ms ease-out forwards",
-                    }}
+                    className="ts-side-btn"
+                    style={{ left: 16 }}
+                    onClick={prev}
+                    disabled={!started || idx === 0}
+                    aria-label="Previous"
                   >
-                    <div
-                      key={mergedPopKey}
-                      className="relative h-full w-full grid place-items-center"
-                      style={{ animation: "tsMergedPulse 1500ms ease-in-out infinite 220ms" }}
-                    >
-                      <img src={BUBBLE_MERGED} alt="" draggable={false} className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }} />
-                      <span className="relative z-10 font-extrabold text-[84px] md:text-[96px] leading-none text-white" style={{ textShadow: "0 8px 18px rgba(0,0,0,0.35)" }}>
-                        {item.word}
-                      </span>
-                    </div>
+                    <span style={{ opacity: !started || idx === 0 ? 0.35 : 1 }}>‹</span>
                   </button>
-                )}
 
-                {/* next guidance after merge */}
-                {started && merged && (
-                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40">
-                    {!isLast ? (
-                      <div className="rounded-2xl bg-white/85 backdrop-blur px-5 py-3 shadow-lg border border-black/5 text-center">
-                        <div className="text-sm font-extrabold text-slate-900">Great! Tap Next →</div>
-                        <button
-                          onClick={next}
-                          className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
-                        >
-                          Next
-                        </button>
+                  <button
+                    className="ts-side-btn"
+                    style={{
+                      right: 16,
+                      animation: started && merged && !isLast ? "tsArrowPulse 900ms ease-in-out infinite" : undefined,
+                    }}
+                    onClick={() => {
+                      if (!merged || !started) return;
+                      next();
+                    }}
+                    disabled={!started || isLast}
+                    aria-label="Next"
+                  >
+                    <span style={{ opacity: !started || isLast ? 0.35 : 1 }}>›</span>
+                  </button>
+
+                  {/* Stage with pointer handlers */}
+                  <div
+                    ref={stageRef}
+                    className="absolute inset-0 select-none"
+                    style={{ touchAction: "none" }}
+                    onPointerMove={onStagePointerMove}
+                    onPointerUp={onStagePointerUp}
+                    onPointerCancel={onStagePointerCancel}
+                  >
+                    {/* Instruction pill (top-center) */}
+                    {started && !merged && (
+                      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+                        <div className="px-4 py-2 rounded-full bg-white/90 text-black text-sm font-semibold shadow-lg">
+                          {!hasDraggedOnce ? "Drag the left bubble to join the sounds" : "Keep sliding… until they touch!"}
+                        </div>
                       </div>
-                    ) : (
-                      <div className="rounded-2xl bg-white/85 backdrop-blur px-5 py-3 shadow-lg border border-black/5 text-center">
-                        <div className="text-sm font-extrabold text-slate-900">All done! 🎉</div>
-                        <button
-                          onClick={() => setIdx(0)}
-                          className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
+                    )}
+
+                    {/* Arrow hint animation (only before first drag) */}
+                    {started && !hasDraggedOnce && !merged && (
+                      <div className="absolute inset-0 pointer-events-none">
+                        <div
+                          className="absolute top-1/2 -translate-y-1/2"
+                          style={{ left: `${leftStartX}px`, width: `${rightStartX - leftStartX}px` }}
                         >
-                          Play again
+                          <div className="flex items-center gap-2 opacity-70 animate-[nudge_1.1s_ease-in-out_infinite]">
+                            <span className="text-white/80 text-2xl">➜</span>
+                            <span className="text-white/60 text-base">slide</span>
+                            <span className="text-white/80 text-2xl">➜</span>
+                            <span className="text-white/80 text-2xl">➜</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Rail line */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 left-0 right-0 mx-auto h-[4px] bg-white/20 rounded-full"
+                      style={{ width: "62%" }}
+                    />
+
+                    {/* Bubbles */}
+                    {!merged && (
+                      <>
+                        {/* Left bubble (draggable) */}
+                        <div
+                          className="absolute top-1/2"
+                          style={{
+                            left: `${leftX}px`,
+                            transform: "translate(-50%, -50%)",
+                            transition: isDragging ? "none" : "transform 220ms ease-out",
+                          }}
+                        >
+                          <button
+                            type="button"
+                            onPointerDown={onLeftBubblePointerDown}
+                            onClick={() => {
+                              if (!started || merging) return;
+                              popLeft();
+                              playTap();
+                              setAttempts((a) => a + 1);
+                            }}
+                            className="rounded-full shadow-lg grid place-items-center text-white font-extrabold bg-gradient-to-br from-blue-400 to-blue-600 border-4 border-white/30"
+                            style={{
+                              width: bubbleSize,
+                              height: bubbleSize,
+                              touchAction: "none",
+                              cursor: "grab",
+                              fontSize: Math.round(bubbleSize * 0.4),
+                            }}
+                            aria-label="Drag left bubble"
+                          >
+                            {item.left}
+                          </button>
+                          {/* Phonics label */}
+                          <div className="mt-3 text-center text-white/90 text-lg font-semibold" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                            {phonicLabel(item.left)}
+                          </div>
+                        </div>
+
+                        {/* Right bubble */}
+                        <div
+                          className="absolute top-1/2"
+                          style={{
+                            left: `${rightX}px`,
+                            transform: "translate(-50%, -50%)",
+                            transition: isDragging ? "none" : "transform 220ms ease-out",
+                          }}
+                        >
+                          <div
+                            className="rounded-full shadow-lg grid place-items-center text-white font-extrabold bg-gradient-to-br from-purple-400 to-purple-600 border-4 border-white/30"
+                            style={{
+                              width: bubbleSize,
+                              height: bubbleSize,
+                              fontSize: Math.round(bubbleSize * 0.4),
+                            }}
+                            aria-label="Right bubble"
+                          >
+                            {item.right}
+                          </div>
+                          {/* Phonics label */}
+                          <div className="mt-3 text-center text-white/90 text-lg font-semibold" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                            {phonicLabel(item.right)}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Merged bubble */}
+                    {merged && (
+                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            popMerged();
+                            playWord(item.word);
+                          }}
+                          className="rounded-full shadow-2xl grid place-items-center text-white font-extrabold bg-gradient-to-br from-emerald-400 to-emerald-600 border-4 border-white/40 animate-[tsPopIn_220ms_ease-out_forwards]"
+                          style={{
+                            width: Math.min(240, Math.round(stageW * 0.25)),
+                            height: Math.min(240, Math.round(stageW * 0.25)),
+                            fontSize: Math.round(Math.min(240, Math.round(stageW * 0.25)) * 0.35),
+                            animation: "tsMergedPulse 1500ms ease-in-out infinite",
+                          }}
+                        >
+                          {item.word}
                         </button>
+                        {/* Phonics label for merged word */}
+                        <div className="mt-4 text-center text-white text-xl font-bold" style={{ textShadow: "0 2px 10px rgba(0,0,0,0.4)" }}>
+                          /{item.word}/
+                        </div>
                       </div>
                     )}
                   </div>
-                )}
-              </>
-            )}
+
+                  {/* Next guidance after merge */}
+                  {started && merged && (
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-40">
+                      {!isLast ? (
+                        <div className="rounded-2xl bg-white/85 backdrop-blur px-5 py-3 shadow-lg border border-black/5 text-center">
+                          <div className="text-sm font-extrabold text-slate-900">Great! Tap Next →</div>
+                          <button
+                            onClick={next}
+                            className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="rounded-2xl bg-white/85 backdrop-blur px-5 py-3 shadow-lg border border-black/5 text-center">
+                          <div className="text-sm font-extrabold text-slate-900">All done! 🎉</div>
+                          <button
+                            onClick={() => setIdx(0)}
+                            className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
+                          >
+                            Play again
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
 
             {/* ===== Level 2: Tap the Word ===== */}
             {activeLevelId === "tap_word" && (
