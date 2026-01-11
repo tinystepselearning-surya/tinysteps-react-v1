@@ -57,6 +57,14 @@ const PHONICS_GAMES = [
     color: 'text-green-300',
     stageId: 'sound_foundations',
   },
+  {
+    id: 'blend_2letters',
+    title: 'Blend Builder',
+    description: 'Age 4–6 — Drag bubbles to blend sounds into words',
+    route: '/kids/games/phonics/blend-builder',
+    color: 'text-purple-300',
+    stageId: 'blend_builder',
+  },
   // More games will be added here later
 ];
 
