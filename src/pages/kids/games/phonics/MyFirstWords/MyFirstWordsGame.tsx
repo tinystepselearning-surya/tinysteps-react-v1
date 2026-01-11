@@ -28,7 +28,7 @@ export const MY_FIRST_WORDS_META = {
 const GAME_ID = "my_first_words_v1";
 const PROGRESS_DOC_ID = "phonics_my_first_words";
 
-const ASSET_BASE = "/games/phonics/blend2letters";
+const ASSET_BASE = "/games/phonics/my-first-words";
 const BUBBLE_LEFT = `${ASSET_BASE}/bubble-left.png`;
 const BUBBLE_RIGHT = `${ASSET_BASE}/bubble-right.png`;
 const BUBBLE_MERGED = `${ASSET_BASE}/bubble-merged.png`;
@@ -115,16 +115,38 @@ function makeTapOptions(target: string, pool: string[]) {
 
 export default function MyFirstWordsGame() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const kidId =
     searchParams.get("kidId") ||
     localStorage.getItem("ts_active_kid_v1") ||
     "";
 
-  const [activeLevelId, setActiveLevelId] = useState<LevelId>("slide_join");
+  type Mode = "slide_join" | "tap_word";
+
+  // ✅ Lock mode from URL (?mode=slide_join or ?mode=tap_word)
+  const urlModeRaw = (searchParams.get("mode") || "").toLowerCase();
+  const forcedMode: Mode | null =
+    urlModeRaw === "tap_word" ? "tap_word" :
+    urlModeRaw === "slide_join" ? "slide_join" :
+    null;
+
+  const subtitle =
+    forcedMode === "slide_join"
+      ? "Level 1: Slide & Join"
+      : forcedMode === "tap_word"
+        ? "Level 2: Tap the Word"
+        : "Level 1: Slide & Join · Level 2: Tap the Word";
+
+  const [activeLevelId, setActiveLevelId] = useState<LevelId>(forcedMode ?? "slide_join");
   const [activeGroupId, setActiveGroupId] = useState<VowelGroupId | null>(null);
   const [isInGameplay, setIsInGameplay] = useState(false);
+
+  // ✅ Sync mode from URL when it changes
+  useEffect(() => {
+    if (forcedMode && activeLevelId !== forcedMode) setActiveLevelId(forcedMode);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [forcedMode]);
 
   const activeLevel = useMemo(() => LEVELS.find((l) => l.id === activeLevelId) ?? LEVELS[0], [activeLevelId]);
 
@@ -502,6 +524,17 @@ export default function MyFirstWordsGame() {
     window.removeEventListener("touchmove", onWinTouchMove as any);
     window.removeEventListener("touchend", onWinTouchEnd as any);
     window.removeEventListener("touchcancel", onWinTouchEnd as any);
+  }
+
+  function onPickMode(next: LevelId) {
+    if (forcedMode) return; // Stage-2 selection locks the level
+    setActiveLevelId(next);
+
+    setSearchParams((prev) => {
+      const p = new URLSearchParams(prev);
+      p.set("mode", next);
+      return p;
+    });
   }
 
   function goBack() {
@@ -1323,34 +1356,33 @@ export default function MyFirstWordsGame() {
 
           <div className="w-full max-w-6xl mx-auto text-center mb-8 relative z-10">
             <h1 className="text-5xl md:text-6xl font-bold text-white drop-shadow-2xl">{MY_FIRST_WORDS_META.title}</h1>
-            <p className="text-lg text-purple-300 mt-2 drop-shadow-lg">{MY_FIRST_WORDS_META.tagline}</p>
+            <p className="text-lg text-purple-300 mt-2 drop-shadow-lg">{subtitle}</p>
 
-            {/* Level pills */}
-            <div className="mt-8 inline-block">
-              <div className="text-xs font-semibold text-white/70 mb-3 tracking-wider uppercase">Choose Level</div>
-              <div className="flex flex-wrap justify-center gap-3 px-6 py-4 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-md shadow-2xl">
-                {LEVELS.map((l) => {
-                  const active = activeLevelId === l.id;
-                  return (
-                    <button
-                      key={l.id}
-                      onClick={() => {
-                        setActiveLevelId(l.id);
-                        setActiveGroupId(null);
-                      }}
-                      className={`px-6 py-3 rounded-full font-bold text-base md:text-lg transition-all whitespace-nowrap ${
-                        active
-                          ? "bg-white/25 text-white border-2 border-white/60 ring-2 ring-white/30 shadow-xl scale-105"
-                          : "bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/12 hover:border-white/40 hover:text-white/90"
-                      }`}
-                    >
-                      {l.title}
-                    </button>
-                  );
-                })}
+            {/* Level pills - hidden when URL forces a specific mode */}
+            {forcedMode == null && (
+              <div className="mt-8 inline-block">
+                <div className="text-xs font-semibold text-white/70 mb-3 tracking-wider uppercase">Choose Level</div>
+                <div className="flex flex-wrap justify-center gap-3 px-6 py-4 rounded-2xl bg-black/30 border border-white/10 backdrop-blur-md shadow-2xl">
+                  {LEVELS.map((l) => {
+                    const active = activeLevelId === l.id;
+                    return (
+                      <button
+                        key={l.id}
+                        onClick={() => onPickMode(l.id)}
+                        className={`px-6 py-3 rounded-full font-bold text-base md:text-lg transition-all whitespace-nowrap ${
+                          active
+                            ? "bg-white/25 text-white border-2 border-white/60 ring-2 ring-white/30 shadow-xl scale-105"
+                            : "bg-white/5 text-white/70 border-2 border-white/20 hover:bg-white/12 hover:border-white/40 hover:text-white/90"
+                        }`}
+                      >
+                        {l.title}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 text-sm text-white/70">{activeLevel.subtitle}</div>
               </div>
-              <div className="mt-3 text-sm text-white/70">{activeLevel.subtitle}</div>
-            </div>
+            )}
           </div>
 
           {/* Group cards */}
