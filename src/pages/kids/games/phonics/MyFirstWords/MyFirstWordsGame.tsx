@@ -491,7 +491,7 @@ export default function MyFirstWordsGame() {
     setStageW(r.width);
 
     return () => ro.disconnect();
-  }, []);
+  }, [isInGameplay]);
 
   // preload audio when item changes (slide_join) and when tap target changes (tap_word)
   useEffect(() => {
@@ -510,7 +510,7 @@ export default function MyFirstWordsGame() {
 
   // Reset when switching group or level or entering gameplay
   useEffect(() => {
-    setStarted(false);
+    setStarted(isInGameplay);
 
     // slide_join reset
     setMerged(false);
@@ -528,7 +528,7 @@ export default function MyFirstWordsGame() {
     setTapOrder([]);
 
     setAttempts(0);
-    setStartTs(null);
+    setStartTs(isInGameplay ? performance.now() : null);
 
     dragSessionRef.current = { active: false, startX: 0, moved: false };
     suppressClickRef.current = false;
@@ -763,6 +763,7 @@ export default function MyFirstWordsGame() {
     setIsDragging(true);
     setHasDraggedOnce(true);
     dragStartRef.current = { x: e.clientX, p: progress };
+    startDragLoop();
   }
 
   function onStagePointerMove(e: React.PointerEvent) {
@@ -1112,7 +1113,7 @@ export default function MyFirstWordsGame() {
                           className="absolute top-1/2 -translate-y-1/2"
                           style={{ left: `${leftStartX}px`, width: `${rightStartX - leftStartX}px` }}
                         >
-                          <div className="flex items-center gap-2 opacity-70 animate-[nudge_1.1s_ease-in-out_infinite]">
+                          <div className="flex items-center gap-2 opacity-70" style={{ animation: "nudge 1.1s ease-in-out infinite" }}>
                             <span className="text-white/80 text-2xl">➜</span>
                             <span className="text-white/60 text-base">slide</span>
                             <span className="text-white/80 text-2xl">➜</span>
@@ -1143,6 +1144,9 @@ export default function MyFirstWordsGame() {
                           <button
                             type="button"
                             onPointerDown={onLeftBubblePointerDown}
+                            onPointerMove={onStagePointerMove}
+                            onPointerUp={onStagePointerUp}
+                            onPointerCancel={onStagePointerCancel}
                             onClick={() => {
                               if (!started || merging) return;
                               popLeft();
