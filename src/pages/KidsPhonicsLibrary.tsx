@@ -8,7 +8,7 @@ import { db } from '../lib/firebaseConfig';
 // Stage configuration (matches Parent journey UI)
 const STAGES = [
   { id: 'sound_foundations', title: 'Sound Foundations', stageNumber: 1 },
-  { id: 'blend_builder', title: 'Blend Builder', stageNumber: 2 },
+  { id: 'blend_builder', title: 'My First Words', stageNumber: 2 },
   { id: 'cvc_word_reader', title: 'CVC Word Reader', stageNumber: 3 },
   { id: 'early_reader_fluency', title: 'Early Reader Fluency', stageNumber: 4 },
   { id: 'rules_track', title: 'Rules Track', stageNumber: 5 },
@@ -59,14 +59,30 @@ const PHONICS_GAMES = [
   },
   {
     id: 'blend_2letters',
-    title: 'Blend Builder',
+    title: 'My First Words',
     description: 'Age 4–6 — Drag bubbles to blend sounds into words',
-    route: '/kids/games/phonics/blend-builder',
+    route: '/kids/games/phonics/my-first-words',
     color: 'text-purple-300',
     stageId: 'blend_builder',
   },
   // More games will be added here later
 ];
+
+// Stage 2: My First Words levels
+const MY_FIRST_WORDS_LEVELS = [
+  {
+    id: "mfw_l1",
+    title: "1) Make the Word (Slide & Join)",
+    subtitle: "Drag bubbles to join sounds",
+    mode: "slide_join",
+  },
+  {
+    id: "mfw_l2",
+    title: "2) Tap the Word",
+    subtitle: "Listen and tap what you hear",
+    mode: "tap_word",
+  },
+] as const;
 
 const KidsPhonicsLibrary: React.FC = () => {
   const navigate = useNavigate();
@@ -259,8 +275,30 @@ const KidsPhonicsLibrary: React.FC = () => {
         )
       ) : null}
 
-      <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8" style={{ zIndex: 10 }}>
-        {filteredGames.map((game) => {
+      <div className="w-full max-w-5xl mx-auto" style={{ zIndex: 10 }}>
+        {/* Stage 2: My First Words -> show levels instead of one game card */}
+        {selectedStageId === 'blend_builder' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {MY_FIRST_WORDS_LEVELS.map((lvl) => (
+              <button
+                key={lvl.id}
+                onClick={() => {
+                  const qs = new URLSearchParams();
+                  if (kidId) qs.set("kidId", kidId);
+                  qs.set("mode", lvl.mode);
+                  navigate(`/kids/games/phonics/my-first-words?${qs.toString()}`);
+                }}
+                className="text-left rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-6 hover:bg-white/15 hover:-translate-y-1 transition-all shadow-lg hover:shadow-2xl"
+              >
+                <div className="text-white text-2xl font-extrabold drop-shadow-lg">{lvl.title}</div>
+                <div className="mt-2 text-white/80 text-sm">{lvl.subtitle}</div>
+                <div className="mt-4 text-yellow-300 font-bold">Play</div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {filteredGames.map((game) => {
           const summary = summariesByGameId[game.id];
           
           // Determine status badge
@@ -358,6 +396,8 @@ const KidsPhonicsLibrary: React.FC = () => {
               </div>
             </div>
           </>
+        )}
+          </div>
         )}
       </div>
     </div>

@@ -556,11 +556,45 @@ export default function MyFirstWordsGame() {
     }
   }
 
+  function resetForNewItemSync() {
+    // stop any active drag
+    cleanupDragListeners();
+    stopDragLoop();
+    cleanupMergedSwipeListeners();
+
+    // CRITICAL: clear merge state BEFORE idx changes (prevents "flash merged next word")
+    setMerged(false);
+    mergedRef.current = false;
+
+    setMerging(false);
+    mergingRef.current = false;
+
+    setProgress(0);
+    progressRef.current = 0;
+
+    setIsDragging(false);
+    setShowBurst(false);
+    setShowConfetti(false);
+
+    // reset merged swipe state
+    setMergedDragX(0);
+    setIsSwipingMerged(false);
+    mergedSwipeRef.current = { active: false, startX: 0 };
+
+    // reset attempts/timing for the next word
+    setAttempts(0);
+    setStartTs(performance.now()); // restart timer for next item
+
+    dragSessionRef.current = { active: false, startX: 0, moved: false };
+    suppressClickRef.current = false;
+  }
+
   function next() {
     if (!activeGroup) return;
 
     if (activeLevelId === "slide_join") {
       if (!hasItems) return;
+      resetForNewItemSync();
       setIdx((p) => clamp(p + 1, 0, ITEMS.length - 1));
       return;
     }
@@ -578,6 +612,7 @@ export default function MyFirstWordsGame() {
 
     if (activeLevelId === "slide_join") {
       if (!hasItems) return;
+      resetForNewItemSync();
       setIdx((p) => clamp(p - 1, 0, ITEMS.length - 1));
       return;
     }
@@ -1375,31 +1410,7 @@ export default function MyFirstWordsGame() {
               </div>
             )}
 
-            {/* Start overlay */}
-            {!started && activeGroup && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-                <div className="w-full max-w-xl rounded-2xl bg-white px-6 py-6 shadow-xl">
-                  <div className="text-center">
-                    <div className="text-xl font-extrabold text-slate-900">{activeLevel.title}</div>
-                    <div className="mt-2 text-sm text-slate-600">{activeGroup.title}</div>
-                    <div className="mt-2 text-xs text-slate-500">
-                      Families: {activeGroup.words.map((w) => `-${w}`).join("  ")}
-                    </div>
-                  </div>
 
-                  <button
-                    className="mt-5 w-full rounded-2xl bg-slate-900 px-4 py-3 text-white font-bold text-lg"
-                    onClick={onStart}
-                  >
-                    Start (Fullscreen)
-                  </button>
-
-                  <div className="mt-3 text-xs text-slate-500 text-center">
-                    Note: audio + fullscreen needs one tap.
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Bottom controls */}
@@ -1494,10 +1505,21 @@ export default function MyFirstWordsGame() {
                 <button
                   key={group.id}
                   onClick={() => {
+                    // select group + enter gameplay
                     setActiveGroupId(group.id);
                     setIsInGameplay(true);
                     setIdx(0);
+
+                    // reset round state immediately
                     reset();
+
+                    // start instantly (same click = gesture)
+                    setStarted(true);
+                    if (startTs === null) setStartTs(performance.now());
+
+                    // request fullscreen + unlock audio
+                    requestRealFullscreen();
+                    unlockAudio();
                   }}
                   className={`${bgGradient} p-6 rounded-2xl border border-white/20 backdrop-blur-md transition-all hover:-translate-y-1 hover:shadow-2xl cursor-pointer text-left`}
                 >
