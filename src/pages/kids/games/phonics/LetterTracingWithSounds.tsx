@@ -61,7 +61,20 @@ const NEXT_ARROW_SRC = "/games/phonics/sound-detective/nextarrow.png";
 // 🖼️ reward image best-effort — prefer the sound-detective folder used by existing assets
 const SOUND_DETECTIVE_DIR = "/games/phonics/sound-detective";
 
-const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
+const STROKE_COLORS = [
+  "#2563EB",
+  "#EC4899",
+  "#22C55E",
+  "#F59E0B",
+  "#8B5CF6",
+  "#14B8A6",
+  "#F97316",
+  "#06B6D4",
+  "#EF4444",
+  "#10B981",
+  "#A855F7",
+  "#F43F5E",
+] as const;
 
 // ⭐ sizes
 const STAR_START_SIZE = 18;
@@ -1140,8 +1153,17 @@ export default function LetterTracingWithSounds() {
   -------------------- */
   const [strokeIndex, setStrokeIndex] = useState(0);
 
+  // Auto-color per letter
+  const autoColor = useMemo(() => {
+    const safePairIndex = Math.max(0, pairIndex);
+    const seed = isPretrace
+      ? safePairIndex
+      : safePairIndex * 2 + step;
+    return STROKE_COLORS[seed % STROKE_COLORS.length];
+  }, [pairIndex, isPretrace, step]);
+
   const [selectedColor, setSelectedColor] =
-    useState<(typeof STROKE_COLORS)[number]>(STROKE_COLORS[0]);
+    useState<(typeof STROKE_COLORS)[number]>(autoColor);
 
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
@@ -1458,7 +1480,9 @@ export default function LetterTracingWithSounds() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
-  }, [currentLetterId, pretraceId, clearTimers, stopTraceAudio, stopLetterSound]);
+
+    setSelectedColor(autoColor);
+  }, [currentLetterId, pretraceId, clearTimers, stopTraceAudio, stopLetterSound, autoColor]);
 
   // Reset on stroke change
   useEffect(() => {
@@ -2735,7 +2759,7 @@ export default function LetterTracingWithSounds() {
             <div className="flex items-center gap-2 rounded-full border bg-white px-3 py-2">
               <span className="text-xs sm:text-sm font-semibold text-slate-700">Color</span>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap max-w-[280px]">
                 {STROKE_COLORS.map((c) => {
                   const active = c === selectedColor;
                   return (
@@ -2804,8 +2828,7 @@ export default function LetterTracingWithSounds() {
         <div
           className={`relative overflow-hidden rounded-2xl border shadow-sm flex flex-col ${fs ? "flex-1 min-h-0" : ""}`}
           style={{
-            background:
-              "radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)",
+            background: `radial-gradient(circle at 50% 50%, ${hexToRgba(selectedColor, 0.08)}, transparent 60%), radial-gradient(circle at 20% 20%, rgba(56,189,248,0.18), transparent 55%), radial-gradient(circle at 80% 30%, rgba(244,114,182,0.16), transparent 55%), radial-gradient(circle at 45% 85%, rgba(34,197,94,0.10), transparent 55%), linear-gradient(135deg, #f8fbff 0%, #fff7fb 45%, #fffdf7 100%)`,
           }}
         >
           <ConfettiBurst fire={confetti} />
@@ -2889,7 +2912,7 @@ export default function LetterTracingWithSounds() {
                     key={`outline-${s.id ?? i}`}
                     d={(s.pathD ?? "").trim()}
                     fill="none"
-                    stroke={hexToRgba(c, 0.1)}
+                    stroke={hexToRgba(c, 0.14)}
                     strokeWidth={10}
                     strokeLinecap="round"
                     strokeLinejoin="round"
