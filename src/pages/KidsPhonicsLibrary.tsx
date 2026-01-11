@@ -70,12 +70,17 @@ const PHONICS_GAMES = [
 
 const KidsPhonicsLibrary: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const kidId = searchParams.get('kidId') || '';
 
   const location = useLocation();
   const [recovering, setRecovering] = useState(false);
-  const [selectedStageId, setSelectedStageId] = useState<string>('sound_foundations');
+  
+  // Read phase from URL query param or default to sound_foundations
+  const phaseParam = searchParams.get('phase') || '';
+  const validStageIds = STAGES.map(s => s.id);
+  const initialStageId = validStageIds.includes(phaseParam) ? phaseParam : 'sound_foundations';
+  const [selectedStageId, setSelectedStageId] = useState<string>(initialStageId);
 
   // Auto-recover kidId from localStorage if missing in URL
   useEffect(() => {
@@ -215,7 +220,13 @@ const KidsPhonicsLibrary: React.FC = () => {
           {STAGES.map((stage) => (
             <button
               key={stage.id}
-              onClick={() => setSelectedStageId(stage.id)}
+              onClick={() => {
+                setSelectedStageId(stage.id);
+                // Update URL query param to persist phase selection
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('phase', stage.id);
+                setSearchParams(newParams, { replace: true });
+              }}
               className={`px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 selectedStageId === stage.id
                   ? 'bg-white/20 text-white border-2 border-white/40'
