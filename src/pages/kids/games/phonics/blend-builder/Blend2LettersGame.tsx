@@ -15,6 +15,12 @@ const PROGRESS_DOC_ID = "phonics_blend_2letters";
 
 const ITEMS: Item[] = [{ left: "a", right: "t", word: "at" }];
 
+const ASSET_BASE = "/games/phonics/blend2letters";
+const BG_URL = `${ASSET_BASE}/blend-bg.jpg`;
+const BUBBLE_LEFT = `${ASSET_BASE}/bubble-left.png`;
+const BUBBLE_RIGHT = `${ASSET_BASE}/bubble-right.png`;
+const BUBBLE_MERGED = `${ASSET_BASE}/bubble-merged.png`;
+
 function clamp(n: number, a: number, b: number) {
   return Math.max(a, Math.min(b, n));
 }
@@ -479,16 +485,17 @@ export default function Blend2LettersGame() {
       <div className="flex-1 min-h-0">
         <div className="mx-auto h-full w-full max-w-6xl px-4 py-4 flex flex-col min-h-0">
           <div className="flex-1 min-h-0 rounded-2xl border border-white/10 bg-[#0b1220] shadow-sm overflow-hidden">
-            <div ref={arenaRef} className="relative h-full w-full" style={{ touchAction: "none" }}>
-              {/* stars */}
-              <div
-                className="absolute inset-0 opacity-70"
-                style={{
-                  backgroundImage:
-                    "radial-gradient(circle at 20% 30%, rgba(255,255,255,.18) 1px, transparent 1px), radial-gradient(circle at 70% 60%, rgba(255,255,255,.14) 1px, transparent 1px), radial-gradient(circle at 40% 80%, rgba(255,255,255,.10) 1px, transparent 1px)",
-                  backgroundSize: "240px 240px",
-                }}
-              />
+            <div
+              ref={arenaRef}
+              className="relative h-full w-full"
+              style={{
+                touchAction: "none",
+                backgroundImage: `url(${BG_URL})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            >
 
               {/* line */}
               <div className="absolute left-1/2 top-1/2 h-[6px] w-[56%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10" />
@@ -518,18 +525,41 @@ export default function Blend2LettersGame() {
                     }}
                     className={[
                       "absolute left-[68%] top-1/2 -translate-x-1/2 -translate-y-1/2",
-                      "h-[96px] w-[96px] rounded-full font-bold text-4xl",
-                      "bg-white text-slate-900 shadow-lg transition select-none",
+                      "h-[116px] w-[116px]",
+                      "bg-transparent border-0 p-0",
+                      "relative flex items-center justify-center select-none",
                     ].join(" ")}
                     style={{
                       transform: `translate(calc(-50% + ${rightX}px), -50%)`,
                       transition: dotTransition,
-                      animation: started && !merging ? "tsPulseGlow 1600ms ease-in-out infinite 800ms" : undefined,
                       willChange: "transform",
                       zIndex: 5,
+                      cursor: "pointer",
                     }}
                   >
-                    {item.right}
+                    <img
+                      src={BUBBLE_RIGHT}
+                      alt=""
+                      draggable={false}
+                      className="absolute inset-0 h-full w-full"
+                      style={{ pointerEvents: "none" }}
+                    />
+
+                    {/* white letter inside */}
+                    <span
+                      className="relative z-10 font-extrabold text-[54px] leading-none text-white"
+                      style={{ textShadow: "0 6px 14px rgba(0,0,0,0.35)" }}
+                    >
+                      {item.right}
+                    </span>
+
+                    {/* labels under bubble */}
+                    <div className="absolute left-1/2 top-full mt-3 -translate-x-1/2 text-center pointer-events-none">
+                      <div className="text-[26px] md:text-[30px] font-extrabold text-slate-900">sound 2</div>
+                      <div className="mt-6 text-[34px] md:text-[38px] font-semibold italic text-slate-900">
+                        /{item.right}/
+                      </div>
+                    </div>
                   </button>
 
                   {/* left dot */}
@@ -547,13 +577,13 @@ export default function Blend2LettersGame() {
                     }}
                     className={[
                       "absolute left-[32%] top-1/2 -translate-x-1/2 -translate-y-1/2",
-                      "h-[96px] w-[96px] rounded-full font-bold text-4xl",
-                      "bg-white text-slate-900 shadow-lg transition select-none",
+                      "h-[116px] w-[116px]",
+                      "bg-transparent border-0 p-0",
+                      "relative flex items-center justify-center select-none",
                     ].join(" ")}
                     style={{
                       transform: `translate(calc(-50% + ${leftX}px), -50%)`,
                       transition: dotTransition,
-                      animation: started && !merging && !isDragging ? "tsPulseGlow 1600ms ease-in-out infinite" : undefined,
                       touchAction: "none",
                       userSelect: "none",
                       WebkitUserSelect: "none",
@@ -562,7 +592,29 @@ export default function Blend2LettersGame() {
                       zIndex: 5,
                     }}
                   >
-                    {item.left}
+                    <img
+                      src={BUBBLE_LEFT}
+                      alt=""
+                      draggable={false}
+                      className="absolute inset-0 h-full w-full"
+                      style={{ pointerEvents: "none" }}
+                    />
+
+                    {/* white letter inside */}
+                    <span
+                      className="relative z-10 font-extrabold text-[54px] leading-none text-white"
+                      style={{ textShadow: "0 6px 14px rgba(0,0,0,0.35)" }}
+                    >
+                      {item.left}
+                    </span>
+
+                    {/* labels under bubble */}
+                    <div className="absolute left-1/2 top-full mt-3 -translate-x-1/2 text-center pointer-events-none">
+                      <div className="text-[26px] md:text-[30px] font-extrabold text-slate-900">sound 1</div>
+                      <div className="mt-6 text-[34px] md:text-[38px] font-semibold italic text-slate-900">
+                        /{item.left}/
+                      </div>
+                    </div>
                   </button>
                 </>
               )}
@@ -572,12 +624,24 @@ export default function Blend2LettersGame() {
                 <button
                   type="button"
                   onClick={() => speak(item.word)}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[108px] w-[108px] rounded-full bg-white text-slate-900 shadow-xl font-extrabold text-4xl"
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[132px] w-[132px] bg-transparent border-0 p-0 relative flex items-center justify-center"
                   style={{
                     animation: "tsPopIn 220ms ease-out forwards, tsMergedPulse 1500ms ease-in-out infinite 280ms",
                   }}
                 >
-                  {item.word}
+                  <img
+                    src={BUBBLE_MERGED}
+                    alt=""
+                    draggable={false}
+                    className="absolute inset-0 h-full w-full"
+                    style={{ pointerEvents: "none" }}
+                  />
+                  <span
+                    className="relative z-10 font-extrabold text-[52px] leading-none text-white"
+                    style={{ textShadow: "0 6px 14px rgba(0,0,0,0.35)" }}
+                  >
+                    {item.word}
+                  </span>
                 </button>
               )}
 
