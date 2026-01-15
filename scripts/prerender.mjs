@@ -8,11 +8,12 @@ const DIST = path.resolve(process.cwd(), "dist");
 const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4173;
 const HOST = `http://127.0.0.1:${PORT}`;
 
-// Keep these as your “always prerender” routes
+// Keep these as your "always prerender" routes
 const SEED_ROUTES = [
   "/",
   "/courses",
   "/curriculum",
+  "/phonics",
   "/blog",
   "/faq",
   // Parents hub + help pages

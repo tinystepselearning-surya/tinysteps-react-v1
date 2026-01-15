@@ -161,6 +161,7 @@
     ],
     "redirects": [
       { "regex": "/main/?$", "destination": "/", "type": 301 },
+      { "regex": "/main/courses/phonics/?$", "destination": "/phonics", "type": 301 },
       { "regex": "/main/(?P<path>.+)", "destination": "/:path", "type": 301 }
     ],
     "rewrites": [
