@@ -30,6 +30,7 @@ export default function NavBar(): JSX.Element {
 
   const moreBtnRef = useRef<HTMLButtonElement | null>(null);
   const moreMenuRef = useRef<HTMLDivElement | null>(null);
+  const closeMoreTimerRef = useRef<number | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -46,6 +47,25 @@ export default function NavBar(): JSX.Element {
   });
 
   const isHome = location.pathname === "/";
+
+  // Hover-intent helpers
+  function clearCloseMoreTimer() {
+    if (closeMoreTimerRef.current) {
+      window.clearTimeout(closeMoreTimerRef.current);
+      closeMoreTimerRef.current = null;
+    }
+  }
+
+  function openMoreHover() {
+    clearCloseMoreTimer();
+    setMoreOpen(true);
+  }
+
+  function scheduleCloseMore() {
+    clearCloseMoreTimer();
+    // small delay so cursor can travel from button → menu
+    closeMoreTimerRef.current = window.setTimeout(() => setMoreOpen(false), 180);
+  }
 
   // compute active index from pathname
   useEffect(() => {
@@ -164,7 +184,7 @@ export default function NavBar(): JSX.Element {
     const r = btn.getBoundingClientRect();
     setMorePos({
       left: r.left,
-      top: r.bottom + 10,
+      top: r.bottom + 2,
       minWidth: Math.max(220, Math.round(r.width)),
     });
   }
@@ -224,6 +244,9 @@ export default function NavBar(): JSX.Element {
             className="ts-nav-more-portal"
             role="menu"
             style={{ left: morePos.left, top: morePos.top, minWidth: morePos.minWidth }}
+            onMouseEnter={openMoreHover}
+            onMouseLeave={scheduleCloseMore}
+            onMouseDown={(e) => e.stopPropagation()}
           >
             {MORE_ITEMS.map((it) => (
               <NavLink
@@ -263,7 +286,7 @@ export default function NavBar(): JSX.Element {
             </li>
           ))}
 
-          {/* ✅ More (CLICK ONLY, stays open) */}
+          {/* ✅ More (HOVER + CLICK) */}
           <li className="ts-nav-item ts-nav-more">
             <button
               ref={moreBtnRef}
@@ -272,15 +295,19 @@ export default function NavBar(): JSX.Element {
               aria-haspopup="menu"
               aria-expanded={moreOpen}
               onMouseEnter={() => {
-                if (!moreOpen) moveUnderlineToEl(moreBtnRef.current);
+                openMoreHover();
+                moveUnderlineToEl(moreBtnRef.current);
               }}
+              onMouseLeave={scheduleCloseMore}
               onFocus={() => {
-                if (!moreOpen) moveUnderlineToEl(moreBtnRef.current);
+                openMoreHover();
+                moveUnderlineToEl(moreBtnRef.current);
               }}
+              onBlur={scheduleCloseMore}
               onClick={() => {
                 // toggle click behavior
                 if (moreOpen) {
-                  setMoreOpen(false);
+                  closeMore();
                 } else {
                   openMore();
                   // ensure underline + position update on open

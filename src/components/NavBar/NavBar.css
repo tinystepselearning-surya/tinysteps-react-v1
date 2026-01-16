@@ -182,7 +182,7 @@
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(15, 23, 42, 0.08);
   z-index: 2147483647;
-  margin-top: -6px; /* slight overlap to bridge mouse gap */
+  margin-top: 0;
   animation: portal-appear 200ms var(--ease);
   pointer-events: auto;
 }
