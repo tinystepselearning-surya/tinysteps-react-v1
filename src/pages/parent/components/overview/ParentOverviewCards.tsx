@@ -37,7 +37,7 @@ const LEARNING_STAGES = [
   },
   {
     id: 2,
-    label: 'Blend Builder',
+    label: 'My First Words',
     shortLabel: 'Blends',
     emoji: '🔗',
     goal: 'Learn to combine sounds smoothly and recognize common blends',

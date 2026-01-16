@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./NavBar.css";
 
@@ -35,7 +35,6 @@ export default function NavBar(): JSX.Element {
 
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showCta, setShowCta] = useState<boolean>(true);
-
   const [moreOpen, setMoreOpen] = useState(false);
 
   const isHome = location.pathname === "/";
@@ -51,7 +50,7 @@ export default function NavBar(): JSX.Element {
     setMoreOpen(false);
   }, [location.pathname]);
 
-  // ✅ Hide CTA while hero is visible (dedupe)
+  // Hide CTA while hero is visible (home only)
   useEffect(() => {
     if (!isHome) {
       setShowCta(true);
@@ -94,7 +93,7 @@ export default function NavBar(): JSX.Element {
   };
 
   // --- underline helpers ---
-  const moveUnderlineToEl = React.useCallback((el: HTMLElement | null) => {
+  const moveUnderlineToEl = useCallback((el: HTMLElement | null) => {
     const container = containerRef.current;
     const u = underlineRef.current;
     if (!container || !el || !u) return;
@@ -108,11 +107,14 @@ export default function NavBar(): JSX.Element {
     u.style.transform = `translateX(${left}px)`;
   }, []);
 
-  const moveUnderlineTo = React.useCallback((index: number) => {
-    const el = itemRefs.current[index];
-    if (!el) return;
-    moveUnderlineToEl(el);
-  }, [moveUnderlineToEl]);
+  const moveUnderlineTo = useCallback(
+    (index: number) => {
+      const el = itemRefs.current[index];
+      if (!el) return;
+      moveUnderlineToEl(el);
+    },
+    [moveUnderlineToEl]
+  );
 
   // underline placement on activeIndex + resize
   useEffect(() => {
@@ -131,9 +133,9 @@ export default function NavBar(): JSX.Element {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-  }, [activeIndex, moreOpen]);
+  }, [activeIndex, moreOpen, moveUnderlineTo, moveUnderlineToEl]);
 
-  // hover preview underline only (doesn't control More)
+  // hover preview underline only (More does NOT open on hover)
   const handleHover = (i: number) => {
     if (moreOpen) return;
     moveUnderlineTo(i);
@@ -155,17 +157,20 @@ export default function NavBar(): JSX.Element {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  // close on outside click
+  // ✅ close on outside click (capture, so overlays can't block it)
   useEffect(() => {
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as Node | null;
-      if (!t) return;
-      if (!moreWrapRef.current?.contains(t)) setMoreOpen(false);
+    if (!moreOpen) return;
+
+    const onPointerDown = (e: PointerEvent) => {
+      const wrap = moreWrapRef.current;
+      const path = (e.composedPath?.() ?? []) as EventTarget[];
+      if (wrap && path.includes(wrap)) return; // inside → keep open
+      setMoreOpen(false); // outside → close
     };
 
-    document.addEventListener("mousedown", onDown);
-    return () => document.removeEventListener("mousedown", onDown);
-  }, []);
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [moreOpen]);
 
   return (
     <header className="ts-nav-wrapper">
@@ -189,33 +194,30 @@ export default function NavBar(): JSX.Element {
             </li>
           ))}
 
-          {/* ✅ More (HOVER + CLICK) */}
-          <li
-            ref={moreWrapRef}
-            className="ts-nav-item ts-nav-more"
-            onMouseEnter={() => setMoreOpen(true)}
-            onMouseLeave={() => setMoreOpen(false)}
-          >
+          {/* ✅ More (CLICK ONLY) */}
+          <li ref={moreWrapRef} className="ts-nav-item ts-nav-more">
             <button
               ref={moreBtnRef}
               type="button"
               className={`ts-nav-link ts-nav-more-btn ${moreOpen ? "active" : ""}`}
               aria-haspopup="menu"
               aria-expanded={moreOpen}
-              onFocus={() => {
-                setMoreOpen(true);
-                moveUnderlineToEl(moreBtnRef.current);
-              }}
               onClick={() => {
                 setMoreOpen((v) => !v);
                 setTimeout(() => moveUnderlineToEl(moreBtnRef.current), 0);
               }}
+              onMouseEnter={() => {
+                if (!moreOpen) moveUnderlineToEl(moreBtnRef.current);
+              }}
+              onFocus={() => {
+                if (!moreOpen) moveUnderlineToEl(moreBtnRef.current);
+              }}
             >
-              More <span className="ts-nav-caret">▾</span>
+Priya <span className="ts-nav-caret">▾</span>
             </button>
 
             {moreOpen && (
-              <div className="ts-nav-more-portal" role="menu">
+              <div className="ts-nav-more-menu" role="menu">
                 {MORE_ITEMS.map((it) => (
                   <NavLink
                     key={it.label}
