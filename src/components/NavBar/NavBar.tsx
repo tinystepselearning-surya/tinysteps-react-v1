@@ -15,7 +15,7 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const MORE_ITEMS: NavItem[] = [
-  { label: "Teachers", to: "/teachers" },
+  { label: "Teachers", to: "/teacher" },
   { label: "Learning Partner", to: "/learning-partner" },
   { label: "Kids", to: "/kids" },
   { label: "FAQ", to: "/faq" },
@@ -29,6 +29,7 @@ export default function NavBar(): JSX.Element {
   const underlineRef = useRef<HTMLDivElement | null>(null);
 
   const moreBtnRef = useRef<HTMLButtonElement | null>(null);
+  const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -193,32 +194,48 @@ export default function NavBar(): JSX.Element {
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
+  // close on outside click
+  useEffect(() => {
+    if (!moreOpen) return;
+
+    const onPointerDownCapture = (e: PointerEvent) => {
+      const t = e.target as Node | null;
+      if (!t) return;
+
+      const btn = moreBtnRef.current;
+      const menu = moreMenuRef.current;
+
+      // Click inside button or menu → keep open
+      if (btn?.contains(t) || menu?.contains(t)) return;
+
+      // Outside click → close
+      setMoreOpen(false);
+    };
+
+    document.addEventListener("pointerdown", onPointerDownCapture, true); // capture
+    return () => document.removeEventListener("pointerdown", onPointerDownCapture, true);
+  }, [moreOpen]);
+
   const portal =
     moreOpen && typeof document !== "undefined"
       ? createPortal(
           <div
-            className="ts-nav-more-layer"
-            onPointerDown={() => setMoreOpen(false)} // outside click closes
-            aria-hidden="true"
+            ref={moreMenuRef}
+            className="ts-nav-more-portal"
+            role="menu"
+            style={{ left: morePos.left, top: morePos.top, minWidth: morePos.minWidth }}
           >
-            <div
-              className="ts-nav-more-portal"
-              role="menu"
-              style={{ left: morePos.left, top: morePos.top, minWidth: morePos.minWidth }}
-              onPointerDown={(e) => e.stopPropagation()} // clicks inside do NOT close
-            >
-              {MORE_ITEMS.map((it) => (
-                <NavLink
-                  key={it.label}
-                  to={it.to}
-                  role="menuitem"
-                  className="ts-nav-more-link"
-                  onClick={() => setMoreOpen(false)}
-                >
-                  {it.label}
-                </NavLink>
-              ))}
-            </div>
+            {MORE_ITEMS.map((it) => (
+              <NavLink
+                key={it.label}
+                to={it.to}
+                role="menuitem"
+                className="ts-nav-more-link"
+                onClick={() => setMoreOpen(false)}
+              >
+                {it.label}
+              </NavLink>
+            ))}
           </div>,
           document.body
         )

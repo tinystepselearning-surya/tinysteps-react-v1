@@ -17,7 +17,7 @@
   color: var(--text);
   border-bottom: none;
   position: relative;
-  z-index: 100;
+  z-index: 9999;
 }
 
 .ts-nav{
@@ -171,15 +171,6 @@
   margin-left: 6px;
   font-size: 0.9em;
   opacity: 0.85;
-}
-
-/* One full-screen layer that sits above everything */
-.ts-nav-more-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  background: transparent;
-  pointer-events: auto;
 }
 
 /* The menu itself lives in body, fixed positioned */
