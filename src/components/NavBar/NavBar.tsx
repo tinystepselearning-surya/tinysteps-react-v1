@@ -196,19 +196,16 @@ export default function NavBar(): JSX.Element {
   const portal =
     moreOpen && typeof document !== "undefined"
       ? createPortal(
-          <>
-            {/* Backdrop to guarantee outside click works and prevents underlying overlays from stealing click */}
-            <div
-              className="ts-nav-more-backdrop"
-              onMouseDown={() => setMoreOpen(false)}
-              aria-hidden="true"
-            />
-
+          <div
+            className="ts-nav-more-layer"
+            onPointerDown={() => setMoreOpen(false)} // outside click closes
+            aria-hidden="true"
+          >
             <div
               className="ts-nav-more-portal"
               role="menu"
               style={{ left: morePos.left, top: morePos.top, minWidth: morePos.minWidth }}
-              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()} // clicks inside do NOT close
             >
               {MORE_ITEMS.map((it) => (
                 <NavLink
@@ -222,7 +219,7 @@ export default function NavBar(): JSX.Element {
                 </NavLink>
               ))}
             </div>
-          </>,
+          </div>,
           document.body
         )
       : null;

@@ -173,12 +173,13 @@
   opacity: 0.85;
 }
 
-/* Fullscreen invisible backdrop so clicks never get stolen by hero overlays */
-.ts-nav-more-backdrop {
+/* One full-screen layer that sits above everything */
+.ts-nav-more-layer {
   position: fixed;
   inset: 0;
+  z-index: 2147483647;
   background: transparent;
-  z-index: 2147483000;
+  pointer-events: auto;
 }
 
 /* The menu itself lives in body, fixed positioned */
@@ -192,6 +193,7 @@
   z-index: 2147483647;
   margin-top: -6px; /* slight overlap to bridge mouse gap */
   animation: portal-appear 200ms var(--ease);
+  pointer-events: auto;
 }
 
 @keyframes portal-appear {
@@ -206,6 +208,7 @@
   color: rgba(0, 0, 0, 0.92);
   text-decoration: none;
   font-weight: 700;
+  pointer-events: auto;
 }
 
 .ts-nav-more-link:hover {
