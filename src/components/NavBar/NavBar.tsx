@@ -1,6 +1,5 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { createPortal } from "react-dom";
 import "./NavBar.css";
 
 type NavItem = { label: string; to: string };
@@ -29,8 +28,7 @@ export default function NavBar(): JSX.Element {
   const underlineRef = useRef<HTMLDivElement | null>(null);
 
   const moreBtnRef = useRef<HTMLButtonElement | null>(null);
-  const moreMenuRef = useRef<HTMLDivElement | null>(null);
-  const closeMoreTimerRef = useRef<number | null>(null);
+  const moreWrapRef = useRef<HTMLLIElement | null>(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -38,34 +36,9 @@ export default function NavBar(): JSX.Element {
   const [activeIndex, setActiveIndex] = useState<number>(0);
   const [showCta, setShowCta] = useState<boolean>(true);
 
-  // ✅ Click-to-open "More" (portal menu)
   const [moreOpen, setMoreOpen] = useState(false);
-  const [morePos, setMorePos] = useState<{ left: number; top: number; minWidth: number }>({
-    left: 0,
-    top: 0,
-    minWidth: 220,
-  });
 
   const isHome = location.pathname === "/";
-
-  // Hover-intent helpers
-  function clearCloseMoreTimer() {
-    if (closeMoreTimerRef.current) {
-      window.clearTimeout(closeMoreTimerRef.current);
-      closeMoreTimerRef.current = null;
-    }
-  }
-
-  function openMoreHover() {
-    clearCloseMoreTimer();
-    setMoreOpen(true);
-  }
-
-  function scheduleCloseMore() {
-    clearCloseMoreTimer();
-    // small delay so cursor can travel from button → menu
-    closeMoreTimerRef.current = window.setTimeout(() => setMoreOpen(false), 180);
-  }
 
   // compute active index from pathname
   useEffect(() => {
@@ -173,38 +146,6 @@ export default function NavBar(): JSX.Element {
     moveUnderlineTo(activeIndex);
   };
 
-  // Simple open/close helpers — dropdown stays open after click until closed by button or selecting an item
-  const openMore = () => setMoreOpen(true);
-  const closeMore = () => setMoreOpen(false);
-
-  // --- portal positioning for More ---
-  function computeMorePos() {
-    const btn = moreBtnRef.current;
-    if (!btn) return;
-    const r = btn.getBoundingClientRect();
-    setMorePos({
-      left: r.left,
-      top: r.bottom + 2,
-      minWidth: Math.max(220, Math.round(r.width)),
-    });
-  }
-
-  useLayoutEffect(() => {
-    if (!moreOpen) return;
-    computeMorePos();
-
-    const onScroll = () => computeMorePos();
-    const onResize = () => computeMorePos();
-
-    window.addEventListener("scroll", onScroll, true); // capture scroll from any container
-    window.addEventListener("resize", onResize);
-
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", onResize);
-    };
-  }, [moreOpen]);
-
   // close on Esc
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -216,53 +157,15 @@ export default function NavBar(): JSX.Element {
 
   // close on outside click
   useEffect(() => {
-    if (!moreOpen) return;
-
-    const onPointerDownCapture = (e: PointerEvent) => {
+    const onDown = (e: MouseEvent) => {
       const t = e.target as Node | null;
       if (!t) return;
-
-      const btn = moreBtnRef.current;
-      const menu = moreMenuRef.current;
-
-      // Click inside button or menu → keep open
-      if (btn?.contains(t) || menu?.contains(t)) return;
-
-      // Outside click → close
-      setMoreOpen(false);
+      if (!moreWrapRef.current?.contains(t)) setMoreOpen(false);
     };
 
-    document.addEventListener("pointerdown", onPointerDownCapture, true); // capture
-    return () => document.removeEventListener("pointerdown", onPointerDownCapture, true);
-  }, [moreOpen]);
-
-  const portal =
-    moreOpen && typeof document !== "undefined"
-      ? createPortal(
-          <div
-            ref={moreMenuRef}
-            className="ts-nav-more-portal"
-            role="menu"
-            style={{ left: morePos.left, top: morePos.top, minWidth: morePos.minWidth }}
-            onMouseEnter={openMoreHover}
-            onMouseLeave={scheduleCloseMore}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            {MORE_ITEMS.map((it) => (
-              <NavLink
-                key={it.label}
-                to={it.to}
-                role="menuitem"
-                className="ts-nav-more-link"
-                onClick={() => setMoreOpen(false)}
-              >
-                {it.label}
-              </NavLink>
-            ))}
-          </div>,
-          document.body
-        )
-      : null;
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, []);
 
   return (
     <header className="ts-nav-wrapper">
@@ -287,39 +190,45 @@ export default function NavBar(): JSX.Element {
           ))}
 
           {/* ✅ More (HOVER + CLICK) */}
-          <li className="ts-nav-item ts-nav-more">
+          <li
+            ref={moreWrapRef}
+            className="ts-nav-item ts-nav-more"
+            onMouseEnter={() => setMoreOpen(true)}
+            onMouseLeave={() => setMoreOpen(false)}
+          >
             <button
               ref={moreBtnRef}
               type="button"
               className={`ts-nav-link ts-nav-more-btn ${moreOpen ? "active" : ""}`}
               aria-haspopup="menu"
               aria-expanded={moreOpen}
-              onMouseEnter={() => {
-                openMoreHover();
-                moveUnderlineToEl(moreBtnRef.current);
-              }}
-              onMouseLeave={scheduleCloseMore}
               onFocus={() => {
-                openMoreHover();
+                setMoreOpen(true);
                 moveUnderlineToEl(moreBtnRef.current);
               }}
-              onBlur={scheduleCloseMore}
               onClick={() => {
-                // toggle click behavior
-                if (moreOpen) {
-                  closeMore();
-                } else {
-                  openMore();
-                  // ensure underline + position update on open
-                  setTimeout(() => {
-                    moveUnderlineToEl(moreBtnRef.current);
-                    computeMorePos();
-                  }, 0);
-                }
+                setMoreOpen((v) => !v);
+                setTimeout(() => moveUnderlineToEl(moreBtnRef.current), 0);
               }}
             >
               More <span className="ts-nav-caret">▾</span>
             </button>
+
+            {moreOpen && (
+              <div className="ts-nav-more-portal" role="menu">
+                {MORE_ITEMS.map((it) => (
+                  <NavLink
+                    key={it.label}
+                    to={it.to}
+                    role="menuitem"
+                    className="ts-nav-more-link"
+                    onClick={() => setMoreOpen(false)}
+                  >
+                    {it.label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
           </li>
 
           {/* ✅ CTA */}
@@ -337,9 +246,6 @@ export default function NavBar(): JSX.Element {
           <span className="particles" aria-hidden="true" />
         </div>
       </nav>
-
-      {/* Portal dropdown */}
-      {portal}
     </header>
   );
 }

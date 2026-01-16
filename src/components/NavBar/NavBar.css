@@ -155,7 +155,7 @@
 }
 
 /* -----------------------------
-   MORE dropdown (PORTAL + BACKDROP)
+   MORE dropdown (INLINE)
 ------------------------------ */
 .ts-nav-more {
   position: relative;
@@ -173,16 +173,19 @@
   opacity: 0.85;
 }
 
-/* The menu itself lives in body, fixed positioned */
+/* Dropdown now lives INSIDE the li */
 .ts-nav-more-portal {
-  position: fixed;
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  min-width: 220px;
+
   padding: 10px;
   border-radius: 14px;
   background: #ffffff;
   box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
   border: 1px solid rgba(15, 23, 42, 0.08);
-  z-index: 2147483647;
-  margin-top: 0;
+  z-index: 100000;
   animation: portal-appear 200ms var(--ease);
   pointer-events: auto;
 }
