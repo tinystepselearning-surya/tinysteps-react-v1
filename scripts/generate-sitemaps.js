@@ -52,9 +52,14 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
     toUrl('https://tinystepslearning.com/courses', lastmodFrom(coursesTs), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/curriculum', lastmodFrom(path.join(publicDir, 'curriculum-v2.1.json')), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/phonics', fmt(new Date()), '0.9', 'weekly')+
+    toUrl('https://tinystepslearning.com/grammar', fmt(new Date()), '0.9', 'weekly')+
+    toUrl('https://tinystepslearning.com/speaking', fmt(new Date()), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/blog', fmt(new Date()), '0.8', 'daily')+
     toUrl('https://tinystepslearning.com/pricing', fmt(new Date()), '0.8', 'monthly')+
-    toUrl('https://tinystepslearning.com/about', fmt(new Date()), '0.7', 'monthly')+
+    toUrl('https://tinystepslearning.com/contact', fmt(new Date()), '0.8', 'monthly')+
+    toUrl('https://tinystepslearning.com/why-tiny-steps', fmt(new Date()), '0.8', 'monthly')+
+    toUrl('https://tinystepslearning.com/faq', fmt(new Date()), '0.8', 'weekly')+
+    toUrl('https://tinystepslearning.com/for-schools', fmt(new Date()), '0.7', 'monthly')+
   `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-static.xml'), staticXml);
 
