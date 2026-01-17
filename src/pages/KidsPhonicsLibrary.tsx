@@ -296,6 +296,67 @@ const KidsPhonicsLibrary: React.FC = () => {
               </button>
             ))}
           </div>
+        ) : selectedStageId === 'cvc_word_reader' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            <button
+              onClick={() => {
+                const el = document.documentElement as any;
+                const fs =
+                  document.documentElement.requestFullscreen ||
+                  el.webkitRequestFullscreen ||
+                  el.mozRequestFullScreen ||
+                  el.msRequestFullscreen;
+
+                if (fs) {
+                  try {
+                    fs.call(document.documentElement);
+                  } catch {
+                    // ignore
+                  }
+                }
+
+                const qs = new URLSearchParams();
+                if (kidId) qs.set('kidId', kidId);
+                const suffix = qs.toString();
+                navigate(`/kids/games/phonics/cvc-word-reader${suffix ? `?${suffix}` : ''}`);
+              }}
+              className="text-left rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-6 hover:bg-white/15 hover:-translate-y-1 transition-all shadow-lg hover:shadow-2xl"
+            >
+              <div className="text-white text-2xl font-extrabold drop-shadow-lg">CVC Word Reader (Level 1)</div>
+              <div className="mt-2 text-white/80 text-sm">
+                Listen to the word and drag first/middle/last sounds.
+              </div>
+              <div className="mt-4 text-yellow-300 font-bold">Play</div>
+            </button>
+            <button
+              onClick={() => {
+                const el = document.documentElement as any;
+                const fs =
+                  document.documentElement.requestFullscreen ||
+                  el.webkitRequestFullscreen ||
+                  el.mozRequestFullScreen ||
+                  el.msRequestFullscreen;
+
+                if (fs) {
+                  try {
+                    fs.call(document.documentElement);
+                  } catch {
+                    // ignore
+                  }
+                }
+
+                const qs = new URLSearchParams();
+                if (kidId) qs.set('kidId', kidId);
+                qs.set('family', 'at');
+                navigate(`/kids/games/phonics/cvc-word-reader/make-a-word?${qs.toString()}`);
+              }}
+              className="text-left rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md p-6 hover:bg-white/15 hover:-translate-y-1 transition-all shadow-lg hover:shadow-2xl"
+            >
+              <div className="text-white text-2xl font-extrabold drop-shadow-lg">Make a Word (Word Families)</div>
+              <div className="mt-2 text-white/80 text-sm">Drag the first letter to make the word</div>
+              <div className="mt-4 text-yellow-300 font-bold">Play</div>
+            </button>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {filteredGames.map((game) => {

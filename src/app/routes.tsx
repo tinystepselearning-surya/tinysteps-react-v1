@@ -55,6 +55,8 @@ const SoundDetectiveGame = lazy(() => import('../pages/kids/games/phonics/SoundD
 const LetterTracingGame = lazy(() => import('../pages/kids/games/phonics/LetterTracingGame'));
 const LetterTracingWithSounds = lazy(() => import('../pages/kids/games/phonics/LetterTracingWithSounds'));
 const Blend2LettersGame = lazy(() => import('../pages/kids/games/phonics/MyFirstWords/MyFirstWordsGame'));
+const CvcWordReaderGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/CvcWordReaderGame'));
+const MakeAWordRimeGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/MakeAWordRimeGame'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -269,6 +271,8 @@ const router = createBrowserRouter(
             { path: 'games/phonics/letter-tracing', element: <LetterTracingGame /> },
             { path: 'games/phonics/letter-tracing-sounds', element: <LetterTracingWithSounds /> },
             { path: 'games/phonics/my-first-words', element: <Blend2LettersGame /> },
+            { path: 'games/phonics/cvc-word-reader', element: <CvcWordReaderGame /> },
+            { path: 'games/phonics/cvc-word-reader/make-a-word', element: <MakeAWordRimeGame /> },
             // Temporary: make /kids/games/speaking safe (redirect to games hub)
             { path: 'games/speaking', element: <KidsGamesHub /> },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },
