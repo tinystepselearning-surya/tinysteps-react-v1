@@ -1010,7 +1010,7 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     };
 
     const spawnCenterBurst = (now: number) => {
-      const CENTER_COUNT = 220;
+      const CENTER_COUNT = 120;
       for (let k = 0; k < CENTER_COUNT; k++) {
         const isStreamer = Math.random() < 0.35;
         const size = isStreamer ? 6 + Math.random() * 10 : 3 + Math.random() * 6;
@@ -1061,8 +1061,8 @@ function ConfettiBurst({ fire }: { fire: boolean }) {
     const start = performance.now();
     spawnCenterBurst(start);
 
-    const LEFT_RATE = 40;
-    const RIGHT_RATE = 40;
+    const LEFT_RATE = 22;
+    const RIGHT_RATE = 22;
     let leftAcc = 0;
     let rightAcc = 0;
     let prevNow = start;
@@ -1540,12 +1540,13 @@ export default function LetterTracingWithSounds() {
   -------------------- */
   const [strokeIndex, setStrokeIndex] = useState(0);
 
-  // ✅ NO auto-selection: child must choose a color
-  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  // ✅ Auto-select a kid-safe default so tracing never feels "blocked"
+  const DEFAULT_TRACE_COLOR = QUICK_COLORS[0];
+  const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_TRACE_COLOR);
   const [colorModalOpen, setColorModalOpen] = useState(false);
 
-  const effectiveColor = selectedColor ?? "#94A3B8"; // slate fallback for UI (not "selected")
-  const canTrace = !!selectedColor;
+  const effectiveColor = selectedColor; // always available
+  const canTrace = true; // kept for minimal diffs; always true now
 
   const [samples, setSamples] = useState<Pt[]>([]);
   const [rawLen, setRawLen] = useState(0);
@@ -1560,6 +1561,24 @@ export default function LetterTracingWithSounds() {
   const [timeStart, setTimeStart] = useState<number | null>(null);
   const [showNextArrow, setShowNextArrow] = useState(false);
   const [letterSoundPlaying, setLetterSoundPlaying] = useState(false);
+
+  type ScaffoldLevel = 0 | 1 | 2 | 3;
+
+  // Miss tracking (per-stroke)
+  const [startMisses, setStartMisses] = useState(0);
+  const startMissesRef = useRef(0);
+
+  const [offPathNudges, setOffPathNudges] = useState(0);
+  const offPathNudgesRef = useRef(0);
+
+  const [startNudgeToken, setStartNudgeToken] = useState(0);
+
+  // Scaffold (max used during this letter)
+  const [scaffoldLevel, setScaffoldLevel] = useState<ScaffoldLevel>(0);
+  const scaffoldMaxRef = useRef<ScaffoldLevel>(0);
+
+  const lastOffPathNudgeAtRef = useRef(0);
+  const wideTolUntilRef = useRef(0);
 
   const startedRef = useRef(false);
   const activePointerIdRef = useRef<number | null>(null);
@@ -1746,10 +1765,23 @@ export default function LetterTracingWithSounds() {
     } catch {}
   }, []);
 
+  const bumpScaffold = useCallback((lvl: ScaffoldLevel) => {
+    setScaffoldLevel((prev) => (Math.max(prev, lvl) as ScaffoldLevel));
+    scaffoldMaxRef.current = Math.max(scaffoldMaxRef.current, lvl) as ScaffoldLevel;
+  }, []);
+
+  const nudgeStart = useCallback(() => {
+    setStartNudgeToken((n) => n + 1);
+    try {
+      // Optional micro-haptic on supported devices (won't crash if unavailable)
+      (navigator as any)?.vibrate?.(10);
+    } catch {}
+  }, []);
+
   const triggerConfetti = useCallback(() => {
     setConfetti(true);
     void playConfettiSound();
-    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 4000);
+    timersRef.current.confettiOff = window.setTimeout(() => setConfetti(false), 2200);
   }, [playConfettiSound]);
 
   const currentStroke: TraceStroke | null = useMemo(() => {
@@ -1862,6 +1894,20 @@ export default function LetterTracingWithSounds() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
+
+    setStartMisses(0);
+    startMissesRef.current = 0;
+
+    setOffPathNudges(0);
+    offPathNudgesRef.current = 0;
+
+    setStartNudgeToken(0);
+
+    setScaffoldLevel(0);
+    scaffoldMaxRef.current = 0;
+
+    wideTolUntilRef.current = 0;
+    lastOffPathNudgeAtRef.current = 0;
   }, [currentLetterId, pretraceId, clearTimers, stopTraceAudio, stopLetterSound]);
 
   // Reset on stroke change
@@ -1877,6 +1923,20 @@ export default function LetterTracingWithSounds() {
 
     setHintIndex(0);
     hintIndexRef.current = 0;
+
+    setStartMisses(0);
+    startMissesRef.current = 0;
+
+    setOffPathNudges(0);
+    offPathNudgesRef.current = 0;
+
+    setStartNudgeToken(0);
+
+    setScaffoldLevel(0);
+    scaffoldMaxRef.current = 0;
+
+    wideTolUntilRef.current = 0;
+    lastOffPathNudgeAtRef.current = 0;
   }, [strokeIndex]);
 
   // Sampling for current stroke
@@ -2340,8 +2400,19 @@ export default function LetterTracingWithSounds() {
         currentLetterId,
       });
 
+      const wrongCount = (startMissesRef.current || 0) + (offPathNudgesRef.current || 0);
+      const attempts = 1 + wrongCount;
+      const correct = 1;
+      const wrong = wrongCount;
+
+      const accuracyPct = Math.round((correct / Math.max(1, attempts)) * 100);
+
+      const traceDurationMs = timeStart ? Math.max(0, Math.round(performance.now() - timeStart)) : 0;
+
+      const maxScaffold = scaffoldMaxRef.current || 0;
+
       const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> =
-        Object.fromEntries(skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }]));
+        Object.fromEntries(skillTags.map((tag) => [tag, { attempts, correct, wrong }]));
 
       // ✅ resume point
       const nextPos: LastPos = (() => {
@@ -2367,11 +2438,16 @@ export default function LetterTracingWithSounds() {
           kidId,
           levelId: levelForTracking,
           completed: true,
-          accuracyPct: 100,
-          durationSec: Math.round(spentMs / 1000),
-          score: 100,
+          accuracyPct,
+          durationSec: Math.round(traceDurationMs / 1000),
+          score: accuracyPct,
           skillTags,
           tagDeltas,
+          meta: {
+            startMisses: startMissesRef.current,
+            offPathNudges: offPathNudgesRef.current,
+            maxScaffold,
+          },
           masteredItems: [masteredItem].filter(Boolean),
           completedAt: Date.now(),
           lastPos: nextPos,
@@ -2453,7 +2529,6 @@ export default function LetterTracingWithSounds() {
      Pointer handling
   -------------------- */
   function handlePointerDown(e: React.PointerEvent) {
-    if (!canTrace) return; // ✅ must select a color first
     if (letterDone) return;
     if (!currentStroke) return;
     if (ignoreMovesRef.current) return;
@@ -2471,14 +2546,31 @@ export default function LetterTracingWithSounds() {
       return;
     }
 
-    const startRadius = 14;
-    const resumeRadius = 18;
+    // Start becomes easier after misses (prevents "nothing happens" frustration)
+    const baseStartRadius = 16;
+    const baseResumeRadius = 22;
 
     const hasProgress = lastIndexRef.current > 0 && samples.length > 0;
     const resumePt = hasProgress ? samples[clamp(lastIndexRef.current, 0, samples.length - 1)] : startPt;
-    const allowedR = hasProgress ? resumeRadius : startRadius;
 
-    if (dist(p, resumePt) > allowedR) return;
+    // escalate radius after misses
+    const sm = startMissesRef.current;
+    const radiusBoost = sm >= 2 ? 12 : sm === 1 ? 6 : 0;
+    const allowedR = (hasProgress ? baseResumeRadius : baseStartRadius) + radiusBoost;
+
+    if (dist(p, resumePt) > allowedR) {
+      // count start miss + nudge
+      const next = startMissesRef.current + 1;
+      startMissesRef.current = next;
+      setStartMisses(next);
+
+      // scaffold ladder: 1=highlight, 2=widen (already), 3=ghost demo
+      if (next === 2) bumpScaffold(2);
+      if (next >= 3) bumpScaffold(3);
+
+      nudgeStart();
+      return;
+    }
 
     void startTraceAudio();
 
@@ -2507,7 +2599,17 @@ export default function LetterTracingWithSounds() {
 
     const p = toSvg(e.clientX, e.clientY);
 
-    const tolerance = 12;
+    const now = performance.now();
+
+    // widen tolerance temporarily if we've nudged recently
+    const baseTol = 12;
+    const extraTol =
+      now < wideTolUntilRef.current ? 10 :
+      offPathNudgesRef.current >= 2 ? 6 :
+      offPathNudgesRef.current === 1 ? 3 : 0;
+
+    const tolerance = baseTol + extraTol;
+
     const i0 = clamp(lastIndexRef.current, 0, samples.length - 1);
     const lookahead = 34;
 
@@ -2521,6 +2623,26 @@ export default function LetterTracingWithSounds() {
         bestD = d;
         bestI = i;
       }
+    }
+
+    if (bestD > tolerance) {
+      // throttle nudges so we don't spam every move event
+      if (now - lastOffPathNudgeAtRef.current > 450) {
+        lastOffPathNudgeAtRef.current = now;
+
+        const next = offPathNudgesRef.current + 1;
+        offPathNudgesRef.current = next;
+        setOffPathNudges(next);
+
+        if (next === 1) bumpScaffold(1);
+        if (next >= 2) bumpScaffold(2);
+        if (next >= 3) {
+          bumpScaffold(3);
+          // widen for 1.5s to help recover
+          wideTolUntilRef.current = now + 1500;
+        }
+      }
+      return;
     }
 
     if (bestD <= tolerance) {
@@ -3241,14 +3363,6 @@ export default function LetterTracingWithSounds() {
           }}
         >
           <ConfettiBurst fire={confetti} />
-
-          {!canTrace && (
-            <div className="pointer-events-none absolute inset-0 z-[10005] flex items-center justify-center">
-              <div className="rounded-2xl bg-white/80 px-5 py-3 text-sm font-extrabold text-slate-800 shadow-lg backdrop-blur">
-                🎨 Pick a color above to start tracing
-              </div>
-            </div>
-          )}
 
           {/* ✅ Green tick on completion */}
           {letterDone && (
