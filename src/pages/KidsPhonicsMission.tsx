@@ -1,12 +1,13 @@
 // src/pages/KidsPhonicsMission.tsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { recordLevelResult } from "../games/engine/recordLevelResult";
 
 // --- Config ---
 const TOTAL_ROUNDS = 8;
-const QUESTION_SET_VERSION = 3; // bump when question generation logic changes
+// Bump when generation / hint logic changes (affects resume validation)
+const QUESTION_SET_VERSION = 4;
 
 const KIDS_FONT_STACK =
   '"Fredoka", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
@@ -161,7 +162,6 @@ const getAudioContext = () => {
 const playClaps = () => {
   try {
     const ctx = getAudioContext();
-    // best-effort resume (mobile browsers often start suspended)
     if (ctx.state === "suspended") {
       ctx.resume().catch(() => {});
     }
@@ -222,6 +222,16 @@ type FireworkParticle = {
   durMs: number;
   sizePx: number;
   color: string;
+};
+
+type ConfettiPiece = {
+  id: number;
+  leftPct: number;
+  delay: number;
+  duration: number;
+  rotation: number;
+  color: string;
+  size: number;
 };
 
 const readBestStars = (kidId?: string): Record<number, number> => {
@@ -365,21 +375,16 @@ const saveGameProgressDoc = async (kidId: string, data: Partial<GameProgressDoc>
 };
 
 // --- Helper Functions ---
-
-// Recorded letter sounds live in /public/games/phonics/letter-sound-match
 const LETTER_SOUND_DIR = "/games/phonics/letter-sound-match";
 const CONFETTI_SFX_SRC = "/confetti.mp3";
 
-// Normalize grapheme keys (e.g., "oo2" -> "oo")
 const normalizeGraphemeForAudio = (g: string) => (g || "").toLowerCase().trim().replace(/\d+$/, "");
-
-// Only a–z are recorded right now (a.mp3 ... z.mp3)
 const getRecordedSoundSrc = (grapheme: string): string | null => {
   const n = normalizeGraphemeForAudio(grapheme);
   return /^[a-z]$/.test(n) ? `${LETTER_SOUND_DIR}/${n}.mp3` : null;
 };
 
-// Fallback (used only when we DON'T have an mp3, e.g., ai/oa/th etc.)
+// NOTE: TTS is a last resort (phoneme quality can vary). Prefer recordings.
 const speak = (text: string) => {
   if (!text) return;
   if ("speechSynthesis" in window) {
@@ -387,6 +392,7 @@ const speak = (text: string) => {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9;
+      utterance.lang = "en-US";
       window.speechSynthesis.speak(utterance);
     } catch {
       // ignore
@@ -394,11 +400,18 @@ const speak = (text: string) => {
   }
 };
 
-// Generate questions for a specific level (scheduled targets)
-// Rule:
-// - Each "focus" letter (this level's items) appears at most 2 times.
-// - Any remaining rounds are filled with review letters from earlier levels.
-// - Distractors are ONLY from letters introduced up to this level (never future letters).
+// Build a cue map for “same sound” filtering (prevents c/k conflict)
+const CUE_BY_GRAPHEME: Record<string, string> = (() => {
+  const out: Record<string, string> = {};
+  LEVELS.flatMap((l) => l.items).forEach((it) => {
+    out[it.grapheme] = it.cue;
+  });
+  return out;
+})();
+
+const getCueFor = (g: string) => CUE_BY_GRAPHEME[g] || PHONETIC_MAP[g] || g;
+
+// Scheduling targets for a level
 const scheduleTargetsForLevel = (levelDef: LevelDef): string[] => {
   const focus = levelDef.items.map((i) => i.grapheme);
   const introduced = getIntroducedGraphemes(levelDef.id);
@@ -408,21 +421,18 @@ const scheduleTargetsForLevel = (levelDef: LevelDef): string[] => {
 
   const targets: string[] = [];
 
-  // 1) Ensure each focus letter appears at least once (as much as TOTAL_ROUNDS allows)
   const focusOnce = shuffle(focus);
   for (const g of focusOnce) {
     if (targets.length >= TOTAL_ROUNDS) break;
     targets.push(g);
   }
 
-  // 2) Add a 2nd pass of focus letters, but never exceed 2 per focus letter
   const maxFocusSlots = Math.min(TOTAL_ROUNDS, focus.length * 2);
   const secondWaveNeeded = Math.max(0, maxFocusSlots - targets.length);
   if (secondWaveNeeded > 0) {
     targets.push(...shuffle(focus).slice(0, secondWaveNeeded));
   }
 
-  // 3) Fill remaining rounds with review letters
   const remaining = TOTAL_ROUNDS - targets.length;
   if (remaining > 0) {
     const reviewPool = review.length ? review : introduced.filter((g) => !targets.includes(g));
@@ -431,14 +441,11 @@ const scheduleTargetsForLevel = (levelDef: LevelDef): string[] => {
     while (targets.length < TOTAL_ROUNDS && bag.length) {
       targets.push(bag.shift()!);
     }
-
-    // last resort (should not happen)
     while (targets.length < TOTAL_ROUNDS) {
       targets.push(focus[0] || introduced[0]);
     }
   }
 
-  // 4) Shuffle final order + avoid immediate repeats when possible
   const out = shuffle(targets);
   for (let i = 1; i < out.length; i++) {
     if (out[i] === out[i - 1]) {
@@ -454,34 +461,54 @@ const scheduleTargetsForLevel = (levelDef: LevelDef): string[] => {
   return out;
 };
 
+// Create a single question with “same-cue distractors filtered out”
+const buildQuestion = (target: string, pool: string[], choicesCount: number): Question => {
+  const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
+
+  const needed = Math.max(0, choicesCount - 1);
+  const targetCue = getCueFor(target);
+
+  // Filter distractors:
+  // - not the target
+  // - not same cue as target (prevents c/k conflict in this sound→letter game)
+  const distractorPool = pool.filter((g) => g !== target && getCueFor(g) !== targetCue);
+
+  const distractors = shuffle(distractorPool).slice(0, needed);
+  let choices = shuffle([target, ...distractors]);
+
+  // Ensure exact length
+  while (choices.length < choicesCount) {
+    // If we ran out of cue-safe distractors, fall back to any introduced (still not target)
+    const fallback = pool.filter((g) => g !== target);
+    const pick = fallback[Math.floor(Math.random() * fallback.length)] || target;
+    if (!choices.includes(pick)) choices.push(pick);
+    else choices.push(target);
+  }
+  if (choices.length > choicesCount) choices = choices.slice(0, choicesCount);
+
+  if (!choices.includes(target)) choices[0] = target;
+
+  // De-dupe if any duplicates slipped in
+  choices = Array.from(new Set(choices));
+  while (choices.length < choicesCount) {
+    const fallback = pool.filter((g) => g !== target && !choices.includes(g));
+    const pick = fallback[Math.floor(Math.random() * fallback.length)] || target;
+    choices.push(pick);
+  }
+  choices = choices.slice(0, choicesCount);
+
+  return { target, choices: shuffle(choices) };
+};
+
 const generateQuestionsForLevel = (levelDef: LevelDef): Question[] => {
   const introduced = getIntroducedGraphemes(levelDef.id);
   const targets = scheduleTargetsForLevel(levelDef);
 
-  const shuffle = <T,>(arr: T[]) => [...arr].sort(() => Math.random() - 0.5);
-
   const questions: Question[] = [];
-  const needed = Math.max(0, levelDef.choicesCount - 1);
-
   for (let i = 0; i < TOTAL_ROUNDS; i++) {
     const target = targets[i] ?? targets[targets.length - 1];
-
-    // Distractors ONLY from introduced letters (never future letters)
-    const distractorPool = introduced.filter((g) => g !== target);
-    const distractors = shuffle(distractorPool).slice(0, needed);
-
-    let choices = shuffle([target, ...distractors]);
-
-    // Ensure exact length
-    while (choices.length < levelDef.choicesCount) choices.push(target);
-    if (choices.length > levelDef.choicesCount) choices = choices.slice(0, levelDef.choicesCount);
-
-    // Ensure target is included
-    if (!choices.includes(target)) choices[0] = target;
-
-    questions.push({ target, choices });
+    questions.push(buildQuestion(target, introduced, levelDef.choicesCount));
   }
-
   return questions;
 };
 
@@ -490,7 +517,6 @@ const KidsPhonicsMission: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { user } = useAuth();
-
   const navigate = useNavigate();
 
   let kidId = searchParams.get("kidId") || "";
@@ -503,6 +529,25 @@ const KidsPhonicsMission: React.FC = () => {
   const [isComplete, setIsComplete] = useState(false);
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [highestUnlocked, setHighestUnlocked] = useState<number>(getUnlockedLevel(kidId));
+
+  const currentLevelDef = useMemo(
+    () => (selectedLevel ? LEVELS.find((l) => l.id === selectedLevel) || null : null),
+    [selectedLevel]
+  );
+
+  // --- Listen gating + hint ladder state ---
+  const [hasListenedThisRound, setHasListenedThisRound] = useState(false);
+  const [choicesEnabled, setChoicesEnabled] = useState(false);
+  const [wrongThisRound, setWrongThisRound] = useState(0);
+  const [pulseCorrect, setPulseCorrect] = useState(false);
+  const [disabledChoices, setDisabledChoices] = useState<Set<string>>(new Set());
+  const [forceCorrectOnly, setForceCorrectOnly] = useState(false);
+  const [nudgeText, setNudgeText] = useState<string | null>(null);
+
+  // Timing refs for telemetry-ish signals
+  const roundStartMsRef = useRef<number>(Date.now());
+  const listenedCountThisRoundRef = useRef<number>(0);
+  const answeredBeforeListenRef = useRef<number>(0);
 
   // Auto-recover kidId from localStorage if missing in URL
   useEffect(() => {
@@ -542,6 +587,9 @@ const KidsPhonicsMission: React.FC = () => {
   };
 
   const timeoutsRef = useRef<number[]>([]);
+  const pushTimeout = (id: number) => {
+    timeoutsRef.current.push(id);
+  };
   const clearAllTimeouts = () => {
     timeoutsRef.current.forEach((id) => clearTimeout(id));
     timeoutsRef.current = [];
@@ -556,8 +604,10 @@ const KidsPhonicsMission: React.FC = () => {
   const correctRef = useRef(0);
   const wrongRef = useRef(0);
   const perLetterRef = useRef<Record<string, { attempts: number; correct: number; wrong: number }>>({});
+  const hintLevelCountsRef = useRef<Record<string, number>>({}); // e.g. "hint:2" -> count
 
   const [confettiActive, setConfettiActive] = useState(false);
+  const [confettiPieces, setConfettiPieces] = useState<ConfettiPiece[]>([]);
   const [fireworks, setFireworks] = useState<FireworkParticle[]>([]);
 
   const gameRef = useRef<HTMLDivElement | null>(null);
@@ -568,8 +618,9 @@ const KidsPhonicsMission: React.FC = () => {
   // --- Prompt audio (recorded mp3) ---
   const promptAudioCacheRef = useRef<Record<string, HTMLAudioElement>>({});
   const activePromptAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPromptPlaying, setIsPromptPlaying] = useState(false);
 
-  // Confetti SFX
+  // Confetti SFX (used only on mission complete now)
   const confettiSfxRef = useRef<HTMLAudioElement | null>(null);
 
   // Autoplay is often blocked until first user tap; we unlock after first Listen/Choice tap
@@ -585,6 +636,7 @@ const KidsPhonicsMission: React.FC = () => {
         activePromptAudioRef.current.currentTime = 0;
       }
     } catch {}
+    setIsPromptPlaying(false);
   }, []);
 
   const playConfettiSfx = useCallback(() => {
@@ -599,13 +651,18 @@ const KidsPhonicsMission: React.FC = () => {
       try {
         a.currentTime = 0;
       } catch {}
-      a.play().catch((err) => {
-        // If blocked (rare here because correct answer is a user gesture), ignore.
-        console.warn("[letter-sound-match] confetti.mp3 play blocked:", err);
-      });
-    } catch (e) {
-      console.warn("Confetti SFX failed:", e);
-    }
+      a.play().catch(() => {});
+    } catch {}
+  }, []);
+
+  // “Listen first” gating: enable choices shortly after we start the prompt
+  const enableChoicesSoon = useCallback(() => {
+    setChoicesEnabled(false);
+    const id = window.setTimeout(() => {
+      setChoicesEnabled(true);
+      setNudgeText(null);
+    }, 450);
+    pushTimeout(id);
   }, []);
 
   const playPromptForGrapheme = useCallback(
@@ -614,10 +671,13 @@ const KidsPhonicsMission: React.FC = () => {
       const item = allItems.find((it) => it.grapheme === grapheme);
       const cue = item ? item.cue : PHONETIC_MAP[grapheme] || grapheme;
 
-      // Stop any ongoing TTS/audio to avoid overlap
       stopPromptAudio();
 
       const src = getRecordedSoundSrc(grapheme);
+      listenedCountThisRoundRef.current += 1;
+      setHasListenedThisRound(true);
+      enableChoicesSoon();
+      setIsPromptPlaying(true);
 
       if (src) {
         let audio = promptAudioCacheRef.current[src];
@@ -632,16 +692,26 @@ const KidsPhonicsMission: React.FC = () => {
           audio.currentTime = 0;
         } catch {}
 
-        audio.play().catch((err) => {
-          console.warn("[letter-sound-match] Prompt mp3 play blocked:", err);
+        audio.onended = () => setIsPromptPlaying(false);
+        audio.onpause = () => setIsPromptPlaying(false);
+
+        audio.play().catch(() => {
+          // If blocked, we still keep “listened” false-ish? Here we keep gating via user tap.
+          setIsPromptPlaying(false);
         });
         return;
       }
 
       // No mp3 yet -> fallback to TTS
-      speak(cue);
+      try {
+        speak(cue);
+      } finally {
+        // TTS end event isn’t reliable; just mark prompt as “not playing” after a short window.
+        const id = window.setTimeout(() => setIsPromptPlaying(false), 700);
+        pushTimeout(id);
+      }
     },
-    [stopPromptAudio]
+    [stopPromptAudio, enableChoicesSoon]
   );
 
   const isSmallScreen = () => window.matchMedia("(max-width: 767px)").matches;
@@ -689,23 +759,38 @@ const KidsPhonicsMission: React.FC = () => {
 
   const currentQuestion = questions[currentRound];
 
-  const generateAndStart = useCallback((levelId: number) => {
-    clearAllTimeouts();
-    const levelDef = LEVELS.find((l) => l.id === levelId)!;
-    setQuestions(generateQuestionsForLevel(levelDef));
-    setCurrentRound(0);
-    setStarsEarned(0);
-    setFeedback(null);
-    setLastTappedChoice(null);
-    setIsComplete(false);
-  }, []);
+  const generateAndStart = useCallback(
+    (levelId: number) => {
+      clearAllTimeouts();
+      const levelDef = LEVELS.find((l) => l.id === levelId)!;
+
+      setQuestions(generateQuestionsForLevel(levelDef));
+      setCurrentRound(0);
+      setStarsEarned(0);
+      setFeedback(null);
+      setLastTappedChoice(null);
+      setIsComplete(false);
+
+      // reset round gating
+      setHasListenedThisRound(false);
+      setChoicesEnabled(false);
+      setWrongThisRound(0);
+      setPulseCorrect(false);
+      setDisabledChoices(new Set());
+      setForceCorrectOnly(false);
+      setNudgeText(null);
+      listenedCountThisRoundRef.current = 0;
+      answeredBeforeListenRef.current = 0;
+      roundStartMsRef.current = Date.now();
+    },
+    []
+  );
 
   // Helper to start a level atomically (uses Firestore/local resume + merges bestStars)
   const startLevel = useCallback(
     async (levelId: number) => {
       clearAllTimeouts();
-      // IMPORTANT: clear previous level questions immediately
-      // so we never auto-save old questions under the new selectedLevel
+
       setQuestions([]);
       setCurrentRound(0);
       setStarsEarned(0);
@@ -715,6 +800,18 @@ const KidsPhonicsMission: React.FC = () => {
       setFeedback(null);
       setLastTappedChoice(null);
 
+      // Reset round gating
+      setHasListenedThisRound(false);
+      setChoicesEnabled(false);
+      setWrongThisRound(0);
+      setPulseCorrect(false);
+      setDisabledChoices(new Set());
+      setForceCorrectOnly(false);
+      setNudgeText(null);
+      listenedCountThisRoundRef.current = 0;
+      answeredBeforeListenRef.current = 0;
+      roundStartMsRef.current = Date.now();
+
       // Initialize session tracking
       sessionStartMsRef.current = Date.now();
       sessionLoggedRef.current = false;
@@ -722,6 +819,7 @@ const KidsPhonicsMission: React.FC = () => {
       correctRef.current = 0;
       wrongRef.current = 0;
       perLetterRef.current = {};
+      hintLevelCountsRef.current = {};
 
       let resumeData: SavedProgress | null = null;
       let firestoreBestStars: Record<number, number> | null = null;
@@ -756,7 +854,6 @@ const KidsPhonicsMission: React.FC = () => {
                 Array.isArray(r.questions) &&
                 r.questions.length === TOTAL_ROUNDS
               ) {
-                // targets/choices can be ANY introduced letters up to this level
                 const pool = getIntroducedGraphemes(levelDef.id);
 
                 const allQuestionsValid = r.questions.every((q) => {
@@ -828,7 +925,6 @@ const KidsPhonicsMission: React.FC = () => {
         if (isValid) {
           resumeData = saved;
         } else if (saved) {
-          // stale/corrupt resume -> clear it so it won't keep coming back
           clearLevelProgress(levelId, kidId);
         }
       }
@@ -848,7 +944,7 @@ const KidsPhonicsMission: React.FC = () => {
     [kidId]
   );
 
-  // ✅ Fix #2: If opened with ?level=..., use startLevel (resume logic), NOT generateAndStart
+  // If opened with ?level=..., use startLevel (resume logic)
   useEffect(() => {
     const levelParam = searchParams.get("level");
     const lp = levelParam ? parseInt(levelParam, 10) : NaN;
@@ -860,34 +956,42 @@ const KidsPhonicsMission: React.FC = () => {
       void startLevel(lp);
       return;
     }
-
-    // If no valid level param, stay on Choose Level screen
   }, [searchParams, kidId, startLevel]);
 
+  // Play prompt (manual)
   const playSound = useCallback(() => {
     if (!currentQuestion) return;
-    setAudioUnlocked(true); // unlock autoplay after first user tap
+    setAudioUnlocked(true);
+    setNudgeText(null);
     playPromptForGrapheme(currentQuestion.target);
   }, [currentQuestion, playPromptForGrapheme]);
 
+  // Auto-prompt after first user interaction unlock
   useEffect(() => {
     if (!currentQuestion) return;
-    if (!audioUnlocked) return; // avoid autoplay until user interaction
+
+    // Reset per-round gating & hint state whenever the question changes
+    setFeedback(null);
+    setLastTappedChoice(null);
+    setWrongThisRound(0);
+    setPulseCorrect(false);
+    setDisabledChoices(new Set());
+    setForceCorrectOnly(false);
+    setHasListenedThisRound(false);
+    setChoicesEnabled(false);
+    setNudgeText(null);
+    listenedCountThisRoundRef.current = 0;
+    answeredBeforeListenRef.current = 0;
+    roundStartMsRef.current = Date.now();
+
+    if (!audioUnlocked) return;
     playPromptForGrapheme(currentQuestion.target);
   }, [currentQuestion, audioUnlocked, playPromptForGrapheme]);
 
-  // ✅ Fix #3: stop audio on unmount + cleanup timeouts/fullscreen
+  // Cleanup on unmount + cleanup timeouts/fullscreen
   useEffect(() => {
     return () => {
-      try {
-        window.speechSynthesis?.cancel?.();
-      } catch {}
-      try {
-        if (activePromptAudioRef.current) {
-          activePromptAudioRef.current.pause();
-          activePromptAudioRef.current.currentTime = 0;
-        }
-      } catch {}
+      stopPromptAudio();
       try {
         if (confettiSfxRef.current) {
           confettiSfxRef.current.pause();
@@ -899,7 +1003,7 @@ const KidsPhonicsMission: React.FC = () => {
       clearAllTimeouts();
       void exitImmersiveMode();
     };
-  }, []);
+  }, [stopPromptAudio]);
 
   // Save progress to localStorage
   useEffect(() => {
@@ -978,115 +1082,173 @@ const KidsPhonicsMission: React.FC = () => {
     else perLetterRef.current[normalized].wrong += 1;
   };
 
-  const handleChoice = (choice: string) => {
-    if (feedback) return; // Prevent multiple clicks
+  const bumpHint = (level: number) => {
+    const k = `hint:${level}`;
+    hintLevelCountsRef.current[k] = (hintLevelCountsRef.current[k] || 0) + 1;
+  };
 
-    // ✅ Fix #1: unlock autoplay on answer tap
+  const makeConfettiPieces = useCallback((count: number) => {
+    const colors = ["#fbbf24", "#34d399", "#60a5fa", "#f87171", "#a78bfa", "#fb923c"];
+    const pieces: ConfettiPiece[] = Array.from({ length: count }).map((_, i) => ({
+      id: i,
+      leftPct: Math.random() * 100,
+      delay: Math.random() * 0.35,
+      duration: 1.6 + Math.random() * 0.9,
+      rotation: Math.random() * 360,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      size: 8 + Math.random() * 6,
+    }));
+    setConfettiPieces(pieces);
+  }, []);
+
+  const triggerMiniCelebrate = useCallback(() => {
+    setConfettiActive(true);
+    makeConfettiPieces(18);
+    const t = window.setTimeout(() => {
+      setConfettiActive(false);
+      setConfettiPieces([]);
+    }, 1800);
+    pushTimeout(t);
+  }, [makeConfettiPieces]);
+
+  const triggerBigCelebrate = useCallback(() => {
+    // Confetti sfx only on mission complete (lower stimulation during practice)
+    playConfettiSfx();
+    setConfettiActive(true);
+    makeConfettiPieces(42);
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!prefersReducedMotion) {
+      const particles: FireworkParticle[] = [];
+      let particleId = 0;
+      const colors = ["#FFD54A", "#FF7A59", "#FF4D8D", "#7C5CFF", "#2EE6A6", "#FFFFFF"];
+
+      const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
+
+      const bursts = [
+        { x: 14, y: 86, count: 20, angleMin: -140, angleMax: -40 },
+        { x: 86, y: 86, count: 20, angleMin: -140, angleMax: -40 },
+        { x: 50, y: 88, count: 20, angleMin: -140, angleMax: -40 },
+        { x: 92, y: 18, count: 10, angleMin: 140, angleMax: 220 },
+        { x: 8, y: 14, count: 10, angleMin: -40, angleMax: 40 },
+      ];
+
+      bursts.forEach((burst) => {
+        const xClamped = clamp(burst.x, 6, 94);
+        const yClamped = clamp(burst.y, 8, 92);
+
+        for (let i = 0; i < burst.count; i++) {
+          const angle = burst.angleMin + Math.random() * (burst.angleMax - burst.angleMin);
+          const angleRad = (angle * Math.PI) / 180;
+          const radius = 160 + Math.random() * 220;
+          const dx = Math.cos(angleRad) * radius;
+          const dy = Math.sin(angleRad) * radius;
+
+          particles.push({
+            id: particleId++,
+            x: `${xClamped}vw`,
+            y: `${yClamped}vh`,
+            dx,
+            dy,
+            rot: Math.random() * 720 - 360,
+            delayMs: Math.random() * 420,
+            durMs: 1600 + Math.random() * 900,
+            sizePx: 4 + Math.random() * 4,
+            color: colors[Math.floor(Math.random() * colors.length)],
+          });
+        }
+      });
+
+      setFireworks(particles);
+      const t = window.setTimeout(() => setFireworks([]), 3200);
+      pushTimeout(t);
+    }
+
+    const t2 = window.setTimeout(() => {
+      setConfettiActive(false);
+      setConfettiPieces([]);
+    }, 2600);
+    pushTimeout(t2);
+  }, [makeConfettiPieces, playConfettiSfx]);
+
+  // Light in-session spaced review: after a miss, ensure the target appears again soon
+  const scheduleSoonReview = useCallback(
+    (target: string) => {
+      if (!currentLevelDef) return;
+      setQuestions((prev) => {
+        if (!prev || prev.length !== TOTAL_ROUNDS) return prev;
+        const idx = Math.min(currentRound + 2, TOTAL_ROUNDS - 1);
+        if (idx <= currentRound) return prev;
+        if (prev[idx]?.target === target) return prev;
+
+        const pool = getIntroducedGraphemes(currentLevelDef.id);
+        const next = [...prev];
+        next[idx] = buildQuestion(target, pool, currentLevelDef.choicesCount);
+        return next;
+      });
+    },
+    [currentLevelDef, currentRound]
+  );
+
+  const handleChoice = (choice: string) => {
+    if (feedback) return;
+    if (!currentQuestion || !currentLevelDef) return;
+
+    // If choices are still gated, treat as “answered before listen”
+    if (!choicesEnabled || !hasListenedThisRound) {
+      answeredBeforeListenRef.current += 1;
+      setAudioUnlocked(true);
+      setNudgeText("Tap listen first");
+      // Replay prompt to guide
+      playPromptForGrapheme(currentQuestion.target);
+      // Track behavior
+      const k = "behavior:answered_before_listen";
+      hintLevelCountsRef.current[k] = (hintLevelCountsRef.current[k] || 0) + 1;
+      return;
+    }
+
+    // Unlock autoplay on answer tap too
     setAudioUnlocked(true);
 
-    // Stop current prompt audio so celebration sounds feel clean
+    // Stop current prompt audio so feedback feels clean
     stopPromptAudio();
-
-    setLastTappedChoice(choice);
 
     // Track attempts for session logging
     attemptsRef.current++;
 
-    if (!currentQuestion) return;
+    setLastTappedChoice(choice);
 
-    if (choice === currentQuestion.target) {
+    // Enforce hint-based disabling
+    if (forceCorrectOnly && choice !== currentQuestion.target) {
+      setNudgeText("Tap the glowing letter");
+      playPromptForGrapheme(currentQuestion.target);
+      return;
+    }
+    if (disabledChoices.has(choice)) {
+      setNudgeText("Try the other one");
+      playPromptForGrapheme(currentQuestion.target);
+      return;
+    }
+
+    const isCorrect = choice === currentQuestion.target;
+
+    if (isCorrect) {
       correctRef.current++;
       bumpLetter(currentQuestion.target, "correct");
       setFeedback("correct");
+      setNudgeText("Great job!");
+      setPulseCorrect(false);
 
-      // Confetti + sounds
-      setConfettiActive(true);
+      // Minimal celebration (no fireworks here)
       playClaps();
-      playConfettiSfx(); // ✅ confetti.mp3 plays along with falling confetti
-
-      // Fireworks
-      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (!prefersReducedMotion) {
-        const particles: FireworkParticle[] = [];
-        let particleId = 0;
-        const colors = ["#FFD54A", "#FF7A59", "#FF4D8D", "#7C5CFF", "#2EE6A6", "#FFFFFF"];
-
-        const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
-
-        const groundBursts = [
-          { x: 14, y: 86, count: 24 },
-          { x: 86, y: 86, count: 24 },
-          { x: 50, y: 88, count: 24 },
-        ];
-
-        groundBursts.forEach((burst) => {
-          const xClamped = clamp(burst.x, 6, 94);
-          const yClamped = clamp(burst.y, 8, 92);
-
-          for (let i = 0; i < burst.count; i++) {
-            const angle = -140 + Math.random() * 100;
-            const angleRad = (angle * Math.PI) / 180;
-            const radius = 220 + Math.random() * 200;
-            const dx = Math.cos(angleRad) * radius;
-            const dy = Math.sin(angleRad) * radius;
-
-            particles.push({
-              id: particleId++,
-              x: `${xClamped}vw`,
-              y: `${yClamped}vh`,
-              dx,
-              dy,
-              rot: Math.random() * 720 - 360,
-              delayMs: Math.random() * 450,
-              durMs: 1800 + Math.random() * 800,
-              sizePx: 4 + Math.random() * 4,
-              color: colors[Math.floor(Math.random() * colors.length)],
-            });
-          }
-        });
-
-        const cornerBursts = [
-          { x: 92, y: 18, count: 12, angleMin: 140, angleMax: 220 },
-          { x: 8, y: 14, count: 12, angleMin: -40, angleMax: 40 },
-        ];
-
-        cornerBursts.forEach((burst) => {
-          const xClamped = clamp(burst.x, 6, 94);
-          const yClamped = clamp(burst.y, 8, 92);
-
-          for (let i = 0; i < burst.count; i++) {
-            const angle = burst.angleMin + Math.random() * (burst.angleMax - burst.angleMin);
-            const angleRad = (angle * Math.PI) / 180;
-            const radius = 120 + Math.random() * 120;
-            const dx = Math.cos(angleRad) * radius;
-            const dy = Math.sin(angleRad) * radius;
-
-            particles.push({
-              id: particleId++,
-              x: `${xClamped}vw`,
-              y: `${yClamped}vh`,
-              dx,
-              dy,
-              rot: Math.random() * 720 - 360,
-              delayMs: Math.random() * 450,
-              durMs: 1800 + Math.random() * 800,
-              sizePx: 4 + Math.random() * 3,
-              color: colors[Math.floor(Math.random() * colors.length)],
-            });
-          }
-        });
-
-        setFireworks(particles);
-
-        const fireworkTimeout = window.setTimeout(() => setFireworks([]), 3000);
-        timeoutsRef.current.push(fireworkTimeout);
-      }
+      triggerMiniCelebrate();
 
       const newStars = starsEarned + 1;
       setStarsEarned((s) => s + 1);
 
+      // Advance in ~2.2s (not 4s)
       const t = window.setTimeout(() => {
-        setConfettiActive(false);
+        setNudgeText(null);
 
         if (currentRound < TOTAL_ROUNDS - 1) {
           setCurrentRound((r) => r + 1);
@@ -1095,7 +1257,7 @@ const KidsPhonicsMission: React.FC = () => {
           return;
         }
 
-        // Level complete
+        // Mission complete
         setIsComplete(true);
 
         if (selectedLevel) {
@@ -1139,6 +1301,13 @@ const KidsPhonicsMission: React.FC = () => {
                   };
                 }
 
+                // Pack hint/behavior counts into tagDeltas safely as “attempts only”
+                Object.entries(hintLevelCountsRef.current).forEach(([k, v]) => {
+                  if (v > 0) {
+                    tagDeltas[k] = { attempts: v, correct: 0, wrong: 0 };
+                  }
+                });
+
                 await recordLevelResult({
                   kidId,
                   gameId: "letter-sound-match",
@@ -1150,7 +1319,7 @@ const KidsPhonicsMission: React.FC = () => {
                   accuracyPct: accuracy * 100,
                   durationSec,
                   tagDeltas,
-                });
+                } as any);
               } catch (err) {
                 console.error("[recordLevelResult] Failed (non-blocking):", err);
               }
@@ -1163,9 +1332,11 @@ const KidsPhonicsMission: React.FC = () => {
             const bestByLevel: Record<string, number> = {};
             Object.entries(mergedBest).forEach(([k, v]) => (bestByLevel[k] = v));
 
-            saveGameProgressDoc(kidId, { bestStarsByLevel: bestByLevel, resume: null, version: QUESTION_SET_VERSION }).catch((e) =>
-              console.warn("Firestore completion save failed:", e)
-            );
+            saveGameProgressDoc(kidId, {
+              bestStarsByLevel: bestByLevel,
+              resume: null,
+              version: QUESTION_SET_VERSION,
+            }).catch(() => {});
           }
 
           // Unlock next level if criteria met
@@ -1175,9 +1346,9 @@ const KidsPhonicsMission: React.FC = () => {
             setHighestUnlocked(newUnlocked);
           }
         }
-      }, 4000);
+      }, 2200);
 
-      timeoutsRef.current.push(t);
+      pushTimeout(t);
       return;
     }
 
@@ -1185,21 +1356,82 @@ const KidsPhonicsMission: React.FC = () => {
     wrongRef.current++;
     bumpLetter(currentQuestion.target, "wrong");
     setFeedback("wrong");
+    setNudgeText("Listen again");
+    scheduleSoonReview(currentQuestion.target);
 
-    const t2 = window.setTimeout(() => {
+    const nextWrong = wrongThisRound + 1;
+    setWrongThisRound(nextWrong);
+
+    // Hint ladder
+    // H1: replay
+    if (nextWrong === 1) {
+      bumpHint(1);
+      const t = window.setTimeout(() => {
+        playPromptForGrapheme(currentQuestion.target);
+      }, 450);
+      pushTimeout(t);
+    }
+
+    // H2: replay + pulse correct
+    if (nextWrong === 2) {
+      bumpHint(2);
+      setPulseCorrect(true);
+      const t = window.setTimeout(() => {
+        playPromptForGrapheme(currentQuestion.target);
+        const t2 = window.setTimeout(() => setPulseCorrect(false), 900);
+        pushTimeout(t2);
+      }, 350);
+      pushTimeout(t);
+      setNudgeText("Look for the glowing letter");
+    }
+
+    // H3: reduce choices (if 3 choices)
+    if (nextWrong === 3) {
+      bumpHint(3);
+      setNudgeText("Let’s make it easier");
+      const nonTarget = currentQuestion.choices.filter((c) => c !== currentQuestion.target);
+      if (nonTarget.length >= 2) {
+        // Disable one distractor (keep target + one distractor)
+        const toDisable = nonTarget.find((c) => c !== choice) || nonTarget[0];
+        setDisabledChoices(new Set([toDisable]));
+      }
+      setPulseCorrect(true);
+      const t = window.setTimeout(() => {
+        playPromptForGrapheme(currentQuestion.target);
+      }, 350);
+      pushTimeout(t);
+    }
+
+    // H4+: errorless success
+    if (nextWrong >= 4) {
+      bumpHint(4);
+      setForceCorrectOnly(true);
+      setPulseCorrect(true);
+      setDisabledChoices(new Set(currentQuestion.choices.filter((c) => c !== currentQuestion.target)));
+      setNudgeText("Tap the glowing letter");
+      const t = window.setTimeout(() => {
+        playPromptForGrapheme(currentQuestion.target);
+      }, 250);
+      pushTimeout(t);
+    }
+
+    // Reset feedback after a teachable window (not 350ms)
+    const reset = window.setTimeout(() => {
       setFeedback(null);
       setLastTappedChoice(null);
-    }, 350);
-    timeoutsRef.current.push(t2);
+    }, 1100);
+    pushTimeout(reset);
   };
+
+  // Trigger big celebration when mission completes
+  useEffect(() => {
+    if (!isComplete) return;
+    triggerBigCelebrate();
+  }, [isComplete, triggerBigCelebrate]);
 
   // --- UI ---
   return (
-    <div
-      ref={gameRef}
-      className="ts-phonics-mission-root"
-      style={{ fontFamily: KIDS_FONT_STACK }}
-    >
+    <div ref={gameRef} className="ts-phonics-mission-root" style={{ fontFamily: KIDS_FONT_STACK }}>
       {!selectedLevel ? (
         <div
           className="relative min-h-screen flex flex-col items-center justify-start py-12 px-4 overflow-hidden"
@@ -1230,7 +1462,9 @@ const KidsPhonicsMission: React.FC = () => {
             {!kidId && (
               <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
                 <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
-                <p className="text-yellow-100/80 text-sm mb-4">Please go back and choose a child to track progress.</p>
+                <p className="text-yellow-100/80 text-sm mb-4">
+                  Please go back and choose a child to track progress.
+                </p>
                 <Link
                   to={withKid("/parent")}
                   className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
@@ -1287,7 +1521,10 @@ const KidsPhonicsMission: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <div aria-label={`Stars: ${starsToShow} of ${TOTAL_ROUNDS}`} className="text-yellow-300">
                         {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
-                          <span key={i} className={`text-sm mr-0.5 ${i < starsToShow ? "text-yellow-300" : "text-white/30"}`}>
+                          <span
+                            key={i}
+                            className={`text-sm mr-0.5 ${i < starsToShow ? "text-yellow-300" : "text-white/30"}`}
+                          >
                             ★
                           </span>
                         ))}
@@ -1327,25 +1564,12 @@ const KidsPhonicsMission: React.FC = () => {
           }}
         >
           <style>{`
-            @keyframes pop { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
-            @keyframes sparkle { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.95; } }
-            @keyframes sparkleBurst { 0% { transform: scale(0); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.9; } 100% { transform: scale(1.5); opacity: 0; } }
+            @keyframes pop { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
             @keyframes gentleShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-            @keyframes boomingPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 140, 66, 0.4); } 50% { transform: scale(1.06); box-shadow: 0 0 40px rgba(255, 140, 66, 0.8), 0 0 60px rgba(255, 107, 53, 0.6); } }
-            @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-            @keyframes drift { 0% { transform: translate(0, 0); } 100% { transform: translate(15px, -15px); } }
-            .starfield { position: absolute; inset: 0; pointer-events: none; }
-            .starfield::before, .starfield::after {
-              content: ''; position: absolute; inset: 0;
-              background-image:
-                radial-gradient(circle at 15% 20%, white 1px, transparent 1.1px),
-                radial-gradient(circle at 85% 30%, white 0.8px, transparent 0.9px),
-                radial-gradient(circle at 40% 70%, white 1px, transparent 1.1px),
-                radial-gradient(circle at 70% 50%, white 0.9px, transparent 1px);
-              background-size: 120px 120px;
-              animation: twinkle 6s ease-in-out infinite, drift 80s linear infinite;
-            }
-            .starfield::after { background-size: 180px 180px; animation-delay: -3s; animation-duration: 8s, 120s; }
+            @keyframes boomingPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 140, 66, 0.28); } 50% { transform: scale(1.04); box-shadow: 0 0 36px rgba(255, 140, 66, 0.55); } }
+            @keyframes confettiFall { 0% { top: -10%; opacity: 1; } 85% { opacity: 1; } 100% { top: 120%; opacity: 0; } }
+            @keyframes fireworkBurst { 0% { transform: translate3d(0,0,0) scale(0.9) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate3d(var(--dx), var(--dy), 0) scale(1) rotate(var(--rot)); opacity: 0; } }
+            @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 0 rgba(52, 211, 153, 0); } 50% { box-shadow: 0 0 40px rgba(52, 211, 153, 0.85); } }
 
             .ts-immersive-game header,
             .ts-immersive-game nav,
@@ -1353,32 +1577,25 @@ const KidsPhonicsMission: React.FC = () => {
             .ts-immersive-game .site-header,
             .ts-immersive-game .navbar { display: none !important; }
 
-            .ts-immersive-game body,
-            .ts-immersive-game #root,
-            .ts-immersive-game main,
-            .ts-immersive-game .min-h-screen { padding-top: 0 !important; margin-top: 0 !important; }
-
-            .choice-btn { transition: transform 0.15s ease, box-shadow 0.15s ease; }
-            .choice-btn:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255, 255, 255, 0.3); }
+            .choice-btn { transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease, opacity 0.15s ease; }
+            .choice-btn:hover { transform: scale(1.04); box-shadow: 0 0 24px rgba(255, 255, 255, 0.22); }
             .choice-btn:active { transform: scale(0.98); }
 
             .choice-btn.sparkle-correct {
               animation: pop 220ms cubic-bezier(.2,.9,.2,1);
-              background: rgba(45, 212, 191, 0.6) !important;
+              background: rgba(45, 212, 191, 0.55) !important;
               border-color: rgba(45, 212, 191, 1) !important;
-              box-shadow: 0 0 60px rgba(45, 212, 191, 0.95), 0 0 140px rgba(45, 212, 191, 0.6) !important;
+              box-shadow: 0 0 50px rgba(45, 212, 191, 0.85) !important;
             }
             .choice-btn.shake-wrong { animation: gentleShake 0.35s ease-in-out; }
             .choice-btn.glow-wrong {
               animation: pop 220ms cubic-bezier(.2,.9,.2,1);
-              background: rgba(239, 68, 68, 0.6) !important;
+              background: rgba(239, 68, 68, 0.45) !important;
               border-color: rgba(239, 68, 68, 1) !important;
-              box-shadow: 0 0 60px rgba(239, 68, 68, 0.95), 0 0 140px rgba(239, 68, 68, 0.6) !important;
+              box-shadow: 0 0 50px rgba(239, 68, 68, 0.75) !important;
             }
+            .choice-btn.pulse-correct { animation: glowPulse 0.9s ease-in-out infinite; }
             .listen-btn-booming { animation: boomingPulse 1.8s ease-in-out infinite; }
-
-            @keyframes confettiFall { 0% { top: -10%; opacity: 1; } 85% { opacity: 1; } 100% { top: 120%; opacity: 0; } }
-            @keyframes fireworkBurst { 0% { transform: translate3d(0,0,0) scale(0.9) rotate(0deg); opacity: 0; } 10% { opacity: 1; } 100% { transform: translate3d(var(--dx), var(--dy), 0) scale(1) rotate(var(--rot)); opacity: 0; } }
 
             @media (prefers-reduced-motion: reduce) {
               * { animation: none !important; transition: none !important; }
@@ -1391,17 +1608,17 @@ const KidsPhonicsMission: React.FC = () => {
             onClick={() => {
               // Save progress immediately before leaving
               if (kidId && selectedLevel && questions.length > 0 && !isComplete) {
-                  saveGameProgressDoc(kidId, {
-                    resume: {
-                      level: selectedLevel,
-                      round: currentRound,
-                      stars: starsEarned,
-                      questions,
-                      updatedAt: Date.now(),
-                    },
-                    version: QUESTION_SET_VERSION,
-                  }).catch((e) => console.warn("Firestore save on exit failed:", e));
-                }
+                saveGameProgressDoc(kidId, {
+                  resume: {
+                    level: selectedLevel,
+                    round: currentRound,
+                    stars: starsEarned,
+                    questions,
+                    updatedAt: Date.now(),
+                  },
+                  version: QUESTION_SET_VERSION,
+                }).catch(() => {});
+              }
               stopPromptAudio();
               void exitImmersiveMode();
               clearAllTimeouts();
@@ -1515,7 +1732,10 @@ const KidsPhonicsMission: React.FC = () => {
                       onClick={playSound}
                       type="button"
                       aria-label="Listen to sound"
-                      className="listen-btn-booming relative flex items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95"
+                      className={[
+                        "relative flex items-center justify-center rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95",
+                        (!hasListenedThisRound || feedback === "wrong" || nudgeText) ? "listen-btn-booming" : "",
+                      ].join(" ")}
                       style={{
                         width: 340,
                         height: 340,
@@ -1524,6 +1744,7 @@ const KidsPhonicsMission: React.FC = () => {
                         touchAction: "manipulation",
                         userSelect: "none",
                         WebkitUserSelect: "none",
+                        filter: isPromptPlaying ? "brightness(1.03)" : "none",
                       }}
                     >
                       <img
@@ -1535,6 +1756,12 @@ const KidsPhonicsMission: React.FC = () => {
                     <div className="text-4xl font-bold text-gray-800" style={{ textShadow: "2px 2px 4px rgba(255,255,255,0.6)" }}>
                       listen
                     </div>
+
+                    {!hasListenedThisRound && (
+                      <div className="text-xl font-semibold text-gray-800/90" style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.6)" }}>
+                        Tap listen first
+                      </div>
+                    )}
                   </div>
 
                   {/* Choices */}
@@ -1547,16 +1774,26 @@ const KidsPhonicsMission: React.FC = () => {
                       const isCorrect = choice === currentQuestion.target;
                       const isWrong = choice === lastTappedChoice && !isCorrect;
 
+                      const disabled =
+                        !!feedback ||
+                        !choicesEnabled ||
+                        !hasListenedThisRound ||
+                        disabledChoices.has(choice) ||
+                        (forceCorrectOnly && !isCorrect);
+
                       return (
                         <button
                           key={choice}
                           type="button"
                           onClick={() => handleChoice(choice)}
                           aria-label={`Choose ${displayText}`}
-                          className={`choice-btn flex items-center justify-center rounded-3xl shadow-xl font-black text-gray-800 transition-all
-                            ${feedback === "correct" && isCorrect ? "sparkle-correct" : ""}
-                            ${feedback === "wrong" && isWrong ? "glow-wrong shake-wrong" : ""}
-                          `}
+                          disabled={disabled}
+                          className={[
+                            "choice-btn flex items-center justify-center rounded-3xl shadow-xl font-black text-gray-800 transition-all",
+                            feedback === "correct" && isCorrect ? "sparkle-correct" : "",
+                            feedback === "wrong" && isWrong ? "glow-wrong shake-wrong" : "",
+                            pulseCorrect && isCorrect ? "pulse-correct" : "",
+                          ].join(" ")}
                           style={{
                             height: 160,
                             background: "linear-gradient(135deg, #FFDAB9 0%, #FFB88C 100%)",
@@ -1566,6 +1803,9 @@ const KidsPhonicsMission: React.FC = () => {
                             touchAction: "manipulation",
                             userSelect: "none",
                             WebkitUserSelect: "none",
+                            opacity: disabled ? 0.62 : 1,
+                            filter: disabled ? "grayscale(0.05)" : "none",
+                            cursor: disabled ? "not-allowed" : "pointer",
                           }}
                         >
                           {displayText.toLowerCase()}
@@ -1576,55 +1816,43 @@ const KidsPhonicsMission: React.FC = () => {
                 </div>
               </div>
 
-              {/* Feedback */}
-              {feedback === "correct" && (
+              {/* Guidance text (replaces big “Try again!” loop with instruction) */}
+              {!!nudgeText && (
                 <div
-                  className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center text-4xl text-green-400 font-bold drop-shadow-lg"
-                  style={{ zIndex: 30, textShadow: "2px 2px 6px rgba(0,0,0,0.8)" }}
+                  className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center text-4xl font-bold drop-shadow-lg"
+                  style={{
+                    zIndex: 30,
+                    textShadow: "2px 2px 6px rgba(0,0,0,0.75)",
+                    color: feedback === "wrong" ? "#FDE68A" : "#34D399",
+                  }}
                 >
-                  Great job! ✨
-                </div>
-              )}
-              {feedback === "wrong" && (
-                <div
-                  className="absolute bottom-20 left-1/2 transform -translate-x-1/2 text-center text-4xl text-yellow-300 font-bold drop-shadow-lg"
-                  style={{ zIndex: 30, textShadow: "2px 2px 6px rgba(0,0,0,0.8)" }}
-                >
-                  Try again! 🌟
+                  {nudgeText}
                 </div>
               )}
 
               {/* Confetti Overlay */}
-              {confettiActive && (
+              {confettiActive && confettiPieces.length > 0 && (
                 <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 60, overflow: "hidden" }} aria-hidden="true">
-                  {Array.from({ length: 50 }).map((_, i) => {
-                    const left = Math.random() * 100;
-                    const delay = Math.random() * 0.6;
-                    const duration = 2.8 + Math.random() * 1.4;
-                    const rotation = Math.random() * 360;
-                    const colors = ["#fbbf24", "#34d399", "#60a5fa", "#f87171", "#a78bfa", "#fb923c"];
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    return (
-                      <div
-                        key={i}
-                        style={{
-                          position: "absolute",
-                          left: `${left}%`,
-                          top: "-10%",
-                          width: "10px",
-                          height: "10px",
-                          backgroundColor: color,
-                          borderRadius: "2px",
-                          animation: `confettiFall ${duration}s linear ${delay}s forwards`,
-                          transform: `rotate(${rotation}deg)`,
-                        }}
-                      />
-                    );
-                  })}
+                  {confettiPieces.map((p) => (
+                    <div
+                      key={p.id}
+                      style={{
+                        position: "absolute",
+                        left: `${p.leftPct}%`,
+                        top: "-10%",
+                        width: `${p.size}px`,
+                        height: `${p.size}px`,
+                        backgroundColor: p.color,
+                        borderRadius: "2px",
+                        animation: `confettiFall ${p.duration}s linear ${p.delay}s forwards`,
+                        transform: `rotate(${p.rotation}deg)`,
+                      }}
+                    />
+                  ))}
                 </div>
               )}
 
-              {/* Fireworks Overlay */}
+              {/* Fireworks Overlay (mission complete only) */}
               {fireworks.length > 0 && (
                 <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 60, overflow: "hidden" }} aria-hidden="true">
                   {fireworks.map((particle) => (

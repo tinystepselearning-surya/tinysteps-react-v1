@@ -4,6 +4,11 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 /**
  * Tiny Steps — Game 3: CVC Word Reader
  *
+ * Fixes included:
+ * ✅ Prevent double-advance (word 1 -> word 3 skip) by removing click+drag double fire
+ * ✅ Fix stale searchParams causing level to revert (level 1 repeats instead of next level)
+ * ✅ Fullscreen exit reliability + auto-exit on leaving play/unmount
+ *
  * Pedagogy upgrades included (Tiny Steps standards):
  * ✅ Listen-first gate (reduces guessing)
  * ✅ Step-based choices (only current slot letters, capped)
@@ -44,6 +49,9 @@ const MAX_WORDS_PER_LEVEL = 12;
 const AUTO_HINT_MS = 3500;
 const SUCCESS_PAUSE_MS = 2500;
 const CONFETTI_MS = 1600;
+
+// Input tuning
+const DRAG_START_PX = 10;
 
 // --------------------
 // Level Groups (5 levels)
@@ -427,6 +435,12 @@ export default function CvcWordReaderGame() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // Keep a fresh ref to avoid stale closures overwriting params (critical for level progression + fullscreen)
+  const searchParamsRef = useRef(searchParams);
+  useEffect(() => {
+    searchParamsRef.current = searchParams;
+  }, [searchParams]);
+
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
 
   // URL param: level = a|e|i|o|u
@@ -562,6 +576,9 @@ export default function CvcWordReaderGame() {
   const [wrongBySlot, setWrongBySlot] = useState<Record<SlotKey, number>>({ first: 0, middle: 0, last: 0 });
   const reviewScheduledRef = useRef(false);
 
+  // Prevent any double-completion / double-advance per word (fixes word skipping)
+  const successLockRef = useRef(false);
+
   const slotRefs = useRef<Record<SlotKey, HTMLDivElement | null>>({
     first: null,
     middle: null,
@@ -577,6 +594,19 @@ export default function CvcWordReaderGame() {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [snapTarget, setSnapTarget] = useState<SlotKey | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
+
+  // Pointer pipeline for choices (tap vs drag is decided here; no onClick used)
+  const choicePointerRef = useRef<{
+    pointerId: number;
+    letter: string;
+    startX: number;
+    startY: number;
+    bubbleLeft: number;
+    bubbleTop: number;
+    dx: number;
+    dy: number;
+    dragging: boolean;
+  } | null>(null);
 
   const dragRef = useRef<{
     id: string;
@@ -598,8 +628,6 @@ export default function CvcWordReaderGame() {
   // Telemetry stub (wire to Firebase later)
   // --------------------
   function logEvent(name: string, payload: Record<string, any> = {}) {
-    // Replace with your analytics pipeline.
-    // Example: window.tsTelemetry?.log({ gameId: GAME_ID, ... })
     // eslint-disable-next-line no-console
     console.log("[TS_GAME_EVENT]", {
       gameId: GAME_ID,
@@ -614,12 +642,55 @@ export default function CvcWordReaderGame() {
   }
 
   // --------------------
+  // Fullscreen helpers (cross-browser)
+  // --------------------
+  function safeExitFullscreen() {
+    const d: any = document;
+    const isFs = !!document.fullscreenElement || !!d.webkitFullscreenElement || !!d.msFullscreenElement;
+    if (!isFs) return;
+
+    const exit = document.exitFullscreen || d.webkitExitFullscreen || d.msExitFullscreen;
+    try {
+      const r = exit?.call(document);
+      // Some browsers return a promise, some don't
+      if (r && typeof (r as Promise<void>).catch === "function") (r as Promise<void>).catch(() => {});
+    } catch {
+      // ignore
+    }
+  }
+
+  async function safeRequestFullscreen(el: HTMLElement) {
+    const anyEl: any = el;
+    const req = el.requestFullscreen || anyEl.webkitRequestFullscreen || anyEl.msRequestFullscreen;
+    if (!req) return;
+    try {
+      const r = req.call(el, { navigationUI: "hide" });
+      if (r && typeof (r as Promise<void>).then === "function") await (r as Promise<void>);
+    } catch {
+      // ignore
+    }
+  }
+
+  // Auto exit fullscreen when leaving play mode (fixes fullscreen “sticking”)
+  useEffect(() => {
+    if (inPlayMode) return;
+    safeExitFullscreen();
+  }, [inPlayMode]);
+
+  // Exit fullscreen on unmount too (extra safety)
+  useEffect(() => {
+    return () => {
+      safeExitFullscreen();
+    };
+  }, []);
+
+  // --------------------
   // Hard guard: NEVER keep fs=1 on Levels screen
   // --------------------
   useEffect(() => {
     if (inPlayMode) return;
     if (!fsParam) return;
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParamsRef.current);
     sp.delete("fs");
     setSearchParams(sp, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -630,9 +701,12 @@ export default function CvcWordReaderGame() {
   // --------------------
   useEffect(() => {
     const onFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-      if (!document.fullscreenElement) {
-        const sp = new URLSearchParams(searchParams);
+      const d: any = document;
+      const nowFs = !!document.fullscreenElement || !!d.webkitFullscreenElement || !!d.msFullscreenElement;
+      setIsFullscreen(nowFs);
+
+      if (!nowFs) {
+        const sp = new URLSearchParams(searchParamsRef.current);
         if (sp.get("fs") === "1") {
           sp.delete("fs");
           setSearchParams(sp, { replace: true });
@@ -640,14 +714,21 @@ export default function CvcWordReaderGame() {
       }
     };
     document.addEventListener("fullscreenchange", onFsChange);
-    return () => document.removeEventListener("fullscreenchange", onFsChange);
-  }, [searchParams, setSearchParams]);
+    // iOS Safari / older webkit sometimes uses webkitfullscreenchange
+    document.addEventListener("webkitfullscreenchange" as any, onFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange" as any, onFsChange);
+    };
+  }, [setSearchParams]);
 
   // Lock scroll when in Play + fullscreen param
   useEffect(() => {
     if (!inPlayMode) return;
-    const shouldLock = !!document.fullscreenElement || fsParam;
+    const d: any = document;
+    const shouldLock = !!document.fullscreenElement || !!d.webkitFullscreenElement || fsParam;
     if (!shouldLock) return;
+
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
@@ -659,22 +740,17 @@ export default function CvcWordReaderGame() {
   // Navigation helpers
   // --------------------
   function goPhonicsLibraryCvcTab() {
+    safeExitFullscreen();
     const qs = new URLSearchParams();
     if (kidId) qs.set("kidId", kidId);
     qs.set("phase", "cvc_word_reader");
     navigate(`/kids/games/phonics?${qs.toString()}`);
   }
 
-  function exitFullscreenIfAny() {
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.().catch(() => {});
-    }
-  }
-
   function goLevels() {
-    exitFullscreenIfAny();
+    safeExitFullscreen();
 
-    const sp = new URLSearchParams(searchParams);
+    const sp = new URLSearchParams(searchParamsRef.current);
     sp.delete("level");
     sp.delete("fs");
     setSearchParams(sp, { replace: true });
@@ -685,23 +761,21 @@ export default function CvcWordReaderGame() {
     resetRound();
   }
 
-  async function enterFullscreenOnPlayWrapperAndMarkFsParam() {
+  async function enterFullscreenOnPlayWrapperAndMarkFsParam(baseParams?: URLSearchParams) {
     const wrapper = fsWrapperRef.current;
     if (!wrapper) return;
 
-    try {
-      await wrapper.requestFullscreen?.({ navigationUI: "hide" } as any);
+    await safeRequestFullscreen(wrapper);
 
-      const sp = new URLSearchParams(searchParams);
-      sp.set("fs", "1");
-      setSearchParams(sp, { replace: true });
-    } catch {
-      // ignore
-    }
+    // IMPORTANT: use provided params (fresh) or ref (fresh) to avoid reverting level
+    const sp = new URLSearchParams(baseParams ?? searchParamsRef.current);
+    sp.set("fs", "1");
+    setSearchParams(sp, { replace: true });
   }
 
   async function startLevel(key: "a" | "e" | "i" | "o" | "u") {
-    const sp = new URLSearchParams(searchParams);
+    // Build params from ref (fresh)
+    const sp = new URLSearchParams(searchParamsRef.current);
     sp.set("level", key);
     sp.delete("fs");
     if (kidId) sp.set("kidId", kidId);
@@ -712,9 +786,9 @@ export default function CvcWordReaderGame() {
     setPos(0);
     resetRound();
 
-    // Note: keeping your existing fullscreen behavior as-is.
+    // Wait two frames so the wrapper exists in DOM
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-    await enterFullscreenOnPlayWrapperAndMarkFsParam();
+    await enterFullscreenOnPlayWrapperAndMarkFsParam(sp);
 
     logEvent("level_start", { level: key });
   }
@@ -803,6 +877,10 @@ export default function CvcWordReaderGame() {
     setWrongBySlot({ first: 0, middle: 0, last: 0 });
     reviewScheduledRef.current = false;
     roundStartMsRef.current = 0;
+
+    // Locks / pointer cleanup
+    successLockRef.current = false;
+    choicePointerRef.current = null;
 
     // stop any active drag raf
     const d = dragRef.current;
@@ -941,7 +1019,7 @@ export default function CvcWordReaderGame() {
     logEvent("level_complete", { level: levelKeyParam, wordsPlayed: playOrder.length });
   }
 
-  function placeCorrectIntoSlot(slotKey: SlotKey, reason: "guided") {
+  function placeCorrectIntoSlot(slotKey: SlotKey) {
     if (!item) return;
     if (levelComplete) return;
 
@@ -966,6 +1044,8 @@ export default function CvcWordReaderGame() {
 
   function celebrateThenAdvance() {
     if (!item) return;
+    if (successLockRef.current) return; // hard stop: prevents double completion
+    successLockRef.current = true;
 
     setPhase("success");
     setCelebrate(true);
@@ -1025,7 +1105,7 @@ export default function CvcWordReaderGame() {
         setHintLetter(correctLetter);
         scheduleReviewIfNeeded("guided");
         // Guided placement (guaranteed success)
-        window.setTimeout(() => placeCorrectIntoSlot(slotKey, "guided"), 250);
+        window.setTimeout(() => placeCorrectIntoSlot(slotKey), 250);
       } else {
         setPrompt("Let’s listen again.");
         setHintLetter(correctLetter);
@@ -1042,6 +1122,7 @@ export default function CvcWordReaderGame() {
   function tryPlace(slotKey: SlotKey, letter: string, method: InputMethod) {
     if (!item) return;
     if (levelComplete) return;
+    if (successLockRef.current) return; // prevents any late extra input from completing again
 
     // Listen-first gate
     if (!hasListened) {
@@ -1105,7 +1186,6 @@ export default function CvcWordReaderGame() {
     const n = reteachMode ? 2 : hintLetter ? 3 : 4;
 
     const shuffled = stableShuffle(base, `${item.id}:${expectedSlotNow}:${n}`);
-    // Ensure correct is present
     if (!shuffled.includes(correct)) shuffled.unshift(correct);
 
     return shuffled.slice(0, Math.min(n, shuffled.length));
@@ -1113,7 +1193,7 @@ export default function CvcWordReaderGame() {
   }, [item?.id, expectedSlotNow, reteachMode, hintLetter, levelComplete]);
 
   // --------------------
-  // Drag handlers (smooth + magnet + absorb)
+  // Drag helpers (ghost + magnet)
   // --------------------
   function setGhostTransform(x: number, y: number, scale = 1) {
     const g = ghostRef.current;
@@ -1160,56 +1240,6 @@ export default function CvcWordReaderGame() {
     });
   }
 
-  function onPointerDownBubble(e: React.PointerEvent, letter: string) {
-    if (levelComplete) return;
-    if (!hasListened) {
-      e.preventDefault();
-      setPrompt("Tap the speaker first.");
-      return;
-    }
-    e.preventDefault();
-
-    const bubbleRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const dx = e.clientX - bubbleRect.left;
-    const dy = e.clientY - bubbleRect.top;
-
-    setDraggingId(letter);
-    setSnapTarget(null);
-    lastSnapRef.current = null;
-
-    dragRef.current = {
-      id: letter,
-      dx,
-      dy,
-      x: bubbleRect.left,
-      y: bubbleRect.top,
-      raf: null,
-      pointerId: e.pointerId,
-      absorbing: false,
-    };
-
-    // place ghost immediately
-    const g = ghostRef.current;
-    if (g) {
-      g.style.transition = "none";
-      setGhostTransform(bubbleRect.left, bubbleRect.top, 1);
-    }
-
-    (e.currentTarget as any).setPointerCapture?.(e.pointerId);
-  }
-
-  function onPointerMove(e: React.PointerEvent) {
-    const d = dragRef.current;
-    if (!d) return;
-    if (d.pointerId !== e.pointerId) return;
-    if (d.absorbing) return;
-
-    e.preventDefault();
-    d.x = e.clientX - d.dx;
-    d.y = e.clientY - d.dy;
-    scheduleGhostUpdate();
-  }
-
   function absorbIntoSlot(slotKey: SlotKey, letter: string) {
     const d = dragRef.current;
     const g = ghostRef.current;
@@ -1229,13 +1259,11 @@ export default function CvcWordReaderGame() {
     setGhostTransform(targetX, targetY, 0.2);
 
     setTimeout(() => {
-      // complete drop
       setDraggingId(null);
       setSnapTarget(null);
       lastSnapRef.current = null;
       dragRef.current = null;
 
-      // reset ghost
       if (ghostRef.current) {
         ghostRef.current.style.transition = "none";
         setGhostTransform(-9999, -9999, 1);
@@ -1245,27 +1273,20 @@ export default function CvcWordReaderGame() {
     }, 170);
   }
 
-  function onPointerUp(e: React.PointerEvent) {
+  function finishDragDrop(clientX: number, clientY: number, letter: string) {
     const d = dragRef.current;
     if (!d) return;
-    if (d.pointerId !== e.pointerId) return;
 
-    e.preventDefault();
-
-    const letter = d.id;
     const near = computeSnapTargetForGhost(d.x, d.y);
 
-    // stop RAF
     if (d.raf) cancelAnimationFrame(d.raf);
 
-    // If close to expected slot → absorb into it
     if (near) {
       absorbIntoSlot(near, letter);
       return;
     }
 
-    // fallback: exact drop via elementFromPoint
-    const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    const el = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
     const slot = el?.closest?.("[data-slot]") as HTMLElement | null;
     const slotKey = (slot?.getAttribute("data-slot") as SlotKey | null) ?? null;
 
@@ -1274,7 +1295,6 @@ export default function CvcWordReaderGame() {
     lastSnapRef.current = null;
     dragRef.current = null;
 
-    // reset ghost
     if (ghostRef.current) {
       ghostRef.current.style.transition = "none";
       setGhostTransform(-9999, -9999, 1);
@@ -1283,13 +1303,131 @@ export default function CvcWordReaderGame() {
     if (slotKey) tryPlace(slotKey, letter, "drag");
   }
 
+  // --------------------
+  // Unified pointer pipeline for choice bubbles (tap OR drag; never both)
+  // --------------------
+  function onChoicePointerDown(e: React.PointerEvent, letter: string) {
+    if (levelComplete) return;
+
+    // Listen-first gate: block both tap and drag before listening
+    if (!hasListened) {
+      e.preventDefault();
+      setPrompt("Tap the speaker first.");
+      return;
+    }
+
+    e.preventDefault();
+
+    const bubbleRect = (e.currentTarget as HTMLDivElement).getBoundingClientRect();
+    const dx = e.clientX - bubbleRect.left;
+    const dy = e.clientY - bubbleRect.top;
+
+    choicePointerRef.current = {
+      pointerId: e.pointerId,
+      letter,
+      startX: e.clientX,
+      startY: e.clientY,
+      bubbleLeft: bubbleRect.left,
+      bubbleTop: bubbleRect.top,
+      dx,
+      dy,
+      dragging: false,
+    };
+
+    // capture pointer so we always get up/move
+    (e.currentTarget as any).setPointerCapture?.(e.pointerId);
+  }
+
+  function onChoicePointerMove(e: React.PointerEvent) {
+    const st = choicePointerRef.current;
+    if (!st) return;
+    if (st.pointerId !== e.pointerId) return;
+
+    e.preventDefault();
+
+    const dist = Math.hypot(e.clientX - st.startX, e.clientY - st.startY);
+
+    // Start drag only after threshold movement
+    if (!st.dragging && dist >= DRAG_START_PX) {
+      st.dragging = true;
+
+      setDraggingId(st.letter);
+      setSnapTarget(null);
+      lastSnapRef.current = null;
+
+      dragRef.current = {
+        id: st.letter,
+        dx: st.dx,
+        dy: st.dy,
+        x: st.bubbleLeft,
+        y: st.bubbleTop,
+        raf: null,
+        pointerId: st.pointerId,
+        absorbing: false,
+      };
+
+      const g = ghostRef.current;
+      if (g) {
+        g.style.transition = "none";
+        setGhostTransform(st.bubbleLeft, st.bubbleTop, 1);
+      }
+    }
+
+    // If dragging, update drag position
+    if (st.dragging && dragRef.current) {
+      const d = dragRef.current;
+      d.x = e.clientX - d.dx;
+      d.y = e.clientY - d.dy;
+      scheduleGhostUpdate();
+    }
+  }
+
+  function onChoicePointerUp(e: React.PointerEvent) {
+    const st = choicePointerRef.current;
+    if (!st) return;
+    if (st.pointerId !== e.pointerId) return;
+
+    e.preventDefault();
+
+    choicePointerRef.current = null;
+
+    // TAP case (never started drag)
+    if (!st.dragging) {
+      tryPlace(nextExpectedSlot(), st.letter, "tap");
+      return;
+    }
+
+    // DRAG case
+    finishDragDrop(e.clientX, e.clientY, st.letter);
+  }
+
+  function onChoicePointerCancel(e: React.PointerEvent) {
+    const st = choicePointerRef.current;
+    if (!st) return;
+    if (st.pointerId !== e.pointerId) return;
+
+    choicePointerRef.current = null;
+
+    setDraggingId(null);
+    setSnapTarget(null);
+    lastSnapRef.current = null;
+
+    if (dragRef.current?.raf) cancelAnimationFrame(dragRef.current.raf);
+    dragRef.current = null;
+
+    if (ghostRef.current) {
+      ghostRef.current.style.transition = "none";
+      setGhostTransform(-9999, -9999, 1);
+    }
+  }
+
   async function enterFullscreenManual() {
-    await enterFullscreenOnPlayWrapperAndMarkFsParam();
+    await enterFullscreenOnPlayWrapperAndMarkFsParam(new URLSearchParams(searchParamsRef.current));
   }
 
   function exitFullscreenManual() {
-    exitFullscreenIfAny();
-    const sp = new URLSearchParams(searchParams);
+    safeExitFullscreen();
+    const sp = new URLSearchParams(searchParamsRef.current);
     sp.delete("fs");
     setSearchParams(sp, { replace: true });
   }
@@ -1445,7 +1583,7 @@ export default function CvcWordReaderGame() {
       `}</style>
 
       <div className="mx-auto h-full w-full max-w-6xl px-4 py-6">
-        {/* Header (keep simple; extra controls are okay for parent/testing) */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-800">
             3. CVC Word Reader • {levelConfig.title} • Word {pos + 1}/{playOrder.length}
@@ -1460,13 +1598,7 @@ export default function CvcWordReaderGame() {
               ↻ Reset
             </button>
 
-            <button
-              onClick={() => {
-                exitFullscreenIfAny();
-                goPhonicsLibraryCvcTab();
-              }}
-              className="rounded-full border bg-white px-4 py-2 text-sm font-semibold"
-            >
+            <button onClick={goPhonicsLibraryCvcTab} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
               ↩ Back to Phonics Library
             </button>
 
@@ -1494,25 +1626,20 @@ export default function CvcWordReaderGame() {
               {prompt}
             </div>
 
-            {/* TOP — LETTER CHOICES (step-based, capped) */}
+            {/* TOP — LETTER CHOICES (pointer pipeline: tap OR drag) */}
             <div className="absolute left-1/2 top-[64px] -translate-x-1/2 flex gap-4 items-center justify-center">
               {choices.map((ch) => {
                 const isDraggingThis = draggingId === ch;
-                const disabled = levelComplete || phase === "success" || !hasListened;
+                const disabled = levelComplete || phase === "success" || !hasListened || successLockRef.current;
                 const isHint = hintLetter === ch;
 
                 return (
                   <div
                     key={ch}
-                    onPointerDown={(e) => !disabled && onPointerDownBubble(e, ch)}
-                    onPointerMove={onPointerMove}
-                    onPointerUp={onPointerUp}
-                    onPointerCancel={onPointerUp}
-                    onClick={() => {
-                      if (disabled) return;
-                      // Tap-to-place fallback (always places into next expected slot)
-                      tryPlace(nextExpectedSlot(), ch, "tap");
-                    }}
+                    onPointerDown={(e) => !disabled && onChoicePointerDown(e, ch)}
+                    onPointerMove={(e) => !disabled && onChoicePointerMove(e)}
+                    onPointerUp={(e) => !disabled && onChoicePointerUp(e)}
+                    onPointerCancel={(e) => !disabled && onChoicePointerCancel(e)}
                     className={`${bubbleStyle} ${bubbleBg(ch)} ${isHint ? "ts-hint" : ""}`}
                     style={{
                       touchAction: "none",
@@ -1589,7 +1716,7 @@ export default function CvcWordReaderGame() {
                 </div>
               </div>
 
-              {/* Built word clarity (helps closure + comprehension) */}
+              {/* Built word clarity */}
               <div className="mt-4 text-center">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm border">
                   <span className="text-sm font-semibold text-slate-700">Word:</span>
@@ -1630,7 +1757,7 @@ export default function CvcWordReaderGame() {
               <audio ref={audioSlowRef} src={item.audioSlowUrl ?? ""} preload="auto" />
             </div>
 
-            {/* Drag ghost (always transform-driven) */}
+            {/* Drag ghost */}
             <div
               ref={ghostRef}
               className={`ts-ghost ${bubbleStyle} ${draggingId ? bubbleBg(draggingId) : "bg-sky-500"}`}

@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
 import {
-  type Item,
   type VowelGroup,
   type VowelGroupId,
   GAME_ID,
@@ -24,21 +23,23 @@ type SlideJoinGameProps = {
   forcedMode?: "slide_join" | null;
 };
 
-export default function SlideJoinGame({
-  kidId,
-  groupId,
-  group,
-  onBackToGroups,
-}: SlideJoinGameProps) {
+// Motor-friendly thresholds + scaffolding ladder
+const MERGE_THRESHOLD = 0.88; // easier than 0.9
+const SNAP_THRESHOLD = 0.80;  // if close, snap to success
+const AUTO_HINT_MS = 4000;    // visual nudge if idle
+const FAILS_FOR_ASSIST = 2;   // show Join button
+const FAILS_FOR_GUIDED = 3;   // auto-slide “watch me”
+
+export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }: SlideJoinGameProps) {
   const stageRef = useRef<HTMLDivElement | null>(null);
 
-  const [started, setStarted] = useState(false);
   const [stageW, setStageW] = useState(0);
 
   const [idx, setIdx] = useState(0);
   const ITEMS = useMemo(() => group.words.map((w) => splitVC(w)), [group]);
   const hasItems = ITEMS.length > 0;
   const isLast = idx >= ITEMS.length - 1;
+
   const item =
     ITEMS[clamp(idx, 0, Math.max(0, ITEMS.length - 1))] ?? {
       left: "a",
@@ -46,29 +47,51 @@ export default function SlideJoinGame({
       word: "at",
     };
 
+  // Start / phases
+  const [started, setStarted] = useState(false);
   const [merged, setMerged] = useState(false);
   const mergedRef = useRef(false);
   const [merging, setMerging] = useState(false);
   const mergingRef = useRef(false);
 
+  // Movement state
   const [progress, setProgress] = useState(0);
   const progressRef = useRef(0);
   const [isDragging, setIsDragging] = useState(false);
   const [hasDraggedOnce, setHasDraggedOnce] = useState(false);
+  const dragStartRef = useRef<{ x: number; p: number } | null>(null);
+  const dragAttemptStartTsRef = useRef<number | null>(null);
 
+  // Scaffolding
+  const [fails, setFails] = useState(0);
+  const failsRef = useRef(0);
+  const [assistEnabled, setAssistEnabled] = useState(false);
+  const assistUsedRef = useRef(false);
+  const guidedUsedRef = useRef(false);
+
+  const [hintPulse, setHintPulse] = useState(false);
+  const hintLevelUsedRef = useRef(0); // 0 none, 1 hint, 2 assist, 3 guided
+
+  // FX
   const [showBurst, setShowBurst] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiKey, setConfettiKey] = useState(0);
-
-  const [attempts, setAttempts] = useState(0);
-  const [startTs, setStartTs] = useState<number | null>(null);
 
   const [leftPopKey, setLeftPopKey] = useState(0);
   const [rightPopKey, setRightPopKey] = useState(0);
   const [mergedPopKey, setMergedPopKey] = useState(0);
 
+  // Telemetry
+  const startTsRef = useRef<number | null>(null);
+  const [mergeAttempts, setMergeAttempts] = useState(0);
+  const mergeAttemptsRef = useRef(0);
+  const soundReplaysRef = useRef(0);
+  const timeToFirstActionMsRef = useRef<number | null>(null);
+  const lastActionTsRef = useRef<number>(performance.now());
+  const dragDurationsRef = useRef<number[]>([]);
+
+  // Anim cancellation
   const cancelAnimRef = useRef<null | (() => void)>(null);
-  const dragStartRef = useRef<{ x: number; p: number } | null>(null);
 
   // Audio
   const audioUnlockedRef = useRef(false);
@@ -80,7 +103,25 @@ export default function SlideJoinGame({
   const tapSrcRef = useRef<string>("");
   const dragSrcRef = useRef<string>("");
 
-  const MERGE_THRESHOLD = 0.9;
+  // ---------- geometry ----------
+  const bubbleSize = Math.min(190, Math.max(130, Math.round(stageW * 0.15)));
+  const leftStartX = stageW * 0.35;
+  const rightStartX = stageW * 0.65;
+  const travel = Math.max(1, rightStartX - leftStartX);
+  const leftX = leftStartX + travel * progress;
+
+  const near = progress >= MERGE_THRESHOLD && !merged;
+  const attachTugPx = near ? -12 * ((progress - MERGE_THRESHOLD) / (1 - MERGE_THRESHOLD)) : 0;
+  const rightX = rightStartX + attachTugPx;
+
+  // ---------- helpers ----------
+  const markAction = useCallback(() => {
+    const now = performance.now();
+    lastActionTsRef.current = now;
+    if (timeToFirstActionMsRef.current == null && startTsRef.current != null) {
+      timeToFirstActionMsRef.current = Math.max(0, Math.round(now - startTsRef.current));
+    }
+  }, []);
 
   function ensureTapDragAudio(leftLetter: string) {
     const tapSrc = tapSoundUrl(leftLetter);
@@ -90,6 +131,7 @@ export default function SlideJoinGame({
       tapSrcRef.current = tapSrc;
       tapRef.current = new Audio(tapSrc);
       tapRef.current.preload = "auto";
+      tapRef.current.volume = 0.95;
     }
 
     if (!dragRefAudio.current || dragSrcRef.current !== dragSrc) {
@@ -97,6 +139,7 @@ export default function SlideJoinGame({
       dragRefAudio.current = new Audio(dragSrc);
       dragRefAudio.current.preload = "auto";
       dragRefAudio.current.loop = true;
+      dragRefAudio.current.volume = 0.65;
     }
 
     if (!confettiRef.current) {
@@ -113,6 +156,7 @@ export default function SlideJoinGame({
     mergeRefAudio.current = new Audio(mergeSoundUrl(word));
     mergeRefAudio.current.preload = "auto";
     mergeRefAudio.current.loop = false;
+    mergeRefAudio.current.volume = 0.95;
   }
 
   function stopDragLoop() {
@@ -155,6 +199,29 @@ export default function SlideJoinGame({
       if (mergeRefAudio.current) mergeRefAudio.current.currentTime = 0;
       if (confettiRef.current) confettiRef.current.currentTime = 0;
     } catch {}
+  }
+
+  async function primeAudioOnGesture() {
+    try {
+      ensureTapDragAudio(item.left);
+      ensureMergeAudio(item.word);
+
+      // iOS/Safari gesture prime
+      const a = tapRef.current;
+      if (!a) return;
+      a.muted = true;
+      a.currentTime = 0;
+      const p = a.play();
+      if (p && typeof (p as any).catch === "function") await p.catch(() => {});
+      a.pause();
+      a.currentTime = 0;
+      a.muted = false;
+
+      audioUnlockedRef.current = true;
+    } catch {
+      // even if prime fails, we keep the UI playable
+      audioUnlockedRef.current = true;
+    }
   }
 
   async function playTap() {
@@ -231,9 +298,8 @@ export default function SlideJoinGame({
     if (!kidId) return;
 
     try {
-      const spentMs = startTs
-        ? Math.max(0, Math.round(performance.now() - startTs))
-        : 0;
+      const spentMs =
+        startTsRef.current != null ? Math.max(0, Math.round(performance.now() - startTsRef.current)) : 0;
 
       recordLevelResult({
         gameId: GAME_ID,
@@ -241,7 +307,10 @@ export default function SlideJoinGame({
         kidId,
         levelId: idx + 1,
         timeSpentMs: spentMs,
-        attempts: Math.max(1, attempts),
+
+        // ✅ Attempts now mean "merge attempts", not sound replays
+        attempts: Math.max(1, mergeAttemptsRef.current),
+
         masteredItems: [masteredWord],
         skillTags: [
           "area:phonics",
@@ -251,6 +320,17 @@ export default function SlideJoinGame({
           `word:${masteredWord}`,
         ],
         completedAt: Date.now(),
+
+        // extra telemetry (recordLevelResult accepts any)
+        meta: {
+          fails: failsRef.current,
+          assistUsed: assistUsedRef.current,
+          guidedSuccessUsed: guidedUsedRef.current,
+          hintLevelUsed: hintLevelUsedRef.current,
+          timeToFirstActionMs: timeToFirstActionMsRef.current,
+          dragDurationsMs: dragDurationsRef.current.slice(0, 30),
+          soundReplays: soundReplaysRef.current,
+        },
       } as any);
     } catch (err) {
       console.error("recordLevelResult failed:", err);
@@ -276,9 +356,23 @@ export default function SlideJoinGame({
     setShowBurst(false);
     setShowConfetti(false);
 
-    setAttempts(0);
-    setStartTs(performance.now());
+    setFails(0);
+    failsRef.current = 0;
+    setAssistEnabled(false);
+    assistUsedRef.current = false;
+    guidedUsedRef.current = false;
+    setHintPulse(false);
+    hintLevelUsedRef.current = 0;
+
+    setMergeAttempts(0);
+    mergeAttemptsRef.current = 0;
+    soundReplaysRef.current = 0;
+    timeToFirstActionMsRef.current = null;
+    dragDurationsRef.current = [];
+
+    startTsRef.current = started ? performance.now() : null;
     dragStartRef.current = null;
+    dragAttemptStartTsRef.current = null;
   }
 
   function next() {
@@ -293,9 +387,13 @@ export default function SlideJoinGame({
     setIdx((p) => clamp(p - 1, 0, ITEMS.length - 1));
   }
 
+  // ---------- pointer handlers ----------
   function onLeftBubblePointerDown(e: React.PointerEvent) {
     if (!started) return;
     if (mergedRef.current || mergingRef.current) return;
+
+    markAction();
+    setHintPulse(false);
 
     e.preventDefault();
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -305,7 +403,10 @@ export default function SlideJoinGame({
 
     setIsDragging(true);
     setHasDraggedOnce(true);
-    dragStartRef.current = { x: e.clientX, p: progress };
+
+    dragStartRef.current = { x: e.clientX, p: progressRef.current };
+    dragAttemptStartTsRef.current = performance.now();
+
     startDragLoop();
   }
 
@@ -316,23 +417,70 @@ export default function SlideJoinGame({
     const start = dragStartRef.current;
     if (!start) return;
 
-    const leftStartX = stageW * 0.35;
-    const rightStartX = stageW * 0.65;
-    const travel = Math.max(1, rightStartX - leftStartX);
-
     const dx = e.clientX - start.x;
     const nextP = clamp(start.p + dx / travel, 0, 1);
     setProgress(nextP);
     progressRef.current = nextP;
   }
 
+  function registerFailedAttempt() {
+    setMergeAttempts((a) => {
+      const na = a + 1;
+      mergeAttemptsRef.current = na;
+      return na;
+    });
+
+    setFails((f) => {
+      const nf = f + 1;
+      failsRef.current = nf;
+
+      // ladder: hint -> assist -> guided
+      if (nf >= 1 && hintLevelUsedRef.current < 1) hintLevelUsedRef.current = 1;
+      if (nf >= FAILS_FOR_ASSIST) {
+        setAssistEnabled(true);
+        if (hintLevelUsedRef.current < 2) hintLevelUsedRef.current = 2;
+      }
+      return nf;
+    });
+
+    // Quick visual guidance (no punishment)
+    setHintPulse(true);
+    window.setTimeout(() => setHintPulse(false), 700);
+  }
+
   function endDragAndSnap() {
     setIsDragging(false);
     dragStartRef.current = null;
 
-    if (progress >= MERGE_THRESHOLD) {
+    // drag duration telemetry
+    const t0 = dragAttemptStartTsRef.current;
+    dragAttemptStartTsRef.current = null;
+    if (t0 != null) {
+      const dur = Math.max(0, Math.round(performance.now() - t0));
+      dragDurationsRef.current.push(dur);
+    }
+
+    // Decide success / snap / fail
+    const p = progressRef.current;
+
+    // ✅ Motor-friendly snap zone
+    if (p >= SNAP_THRESHOLD && !mergedRef.current && !mergingRef.current) {
       cancelAnimRef.current = animateNumber(
-        progress,
+        p,
+        1,
+        170,
+        (v) => {
+          setProgress(v);
+          progressRef.current = v;
+        },
+        () => {}
+      );
+      return;
+    }
+
+    if (p >= MERGE_THRESHOLD) {
+      cancelAnimRef.current = animateNumber(
+        p,
         1,
         180,
         (v) => {
@@ -341,12 +489,38 @@ export default function SlideJoinGame({
         },
         () => {}
       );
-    } else {
-      cancelAnimRef.current = animateNumber(progress, 0, 220, (v) => {
+      return;
+    }
+
+    // fail + snap back
+    registerFailedAttempt();
+
+    // Guided success after repeated struggles
+    if (failsRef.current + 1 >= FAILS_FOR_GUIDED) {
+      if (hintLevelUsedRef.current < 3) hintLevelUsedRef.current = 3;
+      guidedUsedRef.current = true;
+
+      // snap back a little then auto-slide (watch me)
+      cancelAnimRef.current = animateNumber(p, 0, 160, (v) => {
         setProgress(v);
         progressRef.current = v;
       });
+
+      window.setTimeout(() => {
+        if (mergedRef.current || mergingRef.current) return;
+        cancelAnimRef.current = animateNumber(0, 1, 260, (v) => {
+          setProgress(v);
+          progressRef.current = v;
+        });
+      }, 220);
+
+      return;
     }
+
+    cancelAnimRef.current = animateNumber(p, 0, 220, (v) => {
+      setProgress(v);
+      progressRef.current = v;
+    });
   }
 
   function onStagePointerUp() {
@@ -361,6 +535,28 @@ export default function SlideJoinGame({
     endDragAndSnap();
   }
 
+  // Tap-to-join assist (accessibility)
+  function doAssistJoin() {
+    if (!started || mergedRef.current || mergingRef.current) return;
+
+    markAction();
+    assistUsedRef.current = true;
+    if (hintLevelUsedRef.current < 2) hintLevelUsedRef.current = 2;
+
+    setMergeAttempts((a) => {
+      const na = a + 1;
+      mergeAttemptsRef.current = na;
+      return na;
+    });
+
+    cancelAnimRef.current?.();
+    cancelAnimRef.current = animateNumber(progressRef.current, 1, 220, (v) => {
+      setProgress(v);
+      progressRef.current = v;
+    });
+  }
+
+  // ---------- derived UI ----------
   const confettiPieces = useMemo(() => {
     const count = 28;
     return Array.from({ length: count }).map((_, i) => ({
@@ -371,16 +567,18 @@ export default function SlideJoinGame({
       rot: Math.random() * 360,
       drift: (Math.random() * 2 - 1) * 40,
       size: 8 + Math.random() * 10,
+      hue: (i * 37) % 360,
     }));
   }, [confettiKey]);
 
   const instruction = useMemo(() => {
     if (!started) return "Tap Start to play.";
     if (merged) return `Nice! You made "${item.word}".`;
-    if (merging) return "Merging...";
+    if (merging) return "Joining...";
     return `Drag "${item.left}" to "${item.right}" to make "${item.word}".`;
   }, [started, merged, merging, item]);
 
+  // ---------- effects ----------
   useEffect(() => {
     mergedRef.current = merged;
   }, [merged]);
@@ -411,25 +609,39 @@ export default function SlideJoinGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.left, item.word]);
 
+  // Idle hint (visual only)
   useEffect(() => {
-    setStarted(true);
-    setStartTs(performance.now());
-    audioUnlockedRef.current = true;
-    return () => pauseAllAudio();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!started || merged || merging) return;
 
+    const t = window.setInterval(() => {
+      const now = performance.now();
+      if (now - lastActionTsRef.current > AUTO_HINT_MS) {
+        if (hintLevelUsedRef.current < 1) hintLevelUsedRef.current = 1;
+        setHintPulse(true);
+        window.setTimeout(() => setHintPulse(false), 700);
+        lastActionTsRef.current = now; // avoid constant pulsing
+      }
+    }, 500);
+
+    return () => window.clearInterval(t);
+  }, [started, merged, merging]);
+
+  // Merge completion watcher
   useEffect(() => {
     if (mergedRef.current || mergingRef.current) return;
+
     if (progress >= 0.99) {
       stopDragLoop();
       setMerging(true);
       mergingRef.current = true;
+
       window.setTimeout(() => {
         setMerging(false);
         mergingRef.current = false;
+
         setMerged(true);
         mergedRef.current = true;
+
         fireSuccessFX();
         popMerged();
         playWord(item.word);
@@ -439,22 +651,55 @@ export default function SlideJoinGame({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
-  const bubbleSize = Math.min(180, Math.max(120, Math.round(stageW * 0.14)));
-  const leftStartX = stageW * 0.35;
-  const rightStartX = stageW * 0.65;
-  const travel = Math.max(1, rightStartX - leftStartX);
-  const leftX = leftStartX + travel * progress;
+  // Cleanup
+  useEffect(() => {
+    return () => pauseAllAudio();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const near = progress >= MERGE_THRESHOLD && !merged;
-  const attachTugPx = near ? -12 * ((progress - MERGE_THRESHOLD) / (1 - MERGE_THRESHOLD)) : 0;
-  const rightX = rightStartX + attachTugPx;
-
+  // ---------- UI ----------
   return (
     <div className="flex-1 min-h-0 relative">
       <style>{`
-        @keyframes nudge {
-          0%,100% { transform: translateX(0); opacity: .55; }
-          50% { transform: translateX(18px); opacity: .85; }
+        /* Core animations used by this component (self-contained) */
+        @keyframes tsTapPop { 0%{transform:scale(1)} 50%{transform:scale(0.92)} 100%{transform:scale(1)} }
+        @keyframes tsBurst { 0%{transform:translate(-50%,-50%) scale(.6); opacity:.9} 100%{transform:translate(-50%,-50%) scale(1.7); opacity:0} }
+        @keyframes tsMergedPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+        @keyframes tsArrowPulse { 0%,100%{transform:scale(1); opacity:.75} 50%{transform:scale(1.08); opacity:1} }
+        @keyframes tsNudge { 0%,100%{transform:translateX(0); opacity:.55} 50%{transform:translateX(18px); opacity:.85} }
+        @keyframes tsRailPulse { 0%,100%{opacity:.25} 50%{opacity:.6} }
+        @keyframes tsConfettiFall {
+          0% { transform: translate3d(0,-12px,0) rotate(var(--rot)); opacity: 1; }
+          100% { transform: translate3d(var(--dx), 110vh, 0) rotate(calc(var(--rot) + 720deg)); opacity: 0; }
+        }
+
+        .ts-side-btn{
+          position:absolute; top:50%;
+          transform:translateY(-50%);
+          width:64px; height:64px;
+          border-radius:9999px;
+          background:rgba(255,255,255,.78);
+          backdrop-filter: blur(10px);
+          box-shadow: 0 10px 30px rgba(0,0,0,.25);
+          border: 1px solid rgba(0,0,0,.06);
+          font-size: 44px;
+          font-weight: 900;
+          z-index:40;
+          display:grid;
+          place-items:center;
+          user-select:none;
+          -webkit-tap-highlight-color: transparent;
+        }
+        .ts-side-btn:disabled{ opacity:.5; }
+
+        .ts-confetti-piece{
+          position:absolute;
+          top:-16px;
+          border-radius: 999px;
+          background: hsl(var(--hue) 85% 60%);
+          animation: tsConfettiFall var(--dur) ease-in forwards;
+          animation-delay: var(--delay);
+          box-shadow: 0 6px 18px rgba(0,0,0,.15);
         }
       `}</style>
 
@@ -471,13 +716,43 @@ export default function SlideJoinGame({
       <div className="relative h-full w-full" style={{ touchAction: "none" }}>
         <div className="absolute inset-0 bg-black/20" />
 
-        {/* instructions */}
+        {/* Tap-to-start overlay (gesture-based audio unlock) */}
+        {!started && (
+          <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/45 backdrop-blur-sm">
+            <button
+              onClick={async () => {
+                await primeAudioOnGesture();
+                startTsRef.current = performance.now();
+                lastActionTsRef.current = performance.now();
+                setStarted(true);
+                setHasDraggedOnce(false);
+                // gentle: play the left sound once on start (still within gesture chain)
+                soundReplaysRef.current += 1;
+                popLeft();
+                await playTap();
+              }}
+              className="px-12 py-7 bg-white rounded-3xl shadow-2xl border border-black/10 text-slate-900 font-black text-4xl hover:scale-[1.03] active:scale-[0.99] transition-transform"
+              style={{ boxShadow: "0 30px 80px rgba(0,0,0,.45)" }}
+            >
+              Tap to Start
+            </button>
+          </div>
+        )}
+
+        {/* Single instruction bar (keep it simple) */}
         {started && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-white/80 backdrop-blur-md rounded-xl shadow-lg">
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-6 py-3 bg-white/85 backdrop-blur-md rounded-xl shadow-lg border border-black/5">
             <div className="text-center">
               <div className="text-sm font-semibold text-slate-900">{instruction}</div>
-              {!merged && !merging && (
-                <div className="mt-1 text-xs text-slate-700">Tip: drag the left bubble → to join the right.</div>
+              {!merged && !merging && assistEnabled && (
+                <div className="mt-1 text-xs text-slate-700">
+                  Need help? Tap <span className="font-bold">JOIN</span>.
+                </div>
+              )}
+              {!merged && !merging && !assistEnabled && !hasDraggedOnce && (
+                <div className="mt-1 text-xs text-slate-700">
+                  Tip: slide the left bubble on the line.
+                </div>
               )}
             </div>
           </div>
@@ -488,6 +763,7 @@ export default function SlideJoinGame({
           <div
             className="absolute left-1/2 top-1/2 h-[180px] w-[180px] rounded-full"
             style={{
+              transform: "translate(-50%,-50%)",
               background:
                 "radial-gradient(circle, rgba(16,185,129,0.55) 0%, rgba(16,185,129,0.12) 45%, rgba(16,185,129,0) 70%)",
               animation: "tsBurst 600ms ease-out forwards",
@@ -502,29 +778,25 @@ export default function SlideJoinGame({
               <span
                 key={p.id}
                 className="ts-confetti-piece"
-                style={{
-                  left: `${p.left}%`,
-                  width: `${p.size}px`,
-                  height: `${Math.max(5, Math.round(p.size * 0.45))}px`,
-                  ["--delay" as any]: `${p.delay}s`,
-                  ["--dur" as any]: `${p.dur}s`,
-                  ["--rot" as any]: `${p.rot}deg`,
-                  ["--dx" as any]: `${p.drift}px`,
-                  ["--dx2" as any]: `${p.drift * 0.6}px`,
-                }}
+                style={
+                  {
+                    left: `${p.left}%`,
+                    width: `${p.size}px`,
+                    height: `${Math.max(5, Math.round(p.size * 0.45))}px`,
+                    ["--delay" as any]: `${p.delay}s`,
+                    ["--dur" as any]: `${p.dur}s`,
+                    ["--rot" as any]: `${p.rot}deg`,
+                    ["--dx" as any]: `${p.drift}px`,
+                    ["--hue" as any]: `${p.hue}`,
+                  } as React.CSSProperties
+                }
               />
             ))}
           </div>
         )}
 
         {/* Side arrows */}
-        <button
-          className="ts-side-btn"
-          style={{ left: 16 }}
-          onClick={prev}
-          disabled={!started || idx === 0}
-          aria-label="Previous"
-        >
+        <button className="ts-side-btn" style={{ left: 16 }} onClick={prev} disabled={!started || idx === 0} aria-label="Previous">
           <span style={{ opacity: !started || idx === 0 ? 0.35 : 1 }}>‹</span>
         </button>
 
@@ -553,23 +825,14 @@ export default function SlideJoinGame({
           onPointerUp={onStagePointerUp}
           onPointerCancel={onStagePointerCancel}
         >
-          {/* Instruction pill (top-center) */}
-          {started && !merged && (
-            <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
-              <div className="px-4 py-2 rounded-full bg-white/90 text-black text-sm font-semibold shadow-lg">
-                {!hasDraggedOnce ? "Drag the left bubble to join the sounds" : "Keep sliding… until they touch!"}
-              </div>
-            </div>
-          )}
-
-          {/* Arrow hint animation (only before first drag) */}
+          {/* Arrow hint (only before first drag) */}
           {started && !hasDraggedOnce && !merged && (
             <div className="absolute inset-0 pointer-events-none">
               <div
                 className="absolute top-1/2 -translate-y-1/2"
                 style={{ left: `${leftStartX}px`, width: `${rightStartX - leftStartX}px` }}
               >
-                <div className="flex items-center gap-2 opacity-70" style={{ animation: "nudge 1.1s ease-in-out infinite" }}>
+                <div className="flex items-center gap-2 opacity-70" style={{ animation: "tsNudge 1.1s ease-in-out infinite" }}>
                   <span className="text-white/80 text-2xl">➜</span>
                   <span className="text-white/60 text-base">slide</span>
                   <span className="text-white/80 text-2xl">➜</span>
@@ -579,11 +842,26 @@ export default function SlideJoinGame({
             </div>
           )}
 
-          {/* Rail line */}
+          {/* Rail line (pulse on hints) */}
           <div
             className="absolute top-1/2 -translate-y-1/2 left-0 right-0 mx-auto h-[4px] bg-white/20 rounded-full"
-            style={{ width: "62%" }}
+            style={{
+              width: "62%",
+              animation: hintPulse ? "tsRailPulse 700ms ease-in-out" : undefined,
+            }}
           />
+
+          {/* Assist button (tap-to-join fallback) */}
+          {started && !merged && !merging && assistEnabled && (
+            <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40">
+              <button
+                onClick={doAssistJoin}
+                className="rounded-2xl bg-white/90 backdrop-blur px-6 py-3 shadow-lg border border-black/5 font-extrabold text-slate-900 text-lg"
+              >
+                JOIN
+              </button>
+            </div>
+          )}
 
           {/* Bubbles */}
           {!merged && (
@@ -603,11 +881,12 @@ export default function SlideJoinGame({
                   onPointerMove={onStagePointerMove}
                   onPointerUp={onStagePointerUp}
                   onPointerCancel={onStagePointerCancel}
-                  onClick={() => {
+                  onClick={async () => {
                     if (!started || merging) return;
+                    markAction();
                     popLeft();
-                    playTap();
-                    setAttempts((a) => a + 1);
+                    soundReplaysRef.current += 1;
+                    await playTap();
                   }}
                   className="rounded-full shadow-lg grid place-items-center text-white font-extrabold border-4 border-white/30"
                   style={{
@@ -616,7 +895,10 @@ export default function SlideJoinGame({
                     touchAction: "none",
                     cursor: "grab",
                     fontSize: Math.round(bubbleSize * 0.4),
-                    background: "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 35%), linear-gradient(180deg, #60a5fa, #2563eb)",
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 35%), linear-gradient(180deg, #60a5fa, #2563eb)",
+                    boxShadow: hintPulse ? "0 0 0 10px rgba(251,191,36,0.16), 0 18px 40px rgba(0,0,0,0.25)" : undefined,
+                    WebkitTapHighlightColor: "transparent",
                   }}
                   aria-label="Drag left bubble"
                 >
@@ -631,7 +913,10 @@ export default function SlideJoinGame({
                   </span>
                 </button>
 
-                <div className="mt-3 text-center text-white/90 text-lg font-semibold" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                <div
+                  className="mt-3 text-center text-white/90 text-lg font-semibold"
+                  style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
+                >
                   {phonicLabel(item.left)}
                 </div>
               </div>
@@ -651,24 +936,28 @@ export default function SlideJoinGame({
                     width: bubbleSize,
                     height: bubbleSize,
                     fontSize: Math.round(bubbleSize * 0.4),
-                    background: "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 35%), linear-gradient(180deg, #c084fc, #7c3aed)",
+                    background:
+                      "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 35%), linear-gradient(180deg, #c084fc, #7c3aed)",
                     boxShadow: near
                       ? "0 0 0 10px rgba(34,197,94,0.18), 0 18px 40px rgba(0,0,0,0.25)"
+                      : hintPulse
+                      ? "0 0 0 10px rgba(251,191,36,0.12), 0 18px 40px rgba(0,0,0,0.25)"
                       : "0 18px 40px rgba(0,0,0,0.25)",
                   }}
                   aria-label="Right bubble"
                 >
                   <span
                     key={rightPopKey}
-                    style={{
-                      textShadow: "0 8px 22px rgba(0,0,0,0.35)",
-                    }}
+                    style={{ textShadow: "0 8px 22px rgba(0,0,0,0.35)" }}
                   >
                     {item.right}
                   </span>
                 </div>
 
-                <div className="mt-3 text-center text-white/90 text-lg font-semibold" style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                <div
+                  className="mt-3 text-center text-white/90 text-lg font-semibold"
+                  style={{ textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}
+                >
                   {phonicLabel(item.right)}
                 </div>
               </div>
@@ -680,17 +969,19 @@ export default function SlideJoinGame({
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
+                  markAction();
                   popMerged();
-                  playWord(item.word);
+                  await playWord(item.word);
                 }}
-                className="rounded-full shadow-2xl grid place-items-center text-white font-extrabold border-4 border-white/40 animate-[tsPopIn_220ms_ease-out_forwards]"
+                className="rounded-full shadow-2xl grid place-items-center text-white font-extrabold border-4 border-white/40"
                 style={{
                   width: Math.min(240, Math.round(stageW * 0.25)),
                   height: Math.min(240, Math.round(stageW * 0.25)),
                   fontSize: Math.round(Math.min(240, Math.round(stageW * 0.25)) * 0.35),
                   animation: "tsMergedPulse 1500ms ease-in-out infinite",
-                  background: "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 35%), linear-gradient(180deg, #34d399, #059669)",
+                  background:
+                    "radial-gradient(circle at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 35%), linear-gradient(180deg, #34d399, #059669)",
                 }}
               >
                 <span
@@ -717,10 +1008,7 @@ export default function SlideJoinGame({
             {!isLast ? (
               <div className="rounded-2xl bg-white/85 backdrop-blur px-5 py-3 shadow-lg border border-black/5 text-center">
                 <div className="text-sm font-extrabold text-slate-900">Great! Tap Next →</div>
-                <button
-                  onClick={next}
-                  className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
-                >
+                <button onClick={next} className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold">
                   Next
                 </button>
               </div>
@@ -728,7 +1016,10 @@ export default function SlideJoinGame({
               <div className="rounded-2xl bg-white/85 backdrop-blur px-5 py-3 shadow-lg border border-black/5 text-center">
                 <div className="text-sm font-extrabold text-slate-900">All done! 🎉</div>
                 <button
-                  onClick={() => setIdx(0)}
+                  onClick={() => {
+                    setIdx(0);
+                    resetForNewItemSync();
+                  }}
                   className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
                 >
                   Play again
@@ -739,7 +1030,7 @@ export default function SlideJoinGame({
         )}
       </div>
 
-      {/* Bottom controls */}
+      {/* Bottom controls (minimal + consistent) */}
       <div
         className="shrink-0 px-4 py-3 flex flex-wrap gap-3 bg-white/80 backdrop-blur"
         style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
@@ -750,22 +1041,33 @@ export default function SlideJoinGame({
             resetForNewItemSync();
           }}
           className="rounded-xl border bg-white px-4 py-2 font-semibold"
+          disabled={!started}
         >
           Reset
         </button>
 
         <button
-          onClick={() => {
+          onClick={async () => {
             if (!started || merged || merging) return;
+            markAction();
             popLeft();
-            playTap();
-            setAttempts((a) => a + 1);
+            soundReplaysRef.current += 1;
+            await playTap();
           }}
           className="rounded-xl bg-white/90 px-4 py-2 font-semibold border"
           disabled={!started}
         >
-          🔊 Sound "{item.left}"
+          🔊 Sound “{item.left}”
         </button>
+
+        {started && !merged && !merging && assistEnabled && (
+          <button
+            onClick={doAssistJoin}
+            className="rounded-xl bg-slate-900 px-4 py-2 font-semibold text-white"
+          >
+            JOIN
+          </button>
+        )}
       </div>
     </div>
   );

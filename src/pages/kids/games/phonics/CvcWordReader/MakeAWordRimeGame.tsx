@@ -28,6 +28,15 @@ type ConfettiPiece = {
 };
 
 type Screen = "levels" | "play" | "complete";
+type PlayPhase = "cue" | "act" | "feedback";
+
+type QueueEntry = {
+  id: string;
+  item: Item;
+  dueIn: number; // rounds remaining until eligible
+  origin: "new" | "review";
+  repeats: number; // how many times this word has been reinserted
+};
 
 const FAMILY_ORDER = [
   "at",
@@ -334,6 +343,7 @@ const EMOJI: Record<string, string> = {
   hut: "🛖",
 };
 
+// NOTE: TTS consonant sounds are imperfect. Replace with recorded phoneme audio when available.
 const LETTER_PHONEME: Record<string, string> = {
   b: "buh",
   c: "kuh",
@@ -411,10 +421,10 @@ const makeConfettiPieces = (count: number, baseDur: number): ConfettiPiece[] => 
   return Array.from({ length: count }, (_, i) => ({
     id: `${now}-${i}`,
     leftPct: Math.random() * 100,
-    delayMs: Math.random() * 350,
-    durMs: baseDur + Math.random() * 900,
+    delayMs: Math.random() * 220,
+    durMs: baseDur + Math.random() * 550,
     rot: Math.random() * 360,
-    size: 6 + Math.random() * 10,
+    size: 6 + Math.random() * 9,
     bg: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
   }));
 };
@@ -425,26 +435,52 @@ function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
   return Math.sqrt(dx * dx + dy * dy);
 }
 
+function uid(prefix = "id") {
+  return `${prefix}-${Math.random().toString(16).slice(2)}-${Date.now().toString(16)}`;
+}
+
+function clamp(n: number, lo: number, hi: number) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
 export default function MakeAWordRimeGame() {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
   const kidId = sp.get("kidId") ?? "";
 
-  const CONFETTI_MS = 4000;
+  // Celebration (shorter + calmer than before)
+  const CONFETTI_MS = 2800;
 
   const [screen, setScreen] = useState<Screen>("levels");
+  const [phase, setPhase] = useState<PlayPhase>("cue");
+
   const [familyId, setFamilyId] = useState<string>("at");
   const family = FAMILIES[familyId] ?? FAMILIES.at;
 
   const [tiles, setTiles] = useState<Tile[]>(() => makeTiles(family));
 
-  const [idx, setIdx] = useState(0);
-  const current = family.items[idx] ?? family.items[0];
+  // Practice queue (spaced review inside the level)
+  const [queue, setQueue] = useState<QueueEntry[]>([]);
+  const currentEntry = useMemo(() => queue.find((q) => q.dueIn <= 0) ?? null, [queue]);
+  const current = currentEntry?.item ?? family.items[0];
 
+  // Round learning state
   const [placed, setPlaced] = useState<string | null>(null);
   const [flash, setFlash] = useState<"none" | "green" | "wrong">("none");
   const [showBuiltWord, setShowBuiltWord] = useState(false);
   const [imgOk, setImgOk] = useState(true);
+
+  const [wrongCount, setWrongCount] = useState(0);
+  const [hintLevel, setHintLevel] = useState(0); // 0 none, 1 highlight correct, 2 guided soon, 3 reduce choices
+  const [pulseCorrect, setPulseCorrect] = useState(false);
+
+  // support-adaptive difficulty
+  const [independentStreak, setIndependentStreak] = useState(0);
+
+  // timing + telemetry
+  const [actStartMs, setActStartMs] = useState<number>(0);
+  const [hasActedThisRound, setHasActedThisRound] = useState(false);
+  const [firstActionMs, setFirstActionMs] = useState<number | null>(null);
 
   // celebration UI
   const [cheer, setCheer] = useState<string | null>(null);
@@ -459,7 +495,7 @@ export default function MakeAWordRimeGame() {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const blankRef = useRef<HTMLDivElement | null>(null);
 
-  // smooth drag state (pointer drag)
+  // pointer drag state
   const dragRef = useRef<{
     tileId: string;
     ch: string;
@@ -469,6 +505,7 @@ export default function MakeAWordRimeGame() {
     baseCenter: { x: number; y: number };
     dx: number;
     dy: number;
+    didDrag: boolean;
   } | null>(null);
 
   const rafRef = useRef<number | null>(null);
@@ -477,76 +514,95 @@ export default function MakeAWordRimeGame() {
   const [dragState, setDragState] = useState<{ tileId: string; dx: number; dy: number } | null>(
     null
   );
-  const [nearState, setNearState] = useState<{
-    isNear: boolean;
-    isCorrectNear: boolean;
-  }>({ isNear: false, isCorrectNear: false });
+  const [nearState, setNearState] = useState<{ isNear: boolean; isCorrectNear: boolean }>({
+    isNear: false,
+    isCorrectNear: false,
+  });
 
   const isComplete = placed === current.onset;
 
-  // ALWAYS show Levels first (hard)
-  useEffect(() => {
-    setScreen("levels");
-  }, []);
+  // Debug key (re-triggers cue effects)
+  const animKey = `${familyId}-${currentEntry?.id ?? "none"}`;
 
-  // no scroll
-  useEffect(() => {
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, []);
-
-  // audio
-  useEffect(() => {
-    try {
-      audioRef.current = new Audio("/confetti.mp3");
-      audioRef.current.volume = 0.9;
-    } catch {
-      audioRef.current = null;
-    }
-  }, []);
-
-  // reset when family changes
-  useEffect(() => {
-    setTiles(makeTiles(family));
-    setIdx(0);
-    setPlaced(null);
-    setFlash("none");
-    setShowBuiltWord(false);
-    setImgOk(true);
-    setCheer(null);
-    setIsCelebrating(false);
-    setNearState({ isNear: false, isCorrectNear: false });
-    setDragState(null);
-    dragRef.current = null;
-  }, [familyId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // reset when word changes
-  useEffect(() => {
-    setPlaced(null);
-    setFlash("none");
-    setShowBuiltWord(false);
-    setImgOk(true);
-    setCheer(null);
-    setIsCelebrating(false);
-    setNearState({ isNear: false, isCorrectNear: false });
-    setDragState(null);
-    dragRef.current = null;
-  }, [idx]);
-
-  // leave fullscreen when returning to levels
-  useEffect(() => {
-    if (screen === "levels") safeExitFullscreen();
-    // also clear confetti if needed
-    if (screen !== "play") setConfetti([]);
-  }, [screen]);
-
-  const goBackToLibrary = () => {
-    safeExitFullscreen();
-    navigate(`/kids/games/phonics?kidId=${encodeURIComponent(kidId)}&phase=cvc_word_reader`);
+  // ---------- Telemetry ----------
+  const logEvent = (name: string, data: Record<string, any>) => {
+    const payload = { name, ts: Date.now(), kidId, familyId, ...data };
+    // Hook for your app: window.__TS_LOG__(name, payload)
+    const anyWin = window as any;
+    if (typeof anyWin.__TS_LOG__ === "function") anyWin.__TS_LOG__(name, payload);
+    else console.log("[MAW]", payload);
   };
+
+  // ---------- Audio helpers ----------
+  const onsetSoundText = (ch: string) => LETTER_PHONEME[ch.toLowerCase()] ?? ch;
+
+  const cancelSpeech = () => {
+    try {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
+  };
+
+  /**
+   * Safe speech: never allows the game to wait forever.
+   * Resolves even if speech is blocked/hangs.
+   */
+  const speakAsyncSafe = (text: string, timeoutMs = 1400) =>
+    new Promise<{ started: boolean }>((resolve) => {
+      let done = false;
+      let started = false;
+
+      const finish = () => {
+        if (done) return;
+        done = true;
+        resolve({ started });
+      };
+
+      if (!("speechSynthesis" in window)) return finish();
+
+      const synth = window.speechSynthesis;
+
+      try {
+        synth.cancel();
+      } catch {
+        // ignore
+      }
+
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      u.pitch = 1.0;
+
+      const t = window.setTimeout(finish, timeoutMs);
+
+      u.onstart = () => {
+        started = true;
+      };
+      u.onend = () => {
+        window.clearTimeout(t);
+        finish();
+      };
+      u.onerror = () => {
+        window.clearTimeout(t);
+        finish();
+      };
+
+      try {
+        synth.speak(u);
+      } catch {
+        window.clearTimeout(t);
+        return finish();
+      }
+
+      // If blocked, onstart/onend may never fire.
+      window.setTimeout(() => {
+        const blocked = !synth.speaking && !synth.pending;
+        if (blocked) {
+          window.clearTimeout(t);
+          finish();
+        }
+      }, 80);
+    });
 
   const speak = (text: string) => {
     try {
@@ -561,16 +617,39 @@ export default function MakeAWordRimeGame() {
     }
   };
 
-  const speakTargetLetterSound = () => {
+  const playCueSequenceSafe = async () => {
+    const onset = current.onset.toLowerCase();
+    const cue = `${current.word}. First sound: ${onsetSoundText(onset)}.`;
+    logEvent("round_cue", { word: current.word, onset, rime: current.rime, queueLen: queue.length });
+    return speakAsyncSafe(cue, 1400);
+  };
+
+  const speakFirstSound = () => {
     const ch = current.onset.toLowerCase();
-    speak(LETTER_PHONEME[ch] ?? ch);
+    speak(`First sound: ${onsetSoundText(ch)}`);
   };
 
   const speakWord = () => speak(current.word);
 
+  const speakBlend = async () => {
+    const onset = onsetSoundText(current.onset);
+    // Longer timeout is okay here; it does not gate gameplay.
+    await speakAsyncSafe(`${onset}. ${current.rime}. ${current.word}.`, 2500);
+  };
+
+  // ---------- Celebration ----------
+  useEffect(() => {
+    try {
+      audioRef.current = new Audio("/confetti.mp3");
+      audioRef.current.volume = 0.65;
+    } catch {
+      audioRef.current = null;
+    }
+  }, []);
+
   const burstConfetti = (big: boolean) => {
     if (confettiClearRef.current) window.clearTimeout(confettiClearRef.current);
-    setConfetti(makeConfettiPieces(big ? 180 : 150, 4200));
+    setConfetti(makeConfettiPieces(big ? 90 : 70, 2200));
 
     try {
       if (audioRef.current) {
@@ -584,15 +663,59 @@ export default function MakeAWordRimeGame() {
     confettiClearRef.current = window.setTimeout(() => setConfetti([]), CONFETTI_MS);
   };
 
-  const goToFamily = (id: string) => {
-    const fam = FAMILIES[id] ?? FAMILIES.at;
+  const showCheer = () => {
+    const msg = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+    setCheer(msg);
+    window.setTimeout(() => setCheer(null), 850);
+  };
 
-    setIdx(0);
-    setTiles(makeTiles(fam));
+  // ---------- Fullscreen + global setup ----------
+  useEffect(() => {
+    setScreen("levels");
+  }, []);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (screen === "levels") safeExitFullscreen();
+    if (screen !== "play") setConfetti([]);
+    // don’t leave hanging speech when leaving play
+    if (screen !== "play") cancelSpeech();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
+
+  // ---------- Queue initialization / resets ----------
+  const initQueueForFamily = (fam: FamilyConfig) => {
+    const q: QueueEntry[] = fam.items.map((it) => ({
+      id: uid(`q-${fam.id}-${it.word}`),
+      item: it,
+      dueIn: 0,
+      origin: "new",
+      repeats: 0,
+    }));
+    setQueue(q);
+  };
+
+  useEffect(() => {
+    // Reset everything when family changes
+    setTiles(makeTiles(family));
+    initQueueForFamily(family);
+
     setPlaced(null);
     setFlash("none");
     setShowBuiltWord(false);
     setImgOk(true);
+
+    setWrongCount(0);
+    setHintLevel(0);
+    setPulseCorrect(false);
+
     setCheer(null);
     setIsCelebrating(false);
 
@@ -600,78 +723,400 @@ export default function MakeAWordRimeGame() {
     setDragState(null);
     dragRef.current = null;
 
+    setIndependentStreak(0);
+
+    setPhase("cue");
+    setHasActedThisRound(false);
+    setFirstActionMs(null);
+
+    cancelSpeech();
+
     if (confettiClearRef.current) window.clearTimeout(confettiClearRef.current);
     setConfetti([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [familyId]);
+
+  // Reset per new current item (when queue head changes)
+  useEffect(() => {
+    setPlaced(null);
+    setFlash("none");
+    setShowBuiltWord(false);
+    setImgOk(true);
+
+    setWrongCount(0);
+    setHintLevel(0);
+    setPulseCorrect(false);
+
+    setCheer(null);
+    setIsCelebrating(false);
+
+    setNearState({ isNear: false, isCorrectNear: false });
+    setDragState(null);
+    dragRef.current = null;
+
+    setPhase("cue");
+    setHasActedThisRound(false);
+    setFirstActionMs(null);
+
+    cancelSpeech();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animKey]);
+
+  // ✅ FIX #1: Auto cue gating with hard unlock timeout (never stuck on "Listen…")
+  useEffect(() => {
+    let alive = true;
+
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+    const run = async () => {
+      if (screen !== "play") return;
+      if (!currentEntry) return;
+
+      setPhase("cue");
+
+      // small visual settle
+      await sleep(120);
+
+      const startedAt = Date.now();
+      const res = await playCueSequenceSafe();
+
+      if (!alive) return;
+
+      // Hard cap: unlock in <=1200ms total (even if speech was blocked)
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, 1200 - elapsed);
+      if (remaining > 0) await sleep(remaining);
+
+      if (!alive) return;
+
+      setPhase("act");
+      const now = Date.now();
+      setActStartMs(now);
+      setHasActedThisRound(false);
+      setFirstActionMs(null);
+
+      logEvent("round_start", {
+        word: current.word,
+        onset: current.onset,
+        rime: current.rime,
+        origin: currentEntry.origin,
+        dueIn: currentEntry.dueIn,
+        repeats: currentEntry.repeats,
+        speech_blocked: !res.started,
+        cue_unlock_ms: Date.now() - startedAt,
+      });
+    };
+
+    run();
+
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, animKey]);
+
+  // Idle hint: if no action after 3.5s in act phase, hint up
+  useEffect(() => {
+    if (screen !== "play") return;
+    if (phase !== "act") return;
+    if (isCelebrating) return;
+    if (hasActedThisRound) return;
+
+    const t = window.setTimeout(() => {
+      if (screen !== "play") return;
+      if (phase !== "act") return;
+      if (isCelebrating) return;
+      if (hasActedThisRound) return;
+
+      setHintLevel((h) => Math.max(h, 1));
+      setPulseCorrect(true);
+      window.setTimeout(() => setPulseCorrect(false), 900);
+      speakFirstSound();
+      logEvent("hint_idle", { word: current.word, hintLevel: Math.max(hintLevel, 1) });
+    }, 3500);
+
+    return () => window.clearTimeout(t);
+  }, [screen, phase, isCelebrating, hasActedThisRound, animKey, hintLevel, current.word]);
+
+  // ---------- Navigation ----------
+  const goBackToLibrary = () => {
+    safeExitFullscreen();
+    cancelSpeech();
+    navigate(`/kids/games/phonics?kidId=${encodeURIComponent(kidId)}&phase=cvc_word_reader`);
+  };
+
+  const goToFamily = (id: string) => {
+    const fam = FAMILIES[id] ?? FAMILIES.at;
+
+    if (confettiClearRef.current) window.clearTimeout(confettiClearRef.current);
+    setConfetti([]);
+
+    cancelSpeech();
 
     setFamilyId(fam.id);
     setScreen("play");
   };
 
   const pickFamily = (id: string) => {
-    // fullscreen must start on a user tap
     if (rootRef.current) safeRequestFullscreen(rootRef.current);
     goToFamily(id);
   };
 
-  const advance = () => {
-    if (idx >= family.items.length - 1) {
-      setScreen("complete");
-      return;
-    }
-    setIdx((v) => v + 1);
+  const nextFamily = () => {
+    const i = FAMILY_ORDER.indexOf(familyId as any);
+    const next = FAMILY_ORDER[(i + 1) % FAMILY_ORDER.length];
+    goToFamily(next);
   };
 
-  const showCheer = () => {
-    const msg = CHEERS[Math.floor(Math.random() * CHEERS.length)];
-    setCheer(msg);
-    window.setTimeout(() => setCheer(null), 900);
+  const repeatLevel = () => {
+    goToFamily(familyId);
   };
 
-  const correctPlace = (ch: string) => {
-    if (isCelebrating) return;
-
-    const isLast = idx >= family.items.length - 1;
-
-    setIsCelebrating(true);
-    setPlaced(ch);
-    setFlash("green");
-    setShowBuiltWord(false);
-
-    showCheer();
-    burstConfetti(isLast);
-
-    window.setTimeout(() => setShowBuiltWord(true), 220);
-
-    // move to next after confetti duration
-    window.setTimeout(() => {
-      setIsCelebrating(false);
-      setFlash("none");
-      advance();
-    }, CONFETTI_MS);
-  };
-
-  const wrongPlace = () => {
-    if (isCelebrating) return;
-    setFlash("wrong");
-    window.setTimeout(() => setFlash("none"), 320);
-  };
-
-  // difficulty: magnet radius shrinks as the player progresses
+  // ---------- Difficulty: adaptive magnet + choices ----------
   const magnetRadius = useMemo(() => {
-    // start easy, then tighter
-    const base = 150;
-    const step = 12; // difficulty increases each word
-    return Math.max(80, base - idx * step);
-  }, [idx]);
+    const base = 165;
+    const tighten = independentStreak * 10;
+    const relax = hintLevel * 18 + (wrongCount > 0 ? 10 : 0);
+    return clamp(base - tighten + relax, 85, 190);
+  }, [independentStreak, hintLevel, wrongCount]);
 
+  const visibleTiles = useMemo(() => {
+    const all = tiles;
+    const correct = current.onset;
+    const correctTile = all.find((t) => t.ch === correct);
+
+    let count = all.length;
+    if (hintLevel >= 3) count = Math.min(2, all.length);
+    else if (hintLevel === 2) count = Math.min(3, all.length);
+    else if (hintLevel === 1) count = Math.min(4, all.length);
+
+    if (!correctTile) return all.slice(0, count);
+
+    const distractors = all.filter((t) => t.ch !== correct);
+    const chosen: Tile[] = [correctTile, ...distractors.slice(0, Math.max(0, count - 1))];
+
+    const order = new Map(all.map((t, i) => [t.id, i]));
+    chosen.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+    return chosen;
+  }, [tiles, current.onset, hintLevel]);
+
+  // ---------- Target box geometry ----------
   const getBlankCenter = () => {
     const r = blankRef.current?.getBoundingClientRect();
     if (!r) return null;
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   };
 
+  // ---------- Round completion + spaced review ----------
+  const normalizeQueueAfterRound = (q: QueueEntry[]) => {
+    const dec = q.map((e) => ({ ...e, dueIn: Math.max(0, e.dueIn - 1) }));
+    const ready = dec.filter((e) => e.dueIn === 0);
+    const blocked = dec.filter((e) => e.dueIn > 0);
+    return [...ready, ...blocked];
+  };
+
+  const finishRoundAndAdvance = (options: {
+    reinstateDelay?: number;
+    reinstateReason?: "wrong" | "slow";
+  }) => {
+    const curId = currentEntry?.id;
+    if (!curId) return;
+
+    setQueue((prev) => {
+      const cur = prev.find((x) => x.id === curId);
+      let next = prev.filter((x) => x.id !== curId);
+
+      if (cur && options.reinstateDelay && options.reinstateDelay > 0) {
+        const capRepeats = 2;
+        const newRepeats = Math.min(capRepeats, (cur.repeats ?? 0) + 1);
+
+        if (newRepeats <= capRepeats) {
+          const safeDelay = Math.min(options.reinstateDelay, Math.max(0, next.length));
+          next.push({
+            id: uid(`review-${familyId}-${cur.item.word}`),
+            item: cur.item,
+            dueIn: safeDelay,
+            origin: "review",
+            repeats: newRepeats,
+          });
+        }
+      }
+
+      next = normalizeQueueAfterRound(next);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    if (screen !== "play") return;
+    if (queue.length === 0) setScreen("complete");
+  }, [queue.length, screen]);
+
+  // ---------- Feedback handlers ----------
+  const correctPlace = async (
+    ch: string,
+    inputMode: "drag" | "tap",
+    opts?: { bypassPhase?: boolean }
+  ) => {
+    if (isCelebrating) return;
+    if (phase !== "act" && !opts?.bypassPhase) return;
+
+    setPhase("feedback");
+    setIsCelebrating(true);
+
+    const tFirst = firstActionMs ?? (actStartMs ? Date.now() - actStartMs : null);
+
+    const wasSlow = tFirst !== null && tFirst > 3200;
+    const hadErrors = wrongCount > 0;
+    const isIndependent = !hadErrors && hintLevel === 0 && !wasSlow;
+
+    setIndependentStreak((s) => (isIndependent ? s + 1 : 0));
+
+    let reinstateDelay = 0;
+    let reinstateReason: "wrong" | "slow" | undefined = undefined;
+
+    if (hadErrors) {
+      reinstateDelay = 3;
+      reinstateReason = "wrong";
+    } else if (wasSlow) {
+      reinstateDelay = 8;
+      reinstateReason = "slow";
+    }
+
+    logEvent("attempt", {
+      word: current.word,
+      onset: current.onset,
+      chosen: ch,
+      correct: true,
+      wrongCount,
+      hintLevel,
+      inputMode,
+      timeToFirstActionMs: tFirst,
+      wasSlow,
+      reinstateDelay,
+      reinstateReason,
+      independentStreakBefore: independentStreak,
+    });
+
+    setPlaced(ch);
+    setFlash("green");
+    setShowBuiltWord(false);
+
+    showCheer();
+    burstConfetti(false);
+
+    window.setTimeout(() => setShowBuiltWord(true), 220);
+
+    // play blend, but never block UI
+    window.setTimeout(() => {
+      speakBlend().catch(() => {});
+    }, 260);
+
+    window.setTimeout(() => {
+      setIsCelebrating(false);
+      setFlash("none");
+      setPlaced(null);
+      setShowBuiltWord(false);
+      setHintLevel(0);
+      setWrongCount(0);
+      setPulseCorrect(false);
+
+      finishRoundAndAdvance({ reinstateDelay, reinstateReason });
+
+      setPhase("cue");
+    }, CONFETTI_MS);
+  };
+
+  // ✅ FIX #2: Wrong answers never await speech; always unlock quickly (no “minute freeze”)
+  const registerWrong = (chosen: string, inputMode: "drag" | "tap") => {
+    if (isCelebrating) return;
+    if (phase !== "act") return;
+
+    setPhase("feedback");
+    setFlash("wrong");
+
+    const tFirst = firstActionMs ?? (actStartMs ? Date.now() - actStartMs : null);
+    const nextWrong = wrongCount + 1;
+    setWrongCount(nextWrong);
+
+    logEvent("attempt", {
+      word: current.word,
+      onset: current.onset,
+      chosen,
+      correct: false,
+      wrongCount: nextWrong,
+      hintLevel,
+      inputMode,
+      timeToFirstActionMs: tFirst,
+    });
+
+    window.setTimeout(() => setFlash("none"), 320);
+
+    // stop any hanging cue speech
+    cancelSpeech();
+
+    const onsetTxt = onsetSoundText(current.onset);
+
+    if (nextWrong === 1) {
+      speak(`Try again. First sound: ${onsetTxt}.`);
+      window.setTimeout(() => setPhase("act"), 650);
+      return;
+    }
+
+    if (nextWrong === 2) {
+      setHintLevel((h) => Math.max(h, 1));
+      setPulseCorrect(true);
+      window.setTimeout(() => setPulseCorrect(false), 1100);
+      speak(`Listen. First sound: ${onsetTxt}.`);
+      window.setTimeout(() => setPhase("act"), 800);
+      return;
+    }
+
+    if (nextWrong === 3) {
+      setHintLevel((h) => Math.max(h, 2));
+      setPulseCorrect(true);
+      window.setTimeout(() => setPulseCorrect(false), 1200);
+      speak(`Let's do it together. First sound: ${onsetTxt}.`);
+
+      // guided success: don’t rely on phase state update timing
+      window.setTimeout(() => {
+        setPhase("act");
+        correctPlace(current.onset, "tap", { bypassPhase: true });
+      }, 650);
+      return;
+    }
+
+    setHintLevel((h) => Math.max(h, 3));
+    setPulseCorrect(true);
+    window.setTimeout(() => setPulseCorrect(false), 1400);
+    speak(`${current.word}. First sound: ${onsetTxt}. Choose this one.`);
+    window.setTimeout(() => setPhase("act"), 900);
+  };
+
+  // ---------- Input: drag + tap fallback ----------
+  const markFirstActionIfNeeded = () => {
+    if (!hasActedThisRound) {
+      // ✅ FIX #3: cancel cue audio when child starts acting (no overlap)
+      cancelSpeech();
+      setHasActedThisRound(true);
+      const t = actStartMs ? Date.now() - actStartMs : 0;
+      setFirstActionMs(t);
+    }
+  };
+
+  const getTileCenterFromDrag = (dx: number, dy: number) => {
+    const d = dragRef.current;
+    if (!d) return null;
+    return { x: d.baseCenter.x + dx, y: d.baseCenter.y + dy };
+  };
+
   const startDrag = (e: React.PointerEvent<HTMLDivElement>, tile: Tile) => {
-    if (isCelebrating || screen !== "play") return;
+    if (screen !== "play") return;
+    if (phase !== "act") return;
+    if (isCelebrating) return;
+    if (isComplete) return;
+
+    markFirstActionIfNeeded();
 
     const el = e.currentTarget;
     try {
@@ -692,6 +1137,7 @@ export default function MakeAWordRimeGame() {
       baseCenter,
       dx: 0,
       dy: 0,
+      didDrag: false,
     };
 
     setDragState({ tileId: tile.id, dx: 0, dy: 0 });
@@ -711,11 +1157,16 @@ export default function MakeAWordRimeGame() {
 
   const moveDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
-    if (!d || isCelebrating) return;
+    if (!d) return;
+    if (screen !== "play") return;
+    if (phase !== "act") return;
+    if (isCelebrating) return;
     if (e.pointerId !== d.pointerId) return;
 
     const dx = e.clientX - d.startX;
     const dy = e.clientY - d.startY;
+
+    if (!d.didDrag && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) d.didDrag = true;
 
     d.dx = dx;
     d.dy = dy;
@@ -725,35 +1176,36 @@ export default function MakeAWordRimeGame() {
     const blankC = getBlankCenter();
     if (!blankC) return;
 
-    const tileC = { x: d.baseCenter.x + dx, y: d.baseCenter.y + dy };
-    const distance = dist(tileC, blankC);
+    const tileC = getTileCenterFromDrag(dx, dy);
+    if (!tileC) return;
 
+    const distance = dist(tileC, blankC);
     const isNear = distance <= magnetRadius;
     const isCorrectNear = isNear && d.ch === current.onset;
 
-    // glow feedback
     setNearState({ isNear, isCorrectNear });
 
-    // ✅ AUTO-FORM when close enough and correct (no exact drop needed)
     if (isCorrectNear && !isComplete && !isCelebrating) {
-      // stop drag and accept
+      const chosen = d.ch;
       dragRef.current = null;
       setDragState(null);
       setNearState({ isNear: false, isCorrectNear: false });
-      correctPlace(d.ch);
+      correctPlace(chosen, "drag");
     }
   };
 
   const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
     const d = dragRef.current;
-    if (!d || isCelebrating) return;
+    if (!d) return;
+    if (screen !== "play") return;
+    if (phase !== "act") return;
+    if (isCelebrating) return;
     if (e.pointerId !== d.pointerId) return;
 
     const { isNear, isCorrectNear } = nearState;
 
-    // If near but wrong, mark wrong on release.
     if (isNear && !isCorrectNear && d.ch !== current.onset && !isComplete) {
-      wrongPlace();
+      registerWrong(d.ch, "drag");
     }
 
     dragRef.current = null;
@@ -767,17 +1219,24 @@ export default function MakeAWordRimeGame() {
     }
   };
 
-  const nextFamily = () => {
-    const i = FAMILY_ORDER.indexOf(familyId as any);
-    const next = FAMILY_ORDER[(i + 1) % FAMILY_ORDER.length];
-    goToFamily(next);
+  const tapTile = (tile: Tile) => {
+    if (screen !== "play") return;
+    if (phase !== "act") return;
+    if (isCelebrating) return;
+    if (isComplete) return;
+
+    const d = dragRef.current;
+    if (d?.tileId === tile.id && d.didDrag) return;
+
+    markFirstActionIfNeeded();
+
+    if (tile.ch === current.onset) correctPlace(tile.ch, "tap");
+    else registerWrong(tile.ch, "tap");
   };
 
-  const repeatLevel = () => {
-    goToFamily(familyId);
-  };
-
+  // ---------- Visual states ----------
   const wordCardBg = flash === "green" ? "bg-green-200" : "bg-sky-200";
+
   const blankGlow =
     nearState.isNear && !isCelebrating
       ? nearState.isCorrectNear
@@ -785,9 +1244,9 @@ export default function MakeAWordRimeGame() {
         : "ring-8 ring-red-300/70"
       : "";
 
-  // used to re-trigger animations per word
-  const animKey = `${familyId}-${idx}`;
+  const isInteractingDisabled = screen !== "play" || phase !== "act" || isCelebrating;
 
+  // ---------- UI ----------
   return (
     <div
       ref={rootRef}
@@ -796,9 +1255,9 @@ export default function MakeAWordRimeGame() {
         background: "radial-gradient(circle at 50% 40%, #ff88b5 0%, #ff5fa2 55%, #ff4b96 100%)",
       }}
     >
-      {/* Debug badge: if you don't see this, wrong file is running */}
+      {/* Debug badge */}
       <div className="absolute top-4 left-4 z-[10000] px-3 py-1 rounded-full bg-black/35 text-white text-xs font-extrabold border border-white/20">
-        MAW v3 — MAGNET DRAG + YAY
+        MAW v4 — LISTEN GATE + TAP-PLACE + SPACED REVIEW (FIXED)
       </div>
 
       {/* Confetti overlay */}
@@ -816,7 +1275,7 @@ export default function MakeAWordRimeGame() {
                 transform: `rotate(${c.rot}deg)`,
                 animation: `confettiFall ${c.durMs}ms linear forwards`,
                 animationDelay: `${c.delayMs}ms`,
-                opacity: 0.95,
+                opacity: 0.9,
               }}
             />
           ))}
@@ -862,8 +1321,10 @@ export default function MakeAWordRimeGame() {
             </div>
 
             <div className="text-slate-600 mb-6">
-              Pick a word family (like <b>-at</b>, <b>-ig</b>). Then <b>drag the first letter near the box</b> — it snaps
-              when close enough.
+              You’ll <b>listen first</b>, then <b>drag</b> or <b>tap</b> the first letter to make the word.
+              <div className="text-slate-500 text-sm mt-1">
+                If you don’t hear audio, the game will still start — tap 🔊 any time to replay.
+              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -900,12 +1361,8 @@ export default function MakeAWordRimeGame() {
             </div>
 
             <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
-              <div className="text-xs text-slate-500">
-                Tip: The snap zone gets smaller as kids progress (automatic difficulty).
-              </div>
-              <div className="text-xs text-slate-500">
-                Best on iPad/Touch: smooth “drag + snap”.
-              </div>
+              <div className="text-xs text-slate-500">Tip: Wrong answers trigger helpful hints (no freezing).</div>
+              <div className="text-xs text-slate-500">Tap-to-place works for low motor control.</div>
             </div>
           </div>
         </div>
@@ -967,20 +1424,18 @@ export default function MakeAWordRimeGame() {
               <span className="bg-white/15 px-3 py-1 rounded-full border border-white/25">
                 -{family.rime}
               </span>
-              <span className="ml-3 text-white/80 text-sm font-bold">
-                (magnet: {magnetRadius}px)
-              </span>
+              <span className="ml-3 text-white/80 text-sm font-bold">(magnet: {magnetRadius}px)</span>
             </div>
 
             <button
-              onClick={speakTargetLetterSound}
+              onClick={speakFirstSound}
               disabled={isCelebrating}
               className={[
                 "px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 font-extrabold",
                 "hover:bg-white/20 transition active:scale-[0.98]",
                 isCelebrating ? "opacity-60 cursor-not-allowed" : "",
               ].join(" ")}
-              title="Play first sound"
+              title="Replay first sound"
             >
               🔊 First Sound
             </button>
@@ -989,10 +1444,13 @@ export default function MakeAWordRimeGame() {
           {/* letters row */}
           <div className="mt-8 w-full flex justify-center">
             <div className="flex flex-wrap justify-center gap-4">
-              {tiles.map((tile) => {
+              {visibleTiles.map((tile) => {
                 const isDragging = dragState?.tileId === tile.id;
                 const dx = isDragging ? dragState!.dx : 0;
                 const dy = isDragging ? dragState!.dy : 0;
+
+                const isCorrectTile = tile.ch === current.onset;
+                const shouldPulse = pulseCorrect && isCorrectTile && phase === "act";
 
                 return (
                   <div
@@ -1001,20 +1459,22 @@ export default function MakeAWordRimeGame() {
                     onPointerMove={moveDrag}
                     onPointerUp={endDrag}
                     onPointerCancel={endDrag}
+                    onClick={() => tapTile(tile)}
                     className={[
                       "w-24 h-24 rounded-2xl bg-sky-200 shadow-lg border-4 border-sky-300",
                       "flex items-center justify-center select-none",
                       "text-6xl font-black text-black",
-                      "touch-none", // IMPORTANT: smooth drag on touch devices
-                      isCelebrating ? "opacity-60 cursor-not-allowed" : "cursor-grab",
+                      "touch-none",
+                      isInteractingDisabled ? "opacity-60 cursor-not-allowed" : "cursor-grab",
                       isDragging ? "z-50" : "",
+                      shouldPulse ? "ring-8 ring-yellow-300/80 animate-[pop_0.35s_ease-out]" : "",
                     ].join(" ")}
                     style={{
                       transform: isDragging ? `translate3d(${dx}px, ${dy}px, 0)` : "translate3d(0,0,0)",
                       transition: isDragging ? "none" : "transform 220ms ease",
                     }}
                     aria-label={`Letter ${tile.ch}`}
-                    title="Drag down near the box"
+                    title={isInteractingDisabled ? "Listen first…" : "Drag or tap"}
                   >
                     {tile.ch}
                   </div>
@@ -1024,15 +1484,20 @@ export default function MakeAWordRimeGame() {
           </div>
 
           <div className="mt-3 text-white/85 font-semibold text-center">
-            Drag the correct first letter near the box 👇
-            <div className="text-white/70 text-sm">
-              (It snaps when close enough — and gets harder as you go!)
-            </div>
+            {phase === "cue" ? (
+              <>
+                Listening… <span className="text-white/70">(then choose)</span>
+              </>
+            ) : (
+              <>
+                Drag <b>or tap</b> the correct first letter 👇
+                <div className="text-white/70 text-sm">(Only “near the box” counts as a wrong drag — motor misses don’t.)</div>
+              </>
+            )}
           </div>
 
           {/* CENTER: word formation */}
           <div className="flex-1 w-full flex flex-col items-center justify-center">
-            {/* WORD CARD (keep inside as-is) */}
             <div
               className={[
                 "relative w-[min(820px,94vw)] h-[190px] rounded-2xl shadow-xl border-4 border-sky-300",
@@ -1041,7 +1506,6 @@ export default function MakeAWordRimeGame() {
               ].join(" ")}
               style={{ boxShadow: "0 10px 30px rgba(0,0,0,0.25)" }}
             >
-              {/* BIG CHEER */}
               {cheer && (
                 <div className="absolute -top-14 left-1/2 -translate-x-1/2 text-white font-extrabold text-4xl drop-shadow-xl animate-[cheerPop_900ms_ease-out] pointer-events-none">
                   {cheer}
@@ -1056,10 +1520,17 @@ export default function MakeAWordRimeGame() {
                       "w-[125px] h-[125px] rounded-2xl border-4 border-sky-300 bg-pink-200/40",
                       "transition",
                       blankGlow,
-                      isCelebrating ? "opacity-60 cursor-not-allowed" : "cursor-pointer",
+                      phase === "act" && !isCelebrating ? "cursor-pointer" : "cursor-not-allowed opacity-70",
+                      pulseCorrect && phase === "act" ? "ring-8 ring-yellow-300/60" : "",
                     ].join(" ")}
                     aria-label="Target box"
-                    title="Bring the correct letter near me!"
+                    title={phase === "act" ? "Tap to replay cue" : "Listening…"}
+                    onClick={() => {
+                      if (screen !== "play") return;
+                      if (phase === "cue") return;
+                      speak(`${current.word}. First sound: ${onsetSoundText(current.onset)}.`);
+                      logEvent("box_tap_recue", { word: current.word });
+                    }}
                   />
                   <div className="ml-6 text-7xl font-black text-black">{family.rime}</div>
                 </div>
@@ -1080,13 +1551,21 @@ export default function MakeAWordRimeGame() {
               )}
 
               <div className="absolute bottom-3 right-4 text-xs font-bold text-slate-700 bg-white/55 px-3 py-1 rounded-full">
-                {idx + 1} / {family.items.length}
+                {queue.length > 0 ? `${Math.max(1, queue.length)} left` : "done"}
               </div>
 
               {isCelebrating && (
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
                   <div className="px-8 py-4 rounded-full bg-white/70 text-slate-900 text-4xl font-black shadow-lg animate-[pop_0.35s_ease-out]">
                     YAY! 🎉
+                  </div>
+                </div>
+              )}
+
+              {phase === "cue" && (
+                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                  <div className="px-7 py-3 rounded-full bg-white/70 text-slate-900 text-2xl font-black shadow-lg animate-[pop_0.35s_ease-out]">
+                    👂 Listen…
                   </div>
                 </div>
               )}
@@ -1097,8 +1576,12 @@ export default function MakeAWordRimeGame() {
           <div className="w-full flex items-center justify-center pb-8">
             <div
               className="w-44 h-44 md:w-56 md:h-56 flex items-center justify-center"
-              onClick={speakWord}
-              style={{ cursor: isCelebrating ? "default" : "pointer" }}
+              onClick={() => {
+                if (screen !== "play") return;
+                speakWord();
+                logEvent("image_tap_word", { word: current.word });
+              }}
+              style={{ cursor: screen === "play" ? "pointer" : "default" }}
               title="Tap picture to hear the word"
             >
               {imgOk ? (
@@ -1151,7 +1634,7 @@ export default function MakeAWordRimeGame() {
 
           @keyframes confettiFall {
             0%   { transform: translateY(-30px) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(110vh) rotate(720deg); opacity: 0.15; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0.12; }
           }
         `}
       </style>
