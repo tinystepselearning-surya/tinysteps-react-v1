@@ -6,284 +6,303 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 // CLEAN PPT-STYLE JOURNEY (Compact + Professional)
 // ============================================================================
 
-type JourneyStage = "Phonics" | "Grammar" | "Speaking" | "Breakthrough";
+type JourneyCategory = "phonics" | "grammar" | "speaking" | "breakthrough";
 
 type JourneyStop = {
-  id: string; // S1..S8
-  stage: JourneyStage;
+  key: string; // "S1"
   title: string;
-  bullets: string[];
-  left: string; // deprecated, kept for compat
-  top: string; // deprecated, kept for compat
-  childCanDo: string[];
-  nextMilestone: string;
-  teacherFocus: string[];
-  homePractice: string;
-  parentUpdateExample: string;
-  t: number; // 0-1 position on road curve
-  planet: "mercury" | "venus" | "earth" | "mars" | "jupiter" | "saturn" | "uranus" | "neptune";
+  category: JourneyCategory;
 };
 
 const JOURNEY_STOPS: JourneyStop[] = [
-  {
-    id: "S1",
-    stage: "Phonics",
-    title: "Tracing Foundations",
-    bullets: ["Grip + control", "Lines & curves", "Confidence to write"],
-    left: "18%",
-    top: "80%",
-    childCanDo: ["Hold pencil like a pro", "Trace big curves", "Keep lines neat"],
-    nextMilestone: "Write first letters with correct formation",
-    teacherFocus: ["Grip strength", "Line control", "Confidence building"],
-    homePractice: "Trace shapes in sand or on paper for 5 minutes",
-    parentUpdateExample: "Your child's grip is getting stronger! Try tracing shapes at home.",
-    planet: "mercury",
-    t: 0.06,
-  },
-  {
-    id: "S2",
-    stage: "Phonics",
-    title: "Letter Sounds + Formation",
-    bullets: ["26 sounds (not just names)", "Correct start points", "Fewer reversals"],
-    left: "12%",
-    top: "62%",
-    childCanDo: ["Say 26 letter sounds", "Form letters correctly", "Say sounds in order"],
-    nextMilestone: "Blend 2-3 sounds into words",
-    teacherFocus: ["Sound accuracy", "Letter formation", "Muscle memory"],
-    homePractice: "Point to letters and say their sounds (not names)",
-    parentUpdateExample: "Perfect sound practice! Your child knows 15/26 sounds now.",
-    planet: "venus",
-    t: 0.18,
-  },
-  {
-    id: "S3",
-    stage: "Phonics",
-    title: "Blending → Word Families",
-    bullets: ["Blend 2–3 sounds", "CVC words (sat/pin)", "Early spelling from sounds"],
-    left: "25%",
-    top: "46%",
-    childCanDo: ["Blend sounds into words", "Read CVC words", "Spell 3-letter words"],
-    nextMilestone: "Read simple sentences smoothly",
-    teacherFocus: ["Blending fluency", "Word family patterns", "Spelling sounds"],
-    homePractice: "Read 5 simple CVC words together and spell them",
-    parentUpdateExample: "Blending click! Your child read 'cat', 'sit', 'dog' perfectly.",
-    planet: "earth",
-    t: 0.30,
-  },
-  {
-    id: "S4",
-    stage: "Phonics",
-    title: "Reads Sentences",
-    bullets: ["Smooth decoding", "Punctuation pauses", "Simple comprehension"],
-    left: "44%",
-    top: "58%",
-    childCanDo: ["Decode sentences", "Pause at periods", "Answer simple questions"],
-    nextMilestone: "Write simple sentences independently",
-    teacherFocus: ["Fluency building", "Comprehension", "Punctuation awareness"],
-    homePractice: "Read a 3-sentence story and ask 'What happened?'",
-    parentUpdateExample: "Reading breakthrough! Your child read a full sentence today.",
-    planet: "mars",
-    t: 0.42,
-  },
-  {
-    id: "S5",
-    stage: "Breakthrough",
-    title: "Writes Sentences",
-    bullets: ["Clear sentences", "Capital & full stop", "Better speed + neatness"],
-    left: "64%",
-    top: "52%",
-    childCanDo: ["Write full sentences", "Use capitals correctly", "Add periods"],
-    nextMilestone: "Spell common words without help",
-    teacherFocus: ["Sentence structure", "Punctuation rules", "Speed + accuracy"],
-    homePractice: "Write 3 sentences about their day",
-    parentUpdateExample: "Writing is flowing! Your child wrote 'The cat sat on the mat.' perfectly.",
-    planet: "jupiter",
-    t: 0.56,
-  },
-  {
-    id: "S6",
-    stage: "Phonics",
-    title: "Spelling Rules Mastery",
-    bullets: ["Magic-E", "Rabbit rule", "Vowel teams (ai/ee/oa/ie)"],
-    left: "58%",
-    top: "30%",
-    childCanDo: ["Apply magic-e rule", "Use vowel teams", "Spell pattern words"],
-    nextMilestone: "Spell multisyllabic words",
-    teacherFocus: ["Pattern recognition", "Rule application", "Word structure"],
-    homePractice: "Find words with 'ai' or 'ee' sounds in books",
-    parentUpdateExample: "Pattern master! Your child spelled 'make', 'tree', 'rain' correctly.",
-    planet: "saturn",
-    t: 0.68,
-  },
-  {
-    id: "S7",
-    stage: "Grammar",
-    title: "Grammar + Vocabulary",
-    bullets: ["Sentence structure", "Correct verb forms", "Word upgrades"],
-    left: "76%",
-    top: "18%",
-    childCanDo: ["Use correct tenses", "Build complex sentences", "Use varied vocabulary"],
-    nextMilestone: "Write short paragraphs with multiple sentences",
-    teacherFocus: ["Grammar rules", "Vocabulary expansion", "Sentence variety"],
-    homePractice: "Write sentences using 'before', 'after', 'because'",
-    parentUpdateExample: "Grammar growth! Your child used past tense correctly in stories.",
-    planet: "uranus",
-    t: 0.80,
-  },
-  {
-    id: "S8",
-    stage: "Speaking",
-    title: "Confident Speaking (No Blackout)",
-    bullets: ["Stage speaking", "Instant topic speaking", "No freezing — clear framework"],
-    left: "88%",
-    top: "28%",
-    childCanDo: ["Speak on stage", "Handle any topic", "Speak with confidence"],
-    nextMilestone: "Present ideas to large groups",
-    teacherFocus: ["Speaking confidence", "Presentation skills", "Handling nervousness"],
-    homePractice: "Practice 1-minute talks on fun topics",
-    parentUpdateExample: "Speaking star! Your child presented without nervousness today.",
-    planet: "neptune",
-    t: 0.92,
-  },
+  { key: "S1", title: "Tracing Foundations", category: "phonics" },
+  { key: "S2", title: "Letter Sounds + Formation", category: "phonics" },
+  { key: "S3", title: "Blending → Word Families", category: "phonics" },
+  { key: "S4", title: "Reads Sentences", category: "phonics" },
+  { key: "S5", title: "Writes Sentences", category: "grammar" },
+  { key: "S6", title: "Spelling Rules Mastery", category: "grammar" },
+  { key: "S7", title: "Grammar + Vocabulary", category: "speaking" },
+  { key: "S8", title: "Confident Speaking (No Blackout)", category: "breakthrough" },
 ];
 
-type RoadStageLabel = { label: string; x: number; y: number };
-const ROAD_STAGE_LABELS: RoadStageLabel[] = [
-  { label: "Phonics", x: 260, y: 260 },
-  { label: "Grammar", x: 560, y: 290 },
-  { label: "Speaking", x: 700, y: 130 },
-  { label: "Breakthrough", x: 860, y: 105 },
-];
+const CATEGORY_META: Record<
+  JourneyCategory,
+  { label: string; pillClass: string; dot: string }
+> = {
+  phonics: {
+    label: "Phonics",
+    pillClass: "bg-orange-50 text-orange-800 border-orange-200",
+    dot: "#F59E0B",
+  },
+  grammar: {
+    label: "Grammar",
+    pillClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
+    dot: "#10B981",
+  },
+  speaking: {
+    label: "Speaking",
+    pillClass: "bg-purple-50 text-purple-800 border-purple-200",
+    dot: "#8B5CF6",
+  },
+  breakthrough: {
+    label: "Breakthrough",
+    pillClass: "bg-amber-50 text-amber-900 border-amber-200",
+    dot: "#F59E0B",
+  },
+};
 
-function StagePill({ stage }: { stage: JourneyStage }) {
-  const bg =
-    stage === "Phonics"
-      ? "rgba(251,146,60,0.18)"
-      : stage === "Grammar"
-      ? "rgba(59,130,246,0.14)"
-      : stage === "Speaking"
-      ? "rgba(168,85,247,0.14)"
-      : "rgba(34,197,94,0.14)";
-
-  const border =
-    stage === "Phonics"
-      ? "rgba(251,146,60,0.34)"
-      : stage === "Grammar"
-      ? "rgba(59,130,246,0.28)"
-      : stage === "Speaking"
-      ? "rgba(168,85,247,0.28)"
-      : "rgba(34,197,94,0.28)";
-
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        fontSize: 12,
-        fontWeight: 800,
-        padding: "6px 10px",
-        borderRadius: 999,
-        background: bg,
-        border: `1px solid ${border}`,
-        color: "#0f172a",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {stage}
-    </span>
-  );
-}
-
-function SvgStageLabel({ label, x, y }: RoadStageLabel) {
-  const w = label === "Breakthrough" ? 168 : 120;
-  const h = 36;
-  return (
-    <g>
-      <rect
-        x={x - w / 2}
-        y={y - h / 2}
-        width={w}
-        height={h}
-        rx={999}
-        fill="rgba(255,255,255,0.92)"
-        stroke="rgba(15,23,42,0.14)"
-        strokeWidth="2"
-      />
-      <text
-        x={x}
-        y={y + 6}
-        textAnchor="middle"
-        fontSize="15"
-        fontWeight="800"
-        fill="#0f172a"
-      >
-        {label}
-      </text>
-    </g>
-  );
-}
-
-function RoadPin({
-  id,
-  active,
-  onClick,
-  planet,
+function JourneyRoadHorizontal({
+  activeKey,
+  onSelect,
 }: {
-  id: string;
-  active: boolean;
-  onClick: () => void;
-  planet: "mercury" | "venus" | "earth" | "mars" | "jupiter" | "saturn" | "uranus" | "neptune";
+  activeKey: string;
+  onSelect: (key: string) => void;
 }) {
+  const n = JOURNEY_STOPS.length;
+
+  // SVG layout (SpellBee style)
+  const W = 1100;
+  const H = 280;
+  const roadY = 150;
+  const x0 = 90;
+  const x1 = W - 90;
+
+  const xs = JOURNEY_STOPS.map((_, i) =>
+    n === 1 ? (x0 + x1) / 2 : x0 + ((x1 - x0) * i) / (n - 1)
+  );
+
+  const isTop = (i: number) => i % 2 === 0; // alternate label/pin top-bottom
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`ts-planet ${planet} ${active ? "isActive" : ""}`}
-      aria-label={`Open ${id}`}
-      title={id}
-    >
-      <span className="orb" aria-hidden />
-      <span className="ring" aria-hidden />
-      <span className="shine" aria-hidden />
-      <span className="label">{id}</span>
-    </button>
+    <div className="relative w-full rounded-2xl border border-slate-200 bg-gradient-to-b from-sky-50 via-white to-amber-50 p-4 shadow-sm">
+      {/* small sun (top-left) */}
+      <div className="pointer-events-none absolute left-4 top-4 h-12 w-12 rounded-full bg-gradient-to-br from-amber-300 to-orange-500 shadow-[0_0_30px_rgba(251,146,60,0.45)]" />
+      <div className="pointer-events-none absolute left-2 top-2 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(251,146,60,0.35)_0%,rgba(251,146,60,0.00)_65%)]" />
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="h-[240px] w-full"
+        aria-label="Tiny Steps learning journey roadmap"
+        role="img"
+      >
+        <defs>
+          <filter id="tsGlow" x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.25" />
+          </filter>
+        </defs>
+
+        {/* Road */}
+        <rect
+          x={x0}
+          y={roadY - 18}
+          width={x1 - x0}
+          height={36}
+          rx={18}
+          fill="#111827"
+          opacity={0.92}
+        />
+        {/* Center dashed line */}
+        <line
+          x1={x0 + 18}
+          y1={roadY}
+          x2={x1 - 18}
+          y2={roadY}
+          stroke="white"
+          strokeWidth={4}
+          strokeDasharray="10 12"
+          opacity={0.9}
+        />
+
+        {/* Pins + Labels */}
+        {JOURNEY_STOPS.map((s, i) => {
+          const x = xs[i];
+          const top = isTop(i);
+          const active = s.key === activeKey;
+          const c = CATEGORY_META[s.category].dot;
+
+          const triH = 22;
+          const triW = 22;
+
+          const circleR = 18;
+          const circleCy = top ? roadY - (triH + circleR + 6) : roadY + (triH + circleR + 6);
+          const triTipY = top ? roadY - 18 : roadY + 18;
+
+          const triBaseY = top ? triTipY - triH : triTipY + triH;
+
+          const labelY = top ? 52 : 248;
+
+          return (
+            <g
+              key={s.key}
+              tabIndex={0}
+              role="button"
+              aria-label={`${s.key} ${s.title}`}
+              onClick={() => onSelect(s.key)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onSelect(s.key);
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              {/* triangle pointer */}
+              <polygon
+                points={
+                  top
+                    ? `${x},${triTipY} ${x - triW / 2},${triBaseY} ${x + triW / 2},${triBaseY}`
+                    : `${x},${triTipY} ${x - triW / 2},${triBaseY} ${x + triW / 2},${triBaseY}`
+                }
+                fill={c}
+                opacity={0.95}
+                filter={active ? "url(#tsGlow)" : undefined}
+              />
+
+              {/* circle */}
+              <circle
+                cx={x}
+                cy={circleCy}
+                r={circleR}
+                fill="white"
+                stroke={active ? c : "#CBD5E1"}
+                strokeWidth={active ? 4 : 2}
+                filter={active ? "url(#tsGlow)" : undefined}
+              />
+              <text
+                x={x}
+                y={circleCy + 6}
+                textAnchor="middle"
+                fontSize="14"
+                fontWeight="700"
+                fill={active ? "#0F172A" : "#334155"}
+              >
+                {s.key}
+              </text>
+
+              {/* label */}
+              <text
+                x={x}
+                y={labelY}
+                textAnchor="middle"
+                fontSize="14"
+                fontWeight="700"
+                fill="#0F172A"
+              >
+                {s.title}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Stage buttons at the BOTTOM (as you asked) */}
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        {(["phonics", "grammar", "speaking", "breakthrough"] as JourneyCategory[]).map((k) => (
+          <div
+            key={k}
+            className={`rounded-full border px-3 py-1 text-sm font-semibold ${CATEGORY_META[k].pillClass}`}
+          >
+            {CATEGORY_META[k].label}
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-2 text-center text-xs text-slate-600">
+        *In the FREE assessment, we identify the right entry stage and share the next steps clearly.
+      </div>
+    </div>
   );
 }
 
 export function LearningJourneyRoadmapPPT() {
-  const [activeId, setActiveId] = useState<string>("S1");
-  const [pinPos, setPinPos] = useState<Record<string, { xPct: number; yPct: number }>>({});
-
-  const ROAD_W = 1000;
-  const ROAD_H = 380;
-
-  const pathRef = useRef<SVGPathElement | null>(null);
-
-  useEffect(() => {
-    const update = () => {
-      const p = pathRef.current;
-      if (!p) return;
-
-      const len = p.getTotalLength();
-      const next: Record<string, { xPct: number; yPct: number }> = {};
-
-      JOURNEY_STOPS.forEach((s) => {
-        const pt = p.getPointAtLength(len * (s.t ?? 0));
-        next[s.id] = { xPct: (pt.x / ROAD_W) * 100, yPct: (pt.y / ROAD_H) * 100 };
-      });
-
-      setPinPos(next);
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
+  const [activeKey, setActiveKey] = useState<string>("S1");
 
   const active = useMemo(
-    () => JOURNEY_STOPS.find((s) => s.id === activeId) ?? JOURNEY_STOPS[0],
-    [activeId]
+    () => {
+      // Find stop by key (which is "S1", "S2", etc.)
+      // We need journey details so create them dynamically
+      const journeyDetails: Record<string, any> = {
+        S1: {
+          key: "S1",
+          title: "Tracing Foundations",
+          category: "phonics",
+          childCanDo: ["Hold pencil like a pro", "Trace big curves", "Keep lines neat"],
+          nextMilestone: "Write first letters with correct formation",
+          teacherFocus: ["Grip strength", "Line control", "Confidence building"],
+          homePractice: "Trace shapes in sand or on paper for 5 minutes",
+          parentUpdateExample: "Your child's grip is getting stronger! Try tracing shapes at home.",
+        },
+        S2: {
+          key: "S2",
+          title: "Letter Sounds + Formation",
+          category: "phonics",
+          childCanDo: ["Say 26 letter sounds", "Form letters correctly", "Say sounds in order"],
+          nextMilestone: "Blend 2-3 sounds into words",
+          teacherFocus: ["Sound accuracy", "Letter formation", "Muscle memory"],
+          homePractice: "Point to letters and say their sounds (not names)",
+          parentUpdateExample: "Perfect sound practice! Your child knows 15/26 sounds now.",
+        },
+        S3: {
+          key: "S3",
+          title: "Blending → Word Families",
+          category: "phonics",
+          childCanDo: ["Blend sounds into words", "Read CVC words", "Spell 3-letter words"],
+          nextMilestone: "Read simple sentences smoothly",
+          teacherFocus: ["Blending fluency", "Word family patterns", "Spelling sounds"],
+          homePractice: "Read 5 simple CVC words together and spell them",
+          parentUpdateExample: "Blending click! Your child read 'cat', 'sit', 'dog' perfectly.",
+        },
+        S4: {
+          key: "S4",
+          title: "Reads Sentences",
+          category: "phonics",
+          childCanDo: ["Decode sentences", "Pause at periods", "Answer simple questions"],
+          nextMilestone: "Write simple sentences independently",
+          teacherFocus: ["Fluency building", "Comprehension", "Punctuation awareness"],
+          homePractice: "Read a 3-sentence story and ask 'What happened?'",
+          parentUpdateExample: "Reading breakthrough! Your child read a full sentence today.",
+        },
+        S5: {
+          key: "S5",
+          title: "Writes Sentences",
+          category: "grammar",
+          childCanDo: ["Write full sentences", "Use capitals correctly", "Add periods"],
+          nextMilestone: "Spell common words without help",
+          teacherFocus: ["Sentence structure", "Punctuation rules", "Speed + accuracy"],
+          homePractice: "Write 3 sentences about their day",
+          parentUpdateExample: "Writing is flowing! Your child wrote 'The cat sat on the mat.' perfectly.",
+        },
+        S6: {
+          key: "S6",
+          title: "Spelling Rules Mastery",
+          category: "grammar",
+          childCanDo: ["Apply magic-e rule", "Use vowel teams", "Spell pattern words"],
+          nextMilestone: "Spell multisyllabic words",
+          teacherFocus: ["Pattern recognition", "Rule application", "Word structure"],
+          homePractice: "Find words with 'ai' or 'ee' sounds in books",
+          parentUpdateExample: "Pattern master! Your child spelled 'make', 'tree', 'rain' correctly.",
+        },
+        S7: {
+          key: "S7",
+          title: "Grammar + Vocabulary",
+          category: "speaking",
+          childCanDo: ["Use correct tenses", "Build complex sentences", "Use varied vocabulary"],
+          nextMilestone: "Write short paragraphs with multiple sentences",
+          teacherFocus: ["Grammar rules", "Vocabulary expansion", "Sentence variety"],
+          homePractice: "Write sentences using 'before', 'after', 'because'",
+          parentUpdateExample: "Grammar growth! Your child used past tense correctly in stories.",
+        },
+        S8: {
+          key: "S8",
+          title: "Confident Speaking (No Blackout)",
+          category: "breakthrough",
+          childCanDo: ["Speak on stage", "Handle any topic", "Speak with confidence"],
+          nextMilestone: "Present ideas to large groups",
+          teacherFocus: ["Speaking confidence", "Presentation skills", "Handling nervousness"],
+          homePractice: "Practice 1-minute talks on fun topics",
+          parentUpdateExample: "Speaking star! Your child presented without nervousness today.",
+        },
+      };
+      return journeyDetails[activeKey] || journeyDetails["S1"];
+    },
+    [activeKey]
   );
 
   return (
@@ -322,186 +341,8 @@ export function LearningJourneyRoadmapPPT() {
             gap: 14,
           }}
         >
-          {/* LEFT: Road */}
-          <div
-            style={{
-              borderRadius: 22,
-              border: "1px solid rgba(15,23,42,0.06)",
-              padding: 14,
-              overflow: "hidden",
-              position: "relative",
-              minHeight: 390,
-
-              // ✅ clear sky blue + soft depth
-              background:
-                "linear-gradient(180deg, rgba(224,242,254,0.95) 0%, rgba(186,230,253,0.88) 45%, rgba(255,237,213,0.78) 100%)",
-              boxShadow: "0 18px 50px rgba(2,6,23,0.08)",
-            }}
-          >
-            {/* ✅ far sun (small, top-left) + subtle star speckles */}
-            <div className="ts-sky" aria-hidden>
-              <div className="ts-sunFar" />
-              <div className="ts-sunRaysFar" />
-            </div>
-
-            <div className="ts-roadWrap">
-              <svg
-                viewBox="0 0 1000 380"
-                preserveAspectRatio="xMidYMid meet"
-                style={{
-                  width: "100%",
-                  height: "100%",
-                  minHeight: 360,
-                  display: "block",
-                }}
-              >
-                <defs>
-                  {/* Galaxy gradient */}
-                  <linearGradient id="galaxyGrad" x1="0" y1="0" x2="1000" y2="0">
-                    <stop offset="0%" stopColor="#0f172a" />
-                    <stop offset="22%" stopColor="#1e1b4b" />
-                    <stop offset="45%" stopColor="#312e81" />
-                    <stop offset="64%" stopColor="#7c3aed" />
-                    <stop offset="82%" stopColor="#ec4899" />
-                    <stop offset="100%" stopColor="#60a5fa" />
-                  </linearGradient>
-
-                  {/* Sparkle overlay */}
-                  <linearGradient id="sparkleGrad" x1="0" y1="0" x2="1000" y2="0">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.75)" />
-                    <stop offset="50%" stopColor="rgba(255,255,255,0.35)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.65)" />
-                  </linearGradient>
-
-                  {/* Soft glow */}
-                  <filter id="galaxyGlow" x="-40%" y="-40%" width="180%" height="180%">
-                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
-                    <feMerge>
-                      <feMergeNode in="blur" />
-                      <feMergeNode in="SourceGraphic" />
-                    </feMerge>
-                  </filter>
-                </defs>
-
-                {/* Galaxy road base glow */}
-                <path
-                  d="M140 320
-                     C 90 260, 160 170, 270 220
-                     C 380 270, 340 120, 465 160
-                     C 590 200, 540 330, 670 270
-                     C 800 200, 660 150, 745 125
-                     C 840 100, 870 190, 935 150"
-                  fill="none"
-                  stroke="rgba(99,102,241,0.18)"
-                  strokeWidth="92"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#galaxyGlow)"
-                />
-
-                {/* Galaxy road body */}
-                <path
-                  ref={pathRef}
-                  d="M140 320
-                     C 90 260, 160 170, 270 220
-                     C 380 270, 340 120, 465 160
-                     C 590 200, 540 330, 670 270
-                     C 800 200, 660 150, 745 125
-                     C 840 100, 870 190, 935 150"
-                  fill="none"
-                  stroke="url(#galaxyGrad)"
-                  strokeWidth="70"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  filter="url(#galaxyGlow)"
-                  opacity="0.95"
-                />
-
-                {/* Star dust (dotted sparkle line) */}
-                <path
-                  d="M140 320
-                     C 90 260, 160 170, 270 220
-                     C 380 270, 340 120, 465 160
-                     C 590 200, 540 330, 670 270
-                     C 800 200, 660 150, 745 125
-                     C 840 100, 870 190, 935 150"
-                  fill="none"
-                  stroke="url(#sparkleGrad)"
-                  strokeWidth="10"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeDasharray="2 22"
-                  opacity="0.85"
-                />
-
-                {/* A few sparkle stars (light, not clutter) */}
-                {[
-                  [210, 250, 1.0],
-                  [320, 220, 0.9],
-                  [420, 190, 0.8],
-                  [520, 220, 0.9],
-                  [620, 250, 0.8],
-                  [740, 210, 0.9],
-                  [860, 160, 1.0],
-                ].map(([cx, cy, op], i) => (
-                  <circle key={i} cx={cx as number} cy={cy as number} r="4.5" fill="rgba(255,255,255,0.85)" opacity={op as number} />
-                ))}
-              </svg>
-            </div>
-
-            {/* Pins (rotating planets) - positioned absolutely over road */}
-            <div
-              style={{
-                position: "absolute",
-                inset: 14,
-                pointerEvents: "none",
-              }}
-            >
-              {JOURNEY_STOPS.map((s) => {
-                const isActive = s.id === activeId;
-                const pos = pinPos[s.id];
-                if (!pos) return null;
-                return (
-                  <div
-                    key={s.id}
-                    style={{
-                      position: "absolute",
-                      left: `${pos.xPct}%`,
-                      top: `${pos.yPct}%`,
-                      transform: "translate(-50%, -50%)",
-                      pointerEvents: "auto",
-                    }}
-                  >
-                    <RoadPin
-                      id={s.id}
-                      active={isActive}
-                      onClick={() => setActiveId(s.id)}
-                      planet={s.planet}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Stage buttons (bottom) */}
-            <div className="ts-stageRow">
-              {JOURNEY_STOPS.map((s) => {
-                const on = s.id === activeId;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => setActiveId(s.id)}
-                    className={`ts-stageBtn ${on ? "active" : ""}`}
-                    aria-label={`Select ${s.id} ${s.title}`}
-                    title={s.title}
-                  >
-                    {s.id}: {s.title}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* LEFT: Horizontal Road */}
+          <JourneyRoadHorizontal activeKey={activeKey} onSelect={setActiveKey} />
 
           {/* RIGHT: Power Tiles */}
           <aside
@@ -519,9 +360,13 @@ export function LearningJourneyRoadmapPPT() {
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <div style={{ fontWeight: 950, fontSize: 18, color: "#0f172a" }}>
-                {active.id}
+                {active.key}
               </div>
-              <StagePill stage={active.stage} />
+              <div
+                className={`rounded-full border px-3 py-1 text-sm font-semibold ${CATEGORY_META[active.category as JourneyCategory].pillClass}`}
+              >
+                {CATEGORY_META[active.category as JourneyCategory].label}
+              </div>
             </div>
 
             <div style={{ marginTop: 8, fontWeight: 900, fontSize: 15, color: "#0f172a" }}>
@@ -553,7 +398,7 @@ export function LearningJourneyRoadmapPPT() {
                     <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>Child Can Do</div>
                   </div>
                   <ul style={{ margin: "8px 0 0 18px", padding: 0, color: "#334155", fontSize: 12.8, lineHeight: 1.35 }}>
-                    {active.childCanDo.slice(0, 3).map((x) => (
+                    {active.childCanDo.slice(0, 3).map((x: string) => (
                       <li key={x} style={{ marginBottom: 6 }}>{x}</li>
                     ))}
                   </ul>
@@ -595,7 +440,7 @@ export function LearningJourneyRoadmapPPT() {
                     <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>Teacher Focus</div>
                   </div>
                   <ul style={{ margin: "8px 0 0 18px", padding: 0, color: "#334155", fontSize: 12.8, lineHeight: 1.35 }}>
-                    {active.teacherFocus.slice(0, 3).map((x) => (
+                    {active.teacherFocus.slice(0, 3).map((x: string) => (
                       <li key={x} style={{ marginBottom: 6 }}>{x}</li>
                     ))}
                   </ul>
