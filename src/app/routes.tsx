@@ -48,6 +48,7 @@ import ParentPayments from '../pages/parent/Payments';
 const KidsPortal = lazy(() => import('../pages/KidsPortal'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
 const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
+const KidsEnglishExcellence = lazy(() => import('../pages/KidsEnglishExcellence'));
 const KidsPhonicsLibrary = lazy(() => import('../pages/KidsPhonicsLibrary'));
 const KidsPhonicsMission = lazy(() => import('../pages/KidsPhonicsMission'));
 const KidsBalloonPop = lazy(() => import('../pages/KidsBalloonPop'));
@@ -57,6 +58,7 @@ const LetterTracingWithSounds = lazy(() => import('../pages/kids/games/phonics/L
 const Blend2LettersGame = lazy(() => import('../pages/kids/games/phonics/MyFirstWords/MyFirstWordsGame'));
 const CvcWordReaderGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/CvcWordReaderGame'));
 const MakeAWordRimeGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/MakeAWordRimeGame'));
+const SentenceStepperStage4 = lazy(() => import('../pages/kids/games/phonics/SentenceStepperStage4'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -265,6 +267,7 @@ const router = createBrowserRouter(
           children: [
             { index: true, element: <KidsPortal /> },
             { path: 'games', element: <KidsGamesHub /> },
+            { path: 'games/english-excellence', element: <KidsEnglishExcellence /> },
             { path: 'games/phonics', element: <KidsPhonicsLibrary /> },
             { path: 'games/phonics/letter-sound', element: <KidsPhonicsMission /> },
             { path: 'games/phonics/balloon-pop', element: <KidsBalloonPop /> },
@@ -273,6 +276,7 @@ const router = createBrowserRouter(
             { path: 'games/phonics/my-first-words', element: <Blend2LettersGame /> },
             { path: 'games/phonics/cvc-word-reader', element: <CvcWordReaderGame /> },
             { path: 'games/phonics/cvc-word-reader/make-a-word', element: <MakeAWordRimeGame /> },
+            { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
             // Temporary: make /kids/games/speaking safe (redirect to games hub)
             { path: 'games/speaking', element: <KidsGamesHub /> },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },

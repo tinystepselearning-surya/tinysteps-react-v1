@@ -167,64 +167,78 @@ const KidsGamesHub: React.FC = () => {
         )}
       </div>
 
-      {/* Mission Grid */}
-      <div className="w-full max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8" style={{ zIndex: 10 }}>
-        {/* Phonics Mission */}
+      {/* Primary Mission Card */}
+      <div className="w-full max-w-4xl mx-auto mb-12" style={{ zIndex: 10 }}>
         <button
           type="button"
-          onClick={() => navigate(`/kids/games/phonics${kidId ? `?kidId=${kidId}` : ''}`)}
-          className="mission-card accent-phonics"
-          style={{ animation: 'floaty 7s ease-in-out infinite' }}
+          onClick={() => {
+            const qs = searchParams.toString();
+            navigate(qs ? `/kids/games/english-excellence?${qs}` : '/kids/games/english-excellence');
+          }}
+          className="mission-card accent-phonics w-full"
+          style={{ animation: 'floaty 7s ease-in-out infinite', minHeight: '180px' }}
         >
-          <h2 className="text-2xl font-bold text-pink-300">Phonics Mission</h2>
-          <p className="text-sm text-white/80">Learn sounds and letters.</p>
-          <div className="meta-row mt-3">
-            <div className="dots" aria-label="Difficulty: 1 of 3">
-              <span className="dot bg-pink-500" />
-              <span className="dot bg-pink-500 dim" />
-              <span className="dot bg-pink-500 dim" />
+          <h2 className="text-4xl font-bold text-purple-300">✨ English Excellence Mission</h2>
+          <p className="text-base text-white/90 mt-2">A complete learning journey: sounds → words → sentences → reading → speaking</p>
+          <div className="meta-row mt-4">
+            <div className="dots" aria-label="Difficulty: Progressive">
+              <span className="dot bg-purple-500" />
+              <span className="dot bg-purple-500" />
+              <span className="dot bg-purple-500" />
             </div>
-            <div className="reward">⭐ +10</div>
+            <div className="reward text-lg">🎯 Start Learning</div>
           </div>
         </button>
+      </div>
 
-        {/* Grammar Mission */}
-        <button
-          type="button"
-          onClick={() => navigate(`/kids/games/grammar${kidId ? `?kidId=${kidId}` : ''}`)}
-          className="mission-card accent-grammar"
-          style={{ animation: 'floaty 7s ease-in-out infinite 0.5s' }}
-        >
-          <h2 className="text-2xl font-bold text-blue-300">Grammar Mission</h2>
-          <p className="text-sm text-white/80">Build strong sentences.</p>
-          <div className="meta-row mt-3">
-            <div className="dots" aria-label="Difficulty: 2 of 3">
-              <span className="dot bg-blue-500" />
-              <span className="dot bg-blue-500" />
-              <span className="dot bg-blue-500 dim" />
-            </div>
-            <div className="reward">⭐ +15</div>
-          </div>
-        </button>
+      {/* Quick Access Section */}
+      <div className="w-full max-w-5xl mx-auto" style={{ zIndex: 10 }}>
+        <h3 className="text-2xl font-bold text-white/70 mb-6 text-center">Quick Access</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Phonics Library */}
+          <button
+            type="button"
+            onClick={() => navigate(`/kids/games/phonics${kidId ? `?kidId=${kidId}` : ''}`)}
+            className="mission-card accent-phonics"
+            style={{ animation: 'floaty 7s ease-in-out infinite', minHeight: '120px' }}
+          >
+            <h4 className="text-lg font-bold text-pink-300">Phonics Library</h4>
+            <p className="text-xs text-white/70 mt-1">Sounds & letters</p>
+          </button>
 
-        {/* Speaking Mission */}
-        <button
-          type="button"
-          onClick={() => navigate(`/kids/games/speaking${kidId ? `?kidId=${kidId}` : ''}`)}
-          className="mission-card accent-speaking"
-          style={{ animation: 'floaty 7s ease-in-out infinite 1s' }}
-        >
-          <h2 className="text-2xl font-bold text-teal-300">Speaking Mission</h2>
-          <p className="text-sm text-white/80">Practice with confidence.</p>
-          <div className="meta-row mt-3">
-            <div className="dots" aria-label="Difficulty: 2 of 3">
-              <span className="dot bg-teal-500" />
-              <span className="dot bg-teal-500" />
-              <span className="dot bg-teal-500 dim" />
-            </div>
-            <div className="reward">⭐ +15</div>
-          </div>
-        </button>
+          {/* Grammar Mission */}
+          <button
+            type="button"
+            onClick={() => navigate(`/kids/games/grammar${kidId ? `?kidId=${kidId}` : ''}`)}
+            className="mission-card accent-grammar"
+            style={{ animation: 'floaty 7s ease-in-out infinite 0.3s', minHeight: '120px' }}
+          >
+            <h4 className="text-lg font-bold text-blue-300">Grammar Mission</h4>
+            <p className="text-xs text-white/70 mt-1">Build sentences</p>
+          </button>
+
+          {/* Speaking Mission */}
+          <button
+            type="button"
+            onClick={() => navigate(`/kids/games/speaking${kidId ? `?kidId=${kidId}` : ''}`)}
+            className="mission-card accent-speaking"
+            style={{ animation: 'floaty 7s ease-in-out infinite 0.6s', minHeight: '120px' }}
+          >
+            <h4 className="text-lg font-bold text-teal-300">Speaking Mission</h4>
+            <p className="text-xs text-white/70 mt-1">Speak with confidence</p>
+          </button>
+
+          {/* SpellBee Practice (Coming Soon) */}
+          <button
+            type="button"
+            disabled
+            className="mission-card"
+            style={{ minHeight: '120px', opacity: 0.5, cursor: 'not-allowed' }}
+          >
+            <h4 className="text-lg font-bold text-yellow-300">SpellBee Practice</h4>
+            <p className="text-xs text-white/70 mt-1">Coming Soon</p>
+          </button>
+        </div>
       </div>
     </div>
   );

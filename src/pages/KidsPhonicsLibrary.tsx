@@ -65,6 +65,14 @@ const PHONICS_GAMES = [
     color: 'text-purple-300',
     stageId: 'blend_builder',
   },
+  {
+    id: 'sentence_stepper',
+    title: 'Sentence Stepper',
+    description: 'Age 5–7 — Tap words in order to read decodable sentences',
+    route: '/kids/games/phonics/sentence-stepper',
+    color: 'text-indigo-300',
+    stageId: 'early_reader_fluency',
+  },
   // More games will be added here later
 ];
 

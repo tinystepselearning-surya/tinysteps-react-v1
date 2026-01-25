@@ -3,6 +3,7 @@ import { applySeo } from '../lib/seo';
 import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
+import BookAssessmentForm from '../components/forms/BookAssessmentForm';
 
 const levels = [
   {
@@ -193,6 +194,35 @@ export default function PhonicsPage() {
           <div className="pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Can my 7-year-old who struggles with reading catch up?</h3>
             <p className="text-gray-700">Yes. Intensive phonics (3x/week) closes gaps in 8-12 weeks. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives 95%+ success.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Book Assessment Form Section */}
+      <section className="max-w-4xl mx-auto px-6 py-12">
+        <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="flex flex-col justify-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-6">Ready to Start Your Phonics Journey?</h2>
+            <p className="text-lg text-gray-700 mb-4">
+              Book a free assessment class with our experienced mentors. We'll understand your child's learning style and create a personalized phonics plan to help them read with confidence.
+            </p>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-start gap-3">
+                <span className="text-2xl">🎯</span>
+                <span>Personalized assessment in your first class</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-2xl">📈</span>
+                <span>Weekly progress tracking and parent reports</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="text-2xl">🎓</span>
+                <span>Experienced mentors trained in SATPIN method</span>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <BookAssessmentForm defaultInterest="Phonics" source="/phonics" />
           </div>
         </div>
       </section>
