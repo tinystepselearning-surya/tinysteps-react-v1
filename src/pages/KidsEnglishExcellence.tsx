@@ -3,145 +3,138 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 // ============================================================================
-// PPT-STYLE JOURNEY ROADMAP COMPONENT (exported for reuse on Home page)
+// CLEAN PPT-STYLE JOURNEY (Compact + Professional)
 // ============================================================================
 
+type JourneyStage = "Phonics" | "Grammar" | "Speaking" | "Breakthrough";
+
 type JourneyStop = {
-  id: string; // E1..E8
+  id: string; // S1..S8
+  stage: JourneyStage;
   title: string;
   bullets: string[];
-  left: string; // % position
-  top: string; // % position
-  calloutSide: "left" | "right";
+  left: string; // % position on road canvas
+  top: string; // % position on road canvas
 };
 
 const JOURNEY_STOPS: JourneyStop[] = [
-  { id: "E1", title: "Tracing Foundations", bullets: ["Grip + control", "Lines & curves", "Confidence to write"], left: "18%", top: "80%", calloutSide: "right" },
-  { id: "E2", title: "Letter Sounds + Formation", bullets: ["26 sounds (not just names)", "Correct start points", "Fewer reversals"], left: "12%", top: "62%", calloutSide: "right" },
-  { id: "E3", title: "Blending → Word Families", bullets: ["Blend 2–3 sounds", "CVC words (sat/pin)", "Early spelling from sounds"], left: "25%", top: "46%", calloutSide: "right" },
-  { id: "E4", title: "Reads Sentences", bullets: ["Smooth decoding", "Punctuation pauses", "Simple comprehension"], left: "44%", top: "58%", calloutSide: "right" },
-  { id: "E5", title: "Writes Sentences", bullets: ["Clear sentences", "Capital & full stop", "Better speed + neatness"], left: "64%", top: "52%", calloutSide: "right" },
-  { id: "E6", title: "Spelling Rules Mastery", bullets: ["Magic-E", "Rabbit rule", "Vowel teams (ai/ee/oa/ie)"], left: "58%", top: "30%", calloutSide: "left" },
-  { id: "E7", title: "Grammar + Vocabulary", bullets: ["Sentence structure", "Correct verb forms", "Word upgrades"], left: "76%", top: "18%", calloutSide: "left" },
-  { id: "E8", title: "Confident Speaking (No Blackout)", bullets: ["Stage speaking", "Instant topic speaking", "No freezing — clear framework"], left: "88%", top: "28%", calloutSide: "left" },
+  {
+    id: "S1",
+    stage: "Phonics",
+    title: "Tracing Foundations",
+    bullets: ["Grip + control", "Lines & curves", "Confidence to write"],
+    left: "18%",
+    top: "80%",
+  },
+  {
+    id: "S2",
+    stage: "Phonics",
+    title: "Letter Sounds + Formation",
+    bullets: ["26 sounds (not just names)", "Correct start points", "Fewer reversals"],
+    left: "12%",
+    top: "62%",
+  },
+  {
+    id: "S3",
+    stage: "Phonics",
+    title: "Blending → Word Families",
+    bullets: ["Blend 2–3 sounds", "CVC words (sat/pin)", "Early spelling from sounds"],
+    left: "25%",
+    top: "46%",
+  },
+  {
+    id: "S4",
+    stage: "Phonics",
+    title: "Reads Sentences",
+    bullets: ["Smooth decoding", "Punctuation pauses", "Simple comprehension"],
+    left: "44%",
+    top: "58%",
+  },
+  {
+    id: "S5",
+    stage: "Breakthrough",
+    title: "Writes Sentences",
+    bullets: ["Clear sentences", "Capital & full stop", "Better speed + neatness"],
+    left: "64%",
+    top: "52%",
+  },
+  {
+    id: "S6",
+    stage: "Phonics",
+    title: "Spelling Rules Mastery",
+    bullets: ["Magic-E", "Rabbit rule", "Vowel teams (ai/ee/oa/ie)"],
+    left: "58%",
+    top: "30%",
+  },
+  {
+    id: "S7",
+    stage: "Grammar",
+    title: "Grammar + Vocabulary",
+    bullets: ["Sentence structure", "Correct verb forms", "Word upgrades"],
+    left: "76%",
+    top: "18%",
+  },
+  {
+    id: "S8",
+    stage: "Speaking",
+    title: "Confident Speaking (No Blackout)",
+    bullets: ["Stage speaking", "Instant topic speaking", "No freezing — clear framework"],
+    left: "88%",
+    top: "28%",
+  },
 ];
 
-type RoadStageLabel = {
-  label: string;
-  x: number;
-  y: number;
-};
-
+type RoadStageLabel = { label: string; x: number; y: number };
 const ROAD_STAGE_LABELS: RoadStageLabel[] = [
-  { label: "Phonics", x: 260, y: 250 },
-  { label: "Grammar", x: 560, y: 270 },
-  { label: "Speaking", x: 690, y: 120 },
-  { label: "Breakthrough", x: 860, y: 95 },
+  { label: "Phonics", x: 260, y: 260 },
+  { label: "Grammar", x: 560, y: 290 },
+  { label: "Speaking", x: 700, y: 130 },
+  { label: "Breakthrough", x: 860, y: 105 },
 ];
 
-function JourneyMarker({ id }: { id: string }) {
-  return (
-    <div style={{ position: "relative", width: 72, height: 82 }}>
-      {/* pin shadow base */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: "50%",
-          bottom: 6,
-          width: 26,
-          height: 26,
-          transform: "translateX(-50%) rotate(45deg)",
-          borderRadius: 6,
-          background: "rgba(2,6,23,0.25)",
-          filter: "blur(0.2px)",
-        }}
-      />
-      {/* pin head */}
-      <div
-        style={{
-          width: 72,
-          height: 72,
-          borderRadius: 999,
-          background: "#fff",
-          border: "4px solid rgba(15,23,42,0.88)",
-          boxShadow: "0 14px 34px rgba(2,6,23,0.22)",
-          display: "grid",
-          placeItems: "center",
-          fontWeight: 900,
-          fontSize: 20,
-          color: "#f97316",
-        }}
-      >
-        {id}
-      </div>
-      {/* pin tail */}
-      <div
-        aria-hidden
-        style={{
-          position: "absolute",
-          left: "50%",
-          bottom: 0,
-          width: 18,
-          height: 18,
-          transform: "translateX(-50%) rotate(45deg)",
-          borderRadius: 5,
-          background: "#fff",
-          borderRight: "4px solid rgba(15,23,42,0.88)",
-          borderBottom: "4px solid rgba(15,23,42,0.88)",
-        }}
-      />
-    </div>
-  );
-}
+function StagePill({ stage }: { stage: JourneyStage }) {
+  const bg =
+    stage === "Phonics"
+      ? "rgba(251,146,60,0.18)"
+      : stage === "Grammar"
+      ? "rgba(59,130,246,0.14)"
+      : stage === "Speaking"
+      ? "rgba(168,85,247,0.14)"
+      : "rgba(34,197,94,0.14)";
 
-function JourneyCallout({
-  title,
-  bullets,
-  side,
-}: {
-  title: string;
-  bullets: string[];
-  side: "left" | "right";
-}) {
-  const shift = side === "left" ? -300 : 92;
+  const border =
+    stage === "Phonics"
+      ? "rgba(251,146,60,0.34)"
+      : stage === "Grammar"
+      ? "rgba(59,130,246,0.28)"
+      : stage === "Speaking"
+      ? "rgba(168,85,247,0.28)"
+      : "rgba(34,197,94,0.28)";
 
   return (
-    <div
+    <span
       style={{
-        width: 280,
-        background: "rgba(255,255,255,0.96)",
-        border: "1px solid rgba(15,23,42,0.10)",
-        borderRadius: 18,
-        padding: "12px 14px",
-        boxShadow: "0 14px 34px rgba(2,6,23,0.08)",
-        transform: `translateX(${shift}px)`,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        fontSize: 12,
+        fontWeight: 800,
+        padding: "6px 10px",
+        borderRadius: 999,
+        background: bg,
+        border: `1px solid ${border}`,
+        color: "#0f172a",
+        whiteSpace: "nowrap",
       }}
     >
-      <div style={{ fontWeight: 900, color: "#0f172a", fontSize: 14 }}>{title}</div>
-      <ul
-        style={{
-          margin: "8px 0 0 18px",
-          padding: 0,
-          color: "#334155",
-          fontSize: 13,
-          lineHeight: 1.35,
-        }}
-      >
-        {bullets.slice(0, 3).map((b) => (
-          <li key={b} style={{ marginBottom: 6 }}>
-            {b}
-          </li>
-        ))}
-      </ul>
-    </div>
+      {stage}
+    </span>
   );
 }
 
 function SvgStageLabel({ label, x, y }: RoadStageLabel) {
   const w = label === "Breakthrough" ? 168 : 120;
-  const h = 40;
-
+  const h = 36;
   return (
     <g>
       <rect
@@ -151,17 +144,16 @@ function SvgStageLabel({ label, x, y }: RoadStageLabel) {
         height={h}
         rx={999}
         fill="rgba(255,255,255,0.92)"
-        stroke="rgba(15,23,42,0.16)"
+        stroke="rgba(15,23,42,0.14)"
         strokeWidth="2"
       />
       <text
         x={x}
         y={y + 6}
         textAnchor="middle"
-        fontSize="16"
+        fontSize="15"
         fontWeight="800"
         fill="#0f172a"
-        style={{ letterSpacing: "0.2px" }}
       >
         {label}
       </text>
@@ -169,48 +161,98 @@ function SvgStageLabel({ label, x, y }: RoadStageLabel) {
   );
 }
 
+function RoadPin({
+  id,
+  active,
+  onClick,
+}: {
+  id: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        width: 48,
+        height: 48,
+        borderRadius: 999,
+        background: "#fff",
+        border: active ? "3px solid #f97316" : "2px solid rgba(15,23,42,0.55)",
+        boxShadow: active
+          ? "0 14px 30px rgba(249,115,22,0.22)"
+          : "0 12px 26px rgba(2,6,23,0.14)",
+        display: "grid",
+        placeItems: "center",
+        fontWeight: 900,
+        color: active ? "#f97316" : "#0f172a",
+        cursor: "pointer",
+        transition: "transform 160ms ease, box-shadow 160ms ease, border 160ms ease",
+        transform: active ? "scale(1.06)" : "scale(1)",
+      }}
+      aria-label={`Open ${id}`}
+      title={id}
+    >
+      {id}
+    </button>
+  );
+}
+
 export function LearningJourneyRoadmapPPT() {
+  const [activeId, setActiveId] = useState<string>("S1");
+
+  const active = useMemo(
+    () => JOURNEY_STOPS.find((s) => s.id === activeId) ?? JOURNEY_STOPS[0],
+    [activeId]
+  );
+
   return (
     <section
       id="journey-roadmap"
       style={{
-        borderRadius: 28,
+        borderRadius: 26,
         border: "1px solid rgba(15,23,42,0.08)",
-        boxShadow: "0 20px 54px rgba(2,6,23,0.08)",
+        boxShadow: "0 18px 50px rgba(2,6,23,0.08)",
         overflow: "hidden",
-        marginBottom: 20,
+        marginBottom: 18,
         background:
-          "linear-gradient(180deg, rgba(255,237,213,0.96) 0%, rgba(240,249,255,0.92) 100%)",
+          "linear-gradient(180deg, rgba(255,247,237,0.96) 0%, rgba(240,249,255,0.92) 100%)",
       }}
     >
-      {/* PPT-style header band */}
-      <div
-        style={{
-          padding: "20px 20px 14px",
-          background:
-            "linear-gradient(90deg, rgba(249,115,22,0.92) 0%, rgba(251,146,60,0.9) 45%, rgba(255,255,255,0.0) 100%)",
-        }}
-      >
+      {/* Clean header (no big orange block) */}
+      <div style={{ padding: "18px 18px 12px" }}>
         <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-          <div style={{ fontSize: 34, fontWeight: 950, color: "#0f172a" }}>The Journey</div>
-          <div style={{ marginTop: 6, fontSize: 15, color: "#1f2937", lineHeight: 1.45 }}>
-            <strong>Tracing → Reading → Writing → Confident Speaking</strong> — designed for child psychology:
-            tiny wins, guided practice, and confidence (no pressure, no "blackout").
+          <div style={{ fontSize: 30, fontWeight: 950, color: "#0f172a" }}>
+            The Journey
+          </div>
+          <div style={{ marginTop: 6, fontSize: 14, color: "#334155", lineHeight: 1.45 }}>
+            <strong>Tracing → Reading → Writing → Confident Speaking</strong> — tiny wins,
+            guided practice, and confidence (no pressure, no "blackout").
           </div>
         </div>
       </div>
 
-      <div style={{ padding: "14px 16px 18px" }}>
-        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
-          {/* Road canvas */}
+      <div style={{ padding: "0 18px 18px" }}>
+        <div
+          style={{
+            maxWidth: 1120,
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "1.6fr 0.9fr",
+            gap: 14,
+          }}
+        >
+          {/* LEFT: Road */}
           <div
             style={{
-              position: "relative",
               borderRadius: 22,
-              background: "rgba(255,255,255,0.72)",
+              background: "rgba(255,255,255,0.78)",
               border: "1px solid rgba(15,23,42,0.06)",
-              padding: 16,
+              padding: 14,
               overflow: "hidden",
+              position: "relative",
+              minHeight: 360,
             }}
           >
             <svg viewBox="0 0 1000 380" width="100%" height="auto" aria-hidden>
@@ -223,8 +265,8 @@ export function LearningJourneyRoadmapPPT() {
                    C 800 200, 660 150, 745 125
                    C 840 100, 870 190, 935 150"
                 fill="none"
-                stroke="rgba(2,6,23,0.10)"
-                strokeWidth="92"
+                stroke="rgba(2,6,23,0.08)"
+                strokeWidth="86"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -237,8 +279,8 @@ export function LearningJourneyRoadmapPPT() {
                    C 800 200, 660 150, 745 125
                    C 840 100, 870 190, 935 150"
                 fill="none"
-                stroke="url(#roadGrad2)"
-                strokeWidth="78"
+                stroke="url(#roadGradClean)"
+                strokeWidth="72"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -251,52 +293,160 @@ export function LearningJourneyRoadmapPPT() {
                    C 800 200, 660 150, 745 125
                    C 840 100, 870 190, 935 150"
                 fill="none"
-                stroke="rgba(255,255,255,0.42)"
-                strokeWidth="16"
+                stroke="rgba(255,255,255,0.46)"
+                strokeWidth="14"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
 
-              {/* Stage names ON road */}
+              {/* Stage names ON the road */}
               {ROAD_STAGE_LABELS.map((s) => (
                 <SvgStageLabel key={s.label} label={s.label} x={s.x} y={s.y} />
               ))}
 
               <defs>
-                <linearGradient id="roadGrad2" x1="0" y1="0" x2="1000" y2="0">
-                  <stop offset="0%" stopColor="#fb923c" />
-                  <stop offset="55%" stopColor="#f97316" />
+                <linearGradient id="roadGradClean" x1="0" y1="0" x2="1000" y2="0">
+                  <stop offset="0%" stopColor="#fdba74" />
+                  <stop offset="45%" stopColor="#fb923c" />
+                  <stop offset="78%" stopColor="#f97316" />
                   <stop offset="100%" stopColor="#fdba74" />
                 </linearGradient>
               </defs>
             </svg>
 
-            {/* Pins + callouts */}
-            {JOURNEY_STOPS.map((s) => (
-              <div
-                key={s.id}
-                style={{
-                  position: "absolute",
-                  left: s.left,
-                  top: s.top,
-                  transform: "translate(-50%, -50%)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  pointerEvents: "none",
-                }}
-              >
-                <JourneyMarker id={s.id} />
-                <JourneyCallout title={s.title} bullets={s.bullets} side={s.calloutSide} />
-              </div>
-            ))}
+            {/* Pins (no floating callouts) */}
+            {JOURNEY_STOPS.map((s) => {
+              const isActive = s.id === activeId;
+              return (
+                <div
+                  key={s.id}
+                  style={{
+                    position: "absolute",
+                    left: s.left,
+                    top: s.top,
+                    transform: "translate(-50%, -50%)",
+                  }}
+                >
+                  <RoadPin id={s.id} active={isActive} onClick={() => setActiveId(s.id)} />
+                </div>
+              );
+            })}
+
+            {/* Small clickable strip (helps readability) */}
+            <div
+              style={{
+                marginTop: 10,
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+                justifyContent: "center",
+              }}
+            >
+              {JOURNEY_STOPS.map((s) => {
+                const on = s.id === activeId;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setActiveId(s.id)}
+                    style={{
+                      fontSize: 12,
+                      fontWeight: 800,
+                      padding: "7px 10px",
+                      borderRadius: 999,
+                      border: on ? "1px solid rgba(249,115,22,0.42)" : "1px solid rgba(15,23,42,0.10)",
+                      background: on ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.75)",
+                      color: "#0f172a",
+                      cursor: "pointer",
+                    }}
+                    aria-label={`Select ${s.id} ${s.title}`}
+                    title={s.title}
+                  >
+                    {s.id}: {s.title}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Footer note (PPT style) */}
-          <div style={{ marginTop: 10, fontSize: 12, color: "#475569", textAlign: "right" }}>
-            *In the FREE assessment, we identify the right entry point and share the next steps clearly.
-          </div>
+          {/* RIGHT: One clean details card */}
+          <aside
+            style={{
+              borderRadius: 22,
+              background: "rgba(255,255,255,0.92)",
+              border: "1px solid rgba(15,23,42,0.08)",
+              padding: 14,
+              boxShadow: "0 14px 30px rgba(2,6,23,0.06)",
+              alignSelf: "start",
+              position: "sticky",
+              top: 90,
+              height: "fit-content",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+              <div style={{ fontWeight: 950, fontSize: 18, color: "#0f172a" }}>
+                {active.id}
+              </div>
+              <StagePill stage={active.stage} />
+            </div>
+
+            <div style={{ marginTop: 8, fontWeight: 900, fontSize: 15, color: "#0f172a" }}>
+              {active.title}
+            </div>
+
+            <ul style={{ margin: "10px 0 0 18px", padding: 0, color: "#334155", fontSize: 13, lineHeight: 1.4 }}>
+              {active.bullets.map((b) => (
+                <li key={b} style={{ marginBottom: 8 }}>{b}</li>
+              ))}
+            </ul>
+
+            <div
+              style={{
+                marginTop: 12,
+                borderTop: "1px solid rgba(15,23,42,0.08)",
+                paddingTop: 12,
+              }}
+            >
+              <div style={{ fontSize: 12, fontWeight: 900, color: "#334155" }}>PROOF YOU CAN SEE</div>
+              <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
+                {[
+                  ["Milestones", "Not started / In progress / Completed"],
+                  ["Skill Snapshot", "What's strong + what needs practice"],
+                  ["Coach Note", "What to praise + what to fix gently"],
+                  ["Next Goal", "One clear target (no overload)"],
+                ].map(([t, d]) => (
+                  <div
+                    key={t}
+                    style={{
+                      borderRadius: 16,
+                      border: "1px solid rgba(15,23,42,0.08)",
+                      background: "rgba(255,255,255,0.82)",
+                      padding: "10px 10px",
+                    }}
+                  >
+                    <div style={{ fontWeight: 900, fontSize: 13, color: "#0f172a" }}>{t}</div>
+                    <div style={{ marginTop: 3, fontSize: 12, color: "#475569", lineHeight: 1.35 }}>{d}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginTop: 10, fontSize: 12, color: "#475569", textAlign: "right" }}>
+              *In the FREE assessment, we identify the right entry point and share next steps clearly.
+            </div>
+          </aside>
         </div>
+
+        {/* Mobile stacking fix */}
+        <style>
+          {`
+            @media (max-width: 980px) {
+              #journey-roadmap > div:nth-child(3) > div {
+                grid-template-columns: 1fr !important;
+              }
+            }
+          `}
+        </style>
       </div>
     </section>
   );
