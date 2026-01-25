@@ -15,6 +15,11 @@ type JourneyStop = {
   bullets: string[];
   left: string; // % position on road canvas
   top: string; // % position on road canvas
+  childCanDo: string[];
+  nextMilestone: string;
+  teacherFocus: string[];
+  homePractice: string;
+  parentUpdateExample: string;
 };
 
 const JOURNEY_STOPS: JourneyStop[] = [
@@ -25,6 +30,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Grip + control", "Lines & curves", "Confidence to write"],
     left: "18%",
     top: "80%",
+    childCanDo: ["Hold pencil like a pro", "Trace big curves", "Keep lines neat"],
+    nextMilestone: "Write first letters with correct formation",
+    teacherFocus: ["Grip strength", "Line control", "Confidence building"],
+    homePractice: "Trace shapes in sand or on paper for 5 minutes",
+    parentUpdateExample: "Your child's grip is getting stronger! Try tracing shapes at home.",
   },
   {
     id: "S2",
@@ -33,6 +43,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["26 sounds (not just names)", "Correct start points", "Fewer reversals"],
     left: "12%",
     top: "62%",
+    childCanDo: ["Say 26 letter sounds", "Form letters correctly", "Say sounds in order"],
+    nextMilestone: "Blend 2-3 sounds into words",
+    teacherFocus: ["Sound accuracy", "Letter formation", "Muscle memory"],
+    homePractice: "Point to letters and say their sounds (not names)",
+    parentUpdateExample: "Perfect sound practice! Your child knows 15/26 sounds now.",
   },
   {
     id: "S3",
@@ -41,6 +56,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Blend 2–3 sounds", "CVC words (sat/pin)", "Early spelling from sounds"],
     left: "25%",
     top: "46%",
+    childCanDo: ["Blend sounds into words", "Read CVC words", "Spell 3-letter words"],
+    nextMilestone: "Read simple sentences smoothly",
+    teacherFocus: ["Blending fluency", "Word family patterns", "Spelling sounds"],
+    homePractice: "Read 5 simple CVC words together and spell them",
+    parentUpdateExample: "Blending click! Your child read 'cat', 'sit', 'dog' perfectly.",
   },
   {
     id: "S4",
@@ -49,6 +69,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Smooth decoding", "Punctuation pauses", "Simple comprehension"],
     left: "44%",
     top: "58%",
+    childCanDo: ["Decode sentences", "Pause at periods", "Answer simple questions"],
+    nextMilestone: "Write simple sentences independently",
+    teacherFocus: ["Fluency building", "Comprehension", "Punctuation awareness"],
+    homePractice: "Read a 3-sentence story and ask 'What happened?'",
+    parentUpdateExample: "Reading breakthrough! Your child read a full sentence today.",
   },
   {
     id: "S5",
@@ -57,6 +82,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Clear sentences", "Capital & full stop", "Better speed + neatness"],
     left: "64%",
     top: "52%",
+    childCanDo: ["Write full sentences", "Use capitals correctly", "Add periods"],
+    nextMilestone: "Spell common words without help",
+    teacherFocus: ["Sentence structure", "Punctuation rules", "Speed + accuracy"],
+    homePractice: "Write 3 sentences about their day",
+    parentUpdateExample: "Writing is flowing! Your child wrote 'The cat sat on the mat.' perfectly.",
   },
   {
     id: "S6",
@@ -65,6 +95,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Magic-E", "Rabbit rule", "Vowel teams (ai/ee/oa/ie)"],
     left: "58%",
     top: "30%",
+    childCanDo: ["Apply magic-e rule", "Use vowel teams", "Spell pattern words"],
+    nextMilestone: "Spell multisyllabic words",
+    teacherFocus: ["Pattern recognition", "Rule application", "Word structure"],
+    homePractice: "Find words with 'ai' or 'ee' sounds in books",
+    parentUpdateExample: "Pattern master! Your child spelled 'make', 'tree', 'rain' correctly.",
   },
   {
     id: "S7",
@@ -73,6 +108,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Sentence structure", "Correct verb forms", "Word upgrades"],
     left: "76%",
     top: "18%",
+    childCanDo: ["Use correct tenses", "Build complex sentences", "Use varied vocabulary"],
+    nextMilestone: "Write short paragraphs with multiple sentences",
+    teacherFocus: ["Grammar rules", "Vocabulary expansion", "Sentence variety"],
+    homePractice: "Write sentences using 'before', 'after', 'because'",
+    parentUpdateExample: "Grammar growth! Your child used past tense correctly in stories.",
   },
   {
     id: "S8",
@@ -81,6 +121,11 @@ const JOURNEY_STOPS: JourneyStop[] = [
     bullets: ["Stage speaking", "Instant topic speaking", "No freezing — clear framework"],
     left: "88%",
     top: "28%",
+    childCanDo: ["Speak on stage", "Handle any topic", "Speak with confidence"],
+    nextMilestone: "Present ideas to large groups",
+    teacherFocus: ["Speaking confidence", "Presentation skills", "Handling nervousness"],
+    homePractice: "Practice 1-minute talks on fun topics",
+    parentUpdateExample: "Speaking star! Your child presented without nervousness today.",
   },
 ];
 
@@ -175,21 +220,28 @@ function RoadPin({
       type="button"
       onClick={onClick}
       style={{
-        width: 48,
-        height: 48,
+        width: 54,
+        height: 54,
         borderRadius: 999,
-        background: "#fff",
-        border: active ? "3px solid #f97316" : "2px solid rgba(15,23,42,0.55)",
-        boxShadow: active
-          ? "0 14px 30px rgba(249,115,22,0.22)"
-          : "0 12px 26px rgba(2,6,23,0.14)",
+        cursor: "pointer",
         display: "grid",
         placeItems: "center",
-        fontWeight: 900,
-        color: active ? "#f97316" : "#0f172a",
-        cursor: "pointer",
-        transition: "transform 160ms ease, box-shadow 160ms ease, border 160ms ease",
+        fontWeight: 950,
+        letterSpacing: "0.2px",
+
+        background: active
+          ? "radial-gradient(circle at 35% 35%, #fff7ed 0%, #fdba74 35%, #f97316 72%)"
+          : "rgba(255,255,255,0.92)",
+
+        border: active ? "3px solid rgba(249,115,22,0.75)" : "2px solid rgba(15,23,42,0.45)",
+        color: active ? "#111827" : "#0f172a",
+
+        boxShadow: active
+          ? "0 18px 38px rgba(249,115,22,0.28)"
+          : "0 14px 30px rgba(2,6,23,0.14)",
+
         transform: active ? "scale(1.06)" : "scale(1)",
+        transition: "transform 160ms ease, box-shadow 160ms ease, border 160ms ease",
       }}
       aria-label={`Open ${id}`}
       title={id}
@@ -247,14 +299,85 @@ export function LearningJourneyRoadmapPPT() {
           <div
             style={{
               borderRadius: 22,
-              background: "rgba(255,255,255,0.78)",
               border: "1px solid rgba(15,23,42,0.06)",
               padding: 14,
               overflow: "hidden",
               position: "relative",
               minHeight: 360,
+
+              // ✅ SKY + SUNRISE LOOK
+              background:
+                "linear-gradient(180deg, rgba(219,234,254,0.95) 0%, rgba(186,230,253,0.85) 40%, rgba(255,237,213,0.85) 100%)",
+              boxShadow: "0 18px 50px rgba(2,6,23,0.08)",
             }}
           >
+            {/* ✅ SUN + RAYS LAYER */}
+            <div
+              aria-hidden
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                overflow: "hidden",
+              }}
+            >
+              {/* Sun (bottom-left) */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: -40,
+                  bottom: -60,
+                  width: 240,
+                  height: 240,
+                  borderRadius: 999,
+                  background: "radial-gradient(circle at 35% 35%, #fff7ed 0%, #fdba74 35%, #f97316 72%, rgba(249,115,22,0.0) 100%)",
+                  filter: "blur(0px)",
+                  opacity: 0.95,
+                }}
+              />
+
+              {/* Rays */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: -120,
+                  bottom: -120,
+                  width: 520,
+                  height: 520,
+                  borderRadius: 999,
+                  background:
+                    "repeating-conic-gradient(from 210deg, rgba(249,115,22,0.18) 0deg 10deg, rgba(249,115,22,0.0) 10deg 20deg)",
+                  maskImage: "radial-gradient(circle at 55% 55%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 38%, rgba(0,0,0,0) 70%)",
+                  opacity: 0.55,
+                }}
+              />
+
+              {/* Soft clouds */}
+              <div
+                style={{
+                  position: "absolute",
+                  right: 40,
+                  top: 32,
+                  width: 260,
+                  height: 90,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.55)",
+                  filter: "blur(1px)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: 110,
+                  top: 55,
+                  width: 170,
+                  height: 70,
+                  borderRadius: 999,
+                  background: "rgba(255,255,255,0.45)",
+                  filter: "blur(1px)",
+                }}
+              />
+            </div>
             <svg viewBox="0 0 1000 380" width="100%" height="auto" aria-hidden>
               {/* road shadow */}
               <path
@@ -293,7 +416,7 @@ export function LearningJourneyRoadmapPPT() {
                    C 800 200, 660 150, 745 125
                    C 840 100, 870 190, 935 150"
                 fill="none"
-                stroke="rgba(255,255,255,0.46)"
+                stroke="rgba(255,255,255,0.55)"
                 strokeWidth="14"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -306,10 +429,11 @@ export function LearningJourneyRoadmapPPT() {
 
               <defs>
                 <linearGradient id="roadGradClean" x1="0" y1="0" x2="1000" y2="0">
-                  <stop offset="0%" stopColor="#fdba74" />
-                  <stop offset="45%" stopColor="#fb923c" />
-                  <stop offset="78%" stopColor="#f97316" />
-                  <stop offset="100%" stopColor="#fdba74" />
+                  <stop offset="0%" stopColor="#fed7aa" />
+                  <stop offset="30%" stopColor="#fdba74" />
+                  <stop offset="58%" stopColor="#fb923c" />
+                  <stop offset="82%" stopColor="#f97316" />
+                  <stop offset="100%" stopColor="#fed7aa" />
                 </linearGradient>
               </defs>
             </svg>
@@ -369,7 +493,7 @@ export function LearningJourneyRoadmapPPT() {
             </div>
           </div>
 
-          {/* RIGHT: One clean details card */}
+          {/* RIGHT: Power Tiles */}
           <aside
             style={{
               borderRadius: 22,
@@ -394,40 +518,118 @@ export function LearningJourneyRoadmapPPT() {
               {active.title}
             </div>
 
-            <ul style={{ margin: "10px 0 0 18px", padding: 0, color: "#334155", fontSize: 13, lineHeight: 1.4 }}>
-              {active.bullets.map((b) => (
-                <li key={b} style={{ marginBottom: 8 }}>{b}</li>
-              ))}
-            </ul>
-
-            <div
-              style={{
-                marginTop: 12,
-                borderTop: "1px solid rgba(15,23,42,0.08)",
-                paddingTop: 12,
-              }}
-            >
-              <div style={{ fontSize: 12, fontWeight: 900, color: "#334155" }}>PROOF YOU CAN SEE</div>
-              <div style={{ marginTop: 8, display: "grid", gap: 8 }}>
-                {[
-                  ["Milestones", "Not started / In progress / Completed"],
-                  ["Skill Snapshot", "What's strong + what needs practice"],
-                  ["Coach Note", "What to praise + what to fix gently"],
-                  ["Next Goal", "One clear target (no overload)"],
-                ].map(([t, d]) => (
-                  <div
-                    key={t}
-                    style={{
-                      borderRadius: 16,
-                      border: "1px solid rgba(15,23,42,0.08)",
-                      background: "rgba(255,255,255,0.82)",
-                      padding: "10px 10px",
-                    }}
-                  >
-                    <div style={{ fontWeight: 900, fontSize: 13, color: "#0f172a" }}>{t}</div>
-                    <div style={{ marginTop: 3, fontSize: 12, color: "#475569", lineHeight: 1.35 }}>{d}</div>
+            <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
+              {/* Power tiles grid */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 10,
+                }}
+              >
+                {/* Child Can Do */}
+                <div
+                  style={{
+                    borderRadius: 18,
+                    padding: "12px 12px",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,247,237,0.90) 100%)",
+                    boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>✅</span>
+                    <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>Child Can Do</div>
                   </div>
-                ))}
+                  <ul style={{ margin: "8px 0 0 18px", padding: 0, color: "#334155", fontSize: 12.8, lineHeight: 1.35 }}>
+                    {active.childCanDo.slice(0, 3).map((x) => (
+                      <li key={x} style={{ marginBottom: 6 }}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* Next Milestone */}
+                <div
+                  style={{
+                    borderRadius: 18,
+                    padding: "12px 12px",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(219,234,254,0.75) 100%)",
+                    boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>🎯</span>
+                    <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>Next Milestone</div>
+                  </div>
+                  <div style={{ marginTop: 10, color: "#334155", fontSize: 13, lineHeight: 1.4, fontWeight: 800 }}>
+                    {active.nextMilestone}
+                  </div>
+                </div>
+
+                {/* Teacher Focus */}
+                <div
+                  style={{
+                    borderRadius: 18,
+                    padding: "12px 12px",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(240,253,244,0.75) 100%)",
+                    boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>🧑‍🏫</span>
+                    <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>Teacher Focus</div>
+                  </div>
+                  <ul style={{ margin: "8px 0 0 18px", padding: 0, color: "#334155", fontSize: 12.8, lineHeight: 1.35 }}>
+                    {active.teacherFocus.slice(0, 3).map((x) => (
+                      <li key={x} style={{ marginBottom: 6 }}>{x}</li>
+                    ))}
+                  </ul>
+                </div>
+
+                {/* 5-min practice */}
+                <div
+                  style={{
+                    borderRadius: 18,
+                    padding: "12px 12px",
+                    border: "1px solid rgba(15,23,42,0.08)",
+                    background:
+                      "linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(254,249,195,0.68) 100%)",
+                    boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 18 }}>🏠</span>
+                    <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>5-min Home Practice</div>
+                  </div>
+                  <div style={{ marginTop: 10, color: "#334155", fontSize: 12.8, lineHeight: 1.4 }}>
+                    {active.homePractice}
+                  </div>
+                </div>
+              </div>
+
+              {/* Parent update banner */}
+              <div
+                style={{
+                  borderRadius: 18,
+                  padding: "12px 12px",
+                  border: "1px solid rgba(15,23,42,0.08)",
+                  background:
+                    "linear-gradient(90deg, rgba(249,115,22,0.14) 0%, rgba(59,130,246,0.12) 55%, rgba(168,85,247,0.12) 100%)",
+                  boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>📩 Parent Update (Example)</div>
+                  <div style={{ fontSize: 12, fontWeight: 900, color: "#334155" }}>Simple • Clear • Actionable</div>
+                </div>
+                <div style={{ marginTop: 8, color: "#0f172a", fontSize: 13, lineHeight: 1.5 }}>
+                  "{active.parentUpdateExample}"
+                </div>
               </div>
             </div>
 
