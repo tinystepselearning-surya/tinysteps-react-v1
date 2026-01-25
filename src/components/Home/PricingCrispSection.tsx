@@ -62,10 +62,10 @@ const PricingCrispSection: React.FC = () => {
               Starter · 8 classes / month
             </p>
             <div className="mt-2">
-              <PriceLine original={DEFAULT_PER_CLASS_PRICE} suffix="/ class" />
+              <PriceLine original={4800} suffix="/ 8 classes" />
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Billed monthly: <span className="font-bold text-green-700">{fmtINR(applyDiscount(DEFAULT_PER_CLASS_PRICE * 8))}</span> (was {fmtINR(DEFAULT_PER_CLASS_PRICE * 8)})
+              Billed monthly: <span className="font-bold text-green-700">{fmtINR(3360)}</span> (was {fmtINR(4800)})
             </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
@@ -91,10 +91,10 @@ const PricingCrispSection: React.FC = () => {
               Growth · 16 classes / month
             </p>
             <div className="mt-2">
-              <PriceLine original={525} suffix="/ class" />
+              <PriceLine original={9200} suffix="/ 16 classes" />
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Billed monthly: <span className="font-bold text-green-700">{fmtINR(applyDiscount(8400))}</span> (was {fmtINR(8400)})
+              Billed monthly: <span className="font-bold text-green-700">{fmtINR(6440)}</span> (was {fmtINR(9200)})
             </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
@@ -111,16 +111,16 @@ const PricingCrispSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Power Pack */}
+          {/* Intensive Pack */}
           <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Power · 24 classes / month
+              Intensive · 24 classes / month
             </p>
             <div className="mt-2">
-              <PriceLine original={500} suffix="/ class" />
+              <PriceLine original={13200} suffix="/ 24 classes" />
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              Billed monthly: <span className="font-bold text-green-700">{fmtINR(applyDiscount(12000))}</span> (was {fmtINR(12000)})
+              Billed monthly: <span className="font-bold text-green-700">{fmtINR(9240)}</span> (was {fmtINR(13200)})
             </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
