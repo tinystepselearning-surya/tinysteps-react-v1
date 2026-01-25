@@ -13,13 +13,15 @@ type JourneyStop = {
   stage: JourneyStage;
   title: string;
   bullets: string[];
-  left: string; // % position on road canvas
-  top: string; // % position on road canvas
+  left: string; // deprecated, kept for compat
+  top: string; // deprecated, kept for compat
   childCanDo: string[];
   nextMilestone: string;
   teacherFocus: string[];
   homePractice: string;
   parentUpdateExample: string;
+  t: number; // 0-1 position on road curve
+  planet: "mercury" | "venus" | "earth" | "mars" | "jupiter" | "saturn" | "uranus" | "neptune";
 };
 
 const JOURNEY_STOPS: JourneyStop[] = [
@@ -35,6 +37,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Grip strength", "Line control", "Confidence building"],
     homePractice: "Trace shapes in sand or on paper for 5 minutes",
     parentUpdateExample: "Your child's grip is getting stronger! Try tracing shapes at home.",
+    planet: "mercury",
+    t: 0.06,
   },
   {
     id: "S2",
@@ -48,6 +52,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Sound accuracy", "Letter formation", "Muscle memory"],
     homePractice: "Point to letters and say their sounds (not names)",
     parentUpdateExample: "Perfect sound practice! Your child knows 15/26 sounds now.",
+    planet: "venus",
+    t: 0.18,
   },
   {
     id: "S3",
@@ -61,6 +67,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Blending fluency", "Word family patterns", "Spelling sounds"],
     homePractice: "Read 5 simple CVC words together and spell them",
     parentUpdateExample: "Blending click! Your child read 'cat', 'sit', 'dog' perfectly.",
+    planet: "earth",
+    t: 0.30,
   },
   {
     id: "S4",
@@ -74,6 +82,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Fluency building", "Comprehension", "Punctuation awareness"],
     homePractice: "Read a 3-sentence story and ask 'What happened?'",
     parentUpdateExample: "Reading breakthrough! Your child read a full sentence today.",
+    planet: "mars",
+    t: 0.42,
   },
   {
     id: "S5",
@@ -87,6 +97,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Sentence structure", "Punctuation rules", "Speed + accuracy"],
     homePractice: "Write 3 sentences about their day",
     parentUpdateExample: "Writing is flowing! Your child wrote 'The cat sat on the mat.' perfectly.",
+    planet: "jupiter",
+    t: 0.56,
   },
   {
     id: "S6",
@@ -100,6 +112,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Pattern recognition", "Rule application", "Word structure"],
     homePractice: "Find words with 'ai' or 'ee' sounds in books",
     parentUpdateExample: "Pattern master! Your child spelled 'make', 'tree', 'rain' correctly.",
+    planet: "saturn",
+    t: 0.68,
   },
   {
     id: "S7",
@@ -113,6 +127,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Grammar rules", "Vocabulary expansion", "Sentence variety"],
     homePractice: "Write sentences using 'before', 'after', 'because'",
     parentUpdateExample: "Grammar growth! Your child used past tense correctly in stories.",
+    planet: "uranus",
+    t: 0.80,
   },
   {
     id: "S8",
@@ -126,6 +142,8 @@ const JOURNEY_STOPS: JourneyStop[] = [
     teacherFocus: ["Speaking confidence", "Presentation skills", "Handling nervousness"],
     homePractice: "Practice 1-minute talks on fun topics",
     parentUpdateExample: "Speaking star! Your child presented without nervousness today.",
+    planet: "neptune",
+    t: 0.92,
   },
 ];
 
@@ -210,49 +228,58 @@ function RoadPin({
   id,
   active,
   onClick,
+  planet,
 }: {
   id: string;
   active: boolean;
   onClick: () => void;
+  planet: "mercury" | "venus" | "earth" | "mars" | "jupiter" | "saturn" | "uranus" | "neptune";
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      style={{
-        width: 54,
-        height: 54,
-        borderRadius: 999,
-        cursor: "pointer",
-        display: "grid",
-        placeItems: "center",
-        fontWeight: 950,
-        letterSpacing: "0.2px",
-
-        background: active
-          ? "radial-gradient(circle at 35% 35%, #fff7ed 0%, #fdba74 35%, #f97316 72%)"
-          : "rgba(255,255,255,0.92)",
-
-        border: active ? "3px solid rgba(249,115,22,0.75)" : "2px solid rgba(15,23,42,0.45)",
-        color: active ? "#111827" : "#0f172a",
-
-        boxShadow: active
-          ? "0 18px 38px rgba(249,115,22,0.28)"
-          : "0 14px 30px rgba(2,6,23,0.14)",
-
-        transform: active ? "scale(1.06)" : "scale(1)",
-        transition: "transform 160ms ease, box-shadow 160ms ease, border 160ms ease",
-      }}
+      className={`ts-planet ${planet} ${active ? "isActive" : ""}`}
       aria-label={`Open ${id}`}
       title={id}
     >
-      {id}
+      <span className="orb" aria-hidden />
+      <span className="ring" aria-hidden />
+      <span className="shine" aria-hidden />
+      <span className="label">{id}</span>
     </button>
   );
 }
 
 export function LearningJourneyRoadmapPPT() {
   const [activeId, setActiveId] = useState<string>("S1");
+  const [pinPos, setPinPos] = useState<Record<string, { xPct: number; yPct: number }>>({});
+
+  const ROAD_W = 1000;
+  const ROAD_H = 380;
+
+  const pathRef = useRef<SVGPathElement | null>(null);
+
+  useEffect(() => {
+    const update = () => {
+      const p = pathRef.current;
+      if (!p) return;
+
+      const len = p.getTotalLength();
+      const next: Record<string, { xPct: number; yPct: number }> = {};
+
+      JOURNEY_STOPS.forEach((s) => {
+        const pt = p.getPointAtLength(len * (s.t ?? 0));
+        next[s.id] = { xPct: (pt.x / ROAD_W) * 100, yPct: (pt.y / ROAD_H) * 100 };
+      });
+
+      setPinPos(next);
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   const active = useMemo(
     () => JOURNEY_STOPS.find((s) => s.id === activeId) ?? JOURNEY_STOPS[0],
@@ -303,169 +330,161 @@ export function LearningJourneyRoadmapPPT() {
               padding: 14,
               overflow: "hidden",
               position: "relative",
-              minHeight: 360,
+              minHeight: 390,
 
-              // ✅ SKY + SUNRISE LOOK
+              // ✅ clear sky blue + soft depth
               background:
-                "linear-gradient(180deg, rgba(219,234,254,0.95) 0%, rgba(186,230,253,0.85) 40%, rgba(255,237,213,0.85) 100%)",
+                "linear-gradient(180deg, rgba(224,242,254,0.95) 0%, rgba(186,230,253,0.88) 45%, rgba(255,237,213,0.78) 100%)",
               boxShadow: "0 18px 50px rgba(2,6,23,0.08)",
             }}
           >
-            {/* ✅ SUN + RAYS LAYER */}
+            {/* ✅ far sun (small, top-left) + subtle star speckles */}
+            <div className="ts-sky" aria-hidden>
+              <div className="ts-sunFar" />
+              <div className="ts-sunRaysFar" />
+            </div>
+
+            <div className="ts-roadWrap">
+              <svg
+                viewBox="0 0 1000 380"
+                preserveAspectRatio="xMidYMid meet"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  minHeight: 360,
+                  display: "block",
+                }}
+              >
+                <defs>
+                  {/* Galaxy gradient */}
+                  <linearGradient id="galaxyGrad" x1="0" y1="0" x2="1000" y2="0">
+                    <stop offset="0%" stopColor="#0f172a" />
+                    <stop offset="22%" stopColor="#1e1b4b" />
+                    <stop offset="45%" stopColor="#312e81" />
+                    <stop offset="64%" stopColor="#7c3aed" />
+                    <stop offset="82%" stopColor="#ec4899" />
+                    <stop offset="100%" stopColor="#60a5fa" />
+                  </linearGradient>
+
+                  {/* Sparkle overlay */}
+                  <linearGradient id="sparkleGrad" x1="0" y1="0" x2="1000" y2="0">
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.75)" />
+                    <stop offset="50%" stopColor="rgba(255,255,255,0.35)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.65)" />
+                  </linearGradient>
+
+                  {/* Soft glow */}
+                  <filter id="galaxyGlow" x="-40%" y="-40%" width="180%" height="180%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                {/* Galaxy road base glow */}
+                <path
+                  d="M140 320
+                     C 90 260, 160 170, 270 220
+                     C 380 270, 340 120, 465 160
+                     C 590 200, 540 330, 670 270
+                     C 800 200, 660 150, 745 125
+                     C 840 100, 870 190, 935 150"
+                  fill="none"
+                  stroke="rgba(99,102,241,0.18)"
+                  strokeWidth="92"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#galaxyGlow)"
+                />
+
+                {/* Galaxy road body */}
+                <path
+                  ref={pathRef}
+                  d="M140 320
+                     C 90 260, 160 170, 270 220
+                     C 380 270, 340 120, 465 160
+                     C 590 200, 540 330, 670 270
+                     C 800 200, 660 150, 745 125
+                     C 840 100, 870 190, 935 150"
+                  fill="none"
+                  stroke="url(#galaxyGrad)"
+                  strokeWidth="70"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#galaxyGlow)"
+                  opacity="0.95"
+                />
+
+                {/* Star dust (dotted sparkle line) */}
+                <path
+                  d="M140 320
+                     C 90 260, 160 170, 270 220
+                     C 380 270, 340 120, 465 160
+                     C 590 200, 540 330, 670 270
+                     C 800 200, 660 150, 745 125
+                     C 840 100, 870 190, 935 150"
+                  fill="none"
+                  stroke="url(#sparkleGrad)"
+                  strokeWidth="10"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray="2 22"
+                  opacity="0.85"
+                />
+
+                {/* A few sparkle stars (light, not clutter) */}
+                {[
+                  [210, 250, 1.0],
+                  [320, 220, 0.9],
+                  [420, 190, 0.8],
+                  [520, 220, 0.9],
+                  [620, 250, 0.8],
+                  [740, 210, 0.9],
+                  [860, 160, 1.0],
+                ].map(([cx, cy, op], i) => (
+                  <circle key={i} cx={cx as number} cy={cy as number} r="4.5" fill="rgba(255,255,255,0.85)" opacity={op as number} />
+                ))}
+              </svg>
+            </div>
+
+            {/* Pins (rotating planets) - positioned absolutely over road */}
             <div
-              aria-hidden
               style={{
                 position: "absolute",
-                inset: 0,
+                inset: 14,
                 pointerEvents: "none",
-                overflow: "hidden",
               }}
             >
-              {/* Sun (bottom-left) */}
-              <div
-                style={{
-                  position: "absolute",
-                  left: -40,
-                  bottom: -60,
-                  width: 240,
-                  height: 240,
-                  borderRadius: 999,
-                  background: "radial-gradient(circle at 35% 35%, #fff7ed 0%, #fdba74 35%, #f97316 72%, rgba(249,115,22,0.0) 100%)",
-                  filter: "blur(0px)",
-                  opacity: 0.95,
-                }}
-              />
-
-              {/* Rays */}
-              <div
-                style={{
-                  position: "absolute",
-                  left: -120,
-                  bottom: -120,
-                  width: 520,
-                  height: 520,
-                  borderRadius: 999,
-                  background:
-                    "repeating-conic-gradient(from 210deg, rgba(249,115,22,0.18) 0deg 10deg, rgba(249,115,22,0.0) 10deg 20deg)",
-                  maskImage: "radial-gradient(circle at 55% 55%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 38%, rgba(0,0,0,0) 70%)",
-                  opacity: 0.55,
-                }}
-              />
-
-              {/* Soft clouds */}
-              <div
-                style={{
-                  position: "absolute",
-                  right: 40,
-                  top: 32,
-                  width: 260,
-                  height: 90,
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,0.55)",
-                  filter: "blur(1px)",
-                }}
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  right: 110,
-                  top: 55,
-                  width: 170,
-                  height: 70,
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,0.45)",
-                  filter: "blur(1px)",
-                }}
-              />
+              {JOURNEY_STOPS.map((s) => {
+                const isActive = s.id === activeId;
+                const pos = pinPos[s.id];
+                if (!pos) return null;
+                return (
+                  <div
+                    key={s.id}
+                    style={{
+                      position: "absolute",
+                      left: `${pos.xPct}%`,
+                      top: `${pos.yPct}%`,
+                      transform: "translate(-50%, -50%)",
+                      pointerEvents: "auto",
+                    }}
+                  >
+                    <RoadPin
+                      id={s.id}
+                      active={isActive}
+                      onClick={() => setActiveId(s.id)}
+                      planet={s.planet}
+                    />
+                  </div>
+                );
+              })}
             </div>
-            <svg viewBox="0 0 1000 380" width="100%" height="auto" aria-hidden>
-              {/* road shadow */}
-              <path
-                d="M140 320
-                   C 90 260, 160 170, 270 220
-                   C 380 270, 340 120, 465 160
-                   C 590 200, 540 330, 670 270
-                   C 800 200, 660 150, 745 125
-                   C 840 100, 870 190, 935 150"
-                fill="none"
-                stroke="rgba(2,6,23,0.08)"
-                strokeWidth="86"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {/* road body */}
-              <path
-                d="M140 320
-                   C 90 260, 160 170, 270 220
-                   C 380 270, 340 120, 465 160
-                   C 590 200, 540 330, 670 270
-                   C 800 200, 660 150, 745 125
-                   C 840 100, 870 190, 935 150"
-                fill="none"
-                stroke="url(#roadGradClean)"
-                strokeWidth="72"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {/* inner highlight */}
-              <path
-                d="M140 320
-                   C 90 260, 160 170, 270 220
-                   C 380 270, 340 120, 465 160
-                   C 590 200, 540 330, 670 270
-                   C 800 200, 660 150, 745 125
-                   C 840 100, 870 190, 935 150"
-                fill="none"
-                stroke="rgba(255,255,255,0.55)"
-                strokeWidth="14"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
 
-              {/* Stage names ON the road */}
-              {ROAD_STAGE_LABELS.map((s) => (
-                <SvgStageLabel key={s.label} label={s.label} x={s.x} y={s.y} />
-              ))}
-
-              <defs>
-                <linearGradient id="roadGradClean" x1="0" y1="0" x2="1000" y2="0">
-                  <stop offset="0%" stopColor="#fed7aa" />
-                  <stop offset="30%" stopColor="#fdba74" />
-                  <stop offset="58%" stopColor="#fb923c" />
-                  <stop offset="82%" stopColor="#f97316" />
-                  <stop offset="100%" stopColor="#fed7aa" />
-                </linearGradient>
-              </defs>
-            </svg>
-
-            {/* Pins (no floating callouts) */}
-            {JOURNEY_STOPS.map((s) => {
-              const isActive = s.id === activeId;
-              return (
-                <div
-                  key={s.id}
-                  style={{
-                    position: "absolute",
-                    left: s.left,
-                    top: s.top,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                >
-                  <RoadPin id={s.id} active={isActive} onClick={() => setActiveId(s.id)} />
-                </div>
-              );
-            })}
-
-            {/* Small clickable strip (helps readability) */}
-            <div
-              style={{
-                marginTop: 10,
-                display: "flex",
-                gap: 8,
-                flexWrap: "wrap",
-                justifyContent: "center",
-              }}
-            >
+            {/* Stage buttons (bottom) */}
+            <div className="ts-stageRow">
               {JOURNEY_STOPS.map((s) => {
                 const on = s.id === activeId;
                 return (
@@ -473,16 +492,7 @@ export function LearningJourneyRoadmapPPT() {
                     key={s.id}
                     type="button"
                     onClick={() => setActiveId(s.id)}
-                    style={{
-                      fontSize: 12,
-                      fontWeight: 800,
-                      padding: "7px 10px",
-                      borderRadius: 999,
-                      border: on ? "1px solid rgba(249,115,22,0.42)" : "1px solid rgba(15,23,42,0.10)",
-                      background: on ? "rgba(249,115,22,0.12)" : "rgba(255,255,255,0.75)",
-                      color: "#0f172a",
-                      cursor: "pointer",
-                    }}
+                    className={`ts-stageBtn ${on ? "active" : ""}`}
                     aria-label={`Select ${s.id} ${s.title}`}
                     title={s.title}
                   >
@@ -639,14 +649,132 @@ export function LearningJourneyRoadmapPPT() {
           </aside>
         </div>
 
-        {/* Mobile stacking fix */}
+        {/* Galaxy + Planet animations */}
         <style>
           {`
-            @media (max-width: 980px) {
-              #journey-roadmap > div:nth-child(3) > div {
-                grid-template-columns: 1fr !important;
-              }
-            }
+  /* ---------- Sky layer ---------- */
+  .ts-sky{
+    position:absolute; inset:0; pointer-events:none; overflow:hidden;
+    background:
+      radial-gradient(circle at 20% 18%, rgba(255,255,255,0.65) 0 1px, transparent 2px),
+      radial-gradient(circle at 62% 26%, rgba(255,255,255,0.45) 0 1px, transparent 2px),
+      radial-gradient(circle at 78% 14%, rgba(255,255,255,0.55) 0 1px, transparent 2px),
+      radial-gradient(circle at 48% 40%, rgba(255,255,255,0.35) 0 1px, transparent 2px);
+    opacity:0.55;
+  }
+
+  .ts-sunFar{
+    position:absolute; left:18px; top:18px;
+    width:88px; height:88px; border-radius:999px;
+    background: radial-gradient(circle at 35% 35%, #fff7ed 0%, #fdba74 40%, #f97316 78%, rgba(249,115,22,0) 100%);
+    opacity:0.85;
+    filter: blur(0.4px);
+  }
+
+  .ts-sunRaysFar{
+    position:absolute; left:-22px; top:-18px;
+    width:220px; height:220px; border-radius:999px;
+    background: repeating-conic-gradient(from 220deg, rgba(249,115,22,0.12) 0deg 10deg, rgba(249,115,22,0) 10deg 22deg);
+    mask-image: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 35%, rgba(0,0,0,0) 68%);
+    opacity:0.35;
+  }
+
+  /* ---------- Stage buttons ---------- */
+  .ts-stageRow{
+    position:relative;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-start;
+    padding:8px 6px 12px;
+    z-index:2;
+  }
+  .ts-stageBtn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid rgba(15,23,42,0.12);
+    background: rgba(255,255,255,0.70);
+    color:#0f172a;
+    font-weight:900;
+    font-size:13px;
+    box-shadow: 0 10px 22px rgba(2,6,23,0.08);
+    cursor:pointer;
+    transition: transform 140ms ease, box-shadow 140ms ease;
+    white-space:nowrap;
+  }
+  .ts-stageBtn:hover{ transform: translateY(-1px); box-shadow: 0 14px 26px rgba(2,6,23,0.12); }
+  .ts-stageBtn.isActive{
+    border-color: rgba(249,115,22,0.35);
+    background: linear-gradient(90deg, rgba(249,115,22,0.14), rgba(59,130,246,0.12), rgba(168,85,247,0.12));
+  }
+  .ts-stageIcon{ font-size:16px; line-height:1; }
+
+  /* ---------- Planet pins ---------- */
+  @keyframes tsSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  @keyframes tsFloat { 0%{ transform: translate(-50%,-50%) translateY(0px);} 50%{ transform: translate(-50%,-50%) translateY(-6px);} 100%{ transform: translate(-50%,-50%) translateY(0px);} }
+  @keyframes tsPulse { 0%{ opacity:0.35;} 50%{ opacity:0.65;} 100%{ opacity:0.35;} }
+
+  .ts-planet{
+    width:58px;
+    height:58px;
+    border-radius:999px;
+    border:2px solid rgba(15,23,42,0.38);
+    background: rgba(255,255,255,0.78);
+    box-shadow: 0 16px 32px rgba(2,6,23,0.16);
+    cursor:pointer;
+    position:relative;
+    overflow:hidden;
+  }
+  .ts-planetOrb{
+    position:absolute;
+    inset:6px;
+    border-radius:999px;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.92) 0%, color-mix(in srgb, var(--p) 72%, white 28%) 42%, var(--p) 78%),
+      radial-gradient(circle at 70% 80%, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0) 55%);
+    animation: tsSpin 6.5s linear infinite;
+    animation-delay: var(--d);
+  }
+  .ts-planetRing{
+    position:absolute;
+    inset:-8px;
+    border-radius:999px;
+    border:2px solid rgba(255,255,255,0.22);
+    transform: rotate(22deg);
+    animation: tsSpin 10s linear infinite reverse;
+    animation-delay: var(--d);
+  }
+  .ts-planetGlow{
+    position:absolute;
+    inset:-18px;
+    border-radius:999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--p) 42%, transparent 58%) 0%, transparent 68%);
+    opacity:0.35;
+    animation: tsPulse 2.6s ease-in-out infinite;
+  }
+  .ts-planetLabel{
+    position:absolute;
+    inset:0;
+    display:grid;
+    place-items:center;
+    font-weight:950;
+    color:#0f172a;
+    letter-spacing:0.2px;
+  }
+  .ts-planet.isActive{
+    border:3px solid color-mix(in srgb, var(--p) 75%, white 25%);
+    box-shadow: 0 18px 40px color-mix(in srgb, var(--p) 26%, rgba(2,6,23,0.14) 74%);
+    transform: scale(1.06);
+  }
+
+  /* ---------- Responsive layout ---------- */
+  @media (max-width: 980px) {
+    #journey-roadmap > div:nth-child(3) > div { grid-template-columns: 1fr !important; }
+    .ts-stageRow { justify-content:center; }
+  }
           `}
         </style>
       </div>
@@ -1103,10 +1231,248 @@ const KidsEnglishExcellence: React.FC = () => {
           .tiles-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
         }
 
+        /* ========== PLANET STYLES ========== */
+        
+        /* Planet orb animations */
+        @keyframes pSpin {
+          0% { transform: rotateZ(0deg); }
+          100% { transform: rotateZ(360deg); }
+        }
+        
+        @keyframes pFloat {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-6px); }
+        }
+
+        /* Base planet styling */
+        .ts-planet {
+          cursor: pointer;
+          transition: all 220ms ease;
+          position: relative;
+        }
+
+        .ts-planet.isActive {
+          filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.6));
+          transform: scale(1.15);
+        }
+
+        .ts-planet .orb {
+          display: block;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          animation: pSpin 8s linear infinite, pFloat 2.8s ease-in-out infinite;
+          box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25), inset -2px -2px 4px rgba(0, 0, 0, 0.15);
+          position: relative;
+        }
+
+        .ts-planet .ring {
+          display: none;
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 70px;
+          height: 24px;
+          border: 3px solid rgba(217, 119, 6, 0.7);
+          border-radius: 50%;
+          transform: translate(-50%, -50%) rotateX(75deg);
+          animation: pSpin 10s linear infinite reverse;
+          box-shadow: 0 0 8px rgba(217, 119, 6, 0.3);
+        }
+
+        .ts-planet .shine {
+          position: absolute;
+          top: 4px;
+          left: 8px;
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0));
+          opacity: 0.8;
+          animation: pFloat 4.2s ease-in-out infinite 0.4s;
+        }
+
+        .ts-planet .label {
+          position: absolute;
+          top: 56px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 11px;
+          font-weight: 700;
+          white-space: nowrap;
+          color: rgba(15, 23, 42, 0.7);
+          background: rgba(255, 255, 255, 0.85);
+          padding: 4px 8px;
+          border-radius: 4px;
+          pointer-events: none;
+          border: 1px solid rgba(99, 102, 241, 0.15);
+          opacity: 0;
+          transition: opacity 220ms ease;
+        }
+
+        .ts-planet:hover .label, .ts-planet.isActive .label {
+          opacity: 1;
+        }
+
+        /* Mercury: Gray */
+        .ts-planet.mercury .orb {
+          background: linear-gradient(135deg, #a8a9ad 0%, #6f7073 50%, #4a4b4e 100%);
+          animation-duration: 7.2s;
+        }
+
+        /* Venus: Yellow with stripes */
+        .ts-planet.venus .orb {
+          background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 40%, #d97706 70%, #b45309 100%);
+          background-size: 100% 100%;
+          box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35), inset -2px -2px 4px rgba(120, 53, 15, 0.25);
+          animation-duration: 8.4s;
+        }
+
+        /* Earth: Blue with green swirl */
+        .ts-planet.earth .orb {
+          background: conic-gradient(
+            from 0deg at 50% 50%,
+            #0369a1 0%,
+            #06b6d4 25%,
+            #10b981 35%,
+            #84cc16 45%,
+            #0369a1 70%,
+            #0369a1 100%
+          );
+          animation-duration: 8s;
+        }
+
+        /* Mars: Red */
+        .ts-planet.mars .orb {
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%);
+          animation-duration: 7.6s;
+        }
+
+        /* Jupiter: Brown with stripes */
+        .ts-planet.jupiter .orb {
+          background: repeating-linear-gradient(
+            90deg,
+            #92400e 0px,
+            #b45309 4px,
+            #d97706 8px,
+            #f59e0b 12px,
+            #d97706 16px,
+            #b45309 20px,
+            #92400e 24px
+          );
+          animation-duration: 9.2s;
+        }
+
+        /* Saturn: Yellow with rings */
+        .ts-planet.saturn .orb {
+          background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+          animation-duration: 10s;
+        }
+
+        .ts-planet.saturn .ring {
+          display: block;
+        }
+
+        /* Uranus: Cyan */
+        .ts-planet.uranus .orb {
+          background: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #0e7490 100%);
+          animation-duration: 8.8s;
+        }
+
+        /* Neptune: Deep blue */
+        .ts-planet.neptune .orb {
+          background: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0369a1 100%);
+          animation-duration: 9.6s;
+        }
+
+        /* ========== SUN STYLING ========== */
+        
+        @keyframes tsRaysSpin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        @keyframes tsRaysPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+
+        .ts-sunFar {
+          position: absolute;
+          width: 52px;
+          height: 52px;
+          top: 16px;
+          left: 20px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 35% 35%, #fef3c7, #fcd34d 30%, #fbbf24 60%, #f59e0b 100%);
+          box-shadow: 0 0 28px rgba(251, 191, 36, 0.8), 0 0 56px rgba(251, 191, 36, 0.4), inset -2px -2px 4px rgba(217, 119, 6, 0.3);
+          z-index: 5;
+        }
+
+        .ts-sunRays {
+          position: absolute;
+          inset: -14px;
+          border-radius: 50%;
+          animation: tsRaysSpin 18s linear infinite;
+          z-index: 3;
+        }
+
+        .ts-sunRay {
+          position: absolute;
+          width: 4px;
+          height: 12px;
+          background: linear-gradient(to top, rgba(251, 191, 36, 0.8), rgba(251, 191, 36, 0));
+          left: 50%;
+          top: 0;
+          transform: translateX(-50%);
+          border-radius: 2px;
+          animation: tsRaysPulse 3.5s ease-in-out infinite;
+        }
+
+        /* ========== STAGE BUTTONS (BOTTOM) ========== */
+        
+        .ts-stageRow {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+          justify-content: center;
+          margin-top: 12px;
+          padding: 0 12px;
+        }
+
+        .ts-stageBtn {
+          font-size: 12px;
+          font-weight: 800;
+          padding: 7px 10px;
+          border-radius: 999px;
+          border: 1px solid rgba(15, 23, 42, 0.10);
+          background: rgba(255, 255, 255, 0.75);
+          color: #0f172a;
+          cursor: pointer;
+          transition: all 200ms ease;
+        }
+
+        .ts-stageBtn:hover {
+          background: rgba(255, 255, 255, 0.9);
+          border-color: rgba(99, 102, 241, 0.25);
+        }
+
+        .ts-stageBtn.active {
+          background: rgba(249, 115, 22, 0.12);
+          border-color: rgba(249, 115, 22, 0.42);
+          color: #ea580c;
+          font-weight: 900;
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .soft-blob { animation: none !important; }
           .tile { transition: none !important; }
           .pulse, .pulse::after { animation: none !important; }
+          .ts-planet .orb { animation: none !important; }
+          .ts-planet .shine { animation: none !important; }
+          .ts-planet .ring { animation: none !important; }
+          .ts-sunRays { animation: none !important; }
+          .ts-sunRay { animation: none !important; }
         }
       `}</style>
 
