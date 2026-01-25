@@ -3,6 +3,7 @@ import Button from '../Button/Button';
 
 // --- pricing helpers (local, minimal) ---
 const DEFAULT_PER_CLASS_PRICE = 599;
+const DISCOUNT_PCT = 30;
 
 const formatINR = (value: number) =>
   new Intl.NumberFormat('en-IN', {
@@ -10,6 +11,30 @@ const formatINR = (value: number) =>
     currency: 'INR',
     maximumFractionDigits: 0,
   }).format(value);
+
+const fmtINR = (n: number): string => `₹${n.toLocaleString('en-IN')}`;
+
+const applyDiscount = (amount: number): number => {
+  return Math.round(amount * (100 - DISCOUNT_PCT) / 100);
+};
+
+// PriceLine component: renders original (struck), badge, and offered price
+const PriceLine: React.FC<{ original: number; suffix?: string }> = ({
+  original,
+  suffix = '',
+}) => {
+  const offered = applyDiscount(original);
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="line-through text-slate-400 text-sm">{fmtINR(original)}</span>
+      <span className="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold">
+        {DISCOUNT_PCT}% OFF
+      </span>
+      <span className="font-bold text-green-700">{fmtINR(offered)}</span>
+      {suffix && <span className="text-sm text-slate-600">{suffix}</span>}
+    </div>
+  );
+};
 
 const PricingCrispSection: React.FC = () => {
   return (
@@ -36,10 +61,12 @@ const PricingCrispSection: React.FC = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               Starter · 8 classes / month
             </p>
-                <p className="mt-2 text-2xl font-semibold text-slate-900">
-                  {formatINR(DEFAULT_PER_CLASS_PRICE)}<span className="text-sm font-normal text-slate-500"> / class</span>
-                </p>
-                <p className="mt-1 text-xs text-slate-500">{formatINR(DEFAULT_PER_CLASS_PRICE * 8)} total · billed monthly</p>
+            <div className="mt-2">
+              <PriceLine original={DEFAULT_PER_CLASS_PRICE} suffix="/ class" />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Billed monthly: <span className="font-bold text-green-700">{fmtINR(applyDiscount(DEFAULT_PER_CLASS_PRICE * 8))}</span> (was {fmtINR(DEFAULT_PER_CLASS_PRICE * 8)})
+            </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 2 classes per week</li>
@@ -63,10 +90,12 @@ const PricingCrispSection: React.FC = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               Growth · 16 classes / month
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
-              ₹525<span className="text-sm font-normal text-slate-500"> / class</span>
+            <div className="mt-2">
+              <PriceLine original={525} suffix="/ class" />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Billed monthly: <span className="font-bold text-green-700">{fmtINR(applyDiscount(8400))}</span> (was {fmtINR(8400)})
             </p>
-            <p className="mt-1 text-xs text-slate-500">₹8,400 total · billed monthly</p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 3–4 classes per week</li>
@@ -87,10 +116,12 @@ const PricingCrispSection: React.FC = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
               Power · 24 classes / month
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
-              ₹500<span className="text-sm font-normal text-slate-500"> / class</span>
+            <div className="mt-2">
+              <PriceLine original={500} suffix="/ class" />
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Billed monthly: <span className="font-bold text-green-700">{fmtINR(applyDiscount(12000))}</span> (was {fmtINR(12000)})
             </p>
-            <p className="mt-1 text-xs text-slate-500">₹12,000 total · billed monthly</p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 5–6 classes per week</li>

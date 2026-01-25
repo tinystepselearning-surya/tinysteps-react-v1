@@ -9,6 +9,58 @@ import { catalogs } from '../content/courses';
 const MRP_PER_SESSION = 599;           // Official 1:1 MRP
 const DEFAULT_PACK_RATE = 550;         // Typical pack rate used for estimates
 
+// ============================================================================
+// DISCOUNT HELPERS (Limited-time 30% OFF)
+// ============================================================================
+const DISCOUNT_PCT = 30;
+
+const applyDiscount = (amount: number): number => {
+  return Math.round(amount * (100 - DISCOUNT_PCT) / 100);
+};
+
+const fmtINR = (n: number): string => `₹${n.toLocaleString('en-IN')}`;
+
+// PriceLine component: renders original (struck), badge, and offered price
+const PriceLine: FC<{ original: number; suffix?: string; offerOnly?: boolean }> = ({
+  original,
+  suffix = '',
+  offerOnly = false,
+}) => {
+  const offered = applyDiscount(original);
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="line-through text-gray-500 text-sm">{fmtINR(original)}</span>
+      <span className="inline-block bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">
+        {DISCOUNT_PCT}% OFF
+      </span>
+      <span className="font-bold text-green-700">{fmtINR(offered)}</span>
+      {suffix && <span className="text-sm text-gray-600">{suffix}</span>}
+    </div>
+  );
+};
+
+// PriceRangeLine component: renders original range (struck), badge, and offered range
+const PriceRangeLine: FC<{ minOriginal: number; maxOriginal: number }> = ({
+  minOriginal,
+  maxOriginal,
+}) => {
+  const minOffered = applyDiscount(minOriginal);
+  const maxOffered = applyDiscount(maxOriginal);
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="line-through text-gray-500 text-sm">
+        {fmtINR(minOriginal)} – {fmtINR(maxOriginal)}
+      </span>
+      <span className="inline-block bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs font-bold">
+        {DISCOUNT_PCT}% OFF
+      </span>
+      <span className="font-bold text-green-700">
+        {fmtINR(minOffered)} – {fmtINR(maxOffered)}
+      </span>
+    </div>
+  );
+};
+
 const parseWeeks = (duration: string) => {
   const match = duration.match(/(\d+)(?:[–-](\d+))?/);
   if (!match) return { min: 0, max: 0 };
@@ -181,17 +233,16 @@ const PricingPage: FC = () => {
                 {plan.name} Plan
               </h3>
               <p className="text-sm text-gray-600">{plan.duration}</p>
-              <div className="mt-4 text-4xl font-bold text-gray-900">
-                {formatCurrency(plan.fee)}
-                <span className="text-base font-medium text-gray-600">
-                  {' '}
-                  / {plan.sessions} classes
-                </span>
+              <div className="mt-4">
+                <PriceLine
+                  original={plan.fee}
+                  suffix={`/ ${plan.sessions} classes`}
+                />
               </div>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-gray-500 mt-2">
                 {plan.rate
-                  ? `Effective rate: ₹${plan.rate} per 35–40 min live 1:1 class (MRP ₹${MRP_PER_SESSION})`
-                  : `Approx. ₹${DEFAULT_PACK_RATE} per 35–40 min live 1:1 class`}
+                  ? `Effective rate: ${fmtINR(applyDiscount(plan.rate))} per 35–40 min live 1:1 class (orig: ₹${plan.rate})`
+                  : `Approx. ${fmtINR(applyDiscount(DEFAULT_PACK_RATE))} per 35–40 min live 1:1 class`}
               </p>
               <ul className="mt-4 space-y-2 text-sm text-gray-700">
                 {plan.features.map((feature) => (
@@ -265,11 +316,11 @@ const PricingPage: FC = () => {
                         : `${minSessions}–${maxSessions}`}
                     </td>
                     <td className="px-4 py-4 font-semibold text-gray-900">
-                      {minFee === maxFee
-                        ? formatCurrency(minFee)
-                        : `${formatCurrency(minFee)} – ${formatCurrency(
-                            maxFee
-                          )}`}
+                      {minFee === maxFee ? (
+                        <PriceLine original={minFee} />
+                      ) : (
+                        <PriceRangeLine minOriginal={minFee} maxOriginal={maxFee} />
+                      )}
                     </td>
                   </tr>
                 )

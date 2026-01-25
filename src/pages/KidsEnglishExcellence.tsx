@@ -15,14 +15,14 @@ type JourneyStop = {
 };
 
 const JOURNEY_STOPS: JourneyStop[] = [
-  { key: "S1", title: "Tracing Foundations", category: "phonics" },
-  { key: "S2", title: "Letter Sounds + Formation", category: "phonics" },
-  { key: "S3", title: "Blending → Word Families", category: "phonics" },
-  { key: "S4", title: "Reads Sentences", category: "phonics" },
-  { key: "S5", title: "Writes Sentences", category: "grammar" },
-  { key: "S6", title: "Spelling Rules Mastery", category: "grammar" },
-  { key: "S7", title: "Grammar + Vocabulary", category: "speaking" },
-  { key: "S8", title: "Confident Speaking (No Blackout)", category: "breakthrough" },
+  { key: "S1", title: "Pre-Writing Skills (Tracing)", category: "phonics" },
+  { key: "S2", title: "Letter–Sound Correspondence & Letter Formation", category: "phonics" },
+  { key: "S3", title: "Blending & Word Families", category: "phonics" },
+  { key: "S4", title: "Sentence Reading (Decoding & Fluency)", category: "phonics" },
+  { key: "S5", title: "Sentence Writing (Handwriting & Punctuation)", category: "grammar" },
+  { key: "S6", title: "Spelling Patterns & Phonics Rules", category: "grammar" },
+  { key: "S7", title: "Grammar & Vocabulary", category: "speaking" },
+  { key: "S8", title: "Confident Speaking (No Stage Fright)", category: "breakthrough" },
 ];
 
 const CATEGORY_META: Record<
@@ -62,10 +62,10 @@ function JourneyRoadHorizontal({
 
   // SVG layout (SpellBee style)
   const W = 1100;
-  const H = 280;
+  const H = 300;
   const roadY = 150;
-  const x0 = 90;
-  const x1 = W - 90;
+  const x0 = 55;
+  const x1 = W - 55;
 
   const xs = JOURNEY_STOPS.map((_, i) =>
     n === 1 ? (x0 + x1) / 2 : x0 + ((x1 - x0) * i) / (n - 1)
@@ -74,14 +74,21 @@ function JourneyRoadHorizontal({
   const isTop = (i: number) => i % 2 === 0; // alternate label/pin top-bottom
 
   return (
-    <div className="relative w-full rounded-2xl border border-slate-200 bg-gradient-to-b from-sky-50 via-white to-amber-50 p-4 shadow-sm">
-      {/* small sun (top-left) */}
-      <div className="pointer-events-none absolute left-4 top-4 h-12 w-12 rounded-full bg-gradient-to-br from-amber-300 to-orange-500 shadow-[0_0_30px_rgba(251,146,60,0.45)]" />
-      <div className="pointer-events-none absolute left-2 top-2 h-20 w-20 rounded-full bg-[radial-gradient(circle,rgba(251,146,60,0.35)_0%,rgba(251,146,60,0.00)_65%)]" />
+    <div className="relative w-full rounded-2xl border border-slate-200 bg-gradient-to-b from-sky-50 via-indigo-50 to-cyan-50 p-3 shadow-sm">
+      <style>{`
+  /* remove browser focus rectangle on SVG groups */
+  svg g[role="button"]:focus,
+  svg g[role="button"]:focus-visible { outline: none; }
 
+  /* gentle floating animation for pins */
+  @keyframes tsPinFloat {
+    0%,100% { transform: translateY(0px); }
+    50% { transform: translateY(-4px); }
+  }
+`}</style>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="h-[240px] w-full"
+        className="h-[260px] w-full"
         aria-label="Tiny Steps learning journey roadmap"
         role="img"
       >
@@ -120,16 +127,16 @@ function JourneyRoadHorizontal({
           const active = s.key === activeKey;
           const c = CATEGORY_META[s.category].dot;
 
-          const triH = 22;
-          const triW = 22;
+          const triH = 28;
+          const triW = 28;
 
-          const circleR = 18;
+          const circleR = 26;
           const circleCy = top ? roadY - (triH + circleR + 6) : roadY + (triH + circleR + 6);
           const triTipY = top ? roadY - 18 : roadY + 18;
 
           const triBaseY = top ? triTipY - triH : triTipY + triH;
 
-          const labelY = top ? 52 : 248;
+          const labelY = top ? 56 : H - 18;
 
           return (
             <g
@@ -141,7 +148,13 @@ function JourneyRoadHorizontal({
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") onSelect(s.key);
               }}
-              style={{ cursor: "pointer" }}
+              className="tsPin"
+              style={{
+                cursor: "pointer",
+                outline: "none",
+                animation: "tsPinFloat 3.2s ease-in-out infinite",
+                animationDelay: `${i * 0.15}s`,
+              }}
             >
               {/* triangle pointer */}
               <polygon
@@ -154,6 +167,12 @@ function JourneyRoadHorizontal({
                 opacity={0.95}
                 filter={active ? "url(#tsGlow)" : undefined}
               />
+
+              {/* glow halo (animated) */}
+              <circle cx={x} cy={circleCy} r={circleR + 10} fill={c} opacity={0.12}>
+                <animate attributeName="opacity" values="0.10;0.28;0.10" dur="2.6s" repeatCount="indefinite" />
+                <animate attributeName="r" values={`${circleR + 8};${circleR + 13};${circleR + 8}`} dur="2.6s" repeatCount="indefinite" />
+              </circle>
 
               {/* circle */}
               <circle
@@ -169,50 +188,53 @@ function JourneyRoadHorizontal({
                 x={x}
                 y={circleCy + 6}
                 textAnchor="middle"
-                fontSize="14"
+                fontSize="15"
                 fontWeight="700"
                 fill={active ? "#0F172A" : "#334155"}
               >
                 {s.key}
               </text>
 
-              {/* label */}
-              <text
-                x={x}
-                y={labelY}
-                textAnchor="middle"
-                fontSize="14"
-                fontWeight="700"
-                fill="#0F172A"
-              >
-                {s.title}
-              </text>
+              {/* label (wrap S2) */}
+              {(() => {
+                const labelLines =
+                  s.key === "S2"
+                    ? ["Letter–Sound Correspondence", "& Letter Formation"]
+                    : [s.title];
+
+                const labelStartY = top ? 56 : labelLines.length > 1 ? H - 40 : H - 18;
+
+                return (
+                  <text
+                    x={x}
+                    y={labelStartY}
+                    textAnchor="middle"
+                    fontSize="14"
+                    fontWeight="700"
+                    fill="#0F172A"
+                  >
+                    {labelLines.map((line, idx) => (
+                      <tspan key={`${s.key}-${idx}`} x={x} dy={idx === 0 ? 0 : 18}>
+                        {line}
+                      </tspan>
+                    ))}
+                  </text>
+                );
+              })()}
             </g>
           );
         })}
       </svg>
 
-      {/* Stage buttons at the BOTTOM (as you asked) */}
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
-        {(["phonics", "grammar", "speaking", "breakthrough"] as JourneyCategory[]).map((k) => (
-          <div
-            key={k}
-            className={`rounded-full border px-3 py-1 text-sm font-semibold ${CATEGORY_META[k].pillClass}`}
-          >
-            {CATEGORY_META[k].label}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-2 text-center text-xs text-slate-600">
-        *In the FREE assessment, we identify the right entry stage and share the next steps clearly.
-      </div>
     </div>
   );
 }
 
 export function LearningJourneyRoadmapPPT() {
   const [activeKey, setActiveKey] = useState<string>("S1");
+
+  const toRoman = (n: number) =>
+    ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"][n] || String(n);
 
   const active = useMemo(
     () => {
@@ -221,7 +243,7 @@ export function LearningJourneyRoadmapPPT() {
       const journeyDetails: Record<string, any> = {
         S1: {
           key: "S1",
-          title: "Tracing Foundations",
+          title: "Pre-Writing Skills (Tracing)",
           category: "phonics",
           childCanDo: ["Hold pencil like a pro", "Trace big curves", "Keep lines neat"],
           nextMilestone: "Write first letters with correct formation",
@@ -231,7 +253,7 @@ export function LearningJourneyRoadmapPPT() {
         },
         S2: {
           key: "S2",
-          title: "Letter Sounds + Formation",
+          title: "Letter–Sound Correspondence & Letter Formation",
           category: "phonics",
           childCanDo: ["Say 26 letter sounds", "Form letters correctly", "Say sounds in order"],
           nextMilestone: "Blend 2-3 sounds into words",
@@ -241,7 +263,7 @@ export function LearningJourneyRoadmapPPT() {
         },
         S3: {
           key: "S3",
-          title: "Blending → Word Families",
+          title: "Blending & Word Families",
           category: "phonics",
           childCanDo: ["Blend sounds into words", "Read CVC words", "Spell 3-letter words"],
           nextMilestone: "Read simple sentences smoothly",
@@ -251,7 +273,7 @@ export function LearningJourneyRoadmapPPT() {
         },
         S4: {
           key: "S4",
-          title: "Reads Sentences",
+          title: "Sentence Reading (Decoding & Fluency)",
           category: "phonics",
           childCanDo: ["Decode sentences", "Pause at periods", "Answer simple questions"],
           nextMilestone: "Write simple sentences independently",
@@ -261,7 +283,7 @@ export function LearningJourneyRoadmapPPT() {
         },
         S5: {
           key: "S5",
-          title: "Writes Sentences",
+          title: "Sentence Writing (Handwriting & Punctuation)",
           category: "grammar",
           childCanDo: ["Write full sentences", "Use capitals correctly", "Add periods"],
           nextMilestone: "Spell common words without help",
@@ -271,7 +293,7 @@ export function LearningJourneyRoadmapPPT() {
         },
         S6: {
           key: "S6",
-          title: "Spelling Rules Mastery",
+          title: "Spelling Patterns & Phonics Rules",
           category: "grammar",
           childCanDo: ["Apply magic-e rule", "Use vowel teams", "Spell pattern words"],
           nextMilestone: "Spell multisyllabic words",
@@ -291,7 +313,7 @@ export function LearningJourneyRoadmapPPT() {
         },
         S8: {
           key: "S8",
-          title: "Confident Speaking (No Blackout)",
+          title: "Confident Speaking (No Stage Fright)",
           category: "breakthrough",
           childCanDo: ["Speak on stage", "Handle any topic", "Speak with confidence"],
           nextMilestone: "Present ideas to large groups",
@@ -326,7 +348,7 @@ export function LearningJourneyRoadmapPPT() {
           </div>
           <div style={{ marginTop: 6, fontSize: 14, color: "#334155", lineHeight: 1.45 }}>
             <strong>Tracing → Reading → Writing → Confident Speaking</strong> — tiny wins,
-            guided practice, and confidence (no pressure, no "blackout").
+            guided practice, and confidence (no pressure, no stage fright).
           </div>
         </div>
       </div>
@@ -337,30 +359,30 @@ export function LearningJourneyRoadmapPPT() {
             maxWidth: 1120,
             margin: "0 auto",
             display: "grid",
-            gridTemplateColumns: "1.6fr 0.9fr",
+            gridTemplateColumns: "1fr",
             gap: 14,
           }}
         >
           {/* LEFT: Horizontal Road */}
           <JourneyRoadHorizontal activeKey={activeKey} onSelect={setActiveKey} />
 
-          {/* RIGHT: Power Tiles */}
-          <aside
+          {/* BOTTOM: Power Tiles */}
+          <div
             style={{
               borderRadius: 22,
               background: "rgba(255,255,255,0.92)",
               border: "1px solid rgba(15,23,42,0.08)",
               padding: 14,
               boxShadow: "0 14px 30px rgba(2,6,23,0.06)",
-              alignSelf: "start",
-              position: "sticky",
-              top: 90,
-              height: "fit-content",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
               <div style={{ fontWeight: 950, fontSize: 18, color: "#0f172a" }}>
-                {active.key}
+                {(() => {
+                  const stageNum = Number(String(active.key).replace("S", "")) || 1;
+                  const stageRoman = toRoman(stageNum);
+                  return `Stage ${stageRoman}`;
+                })()}
               </div>
               <div
                 className={`rounded-full border px-3 py-1 text-sm font-semibold ${CATEGORY_META[active.category as JourneyCategory].pillClass}`}
@@ -375,13 +397,7 @@ export function LearningJourneyRoadmapPPT() {
 
             <div style={{ marginTop: 12, display: "grid", gap: 12 }}>
               {/* Power tiles grid */}
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: 10,
-                }}
-              >
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Child Can Do */}
                 <div
                   style={{
@@ -467,31 +483,8 @@ export function LearningJourneyRoadmapPPT() {
                 </div>
               </div>
 
-              {/* Parent update banner */}
-              <div
-                style={{
-                  borderRadius: 18,
-                  padding: "12px 12px",
-                  border: "1px solid rgba(15,23,42,0.08)",
-                  background:
-                    "linear-gradient(90deg, rgba(249,115,22,0.14) 0%, rgba(59,130,246,0.12) 55%, rgba(168,85,247,0.12) 100%)",
-                  boxShadow: "0 10px 24px rgba(2,6,23,0.06)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ fontWeight: 950, fontSize: 13, color: "#0f172a" }}>📩 Parent Update (Example)</div>
-                  <div style={{ fontSize: 12, fontWeight: 900, color: "#334155" }}>Simple • Clear • Actionable</div>
-                </div>
-                <div style={{ marginTop: 8, color: "#0f172a", fontSize: 13, lineHeight: 1.5 }}>
-                  "{active.parentUpdateExample}"
-                </div>
-              </div>
             </div>
-
-            <div style={{ marginTop: 10, fontSize: 12, color: "#475569", textAlign: "right" }}>
-              *In the FREE assessment, we identify the right entry point and share next steps clearly.
-            </div>
-          </aside>
+          </div>
         </div>
 
         {/* Galaxy + Planet animations */}
