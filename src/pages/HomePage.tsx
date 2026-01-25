@@ -5,6 +5,7 @@ import { applySeo } from "../lib/seo";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
+import { LearningJourneyRoadmapPPT } from "./KidsEnglishExcellence";
 
 /**
  * Safe optional sections loader:
@@ -224,6 +225,13 @@ export default function HomePage() {
       </Suspense>
 
       {/* WhyChooseCollapsibleSection intentionally removed */}
+
+      {/* ✅ PPT-style Journey Roadmap (above Learning Stages) */}
+      <section className="px-6 py-12">
+        <div className="mx-auto max-w-6xl">
+          <LearningJourneyRoadmapPPT />
+        </div>
+      </section>
 
       <Suspense fallback={null}>
         <StepTimeline />

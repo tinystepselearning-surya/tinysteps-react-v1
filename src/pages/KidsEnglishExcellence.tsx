@@ -3,6 +3,306 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 // ============================================================================
+// PPT-STYLE JOURNEY ROADMAP COMPONENT (exported for reuse on Home page)
+// ============================================================================
+
+type JourneyStop = {
+  id: string; // E1..E8
+  title: string;
+  bullets: string[];
+  left: string; // % position
+  top: string; // % position
+  calloutSide: "left" | "right";
+};
+
+const JOURNEY_STOPS: JourneyStop[] = [
+  { id: "E1", title: "Tracing Foundations", bullets: ["Grip + control", "Lines & curves", "Confidence to write"], left: "18%", top: "80%", calloutSide: "right" },
+  { id: "E2", title: "Letter Sounds + Formation", bullets: ["26 sounds (not just names)", "Correct start points", "Fewer reversals"], left: "12%", top: "62%", calloutSide: "right" },
+  { id: "E3", title: "Blending → Word Families", bullets: ["Blend 2–3 sounds", "CVC words (sat/pin)", "Early spelling from sounds"], left: "25%", top: "46%", calloutSide: "right" },
+  { id: "E4", title: "Reads Sentences", bullets: ["Smooth decoding", "Punctuation pauses", "Simple comprehension"], left: "44%", top: "58%", calloutSide: "right" },
+  { id: "E5", title: "Writes Sentences", bullets: ["Clear sentences", "Capital & full stop", "Better speed + neatness"], left: "64%", top: "52%", calloutSide: "right" },
+  { id: "E6", title: "Spelling Rules Mastery", bullets: ["Magic-E", "Rabbit rule", "Vowel teams (ai/ee/oa/ie)"], left: "58%", top: "30%", calloutSide: "left" },
+  { id: "E7", title: "Grammar + Vocabulary", bullets: ["Sentence structure", "Correct verb forms", "Word upgrades"], left: "76%", top: "18%", calloutSide: "left" },
+  { id: "E8", title: "Confident Speaking (No Blackout)", bullets: ["Stage speaking", "Instant topic speaking", "No freezing — clear framework"], left: "88%", top: "28%", calloutSide: "left" },
+];
+
+type RoadStageLabel = {
+  label: string;
+  x: number;
+  y: number;
+};
+
+const ROAD_STAGE_LABELS: RoadStageLabel[] = [
+  { label: "Phonics", x: 260, y: 250 },
+  { label: "Grammar", x: 560, y: 270 },
+  { label: "Speaking", x: 690, y: 120 },
+  { label: "Breakthrough", x: 860, y: 95 },
+];
+
+function JourneyMarker({ id }: { id: string }) {
+  return (
+    <div style={{ position: "relative", width: 72, height: 82 }}>
+      {/* pin shadow base */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: "50%",
+          bottom: 6,
+          width: 26,
+          height: 26,
+          transform: "translateX(-50%) rotate(45deg)",
+          borderRadius: 6,
+          background: "rgba(2,6,23,0.25)",
+          filter: "blur(0.2px)",
+        }}
+      />
+      {/* pin head */}
+      <div
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: 999,
+          background: "#fff",
+          border: "4px solid rgba(15,23,42,0.88)",
+          boxShadow: "0 14px 34px rgba(2,6,23,0.22)",
+          display: "grid",
+          placeItems: "center",
+          fontWeight: 900,
+          fontSize: 20,
+          color: "#f97316",
+        }}
+      >
+        {id}
+      </div>
+      {/* pin tail */}
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: "50%",
+          bottom: 0,
+          width: 18,
+          height: 18,
+          transform: "translateX(-50%) rotate(45deg)",
+          borderRadius: 5,
+          background: "#fff",
+          borderRight: "4px solid rgba(15,23,42,0.88)",
+          borderBottom: "4px solid rgba(15,23,42,0.88)",
+        }}
+      />
+    </div>
+  );
+}
+
+function JourneyCallout({
+  title,
+  bullets,
+  side,
+}: {
+  title: string;
+  bullets: string[];
+  side: "left" | "right";
+}) {
+  const shift = side === "left" ? -300 : 92;
+
+  return (
+    <div
+      style={{
+        width: 280,
+        background: "rgba(255,255,255,0.96)",
+        border: "1px solid rgba(15,23,42,0.10)",
+        borderRadius: 18,
+        padding: "12px 14px",
+        boxShadow: "0 14px 34px rgba(2,6,23,0.08)",
+        transform: `translateX(${shift}px)`,
+      }}
+    >
+      <div style={{ fontWeight: 900, color: "#0f172a", fontSize: 14 }}>{title}</div>
+      <ul
+        style={{
+          margin: "8px 0 0 18px",
+          padding: 0,
+          color: "#334155",
+          fontSize: 13,
+          lineHeight: 1.35,
+        }}
+      >
+        {bullets.slice(0, 3).map((b) => (
+          <li key={b} style={{ marginBottom: 6 }}>
+            {b}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SvgStageLabel({ label, x, y }: RoadStageLabel) {
+  const w = label === "Breakthrough" ? 168 : 120;
+  const h = 40;
+
+  return (
+    <g>
+      <rect
+        x={x - w / 2}
+        y={y - h / 2}
+        width={w}
+        height={h}
+        rx={999}
+        fill="rgba(255,255,255,0.92)"
+        stroke="rgba(15,23,42,0.16)"
+        strokeWidth="2"
+      />
+      <text
+        x={x}
+        y={y + 6}
+        textAnchor="middle"
+        fontSize="16"
+        fontWeight="800"
+        fill="#0f172a"
+        style={{ letterSpacing: "0.2px" }}
+      >
+        {label}
+      </text>
+    </g>
+  );
+}
+
+export function LearningJourneyRoadmapPPT() {
+  return (
+    <section
+      id="journey-roadmap"
+      style={{
+        borderRadius: 28,
+        border: "1px solid rgba(15,23,42,0.08)",
+        boxShadow: "0 20px 54px rgba(2,6,23,0.08)",
+        overflow: "hidden",
+        marginBottom: 20,
+        background:
+          "linear-gradient(180deg, rgba(255,237,213,0.96) 0%, rgba(240,249,255,0.92) 100%)",
+      }}
+    >
+      {/* PPT-style header band */}
+      <div
+        style={{
+          padding: "20px 20px 14px",
+          background:
+            "linear-gradient(90deg, rgba(249,115,22,0.92) 0%, rgba(251,146,60,0.9) 45%, rgba(255,255,255,0.0) 100%)",
+        }}
+      >
+        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+          <div style={{ fontSize: 34, fontWeight: 950, color: "#0f172a" }}>The Journey</div>
+          <div style={{ marginTop: 6, fontSize: 15, color: "#1f2937", lineHeight: 1.45 }}>
+            <strong>Tracing → Reading → Writing → Confident Speaking</strong> — designed for child psychology:
+            tiny wins, guided practice, and confidence (no pressure, no "blackout").
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: "14px 16px 18px" }}>
+        <div style={{ maxWidth: 1120, margin: "0 auto" }}>
+          {/* Road canvas */}
+          <div
+            style={{
+              position: "relative",
+              borderRadius: 22,
+              background: "rgba(255,255,255,0.72)",
+              border: "1px solid rgba(15,23,42,0.06)",
+              padding: 16,
+              overflow: "hidden",
+            }}
+          >
+            <svg viewBox="0 0 1000 380" width="100%" height="auto" aria-hidden>
+              {/* road shadow */}
+              <path
+                d="M140 320
+                   C 90 260, 160 170, 270 220
+                   C 380 270, 340 120, 465 160
+                   C 590 200, 540 330, 670 270
+                   C 800 200, 660 150, 745 125
+                   C 840 100, 870 190, 935 150"
+                fill="none"
+                stroke="rgba(2,6,23,0.10)"
+                strokeWidth="92"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* road body */}
+              <path
+                d="M140 320
+                   C 90 260, 160 170, 270 220
+                   C 380 270, 340 120, 465 160
+                   C 590 200, 540 330, 670 270
+                   C 800 200, 660 150, 745 125
+                   C 840 100, 870 190, 935 150"
+                fill="none"
+                stroke="url(#roadGrad2)"
+                strokeWidth="78"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* inner highlight */}
+              <path
+                d="M140 320
+                   C 90 260, 160 170, 270 220
+                   C 380 270, 340 120, 465 160
+                   C 590 200, 540 330, 670 270
+                   C 800 200, 660 150, 745 125
+                   C 840 100, 870 190, 935 150"
+                fill="none"
+                stroke="rgba(255,255,255,0.42)"
+                strokeWidth="16"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+
+              {/* Stage names ON road */}
+              {ROAD_STAGE_LABELS.map((s) => (
+                <SvgStageLabel key={s.label} label={s.label} x={s.x} y={s.y} />
+              ))}
+
+              <defs>
+                <linearGradient id="roadGrad2" x1="0" y1="0" x2="1000" y2="0">
+                  <stop offset="0%" stopColor="#fb923c" />
+                  <stop offset="55%" stopColor="#f97316" />
+                  <stop offset="100%" stopColor="#fdba74" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            {/* Pins + callouts */}
+            {JOURNEY_STOPS.map((s) => (
+              <div
+                key={s.id}
+                style={{
+                  position: "absolute",
+                  left: s.left,
+                  top: s.top,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                  pointerEvents: "none",
+                }}
+              >
+                <JourneyMarker id={s.id} />
+                <JourneyCallout title={s.title} bullets={s.bullets} side={s.calloutSide} />
+              </div>
+            ))}
+          </div>
+
+          {/* Footer note (PPT style) */}
+          <div style={{ marginTop: 10, fontSize: 12, color: "#475569", textAlign: "right" }}>
+            *In the FREE assessment, we identify the right entry point and share the next steps clearly.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
