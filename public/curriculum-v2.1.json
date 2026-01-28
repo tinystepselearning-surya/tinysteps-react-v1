@@ -228,279 +228,431 @@
       }
     },
     "phonics-advanced": {
-      "weeks": [
-        {
-          "title": "Week 1: Diagnostic + Syllable Types",
-          "learns": [
-            "Closed, open, magic‑e, r‑controlled, vowel team, consonant+le"
-          ],
-          "activities": [
-            "Diagnostic passage",
-            "Syllable type sort"
-          ],
-          "mastery": "Identifies 5–6 types ✓"
-        },
-        {
-          "title": "Week 2: Long Vowels — a (ai, ay, a_e, eigh/ei)",
-          "learns": [
-            "Position rules for ai/ay",
-            "Alt spellings incl eigh/ei (older)"
-          ],
-          "activities": [
-            "Word sort",
-            "Sentence creation"
-          ],
-          "homework": [
-            "ai/ay sheet"
-          ],
-          "mastery": "Chooses correct a‑pattern ✓"
-        },
-        {
-          "title": "Week 3: e/i patterns (ee/ea/e_e, igh/ie/i_e, y)",
-          "learns": [
-            "ee vs ea",
-            "igh/ie/i_e",
-            "Shy i & tough y: y as long i at word end"
-          ],
-          "activities": [
-            "Minimal pairs",
-            "Dictation 12"
-          ],
-          "homework": [
-            "Reader: e/i mix"
-          ],
-          "mastery": "90% accuracy on e/i set ✓"
-        },
-        {
-          "title": "Week 4: o/u patterns (oa/oe/o_e, oo, ue/ui/u_e/ew)",
-          "learns": [
-            "oa/oe/o_e",
-            "oo (book/moon)",
-            "ue/ui/u_e/ew"
-          ],
-          "activities": [
-            "Word ladders",
-            "Phrase reading"
-          ],
-          "homework": [
-            "Practice set"
-          ],
-          "mastery": "Reads o/u patterns in context ✓"
-        },
-        {
-          "title": "Week 5: R‑controlled review (ar/er/ir/or/ur)",
-          "learns": [
-            "Contrast r‑controlled vowels"
-          ],
-          "activities": [
-            "Sort & read",
-            "Timed read"
-          ],
-          "mastery": "Sorts r‑controlled accurately ✓"
-        },
-        {
-          "title": "Week 6: Diphthongs (oi/oy, ou/ow, au/aw)",
-          "learns": [
-            "Common diphthongs & positions",
-            "Link au/aw to other /aw/ spellings (all, alk, al)"
-          ],
-          "activities": [
-            "Picture prompts with words",
-            "Dictation"
-          ],
-          "homework": [
-            "Diphthong deck"
-          ],
-          "mastery": "Reads/uses diphthongs ✓"
-        },
-        {
-          "title": "Week 7: Soft/Hard C & G + three j sounds",
-          "learns": [
-            "Soft c/g before e,i,y",
-            "j/dge/ge",
-            "Common silent letters (kn, wr, mb, gn, lk)"
-          ],
-          "activities": [
-            "Rule chart",
-            "Edit & fix sheet",
-            "Silent-letter word sort & read"
-          ],
-          "mastery": "Applies soft/hard & j rules ✓"
-        },
-        {
-          "title": "Week 8: Schwa & reduction",
-          "learns": [
-            "Unstressed vowel reduction (schwa)",
-            "Schwa in endings like -tion/-sion/-ture",
-            "Spelling strategies for schwa words"
-          ],
-          "activities": [
-            "Spot the schwa",
-            "Chunking practice"
-          ],
-          "mastery": "Marks schwa in words ✓"
-        },
-        {
-          "title": "Week 9: Consonant+le + Doubling + Suffix rules",
-          "learns": [
-            "c+le splits",
-            "Rabbit/doubling rules",
-            "‑ing/‑ed/‑es/‑tion"
-          ],
-          "activities": [
-            "Split & read",
-            "Add suffix game"
-          ],
-          "mastery": "Decodes multisyllabic with suffix ✓"
-        },
-        {
-          "title": "Week 10: Morphology (prefixes/suffixes)",
-          "learns": [
-            "Common prefixes un‑, re‑, pre‑, mis‑, dis‑",
-            "Suffixes ‑ful/‑less/‑ment/‑ness/‑able"
-          ],
-          "activities": [
-            "Build‑a‑word",
-            "Morpho sort"
-          ],
-          "mastery": "Explains 5 affixes with examples ✓"
-        },
-        {
-          "title": "Week 11: Multisyllabic strategies + fluency",
-          "learns": [
-            "Chunking & stress",
-            "Phrasing & expression"
-          ],
-          "activities": [
-            "Timed passages (150–300w)",
-            "Prosody practice"
-          ],
-          "mastery": "Fluent passage read ✓"
-        },
-        {
-          "title": "Week 12: Review + Capstone",
-          "learns": [
-            "Comprehensive review",
-            "Tricky words (advanced)"
-          ],
-          "activities": [
-            "Capstone passage + paragraph"
-          ],
-          "mastery": "Read 150–300w + write 8–10 sentences ✓"
-        }
+  "weeks": [
+    {
+      "title": "Week 1: Diagnostic + Syllable Types",
+      "learns": [
+        "Closed, open, magic-e, r-controlled, vowel team, consonant+le",
+        "How syllable type helps you choose vowel sound",
+        "Advanced tricky words (Week 1 set)"
       ],
-      "meta": {
-        "label": "Phonics – Advanced Patterns & Morphology",
-        "ages": "8–12",
-        "cefr": "A2–B1 (reading & spelling)",
-        "notes": "Advanced vowel teams, r-controlled patterns, diphthongs, soft/hard consonants, schwa, syllable types, and prefixes/suffixes."
-      }
-    },
-    "phonics-foundations": {
-      "weeks": [
-        {
-          "title": "Week 1: Baseline & Plan",
-          "learns": [
-            "Individual gap analysis",
-            "Personalized plan"
-          ],
-          "activities": [
-            "Sound/decoding check",
-            "Sample reading & spelling"
-          ],
-          "mastery": "Plan agreed ✓"
-        },
-        {
-          "title": "Week 2: CVC & Blending Refresh",
-          "learns": [
-            "Slow→fast blending",
-            "Review common consonant blends (st, bl, cr, nd, etc.)"
-          ],
-          "activities": [
-            "CVC builder",
-            "Minimal pairs"
-          ],
-          "homework": [
-            "Daily 5‑min blending"
-          ],
-          "mastery": "Blend 12 CVC ✓"
-        },
-        {
-          "title": "Week 3: Digraphs Focus",
-          "learns": [
-            "sh/ch/th/wh (+ qu)"
-          ],
-          "activities": [
-            "Digraph detective",
-            "Sort & read"
-          ],
-          "homework": [
-            "Worksheet + reader"
-          ],
-          "mastery": "Identifies 5 digraphs ✓"
-        },
-        {
-          "title": "Week 4: Magic‑e",
-          "learns": [
-            "a_e/i_e/o_e/u_e"
-          ],
-          "activities": [
-            "Pairs flip",
-            "Sentence read"
-          ],
-          "mastery": "Min‑pair accuracy 90% ✓"
-        },
-        {
-          "title": "Week 5: Vowel Teams",
-          "learns": [
-            "ai/ay, ee/ea"
-          ],
-          "activities": [
-            "Word ladders",
-            "Phrase cards"
-          ],
-          "mastery": "Reads teams in context ✓"
-        },
-        {
-          "title": "Week 6: R‑controlled",
-          "learns": [
-            "ar/or + er/ir/ur"
-          ],
-          "activities": [
-            "Sort & read",
-            "Dictation 10"
-          ],
-          "mastery": "Sorts r‑controlled ✓"
-        },
-        {
-          "title": "Week 7: Multisyllabic On‑ramp",
-          "learns": [
-            "Syllable types basics"
-          ],
-          "activities": [
-            "Chunk & read",
-            "Suffix add"
-          ],
-          "mastery": "Reads 2‑syllable words ✓"
-        },
-        {
-          "title": "Week 8: Review & Tricky Words",
-          "learns": [
-            "Spaced practice tricky set"
-          ],
-          "activities": [
-            "Game day"
-          ],
-          "mastery": "Personal reader 20–40 words ✓"
-        }
+      "activities": [
+        "Diagnostic passage (decode + fluency)",
+        "Syllable type sort",
+        "Mark vowels + split 2-syllable words",
+        "Tricky word read + use-in-a-sentence (Week 1 set)"
       ],
-      "meta": {
-        "label": "Phonics – Bridge & Fluency",
-        "ages": "6–9",
-        "cefr": "A1–A2 (consolidation)",
-        "notes": "Gap-filling and fluency course to secure CVC, digraphs, magic-e, vowel teams, r-controlled vowels, and two-syllable decoding."
-      }
+      "homework": [
+        "5-min daily syllable split practice (10 words)",
+        "Tricky words Week 1: because, people, again, every, different, even, many, answer, money, busy, any, sure"
+      ],
+      "mastery": "Identifies 5–6 syllable types + splits 8/10 words correctly + reads Week 1 tricky set ✓"
     },
+    {
+      "title": "Week 2: Long Vowels — A patterns (ai, ay, a_e, eigh/ei)",
+      "learns": [
+        "ai/ay position rule (middle vs end)",
+        "a_e as split digraph",
+        "Alternative spellings eigh/ei (preview + recognition)",
+        "Advanced tricky words (Week 2 set)"
+      ],
+      "activities": [
+        "Word sort (ai/ay/a_e/eigh/ei)",
+        "Dictation (10–12 words)",
+        "Sentence creation (3–5 sentences using target words)",
+        "Tricky word sort: A-pattern tricky words (Week 2 set)"
+      ],
+      "homework": [
+        "ai/ay/a_e practice sheet",
+        "Read 1 short passage highlighting A patterns",
+        "Tricky words Week 2: break, great, steak, they, their, there, eight, weight, straight, raise, afraid, maybe"
+      ],
+      "mastery": "Chooses correct A pattern in context (80%+) + reads Week 2 tricky set ✓"
+    },
+    {
+      "title": "Week 3: Long Vowels — E & I patterns (ee/ea/e_e, igh/ie/i_e, y)",
+      "learns": [
+        "ee vs ea (common vs less common cases)",
+        "i_e vs igh vs ie",
+        "y as long i at word end (try, fly) and y as long e (happy)",
+        "Advanced tricky words (Week 3 set)"
+      ],
+      "activities": [
+        "Minimal pairs + read aloud",
+        "Dictation (12 words)",
+        "Spot-the-pattern paragraph (circle patterns)",
+        "Tricky word hunt in a short text (Week 3 set)"
+      ],
+      "homework": [
+        "Reader: E/I/Y mix",
+        "Pattern hunt: find 10 words in a story/book",
+        "Tricky words Week 3: been, pretty, friend, piece, field, chief, believe, climb, behind, country, anyone, hundred"
+      ],
+      "mastery": "Reads E/I/Y set with 90%+ accuracy + explains the pattern + reads Week 3 tricky set ✓"
+    },
+    {
+      "title": "Week 4: Long Vowels — O & U patterns (oa/oe/o_e, oo, ue/ui/u_e/ew)",
+      "learns": [
+        "oa/oe/o_e patterns",
+        "oo has 2 sounds (book vs moon)",
+        "u spellings: ue/ui/u_e/ew (clue, fruit, flute, chew)",
+        "Advanced tricky words (Week 4 set)"
+      ],
+      "activities": [
+        "Word ladders (o patterns)",
+        "oo two-sound sort",
+        "Phrase reading + quick dictation (10)",
+        "Tricky word read + choose the correct word in sentence (Week 4 set)"
+      ],
+      "homework": [
+        "Practice set + 1 passage",
+        "oo two-sound worksheet",
+        "Tricky words Week 4: could, would, should, through, though, thought, enough, young, rough, cough, built, juice"
+      ],
+      "mastery": "Reads O/U patterns in context (85%+) + reads Week 4 tricky set ✓"
+    },
+    {
+      "title": "Week 5: R-controlled vowels (ar/er/ir/or/ur) + tricky contrasts",
+      "learns": [
+        "ar/er/ir/or/ur patterns",
+        "Common confusions: or vs aw/au (preview)",
+        "Spelling exposure for er/ir/ur (same sound)",
+        "Advanced tricky words (Week 5 set)"
+      ],
+      "activities": [
+        "Sort & read",
+        "Timed read (1 minute) + error check",
+        "Dictation (10–12 words)",
+        "Tricky word contrast: wor/or/ir/ear/war (Week 5 set)"
+      ],
+      "homework": [
+        "R-controlled worksheet",
+        "Read short paragraph and underline r-controlled",
+        "Tricky words Week 5: world, work, worm, word, worse, worth, learn, early, heard, heart, warm, quarter"
+      ],
+      "mastery": "Sorts r-controlled accurately + reads passage with 90%+ accuracy + reads Week 5 tricky set ✓"
+    },
+    {
+      "title": "Week 6: Diphthongs & /aw/ spellings (oi/oy, ou/ow, au/aw + all/alk/al)",
+      "learns": [
+        "oi/oy positions",
+        "ou/ow patterns",
+        "au/aw and other /aw/ spellings: all, alk, al (ball, talk, calm)",
+        "Advanced tricky words (Week 6 set)"
+      ],
+      "activities": [
+        "Picture prompts with words",
+        "Diphthong + /aw/ spelling sort",
+        "Dictation (12 words)",
+        "Tricky word sort: ow/ou vs aw/au vs oa (Week 6 set)"
+      ],
+      "homework": [
+        "Diphthong deck practice (5 min/day)",
+        "Aw/Au/All/Alk/Al mini passage",
+        "Tricky words Week 6: know, show, grow, boat, road, bought, daughter, caught, talk, walk, calm, always"
+      ],
+      "mastery": "Reads/uses diphthongs + /aw/ spellings correctly in sentences + reads Week 6 tricky set ✓"
+    },
+    {
+      "title": "Week 7: Soft/Hard C & G + J spellings + Silent letters",
+      "learns": [
+        "Soft c/g before e, i, y",
+        "j/dge/ge (three j spellings)",
+        "Silent letters: kn, wr, mb, gn, lk",
+        "Advanced tricky words (Week 7 set)"
+      ],
+      "activities": [
+        "Rule chart + examples",
+        "Edit & fix sheet (apply rules)",
+        "Silent-letter word sort & read",
+        "Tricky word practice: highlight the rule (Week 7 set)"
+      ],
+      "homework": [
+        "Soft/Hard c-g practice sheet",
+        "Silent-letter word list + 5 sentences",
+        "Tricky words Week 7: city, cycle, giant, gym, guess, guide, juice, edge, knee, write, thumb, sign"
+      ],
+      "mastery": "Applies soft/hard + j spellings + identifies silent letters (80%+) + reads Week 7 tricky set ✓"
+    },
+    {
+      "title": "Week 8: Schwa & reduced vowels (including -tion/-sion/-ture)",
+      "learns": [
+        "Schwa = unstressed vowel sound",
+        "Schwa in common endings: -tion/-sion/-ture/-age/-able (intro)",
+        "Spelling strategies: base word + chunking",
+        "Advanced tricky words (Week 8 set)"
+      ],
+      "activities": [
+        "Spot the schwa (mark weak vowels)",
+        "Chunking practice (break long words)",
+        "Dictation (10 schwa words)",
+        "Ending sort: -tion/-sion/-ture (Week 8 set)"
+      ],
+      "homework": [
+        "Schwa hunt: find 10 schwa words in reading",
+        "Short worksheet (mark schwa vowels)",
+        "Tricky words Week 8: action, station, fiction, mission, vision, measure, picture, nature, animal, family, second, chocolate"
+      ],
+      "mastery": "Marks schwa in words + reads schwa endings accurately + reads Week 8 tricky set ✓"
+    },
+    {
+      "title": "Week 9: Consonant+le + Doubling rules + suffix basics (-ing/-ed/-es)",
+      "learns": [
+        "Consonant+le syllable (ta-ble, bub-ble)",
+        "Doubling (rabbit) rule for adding suffixes",
+        "Suffix basics: -ing/-ed/-es (spelling changes)",
+        "Advanced tricky words (Week 9 set)"
+      ],
+      "activities": [
+        "Split & read (c+le words)",
+        "Add-suffix game",
+        "Dictation (10 mixed suffix words)",
+        "Tricky word build: base word → changed word (Week 9 set)"
+      ],
+      "homework": [
+        "c+le sort",
+        "Suffix add worksheet",
+        "Tricky words Week 9: little, middle, table, bottle, trouble, doubled, running, hopped, making, having, cried, carried"
+      ],
+      "mastery": "Decodes multisyllabic words + applies doubling when adding suffixes + reads Week 9 tricky set ✓"
+    },
+    {
+      "title": "Week 10: Morphology (prefixes/suffixes) + meaning helps reading",
+      "learns": [
+        "Prefixes: un-, re-, pre-, mis-, dis-",
+        "Suffixes: -ful/-less/-ment/-ness/-able",
+        "How meaning supports decoding + spelling",
+        "Advanced tricky words (Week 10 set)"
+      ],
+      "activities": [
+        "Build-a-word (prefix/root/suffix)",
+        "Morphology sort (meaning groups)",
+        "Write 6 sentences using new words",
+        "Tricky word meaning match (Week 10 set)"
+      ],
+      "homework": [
+        "Affix notebook: 5 new words/day for 3 days",
+        "Tricky words Week 10: unhappy, reread, preview, mistake, dishonest, careful, fearless, movement, kindness, readable, useless, hopeful"
+      ],
+      "mastery": "Explains 5 affixes + uses them correctly in sentences + reads Week 10 tricky set ✓"
+    },
+    {
+      "title": "Week 11: Multisyllabic strategies + fluency",
+      "learns": [
+        "Chunking + stress patterns (where to stress)",
+        "Phrasing + expression for meaning",
+        "Advanced tricky words (Week 11 set)"
+      ],
+      "activities": [
+        "Timed passages (150–300w)",
+        "Prosody practice (pause, emphasis)",
+        "Error-correction strategy (self-fix)",
+        "Fluency challenge: tricky words in a passage (Week 11 set)"
+      ],
+      "homework": [
+        "Daily 2-min reread of same passage (fluency)",
+        "Tricky words Week 11: important, interest, favorite, remember, probably, actually, immediately, usually, business, comfortable, vegetable, government"
+      ],
+      "mastery": "Fluent passage read + improved accuracy/time across 3 reads + reads Week 11 tricky set ✓"
+    },
+    {
+      "title": "Week 12: Review + Capstone (Read + Write with rubric)",
+      "learns": [
+        "Comprehensive review of patterns",
+        "Advanced tricky words (Week 12 capstone list)"
+      ],
+      "activities": [
+        "Capstone passage (150–300w) + comprehension (5 Qs)",
+        "Write a paragraph (8–10 sentences) using 8 target words",
+        "Tricky words review game (Weeks 1–11) + Week 12 list"
+      ],
+      "homework": [
+        "Capstone corrections + final clean copy",
+        "Tricky words Week 12 (Capstone list): because, their, there, friend, enough, could, should, world, know, write, picture, important"
+      ],
+      "mastery": "Reads 150–300w (95%+ accuracy) + answers 4/5 Qs + writes 8–10 sentences + uses 8 target tricky words ✓"
+    }
+  ],
+  "meta": {
+    "label": "Phonics – Advanced Patterns & Morphology",
+    "ages": "8–12",
+    "cefr": "A2–B1 (reading & spelling)",
+    "notes": "Advanced vowel teams, r-controlled patterns, diphthongs, soft/hard consonants, silent letters, schwa, syllable types, suffix rules, and prefixes/suffixes for decoding + spelling."
+  }
+},
+    "phonics-brush-up": {
+  "weeks": [
+    {
+      "title": "Week 1: Baseline Check + Personalized Plan",
+      "focus": "Find gaps fast + set a clear target",
+      "learns": [
+        "Quick diagnostic of sounds, blending, and reading stamina",
+        "Identify exactly what the child misses (sounds / blending / rules / fluency)",
+        "Personalized weekly goal (1–2 priorities only)"
+      ],
+      "activities": [
+        "Sound check: 20 mixed sounds (incl. sh/ch/th, ai/ee, ar/or)",
+        "Blending check: 10 CVC + 5 CCVC (stop, flag)",
+        "Reading check: 1 short decodable (accuracy + speed)",
+        "Spelling check: 8 words (CVC + 2 digraph + 2 long vowel)",
+        "Create the 'Focus Ladder' (Top 3 weak areas)"
+      ],
+      "homework": [
+        "2-minute daily sound review (flash/audio)",
+        "1 short decodable reread (same page for 3 days)"
+      ],
+      "mastery": "Baseline recorded + Focus Ladder created ✓"
+    },
+    {
+      "title": "Week 2: CVC Blending Refresh + Consonant Blends",
+      "focus": "CVC → CCVC/ CVCC (blends at start/end)",
+      "learns": [
+        "Slow → smooth blending (no guessing)",
+        "Segmenting to spell (stretch the word)",
+        "Common blends: st, sp, sk, sl, cl, bl, fl, gl, cr, fr, gr, tr",
+        "End blends: nd, nt, mp, ft, lk"
+      ],
+      "activities": [
+        "Tap-and-blend drill (10 CVC → 10 CCVC/CVCC)",
+        "Minimal pairs game (pin/pan, cap/cab)",
+        "Build-a-word tiles (change 1 sound at a time)",
+        "Quick dictation (8 words + 2 sentences)"
+      ],
+      "homework": [
+        "Daily 5-min blending (10 words)",
+        "Spell 5 words (say → tap → write)"
+      ],
+      "mastery": "Reads 20+ CVC/CCVC/CVCC with 90%+ accuracy ✓"
+    },
+    {
+      "title": "Week 3: Digraphs Fix-It Week",
+      "focus": "sh, ch, th, wh, qu (+ ng, nk if needed)",
+      "learns": [
+        "2 letters = 1 sound (digraph)",
+        "th can be voiced/unvoiced (simple exposure)",
+        "qu = /kw/",
+        "ng/nk endings (optional extension for stronger kids)"
+      ],
+      "activities": [
+        "Digraph detective (hunt in words + highlight)",
+        "Sort & read: sh/ch/th/wh/qu",
+        "Read a short digraph passage",
+        "Dictation (10 words) + 'fix the mistake' sheet"
+      ],
+      "homework": [
+        "Worksheet + 1-page reader",
+        "Make 5 sentences using digraph words (choose from word bank)"
+      ],
+      "mastery": "Identifies 5 digraphs + reads them in a passage ✓"
+    },
+    {
+      "title": "Week 4: Magic-e Brush Up (Split Digraphs)",
+      "focus": "a_e, i_e, o_e, u_e (and e_e if needed)",
+      "learns": [
+        "Magic-e changes short vowel to long vowel",
+        "Reads minimal pairs without confusion (cap/cape)",
+        "Spells magic-e words (made vs mad)"
+      ],
+      "activities": [
+        "Flip-cards: short → long (10 pairs)",
+        "Minimal pair sorting + speed read",
+        "Sentence read + underline magic-e",
+        "Dictation (8 words + 2 sentences)"
+      ],
+      "homework": [
+        "Pairs list (10 pairs)",
+        "Mini reader page (magic-e)"
+      ],
+      "mastery": "Reads minimal pairs with 90%+ accuracy + spells 6/8 correctly ✓"
+    },
+    {
+      "title": "Week 5: Vowel Teams (ai/ay, ee/ea) + Confusions",
+      "focus": "Choose the right team in real reading",
+      "learns": [
+        "ai usually in middle; ay often at end (simple rule)",
+        "ee vs ea (common words practice)",
+        "Stop guessing: scan for vowel team first"
+      ],
+      "activities": [
+        "Word ladders (rain→train; see→tree)",
+        "Team sort (ai/ay + ee/ea)",
+        "Phrase cards (read & act)",
+        "Dictation (10 team words) + 1 short paragraph read"
+      ],
+      "homework": [
+        "ai/ay worksheet + ee/ea worksheet (short)",
+        "Read 1 paragraph and circle vowel teams"
+      ],
+      "mastery": "Reads vowel-team words in context (85%+) ✓"
+    },
+    {
+      "title": "Week 6: R-Controlled Rescue (Bossy R)",
+      "focus": "ar/or + er/ir/ur (and quick review of confusion sets)",
+      "learns": [
+        "R changes the vowel sound",
+        "er/ir/ur often sound similar (spelling exposure)",
+        "Common tricky set practice: her/here, for/four (exposure)"
+      ],
+      "activities": [
+        "Sort & read (ar/or/er/ir/ur)",
+        "Timed read: short r-controlled passage",
+        "Dictation (10 words) + 2 sentences",
+        "Picture match: choose correct r-word"
+      ],
+      "homework": [
+        "r-controlled worksheet",
+        "Read 1 page and underline r-controlled"
+      ],
+      "mastery": "Sorts r-controlled accurately + reads passage with 90%+ accuracy ✓"
+    },
+    {
+      "title": "Week 7: Multisyllabic On-Ramp (2-Syllable Words)",
+      "focus": "Chunk → read (no fear of big words)",
+      "learns": [
+        "Syllable basics: closed/open/magic-e/consonant+le (intro)",
+        "Split 2-syllable words and read smoothly",
+        "Simple suffixes: -s, -es, -ing, -ed (intro)"
+      ],
+      "activities": [
+        "Chunk & read: 12 two-syllable words",
+        "Syllable type spot (quick marking)",
+        "Add suffix game (play→playing, jump→jumped)",
+        "Short passage read (2-syllable focus)"
+      ],
+      "homework": [
+        "2-syllable list (10): split with a line and read",
+        "Suffix mini practice (8 words)"
+      ],
+      "mastery": "Reads 10/12 two-syllable words correctly + applies suffixes ✓"
+    },
+    {
+      "title": "Week 8: Review + Fluency + Tricky Words (Bridge Set)",
+      "focus": "Lock everything + build confidence",
+      "learns": [
+        "Spiral review of weak areas (from Week 1 ladder)",
+        "Fluency routine: accuracy → smoothness → expression",
+        "Tricky words (bridge set) with spaced practice"
+      ],
+      "activities": [
+        "Game Day: mixed skills stations (blends, digraphs, magic-e, teams, r-controlled)",
+        "Fluency: repeated reading (same passage 3 times)",
+        "Tricky words: read → clap syllables (if long) → use in sentence",
+        "Mini assessment + celebrate growth"
+      ],
+      "homework": [
+        "Bridge tricky words (15) spaced practice: once daily for 5 days",
+        "Personal reader 20–60 words (reread x3 across the week)"
+      ],
+      "mastery": "Personal reader 20–60 words with 95%+ accuracy + improved fluency ✓"
+    }
+  ],
+  "meta": {
+    "label": "Phonics – Brush Up (Bridge & Fluency)",
+    "ages": "6–9",
+    "cefr": "A1–A2 (consolidation)",
+    "notes": "A fast gap-filling course to rebuild confidence and fluency: CVC→blends, digraphs, magic-e, vowel teams, r-controlled vowels, and a gentle on-ramp to 2-syllable decoding with measurable weekly mastery."
+  }
+},
     "grammar-essentials": {
       "weeks": [
         {

@@ -32,6 +32,7 @@ function inferTabFromCourseSlug(courseSlug: string): ValidTab {
 const COURSE_SLUG_ALIASES: Record<string, string> = {
   'phonics-foundation': 'phonics-early',
   'phonics-early': 'phonics-foundation',
+  'phonics-foundations': 'phonics-brush-up', // backward compat: old name → new key
 };
 
 function safeTab(value: string | null): Tab {
@@ -266,7 +267,7 @@ function safeCourse(value: string | null): string | null {
                   </ul>
                 </div>
                 <div>
-                  <div className="font-semibold">PHONICS FOUNDATIONS (Ages 5-10, 8-12 weeks)</div>
+                  <div className="font-semibold">PHONICS BRUSH-UP (Ages 5-10, 8-12 weeks)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Customized gap-filling program</li>
                     <li>Targets specific phonics weaknesses</li>
@@ -286,9 +287,9 @@ function safeCourse(value: string | null): string | null {
               <WeekAccordion key="phonics-advanced" items={getWeeks('phonics-advanced')} />
             </div>
 
-            <div id="course-phonics-foundations" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-foundations' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Foundations (Brush-Up) (8–12 weeks)</h3>
-              <WeekAccordion key="phonics-foundations" items={getWeeks('phonics-foundations')} />
+            <div id="course-phonics-brush-up" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-brush-up' ? 'ring-2 ring-primary-300' : ''}`}>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Brush-Up (8–12 weeks)</h3>
+              <WeekAccordion key="phonics-brush-up" items={getWeeks('phonics-brush-up')} />
             </div>
           </div>
         )}

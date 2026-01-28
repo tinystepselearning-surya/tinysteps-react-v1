@@ -41,7 +41,7 @@ const LEVEL_OPTIONS = ["all", "Foundation", "Basic", "Intermediate", "Advanced",
 const COURSE_ORDER = [
   "phonics foundation",
   "phonics advanced",
-  "phonics foundations (brush-up)",
+  "phonics brush-up",
   "grammar essentials",
   "grammar mastery",
   "public speaking foundations",

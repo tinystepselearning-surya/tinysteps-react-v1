@@ -56,9 +56,9 @@ export const catalogs: CourseCatalogItem[] = [
     ]
   },
   {
-    slug: 'phonics-foundations',
+    slug: 'phonics-brush-up',
     icon: '🧩',
-    name: 'Phonics Foundations (Brush‑Up)',
+    name: 'Phonics Brush-Up',
     track: 'phonics',
     age: 'Ages 5–10',
     duration: '8–12 weeks',
