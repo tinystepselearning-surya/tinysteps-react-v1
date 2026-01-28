@@ -2,6 +2,7 @@
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect } from "react";
 import { applySeo } from "../lib/seo";
+import { organizationSchema, localBusinessSchema } from "../lib/schemas";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -149,17 +150,21 @@ export default function HomePage() {
       canonicalPath: "/",
       ogType: "website",
       jsonLd: [
-        {
-          '@context': 'https://schema.org',
-          '@type': 'Organization',
-          name: 'Tiny Steps Learning',
-          url: 'https://tinystepslearning.com',
-        },
+        organizationSchema,
+        localBusinessSchema,
         {
           '@context': 'https://schema.org',
           '@type': 'WebSite',
           name: 'Tiny Steps Learning',
           url: 'https://tinystepslearning.com',
+          potentialAction: {
+            '@type': 'SearchAction',
+            target: {
+              '@type': 'EntryPoint',
+              urlTemplate: 'https://tinystepslearning.com/courses?q={search_term_string}'
+            },
+            'query-input': 'required name=search_term_string'
+          }
         },
       ],
     });
@@ -190,6 +195,7 @@ export default function HomePage() {
                 alt="Christmas banner"
                 className="absolute inset-0 h-full w-full object-cover"
                 draggable={false}
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30" />
 

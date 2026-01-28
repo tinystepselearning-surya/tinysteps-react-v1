@@ -46,6 +46,12 @@ const faqSchema = {
     acceptedAnswer: {
       '@type': 'Answer',
       text: item.answer
+    },
+    // Speakable for voice assistants
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['.faq-question', '.faq-answer'],
+      xpath: ['//h3[@class="faq-question"]', '//p[@class="faq-answer"]'],
     }
   }))
 };

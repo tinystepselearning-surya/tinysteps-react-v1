@@ -114,6 +114,16 @@ function buildMetaDescription(src: any) {
       },
     };
 
+    // Speakable schema for voice search + assistant integrations
+    const speakableText = buildMetaDescription(metaSource) || metaSource.title || '';
+    if (speakableText) {
+      obj.speakable = {
+        '@type': 'SpeakableSpecification',
+        cssSelector: ['article h1', 'article > p:first-of-type'],
+        xpath: ['/html/body/article/h1', '/html/body/article/p[1]'],
+      };
+    }
+
     return obj;
   }, [post, metaSource]);
 
@@ -161,7 +171,14 @@ function buildMetaDescription(src: any) {
         <div className="text-xs text-primary-600">{metaSource.category || 'Parent Tips'}</div>
         <h1 className="mt-1 text-3xl font-bold text-gray-900">{metaSource.title}</h1>
         <div className="mt-1 text-sm text-gray-600">by {metaSource.author || 'Tiny Steps'} • {metaSource.readTime || '5 min'} • {formatBlogDate(metaSource.date)}</div>
-        {metaSource.hero && <div className="mt-4 aspect-video w-full rounded-xl bg-slate-100" style={{backgroundImage: `url(${metaSource.hero})`, backgroundSize: 'cover'}} />}
+        {metaSource.hero && (
+          <img 
+            src={metaSource.hero} 
+            alt={metaSource.title}
+            className="mt-4 w-full rounded-xl bg-slate-100 object-cover aspect-video"
+            loading="lazy"
+          />
+        )}
 
         <article className="prose prose-slate mt-6 max-w-none">
           {post && (() => {
