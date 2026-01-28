@@ -17,13 +17,15 @@ interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 
   priority?: boolean;
   sizes?: string;
   srcSet?: string;
+  webpSrc?: string;
 }
 
 /**
  * OptimizedImage component for better Core Web Vitals
  * 
  * @param priority - If true, preload image for LCP optimization (use only for above-fold images)
- * @param src - Image source URL
+ * @param src - Image source URL (JPG fallback)
+ * @param webpSrc - WebP version URL (optional, for better compression)
  * @param alt - Alt text (required for accessibility)
  * @param width - Image natural width (helps prevent layout shift)
  * @param height - Image natural height (helps prevent layout shift)
@@ -38,6 +40,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   height,
   sizes,
   srcSet,
+  webpSrc,
   className = '',
   ...props
 }) => {
@@ -55,18 +58,37 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         />
       )}
 
-      <img
-        src={src}
-        alt={alt}
-        className={className}
-        loading={priority ? 'eager' : 'lazy'}
-        fetchPriority={priority ? 'high' : 'auto'}
-        width={width}
-        height={height}
-        sizes={sizes}
-        srcSet={srcSet}
-        {...props}
-      />
+      {/* Picture element with WebP support */}
+      {webpSrc ? (
+        <picture>
+          <source srcSet={webpSrc} type="image/webp" sizes={sizes} />
+          <img
+            src={src}
+            alt={alt}
+            className={className}
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            width={width}
+            height={height}
+            sizes={sizes}
+            srcSet={srcSet}
+            {...props}
+          />
+        </picture>
+      ) : (
+        <img
+          src={src}
+          alt={alt}
+          className={className}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
+          width={width}
+          height={height}
+          sizes={sizes}
+          srcSet={srcSet}
+          {...props}
+        />
+      )}
     </>
   );
 };
