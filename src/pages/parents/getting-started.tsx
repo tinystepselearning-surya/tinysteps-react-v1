@@ -12,6 +12,12 @@ const GettingStarted: React.FC = () => {
     <article className="mx-auto max-w-3xl px-6 py-8">
       <h1 className="text-2xl font-bold">Getting started with Tiny Steps</h1>
 
+      <div className="mt-4 rounded-lg bg-green-50 p-4 border border-green-200">
+        <p className="text-sm font-medium text-green-900">
+          Every child starts with a free 35-minute assessment. We evaluate reading, letter-sound knowledge, and speaking confidence to recommend the perfect learning path.
+        </p>
+      </div>
+
       <p className="mt-4">Start with one free assessment class. Book a 35‑minute trial so we can recommend the right level.</p>
       <p className="mt-2 text-sm text-gray-700">We assess reading, letter-sound knowledge and speaking confidence quickly.</p>
 
@@ -28,9 +34,31 @@ const GettingStarted: React.FC = () => {
         <li>Comparing to other children instead of tracking progress.</li>
       </ul>
 
-      <div className="mt-6">
-        <Link to="/courses" className="inline-block rounded bg-primary-600 px-4 py-2 text-white">Browse courses</Link>
-        <Link to="/curriculum" className="ml-3 text-primary-600">View curriculum</Link>
+      <div className="mt-8 flex flex-col gap-3">
+        <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+          Book Your Free Assessment →
+        </Link>
+        <Link to="/parents/choosing-course" className="text-primary-600 text-sm font-medium hover:underline">
+          Not sure which course? See course comparison
+        </Link>
+      </div>
+
+      <div className="mt-10 border-t pt-8">
+        <h3 className="text-lg font-semibold text-gray-900">Why start with an assessment?</h3>
+        <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+            <span><strong>Personalized plan:</strong> Teachers identify current level and learning pace to match your child's unique needs.</span>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+            <span><strong>No pressure:</strong> Completely free—no obligation to enroll. Use results to make an informed choice.</span>
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+            <span><strong>Quick feedback:</strong> Receive recommendations and curriculum details within 12 hours.</span>
+          </div>
+        </div>
       </div>
     </article>
   );

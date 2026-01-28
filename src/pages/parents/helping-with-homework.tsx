@@ -12,6 +12,12 @@ const HelpingWithHomework: React.FC = () => {
   <article className="mx-auto max-w-3xl px-6 py-8">
     <h1 className="text-2xl font-bold">Helping with homework</h1>
 
+    <div className="mt-4 rounded-lg bg-indigo-50 p-4 border border-indigo-200">
+      <p className="text-sm font-medium text-indigo-900">
+        Quality beats quantity. A focused 5–10 minute practice session daily is more effective than longer, inconsistent sessions. Use the weekly goal your teacher shares.
+      </p>
+    </div>
+
     <p className="mt-4">Keep practice short and playful: 5–10 minutes of focused work after class is most effective.</p>
     <p className="mt-2 text-sm text-gray-700">Consistency beats duration for young learners.</p>
 
@@ -28,9 +34,31 @@ const HelpingWithHomework: React.FC = () => {
       <li>Over-correcting every mistake instead of highlighting one focus.</li>
     </ul>
 
-    <div className="mt-6">
-      <Link to="/blog" className="inline-block rounded bg-primary-600 px-4 py-2 text-white">Read practice tips</Link>
-      <Link to="/faq" className="ml-3 text-primary-600">Homework FAQ</Link>
+    <div className="mt-8 flex flex-col gap-3">
+      <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Enroll in a Tiny Steps Course →
+      </Link>
+      <Link to="/parents/phonics-mission" className="text-primary-600 text-sm font-medium hover:underline">
+        See our 5-minute daily practice routine
+      </Link>
+    </div>
+
+    <div className="mt-10 border-t pt-8">
+      <h3 className="text-lg font-semibold text-gray-900">Creating the right environment</h3>
+      <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Set the right tone:</strong> Position yourself as a supportive coach, not a teacher. "Let's practice together" feels safer than "Do this correctly."</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Pick the right time:</strong> Practice when your child is alert and calm—avoid right after school if they're tired.</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Focus on one goal:</strong> Ask the teacher: "What's the one thing I should focus on this week?" Narrow scope builds confidence.</span>
+        </div>
+      </div>
     </div>
   </article>
 );

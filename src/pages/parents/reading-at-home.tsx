@@ -12,6 +12,12 @@ const ReadingAtHome: React.FC = () => {
   <article className="mx-auto max-w-3xl px-6 py-8">
     <h1 className="text-2xl font-bold">Reading at home — simple routines</h1>
 
+    <div className="mt-4 rounded-lg bg-orange-50 p-4 border border-orange-200">
+      <p className="text-sm font-medium text-orange-900">
+        Daily reading builds fluency and confidence. A 10–15 minute routine using decodable texts works best for ages 3–9. Make it warm, not a test.
+      </p>
+    </div>
+
     <p className="mt-4">Read together daily for 10–15 minutes using decodable texts and short questions.</p>
     <p className="mt-2 text-sm text-gray-700">Make reading warm and conversational, not a quiz.</p>
 
@@ -28,9 +34,31 @@ const ReadingAtHome: React.FC = () => {
       <li>Using long texts that tire younger readers quickly.</li>
     </ul>
 
-    <div className="mt-6">
-      <Link to="/blog" className="inline-block rounded bg-primary-600 px-4 py-2 text-white">Reading tips</Link>
-      <Link to="/curriculum" className="ml-3 text-primary-600">See curriculum</Link>
+    <div className="mt-8 flex flex-col gap-3">
+      <Link to="/curriculum" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        View Decodable Reading Path →
+      </Link>
+      <Link to="/parents/phonics-mission" className="text-primary-600 text-sm font-medium hover:underline">
+        Combine with daily phonics practice
+      </Link>
+    </div>
+
+    <div className="mt-10 border-t pt-8">
+      <h3 className="text-lg font-semibold text-gray-900">Tips for success</h3>
+      <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Pick the right level:</strong> Books should use sounds your child has already learned in Tiny Steps lessons.</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Ask open questions:</strong> Instead of "What's the main idea?" ask "What happens next?" or "How does the character feel?"</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Celebrate small wins:</strong> Point out specific strengths: "You blended that word so smoothly!" builds intrinsic motivation.</span>
+        </div>
+      </div>
     </div>
   </article>
 );

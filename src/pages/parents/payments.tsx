@@ -12,6 +12,12 @@ const Payments: React.FC = () => {
   <article className="mx-auto max-w-3xl px-6 py-8">
     <h1 className="text-2xl font-bold">Payments & invoices</h1>
 
+    <div className="mt-4 rounded-lg bg-teal-50 p-4 border border-teal-200">
+      <p className="text-sm font-medium text-teal-900">
+        All transactions are secure and transparent. We provide clear invoices, flexible payment options, and fast support for any billing questions.
+      </p>
+    </div>
+
     <p className="mt-4">Secure payments and clear invoices—check your parent dashboard for receipts.</p>
     <p className="mt-2 text-sm text-gray-700">Contact support for billing questions or payment plans.</p>
 
@@ -28,9 +34,31 @@ const Payments: React.FC = () => {
       <li>Assuming a course auto-renews—check your plan.</li>
     </ul>
 
-    <div className="mt-6">
-      <Link to="/parent/payments" className="inline-block rounded bg-primary-600 px-4 py-2 text-white">Open payments</Link>
-      <Link to="/faq" className="ml-3 text-primary-600">Billing FAQ</Link>
+    <div className="mt-8 flex flex-col gap-3">
+      <Link to="/parent/payments" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Open Payments Dashboard →
+      </Link>
+      <a href="https://wa.me/919618398383" className="text-primary-600 text-sm font-medium hover:underline">
+        WhatsApp us for payment plan options
+      </a>
+    </div>
+
+    <div className="mt-10 border-t pt-8">
+      <h3 className="text-lg font-semibold text-gray-900">Payment details</h3>
+      <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Invoices:</strong> Each transaction generates an invoice accessible from your parent dashboard. Download anytime for tax or personal records.</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Payment plans:</strong> Contact our team via WhatsApp or form to discuss monthly payment options, discounts, or refund eligibility.</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Course validity:</strong> Check your dashboard for course duration. Some plans auto-renew, others require manual renewal—verify your plan type.</span>
+        </div>
+      </div>
     </div>
   </article>
 );

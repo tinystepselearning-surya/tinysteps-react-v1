@@ -5,6 +5,8 @@ import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import type { FC } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
+import AboutAuthor from '../components/AboutAuthor';
+import ParentsAlsoAsk from '../components/ParentsAlsoAsk';
 // Meta removed — use applySeo as single source of truth
 
 const BlogPostPage: FC = () => {
@@ -205,6 +207,9 @@ function buildMetaDescription(src: any) {
           })()}
           {MdxComp && <MdxComp />}
         </article>
+
+        {/* About the Author section */}
+        <AboutAuthor />
 
         {/* Parents Help Hub cross-link block (small, minimal) */}
         <section className="mt-10 px-0">

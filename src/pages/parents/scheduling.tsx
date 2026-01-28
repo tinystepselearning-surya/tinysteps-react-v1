@@ -12,6 +12,12 @@ const Scheduling: React.FC = () => {
   <article className="mx-auto max-w-3xl px-6 py-8">
     <h1 className="text-2xl font-bold">Scheduling & attendance</h1>
 
+    <div className="mt-4 rounded-lg bg-cyan-50 p-4 border border-cyan-200">
+      <p className="text-sm font-medium text-cyan-900">
+        Steady attendance (one class per week + daily practice) builds momentum. We offer flexible slots and make-up options for planned absences.
+      </p>
+    </div>
+
     <p className="mt-4">Consistent attendance matters—aim for at least one class per week and short daily practice.</p>
     <p className="mt-2 text-sm text-gray-700">We provide flexible slots; notify us for planned absences.</p>
 
@@ -28,9 +34,31 @@ const Scheduling: React.FC = () => {
       <li>Skipping short home practice between classes.</li>
     </ul>
 
-    <div className="mt-6">
-      <Link to="/courses" className="inline-block rounded bg-primary-600 px-4 py-2 text-white">Manage classes</Link>
-      <Link to="/faq" className="ml-3 text-primary-600">Scheduling FAQ</Link>
+    <div className="mt-8 flex flex-col gap-3">
+      <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Browse & Schedule Classes →
+      </Link>
+      <Link to="/parents/phonics-mission" className="text-primary-600 text-sm font-medium hover:underline">
+        Set up daily practice routines between classes
+      </Link>
+    </div>
+
+    <div className="mt-10 border-t pt-8">
+      <h3 className="text-lg font-semibold text-gray-900">Tips for consistency</h3>
+      <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Choose a recurring slot:</strong> Pick the same day and time each week. Your child's body clock and teacher's prep schedule both benefit from predictability.</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Pre-class warm-up:</strong> 2–3 minutes before class, do a quick phonics review. Fresh recall helps your child engage faster in lessons.</span>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
+          <span><strong>Notify early for changes:</strong> Message support 48 hours before planned absences when possible. This helps teachers adjust pacing and notes.</span>
+        </div>
+      </div>
     </div>
   </article>
 );
