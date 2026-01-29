@@ -2,36 +2,34 @@
  * OptimizedImage Component
  * Handles:
  * - Lazy loading for below-fold images
- * - Responsive images with srcset
- * - Preload for critical LCP images
- * - WebP format with fallback
+ * - Responsive images with srcSet + sizes
+ * - Preload for critical LCP images (in <head>, not in body)
+ * - WebP via <picture> with JPG/PNG fallback
  */
 
-import React, { ImgHTMLAttributes } from 'react';
+import React, { ImgHTMLAttributes, useEffect, useMemo } from "react";
 
-interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 'src'> {
-  src: string;
+type FetchPriority = "high" | "low" | "auto";
+
+interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt"> {
+  src: string; // fallback (jpg/png/etc)
   alt: string;
+
   width?: number;
   height?: number;
+
+  /** If true, we preload + eager-load (use only for above-the-fold / LCP candidate) */
   priority?: boolean;
+
+  /** Responsive */
   sizes?: string;
   srcSet?: string;
+
+  /** WebP support (optional) */
   webpSrc?: string;
+  webpSrcSet?: string;
 }
 
-/**
- * OptimizedImage component for better Core Web Vitals
- * 
- * @param priority - If true, preload image for LCP optimization (use only for above-fold images)
- * @param src - Image source URL (JPG fallback)
- * @param webpSrc - WebP version URL (optional, for better compression)
- * @param alt - Alt text (required for accessibility)
- * @param width - Image natural width (helps prevent layout shift)
- * @param height - Image natural height (helps prevent layout shift)
- * @param sizes - Responsive size descriptor
- * @param srcSet - Responsive image set
- */
 export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
   alt,
@@ -41,56 +39,92 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   sizes,
   srcSet,
   webpSrc,
-  className = '',
-  ...props
+  webpSrcSet,
+  className = "",
+  ...rest
 }) => {
-  return (
-    <>
-      {/* Preload link for critical LCP images */}
-      {priority && (
-        <link
-          rel="preload"
-          as="image"
-          href={src}
-          fetchPriority="high"
-          imagesrcset={srcSet}
-          imagesizes={sizes}
-        />
-      )}
+  const preloadHref = webpSrc ?? src;
 
-      {/* Picture element with WebP support */}
-      {webpSrc ? (
-        <picture>
-          <source srcSet={webpSrc} type="image/webp" sizes={sizes} />
-          <img
-            src={src}
-            alt={alt}
-            className={className}
-            loading={priority ? 'eager' : 'lazy'}
-            fetchPriority={priority ? 'high' : 'auto'}
-            width={width}
-            height={height}
-            sizes={sizes}
-            srcSet={srcSet}
-            {...props}
-          />
-        </picture>
-      ) : (
-        <img
-          src={src}
-          alt={alt}
-          className={className}
-          loading={priority ? 'eager' : 'lazy'}
-          fetchPriority={priority ? 'high' : 'auto'}
-          width={width}
-          height={height}
+  const preloadKey = useMemo(() => {
+    // stable key to avoid duplicate <link> tags in <head>
+    const s1 = preloadHref || "";
+    const s2 = (webpSrcSet ?? srcSet ?? "").trim();
+    const s3 = (sizes ?? "").trim();
+    return `oi:${s1}::${s2}::${s3}`;
+  }, [preloadHref, webpSrcSet, srcSet, sizes]);
+
+  // Preload in <head> (avoids React typing issues + correct HTML placement)
+  useEffect(() => {
+    if (!priority) return;
+
+    const head = document.head || document.getElementsByTagName("head")[0];
+    if (!head) return;
+
+    // Prevent duplicates
+    const existing = head.querySelector<HTMLLinkElement>(`link[data-optimized-preload="${preloadKey}"]`);
+    if (existing) return;
+
+    const link = document.createElement("link");
+    link.setAttribute("rel", "preload");
+    link.setAttribute("as", "image");
+    link.setAttribute("href", preloadHref);
+    link.setAttribute("data-optimized-preload", preloadKey);
+
+    // Hint browser which format is likely used
+    if (webpSrc) link.setAttribute("type", "image/webp");
+
+    // NOTE: these must be lowercase attribute names in HTML
+    const effectiveSrcSet = (webpSrcSet ?? "").trim() || (srcSet ?? "").trim();
+    if (effectiveSrcSet) link.setAttribute("imagesrcset", effectiveSrcSet);
+    if (sizes) link.setAttribute("imagesizes", sizes);
+
+    // fetchpriority is supported in Chromium-based browsers
+    link.setAttribute("fetchpriority", "high");
+
+    head.appendChild(link);
+
+    return () => {
+      // Optional cleanup (keeps head tidy on route changes)
+      try {
+        head.removeChild(link);
+      } catch {
+        // ignore
+      }
+    };
+  }, [priority, preloadHref, preloadKey, webpSrc, webpSrcSet, srcSet, sizes]);
+
+  const loading: "eager" | "lazy" = priority ? "eager" : "lazy";
+  const fetchPriority: FetchPriority = priority ? "high" : "auto";
+
+  const imgCommonProps = {
+    ...rest,
+    src,
+    alt,
+    className,
+    width,
+    height,
+    sizes,
+    srcSet,
+    loading,
+    decoding: "async" as const,
+    // fetchPriority is not typed in some React/@types versions, so cast safely.
+    ...( { fetchPriority } as any ),
+  };
+
+  if (webpSrc || webpSrcSet) {
+    return (
+      <picture>
+        <source
+          type="image/webp"
           sizes={sizes}
-          srcSet={srcSet}
-          {...props}
+          srcSet={(webpSrcSet ?? webpSrc ?? "").trim() || undefined}
         />
-      )}
-    </>
-  );
+        <img {...imgCommonProps} />
+      </picture>
+    );
+  }
+
+  return <img {...imgCommonProps} />;
 };
 
 export default OptimizedImage;
