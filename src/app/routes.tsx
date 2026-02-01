@@ -26,6 +26,7 @@ const SpeakingPage = lazy(() => import('../pages/speaking'));
 const SummerCamp2026Page = lazy(() => import('../pages/public/SummerCamp2026Page'));
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
+const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
 const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
@@ -133,6 +134,7 @@ const router = createBrowserRouter(
         { path: 'summer-english-camp-2026', element: <SummerCamp2026Page /> },
         { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
+        { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
