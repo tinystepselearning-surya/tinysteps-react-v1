@@ -23,6 +23,7 @@ const ForSchoolsPage = lazy(() => import('../pages/ForSchoolsPage'));
 const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
+const SummerCamp2026Page = lazy(() => import('../pages/public/SummerCamp2026Page'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
 const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
@@ -127,6 +128,7 @@ const router = createBrowserRouter(
         { path: 'parents/common-mistakes', element: <ParentCommonMistakes /> },
         { path: 'why-us', element: <Navigate to="/why-tiny-steps" replace /> },
         { path: 'faq', element: <FAQPage /> },
+        { path: 'summer-english-camp-2026', element: <SummerCamp2026Page /> },
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
