@@ -27,6 +27,23 @@ const items: FAQItem[] = [
   { id: 'q18', category: 'speaking', question: 'Nervous during presentations—any tips?', answer: 'Practice 5+ times, know content, breathe (3 deep breaths), focus on 1 friendly face. Our capstones start low‑pressure with teacher + parent before larger settings.' },
   { id: 'q19', category: 'online', question: 'Is online learning as good as offline?', answer: 'For English, 1:1 online often outperforms batch offline: personalization, recordings, flexibility, global teachers. Offline offers socialization. For serious skill gains, 1:1 online wins.' },
   { id: 'q20', category: 'online', question: 'How do I ensure my child is actually learning online?', answer: 'Demand transparency: weekly reports, recordings, home tasks, monthly calls, mastery bands. Tiny Steps provides all five so you can verify learning.' },
+  { id: 'q21', category: 'summer', question: 'What is Summer English Camp 2026?', answer: 'An intensive 7-week live summer program (June–July 2026) combining phonics, grammar, and public speaking. 1:1 instruction with daily practice, games, and a capstone performance video. Designed for ages 5–12 to build English foundations fast.' },
+  { id: 'q22', category: 'summer', question: 'What ages is the camp for?', answer: 'Ages 5–12. We split into cohorts: Foundation (5–7), Intermediate (7–10), Advanced (10–12). Each learns at their level.' },
+  { id: 'q23', category: 'summer', question: 'What will my child learn in the summer camp?', answer: 'Phonics: letter sounds to fluent reading. Grammar: sentence structure, punctuation, parts of speech. Public Speaking: confidence, clarity, storytelling. Plus daily games, drills, and progress videos.' },
+  { id: 'q24', category: 'summer', question: 'Is summer camp 1:1 or group?', answer: 'Primarily 1:1 live classes for personalization. Small group batches may open for specific cohorts on request. Check <a href="/summer-english-camp-2026" class="text-tiny-green-600">camp details page</a> for latest options.' },
+  { id: 'q25', category: 'summer', question: 'When is the camp and what are the fees?', answer: 'Camp runs June 1–July 20, 2026. Exact dates, fees, and schedule will be announced soon. <a href="/summer-english-camp-2026" class="text-tiny-green-600">Visit the camp page</a> or <a href="/contact" class="text-tiny-blue-600">contact us</a> for early-bird updates.' },
+  { id: 'q26', category: 'summer', question: 'How do I enroll or book an assessment for summer camp?', answer: 'Fill out the <a href="/contact" class="text-tiny-blue-600">contact form</a> with your child\'s age and English level. We\'ll send a free assessment link and camp details within 12 hours.' },
+  { id: 'q27', category: 'pricing', question: 'What class packages do you offer?', answer: 'Flexible packages: 1, 4, 8, 12, or 24 classes. Buy as you go (per-class rate) or subscribe for longer commitment (better rate). All include weekly progress reports. See <a href="/pricing" class="text-tiny-green-600">pricing page</a> for details.' },
+  { id: 'q28', category: 'pricing', question: 'Do you offer a free trial or assessment?', answer: 'Yes. Every child gets a free 20-minute assessment where our mentor evaluates English level, learning style, and goals. No obligation or credit card needed.' },
+  { id: 'q29', category: 'pricing', question: 'What payment methods do you accept?', answer: 'Bank transfer (manual), UPI, and automated subscription (autopay). All payments are secure and receipted. Invoices sent automatically after each transaction.' },
+  { id: 'q30', category: 'pricing', question: 'Do you provide invoices and receipts?', answer: 'Yes. Invoices and GST receipts sent via email after every payment. Keep them for records or reimbursement.' },
+  { id: 'q31', category: 'pricing', question: 'What if I need to reschedule or cancel?', answer: 'Reschedule anytime with 24-hour notice via WhatsApp or dashboard. Cancellation policy: refund unused classes if cancelled 7+ days before class date. Specific terms vary by package—check your agreement.' },
+  { id: 'q32', category: 'pricing', question: 'Can I pause my package during travel or exams?', answer: 'Yes, you can pause for up to 30 days per calendar year. Classes don\'t expire during pause. Email support@tinystepslearning.com to request.' },
+  { id: 'q33', category: 'timings', question: 'Are classes available in Hyderabad?', answer: 'Yes! Our classes are fully online, so they\'re available in Hyderabad and anywhere else in India or globally. You just need internet and a device.' },
+  { id: 'q34', category: 'timings', question: 'Do you have weekend batches?', answer: 'Yes. Weekend slots fill up fast. Book early for Saturday/Sunday preferences. <a href="/contact" class="text-tiny-blue-600">Contact us</a> to check current availability.' },
+  { id: 'q35', category: 'timings', question: 'Do you offer evening or early-morning slots for international parents?', answer: 'We offer slots across time zones from 6 AM to 9 PM IST. For UK/US parents, we have early morning or late evening IST options. <a href="/contact" class="text-tiny-blue-600">Contact us</a> for the latest schedule.' },
+  { id: 'q36', category: 'timings', question: 'What platform do you use for online classes?', answer: 'We use Zoom for live sessions. No app download needed; join via browser link. Meetings are secure and recorded (optional) for reference.' },
+  { id: 'q37', category: 'timings', question: 'Do parents need to sit with the child during class?', answer: 'Ages 3–5: Yes, recommend initial presence for technical support. Ages 6+: Not required, but optional. Some parents observe to reinforce at home; others step away. Your choice. We\'ll advise during the assessment.' },
 ];
 
 const categories = [
@@ -34,7 +51,10 @@ const categories = [
   { id: 'phonics', label: 'Phonics' },
   { id: 'grammar', label: 'Grammar' },
   { id: 'speaking', label: 'Public Speaking' },
-  { id: 'online', label: 'Online Learning' }
+  { id: 'online', label: 'Online Learning' },
+  { id: 'summer', label: 'Summer Camp 2026' },
+  { id: 'pricing', label: 'Pricing & Payments' },
+  { id: 'timings', label: 'Hyderabad & Timings' }
 ];
 
 const faqSchema = {
