@@ -133,10 +133,235 @@ async function discoverBlogRoutes(page) {
   return list;
 }
 
+/**
+ * SEO Registry matching src/lib/seo.ts ROUTE_SEO_REGISTRY
+ * Maps route pathname to SEO metadata for build-time injection into HTML <head>
+ */
+const ROUTE_SEO_CONFIG = {
+  '/': {
+    title: 'Tiny Steps Learning | 1:1 Online English Classes for Kids',
+    description: 'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class.',
+    canonicalPath: '/',
+    robots: 'index, follow',
+  },
+  '/courses': {
+    title: 'English Courses for Kids | Tiny Steps Learning',
+    description: 'Browse our range of 1:1 online English courses for kids ages 3–12. Phonics, grammar, public speaking, and more. Customized to each child\'s pace and learning style.',
+    canonicalPath: '/courses',
+    robots: 'index, follow',
+  },
+  '/curriculum': {
+    title: 'IB-Aligned English Curriculum | Tiny Steps Learning',
+    description: 'Explore our comprehensive, IB-aligned English curriculum for young learners. Phonics mastery, grammar fundamentals, and communication skills—all designed by education experts.',
+    canonicalPath: '/curriculum',
+    robots: 'index, follow',
+  },
+  '/phonics': {
+    title: 'Online Phonics Classes for Kids | Tiny Steps Learning',
+    description: 'Personalized 1:1 online phonics classes for kids ages 3–6. Master letter sounds, blending, and early reading with expert live mentors and AI practice games.',
+    canonicalPath: '/phonics',
+    robots: 'index, follow',
+  },
+  '/grammar': {
+    title: 'English Grammar Classes for Kids | Tiny Steps Learning',
+    description: 'Transform your child\'s grammar confidence. 1:1 online grammar classes for kids ages 6–12, covering parts of speech, sentence structure, and more.',
+    canonicalPath: '/grammar',
+    robots: 'index, follow',
+  },
+  '/speaking': {
+    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
+    description: 'Build communication confidence. 1:1 online public speaking classes for kids ages 6–12. Presentation skills, fluency, and confident self-expression.',
+    canonicalPath: '/speaking',
+    robots: 'index, follow',
+  },
+  '/blog': {
+    title: 'Blog | Tiny Steps Learning',
+    description: 'Read expert articles on English language learning, teaching strategies, and child development. Tips for parents and educators.',
+    canonicalPath: '/blog',
+    robots: 'index, follow',
+  },
+  '/pricing': {
+    title: 'Pricing & Plans | Tiny Steps Learning',
+    description: 'Affordable, transparent pricing for 1:1 online English classes. Choose the plan that fits your family. No hidden fees.',
+    canonicalPath: '/pricing',
+    robots: 'index, follow',
+  },
+  '/contact': {
+    title: 'Contact Us | Tiny Steps Learning',
+    description: 'Have questions? Get in touch with our team. We\'re here to help you find the perfect English class for your child.',
+    canonicalPath: '/contact',
+    robots: 'index, follow',
+  },
+  '/why-tiny-steps': {
+    title: 'Why Choose Tiny Steps Learning | Online English Classes for Kids',
+    description: 'Discover why thousands of families trust Tiny Steps Learning. Expert mentors, personalized learning, proven results.',
+    canonicalPath: '/why-tiny-steps',
+    robots: 'index, follow',
+  },
+  '/faq': {
+    title: 'Frequently Asked Questions | Tiny Steps Learning',
+    description: 'Find answers to common questions about our 1:1 online English classes, curriculum, scheduling, pricing, and more.',
+    canonicalPath: '/faq',
+    robots: 'index, follow',
+  },
+  '/for-schools': {
+    title: 'English Program for Schools | Tiny Steps Learning',
+    description: 'Tiny Steps Learning partners with schools to deliver high-quality, personalized English instruction for groups or individuals.',
+    canonicalPath: '/for-schools',
+    robots: 'index, follow',
+  },
+  '/parents': {
+    title: 'Parents Hub | Tiny Steps Learning',
+    description: 'Resources and guides for parents. Learn how to support your child\'s English learning journey at home.',
+    canonicalPath: '/parents',
+    robots: 'index, follow',
+  },
+  '/parents/getting-started': {
+    title: 'Getting Started Guide | Parents Hub | Tiny Steps Learning',
+    description: 'A step-by-step guide for parents to get started with Tiny Steps Learning. Enrollment, first class, and what to expect.',
+    canonicalPath: '/parents/getting-started',
+    robots: 'index, follow',
+  },
+  '/parents/choosing-course': {
+    title: 'Choosing the Right Course for Your Child | Parents Hub | Tiny Steps Learning',
+    description: 'How to choose the best English course for your child\'s age, level, and learning goals.',
+    canonicalPath: '/parents/choosing-course',
+    robots: 'index, follow',
+  },
+  '/parents/scheduling': {
+    title: 'Scheduling Classes | Parents Hub | Tiny Steps Learning',
+    description: 'Tips for scheduling and managing your child\'s online English classes with flexibility and consistency.',
+    canonicalPath: '/parents/scheduling',
+    robots: 'index, follow',
+  },
+  '/parents/payments': {
+    title: 'Payments & Invoicing | Parents Hub | Tiny Steps Learning',
+    description: 'Learn about our flexible payment options, billing cycles, and invoicing for English classes.',
+    canonicalPath: '/parents/payments',
+    robots: 'index, follow',
+  },
+  '/parents/tracking-progress': {
+    title: 'Tracking Your Child\'s Progress | Parents Hub | Tiny Steps Learning',
+    description: 'Understand how Tiny Steps Learning helps you track your child\'s English learning progress and celebrate milestones.',
+    canonicalPath: '/parents/tracking-progress',
+    robots: 'index, follow',
+  },
+  '/parents/helping-with-homework': {
+    title: 'Helping with Homework | Parents Hub | Tiny Steps Learning',
+    description: 'Tips and strategies for parents to support their child\'s English practice and homework between classes.',
+    canonicalPath: '/parents/helping-with-homework',
+    robots: 'index, follow',
+  },
+  '/parents/phonics-mission': {
+    title: 'Phonics Mission Guide | Parents Hub | Tiny Steps Learning',
+    description: 'A parent\'s guide to the Phonics Mission program. How to help your child master phonics through engaging practice.',
+    canonicalPath: '/parents/phonics-mission',
+    robots: 'index, follow',
+  },
+  '/parents/reading-at-home': {
+    title: 'Reading at Home | Parents Hub | Tiny Steps Learning',
+    description: 'Strategies for parents to encourage reading at home and support your child\'s literacy development.',
+    canonicalPath: '/parents/reading-at-home',
+    robots: 'index, follow',
+  },
+  '/parents/speech-confidence': {
+    title: 'Building Speech Confidence | Parents Hub | Tiny Steps Learning',
+    description: 'How to help your shy child build confidence in speaking English. Tips from our expert mentors.',
+    canonicalPath: '/parents/speech-confidence',
+    robots: 'index, follow',
+  },
+  '/parents/common-mistakes': {
+    title: 'Common Learning Mistakes | Parents Hub | Tiny Steps Learning',
+    description: 'Avoid common pitfalls in English learning. Expert advice from Tiny Steps Learning mentors.',
+    canonicalPath: '/parents/common-mistakes',
+    robots: 'index, follow',
+  },
+  '/summer-english-camp-2026': {
+    title: 'Summer English Camp 2026 | Tiny Steps Learning',
+    description: 'Join our immersive Summer English Camp 2026. Dynamic group sessions, games, and creative projects for kids ages 6–12.',
+    canonicalPath: '/summer-english-camp-2026',
+    robots: 'index, follow',
+  },
+  '/online-phonics-reading-classes': {
+    title: 'Online Phonics & Reading Classes for Kids | Tiny Steps Learning',
+    description: 'Specialized 1:1 online phonics and reading classes. Master early literacy with expert guidance and interactive practice.',
+    canonicalPath: '/online-phonics-reading-classes',
+    robots: 'index, follow',
+  },
+  '/english-grammar-writing-classes': {
+    title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
+    description: 'Improve grammar and writing skills with 1:1 online classes. For kids ages 7–12. Clear explanations, practical exercises, and feedback.',
+    canonicalPath: '/english-grammar-writing-classes',
+    robots: 'index, follow',
+  },
+  '/public-speaking-communication-kids': {
+    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
+    description: 'Build speaking confidence and communication skills. 1:1 online classes for kids ages 7–12. Presentations, fluency, and self-expression.',
+    canonicalPath: '/public-speaking-communication-kids',
+    robots: 'index, follow',
+  },
+};
+
+/**
+ * Inject SEO metadata into HTML <head> for the given route.
+ * Modifies <title>, <meta name="description">, <link rel="canonical">, and <meta name="robots">.
+ * @param html The full HTML string
+ * @param route The pathname (e.g. "/pricing")
+ * @returns Modified HTML with correct SEO metadata
+ */
+function injectSeoMetadata(html, route) {
+  const config = ROUTE_SEO_CONFIG[route];
+  if (!config) {
+    // No config for this route; return HTML as-is
+    return html;
+  }
+
+  const canonicalUrl = config.canonicalPath === '/' 
+    ? 'https://tinystepslearning.com/' 
+    : `https://tinystepslearning.com${config.canonicalPath}`;
+
+  let result = html;
+
+  // Inject/replace <title>
+  const titleTag = `<title>${escapeHtml(config.title)}</title>`;
+  result = result.replace(/<title>.*?<\/title>/i, titleTag) || result.replace('</head>', `${titleTag}</head>`);
+
+  // Inject/replace <meta name="description">
+  const descMeta = `<meta name="description" content="${escapeHtml(config.description)}">`;
+  result = result.replace(/<meta name="description"[^>]*>/i, descMeta) || result.replace('</head>', `${descMeta}</head>`);
+
+  // Inject/replace <link rel="canonical">
+  const canonicalLink = `<link rel="canonical" href="${canonicalUrl}">`;
+  result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
+
+  // Inject/replace <meta name="robots">
+  const robotsMeta = `<meta name="robots" content="${config.robots}">`;
+  result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
+
+  return result;
+}
+
+/**
+ * Escape HTML special characters for safe injection into HTML attributes.
+ */
+function escapeHtml(text) {
+  const map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;',
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
 async function writeRouteHtml(route, html) {
+  // Inject SEO metadata before writing
+  const seoInjectedHtml = injectSeoMetadata(html, route);
+
   if (route === "/") {
     const outFile = path.join(DIST, "index.html");
-    await fs.writeFile(outFile, html, "utf8");
+    await fs.writeFile(outFile, seoInjectedHtml, "utf8");
     console.log("Wrote", outFile);
     return;
   }
@@ -144,7 +369,7 @@ async function writeRouteHtml(route, html) {
   const outDir = path.join(DIST, route.replace(/^\//, ""));
   await fs.mkdir(outDir, { recursive: true });
   const outFile = path.join(outDir, "index.html");
-  await fs.writeFile(outFile, html, "utf8");
+  await fs.writeFile(outFile, seoInjectedHtml, "utf8");
   console.log("Wrote", outFile);
 }
 
