@@ -400,6 +400,7 @@ export const batchInsightsRollup11am = onSchedule(
   {
     schedule: "30 5 * * *", // 05:30 UTC = 11:00 IST
     timeZone: "UTC",
+    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
@@ -411,6 +412,7 @@ export const batchInsightsRollup5pm = onSchedule(
   {
     schedule: "30 11 * * *", // 11:30 UTC = 17:00 IST
     timeZone: "UTC",
+    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();
@@ -422,6 +424,7 @@ export const batchInsightsRollup11pm = onSchedule(
   {
     schedule: "30 17 * * *", // 17:30 UTC = 23:00 IST
     timeZone: "UTC",
+    region: "asia-south1",
   },
   async () => {
     const db = admin.firestore();

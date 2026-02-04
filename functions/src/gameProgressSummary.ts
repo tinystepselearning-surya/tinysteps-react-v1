@@ -45,7 +45,10 @@ interface GameSummaryData {
  * kids/{kidId}/gameSummaries/{gameId}
  */
 export const onGameProgressWrite = onDocumentWritten(
-  'kids/{kidId}/gameProgress/{gameId}',
+  {
+    document: 'kids/{kidId}/gameProgress/{gameId}',
+    region: 'asia-south1',
+  },
   async (event) => {
     const { kidId, gameId } = event.params;
     const snapshot = event.data;

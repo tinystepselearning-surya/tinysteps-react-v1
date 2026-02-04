@@ -34,7 +34,10 @@ function getWeekNumber(date: Date): number {
  *    - lastUpdatedAt
  */
 export const onGameSessionCreateTrigger = onDocumentCreated(
-  'gameSessions/{eventId}',
+  {
+    document: 'gameSessions/{eventId}',
+    region: 'asia-south1',
+  },
   async (event) => {
     const eventId = event.params.eventId;
     const sessionData = event.data?.data();
