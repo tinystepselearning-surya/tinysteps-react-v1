@@ -302,6 +302,79 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/public-speaking-communication-kids',
     ogType: 'website',
   },
+  // Protected / Portal Routes — NOINDEX
+  '/login': {
+    title: 'Sign In | Tiny Steps Learning',
+    description: 'Sign in to your Tiny Steps Learning account.',
+    canonicalPath: '/login',
+    robots: 'noindex, nofollow',
+  },
+  '/teacher/login': {
+    title: 'Teacher Sign In | Tiny Steps Learning',
+    description: 'Sign in as a teacher.',
+    canonicalPath: '/teacher/login',
+    robots: 'noindex, nofollow',
+  },
+  '/parent/login': {
+    title: 'Parent Sign In | Tiny Steps Learning',
+    description: 'Sign in as a parent.',
+    canonicalPath: '/parent/login',
+    robots: 'noindex, nofollow',
+  },
+  '/learning-partner/login': {
+    title: 'Learning Partner Sign In | Tiny Steps Learning',
+    description: 'Sign in as a learning partner.',
+    canonicalPath: '/learning-partner/login',
+    robots: 'noindex, nofollow',
+  },
+  '/surya/login': {
+    title: 'Admin Sign In | Tiny Steps Learning',
+    description: 'Admin sign in.',
+    canonicalPath: '/surya/login',
+    robots: 'noindex, nofollow',
+  },
+  '/admin/login': {
+    title: 'Admin Sign In | Tiny Steps Learning',
+    description: 'Admin sign in.',
+    canonicalPath: '/admin/login',
+    robots: 'noindex, nofollow',
+  },
+  '/unauthorized': {
+    title: 'Unauthorized | Tiny Steps Learning',
+    description: 'You do not have permission to access this resource.',
+    canonicalPath: '/unauthorized',
+    robots: 'noindex, nofollow',
+  },
+  '/surya': {
+    title: 'Admin Dashboard | Tiny Steps Learning',
+    description: 'Admin dashboard.',
+    canonicalPath: '/surya',
+    robots: 'noindex, nofollow',
+  },
+  '/teacher': {
+    title: 'Teacher Dashboard | Tiny Steps Learning',
+    description: 'Teacher dashboard.',
+    canonicalPath: '/teacher',
+    robots: 'noindex, nofollow',
+  },
+  '/parent': {
+    title: 'Parent Dashboard | Tiny Steps Learning',
+    description: 'Parent dashboard.',
+    canonicalPath: '/parent',
+    robots: 'noindex, nofollow',
+  },
+  '/kids': {
+    title: 'Kids Portal | Tiny Steps Learning',
+    description: 'Kids learning portal.',
+    canonicalPath: '/kids',
+    robots: 'noindex, nofollow',
+  },
+  '/learning-partner': {
+    title: 'Learning Partner Dashboard | Tiny Steps Learning',
+    description: 'Learning partner dashboard.',
+    canonicalPath: '/learning-partner',
+    robots: 'noindex, nofollow',
+  },
 };
 
 /**

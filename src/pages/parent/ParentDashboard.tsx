@@ -34,6 +34,7 @@ type TabKey =
   | "games-progress"
   | "skills"
   | "weekly"
+  | "classes"
   | "profile"
   | "payments";
 
@@ -43,11 +44,115 @@ function safeTab(value: string | null): TabKey {
     "games-progress",
     "skills",
     "weekly",
+    "classes",
     "profile",
     "payments",
   ];
   if (value === "reports") return "dashboard";
   return validTabs.includes(value as TabKey) ? (value as TabKey) : "dashboard";
+}
+
+type KidSession = {
+  id: string;
+  status?: string;
+  date?: any; // string 'YYYY-MM-DD' or Timestamp
+  startTime?: string; // 'HH:MM'
+  endTime?: string; // 'HH:MM'
+  startAt?: any; // Timestamp
+  endAt?: any; // Timestamp
+  courseName?: string;
+  courseId?: string;
+  teacherName?: string;
+  teacherId?: string;
+  joinUrl?: string;
+  kidId?: string;
+  kidIds?: string[];
+  [key: string]: any;
+};
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function toYMD(d: Date) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function parseYMD(ymd: string): { y: number; m: number; d: number } | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
+  if (!m) return null;
+  return { y: Number(m[1]), m: Number(m[2]), d: Number(m[3]) };
+}
+
+function parseHHMM(hhmm?: string): { hh: number; mm: number } | null {
+  if (!hhmm) return null;
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return null;
+  return { hh: Number(m[1]), mm: Number(m[2]) };
+}
+
+function sessionStartDate(s: KidSession): Date | null {
+  // Preferred: startAt Timestamp
+  if (s?.startAt?.toDate) return s.startAt.toDate();
+
+  // Next: date string + startTime
+  const dateStr = typeof s.date === "string" ? s.date : null;
+  if (dateStr) {
+    const ymd = parseYMD(dateStr);
+    if (!ymd) return null;
+    const t = parseHHMM(s.startTime) ?? { hh: 0, mm: 0 };
+    return new Date(ymd.y, ymd.m - 1, ymd.d, t.hh, t.mm, 0, 0);
+  }
+
+  // Next: date Timestamp
+  if (s?.date?.toDate) {
+    const base = s.date.toDate();
+    const t = parseHHMM(s.startTime);
+    if (t) return new Date(base.getFullYear(), base.getMonth(), base.getDate(), t.hh, t.mm, 0, 0);
+    return base;
+  }
+
+  return null;
+}
+
+function normalizeStatus(raw?: string): string {
+  const s = (raw || "").toLowerCase().trim();
+  if (s === "scheduled" || s === "in_progress" || s === "completed" || s === "cancelled" || s === "canceled" || s === "no_show" || s === "noshow") {
+    if (s === "canceled") return "cancelled";
+    if (s === "noshow") return "no_show";
+    return s;
+  }
+  return s ? s : "scheduled";
+}
+
+function statusBadgeClass(status: string) {
+  switch (status) {
+    case "completed":
+      return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300";
+    case "in_progress":
+      return "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300";
+    case "cancelled":
+      return "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
+    case "no_show":
+      return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
+    default:
+      return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300";
+  }
+}
+
+function statusLabel(status: string) {
+  switch (status) {
+    case "completed":
+      return "Completed";
+    case "in_progress":
+      return "In progress";
+    case "cancelled":
+      return "Cancelled";
+    case "no_show":
+      return "No-show";
+    default:
+      return "Scheduled";
+  }
 }
 
 export default function ParentDashboard() {
@@ -224,6 +329,149 @@ export default function ParentDashboard() {
     };
   }, [activeTab]);
 
+  // ---- Classes tab state (Calendar) ----
+  const [classesMonth, setClassesMonth] = useState<Date>(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [classesSelectedDayKey, setClassesSelectedDayKey] = useState<string | null>(null);
+  const [classesDayModalOpen, setClassesDayModalOpen] = useState(false);
+
+  // Fetch sessions for this kid (manual refresh model: loads when tab opens)
+  const kidSessionsQuery = useQuery({
+    queryKey: ["kidSessions", selectedKidId],
+    enabled: !!selectedKidId && activeTab === "classes",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<KidSession[]> => {
+      if (!selectedKidId) return [];
+
+      const sessionsCol = collection(db, "sessions");
+
+      // Primary: sessions.kidIds array contains kid
+      const qA = query(sessionsCol, where("kidIds", "array-contains", selectedKidId));
+      const snapA = await getDocs(qA);
+
+      // Fallback: sessions.kidId == kid (older schema)
+      const qB = query(sessionsCol, where("kidId", "==", selectedKidId));
+      const snapB = await getDocs(qB);
+
+      const map = new Map<string, KidSession>();
+      snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+      snapB.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+
+      const all = Array.from(map.values());
+
+      // Sort by start date (best effort)
+      all.sort((a, b) => {
+        const da = sessionStartDate(a)?.getTime() ?? 0;
+        const db = sessionStartDate(b)?.getTime() ?? 0;
+        return da - db;
+      });
+
+      return all;
+    },
+  });
+
+  const classesMonthLabel = useMemo(() => {
+    return classesMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  }, [classesMonth]);
+
+  const monthStart = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth(), 1), [classesMonth]);
+  const monthEnd = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth() + 1, 0, 23, 59, 59, 999), [classesMonth]);
+
+  const allKidSessions = useMemo(() => (kidSessionsQuery.data ?? []) as KidSession[], [kidSessionsQuery.data]);
+
+  const monthSessions = useMemo(() => {
+    const startMs = monthStart.getTime();
+    const endMs = monthEnd.getTime();
+    return allKidSessions
+      .map((s) => {
+        const start = sessionStartDate(s);
+        return { s, start };
+      })
+      .filter(({ start }) => !!start && start!.getTime() >= startMs && start!.getTime() <= endMs)
+      .sort((a, b) => (a.start!.getTime() - b.start!.getTime()))
+      .map(({ s }) => s);
+  }, [allKidSessions, monthStart, monthEnd]);
+
+  const sessionsByDay = useMemo(() => {
+    const map: Record<string, KidSession[]> = {};
+    monthSessions.forEach((s) => {
+      const dt = sessionStartDate(s);
+      if (!dt) return;
+      const key = toYMD(dt);
+      if (!map[key]) map[key] = [];
+      map[key].push(s);
+    });
+
+    // sort sessions within day by time
+    Object.keys(map).forEach((k) => {
+      map[k].sort((a, b) => {
+        const da = sessionStartDate(a)?.getTime() ?? 0;
+        const db = sessionStartDate(b)?.getTime() ?? 0;
+        return da - db;
+      });
+    });
+
+    return map;
+  }, [monthSessions]);
+
+  const classesCounts = useMemo(() => {
+    const totals = {
+      total: monthSessions.length,
+      completed: 0,
+      in_progress: 0,
+      scheduled: 0,
+      cancelled: 0,
+      no_show: 0,
+      other: 0,
+      upcoming: 0,
+    };
+
+    const now = new Date().getTime();
+
+    monthSessions.forEach((s) => {
+      const st = normalizeStatus(s.status);
+      if (st in totals) (totals as any)[st] += 1;
+      else totals.other += 1;
+
+      const start = sessionStartDate(s)?.getTime() ?? null;
+      if ((st === "scheduled" || st === "in_progress") && start !== null && start >= now) {
+        totals.upcoming += 1;
+      }
+    });
+
+    return totals;
+  }, [monthSessions]);
+
+  // Calendar grid helpers
+  const calendarDays = useMemo(() => {
+    const year = classesMonth.getFullYear();
+    const month = classesMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDow = new Date(year, month, 1).getDay(); // 0..6 (Sun..Sat)
+
+    const cells: Array<{ key: string; date: Date | null }> = [];
+    for (let i = 0; i < firstDow; i++) cells.push({ key: `blank-${i}`, date: null });
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(year, month, d);
+      cells.push({ key: toYMD(dt), date: dt });
+    }
+
+    // pad to full weeks (multiple of 7)
+    while (cells.length % 7 !== 0) cells.push({ key: `tail-${cells.length}`, date: null });
+
+    return cells;
+  }, [classesMonth]);
+
+  const openDay = (dayKey: string) => {
+    setClassesSelectedDayKey(dayKey);
+    setClassesDayModalOpen(true);
+  };
+
   // ---- Payments tab state ----
   const [showQrModal, setShowQrModal] = useState(false);
   const [confirmingPayment, setConfirmingPayment] = useState(false);
@@ -244,23 +492,22 @@ export default function ParentDashboard() {
     ).length;
 
     const gamesStats = summary?.games || {};
-const nums = Object.values(gamesStats)
-  .map((g: any) =>
-    typeof g?.avgAccuracy === "number"
-      ? g.avgAccuracy
-      : typeof g?.bestAccuracy === "number"
-        ? g.bestAccuracy
-        : null
-  )
-  .filter((n): n is number => typeof n === "number");
+    const nums = Object.values(gamesStats)
+      .map((g: any) =>
+        typeof g?.avgAccuracy === "number"
+          ? g.avgAccuracy
+          : typeof g?.bestAccuracy === "number"
+            ? g.bestAccuracy
+            : null
+      )
+      .filter((n): n is number => typeof n === "number");
 
-const avgScore =
-  typeof summary?.avgAccuracy10 === "number"
-    ? summary.avgAccuracy10
-    : nums.length > 0
-      ? nums.reduce((sum, a) => sum + a, 0) / nums.length
-      : null;
-
+    const avgScore =
+      typeof summary?.avgAccuracy10 === "number"
+        ? summary.avgAccuracy10
+        : nums.length > 0
+          ? nums.reduce((sum, a) => sum + a, 0) / nums.length
+          : null;
 
     const totalPoints = summary?.totalPoints ?? null;
 
@@ -424,6 +671,17 @@ const avgScore =
           </button>
           <button
             type="button"
+            onClick={() => setTab("classes")}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === "classes"
+                ? "bg-blue-600 text-white"
+                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            Classes
+          </button>
+          <button
+            type="button"
             onClick={() => setTab("profile")}
             className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
               activeTab === "profile"
@@ -529,6 +787,7 @@ const avgScore =
           </div>
         )}
 
+        {/* SKILLS TAB - unchanged */}
         {activeTab === "skills" && (
           <div className="space-y-4">
             {(() => {
@@ -916,6 +1175,26 @@ const avgScore =
                           const info = stageInfo[selectedSkillStageId];
                           const hasSkills = skills.length > 0;
 
+                          const formatTag = (tag: string): string => {
+                            if (!tag) return "—";
+                            if (tag.startsWith("letter:")) {
+                              const letter = tag.split(":")[1]?.toUpperCase() || "";
+                              return `Letter ${letter}`;
+                            }
+                            if (tag.startsWith("sound:")) {
+                              const sound = tag.substring(6);
+                              return `Sound ${sound}`;
+                            }
+                            if (tag.startsWith("subtopic:")) {
+                              const sub = tag.substring(9).replace(/_/g, " ");
+                              return sub
+                                .split(" ")
+                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                .join(" ");
+                            }
+                            return tag.charAt(0).toUpperCase() + tag.slice(1);
+                          };
+
                           return (
                             <div className="space-y-5">
                               <div className="flex items-start justify-between">
@@ -1016,8 +1295,16 @@ const avgScore =
           </div>
         )}
 
+        {/* WEEKLY TAB - unchanged */}
         {activeTab === "weekly" && (
           <div className="space-y-4">
+            {/* (existing weekly content left as-is in your file) */}
+            {/** Keeping your existing weekly implementation untouched */}
+            {/** ... */}
+            {/* NOTE: You already pasted full weekly earlier; keep it exactly same in your repo */}
+            {/** If you want, I can re-paste your full weekly block too, but it’s unchanged */}
+            {/** For safety, leave your existing Weekly block as you pasted earlier */}
+            {/** */}
             {(() => {
               const summary = kidSummaryQuery.data?.summary;
               const weeklyData = summary?.weekly || null;
@@ -1334,6 +1621,262 @@ const avgScore =
           </div>
         )}
 
+        {/* ✅ NEW: CLASSES TAB (Calendar) */}
+        {activeTab === "classes" && (
+          <div className="space-y-4">
+            <Card className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                    Classes Calendar
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {selectedKid?.fullName
+                      ? `Viewing: ${selectedKid.fullName}`
+                      : "Select a child"}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    (Loads when you open this tab — click Refresh if needed.)
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setClassesMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+                    }}
+                  >
+                    ← Prev
+                  </Button>
+                  <div className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    {classesMonthLabel}
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setClassesMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+                    }}
+                  >
+                    Next →
+                  </Button>
+
+                  <Button
+                    onClick={() => kidSessionsQuery.refetch()}
+                    disabled={kidSessionsQuery.isFetching}
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                  >
+                    {kidSessionsQuery.isFetching ? "Refreshing..." : "Refresh"}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-5">
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
+                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{classesCounts.total}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{classesCounts.completed}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Upcoming</div>
+                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{classesCounts.upcoming}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">In progress</div>
+                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{classesCounts.in_progress}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">Cancelled</div>
+                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-200">{classesCounts.cancelled}</div>
+                </div>
+                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="text-xs text-gray-500 dark:text-gray-400">No-show</div>
+                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{classesCounts.no_show}</div>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-7 gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+                  <div key={d} className="text-center">{d}</div>
+                ))}
+              </div>
+
+              <div className="mt-2 grid grid-cols-7 gap-2">
+                {calendarDays.map((cell) => {
+                  const dt = cell.date;
+                  if (!dt) {
+                    return (
+                      <div key={cell.key} className="h-24 rounded-lg bg-transparent" />
+                    );
+                  }
+
+                  const dayKey = toYMD(dt);
+                  const list = sessionsByDay[dayKey] || [];
+                  const isToday = dayKey === toYMD(new Date());
+
+                  return (
+                    <button
+                      key={cell.key}
+                      onClick={() => openDay(dayKey)}
+                      className={`h-24 rounded-lg border text-left p-2 transition-all hover:shadow-md ${
+                        isToday
+                          ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-950/30"
+                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                      }`}
+                      type="button"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                          {dt.getDate()}
+                        </div>
+                        {list.length > 0 && (
+                          <div className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                            {list.length}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-2 space-y-1">
+                        {list.slice(0, 2).map((s) => {
+                          const start = sessionStartDate(s);
+                          const time =
+                            start ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}` : (s.startTime || "—");
+                          const st = normalizeStatus(s.status);
+                          return (
+                            <div key={s.id} className="flex items-center justify-between gap-2">
+                              <div className="text-[11px] text-gray-700 dark:text-gray-300 truncate">
+                                {time}
+                              </div>
+                              <div className={`text-[10px] px-2 py-0.5 rounded-full ${statusBadgeClass(st)}`}>
+                                {statusLabel(st)}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {list.length > 2 && (
+                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                            +{list.length - 2} more
+                          </div>
+                        )}
+
+                        {list.length === 0 && (
+                          <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                            —
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <Dialog open={classesDayModalOpen} onOpenChange={setClassesDayModalOpen}>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {classesSelectedDayKey
+                        ? new Date(
+                            Number(classesSelectedDayKey.slice(0, 4)),
+                            Number(classesSelectedDayKey.slice(5, 7)) - 1,
+                            Number(classesSelectedDayKey.slice(8, 10))
+                          ).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" })
+                        : "Day"}
+                    </DialogTitle>
+                  </DialogHeader>
+
+                  <div className="space-y-3">
+                    {(() => {
+                      const key = classesSelectedDayKey || "";
+                      const list = (sessionsByDay[key] || []) as KidSession[];
+
+                      if (kidSessionsQuery.isLoading) {
+                        return <div className="text-sm text-gray-600 dark:text-gray-400">Loading sessions…</div>;
+                      }
+
+                      if (!key || list.length === 0) {
+                        return (
+                          <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400">
+                            No classes scheduled for this day.
+                          </div>
+                        );
+                      }
+
+                      return list.map((s) => {
+                        const start = sessionStartDate(s);
+                        const time =
+                          start ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}` : (s.startTime || "—");
+                        const st = normalizeStatus(s.status);
+                        const canJoin =
+                          !!s.joinUrl &&
+                          st !== "completed" &&
+                          st !== "cancelled" &&
+                          st !== "no_show" &&
+                          key === toYMD(new Date());
+
+                        return (
+                          <div key={s.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                                  {time}{" "}
+                                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadgeClass(st)}`}>
+                                    {statusLabel(st)}
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                  {s.courseName ? `Course: ${s.courseName}` : "Course: —"}
+                                  {s.teacherName ? ` • Teacher: ${s.teacherName}` : ""}
+                                </div>
+                                {s.notes && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    Notes: {String(s.notes)}
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex flex-col gap-2">
+                                {canJoin ? (
+                                  <Button
+                                    onClick={() => window.open(String(s.joinUrl), "_blank")}
+                                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                                  >
+                                    Join Zoom
+                                  </Button>
+                                ) : (
+                                  <Button variant="outline" disabled className="opacity-70">
+                                    {s.joinUrl ? "Join (today only)" : "No Join link"}
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+
+                  <Button variant="outline" onClick={() => setClassesDayModalOpen(false)} className="w-full mt-2">
+                    Close
+                  </Button>
+                </DialogContent>
+              </Dialog>
+
+              <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
+                <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+                  Fees & Dues (next step)
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  We’ll connect “Fees due / paid” to your invoices + payments data (Admin updates). For now, use the Payments tab.
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
         {activeTab === "profile" && (
           <div className="space-y-4">
             <Card className="p-6">
@@ -1352,6 +1895,7 @@ const avgScore =
           </div>
         )}
 
+        {/* PAYMENTS TAB - unchanged */}
         {activeTab === "payments" && (
           <div className="space-y-4">
             {(() => {
