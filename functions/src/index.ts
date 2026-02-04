@@ -31,6 +31,7 @@ export {
 // Game progress tracking
 export { onGameProgressWrite } from "./gameProgressSummary";
 export { onGameSessionCreate } from "./onGameSessionCreate";
+export { onGameSessionCreateTrigger } from "./triggers/onGameSessionCreate";
 
 // Parent data access
 export { createStudentForParent } from "./parentStudents";
@@ -38,3 +39,19 @@ export { createStudentForParent } from "./parentStudents";
 // Insights & analytics
 export { runInsightsRollupNow } from "./runInsightsRollupNow";
 export { setInsightsEnabled } from "./setInsightsEnabled";
+
+// Scheduled batch insights rollups
+export {
+  batchInsightsRollup11am,
+  batchInsightsRollup5pm,
+  batchInsightsRollup11pm,
+} from "./scheduled/batchInsightsRollup";
+
+// Games: catalog management and level results
+export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
+export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
+export { recordLevelResult } from "./games/recordLevelResult";
+
+// AI: Ask TinySteps chatbot and knowledge base
+export { askTinySteps } from "./ai/askTinySteps";
+export { refreshPublicKb } from "./ai/refreshPublicKb";
