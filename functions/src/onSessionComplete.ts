@@ -1,21 +1,41 @@
-import * as functions from 'firebase-functions/v1';
-import { onCall, HttpsError } from 'firebase-functions/v2/https';
-import * as admin from 'firebase-admin';
+// functions/src/onSessionComplete.ts
+import * as admin from "firebase-admin";
+import * as logger from "firebase-functions/logger";
+import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
-// Session shape in Firestore
+const REGION = "asia-south1";
+
+type AttendanceStatus = "present" | "absent" | "late" | "excused" | "unknown";
+
+type AttendanceEntry = {
+  status?: AttendanceStatus;
+  notes?: string;
+  mastery?: number;
+  topics?: string[];
+};
+
 interface SessionData {
-  courseId: string;
-  teacherId: string;
-  kidIds: string[];
-  enrollmentIds?: string[];
-  status: string;
-  // Mark that credits have been processed for this session
+  courseId?: string;
+  teacherId?: string;
+  kidIds?: string[];
+  status?: string;
+
+  // NEW: attendance stored directly in the session doc by Teacher UI
+  attendance?: Record<string, AttendanceEntry>;
+
+  // Idempotency + lock
   creditsProcessed?: boolean;
   creditsProcessedAt?: admin.firestore.Timestamp;
+
+  creditsProcessing?: boolean;
+  creditsProcessingAt?: admin.firestore.Timestamp;
+  creditsProcessingBy?: string;
+  creditsProcessingError?: string;
 }
 
 interface CreditChange {
@@ -28,268 +48,365 @@ interface CreditChange {
   attendanceStatus: string | null;
 }
 
-async function processSessionCompletion(sessionId: string, session: SessionData) {
-  const { courseId, teacherId, kidIds, creditsProcessed } = session;
+const LOCK_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
-  // Guard: minimal session info
-  if (!courseId || !teacherId || !Array.isArray(kidIds) || kidIds.length === 0) {
-    functions.logger.warn('processSessionCompletion: missing core fields', {
-      sessionId,
-      courseId,
-      teacherId,
-      kidIds,
-    });
-    return;
-  }
-
-  // Idempotency guard – if already processed, do nothing
-  if (creditsProcessed) {
-    functions.logger.info(
-      'processSessionCompletion: session already processed, skipping',
-      { sessionId }
-    );
-    return;
-  }
-
-  const db = admin.firestore();
-  const batch = db.batch();
-
-  let creditsEarnedForTeacher = 0;
-  const creditChanges: CreditChange[] = [];
-
-  for (const kidId of kidIds) {
-    if (!kidId) continue;
-
-    // Find enrollment for this kid + course
-    const enrollmentQuery = await db
-      .collection('enrollments')
-      .where('kidId', '==', kidId)
-      .where('courseId', '==', courseId)
-      .limit(1)
-      .get();
-
-    if (enrollmentQuery.empty) {
-      functions.logger.warn(
-        `Enrollment not found for kidId=${kidId}, courseId=${courseId}`
-      );
-      continue;
-    }
-
-    const enrollmentDoc = enrollmentQuery.docs[0];
-    const enrollment = enrollmentDoc.data();
-
-    // Look up attendance for this session + kid
-    const attendanceDoc = await db
-      .collection('attendance')
-      .doc(sessionId)
-      .collection('attendanceRecords')
-      .doc(kidId)
-      .get();
-
-    const attendanceData = attendanceDoc.data();
-
-    // Only count if present (you can change this to include 'late' if you want)
-    if (attendanceDoc.exists && attendanceData?.status === 'present') {
-      const currentRemaining =
-        typeof enrollment.creditsRemaining === 'number'
-          ? enrollment.creditsRemaining
-          : 0;
-      const currentUsed =
-        typeof enrollment.creditsUsed === 'number'
-          ? enrollment.creditsUsed
-          : 0;
-
-      const newCreditsRemaining = currentRemaining - 1;
-      const newCreditsUsed = currentUsed + 1;
-
-      batch.update(enrollmentDoc.ref, {
-        creditsRemaining: newCreditsRemaining,
-        creditsUsed: newCreditsUsed,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedBy: 'onSessionComplete',
-      });
-
-      creditsEarnedForTeacher++;
-
-      creditChanges.push({
-        kidId,
-        enrollmentId: enrollmentDoc.id,
-        previousRemaining: currentRemaining,
-        newRemaining: newCreditsRemaining,
-        previousUsed: currentUsed,
-        newUsed: newCreditsUsed,
-        attendanceStatus: attendanceData?.status || null,
-      });
-
-      // Low-credit alert
-      if (newCreditsRemaining <= 2) {
-        const alertRef = db.collection('alerts').doc();
-        batch.set(alertRef, {
-          type: 'low_credits',
-          enrollmentId: enrollmentDoc.id,
-          kidId,
-          creditsRemaining: newCreditsRemaining,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          createdBy: 'onSessionComplete',
-        });
-      }
-    }
-  }
-
-  // Mark session as processed so we never double-charge
-  const sessionRef = db.collection('sessions').doc(sessionId);
-  batch.set(
-    sessionRef,
-    {
-      creditsProcessed: true,
-      creditsProcessedAt: admin.firestore.FieldValue.serverTimestamp(),
-    },
-    { merge: true }
-  );
-
-  await batch.commit();
-
-  // ---- AUDIT LOG WRITE ----
-  try {
-    const auditRef = db.collection('auditLogs').doc();
-    await auditRef.set({
-      type: 'session_completion',
-      sessionId,
-      courseId,
-      teacherId,
-      kidIds,
-      creditsEarned: creditsEarnedForTeacher,
-      creditChanges,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdBy: 'onSessionComplete',
-    });
-    functions.logger.info('Session audit log written', {
-      sessionId,
-      auditLogId: auditRef.id,
-      creditsEarnedForTeacher,
-    });
-  } catch (err) {
-    functions.logger.error('Failed to write session audit log', {
-      sessionId,
-      error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  // Post-processing (non-batched)
-  await Promise.all(
-    kidIds.map((kidId: string) => recomputeStudentSummary(kidId, courseId))
-  );
-
-  await accrueTeacherEarnings(
-    teacherId,
-    sessionId,
-    courseId,
-    creditsEarnedForTeacher
-  );
-
-  functions.logger.info('Session completed and processed', {
-    sessionId,
-    kidCount: kidIds.length,
-    creditsEarnedForTeacher,
-  });
+function nowMs() {
+  return Date.now();
 }
 
-// Firestore trigger: when a session status becomes "completed"
-export const onSessionCompleteTrigger = functions
-  .region('asia-south1')
-  .firestore.document('sessions/{sessionId}')
-  .onUpdate(async (change, context) => {
-    const before = change.before.data() as SessionData | undefined;
-    const after = change.after.data() as SessionData | undefined;
-    const sessionId = context.params.sessionId;
+function toNumber(x: any, fallback = 0) {
+  return typeof x === "number" && Number.isFinite(x) ? x : fallback;
+}
 
-    // Only run when status flips to completed
-    if (before?.status !== 'completed' && after?.status === 'completed') {
-      try {
-        await processSessionCompletion(sessionId, after as SessionData);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Unknown error';
-        functions.logger.error(
-          `Error in onSessionCompleteTrigger: ${errorMessage}`,
-          { sessionId }
+function clampMin0(n: number) {
+  return n < 0 ? 0 : n;
+}
+
+async function assertCanFinalizeSession(uid: string, session: SessionData) {
+  // Teacher assigned to the session: allowed
+  if (session.teacherId && uid === session.teacherId) return;
+
+  // Otherwise allow admin / rm (from Firestore role or claims)
+  const db = admin.firestore();
+
+  // Prefer Firestore role
+  const userSnap = await db.doc(`users/${uid}`).get();
+  const role = userSnap.exists ? (userSnap.data() as any)?.role : null;
+
+  if (role === "admin" || role === "rm") return;
+
+  // Fallback: custom claims (if you use them)
+  // (We don’t have the claims here in trigger, so callable checks claims earlier.)
+  throw new HttpsError("permission-denied", "Not allowed to finalize this session.");
+}
+
+async function acquireProcessingLock(
+  sessionRef: admin.firestore.DocumentReference,
+  actor: string
+): Promise<SessionData> {
+  const db = admin.firestore();
+
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(sessionRef);
+    if (!snap.exists) throw new HttpsError("not-found", "Session not found.");
+
+    const session = snap.data() as SessionData;
+
+    // Already processed => skip
+    if (session.creditsProcessed) return session;
+
+    // In-progress lock check
+    if (session.creditsProcessing && session.creditsProcessingAt?.toMillis) {
+      const ageMs = nowMs() - session.creditsProcessingAt.toMillis();
+      if (ageMs < LOCK_TTL_MS) {
+        throw new HttpsError(
+          "failed-precondition",
+          "Credits processing already in progress. Please retry in a minute."
         );
       }
     }
-  });
 
-// Callable: manual finalize / re-run by teacher or admin
-export const onSessionComplete = onCall(
+    tx.set(
+      sessionRef,
+      {
+        creditsProcessing: true,
+        creditsProcessingAt: admin.firestore.FieldValue.serverTimestamp(),
+        creditsProcessingBy: actor,
+        creditsProcessingError: admin.firestore.FieldValue.delete(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+
+    return session;
+  });
+}
+
+async function releaseLockWithError(
+  sessionRef: admin.firestore.DocumentReference,
+  errorMessage: string
+) {
+  await sessionRef.set(
+    {
+      creditsProcessing: admin.firestore.FieldValue.delete(),
+      creditsProcessingAt: admin.firestore.FieldValue.delete(),
+      creditsProcessingBy: admin.firestore.FieldValue.delete(),
+      creditsProcessingError: errorMessage,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+async function markProcessed(sessionRef: admin.firestore.DocumentReference) {
+  await sessionRef.set(
+    {
+      creditsProcessed: true,
+      creditsProcessedAt: admin.firestore.FieldValue.serverTimestamp(),
+      creditsProcessing: admin.firestore.FieldValue.delete(),
+      creditsProcessingAt: admin.firestore.FieldValue.delete(),
+      creditsProcessingBy: admin.firestore.FieldValue.delete(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+/**
+ * Main processor (shared by trigger + callable)
+ */
+async function processSessionCompletion(
+  sessionId: string,
+  opts: { callerUid?: string; enforcePermissions?: boolean }
+) {
+  const db = admin.firestore();
+  const sessionRef = db.collection("sessions").doc(sessionId);
+  const caller = opts.callerUid || "trigger";
+
+  // Acquire lock (prevents double-charging trigger+callable)
+  const session = await acquireProcessingLock(sessionRef, caller);
+
+  try {
+    // If already processed, exit cleanly
+    if (session.creditsProcessed) {
+      logger.info("processSessionCompletion: already processed, skipping", { sessionId });
+      return { success: true, skipped: true, creditsEarnedForTeacher: 0 };
+    }
+
+    const { courseId, teacherId } = session;
+
+    if (!courseId || !teacherId) {
+      logger.warn("processSessionCompletion: missing core fields", { sessionId, courseId, teacherId });
+      await releaseLockWithError(sessionRef, "Missing courseId/teacherId in session.");
+      return { success: false, skipped: true, creditsEarnedForTeacher: 0 };
+    }
+
+    if (opts.enforcePermissions && opts.callerUid) {
+      await assertCanFinalizeSession(opts.callerUid, session);
+    }
+
+    // Require completed status (your UI sets status: "completed")
+    if (session.status !== "completed") {
+      throw new HttpsError(
+        "failed-precondition",
+        "Session must be marked completed before finalization."
+      );
+    }
+
+    const attendanceMap = session.attendance || {};
+    const kidIdsRaw = Array.isArray(session.kidIds) && session.kidIds.length
+      ? session.kidIds
+      : Object.keys(attendanceMap);
+
+    const kidIds = Array.from(new Set(kidIdsRaw.filter(Boolean)));
+
+    if (kidIds.length === 0) {
+      // Nothing to process, but mark processed to prevent repeats
+      await markProcessed(sessionRef);
+      return { success: true, skipped: false, creditsEarnedForTeacher: 0 };
+    }
+
+    let creditsEarnedForTeacher = 0;
+    const creditChanges: CreditChange[] = [];
+
+    for (const kidId of kidIds) {
+      const att = attendanceMap[kidId];
+      const status = (att?.status || "unknown") as AttendanceStatus;
+
+      // Only decrement credits for present (optionally add "late" here if you want)
+      if (status !== "present") continue;
+
+      // Find enrollment for this kid + course
+      const enrollmentQuery = await db
+        .collection("enrollments")
+        .where("kidId", "==", kidId)
+        .where("courseId", "==", courseId)
+        .limit(1)
+        .get();
+
+      if (enrollmentQuery.empty) {
+        logger.warn("Enrollment not found", { sessionId, kidId, courseId });
+        continue;
+      }
+
+      const enrollmentDoc = enrollmentQuery.docs[0];
+      const enrollmentRef = enrollmentDoc.ref;
+
+      // Update enrollment safely in a transaction (avoids race conditions)
+      const change = await db.runTransaction(async (tx) => {
+        const snap = await tx.get(enrollmentRef);
+        const enrollment = snap.exists ? snap.data() : {};
+
+        const currentRemaining = toNumber((enrollment as any)?.creditsRemaining, 0);
+        const currentUsed = toNumber((enrollment as any)?.creditsUsed, 0);
+
+        const newRemaining = clampMin0(currentRemaining - 1);
+        const newUsed = currentUsed + 1;
+
+        tx.update(enrollmentRef, {
+          creditsRemaining: newRemaining,
+          creditsUsed: newUsed,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: "onSessionComplete",
+        });
+
+        // Low-credit alert
+        if (newRemaining <= 2) {
+          const alertRef = db.collection("alerts").doc();
+          tx.set(alertRef, {
+            type: "low_credits",
+            enrollmentId: enrollmentDoc.id,
+            kidId,
+            creditsRemaining: newRemaining,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: "onSessionComplete",
+          });
+        }
+
+        return {
+          kidId,
+          enrollmentId: enrollmentDoc.id,
+          previousRemaining: currentRemaining,
+          newRemaining,
+          previousUsed: currentUsed,
+          newUsed,
+          attendanceStatus: status || null,
+        } as CreditChange;
+      });
+
+      creditsEarnedForTeacher++;
+      creditChanges.push(change);
+    }
+
+    // Mark processed (idempotency)
+    await markProcessed(sessionRef);
+
+    // Audit log (non-batched)
+    try {
+      const auditRef = db.collection("auditLogs").doc();
+      await auditRef.set({
+        type: "session_completion",
+        sessionId,
+        courseId,
+        teacherId,
+        kidIds,
+        creditsEarned: creditsEarnedForTeacher,
+        creditChanges,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: "onSessionComplete",
+      });
+      logger.info("Session audit log written", {
+        sessionId,
+        auditLogId: auditRef.id,
+        creditsEarnedForTeacher,
+      });
+    } catch (err) {
+      logger.error("Failed to write session audit log", {
+        sessionId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+
+    // Post-processing (best-effort)
+    await Promise.all(
+      kidIds.map((kidId) => recomputeStudentSummary(kidId, courseId))
+    );
+
+    await accrueTeacherEarnings(teacherId, sessionId, courseId, creditsEarnedForTeacher);
+
+    logger.info("Session completed and processed", {
+      sessionId,
+      kidCount: kidIds.length,
+      creditsEarnedForTeacher,
+    });
+
+    return { success: true, skipped: false, creditsEarnedForTeacher };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("processSessionCompletion failed", { sessionId, error: message });
+
+    // release lock so user can retry
+    await releaseLockWithError(sessionRef, message);
+
+    // rethrow for callable UX
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", "Unable to finalize session. Please retry later.");
+  }
+}
+
+/**
+ * Firestore trigger (v2): run when status flips to "completed"
+ */
+export const onSessionCompleteTrigger = onDocumentUpdated(
   {
-    region: 'asia-south1',
-    memory: '256MiB',
+    document: "sessions/{sessionId}",
+    region: REGION,
+    memory: "256MiB",
     timeoutSeconds: 120,
   },
-  async (data: any, context: any) => {
-    if (!context.auth) {
-      throw new HttpsError('unauthenticated', 'Authentication required.');
-    }
+  async (event) => {
+    const sessionId = event.params.sessionId as string;
+    const before = event.data?.before?.data() as SessionData | undefined;
+    const after = event.data?.after?.data() as SessionData | undefined;
 
-    const { sessionId } = data as { sessionId?: string };
-    if (!sessionId || typeof sessionId !== 'string') {
-      throw new HttpsError('invalid-argument', 'sessionId is required.');
-    }
+    if (!after) return;
 
-    const db = admin.firestore();
-    const snapshot = await db.doc(`sessions/${sessionId}`).get();
-    if (!snapshot.exists) {
-      throw new HttpsError('not-found', 'Session not found.');
-    }
+    const becameCompleted =
+      (before?.status || "") !== "completed" && (after.status || "") === "completed";
 
-    const session = snapshot.data() as SessionData;
+    if (!becameCompleted) return;
 
-    // Require session to be marked completed (e.g., via markAttendance)
-    if (session.status !== 'completed') {
-      throw new HttpsError(
-        'failed-precondition',
-        'Session must be marked completed before finalization.'
-      );
-    }
-
-    const claims = context.auth.token as any;
-    const isTeacher =
-      !!claims.teacher && context.auth.uid === session.teacherId;
-    const isAdmin = !!claims.admin || claims.role === 'admin';
-
-    if (!isTeacher && !isAdmin) {
-      throw new HttpsError(
-        'permission-denied',
-        'Only the assigned teacher or an admin can run this action.'
-      );
-    }
+    // If already processed, skip quickly
+    if (after.creditsProcessed) return;
 
     try {
-      await processSessionCompletion(sessionId, session);
-      return { success: true };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-      functions.logger.error(
-        `Callable onSessionComplete failed: ${errorMessage}`,
-        { sessionId }
-      );
-      throw new HttpsError(
-        'internal',
-        'Unable to finalize session. Please retry later.'
-      );
+      await processSessionCompletion(sessionId, {
+        callerUid: after.teacherId,
+        enforcePermissions: false, // trigger runs server-side
+      });
+    } catch (err) {
+      logger.error("onSessionCompleteTrigger error", {
+        sessionId,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 );
 
-// Helper: recompute student summary (currently using your existing logic/stub)
-// You can later replace this with a real import from ./recomputeStudentSummary
+/**
+ * Callable (v2): For manual retry/admin operations only.
+ * Teacher UI must NOT auto-call to prevent double-processing.
+ */
+export const onSessionComplete = onCall(
+  {
+    region: REGION,
+    memory: "256MiB",
+    timeoutSeconds: 120,
+  },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError("unauthenticated", "Authentication required.");
+
+    const sessionId = (request.data?.sessionId || "").toString().trim();
+    if (!sessionId) throw new HttpsError("invalid-argument", "sessionId is required.");
+
+    // We don't block here based on claims alone because your system often uses Firestore roles.
+    // Permission enforcement happens inside processSessionCompletion().
+
+    const result = await processSessionCompletion(sessionId, {
+      callerUid: uid,
+      enforcePermissions: true,
+    });
+
+    return result;
+  }
+);
+
+// ---- Helper stubs (keep yours / replace later) ----
 async function recomputeStudentSummary(kidId: string, courseId: string) {
-  functions.logger.info(
-    `Recomputing summary for kidId=${kidId}, courseId=${courseId}`
-  );
+  logger.info("Recomputing summary (stub)", { kidId, courseId });
 }
 
-// Minimal earnings model: per-teacher, per-month
 async function accrueTeacherEarnings(
   teacherId: string,
   sessionId: string,
@@ -297,23 +414,20 @@ async function accrueTeacherEarnings(
   creditsEarned: number
 ) {
   if (!teacherId || creditsEarned <= 0) {
-    functions.logger.info('accrueTeacherEarnings: nothing to do', {
-      teacherId,
-      creditsEarned,
-    });
+    logger.info("accrueTeacherEarnings: nothing to do", { teacherId, creditsEarned });
     return;
   }
 
   const db = admin.firestore();
   const now = new Date();
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const monthId = `${year}-${month}`; // e.g. "2025-11"
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const monthId = `${year}-${month}`;
 
   const earningsRef = db
-    .collection('teachers')
+    .collection("teachers")
     .doc(teacherId)
-    .collection('earnings')
+    .collection("earnings")
     .doc(monthId);
 
   await earningsRef.set(
@@ -329,10 +443,5 @@ async function accrueTeacherEarnings(
     { merge: true }
   );
 
-  functions.logger.info('Teacher earnings updated', {
-    teacherId,
-    monthId,
-    sessionId,
-    creditsEarned,
-  });
+  logger.info("Teacher earnings updated", { teacherId, monthId, sessionId, creditsEarned });
 }

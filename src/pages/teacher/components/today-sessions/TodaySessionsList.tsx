@@ -5,10 +5,9 @@ import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
 import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
-import { db, functions } from '../../../../lib/firebaseConfig';
+import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
-import { httpsCallable } from 'firebase/functions';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -47,21 +46,9 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid,
       });
-      try {
-        const markComplete = httpsCallable(functions, 'onSessionComplete');
-        await markComplete({ sessionId: selectedSession.id });
-      } catch (fnErr) {
-        console.warn('onSessionComplete callable unavailable', fnErr);
-        const message =
-          fnErr instanceof Error
-            ? fnErr.message
-            : (fnErr as { message?: string })?.message || 'Background processing failed.';
-        toast({
-          title: 'Post-processing failed',
-          description: message,
-          variant: 'destructive',
-        });
-      }
+      // Background post-processing (credits, alerts) is handled by the
+      // Firestore trigger `onSessionCompleteTrigger` in `functions/`.
+      // Avoid calling the callable here to prevent double-processing.
       toast({ title: 'Attendance saved', description: 'All attendance entries stored.' });
     } catch (err) {
       console.error(err);

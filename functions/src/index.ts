@@ -1,82 +1,40 @@
 /**
- * Tiny Steps – Cloud Functions (v2)
- * Clean Index File – Only exports existing functions
+ * functions/src/index.ts
+ *
+ * Export barrel for all Cloud Functions.
+ * Each function is defined in its own module for better organization and testing.
+ *
+ * IMPORTANT: This file should ONLY contain exports, never function implementations.
+ * Callable functions are for manual retry/admin operations; UI should NOT auto-call.
+ * Firestore triggers handle automatic background processing.
  */
 
-import { setGlobalOptions } from 'firebase-functions/v2';
-import * as admin from 'firebase-admin';
-import * as logger from 'firebase-functions/logger';
+// Session completion (attendance + credit processing)
+// Callable is for manual retry only; teacher UI must not auto-call to prevent double-processing
+export { onSessionComplete, onSessionCompleteTrigger } from "./onSessionComplete";
 
-// Global settings (prevent runaway cost + force asia-south1 region)
-setGlobalOptions({ maxInstances: 10, region: 'asia-south1' });
+// Admin user management
+export { adminCreateUser } from "./adminCreateUser";
+export { adminDeleteUser } from "./adminDeleteUser";
+export { adminArchiveUser } from "./adminArchiveUser";
+export { adminGenerateResetLink } from "./adminGenerateResetLink";
 
-// Initialize Firebase Admin SDK only once
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-
-// ---------- Imports from existing modules ----------
-
-// Admin: Create Users
-export { adminCreateUser } from './adminCreateUser';
-
-// Admin: Password Reset Link
-export { adminGenerateResetLink } from './adminGenerateResetLink';
-export { adminDeleteUser } from './adminDeleteUser';
-export { adminArchiveUser } from './adminArchiveUser';
-
-// Admin: Assign / Unassign Learning Partners
-export {
-  assignLPToParent,
-  unassignLPFromParent,
-  assignLPToTeacher,
+// Learning Partner assignment
+export { 
+  assignLPToParent, 
+  unassignLPFromParent, 
+  assignLPToTeacher, 
   unassignLPFromTeacher,
-} from './assignLP';
+  adminSetUserRole 
+} from "./assignLP";
 
-// Admin: Control Insights Kill Switch
-export { setInsightsEnabled } from './setInsightsEnabled';
+// Game progress tracking
+export { onGameProgressWrite } from "./gameProgressSummary";
+export { onGameSessionCreate } from "./onGameSessionCreate";
 
-// Admin: Manual Insights Rollup
-export { runInsightsRollupNow } from './runInsightsRollupNow';
+// Parent data access
+export { createStudentForParent } from "./parentStudents";
 
-export { refreshPublicKb } from "./ai/refreshPublicKb";
-
-
-// Parent → Students Subcollection Operations
-export { createStudentForParent } from './parentStudents';
-
-// Session Completion Handler
-export {
-  onSessionComplete,
-  onSessionCompleteTrigger,
-} from './onSessionComplete';
-
-// Game Progress Summary Generator
-export { onGameProgressWrite } from './gameProgressSummary';
-
-// Game Session Trigger (onCreate rollups)
-export { onGameSessionCreateTrigger } from './triggers/onGameSessionCreate';
-
-// Batch Insights Rollup (Scheduled 3x daily)
-export {
-  batchInsightsRollup11am,
-  batchInsightsRollup5pm,
-  batchInsightsRollup11pm,
-} from './scheduled/batchInsightsRollup';
-
-// Games: Record Level Result
-export { recordLevelResult } from './games/recordLevelResult';
-
-// Games: Force Catalog Patching (Admin only)
-export { ensureGamesCatalogNow } from './games/ensureGamesCatalogNow';
-
-// Games: Cleanup Catalog Structure (Admin only)
-export { cleanupGamesCatalogNow } from './games/cleanupGamesCatalogNow';
-
-// AI: Ask TinySteps callable
-export { askTinySteps } from './ai/askTinySteps';
-
-// Health ping (optional small endpoint you may add later)
-// export { healthCheck } from './health'; // Uncomment only if file exists
-
-logger.info('Tiny Steps Cloud Functions Initialized (v2)');
+// Insights & analytics
+export { runInsightsRollupNow } from "./runInsightsRollupNow";
+export { setInsightsEnabled } from "./setInsightsEnabled";
