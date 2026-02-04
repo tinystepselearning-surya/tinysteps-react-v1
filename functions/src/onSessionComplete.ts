@@ -1,8 +1,8 @@
 // functions/src/onSessionComplete.ts
 import * as admin from "firebase-admin";
+import * as functionsV1 from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
-import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -335,19 +335,16 @@ async function processSessionCompletion(
 }
 
 /**
- * Firestore trigger (v2): run when status flips to "completed"
+ * Firestore trigger (v1 Gen 1): run when status flips to "completed"
+ * Kept as v1 to avoid "Upgrading from 1st Gen to 2nd Gen not supported" error
  */
-export const onSessionCompleteTrigger = onDocumentUpdated(
-  {
-    document: "sessions/{sessionId}",
-    region: REGION,
-    memory: "256MiB",
-    timeoutSeconds: 120,
-  },
-  async (event) => {
-    const sessionId = event.params.sessionId as string;
-    const before = event.data?.before?.data() as SessionData | undefined;
-    const after = event.data?.after?.data() as SessionData | undefined;
+export const onSessionCompleteTrigger = functionsV1
+  .region(REGION)
+  .firestore.document("sessions/{sessionId}")
+  .onUpdate(async (change, context) => {
+    const sessionId = context.params.sessionId as string;
+    const before = change.before.data() as SessionData | undefined;
+    const after = change.after.data() as SessionData | undefined;
 
     if (!after) return;
 
@@ -370,8 +367,7 @@ export const onSessionCompleteTrigger = onDocumentUpdated(
         error: err instanceof Error ? err.message : String(err),
       });
     }
-  }
-);
+  });
 
 /**
  * Callable (v2): For manual retry/admin operations only.
