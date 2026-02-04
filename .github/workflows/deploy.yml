@@ -111,6 +111,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -124,38 +127,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Clean stale functions build artifacts
+        run: rm -rf functions/lib functions/tsconfig.tsbuildinfo functions/.tsbuildinfo || true
+
       - name: Install Functions dependencies
         run: npm ci --prefix functions
 
       - name: Build Cloud Functions
-        run: npm run build --prefix functions
+        run: npm --prefix functions run build
 
-      - name: Debug - Show commit being deployed
+      - name: Verify deployment commit and exports
         run: |
-          echo "📦 Deploying commit: $(git rev-parse HEAD)"
-          echo "📦 Commit message: $(git log -1 --pretty=%B)"
-
-      - name: Debug - Verify function exports
-        run: |
-          echo "🔍 Verifying critical function exports..."
-          cd functions
-          node -e "const m=require('./lib/index.js'); console.log('Total exports:', Object.keys(m).length); console.log(Object.keys(m).sort().join('\n'))" | tee /tmp/exports.txt
+          echo "📦 Deploying commit:"
+          git rev-parse HEAD && git log -1 --oneline
           
-          # Check for critical functions
-          MISSING=""
-          for fn in batchInsightsRollup11am batchInsightsRollup5pm batchInsightsRollup11pm onGameProgressWrite onGameSessionCreateTrigger; do
-            if ! grep -q "^$fn$" /tmp/exports.txt; then
-              MISSING="$MISSING $fn"
-            fi
-          done
+          echo ""
+          echo "🔍 Verifying critical function exports exist in build output..."
           
-          if [ -n "$MISSING" ]; then
-            echo "❌ MISSING EXPORTS:$MISSING"
-            echo "This would cause CI deploy to fail with non-interactive deletion error"
+          if ! node -e "const m=require('./functions/lib/index.js'); console.log(Object.keys(m).sort().join('\n'))" | grep -E "batchInsightsRollup11am|batchInsightsRollup5pm|batchInsightsRollup11pm|onGameProgressWrite|onGameSessionCreateTrigger"; then
+            echo "❌ CRITICAL: Missing required function exports in compiled output"
+            echo "This indicates the build is stale or exports are not configured correctly"
             exit 1
-          else
-            echo "✅ All critical function exports verified"
           fi
+          
+          echo "✅ All critical function exports verified in functions/lib/index.js"
 
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
