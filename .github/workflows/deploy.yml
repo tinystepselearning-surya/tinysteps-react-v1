@@ -127,6 +127,36 @@ jobs:
       - name: Install Functions dependencies
         run: npm ci --prefix functions
 
+      - name: Build Cloud Functions
+        run: npm run build --prefix functions
+
+      - name: Debug - Show commit being deployed
+        run: |
+          echo "📦 Deploying commit: $(git rev-parse HEAD)"
+          echo "📦 Commit message: $(git log -1 --pretty=%B)"
+
+      - name: Debug - Verify function exports
+        run: |
+          echo "🔍 Verifying critical function exports..."
+          cd functions
+          node -e "const m=require('./lib/index.js'); console.log('Total exports:', Object.keys(m).length); console.log(Object.keys(m).sort().join('\n'))" | tee /tmp/exports.txt
+          
+          # Check for critical functions
+          MISSING=""
+          for fn in batchInsightsRollup11am batchInsightsRollup5pm batchInsightsRollup11pm onGameProgressWrite onGameSessionCreateTrigger; do
+            if ! grep -q "^$fn$" /tmp/exports.txt; then
+              MISSING="$MISSING $fn"
+            fi
+          done
+          
+          if [ -n "$MISSING" ]; then
+            echo "❌ MISSING EXPORTS:$MISSING"
+            echo "This would cause CI deploy to fail with non-interactive deletion error"
+            exit 1
+          else
+            echo "✅ All critical function exports verified"
+          fi
+
       - name: Deploy Cloud Functions
         run: npx firebase-tools@latest deploy --only functions --project ${{ env.FIREBASE_PROJECT_ID }} --non-interactive
         env:
