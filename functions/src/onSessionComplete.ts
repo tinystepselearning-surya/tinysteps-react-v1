@@ -441,3 +441,89 @@ async function accrueTeacherEarnings(
 
   logger.info("Teacher earnings updated", { teacherId, monthId, sessionId, creditsEarned });
 }
+
+/**
+ * ✅ Bills parent ONLY when a session is completed AND at least one kid is marked present.
+ * ✅ Creates billingCharges docs idempotently (no double billing).
+ * 
+ * Trigger: sessions/{sessionId} onUpdate
+ * Region: asia-south1 (default for Gen1 in this project)
+ * 
+ * Logic:
+ * - Fires when session document is updated
+ * - Checks if status === "completed"
+ * - Reads attendance[kidId] to find kids marked "present"
+ * - Creates billingCharges/{chargeId} with amount from session.feeAmount
+ * - Idempotent: skips if charge doc already exists
+ */
+export const createBillingChargeOnPresent = functionsV1.firestore
+  .document("sessions/{sessionId}")
+  .onUpdate(async (change, context) => {
+    const after = change.after.data() as any;
+    const sessionId = context.params.sessionId as string;
+
+    if (!after) return;
+
+    // Must be completed
+    if (after.status !== "completed") return;
+
+    // Attendance can be:
+    // attendance[kidId] = { status: "present" | "absent" | "late", ... }
+    // or (older) attendance[kidId] = "present"
+    const attendance = after.attendance || {};
+
+    const kidIds: string[] = Array.isArray(after.kidIds)
+      ? after.kidIds
+      : after.kidId
+        ? [after.kidId]
+        : [];
+
+    const presentKidIds = kidIds.filter((kidId) => {
+      const entry = attendance?.[kidId];
+      const status = entry?.status ?? entry; // supports {status:"present"} or "present"
+      return status === "present";
+    });
+
+    if (presentKidIds.length === 0) return;
+
+    // Fee should come from session snapshot created by Admin scheduler
+    const amount = Number(after.feeAmount ?? after.feePerClass ?? 0);
+    if (!Number.isFinite(amount) || amount <= 0) return;
+
+    const currency = after.currency || "INR";
+    const parentId =
+      after.parentId || (Array.isArray(after.parentIds) ? after.parentIds[0] : null);
+    const enrollmentId = after.enrollmentId || null;
+
+    const db = admin.firestore();
+
+    // If 1:1 → one charge per session (doc id = sessionId)
+    // If group (future) → one charge per present kid
+    for (const kidId of presentKidIds) {
+      const chargeId = presentKidIds.length === 1 ? sessionId : `${sessionId}_${kidId}`;
+      const chargeRef = db.collection("billingCharges").doc(chargeId);
+
+      const existing = await chargeRef.get();
+      if (existing.exists) continue; // idempotent
+
+      await chargeRef.set({
+        sessionId,
+        enrollmentId,
+        kidId,
+        parentId,
+        amount,
+        currency,
+        status: "due",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        source: "session_present_completed",
+      });
+
+      logger.info("Billing charge created", { 
+        chargeId, 
+        sessionId, 
+        kidId, 
+        amount, 
+        currency 
+      });
+    }
+  });

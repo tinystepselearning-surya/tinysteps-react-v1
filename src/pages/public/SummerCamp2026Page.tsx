@@ -1,208 +1,425 @@
 import { useEffect } from 'react';
 import { applySeo } from '../../lib/seo';
-import Meta from '../../components/common/Meta';
 import { Link } from 'react-router-dom';
 
-// TODO: Add Event schema once camp dates, pricing, and schedule are finalized
+const WHATSAPP_NUMBER = '919618398383';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi! I want to know more about Summer English Camp 2026.')}`;
 
 export default function SummerCamp2026Page() {
   useEffect(() => {
     applySeo({
-      title: "Summer English Camp 2026 | Phonics, Grammar & Public Speaking (Ages 5–12) | Tiny Steps",
-      description: "Online summer English camp for kids (Ages 5–12). Phonics + grammar + public speaking with live mentors, fun activities, and weekly progress updates. Limited seats.",
+      title: "Summer English Camp 2026 | Ages 3–12 | Phonics, Grammar & Speaking | Tiny Steps",
+      description: "7-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors. Limited seats available.",
       canonicalPath: "/summer-english-camp-2026",
       ogType: "website"
-      // jsonLd will be added once event details are confirmed
     });
   }, []);
 
   return (
-    <div className="container mx-auto px-6 py-12 max-w-4xl">
-      {/* Header Section */}
-      <section className="mb-12 text-center">
+    <div className="container mx-auto px-6 py-12 max-w-5xl">
+      {/* Hero Section */}
+      <section className="mb-16 text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-[#2d5016] mb-4">
           Summer English Camp 2026
         </h1>
-        <p className="text-xl text-gray-700 mb-6">
-          Intensive 7-week online program for ages 5–12: <strong>Phonics • Grammar • Public Speaking</strong>
+        <p className="text-xl md:text-2xl text-gray-700 mb-6 max-w-3xl mx-auto">
+          Give your child a head start with <strong>confident reading, clear speaking, and strong grammar</strong> in just 7 weeks
         </p>
-        <p className="text-gray-600 mb-8">
-          Live mentors, daily practice, capstone projects, and weekly parent progress updates.
-        </p>
-        <Link
-          to="/contact"
-          className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
-        >
-          Book a Free Assessment
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+          <Link
+            to="/contact"
+            className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
+          >
+            Book Free Assessment
+          </Link>
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-3 px-8 rounded-lg transition"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Enquire on WhatsApp
+          </a>
+        </div>
+        <p className="text-sm text-gray-500">Limited seats • Ages 3–12 • Live 1:1 and small group classes</p>
       </section>
 
-      {/* Who is this for? */}
-      <section id="who" className="mb-12 bg-blue-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Who is this camp for?</h2>
-        <p className="text-gray-700 mb-4">
-          Summer Camp 2026 is designed for children ages 5–12 who want to:
+      {/* AEO Direct Answer Block */}
+      <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
+        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What is Summer English Camp 2026?</h2>
+        <p className="text-gray-700 leading-relaxed">
+          Summer English Camp 2026 is a 7-week online program for children ages 3–12 to build reading fluency, grammar confidence, and public speaking skills. Each child gets daily live classes with expert mentors, guided practice, and weekly progress reports for parents. Perfect for beginners or students looking to accelerate their English journey.
         </p>
-        <ul className="space-y-2 text-gray-700 ml-4">
-          <li>✓ Build strong phonics foundations or move to fluency</li>
-          <li>✓ Master grammar rules and improve writing</li>
-          <li>✓ Gain confidence in public speaking and presentations</li>
-          <li>✓ Enjoy structured, fun online learning with peer interaction</li>
-        </ul>
       </section>
 
-      {/* What will they learn? */}
-      <section id="learn" className="mb-12">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-6">What your child will learn</h2>
+      {/* AEO Direct Answer Block */}
+      <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
+        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What is Summer English Camp 2026?</h2>
+        <p className="text-gray-700 leading-relaxed">
+          Summer English Camp 2026 is a 7-week online program for children ages 3–12 to build reading fluency, grammar confidence, and public speaking skills. Each child gets daily live classes with expert mentors, guided practice, and weekly progress reports for parents. Perfect for beginners or students looking to accelerate their English journey.
+        </p>
+      </section>
+
+      {/* Camp Dates */}
+      <section className="mb-12 bg-yellow-50 border border-yellow-300 p-6 rounded-lg">
+        <h2 className="text-2xl font-bold text-[#2d5016] mb-3">📅 Camp Dates</h2>
+        <p className="text-gray-700 mb-2">
+          <strong>When:</strong> March/April 2026 (exact dates will be announced by end of February 2026)
+        </p>
+        <p className="text-gray-700 mb-2">
+          <strong>Duration:</strong> 7 weeks, daily live classes
+        </p>
+        <p className="text-sm text-gray-600 mt-4">
+          💡 <strong>Early bird reservations open now.</strong> <Link to="/contact" className="text-[#4a7c2c] underline font-semibold">Book your free assessment</Link> to secure your child's spot before seats fill up.
+        </p>
+      </section>
+
+      {/* Age Bands */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Age Groups & Focus Outcomes</h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Phonics Card */}
-          <div className="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
-            <h3 className="text-xl font-bold text-[#4a7c2c] mb-3">📖 Phonics</h3>
-            <p className="text-gray-700 mb-3">
-              SATPIN sounds, blending, digraphs, vowel teams, and fluency building.
-            </p>
-            <Link to="/phonics" className="text-[#4a7c2c] hover:underline font-semibold">
-              Learn more →
-            </Link>
+          {/* Ages 3-5 */}
+          <div className="border-2 border-[#4a7c2c] rounded-lg p-6 hover:shadow-lg transition">
+            <h3 className="text-2xl font-bold text-[#4a7c2c] mb-3">Ages 3–5</h3>
+            <p className="text-sm text-gray-600 mb-4 font-semibold">Foundation & Phonics</p>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>✓ Learn SATPIN sounds and simple blending</li>
+              <li>✓ Recognize and trace uppercase/lowercase letters</li>
+              <li>✓ Build vocabulary with pictures and stories</li>
+              <li>✓ Speak simple sentences with confidence</li>
+              <li>✓ Follow instructions and participate actively</li>
+            </ul>
           </div>
 
-          {/* Grammar Card */}
-          <div className="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
-            <h3 className="text-xl font-bold text-[#4a7c2c] mb-3">✏️ Grammar & Writing</h3>
-            <p className="text-gray-700 mb-3">
-              Nouns, verbs, tenses, sentence construction, and short paragraph writing.
-            </p>
-            <Link to="/grammar" className="text-[#4a7c2c] hover:underline font-semibold">
-              Learn more →
-            </Link>
+          {/* Ages 6-8 */}
+          <div className="border-2 border-[#4a7c2c] rounded-lg p-6 hover:shadow-lg transition bg-green-50">
+            <h3 className="text-2xl font-bold text-[#4a7c2c] mb-3">Ages 6–8</h3>
+            <p className="text-sm text-gray-600 mb-4 font-semibold">Reading Fluency & Grammar</p>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>✓ Master digraphs, vowel teams, and blending</li>
+              <li>✓ Read short passages fluently and independently</li>
+              <li>✓ Learn nouns, verbs, adjectives, and tenses</li>
+              <li>✓ Write complete sentences and short paragraphs</li>
+              <li>✓ Present ideas clearly in group discussions</li>
+            </ul>
           </div>
 
-          {/* Speaking Card */}
-          <div className="border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition">
-            <h3 className="text-xl font-bold text-[#4a7c2c] mb-3">🎤 Public Speaking</h3>
-            <p className="text-gray-700 mb-3">
-              Storytelling, presentations, confidence building, and Q&A skills.
-            </p>
-            <Link to="/speaking" className="text-[#4a7c2c] hover:underline font-semibold">
-              Learn more →
-            </Link>
+          {/* Ages 9-12 */}
+          <div className="border-2 border-[#4a7c2c] rounded-lg p-6 hover:shadow-lg transition">
+            <h3 className="text-2xl font-bold text-[#4a7c2c] mb-3">Ages 9–12</h3>
+            <p className="text-sm text-gray-600 mb-4 font-semibold">Advanced Skills & Confidence</p>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>✓ Read age-appropriate novels and comprehend deeply</li>
+              <li>✓ Master complex grammar: clauses, tenses, punctuation</li>
+              <li>✓ Write essays, stories, and structured paragraphs</li>
+              <li>✓ Deliver confident presentations and speeches</li>
+              <li>✓ Engage in debates and Q&A with poise</li>
+            </ul>
           </div>
         </div>
+        <p className="text-center text-sm text-gray-600 mt-6">
+          Don't see your child's exact age or skill level? <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-[#4a7c2c] underline font-semibold">Chat with us on WhatsApp</a> for a personalized plan.
+        </p>
       </section>
 
-      {/* How the camp works */}
-      <section id="how" className="mb-12 bg-green-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">How the camp works</h2>
-        <div className="space-y-4 text-gray-700">
-          <div>
-            <h3 className="font-bold text-lg mb-2">📅 Live Sessions</h3>
-            <p>
-              Interactive daily lessons with live mentors in small groups (max 4 students). Each session builds on the previous week.
-            </p>
+      {/* Daily Plan */}
+      <section className="mb-12 bg-green-50 p-8 rounded-lg">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">⏱️ Daily 45-Minute Class Structure</h2>
+        <p className="text-gray-700 mb-6">
+          Every session is designed for maximum engagement and learning. Here's what happens in each 45-minute class:
+        </p>
+        <div className="space-y-4">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-16 h-16 bg-[#4a7c2c] text-white rounded-full flex items-center justify-center font-bold text-lg">
+              5min
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Warm-Up & Review</h3>
+              <p className="text-gray-700 text-sm">
+                Greet the child, review previous day's learning, and set the tone for today's session with a fun activity.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg mb-2">🎯 Daily Practice</h3>
-            <p>
-              Students complete AI-guided practice activities and homework to reinforce learning between sessions.
-            </p>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-16 h-16 bg-[#4a7c2c] text-white rounded-full flex items-center justify-center font-bold text-lg">
+              15min
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Skill Focus (Phonics / Grammar / Speaking)</h3>
+              <p className="text-gray-700 text-sm">
+                Teach new sounds, grammar rules, or speaking techniques through interactive games, stories, and live examples.
+              </p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg mb-2">📊 Weekly Updates</h3>
-            <p>
-              Parents receive progress reports showing skills mastered, challenges, and recommendations for home practice.
-            </p>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-16 h-16 bg-[#4a7c2c] text-white rounded-full flex items-center justify-center font-bold text-lg">
+              20min
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Guided Practice</h3>
+              <p className="text-gray-700 text-sm">
+                Child practices reading, writing, or speaking with mentor feedback. Mistakes are corrected gently in real-time.
+              </p>
+            </div>
           </div>
-          <div className="text-center mt-6 p-4 bg-yellow-100 rounded border border-yellow-300">
-            <p className="font-semibold text-gray-800">📋 Schedule & Pricing</p>
-            <p className="text-gray-700">Details coming soon. Check back or contact us to reserve your spot!</p>
+
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-16 h-16 bg-[#4a7c2c] text-white rounded-full flex items-center justify-center font-bold text-lg">
+              5min
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Recap & Next Steps</h3>
+              <p className="text-gray-700 text-sm">
+                Summarize key learnings, assign short practice for the next day, and celebrate progress with positive reinforcement.
+              </p>
+            </div>
           </div>
         </div>
+        <p className="text-sm text-gray-600 mt-6 bg-white p-4 rounded border border-gray-200">
+          <strong>📱 Between classes:</strong> Children complete 10–15 minutes of AI-guided practice games to reinforce daily lessons.
+        </p>
       </section>
 
-      {/* Expected outcomes */}
-      <section id="outcomes" className="mb-12">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Outcomes parents can expect</h2>
-        <ul className="space-y-3 text-gray-700">
-          <li className="flex items-start">
-            <span className="text-2xl mr-3">✨</span>
-            <span><strong>Reading fluency:</strong> Smooth, confident reading of age-appropriate texts</span>
-          </li>
-          <li className="flex items-start">
-            <span className="text-2xl mr-3">💪</span>
-            <span><strong>Grammar confidence:</strong> Understanding of sentence structure and written expression</span>
-          </li>
-          <li className="flex items-start">
-            <span className="text-2xl mr-3">🗣️</span>
-            <span><strong>Speaking poise:</strong> Increased confidence presenting ideas in front of others</span>
-          </li>
-          <li className="flex items-start">
-            <span className="text-2xl mr-3">📈</span>
-            <span><strong>Progress momentum:</strong> Demonstrated growth in all three areas with documented milestones</span>
-          </li>
-        </ul>
+      {/* Learning Outcomes */}
+      <section className="mb-12">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6">🎯 Measurable Learning Outcomes</h2>
+        <p className="text-gray-700 mb-6">
+          By the end of the 7-week camp, your child will achieve visible, measurable progress:
+        </p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">📖 Reading Fluency</h3>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>• <strong>Beginners (3–5):</strong> Decode 20+ CVC words independently</li>
+              <li>• <strong>Intermediate (6–8):</strong> Read 60+ words/minute with comprehension</li>
+              <li>• <strong>Advanced (9–12):</strong> Read 100+ words/minute, understand context and inference</li>
+            </ul>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">🗣️ Speaking Confidence</h3>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>• <strong>Beginners (3–5):</strong> Speak 5–10 word sentences clearly</li>
+              <li>• <strong>Intermediate (6–8):</strong> Share stories and answer questions with confidence</li>
+              <li>• <strong>Advanced (9–12):</strong> Deliver 2–3 minute presentations without prompts</li>
+            </ul>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">✏️ Grammar & Writing</h3>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>• <strong>Beginners (3–5):</strong> Recognize nouns and verbs; trace letters correctly</li>
+              <li>• <strong>Intermediate (6–8):</strong> Write 3–5 sentence paragraphs with correct tense</li>
+              <li>• <strong>Advanced (9–12):</strong> Write structured essays with intro, body, and conclusion</li>
+            </ul>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">🧠 Phonics Mastery</h3>
+            <ul className="space-y-2 text-gray-700 text-sm">
+              <li>• <strong>Beginners (3–5):</strong> Master SATPIN sounds and simple blending</li>
+              <li>• <strong>Intermediate (6–8):</strong> Decode digraphs (sh, ch, th) and vowel teams (ai, oa)</li>
+              <li>• <strong>Advanced (9–12):</strong> Apply phonics rules to unfamiliar multisyllabic words</li>
+            </ul>
+          </div>
+        </div>
+        <p className="text-center text-sm text-gray-600 mt-6">
+          All outcomes are tracked weekly and shared with parents. <Link to="/curriculum" className="text-[#4a7c2c] underline font-semibold">Explore our full curriculum</Link> to see the complete learning pathway.
+        </p>
+      </section>
+
+      {/* What Parents Get */}
+      <section className="mb-12 bg-purple-50 p-8 rounded-lg">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">👪 What Parents Get</h2>
+        <div className="space-y-4">
+          <div className="flex gap-4 items-start">
+            <span className="text-3xl">📊</span>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Weekly Progress Reports</h3>
+              <p className="text-gray-700 text-sm">
+                Every Friday, receive a detailed report showing skills mastered, challenges observed, and activities practiced. Know exactly where your child stands.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-start">
+            <span className="text-3xl">🎯</span>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Clear Next Steps</h3>
+              <p className="text-gray-700 text-sm">
+                Each report includes actionable recommendations: "Practice blending with these 5 words," "Read this story together," or "Encourage speaking in full sentences."
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-start">
+            <span className="text-3xl">💬</span>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Direct Access to Mentors</h3>
+              <p className="text-gray-700 text-sm">
+                Questions or concerns? Message your child's mentor anytime via the parent portal or WhatsApp. We respond within 6 working hours.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-4 items-start">
+            <span className="text-3xl">🏆</span>
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Final Camp Certificate & Portfolio</h3>
+              <p className="text-gray-700 text-sm">
+                At the end of 7 weeks, your child receives a digital certificate, a showcase video of their best work, and a personalized learning portfolio to continue their journey.
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Frequently Asked Questions */}
-      <section id="faqs" className="mb-12 bg-purple-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Frequently Asked Questions</h2>
-        <div className="space-y-4 text-gray-700">
+      <section id="faqs" className="mb-12 bg-gray-50 p-8 rounded-lg">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
           <div>
-            <h3 className="font-bold text-lg mb-1">What if my child is a beginner in English?</h3>
-            <p>We welcome beginners! Our mentors assess each child's level and provide targeted lessons and practice.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Is this camp for complete beginners?</h3>
+            <p className="text-gray-700 text-sm">
+              Yes! We welcome children with zero English knowledge. Our mentors assess each child's level during the free trial and tailor lessons accordingly. Beginners start with basic sounds and simple words.
+            </p>
           </div>
-          <div>
-            <h3 className="font-bold text-lg mb-1">How many hours per week is the camp?</h3>
-            <p>Details coming soon. Contact us to discuss schedule options that fit your family's needs.</p>
-          </div>
-          <div>
-            <h3 className="font-bold text-lg mb-1">Can I enroll in just one skill (phonics, grammar, or speaking)?</h3>
-            <p>Contact us to discuss flexible enrollment options and pricing.</p>
-          </div>
-        </div>
-        <div className="mt-6 text-center">
-          <Link
-            to="/faq"
-            className="text-[#4a7c2c] hover:underline font-semibold"
-          >
-            View full FAQ →
-          </Link>
-        </div>
-      </section>
 
-      {/* Pricing Section */}
-      <section id="schedule" className="mb-12">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Schedule & Pricing</h2>
-        <div className="bg-gray-50 p-8 rounded-lg text-center">
-          <p className="text-gray-700 mb-4">
-            Exact dates, session times, and pricing will be announced soon.
-          </p>
-          <Link
-            to="/pricing"
-            className="inline-block text-[#4a7c2c] hover:underline font-semibold"
-          >
-            View our standard pricing →
-          </Link>
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How many hours per day is the camp?</h3>
+            <p className="text-gray-700 text-sm">
+              Each child attends one 45-minute live class per day, plus 10–15 minutes of self-paced practice games. Total daily commitment is approximately 60 minutes.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Are classes 1:1 or group-based?</h3>
+            <p className="text-gray-700 text-sm">
+              We offer both formats. 1:1 classes provide maximum personalization. Small group classes (2–4 children of similar age and level) add peer interaction. You can choose based on your child's learning style.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What if my child misses a class?</h3>
+            <p className="text-gray-700 text-sm">
+              Missed classes can be rescheduled within the same week subject to mentor availability. We record key concepts so your child can review missed content before the next session.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Can I enroll my child for only phonics or only speaking?</h3>
+            <p className="text-gray-700 text-sm">
+              The camp is designed as an integrated program covering all three skills for maximum impact. However, mentors can emphasize specific areas based on your child's needs. <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-[#4a7c2c] underline font-semibold">Contact us</a> to discuss custom options.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What devices do we need?</h3>
+            <p className="text-gray-700 text-sm">
+              A laptop, tablet, or smartphone with stable internet and a working camera/microphone. We recommend a laptop or tablet for the best interactive experience. No special software required—classes run in your browser.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How much does the camp cost?</h3>
+            <p className="text-gray-700 text-sm">
+              Pricing will be announced once final dates are confirmed (by end of February). Early registrations through the free assessment may receive priority booking and special offers. <Link to="/pricing" className="text-[#4a7c2c] underline font-semibold">View our standard pricing</Link> for reference.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Will my child get a certificate at the end?</h3>
+            <p className="text-gray-700 text-sm">
+              Yes! Every child who completes the camp receives a digital certificate of achievement, a personalized progress portfolio, and a showcase video highlighting their best work during the 7 weeks.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What happens after the camp ends?</h3>
+            <p className="text-gray-700 text-sm">
+              Most families continue with our regular ongoing programs to maintain momentum. We provide a clear learning roadmap so your child can transition smoothly into term-based courses. <Link to="/courses" className="text-[#4a7c2c] underline font-semibold">Explore our courses</Link> to plan ahead.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Can international students join?</h3>
+            <p className="text-gray-700 text-sm">
+              Absolutely! We welcome families from any country. Classes can be scheduled across time zones. Most of our students are based in India, but we have served families in the US, UK, Singapore, UAE, and Australia.
+            </p>
+          </div>
+        </div>
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-4">Still have questions?</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 bg-[#25D366] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#20ba5a] transition"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Chat on WhatsApp
+            </a>
+            <Link
+              to="/faq"
+              className="inline-block border-2 border-[#4a7c2c] text-[#4a7c2c] font-semibold py-3 px-6 rounded-lg hover:bg-[#4a7c2c] hover:text-white transition"
+            >
+              View Full FAQ
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* CTA Footer */}
-      <section className="bg-[#2d5016] text-white p-8 rounded-lg text-center">
-        <h2 className="text-2xl font-bold mb-4">Ready to give your child a summer full of learning?</h2>
-        <p className="mb-6 text-lg">
-          Limited seats available. Book a free assessment today to reserve your spot.
+      <section className="bg-[#2d5016] text-white p-8 md:p-12 rounded-lg text-center">
+        <h2 className="text-3xl font-bold mb-4">Ready to Give Your Child a Confident English Summer?</h2>
+        <p className="mb-6 text-lg max-w-2xl mx-auto">
+          Limited seats available. Book a free assessment today to understand your child's current level and secure their spot in Summer Camp 2026.
         </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
+        <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
           <Link
             to="/contact"
-            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition"
+            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
           >
             Book Free Assessment
           </Link>
-          <Link
-            to="/pricing"
-            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-3 px-8 rounded-lg transition"
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-4 px-8 rounded-lg transition text-lg inline-flex items-center justify-center gap-2"
           >
-            View Pricing
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+              <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            Enquire on WhatsApp
+          </a>
+        </div>
+        <div className="flex flex-wrap gap-4 justify-center text-sm">
+          <Link to="/courses" className="text-white hover:text-gray-200 underline">
+            Explore Courses
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/curriculum" className="text-white hover:text-gray-200 underline">
+            View Curriculum
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/phonics" className="text-white hover:text-gray-200 underline">
+            Phonics Program
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/pricing" className="text-white hover:text-gray-200 underline">
+            Pricing Info
           </Link>
         </div>
       </section>

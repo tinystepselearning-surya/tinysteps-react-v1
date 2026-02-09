@@ -37,10 +37,10 @@ export default function EnglishGrammarWritingClassesPage() {
           Online English Grammar & Writing Classes
         </h1>
         <p className="text-xl text-gray-700 mb-6">
-          1:1 personalized instruction for ages 5–12. Master sentence structure, punctuation, and creative writing.
+          Help your child write clear, confident sentences and master grammar rules that stick—with 1:1 mentorship tailored to their pace (Ages 5–12).
         </p>
         <p className="text-gray-600 mb-8">
-          Taught by experienced mentors using clear explanations, fun activities, and guided practice. Weekly progress reports for parents.
+          No more confusing worksheets or boring drills. Our mentors use games, clear examples, and guided writing practice to make grammar click. Weekly progress reports show exactly what your child is mastering.
         </p>
         <Link
           to="/contact"
@@ -48,6 +48,14 @@ export default function EnglishGrammarWritingClassesPage() {
         >
           Book a Free Assessment
         </Link>
+      </section>
+
+      {/* AEO Direct Answer Block */}
+      <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
+        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are online English grammar & writing classes?</h2>
+        <p className="text-gray-700 leading-relaxed">
+          Online English grammar and writing classes teach children ages 5–12 sentence structure, punctuation, parts of speech, and creative writing through live 1:1 sessions with expert mentors. Each class includes clear explanations, interactive practice, and guided writing activities tailored to your child's level—with weekly progress reports so parents see exactly what skills are improving.
+        </p>
       </section>
 
       {/* Who is this for? */}
@@ -63,27 +71,48 @@ export default function EnglishGrammarWritingClassesPage() {
 
       {/* What your child will learn */}
       <section id="learn" className="mb-12">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-6">What your child will learn</h2>
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6">What your child will master</h2>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">📝 Sentence Building Skills</h3>
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">📝 Grammar Foundations</h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Parts of speech (nouns, verbs, adjectives, prepositions)</li>
-              <li>• Subject-verb agreement</li>
-              <li>• Simple, compound, and complex sentences</li>
-              <li>• Sentence combining and variety</li>
+              <li>• Parts of speech: nouns, verbs, adjectives, adverbs, prepositions</li>
+              <li>• Subject-verb agreement and proper tense usage</li>
+              <li>• Simple, compound, and complex sentence structures</li>
+              <li>• Understanding clauses, phrases, and sentence variety</li>
             </ul>
           </div>
           <div className="border border-gray-200 rounded-lg p-6 shadow-sm">
-            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">✍️ Writing Skills</h3>
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">✍️ Writing & Composition</h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li>• Punctuation mastery (periods, commas, apostrophes, question marks)</li>
-              <li>• Paragraph structure and organization</li>
-              <li>• Descriptive and creative writing techniques</li>
-              <li>• Editing and proofreading strategies</li>
+              <li>• Punctuation mastery: periods, commas, apostrophes, quotation marks</li>
+              <li>• Paragraph organization with topic sentences and supporting details</li>
+              <li>• Descriptive writing using vivid adjectives and sensory language</li>
+              <li>• Editing, proofreading, and self-correction strategies</li>
+            </ul>
+          </div>
+          <div className="border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">🎯 Practical Application</h3>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li>• Writing clear sentences and fixing run-ons or fragments</li>
+              <li>• Building vocabulary through context and word families</li>
+              <li>• Using grammar to express ideas more precisely</li>
+              <li>• Applying rules in real writing (stories, essays, reports)</li>
+            </ul>
+          </div>
+          <div className="border border-gray-200 rounded-lg p-6 shadow-sm">
+            <h3 className="font-bold text-lg text-[#4a7c2c] mb-3">🏆 Confidence & Fluency</h3>
+            <ul className="space-y-2 text-sm text-gray-700">
+              <li>• Understanding WHY rules exist (not just memorizing)</li>
+              <li>• Confidence to write without constant second-guessing</li>
+              <li>• Recognition of common mistakes and how to fix them</li>
+              <li>• Transferring skills to all school subjects and creative projects</li>
             </ul>
           </div>
         </div>
+        <p className="text-center text-sm text-gray-600 mt-6">
+          Not sure where your child should start? <Link to="/contact" className="text-[#4a7c2c] underline font-semibold">Book a free assessment</Link> and we'll recommend the perfect starting point.
+        </p>
       </section>
 
       {/* How our classes work */}
@@ -166,69 +195,138 @@ export default function EnglishGrammarWritingClassesPage() {
       </section>
 
       {/* FAQs */}
-      <section id="faqs" className="mb-12 bg-purple-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Frequently Asked Questions</h2>
-        <div className="space-y-4 text-gray-700">
+      <section id="faqs" className="mb-12 bg-gray-50 p-8 rounded-lg">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions About Grammar Classes</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
           <div>
-            <h3 className="font-bold text-lg mb-1">My child hates grammar. Will they enjoy this?</h3>
-            <p>Grammar feels boring when it's just rules and worksheets. Our approach is different: we show how grammar helps express ideas better. When kids see the purpose, they engage—and enjoy the a-ha moments when things click.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">My child hates grammar. Will they enjoy these classes?</h3>
+            <p className="text-gray-700 text-sm">
+              Grammar feels boring when it's just rules and worksheets. Our approach is different: we use games, real-world examples, and show how grammar helps express ideas better. When kids see the purpose and experience success, they engage—and many actually start enjoying the "a-ha" moments.
+            </p>
           </div>
+
           <div>
-            <h3 className="font-bold text-lg mb-1">How often should we take classes?</h3>
-            <p>We recommend 2–3 classes per week for best results. Consistent practice helps grammar become automatic. Most children see noticeable improvement in writing clarity within 4–6 weeks.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What age should my child start grammar lessons?</h3>
+            <p className="text-gray-700 text-sm">
+              Children as young as 5 can start with simple parts of speech (nouns, verbs) and sentence basics. Ages 7–9 dive deeper into punctuation and sentence structure. Ages 10+ work on complex sentences, editing, and essay writing. We assess your child's level and start where they're ready.
+            </p>
           </div>
+
           <div>
-            <h3 className="font-bold text-lg mb-1">What if my child struggles with writing?</h3>
-            <p>Writing challenges often stem from weak grammar foundations or unclear thinking. Our 1:1 approach lets us diagnose the issue and build skills gradually. We celebrate small wins and build momentum.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How often should my child take grammar classes?</h3>
+            <p className="text-gray-700 text-sm">
+              We recommend 2–3 classes per week for consistent progress. Grammar skills build on each other, so regular practice helps concepts become automatic. Most children see noticeable improvements in writing clarity and confidence within 4–6 weeks.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Will this help with my child's school writing assignments?</h3>
+            <p className="text-gray-700 text-sm">
+              Absolutely. Strong grammar is the foundation of all good writing. Our students typically see better grades in English, improved essay scores, and more confidence in written assignments across all subjects. Parents often tell us teachers notice the improvement within weeks.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">My child struggles with spelling and punctuation. Can you help?</h3>
+            <p className="text-gray-700 text-sm">
+              Yes! Spelling and punctuation are core parts of our curriculum. We teach rules systematically (not just memorization) and practice through guided writing. Our 1:1 format lets us address specific weak spots and build confidence step-by-step.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Do you teach creative writing or just grammar rules?</h3>
+            <p className="text-gray-700 text-sm">
+              Both! We teach grammar through writing practice—not in isolation. Kids write stories, descriptions, and essays while applying grammar rules. This makes learning meaningful and helps them see how grammar improves their creative expression.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What if my child is ahead or behind their grade level?</h3>
+            <p className="text-gray-700 text-sm">
+              Our 1:1 approach is perfect for this. We assess your child's current skills during the free trial and customize lessons to their level—whether they need foundational support or advanced challenges. No one is held back or pushed too fast.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How will I know if my child is making progress?</h3>
+            <p className="text-gray-700 text-sm">
+              Every week, you receive a detailed progress report showing what grammar concepts your child mastered, writing samples with feedback, areas to focus on next, and tips for home practice. You'll see concrete improvement in their writing over time.
+            </p>
           </div>
         </div>
-        <div className="mt-6 text-center">
-          <Link
-            to="/faq"
-            className="text-[#4a7c2c] hover:underline font-semibold"
-          >
-            View full FAQ →
-          </Link>
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-4">More questions?</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/faq"
+              className="inline-block border-2 border-[#4a7c2c] text-[#4a7c2c] font-semibold py-3 px-6 rounded-lg hover:bg-[#4a7c2c] hover:text-white transition"
+            >
+              View Full FAQ
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-block bg-[#4a7c2c] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#2d5016] transition"
+            >
+              Book Free Assessment
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Cross-links to other programs */}
       <section className="mb-12 bg-gray-50 p-8 rounded-lg">
-        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Part of the Tiny Steps learning journey</h2>
+        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Build complete English language skills</h2>
         <p className="text-gray-700 mb-6">
-          Build a complete foundation in English language skills:
+          Grammar is one pillar of strong English. Explore our other programs to give your child a well-rounded foundation:
         </p>
         <div className="grid md:grid-cols-3 gap-4">
           <Link to="/phonics" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Explore Phonics & Reading →
+            → Phonics & Reading Program →
           </Link>
-          <Link to="/speaking" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Explore Public Speaking →
+          <Link to="/public-speaking-communication-kids" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → Public Speaking Classes →
           </Link>
-          <Link to="/grammar" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Full Grammar Program →
+          <Link to="/courses" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → All Courses & Curriculum →
           </Link>
         </div>
       </section>
 
       {/* CTA Footer */}
-      <section className="bg-[#2d5016] text-white p-8 rounded-lg text-center">
-        <h2 className="text-2xl font-bold mb-4">Ready to help your child master writing?</h2>
-        <p className="mb-6 text-lg">
-          Book a free assessment to discuss your child's needs and get started.
+      <section className="bg-[#2d5016] text-white p-8 md:p-12 rounded-lg text-center">
+        <h2 className="text-3xl font-bold mb-4">Ready to help your child write with confidence?</h2>
+        <p className="mb-6 text-lg max-w-2xl mx-auto">
+          Book a free assessment to understand your child's current grammar level and get a personalized learning plan. See exactly how our 1:1 approach works—with no commitment required.
         </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
+        <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
           <Link
             to="/contact"
-            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition"
+            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
           >
             Book Free Assessment
           </Link>
           <Link
             to="/pricing"
-            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-3 px-8 rounded-lg transition"
+            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-4 px-8 rounded-lg transition text-lg"
           >
             View Pricing
+          </Link>
+        </div>
+        <div className="flex flex-wrap gap-4 justify-center text-sm">
+          <Link to="/courses" className="text-white hover:text-gray-200 underline">
+            All Courses
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/curriculum" className="text-white hover:text-gray-200 underline">
+            Full Curriculum
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/phonics" className="text-white hover:text-gray-200 underline">
+            Phonics Program
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/public-speaking-communication-kids" className="text-white hover:text-gray-200 underline">
+            Speaking Classes
           </Link>
         </div>
       </section>

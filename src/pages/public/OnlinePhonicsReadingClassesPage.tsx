@@ -50,8 +50,16 @@ export default function OnlinePhonicsReadingClassesPage() {
         </Link>
       </section>
 
+      {/* AEO Direct Answer Block */}
+      <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
+        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are online phonics and reading classes?</h2>
+        <p className="text-gray-700 leading-relaxed">
+          Online phonics and reading classes teach children ages 3–8 letter sounds, blending, and reading through live 1:1 sessions with expert mentors. Each class uses proven methods like SATPIN, interactive games, and guided practice tailored to your child's pace—with weekly progress reports so parents see exactly what skills are improving and what to practice at home.
+        </p>
+      </section>
+
       {/* Who is this for? */}
-      <section id="who" className="mb-12 bg-blue-50 p-8 rounded-lg">
+      <section id="who" className="mb-12 bg-green-50 p-8 rounded-lg">
         <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Who is this for?</h2>
         <p className="text-gray-700 mb-4">
           These classes are perfect for children ages 3–8 who:
@@ -169,69 +177,138 @@ export default function OnlinePhonicsReadingClassesPage() {
       </section>
 
       {/* FAQs */}
-      <section id="faqs" className="mb-12 bg-purple-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Frequently Asked Questions</h2>
-        <div className="space-y-4 text-gray-700">
+      <section id="faqs" className="mb-12 bg-gray-50 p-8 rounded-lg">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions About Phonics Classes</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
           <div>
-            <h3 className="font-bold text-lg mb-1">What if my child has never read before?</h3>
-            <p>Perfect! We start from the very beginning. Our mentors teach letter sounds before reading, building a strong foundation step by step.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What if my child has never read before?</h3>
+            <p className="text-gray-700 text-sm">
+              Perfect! We start from the very beginning with letter recognition and sounds. Our mentors teach phonics step-by-step, building a strong foundation before moving to blending and reading. No prior knowledge is needed.
+            </p>
           </div>
+
           <div>
-            <h3 className="font-bold text-lg mb-1">How often should we take classes?</h3>
-            <p>We recommend 2–3 classes per week for best results. Most children see noticeable progress within 4–6 weeks of consistent practice.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How quickly will my child start reading?</h3>
+            <p className="text-gray-700 text-sm">
+              Most children start blending simple CVC words (cat, dog, sun) within 4–6 weeks of consistent classes (2–3 per week). Reading full sentences typically happens within 8–12 weeks, depending on starting level and practice frequency.
+            </p>
           </div>
+
           <div>
-            <h3 className="font-bold text-lg mb-1">Can my child learn if they're shy or anxious?</h3>
-            <p>Yes! 1:1 classes provide a safe, pressure-free space. Our mentors build trust and create a fun learning environment at your child's pace.</p>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What is the SATPIN method?</h3>
+            <p className="text-gray-700 text-sm">
+              SATPIN is a proven phonics sequence that teaches the most common letter sounds first (S, A, T, P, I, N). This allows children to start blending simple words like "sat," "pin," and "tap" quickly, building confidence and momentum early in their learning journey.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How often should my child take classes?</h3>
+            <p className="text-gray-700 text-sm">
+              We recommend 2–3 classes per week for best results. Consistent practice helps phonics skills become automatic. Children taking 3 classes per week typically progress 50% faster than those taking 1 class per week.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Can my child learn if they're shy or anxious?</h3>
+            <p className="text-gray-700 text-sm">
+              Yes! 1:1 classes provide a safe, pressure-free environment. Our mentors build trust through games, songs, and positive reinforcement. Shy children often thrive in 1:1 settings because there's no peer pressure and they can go at their own comfortable pace.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">What if my child already knows some letters?</h3>
+            <p className="text-gray-700 text-sm">
+              Great! We assess your child's current level during the free trial and start exactly where they need. We don't waste time on skills they've already mastered—we move them forward with blending, tricky words, or fluency building based on their readiness.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Do you provide homework or practice activities?</h3>
+            <p className="text-gray-700 text-sm">
+              Yes! After each class, we assign 5–10 minutes of practice activities (games, flashcards, or reading exercises). Practice is optional but highly recommended—children who practice between classes progress significantly faster.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">How will I track my child's progress?</h3>
+            <p className="text-gray-700 text-sm">
+              Every week, you receive a detailed progress report showing which sounds and words your child mastered, areas to focus on, and specific tips for home practice. You'll see concrete evidence of improvement—like moving from 5 sounds to 15 sounds, or reading their first sentence.
+            </p>
           </div>
         </div>
-        <div className="mt-6 text-center">
-          <Link
-            to="/faq"
-            className="text-[#4a7c2c] hover:underline font-semibold"
-          >
-            View full FAQ →
-          </Link>
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-4">More questions about phonics?</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/faq"
+              className="inline-block border-2 border-[#4a7c2c] text-[#4a7c2c] font-semibold py-3 px-6 rounded-lg hover:bg-[#4a7c2c] hover:text-white transition"
+            >
+              View Full FAQ
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-block bg-[#4a7c2c] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#2d5016] transition"
+            >
+              Book Free Assessment
+            </Link>
+          </div>
         </div>
       </section>
 
       {/* Cross-links to other programs */}
       <section className="mb-12 bg-gray-50 p-8 rounded-lg">
-        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Part of the Tiny Steps learning journey</h2>
+        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Build complete English skills beyond phonics</h2>
         <p className="text-gray-700 mb-6">
-          Once your child masters phonics and reading, they can move forward with confidence:
+          Once your child masters phonics and reading, continue their learning journey with:
         </p>
         <div className="grid md:grid-cols-3 gap-4">
-          <Link to="/grammar" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Explore Grammar & Writing →
+          <Link to="/english-grammar-writing-classes" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → Grammar & Writing Classes →
           </Link>
-          <Link to="/speaking" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Explore Public Speaking →
+          <Link to="/public-speaking-communication-kids" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → Public Speaking Classes →
           </Link>
-          <Link to="/phonics" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Full Phonics Program →
+          <Link to="/courses" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → All Courses & Curriculum →
           </Link>
         </div>
       </section>
 
       {/* CTA Footer */}
-      <section className="bg-[#2d5016] text-white p-8 rounded-lg text-center">
-        <h2 className="text-2xl font-bold mb-4">Ready to help your child unlock reading?</h2>
-        <p className="mb-6 text-lg">
-          Book a free assessment to discuss your child's needs and get started.
+      <section className="bg-[#2d5016] text-white p-8 md:p-12 rounded-lg text-center">
+        <h2 className="text-3xl font-bold mb-4">Ready to help your child unlock reading?</h2>
+        <p className="mb-6 text-lg max-w-2xl mx-auto">
+          Book a free assessment to understand your child's current phonics level and get a personalized learning plan. See how 1:1 instruction works—with no commitment required.
         </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center">
+        <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
           <Link
             to="/contact"
-            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-3 px-8 rounded-lg transition"
+            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
           >
             Book Free Assessment
           </Link>
           <Link
             to="/pricing"
-            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-3 px-8 rounded-lg transition"
+            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-4 px-8 rounded-lg transition text-lg"
           >
             View Pricing
+          </Link>
+        </div>
+        <div className="flex flex-wrap gap-4 justify-center text-sm">
+          <Link to="/courses" className="text-white hover:text-gray-200 underline">
+            All Courses
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/curriculum" className="text-white hover:text-gray-200 underline">
+            Full Curriculum
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/english-grammar-writing-classes" className="text-white hover:text-gray-200 underline">
+            Grammar Classes
+          </Link>
+          <span className="text-gray-400">•</span>
+          <Link to="/public-speaking-communication-kids" className="text-white hover:text-gray-200 underline">
+            Speaking Classes
           </Link>
         </div>
       </section>

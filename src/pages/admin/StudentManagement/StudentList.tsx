@@ -1,5 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { onSnapshot, collection, query, orderBy, getDocs } from 'firebase/firestore';
+import {
+  onSnapshot,
+  collection,
+  query,
+  orderBy,
+  getDocs,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -14,6 +27,7 @@ import { Student } from '../../../types/Student';
 import { useEnrollmentsForStudents } from '../../../hooks/useData';
 import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
 
 const PAGE_SIZE = 25;
 
@@ -22,6 +36,25 @@ interface StudentListProps {
   onDelete: (studentId: string) => void;
   onAssignCourse: (student: Student) => void;
 }
+
+type EnrollmentLite = {
+  id: string;
+  status?: string;
+  courseId?: string;
+  course?: { title?: string };
+  teacherId?: string;
+  teacher?: { name?: string; email?: string; uid?: string; id?: string };
+  feePerClass?: number;
+  currency?: string;
+  joinUrl?: string;
+  schedule?: {
+    timezone?: string;
+    weekdays?: number[];
+    timeHHmm?: string;
+    durationMins?: number;
+  };
+  startDate?: any; // Timestamp
+};
 
 function computeAgeYearsFromDob(dob?: string): number | null {
   try {
@@ -59,6 +92,45 @@ function displayAgeYears(s: any): string {
   return fromDob != null ? String(fromDob) : '—';
 }
 
+function toISODate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function parseISODateOnly(iso: string): Date | null {
+  // iso: YYYY-MM-DD
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
+  const dt = new Date(y, mo - 1, d, 0, 0, 0, 0);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function formatYMDCompact(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}${m}${day}`;
+}
+
+function safeNumber(v: any, fallback = 0): number {
+  const n = typeof v === 'string' ? Number(v) : v;
+  return typeof n === 'number' && Number.isFinite(n) ? n : fallback;
+}
+
+function enrollmentLabel(e: EnrollmentLite): string {
+  const courseTitle = e.course?.title || e.courseId || 'Course';
+  const teacher = e.teacher?.name || e.teacher?.email || e.teacherId || '';
+  const fee = safeNumber(e.feePerClass, 0);
+  const feeText = fee > 0 ? ` — ₹${fee}/class` : '';
+  return `${courseTitle}${teacher ? ` — ${teacher}` : ''}${feeText}`;
+}
+
 export default function StudentList({ onEdit, onDelete, onAssignCourse }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [parents, setParents] = useState<User[]>([]);
@@ -71,6 +143,20 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [assignCourseFor, setAssignCourseFor] = useState<Student | null>(null);
   const [assignTeacherFor, setAssignTeacherFor] = useState<Student | null>(null);
   const [assignLPFor, setAssignLPFor] = useState<Student | null>(null);
+
+  // ✅ NEW: schedule modal state
+  const [scheduleFor, setScheduleFor] = useState<Student | null>(null);
+  const [scheduleEnrollmentId, setScheduleEnrollmentId] = useState<string>('');
+  const [enrollmentStartDate, setEnrollmentStartDate] = useState<string>(toISODate(new Date()));
+  const [classesStartDate, setClassesStartDate] = useState<string>(toISODate(new Date()));
+  const [weekdays, setWeekdays] = useState<number[]>([1, 3, 5]); // Mon, Wed, Fri default
+  const [timeHHmm, setTimeHHmm] = useState<string>('18:00');
+  const [durationMins, setDurationMins] = useState<number>(35);
+  const [feePerClass, setFeePerClass] = useState<number>(0);
+  const [generateWeeks, setGenerateWeeks] = useState<number>(8);
+  const [endDate, setEndDate] = useState<string>(''); // optional
+  const [meetingLink, setMeetingLink] = useState<string>(''); // optional (Zoom/Meet)
+  const [savingSchedule, setSavingSchedule] = useState<boolean>(false);
 
   const { user } = useAuthStore();
 
@@ -144,16 +230,145 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const enrollmentsQuery = useEnrollmentsForStudents(pagedStudentIds);
 
   const enrollmentsByStudent = useMemo(() => {
-    const map: Record<string, any[]> = {};
+    const map: Record<string, EnrollmentLite[]> = {};
     if (!enrollmentsQuery.data) return map;
-    enrollmentsQuery.data.forEach((e: any) => {
+    (enrollmentsQuery.data as any[]).forEach((e: any) => {
       const sid = e.studentId || e.kidId || (e.kidIds && e.kidIds[0]);
       if (!sid) return;
       if (!map[sid]) map[sid] = [];
-      map[sid].push(e);
+      map[sid].push(e as EnrollmentLite);
     });
     return map;
   }, [enrollmentsQuery.data]);
+
+  const canAdminAct =
+    user?.role === 'admin' || (user?.role === 'learningPartner');
+
+  function openScheduleModal(student: Student) {
+    const enrolls = enrollmentsByStudent[student.id] || [];
+    if (enrolls.length === 0) {
+      toast({
+        title: 'No enrollment found',
+        description: 'Assign a course first, then schedule recurring classes.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const first = enrolls[0];
+
+    setScheduleFor(student);
+    setScheduleEnrollmentId(first.id);
+
+    const today = new Date();
+    const todayISO = toISODate(today);
+
+    // default dates
+    setEnrollmentStartDate(todayISO);
+    setClassesStartDate(todayISO);
+
+    // defaults from enrollment if already set
+    setWeekdays(first.schedule?.weekdays?.length ? first.schedule.weekdays : [1, 3, 5]);
+    setTimeHHmm(first.schedule?.timeHHmm || '18:00');
+    setDurationMins(safeNumber(first.schedule?.durationMins, 35));
+    setFeePerClass(safeNumber(first.feePerClass, 0));
+    setGenerateWeeks(8);
+    setEndDate('');
+    setMeetingLink(first.joinUrl || '');
+  }
+
+  async function handleSaveSchedule() {
+    if (!scheduleFor) return;
+
+    const enrolls = enrollmentsByStudent[scheduleFor.id] || [];
+    const selectedEnrollment = enrolls.find(e => e.id === scheduleEnrollmentId);
+
+    if (!scheduleEnrollmentId || !selectedEnrollment) {
+      toast({ title: 'Select an enrollment', variant: 'destructive' });
+      return;
+    }
+
+    const enrollStart = parseISODateOnly(enrollmentStartDate);
+    const classStart = parseISODateOnly(classesStartDate);
+    if (!enrollStart || !classStart) {
+      toast({ title: 'Invalid start date', variant: 'destructive' });
+      return;
+    }
+
+    if (!timeHHmm || !/^\d{2}:\d{2}$/.test(timeHHmm)) {
+      toast({ title: 'Invalid time', description: 'Use HH:MM format.', variant: 'destructive' });
+      return;
+    }
+
+    if (!Array.isArray(weekdays) || weekdays.length === 0) {
+      toast({ title: 'Pick at least one weekday', variant: 'destructive' });
+      return;
+    }
+
+    const fee = safeNumber(feePerClass, 0);
+    if (fee <= 0) {
+      toast({ title: 'Fee per class required', description: 'Enter a fee > 0.', variant: 'destructive' });
+      return;
+    }
+
+    const dur = Math.max(10, Math.min(180, safeNumber(durationMins, 35)));
+    const weeks = Math.max(1, Math.min(52, safeNumber(generateWeeks, 8)));
+
+    setSavingSchedule(true);
+    try {
+      // 1) Update enrollment with start date + fee + schedule
+      const enrollmentRef = doc(db, 'enrollments', scheduleEnrollmentId);
+      await updateDoc(enrollmentRef, {
+        startDate: Timestamp.fromDate(enrollStart),
+        feePerClass: fee,
+        currency: 'INR',
+        joinUrl: meetingLink ? meetingLink : null,
+        schedule: {
+          timezone: 'Asia/Kolkata',
+          weekdays,
+          timeHHmm,
+          durationMins: dur,
+        },
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid || null,
+      });
+
+      // 2) Call Cloud Function to generate sessions
+      const functions = getFunctions(undefined, 'asia-south1');
+      const createSessionsFromSchedule = httpsCallable<
+        { enrollmentId: string; weeksAhead?: number },
+        { created: number; skipped: number; rangeStart: string; rangeEnd: string }
+      >(functions, 'createSessionsFromSchedule');
+
+      const result = await createSessionsFromSchedule({
+        enrollmentId: scheduleEnrollmentId,
+        weeksAhead: weeks,
+      });
+
+      const { created, skipped } = result.data;
+
+      toast({
+        title: 'Schedule saved',
+        description: `✅ Created ${created} sessions (${skipped} already existed)`,
+      });
+
+      setScheduleFor(null);
+      enrollmentsQuery.refetch();
+    } catch (err: any) {
+      console.error('Error saving schedule:', err);
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to save schedule / create sessions.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingSchedule(false);
+    }
+  }
+
+  function toggleWeekday(day: number) {
+    setWeekdays(prev => (prev.includes(day) ? prev.filter(x => x !== day) : [...prev, day].sort((a, b) => a - b)));
+  }
 
   return (
     <div className="space-y-4">
@@ -248,6 +463,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                             <strong>{e.course?.title || e.courseId}</strong>
                             {e.teacher && ` — ${e.teacher.name || e.teacher.email}`}
                             {` — ${e.status}`}
+                            {safeNumber(e.feePerClass, 0) > 0 ? ` — ₹${e.feePerClass}/class` : ''}
                           </div>
                           <div className="ml-4">
                             <Button
@@ -273,7 +489,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                 </TableCell>
 
                 <TableCell>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button
                       size="sm"
                       onClick={() => onAssignCourse(s)}
@@ -306,6 +522,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                       disabled={!(user?.role === 'admin')}
                     >
                       {user?.role === 'admin' ? 'Assign LP' : 'Not Authorized'}
+                    </Button>
+
+                    {/* ✅ NEW: Schedule Classes */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openScheduleModal(s)}
+                      disabled={
+                        !(
+                          user?.role === 'admin' ||
+                          (user?.role === 'learningPartner' && ((s as any).lpId === user.uid))
+                        )
+                      }
+                    >
+                      Schedule Classes
                     </Button>
 
                     <Button size="sm" variant="destructive" onClick={() => onDelete(s.id)}>
@@ -368,6 +599,164 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           }}
         />
       )}
+
+      {/* ✅ NEW: Schedule Classes Modal */}
+      <Dialog open={!!scheduleFor} onOpenChange={(open) => !open && setScheduleFor(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Schedule Classes {scheduleFor?.fullName ? `— ${scheduleFor.fullName}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+
+          {scheduleFor ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <div className="text-sm font-medium mb-1">Enrollment (Course)</div>
+                  <Select value={scheduleEnrollmentId} onValueChange={setScheduleEnrollmentId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select enrollment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(enrollmentsByStudent[scheduleFor.id] || []).map(e => (
+                        <SelectItem key={e.id} value={e.id}>
+                          {enrollmentLabel(e)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Tip: Assign course + teacher first if needed.
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Fee per class (₹)</div>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={feePerClass}
+                    onChange={(e) => setFeePerClass(safeNumber(e.target.value, 0))}
+                    placeholder="e.g., 599"
+                  />
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Enrollment start date</div>
+                  <Input
+                    type="date"
+                    value={enrollmentStartDate}
+                    onChange={(e) => setEnrollmentStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Classes start date</div>
+                  <Input
+                    type="date"
+                    value={classesStartDate}
+                    onChange={(e) => setClassesStartDate(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Time (HH:MM)</div>
+                  <Input
+                    type="time"
+                    value={timeHHmm}
+                    onChange={(e) => setTimeHHmm(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Duration (minutes)</div>
+                  <Input
+                    type="number"
+                    min={10}
+                    max={180}
+                    value={durationMins}
+                    onChange={(e) => setDurationMins(safeNumber(e.target.value, 35))}
+                  />
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">Generate for (weeks)</div>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={52}
+                    value={generateWeeks}
+                    onChange={(e) => setGenerateWeeks(safeNumber(e.target.value, 8))}
+                  />
+                  <div className="text-xs text-gray-500 mt-1">
+                    We will create future sessions in Firestore → sessions.
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-medium mb-1">End date (optional)</div>
+                  <Input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                  <div className="text-xs text-gray-500 mt-1">
+                    If set, it overrides “weeks”.
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="text-sm font-medium mb-1">Weekdays</div>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { d: 0, label: 'Sun' },
+                      { d: 1, label: 'Mon' },
+                      { d: 2, label: 'Tue' },
+                      { d: 3, label: 'Wed' },
+                      { d: 4, label: 'Thu' },
+                      { d: 5, label: 'Fri' },
+                      { d: 6, label: 'Sat' },
+                    ].map(w => (
+                      <Button
+                        key={w.d}
+                        type="button"
+                        size="sm"
+                        variant={weekdays.includes(w.d) ? 'default' : 'outline'}
+                        onClick={() => toggleWeekday(w.d)}
+                      >
+                        {w.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <div className="text-sm font-medium mb-1">Zoom / Meet link (optional)</div>
+                  <Input
+                    value={meetingLink}
+                    onChange={(e) => setMeetingLink(e.target.value)}
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+
+              <div className="text-xs text-gray-500">
+                Note: Sessions are created with deterministic IDs so re-saving won’t duplicate. Existing sessions are skipped.
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter className="gap-2">
+            <Button variant="secondary" onClick={() => setScheduleFor(null)} disabled={savingSchedule}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveSchedule} disabled={savingSchedule}>
+              {savingSchedule ? 'Saving...' : 'Save Schedule'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

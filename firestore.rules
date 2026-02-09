@@ -226,6 +226,14 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // BILLING CHARGES COLLECTION
+    // ----------------------------
+    match /billingCharges/{chargeId} {
+      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
     // MESSAGES COLLECTION
     // ----------------------------
     match /messages/{messageId} {

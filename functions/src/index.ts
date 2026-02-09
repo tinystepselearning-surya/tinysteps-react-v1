@@ -9,9 +9,13 @@
  * Firestore triggers handle automatic background processing.
  */
 
-// Session completion (attendance + credit processing)
+// Session completion (attendance + credit processing + billing)
 // Callable is for manual retry only; teacher UI must not auto-call to prevent double-processing
-export { onSessionComplete, onSessionCompleteTrigger } from "./onSessionComplete";
+// createBillingChargeOnPresent auto-bills when session completed + kid marked present
+export { onSessionComplete, onSessionCompleteTrigger, createBillingChargeOnPresent } from "./onSessionComplete";
+
+// Bulk session generator from enrollment schedule config
+export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
 
 // Admin user management
 export { adminCreateUser } from "./adminCreateUser";
