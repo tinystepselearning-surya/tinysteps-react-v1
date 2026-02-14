@@ -52,8 +52,9 @@ export const localBusinessSchema = {
   url: 'https://tinystepslearning.com',
   address: {
     '@type': 'PostalAddress',
-    addressCountry: 'IN',
-    addressRegion: 'India'
+    addressLocality: 'Hyderabad',
+    addressRegion: 'Telangana',
+    addressCountry: 'IN'
   },
   openingHoursSpecification: {
     '@type': 'OpeningHoursSpecification',

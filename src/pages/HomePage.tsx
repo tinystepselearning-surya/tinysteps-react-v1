@@ -287,11 +287,11 @@ export default function HomePage() {
       <section className="px-6 py-10">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-2xl bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold">English classes for kids across India</h2>
-            <p className="mt-2 text-gray-700">“Searching for ‘kids English classes near me’? Tiny Steps is 1:1 online, so children can learn from anywhere in India—Hyderabad, Bengaluru, Chennai, Mumbai, Delhi, Pune, Kolkata, Ahmedabad and more.”</p>
+            <h2 className="text-2xl font-semibold">English classes for kids worldwide</h2>
+            <p className="mt-2 text-gray-700">"Searching for 'kids English classes near me'? Tiny Steps is 1:1 online, so children can learn from anywhere in the world—Hyderabad, Chennai, Mumbai, Delhi, Pune, Kolkata, London, Dubai, Singapore and more."</p>
 
             <div className="mt-4 flex flex-wrap gap-2">
-              {['Hyderabad','Bengaluru','Chennai','Mumbai','Delhi NCR','Pune','Kolkata','Ahmedabad','Jaipur','Lucknow','Indore'].map((c) => (
+              {['Hyderabad','Chennai','Mumbai','Delhi NCR','Pune','Kolkata','London','Dubai','Singapore','New York','Toronto'].map((c) => (
                 <span key={c} className="rounded-full bg-slate-100 px-3 py-1 text-sm">{c}</span>
               ))}
             </div>
