@@ -11,11 +11,13 @@ const HOST = `http://127.0.0.1:${PORT}`;
 // Keep these as your "always prerender" routes
 const SEED_ROUTES = [
   "/",
+  "/phonics",
   "/courses",
   "/curriculum",
-  "/phonics",
-  "/blog",
+  "/pricing",
   "/faq",
+  "/contact",
+  "/blog",
   // Parents hub + help pages
   "/parents",
   "/parents/getting-started",
@@ -47,7 +49,7 @@ function startPreview() {
   return proc;
 }
 
-async function waitForServer(url, timeout = 45000) {
+async function waitForServer(url, timeout = 90000) {
   const start = Date.now();
   const alt = url.replace("127.0.0.1", "localhost");
   let attempt = 0;
@@ -373,13 +375,64 @@ async function writeRouteHtml(route, html) {
   console.log("Wrote", outFile);
 }
 
+/**
+ * Render a single route with retry logic and content validation.
+ * @param page Playwright page instance
+ * @param route The route path (e.g. "/phonics")
+ * @param maxRetries Maximum number of retry attempts
+ * @returns Promise that resolves when route is successfully rendered
+ */
+async function renderRouteWithRetry(page, route, maxRetries = 2) {
+  const url = `${HOST}${route}`;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Prerendering ${url}${attempt > 1 ? ` (attempt ${attempt}/${maxRetries})` : ''}`);
+      
+      await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+      
+      // Wait for React content to be meaningful (not just meta tags)
+      // Check that #root has substantial text content (>200 chars) or main heading exists
+      await page.waitForFunction(
+        () => {
+          const root = document.getElementById('root');
+          if (!root) return false;
+          const textLength = root.innerText?.length || 0;
+          const hasHeading = root.querySelector('h1, h2') !== null;
+          return textLength > 200 || hasHeading;
+        },
+        { timeout: 30000 }
+      );
+      
+      const html = await page.content();
+      
+      // Validate HTML has meaningful content
+      if (html.length < 1000) {
+        throw new Error(`HTML too short (${html.length} bytes) - likely empty shell`);
+      }
+      
+      await writeRouteHtml(route, html);
+      return; // Success - exit retry loop
+      
+    } catch (err) {
+      if (attempt === maxRetries) {
+        console.error(`❌ FAILED to prerender ${route} after ${maxRetries} attempts:`);
+        console.error(err.message);
+        throw new Error(`Prerender failed for route: ${route}`);
+      }
+      console.warn(`Retry ${attempt}/${maxRetries} for ${route} failed: ${err.message}`);
+      await new Promise((r) => setTimeout(r, 2000)); // Wait 2s before retry
+    }
+  }
+}
+
 async function prerender() {
   const proc = startPreview();
 
   try {
     const baseUrl = `${HOST}/`;
     console.log("Waiting for server at", baseUrl);
-    await waitForServer(baseUrl, 45000);
+    await waitForServer(baseUrl, 90000);
 
     let browser;
     try {
@@ -408,16 +461,39 @@ async function prerender() {
 
       const ROUTES = Array.from(new Set([...SEED_ROUTES, ...blogRoutes]));
 
-      // Prerender all routes
+      console.log(`\n🚀 Prerendering ${ROUTES.length} routes...\n`);
+
+      // Prerender all routes with retry logic
+      let successCount = 0;
+      let failCount = 0;
+      const failedRoutes = [];
+
       for (const route of ROUTES) {
-        const url = `${HOST}${route}`;
-        console.log("Prerendering", url);
-        await page.goto(url, { waitUntil: "networkidle" });
-        const html = await page.content();
-        await writeRouteHtml(route, html);
+        try {
+          await renderRouteWithRetry(page, route);
+          successCount++;
+        } catch (err) {
+          failCount++;
+          failedRoutes.push(route);
+          console.error(`Skipping ${route} due to error: ${err.message}`);
+        }
       }
 
       await browser.close();
+
+      // Print summary
+      console.log(`\n✅ Prerender Summary:`);
+      console.log(`   ✓ Success: ${successCount}/${ROUTES.length} routes`);
+      if (failCount > 0) {
+        console.log(`   ✗ Failed: ${failCount} routes`);
+        console.log(`   Failed routes:`, failedRoutes.join(', '));
+      }
+
+      // Exit with error if any critical route failed
+      if (failCount > 0) {
+        throw new Error(`${failCount} route(s) failed to prerender`);
+      }
+
     } catch (launchErr) {
       console.error("Prerender failed with error:");
       console.error(launchErr && launchErr.stack ? launchErr.stack : launchErr);
