@@ -42,7 +42,9 @@ const ContactPage: FC = () => {
                 <li><span className="font-semibold">Support:</span> <a href="/contact" className="text-tiny-blue-600">Use the contact form to reach our team</a></li>
               )}
               <li><span className="font-semibold">Email:</span> <a href="mailto:hello@tinystepslearning.com" className="text-tiny-blue-600">hello@tinystepslearning.com</a></li>
-              <li><span className="font-semibold">Location:</span> Bengaluru, Karnataka (serving families PAN India)</li>
+              <li>
+                <span className="font-semibold">Location:</span> Hyderabad, Telangana (online-only; serving families across the globe)
+              </li>
               <li><span className="font-semibold">Hours:</span> Mon–Fri 9 AM – 6 PM IST • Sat 10 AM – 2 PM IST</li>
             </ul>
           </div>
