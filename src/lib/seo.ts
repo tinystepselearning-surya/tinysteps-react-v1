@@ -89,7 +89,7 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });
   upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: cfg.description ?? undefined });
 
-  // Resolve OG image: prefer explicit cfg.ogImage, else provide a parents default for /parents routes
+  // Resolve OG image: prefer explicit cfg.ogImage, else provide a parents default for /parents routes, else fallback to og-default.png
   const resolvedOgImage = (function () {
     if (cfg.ogImage) return cfg.ogImage.startsWith('http') ? cfg.ogImage : `${CANONICAL_ORIGIN}${cfg.ogImage}`;
     try {
@@ -97,16 +97,14 @@ export function applySeo(cfg: SeoConfig) {
     } catch (e) {
       /* ignore */
     }
-    return undefined;
+    // Fallback to default OG image for all public pages
+    return `${CANONICAL_ORIGIN}/og-default.png`;
   })();
 
-  if (resolvedOgImage) {
-    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: resolvedOgImage });
-    upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
-  } else {
-    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: undefined });
-    upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary' });
-  }
+  // Always set OG image (we now always have a fallback)
+  upsertMeta('meta[property="og:image"]', { property: 'og:image', content: resolvedOgImage });
+  upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: resolvedOgImage });
+  upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
 
   // JSON-LD (optional)
   removeExistingJsonLd();
