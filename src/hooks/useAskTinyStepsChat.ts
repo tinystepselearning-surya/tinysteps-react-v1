@@ -27,7 +27,7 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "pricing",
     title: "Pricing & Packages",
     text:
-      "1:1 classes (35 minutes). Free Assessment Class (Demo) is FREE (₹0). Packages: 8 classes ₹4,400; 16 classes ₹8,400; 24 classes ₹12,000. Optional single paid class: ₹599.",
+      "1:1 classes (35 minutes). Free Assessment Class (Demo) is FREE (₹0). 30% OFF Plans: Starter (8 classes) ₹3,360; Growth (16 classes) ₹6,440; Intensive (24 classes) ₹9,240. Optional single paid class: ₹599.",
   },
   {
     id: "timings",
@@ -60,9 +60,9 @@ export const ASK_TINYSTEPS_FACTS = {
   paidSingleClassPrice: 599,
 
   pricingPackages: [
-    { classes: 8, price: 4400, perClass: 550 },
-    { classes: 16, price: 8400, perClass: 525 },
-    { classes: 24, price: 12000, perClass: 500 },
+    { classes: 8, price: 3360, perClass: 420 },   // Starter: ₹4,800 → 30% OFF → ₹3,360
+    { classes: 16, price: 6440, perClass: 402.5 }, // Growth: ₹9,200 → 30% OFF → ₹6,440
+    { classes: 24, price: 9240, perClass: 385 },  // Intensive: ₹13,200 → 30% OFF → ₹9,240
   ],
 
   ageRangeOverall: "3–12",

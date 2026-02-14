@@ -5,14 +5,15 @@ import type { FC } from 'react';
 import Meta from '../components/common/Meta';
 import { useAuthStore } from '../store/useAuthStore';
 import { catalogs } from '../content/courses';
+import { DISCOUNT_PERCENT, INTENSIVE_PLAN } from '../lib/pricingPlans';
 
 const MRP_PER_SESSION = 599;           // Official 1:1 MRP
-const DEFAULT_PACK_RATE = 550;         // Typical pack rate used for estimates
+const DEFAULT_PACK_RATE = INTENSIVE_PLAN.perClassOriginal; // 550 - Use Intensive original rate for estimates
 
 // ============================================================================
 // DISCOUNT HELPERS (Limited-time 30% OFF)
 // ============================================================================
-const DISCOUNT_PCT = 30;
+const DISCOUNT_PCT = DISCOUNT_PERCENT; // 30
 
 const applyDiscount = (amount: number): number => {
   return Math.round(amount * (100 - DISCOUNT_PCT) / 100);
@@ -74,15 +75,13 @@ const parseClassesPerWeek = (frequency: string) => {
   return match ? parseInt(match[1], 10) : 2;
 };
 
-const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`;
+import { PRICING_PLANS, formatINR as formatCurrency } from '../lib/pricingPlans';
 
-  import { DEFAULT_PER_CLASS_PRICE } from '../constants/pricing';
-
-  const plans = [
+const plans = [
   {
     name: 'Starter',
     sessions: 8,
-    rate: DEFAULT_PER_CLASS_PRICE, // ₹4,800
+    rate: PRICING_PLANS[0].perClassOriginal, // ₹600 original, ₹420 discounted
     duration: '4 weeks • 2 live classes/week',
     badge: 'New families',
     highlight: false,
@@ -95,9 +94,9 @@ const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`;
     ],
   },
   {
-      name: 'Growth',
+    name: 'Growth',
     sessions: 16,
-    rate: 575, // ₹9,200
+    rate: PRICING_PLANS[1].perClassOriginal, // ₹575 original, ₹402.5 discounted
     duration: '8 weeks • 2 live classes/week',
     badge: 'Most popular',
     highlight: true,
@@ -112,7 +111,7 @@ const formatCurrency = (value: number) => `₹${value.toLocaleString('en-IN')}`;
   {
     name: 'Intensive',
     sessions: 24,
-    rate: 550, // ₹13,200
+    rate: PRICING_PLANS[2].perClassOriginal, // ₹550 original, ₹385 discounted
     duration: '8 weeks • 3 live classes/week',
     badge: 'Fast-track',
     highlight: false,

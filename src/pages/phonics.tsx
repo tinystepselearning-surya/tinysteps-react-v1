@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
@@ -101,7 +102,7 @@ export default function PhonicsPage() {
               "name": "How much do phonics classes cost in India?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "1:1 live phonics classes typically cost ₹4,000-8,000/month for 8-12 sessions. Group classes are ₹2,000-4,000/month. Tiny Steps offers flexible monthly plans with free trial."
+                "text": "1:1 live phonics classes at Tiny Steps: Starter (8 classes) ₹3,360/month, Growth (16 classes) ₹6,440/month, Intensive (24 classes) ₹9,240/month. All plans include 30% discount. Free assessment class to start."
               }
             },
             {
@@ -159,6 +160,24 @@ export default function PhonicsPage() {
       <LevelTabs levels={levels} />
       <LearningJourney stages={stages} />
 
+      {/* Buyer Guide Section */}
+      <section className="max-w-4xl mx-auto px-6 py-12 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg my-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Choosing the best online phonics classes in India</h2>
+        <p className="text-gray-700 mb-4">
+          Evaluating online phonics programs can be overwhelming. Our comprehensive buyer guide helps parents compare options using a 10-point checklist covering curriculum quality, teacher credentials, class formats (1:1 vs group), trial policies, and pricing transparency.
+        </p>
+        <p className="text-gray-700 mb-6">
+          Whether you're looking for your first phonics program or switching from another provider, this guide includes FAQs from Indian parents and practical tips for making an informed decision.
+        </p>
+        <Link 
+          to="/best-online-phonics-classes-india"
+          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Read the buyer guide: Best Online Phonics Classes in India
+          <span className="text-lg">→</span>
+        </Link>
+      </section>
+
       {/* FAQ Section */}
       <section className="max-w-4xl mx-auto px-6 py-12">
         <h2 className="text-3xl font-bold text-gray-900 mb-6">Frequently Asked Questions</h2>
@@ -181,7 +200,7 @@ export default function PhonicsPage() {
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">How much do phonics classes cost in India?</h3>
-            <p className="text-gray-700">1:1 live phonics classes typically cost ₹4,000-8,000/month for 8-12 sessions. Group classes are ₹2,000-4,000/month. Tiny Steps offers flexible monthly plans with free trial.</p>
+            <p className="text-gray-700">Tiny Steps offers three flexible plans with 30% OFF: Starter (8 classes) ₹3,360/month, Growth (16 classes) ₹6,440/month, and Intensive (24 classes) ₹9,240/month. All plans are 1:1 live classes with free assessment to start. For detailed pricing comparisons and what to look for when evaluating value, see our <Link to="/best-online-phonics-classes-india" className="text-blue-600 hover:underline">buyer guide for choosing online phonics classes in India</Link>.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">What's the difference between 1:1 and group phonics classes?</h3>

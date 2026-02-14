@@ -1,25 +1,11 @@
 import React from 'react';
 import Button from '../Button/Button';
+import { PRICING_PACKAGES, DISCOUNT_PERCENT, formatINR as fmtINR } from '../../lib/pricingPlans';
 
-// --- pricing helpers (local, minimal) ---
-const DEFAULT_PER_CLASS_PRICE = 599;
-const DISCOUNT_PCT = 30;
+// Re-export for backwards compatibility
+export { PRICING_PACKAGES };
 
-// Pricing packages (exported for reuse in courses page)
-export const PRICING_PACKAGES = [
-  { name: 'Starter', classes: 8, original: 4800, monthly: 3360 },
-  { name: 'Growth', classes: 16, original: 9200, monthly: 6440 },
-  { name: 'Intensive', classes: 24, original: 13200, monthly: 9240 },
-] as const;
-
-const formatINR = (value: number) =>
-  new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 0,
-  }).format(value);
-
-const fmtINR = (n: number): string => `₹${n.toLocaleString('en-IN')}`;
+// formatINR and fmtINR imported from pricingPlans.ts
 
 const applyDiscount = (amount: number): number => {
   return Math.round(amount * (100 - DISCOUNT_PCT) / 100);
