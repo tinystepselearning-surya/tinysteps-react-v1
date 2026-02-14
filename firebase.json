@@ -159,6 +159,15 @@
         ]
       },
       {
+        "source": "/logo.png",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=86400"
+          }
+        ]
+      },
+      {
         "source": "**/*.@(js|css)",
         "headers": [
           {
@@ -196,7 +205,7 @@
       }
     ],
     "redirects": [
-      { "source": "/blog/phonics-at-home-activities", "destination": "/parents/reading-at-home", "type": 301 },
+      { "source": "/blog/phonics-at-home-activities", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
       { "source": "/about", "destination": "/why-tiny-steps", "type": 301 },
       { "regex": "/main/?$", "destination": "/", "type": 301 },
       { "regex": "/main/courses/phonics/?$", "destination": "/phonics", "type": 301 },

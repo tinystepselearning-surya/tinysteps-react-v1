@@ -5,13 +5,119 @@ import { Link } from 'react-router-dom';
 const WHATSAPP_NUMBER = '919618398383';
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi! I want to know more about Summer English Camp 2026.')}`;
 
+// Single source of truth for FAQ data
+const FAQS = [
+  {
+    question: 'Is the Summer Camp 100% online?',
+    answer: 'Yes, the entire camp is conducted online via live Zoom sessions with experienced mentors. Each child attends daily 45-minute classes from the comfort of home. All learning materials, practice activities, and progress reports are accessible through our online platform. No physical attendance required.'
+  },
+  {
+    question: 'Is this camp for complete beginners?',
+    answer: "Yes! We welcome children with zero English knowledge. Our mentors assess each child's level during the free trial and tailor lessons accordingly. Beginners start with basic sounds and simple words."
+  },
+  {
+    question: 'How many hours per day is the camp?',
+    answer: 'Each child attends one 45-minute live class per day, plus 10–15 minutes of self-paced practice games. Total daily commitment is approximately 60 minutes.'
+  },
+  {
+    question: 'Are classes 1:1 or group-based?',
+    answer: "We offer both formats. 1:1 classes provide maximum personalization. Small group classes (2–4 children of similar age and level) add peer interaction. You can choose based on your child's learning style."
+  },
+  {
+    question: 'What if my child misses a class?',
+    answer: 'Missed classes can be rescheduled within the same week subject to mentor availability. We record key concepts so your child can review missed content before the next session.'
+  },
+  {
+    question: 'Can I enroll my child for only phonics or only speaking?',
+    answer: "The camp is designed as an integrated program covering all three skills for maximum impact. However, mentors can emphasize specific areas based on your child's needs. Contact us to discuss custom options."
+  },
+  {
+    question: 'What devices do we need?',
+    answer: 'A laptop, tablet, or smartphone with stable internet and a working camera/microphone. We recommend a laptop or tablet for the best interactive experience. No special software required—classes run in your browser.'
+  },
+  {
+    question: 'How much does the camp cost?',
+    answer: 'Pricing will be announced once final dates are confirmed (by end of February). Early registrations through the free assessment may receive priority booking and special offers.'
+  },
+  {
+    question: 'Will my child get a certificate at the end?',
+    answer: 'Yes! Every child who completes the camp receives a digital certificate of achievement, a personalized progress portfolio, and a showcase video highlighting their best work during the 7 weeks.'
+  },
+  {
+    question: 'What happens after the camp ends?',
+    answer: 'Most families continue with our regular ongoing programs to maintain momentum. We provide a clear learning roadmap so your child can transition smoothly into term-based courses.'
+  },
+  {
+    question: 'Can international students join?',
+    answer: 'Absolutely! We welcome families from any country. Classes can be scheduled across time zones. Families join us from 15+ countries. Our program is 100% online, so children can attend from anywhere in the world.'
+  }
+];
+
+// Schemas with entity linking
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://tinystepslearning.com/#organization',
+  name: 'Tiny Steps Learning',
+  url: 'https://tinystepslearning.com',
+  logo: 'https://tinystepslearning.com/logo.png',
+  sameAs: [
+    'https://www.facebook.com/tinystepslearning',
+    'https://www.instagram.com/tinystepslearning'
+  ]
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  '@id': 'https://tinystepslearning.com/summer-english-camp-2026#breadcrumb',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Summer English Camp 2026', item: 'https://tinystepslearning.com/summer-english-camp-2026' },
+  ],
+};
+
+const webPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  '@id': 'https://tinystepslearning.com/summer-english-camp-2026#webpage',
+  url: 'https://tinystepslearning.com/summer-english-camp-2026',
+  name: 'Summer English Camp 2026 | Ages 3–12 | Tiny Steps Learning',
+  description: '7-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors.',
+  inLanguage: 'en-IN',
+  publisher: {
+    '@id': 'https://tinystepslearning.com/#organization'
+  },
+  about: {
+    '@id': 'https://tinystepslearning.com/#organization'
+  },
+  breadcrumb: {
+    '@id': 'https://tinystepslearning.com/summer-english-camp-2026#breadcrumb'
+  }
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/summer-english-camp-2026#faqpage',
+  mainEntity: FAQS.map(faq => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer
+    }
+  }))
+};
+
 export default function SummerCamp2026Page() {
   useEffect(() => {
     applySeo({
       title: "Summer English Camp 2026 | Ages 3–12 | Phonics, Grammar & Speaking | Tiny Steps",
       description: "7-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors. Limited seats available.",
       canonicalPath: "/summer-english-camp-2026",
-      ogType: "website"
+      ogType: "website",
+      jsonLd: [organizationSchema, breadcrumbSchema, webPageSchema, faqSchema],
     });
   }, []);
 
@@ -291,89 +397,32 @@ export default function SummerCamp2026Page() {
       <section id="faqs" className="mb-12 bg-gray-50 p-8 rounded-lg">
         <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions</h2>
         <div className="space-y-6 max-w-3xl mx-auto">
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Is the Summer Camp 100% online?</h3>
-            <p className="text-gray-700 text-sm">
-              Yes, the entire camp is conducted online via live Zoom sessions with experienced mentors. Each child attends daily 45-minute classes from the comfort of home. All learning materials, practice activities, and progress reports are accessible through our online platform. No physical attendance required.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Can children outside India join?</h3>
-            <p className="text-gray-700 text-sm">
-              Absolutely! We welcome families from around the world. Class time slots are scheduled in IST (Indian Standard Time) but we offer flexible scheduling to accommodate different time zones. Families from the US, UK, UAE, Singapore, Australia, and 10+ other countries have successfully joined our programs.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Is this camp for complete beginners?</h3>
-            <p className="text-gray-700 text-sm">
-              Yes! We welcome children with zero English knowledge. Our mentors assess each child's level during the free trial and tailor lessons accordingly. Beginners start with basic sounds and simple words.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">How many hours per day is the camp?</h3>
-            <p className="text-gray-700 text-sm">
-              Each child attends one 45-minute live class per day, plus 10–15 minutes of self-paced practice games. Total daily commitment is approximately 60 minutes.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Are classes 1:1 or group-based?</h3>
-            <p className="text-gray-700 text-sm">
-              We offer both formats. 1:1 classes provide maximum personalization. Small group classes (2–4 children of similar age and level) add peer interaction. You can choose based on your child's learning style.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">What if my child misses a class?</h3>
-            <p className="text-gray-700 text-sm">
-              Missed classes can be rescheduled within the same week subject to mentor availability. We record key concepts so your child can review missed content before the next session.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Can I enroll my child for only phonics or only speaking?</h3>
-            <p className="text-gray-700 text-sm">
-              The camp is designed as an integrated program covering all three skills for maximum impact. However, mentors can emphasize specific areas based on your child's needs. <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-[#4a7c2c] underline font-semibold">Contact us</a> to discuss custom options.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">What devices do we need?</h3>
-            <p className="text-gray-700 text-sm">
-              A laptop, tablet, or smartphone with stable internet and a working camera/microphone. We recommend a laptop or tablet for the best interactive experience. No special software required—classes run in your browser.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">How much does the camp cost?</h3>
-            <p className="text-gray-700 text-sm">
-              Pricing will be announced once final dates are confirmed (by end of February). Early registrations through the free assessment may receive priority booking and special offers. <Link to="/pricing" className="text-[#4a7c2c] underline font-semibold">View our standard pricing</Link> for reference.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Will my child get a certificate at the end?</h3>
-            <p className="text-gray-700 text-sm">
-              Yes! Every child who completes the camp receives a digital certificate of achievement, a personalized progress portfolio, and a showcase video highlighting their best work during the 7 weeks.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">What happens after the camp ends?</h3>
-            <p className="text-gray-700 text-sm">
-              Most families continue with our regular ongoing programs to maintain momentum. We provide a clear learning roadmap so your child can transition smoothly into term-based courses. <Link to="/courses" className="text-[#4a7c2c] underline font-semibold">Explore our courses</Link> to plan ahead.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Can international students join?</h3>
-            <p className="text-gray-700 text-sm">
-              Absolutely! We welcome families from any country. Classes can be scheduled across time zones. Families join us from 15+ countries. Our program is 100% online, so children can attend from anywhere in the world.
-            </p>
-          </div>
+          {FAQS.map((faq, index) => (
+            <div key={index}>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">{faq.question}</h3>
+              <p className="text-gray-700 text-sm">
+                {faq.answer}
+                {faq.question === 'Can I enroll my child for only phonics or only speaking?' && (
+                  <>
+                    {' '}
+                    <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="text-[#4a7c2c] underline font-semibold">Contact us</a> to discuss custom options.
+                  </>
+                )}
+                {faq.question === 'How much does the camp cost?' && (
+                  <>
+                    {' '}
+                    <Link to="/pricing" className="text-[#4a7c2c] underline font-semibold">View our standard pricing</Link> for reference.
+                  </>
+                )}
+                {faq.question === 'What happens after the camp ends?' && (
+                  <>
+                    {' '}
+                    <Link to="/courses" className="text-[#4a7c2c] underline font-semibold">Explore our courses</Link> to plan ahead.
+                  </>
+                )}
+              </p>
+            </div>
+          ))}
         </div>
         <div className="mt-8 text-center">
           <p className="text-gray-600 mb-4">Still have questions?</p>

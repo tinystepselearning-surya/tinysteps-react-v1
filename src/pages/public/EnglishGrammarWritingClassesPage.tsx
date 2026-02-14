@@ -2,6 +2,111 @@ import { useEffect } from 'react';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 
+// Single source of truth for FAQ data
+const FAQS = [
+  {
+    question: 'What is the right age to start grammar classes?',
+    answer: 'Children as young as 5 can start with simple parts of speech (nouns, verbs) and sentence basics. Ages 7–9 dive deeper into punctuation and sentence structure. Ages 10+ work on complex sentences, editing, and essay writing. We assess your child\'s level during the free trial and start where they\'re ready—not just based on age or grade.'
+  },
+  {
+    question: 'How do you teach tenses to young children?',
+    answer: 'We use visual timelines, relatable stories, and simple examples kids can connect to their daily lives. For example: "Yesterday I played" (past), "Today I play" (present), "Tomorrow I will play" (future). We practice through games and writing activities until tense usage becomes natural—not just memorized rules.'
+  },
+  {
+    question: 'My child hates grammar. Will they enjoy these classes?',
+    answer: 'Grammar feels boring when it\'s just rules and worksheets. Our approach is different: we use games, real-world examples, and show how grammar helps express ideas better. When kids see the purpose and experience success, they engage—and many actually start enjoying the "a-ha" moments.'
+  },
+  {
+    question: 'How often should my child take grammar classes?',
+    answer: 'We recommend 2–3 classes per week for consistent progress. Grammar skills build on each other, so regular practice helps concepts become automatic. Most children see noticeable improvements in writing clarity and confidence within 4–6 weeks.'
+  },
+  {
+    question: 'Will this help with my child\'s school writing assignments?',
+    answer: 'Absolutely. Strong grammar is the foundation of all good writing. Our students typically see better grades in English, improved essay scores, and more confidence in written assignments across all subjects. Parents often tell us teachers notice the improvement within weeks.'
+  },
+  {
+    question: 'My child struggles with spelling and punctuation. Can you help?',
+    answer: 'Yes! Spelling and punctuation are core parts of our curriculum. We teach rules systematically (not just memorization) and practice through guided writing. Our 1:1 format lets us address specific weak spots and build confidence step-by-step.'
+  },
+  {
+    question: 'Do you teach creative writing or just grammar rules?',
+    answer: 'Both! We teach grammar through writing practice—not in isolation. Kids write stories, descriptions, and essays while applying grammar rules. This makes learning meaningful and helps them see how grammar improves their creative expression.'
+  },
+  {
+    question: 'Can grammar classes help with reading comprehension?',
+    answer: 'Yes! Understanding sentence structure and grammar helps children decode complex sentences when reading. They can identify subjects, verbs, and clauses, which makes comprehension easier—especially with academic texts and literature.'
+  },
+  {
+    question: 'What if my child is ahead or behind their grade level?',
+    answer: 'Our 1:1 approach is perfect for this. We assess your child\'s current skills during the free trial and customize lessons to their level—whether they need foundational support or advanced challenges. No one is held back or pushed too fast.'
+  },
+  {
+    question: 'How long until I see improvement in my child\'s writing?',
+    answer: 'Most parents notice clearer sentences and fewer basic errors within 3–4 weeks of consistent classes (2–3 times per week). Deeper skills like paragraph organization and complex sentence structure develop over 8–12 weeks. Every child progresses at their own pace.'
+  },
+  {
+    question: 'How will I know if my child is making progress?',
+    answer: 'Every week, you receive a detailed progress report showing what grammar concepts your child mastered, writing samples with feedback, areas to focus on next, and tips for home practice. You\'ll see concrete improvement in their writing over time.'
+  },
+  {
+    question: 'How do you track progress in grammar and writing?',
+    answer: 'We track mastery of specific grammar concepts (parts of speech, tenses, punctuation), writing clarity, sentence variety, and error patterns. Weekly reports show skills mastered, writing samples, and next steps. You see exactly where your child is improving and what to practice at home.'
+  }
+];
+
+// Schemas with entity linking
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://tinystepslearning.com/#organization',
+  name: 'Tiny Steps Learning',
+  url: 'https://tinystepslearning.com',
+  logo: 'https://tinystepslearning.com/logo.png',
+  sameAs: [
+    'https://www.facebook.com/tinystepslearning',
+    'https://www.instagram.com/tinystepslearning'
+  ]
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  '@id': 'https://tinystepslearning.com/english-grammar-writing-classes#breadcrumb',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Grammar & Writing Classes', item: 'https://tinystepslearning.com/english-grammar-writing-classes' },
+  ],
+};
+
+const courseSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  '@id': 'https://tinystepslearning.com/english-grammar-writing-classes#course',
+  name: 'Online English Grammar & Writing Classes',
+  description: '1:1 online grammar and writing instruction for ages 5–12. Master sentence structure, punctuation, parts of speech, and creative writing with live mentors and interactive practice.',
+  provider: {
+    '@id': 'https://tinystepslearning.com/#organization'
+  },
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online'
+  }
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/english-grammar-writing-classes#faqpage',
+  mainEntity: FAQS.map(faq => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer
+    }
+  }))
+};
+
 export default function EnglishGrammarWritingClassesPage() {
   useEffect(() => {
     applySeo({
@@ -9,23 +114,7 @@ export default function EnglishGrammarWritingClassesPage() {
       description: "Online grammar and writing classes for kids (Ages 5–12). Clear explanations, games, sentence building, and guided writing—plus weekly progress updates. Book a free assessment.",
       canonicalPath: "/english-grammar-writing-classes",
       ogType: "website",
-      jsonLd: [
-        {
-          "@context": "https://schema.org",
-          "@type": "Course",
-          "name": "Online English Grammar & Writing Classes",
-          "description": "1:1 online grammar and writing instruction for ages 5–12. Master sentence structure, punctuation, parts of speech, and creative writing with live mentors and interactive practice.",
-          "provider": {
-            "@type": "Organization",
-            "name": "Tiny Steps Learning",
-            "sameAs": "https://tinystepslearning.com"
-          },
-          "hasCourseInstance": {
-            "@type": "CourseInstance",
-            "courseMode": "OnlineCoursePlatform"
-          }
-        }
-      ]
+      jsonLd: [organizationSchema, breadcrumbSchema, courseSchema, faqSchema],
     });
   }, []);
 
@@ -198,61 +287,12 @@ export default function EnglishGrammarWritingClassesPage() {
       <section id="faqs" className="mb-12 bg-gray-50 p-8 rounded-lg">
         <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions About Grammar Classes</h2>
         <div className="space-y-6 max-w-3xl mx-auto">
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">My child hates grammar. Will they enjoy these classes?</h3>
-            <p className="text-gray-700 text-sm">
-              Grammar feels boring when it's just rules and worksheets. Our approach is different: we use games, real-world examples, and show how grammar helps express ideas better. When kids see the purpose and experience success, they engage—and many actually start enjoying the "a-ha" moments.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">What age should my child start grammar lessons?</h3>
-            <p className="text-gray-700 text-sm">
-              Children as young as 5 can start with simple parts of speech (nouns, verbs) and sentence basics. Ages 7–9 dive deeper into punctuation and sentence structure. Ages 10+ work on complex sentences, editing, and essay writing. We assess your child's level and start where they're ready.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">How often should my child take grammar classes?</h3>
-            <p className="text-gray-700 text-sm">
-              We recommend 2–3 classes per week for consistent progress. Grammar skills build on each other, so regular practice helps concepts become automatic. Most children see noticeable improvements in writing clarity and confidence within 4–6 weeks.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Will this help with my child's school writing assignments?</h3>
-            <p className="text-gray-700 text-sm">
-              Absolutely. Strong grammar is the foundation of all good writing. Our students typically see better grades in English, improved essay scores, and more confidence in written assignments across all subjects. Parents often tell us teachers notice the improvement within weeks.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">My child struggles with spelling and punctuation. Can you help?</h3>
-            <p className="text-gray-700 text-sm">
-              Yes! Spelling and punctuation are core parts of our curriculum. We teach rules systematically (not just memorization) and practice through guided writing. Our 1:1 format lets us address specific weak spots and build confidence step-by-step.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">Do you teach creative writing or just grammar rules?</h3>
-            <p className="text-gray-700 text-sm">
-              Both! We teach grammar through writing practice—not in isolation. Kids write stories, descriptions, and essays while applying grammar rules. This makes learning meaningful and helps them see how grammar improves their creative expression.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">What if my child is ahead or behind their grade level?</h3>
-            <p className="text-gray-700 text-sm">
-              Our 1:1 approach is perfect for this. We assess your child's current skills during the free trial and customize lessons to their level—whether they need foundational support or advanced challenges. No one is held back or pushed too fast.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="font-bold text-lg mb-2 text-gray-900">How will I know if my child is making progress?</h3>
-            <p className="text-gray-700 text-sm">
-              Every week, you receive a detailed progress report showing what grammar concepts your child mastered, writing samples with feedback, areas to focus on next, and tips for home practice. You'll see concrete improvement in their writing over time.
-            </p>
-          </div>
+          {FAQS.map((faq, index) => (
+            <div key={index}>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">{faq.question}</h3>
+              <p className="text-gray-700 text-sm">{faq.answer}</p>
+            </div>
+          ))}
         </div>
         <div className="mt-8 text-center">
           <p className="text-gray-600 mb-4">More questions?</p>

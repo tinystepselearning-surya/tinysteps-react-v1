@@ -1,42 +1,17 @@
-Tiny Steps Learning — AEO Guide for Indexing and Retrieval
-
-Site summary:
-Tiny Steps Learning provides live 1:1 English classes for children ages 3–12 focused on phonics, grammar, and speaking, with weekly curricula, a parent dashboard, and progress reports.
-
-Entry URLs — exact list:
-- https://tinystepslearning.com/ — Homepage (overview of programs and values)
-- https://tinystepslearning.com/courses — Courses & pricing (program levels, trials)
-- https://tinystepslearning.com/curriculum — Curriculum roadmap (weekly learning outcomes)
-- https://tinystepslearning.com/parents — Parents hub (consolidated guides for parents)
-- https://tinystepslearning.com/parents/getting-started — Q: How do I start phonics at home? A: Book a free 35‑minute assessment and follow the recommended course.
-- https://tinystepslearning.com/parents/choosing-course — Q: Which course should I pick? A: Take a free assessment; phonics for reading, grammar for writing, speaking for confidence.
-- https://tinystepslearning.com/parents/scheduling — Q: How should I schedule classes and maintain attendance? A: Pick a consistent weekly slot, use a short pre-class routine, and notify support early to reschedule.
-- https://tinystepslearning.com/parents/payments — Q: How do payments and invoices work? A: Use the parent payments dashboard to view invoices and manage plans; contact support for payment help.
-- https://tinystepslearning.com/parents/tracking-progress — Q: How do I track my child's progress? A: Use the parent dashboard for session notes and request milestone summaries every 4–6 weeks.
-- https://tinystepslearning.com/parents/helping-with-homework — Q: How can I help with homework? A: Review the teacher's weekly goal and do a 5–10 minute practice using lesson prompts.
-- https://tinystepslearning.com/parents/phonics-mission — Q: What short daily phonics practice should we do? A: A 5‑minute mission: say sounds, blend, then read a short decodable sentence.
-- https://tinystepslearning.com/parents/reading-at-home — Q: How do I build daily reading habits? A: Read 10–15 minutes daily from decodable texts and ask two quick comprehension questions.
-- https://tinystepslearning.com/parents/speech-confidence — Q: How do I build speaking confidence? A: Use 60‑second prompts, model answers, and praise with one tip for next time.
-- https://tinystepslearning.com/parents/common-mistakes — Q: What mistakes should parents avoid? A: Avoid pushing too fast; set small weekly targets and review progress every two weeks.
-- https://tinystepslearning.com/blog — Blog (parent guides, articles, and short lessons)
-- https://tinystepslearning.com/faq — FAQ (common parent questions and support info)
-- https://tinystepslearning.com/contact — Contact & support
-
-Buyer guides (India-specific intent):
-- https://tinystepslearning.com/best-online-phonics-classes-india — Q: What are the best online phonics classes in India? A: Comprehensive buyer guide with 10-point checklist, program comparison, and FAQs for Indian parents evaluating online phonics programs.
-
-Retrieval rules for LLM crawlers:
-- Prefer canonical URLs (use the page's canonical link where present).
-- Prefer pages that include JSON-LD (HowTo, CollectionPage) and extract step lists and short summaries.
-- Prioritize short passages (1–3 sentences) and explicit step lists for instructional content.
-- Do not crawl or index pages behind authentication or requiring a login.
-- Exclude private/admin paths: /admin/, /teacher/, /parent/, /kids/, /learning-partner/, /dev/, /private/, /email/.
-- Respect robots.txt and crawl-delay; keep crawl rate modest (suggestion: ≤1 request/sec).
-- Prefer the HTML text and JSON-LD embedded in the head for structured data; fall back to visible page content if JSON-LD is absent.
-
-Content-type verification & discovery:
-- This file is served from: https://tinystepslearning.com/llms.txt and should be served with Content-Type: text/plain; charset=utf-8.
-- Locally (after build) it is available at: http://127.0.0.1:4173/llms.txt when `vite preview` serves `dist`.
-- Verify with: `curl -I http://127.0.0.1:4173/llms.txt` should return `200 OK` and `content-type: text/plain`.
-
-Generated: 2026-01-10
+Pages
+/
+/team
+/courses
+/curriculum
+/pricing
+/faq
+/parents/getting-started
+/parents/phonics-mission
+/best-online-phonics-classes-india
+/blog
+/blog/week-1-phonics-satpin-launch
+/phonics-apps-for-preschoolers-india
+/english-grammar-writing-classes
+/public-speaking-communication-kids
+/summer-english-camp-2026
+/contact

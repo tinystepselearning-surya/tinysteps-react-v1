@@ -17,9 +17,14 @@ const SEED_ROUTES = [
   "/pricing",
   "/faq",
   "/contact",
+  "/team",
   "/blog",
   "/book-demo",
   "/best-online-phonics-classes-india",
+  "/phonics-apps-for-preschoolers-india",
+  "/summer-english-camp-2026",
+  "/english-grammar-writing-classes",
+  "/public-speaking-communication-kids",
   // Parents hub + help pages
   "/parents",
   "/parents/getting-started",
@@ -196,6 +201,12 @@ const ROUTE_SEO_CONFIG = {
     canonicalPath: '/pricing',
     robots: 'index, follow',
   },
+  '/phonics-apps-for-preschoolers-india': {
+    title: 'Phonics Apps for Preschoolers in India | Tiny Steps Learning',
+    description: 'Parent-friendly guide to phonics apps for preschoolers in India (ages 3–6): what to look for, 10-minute routine, and common mistakes to avoid.',
+    canonicalPath: '/phonics-apps-for-preschoolers-india',
+    robots: 'index, follow',
+  },
   '/contact': {
     title: 'Contact Us | Tiny Steps Learning',
     description: 'Have questions? Get in touch with our team. We\'re here to help you find the perfect English class for your child.',
@@ -212,6 +223,12 @@ const ROUTE_SEO_CONFIG = {
     title: 'Frequently Asked Questions | Tiny Steps Learning',
     description: 'Find answers to common questions about our 1:1 online English classes, curriculum, scheduling, pricing, and more.',
     canonicalPath: '/faq',
+    robots: 'index, follow',
+  },
+  '/team': {
+    title: 'Meet the Team | Tiny Steps Learning',
+    description: 'Meet the experienced educators behind Tiny Steps Learning. Based in Hyderabad, serving families worldwide with expert 1:1 online English classes for kids ages 3–12.',
+    canonicalPath: '/team',
     robots: 'index, follow',
   },
   '/for-schools': {

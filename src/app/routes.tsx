@@ -18,6 +18,7 @@ const FAQPage = lazy(() => import('../pages/FAQPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
 const WhyTinyStepsPage = lazy(() => import('../pages/WhyTinyStepsPage'));
 const ForSchoolsPage = lazy(() => import('../pages/ForSchoolsPage'));
+const TeamPage = lazy(() => import('../pages/TeamPage'));
 
 // Course Pages
 const PhonicsPage = lazy(() => import('../pages/phonics'));
@@ -28,6 +29,8 @@ const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/Onlin
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
+const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
+const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
@@ -116,6 +119,7 @@ const router = createBrowserRouter(
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
+        { path: 'team', element: <TeamPage /> },
         { path: 'courses', element: <CoursesPage /> },
         { path: 'courses/:courseId', element: <CourseDetailPage /> },
         { path: 'curriculum', element: <CurriculumPage /> },
@@ -138,6 +142,8 @@ const router = createBrowserRouter(
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
         { path: 'best-online-phonics-classes-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
+        { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
+        { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },

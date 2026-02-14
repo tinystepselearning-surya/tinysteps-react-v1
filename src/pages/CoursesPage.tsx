@@ -4,9 +4,9 @@ import { applySeo } from "../lib/seo";
 import type { FC } from "react";
 import { CourseCard } from "../components/courses/CourseCard";
 import { ParentReportPreview } from "../components/courses/ParentReportPreview";
-import Meta from "../components/common/Meta";
 import { catalogs } from "../content/courses";
 import { DEFAULT_PER_CLASS_PRICE, formatINR } from '../constants/pricing';
+import { organizationSchema } from '../lib/schemas';
 
 const DASH_RE = /[\u2010\u2011\u2012\u2013\u2014\u2212]/g; // hyphen variants
 const norm = (v: any) =>
@@ -100,16 +100,28 @@ const CoursesPage: FC = () => {
       ],
     };
 
-    const itemList = {
+    // Build Course schemas for AEO (Answer Engine Optimization)
+    const courseSchemas = catalogs.map((c) => ({
       '@context': 'https://schema.org',
-      '@type': 'ItemList',
-      itemListElement: catalogs.map((c, i) => ({
-        '@type': 'ListItem',
-        position: i + 1,
-        name: c.name,
-        url: `https://tinystepslearning.com/courses#${encodeURIComponent(c.slug || c.name)}`,
-      })),
-    };
+      '@type': 'Course',
+      '@id': `https://tinystepslearning.com/#course-${c.slug}`,
+      name: c.name,
+      description: `${c.duration} live 1:1 ${c.track} program for ${c.age.toLowerCase()}. ${c.overview.join(', ')}.`,
+      provider: {
+        '@type': 'Organization',
+        '@id': 'https://tinystepslearning.com/#organization',
+        name: 'Tiny Steps Learning'
+      },
+      url: `https://tinystepslearning.com/courses#${c.slug}`,
+      audience: {
+        '@type': 'EducationalAudience',
+        educationalRole: 'student',
+        audienceType: c.age
+      },
+      educationalLevel: c.level,
+      inLanguage: 'en-IN',
+      areaServed: 'IN'
+    }));
 
     applySeo({
       title: "Online English Courses for Kids: Phonics, Grammar & Public Speaking | Tiny Steps",
@@ -117,7 +129,7 @@ const CoursesPage: FC = () => {
         "1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured week-by-week courses with clear progress and parent updates.",
       canonicalPath: "/courses",
       ogType: "website",
-      jsonLd: [breadcrumb, itemList],
+      jsonLd: [organizationSchema, breadcrumb, ...courseSchemas],
     });
   }, []);
 
@@ -156,36 +168,6 @@ const CoursesPage: FC = () => {
 
   return (
     <div className="page-gradient relative overflow-hidden">
-      <Meta
-        title="Online English Courses for Kids: Phonics, Grammar & Public Speaking | Tiny Steps"
-        description="1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured week-by-week courses with clear progress and parent updates."
-        canonical="https://tinystepslearning.com/courses"
-        jsonLd={{
-          "@context": "https://schema.org",
-          "@type": "ItemList",
-          itemListElement: catalogs.map((c, i) => ({
-            "@type": "ListItem",
-            position: i + 1,
-            item: {
-              "@type": "Course",
-              name: c.name,
-              description: `${c.name} — ${(c.overview || []).join(", ")}`,
-              provider: { "@type": "Organization", name: "Tiny Steps Online School" },
-              hasCourseInstance: {
-                "@type": "CourseInstance",
-                courseMode: "OnlineCoursePlatform",
-                offers: {
-                  "@type": "Offer",
-                  price: String(c.price || "").replace(/[^0-9]/g, "") || "0",
-                  priceCurrency: "INR",
-                  availability: "http://schema.org/InStock",
-                },
-              },
-            },
-          })),
-        }}
-      />
-
       <CoursesHero />
 
       <div className="mx-auto max-w-6xl px-6 pb-16">

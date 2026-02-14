@@ -2,6 +2,111 @@ import { useEffect } from 'react';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 
+// Single source of truth for FAQ data
+const FAQS = [
+  {
+    question: 'What age is best to start public speaking classes?',
+    answer: 'Children as young as 4 can start with simple confidence-building activities like show & tell and mini-stories. Ages 6–9 work on structured speaking, voice clarity, and storytelling. Ages 10+ tackle presentations, debates, and impromptu speaking. We tailor lessons to your child\'s readiness and comfort level.'
+  },
+  {
+    question: 'My child is very shy. Will they be forced to speak?',
+    answer: 'Absolutely not. We never force speaking or put pressure on kids. Our mentors create a warm, safe space where your child controls the pace. We start with micro-speaks (15-45 seconds) and gradually build confidence at their speed. Many of our most confident speakers started extremely shy.'
+  },
+  {
+    question: 'Is it 1:1 or group classes?',
+    answer: 'Primarily 1:1 live classes for personalized attention and a pressure-free environment. This lets shy children build confidence safely and advanced speakers get targeted feedback. Small group sessions (2-4 children) may be available on request for specific workshops or practice.'
+  },
+  {
+    question: 'What happens in a typical speaking class?',
+    answer: 'Each 30-40 minute session includes: warm-up activities (voice exercises, posture check), a speaking challenge (show & tell, storytelling, prepared or impromptu speech), gentle feedback on what went well and one tip to improve, and celebration of effort. We keep it fun, supportive, and low-pressure.'
+  },
+  {
+    question: 'How do you improve pronunciation and voice clarity?',
+    answer: 'We use tongue twisters, breathing exercises, and slow-paced repetition to improve pronunciation. Mentors model clear speech and gently correct common mistakes. We record progress so your child can hear their own improvement, which builds confidence and motivation.'
+  },
+  {
+    question: 'Will this help with school presentations and class participation?',
+    answer: 'Yes! School presentations, show & tell, and class discussions are exactly what we practice. Children learn to organize thoughts, speak clearly, make eye contact, and handle Q&A. Parents and teachers typically notice improved confidence and participation within weeks.'
+  },
+  {
+    question: 'How often should my child take speaking classes?',
+    answer: 'We recommend 2–3 classes per week for consistent progress. Speaking confidence grows with regular practice—like a muscle. Most children show noticeable improvement in confidence, clarity, and willingness to speak within 4–6 weeks of consistent classes.'
+  },
+  {
+    question: 'How do you track progress in speaking skills?',
+    answer: 'We track confidence level, voice clarity, eye contact, body language, sentence fluency, storytelling ability, and willingness to volunteer answers. Weekly reports show specific improvements, strengths, areas to practice, and tips for home. You\'ll see measurable growth over time.'
+  },
+  {
+    question: 'How long until I see my child\'s confidence improve?',
+    answer: 'Most parents notice small changes within 2–3 weeks: speaking in full sentences at home, volunteering more at school, or trying new speaking activities. Deeper confidence (public speaking comfort, presentations without anxiety) develops over 8–12 weeks with consistent practice.'
+  },
+  {
+    question: 'Can speaking classes help children who mumble or speak too softly?',
+    answer: 'Yes! We work on voice projection, breathing techniques, and confidence. Many children speak softly due to shyness or habit—not physical issues. With encouragement, practice, and feedback, they learn to project their voice naturally. We celebrate every improvement.'
+  },
+  {
+    question: 'Will my child be recorded during classes?',
+    answer: 'Optional. We can record sessions for your child\'s portfolio or to review feedback together, but only with parent and child consent. Many parents love having recordings to celebrate their child\'s progress and share milestones with family.'
+  },
+  {
+    question: 'Do you teach debate skills or just basic speaking?',
+    answer: 'Both! Beginners focus on confidence, clarity, and storytelling. Intermediate students work on structured speeches and presentations. Advanced learners tackle debate basics, persuasive speaking, and handling opposing viewpoints. We adapt to your child\'s level and interests.'
+  }
+];
+
+// Schemas with entity linking
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  '@id': 'https://tinystepslearning.com/#organization',
+  name: 'Tiny Steps Learning',
+  url: 'https://tinystepslearning.com',
+  logo: 'https://tinystepslearning.com/logo.png',
+  sameAs: [
+    'https://www.facebook.com/tinystepslearning',
+    'https://www.instagram.com/tinystepslearning'
+  ]
+};
+
+const breadcrumbSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  '@id': 'https://tinystepslearning.com/public-speaking-communication-kids#breadcrumb',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+    { '@type': 'ListItem', position: 2, name: 'Public Speaking Classes', item: 'https://tinystepslearning.com/public-speaking-communication-kids' },
+  ],
+};
+
+const courseSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Course',
+  '@id': 'https://tinystepslearning.com/public-speaking-communication-kids#course',
+  name: 'Public Speaking & Communication Classes',
+  description: '1:1 online public speaking and communication instruction for ages 4–12. Master confidence, voice clarity, body language, storytelling, and presentation skills with live mentors and supportive practice.',
+  provider: {
+    '@id': 'https://tinystepslearning.com/#organization'
+  },
+  hasCourseInstance: {
+    '@type': 'CourseInstance',
+    courseMode: 'online'
+  }
+};
+
+const faqSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  '@id': 'https://tinystepslearning.com/public-speaking-communication-kids#faqpage',
+  mainEntity: FAQS.map(faq => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.answer
+    }
+  }))
+};
+
 export default function PublicSpeakingCommunicationKidsPage() {
   useEffect(() => {
     applySeo({
@@ -9,23 +114,7 @@ export default function PublicSpeakingCommunicationKidsPage() {
       description: "Online public speaking and communication classes for kids (Ages 4–12). Build confidence, eye contact, posture, storytelling, and presentation skills with friendly mentors. Book a free assessment.",
       canonicalPath: "/public-speaking-communication-kids",
       ogType: "website",
-      jsonLd: [
-        {
-          "@context": "https://schema.org",
-          "@type": "Course",
-          "name": "Public Speaking & Communication Classes",
-          "description": "1:1 online public speaking and communication instruction for ages 4–12. Master confidence, voice clarity, body language, storytelling, and presentation skills with live mentors and supportive practice.",
-          "provider": {
-            "@type": "Organization",
-            "name": "Tiny Steps Learning",
-            "sameAs": "https://tinystepslearning.com"
-          },
-          "hasCourseInstance": {
-            "@type": "CourseInstance",
-            "courseMode": "OnlineCoursePlatform"
-          }
-        }
-      ]
+      jsonLd: [organizationSchema, breadcrumbSchema, courseSchema, faqSchema],
     });
   }, []);
 
@@ -48,6 +137,14 @@ export default function PublicSpeakingCommunicationKidsPage() {
         >
           Book a Free Assessment
         </Link>
+      </section>
+
+      {/* AEO Direct Answer Block */}
+      <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
+        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are public speaking classes for kids?</h2>
+        <p className="text-gray-700 leading-relaxed">
+          Public speaking classes for kids teach children ages 4–12 to speak confidently in front of others through live 1:1 sessions with supportive mentors. Each class builds voice clarity, eye contact, body language, storytelling skills, and presentation techniques using games, gentle feedback, and practice tailored to your child's comfort level.
+        </p>
       </section>
 
       {/* Who is this for? */}
@@ -166,29 +263,32 @@ export default function PublicSpeakingCommunicationKidsPage() {
       </section>
 
       {/* FAQs */}
-      <section id="faqs" className="mb-12 bg-purple-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Frequently Asked Questions</h2>
-        <div className="space-y-4 text-gray-700">
-          <div>
-            <h3 className="font-bold text-lg mb-1">My child is very shy. Will they be forced to speak?</h3>
-            <p>No. We never force speaking or put pressure on kids. Our mentors create a warm, safe space where your child controls the pace. We start small (micro-speaks) and gradually build confidence at their speed.</p>
-          </div>
-          <div>
-            <h3 className="font-bold text-lg mb-1">How often should we take classes?</h3>
-            <p>We recommend 2–3 classes per week for best results. Consistent practice helps confidence grow quickly. Most children see noticeable improvement in confidence and communication within 4–6 weeks.</p>
-          </div>
-          <div>
-            <h3 className="font-bold text-lg mb-1">Will my child be recorded?</h3>
-            <p>Optional. We can record sessions for your child's portfolio or to review feedback, but only with parent and child consent. Many parents love having recordings to celebrate their child's progress.</p>
-          </div>
+      <section id="faqs" className="mb-12 bg-gray-50 p-8 rounded-lg">
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions About Speaking Classes</h2>
+        <div className="space-y-6 max-w-3xl mx-auto">
+          {FAQS.map((faq, index) => (
+            <div key={index}>
+              <h3 className="font-bold text-lg mb-2 text-gray-900">{faq.question}</h3>
+              <p className="text-gray-700 text-sm">{faq.answer}</p>
+            </div>
+          ))}
         </div>
-        <div className="mt-6 text-center">
-          <Link
-            to="/faq"
-            className="text-[#4a7c2c] hover:underline font-semibold"
-          >
-            View full FAQ →
-          </Link>
+        <div className="mt-8 text-center">
+          <p className="text-gray-600 mb-4">More questions?</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              to="/faq"
+              className="inline-block border-2 border-[#4a7c2c] text-[#4a7c2c] font-semibold py-3 px-6 rounded-lg hover:bg-[#4a7c2c] hover:text-white transition"
+            >
+              View Full FAQ
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-block bg-[#4a7c2c] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#2d5016] transition"
+            >
+              Book Free Assessment
+            </Link>
+          </div>
         </div>
       </section>
 
