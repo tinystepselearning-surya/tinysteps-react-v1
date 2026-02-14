@@ -8,7 +8,7 @@ export { PRICING_PACKAGES };
 // formatINR and fmtINR imported from pricingPlans.ts
 
 const applyDiscount = (amount: number): number => {
-  return Math.round(amount * (100 - DISCOUNT_PCT) / 100);
+  return Math.round(amount * (100 - DISCOUNT_PERCENT) / 100);
 };
 
 // PriceLine component: renders original (struck), badge, and offered price
@@ -21,7 +21,7 @@ const PriceLine: React.FC<{ original: number; suffix?: string }> = ({
     <div className="flex items-center gap-2 flex-wrap">
       <span className="line-through text-slate-400 text-sm">{fmtINR(original)}</span>
       <span className="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold">
-        {DISCOUNT_PCT}% OFF
+        {DISCOUNT_PERCENT}% OFF
       </span>
       <span className="font-bold text-green-700">{fmtINR(offered)}</span>
       {suffix && <span className="text-sm text-slate-600">{suffix}</span>}

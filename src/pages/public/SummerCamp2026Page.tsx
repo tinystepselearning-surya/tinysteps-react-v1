@@ -56,12 +56,19 @@ export default function SummerCamp2026Page() {
         </p>
       </section>
 
-      {/* AEO Direct Answer Block */}
+      {/* Online-only + Global Availability */}
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
-        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What is Summer English Camp 2026?</h2>
-        <p className="text-gray-700 leading-relaxed">
-          Summer English Camp 2026 is a 7-week online program for children ages 3–12 to build reading fluency, grammar confidence, and public speaking skills. Each child gets daily live classes with expert mentors, guided practice, and weekly progress reports for parents. Perfect for beginners or students looking to accelerate their English journey.
-        </p>
+        <h2 className="text-lg font-bold text-[#2d5016] mb-3">Online-only • Open Worldwide</h2>
+        <ul className="space-y-2 text-gray-700">
+          <li className="flex items-start gap-2">
+            <span className="text-[#4a7c2c] font-bold">✓</span>
+            <span><strong>100% online summer camp (live mentor-led)</strong> — All classes are conducted via Zoom with real-time interaction, screen sharing, and personalized feedback.</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-[#4a7c2c] font-bold">✓</span>
+            <span><strong>Open to children worldwide (15+ countries)</strong> — Families from India, USA, UK, UAE, Singapore, Australia, and more have joined our programs. Time slots are flexible to accommodate different time zones.</span>
+          </li>
+        </ul>
       </section>
 
       {/* Camp Dates */}
@@ -285,6 +292,20 @@ export default function SummerCamp2026Page() {
         <h2 className="text-3xl font-bold text-[#2d5016] mb-6 text-center">Frequently Asked Questions</h2>
         <div className="space-y-6 max-w-3xl mx-auto">
           <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Is the Summer Camp 100% online?</h3>
+            <p className="text-gray-700 text-sm">
+              Yes, the entire camp is conducted online via live Zoom sessions with experienced mentors. Each child attends daily 45-minute classes from the comfort of home. All learning materials, practice activities, and progress reports are accessible through our online platform. No physical attendance required.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-lg mb-2 text-gray-900">Can children outside India join?</h3>
+            <p className="text-gray-700 text-sm">
+              Absolutely! We welcome families from around the world. Class time slots are scheduled in IST (Indian Standard Time) but we offer flexible scheduling to accommodate different time zones. Families from the US, UK, UAE, Singapore, Australia, and 10+ other countries have successfully joined our programs.
+            </p>
+          </div>
+
+          <div>
             <h3 className="font-bold text-lg mb-2 text-gray-900">Is this camp for complete beginners?</h3>
             <p className="text-gray-700 text-sm">
               Yes! We welcome children with zero English knowledge. Our mentors assess each child's level during the free trial and tailor lessons accordingly. Beginners start with basic sounds and simple words.
@@ -350,7 +371,7 @@ export default function SummerCamp2026Page() {
           <div>
             <h3 className="font-bold text-lg mb-2 text-gray-900">Can international students join?</h3>
             <p className="text-gray-700 text-sm">
-              Absolutely! We welcome families from any country. Classes can be scheduled across time zones. Most of our students are based in India, but we have served families in the US, UK, Singapore, UAE, and Australia.
+              Absolutely! We welcome families from any country. Classes can be scheduled across time zones. Families join us from 15+ countries. Our program is 100% online, so children can attend from anywhere in the world.
             </p>
           </div>
         </div>
