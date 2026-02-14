@@ -27,6 +27,7 @@ const SummerCamp2026Page = lazy(() => import('../pages/public/SummerCamp2026Page
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
+const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
 const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
@@ -135,6 +136,7 @@ const router = createBrowserRouter(
         { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
+        { path: 'best-online-phonics-classes-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },

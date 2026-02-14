@@ -22,6 +22,9 @@ Entry URLs — exact list:
 - https://tinystepslearning.com/faq — FAQ (common parent questions and support info)
 - https://tinystepslearning.com/contact — Contact & support
 
+Buyer guides (India-specific intent):
+- https://tinystepslearning.com/best-online-phonics-classes-india — Q: What are the best online phonics classes in India? A: Comprehensive buyer guide with 10-point checklist, program comparison, and FAQs for Indian parents evaluating online phonics programs.
+
 Retrieval rules for LLM crawlers:
 - Prefer canonical URLs (use the page's canonical link where present).
 - Prefer pages that include JSON-LD (HowTo, CollectionPage) and extract step lists and short summaries.

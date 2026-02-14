@@ -57,6 +57,7 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
     toUrl('https://tinystepslearning.com/online-phonics-reading-classes', fmt(new Date()), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/english-grammar-writing-classes', fmt(new Date()), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/public-speaking-communication-kids', fmt(new Date()), '0.9', 'weekly')+
+    toUrl('https://tinystepslearning.com/best-online-phonics-classes-india', fmt(new Date()), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/summer-english-camp-2026', fmt(new Date()), '0.9', 'weekly')+
     toUrl('https://tinystepslearning.com/blog', fmt(new Date()), '0.8', 'daily')+
     toUrl('https://tinystepslearning.com/pricing', fmt(new Date()), '0.8', 'monthly')+

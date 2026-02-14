@@ -63,6 +63,24 @@ const BlogPage: FC = () => {
       url: `https://tinystepslearning.com/blog/${post.slug}`
     }))
   }), [combined]);
+
+  const collectionSchema = useMemo(() => ({
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'Tiny Steps Blog',
+    description: 'Weekly phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building.',
+    url: 'https://tinystepslearning.com/blog',
+    mainEntity: {
+      '@type': 'ItemList',
+      itemListElement: combined.slice(0, 20).map((post, idx) => ({
+        '@type': 'ListItem',
+        position: idx + 1,
+        url: `https://tinystepslearning.com/blog/${post.slug}`,
+        name: post.title
+      }))
+    }
+  }), [combined]);
+
   const featured = useMemo(() => sortedPosts[0], [sortedPosts]);
 
   const breadcrumb = useMemo(() => ({
@@ -80,9 +98,9 @@ const BlogPage: FC = () => {
       description: 'Weekly phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning.',
       canonicalPath: '/blog',
       ogType: 'website',
-      jsonLd: [breadcrumb, blogSchema],
+      jsonLd: [breadcrumb, blogSchema, collectionSchema],
     });
-  }, [breadcrumb, blogSchema]);
+  }, [breadcrumb, blogSchema, collectionSchema]);
 
   return (
     <div className="bg-white">

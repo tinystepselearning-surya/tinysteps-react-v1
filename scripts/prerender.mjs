@@ -18,6 +18,7 @@ const SEED_ROUTES = [
   "/faq",
   "/contact",
   "/blog",
+  "/best-online-phonics-classes-india",
   // Parents hub + help pages
   "/parents",
   "/parents/getting-started",

@@ -2,6 +2,7 @@
 import { useEffect } from 'react';
 import type { FC } from 'react';
 import { applySeo } from '../../lib/seo';
+import { organizationSchema } from '../../lib/schemas';
 
 type MetaProps = {
   title?: string;
@@ -43,13 +44,43 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }
       canonicalPath = undefined;
     }
 
+    // Merge base org schema with page-specific jsonLd for public pages only
+    let mergedJsonLd: Record<string, any> | Record<string, any>[] | undefined;
+    const isPrivateDashboard = canonicalPath && (
+      canonicalPath.startsWith('/admin') ||
+      canonicalPath.startsWith('/teacher') ||
+      canonicalPath.startsWith('/parent') ||
+      canonicalPath.startsWith('/kids') ||
+      canonicalPath.startsWith('/learning-partner') ||
+      canonicalPath.startsWith('/surya')
+    );
+
+    if (!isPrivateDashboard) {
+      // Check if page-specific jsonLd already includes Organization schema
+      const pageJsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+      const hasOrgSchema = pageJsonLdArray.some(
+        (schema) => schema?.['@type'] === 'Organization' || schema?.['@type'] === 'EducationalOrganization'
+      );
+
+      if (hasOrgSchema) {
+        // Page already includes org schema; use as-is
+        mergedJsonLd = jsonLd;
+      } else {
+        // Add base org schema first, then page-specific schemas
+        mergedJsonLd = [organizationSchema, ...pageJsonLdArray];
+      }
+    } else {
+      // Private dashboard: use page-specific jsonLd only (if any)
+      mergedJsonLd = jsonLd;
+    }
+
     applySeo({
       title: finalTitle,
       description: finalDescription,
       canonicalPath,
       robots: 'index, follow',
       ogType: 'website',
-      jsonLd,
+      jsonLd: mergedJsonLd,
     });
 
     // keywords: keep optional behavior — set/remove meta[name="keywords"]

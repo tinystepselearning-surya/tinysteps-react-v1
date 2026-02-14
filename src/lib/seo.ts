@@ -1,4 +1,6 @@
 // src/lib/seo.ts
+import { organizationSchema } from './schemas';
+
 type SeoConfig = {
   title: string;
   description?: string;
@@ -11,6 +13,17 @@ type SeoConfig = {
 };
 
 const CANONICAL_ORIGIN = "https://tinystepslearning.com";
+const JSONLD_SCRIPT_ID = "ts-jsonld";
+
+// Private dashboard paths that should NOT get organization schema
+const PRIVATE_PATH_PREFIXES = [
+  '/admin',
+  '/teacher',
+  '/parent',
+  '/kids',
+  '/learning-partner',
+  '/surya'
+];
 
 function upsertMeta(selector: string, attrs: Record<string, string | undefined>) {
   const el = document.head.querySelector(selector) as HTMLMetaElement | null;
@@ -52,9 +65,47 @@ function upsertLink(selector: string, attrs: Record<string, string | undefined>)
 }
 
 function removeExistingJsonLd() {
+  // Note: We now use a single script#ts-jsonld, so this legacy cleanup is kept for compatibility
   document.head
-    .querySelectorAll('script[type="application/ld+json"][data-ts-seo="1"]')
+    .querySelectorAll('script[type="application/ld+json"][data-ts-seo="1"]:not(#ts-jsonld)')
     .forEach((n) => n.remove());
+}
+
+/**
+ * Helper to generate a stable key for schema deduplication
+ * Prefers @id if present, otherwise uses @type + stringified object
+ */
+function getSchemaKey(schema: any): string {
+  if (schema?.['@id']) return `id:${schema['@id']}`;
+  const type = schema?.['@type'] || 'Unknown';
+  // Use JSON.stringify for stable comparison (note: not perfect for deeply nested objects with different key orders)
+  return `${type}:${JSON.stringify(schema)}`;
+}
+
+/**
+ * Deduplicate schemas by stable key
+ * Keep first occurrence of each unique schema
+ */
+function deduplicateSchemas(schemas: any[]): any[] {
+  const seen = new Set<string>();
+  const result: any[] = [];
+  
+  for (const schema of schemas) {
+    const key = getSchemaKey(schema);
+    if (!seen.has(key)) {
+      seen.add(key);
+      result.push(schema);
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Check if path is a private dashboard route
+ */
+function isPrivatePath(path: string): boolean {
+  return PRIVATE_PATH_PREFIXES.some(prefix => path.startsWith(prefix));
 }
 
 export function applySeo(cfg: SeoConfig) {
@@ -106,15 +157,69 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: resolvedOgImage });
   upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
 
-  // JSON-LD (optional)
-  removeExistingJsonLd();
-  if (cfg.jsonLd) {
-    const s = document.createElement('script');
-    s.type = 'application/ld+json';
-    s.setAttribute('data-ts-seo', '1');
-    s.text = JSON.stringify(cfg.jsonLd);
-    document.head.appendChild(s);
+  // JSON-LD with merge + dedupe to handle multiple applySeo calls
+  removeExistingJsonLd(); // Clean up legacy data-ts-seo scripts
+  
+  // 1. Read existing schemas from our managed script (ONLY if same path)
+  let existingSchemas: any[] = [];
+  const existingScript = document.getElementById(JSONLD_SCRIPT_ID);
+  if (existingScript && existingScript.textContent) {
+    // Check if existing schemas belong to the same page
+    const existingPath = existingScript.dataset.path || '';
+    const canonicalPath = cfg.canonicalPath || path;
+    
+    if (existingPath === canonicalPath) {
+      // Same page: allow merge (handles multiple applySeo calls on same page)
+      try {
+        const parsed = JSON.parse(existingScript.textContent);
+        existingSchemas = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (e) {
+        // Invalid JSON, ignore and start fresh
+        existingSchemas = [];
+      }
+    }
+    // else: Different page, existingSchemas stays [] (no bleed)
   }
+  
+  // 2. Normalize new schemas to array
+  const newSchemas = cfg.jsonLd 
+    ? (Array.isArray(cfg.jsonLd) ? cfg.jsonLd : [cfg.jsonLd])
+    : [];
+  
+  // 3. Add base organization schema for public pages
+  const isPrivate = isPrivatePath(path);
+  const baseSchemas: any[] = [];
+  
+  if (!isPrivate) {
+    // Check if org schema already exists in existing or new schemas
+    const allSchemas = [...existingSchemas, ...newSchemas];
+    const hasOrgSchema = allSchemas.some(
+      s => s?.['@type'] === 'Organization' || s?.['@type'] === 'EducationalOrganization'
+    );
+    
+    if (!hasOrgSchema) {
+      baseSchemas.push(organizationSchema);
+    }
+  }
+  
+  // 4. Merge and deduplicate: [base org, ...existing, ...new]
+  const mergedSchemas = [...baseSchemas, ...existingSchemas, ...newSchemas];
+  const finalSchemas = deduplicateSchemas(mergedSchemas);
+  
+  // 5. Write to single managed script element with path marker
+  let scriptEl = document.getElementById(JSONLD_SCRIPT_ID) as HTMLScriptElement | null;
+  if (!scriptEl) {
+    scriptEl = document.createElement('script');
+    scriptEl.id = JSONLD_SCRIPT_ID;
+    scriptEl.type = 'application/ld+json';
+    scriptEl.setAttribute('data-ts-seo', '1');
+    document.head.appendChild(scriptEl);
+  }
+  
+  // Always write as array for consistency
+  scriptEl.textContent = JSON.stringify(finalSchemas);
+  // Store path to prevent schema bleed across routes
+  scriptEl.dataset.path = cfg.canonicalPath || path;
 }
 
 // ============================================================================
