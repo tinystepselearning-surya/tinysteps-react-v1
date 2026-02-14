@@ -28,6 +28,7 @@ const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/Onlin
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
+const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
 const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
@@ -141,6 +142,7 @@ const router = createBrowserRouter(
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
         { path: 'for-schools', element: <ForSchoolsPage /> },
+        { path: 'book-demo', element: <BookDemoPage /> },
 
         // ---------- Public auth routes ----------
         { path: 'login', element: <LoginPage /> },

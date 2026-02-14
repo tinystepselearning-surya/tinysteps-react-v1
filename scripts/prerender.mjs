@@ -18,6 +18,7 @@ const SEED_ROUTES = [
   "/faq",
   "/contact",
   "/blog",
+  "/book-demo",
   "/best-online-phonics-classes-india",
   // Parents hub + help pages
   "/parents",
@@ -175,6 +176,12 @@ const ROUTE_SEO_CONFIG = {
     title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
     description: 'Build communication confidence. 1:1 online public speaking classes for kids ages 6–12. Presentation skills, fluency, and confident self-expression.',
     canonicalPath: '/speaking',
+    robots: 'index, follow',
+  },
+  '/book-demo': {
+    title: 'Book Free Assessment Class | Tiny Steps Learning',
+    description: 'Book a free 1:1 assessment class for your child (ages 3-12). Discover their English level and get a personalized learning plan. Live online classes with expert mentors. No credit card required.',
+    canonicalPath: '/book-demo',
     robots: 'index, follow',
   },
   '/blog': {

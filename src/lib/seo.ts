@@ -278,6 +278,12 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/speaking',
     ogType: 'website',
   },
+  '/book-demo': {
+    title: 'Book Free Assessment Class | Tiny Steps Learning',
+    description: 'Book a free 1:1 assessment class for your child (ages 3-12). Discover their English level and get a personalized learning plan. Live online classes with expert mentors. No credit card required.',
+    canonicalPath: '/book-demo',
+    ogType: 'website',
+  },
   '/blog': {
     title: 'Blog | Tiny Steps Learning',
     description: 'Read expert articles on English language learning, teaching strategies, and child development. Tips for parents and educators.',
