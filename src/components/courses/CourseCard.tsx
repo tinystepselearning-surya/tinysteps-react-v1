@@ -67,16 +67,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ icon, name, track, age, 
             </Link>
           )}
 
-          <Button
-            size="sm"
-            className="min-w-[170px] whitespace-nowrap"
-            onClick={(e) => {
-              e.stopPropagation();
-              // TODO: hook your enroll flow here (WhatsApp / booking / checkout)
-            }}
+          <Link
+            to="/pricing"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center min-w-[170px] whitespace-nowrap rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-md hover:shadow-lg transition"
           >
-            Enroll · {price}
-          </Button>
+            View Pricing · {price}
+          </Link>
         </div>
         {ibLens.length > 0 && (
           <div className="mt-3 text-xs text-gray-600">

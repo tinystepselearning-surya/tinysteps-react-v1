@@ -5,6 +5,13 @@ import Button from '../Button/Button';
 const DEFAULT_PER_CLASS_PRICE = 599;
 const DISCOUNT_PCT = 30;
 
+// Pricing packages (exported for reuse in courses page)
+export const PRICING_PACKAGES = [
+  { name: 'Starter', classes: 8, original: 4800, monthly: 3360 },
+  { name: 'Growth', classes: 16, original: 9200, monthly: 6440 },
+  { name: 'Intensive', classes: 24, original: 13200, monthly: 9240 },
+] as const;
+
 const formatINR = (value: number) =>
   new Intl.NumberFormat('en-IN', {
     style: 'currency',
