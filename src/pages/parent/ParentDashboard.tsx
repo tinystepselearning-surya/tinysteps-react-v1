@@ -345,32 +345,64 @@ export default function ParentDashboard() {
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
     queryFn: async (): Promise<KidSession[]> => {
-      if (!selectedKidId) return [];
+      if (!selectedKidId || !user?.uid) return [];
+
+      console.log("🔍 [ParentDashboard] Fetching sessions for:", {
+        selectedKidId,
+        parentUid: user.uid,
+        parentEmail: user.email,
+      });
 
       const sessionsCol = collection(db, "sessions");
 
-      // Primary: sessions.kidIds array contains kid
-      const qA = query(sessionsCol, where("kidIds", "array-contains", selectedKidId));
-      const snapA = await getDocs(qA);
+      try {
+        // Primary: sessions.kidIds array contains kid AND parentId matches current user
+        const qA = query(
+          sessionsCol,
+          where("kidIds", "array-contains", selectedKidId),
+          where("parentId", "==", user.uid)
+        );
+        const snapA = await getDocs(qA);
+        console.log("✅ [Query A] kidIds array-contains + parentId:", {
+          count: snapA.size,
+          docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
+        });
 
-      // Fallback: sessions.kidId == kid (older schema)
-      const qB = query(sessionsCol, where("kidId", "==", selectedKidId));
-      const snapB = await getDocs(qB);
+        // Fallback: sessions.kidId == kid (older schema) AND parentId matches
+        const qB = query(
+          sessionsCol,
+          where("kidId", "==", selectedKidId),
+          where("parentId", "==", user.uid)
+        );
+        const snapB = await getDocs(qB);
+        console.log("✅ [Query B] kidId equality + parentId:", {
+          count: snapB.size,
+          docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
+        });
 
-      const map = new Map<string, KidSession>();
-      snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
-      snapB.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+        const map = new Map<string, KidSession>();
+        snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
+        snapB.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
 
-      const all = Array.from(map.values());
+        const all = Array.from(map.values());
+        console.log("📊 [Final Result] Total unique sessions:", all.length);
 
-      // Sort by start date (best effort)
-      all.sort((a, b) => {
-        const da = sessionStartDate(a)?.getTime() ?? 0;
-        const db = sessionStartDate(b)?.getTime() ?? 0;
-        return da - db;
-      });
+        // Sort by start date (best effort)
+        all.sort((a, b) => {
+          const da = sessionStartDate(a)?.getTime() ?? 0;
+          const db = sessionStartDate(b)?.getTime() ?? 0;
+          return da - db;
+        });
 
-      return all;
+        return all;
+      } catch (error: any) {
+        console.error("❌ [ParentDashboard] Firestore query error:", {
+          code: error?.code,
+          message: error?.message,
+          details: error,
+        });
+        throw error;
+      }
     },
   });
 
