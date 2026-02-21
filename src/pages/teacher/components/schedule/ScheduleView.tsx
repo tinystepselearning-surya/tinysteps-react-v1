@@ -55,9 +55,30 @@ type TopicUpdatePayload = {
 };
 
 const COURSE_LABEL_BY_ID: Record<string, string> = {
-  foundational: 'Foundational Course',
+  'phonics-foundations': 'Phonics Foundations',
+  'early-phonics': 'Early Phonics',
+  'advanced-phonics': 'Advanced Phonics',
+  foundational: 'Phonics Foundations',
   early: 'Early Phonics',
   advanced: 'Advanced Phonics',
+};
+
+const COURSE_ID_ALIASES: Record<string, string> = {
+  'phonics-foundation': 'phonics-foundations',
+  'phonics-foundations': 'phonics-foundations',
+  foundational: 'phonics-foundations',
+  'phonics-early': 'early-phonics',
+  early: 'early-phonics',
+  'phonics-advanced': 'advanced-phonics',
+  advanced: 'advanced-phonics',
+};
+
+const normalizeCourseId = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  const key = trimmed.toLowerCase();
+  return COURSE_ID_ALIASES[key] || trimmed;
 };
 
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
@@ -81,6 +102,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [scheduleNote, setScheduleNote] = useState('');
   const [isSavingRequest, setIsSavingRequest] = useState(false);
   const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([]);
+  const [isOverflowOpen, setIsOverflowOpen] = useState(false);
+  const [overflowDay, setOverflowDay] = useState<Date | null>(null);
+  const [overflowSessions, setOverflowSessions] = useState<TeacherSession[]>([]);
 
   const { monthStart, monthEnd } = useMemo(
     () => ({ monthStart: startOfMonth(currentDate), monthEnd: endOfMonth(currentDate) }),
@@ -558,7 +582,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
       batch.update(sessionRef, sessionUpdate);
 
-      const sessionCourseId = data.meta?.courseId || (selectedSession as any)?.courseId;
+      const sessionCourseId =
+        normalizeCourseId(data.meta?.courseId || (selectedSession as any)?.courseId) || '';
       const sessionCourseLabel =
         data.meta?.courseLabel ||
         (selectedSession as any)?.courseLabel ||
@@ -861,8 +886,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         className="text-xs text-primary-600 hover:underline text-left"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setCurrentDate(day);
-                          setView('day');
+                          setOverflowDay(day);
+                          setOverflowSessions(daySessions);
+                          setIsOverflowOpen(true);
                         }}
                       >
                         +{daySessions.length - 2} more
@@ -1108,6 +1134,78 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         onClose={() => setSelectedSession(null)}
         onSubmit={handleAttendanceSubmit}
       />
+
+      <Dialog
+        open={isOverflowOpen}
+        onOpenChange={(open) => {
+          setIsOverflowOpen(open);
+          if (!open) {
+            setOverflowSessions([]);
+            setOverflowDay(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              Sessions on {overflowDay ? format(overflowDay, 'EEE, MMM d') : 'this day'}
+            </DialogTitle>
+            <DialogDescription>
+              Tap a session to mark attendance.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+            {overflowSessions.map((session, idx) => {
+              const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
+              const kidNames = kidIds
+                .map((id) => studentNameById.get(id))
+                .filter(Boolean)
+                .join(', ') || 'Student';
+              const fallbackCourseLabel = kidIds
+                .map((id) => studentCourseLabelById.get(id))
+                .find(Boolean) || '';
+              const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
+              const isRescheduleRequested = Object.values(session.attendance || {})
+                .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+              const timeLabel = session.startTime && session.endTime
+                ? `${session.startTime} - ${session.endTime}`
+                : session.startTime || '';
+              return (
+                <button
+                  key={session.id || idx}
+                  type="button"
+                  className="w-full text-left border rounded-lg px-3 py-2 hover:bg-muted/40 transition-colors"
+                  onClick={() => {
+                    setSelectedSession(session);
+                    setIsOverflowOpen(false);
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="font-medium text-sm">{timeLabel}</div>
+                      <div className="text-xs text-muted-foreground">{kidNames}</div>
+                      {courseLabel && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {truncateLabel(courseLabel, 24)}
+                        </div>
+                      )}
+                    </div>
+                    {isRescheduleRequested ? (
+                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
+                        Reschedule
+                      </Badge>
+                    ) : (
+                      <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
+                        {session.status}
+                      </Badge>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isBlockModalOpen} onOpenChange={setIsBlockModalOpen}>
         <DialogContent className="max-w-md">

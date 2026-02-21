@@ -75,6 +75,19 @@ service cloud.firestore {
       return get(kidDocPath(kidId)).data;
     }
 
+    // Students helper functions (progress/curriculum live under /students)
+    function studentDocPath(kidId) {
+      return /databases/$(database)/documents/students/$(kidId);
+    }
+
+    function studentExists(kidId) {
+      return exists(studentDocPath(kidId));
+    }
+
+    function studentDoc(kidId) {
+      return get(studentDocPath(kidId)).data;
+    }
+
     // Who can read kid + kid subcollections
     function canAccessKid(kidId) {
       return isAdmin()
@@ -102,16 +115,32 @@ service cloud.firestore {
 
     function isParentOfKid(kidId) {
       return isParent()
-        && kidExists(kidId)
         && (
-          (('parentIds' in kidDoc(kidId)) &&
-            (
-              ((kidDoc(kidId).parentIds is list) && (request.auth.uid in kidDoc(kidId).parentIds)) ||
-              ((kidDoc(kidId).parentIds is string) && (kidDoc(kidId).parentIds == request.auth.uid))
+          (kidExists(kidId)
+            && (
+              (('parentIds' in kidDoc(kidId)) &&
+                (
+                  ((kidDoc(kidId).parentIds is list) && (request.auth.uid in kidDoc(kidId).parentIds)) ||
+                  ((kidDoc(kidId).parentIds is string) && (kidDoc(kidId).parentIds == request.auth.uid))
+                )
+              ) ||
+              (('primaryParentId' in kidDoc(kidId)) && (kidDoc(kidId).primaryParentId == request.auth.uid)) ||
+              (('parentId' in kidDoc(kidId)) && (kidDoc(kidId).parentId == request.auth.uid))
             )
-          ) ||
-          (('primaryParentId' in kidDoc(kidId)) && (kidDoc(kidId).primaryParentId == request.auth.uid)) ||
-          (('parentId' in kidDoc(kidId)) && (kidDoc(kidId).parentId == request.auth.uid))
+          )
+          ||
+          (studentExists(kidId)
+            && (
+              (('parentIds' in studentDoc(kidId)) &&
+                (
+                  ((studentDoc(kidId).parentIds is list) && (request.auth.uid in studentDoc(kidId).parentIds)) ||
+                  ((studentDoc(kidId).parentIds is string) && (studentDoc(kidId).parentIds == request.auth.uid))
+                )
+              ) ||
+              (('primaryParentId' in studentDoc(kidId)) && (studentDoc(kidId).primaryParentId == request.auth.uid)) ||
+              (('parentId' in studentDoc(kidId)) && (studentDoc(kidId).parentId == request.auth.uid))
+            )
+          )
         );
     }
 

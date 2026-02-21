@@ -518,7 +518,7 @@ export default function ParentDashboard() {
   // Fetch sessions for this kid (manual refresh model: loads when tab opens)
   const kidSessionsQuery = useQuery({
     queryKey: ["kidSessions", selectedKidId],
-    enabled: !!selectedKidId && activeTab === "classes",
+    enabled: !!selectedKidId && (activeTab === "classes" || activeTab === "payments"),
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
@@ -657,65 +657,59 @@ export default function ParentDashboard() {
   }, [monthSessions]);
 
   const billingSummary = useMemo(() => {
-    const charges = (billingChargesQuery.data ?? []) as BillingCharge[];
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-    let dueNow = 0;
-    let billedThisMonth = 0;
-    let chargesThisMonth = 0;
-    let paidThisMonth = 0;
-
-    const isCompletedCharge = (charge: BillingCharge) => {
-      const source = String((charge as any).source ?? '').toLowerCase().trim();
-      const sessionStatus = String((charge as any).sessionStatus ?? '').toLowerCase().trim();
-      if (source) return source === 'session_present_completed';
-      if (sessionStatus) return sessionStatus === 'completed';
-      return false;
-    };
-
-    charges.forEach((charge) => {
-      if (!isCompletedCharge(charge)) return;
-      const rawAmount = Number(charge.amount ?? 0);
-      const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-      const status = String(charge.status ?? "").toLowerCase().trim();
-
-      const isPaid = status === "paid" || status === "settled";
-      const isVoid =
-        status === "void" ||
-        status === "cancelled" ||
-        status === "canceled" ||
-        status === "waived" ||
-        status === "refunded";
-
-      if (!isPaid && !isVoid) {
-        dueNow += amount;
-      }
-
-      const createdAt =
-        charge.createdAt?.toDate?.() ??
-        (charge.createdAt instanceof Date ? charge.createdAt : null);
-
-      if (createdAt && createdAt >= monthStart && createdAt < nextMonthStart) {
-        billedThisMonth += amount;
-        chargesThisMonth += 1;
-        if (isPaid) paidThisMonth += amount;
-      }
+    const kidId = selectedKidId ? String(selectedKidId) : null;
+    const completedSessions = monthSessions.filter((s) => {
+      if (!kidId) return false;
+      if (normalizeStatus(s.status) !== "completed") return false;
+      const attendance = (s as any).attendance || {};
+      const entry = attendance?.[kidId];
+      const status = entry?.status ?? entry;
+      return status === "present" || status === "late";
     });
 
+    const totalBilled = completedSessions.reduce((sum, s) => {
+      const raw =
+        (s as any).feeAmount ??
+        (s as any).feePerClass ??
+        (s as any).amount ??
+        0;
+      const amount = Number(raw);
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
+
     const avgRate =
-      chargesThisMonth > 0 ? Math.round(billedThisMonth / chargesThisMonth) : 0;
+      completedSessions.length > 0
+        ? Math.round(totalBilled / completedSessions.length)
+        : 0;
+
+    const charges = (billingChargesQuery.data ?? []) as BillingCharge[];
+    const paidThisMonth = charges.reduce((sum, charge) => {
+      if (!kidId) return sum;
+      const chargeKidId = String((charge as any).kidId || '');
+      if (!chargeKidId || chargeKidId !== kidId) return sum;
+      const source = String((charge as any).source ?? '').toLowerCase().trim();
+      if (source && source !== 'session_present_completed') return sum;
+      const status = String(charge.status ?? "").toLowerCase().trim();
+      const isPaid = status === "paid" || status === "settled";
+      if (!isPaid) return sum;
+      const rawAmount = Number(charge.amount ?? 0);
+      const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
+      return sum + amount;
+    }, 0);
+
+    const dueNow = Math.max(totalBilled - paidThisMonth, 0);
 
     return {
       dueNow,
-      billedThisMonth,
-      chargesThisMonth,
-      totalCharges: charges.filter(isCompletedCharge).length,
+      billedThisMonth: totalBilled,
+      chargesThisMonth: completedSessions.length,
+      totalCharges: completedSessions.length,
       avgRate,
       paidThisMonth,
     };
-  }, [billingChargesQuery.data]);
+  }, [billingChargesQuery.data, monthSessions, selectedKidId]);
+
+  const billingLoading = billingChargesQuery.isLoading || kidSessionsQuery.isLoading;
 
   // Calendar grid helpers
   const calendarDays = useMemo(() => {
@@ -2217,7 +2211,7 @@ export default function ParentDashboard() {
                 <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
                   Fees & Dues
                 </div>
-                {billingChargesQuery.isLoading ? (
+                {billingLoading ? (
                   <div className="text-sm text-gray-600 dark:text-gray-400">
                     Loading fees…
                   </div>
@@ -2253,6 +2247,9 @@ export default function ParentDashboard() {
                     )}
                     <div className="text-xs text-gray-500 dark:text-gray-500">
                       Charges: {billingSummary.totalCharges}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      Calculated from {billingSummary.chargesThisMonth} completed classes (Present/Late) in {classesMonthLabel}.
                     </div>
                   </div>
                 )}
@@ -2388,7 +2385,7 @@ export default function ParentDashboard() {
                         Class Fees & Dues
                       </h3>
                       <div className="p-4 rounded-lg bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
-                        {billingChargesQuery.isLoading ? (
+                        {billingLoading ? (
                           <div className="text-sm text-gray-600 dark:text-gray-400">
                             Loading fees…
                           </div>
@@ -2424,6 +2421,9 @@ export default function ParentDashboard() {
                             )}
                             <div className="text-xs text-gray-500 dark:text-gray-500">
                               Charges: {billingSummary.totalCharges}
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-500">
+                              Calculated from {billingSummary.chargesThisMonth} completed classes (Present/Late) in {classesMonthLabel}.
                             </div>
                           </div>
                         )}

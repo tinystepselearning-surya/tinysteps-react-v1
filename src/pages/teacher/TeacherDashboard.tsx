@@ -244,23 +244,52 @@ export default function TeacherDashboard() {
           });
         });
 
-        const enrollmentsSnap = await getDocs(
-          query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))
-        );
-        const enrollments = enrollmentsSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-
         const enrollmentByKidId = new Map<string, any>();
-        enrollments.forEach((enr) => {
-          const kidId =
-            String(enr.kidId || enr.studentId || (Array.isArray(enr.kidIds) ? enr.kidIds[0] : '') || '');
-          if (!kidId) return;
-          const current = enrollmentByKidId.get(kidId);
-          const nextTime = enr.createdAt?.toMillis?.() ?? 0;
-          const currentTime = current?.createdAt?.toMillis?.() ?? 0;
-          if (!current || nextTime >= currentTime) {
-            enrollmentByKidId.set(kidId, enr);
-          }
-        });
+        await Promise.all(
+          students.map(async (student) => {
+            const kidId = String((student as any).uid || (student as any).id || '');
+            if (!kidId) return;
+
+            const results = new Map<string, any>();
+            const queries = [
+              query(collection(db, 'enrollments'), where('kidId', '==', kidId)),
+              query(collection(db, 'enrollments'), where('studentId', '==', kidId)),
+              query(collection(db, 'enrollments'), where('kidIds', 'array-contains', kidId)),
+            ];
+
+            for (const q of queries) {
+              const snap = await getDocs(q);
+              snap.docs.forEach((d) => results.set(d.id, { id: d.id, ...(d.data() as any) }));
+            }
+
+            const list = Array.from(results.values());
+            if (list.length === 0) return;
+
+            const isActive = (value: any) => {
+              const status = String(value ?? '').toLowerCase().trim();
+              return status === 'active' || status === 'enrolled' || status === 'ongoing';
+            };
+
+            const activeEnrollments = list.filter((enr) => isActive(enr.status || enr.enrollmentStatus));
+            const candidates = activeEnrollments.length > 0 ? activeEnrollments : list;
+
+            const latest = candidates.sort((a, b) => {
+              const aTime =
+                a.updatedAt?.toMillis?.() ??
+                a.enrollmentDate?.toMillis?.() ??
+                a.createdAt?.toMillis?.() ??
+                0;
+              const bTime =
+                b.updatedAt?.toMillis?.() ??
+                b.enrollmentDate?.toMillis?.() ??
+                b.createdAt?.toMillis?.() ??
+                0;
+              return bTime - aTime;
+            })[0];
+
+            enrollmentByKidId.set(kidId, latest);
+          })
+        );
 
         const summaries: Record<string, StudentProgressSummary> = {};
         await Promise.all(
@@ -272,9 +301,11 @@ export default function TeacherDashboard() {
             const courseId = enrollment?.courseId ? String(enrollment.courseId) : '';
             const courseName =
               enrollment?.courseName ||
+              enrollment?.courseLabel ||
               enrollment?.courseTitle ||
               enrollment?.course?.title ||
               enrollment?.course?.name ||
+              courseId ||
               '';
 
             let completedTopics = 0;
@@ -282,17 +313,6 @@ export default function TeacherDashboard() {
             let lastRemark = '—';
 
             if (courseId) {
-              const curSnap = await getDocs(
-                query(
-                  collection(db, 'students', kidId, 'curriculum'),
-                  where('courseId', '==', courseId)
-                )
-              );
-              curSnap.forEach((docSnap) => {
-                const data = docSnap.data() as any;
-                if (String(data?.status || '') === 'completed') completedTopics += 1;
-              });
-
               const progSnap = await getDocs(
                 query(
                   collection(db, 'students', kidId, 'progress'),
@@ -302,6 +322,11 @@ export default function TeacherDashboard() {
               let latest: any = null;
               progSnap.forEach((docSnap) => {
                 const data = docSnap.data() as any;
+                const mastery = String(data?.mastery ?? '').toLowerCase();
+                const scoreBand = Number(data?.scoreBand ?? data?.score ?? 0);
+                if (mastery === 'proficient' || mastery === 'mastered' || scoreBand >= 81) {
+                  completedTopics += 1;
+                }
                 const ts = data?.updatedAt?.toMillis?.() ?? 0;
                 const best = latest?.updatedAt?.toMillis?.() ?? 0;
                 if (ts >= best) latest = data;
@@ -675,7 +700,7 @@ function StudentRow({
           kidId,
           name,
           courseId: progressSummary?.courseId,
-          courseName: progressSummary?.courseName || student.courseName,
+          courseName: progressSummary?.courseName,
         })
       }
     >
@@ -687,7 +712,7 @@ function StudentRow({
           Parent: {student.parentName || '—'}
         </p>
         <p className="text-sm">
-          Course: {progressSummary?.courseName || student.courseName || '—'}
+          Course: {progressSummary?.courseName || '—'}
         </p>
         <p className="text-sm text-gray-600 mt-1">
           {progressLoading ? 'Loading progress…' : `Completed topics: ${completed} / ${total || '—'}`}

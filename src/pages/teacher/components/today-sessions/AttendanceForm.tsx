@@ -7,7 +7,7 @@ import { Textarea } from '@components/ui/textarea';
 import { Input } from '@components/ui/input';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
-import { collection, doc, getDoc, getDocs, onSnapshot, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, startAt, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
@@ -624,13 +624,15 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
       try {
         const entries = await Promise.all(
           kidIds.map(async (kidId) => {
-            const q = query(
-              collection(db, 'students', kidId, 'progress'),
+            const progressCol = collection(db, 'students', kidId, 'progress');
+            const map: Record<string, SavedTopicProgress> = {};
+
+            const byCourseQuery = query(
+              progressCol,
               where('courseId', '==', effectiveCourseId)
             );
-            const snap = await getDocs(q);
-            const map: Record<string, SavedTopicProgress> = {};
-            snap.forEach((docSnap) => {
+            const byCourseSnap = await getDocs(byCourseQuery);
+            byCourseSnap.forEach((docSnap) => {
               const data = docSnap.data() || {};
               const score = parseScoreValue(data.score ?? data.scoreBand);
               map[docSnap.id] = {
@@ -641,6 +643,28 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                 topicName: data.topicName || data.topicLabel || data.name || '',
               };
             });
+
+            const prefix = `${effectiveCourseId}__`;
+            const byIdQuery = query(
+              progressCol,
+              orderBy(documentId()),
+              startAt(prefix),
+              endAt(`${prefix}\uf8ff`)
+            );
+            const byIdSnap = await getDocs(byIdQuery);
+            byIdSnap.forEach((docSnap) => {
+              if (map[docSnap.id]) return;
+              const data = docSnap.data() || {};
+              const score = parseScoreValue(data.score ?? data.scoreBand);
+              map[docSnap.id] = {
+                mastery: typeof data.mastery === 'string' ? data.mastery : undefined,
+                score: score ?? 50,
+                teacherRemark: typeof data.teacherRemark === 'string' ? data.teacherRemark : '',
+                updatedAt: data.updatedAt,
+                topicName: data.topicName || data.topicLabel || data.name || '',
+              };
+            });
+
             return [kidId, map] as const;
           })
         );
