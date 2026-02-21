@@ -16,7 +16,7 @@ interface AttendanceFormProps {
   open: boolean;
   session: TeacherSession | null;
   onClose: () => void;
-  onSubmit: (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdateState[] }>; sessionNotes: string }) => Promise<void>;
+  onSubmit: (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdateState[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string } }) => Promise<void>;
 }
 
 type AttendanceOutcome = AttendanceStatus | 'reschedule_requested' | '';
@@ -74,6 +74,12 @@ const COURSE_NAME_TO_ID: Record<string, string> = {
   'phonics foundation': 'phonics-foundations',
   'early phonics': 'early-phonics',
   'advanced phonics': 'advanced-phonics',
+};
+
+const COURSE_LABEL_BY_ID: Record<string, string> = {
+  'phonics-foundations': 'Phonics Foundations',
+  'early-phonics': 'Early Phonics',
+  'advanced-phonics': 'Advanced Phonics',
 };
 
 const normalizeCourseId = (value?: string | null): string | null => {
@@ -310,8 +316,15 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   useEffect(() => {
     if (session) {
       const defaults: Record<string, AttendanceEntryState> = {};
+      const attendance = (session.attendance as any) || {};
+      const allPresentByDefault =
+        kidIds.length > 0 &&
+        kidIds.every((kidId) => normalizeStatus(attendance?.[kidId]) === 'present') &&
+        session.status !== 'completed' &&
+        session.status !== 'in_progress';
       kidIds.forEach((kidId) => {
         const existingEntry = (session.attendance as any)?.[kidId];
+        const existingStatus = normalizeStatus(existingEntry);
         const existingTopics = Array.isArray(existingEntry?.topics)
           ? (existingEntry.topics as string[]).filter(Boolean)
           : [];
@@ -327,7 +340,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
           }, {} as Record<string, TopicUpdateState>);
 
         defaults[kidId] = {
-          status: normalizeStatus(session.attendance?.[kidId]),
+          status: allPresentByDefault ? '' : existingStatus,
           notes: '',
           mastery: 50,
           topicUpdatesById,
@@ -565,6 +578,10 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
           { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdateState[] }
         >,
         sessionNotes,
+        meta: {
+          courseId: effectiveCourseId || undefined,
+          courseLabel: effectiveCourseLabel || undefined,
+        },
       });
       onClose();
     } finally {
@@ -581,6 +598,12 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     [session?.courseName, (session as any)?.courseLabel]
   );
   const effectiveCourseId = directCourseId || enrollmentCourseId || nameCourseId || '';
+  const effectiveCourseLabel =
+    session?.courseName ||
+    (session as any)?.courseLabel ||
+    (effectiveCourseId ? COURSE_LABEL_BY_ID[effectiveCourseId] : '') ||
+    effectiveCourseId ||
+    '';
 
   const topics = useMemo(() => {
     const courseId = effectiveCourseId;

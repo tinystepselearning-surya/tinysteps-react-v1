@@ -6,6 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 interface FilteredStudent {
   uid: string;
   fullName: string;
+  studentName?: string;
   grade?: string;
   progressStatus?: 'on_track' | 'needs_attention';
   lastSessionDate?: string;
@@ -35,7 +36,18 @@ export function useTeacherFilteredStudents() {
       (snapshot) => {
         const studentsList: FilteredStudent[] = snapshot.docs.map(doc => ({
           uid: doc.id,
-          fullName: doc.data().fullName || '',
+          fullName:
+            doc.data().fullName ||
+            doc.data().studentName ||
+            doc.data().displayName ||
+            doc.data().name ||
+            '',
+          studentName:
+            doc.data().fullName ||
+            doc.data().studentName ||
+            doc.data().displayName ||
+            doc.data().name ||
+            '',
           grade: doc.data().grade,
           progressStatus: doc.data().progressStatus || 'on_track',
           lastSessionDate: doc.data().lastSessionDate,

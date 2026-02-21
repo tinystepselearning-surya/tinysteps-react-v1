@@ -533,7 +533,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
-  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string }) => {
+  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string } }) => {
     if (!selectedSession) return;
     try {
       const batch = writeBatch(db);
@@ -558,8 +558,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
       batch.update(sessionRef, sessionUpdate);
 
-      const sessionCourseId = (selectedSession as any)?.courseId;
+      const sessionCourseId = data.meta?.courseId || (selectedSession as any)?.courseId;
       const sessionCourseLabel =
+        data.meta?.courseLabel ||
         (selectedSession as any)?.courseLabel ||
         selectedSession.courseName ||
         (sessionCourseId ? COURSE_LABEL_BY_ID[sessionCourseId] : '') ||
@@ -855,9 +856,17 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                       );
                     })}
                     {daySessions.length > 2 && (
-                      <div className="text-xs text-muted-foreground">
+                      <button
+                        type="button"
+                        className="text-xs text-primary-600 hover:underline text-left"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentDate(day);
+                          setView('day');
+                        }}
+                      >
                         +{daySessions.length - 2} more
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -954,7 +963,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
       {view === 'day' && (
         <Card className="p-6">
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
             {(sessionsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0 ||
               blockedSlotsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0 ||
               requestsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0) ? (

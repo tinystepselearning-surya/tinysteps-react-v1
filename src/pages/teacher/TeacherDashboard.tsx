@@ -1,7 +1,9 @@
 // src/pages/teacher/TeacherDashboard.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
+import { Badge } from '@components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog';
 
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
@@ -10,6 +12,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTeacherSessions } from './hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../lib/firebaseConfig';
 
 // Lazy-loaded views
 const TodaySessionsView = React.lazy(() =>
@@ -112,6 +116,22 @@ type StudentForRow = {
   [key: string]: any;
 };
 
+type StudentProgressSummary = {
+  courseId?: string;
+  courseName?: string;
+  completedTopics?: number;
+  totalTopics?: number;
+  lastTopic?: string;
+  lastRemark?: string;
+};
+
+type CurriculumTopic = {
+  id: string;
+  courseId?: string;
+  lesson?: string;
+  label?: string;
+};
+
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
   const [tab, setTab] = useState<string>('today');
@@ -180,6 +200,185 @@ export default function TeacherDashboard() {
   // Provide a placeholder empty array for header counts when not active.
   const sessions = [];
   const { students, loading, error } = useTeacherFilteredStudents();
+  const [progressByKidId, setProgressByKidId] = useState<Record<string, StudentProgressSummary>>({});
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [topicsByCourseId, setTopicsByCourseId] = useState<Record<string, CurriculumTopic[]>>({});
+  const [topicsModalOpen, setTopicsModalOpen] = useState(false);
+  const [selectedStudentForTopics, setSelectedStudentForTopics] = useState<{
+    kidId: string;
+    name: string;
+    courseId?: string;
+    courseName?: string;
+  } | null>(null);
+  const [topicStatuses, setTopicStatuses] = useState<Record<string, string>>({});
+  const [topicStatusesLoading, setTopicStatusesLoading] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSummaries = async () => {
+      if (!teacherId || students.length === 0) {
+        setProgressByKidId({});
+        setProgressLoading(false);
+        return;
+      }
+
+      setProgressLoading(true);
+      try {
+        const topicsSnap = await getDoc(doc(db, 'config', 'curriculumTopics'));
+        const topicItems = topicsSnap.exists() && Array.isArray((topicsSnap.data() as any)?.topics)
+          ? (topicsSnap.data() as any).topics
+          : [];
+        const totalsByCourseId = new Map<string, number>();
+        const byCourse: Record<string, CurriculumTopic[]> = {};
+        topicItems.forEach((t: any) => {
+          const courseId = String(t?.courseId || '').trim();
+          if (!courseId) return;
+          totalsByCourseId.set(courseId, (totalsByCourseId.get(courseId) || 0) + 1);
+          if (!byCourse[courseId]) byCourse[courseId] = [];
+          byCourse[courseId].push({
+            id: String(t?.id ?? ''),
+            courseId,
+            lesson: t?.lesson ? String(t.lesson) : undefined,
+            label: String(t?.label ?? t?.topicName ?? t?.name ?? ''),
+          });
+        });
+
+        const enrollmentsSnap = await getDocs(
+          query(collection(db, 'enrollments'), where('teacherId', '==', teacherId))
+        );
+        const enrollments = enrollmentsSnap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
+        const enrollmentByKidId = new Map<string, any>();
+        enrollments.forEach((enr) => {
+          const kidId =
+            String(enr.kidId || enr.studentId || (Array.isArray(enr.kidIds) ? enr.kidIds[0] : '') || '');
+          if (!kidId) return;
+          const current = enrollmentByKidId.get(kidId);
+          const nextTime = enr.createdAt?.toMillis?.() ?? 0;
+          const currentTime = current?.createdAt?.toMillis?.() ?? 0;
+          if (!current || nextTime >= currentTime) {
+            enrollmentByKidId.set(kidId, enr);
+          }
+        });
+
+        const summaries: Record<string, StudentProgressSummary> = {};
+        await Promise.all(
+          students.map(async (student) => {
+            const kidId = String((student as any).uid || (student as any).id || '');
+            if (!kidId) return;
+
+            const enrollment = enrollmentByKidId.get(kidId);
+            const courseId = enrollment?.courseId ? String(enrollment.courseId) : '';
+            const courseName =
+              enrollment?.courseName ||
+              enrollment?.courseTitle ||
+              enrollment?.course?.title ||
+              enrollment?.course?.name ||
+              '';
+
+            let completedTopics = 0;
+            let lastTopic = '—';
+            let lastRemark = '—';
+
+            if (courseId) {
+              const curSnap = await getDocs(
+                query(
+                  collection(db, 'students', kidId, 'curriculum'),
+                  where('courseId', '==', courseId)
+                )
+              );
+              curSnap.forEach((docSnap) => {
+                const data = docSnap.data() as any;
+                if (String(data?.status || '') === 'completed') completedTopics += 1;
+              });
+
+              const progSnap = await getDocs(
+                query(
+                  collection(db, 'students', kidId, 'progress'),
+                  where('courseId', '==', courseId)
+                )
+              );
+              let latest: any = null;
+              progSnap.forEach((docSnap) => {
+                const data = docSnap.data() as any;
+                const ts = data?.updatedAt?.toMillis?.() ?? 0;
+                const best = latest?.updatedAt?.toMillis?.() ?? 0;
+                if (ts >= best) latest = data;
+              });
+              if (latest) {
+                lastTopic = latest.topicName || '—';
+                lastRemark = latest.teacherRemark || '—';
+              }
+            }
+
+            summaries[kidId] = {
+              courseId: courseId || undefined,
+              courseName: courseName || undefined,
+              completedTopics,
+              totalTopics: courseId ? totalsByCourseId.get(courseId) || 0 : 0,
+              lastTopic,
+              lastRemark,
+            };
+          })
+        );
+
+        if (!cancelled) {
+          setProgressByKidId(summaries);
+          setTopicsByCourseId(byCourse);
+        }
+      } catch (err) {
+        console.error('[TeacherDashboard] load progress summaries failed', err);
+        if (!cancelled) setProgressByKidId({});
+      } finally {
+        if (!cancelled) setProgressLoading(false);
+      }
+    };
+
+    loadSummaries();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [teacherId, students]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTopicStatuses = async () => {
+      if (!topicsModalOpen || !selectedStudentForTopics?.kidId || !selectedStudentForTopics?.courseId) {
+        setTopicStatuses({});
+        setTopicStatusesLoading(false);
+        return;
+      }
+      setTopicStatusesLoading(true);
+      try {
+        const snap = await getDocs(
+          query(
+            collection(db, 'students', selectedStudentForTopics.kidId, 'curriculum'),
+            where('courseId', '==', selectedStudentForTopics.courseId)
+          )
+        );
+        const map: Record<string, string> = {};
+        snap.forEach((docSnap) => {
+          const data = docSnap.data() as any;
+          map[docSnap.id] = String(data?.status || '').toLowerCase();
+        });
+        if (!cancelled) setTopicStatuses(map);
+      } catch (err) {
+        console.error('[TeacherDashboard] load topic statuses failed', err);
+        if (!cancelled) setTopicStatuses({});
+      } finally {
+        if (!cancelled) setTopicStatusesLoading(false);
+      }
+    };
+
+    loadTopicStatuses();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [topicsModalOpen, selectedStudentForTopics?.kidId, selectedStudentForTopics?.courseId]);
 
   if (isLoading) {
     return (
@@ -283,6 +482,12 @@ export default function TeacherDashboard() {
                           <StudentRow
                             key={student.uid || student.id}
                             student={student}
+                            progressSummary={progressByKidId[String((student as any).uid || (student as any).id || '')]}
+                            progressLoading={progressLoading}
+                            onOpenTopics={(payload) => {
+                              setSelectedStudentForTopics(payload);
+                              setTopicsModalOpen(true);
+                            }}
                           />
                         ))}
                       </div>
@@ -362,32 +567,174 @@ export default function TeacherDashboard() {
           <NotificationsPanel teacherId={teacherId} onClose={() => setShowNotifications(false)} />
         </React.Suspense>
       )}
+
+      <Dialog
+        open={topicsModalOpen}
+        onOpenChange={(open) => {
+          setTopicsModalOpen(open);
+          if (!open) setSelectedStudentForTopics(null);
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Topics for {selectedStudentForTopics?.name || 'Student'}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedStudentForTopics?.courseName
+                ? `Course: ${selectedStudentForTopics.courseName}`
+                : 'No course assigned yet.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!selectedStudentForTopics?.courseId ? (
+            <div className="text-sm text-gray-600">
+              No course is linked to this student. Ask admin to assign a course.
+            </div>
+          ) : topicStatusesLoading ? (
+            <div className="text-sm text-gray-600">Loading topics…</div>
+          ) : (
+            (() => {
+              const allTopics =
+                topicsByCourseId[selectedStudentForTopics.courseId || ''] || [];
+              const completed = allTopics.filter(
+                (t) => (topicStatuses[t.id] || '') === 'completed'
+              );
+              const inProgress = allTopics.filter(
+                (t) => (topicStatuses[t.id] || '') === 'in_progress'
+              );
+              const pending = allTopics.filter(
+                (t) => !topicStatuses[t.id] || topicStatuses[t.id] === 'pending'
+              );
+
+              if (allTopics.length === 0) {
+                return (
+                  <div className="text-sm text-gray-600">
+                    No curriculum topics found for this course.
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-6">
+                  <div className="text-xs text-gray-500">
+                    Completed: {completed.length} · In progress: {inProgress.length} · Pending: {pending.length}
+                  </div>
+                  <TopicsStatusList
+                    title="Completed"
+                    topics={completed}
+                    statusLabel="Completed"
+                    badgeClass="bg-green-100 text-green-800 border border-green-200"
+                  />
+                  <TopicsStatusList
+                    title="In Progress"
+                    topics={inProgress}
+                    statusLabel="In progress"
+                    badgeClass="bg-amber-100 text-amber-800 border border-amber-200"
+                  />
+                  <TopicsStatusList
+                    title="Pending"
+                    topics={pending}
+                    statusLabel="Pending"
+                    badgeClass="bg-gray-100 text-gray-700 border border-gray-200"
+                  />
+                </div>
+              );
+            })()
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
-function StudentRow({ student }: { student: StudentForRow }) {
+function StudentRow({
+  student,
+  progressSummary,
+  progressLoading,
+  onOpenTopics,
+}: {
+  student: StudentForRow;
+  progressSummary?: StudentProgressSummary;
+  progressLoading?: boolean;
+  onOpenTopics: (payload: { kidId: string; name: string; courseId?: string; courseName?: string }) => void;
+}) {
   const mastery =
     typeof student.mastery === 'number' ? `${student.mastery}%` : '—';
+  const completed = progressSummary?.completedTopics ?? 0;
+  const total = progressSummary?.totalTopics ?? 0;
+  const kidId = String((student as any).uid || (student as any).id || '');
+  const name = student.studentName || student.fullName || 'Unnamed student';
 
   return (
-    <div className="border rounded-lg p-4 flex justify-between items-start">
+    <button
+      type="button"
+      className="w-full text-left border rounded-lg p-4 flex justify-between items-start hover:bg-muted/40 transition-colors"
+      onClick={() =>
+        onOpenTopics({
+          kidId,
+          name,
+          courseId: progressSummary?.courseId,
+          courseName: progressSummary?.courseName || student.courseName,
+        })
+      }
+    >
       <div>
         <h3 className="font-bold">
-          {student.studentName || 'Unnamed student'}
+          {name}
         </h3>
         <p className="text-sm text-gray-600">
           Parent: {student.parentName || '—'}
         </p>
         <p className="text-sm">
-          Course: {student.courseName || '—'}
+          Course: {progressSummary?.courseName || student.courseName || '—'}
         </p>
+        <p className="text-sm text-gray-600 mt-1">
+          {progressLoading ? 'Loading progress…' : `Completed topics: ${completed} / ${total || '—'}`}
+        </p>
+        {!progressLoading && (
+          <p className="text-xs text-gray-500 mt-1">
+            Last updated: {progressSummary?.lastTopic || '—'}
+            {progressSummary?.lastRemark && progressSummary?.lastRemark !== '—'
+              ? ` • ${progressSummary.lastRemark}`
+              : ''}
+          </p>
+        )}
       </div>
       <div className="text-right">
         <p className="font-bold text-lg">{mastery} Mastery</p>
         <p className="text-sm text-gray-600">
           Status: {student.status || '—'}
         </p>
+      </div>
+    </button>
+  );
+}
+
+function TopicsStatusList({
+  title,
+  topics,
+  statusLabel,
+  badgeClass,
+}: {
+  title: string;
+  topics: CurriculumTopic[];
+  statusLabel: string;
+  badgeClass: string;
+}) {
+  if (topics.length === 0) return null;
+  return (
+    <div className="space-y-2">
+      <div className="text-sm font-semibold text-gray-900">{title}</div>
+      <div className="space-y-2">
+        {topics.map((topic) => (
+          <div key={topic.id} className="flex items-center justify-between gap-2 border rounded-md px-3 py-2">
+            <div className="text-sm text-gray-800">
+              {topic.lesson ? `${topic.lesson} — ${topic.label || topic.id}` : (topic.label || topic.id)}
+            </div>
+            <Badge className={badgeClass}>{statusLabel}</Badge>
+          </div>
+        ))}
       </div>
     </div>
   );

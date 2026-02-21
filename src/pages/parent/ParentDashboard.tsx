@@ -317,10 +317,8 @@ export default function ParentDashboard() {
     },
   });
 
-  const phonicsProgressByCourse = useMemo(() => {
-    const records = (phonicsProgressQuery.data ?? []) as any[];
+  const phonicsEnrollments = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
-
     const isPhonicsEnrollment = (enrollment: Enrollment): boolean => {
       const courseId = String(enrollment.courseId || "");
       if (PHONICS_COURSE_IDS.includes(courseId)) return true;
@@ -331,8 +329,11 @@ export default function ParentDashboard() {
         .trim();
       return area === "phonics";
     };
+    return enrollments.filter(isPhonicsEnrollment);
+  }, [enrollmentsQuery.data]);
 
-    const phonicsEnrollments = enrollments.filter(isPhonicsEnrollment);
+  const phonicsProgressByCourse = useMemo(() => {
+    const records = (phonicsProgressQuery.data ?? []) as any[];
     const courseIdsToShow = PHONICS_COURSE_IDS.filter((id) =>
       phonicsEnrollments.some((enr) => String(enr.courseId || "") === id)
     );
@@ -373,12 +374,22 @@ export default function ParentDashboard() {
         lastRemark: last?.teacherRemark || "—",
       };
     });
-  }, [phonicsProgressQuery.data, enrollmentsQuery.data]);
+  }, [phonicsProgressQuery.data, phonicsEnrollments]);
 
   const phonicsLoading =
     phonicsProgressQuery.isLoading || enrollmentsQuery.isLoading;
   const phonicsError =
     phonicsProgressQuery.isError || enrollmentsQuery.isError;
+  const phonicsErrorMessage = useMemo(() => {
+    const err =
+      (phonicsProgressQuery.error as any) ||
+      (enrollmentsQuery.error as any);
+    const msg = String(err?.message ?? '').toLowerCase();
+    if (msg.includes('permission') || msg.includes('insufficient')) {
+      return 'Access issue — please contact admin.';
+    }
+    return 'Unable to load progress right now.';
+  }, [phonicsProgressQuery.error, enrollmentsQuery.error]);
 
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
@@ -654,8 +665,18 @@ export default function ParentDashboard() {
     let dueNow = 0;
     let billedThisMonth = 0;
     let chargesThisMonth = 0;
+    let paidThisMonth = 0;
+
+    const isCompletedCharge = (charge: BillingCharge) => {
+      const source = String((charge as any).source ?? '').toLowerCase().trim();
+      const sessionStatus = String((charge as any).sessionStatus ?? '').toLowerCase().trim();
+      if (source) return source === 'session_present_completed';
+      if (sessionStatus) return sessionStatus === 'completed';
+      return false;
+    };
 
     charges.forEach((charge) => {
+      if (!isCompletedCharge(charge)) return;
       const rawAmount = Number(charge.amount ?? 0);
       const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
       const status = String(charge.status ?? "").toLowerCase().trim();
@@ -679,14 +700,20 @@ export default function ParentDashboard() {
       if (createdAt && createdAt >= monthStart && createdAt < nextMonthStart) {
         billedThisMonth += amount;
         chargesThisMonth += 1;
+        if (isPaid) paidThisMonth += amount;
       }
     });
+
+    const avgRate =
+      chargesThisMonth > 0 ? Math.round(billedThisMonth / chargesThisMonth) : 0;
 
     return {
       dueNow,
       billedThisMonth,
       chargesThisMonth,
-      totalCharges: charges.length,
+      totalCharges: charges.filter(isCompletedCharge).length,
+      avgRate,
+      paidThisMonth,
     };
   }, [billingChargesQuery.data]);
 
@@ -1016,7 +1043,7 @@ export default function ParentDashboard() {
 
               {phonicsError && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Unable to load progress right now.
+                  {phonicsErrorMessage}
                 </p>
               )}
 
@@ -1024,7 +1051,9 @@ export default function ParentDashboard() {
                 !phonicsError &&
                 phonicsProgressByCourse.length === 0 && (
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    No phonics enrollment yet.
+                    {phonicsEnrollments.length === 0
+                      ? "No phonics enrollment yet."
+                      : "No progress updates yet. Once the teacher marks topics as covered, you’ll see progress here."}
                   </p>
                 )}
 
@@ -2202,11 +2231,24 @@ export default function ParentDashboard() {
                 ) : (
                   <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                     <div>
+                      Completed this month: {billingSummary.chargesThisMonth}
+                    </div>
+                    {billingSummary.avgRate > 0 && (
+                      <div>
+                        Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
+                      </div>
+                    )}
+                    <div>
                       Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
                     </div>
                     {billingSummary.chargesThisMonth > 0 && (
                       <div>
                         Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                      </div>
+                    )}
+                    {billingSummary.paidThisMonth > 0 && (
+                      <div>
+                        Paid this month: ₹{billingSummary.paidThisMonth.toLocaleString("en-IN")}
                       </div>
                     )}
                     <div className="text-xs text-gray-500 dark:text-gray-500">
@@ -2360,11 +2402,24 @@ export default function ParentDashboard() {
                         ) : (
                           <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
                             <div>
+                              Completed this month: {billingSummary.chargesThisMonth}
+                            </div>
+                            {billingSummary.avgRate > 0 && (
+                              <div>
+                                Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
+                              </div>
+                            )}
+                            <div>
                               Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
                             </div>
                             {billingSummary.chargesThisMonth > 0 && (
                               <div>
                                 Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                              </div>
+                            )}
+                            {billingSummary.paidThisMonth > 0 && (
+                              <div>
+                                Paid this month: ₹{billingSummary.paidThisMonth.toLocaleString("en-IN")}
                               </div>
                             )}
                             <div className="text-xs text-gray-500 dark:text-gray-500">

@@ -9,6 +9,7 @@ import { TeacherSession } from '../../../../types/Teacher';
 import { format, parseISO } from 'date-fns';
 import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
 import { FileText } from 'lucide-react';
+import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
 interface UpcomingSessionsViewProps {
   teacherId?: string;
@@ -16,6 +17,7 @@ interface UpcomingSessionsViewProps {
 
 export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId }) => {
   const { sessions, isLoading, error } = useUpcomingSessions(teacherId);
+  const { students } = useTeacherFilteredStudents();
   const [searchTerm, setSearchTerm] = useState('');
   const [courseFilter, setCourseFilter] = useState('');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
@@ -50,6 +52,16 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
     const courses = new Set(sessions.map(s => s.courseName).filter(Boolean));
     return Array.from(courses) as string[];
   }, [sessions]);
+
+  const studentNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((s: any) => {
+      const id = s.uid || s.id;
+      const name = s.fullName || s.studentName || s.displayName || s.name || '';
+      if (id && name) map.set(String(id), String(name));
+    });
+    return map;
+  }, [students]);
 
   if (isLoading) {
     return <Card className="p-6"><p>Loading upcoming sessions...</p></Card>;
@@ -108,7 +120,12 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                           <div>
                             <p className="font-medium">{session.startTime}</p>
                             <p className="text-sm text-muted-foreground">{session.courseName}</p>
-                            <p className="text-sm">{session.kidIds.length} students</p>
+                            <p className="text-sm">
+                              {session.kidIds
+                                .map((id) => studentNameById.get(id))
+                                .filter(Boolean)
+                                .join(', ') || `${session.kidIds.length} students`}
+                            </p>
                           </div>
                           <Badge variant="secondary">Scheduled</Badge>
                         </div>
