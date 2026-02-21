@@ -414,6 +414,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /config/curriculumTopics {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
     match /config/insights {
       allow read: if isAdmin();
       allow write: if false; // only callable (admin SDK) should write
