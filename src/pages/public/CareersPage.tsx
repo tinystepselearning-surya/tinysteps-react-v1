@@ -139,7 +139,7 @@ export default function CareersPage() {
   }, []);
 
   return (
-    <div className="page-gradient min-h-screen">
+    <div className="page-gradient min-h-screen pb-24 md:pb-0">
       <section className="px-6 pt-24 pb-12">
         <div className="mx-auto max-w-5xl text-center">
           <div className="gradient-chip mx-auto w-max">We’re hiring</div>
@@ -272,6 +272,22 @@ export default function CareersPage() {
           </div>
         </div>
       </section>
+
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-gray-900">Apply on WhatsApp</div>
+          <Button
+            asChild
+            size="sm"
+            variant="default"
+            className="bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_12px_25px_rgba(15,23,42,0.25)] hover:shadow-[0_16px_30px_rgba(37,99,235,0.35)]"
+          >
+            <a href={buildWhatsAppLink()} target="_blank" rel="noopener noreferrer">
+              WhatsApp
+            </a>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
