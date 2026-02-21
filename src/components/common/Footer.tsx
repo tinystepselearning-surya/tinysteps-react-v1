@@ -21,6 +21,7 @@ const resourceLinks = [
   { label: 'Pricing', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
   { label: 'FAQ', href: '/faq' },
+  { label: 'Careers', href: '/careers' },
   { label: 'Contact', href: '/contact' }
 ];
 

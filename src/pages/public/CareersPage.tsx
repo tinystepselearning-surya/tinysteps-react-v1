@@ -3,8 +3,14 @@ import { applySeo } from '../../lib/seo';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 
-const WHATSAPP_LINK =
-  'https://wa.me/919618398383?text=Hi%20Tiny%20Steps%20Team!%20I%20want%20to%20apply%20for%20%5BTeacher%20%2F%20Learning%20Partner%20%2F%20Curriculum%20Admin%5D.%20My%20name%3A%20_____%20%7C%20City%3A%20_____%20%7C%20Experience%3A%20_____%20%7C%20Availability%3A%20_____%20%7C%20Resume%20link%3A%20_____';
+const BASE_MESSAGE =
+  'Hi Tiny Steps Team! I want to apply for [Teacher / Learning Partner / Curriculum Admin].';
+
+const buildWhatsAppLink = (role?: string) => {
+  const roleLine = role ? `Role: ${role}. ` : '';
+  const message = `${BASE_MESSAGE} ${roleLine}My name: _____ | City: _____ | Experience: _____ | Availability: _____ | Resume link: _____`;
+  return `https://wa.me/919618398383?text=${encodeURIComponent(message)}`;
+};
 
 const ROLES = [
   {
@@ -25,6 +31,7 @@ const ROLES = [
       'Phonics or IB curriculum exposure.',
       'TEFL / TESOL certification.',
     ],
+    ctaRole: 'Teacher',
   },
   {
     title: 'Learning Partner (Child Support During Class)',
@@ -44,6 +51,7 @@ const ROLES = [
       'Early childhood or special needs experience.',
       'Prior classroom or tutoring exposure.',
     ],
+    ctaRole: 'Learning Partner',
   },
   {
     title: 'Curriculum Administrator (Content + Quality + Coordination)',
@@ -63,6 +71,7 @@ const ROLES = [
       'K–12 or IB curriculum familiarity.',
       'Phonics or literacy program experience.',
     ],
+    ctaRole: 'Curriculum Admin',
   },
 ];
 
@@ -141,8 +150,13 @@ export default function CareersPage() {
             Remote • Part-time • Meaningful work with children (ages 3–12)
           </p>
           <div className="mt-6 flex justify-center">
-            <Button asChild variant="cta" size="lg">
-              <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer">
+            <Button
+              asChild
+              variant="default"
+              size="lg"
+              className="bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
+            >
+              <a href={buildWhatsAppLink()} target="_blank" rel="noopener noreferrer">
                 Message on WhatsApp to Apply
               </a>
             </Button>
@@ -190,8 +204,16 @@ export default function CareersPage() {
               </div>
 
               <div className="mt-6">
-                <Button asChild variant="cta" className="w-full">
-                  <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer">
+                <Button
+                  asChild
+                  variant="default"
+                  className="w-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
+                >
+                  <a
+                    href={buildWhatsAppLink(role.ctaRole)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     Apply on WhatsApp
                   </a>
                 </Button>
@@ -237,8 +259,13 @@ export default function CareersPage() {
             Message us with your details and preferred role.
           </p>
           <div className="mt-6 flex justify-center">
-            <Button asChild variant="cta" size="lg">
-              <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer">
+            <Button
+              asChild
+              variant="default"
+              size="lg"
+              className="bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
+            >
+              <a href={buildWhatsAppLink()} target="_blank" rel="noopener noreferrer">
                 Apply on WhatsApp
               </a>
             </Button>

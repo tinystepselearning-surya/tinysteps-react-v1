@@ -42,6 +42,7 @@ export default function Header() {
     { label: "Teachers", href: "/teacher" },
     { label: "Learning Partner", href: "/learning-partner" },
     { label: "Kids", href: "/parent/kids" },
+    { label: "Careers", href: "/careers" },
     { label: "FAQ", href: "/faq" },
     { label: "Contact", href: "/contact" },
   ];
