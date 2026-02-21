@@ -2,15 +2,19 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   onSnapshot,
   collection,
+  collectionGroup,
   query,
   orderBy,
   getDocs,
+  addDoc,
+  deleteDoc,
   doc,
   getDoc,
   setDoc,
   updateDoc,
   serverTimestamp,
   Timestamp,
+  where,
 } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../lib/firebaseConfig';
@@ -31,6 +35,112 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 
 const PAGE_SIZE = 25;
 
+const COURSE_CATALOG_SYNC = [
+  { id: 'phonics-foundations', title: 'Phonics Foundations', area: 'phonics', level: 'foundations' },
+  { id: 'early-phonics', title: 'Early Phonics', area: 'phonics', level: 'early' },
+  { id: 'advanced-phonics', title: 'Advanced Phonics', area: 'phonics', level: 'advanced' },
+  { id: 'basic-grammar', title: 'Basic Grammar', area: 'grammar', level: 'basic' },
+  { id: 'intermediate-grammar', title: 'Intermediate Grammar', area: 'grammar', level: 'intermediate' },
+  { id: 'advanced-grammar', title: 'Advanced Grammar', area: 'grammar', level: 'advanced' },
+  { id: 'basic-public-speaking', title: 'Public Speaking (Basic)', area: 'speaking', level: 'basic' },
+  { id: 'intermediate-public-speaking', title: 'Public Speaking (Intermediate)', area: 'speaking', level: 'intermediate' },
+  { id: 'advanced-public-speaking', title: 'Public Speaking (Advanced)', area: 'speaking', level: 'advanced' },
+];
+
+const PHONICS_CURRICULUM_TOPICS = [
+  { id: 'phonics-foundations__lesson-01', courseId: 'phonics-foundations', lesson: 'Lesson-1', label: 's' },
+  { id: 'phonics-foundations__lesson-02', courseId: 'phonics-foundations', lesson: 'Lesson-2', label: 'a' },
+  { id: 'phonics-foundations__lesson-03', courseId: 'phonics-foundations', lesson: 'Lesson-3', label: 't' },
+  { id: 'phonics-foundations__lesson-04', courseId: 'phonics-foundations', lesson: 'Lesson-4', label: 'i' },
+  { id: 'phonics-foundations__lesson-05', courseId: 'phonics-foundations', lesson: 'Lesson-5', label: 'p' },
+  { id: 'phonics-foundations__lesson-06', courseId: 'phonics-foundations', lesson: 'Lesson-6', label: 'n' },
+  { id: 'phonics-foundations__lesson-07', courseId: 'phonics-foundations', lesson: 'Lesson-7', label: 'c' },
+  { id: 'phonics-foundations__lesson-08', courseId: 'phonics-foundations', lesson: 'Lesson-8', label: 'k' },
+  { id: 'phonics-foundations__lesson-09', courseId: 'phonics-foundations', lesson: 'Lesson-9', label: 'e' },
+  { id: 'phonics-foundations__lesson-10', courseId: 'phonics-foundations', lesson: 'Lesson-10', label: 'h' },
+  { id: 'phonics-foundations__lesson-11', courseId: 'phonics-foundations', lesson: 'Lesson-11', label: 'r' },
+  { id: 'phonics-foundations__lesson-12', courseId: 'phonics-foundations', lesson: 'Lesson-12', label: 'm' },
+  { id: 'phonics-foundations__lesson-13', courseId: 'phonics-foundations', lesson: 'Lesson-13', label: 'd' },
+  { id: 'phonics-foundations__lesson-14', courseId: 'phonics-foundations', lesson: 'Lesson-14', label: 'g' },
+  { id: 'phonics-foundations__lesson-15', courseId: 'phonics-foundations', lesson: 'Lesson-15', label: 'o' },
+  { id: 'phonics-foundations__lesson-16', courseId: 'phonics-foundations', lesson: 'Lesson-16', label: 'u' },
+  { id: 'phonics-foundations__lesson-17', courseId: 'phonics-foundations', lesson: 'Lesson-17', label: 'l' },
+  { id: 'phonics-foundations__lesson-18', courseId: 'phonics-foundations', lesson: 'Lesson-18', label: 'f' },
+  { id: 'phonics-foundations__lesson-19', courseId: 'phonics-foundations', lesson: 'Lesson-19', label: 'b' },
+  { id: 'phonics-foundations__lesson-20', courseId: 'phonics-foundations', lesson: 'Lesson-20', label: 'j' },
+  { id: 'phonics-foundations__lesson-21', courseId: 'phonics-foundations', lesson: 'Lesson-21', label: 'z' },
+  { id: 'phonics-foundations__lesson-22', courseId: 'phonics-foundations', lesson: 'Lesson-22', label: 'w' },
+  { id: 'phonics-foundations__lesson-23', courseId: 'phonics-foundations', lesson: 'Lesson-23', label: 'v' },
+  { id: 'phonics-foundations__lesson-24', courseId: 'phonics-foundations', lesson: 'Lesson-24', label: 'y' },
+  { id: 'phonics-foundations__lesson-25', courseId: 'phonics-foundations', lesson: 'Lesson-25', label: 'x' },
+  { id: 'phonics-foundations__lesson-26', courseId: 'phonics-foundations', lesson: 'Lesson-26', label: 'q' },
+  { id: 'phonics-foundations__lesson-27', courseId: 'phonics-foundations', lesson: 'Lesson-27', label: 'a e i o u' },
+  { id: 'phonics-foundations__lesson-28', courseId: 'phonics-foundations', lesson: 'Lesson-28', label: 'all letter sounds' },
+  { id: 'phonics-foundations__lesson-29', courseId: 'phonics-foundations', lesson: 'Lesson-29', label: 'revision' },
+  { id: 'phonics-foundations__lesson-30', courseId: 'phonics-foundations', lesson: 'Lesson-30', label: 'revision' },
+  { id: 'early-phonics__lesson-01', courseId: 'early-phonics', lesson: 'Lesson-1', label: 's a t' },
+  { id: 'early-phonics__lesson-02', courseId: 'early-phonics', lesson: 'Lesson-2', label: 'i p n' },
+  { id: 'early-phonics__lesson-03', courseId: 'early-phonics', lesson: 'Lesson-3', label: 'c and k' },
+  { id: 'early-phonics__lesson-04', courseId: 'early-phonics', lesson: 'Lesson-4', label: 'e  h  r' },
+  { id: 'early-phonics__lesson-05', courseId: 'early-phonics', lesson: 'Lesson-5', label: 'm d g' },
+  { id: 'early-phonics__lesson-06', courseId: 'early-phonics', lesson: 'Lesson-6', label: 'o u l' },
+  { id: 'early-phonics__lesson-07', courseId: 'early-phonics', lesson: 'Lesson-7', label: 'f b j' },
+  { id: 'early-phonics__lesson-08', courseId: 'early-phonics', lesson: 'Lesson-8', label: 'z w v' },
+  { id: 'early-phonics__lesson-09', courseId: 'early-phonics', lesson: 'Lesson-9', label: 'y x q' },
+  { id: 'early-phonics__lesson-10', courseId: 'early-phonics', lesson: 'Lesson-10', label: 'short vowels' },
+  { id: 'early-phonics__lesson-11', courseId: 'early-phonics', lesson: 'Lesson-11', label: 'sh' },
+  { id: 'early-phonics__lesson-12', courseId: 'early-phonics', lesson: 'Lesson-12', label: 'ch, tch' },
+  { id: 'early-phonics__lesson-13', courseId: 'early-phonics', lesson: 'Lesson-13', label: 'th, TH' },
+  { id: 'early-phonics__lesson-14', courseId: 'early-phonics', lesson: 'Lesson-14', label: 'ck' },
+  { id: 'early-phonics__lesson-15', courseId: 'early-phonics', lesson: 'Lesson-15', label: 'ng, mb' },
+  { id: 'early-phonics__lesson-16', courseId: 'early-phonics', lesson: 'Lesson-16', label: 'kn' },
+  { id: 'early-phonics__lesson-17', courseId: 'early-phonics', lesson: 'Lesson-17', label: 'wr' },
+  { id: 'early-phonics__lesson-18', courseId: 'early-phonics', lesson: 'Lesson-18', label: 'wh' },
+  { id: 'early-phonics__lesson-19', courseId: 'early-phonics', lesson: 'Lesson-19', label: 'ph, gh' },
+  { id: 'early-phonics__lesson-20', courseId: 'early-phonics', lesson: 'Lesson-20', label: 'revision of digraphs' },
+  { id: 'early-phonics__lesson-21', courseId: 'early-phonics', lesson: 'Lesson-21', label: 'Floss rule' },
+  { id: 'early-phonics__lesson-22', courseId: 'early-phonics', lesson: 'Lesson-22', label: 'ai' },
+  { id: 'early-phonics__lesson-23', courseId: 'early-phonics', lesson: 'Lesson-23', label: 'ee' },
+  { id: 'early-phonics__lesson-24', courseId: 'early-phonics', lesson: 'Lesson-24', label: 'ea' },
+  { id: 'early-phonics__lesson-25', courseId: 'early-phonics', lesson: 'Lesson-25', label: 'ie' },
+  { id: 'early-phonics__lesson-26', courseId: 'early-phonics', lesson: 'Lesson-26', label: 'oa' },
+  { id: 'early-phonics__lesson-27', courseId: 'early-phonics', lesson: 'Lesson-27', label: 'oo' },
+  { id: 'early-phonics__lesson-28', courseId: 'early-phonics', lesson: 'Lesson-28', label: 'oe' },
+  { id: 'early-phonics__lesson-29', courseId: 'early-phonics', lesson: 'Lesson-29', label: 'oo-ui' },
+  { id: 'early-phonics__lesson-30', courseId: 'early-phonics', lesson: 'Lesson-30', label: 'oo-ue' },
+  { id: 'early-phonics__lesson-31', courseId: 'early-phonics', lesson: 'Lesson-31', label: 'igh' },
+  { id: 'early-phonics__lesson-32', courseId: 'early-phonics', lesson: 'Lesson-32', label: 'a_e' },
+  { id: 'early-phonics__lesson-33', courseId: 'early-phonics', lesson: 'Lesson-33', label: 'e_e' },
+  { id: 'early-phonics__lesson-34', courseId: 'early-phonics', lesson: 'Lesson-34', label: 'i_e' },
+  { id: 'early-phonics__lesson-35', courseId: 'early-phonics', lesson: 'Lesson-35', label: 'o_e' },
+  { id: 'early-phonics__lesson-36', courseId: 'early-phonics', lesson: 'Lesson-36', label: 'u_e' },
+  { id: 'early-phonics__lesson-37', courseId: 'early-phonics', lesson: 'Lesson-37', label: 'Rabbit rule' },
+  { id: 'early-phonics__lesson-38', courseId: 'early-phonics', lesson: 'Lesson-38', label: 'monster le' },
+  { id: 'early-phonics__lesson-39', courseId: 'early-phonics', lesson: 'Lesson-39', label: 'soft c' },
+  { id: 'early-phonics__lesson-40', courseId: 'early-phonics', lesson: 'Lesson-40', label: 'hard g' },
+  { id: 'early-phonics__lesson-41', courseId: 'early-phonics', lesson: 'Lesson-41', label: 'Revision' },
+  { id: 'advanced-phonics__lesson-01', courseId: 'advanced-phonics', lesson: 'Lesson-1', label: 'ai, ay' },
+  { id: 'advanced-phonics__lesson-02', courseId: 'advanced-phonics', lesson: 'Lesson-2', label: 'oi, oy' },
+  { id: 'advanced-phonics__lesson-03', courseId: 'advanced-phonics', lesson: 'Lesson-3', label: 'ou, ow' },
+  { id: 'advanced-phonics__lesson-04', courseId: 'advanced-phonics', lesson: 'Lesson-4', label: 'au, aw' },
+  { id: 'advanced-phonics__lesson-05', courseId: 'advanced-phonics', lesson: 'Lesson-5', label: 'bossy ar' },
+  { id: 'advanced-phonics__lesson-06', courseId: 'advanced-phonics', lesson: 'Lesson-6', label: 'bossy or' },
+  { id: 'advanced-phonics__lesson-07', courseId: 'advanced-phonics', lesson: 'Lesson-7', label: 'ir, ur, er' },
+  { id: 'advanced-phonics__lesson-08', courseId: 'advanced-phonics', lesson: 'Lesson-8', label: '3  j sounds' },
+  { id: 'advanced-phonics__lesson-09', courseId: 'advanced-phonics', lesson: 'Lesson-9', label: 'shun sounds' },
+  { id: 'advanced-phonics__lesson-10', courseId: 'advanced-phonics', lesson: 'Lesson-10', label: 'silent letters' },
+  { id: 'advanced-phonics__lesson-11', courseId: 'advanced-phonics', lesson: 'Lesson-11', label: 'alternate a' },
+  { id: 'advanced-phonics__lesson-12', courseId: 'advanced-phonics', lesson: 'Lesson-12', label: 'alternate e' },
+  { id: 'advanced-phonics__lesson-13', courseId: 'advanced-phonics', lesson: 'Lesson-13', label: 'alternate i' },
+  { id: 'advanced-phonics__lesson-14', courseId: 'advanced-phonics', lesson: 'Lesson-14', label: 'alternate o' },
+  { id: 'advanced-phonics__lesson-15', courseId: 'advanced-phonics', lesson: 'Lesson-15', label: 'alternate u' },
+  { id: 'advanced-phonics__lesson-16', courseId: 'advanced-phonics', lesson: 'Lesson-16', label: 'c at the end, ct sound' },
+  { id: 'advanced-phonics__lesson-17', courseId: 'advanced-phonics', lesson: 'Lesson-17', label: 'revision' },
+  { id: 'advanced-phonics__lesson-18', courseId: 'advanced-phonics', lesson: 'Lesson-18', label: 'revision' },
+  { id: 'advanced-phonics__lesson-19', courseId: 'advanced-phonics', lesson: 'Lesson-19', label: 'revision' },
+  { id: 'advanced-phonics__lesson-20', courseId: 'advanced-phonics', lesson: 'Lesson-20', label: 'revision' },
+] as const;
+
 interface StudentListProps {
   onEdit: (student: Student) => void;
   onDelete: (studentId: string) => void;
@@ -44,6 +154,8 @@ type EnrollmentLite = {
   course?: { title?: string };
   teacherId?: string;
   teacher?: { name?: string; email?: string; uid?: string; id?: string };
+  parentId?: string;
+  parentIds?: string[];
   feePerClass?: number;
   currency?: string;
   joinUrl?: string;
@@ -54,6 +166,18 @@ type EnrollmentLite = {
     durationMins?: number;
   };
   startDate?: any; // Timestamp
+};
+
+type SessionRequestRow = {
+  id: string;
+  path: string;
+  teacherId: string;
+  kidId: string;
+  startAt: Date;
+  endAt: Date;
+  durationMins: number;
+  note?: string;
+  status?: string;
 };
 
 function computeAgeYearsFromDob(dob?: string): number | null {
@@ -118,6 +242,23 @@ function formatYMDCompact(d: Date): string {
   return `${y}${m}${day}`;
 }
 
+
+function formatTimeHHmm(d: Date): string {
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
+function formatDateTime(d: Date): string {
+  return d.toLocaleString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 function safeNumber(v: any, fallback = 0): number {
   const n = typeof v === 'string' ? Number(v) : v;
   return typeof n === 'number' && Number.isFinite(n) ? n : fallback;
@@ -158,7 +299,17 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [meetingLink, setMeetingLink] = useState<string>(''); // optional (Zoom/Meet)
   const [savingSchedule, setSavingSchedule] = useState<boolean>(false);
 
+  const [sessionRequests, setSessionRequests] = useState<SessionRequestRow[]>([]);
+  const [requestActionId, setRequestActionId] = useState<string | null>(null);
+  const [syncStatus, setSyncStatus] = useState({
+    running: false,
+  });
+  const [syncCurriculumStatus, setSyncCurriculumStatus] = useState({
+    running: false,
+  });
+
   const { user } = useAuthStore();
+  const isAdmin = user?.role === 'admin';
 
   const handleDeleteEnrollment = async (enrollmentId: string) => {
     if (!window.confirm('Delete this enrollment?')) return;
@@ -202,6 +353,51 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      setSessionRequests([]);
+      return;
+    }
+
+    const q = query(
+      collectionGroup(db, 'sessionRequests'),
+      orderBy('startAt', 'asc'),
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const rows = snapshot.docs
+          .map((d) => {
+            const raw = d.data() as any;
+            const startAt = raw?.startAt?.toDate ? raw.startAt.toDate() : raw?.startAt ? new Date(raw.startAt) : null;
+            const endAt = raw?.endAt?.toDate ? raw.endAt.toDate() : raw?.endAt ? new Date(raw.endAt) : null;
+            if (!startAt) return null;
+            const durationMins = safeNumber(raw?.durationMins, endAt ? Math.round((endAt.getTime() - startAt.getTime()) / 60000) : 35);
+            const finalEndAt = endAt || new Date(startAt.getTime() + durationMins * 60 * 1000);
+
+            return {
+              id: d.id,
+              path: d.ref.path,
+              teacherId: raw?.teacherId || '',
+              kidId: raw?.kidId || '',
+              startAt,
+              endAt: finalEndAt,
+              durationMins,
+              note: raw?.note || '',
+              status: raw?.status || 'requested',
+            } as SessionRequestRow;
+          })
+          .filter(Boolean) as SessionRequestRow[];
+
+        setSessionRequests(rows);
+      },
+      (err) => console.error('sessionRequests onSnapshot error', err),
+    );
+
+    return () => unsub();
+  }, [user?.role]);
+
   const filtered = useMemo(() => {
     let list = students.slice();
 
@@ -241,8 +437,34 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return map;
   }, [enrollmentsQuery.data]);
 
-  const canAdminAct =
-    user?.role === 'admin' || (user?.role === 'learningPartner');
+  const studentById = useMemo(() => {
+    const map = new Map<string, Student>();
+    students.forEach((s) => map.set(s.id, s));
+    return map;
+  }, [students]);
+
+  async function findEnrollmentForRequest(kidId: string, teacherId?: string): Promise<EnrollmentLite | null> {
+    const enrollments: EnrollmentLite[] = [];
+    const base = collection(db, 'enrollments');
+
+    const q1 = query(base, where('kidId', '==', kidId));
+    const q2 = query(base, where('kidIds', 'array-contains', kidId));
+
+    for (const q of [q1, q2]) {
+      const snap = await getDocs(q);
+      snap.docs.forEach((d) => {
+        enrollments.push({ id: d.id, ...(d.data() as any) } as EnrollmentLite);
+      });
+    }
+
+    if (enrollments.length === 0) return null;
+
+    const byTeacher = teacherId
+      ? enrollments.find((e) => e.teacherId === teacherId)
+      : null;
+
+    return byTeacher || enrollments[0];
+  }
 
   function openScheduleModal(student: Student) {
     const enrolls = enrollmentsByStudent[student.id] || [];
@@ -366,6 +588,198 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     }
   }
 
+  async function handleApproveRequest(req: SessionRequestRow) {
+    if (user?.role !== 'admin') return;
+    if (!req.kidId || !req.teacherId) {
+      toast({ title: 'Missing data', description: 'Request is missing kid or teacher.', variant: 'destructive' });
+      return;
+    }
+
+    setRequestActionId(req.id);
+    try {
+      const enrollment = await findEnrollmentForRequest(req.kidId, req.teacherId);
+      const student = studentById.get(req.kidId);
+
+      const parentIds = (student?.parentIds || enrollment?.parentIds || []).filter(Boolean);
+      const parentId = student?.primaryParentId || enrollment?.parentId || parentIds[0] || null;
+
+      const feeAmount = safeNumber(enrollment?.feePerClass, 0);
+      const currency = enrollment?.currency || 'INR';
+      const courseId = enrollment?.courseId || null;
+      const joinUrl = enrollment?.joinUrl || null;
+
+      const startAt = req.startAt;
+      const endAt = req.endAt;
+      const dateStr = toISODate(startAt);
+      const startTime = formatTimeHHmm(startAt);
+      const endTime = formatTimeHHmm(endAt);
+
+      await addDoc(collection(db, 'sessions'), {
+        enrollmentId: enrollment?.id || null,
+        kidId: req.kidId,
+        kidIds: [req.kidId],
+        parentId,
+        parentIds,
+        teacherId: req.teacherId,
+        courseId,
+        startAt: Timestamp.fromDate(startAt),
+        endAt: Timestamp.fromDate(endAt),
+        date: dateStr,
+        startTime,
+        endTime,
+        status: 'scheduled',
+        attendance: null,
+        feeAmount,
+        currency,
+        joinUrl,
+        notes: req.note || '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: user?.uid || 'admin',
+        updatedBy: user?.uid || 'admin',
+        source: 'admin_approved_request',
+      });
+
+      await deleteDoc(doc(db, req.path));
+      toast({ title: 'Session approved', description: 'Session created and request removed.' });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: 'Approve failed',
+        description: err?.message || 'Unable to approve request.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRequestActionId(null);
+    }
+  }
+
+  const handleSyncCourseCatalog = async () => {
+    if (!isAdmin || syncStatus.running) return;
+
+    const confirmed = window.confirm('Sync the course catalog with the standard 9 courses?');
+    if (!confirmed) return;
+
+    setSyncStatus({ running: true });
+    try {
+      for (const course of COURSE_CATALOG_SYNC) {
+        const ref = doc(db, 'courses', course.id);
+        const snap = await getDoc(ref);
+        const existing = snap.exists() ? (snap.data() as any) : {};
+
+        const payload: Record<string, unknown> = {
+          title: course.title,
+          name: course.title,
+          area: course.area,
+          level: course.level,
+          status: 'active',
+          active: true,
+          durationMinutes: typeof existing?.durationMinutes === 'number'
+            ? existing.durationMinutes
+            : 35,
+          updatedAt: serverTimestamp(),
+          updatedBy: user?.uid ?? null,
+        };
+
+        if (!snap.exists() || !existing?.createdAt) {
+          payload.createdAt = serverTimestamp();
+        }
+        if (!snap.exists() || !existing?.createdBy) {
+          payload.createdBy = user?.uid ?? null;
+        }
+
+        await setDoc(ref, payload, { merge: true });
+      }
+
+      toast({
+        title: 'Course catalog synced',
+        description: 'Standard courses are now active in /courses.',
+      });
+    } catch (err: any) {
+      console.error('Sync course catalog failed', err);
+      toast({
+        title: 'Sync failed',
+        description: err?.message || 'Unable to sync courses.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncStatus({ running: false });
+    }
+  };
+
+  const handleSyncCurriculum = async () => {
+    if (!isAdmin || syncCurriculumStatus.running) return;
+
+    const confirmed = window.confirm('Sync phonics curriculum topics to Firestore?');
+    if (!confirmed) return;
+
+    setSyncCurriculumStatus({ running: true });
+    try {
+      const curriculumRef = doc(db, 'config', 'curriculumTopics');
+      const snap = await getDoc(curriculumRef);
+      const existing = snap.exists() ? (snap.data() as any) : {};
+      const existingTopics = Array.isArray(existing?.topics) ? existing.topics : [];
+
+      if (existingTopics.length > 0) {
+        toast({
+          title: 'Curriculum already synced',
+          description: 'Curriculum topics already exist.',
+        });
+        return;
+      }
+
+      const payload: Record<string, unknown> = {
+        topics: PHONICS_CURRICULUM_TOPICS,
+        updatedAt: serverTimestamp(),
+        updatedBy: user?.uid ?? null,
+      };
+
+      if (!snap.exists() || !existing?.createdAt) {
+        payload.createdAt = serverTimestamp();
+      }
+      if (!snap.exists() || !existing?.createdBy) {
+        payload.createdBy = user?.uid ?? null;
+      }
+
+      await setDoc(curriculumRef, payload, { merge: true });
+
+      toast({
+        title: 'Curriculum synced',
+        description: 'Phonics curriculum topics are now available.',
+      });
+    } catch (err: any) {
+      console.error('Sync curriculum failed', err);
+      toast({
+        title: 'Sync failed',
+        description: err?.message || 'Unable to sync curriculum.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSyncCurriculumStatus({ running: false });
+    }
+  };
+
+  async function handleRejectRequest(req: SessionRequestRow) {
+    if (user?.role !== 'admin') return;
+    const confirmed = window.confirm('Reject this session request?');
+    if (!confirmed) return;
+
+    setRequestActionId(req.id);
+    try {
+      await deleteDoc(doc(db, req.path));
+      toast({ title: 'Request rejected', description: 'Request removed.' });
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        title: 'Reject failed',
+        description: err?.message || 'Unable to reject request.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRequestActionId(null);
+    }
+  }
+
   function toggleWeekday(day: number) {
     setWeekdays(prev => (prev.includes(day) ? prev.filter(x => x !== day) : [...prev, day].sort((a, b) => a - b)));
   }
@@ -374,6 +788,26 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Students</h2>
+        {isAdmin && (
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSyncCourseCatalog}
+              disabled={syncStatus.running}
+            >
+              {syncStatus.running ? 'Syncing Courses...' : 'Sync Course Catalog'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSyncCurriculum}
+              disabled={syncCurriculumStatus.running}
+            >
+              {syncCurriculumStatus.running ? 'Syncing Curriculum...' : 'Sync Curriculum (Phonics)'}
+            </Button>
+          </div>
+        )}
       </div>
 
       <Card className="p-4">
@@ -421,6 +855,84 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         </div>
       </Card>
 
+      {user?.role === 'admin' && (
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Session Requests</h3>
+              <p className="text-xs text-gray-500">
+                Teacher ad-hoc sessions awaiting approval.
+              </p>
+            </div>
+            <div className="text-xs text-gray-500">
+              {sessionRequests.length} pending
+            </div>
+          </div>
+
+          {sessionRequests.length === 0 ? (
+            <div className="text-sm text-gray-500 mt-3">No pending requests.</div>
+          ) : (
+            <div className="mt-3">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Teacher</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Date & Time</TableHead>
+                    <TableHead>Duration</TableHead>
+                    <TableHead>Note</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sessionRequests.map((req) => {
+                    const student = studentById.get(req.kidId);
+                    return (
+                      <TableRow key={req.id}>
+                        <TableCell className="text-xs">
+                          {req.teacherId || '—'}
+                        </TableCell>
+                        <TableCell>
+                          {student?.fullName || req.kidId || '—'}
+                        </TableCell>
+                        <TableCell>{formatDateTime(req.startAt)}</TableCell>
+                        <TableCell>{req.durationMins} min</TableCell>
+                        <TableCell className="text-xs">
+                          {req.note || '—'}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {req.status || 'requested'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex gap-2 flex-wrap">
+                            <Button
+                              size="sm"
+                              onClick={() => handleApproveRequest(req)}
+                              disabled={requestActionId === req.id}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleRejectRequest(req)}
+                              disabled={requestActionId === req.id}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+      )}
+
       <Card>
         <Table>
           <TableHeader>
@@ -438,7 +950,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           <TableBody>
             {paged.map(s => (
               <TableRow key={s.id}>
-                <TableCell>{s.fullName}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{s.fullName}</div>
+                </TableCell>
 
                 <TableCell>
                   {(s.parentIds || []).map(pid => {

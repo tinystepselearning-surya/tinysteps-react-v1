@@ -29,15 +29,38 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttenda
   const isInProgress = isAfter(now, sessionStart) && isBefore(now, sessionEnd);
   const isCompleted = isAfter(now, sessionEnd);
 
+  const getAttendanceStatus = (value: any): string | undefined => {
+    if (!value) return undefined;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object' && typeof value.status === 'string') return value.status;
+    return undefined;
+  };
+
   const attendanceSummary = useMemo(() => {
     const attendance = session.attendance || {};
-    const present = Object.values(attendance).filter(s => s === 'present').length;
-    const absent = Object.values(attendance).filter(s => s === 'absent').length;
-    const late = Object.values(attendance).filter(s => s === 'late').length;
+    const statuses = Object.values(attendance)
+      .map(getAttendanceStatus)
+      .filter(Boolean);
+    const present = statuses.filter(s => s === 'present').length;
+    const absent = statuses.filter(s => s === 'absent').length;
+    const late = statuses.filter(s => s === 'late').length;
     return { present, absent, late, total: session.kidIds?.length || 0 };
   }, [session.attendance, session.kidIds]);
 
+  const hasRescheduleRequested = useMemo(() => {
+    const attendance = session.attendance || {};
+    return Object.values(attendance).some(
+      (entry) => getAttendanceStatus(entry) === 'reschedule_requested'
+    );
+  }, [session.attendance]);
+
   const joinDisabled = !session.joinUrl;
+  const courseLabel =
+    (session as any).courseLabel ||
+    session.courseName ||
+    (session as any).courseTitle ||
+    session.courseId ||
+    '';
 
   return (
     <Card className="p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -46,6 +69,11 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttenda
           <Badge variant={statusMap[session.status]?.variant || 'secondary'}>
             {statusMap[session.status]?.label || 'Scheduled'}
           </Badge>
+          {hasRescheduleRequested && (
+            <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
+              Reschedule requested
+            </Badge>
+          )}
           {timeUntilStart > 0 && timeUntilStart <= 60 && (
             <Badge variant="outline">
               Starts in {timeUntilStart} min
@@ -55,7 +83,11 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttenda
         <p className="text-sm text-muted-foreground">
           {format(sessionStart, 'PPPP')} · {session.startTime} - {session.endTime} (30 min)
         </p>
-        <h3 className="text-lg font-semibold">{session.courseName || 'Course'}</h3>
+        {courseLabel ? (
+          <h3 className="text-lg font-semibold">{courseLabel}</h3>
+        ) : (
+          <h3 className="text-lg font-semibold">Course</h3>
+        )}
         <p className="text-sm text-muted-foreground">
           Students: {attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late} of {attendanceSummary.total} present
         </p>

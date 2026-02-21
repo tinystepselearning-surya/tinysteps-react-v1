@@ -100,6 +100,13 @@ service cloud.firestore {
         );
     }
 
+    function isParentOfKid(kidId) {
+      return isParent()
+        && kidExists(kidId)
+        && ('parentIds' in kidDoc(kidId))
+        && (request.auth.uid in kidDoc(kidId).parentIds);
+    }
+
     // ----------------------------
     // Public game reference data
     // ----------------------------
@@ -139,6 +146,14 @@ service cloud.firestore {
 
     match /teachers/{teacherId}/classes/{classId}/studentMetrics/{document=**} {
       allow read, write: if isSignedIn() && request.auth.uid == teacherId;
+    }
+
+    match /teachers/{teacherId}/blockedSlots/{blockId} {
+      allow read, create, update, delete: if isSignedIn() && request.auth.uid == teacherId;
+    }
+
+    match /teachers/{teacherId}/sessionRequests/{requestId} {
+      allow read, create, update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == teacherId);
     }
 
     // ----------------------------
@@ -191,7 +206,7 @@ service cloud.firestore {
     match /students/{kidId}/progress/{topicId} {
       allow read: if isAdmin()
         || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
-        || (isParent() && get(/databases/$(database)/documents/kids/$(kidId)).data.primaryParentId == request.auth.uid);
+        || isParentOfKid(kidId);
 
       allow create, update, delete: if isAdmin()
         || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
@@ -200,10 +215,17 @@ service cloud.firestore {
     match /students/{kidId}/curriculum/{topicId} {
       allow read: if isAdmin()
         || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
-        || (isParent() && get(/databases/$(database)/documents/kids/$(kidId)).data.primaryParentId == request.auth.uid);
+        || isParentOfKid(kidId);
 
       allow create, update, delete: if isAdmin()
         || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
+    }
+
+    match /students/{kidId} {
+      allow read: if isAdmin()
+        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
+        || (isParent() && get(/databases/$(database)/documents/kids/$(kidId)).data.primaryParentId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
     }
 
     // ✅ NEW: Game sessions under kid (write + read)
@@ -385,6 +407,11 @@ service cloud.firestore {
     match /config/gamesCatalog {
       allow read: if isSignedIn();
       allow write: if false; // only server-side/admin SDK should write
+    }
+
+    match /config/picklists {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
     match /config/insights {

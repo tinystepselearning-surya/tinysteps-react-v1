@@ -2,18 +2,63 @@ import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { useEarnings } from '../../hooks/useEarnings';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface EarningsSummaryProps {
   teacherId?: string;
 }
 
 export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
-  const { data, isLoading } = useEarnings(teacherId);
+  const { user } = useAuthStore();
+  const resolvedTeacherId = teacherId || user?.uid;
+  const { data, isLoading, isError, error } = useEarnings(resolvedTeacherId);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Card className="p-6">
         <p className="text-sm text-muted-foreground">Loading earnings...</p>
+      </Card>
+    );
+  }
+
+  if (!resolvedTeacherId) {
+    return (
+      <Card className="p-6">
+        <p className="text-sm text-muted-foreground">
+          Unable to load earnings. Please refresh or contact support.
+        </p>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    console.error('Error loading teacher earnings:', error);
+    return (
+      <Card className="p-6">
+        <p className="text-sm text-muted-foreground">
+          Unable to load earnings. Please try again.
+        </p>
+      </Card>
+    );
+  }
+
+  const isEmpty =
+    !data ||
+    (
+      data.totalSessions === 0 &&
+      data.sessionsCompleted === 0 &&
+      data.totalEarnings === 0 &&
+      data.pendingEarnings === 0 &&
+      (data.breakdownByCourse?.length || 0) === 0 &&
+      (data.payments?.length || 0) === 0
+    );
+
+  if (isEmpty) {
+    return (
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold">Monthly Overview</h3>
+        <p className="text-sm text-muted-foreground">No earnings yet for this month.</p>
+        <div className="mt-3 text-2xl font-bold">₹0</div>
       </Card>
     );
   }

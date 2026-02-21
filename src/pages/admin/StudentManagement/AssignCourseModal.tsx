@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@components/ui/select';
+import { Input } from '@components/ui/input';
 import {
   collection,
   getDocs,
@@ -45,19 +46,21 @@ type Course = {
   area?: string;
   levelName?: string;
   status?: string;
+  feePerClass?: number;
   ratePerSession?: number;
   sessionFrequency?: string;
 };
 
 const defaultCourses = [
-  'Early Phonics',
   'Phonics Foundations',
+  'Early Phonics',
   'Advanced Phonics',
   'Basic Grammar',
-  'Advanced Grammar & Writing',
-  'Basic Public Speaking (Early Speakers)',
-  'Advanced Public Speaking (Young Leaders)',
-  'Spoken English & Confident Communication (Adults)',
+  'Intermediate Grammar',
+  'Advanced Grammar',
+  'Public Speaking (Basic)',
+  'Public Speaking (Intermediate)',
+  'Public Speaking (Advanced)',
 ];
 
 // simple helper to estimate credits for a monthly cycle
@@ -83,6 +86,7 @@ export default function AssignCourseModal({
   const [selected, setSelected] = useState<string>('');
   const [canAssign, setCanAssign] = useState<boolean>(false);
   const [saving, setSaving] = useState(false);
+  const [feePerClassInput, setFeePerClassInput] = useState<string>('');
 
   const { user } = useAuthStore();
 
@@ -117,6 +121,56 @@ export default function AssignCourseModal({
     setCourses([]);
   }, [fetchedCourses]);
 
+  const normalizeArea = (value?: string) => {
+    const v = String(value || '').toLowerCase().trim();
+    if (v.includes('phonics')) return 'phonics';
+    if (v.includes('grammar')) return 'grammar';
+    if (v.includes('speaking') || v.includes('speech') || v.includes('public')) return 'speaking';
+    return v;
+  };
+
+  const normalizeLevel = (value?: string) => {
+    const v = String(value || '').toLowerCase().trim();
+    if (v.includes('foundation')) return 'foundations';
+    if (v.includes('early')) return 'early';
+    if (v.includes('basic')) return 'basic';
+    if (v.includes('intermediate')) return 'intermediate';
+    if (v.includes('advanced')) return 'advanced';
+    return v;
+  };
+
+  const sortedCourses = React.useMemo(() => {
+    const areaOrder = ['phonics', 'grammar', 'speaking'];
+    const levelOrderByArea: Record<string, string[]> = {
+      phonics: ['foundations', 'early', 'advanced'],
+      grammar: ['basic', 'intermediate', 'advanced'],
+      speaking: ['basic', 'intermediate', 'advanced'],
+    };
+
+    return [...courses].sort((a, b) => {
+      const areaA = normalizeArea(a.area);
+      const areaB = normalizeArea(b.area);
+      const areaIdxA = areaOrder.indexOf(areaA);
+      const areaIdxB = areaOrder.indexOf(areaB);
+      if (areaIdxA !== areaIdxB) {
+        return (areaIdxA === -1 ? 999 : areaIdxA) - (areaIdxB === -1 ? 999 : areaIdxB);
+      }
+
+      const levelA = normalizeLevel(a.level || a.levelName);
+      const levelB = normalizeLevel(b.level || b.levelName);
+      const levelOrder = levelOrderByArea[areaA] || [];
+      const levelIdxA = levelOrder.indexOf(levelA);
+      const levelIdxB = levelOrder.indexOf(levelB);
+      if (levelIdxA !== levelIdxB) {
+        return (levelIdxA === -1 ? 999 : levelIdxA) - (levelIdxB === -1 ? 999 : levelIdxB);
+      }
+
+      const nameA = (a.name || a.title || a.id || '').toLowerCase();
+      const nameB = (b.name || b.title || b.id || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+  }, [courses]);
+
   // Who can assign? Admin OR LP assigned to this student
   useEffect(() => {
     if (!user || !student) return;
@@ -150,6 +204,28 @@ export default function AssignCourseModal({
     void check();
   }, [user, student]);
 
+  useEffect(() => {
+    if (!selected) {
+      setFeePerClassInput('');
+      return;
+    }
+    const selectedCourse = courses.find((c) => c.id === selected);
+    if (!selectedCourse) {
+      setFeePerClassInput('');
+      return;
+    }
+    const rawDefault =
+      selectedCourse.feePerClass ??
+      selectedCourse.ratePerSession ??
+      0;
+    const defaultFee = Number(rawDefault);
+    if (Number.isFinite(defaultFee) && defaultFee > 0) {
+      setFeePerClassInput(String(defaultFee));
+    } else {
+      setFeePerClassInput('');
+    }
+  }, [selected, courses]);
+
   const handleAssign = async () => {
     if (!selected) {
       toast({
@@ -164,6 +240,16 @@ export default function AssignCourseModal({
         title: 'Not authorized',
         description:
           'You do not have permission to assign a course to this student.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const feePerClass = Number(feePerClassInput);
+    if (!Number.isFinite(feePerClass) || feePerClass <= 0) {
+      toast({
+        title: 'Fee per class required',
+        description: 'Enter a valid fee per class before assigning.',
         variant: 'destructive',
       });
       return;
@@ -203,7 +289,6 @@ export default function AssignCourseModal({
         null;
 
       const selectedCourse = courses.find((c) => c.id === selected);
-      const ratePerSession = selectedCourse?.ratePerSession ?? 0;
       const sessionFrequency =
         selectedCourse?.sessionFrequency || 'weekly';
       const sessionsPerMonth =
@@ -221,7 +306,8 @@ export default function AssignCourseModal({
         lpId: null,
         parentId: primaryParentId,
         status: 'pending_teacher',
-        ratePerSession,
+        feePerClass,
+        currency: 'INR',
         billingCycle,
         creditsTotal,
         creditsUsed: 0,
@@ -280,13 +366,13 @@ export default function AssignCourseModal({
         </DialogHeader>
 
           <div className="py-4 space-y-2">
-            {courses.length > 0 ? (
+            {sortedCourses.length > 0 ? (
               <Select value={selected} onValueChange={setSelected}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select course" />
                 </SelectTrigger>
                 <SelectContent>
-                  {courses.map((c) => (
+                  {sortedCourses.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {(c.name || c.title || 'Untitled Course')}
                       {(c.area || c.level) ? ` — ${c.area || ''}${c.area && c.level ? ' / ' : ''}${c.level || ''}` : ''}
@@ -299,6 +385,17 @@ export default function AssignCourseModal({
                 No courses found. Please add courses in Course Management.
               </div>
             )}
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Fee per class (₹)</label>
+            <Input
+              type="number"
+              min={1}
+              step={1}
+              placeholder="e.g., 599"
+              value={feePerClassInput}
+              onChange={(e) => setFeePerClassInput(e.target.value)}
+            />
+          </div>
           {!canAssign && (
             <p className="text-xs text-red-500">
               You are not authorized to assign courses for this

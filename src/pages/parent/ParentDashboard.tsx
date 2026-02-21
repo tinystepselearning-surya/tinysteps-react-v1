@@ -70,6 +70,42 @@ type KidSession = {
   [key: string]: any;
 };
 
+type BillingCharge = {
+  id: string;
+  amount?: number;
+  status?: string;
+  createdAt?: any;
+  currency?: string;
+  [key: string]: any;
+};
+
+type Enrollment = {
+  id: string;
+  courseId?: string;
+  course?: { area?: string };
+  courseArea?: string;
+  area?: string;
+  [key: string]: any;
+};
+
+const PHONICS_COURSE_IDS = [
+  "phonics-foundations",
+  "early-phonics",
+  "advanced-phonics",
+];
+
+const phonicsLabelsByCourseId: Record<string, string> = {
+  "phonics-foundations": "Phonics Foundations",
+  "early-phonics": "Early Phonics",
+  "advanced-phonics": "Advanced Phonics",
+};
+
+const phonicsTotalsByCourseId: Record<string, number> = {
+  "phonics-foundations": 30,
+  "early-phonics": 41,
+  "advanced-phonics": 20,
+};
+
 function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
@@ -231,6 +267,119 @@ export default function ParentDashboard() {
     },
   });
 
+  // ---- Enrollments for selected kid (used for phonics progress) ----
+  const enrollmentsQuery = useQuery({
+    queryKey: ["kidEnrollments", selectedKidId],
+    enabled: !!selectedKidId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<Enrollment[]> => {
+      if (!selectedKidId) return [];
+      const enrollmentsCol = collection(db, "enrollments");
+      const results = new Map<string, Enrollment>();
+
+      const queries = [
+        query(enrollmentsCol, where("studentId", "==", selectedKidId)),
+        query(enrollmentsCol, where("kidId", "==", selectedKidId)),
+        query(enrollmentsCol, where("kidIds", "array-contains", selectedKidId)),
+      ];
+
+      for (const q of queries) {
+        const snap = await getDocs(q);
+        snap.docs.forEach((d) => {
+          results.set(d.id, { id: d.id, ...(d.data() as any) });
+        });
+      }
+
+      return Array.from(results.values());
+    },
+  });
+
+  // ---- Phonics progress (per-course) ----
+  const phonicsProgressQuery = useQuery({
+    queryKey: ["phonicsProgress", selectedKidId],
+    enabled: !!selectedKidId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId) return [];
+      try {
+        const snap = await getDocs(
+          collection(db, "students", selectedKidId, "progress")
+        );
+        return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      } catch (err: any) {
+        console.error("❌ [ParentDashboard] Progress query error:", err);
+        throw err;
+      }
+    },
+  });
+
+  const phonicsProgressByCourse = useMemo(() => {
+    const records = (phonicsProgressQuery.data ?? []) as any[];
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+
+    const isPhonicsEnrollment = (enrollment: Enrollment): boolean => {
+      const courseId = String(enrollment.courseId || "");
+      if (PHONICS_COURSE_IDS.includes(courseId)) return true;
+      const area = String(
+        enrollment.course?.area ?? enrollment.courseArea ?? enrollment.area ?? ""
+      )
+        .toLowerCase()
+        .trim();
+      return area === "phonics";
+    };
+
+    const phonicsEnrollments = enrollments.filter(isPhonicsEnrollment);
+    const courseIdsToShow = PHONICS_COURSE_IDS.filter((id) =>
+      phonicsEnrollments.some((enr) => String(enr.courseId || "") === id)
+    );
+
+    if (courseIdsToShow.length === 0) return [];
+
+    const getMastered = (doc: any): boolean => {
+      const mastery = String(doc.mastery ?? "").toLowerCase();
+      if (mastery === "proficient" || mastery === "mastered") return true;
+      const scoreBand = Number(doc.scoreBand);
+      if (Number.isFinite(scoreBand) && scoreBand >= 81) return true;
+      return false;
+    };
+
+    return courseIdsToShow.map((courseId) => {
+      const items = records.filter(
+        (doc) => String(doc.courseId || "") === courseId
+      );
+
+      const sorted = items
+        .slice()
+        .sort((a, b) => {
+          const aTime = a.updatedAt?.toMillis?.() ?? 0;
+          const bTime = b.updatedAt?.toMillis?.() ?? 0;
+          return bTime - aTime;
+        });
+
+      const last = sorted[0];
+      const mastered = items.filter(getMastered).length;
+
+      return {
+        courseId,
+        courseLabel: phonicsLabelsByCourseId[courseId] || courseId,
+        topicsUpdated: items.length,
+        totalTopics: phonicsTotalsByCourseId[courseId],
+        mastered,
+        lastTopic: last?.topicName || "—",
+        lastRemark: last?.teacherRemark || "—",
+      };
+    });
+  }, [phonicsProgressQuery.data, enrollmentsQuery.data]);
+
+  const phonicsLoading =
+    phonicsProgressQuery.isLoading || enrollmentsQuery.isLoading;
+  const phonicsError =
+    phonicsProgressQuery.isError || enrollmentsQuery.isError;
+
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
    * Manual refresh model: fetch when entering Games Progress tab (no polling)
@@ -276,6 +425,24 @@ export default function ParentDashboard() {
     queryFn: async () => {
       const snap = await getDoc(doc(db, "config", "payments"));
       return snap.exists() ? (snap.data() as any) : null;
+    },
+  });
+
+  // ---- Billing charges (Fees & Dues) ----
+  const billingChargesQuery = useQuery({
+    queryKey: ["billingCharges", user?.uid],
+    enabled: !!user?.uid,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<BillingCharge[]> => {
+      if (!user?.uid) return [];
+      const q = query(
+        collection(db, "billingCharges"),
+        where("parentId", "==", user.uid)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
     },
   });
 
@@ -477,6 +644,51 @@ export default function ParentDashboard() {
 
     return totals;
   }, [monthSessions]);
+
+  const billingSummary = useMemo(() => {
+    const charges = (billingChargesQuery.data ?? []) as BillingCharge[];
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    let dueNow = 0;
+    let billedThisMonth = 0;
+    let chargesThisMonth = 0;
+
+    charges.forEach((charge) => {
+      const rawAmount = Number(charge.amount ?? 0);
+      const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
+      const status = String(charge.status ?? "").toLowerCase().trim();
+
+      const isPaid = status === "paid" || status === "settled";
+      const isVoid =
+        status === "void" ||
+        status === "cancelled" ||
+        status === "canceled" ||
+        status === "waived" ||
+        status === "refunded";
+
+      if (!isPaid && !isVoid) {
+        dueNow += amount;
+      }
+
+      const createdAt =
+        charge.createdAt?.toDate?.() ??
+        (charge.createdAt instanceof Date ? charge.createdAt : null);
+
+      if (createdAt && createdAt >= monthStart && createdAt < nextMonthStart) {
+        billedThisMonth += amount;
+        chargesThisMonth += 1;
+      }
+    });
+
+    return {
+      dueNow,
+      billedThisMonth,
+      chargesThisMonth,
+      totalCharges: charges.length,
+    };
+  }, [billingChargesQuery.data]);
 
   // Calendar grid helpers
   const calendarDays = useMemo(() => {
@@ -785,6 +997,81 @@ export default function ParentDashboard() {
                 </div>
               </Card>
             )}
+
+            <Card className="p-6 space-y-4">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Phonics Progress
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Course-wise progress for {selectedKid?.fullName || "your child"}.
+                </p>
+              </div>
+
+              {phonicsLoading && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Loading progress…
+                </p>
+              )}
+
+              {phonicsError && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Unable to load progress right now.
+                </p>
+              )}
+
+              {!phonicsLoading &&
+                !phonicsError &&
+                phonicsProgressByCourse.length === 0 && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No phonics enrollment yet.
+                  </p>
+                )}
+
+              {!phonicsLoading &&
+                !phonicsError &&
+                phonicsProgressByCourse.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {phonicsProgressByCourse.map((course) => (
+                      <Card
+                        key={course.courseId}
+                        className="p-4 border border-gray-200 dark:border-gray-700"
+                      >
+                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {course.courseLabel}
+                        </h4>
+                        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <div className="text-xs text-gray-500">Topics updated</div>
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">
+                              {course.topicsUpdated}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500">Mastered topics</div>
+                            <div className="font-semibold text-gray-900 dark:text-gray-100">
+                              {course.mastered}
+                            </div>
+                          </div>
+                        </div>
+                        {Number.isFinite(course.totalTopics) && (
+                          <div className="mt-3 text-xs text-gray-500">
+                            Updated: {course.topicsUpdated} / Total: {course.totalTopics}
+                          </div>
+                        )}
+                        <div className="mt-3 text-xs text-gray-500">Last updated topic</div>
+                        <div className="text-sm text-gray-800 dark:text-gray-200">
+                          {course.lastTopic || "—"}
+                        </div>
+                        <div className="mt-2 text-xs text-gray-500">Last remark</div>
+                        <div className="text-sm text-gray-800 dark:text-gray-200">
+                          {course.lastRemark || "—"}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+            </Card>
           </div>
         )}
 
@@ -1899,11 +2186,34 @@ export default function ParentDashboard() {
 
               <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
                 <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                  Fees & Dues (next step)
+                  Fees & Dues
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  We’ll connect “Fees due / paid” to your invoices + payments data (Admin updates). For now, use the Payments tab.
-                </div>
+                {billingChargesQuery.isLoading ? (
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Loading fees…
+                  </div>
+                ) : billingSummary.totalCharges === 0 ? (
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    Due now: ₹0
+                    <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                      No charges yet this month.
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                    <div>
+                      Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
+                    </div>
+                    {billingSummary.chargesThisMonth > 0 && (
+                      <div>
+                        Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                      </div>
+                    )}
+                    <div className="text-xs text-gray-500 dark:text-gray-500">
+                      Charges: {billingSummary.totalCharges}
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -2027,6 +2337,49 @@ export default function ParentDashboard() {
                                 : "—"}
                             </span>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                        Class Fees & Dues
+                      </h3>
+                      <div className="p-4 rounded-lg bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
+                        {billingChargesQuery.isLoading ? (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Loading fees…
+                          </div>
+                        ) : billingSummary.totalCharges === 0 ? (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Due now: ₹0
+                            <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                              No charges yet this month.
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                            <div>
+                              Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
+                            </div>
+                            {billingSummary.chargesThisMonth > 0 && (
+                              <div>
+                                Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+                              </div>
+                            )}
+                            <div className="text-xs text-gray-500 dark:text-gray-500">
+                              Charges: {billingSummary.totalCharges}
+                            </div>
+                          </div>
+                        )}
+                        <div className="mt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setTab("classes")}
+                          >
+                            View classes
+                          </Button>
                         </div>
                       </div>
                     </div>

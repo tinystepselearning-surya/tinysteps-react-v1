@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { useTeacherStats } from '../../hooks/useTeacherStats';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 interface TeacherStatsProps {
   teacherId?: string;
@@ -14,12 +15,56 @@ const StatBlock = ({ label, value }: { label: string; value: string | number }) 
 );
 
 export const TeacherStats: FC<TeacherStatsProps> = ({ teacherId }) => {
-  const { data, isLoading } = useTeacherStats(teacherId);
+  const { user } = useAuthStore();
+  const resolvedTeacherId = teacherId || user?.uid;
+  const { data, isLoading, isError, error } = useTeacherStats(resolvedTeacherId);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Card className="p-6">
         <p className="text-sm text-muted-foreground">Loading analytics...</p>
+      </Card>
+    );
+  }
+
+  if (!resolvedTeacherId) {
+    return (
+      <Card className="p-6">
+        <p className="text-sm text-muted-foreground">
+          Unable to load analytics. Please refresh or contact support.
+        </p>
+      </Card>
+    );
+  }
+
+  if (isError) {
+    console.error('Error loading teacher analytics:', error);
+    return (
+      <Card className="p-6">
+        <p className="text-sm text-muted-foreground">
+          Unable to load analytics. Please try again.
+        </p>
+      </Card>
+    );
+  }
+
+  const isEmpty =
+    !data ||
+    (
+      data.totalSessions === 0 &&
+      data.totalStudents === 0 &&
+      data.averageAttendance === 0 &&
+      data.averageSatisfaction === 0 &&
+      data.completionRate === 0 &&
+      (data.sessionsByCourse?.length || 0) === 0 &&
+      (data.sessionsByMonth?.length || 0) === 0
+    );
+
+  if (isEmpty) {
+    return (
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold">Analytics</h3>
+        <p className="text-sm text-muted-foreground">No analytics yet.</p>
       </Card>
     );
   }

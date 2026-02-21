@@ -5,6 +5,7 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { useTeacherStudents } from '../../hooks/useTeacherStudents';
 import { TeacherStudent } from '../../../../types/Teacher';
+import { Link } from 'react-router-dom';
 
 interface StudentsListProps {
   teacherId?: string;
@@ -63,6 +64,20 @@ export const StudentsList: React.FC<StudentsListProps> = ({ teacherId }) => {
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>Courses: {(student.courseNames || []).join(', ') || '—'}</p>
                 <p>Last session: {student.lastSessionDate || '—'}</p>
+              </div>
+              <div className="pt-2">
+                {student.id ? (
+                  <Link
+                    to={`/teacher/students/${student.id}/topic-progress`}
+                    className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                  >
+                    Update Progress
+                  </Link>
+                ) : (
+                  <span className="text-xs text-muted-foreground cursor-not-allowed">
+                    Update Progress (missing ID)
+                  </span>
+                )}
               </div>
             </Card>
           ))}

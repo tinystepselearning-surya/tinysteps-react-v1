@@ -15,18 +15,70 @@ const defaultSummary: TeacherEarningsSummary = {
   payments: [],
 };
 
+const toNumber = (value: unknown, fallback = 0) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+const getMonthId = (date: Date, useUtc = false) => {
+  const year = useUtc ? date.getUTCFullYear() : date.getFullYear();
+  const month = String((useUtc ? date.getUTCMonth() : date.getMonth()) + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const normalizeEarnings = (data: any, monthId: string): TeacherEarningsSummary => {
+  const sessionsCompleted = toNumber(data.sessionsCompleted, toNumber(data.totalSessions, 0));
+  const totalSessions = toNumber(data.totalSessions, sessionsCompleted || toNumber(data.creditsEarned, 0));
+  const sessionsPending = toNumber(data.sessionsPending, 0);
+  const ratePerSession = toNumber(data.ratePerSession, toNumber(data.ratePerCredit, 0));
+  const creditsEarned = toNumber(data.creditsEarned, 0);
+  const totalEarnings = toNumber(
+    data.totalEarnings,
+    ratePerSession > 0 ? ratePerSession * creditsEarned : 0
+  );
+  const pendingEarnings = toNumber(data.pendingEarnings, 0);
+
+  return {
+    month: data.month ?? monthId,
+    totalSessions,
+    sessionsCompleted,
+    sessionsPending,
+    ratePerSession,
+    totalEarnings,
+    pendingEarnings,
+    breakdownByCourse: Array.isArray(data.breakdownByCourse) ? data.breakdownByCourse : [],
+    payments: Array.isArray(data.payments) ? data.payments : [],
+  };
+};
+
 const fetchEarnings = async (teacherId: string): Promise<TeacherEarningsSummary> => {
-  const ref = doc(db, 'teacherEarnings', teacherId);
-  const snapshot = await getDoc(ref);
-  if (!snapshot.exists()) {
-    return { ...defaultSummary, month: '' };
+  const now = new Date();
+  const monthLocal = getMonthId(now);
+  const monthUtc = getMonthId(now, true);
+
+  const primaryRef = doc(db, 'teachers', teacherId, 'earnings', monthLocal);
+  let snapshot = await getDoc(primaryRef);
+
+  if (!snapshot.exists() && monthUtc !== monthLocal) {
+    const utcRef = doc(db, 'teachers', teacherId, 'earnings', monthUtc);
+    snapshot = await getDoc(utcRef);
   }
-  return snapshot.data() as TeacherEarningsSummary;
+
+  if (snapshot.exists()) {
+    return normalizeEarnings(snapshot.data(), snapshot.id);
+  }
+
+  // Backward-compat fallback
+  const legacyRef = doc(db, 'teacherEarnings', teacherId);
+  const legacySnap = await getDoc(legacyRef);
+  if (!legacySnap.exists()) {
+    return { ...defaultSummary, month: monthLocal };
+  }
+  return normalizeEarnings(legacySnap.data(), monthLocal);
 };
 
 export const useEarnings = (teacherId?: string) => {
+  const monthId = getMonthId(new Date());
   return useQuery<TeacherEarningsSummary>({
-    queryKey: ['teacherEarnings', teacherId],
+    queryKey: ['teacherEarnings', teacherId, monthId],
     queryFn: () => (teacherId ? fetchEarnings(teacherId) : Promise.resolve(defaultSummary)),
     enabled: Boolean(teacherId),
     staleTime: 1000 * 60 * 10,
