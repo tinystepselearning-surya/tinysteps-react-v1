@@ -15,12 +15,14 @@ interface AttendanceFormProps {
   open: boolean;
   session: TeacherSession | null;
   onClose: () => void;
-  onSubmit: (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }>; sessionNotes: string }) => Promise<void>;
+  onSubmit: (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdateState[] }>; sessionNotes: string }) => Promise<void>;
 }
 
 type AttendanceOutcome = AttendanceStatus | 'reschedule_requested';
 
 const STATUS_OPTIONS: AttendanceOutcome[] = ['present', 'absent', 'late', 'reschedule_requested'];
+
+type TopicMastery = 'not_started' | 'emerging' | 'developing' | 'proficient' | 'mastered';
 
 type CurriculumTopic = {
   id: string;
@@ -28,6 +30,29 @@ type CurriculumTopic = {
   lesson?: string;
   label?: string;
 };
+
+type TopicUpdateState = {
+  topicId: string;
+  mastery: TopicMastery;
+  score: number;
+  teacherRemark: string;
+  topicName?: string;
+};
+
+type AttendanceEntryState = {
+  status: AttendanceOutcome;
+  notes?: string;
+  mastery?: number;
+  topicUpdatesById?: Record<string, TopicUpdateState>;
+};
+
+const TOPIC_MASTERY_OPTIONS: TopicMastery[] = [
+  'not_started',
+  'emerging',
+  'developing',
+  'proficient',
+  'mastered',
+];
 
 const COURSE_ID_ALIASES: Record<string, string> = {
   'phonics-foundation': 'phonics-foundations',
@@ -59,7 +84,7 @@ const mapCourseNameToId = (value?: string | null): string | null => {
 export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, onClose, onSubmit }) => {
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formState, setFormState] = useState<Record<string, { status: AttendanceOutcome; notes?: string; mastery?: number; topics?: string[] }>>({});
+  const [formState, setFormState] = useState<Record<string, AttendanceEntryState>>({});
   const [sessionNotes, setSessionNotes] = useState('');
   const [kidNameById, setKidNameById] = useState<Record<string, string>>({});
   const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([]);
@@ -67,6 +92,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
   const [enrollmentCourseId, setEnrollmentCourseId] = useState<string | null>(null);
   const [enrollmentCourseLoading, setEnrollmentCourseLoading] = useState(false);
+  const [expandedTopics, setExpandedTopics] = useState<Record<string, Record<string, boolean>>>({});
 
   const { students } = useTeacherFilteredStudents();
 
@@ -247,13 +273,28 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
   useEffect(() => {
     if (session) {
-      const defaults: Record<string, { status: AttendanceOutcome; notes?: string; mastery?: number; topics?: string[] }> = {};
+      const defaults: Record<string, AttendanceEntryState> = {};
       kidIds.forEach((kidId) => {
+        const existingEntry = (session.attendance as any)?.[kidId];
+        const existingTopics = Array.isArray(existingEntry?.topics)
+          ? (existingEntry.topics as string[]).filter(Boolean)
+          : [];
+        const topicUpdatesById = existingTopics.reduce((acc, topicId) => {
+          acc[topicId] = {
+            topicId,
+            mastery: 'developing',
+            score: 50,
+            teacherRemark: '',
+            topicName: topicId,
+          };
+          return acc;
+        }, {} as Record<string, TopicUpdateState>);
+
         defaults[kidId] = {
           status: normalizeStatus(session.attendance?.[kidId]),
           notes: '',
           mastery: 50,
-          topics: [],
+          topicUpdatesById,
         };
       });
       setFormState(defaults);
@@ -291,16 +332,132 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     }));
   };
 
-  const handleTopicChange = (kidId: string, topicId: string, checked: boolean) => {
-    setFormState((prev) => ({
-      ...prev,
-      [kidId]: {
-        ...prev[kidId],
-        topics: checked
-          ? [...(prev[kidId].topics || []), topicId]
-          : (prev[kidId].topics || []).filter(t => t !== topicId),
-      },
-    }));
+  const handleTopicToggle = (kidId: string, topic: CurriculumTopic, checked: boolean) => {
+    setFormState((prev) => {
+      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
+      if (checked) {
+        topicUpdatesById[topic.id] = topicUpdatesById[topic.id] || {
+          topicId: topic.id,
+          mastery: 'developing',
+          score: 50,
+          teacherRemark: '',
+          topicName: formatTopicLabel(topic),
+        };
+      } else {
+        delete topicUpdatesById[topic.id];
+      }
+      return {
+        ...prev,
+        [kidId]: {
+          ...current,
+          topicUpdatesById,
+        },
+      };
+    });
+
+    setExpandedTopics((prev) => {
+      const next = { ...prev };
+      if (checked) {
+        const kidTopics = { ...(next[kidId] || {}) };
+        kidTopics[topic.id] = true;
+        next[kidId] = kidTopics;
+      } else if (next[kidId]) {
+        const kidTopics = { ...next[kidId] };
+        delete kidTopics[topic.id];
+        if (Object.keys(kidTopics).length === 0) {
+          delete next[kidId];
+        } else {
+          next[kidId] = kidTopics;
+        }
+      }
+      return next;
+    });
+  };
+
+  const toggleTopicExpanded = (kidId: string, topicId: string) => {
+    setExpandedTopics((prev) => {
+      const next = { ...prev };
+      const kidTopics = { ...(next[kidId] || {}) };
+      kidTopics[topicId] = !kidTopics[topicId];
+      next[kidId] = kidTopics;
+      return next;
+    });
+  };
+
+  const handleTopicMasteryChange = (kidId: string, topic: CurriculumTopic, value: TopicMastery) => {
+    setFormState((prev) => {
+      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
+      const existing = topicUpdatesById[topic.id] || {
+        topicId: topic.id,
+        mastery: 'developing' as TopicMastery,
+        score: 50,
+        teacherRemark: '',
+        topicName: formatTopicLabel(topic),
+      };
+      topicUpdatesById[topic.id] = {
+        ...existing,
+        mastery: value,
+      };
+      return {
+        ...prev,
+        [kidId]: {
+          ...current,
+          topicUpdatesById,
+        },
+      };
+    });
+  };
+
+  const handleTopicScoreChange = (kidId: string, topic: CurriculumTopic, value: number) => {
+    setFormState((prev) => {
+      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
+      const existing = topicUpdatesById[topic.id] || {
+        topicId: topic.id,
+        mastery: 'developing' as TopicMastery,
+        score: 50,
+        teacherRemark: '',
+        topicName: formatTopicLabel(topic),
+      };
+      topicUpdatesById[topic.id] = {
+        ...existing,
+        score: value,
+      };
+      return {
+        ...prev,
+        [kidId]: {
+          ...current,
+          topicUpdatesById,
+        },
+      };
+    });
+  };
+
+  const handleTopicRemarkChange = (kidId: string, topic: CurriculumTopic, value: string) => {
+    setFormState((prev) => {
+      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
+      const existing = topicUpdatesById[topic.id] || {
+        topicId: topic.id,
+        mastery: 'developing' as TopicMastery,
+        score: 50,
+        teacherRemark: '',
+        topicName: formatTopicLabel(topic),
+      };
+      topicUpdatesById[topic.id] = {
+        ...existing,
+        teacherRemark: value,
+      };
+      return {
+        ...prev,
+        [kidId]: {
+          ...current,
+          topicUpdatesById,
+        },
+      };
+    });
   };
 
   const handleSubmit = async () => {
@@ -322,7 +479,14 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
               notes: entry.notes ?? '',
             };
           } else {
-            sanitizedAttendance[kidId] = entry;
+            const topicUpdates = Object.values(entry.topicUpdatesById || {});
+            const topicIds = topicUpdates.map((t) => t.topicId).filter(Boolean);
+            const { topicUpdatesById, ...rest } = entry;
+            sanitizedAttendance[kidId] = {
+              ...rest,
+              topics: topicIds,
+              topicUpdates,
+            };
           }
         });
 
@@ -337,9 +501,23 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
       }
 
       await onSubmit({
-        attendance: formState as Record<
+        attendance: Object.fromEntries(
+          Object.entries(formState).map(([kidId, entry]) => {
+            const topicUpdates = Object.values(entry.topicUpdatesById || {});
+            const topicIds = topicUpdates.map((t) => t.topicId).filter(Boolean);
+            const { topicUpdatesById, ...rest } = entry;
+            return [
+              kidId,
+              {
+                ...rest,
+                topics: topicIds,
+                topicUpdates,
+              },
+            ];
+          })
+        ) as Record<
           string,
-          { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }
+          { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdateState[] }
         >,
         sessionNotes,
       });
@@ -467,21 +645,116 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                       ) : topics.length === 0 ? (
                         <p className="text-sm text-gray-500">No curriculum topics available for this course.</p>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                          {topics.map((topic) => {
-                            const savedTopics = formState[kidId]?.topics || [];
-                            const isChecked = savedTopics.includes(topic.id) || savedTopics.includes(topic.label || '');
-                            return (
-                              <label key={topic.id} className="flex items-center gap-2 text-sm">
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  onChange={(e) => handleTopicChange(kidId, topic.id, e.target.checked)}
-                                />
-                                {formatTopicLabel(topic)}
-                              </label>
-                            );
-                          })}
+                        <div className="space-y-4 mt-2">
+                          {Object.entries(
+                            topics.reduce((acc, topic) => {
+                              const lessonKey = topic.lesson || 'Other';
+                              if (!acc[lessonKey]) acc[lessonKey] = [];
+                              acc[lessonKey].push(topic);
+                              return acc;
+                            }, {} as Record<string, CurriculumTopic[]>)
+                          )
+                            .sort(([a], [b]) => {
+                              const aNum = Number(String(a).replace(/[^0-9]/g, '')) || 0;
+                              const bNum = Number(String(b).replace(/[^0-9]/g, '')) || 0;
+                              return aNum - bNum;
+                            })
+                            .map(([lesson, lessonTopics]) => (
+                              <div key={lesson} className="border rounded-lg p-3 bg-white/60">
+                                <div className="text-xs font-semibold text-gray-700 mb-2">{lesson}</div>
+                                <div className="space-y-3">
+                                  {lessonTopics.map((topic) => {
+                                    const topicEntry = formState[kidId]?.topicUpdatesById?.[topic.id];
+                                    const isChecked = Boolean(topicEntry);
+                                    const isExpanded = Boolean(expandedTopics[kidId]?.[topic.id]);
+                                    return (
+                                      <div key={topic.id} className="text-sm">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <label className="flex items-center gap-2">
+                                            <input
+                                              type="checkbox"
+                                              checked={isChecked}
+                                              onChange={(e) => handleTopicToggle(kidId, topic, e.target.checked)}
+                                            />
+                                            <span>{formatTopicLabel(topic)}</span>
+                                          </label>
+                                          {isChecked && (
+                                            <button
+                                              type="button"
+                                              className="text-xs text-primary-600 hover:underline"
+                                              onClick={() => toggleTopicExpanded(kidId, topic.id)}
+                                            >
+                                              {isExpanded ? 'Hide' : 'Details'}
+                                            </button>
+                                          )}
+                                        </div>
+                                        {isChecked && isExpanded && (
+                                          <div className="mt-2 space-y-2 pl-6">
+                                            <div className="flex flex-wrap items-center gap-3">
+                                              <div className="min-w-[160px]">
+                                                <Label className="text-xs">Mastery</Label>
+                                                <Select
+                                                  value={topicEntry?.mastery || 'developing'}
+                                                  onValueChange={(value) =>
+                                                    handleTopicMasteryChange(
+                                                      kidId,
+                                                      topic,
+                                                      value as TopicMastery
+                                                    )
+                                                  }
+                                                >
+                                                  <SelectTrigger className="h-8 text-xs">
+                                                    <SelectValue />
+                                                  </SelectTrigger>
+                                                  <SelectContent>
+                                                    {TOPIC_MASTERY_OPTIONS.map((opt) => (
+                                                      <SelectItem key={opt} value={opt}>
+                                                        {opt.replace(/_/g, ' ')}
+                                                      </SelectItem>
+                                                    ))}
+                                                  </SelectContent>
+                                                </Select>
+                                              </div>
+                                              <div className="min-w-[200px]">
+                                                <Label className="text-xs">Score</Label>
+                                                <Input
+                                                  type="range"
+                                                  min="0"
+                                                  max="100"
+                                                  value={topicEntry?.score ?? 50}
+                                                  onChange={(e) =>
+                                                    handleTopicScoreChange(
+                                                      kidId,
+                                                      topic,
+                                                      parseInt(e.target.value, 10)
+                                                    )
+                                                  }
+                                                  className="mt-1"
+                                                />
+                                                <span className="text-xs text-gray-600">
+                                                  {topicEntry?.score ?? 50}%
+                                                </span>
+                                              </div>
+                                            </div>
+                                            <div>
+                                              <Label className="text-xs">Remark</Label>
+                                              <Input
+                                                value={topicEntry?.teacherRemark ?? ''}
+                                                onChange={(e) =>
+                                                  handleTopicRemarkChange(kidId, topic, e.target.value)
+                                                }
+                                                placeholder="Quick remark"
+                                                className="h-8 text-xs"
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
                         </div>
                       )}
                     </div>

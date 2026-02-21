@@ -46,6 +46,14 @@ interface CurriculumTopic {
   label?: string;
 }
 
+type TopicUpdatePayload = {
+  topicId: string;
+  mastery?: string;
+  score?: number;
+  teacherRemark?: string;
+  topicName?: string;
+};
+
 const COURSE_LABEL_BY_ID: Record<string, string> = {
   foundational: 'Foundational Course',
   early: 'Early Phonics',
@@ -525,7 +533,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
-  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }>; sessionNotes: string }) => {
+  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string }) => {
     if (!selectedSession) return;
     try {
       const batch = writeBatch(db);
@@ -562,15 +570,29 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       for (const [kidId, entry] of Object.entries(data.attendance)) {
         const status = (entry as any)?.status ?? entry;
         if (status !== 'present' && status !== 'late') continue;
-        
-        const topics = entry?.topics ?? [];
-        if (!Array.isArray(topics) || topics.length === 0) continue;
 
-        for (const topicId of topics) {
+        const topicUpdates = Array.isArray((entry as any)?.topicUpdates) ? (entry as any).topicUpdates : [];
+        const topicIds = topicUpdates.length
+          ? topicUpdates.map((t: any) => t?.topicId).filter(Boolean)
+          : (Array.isArray(entry?.topics) ? entry.topics : []);
+        if (!Array.isArray(topicIds) || topicIds.length === 0) continue;
+
+        const updatesById = new Map<string, TopicUpdatePayload>(
+          topicUpdates.map((t: any) => [t?.topicId, t])
+        );
+
+        for (const topicId of topicIds) {
           if (!topicId) continue;
-          const topicName = topicLabelById.get(topicId) ?? topicId;
+          const update = updatesById.get(topicId);
+          const scoreRaw = Number(update?.score);
+          const score = Number.isFinite(scoreRaw)
+            ? scoreRaw
+            : (Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50);
+          const mastery = update?.mastery;
+          const isCompleted = mastery === 'proficient' || mastery === 'mastered' || score >= 81;
+          const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
           const payload: Record<string, any> = {
-            status: 'completed',
+            status: isCompleted ? 'completed' : 'in_progress',
             updatedAt: serverTimestamp(),
             updatedBy: user?.uid ?? null,
             source: 'attendance',
@@ -591,26 +613,36 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       for (const [kidId, entry] of Object.entries(data.attendance)) {
         const status = (entry as any)?.status ?? entry;
         if (status !== 'present' && status !== 'late') continue;
-        
-        const topics = entry?.topics ?? [];
-        if (!Array.isArray(topics) || topics.length === 0) continue;
 
-        // Convert mastery to number (0-100)
-        const masteryNum = Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50;
-        
-        // Derive scoreBand from mastery
-        const scoreBand = masteryNum <= 20 ? '0-20' :
-                         masteryNum <= 40 ? '21-40' :
-                         masteryNum <= 60 ? '41-60' :
-                         masteryNum <= 80 ? '61-80' : '81-100';
+        const topicUpdates = Array.isArray((entry as any)?.topicUpdates) ? (entry as any).topicUpdates : [];
+        const topicIds = topicUpdates.length
+          ? topicUpdates.map((t: any) => t?.topicId).filter(Boolean)
+          : (Array.isArray(entry?.topics) ? entry.topics : []);
+        if (!Array.isArray(topicIds) || topicIds.length === 0) continue;
 
-        for (const topicId of topics) {
+        const updatesById = new Map<string, TopicUpdatePayload>(
+          topicUpdates.map((t: any) => [t?.topicId, t])
+        );
+
+        for (const topicId of topicIds) {
           if (!topicId) continue;
-          const topicName = topicLabelById.get(topicId) ?? topicId;
+          const update = updatesById.get(topicId);
+          const scoreRaw = Number(update?.score);
+          const score = Number.isFinite(scoreRaw)
+            ? scoreRaw
+            : (Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50);
+          const scoreBand = score <= 20 ? '0-20' :
+                           score <= 40 ? '21-40' :
+                           score <= 60 ? '41-60' :
+                           score <= 80 ? '61-80' : '81-100';
+          const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
+          const mastery = update?.mastery;
+          const teacherRemark = update?.teacherRemark ?? '';
           const payload: Record<string, any> = {
-            mastery: masteryNum,
+            mastery: mastery ?? '',
+            score: score,
             scoreBand: scoreBand,
-            teacherRemark: entry.notes ?? '',
+            teacherRemark,
             lastEvidence: 'attendance',
             lastSessionId: selectedSession.id,
             updatedAt: serverTimestamp(),
