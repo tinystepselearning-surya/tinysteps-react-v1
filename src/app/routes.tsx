@@ -32,6 +32,7 @@ const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/Bes
 const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
 const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
+const CareersPage = lazy(() => import('../pages/public/CareersPage'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
 const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
@@ -120,6 +121,7 @@ const router = createBrowserRouter(
         { path: 'contact', element: <ContactPage /> },
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
         { path: 'team', element: <TeamPage /> },
+        { path: 'careers', element: <CareersPage /> },
         { path: 'courses', element: <CoursesPage /> },
         { path: 'courses/:courseId', element: <CourseDetailPage /> },
         { path: 'curriculum', element: <CurriculumPage /> },

@@ -320,6 +320,12 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/for-schools',
     ogType: 'website',
   },
+  '/careers': {
+    title: 'Careers | Join the Tiny Steps Team',
+    description: 'We’re hiring remote part-time Online Teachers, Learning Partners, and Curriculum Administrators. Work with children aged 3–12. Apply on WhatsApp.',
+    canonicalPath: '/careers',
+    ogType: 'website',
+  },
   '/parents': {
     title: 'Parents Hub | Tiny Steps Learning',
     description: 'Resources and guides for parents. Learn how to support your child\'s English learning journey at home.',

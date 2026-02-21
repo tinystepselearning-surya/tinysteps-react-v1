@@ -18,6 +18,7 @@ const SEED_ROUTES = [
   "/faq",
   "/contact",
   "/team",
+  "/careers",
   "/blog",
   "/book-demo",
   "/best-online-phonics-classes-india",
@@ -229,6 +230,12 @@ const ROUTE_SEO_CONFIG = {
     title: 'Meet the Team | Tiny Steps Learning',
     description: 'Meet the experienced educators behind Tiny Steps Learning. Based in Hyderabad, serving families worldwide with expert 1:1 online English classes for kids ages 3–12.',
     canonicalPath: '/team',
+    robots: 'index, follow',
+  },
+  '/careers': {
+    title: 'Careers | Join the Tiny Steps Team',
+    description: 'We’re hiring remote part-time Online Teachers, Learning Partners, and Curriculum Administrators. Work with children aged 3–12. Apply on WhatsApp.',
+    canonicalPath: '/careers',
     robots: 'index, follow',
   },
   '/for-schools': {
