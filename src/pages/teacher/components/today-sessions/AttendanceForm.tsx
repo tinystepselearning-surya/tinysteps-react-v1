@@ -6,6 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@components/ui/textarea';
 import { Input } from '@components/ui/input';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
+import { useProgressPicklists } from '../../../../hooks/useProgressPicklists';
+import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../../../lib/firebaseConfig';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -20,11 +24,88 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState<Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }>>({});
   const [sessionNotes, setSessionNotes] = useState('');
+  const [kidNameById, setKidNameById] = useState<Record<string, string>>({});
+
+  const { config, loading: picklistsLoading } = useProgressPicklists();
+  const { students } = useTeacherFilteredStudents();
+
+  // Build name lookup map from hook (priority source)
+  const kidNameFromHookById = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((student) => {
+      // Robust name resolution: try multiple fields
+      const name = student.fullName || 
+                   (student as any).studentName || 
+                   (student as any).name || 
+                   (student as any).displayName || 
+                   (student as any).email || 
+                   '';
+      if (name && student.uid) {
+        map.set(student.uid, name);
+      }
+      // Also map by alternative ID fields if present
+      if (name && (student as any).id) map.set((student as any).id, name);
+      if (name && (student as any).userId) map.set((student as any).userId, name);
+    });
+    return map;
+  }, [students]);
+
+  // Extract kidIds from session
+  const kidIds = useMemo(() => 
+    session?.kidIds?.length ? session.kidIds : (session?.kidId ? [session.kidId] : []),
+    [session]
+  );
+
+  // Fallback fetch: read missing kid names from Firestore
+  useEffect(() => {
+    if (!session || kidIds.length === 0) return;
+
+    let cancelled = false;
+
+    const fetchMissingNames = async () => {
+      const missingKidIds = kidIds.filter(id => !kidNameFromHookById.has(id) && !kidNameById[id]);
+      
+      if (missingKidIds.length === 0) return;
+
+      const fetchedNames: Record<string, string> = {};
+      
+      await Promise.all(
+        missingKidIds.map(async (kidId) => {
+          try {
+            const kidDocRef = doc(db, 'kids', kidId);
+            const kidDocSnap = await getDoc(kidDocRef);
+            
+            if (kidDocSnap.exists() && !cancelled) {
+              const data = kidDocSnap.data();
+              const name = data.fullName || 
+                          data.studentName || 
+                          data.name || 
+                          data.displayName || 
+                          'Student';
+              fetchedNames[kidId] = name;
+            }
+          } catch (err) {
+            console.warn(`Failed to fetch name for kid ${kidId}:`, err);
+          }
+        })
+      );
+
+      if (!cancelled && Object.keys(fetchedNames).length > 0) {
+        setKidNameById(prev => ({ ...prev, ...fetchedNames }));
+      }
+    };
+
+    fetchMissingNames();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, kidIds, kidNameFromHookById, kidNameById]);
 
   useEffect(() => {
     if (session) {
       const defaults: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }> = {};
-      session.kidIds.forEach((kidId) => {
+      kidIds.forEach((kidId) => {
         defaults[kidId] = {
           status: session.attendance?.[kidId] || 'present',
           notes: '',
@@ -35,7 +116,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
       setFormState(defaults);
       setSessionNotes(session.notes || '');
     }
-  }, [session]);
+  }, [session, kidIds]);
 
   const handleChange = (kidId: string, status: AttendanceStatus) => {
     setFormState((prev) => ({
@@ -67,14 +148,14 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     }));
   };
 
-  const handleTopicChange = (kidId: string, topic: string, checked: boolean) => {
+  const handleTopicChange = (kidId: string, topicId: string, checked: boolean) => {
     setFormState((prev) => ({
       ...prev,
       [kidId]: {
         ...prev[kidId],
         topics: checked
-          ? [...(prev[kidId].topics || []), topic]
-          : (prev[kidId].topics || []).filter(t => t !== topic),
+          ? [...(prev[kidId].topics || []), topicId]
+          : (prev[kidId].topics || []).filter(t => t !== topicId),
       },
     }));
   };
@@ -90,10 +171,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     }
   };
 
-  const kids = useMemo(() => session?.kidIds || [], [session]);
-
-  // Mock topics
-  const topics = ['Letter A', 'Phoneme Sounds', 'Word Building'];
+  const topics = useMemo(() => config?.topics ?? [], [config?.topics]);
 
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
@@ -107,20 +185,31 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
         ) : (
           <div className="space-y-4">
             <div>
-              <p className="text-sm text-muted-foreground">
-                {session.courseName} · {session.startTime} - {session.endTime}
+              <p className="text-sm font-medium">
+                {session.courseName || session.courseId || 'Course'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {session.startTime} - {session.endTime}
               </p>
             </div>
-            {kids.length === 0 ? (
+            {kidIds.length === 0 ? (
               <p className="text-sm text-muted-foreground">No students assigned to this session.</p>
             ) : (
-              kids.map((kidId) => (
-                <div key={kidId} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <Label className="font-medium">{kidId}</Label>
-                    </div>
+              kidIds.map((kidId) => {
+                // Resolve kid name: try hook first, then fallback fetch, then truncated ID
+                const displayName = kidNameFromHookById.get(kidId) || 
+                                   kidNameById[kidId] || 
+                                   `Student (${kidId.slice(0, 6)}…)`;
+                
+                return (
+                  <div key={kidId} className="border rounded-lg p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                        <Label className="font-medium">
+                          {displayName}
+                        </Label>
+                      </div>
                     <Select
                       value={formState[kidId]?.status || 'present'}
                       onValueChange={(v) => handleChange(kidId, v as AttendanceStatus)}
@@ -151,18 +240,26 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                   </div>
                   <div>
                     <Label>Topics Covered</Label>
-                    <div className="flex gap-2 mt-1">
-                      {topics.map((topic) => (
-                        <label key={topic} className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            checked={(formState[kidId]?.topics || []).includes(topic)}
-                            onChange={(e) => handleTopicChange(kidId, topic, e.target.checked)}
-                          />
-                          {topic}
-                        </label>
-                      ))}
-                    </div>
+                    {picklistsLoading ? (
+                      <p className="text-sm text-gray-500">Loading topics...</p>
+                    ) : (
+                      <div className="flex gap-2 mt-1">
+                        {topics.map((topic) => {
+                          const savedTopics = formState[kidId]?.topics || [];
+                          const isChecked = savedTopics.includes(topic.id) || savedTopics.includes(topic.label);
+                          return (
+                            <label key={topic.id} className="flex items-center gap-1">
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                onChange={(e) => handleTopicChange(kidId, topic.id, e.target.checked)}
+                              />
+                              {topic.label}
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <Textarea
                     placeholder="Notes (optional)"
@@ -170,7 +267,8 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                     onChange={(event) => handleNotesChange(kidId, event.target.value)}
                   />
                 </div>
-              ))
+                );
+              })
             )}
             <div>
               <Label>Session Notes</Label>

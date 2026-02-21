@@ -4,7 +4,7 @@ import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
-import { doc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
@@ -39,17 +39,77 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }>; sessionNotes: string }) => {
     if (!selectedSession) return;
     try {
-      await updateDoc(doc(db, 'sessions', selectedSession.id), {
+      const batch = writeBatch(db);
+      
+      // Update session document
+      const sessionRef = doc(db, 'sessions', selectedSession.id);
+      batch.update(sessionRef, {
         attendance: data.attendance,
         notes: data.sessionNotes,
         status: 'completed',
         updatedAt: serverTimestamp(),
-        updatedBy: user?.uid,
+        updatedBy: user?.uid ?? null,
       });
+
+      // Write curriculum completion for each kid with topics (only if present/late)
+      for (const [kidId, entry] of Object.entries(data.attendance)) {
+        const status = entry?.status;
+        if (status === 'absent') continue;
+        
+        const topics = entry?.topics ?? [];
+        if (!Array.isArray(topics) || topics.length === 0) continue;
+
+        for (const topicId of topics) {
+          if (!topicId) continue;
+          const curRef = doc(db, 'students', kidId, 'curriculum', topicId);
+          batch.set(curRef, {
+            status: 'completed',
+            updatedAt: serverTimestamp(),
+            updatedBy: user?.uid ?? null,
+            source: 'attendance',
+            lastSessionId: selectedSession.id,
+          }, { merge: true });
+        }
+      }
+
+      // Write progress docs for each kid with topics (only if present/late)
+      for (const [kidId, entry] of Object.entries(data.attendance)) {
+        const status = entry?.status;
+        if (status === 'absent') continue;
+        
+        const topics = entry?.topics ?? [];
+        if (!Array.isArray(topics) || topics.length === 0) continue;
+
+        // Convert mastery to number (0-100)
+        const masteryNum = Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50;
+        
+        // Derive scoreBand from mastery
+        const scoreBand = masteryNum <= 20 ? '0-20' :
+                         masteryNum <= 40 ? '21-40' :
+                         masteryNum <= 60 ? '41-60' :
+                         masteryNum <= 80 ? '61-80' : '81-100';
+
+        for (const topicId of topics) {
+          if (!topicId) continue;
+          const progRef = doc(db, 'students', kidId, 'progress', topicId);
+          batch.set(progRef, {
+            mastery: masteryNum,
+            scoreBand: scoreBand,
+            teacherRemark: entry.notes ?? '',
+            lastEvidence: 'attendance',
+            lastSessionId: selectedSession.id,
+            updatedAt: serverTimestamp(),
+            updatedBy: user?.uid ?? null,
+            source: 'attendance',
+          }, { merge: true });
+        }
+      }
+
+      await batch.commit();
       // Background post-processing (credits, alerts) is handled by the
       // Firestore trigger `onSessionCompleteTrigger` in `functions/`.
       // Avoid calling the callable here to prevent double-processing.
-      toast({ title: 'Attendance saved', description: 'All attendance entries stored.' });
+      toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
     } catch (err) {
       console.error(err);
       toast({

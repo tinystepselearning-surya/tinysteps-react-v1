@@ -29,7 +29,8 @@ const toTeacherSession = (doc: any): TeacherSession => ({
 
 export const useTeacherSessions = (
   teacherId?: string,
-  date: string = format(new Date(), 'yyyy-MM-dd')
+  startDate?: string,
+  endDate?: string
 ): UseTeacherSessionsResult => {
   const [sessions, setSessions] = useState<TeacherSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!teacherId);
@@ -41,10 +42,17 @@ export const useTeacherSessions = (
       return;
     }
 
+    // Default to today if no range provided
+    const today = format(new Date(), 'yyyy-MM-dd');
+    const start = startDate || today;
+    const end = endDate || today;
+
     const q = query(
       collection(db, 'sessions'),
       where('teacherId', '==', teacherId),
-      where('date', '==', date),
+      where('date', '>=', start),
+      where('date', '<=', end),
+      orderBy('date', 'asc'),
       orderBy('startTime', 'asc')
     );
 
@@ -63,7 +71,7 @@ export const useTeacherSessions = (
     );
 
     return () => unsub();
-  }, [teacherId, date]);
+  }, [teacherId, startDate, endDate]);
 
   const sortedSessions = useMemo(
     () =>
