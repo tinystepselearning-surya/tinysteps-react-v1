@@ -32,7 +32,7 @@ const programs = [
     icon: '🧩',
     age: 'Ages 7-12',
     blurb: 'AI-detected gaps + custom plan for fast catch-up.',
-    href: '/courses/phonics-foundations',
+    href: '/courses/phonics-foundation',
     accent: 'from-indigo-100 via-white to-lime-100'
   }
 ];

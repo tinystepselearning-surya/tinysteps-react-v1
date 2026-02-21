@@ -123,7 +123,7 @@ const router = createBrowserRouter(
         { path: 'team', element: <TeamPage /> },
         { path: 'careers', element: <CareersPage /> },
         { path: 'courses', element: <CoursesPage /> },
-        { path: 'courses/:courseId', element: <CourseDetailPage /> },
+        { path: 'courses/:slug', element: <CourseDetailPage /> },
         { path: 'curriculum', element: <CurriculumPage /> },
         // Parents / Help hub
         { path: 'parents', element: <ParentsHubPage /> },

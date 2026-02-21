@@ -6,9 +6,11 @@ import { catalogs, curriculumBySlug } from '../content/courses';
 import { getCourseWeeksOverride } from '../content/curriculumLoader';
 import Meta from '../components/common/Meta';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
+import { applySeo } from '../lib/seo';
 
 const CourseDetailPage: FC = () => {
-  const { slug } = useParams();
+  const params = useParams();
+  const slug = params.slug ?? params.courseId;
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
   const base = curriculumBySlug[slug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
@@ -25,6 +27,17 @@ const CourseDetailPage: FC = () => {
 
   useEffect(() => {
     if (course) document.title = `${course.name} | Tiny Steps`;
+  }, [course, slug]);
+
+  useEffect(() => {
+    if (course) return;
+    applySeo({
+      title: 'Course not found | Tiny Steps Learning',
+      description: 'The course you are looking for does not exist.',
+      canonicalPath: '/courses',
+      robots: 'noindex, follow',
+      ogType: 'website',
+    });
   }, [course]);
 
   if (!course) {

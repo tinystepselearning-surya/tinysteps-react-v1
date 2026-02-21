@@ -29,6 +29,33 @@ type CurriculumTopic = {
   label?: string;
 };
 
+const COURSE_ID_ALIASES: Record<string, string> = {
+  'phonics-foundation': 'phonics-foundations',
+  'phonics-advanced': 'advanced-phonics',
+  'phonics-early': 'early-phonics',
+};
+
+const COURSE_NAME_TO_ID: Record<string, string> = {
+  'phonics foundations': 'phonics-foundations',
+  'phonics foundation': 'phonics-foundations',
+  'early phonics': 'early-phonics',
+  'advanced phonics': 'advanced-phonics',
+};
+
+const normalizeCourseId = (value?: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = String(value).trim();
+  if (!trimmed) return null;
+  const key = trimmed.toLowerCase();
+  return COURSE_ID_ALIASES[key] || trimmed;
+};
+
+const mapCourseNameToId = (value?: string | null): string | null => {
+  if (!value) return null;
+  const key = String(value).trim().toLowerCase();
+  return COURSE_NAME_TO_ID[key] || null;
+};
+
 export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, onClose, onSubmit }) => {
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,6 +65,8 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([]);
   const [curriculumLoading, setCurriculumLoading] = useState(true);
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
+  const [enrollmentCourseId, setEnrollmentCourseId] = useState<string | null>(null);
+  const [enrollmentCourseLoading, setEnrollmentCourseLoading] = useState(false);
 
   const { students } = useTeacherFilteredStudents();
 
@@ -65,6 +94,11 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   // Extract kidIds from session
   const kidIds = useMemo(
     () => (session?.kidIds?.length ? session.kidIds : []),
+    [session]
+  );
+
+  const enrollmentId = useMemo(
+    () => (session as any)?.enrollmentId as string | undefined,
     [session]
   );
 
@@ -104,6 +138,57 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
     return () => unsub();
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const resolveEnrollmentCourse = async () => {
+      if (!session) {
+        setEnrollmentCourseId(null);
+        setEnrollmentCourseLoading(false);
+        return;
+      }
+
+      const direct = normalizeCourseId(session?.courseId);
+      if (direct) {
+        setEnrollmentCourseId(null);
+        setEnrollmentCourseLoading(false);
+        return;
+      }
+
+      if (!enrollmentId) {
+        setEnrollmentCourseId(null);
+        setEnrollmentCourseLoading(false);
+        return;
+      }
+
+      setEnrollmentCourseLoading(true);
+      try {
+        const snap = await getDoc(doc(db, 'enrollments', enrollmentId));
+        const next = snap.exists()
+          ? normalizeCourseId((snap.data() as any)?.courseId)
+          : null;
+        if (!cancelled) {
+          setEnrollmentCourseId(next);
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.error('[AttendanceForm] enrollment course fetch failed', err);
+        }
+        if (!cancelled) {
+          setEnrollmentCourseId(null);
+        }
+      } finally {
+        if (!cancelled) setEnrollmentCourseLoading(false);
+      }
+    };
+
+    resolveEnrollmentCourse();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, enrollmentId]);
 
   // Fallback fetch: read missing kid names from Firestore
   useEffect(() => {
@@ -264,11 +349,33 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     }
   };
 
+  const directCourseId = useMemo(
+    () => normalizeCourseId(session?.courseId),
+    [session?.courseId]
+  );
+  const nameCourseId = useMemo(
+    () => mapCourseNameToId(session?.courseName || (session as any)?.courseLabel || null),
+    [session?.courseName, (session as any)?.courseLabel]
+  );
+  const effectiveCourseId = directCourseId || enrollmentCourseId || nameCourseId || '';
+
   const topics = useMemo(() => {
-    const courseId = session?.courseId;
+    const courseId = effectiveCourseId;
     if (!courseId) return [];
     return curriculumTopics.filter((topic) => topic.courseId === courseId);
-  }, [curriculumTopics, session?.courseId]);
+  }, [curriculumTopics, effectiveCourseId]);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.debug('[AttendanceForm topics]', {
+        sessionId: session?.id,
+        sessionCourseId: session?.courseId,
+        effectiveCourseId,
+        totalTopicsLoaded: curriculumTopics.length,
+        topicsForCourseCount: topics.length,
+      });
+    }
+  }, [session?.id, session?.courseId, effectiveCourseId, curriculumTopics.length, topics.length]);
 
   const formatTopicLabel = (topic: CurriculumTopic) => {
     const base = topic.label || topic.id;
@@ -345,8 +452,14 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                   {!isRescheduleRequested ? (
                     <div>
                       <Label>Topics Covered</Label>
-                      {!session?.courseId ? (
-                        <p className="text-sm text-gray-500">No course assigned to this session.</p>
+                      {!effectiveCourseId ? (
+                        enrollmentCourseLoading ? (
+                          <p className="text-sm text-gray-500">Resolving course…</p>
+                        ) : (
+                          <p className="text-sm text-gray-500">
+                            This session has no course. Topics can’t be loaded. Ask Admin to re-generate sessions from schedule or fix the session courseId.
+                          </p>
+                        )
                       ) : curriculumLoading ? (
                         <p className="text-sm text-gray-500">Loading topics...</p>
                       ) : curriculumError ? (
