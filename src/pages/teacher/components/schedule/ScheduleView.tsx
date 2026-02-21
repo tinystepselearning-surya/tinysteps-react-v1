@@ -63,7 +63,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
   // Create quick lookup map: kidId -> studentName
   const studentNameById = useMemo(
-    () => new Map(students.map(s => [s.uid || s.id, s.studentName || s.displayName || ''])),
+    () => new Map(students.map((s) => [s.uid, s.fullName || ''])),
     [students]
   );
 
@@ -225,7 +225,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   <div className="space-y-1 mt-1">
                     {daySessions.slice(0, 2).map((session, idx) => {
                       // Resolve kid names from kidIds array or fallback to single kidId
-                      const kidIds = session.kidIds?.length ? session.kidIds : (session.kidId ? [session.kidId] : []);
+                      const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
                       const kidNames = kidIds
                         .map(id => studentNameById.get(id))
                         .filter(Boolean)
@@ -276,7 +276,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   </div>
                   <div className="space-y-1">
                     {daySessions.map((session, idx) => {
-                      const kidIds = session.kidIds?.length ? session.kidIds : (session.kidId ? [session.kidId] : []);
+                      const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
                       const kidNames = kidIds
                         .map(id => studentNameById.get(id))
                         .filter(Boolean)
@@ -316,7 +316,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <div className="space-y-2">
             {sessionsByDate[format(currentDate, 'yyyy-MM-dd')]?.length > 0 ? (
               sessionsByDate[format(currentDate, 'yyyy-MM-dd')].map((session, idx) => {
-                const kidIds = session.kidIds?.length ? session.kidIds : (session.kidId ? [session.kidId] : []);
+                const kidIds: string[] = session.kidIds?.length ? session.kidIds : [];
                 const kidNames = kidIds
                   .map(id => studentNameById.get(id))
                   .filter(Boolean)

@@ -51,8 +51,8 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   }, [students]);
 
   // Extract kidIds from session
-  const kidIds = useMemo(() => 
-    session?.kidIds?.length ? session.kidIds : (session?.kidId ? [session.kidId] : []),
+  const kidIds = useMemo(
+    () => (session?.kidIds?.length ? session.kidIds : []),
     [session]
   );
 
@@ -288,7 +288,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                 <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmit} disabled={isSubmitting || kids.length === 0}>
+                <Button onClick={handleSubmit} disabled={isSubmitting || kidIds.length === 0}>
                   {isSubmitting ? 'Saving...' : 'Save & Close'}
                 </Button>
               </div>
