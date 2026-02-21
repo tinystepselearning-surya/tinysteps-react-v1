@@ -7,9 +7,10 @@ import { Textarea } from '@components/ui/textarea';
 import { Input } from '@components/ui/input';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
-import { doc, getDoc, onSnapshot, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { toast } from '@components/hooks/use-toast';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -18,7 +19,7 @@ interface AttendanceFormProps {
   onSubmit: (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdateState[] }>; sessionNotes: string }) => Promise<void>;
 }
 
-type AttendanceOutcome = AttendanceStatus | 'reschedule_requested';
+type AttendanceOutcome = AttendanceStatus | 'reschedule_requested' | '';
 
 const STATUS_OPTIONS: AttendanceOutcome[] = ['present', 'absent', 'late', 'reschedule_requested'];
 
@@ -44,6 +45,14 @@ type AttendanceEntryState = {
   notes?: string;
   mastery?: number;
   topicUpdatesById?: Record<string, TopicUpdateState>;
+};
+
+type SavedTopicProgress = {
+  mastery?: string;
+  score?: number;
+  teacherRemark?: string;
+  updatedAt?: any;
+  topicName?: string;
 };
 
 const TOPIC_MASTERY_OPTIONS: TopicMastery[] = [
@@ -81,6 +90,26 @@ const mapCourseNameToId = (value?: string | null): string | null => {
   return COURSE_NAME_TO_ID[key] || null;
 };
 
+const normalizeMasteryValue = (value?: string | null): TopicMastery => {
+  const raw = String(value ?? '').trim().toLowerCase().replace(/\s+/g, '_');
+  if (TOPIC_MASTERY_OPTIONS.includes(raw as TopicMastery)) return raw as TopicMastery;
+  return 'developing';
+};
+
+const parseScoreValue = (value: any): number | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const direct = Number(value);
+    if (Number.isFinite(direct)) return direct;
+    const m = value.match(/(\d+)/);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return undefined;
+};
+
 export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, onClose, onSubmit }) => {
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,6 +122,8 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   const [enrollmentCourseId, setEnrollmentCourseId] = useState<string | null>(null);
   const [enrollmentCourseLoading, setEnrollmentCourseLoading] = useState(false);
   const [expandedTopics, setExpandedTopics] = useState<Record<string, Record<string, boolean>>>({});
+  const [savedTopicProgressByKidId, setSavedTopicProgressByKidId] = useState<Record<string, Record<string, SavedTopicProgress>>>({});
+  const [savedTopicProgressLoading, setSavedTopicProgressLoading] = useState(false);
 
   const { students } = useTeacherFilteredStudents();
 
@@ -127,6 +158,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     () => (session as any)?.enrollmentId as string | undefined,
     [session]
   );
+  const kidIdsKey = useMemo(() => kidIds.join('|'), [kidIds]);
 
   useEffect(() => {
     const ref = doc(db, 'config', 'curriculumTopics');
@@ -263,12 +295,16 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   }, [session, kidIds, kidNameFromHookById, kidNameById]);
 
   const normalizeStatus = (value: any): AttendanceOutcome => {
-    if (!value) return 'present';
-    if (typeof value === 'string') return value as AttendanceOutcome;
-    if (typeof value === 'object' && typeof value.status === 'string') {
-      return value.status as AttendanceOutcome;
+    if (!value) return '';
+    if (typeof value === 'string') {
+      return STATUS_OPTIONS.includes(value as AttendanceOutcome) ? (value as AttendanceOutcome) : '';
     }
-    return 'present';
+    if (typeof value === 'object' && typeof value.status === 'string') {
+      return STATUS_OPTIONS.includes(value.status as AttendanceOutcome)
+        ? (value.status as AttendanceOutcome)
+        : '';
+    }
+    return '';
   };
 
   useEffect(() => {
@@ -279,16 +315,16 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
         const existingTopics = Array.isArray(existingEntry?.topics)
           ? (existingEntry.topics as string[]).filter(Boolean)
           : [];
-        const topicUpdatesById = existingTopics.reduce((acc, topicId) => {
-          acc[topicId] = {
-            topicId,
-            mastery: 'developing',
-            score: 50,
-            teacherRemark: '',
-            topicName: topicId,
-          };
-          return acc;
-        }, {} as Record<string, TopicUpdateState>);
+          const topicUpdatesById = existingTopics.reduce((acc, topicId) => {
+            acc[topicId] = {
+              topicId,
+              mastery: 'developing',
+              score: 50,
+              teacherRemark: '',
+              topicName: topicId,
+            };
+            return acc;
+          }, {} as Record<string, TopicUpdateState>);
 
         defaults[kidId] = {
           status: normalizeStatus(session.attendance?.[kidId]),
@@ -334,15 +370,16 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
   const handleTopicToggle = (kidId: string, topic: CurriculumTopic, checked: boolean) => {
     setFormState((prev) => {
-      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const current = prev[kidId] || { status: '' as AttendanceOutcome };
       const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
       if (checked) {
+        const saved = savedTopicProgressByKidId[kidId]?.[topic.id];
         topicUpdatesById[topic.id] = topicUpdatesById[topic.id] || {
           topicId: topic.id,
-          mastery: 'developing',
-          score: 50,
-          teacherRemark: '',
-          topicName: formatTopicLabel(topic),
+          mastery: normalizeMasteryValue(saved?.mastery),
+          score: parseScoreValue(saved?.score) ?? 50,
+          teacherRemark: saved?.teacherRemark ?? '',
+          topicName: saved?.topicName || formatTopicLabel(topic),
         };
       } else {
         delete topicUpdatesById[topic.id];
@@ -387,7 +424,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
   const handleTopicMasteryChange = (kidId: string, topic: CurriculumTopic, value: TopicMastery) => {
     setFormState((prev) => {
-      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const current = prev[kidId] || { status: '' as AttendanceOutcome };
       const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
       const existing = topicUpdatesById[topic.id] || {
         topicId: topic.id,
@@ -412,7 +449,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
   const handleTopicScoreChange = (kidId: string, topic: CurriculumTopic, value: number) => {
     setFormState((prev) => {
-      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const current = prev[kidId] || { status: '' as AttendanceOutcome };
       const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
       const existing = topicUpdatesById[topic.id] || {
         topicId: topic.id,
@@ -437,7 +474,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
   const handleTopicRemarkChange = (kidId: string, topic: CurriculumTopic, value: string) => {
     setFormState((prev) => {
-      const current = prev[kidId] || { status: 'present' as AttendanceOutcome };
+      const current = prev[kidId] || { status: '' as AttendanceOutcome };
       const topicUpdatesById = { ...(current.topicUpdatesById || {}) };
       const existing = topicUpdatesById[topic.id] || {
         topicId: topic.id,
@@ -462,6 +499,14 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
 
   const handleSubmit = async () => {
     if (!session) return;
+    if (hasMissingStatus) {
+      toast({
+        title: 'Select attendance status',
+        description: 'Please choose Present/Absent/Late/Reschedule for each student.',
+        variant: 'destructive',
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       const hasReschedule = Object.values(formState).some(
@@ -544,6 +589,101 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
   }, [curriculumTopics, effectiveCourseId]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const loadSavedProgress = async () => {
+      if (!open || !effectiveCourseId || kidIds.length === 0) {
+        setSavedTopicProgressByKidId({});
+        setSavedTopicProgressLoading(false);
+        return;
+      }
+      setSavedTopicProgressLoading(true);
+      try {
+        const entries = await Promise.all(
+          kidIds.map(async (kidId) => {
+            const q = query(
+              collection(db, 'students', kidId, 'progress'),
+              where('courseId', '==', effectiveCourseId)
+            );
+            const snap = await getDocs(q);
+            const map: Record<string, SavedTopicProgress> = {};
+            snap.forEach((docSnap) => {
+              const data = docSnap.data() || {};
+              const score = parseScoreValue(data.score ?? data.scoreBand);
+              map[docSnap.id] = {
+                mastery: typeof data.mastery === 'string' ? data.mastery : undefined,
+                score: score ?? 50,
+                teacherRemark: typeof data.teacherRemark === 'string' ? data.teacherRemark : '',
+                updatedAt: data.updatedAt,
+                topicName: data.topicName || data.topicLabel || data.name || '',
+              };
+            });
+            return [kidId, map] as const;
+          })
+        );
+        if (!cancelled) {
+          setSavedTopicProgressByKidId(Object.fromEntries(entries));
+          if (import.meta.env.DEV) {
+            const total = entries.reduce((acc, [, map]) => acc + Object.keys(map).length, 0);
+            console.debug('[AttendanceForm] loaded saved progress', {
+              courseId: effectiveCourseId,
+              kids: entries.length,
+              totalTopics: total,
+            });
+          }
+        }
+      } catch (err) {
+        if (import.meta.env.DEV) {
+          console.error('[AttendanceForm] loadSavedProgress failed', err);
+        }
+        if (!cancelled) {
+          setSavedTopicProgressByKidId({});
+        }
+      } finally {
+        if (!cancelled) setSavedTopicProgressLoading(false);
+      }
+    };
+
+    loadSavedProgress();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [open, effectiveCourseId, kidIdsKey]);
+
+  useEffect(() => {
+    if (!session) return;
+    setFormState((prev) => {
+      const next = { ...prev };
+      kidIds.forEach((kidId) => {
+        const entry = next[kidId];
+        if (!entry?.topicUpdatesById) return;
+        const savedMap = savedTopicProgressByKidId[kidId];
+        if (!savedMap) return;
+        const updated = { ...entry.topicUpdatesById };
+        Object.entries(updated).forEach(([topicId, topicEntry]) => {
+          const saved = savedMap[topicId];
+          if (!saved) return;
+          const isDefault =
+            topicEntry.mastery === 'developing' &&
+            topicEntry.score === 50 &&
+            !topicEntry.teacherRemark;
+          if (!isDefault) return;
+          updated[topicId] = {
+            ...topicEntry,
+            mastery: normalizeMasteryValue(saved.mastery),
+            score: parseScoreValue(saved.score) ?? topicEntry.score,
+            teacherRemark: saved.teacherRemark ?? topicEntry.teacherRemark,
+            topicName: saved.topicName || topicEntry.topicName,
+          };
+        });
+        next[kidId] = { ...entry, topicUpdatesById: updated };
+      });
+      return next;
+    });
+  }, [session?.id, kidIdsKey, savedTopicProgressByKidId]);
+
+  useEffect(() => {
     if (import.meta.env.DEV) {
       console.debug('[AttendanceForm topics]', {
         sessionId: session?.id,
@@ -555,9 +695,22 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
     }
   }, [session?.id, session?.courseId, effectiveCourseId, curriculumTopics.length, topics.length]);
 
+  const hasMissingStatus = useMemo(
+    () => kidIds.some((kidId) => !formState[kidId]?.status),
+    [kidIdsKey, formState]
+  );
+
   const formatTopicLabel = (topic: CurriculumTopic) => {
     const base = topic.label || topic.id;
     return topic.lesson ? `${topic.lesson} — ${base}` : base;
+  };
+
+  const formatSavedSummary = (saved?: SavedTopicProgress) => {
+    if (!saved) return '';
+    const mastery = saved.mastery ? normalizeMasteryValue(saved.mastery).replace(/_/g, ' ') : '';
+    const score = Number.isFinite(Number(saved.score)) ? `${Number(saved.score)}%` : '';
+    const remark = saved.teacherRemark ? `“${saved.teacherRemark}”` : '';
+    return [mastery, score, remark].filter(Boolean).join(' • ');
   };
 
   return (
@@ -600,11 +753,11 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                         </Label>
                       </div>
                     <Select
-                      value={formState[kidId]?.status || 'present'}
+                      value={formState[kidId]?.status ?? ''}
                       onValueChange={(v) => handleChange(kidId, v as AttendanceOutcome)}
                     >
                       <SelectTrigger className="w-[150px]">
-                        <SelectValue />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
                         {STATUS_OPTIONS.map((status) => (
@@ -678,6 +831,11 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                                             />
                                             <span>{formatTopicLabel(topic)}</span>
                                           </label>
+                                          {!isChecked && !savedTopicProgressLoading && savedTopicProgressByKidId[kidId]?.[topic.id] && (
+                                            <span className="text-xs text-gray-500">
+                                              Saved: {formatSavedSummary(savedTopicProgressByKidId[kidId]?.[topic.id])}
+                                            </span>
+                                          )}
                                           {isChecked && (
                                             <button
                                               type="button"
@@ -688,6 +846,11 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                                             </button>
                                           )}
                                         </div>
+                                        {isChecked && !isExpanded && savedTopicProgressByKidId[kidId]?.[topic.id] && (
+                                          <div className="pl-6 text-xs text-gray-500 mt-1">
+                                            Saved: {formatSavedSummary(savedTopicProgressByKidId[kidId]?.[topic.id])}
+                                          </div>
+                                        )}
                                         {isChecked && isExpanded && (
                                           <div className="mt-2 space-y-2 pl-6">
                                             <div className="flex flex-wrap items-center gap-3">
@@ -789,10 +952,15 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                 <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
                   Cancel
                 </Button>
-                <Button onClick={handleSubmit} disabled={isSubmitting || kidIds.length === 0}>
+                <Button onClick={handleSubmit} disabled={isSubmitting || kidIds.length === 0 || hasMissingStatus}>
                   {isSubmitting ? 'Saving...' : 'Save & Close'}
                 </Button>
               </div>
+              {hasMissingStatus && (
+                <p className="text-xs text-amber-600 mt-2">
+                  Select attendance status for all students to save.
+                </p>
+              )}
             </div>
           </div>
         )}

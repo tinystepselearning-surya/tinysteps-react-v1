@@ -584,12 +584,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         for (const topicId of topicIds) {
           if (!topicId) continue;
           const update = updatesById.get(topicId);
-          const scoreRaw = Number(update?.score);
-          const score = Number.isFinite(scoreRaw)
-            ? scoreRaw
-            : (Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50);
-          const mastery = update?.mastery;
-          const isCompleted = mastery === 'proficient' || mastery === 'mastered' || score >= 81;
+          const mastery = typeof update?.mastery === 'string' ? update.mastery.trim() : '';
+          const scoreRaw = update?.score;
+          const score = Number.isFinite(Number(scoreRaw)) ? Number(scoreRaw) : null;
+          const isCompleted = mastery === 'proficient' || mastery === 'mastered' || (score !== null && score >= 81);
           const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
           const payload: Record<string, any> = {
             status: isCompleted ? 'completed' : 'in_progress',
@@ -627,29 +625,30 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         for (const topicId of topicIds) {
           if (!topicId) continue;
           const update = updatesById.get(topicId);
-          const scoreRaw = Number(update?.score);
-          const score = Number.isFinite(scoreRaw)
-            ? scoreRaw
-            : (Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50);
-          const scoreBand = score <= 20 ? '0-20' :
+          const mastery = typeof update?.mastery === 'string' ? update.mastery.trim() : '';
+          const teacherRemark = typeof update?.teacherRemark === 'string' ? update.teacherRemark.trim() : '';
+          const scoreRaw = update?.score;
+          const score = Number.isFinite(Number(scoreRaw)) ? Number(scoreRaw) : null;
+          const scoreBand = score === null ? null : (
+                           score <= 20 ? '0-20' :
                            score <= 40 ? '21-40' :
                            score <= 60 ? '41-60' :
-                           score <= 80 ? '61-80' : '81-100';
+                           score <= 80 ? '61-80' : '81-100'
+          );
           const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
-          const mastery = update?.mastery;
-          const teacherRemark = update?.teacherRemark ?? '';
           const payload: Record<string, any> = {
-            mastery: mastery ?? '',
-            score: score,
-            scoreBand: scoreBand,
-            teacherRemark,
-            lastEvidence: 'attendance',
+            lastEvidence: 'session',
             lastSessionId: selectedSession.id,
             updatedAt: serverTimestamp(),
             updatedBy: user?.uid ?? null,
             source: 'attendance',
             topicName,
+            topicId,
           };
+          if (mastery) payload.mastery = mastery;
+          if (teacherRemark) payload.teacherRemark = teacherRemark;
+          if (score !== null) payload.score = score;
+          if (scoreBand) payload.scoreBand = scoreBand;
           if (sessionCourseId) payload.courseId = sessionCourseId;
           if (sessionCourseLabel) {
             payload.courseLabel = sessionCourseLabel;

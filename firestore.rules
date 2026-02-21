@@ -103,8 +103,16 @@ service cloud.firestore {
     function isParentOfKid(kidId) {
       return isParent()
         && kidExists(kidId)
-        && ('parentIds' in kidDoc(kidId))
-        && (request.auth.uid in kidDoc(kidId).parentIds);
+        && (
+          (('parentIds' in kidDoc(kidId)) &&
+            (
+              ((kidDoc(kidId).parentIds is list) && (request.auth.uid in kidDoc(kidId).parentIds)) ||
+              ((kidDoc(kidId).parentIds is string) && (kidDoc(kidId).parentIds == request.auth.uid))
+            )
+          ) ||
+          (('primaryParentId' in kidDoc(kidId)) && (kidDoc(kidId).primaryParentId == request.auth.uid)) ||
+          (('parentId' in kidDoc(kidId)) && (kidDoc(kidId).parentId == request.auth.uid))
+        );
     }
 
     // ----------------------------
