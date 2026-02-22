@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { addDays, format } from 'date-fns';
 import { db } from '../../../lib/firebaseConfig';
 import { TeacherSession } from '../../../types/Teacher';
@@ -39,18 +39,46 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     }
 
     const today = new Date();
-    const dates = [];
+    const dates: string[] = [];
     for (let i = 1; i <= 7; i++) {
       dates.push(format(addDays(today, i), 'yyyy-MM-dd'));
     }
 
+    const baseCollection = collection(db, 'classSessions');
     const q = query(
-      collection(db, 'classSessions'),
+      baseCollection,
       where('teacherId', '==', teacherId),
       where('date', 'in', dates),
       orderBy('date', 'asc'),
       orderBy('startTime', 'asc')
     );
+
+    const fallbackMessage =
+      'Loading sessions in fallback mode (index not ready). Admin can deploy indexes for faster results.';
+
+    const runFallback = async () => {
+      try {
+        const fallbackSnap = await getDocs(
+          query(baseCollection, where('teacherId', '==', teacherId))
+        );
+        const allSessions = fallbackSnap.docs.map((d) =>
+          toTeacherSession({ id: d.id, ...d.data() })
+        );
+        const filtered = allSessions.filter((s) => dates.includes(String(s.date || '')));
+        const sorted = filtered.sort((a, b) => {
+          if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
+          return String(a.startTime || '').localeCompare(String(b.startTime || ''), undefined, {
+            numeric: true,
+          });
+        });
+        setSessions(sorted.slice(0, 200));
+        setIsLoading(false);
+        setError(new Error(fallbackMessage));
+      } catch (fallbackErr) {
+        setError(fallbackErr as Error);
+        setIsLoading(false);
+      }
+    };
 
     const unsub = onSnapshot(
       q,
@@ -63,9 +91,19 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
         });
         setSessions(next);
         setIsLoading(false);
+        setError(null);
       },
       (err) => {
         console.error('useUpcomingSessions error', err);
+        const message = err instanceof Error ? err.message : String(err);
+        if (
+          err?.code === 'failed-precondition' ||
+          /requires an index|index is currently building/i.test(message)
+        ) {
+          unsub();
+          runFallback();
+          return;
+        }
         setError(err as Error);
         setIsLoading(false);
       }

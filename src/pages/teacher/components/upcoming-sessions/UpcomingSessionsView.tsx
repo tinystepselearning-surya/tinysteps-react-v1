@@ -68,7 +68,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   }
 
   if (error) {
-    return <Card className="p-6"><p className="text-red-500">{error.message}</p></Card>;
+    return <Card className="p-6"><p className="text-muted-foreground">{error.message}</p></Card>;
   }
 
   return (

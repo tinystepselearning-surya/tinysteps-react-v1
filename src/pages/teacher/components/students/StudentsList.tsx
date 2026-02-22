@@ -62,7 +62,17 @@ export const StudentsList: React.FC<StudentsListProps> = ({ teacherId }) => {
                 </Badge>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>Courses: {(student.courseNames || []).join(', ') || '—'}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p>Courses: {(student.courseNames || []).join(', ') || '—'}</p>
+                  {student.enrollmentStatus === 'pending_payment' && (
+                    <Badge variant="outline" className="text-xs">
+                      Pending payment
+                    </Badge>
+                  )}
+                </div>
+                <p>
+                  Parent: {student.parentName || student.parentEmail || '—'}
+                </p>
                 <p>Last session: {student.lastSessionDate || '—'}</p>
               </div>
               <div className="pt-2">

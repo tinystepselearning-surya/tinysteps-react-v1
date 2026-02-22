@@ -26,6 +26,9 @@ export interface TeacherStudent {
   fullName: string;
   grade?: string;
   courseNames?: string[];
+  enrollmentStatus?: 'active' | 'pending_payment' | string;
+  parentName?: string;
+  parentEmail?: string;
   progressStatus?: 'on_track' | 'needs_attention';
   lastSessionDate?: string;
   avatarUrl?: string;

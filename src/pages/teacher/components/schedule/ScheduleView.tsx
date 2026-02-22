@@ -168,7 +168,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   }, [currentDate, view]);
 
   // Fetch all sessions for the visible range
-  const { sessions } = useTeacherSessions(
+  const { sessions, error: sessionsError } = useTeacherSessions(
     teacherId,
     format(rangeStart, 'yyyy-MM-dd'),
     format(rangeEnd, 'yyyy-MM-dd')
@@ -731,6 +731,17 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
   return (
     <div className="space-y-6">
+      {sessionsError && (
+        <Card className="p-4 border border-red-200 bg-red-50 text-red-700">
+          <p className="text-sm font-medium">Unable to load sessions.</p>
+          <p className="text-xs text-red-600 mt-1">
+            {sessionsError.message}
+          </p>
+          <p className="text-xs text-red-600 mt-1">
+            If you’re an admin, deploy the required Firestore indexes for classSessions.
+          </p>
+        </Card>
+      )}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePrev}>Prev</Button>

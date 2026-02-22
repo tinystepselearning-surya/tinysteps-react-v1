@@ -135,9 +135,10 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   }
 
   if (error) {
+    const fallbackMsg = error.message;
     return (
       <Card className="p-6">
-        <p className="text-sm text-red-500">{error.message}</p>
+        <p className="text-sm text-muted-foreground">{fallbackMsg}</p>
       </Card>
     );
   }
