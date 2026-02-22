@@ -1,3 +1,5 @@
+import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES } from '../config/pricing';
+
 // Lightweight course catalog and deep curriculum samples
 export type CourseTrack = 'phonics' | 'grammar' | 'speaking';
 
@@ -29,7 +31,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Foundation',
     overview: ['Letters & sounds (SATPIN)', 'Blending CVC', 'Digraphs', 'Magic‑e & teams', 'Tricky words'],
     outcomes: ['Identify 100+ letter sounds', 'Read decodable books', 'Write CVC words correctly', 'Recognize tricky words'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Communication & Thinking (phonological awareness, reflection journals)',
       'PYP Language: Phonemic awareness, decoding, emergent writing',
@@ -48,7 +50,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Long vowels', 'R‑controlled', 'Diphthongs', 'Multisyllabic strategies', 'Fluency'],
     outcomes: ['Read 150–300 word passages', 'Write 8–10 sentence paragraphs', 'Apply advanced patterns'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Research & Self-Management (word inquiries, independent practice logs)',
       'PYP Language: Reading comprehension, spelling conventions, fluency',
@@ -66,7 +68,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Brush‑Up',
     overview: ['Gap analysis', 'Targeted digraphs', 'Magic‑e & teams', 'Tricky words intensive', 'Multisyllabic decoding'],
     outcomes: ['Eliminate identified gaps', 'Personal reader booklet', 'Spelling list mastery'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Self-Management & Communication (goal tracking, oral reading logs)',
       'PYP Language: Differentiated decoding + encoding sequences',
@@ -84,7 +86,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Nouns & pronouns', 'Verbs & tenses', 'Adjectives', 'Prepositions', 'Conjunctions'],
     outcomes: ['Write 6–8 sentence paragraph', 'Punctuate correctly', 'Subject‑verb agreement mastery'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Communication (sentence crafting, peer dialogue) & Research (language inquiry)',
       'PYP Language: Written conventions, grammar usage, short-form writing',
@@ -102,7 +104,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['All 12 tenses', 'Clauses & modals', 'Reported speech', 'Passive voice', 'Advanced punctuation'],
     outcomes: ['120–180 word informative paragraph', 'Cohesion & transition words', 'Advanced accuracy'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Thinking & Research (essay planning, language analysis)',
       'MYP Language & Literature alignment: grammar accuracy, rationale writing',
@@ -120,7 +122,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Confidence & posture', 'Clear voice', 'Picture talks', 'Show & Tell structure'],
     outcomes: ['30–45s Show & Tell', 'Eye contact & posture', 'Intro‑middle‑close'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Communication & Social skills (spoken interactions, empathy building)',
       'PYP Oral Language scope: listening & speaking, presentation skills',
@@ -138,7 +140,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Hook‑Body‑Close', 'Persuasion & debate', 'Impromptu speaking', 'Visual aids mastery'],
     outcomes: ['1–2 minute capstone speech', 'Rubric‑based evaluation', 'Leadership presence'],
-    price: 'Plans from ₹3,360/month (30% off)',
+    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
     ibLens: [
       'ATL: Communication & Self-management (speech planning, rehearsals, feedback journals)',
       'Approaches to Learning – Presentation & Media literacy strands',

@@ -5,10 +5,18 @@ import type { FC } from 'react';
 import Meta from '../components/common/Meta';
 import { useAuthStore } from '../store/useAuthStore';
 import { catalogs } from '../content/courses';
-import { DISCOUNT_PERCENT, INTENSIVE_PLAN } from '../lib/pricingPlans';
+import {
+  COURSE_FEE_RANGE_24_36,
+  COURSE_TOTAL_FEE_ESTIMATE,
+  formatINR,
+  GROUP_MONTHLY_FEES,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  PER_CLASS_PRICE,
+  totalFeeForSessions,
+} from '../config/pricing';
 
-const MRP_PER_SESSION = 400;           // Official 1:1 base rate
-const DEFAULT_PACK_RATE = 400; // Use base rate for estimates
+const MRP_PER_SESSION = PER_CLASS_PRICE; // Official 1:1 base rate
+const DEFAULT_PACK_RATE = PER_CLASS_PRICE; // Use base rate for estimates
 
 // ============================================================================
 // DISCOUNT HELPERS (Deprecated for current pricing)
@@ -19,7 +27,7 @@ const applyDiscount = (amount: number): number => {
   return Math.round(amount * (100 - DISCOUNT_PCT) / 100);
 };
 
-const fmtINR = (n: number): string => `₹${n.toLocaleString('en-IN')}`;
+const fmtINR = (n: number): string => formatINR(n);
 
 // PriceLine component: renders original (struck), badge, and offered price
 const PriceLine: FC<{ original: number; suffix?: string; offerOnly?: boolean }> = ({
@@ -65,13 +73,9 @@ const parseClassesPerWeek = (frequency: string) => {
   return match ? parseInt(match[1], 10) : 2;
 };
 
-import { PRICING_PLANS, formatINR as formatCurrency } from '../lib/pricingPlans';
-
-const plans = [
-  {
+const planMeta = {
+  starter: {
     name: 'Starter',
-    sessions: 12,
-    monthlyFee: 4800,
     title: '12 Classes / Month',
     badge: 'New families',
     highlight: false,
@@ -83,10 +87,8 @@ const plans = [
       'WhatsApp nudges for practice',
     ],
   },
-  {
+  growth: {
     name: 'Growth',
-    sessions: 16,
-    monthlyFee: 6400,
     title: '16 Classes / Month',
     badge: 'Most popular',
     highlight: true,
@@ -98,10 +100,8 @@ const plans = [
       'Parent Q&A call every month',
     ],
   },
-  {
+  intensive: {
     name: 'Intensive',
-    sessions: 24,
-    monthlyFee: 9600,
     title: '24 Classes / Month',
     badge: 'Fast-track',
     highlight: false,
@@ -113,7 +113,21 @@ const plans = [
       'Optional Saturday masterclass',
     ],
   },
-];
+} as const;
+
+const plans = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => {
+  const meta = planMeta[pkg.id] || planMeta.starter;
+  return {
+    name: meta.name,
+    sessions: pkg.classes,
+    monthlyFee: pkg.monthlyFee,
+    title: meta.title,
+    badge: meta.badge,
+    highlight: meta.highlight,
+    color: meta.color,
+    features: meta.features,
+  };
+});
 
 const PricingPage: FC = () => {
   useEffect(() => {
@@ -129,9 +143,9 @@ const PricingPage: FC = () => {
         const minSessions = weeks.min * effectiveClassesPerWeek;
         const maxSessions = weeks.max * effectiveClassesPerWeek;
 
-        // Use the typical pack rate (~₹550) for fee estimates
-        const minFee = minSessions * DEFAULT_PACK_RATE;
-        const maxFee = maxSessions * DEFAULT_PACK_RATE;
+        // Use the current per-class rate for fee estimates
+        const minFee = totalFeeForSessions(minSessions, DEFAULT_PACK_RATE);
+        const maxFee = totalFeeForSessions(maxSessions, DEFAULT_PACK_RATE);
 
         return {
           course,
@@ -150,13 +164,9 @@ const PricingPage: FC = () => {
   const planPricing = useMemo(() => plans, []);
 
   const navigate = useNavigate();
-  const groupPricing = [
-    {
-      size: '1:1',
-      fee12: 4800,
-      save: null,
+  const groupMeta = {
+    '1:1': {
       bestFor: 'Premium 1:1 (all ages)',
-      duration: '35 min',
       chip: 'Premium',
       theme: {
         bg: 'bg-amber-50',
@@ -164,12 +174,8 @@ const PricingPage: FC = () => {
         badge: 'bg-amber-100 text-amber-900',
       },
     },
-    {
-      size: '1:2',
-      fee12: 3600,
-      save: 25,
+    '1:2': {
       bestFor: 'Early learners (4–10)',
-      duration: '40 min',
       chip: 'Small group',
       theme: {
         bg: 'bg-sky-50',
@@ -177,12 +183,8 @@ const PricingPage: FC = () => {
         badge: 'bg-sky-100 text-sky-900',
       },
     },
-    {
-      size: '1:3',
-      fee12: 3000,
-      save: 38,
+    '1:3': {
       bestFor: 'Same-level kids (5–10)',
-      duration: '45 min',
       chip: 'Small group',
       theme: {
         bg: 'bg-violet-50',
@@ -190,12 +192,8 @@ const PricingPage: FC = () => {
         badge: 'bg-violet-100 text-violet-900',
       },
     },
-    {
-      size: '1:4',
-      fee12: 2640,
-      save: 45,
+    '1:4': {
       bestFor: 'Confident learners (6–12)',
-      duration: '50 min',
       chip: 'Small group',
       theme: {
         bg: 'bg-teal-50',
@@ -203,12 +201,8 @@ const PricingPage: FC = () => {
         badge: 'bg-teal-100 text-teal-900',
       },
     },
-    {
-      size: '1:5',
-      fee12: 2400,
-      save: 50,
+    '1:5': {
       bestFor: 'Practice groups (7–12)',
-      duration: '55 min',
       chip: 'Small group',
       theme: {
         bg: 'bg-rose-50',
@@ -216,12 +210,8 @@ const PricingPage: FC = () => {
         badge: 'bg-rose-100 text-rose-900',
       },
     },
-    {
-      size: '1:6',
-      fee12: 2160,
-      save: 55,
+    '1:6': {
       bestFor: 'Fluency & speaking (8–12)',
-      duration: '60 min',
       chip: 'Small group',
       theme: {
         bg: 'bg-lime-50',
@@ -229,8 +219,26 @@ const PricingPage: FC = () => {
         badge: 'bg-lime-100 text-lime-900',
       },
     },
-  ];
-  const baseGroupFee12 = 4800;
+  } as const;
+
+  const baseGroupFee12 =
+    GROUP_MONTHLY_FEES.find((row) => row.ratio === '1:1')?.monthlyFee ?? 0;
+
+  const groupPricing = GROUP_MONTHLY_FEES.map((row) => {
+    const meta = groupMeta[row.ratio as keyof typeof groupMeta] || groupMeta['1:1'];
+    const save = row.ratio === '1:1'
+      ? null
+      : Math.round((1 - row.monthlyFee / baseGroupFee12) * 100);
+    return {
+      size: row.ratio,
+      fee12: row.monthlyFee,
+      save,
+      bestFor: meta.bestFor,
+      duration: `${row.durationMinutes} min`,
+      chip: meta.chip,
+      theme: meta.theme,
+    };
+  });
 
   const offerCatalog = {
     '@context': 'https://schema.org',
@@ -263,13 +271,16 @@ const PricingPage: FC = () => {
       <section className="relative px-6 pt-24 pb-10">
         <div className="mx-auto max-w-5xl glass-panel px-8 py-10 text-center">
           <div className="gradient-chip mx-auto w-max">
-            ₹{MRP_PER_SESSION} per class • Choose 12, 16, or 24 classes per month
+            {formatINR(MRP_PER_SESSION)} per class • Choose 12, 16, or 24 classes per month
           </div>
           <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">
             Pricing that mirrors your child’s curriculum
           </h1>
           <p className="mt-3 text-gray-700">
             All plans are billed monthly. We’ll help you pick the right plan after a free assessment.
+          </p>
+          <p className="mt-2 text-sm text-gray-600">
+            Typical course total: {formatINR(COURSE_TOTAL_FEE_ESTIMATE)} for 36 sessions • Range {formatINR(COURSE_FEE_RANGE_24_36.min)}–{formatINR(COURSE_FEE_RANGE_24_36.max)} for 24–36 sessions.
           </p>
         </div>
       </section>
@@ -301,7 +312,7 @@ const PricingPage: FC = () => {
                 </div>
               </div>
               <p className="text-xs text-gray-500 mt-2">
-                {`₹${DEFAULT_PACK_RATE} per class • ${plan.sessions} live classes`}
+                {`${formatINR(DEFAULT_PACK_RATE)} per class • ${plan.sessions} live classes`}
               </p>
               <ul className="mt-4 space-y-2 text-sm text-gray-700">
                 {plan.features.map((feature) => (

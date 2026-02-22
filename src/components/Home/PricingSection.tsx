@@ -1,39 +1,39 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Button from '../Button/Button';
+import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from '../../config/pricing';
 
-const plans = [
-  {
+const planMeta: Record<string, { name: string; highlight: boolean; note: string }> = {
+  starter: {
     name: 'Starter Pack',
-    price: '₹4,400',
-    bullets: [
-      '8 live 1:1 classes (35 mins each)',
-      'Effective rate: ₹550 per class',
-      'Great for starting ages 3–6',
-    ],
     highlight: false,
+    note: 'Great for starting ages 3–6',
   },
-  {
+  growth: {
     name: 'Growth Pack',
-    price: '₹8,400',
-    bullets: [
-      '16 live 1:1 classes (35 mins each)',
-      'Effective rate: ₹525 per class',
-      'Most popular for ages 5–10',
-    ],
     highlight: true,
+    note: 'Most popular for ages 5–10',
   },
-  {
+  intensive: {
     name: 'Intensive Pack',
-    price: '₹12,000',
-    bullets: [
-      '24 live 1:1 classes (35 mins each)',
-      'Effective rate: ₹500 per class',
-      'Ideal for advanced or fast catch-up',
-    ],
     highlight: false,
+    note: 'Ideal for advanced or fast catch-up',
   },
-];
+};
+
+const plans = ONE_TO_ONE_MONTHLY_PACKAGES.map((plan) => {
+  const meta = planMeta[plan.id] || planMeta.starter;
+  return {
+    name: meta.name,
+    price: formatINR(plan.monthlyFee),
+    bullets: [
+      `${plan.classes} live 1:1 classes (${plan.durationMinutes} mins each)`,
+      `Effective rate: ${formatINR(PER_CLASS_PRICE)} per class`,
+      meta.note,
+    ],
+    highlight: meta.highlight,
+  };
+});
 
 const PricingSection = () => {
   return (

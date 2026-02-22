@@ -94,17 +94,120 @@ const PHONICS_COURSE_IDS = [
   "advanced-phonics",
 ];
 
+const PHONICS_COURSE_ID_ALIASES: Record<string, string> = {
+  "phonics-foundation": "phonics-foundations",
+  foundational: "phonics-foundations",
+  "phonics-early": "early-phonics",
+  early: "early-phonics",
+  "phonics-advanced": "advanced-phonics",
+  advanced: "advanced-phonics",
+};
+
 const phonicsLabelsByCourseId: Record<string, string> = {
   "phonics-foundations": "Phonics Foundations",
   "early-phonics": "Early Phonics",
   "advanced-phonics": "Advanced Phonics",
 };
 
-const phonicsTotalsByCourseId: Record<string, number> = {
-  "phonics-foundations": 30,
-  "early-phonics": 41,
-  "advanced-phonics": 20,
+const phonicsGradientsByCourseId: Record<string, string> = {
+  "phonics-foundations": "from-indigo-50 to-purple-50",
+  "early-phonics": "from-emerald-50 to-teal-50",
+  "advanced-phonics": "from-amber-50 to-orange-50",
 };
+
+const phonicsIconsByCourseId: Record<string, string> = {
+  "phonics-foundations": "🔤",
+  "early-phonics": "📘",
+  "advanced-phonics": "🧠",
+};
+
+function clampPercent(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function parseScorePercent(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return clampPercent(value);
+  }
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  const nums = raw.match(/\d+/g);
+  if (!nums || nums.length === 0) return null;
+  const isRangeLike = /-|–|\/| to /i.test(raw);
+  const chosen = Number(isRangeLike ? nums[0] : nums[nums.length - 1]);
+  if (!Number.isFinite(chosen)) return null;
+  return clampPercent(chosen);
+}
+
+function masteryToPercent(value: unknown): number | null {
+  const mastery = String(value ?? "").trim().toLowerCase();
+  if (!mastery) return null;
+  if (mastery === "not_started") return 0;
+  if (mastery === "emerging") return 25;
+  if (mastery === "developing") return 50;
+  if (mastery === "proficient") return 75;
+  if (mastery === "mastered") return 100;
+  return null;
+}
+
+function formatMasteryLabel(value?: string | null): string {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return "";
+  if (raw === "not_started") return "Not started";
+  const cleaned = raw.replace(/_/g, " ");
+  return cleaned.replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
+function resolveTopicOrder(topic: any): number | null {
+  if (typeof topic?.order === "number") return topic.order;
+  if (typeof topic?.index === "number") return topic.index;
+  if (typeof topic?.lesson === "number") return topic.lesson;
+  if (typeof topic?.lesson === "string") {
+    const m = topic.lesson.match(/(\d+)/);
+    if (m) {
+      const n = Number(m[1]);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+
+function formatTimestamp(ms?: number | null): string {
+  if (!ms) return "—";
+  const dt = new Date(ms);
+  if (Number.isNaN(dt.getTime())) return "—";
+  return dt.toLocaleString();
+}
+
+function normalizeTopicText(value?: string | null): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function normalizePhonicsCourseId(value?: string | null): string | null {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return null;
+  if (PHONICS_COURSE_IDS.includes(raw)) return raw;
+  return PHONICS_COURSE_ID_ALIASES[raw] || null;
+}
+
+function normalizeSessionCourseId(session?: any): string | null {
+  const direct = normalizePhonicsCourseId(
+    session?.courseId ?? session?.course?.id ?? session?.course
+  );
+  if (direct) return direct;
+  const name = String(session?.courseName ?? session?.courseLabel ?? "")
+    .toLowerCase()
+    .trim();
+  if (!name) return null;
+  if (name.includes("early")) return "early-phonics";
+  if (name.includes("foundation")) return "phonics-foundations";
+  if (name.includes("advanced")) return "advanced-phonics";
+  return null;
+}
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -241,6 +344,11 @@ export default function ParentDashboard() {
 
   const kids = useMemo(() => kidsQuery.data ?? [], [kidsQuery.data]);
   const [selectedKidId, setSelectedKidId] = useState<string>("");
+  const [curriculumTopicModalOpen, setCurriculumTopicModalOpen] =
+    useState(false);
+  const [selectedCurriculumTopic, setSelectedCurriculumTopic] =
+    useState<any>(null);
+  const [curriculumExpanded, setCurriculumExpanded] = useState(false);
 
   useEffect(() => {
     if (!selectedKidId && kids.length > 0) setSelectedKidId(kids[0].id);
@@ -269,20 +377,32 @@ export default function ParentDashboard() {
 
   // ---- Enrollments for selected kid (used for phonics progress) ----
   const enrollmentsQuery = useQuery({
-    queryKey: ["kidEnrollments", selectedKidId],
-    enabled: !!selectedKidId,
+    queryKey: ["kidEnrollments", user?.uid, selectedKidId],
+    enabled: !!user?.uid && !!selectedKidId,
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
     queryFn: async (): Promise<Enrollment[]> => {
-      if (!selectedKidId) return [];
+      if (!user?.uid || !selectedKidId) return [];
       const enrollmentsCol = collection(db, "enrollments");
       const results = new Map<string, Enrollment>();
 
       const queries = [
-        query(enrollmentsCol, where("studentId", "==", selectedKidId)),
-        query(enrollmentsCol, where("kidId", "==", selectedKidId)),
-        query(enrollmentsCol, where("kidIds", "array-contains", selectedKidId)),
+        query(
+          enrollmentsCol,
+          where("parentId", "==", user.uid),
+          where("studentId", "==", selectedKidId)
+        ),
+        query(
+          enrollmentsCol,
+          where("parentId", "==", user.uid),
+          where("kidId", "==", selectedKidId)
+        ),
+        query(
+          enrollmentsCol,
+          where("parentId", "==", user.uid),
+          where("kidIds", "array-contains", selectedKidId)
+        ),
       ];
 
       for (const q of queries) {
@@ -317,6 +437,78 @@ export default function ParentDashboard() {
     },
   });
 
+  const curriculumTopicsQuery = useQuery({
+    queryKey: ["curriculumTopics"],
+    enabled: activeTab === "dashboard",
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, "config", "curriculumTopics"));
+      return snap.exists() ? (snap.data() as any) : null;
+    },
+  });
+
+  const curriculumTopicsByCourseId = useMemo(() => {
+    const data = curriculumTopicsQuery.data;
+    const rawTopics = Array.isArray(data?.topics) ? data.topics : [];
+    const byCourse: Record<
+      string,
+      Array<{ id: string; label: string; matchLabel: string; order: number | null }>
+    > = {};
+
+    rawTopics.forEach((topic: any) => {
+      const id = String(topic?.id ?? "");
+      if (!id) return;
+      const courseId = normalizePhonicsCourseId(topic?.courseId ?? topic?.course);
+      if (!courseId) return;
+      const baseLabel = String(
+        topic?.label ?? topic?.topicName ?? topic?.name ?? id
+      ).trim();
+      const lesson = topic?.lesson ? String(topic.lesson).trim() : "";
+      const label = lesson ? `${lesson} — ${baseLabel || id}` : baseLabel || id;
+      const order = resolveTopicOrder(topic);
+      if (!byCourse[courseId]) byCourse[courseId] = [];
+      byCourse[courseId].push({ id, label, matchLabel: baseLabel || id, order });
+    });
+
+    Object.keys(byCourse).forEach((courseId) => {
+      byCourse[courseId] = byCourse[courseId].sort((a, b) => {
+        const aOrder = a.order;
+        const bOrder = b.order;
+        if (aOrder !== null && bOrder !== null && aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        if (aOrder !== null && bOrder === null) return -1;
+        if (aOrder === null && bOrder !== null) return 1;
+        return a.label.localeCompare(b.label);
+      });
+    });
+
+    return byCourse;
+  }, [curriculumTopicsQuery.data]);
+
+  const topicCourseById = useMemo(() => {
+    const map: Record<string, string> = {};
+    Object.entries(curriculumTopicsByCourseId).forEach(([courseId, topics]) => {
+      topics.forEach((topic) => {
+        map[topic.id] = courseId;
+      });
+    });
+    return map;
+  }, [curriculumTopicsByCourseId]);
+
+  const progressByTopicId = useMemo(() => {
+    const records = (phonicsProgressQuery.data ?? []) as any[];
+    const map: Record<string, any> = {};
+    records.forEach((doc) => {
+      const id = String(doc?.topicId ?? doc?.id ?? "");
+      if (!id) return;
+      map[id] = doc;
+    });
+    return map;
+  }, [phonicsProgressQuery.data]);
+
   const phonicsEnrollments = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
     const isPhonicsEnrollment = (enrollment: Enrollment): boolean => {
@@ -332,64 +524,15 @@ export default function ParentDashboard() {
     return enrollments.filter(isPhonicsEnrollment);
   }, [enrollmentsQuery.data]);
 
-  const phonicsProgressByCourse = useMemo(() => {
-    const records = (phonicsProgressQuery.data ?? []) as any[];
-    const courseIdsToShow = PHONICS_COURSE_IDS.filter((id) =>
-      phonicsEnrollments.some((enr) => String(enr.courseId || "") === id)
-    );
+  const phonicsCourseIdsFromEnrollments = useMemo(() => {
+    return phonicsEnrollments
+      .map((enr) => normalizePhonicsCourseId(enr.courseId))
+      .filter((id): id is string => Boolean(id));
+  }, [phonicsEnrollments]);
 
-    if (courseIdsToShow.length === 0) return [];
-
-    const getMastered = (doc: any): boolean => {
-      const mastery = String(doc.mastery ?? "").toLowerCase();
-      if (mastery === "proficient" || mastery === "mastered") return true;
-      const scoreBand = Number(doc.scoreBand);
-      if (Number.isFinite(scoreBand) && scoreBand >= 81) return true;
-      return false;
-    };
-
-    return courseIdsToShow.map((courseId) => {
-      const items = records.filter(
-        (doc) => String(doc.courseId || "") === courseId
-      );
-
-      const sorted = items
-        .slice()
-        .sort((a, b) => {
-          const aTime = a.updatedAt?.toMillis?.() ?? 0;
-          const bTime = b.updatedAt?.toMillis?.() ?? 0;
-          return bTime - aTime;
-        });
-
-      const last = sorted[0];
-      const mastered = items.filter(getMastered).length;
-
-      return {
-        courseId,
-        courseLabel: phonicsLabelsByCourseId[courseId] || courseId,
-        topicsUpdated: items.length,
-        totalTopics: phonicsTotalsByCourseId[courseId],
-        mastered,
-        lastTopic: last?.topicName || "—",
-        lastRemark: last?.teacherRemark || "—",
-      };
-    });
-  }, [phonicsProgressQuery.data, phonicsEnrollments]);
-
-  const phonicsLoading =
-    phonicsProgressQuery.isLoading || enrollmentsQuery.isLoading;
-  const phonicsError =
-    phonicsProgressQuery.isError || enrollmentsQuery.isError;
-  const phonicsErrorMessage = useMemo(() => {
-    const err =
-      (phonicsProgressQuery.error as any) ||
-      (enrollmentsQuery.error as any);
-    const msg = String(err?.message ?? '').toLowerCase();
-    if (msg.includes('permission') || msg.includes('insufficient')) {
-      return 'Access issue — please contact admin.';
-    }
-    return 'Unable to load progress right now.';
-  }, [phonicsProgressQuery.error, enrollmentsQuery.error]);
+  const enrolledCourseIds = useMemo(() => {
+    return Array.from(new Set(phonicsCourseIdsFromEnrollments));
+  }, [phonicsCourseIdsFromEnrollments]);
 
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
@@ -518,7 +661,11 @@ export default function ParentDashboard() {
   // Fetch sessions for this kid (manual refresh model: loads when tab opens)
   const kidSessionsQuery = useQuery({
     queryKey: ["kidSessions", selectedKidId],
-    enabled: !!selectedKidId && (activeTab === "classes" || activeTab === "payments"),
+    enabled:
+      !!selectedKidId &&
+      (activeTab === "classes" ||
+        activeTab === "payments" ||
+        activeTab === "dashboard"),
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
@@ -592,6 +739,243 @@ export default function ParentDashboard() {
   const monthEnd = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth() + 1, 0, 23, 59, 59, 999), [classesMonth]);
 
   const allKidSessions = useMemo(() => (kidSessionsQuery.data ?? []) as KidSession[], [kidSessionsQuery.data]);
+
+  const sessionsPhonicsCourseIds = useMemo(() => {
+    return allKidSessions
+      .map((session) => normalizeSessionCourseId(session))
+      .filter((id): id is string => Boolean(id));
+  }, [allKidSessions]);
+
+  const mostRecentSessionCourseId = useMemo(() => {
+    let latestTime = 0;
+    let latestCourseId: string | null = null;
+    allKidSessions.forEach((session) => {
+      const courseId = normalizeSessionCourseId(session);
+      if (!courseId) return;
+      const time = sessionStartDate(session)?.getTime() ?? 0;
+      if (time >= latestTime) {
+        latestTime = time;
+        latestCourseId = courseId;
+      }
+    });
+    return latestCourseId;
+  }, [allKidSessions]);
+
+  const displayCourseId = useMemo(() => {
+    if (enrolledCourseIds.length === 1) {
+      const enrolledCourseId = enrolledCourseIds[0];
+      if (
+        mostRecentSessionCourseId &&
+        mostRecentSessionCourseId !== enrolledCourseId
+      ) {
+        return mostRecentSessionCourseId;
+      }
+      return enrolledCourseId;
+    }
+    if (mostRecentSessionCourseId) return mostRecentSessionCourseId;
+    return null;
+  }, [enrolledCourseIds, mostRecentSessionCourseId]);
+
+  const phonicsProgressByCourse = useMemo(() => {
+    if (!displayCourseId) return [];
+
+    const topics = curriculumTopicsByCourseId[displayCourseId] ?? [];
+    const progressDocs = (phonicsProgressQuery.data ?? []) as any[];
+
+    const resolveDocCourseId = (doc: any): string | null => {
+      if (!doc) return null;
+      const direct = normalizePhonicsCourseId(
+        doc?.courseId ?? doc?.course?.id ?? doc?.course
+      );
+      if (direct) return direct;
+      const key = String(doc?.topicId ?? doc?.id ?? "").trim();
+      return key ? topicCourseById[key] ?? null : null;
+    };
+
+    const labelMap = new Map<string, any>();
+    const labelUpdatedAt = new Map<string, number>();
+    const addLabelEntry = (rawLabel: string | undefined | null, doc: any) => {
+      const key = normalizeTopicText(rawLabel || "");
+      if (!key) return;
+      const nextTime = doc?.updatedAt?.toMillis?.() ?? 0;
+      const prevTime = labelUpdatedAt.get(key) ?? -1;
+      if (nextTime >= prevTime) {
+        labelMap.set(key, doc);
+        labelUpdatedAt.set(key, nextTime);
+      }
+    };
+
+    progressDocs.forEach((doc) => {
+      const docCourseId = resolveDocCourseId(doc);
+      if (docCourseId && docCourseId !== displayCourseId) return;
+      addLabelEntry(doc?.topicName, doc);
+      addLabelEntry(doc?.label, doc);
+      addLabelEntry(doc?.topicLabel, doc);
+    });
+
+    let completedCount = 0;
+    let topicsUpdated = 0;
+    let idMatchCount = 0;
+    let labelMatchCount = 0;
+
+    const rows = topics.map((topic) => {
+      let matchedDoc: any = null;
+      let matchedBy: "id" | "label" | "none" = "none";
+
+      const docById = progressByTopicId[topic.id];
+      if (docById) {
+        const docCourseId = resolveDocCourseId(docById);
+        if (!docCourseId || docCourseId === displayCourseId) {
+          matchedDoc = docById;
+          matchedBy = "id";
+        }
+      }
+
+      if (!matchedDoc) {
+        const labelKeys = [
+          normalizeTopicText(topic.label),
+          normalizeTopicText(topic.matchLabel),
+        ].filter(Boolean);
+        for (const key of Array.from(new Set(labelKeys))) {
+          const candidate = labelMap.get(key);
+          if (candidate) {
+            matchedDoc = candidate;
+            matchedBy = "label";
+            break;
+          }
+        }
+      }
+
+      const mastery = matchedDoc?.mastery;
+      const scoreBand = matchedDoc?.scoreBand ?? null;
+      const rawScorePct = matchedDoc?.scorePct;
+      const scorePct =
+        Number.isFinite(Number(rawScorePct))
+          ? clampPercent(Number(rawScorePct))
+          : Number.isFinite(Number(matchedDoc?.score))
+            ? clampPercent(Number(matchedDoc?.score))
+            : Number.isFinite(Number(scoreBand))
+              ? clampPercent(Number(scoreBand))
+              : parseScorePercent(scoreBand ?? matchedDoc?.score);
+      const masteryPercent = masteryToPercent(mastery);
+      const percent = clampPercent(scorePct ?? masteryPercent ?? 0);
+
+      const masteryLower = String(mastery ?? "").toLowerCase().trim();
+      const isScoreComplete = (scorePct ?? -1) >= 90;
+      const isMastered = masteryLower === "mastered";
+      const isComplete = isMastered || isScoreComplete;
+
+      let status: "not_started" | "in_progress" | "completed" = "not_started";
+      if (matchedDoc) {
+        if (isComplete) status = "completed";
+        else if (percent > 0 || (masteryLower && masteryLower !== "not_started")) {
+          status = "in_progress";
+        }
+      }
+
+      if (matchedDoc) topicsUpdated += 1;
+      if (status === "completed") completedCount += 1;
+      if (matchedBy === "id") idMatchCount += 1;
+      if (matchedBy === "label") labelMatchCount += 1;
+
+      const updatedAtMs =
+        matchedDoc?.updatedAt?.toMillis?.() ??
+        (typeof matchedDoc?.updatedAt === "number" ? matchedDoc.updatedAt : null);
+
+      return {
+        id: topic.id,
+        label: topic.label,
+        status,
+        percent,
+        scorePct: scorePct ?? null,
+        remark: matchedDoc?.teacherRemark ?? matchedDoc?.remark ?? "",
+        updatedAtMs,
+        mastery: mastery ?? "",
+        scoreBand,
+      };
+    });
+
+    const totalTopics = topics.length;
+    const overallPctRaw =
+      totalTopics > 0 ? Math.round((completedCount / totalTopics) * 100) : 0;
+    const overallPct = clampPercent(overallPctRaw);
+
+    return [
+      {
+        courseId: displayCourseId,
+        courseLabel: phonicsLabelsByCourseId[displayCourseId] || displayCourseId,
+        rows,
+        totalTopics,
+        topicsUpdated,
+        completedCount,
+        overallPct,
+        idMatchCount,
+        labelMatchCount,
+      },
+    ];
+  }, [
+    displayCourseId,
+    curriculumTopicsByCourseId,
+    phonicsProgressQuery.data,
+    progressByTopicId,
+    topicCourseById,
+  ]);
+
+  const phonicsLoading =
+    enrollmentsQuery.isLoading ||
+    phonicsProgressQuery.isLoading ||
+    curriculumTopicsQuery.isLoading ||
+    kidSessionsQuery.isLoading;
+
+  const phonicsError = Boolean(
+    phonicsProgressQuery.error ||
+      enrollmentsQuery.error ||
+      curriculumTopicsQuery.error
+  );
+
+  const phonicsErrorMessage = useMemo(() => {
+    const err =
+      (phonicsProgressQuery.error as any) ||
+      (enrollmentsQuery.error as any) ||
+      (curriculumTopicsQuery.error as any);
+    const code = String(err?.code ?? "").toLowerCase();
+    if (code === "permission-denied") return "Access issue — please contact admin.";
+    if (code === "failed-precondition")
+      return "Setup issue (index missing). Please contact admin.";
+    return "Unable to load progress right now.";
+  }, [
+    phonicsProgressQuery.error,
+    enrollmentsQuery.error,
+    curriculumTopicsQuery.error,
+  ]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    if (phonicsLoading) return;
+    const progressDocs = (phonicsProgressQuery.data ?? []) as any[];
+    const sample = progressDocs.slice(0, 3).map((doc) => ({
+      identifier: doc?.id,
+      courseIdentifier: doc?.courseId ?? null,
+      topicName: doc?.topicName ?? doc?.label ?? null,
+    }));
+    const courseDebug = phonicsProgressByCourse[0];
+    console.log("[Curriculum Debug]", {
+      displayCourseIdentifier: displayCourseId,
+      enrolledCourseIdentifiers: enrolledCourseIds,
+      sessionCourseIdentifiers: sessionsPhonicsCourseIds,
+      progressDocumentsCount: progressDocs.length,
+      identifierMatches: courseDebug?.idMatchCount ?? 0,
+      labelMatches: courseDebug?.labelMatchCount ?? 0,
+      progressSample: sample,
+    });
+  }, [
+    displayCourseId,
+    enrolledCourseIds,
+    sessionsPhonicsCourseIds,
+    phonicsLoading,
+    phonicsProgressQuery.data,
+    phonicsProgressByCourse,
+  ]);
 
   const monthSessions = useMemo(() => {
     const startMs = monthStart.getTime();
@@ -972,6 +1356,332 @@ export default function ParentDashboard() {
         {/* Content */}
         {activeTab === "dashboard" && (
           <div className="space-y-6">
+            <Card className="p-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Curriculum Progress
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Course-wise curriculum progress for {selectedKid?.fullName || "your child"}.
+                  </p>
+                </div>
+                <div className="text-2xl">📚</div>
+              </div>
+
+              {phonicsLoading && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Loading curriculum…
+                </p>
+              )}
+
+              {phonicsError && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {phonicsErrorMessage}
+                </p>
+              )}
+
+              {!phonicsLoading &&
+                !phonicsError &&
+                !displayCourseId && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No enrolled curriculum found. Please contact admin.
+                  </p>
+                )}
+
+              {!phonicsLoading &&
+                !phonicsError &&
+                phonicsProgressByCourse.length > 0 && (
+                  <div className="space-y-5">
+                    {(() => {
+                      const selectedCourse = phonicsProgressByCourse[0];
+
+                      if (!selectedCourse) {
+                        return (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Curriculum lessons are not available yet.
+                          </div>
+                        );
+                      }
+
+                      if (selectedCourse.totalTopics === 0) {
+                        return (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Curriculum lessons are not available yet.
+                          </div>
+                        );
+                      }
+
+                      const showLimit = 10;
+                      const inProgressCount = selectedCourse.rows.filter(
+                        (row: any) => row.status === "in_progress"
+                      ).length;
+                      const notStartedCount =
+                        selectedCourse.totalTopics -
+                        selectedCourse.completedCount -
+                        inProgressCount;
+                      const nextTopic =
+                        selectedCourse.rows.find(
+                          (row: any) => row.status === "in_progress"
+                        ) ||
+                        selectedCourse.rows.find(
+                          (row: any) => row.status === "not_started"
+                        );
+                      const topicsToShow = curriculumExpanded
+                        ? selectedCourse.rows
+                        : selectedCourse.rows.slice(0, showLimit);
+
+                      return (
+                        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                          <div
+                            className={`px-4 py-3 bg-gradient-to-r ${
+                              phonicsGradientsByCourseId[selectedCourse.courseId] ||
+                              "from-slate-50 to-gray-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-lg">
+                                  {phonicsIconsByCourseId[selectedCourse.courseId] || "📘"}
+                                </span>
+                                <span className="text-sm font-semibold text-gray-900">
+                                  {selectedCourse.courseLabel}
+                                </span>
+                              </div>
+                              <span className="text-xs font-semibold text-gray-700">
+                                {selectedCourse.overallPct}% complete
+                              </span>
+                            </div>
+                          </div>
+                          <div className="p-4 space-y-4">
+                            {nextTopic ? (
+                              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2">
+                                <div className="text-xs text-indigo-700">
+                                  <span className="font-semibold">Next lesson:</span>{" "}
+                                  {nextTopic.label}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setSelectedCurriculumTopic({
+                                      ...nextTopic,
+                                      courseLabel: selectedCourse.courseLabel,
+                                    });
+                                    setCurriculumTopicModalOpen(true);
+                                  }}
+                                >
+                                  Continue
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
+                                All lessons completed. Great work!
+                              </div>
+                            )}
+
+                            <div>
+                              <div className="flex items-center justify-between text-xs text-gray-500">
+                                <span>Overall completion</span>
+                                <span>
+                                  {selectedCourse.completedCount} of {selectedCourse.totalTopics} lessons completed
+                                </span>
+                              </div>
+                              <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                                <div
+                                  className="h-2 rounded-full bg-indigo-500"
+                                  style={{ width: `${selectedCourse.overallPct}%` }}
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">
+                                Completed: {selectedCourse.completedCount}/{selectedCourse.totalTopics}
+                              </span>
+                              <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700">
+                                In progress: {inProgressCount}
+                              </span>
+                              <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">
+                                Not started: {Math.max(notStartedCount, 0)}
+                              </span>
+                              <span className="px-2 py-1 rounded-full bg-indigo-50 text-indigo-700">
+                                Topics updated: {selectedCourse.topicsUpdated}
+                              </span>
+                            </div>
+                            <div className="text-[11px] text-gray-500">
+                              Completed = 100% • In progress = started • Not started = 0%
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                              {topicsToShow.map((row: any) => {
+                                const statusStyles =
+                                  row.status === "completed"
+                                    ? "bg-emerald-100 text-emerald-700"
+                                    : row.status === "in_progress"
+                                      ? "bg-blue-100 text-blue-700"
+                                      : "bg-slate-100 text-slate-600";
+                                const statusLabel =
+                                  row.status === "completed"
+                                    ? "Completed"
+                                    : row.status === "in_progress"
+                                      ? "In progress"
+                                      : "Not started";
+                                const masteryLabel = formatMasteryLabel(row.mastery);
+                                return (
+                                  <button
+                                    key={row.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedCurriculumTopic({
+                                        ...row,
+                                        courseLabel: selectedCourse.courseLabel,
+                                      });
+                                      setCurriculumTopicModalOpen(true);
+                                    }}
+                                    className="text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:border-indigo-300 hover:shadow-sm transition"
+                                  >
+                                    <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                      {row.label}
+                                    </div>
+                                    <div className="mt-2 flex items-center justify-between">
+                                      <span className="text-xs text-gray-500">
+                                        {row.percent}%
+                                      </span>
+                                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusStyles}`}>
+                                        {statusLabel}
+                                      </span>
+                                    </div>
+                                    {masteryLabel && (
+                                      <div className="mt-1 text-[10px] text-gray-500">
+                                        Mastery: <span className="font-semibold text-gray-700">{masteryLabel}</span>
+                                      </div>
+                                    )}
+                                    <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700">
+                                      <div
+                                        className="h-1.5 rounded-full bg-indigo-500"
+                                        style={{ width: `${row.percent}%` }}
+                                      />
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {selectedCourse.totalTopics > showLimit && (
+                              <div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => setCurriculumExpanded((prev) => !prev)}
+                                >
+                                  {curriculumExpanded
+                                    ? "Show less"
+                                    : `Show all lessons (${selectedCourse.totalTopics})`}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
+            </Card>
+
+            <Dialog
+              open={curriculumTopicModalOpen}
+              onOpenChange={(open) => {
+                setCurriculumTopicModalOpen(open);
+                if (!open) setSelectedCurriculumTopic(null);
+              }}
+            >
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Lesson details</DialogTitle>
+                </DialogHeader>
+                {selectedCurriculumTopic ? (
+                  <div className="space-y-3 text-sm">
+                    <div className="font-semibold text-gray-900">
+                      {selectedCurriculumTopic.label}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {selectedCurriculumTopic.courseLabel}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Progress</span>
+                      <span className="font-semibold text-gray-900">
+                        {selectedCurriculumTopic.percent}%
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-gray-200">
+                      <div
+                        className="h-2 rounded-full bg-indigo-500"
+                        style={{ width: `${selectedCurriculumTopic.percent}%` }}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
+                      <div>
+                        <div className="text-gray-500">Status</div>
+                        <div className="font-medium text-gray-900">
+                          {selectedCurriculumTopic.status === "completed"
+                            ? "Completed"
+                            : selectedCurriculumTopic.status === "in_progress"
+                              ? "In progress"
+                              : "Not started"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Last updated</div>
+                        <div className="font-medium text-gray-900">
+                          {formatTimestamp(selectedCurriculumTopic.updatedAtMs)}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Mastery</div>
+                        <div className="font-medium text-gray-900">
+                          {formatMasteryLabel(selectedCurriculumTopic.mastery) || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Score</div>
+                        <div className="font-medium text-gray-900">
+                          {Number.isFinite(selectedCurriculumTopic.scorePct)
+                            ? `${selectedCurriculumTopic.scorePct}%`
+                            : "—"}
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-500">Last remark</div>
+                      <div className="text-sm text-gray-800">
+                        {selectedCurriculumTopic.remark || "—"}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-600">No lesson selected.</div>
+                )}
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+
+        {activeTab === "games-progress" && (
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                Games Progress
+              </h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {selectedKid?.fullName
+                  ? `Viewing: ${selectedKid.fullName}`
+                  : "Select a child"}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                (Progress updates when you reopen this page — no auto-refresh.)
+              </p>
+            </div>
+
             {overviewMetrics ? (
               <ParentOverviewCards
                 confidenceNow={overviewMetrics.confidenceNow}
@@ -1018,101 +1728,6 @@ export default function ParentDashboard() {
                 </div>
               </Card>
             )}
-
-            <Card className="p-6 space-y-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                  Phonics Progress
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Course-wise progress for {selectedKid?.fullName || "your child"}.
-                </p>
-              </div>
-
-              {phonicsLoading && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Loading progress…
-                </p>
-              )}
-
-              {phonicsError && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {phonicsErrorMessage}
-                </p>
-              )}
-
-              {!phonicsLoading &&
-                !phonicsError &&
-                phonicsProgressByCourse.length === 0 && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {phonicsEnrollments.length === 0
-                      ? "No phonics enrollment yet."
-                      : "No progress updates yet. Once the teacher marks topics as covered, you’ll see progress here."}
-                  </p>
-                )}
-
-              {!phonicsLoading &&
-                !phonicsError &&
-                phonicsProgressByCourse.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {phonicsProgressByCourse.map((course) => (
-                      <Card
-                        key={course.courseId}
-                        className="p-4 border border-gray-200 dark:border-gray-700"
-                      >
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {course.courseLabel}
-                        </h4>
-                        <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <div className="text-xs text-gray-500">Topics updated</div>
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">
-                              {course.topicsUpdated}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-500">Mastered topics</div>
-                            <div className="font-semibold text-gray-900 dark:text-gray-100">
-                              {course.mastered}
-                            </div>
-                          </div>
-                        </div>
-                        {Number.isFinite(course.totalTopics) && (
-                          <div className="mt-3 text-xs text-gray-500">
-                            Updated: {course.topicsUpdated} / Total: {course.totalTopics}
-                          </div>
-                        )}
-                        <div className="mt-3 text-xs text-gray-500">Last updated topic</div>
-                        <div className="text-sm text-gray-800 dark:text-gray-200">
-                          {course.lastTopic || "—"}
-                        </div>
-                        <div className="mt-2 text-xs text-gray-500">Last remark</div>
-                        <div className="text-sm text-gray-800 dark:text-gray-200">
-                          {course.lastRemark || "—"}
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "games-progress" && (
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                Games Progress
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedKid?.fullName
-                  ? `Viewing: ${selectedKid.fullName}`
-                  : "Select a child"}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                (Progress updates when you reopen this page — no auto-refresh.)
-              </p>
-            </div>
 
             {kidSummaryQuery.isLoading ? (
               <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">

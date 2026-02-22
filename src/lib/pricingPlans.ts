@@ -1,53 +1,27 @@
 /**
- * Single source of truth for Tiny Steps pricing
- * All public pages must import from here to ensure consistency
+ * Backwards-compatible pricing exports (source: src/config/pricing.ts)
  */
+import { ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../config/pricing';
 
-export const DISCOUNT_PERCENT = 30;
+export const DISCOUNT_PERCENT = 0;
 
-export const PRICING_PLANS = [
-  { 
-    id: 'starter',
-    name: 'Starter', 
-    classes: 8, 
-    original: 4800, 
-    discounted: 3360,
-    perClassOriginal: 600,
-    perClassDiscounted: 420,
-  },
-  { 
-    id: 'growth',
-    name: 'Growth', 
-    classes: 16, 
-    original: 9200, 
-    discounted: 6440,
-    perClassOriginal: 575,
-    perClassDiscounted: 402.5,
-  },
-  { 
-    id: 'intensive',
-    name: 'Intensive', 
-    classes: 24, 
-    original: 13200, 
-    discounted: 9240,
-    perClassOriginal: 550,
-    perClassDiscounted: 385,
-  },
-] as const;
+export const PRICING_PLANS = ONE_TO_ONE_MONTHLY_PACKAGES.map((plan) => ({
+  id: plan.id,
+  name: plan.id === 'starter' ? 'Starter' : plan.id === 'growth' ? 'Growth' : 'Intensive',
+  classes: plan.classes,
+  original: plan.monthlyFee,
+  discounted: plan.monthlyFee,
+  perClassOriginal: PER_CLASS_PRICE,
+  perClassDiscounted: PER_CLASS_PRICE,
+}));
 
 export type PricingPlan = typeof PRICING_PLANS[number];
 
 // Helper: minimum discounted price across all plans
 export const MIN_PLAN_PRICE = Math.min(...PRICING_PLANS.map(p => p.discounted)); // 3360
 
-// Helper: format INR currency
-export const formatINR = (value: number): string => {
-  try {
-    return `₹${value.toLocaleString('en-IN')}`;
-  } catch {
-    return `₹${value}`;
-  }
-};
+// Re-export formatINR from canonical pricing
+export { formatINR };
 
 // Helper: get plan by ID
 export const getPlanById = (id: string) => PRICING_PLANS.find(p => p.id === id);

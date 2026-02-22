@@ -5,6 +5,13 @@ import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
 import BookAssessmentForm from '../components/forms/BookAssessmentForm';
+import {
+  COURSE_FEE_RANGE_24_36,
+  formatINR,
+  GROUP_MONTHLY_FEES,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  PER_CLASS_PRICE,
+} from '../config/pricing';
 
 const levels = [
   {
@@ -29,6 +36,12 @@ const stages = [
   { title: 'Weeks 5-8 • Rules & teams', duration: 'Month 2', description: 'Digraphs, magic-e, vowel teams, tricky words set B.' },
   { title: 'Weeks 9-12 • Fluency & writing', duration: 'Month 3', description: 'Reading passages with expression, spelling, and short paragraphs.' }
 ];
+
+const oneToOnePricingCopy = `1:1 live phonics classes at Tiny Steps: Starter (${ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month, Growth (${ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}/month, Intensive (${ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}/month. ${formatINR(PER_CLASS_PRICE)} per class. Typical course total: ${formatINR(COURSE_FEE_RANGE_24_36.min)}–${formatINR(COURSE_FEE_RANGE_24_36.max)} for 24–36 sessions. Free assessment class to start.`;
+
+const groupPricingCopy = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1')
+  .map((row) => `${row.ratio} ${formatINR(row.monthlyFee)}`)
+  .join(', ');
 
 export default function PhonicsPage() {
   useEffect(() => {
@@ -102,7 +115,7 @@ export default function PhonicsPage() {
               "name": "How much do phonics classes cost in India?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "1:1 live phonics classes at Tiny Steps: Starter (8 classes) ₹3,360/month, Growth (16 classes) ₹6,440/month, Intensive (24 classes) ₹9,240/month. All plans include 30% discount. Free assessment class to start."
+                "text": oneToOnePricingCopy
               }
             },
             {
@@ -110,7 +123,7 @@ export default function PhonicsPage() {
               "name": "What's the difference between 1:1 and group phonics classes?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "1:1 classes adapt to your child's pace, give instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less but suit children who already follow instructions well."
+                "text": `1:1 classes adapt to your child's pace, give instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`
               }
             },
             {
@@ -200,11 +213,11 @@ export default function PhonicsPage() {
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">How much do phonics classes cost in India?</h3>
-            <p className="text-gray-700">Tiny Steps offers three flexible plans with 30% OFF: Starter (8 classes) ₹3,360/month, Growth (16 classes) ₹6,440/month, and Intensive (24 classes) ₹9,240/month. All plans are 1:1 live classes with free assessment to start. For detailed pricing comparisons and what to look for when evaluating value, see our <Link to="/best-online-phonics-classes-india" className="text-blue-600 hover:underline">buyer guide for choosing online phonics classes in India</Link>.</p>
+            <p className="text-gray-700">{oneToOnePricingCopy} For detailed pricing comparisons and what to look for when evaluating value, see our <Link to="/best-online-phonics-classes-india" className="text-blue-600 hover:underline">buyer guide for choosing online phonics classes in India</Link>.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">What's the difference between 1:1 and group phonics classes?</h3>
-            <p className="text-gray-700">1:1 classes adapt to your child's pace, give instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less but suit children who already follow instructions well.</p>
+            <p className="text-gray-700">1:1 classes adapt to your child's pace, give instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less; current monthly fees per child (12 classes): {groupPricingCopy}.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Do you teach Jolly Phonics or synthetic phonics?</h3>

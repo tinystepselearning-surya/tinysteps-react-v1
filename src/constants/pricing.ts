@@ -1,8 +1,7 @@
 // Import from single source of truth
-import { STARTER_PLAN, formatINR } from '../lib/pricingPlans';
+import { PER_CLASS_PRICE, formatINR } from '../config/pricing';
 
-// Default per-class price based on Starter plan original rate
-export const DEFAULT_PER_CLASS_PRICE = STARTER_PLAN.perClassOriginal; // 600
+export const DEFAULT_PER_CLASS_PRICE = PER_CLASS_PRICE;
 
 // Re-export formatINR for backwards compatibility
 export { formatINR };

@@ -8,6 +8,7 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
+import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from "../config/pricing";
 
 type ChatRole = "user" | "assistant";
 export type AskChatMessage = { role: ChatRole; content: string };
@@ -16,6 +17,12 @@ export type AskChatMessage = { role: ChatRole; content: string };
  * ✅ Curated, deterministic KB (no model calls).
  * Keep this aligned with website copy.
  */
+const CANONICAL_PRICING_PACKAGES = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => ({
+  classes: pkg.classes,
+  price: pkg.monthlyFee,
+  perClass: PER_CLASS_PRICE,
+}));
+
 export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
   {
     id: "assessment",
@@ -27,7 +34,7 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "pricing",
     title: "Pricing & Packages",
     text:
-      "1:1 classes (35 minutes). Free Assessment Class (Demo) is FREE (₹0). 30% OFF Plans: Starter (8 classes) ₹3,360; Growth (16 classes) ₹6,440; Intensive (24 classes) ₹9,240. Optional single paid class: ₹599.",
+      `1:1 classes (35 minutes). Free Assessment Class (Demo) is FREE (₹0). Plans: Starter (${CANONICAL_PRICING_PACKAGES[0].classes} classes) ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)}; Growth (${CANONICAL_PRICING_PACKAGES[1].classes} classes) ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)}; Intensive (${CANONICAL_PRICING_PACKAGES[2].classes} classes) ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)}. Optional single paid class: ${formatINR(PER_CLASS_PRICE)}.`,
   },
   {
     id: "timings",
@@ -57,13 +64,9 @@ export const ASK_TINYSTEPS_FACTS = {
   freeAssessmentPrice: 0,
 
   // Optional paid single class (not the demo)
-  paidSingleClassPrice: 599,
+  paidSingleClassPrice: PER_CLASS_PRICE,
 
-  pricingPackages: [
-    { classes: 8, price: 3360, perClass: 420 },   // Starter: ₹4,800 → 30% OFF → ₹3,360
-    { classes: 16, price: 6440, perClass: 402.5 }, // Growth: ₹9,200 → 30% OFF → ₹6,440
-    { classes: 24, price: 9240, perClass: 385 },  // Intensive: ₹13,200 → 30% OFF → ₹9,240
-  ],
+  pricingPackages: CANONICAL_PRICING_PACKAGES,
 
   ageRangeOverall: "3–12",
   tracks: [

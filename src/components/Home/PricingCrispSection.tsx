@@ -1,33 +1,10 @@
 import React from 'react';
-import Button from '../Button/Button';
-import { PRICING_PACKAGES, DISCOUNT_PERCENT, formatINR as fmtINR } from '../../lib/pricingPlans';
-
-// Re-export for backwards compatibility
-export { PRICING_PACKAGES };
-
-// formatINR and fmtINR imported from pricingPlans.ts
-
-const applyDiscount = (amount: number): number => {
-  return Math.round(amount * (100 - DISCOUNT_PERCENT) / 100);
-};
-
-// PriceLine component: renders original (struck), badge, and offered price
-const PriceLine: React.FC<{ original: number; suffix?: string }> = ({
-  original,
-  suffix = '',
-}) => {
-  const offered = applyDiscount(original);
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="line-through text-slate-400 text-sm">{fmtINR(original)}</span>
-      <span className="inline-block bg-red-100 text-red-700 px-2 py-0.5 rounded text-xs font-bold">
-        {DISCOUNT_PERCENT}% OFF
-      </span>
-      <span className="font-bold text-green-700">{fmtINR(offered)}</span>
-      {suffix && <span className="text-sm text-slate-600">{suffix}</span>}
-    </div>
-  );
-};
+import {
+  COURSE_FEE_RANGE_24_36,
+  formatINR,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  PER_CLASS_PRICE,
+} from '../../config/pricing';
 
 const PricingCrispSection: React.FC = () => {
   return (
@@ -52,14 +29,16 @@ const PricingCrispSection: React.FC = () => {
           {/* Starter Pack */}
           <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Starter · 8 classes / month
+              Starter · {ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes / month
             </p>
             <div className="mt-2">
-              <PriceLine original={4800} suffix="/ 8 classes" />
+              <div className="text-2xl font-bold text-slate-900">
+                {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}
+              </div>
+              <div className="text-sm text-slate-600">
+                {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes} mins
+              </div>
             </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Billed monthly: <span className="font-bold text-green-700">{fmtINR(3360)}</span> (was {fmtINR(4800)})
-            </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 2 classes per week</li>
@@ -81,14 +60,16 @@ const PricingCrispSection: React.FC = () => {
               Most popular
             </div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Growth · 16 classes / month
+              Growth · {ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes / month
             </p>
             <div className="mt-2">
-              <PriceLine original={9200} suffix="/ 16 classes" />
+              <div className="text-2xl font-bold text-slate-900">
+                {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}
+              </div>
+              <div className="text-sm text-slate-600">
+                {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[1].durationMinutes} mins
+              </div>
             </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Billed monthly: <span className="font-bold text-green-700">{fmtINR(6440)}</span> (was {fmtINR(9200)})
-            </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 3–4 classes per week</li>
@@ -107,14 +88,16 @@ const PricingCrispSection: React.FC = () => {
           {/* Intensive Pack */}
           <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-              Intensive · 24 classes / month
+              Intensive · {ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes / month
             </p>
             <div className="mt-2">
-              <PriceLine original={13200} suffix="/ 24 classes" />
+              <div className="text-2xl font-bold text-slate-900">
+                {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}
+              </div>
+              <div className="text-sm text-slate-600">
+                {formatINR(PER_CLASS_PRICE)} per class • {ONE_TO_ONE_MONTHLY_PACKAGES[2].durationMinutes} mins
+              </div>
             </div>
-            <p className="mt-2 text-xs text-slate-500">
-              Billed monthly: <span className="font-bold text-green-700">{fmtINR(9240)}</span> (was {fmtINR(13200)})
-            </p>
             <ul className="mt-4 space-y-1.5 text-sm text-slate-600">
               <li>• Personalised assessment + roadmap</li>
               <li>• Around 5–6 classes per week</li>
@@ -136,6 +119,9 @@ const PricingCrispSection: React.FC = () => {
             <span>✅ No long-term lock-in</span>
             <span>✅ Easy class rescheduling</span>
             <span>✅ Pause anytime between months</span>
+          </p>
+          <p>
+            Course total estimate: {formatINR(COURSE_FEE_RANGE_24_36.min)}–{formatINR(COURSE_FEE_RANGE_24_36.max)} for 24–36 sessions.
           </p>
         </div>
       </div>

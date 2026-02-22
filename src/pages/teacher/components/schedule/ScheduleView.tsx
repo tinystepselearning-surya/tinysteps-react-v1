@@ -155,6 +155,18 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return map;
   }, [curriculumTopics]);
 
+  const topicCourseById = useMemo(() => {
+    const map = new Map<string, string>();
+    curriculumTopics.forEach((topic) => {
+      if (!topic.id || !topic.courseId) return;
+      const normalized = normalizeCourseId(topic.courseId);
+      if (normalized) {
+        map.set(topic.id, normalized);
+      }
+    });
+    return map;
+  }, [curriculumTopics]);
+
   // Calculate date range based on view
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
@@ -616,6 +628,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           const score = Number.isFinite(Number(scoreRaw)) ? Number(scoreRaw) : null;
           const isCompleted = mastery === 'proficient' || mastery === 'mastered' || (score !== null && score >= 81);
           const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
+          const resolvedCourseId = sessionCourseId || topicCourseById.get(topicId) || '';
+          const resolvedCourseLabel =
+            sessionCourseLabel ||
+            (resolvedCourseId ? COURSE_LABEL_BY_ID[resolvedCourseId] : '') ||
+            resolvedCourseId ||
+            '';
           const payload: Record<string, any> = {
             status: isCompleted ? 'completed' : 'in_progress',
             updatedAt: serverTimestamp(),
@@ -624,10 +642,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
             lastSessionId: selectedSession.id,
             topicName,
           };
-          if (sessionCourseId) payload.courseId = sessionCourseId;
-          if (sessionCourseLabel) {
-            payload.courseLabel = sessionCourseLabel;
-            payload.courseName = sessionCourseLabel;
+          if (resolvedCourseId) payload.courseId = resolvedCourseId;
+          if (resolvedCourseLabel) {
+            payload.courseLabel = resolvedCourseLabel;
+            payload.courseName = resolvedCourseLabel;
           }
           const curRef = doc(db, 'students', kidId, 'curriculum', topicId);
           batch.set(curRef, payload, { merge: true });
@@ -656,6 +674,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           const teacherRemark = typeof update?.teacherRemark === 'string' ? update.teacherRemark.trim() : '';
           const scoreRaw = update?.score;
           const score = Number.isFinite(Number(scoreRaw)) ? Number(scoreRaw) : null;
+          const scorePct = score === null ? null : Math.max(0, Math.min(100, Math.round(score)));
           const scoreBand = score === null ? null : (
                            score <= 20 ? '0-20' :
                            score <= 40 ? '21-40' :
@@ -663,6 +682,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                            score <= 80 ? '61-80' : '81-100'
           );
           const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
+          const resolvedCourseId = sessionCourseId || topicCourseById.get(topicId) || '';
+          const resolvedCourseLabel =
+            sessionCourseLabel ||
+            (resolvedCourseId ? COURSE_LABEL_BY_ID[resolvedCourseId] : '') ||
+            resolvedCourseId ||
+            '';
           const payload: Record<string, any> = {
             lastEvidence: 'session',
             lastSessionId: selectedSession.id,
@@ -675,11 +700,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           if (mastery) payload.mastery = mastery;
           if (teacherRemark) payload.teacherRemark = teacherRemark;
           if (score !== null) payload.score = score;
+          if (scorePct !== null) payload.scorePct = scorePct;
           if (scoreBand) payload.scoreBand = scoreBand;
-          if (sessionCourseId) payload.courseId = sessionCourseId;
-          if (sessionCourseLabel) {
-            payload.courseLabel = sessionCourseLabel;
-            payload.courseName = sessionCourseLabel;
+          if (resolvedCourseId) payload.courseId = resolvedCourseId;
+          if (resolvedCourseLabel) {
+            payload.courseLabel = resolvedCourseLabel;
+            payload.courseName = resolvedCourseLabel;
           }
           const progRef = doc(db, 'students', kidId, 'progress', topicId);
           batch.set(progRef, payload, { merge: true });
