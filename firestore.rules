@@ -144,6 +144,13 @@ service cloud.firestore {
         );
     }
 
+    function isTeacherOfKid(kidId) {
+      return isSignedIn()
+        && kidExists(kidId)
+        && ('teacherIds' in kidDoc(kidId))
+        && (request.auth.uid in kidDoc(kidId).teacherIds);
+    }
+
     // Class session schema guardrail (canonical collection)
     function isValidClassSession(data) {
       return data.keys().hasAll([
@@ -283,6 +290,25 @@ service cloud.firestore {
         || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
     }
 
+    match /students/{kidId}/weeklyReports/{reportId} {
+      allow read: if isAdmin()
+        || (
+          isTeacher()
+          && kidExists(kidId)
+          && ('teacherIds' in kidDoc(kidId))
+          && (request.auth.uid in kidDoc(kidId).teacherIds)
+        )
+        || (isParentOfKid(kidId) && resource.data.status == "published");
+
+      allow create, update, delete: if isAdmin()
+        || (
+          isTeacher()
+          && kidExists(kidId)
+          && ('teacherIds' in kidDoc(kidId))
+          && (request.auth.uid in kidDoc(kidId).teacherIds)
+        );
+    }
+
     match /students/{kidId} {
       allow read: if isAdmin()
         || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
@@ -335,7 +361,11 @@ service cloud.firestore {
     match /enrollments/{enrollmentId} {
       allow read, write: if isAdmin();
       allow read: if isParent() && resource.data.parentId == request.auth.uid;
-      allow read: if isTeacher() && resource.data.teacherId == request.auth.uid;
+      allow read: if isTeacher() && (
+        resource.data.teacherId == request.auth.uid
+        || (resource.data.kidId != null && isTeacherOfKid(resource.data.kidId))
+        || (resource.data.studentId != null && isTeacherOfKid(resource.data.studentId))
+      );
       allow read: if isLP() && resource.data.lpId == request.auth.uid;
     }
 

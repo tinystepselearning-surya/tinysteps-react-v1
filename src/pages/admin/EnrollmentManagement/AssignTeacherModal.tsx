@@ -10,6 +10,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
+import { updateKid } from '../../../services/kidsService';
 import {
   Dialog,
   DialogContent,
@@ -122,6 +123,16 @@ export default function AssignTeacherModal({
           updatedAt: serverTimestamp(),
         },
       );
+
+      const kidId =
+        enrollment.kidId ||
+        enrollment.studentId ||
+        (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : null);
+      if (kidId) {
+        await updateKid(String(kidId), {
+          teacherId: selectedTeacherId,
+        } as any);
+      }
 
       toast({
         title: 'Teacher assigned',

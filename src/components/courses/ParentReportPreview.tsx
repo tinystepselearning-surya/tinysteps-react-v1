@@ -1,5 +1,7 @@
 // @ts-nocheck
 import React, { useMemo } from "react";
+import { WeeklyProgressCard } from "../insights/WeeklyProgressCard";
+import type { WeeklyReport } from "../../lib/insights/weeklyReports";
 
 type Props = {
   track?: "all" | "phonics" | "grammar" | "speaking" | string;
@@ -198,82 +200,46 @@ export const ParentReportPreview: React.FC<Props> = ({ track = "all" }) => {
     return base;
   }, [track]);
 
+  const sessionParts = model.sessions.split(" ")[0]?.split("/") ?? [];
+  const sessionsAttended = Number(sessionParts[0] ?? 0);
+  const sessionsPlanned = Number(sessionParts[1] ?? 0);
+
+  const report: WeeklyReport = {
+    studentId: "sample",
+    courseId: track,
+    weekKey: model.week.replace("Sample week: ", ""),
+    weekStartAt: 0,
+    weekEndAt: 0,
+    sessionsPlanned,
+    sessionsAttended,
+    scores: {
+      overall: model.overall,
+      consistency: model.bars?.[0]?.value ?? 0,
+      understanding: model.bars?.[1]?.value ?? 0,
+      confidence: model.bars?.[2]?.value ?? 0,
+    },
+    covered: model.covered || [],
+    wins: model.wins || [],
+    focusAreas: model.focus || [],
+    nextWeekPlan: model.next || [],
+    homePractice: {
+      quickRevision: model.practice?.[0] || "2 minutes: quick revision",
+      focusedSkill: model.practice?.[1] || "2 minutes: one focused skill",
+      confidenceBooster: model.practice?.[2] || "1 minute: confidence booster",
+    },
+    teacherNote: "",
+    status: "published",
+    updatedBy: "sample",
+    updatedAt: Date.now(),
+  };
+
   return (
-    <div className="rounded-3xl bg-white/80 p-5 md:p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-        <div>
-          <div className="text-xs font-bold uppercase tracking-widest text-slate-500">
-            {model.tag}
-          </div>
-          <div className="mt-1 text-lg font-extrabold text-slate-900">
-            {model.title}
-          </div>
-          <div className="mt-1 text-sm text-slate-600">{model.subtitle}</div>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Pill k="Week" v={model.week.replace("Sample week: ", "")} />
-            <Pill k="Sessions" v={model.sessions} />
-            <Pill k="Overall" v={`${model.overall}%`} />
-          </div>
-        </div>
-
-        <div className="mt-2 w-max rounded-full bg-slate-900/5 px-4 py-2 text-sm font-semibold text-slate-700">
-          Sample Preview
-        </div>
-      </div>
-
-      {/* Overall progress */}
-      <div className="mt-5 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/60">
-        <div className="flex items-center justify-between">
-          <div className="text-sm font-semibold text-slate-900">Overall progress</div>
-          <div className="text-xs font-semibold text-slate-600">{clampPct(model.overall)}%</div>
-        </div>
-        <div className="mt-2 h-2.5 w-full rounded-full bg-slate-100">
-          <div
-            className="h-2.5 rounded-full bg-gradient-to-r from-primary-500 to-secondary-500"
-            style={{ width: `${clampPct(model.overall)}%` }}
-          />
-        </div>
-        <div className="mt-2 text-xs text-slate-500">
-          This is a mock preview of the parent dashboard report format we’re building.
-        </div>
-      </div>
-
-      {/* Skill bars */}
-      <div className="mt-4 grid gap-3 md:grid-cols-3">
-        {model.bars.map((b, i) => (
-          <Bar key={i} label={b.label} value={b.value} hint={b.hint} />
-        ))}
-      </div>
-
-      {/* Sections */}
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        <Section title="What we covered" items={model.covered} />
-        <Section title="Wins this week" items={model.wins} />
-        <Section title="Focus areas" items={model.focus} />
-        <Section title="Next week plan" items={model.next} />
-      </div>
-
-      {/* Home practice */}
-      <div className="mt-4 rounded-2xl bg-gradient-to-br from-white to-slate-50 p-4 ring-1 ring-slate-200/60">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-slate-900">Home practice (5 mins/day)</div>
-          <div className="text-xs font-semibold text-slate-600">Simple • doable • consistent</div>
-        </div>
-        <div className="mt-2 grid gap-2 md:grid-cols-3">
-          {model.practice.map((p, i) => (
-            <div key={i} className="rounded-xl bg-white px-3 py-2 text-sm text-slate-700 ring-1 ring-slate-200/60">
-              {p}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 text-xs text-slate-500">
-        Note: This is a preview card — the full report will appear inside the parent dashboard after enrollment.
-      </div>
-    </div>
+    <WeeklyProgressCard
+      report={report}
+      title={model.title}
+      showSampleBadge
+      footerNote="This is a mock preview of the parent dashboard report format we're building."
+    />
   );
 };
 

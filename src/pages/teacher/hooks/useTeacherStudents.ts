@@ -18,21 +18,33 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
   });
 
   const enrollmentsByKidId = new Map<string, any[]>();
+  const enrollmentDocsById = new Map<string, any>();
   const chunkSize = 10;
   for (let i = 0; i < kidIds.length; i += chunkSize) {
     const chunk = kidIds.slice(i, i + chunkSize);
-    const [snapById, snapByArray] = await Promise.all([
-      getDocs(query(collection(db, 'enrollments'), where('kidId', 'in', chunk))),
+    const [snapByArray, snapById, snapByStudentId] = await Promise.all([
       getDocs(query(collection(db, 'enrollments'), where('kidIds', 'array-contains-any', chunk))),
+      getDocs(query(collection(db, 'enrollments'), where('kidId', 'in', chunk))),
+      getDocs(query(collection(db, 'enrollments'), where('studentId', 'in', chunk))),
     ]);
-    [...snapById.docs, ...snapByArray.docs].forEach((doc) => {
-      const data = doc.data() as any;
-      const kidId = data.kidId || (Array.isArray(data.kidIds) ? data.kidIds[0] : null) || data.studentId;
-      if (!kidId) return;
-      if (!enrollmentsByKidId.has(kidId)) enrollmentsByKidId.set(kidId, []);
-      enrollmentsByKidId.get(kidId)!.push({ id: doc.id, ...data });
+    [...snapByArray.docs, ...snapById.docs, ...snapByStudentId.docs].forEach((doc) => {
+      if (enrollmentDocsById.has(doc.id)) return;
+      enrollmentDocsById.set(doc.id, { id: doc.id, ...(doc.data() as any) });
     });
   }
+
+  enrollmentDocsById.forEach((enrollment) => {
+    const ids = new Set<string>();
+    if (enrollment.kidId) ids.add(String(enrollment.kidId));
+    if (enrollment.studentId) ids.add(String(enrollment.studentId));
+    if (Array.isArray(enrollment.kidIds)) {
+      enrollment.kidIds.forEach((id: any) => ids.add(String(id)));
+    }
+    ids.forEach((id) => {
+      if (!enrollmentsByKidId.has(id)) enrollmentsByKidId.set(id, []);
+      enrollmentsByKidId.get(id)!.push(enrollment);
+    });
+  });
 
   const parentIds = new Set<string>();
   kidDocs.forEach(({ data }) => {
@@ -60,15 +72,44 @@ const fetchTeacherStudents = async (teacherId: string): Promise<TeacherStudent[]
     })
   );
 
+  const statusPriority = new Set(['active', 'enrolled', 'current']);
+  const toMillis = (value: any): number => {
+    if (!value) return 0;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = Date.parse(value);
+      return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    if (typeof value.toMillis === 'function') return value.toMillis();
+    if (typeof value.seconds === 'number') return value.seconds * 1000;
+    return 0;
+  };
+  const recencyScore = (e: any) => {
+    return (
+      toMillis(e.updatedAt) ||
+      toMillis(e.updated_at) ||
+      toMillis(e.updatedOn) ||
+      toMillis(e.updated_on) ||
+      toMillis(e.createdAt) ||
+      toMillis(e.created_at) ||
+      toMillis(e.createdOn) ||
+      toMillis(e.created_on) ||
+      0
+    );
+  };
+  const pickMostRecent = (arr: any[]) => {
+    if (arr.length === 0) return undefined;
+    return arr.reduce((best, curr) => (recencyScore(curr) > recencyScore(best) ? curr : best));
+  };
+
   return kidDocs.map(({ id, data }) => {
     const enrollments = enrollmentsByKidId.get(id) || [];
-    const relevant = enrollments.filter((e) =>
-      ['active', 'pending_payment'].includes(String(e.status || '').toLowerCase())
+    const preferredStatus = enrollments.filter((e) =>
+      statusPriority.has(String(e.status || '').toLowerCase())
     );
     const preferred =
-      relevant.find((e) => e.teacherId === teacherId) ||
-      relevant[0] ||
-      enrollments.find((e) => e.teacherId === teacherId) ||
+      pickMostRecent(preferredStatus) ||
+      pickMostRecent(enrollments) ||
       enrollments[0];
 
     const enrollmentStatus = preferred?.status

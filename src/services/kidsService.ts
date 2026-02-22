@@ -104,6 +104,17 @@ export async function updateKid(id: string, changes: Partial<Kid>): Promise<void
   // If caller sends ageYears, map it
   normalizeAge(payload);
 
+  // If a teacher is assigned, ensure teacherIds is updated
+  if (
+    Object.prototype.hasOwnProperty.call(changes as any, 'teacherId') &&
+    !Object.prototype.hasOwnProperty.call(changes as any, 'teacherIds')
+  ) {
+    const teacherId = (changes as any).teacherId;
+    if (teacherId) {
+      payload.teacherIds = arrayUnion(teacherId);
+    }
+  }
+
   // If caller still sends dob-ish fields, remove them from payload
   // BUT if you're updating age (or sent dob), we also delete DOB fields from Firestore.
   const touchingAge =

@@ -28,9 +28,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { WeeklyProgressCard } from "../../components/insights/WeeklyProgressCard";
+import {
+  fetchPublishedWeeklyReports,
+  type WeeklyReport,
+} from "../../lib/insights/weeklyReports";
 
 type TabKey =
   | "dashboard"
+  | "insights"
   | "games-progress"
   | "skills"
   | "weekly"
@@ -41,6 +47,7 @@ type TabKey =
 function safeTab(value: string | null): TabKey {
   const validTabs: TabKey[] = [
     "dashboard",
+    "insights",
     "games-progress",
     "skills",
     "weekly",
@@ -82,6 +89,8 @@ type BillingCharge = {
 type Enrollment = {
   id: string;
   courseId?: string;
+  courseName?: string;
+  courseLabel?: string;
   course?: { area?: string };
   courseArea?: string;
   area?: string;
@@ -349,6 +358,10 @@ export default function ParentDashboard() {
   const [selectedCurriculumTopic, setSelectedCurriculumTopic] =
     useState<any>(null);
   const [curriculumExpanded, setCurriculumExpanded] = useState(false);
+  const [insightsCourseId, setInsightsCourseId] = useState<string>("");
+  const [insightsView, setInsightsView] = useState<
+    "this-week" | "week-on-week" | "till-date" | "course-progress"
+  >("this-week");
 
   useEffect(() => {
     if (!selectedKidId && kids.length > 0) setSelectedKidId(kids[0].id);
@@ -533,6 +546,126 @@ export default function ParentDashboard() {
   const enrolledCourseIds = useMemo(() => {
     return Array.from(new Set(phonicsCourseIdsFromEnrollments));
   }, [phonicsCourseIdsFromEnrollments]);
+
+  const insightsCourseOptions = useMemo(() => {
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+    const map = new Map<string, string>();
+    enrollments.forEach((enr) => {
+      const courseId = String(enr.courseId || "").trim();
+      if (!courseId) return;
+      const label = String(enr.courseLabel || enr.courseName || courseId).trim();
+      if (!map.has(courseId)) map.set(courseId, label || courseId);
+    });
+    return Array.from(map.entries()).map(([courseId, label]) => ({
+      courseId,
+      label,
+    }));
+  }, [enrollmentsQuery.data]);
+
+  useEffect(() => {
+    if (!insightsCourseOptions.length) {
+      if (insightsCourseId) setInsightsCourseId("");
+      return;
+    }
+    if (!insightsCourseId) {
+      setInsightsCourseId(insightsCourseOptions[0].courseId);
+      return;
+    }
+    if (!insightsCourseOptions.find((opt) => opt.courseId === insightsCourseId)) {
+      setInsightsCourseId(insightsCourseOptions[0].courseId);
+    }
+  }, [insightsCourseId, insightsCourseOptions, selectedKidId]);
+
+  const weeklyReportsQuery = useQuery({
+    queryKey: ["weeklyReports", selectedKidId, insightsCourseId],
+    enabled: !!selectedKidId && !!insightsCourseId && activeTab === "insights",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId || !insightsCourseId) return [];
+      return fetchPublishedWeeklyReports(selectedKidId, insightsCourseId);
+    },
+  });
+
+  const weeklyReports = useMemo(() => {
+    return (weeklyReportsQuery.data ?? []) as WeeklyReport[];
+  }, [weeklyReportsQuery.data]);
+
+  const latestWeeklyReport = weeklyReports[0] ?? null;
+  const prevWeeklyReport = weeklyReports[1] ?? null;
+
+  const tillDateReport = useMemo(() => {
+    if (!selectedKidId || !insightsCourseId || weeklyReports.length === 0) return null;
+    const count = weeklyReports.length;
+    const sumOverall = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.scores?.overall) || 0),
+      0
+    );
+    const sumConsistency = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.scores?.consistency) || 0),
+      0
+    );
+    const sumUnderstanding = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.scores?.understanding) || 0),
+      0
+    );
+    const sumConfidence = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.scores?.confidence) || 0),
+      0
+    );
+    const sessionsPlanned = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.sessionsPlanned) || 0),
+      0
+    );
+    const sessionsAttended = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.sessionsAttended) || 0),
+      0
+    );
+    const latest = weeklyReports[0];
+    return {
+      studentId: selectedKidId,
+      courseId: insightsCourseId,
+      weekKey: "Till Date",
+      weekStartAt: latest.weekStartAt,
+      weekEndAt: latest.weekEndAt,
+      sessionsPlanned,
+      sessionsAttended,
+      scores: {
+        overall: clampPercent(sumOverall / count),
+        consistency: clampPercent(sumConsistency / count),
+        understanding: clampPercent(sumUnderstanding / count),
+        confidence: clampPercent(sumConfidence / count),
+      },
+      covered: [`Average progress across ${count} weeks`],
+      wins: ["Positive progress tracked weekly"],
+      focusAreas: ["Based on weekly reports"],
+      nextWeekPlan: ["Continue with the weekly plan"],
+      homePractice: {
+        quickRevision: latest.homePractice?.quickRevision || "2 minutes: quick revision",
+        focusedSkill: latest.homePractice?.focusedSkill || "2 minutes: one focused skill",
+        confidenceBooster: latest.homePractice?.confidenceBooster || "1 minute: confidence booster",
+      },
+      teacherNote: latest.teacherNote,
+      status: "published" as const,
+      updatedBy: latest.updatedBy || "",
+      updatedAt: latest.updatedAt ?? Date.now(),
+    } as WeeklyReport;
+  }, [weeklyReports, insightsCourseId, selectedKidId]);
+
+  const insightsSummary = useMemo(() => {
+    if (weeklyReports.length === 0) return null;
+    const count = weeklyReports.length;
+    const sumOverall = weeklyReports.reduce(
+      (acc, r) => acc + (Number(r.scores?.overall) || 0),
+      0
+    );
+    return {
+      count,
+      avgOverall: clampPercent(sumOverall / count),
+      lastUpdatedAt: weeklyReports[0]?.updatedAt ?? null,
+    };
+  }, [weeklyReports]);
 
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
@@ -1287,6 +1420,17 @@ export default function ParentDashboard() {
           </button>
           <button
             type="button"
+            onClick={() => setTab("insights")}
+            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
+              activeTab === "insights"
+                ? "bg-blue-600 text-white"
+                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
+            }`}
+          >
+            Insights
+          </button>
+          <button
+            type="button"
             onClick={() => setTab("games-progress")}
             className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
               activeTab === "games-progress"
@@ -1663,6 +1807,163 @@ export default function ParentDashboard() {
                 )}
               </DialogContent>
             </Dialog>
+          </div>
+        )}
+
+        {activeTab === "insights" && (
+          <div className="space-y-6">
+            <Card className="p-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Insights
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Weekly progress cards shared by your teacher.
+                  </p>
+                </div>
+                <div className="text-2xl">📈</div>
+              </div>
+
+              {insightsCourseOptions.length === 0 && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No enrolled courses found. Please contact admin.
+                </p>
+              )}
+
+              {insightsCourseOptions.length > 0 && (
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Course
+                    </label>
+                    {insightsCourseOptions.length > 1 ? (
+                      <select
+                        value={insightsCourseId}
+                        onChange={(e) => setInsightsCourseId(e.target.value)}
+                        className="mt-1 w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+                      >
+                        {insightsCourseOptions.map((opt) => (
+                          <option key={opt.courseId} value={opt.courseId}>
+                            {opt.label || opt.courseId}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <div className="mt-1 text-sm text-gray-700 dark:text-gray-300">
+                        {insightsCourseOptions[0]?.label || insightsCourseOptions[0]?.courseId}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {(
+                  [
+                    { key: "this-week", label: "This Week" },
+                    { key: "week-on-week", label: "Week-on-week" },
+                    { key: "till-date", label: "Till Date" },
+                    { key: "course-progress", label: "Course Progress" },
+                  ] as const
+                ).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setInsightsView(opt.key)}
+                    className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${
+                      insightsView === opt.key
+                        ? "border-blue-600 bg-blue-600 text-white"
+                        : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {weeklyReportsQuery.isLoading && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Loading weekly insights...
+                </p>
+              )}
+
+              {weeklyReportsQuery.isError && (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Unable to load weekly insights right now.
+                </p>
+              )}
+
+              {!weeklyReportsQuery.isLoading &&
+                !weeklyReportsQuery.isError &&
+                weeklyReports.length === 0 && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    No weekly insights published yet.
+                  </p>
+                )}
+
+              {weeklyReports.length > 0 && (
+                <>
+                  {insightsView === "this-week" && latestWeeklyReport && (
+                    <WeeklyProgressCard report={latestWeeklyReport} variant="parent" />
+                  )}
+
+                  {insightsView === "week-on-week" && latestWeeklyReport && (
+                    <div className="space-y-3">
+                      <WeeklyProgressCard
+                        report={latestWeeklyReport}
+                        prevReport={prevWeeklyReport}
+                        showDeltas
+                        variant="parent"
+                      />
+                      {!prevWeeklyReport && (
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          No previous week yet. Deltas will appear after the next report.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {insightsView === "till-date" && tillDateReport && (
+                    <WeeklyProgressCard
+                      report={tillDateReport}
+                      title="Till Date Progress"
+                      variant="parent"
+                    />
+                  )}
+
+                  {insightsView === "course-progress" && (
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        Course Progress Summary
+                      </div>
+                      <div className="mt-2 grid gap-3 md:grid-cols-3">
+                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                          <div className="text-xs text-gray-500">Weeks published</div>
+                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {insightsSummary?.count ?? 0}
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                          <div className="text-xs text-gray-500">Average overall</div>
+                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            {insightsSummary?.avgOverall ?? 0}%
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                          <div className="text-xs text-gray-500">Last updated</div>
+                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {insightsSummary?.lastUpdatedAt
+                              ? new Date(insightsSummary.lastUpdatedAt).toLocaleDateString("en-IN")
+                              : "-"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </Card>
           </div>
         )}
 
