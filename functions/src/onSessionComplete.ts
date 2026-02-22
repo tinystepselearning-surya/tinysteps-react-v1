@@ -1,6 +1,5 @@
 // functions/src/onSessionComplete.ts
 import * as admin from "firebase-admin";
-import * as functionsV1 from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 
@@ -335,41 +334,6 @@ async function processSessionCompletion(
 }
 
 /**
- * Firestore trigger (v1 Gen 1): run when status flips to "completed"
- * Kept as v1 to avoid "Upgrading from 1st Gen to 2nd Gen not supported" error
- */
-export const onSessionCompleteTrigger = functionsV1
-  .region(REGION)
-  .firestore.document("classSessions/{sessionId}")
-  .onUpdate(async (change, context) => {
-    const sessionId = context.params.sessionId as string;
-    const before = change.before.data() as SessionData | undefined;
-    const after = change.after.data() as SessionData | undefined;
-
-    if (!after) return;
-
-    const becameCompleted =
-      (before?.status || "") !== "completed" && (after.status || "") === "completed";
-
-    if (!becameCompleted) return;
-
-    // If already processed, skip quickly
-    if (after.creditsProcessed) return;
-
-    try {
-      await processSessionCompletion(sessionId, {
-        callerUid: after.teacherId,
-        enforcePermissions: false, // trigger runs server-side
-      });
-    } catch (err) {
-      logger.error("onSessionCompleteTrigger error", {
-        sessionId,
-        error: err instanceof Error ? err.message : String(err),
-      });
-    }
-  });
-
-/**
  * Callable (v2): For manual retry/admin operations only.
  * Teacher UI must NOT auto-call to prevent double-processing.
  */
@@ -441,89 +405,3 @@ async function accrueTeacherEarnings(
 
   logger.info("Teacher earnings updated", { teacherId, monthId, sessionId, creditsEarned });
 }
-
-/**
- * ✅ Bills parent ONLY when a session is completed AND at least one kid is marked present.
- * ✅ Creates billingCharges docs idempotently (no double billing).
- * 
- * Trigger: classSessions/{sessionId} onUpdate
- * Region: asia-south1 (default for Gen1 in this project)
- * 
- * Logic:
- * - Fires when session document is updated
- * - Checks if status === "completed"
- * - Reads attendance[kidId] to find kids marked "present"
- * - Creates billingCharges/{chargeId} with amount from session.feeAmount
- * - Idempotent: skips if charge doc already exists
- */
-export const createBillingChargeOnPresent = functionsV1.firestore
-  .document("classSessions/{sessionId}")
-  .onUpdate(async (change, context) => {
-    const after = change.after.data() as any;
-    const sessionId = context.params.sessionId as string;
-
-    if (!after) return;
-
-    // Must be completed
-    if (after.status !== "completed") return;
-
-    // Attendance can be:
-    // attendance[kidId] = { status: "present" | "absent" | "late", ... }
-    // or (older) attendance[kidId] = "present"
-    const attendance = after.attendance || {};
-
-    const kidIds: string[] = Array.isArray(after.kidIds)
-      ? after.kidIds
-      : after.kidId
-        ? [after.kidId]
-        : [];
-
-    const presentKidIds = kidIds.filter((kidId) => {
-      const entry = attendance?.[kidId];
-      const status = entry?.status ?? entry; // supports {status:"present"} or "present"
-      return status === "present";
-    });
-
-    if (presentKidIds.length === 0) return;
-
-    // Fee should come from session snapshot created by Admin scheduler
-    const amount = Number(after.feeAmount ?? after.feePerClass ?? 0);
-    if (!Number.isFinite(amount) || amount <= 0) return;
-
-    const currency = after.currency || "INR";
-    const parentId =
-      after.parentId || (Array.isArray(after.parentIds) ? after.parentIds[0] : null);
-    const enrollmentId = after.enrollmentId || null;
-
-    const db = admin.firestore();
-
-    // If 1:1 → one charge per session (doc id = sessionId)
-    // If group (future) → one charge per present kid
-    for (const kidId of presentKidIds) {
-      const chargeId = presentKidIds.length === 1 ? sessionId : `${sessionId}_${kidId}`;
-      const chargeRef = db.collection("billingCharges").doc(chargeId);
-
-      const existing = await chargeRef.get();
-      if (existing.exists) continue; // idempotent
-
-      await chargeRef.set({
-        sessionId,
-        enrollmentId,
-        kidId,
-        parentId,
-        amount,
-        currency,
-        status: "due",
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        source: "session_present_completed",
-      });
-
-      logger.info("Billing charge created", { 
-        chargeId, 
-        sessionId, 
-        kidId, 
-        amount, 
-        currency 
-      });
-    }
-  });

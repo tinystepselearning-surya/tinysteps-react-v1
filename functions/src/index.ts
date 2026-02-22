@@ -11,7 +11,6 @@
 
 // Session completion (attendance + credit processing + billing)
 // Callable is for manual retry only; teacher UI must not auto-call to prevent double-processing
-// createBillingChargeOnPresent auto-bills when session completed + kid marked present
 export { onSessionComplete } from "./onSessionComplete";
 
 // Bulk session generator from enrollment schedule config
