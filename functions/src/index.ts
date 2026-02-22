@@ -18,6 +18,7 @@ export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
 
 // Admin user management
 export { adminCreateUser } from "./adminCreateUser";
+export { backfillTeacherDocs } from "./adminCreateUser";
 export { adminDeleteUser } from "./adminDeleteUser";
 export { adminArchiveUser } from "./adminArchiveUser";
 export { adminGenerateResetLink } from "./adminGenerateResetLink";
