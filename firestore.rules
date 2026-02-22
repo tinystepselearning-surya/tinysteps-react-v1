@@ -147,6 +147,7 @@ service cloud.firestore {
     // Class session schema guardrail (canonical collection)
     function isValidClassSession(data) {
       return data.keys().hasAll([
+        "enrollmentId",
         "teacherId",
         "parentId",
         "kidIds",
@@ -155,10 +156,13 @@ service cloud.firestore {
         "startAt",
         "endAt"
       ])
+        && data.enrollmentId is string
         && data.teacherId is string
         && data.parentId is string
         && data.kidIds is list
-        && data.kidIds.size() > 0
+        && data.kidIds.size() == 1
+        && data.kidIds[0] is string
+        && (!("kidId" in data) || (data.kidId is string && data.kidId == data.kidIds[0]))
         && data.courseId is string
         && data.status in ["scheduled", "in_progress", "completed", "cancelled", "reschedule_requested"]
         && data.startAt is timestamp

@@ -12,7 +12,7 @@
 // Session completion (attendance + credit processing + billing)
 // Callable is for manual retry only; teacher UI must not auto-call to prevent double-processing
 // createBillingChargeOnPresent auto-bills when session completed + kid marked present
-export { onSessionComplete, onSessionCompleteTrigger, createBillingChargeOnPresent } from "./onSessionComplete";
+export { onSessionComplete } from "./onSessionComplete";
 
 // Bulk session generator from enrollment schedule config
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
@@ -34,7 +34,6 @@ export {
 
 // Game progress tracking
 export { onGameProgressWrite } from "./gameProgressSummary";
-export { onGameSessionCreate } from "./onGameSessionCreate";
 export { onGameSessionCreateTrigger } from "./triggers/onGameSessionCreate";
 
 // Parent data access
@@ -57,7 +56,6 @@ export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
 
 // Admin-only purge (temporary)
-export { purgeCollection } from "./purgeCollection";
 
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";

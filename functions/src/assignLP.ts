@@ -228,7 +228,7 @@ export const unassignLPFromTeacher = onCall(
 /* -------------------- ADMIN SET USER ROLE -------------------------- */
 /* ------------------------------------------------------------------ */
 
-export const adminSetUserRole = onCall(async (request) => {
+export const adminSetUserRole = onCall({ region: 'asia-south1' }, async (request) => {
   const { uid, role } = request.data;
   const callerUid = request.auth?.uid;
 
