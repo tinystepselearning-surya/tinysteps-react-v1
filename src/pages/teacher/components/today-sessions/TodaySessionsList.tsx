@@ -4,7 +4,7 @@ import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
-import { doc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
@@ -13,6 +13,7 @@ interface TodaySessionsListProps {
   teacherId?: string;
 }
 
+
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
@@ -20,11 +21,14 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
   const handleComplete = async (sessionId: string) => {
     try {
-      await updateDoc(doc(db, 'sessions', sessionId), {
+      const batch = writeBatch(db);
+      const payload = {
         status: 'completed',
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid,
-      });
+      };
+      batch.set(doc(db, 'classSessions', sessionId), payload, { merge: true });
+      await batch.commit();
       toast({ title: 'Session updated', description: 'Session marked as completed.' });
     } catch (err) {
       console.error(err);
@@ -42,14 +46,14 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       const batch = writeBatch(db);
       
       // Update session document
-      const sessionRef = doc(db, 'sessions', selectedSession.id);
-      batch.update(sessionRef, {
+      const sessionUpdate = {
         attendance: data.attendance,
         notes: data.sessionNotes,
         status: 'completed',
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid ?? null,
-      });
+      };
+      batch.set(doc(db, 'classSessions', selectedSession.id), sessionUpdate, { merge: true });
 
       // Write curriculum completion for each kid with topics (only if present/late)
       for (const [kidId, entry] of Object.entries(data.attendance)) {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, onSnapshot, query, where, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 
 // Lightweight helpers for export
@@ -57,7 +57,11 @@ export default function AnalyticsDashboard(): JSX.Element {
     const unsubUsers = onSnapshot(collection(db, 'users'), snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);
     const unsubStudents = onSnapshot(collection(db, 'kids'), snap => setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);
     const unsubEnroll = onSnapshot(collection(db, 'enrollments'), snap => setEnrollments(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);
-    const unsubSessions = onSnapshot(collection(db, 'sessions'), snap => setSessions(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);
+    const unsubSessions = onSnapshot(
+      collection(db, 'classSessions'),
+      snap => setSessions(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      onErr
+    );
     const unsubPayments = onSnapshot(collection(db, 'payments'), snap => setPayments(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);
     const unsubCourses = onSnapshot(collection(db, 'courses'), snap => setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);
     const unsubReports = onSnapshot(collection(db, 'reports'), snap => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() }))), onErr);

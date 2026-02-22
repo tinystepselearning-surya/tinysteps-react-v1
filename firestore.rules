@@ -144,6 +144,27 @@ service cloud.firestore {
         );
     }
 
+    // Class session schema guardrail (canonical collection)
+    function isValidClassSession(data) {
+      return data.keys().hasAll([
+        "teacherId",
+        "parentId",
+        "kidIds",
+        "courseId",
+        "status",
+        "startAt",
+        "endAt"
+      ])
+        && data.teacherId is string
+        && data.parentId is string
+        && data.kidIds is list
+        && data.kidIds.size() > 0
+        && data.courseId is string
+        && data.status in ["scheduled", "in_progress", "completed", "cancelled", "reschedule_requested"]
+        && data.startAt is timestamp
+        && data.endAt is timestamp;
+    }
+
     // ----------------------------
     // Public game reference data
     // ----------------------------
@@ -315,16 +336,31 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // SESSIONS COLLECTION
+    // LEGACY SESSIONS COLLECTION (LOCKED)
     // ----------------------------
-    match /sessions/{sessionId} {
-      allow read, write: if isAdmin();
-      allow read, write: if isTeacher() && resource.data.teacherId == request.auth.uid;
-      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+    match /sessions/{document=**} {
+      allow read, write: if false;
+    }
 
-      allow read: if isKid()
-        && ('kidIds' in resource.data)
-        && (request.auth.uid in resource.data.kidIds);
+    // ----------------------------
+    // CLASS SESSIONS COLLECTION
+    // ----------------------------
+    match /classSessions/{sessionId} {
+      allow read: if isAdmin()
+        || (isTeacher() && resource.data.teacherId == request.auth.uid)
+        || (isParent() && resource.data.parentId == request.auth.uid)
+        || (isKid() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
+
+      allow create: if isValidClassSession(request.resource.data)
+        && (isAdmin() || (isTeacher() && request.resource.data.teacherId == request.auth.uid));
+
+      allow update: if isValidClassSession(request.resource.data)
+        && (isAdmin()
+          || (isTeacher()
+            && resource.data.teacherId == request.auth.uid
+            && request.resource.data.teacherId == resource.data.teacherId));
+
+      allow delete: if isAdmin();
     }
 
     // ----------------------------

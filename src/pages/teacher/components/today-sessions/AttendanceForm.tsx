@@ -7,7 +7,7 @@ import { Textarea } from '@components/ui/textarea';
 import { Input } from '@components/ui/input';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
-import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, startAt, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, startAt, updateDoc, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
@@ -81,6 +81,7 @@ const COURSE_LABEL_BY_ID: Record<string, string> = {
   'early-phonics': 'Early Phonics',
   'advanced-phonics': 'Advanced Phonics',
 };
+
 
 const normalizeCourseId = (value?: string | null): string | null => {
   if (!value) return null;
@@ -548,12 +549,15 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
           }
         });
 
-        await updateDoc(doc(db, 'sessions', session.id), {
+        const batch = writeBatch(db);
+        const updatePayload = {
           attendance: sanitizedAttendance,
           notes: sessionNotes,
           updatedAt: serverTimestamp(),
           updatedBy: user?.uid ?? null,
-        });
+        };
+        batch.set(doc(db, 'classSessions', session.id), updatePayload, { merge: true });
+        await batch.commit();
         onClose();
         return;
       }

@@ -56,6 +56,9 @@ export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
 export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
 
+// Admin-only purge (temporary)
+export { purgeCollection } from "./purgeCollection";
+
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
 export { refreshPublicKb } from "./ai/refreshPublicKb";

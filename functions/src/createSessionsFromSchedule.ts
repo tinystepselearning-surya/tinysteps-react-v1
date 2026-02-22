@@ -142,17 +142,16 @@ export const createSessionsFromSchedule = onCall(
       // Generate session ID (deterministic)
       const ymd = `${year}${String(month + 1).padStart(2, "0")}${String(date).padStart(2, "0")}`;
       const hhmmCompact = `${String(hh).padStart(2, "0")}${String(mm).padStart(2, "0")}`;
-      const sessionId = `${kidId}_${ymd}_${hhmmCompact}`;
+      const sessionId = `${enrollmentId}_${ymd}_${hhmmCompact}`;
 
-      const sessionRef = db.collection("sessions").doc(sessionId);
-      const existing = await sessionRef.get();
+      const classSessionRef = db.collection("classSessions").doc(sessionId);
+      const existing = await classSessionRef.get();
       if (existing.exists) {
         skipped += 1;
         continue;
       }
-
       // Prepare session doc
-      batch.set(sessionRef, {
+      const payload = {
         // linkage
         enrollmentId,
         kidId,
@@ -187,7 +186,9 @@ export const createSessionsFromSchedule = onCall(
         createdBy: "system",
         updatedBy: "system",
         source: "enrollmentSchedule",
-      });
+      };
+
+      batch.set(classSessionRef, payload);
 
       created += 1;
       batchOps += 1;

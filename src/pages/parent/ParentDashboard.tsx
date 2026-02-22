@@ -531,29 +531,29 @@ export default function ParentDashboard() {
         parentEmail: user.email,
       });
 
-      const sessionsCol = collection(db, "sessions");
+      const classSessionsCol = collection(db, "classSessions");
 
       try {
         // Primary: sessions.kidIds array contains kid AND parentId matches current user
         const qA = query(
-          sessionsCol,
+          classSessionsCol,
           where("kidIds", "array-contains", selectedKidId),
           where("parentId", "==", user.uid)
         );
         const snapA = await getDocs(qA);
-        console.log("✅ [Query A] kidIds array-contains + parentId:", {
+        console.log("✅ [Query A] classSessions kidIds array-contains + parentId:", {
           count: snapA.size,
           docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
         });
 
         // Fallback: sessions.kidId == kid (older schema) AND parentId matches
         const qB = query(
-          sessionsCol,
+          classSessionsCol,
           where("kidId", "==", selectedKidId),
           where("parentId", "==", user.uid)
         );
         const snapB = await getDocs(qB);
-        console.log("✅ [Query B] kidId equality + parentId:", {
+        console.log("✅ [Query B] classSessions kidId equality + parentId:", {
           count: snapB.size,
           docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
         });

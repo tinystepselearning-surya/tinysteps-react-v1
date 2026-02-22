@@ -53,13 +53,20 @@ export function useSessionsForTeacher(teacherId: string) {
       ] as any);
 
       const q = query(
-        collection(db, 'sessions'),
+        collection(db, 'classSessions'),
         where('teacherId', '==', teacherId),
         where('status', 'in', ['scheduled', 'in_progress']),
         orderBy('date', 'asc'),
       );
       const snapshot = await getDocs(q);
-      return snapshot.docs.map((d: any) => ({ id: d.id, ...(d.data() as Session) }));
+      return snapshot.docs
+        .map((d: any) => ({ id: d.id, ...(d.data() as Session) }))
+        .sort((a: any, b: any) => {
+          const dateA = String(a?.date || '');
+          const dateB = String(b?.date || '');
+          if (dateA !== dateB) return dateA.localeCompare(dateB);
+          return String(a?.startTime || '').localeCompare(String(b?.startTime || ''), undefined, { numeric: true });
+        });
     },
     enabled: !!teacherId,
   });

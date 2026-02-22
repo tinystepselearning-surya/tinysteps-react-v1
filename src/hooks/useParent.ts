@@ -23,7 +23,8 @@ export const useParentSessions = (parentId: string) => {
       const children = await getDocs(query(collection(db, 'kids'), where('parentId', '==', parentId)));
       const kidIds = children.docs.map(doc => doc.id);
       if (kidIds.length === 0) return [];
-      const q = query(collection(db, 'sessions'), where('kidId', 'in', kidIds), orderBy('date', 'desc'));
+      const classSessionsCol = collection(db, 'classSessions');
+      const q = query(classSessionsCol, where('kidId', 'in', kidIds), orderBy('date', 'desc'));
       const snapshot = await getDocs(q);
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ParentSession));
     },

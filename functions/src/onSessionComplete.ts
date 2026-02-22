@@ -160,7 +160,7 @@ async function processSessionCompletion(
   opts: { callerUid?: string; enforcePermissions?: boolean }
 ) {
   const db = admin.firestore();
-  const sessionRef = db.collection("sessions").doc(sessionId);
+  const sessionRef = db.collection("classSessions").doc(sessionId);
   const caller = opts.callerUid || "trigger";
 
   // Acquire lock (prevents double-charging trigger+callable)
@@ -340,7 +340,7 @@ async function processSessionCompletion(
  */
 export const onSessionCompleteTrigger = functionsV1
   .region(REGION)
-  .firestore.document("sessions/{sessionId}")
+  .firestore.document("classSessions/{sessionId}")
   .onUpdate(async (change, context) => {
     const sessionId = context.params.sessionId as string;
     const before = change.before.data() as SessionData | undefined;
@@ -446,7 +446,7 @@ async function accrueTeacherEarnings(
  * ✅ Bills parent ONLY when a session is completed AND at least one kid is marked present.
  * ✅ Creates billingCharges docs idempotently (no double billing).
  * 
- * Trigger: sessions/{sessionId} onUpdate
+ * Trigger: classSessions/{sessionId} onUpdate
  * Region: asia-south1 (default for Gen1 in this project)
  * 
  * Logic:
@@ -457,7 +457,7 @@ async function accrueTeacherEarnings(
  * - Idempotent: skips if charge doc already exists
  */
 export const createBillingChargeOnPresent = functionsV1.firestore
-  .document("sessions/{sessionId}")
+  .document("classSessions/{sessionId}")
   .onUpdate(async (change, context) => {
     const after = change.after.data() as any;
     const sessionId = context.params.sessionId as string;

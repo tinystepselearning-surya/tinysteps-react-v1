@@ -45,7 +45,7 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     }
 
     const q = query(
-      collection(db, 'sessions'),
+      collection(db, 'classSessions'),
       where('teacherId', '==', teacherId),
       where('date', 'in', dates),
       orderBy('date', 'asc'),
@@ -55,8 +55,13 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
     const unsub = onSnapshot(
       q,
       (snapshot) => {
-        const data = snapshot.docs.map((d) => toTeacherSession({ id: d.id, ...d.data() }));
-        setSessions(data);
+        const next = snapshot.docs
+          .map((d) => toTeacherSession({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+          if (a.date !== b.date) return String(a.date).localeCompare(String(b.date));
+          return String(a.startTime || '').localeCompare(String(b.startTime || ''), undefined, { numeric: true });
+        });
+        setSessions(next);
         setIsLoading(false);
       },
       (err) => {

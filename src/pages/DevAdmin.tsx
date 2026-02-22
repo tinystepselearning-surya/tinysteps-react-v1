@@ -58,7 +58,12 @@ export default function DevAdmin() {
             setLastError(null);
             try {
               if (!teacherIdCheck) throw new Error('Enter a teacherId to check');
-              const q = query(collection(db, 'sessions'), where('teacherId', '==', teacherIdCheck), where('status', 'in', ['scheduled','in_progress']), orderBy('date', 'asc'));
+              const q = query(
+                collection(db, 'classSessions'),
+                where('teacherId', '==', teacherIdCheck),
+                where('status', 'in', ['scheduled','in_progress']),
+                orderBy('date', 'asc')
+              );
               await getDocs(q);
               setLastError('Query succeeded — no index error returned');
               setLastIndexLink(null);

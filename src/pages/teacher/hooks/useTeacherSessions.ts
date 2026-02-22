@@ -47,8 +47,8 @@ export const useTeacherSessions = (
     const start = startDate || today;
     const end = endDate || today;
 
-    const q = query(
-      collection(db, 'sessions'),
+    const classSessionsQuery = query(
+      collection(db, 'classSessions'),
       where('teacherId', '==', teacherId),
       where('date', '>=', start),
       where('date', '<=', end),
@@ -56,21 +56,30 @@ export const useTeacherSessions = (
       orderBy('startTime', 'asc')
     );
 
+    let cancelled = false;
+
     const unsub = onSnapshot(
-      q,
+      classSessionsQuery,
       (snapshot) => {
-        const data = snapshot.docs.map((d) => toTeacherSession({ id: d.id, ...d.data() }));
-        setSessions(data);
-        setIsLoading(false);
+        const classSessions = snapshot.docs.map((d) => toTeacherSession({ id: d.id, ...d.data() }));
+        if (!cancelled) {
+          setSessions(classSessions);
+          setIsLoading(false);
+        }
       },
       (err) => {
         console.error('useTeacherSessions error', err);
-        setError(err as Error);
-        setIsLoading(false);
+        if (!cancelled) {
+          setError(err as Error);
+          setIsLoading(false);
+        }
       }
     );
 
-    return () => unsub();
+    return () => {
+      cancelled = true;
+      unsub();
+    };
   }, [teacherId, startDate, endDate]);
 
   const sortedSessions = useMemo(

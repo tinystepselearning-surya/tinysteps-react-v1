@@ -6,7 +6,6 @@ import {
   query,
   orderBy,
   getDocs,
-  addDoc,
   deleteDoc,
   doc,
   getDoc,
@@ -34,6 +33,8 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
 
 const PAGE_SIZE = 25;
+
+const getClassSessionsCollection = () => collection(db, 'classSessions');
 
 const COURSE_CATALOG_SYNC = [
   { id: 'phonics-foundations', title: 'Phonics Foundations', area: 'phonics', level: 'foundations' },
@@ -607,15 +608,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       const currency = enrollment?.currency || 'INR';
       const courseId = enrollment?.courseId || null;
       const joinUrl = enrollment?.joinUrl || null;
+      const enrollmentId = enrollment?.id || null;
 
       const startAt = req.startAt;
       const endAt = req.endAt;
       const dateStr = toISODate(startAt);
       const startTime = formatTimeHHmm(startAt);
       const endTime = formatTimeHHmm(endAt);
+      const hhmmCompact = startTime.replace(":", "");
+      if (!enrollmentId) {
+        throw new Error('No active enrollment found for this request.');
+      }
+      const sessionId = `${enrollmentId}_${dateStr.replace(/-/g, "")}_${hhmmCompact}`;
 
-      await addDoc(collection(db, 'sessions'), {
-        enrollmentId: enrollment?.id || null,
+      const payload = {
+        enrollmentId,
         kidId: req.kidId,
         kidIds: [req.kidId],
         parentId,
@@ -638,7 +645,10 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         createdBy: user?.uid || 'admin',
         updatedBy: user?.uid || 'admin',
         source: 'admin_approved_request',
-      });
+      };
+
+      const classSessionRef = doc(getClassSessionsCollection(), sessionId);
+      await setDoc(classSessionRef, payload, { merge: true });
 
       await deleteDoc(doc(db, req.path));
       toast({ title: 'Session approved', description: 'Session created and request removed.' });

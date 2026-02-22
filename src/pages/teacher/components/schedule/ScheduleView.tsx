@@ -81,6 +81,7 @@ const normalizeCourseId = (value?: string | null): string | null => {
   return COURSE_ID_ALIASES[key] || trimmed;
 };
 
+
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -563,7 +564,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       const batch = writeBatch(db);
       
       // Update session document
-      const sessionRef = doc(db, 'sessions', selectedSession.id);
       const hasPresentOrLate = Object.values(data.attendance || {}).some((entry: any) => {
         const status = entry?.status ?? entry;
         return status === 'present' || status === 'late';
@@ -580,7 +580,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         sessionUpdate.status = 'completed';
       }
 
-      batch.update(sessionRef, sessionUpdate);
+      const classSessionRef = doc(db, 'classSessions', selectedSession.id);
+      batch.set(classSessionRef, sessionUpdate, { merge: true });
 
       const sessionCourseId =
         normalizeCourseId(data.meta?.courseId || (selectedSession as any)?.courseId) || '';
