@@ -230,13 +230,19 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
                   <div className="flex flex-wrap gap-2">
                     <Button
                       variant="outline"
-                      onClick={() => navigate(`/teacher/students/${kid.id}/topic-progress`)}
+                      onClick={() =>
+                        navigate(`/teacher/students/${kid.id}/topic-progress?from=students`)
+                      }
                     >
                       Open Topics
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => navigate(`/teacher/students/${kid.id}/topic-progress`)}
+                      onClick={() =>
+                        navigate(
+                          `/teacher/students/${kid.id}/topic-progress?from=students&tab=weekly`
+                        )
+                      }
                     >
                       Weekly Insights
                     </Button>

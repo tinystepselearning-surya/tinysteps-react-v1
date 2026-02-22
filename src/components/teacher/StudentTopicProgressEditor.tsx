@@ -13,6 +13,7 @@ import {
 interface StudentTopicProgressEditorProps {
   kidId: string;
   kidName?: string;
+  onSaveAndBack?: () => void;
 }
 
 type CourseId = 'foundational' | 'early' | 'advanced';
@@ -204,6 +205,7 @@ const formatCommaList = (value: unknown): string => {
 const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   kidId,
   kidName,
+  onSaveAndBack,
 }) => {
   const { config, loading: configLoading, error: configError } =
     useProgressPicklists();
@@ -228,6 +230,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [teacherRemark, setTeacherRemark] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
 
   const resolvedCourseOptions = useMemo<CourseDefinition[]>(() => courseOptions, [courseOptions]);
 
@@ -378,8 +381,8 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     setSaveMessage(null);
   }, [selectedTopicId, existingTopics]);
 
-  const handleSave = async () => {
-    if (!kidId || !selectedTopicId || !selectedTopicDef) return;
+  const handleSave = async (): Promise<boolean> => {
+    if (!kidId || !selectedTopicId || !selectedTopicDef) return false;
 
     try {
       setSaving(true);
@@ -408,12 +411,29 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       );
 
       setSaveMessage('Progress saved.');
+      setLastSavedAt(Date.now());
+      return true;
     } catch (err: any) {
       setSaveMessage(
         err?.message || 'Could not save progress. Please try again.',
       );
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveAndBack = async () => {
+    const ok = await handleSave();
+    if (ok && onSaveAndBack) onSaveAndBack();
+  };
+
+  const handleSaveAndNext = async () => {
+    const ok = await handleSave();
+    if (!ok) return;
+    const idx = courseTopics.findIndex((t) => t.id === selectedTopicId);
+    if (idx >= 0 && idx < courseTopics.length - 1) {
+      setSelectedTopicId(courseTopics[idx + 1].id);
     }
   };
 
@@ -421,11 +441,11 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     topicsLoading || !selectedCourseId || courseTopics.length === 0;
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4 text-sm">
+    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 text-sm">
       <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-800">
-            Topic-wise Progress (Teacher View)
+            Topic Progress — Quick Update
           </h2>
           {kidName && (
             <p className="text-xs text-slate-500">
@@ -454,11 +474,11 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         </p>
       )}
 
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid gap-2 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
           Course
           <select
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
             value={selectedCourseId}
             onChange={(e) => {
               setCourseManuallySelected(true);
@@ -477,7 +497,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
           Topic
           <select
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
             value={selectedTopicId}
             onChange={(e) => setSelectedTopicId(e.target.value)}
             disabled={disabled}
@@ -492,75 +512,82 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             ))}
           </select>
         </label>
-
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Subskill (optional)
-          <input
-            type="text"
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-            placeholder="e.g., CVC blending"
-            value={selectedSubskill}
-            onChange={(e) => setSelectedSubskill(e.target.value)}
-            disabled={disabled}
-          />
-        </label>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-4">
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Mastery
-          <select
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-            value={mastery}
-            onChange={(e) => setMastery(e.target.value)}
-            disabled={disabled}
-          >
-            {(config?.mastery ?? ['not_started']).map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="grid gap-2 md:grid-cols-4">
+        <div className="md:col-span-2 space-y-1">
+          <div className="text-xs font-medium text-slate-700">Mastery</div>
+          <div className="flex flex-wrap gap-2">
+            {(config?.mastery ?? [
+              'not_started',
+              'emerging',
+              'developing',
+              'proficient',
+              'mastered',
+            ]).map((m) => {
+              const active = mastery === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMastery(m)}
+                  disabled={disabled}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                    active
+                      ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {String(m).replace(/_/g, ' ')}
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-xs text-slate-500">
+            Pick the child's current level for this topic.
+          </div>
+        </div>
 
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Score band
-          <select
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-            value={scoreBand}
-            onChange={(e) => setScoreBand(e.target.value)}
-            disabled={disabled}
-          >
-            <option value="">Not set</option>
-            {(config?.scoreBands ?? []).map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Last evidence
-          <select
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-            value={lastEvidence}
-            onChange={(e) => setLastEvidence(e.target.value)}
-            disabled={disabled}
-          >
-            <option value="">Not set</option>
-            {(config?.lastEvidence ?? []).map((ev) => (
-              <option key={ev} value={ev}>
-                {ev}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-slate-700">Score band</div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: '0–20', fallback: '0-20' },
+              { label: '21–40', fallback: '21-40' },
+              { label: '41–60', fallback: '41-60' },
+              { label: '61–80', fallback: '61-80' },
+              { label: '81–100', fallback: '81-100' },
+            ].map((opt) => {
+              const candidates = (config?.scoreBands ?? []) as string[];
+              const value =
+                candidates.find((c) => c === opt.label || c === opt.fallback) ?? opt.fallback;
+              const active = scoreBand === value;
+              return (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setScoreBand(value)}
+                  disabled={disabled}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                    active
+                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-xs text-slate-500">
+            Pick a band based on today's performance.
+          </div>
+        </div>
 
         <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
           Next action
           <select
-            className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
+            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
             value={nextAction}
             onChange={(e) => setNextAction(e.target.value)}
             disabled={disabled}
@@ -573,52 +600,140 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             ))}
           </select>
         </label>
+
+        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
+          Teacher remark
+          <input
+            type="text"
+            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+            placeholder="One-line note for parents"
+            value={teacherRemark}
+            onChange={(e) => setTeacherRemark(e.target.value)}
+            disabled={disabled}
+          />
+        </label>
       </div>
 
-      <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-        Strengths (comma-separated)
-        <input
-          type="text"
-          className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-          placeholder="e.g., blending, confidence, pronunciation"
-          value={strengths}
-          onChange={(e) => setStrengths(e.target.value)}
-          disabled={disabled}
-        />
-      </label>
+      <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-semibold text-slate-700">Optional</div>
+          <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+            Optional
+          </span>
+        </div>
+        <div className="grid gap-2 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+            Subskill
+            <input
+              type="text"
+              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              placeholder="e.g., CVC blending"
+              value={selectedSubskill}
+              onChange={(e) => setSelectedSubskill(e.target.value)}
+              disabled={disabled}
+            />
+            <span className="text-[11px] text-slate-500">
+              Exact skill observed today (e.g., CVC blending, letter formation).
+            </span>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {[
+                'CVC blending',
+                'segmenting',
+                'letter formation',
+                'sound recognition',
+                'word reading',
+                'spelling',
+                'sentence reading',
+                'pronunciation',
+              ].map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() =>
+                    setSelectedSubskill((prev) => (prev ? `${prev}, ${chip}` : chip))
+                  }
+                  className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  disabled={disabled}
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
+          </label>
 
-      <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-        Weaknesses (comma-separated)
-        <input
-          type="text"
-          className="rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-          placeholder="e.g., blends, pacing, handwriting"
-          value={weaknesses}
-          onChange={(e) => setWeaknesses(e.target.value)}
-          disabled={disabled}
-        />
-      </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+            Last evidence
+            <select
+              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              value={lastEvidence}
+              onChange={(e) => setLastEvidence(e.target.value)}
+              disabled={disabled}
+            >
+              <option value="">Not set</option>
+              {(config?.lastEvidence ?? []).map((ev) => (
+                <option key={ev} value={ev}>
+                  {ev}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-        Teacher remark
-        <textarea
-          className="min-h-[60px] rounded border border-slate-300 bg-white px-2 py-1 text-sm"
-          placeholder="Short note for parents & internal tracking"
-          value={teacherRemark}
-          onChange={(e) => setTeacherRemark(e.target.value)}
-          disabled={disabled}
-        />
-      </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+            Strengths (comma-separated)
+            <input
+              type="text"
+              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              placeholder="e.g., blending, confidence"
+              value={strengths}
+              onChange={(e) => setStrengths(e.target.value)}
+              disabled={disabled}
+            />
+          </label>
 
-      <div className="flex justify-end">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+            Weaknesses (comma-separated)
+            <input
+              type="text"
+              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              placeholder="e.g., blends, pacing"
+              value={weaknesses}
+              onChange={(e) => setWeaknesses(e.target.value)}
+              disabled={disabled}
+            />
+          </label>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap justify-end gap-2">
         <button
           type="button"
           onClick={handleSave}
           disabled={disabled || saving || !selectedTopicId}
-          className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
         >
-          {saving ? 'Saving…' : 'Save topic progress'}
+          {saving ? 'Saving…' : 'Save'}
         </button>
+        {onSaveAndBack ? (
+          <button
+            type="button"
+            onClick={handleSaveAndBack}
+            disabled={disabled || saving || !selectedTopicId}
+            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {saving ? 'Saving…' : 'Save & Back'}
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={handleSaveAndNext}
+          disabled={disabled || saving || !selectedTopicId}
+          className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+        >
+          {saving ? 'Saving…' : 'Save & Next Topic'}
+        </button>
+      </div>
+      <div className="text-xs text-slate-500">
+        Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
       </div>
     </div>
   );

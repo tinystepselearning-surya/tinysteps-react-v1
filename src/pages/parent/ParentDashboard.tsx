@@ -667,6 +667,54 @@ export default function ParentDashboard() {
     };
   }, [weeklyReports]);
 
+  const buildPreviewReport = (kidId?: string, courseId?: string): WeeklyReport => {
+    const now = Date.now();
+    return {
+      studentId: kidId || "preview",
+      courseId: courseId || "preview",
+      weekKey: "Preview",
+      weekStartAt: now,
+      weekEndAt: now,
+      sessionsPlanned: 0,
+      sessionsAttended: 0,
+      scores: {
+        overall: 0,
+        consistency: 0,
+        understanding: 0,
+        confidence: 0,
+      },
+      covered: [
+        "Weekly learning summary",
+        "One key skill practiced",
+        "Teacher notes + next steps",
+      ],
+      wins: [
+        "More focus during class",
+        "Better follow-through at home",
+        "Small improvements week-on-week",
+      ],
+      focusAreas: ["One key gap highlighted (so practice stays simple)"],
+      nextWeekPlan: [
+        "Continue the same schedule",
+        "Daily micro-practice",
+        "Review progress next week",
+      ],
+      homePractice: {
+        quickRevision: "2 minutes: quick revision",
+        focusedSkill: "2 minutes: one focused skill",
+        confidenceBooster: "1 minute: confidence booster",
+      },
+      status: "published",
+      updatedBy: "",
+      updatedAt: now,
+    };
+  };
+
+  const weeklyPreviewReport = useMemo<WeeklyReport>(
+    () => buildPreviewReport(selectedKidId, insightsCourseId),
+    [insightsCourseId, selectedKidId]
+  );
+
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
    * Manual refresh model: fetch when entering Games Progress tab (no polling)
@@ -1884,22 +1932,49 @@ export default function ParentDashboard() {
 
               {weeklyReportsQuery.isLoading && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Loading weekly insights...
-                </p>
-              )}
-
-              {weeklyReportsQuery.isError && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Unable to load weekly insights right now.
+                  Loading insights...
                 </p>
               )}
 
               {!weeklyReportsQuery.isLoading &&
-                !weeklyReportsQuery.isError &&
-                weeklyReports.length === 0 && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    No weekly insights published yet.
-                  </p>
+                (weeklyReportsQuery.isError || weeklyReports.length === 0) && (
+                  <div className="space-y-4">
+                    {weeklyReportsQuery.isError && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        We couldn't load reports right now.
+                      </p>
+                    )}
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <div className="font-semibold">No weekly report published yet</div>
+                      <div className="mt-1 text-amber-800">
+                        Once your teacher publishes, you'll see weekly progress, focus areas, and
+                        a 5-minute home plan here.
+                      </div>
+                    </div>
+
+                    <WeeklyProgressCard
+                      report={weeklyPreviewReport}
+                      title="Weekly Progress Card"
+                      variant="parent"
+                    />
+
+                    <div>
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        What you'll see here
+                      </div>
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
+                        <li>Overall progress (%)</li>
+                        <li>Consistency (%)</li>
+                        <li>Understanding (%)</li>
+                        <li>Confidence (%)</li>
+                        <li>What we covered</li>
+                        <li>Wins this week</li>
+                        <li>Focus areas</li>
+                        <li>Next week plan</li>
+                        <li>Home practice (5 mins/day)</li>
+                      </ul>
+                    </div>
+                  </div>
                 )}
 
               {weeklyReports.length > 0 && (
