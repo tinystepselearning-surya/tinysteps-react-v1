@@ -478,8 +478,13 @@ export default function ParentDashboard() {
       const baseLabel = String(
         topic?.label ?? topic?.topicName ?? topic?.name ?? id
       ).trim();
+      const displayTitle = String(topic?.displayTitle ?? '').trim();
       const lesson = topic?.lesson ? String(topic.lesson).trim() : "";
-      const label = lesson ? `${lesson} — ${baseLabel || id}` : baseLabel || id;
+      const label = displayTitle
+        ? displayTitle
+        : lesson
+          ? `${lesson} — ${baseLabel || id}`
+          : baseLabel || id;
       const order = resolveTopicOrder(topic);
       if (!byCourse[courseId]) byCourse[courseId] = [];
       byCourse[courseId].push({ id, label, matchLabel: baseLabel || id, order });

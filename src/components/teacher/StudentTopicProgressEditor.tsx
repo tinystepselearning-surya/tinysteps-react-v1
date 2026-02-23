@@ -16,7 +16,7 @@ interface StudentTopicProgressEditorProps {
   onSaveAndBack?: () => void;
 }
 
-type CourseId = 'foundational' | 'early' | 'advanced';
+type CourseId = 'phonics-foundations' | 'early-phonics' | 'advanced-phonics';
 
 type CourseDefinition = {
   id: CourseId;
@@ -27,15 +27,17 @@ type CourseTopic = {
   id: string;
   lesson: string;
   label: string;
+  displayTitle?: string;
+  order?: number | null;
   courseId: CourseId;
   courseLabel: string;
   area: 'phonics';
 };
 
 const PHONICS_COURSES: CourseDefinition[] = [
-  { id: 'foundational', label: 'Foundational Course' },
-  { id: 'early', label: 'Early Phonics' },
-  { id: 'advanced', label: 'Advanced Phonics' },
+  { id: 'phonics-foundations', label: 'Phonics Foundations' },
+  { id: 'early-phonics', label: 'Early Phonics' },
+  { id: 'advanced-phonics', label: 'Advanced Phonics' },
 ];
 
 const normalizeSlug = (value: string): string =>
@@ -44,11 +46,24 @@ const normalizeSlug = (value: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 
-const makeTopicId = (courseId: CourseId, lesson: string, label: string): string =>
-  `${courseId}:${normalizeSlug(lesson)}:${normalizeSlug(label)}`;
+const extractLessonNumber = (value?: string): number | null => {
+  if (!value) return null;
+  const match = /lesson[-\s]*0*(\d+)/i.exec(value);
+  if (!match) return null;
+  const num = Number(match[1]);
+  return Number.isFinite(num) ? num : null;
+};
+
+const makeTopicId = (courseId: CourseId, lesson: string): string => {
+  const lessonNum = extractLessonNumber(lesson);
+  if (lessonNum != null) {
+    return `${courseId}__lesson-${String(lessonNum).padStart(2, '0')}`;
+  }
+  return `${courseId}__${normalizeSlug(lesson)}`;
+};
 
 const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
-  foundational: [
+  'phonics-foundations': [
     { lesson: 'Lesson-1', label: 's' },
     { lesson: 'Lesson-2', label: 'a' },
     { lesson: 'Lesson-3', label: 't' },
@@ -81,12 +96,12 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     { lesson: 'Lesson-30', label: 'revision' },
   ].map((topic) => ({
     ...topic,
-    id: makeTopicId('foundational', topic.lesson, topic.label),
-    courseId: 'foundational',
-    courseLabel: 'Foundational Course',
+    id: makeTopicId('phonics-foundations', topic.lesson),
+    courseId: 'phonics-foundations',
+    courseLabel: 'Phonics Foundations',
     area: 'phonics',
   })),
-  early: [
+  'early-phonics': [
     { lesson: 'Lesson 1', label: 's a t' },
     { lesson: 'Lesson-2', label: 'i p n' },
     { lesson: 'Lesson-3', label: 'c and k' },
@@ -127,15 +142,15 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     { lesson: 'Lesson-38', label: 'monster le' },
     { lesson: 'Lesson-39', label: 'soft c' },
     { lesson: 'Lesson-40', label: 'hard g' },
-    { lesson: 'Lesson-40', label: 'Revision' },
+    { lesson: 'Lesson-41', label: 'Revision' },
   ].map((topic) => ({
     ...topic,
-    id: makeTopicId('early', topic.lesson, topic.label),
-    courseId: 'early',
+    id: makeTopicId('early-phonics', topic.lesson),
+    courseId: 'early-phonics',
     courseLabel: 'Early Phonics',
     area: 'phonics',
   })),
-  advanced: [
+  'advanced-phonics': [
     { lesson: 'Lesson 1', label: 'ai, ay' },
     { lesson: 'Lesson-2', label: 'oi, oy' },
     { lesson: 'Lesson-3', label: 'ou, ow' },
@@ -158,8 +173,8 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     { lesson: 'Lesson-20', label: 'revision' },
   ].map((topic) => ({
     ...topic,
-    id: makeTopicId('advanced', topic.lesson, topic.label),
-    courseId: 'advanced',
+    id: makeTopicId('advanced-phonics', topic.lesson),
+    courseId: 'advanced-phonics',
     courseLabel: 'Advanced Phonics',
     area: 'phonics',
   })),
@@ -170,20 +185,33 @@ const COURSE_LABEL_BY_ID = PHONICS_COURSES.reduce<Record<CourseId, string>>(
     acc[course.id] = course.label;
     return acc;
   },
-  { foundational: 'Foundational Course', early: 'Early Phonics', advanced: 'Advanced Phonics' },
+  {
+    'phonics-foundations': 'Phonics Foundations',
+    'early-phonics': 'Early Phonics',
+    'advanced-phonics': 'Advanced Phonics',
+  },
 );
 
 const normalizeCourseId = (value?: string): CourseId | null => {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
-  if (normalized === 'foundational' || normalized === 'foundational course') return 'foundational';
-  if (normalized === 'early' || normalized === 'early phonics') return 'early';
-  if (normalized === 'advanced' || normalized === 'advanced phonics') return 'advanced';
+  if (normalized === 'phonics-foundations' || normalized === 'phonics foundation') return 'phonics-foundations';
+  if (normalized === 'foundational' || normalized === 'foundational course') return 'phonics-foundations';
+  if (normalized === 'early-phonics' || normalized === 'early phonics') return 'early-phonics';
+  if (normalized === 'phonics-early' || normalized === 'early') return 'early-phonics';
+  if (normalized === 'advanced-phonics' || normalized === 'advanced phonics') return 'advanced-phonics';
+  if (normalized === 'phonics-advanced' || normalized === 'advanced') return 'advanced-phonics';
   return null;
 };
 
 const normalizeCourseName = (value?: string): CourseId | null =>
   normalizeCourseId(value);
+
+const normalizeTopicText = (value?: string): string =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
 
 const parseCommaList = (value: string): string[] =>
   value
@@ -216,6 +244,10 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     error: topicsError,
   } = useKidTopicProgress(kidId);
 
+  const [curriculumTopics, setCurriculumTopics] = useState<any[]>([]);
+  const [curriculumLoading, setCurriculumLoading] = useState(false);
+  const [curriculumError, setCurriculumError] = useState<string | null>(null);
+
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('');
   const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(PHONICS_COURSES);
@@ -234,36 +266,69 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   const resolvedCourseOptions = useMemo<CourseDefinition[]>(() => courseOptions, [courseOptions]);
 
+  useEffect(() => {
+    let active = true;
+    const loadCurriculum = async () => {
+      setCurriculumLoading(true);
+      setCurriculumError(null);
+      try {
+        const snap = await getDoc(doc(db, 'config', 'curriculumTopics'));
+        if (!active) return;
+        const data = snap.exists() ? (snap.data() as any) : {};
+        setCurriculumTopics(Array.isArray(data?.topics) ? data.topics : []);
+      } catch (err: any) {
+        if (!active) return;
+        setCurriculumError(err?.message || 'Unable to load curriculum.');
+        setCurriculumTopics([]);
+      } finally {
+        if (active) setCurriculumLoading(false);
+      }
+    };
+    loadCurriculum();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const courseTopics = useMemo<CourseTopic[]>(() => {
-    const configCourses = (config as any)?.phonicsCourses as any[] | undefined;
-    const configTopics = (config as any)?.phonicsTopics as any[] | undefined;
-    if (selectedCourseId && Array.isArray(configCourses) && Array.isArray(configTopics)) {
-      const matchedCourse = configCourses.find(
-        (c) => normalizeCourseId(String(c?.id ?? c?.courseId ?? c?.label)) === selectedCourseId,
-      );
-      const courseLabel = String(matchedCourse?.label || COURSE_LABEL_BY_ID[selectedCourseId]);
-      const topicsForCourse = configTopics
-        .filter((t) => normalizeCourseId(String(t?.courseId ?? t?.course)) === selectedCourseId)
-        .map((t) => {
-          const lesson = String(t?.lesson ?? t?.lessonNumber ?? t?.lessonNo ?? '');
-          const label = String(t?.label ?? t?.topic ?? t?.topicName ?? '');
-          return {
-            id: String(t?.id ?? makeTopicId(selectedCourseId, lesson, label)),
-            lesson,
-            label,
-            courseId: selectedCourseId,
-            courseLabel,
-            area: 'phonics',
-          } as CourseTopic;
-        });
-      if (topicsForCourse.length > 0) return topicsForCourse;
+    if (!selectedCourseId) return [];
+    const courseLabel = COURSE_LABEL_BY_ID[selectedCourseId];
+    const topicsForCourse = curriculumTopics
+      .filter((t) => normalizeCourseId(String(t?.courseId ?? t?.course)) === selectedCourseId)
+      .map((t) => {
+        const lesson = String(t?.lesson ?? t?.lessonNumber ?? t?.lessonNo ?? '');
+        const label = String(t?.label ?? t?.topic ?? t?.topicName ?? '');
+        const displayTitle = String(t?.displayTitle ?? '').trim();
+        const order = Number.isFinite(Number(t?.order))
+          ? Number(t.order)
+          : extractLessonNumber(lesson);
+        return {
+          id: String(t?.id ?? makeTopicId(selectedCourseId, lesson)),
+          lesson,
+          label,
+          displayTitle: displayTitle || (lesson ? `${lesson} — ${label}` : label),
+          order: order ?? null,
+          courseId: selectedCourseId,
+          courseLabel,
+          area: 'phonics',
+        } as CourseTopic;
+      });
+
+    if (topicsForCourse.length > 0) {
+      return topicsForCourse.sort((a, b) => {
+        const aOrder = a.order ?? extractLessonNumber(a.lesson) ?? null;
+        const bOrder = b.order ?? extractLessonNumber(b.lesson) ?? null;
+        if (aOrder !== null && bOrder !== null && aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        if (aOrder !== null && bOrder === null) return -1;
+        if (aOrder === null && bOrder !== null) return 1;
+        return a.lesson.localeCompare(b.lesson);
+      });
     }
 
-    if (selectedCourseId) {
-      return PHONICS_TOPICS_BY_COURSE[selectedCourseId] || [];
-    }
-    return [];
-  }, [config, selectedCourseId]);
+    return PHONICS_TOPICS_BY_COURSE[selectedCourseId] || [];
+  }, [curriculumTopics, selectedCourseId]);
 
   const selectedTopicDef: CourseTopic | undefined = useMemo(
     () => courseTopics.find((t) => t.id === selectedTopicId),
@@ -306,16 +371,16 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             setSelectedCourseId((prev) => (courseManuallySelected ? prev : (defaultCourse || prev || options[0]?.id || '')));
           } else {
             setCourseOptions(PHONICS_COURSES);
-            setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'foundational'));
+            setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'phonics-foundations'));
           }
         } else {
           setCourseOptions(PHONICS_COURSES);
-          setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'foundational'));
+          setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'phonics-foundations'));
         }
       } catch {
         if (!active) return;
         setCourseOptions(PHONICS_COURSES);
-        setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'foundational'));
+        setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'phonics-foundations'));
       }
     };
 
@@ -346,9 +411,22 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   useEffect(() => {
     if (!selectedTopicId) return;
 
-    const existing: KidTopicProgress | undefined = existingTopics.find(
+    let existing: KidTopicProgress | undefined = existingTopics.find(
       (t) => t.id === selectedTopicId,
     );
+
+    if (!existing && selectedTopicDef) {
+      const fallbackLabels = [
+        selectedTopicDef.displayTitle,
+        `${selectedTopicDef.lesson} — ${selectedTopicDef.label}`,
+      ].filter(Boolean) as string[];
+      const fallbackKeys = fallbackLabels.map((label) => normalizeTopicText(label));
+      existing = existingTopics.find((t) => {
+        const raw = String((t as any)?.topicName ?? (t as any)?.label ?? (t as any)?.topicLabel ?? '');
+        const key = normalizeTopicText(raw);
+        return key.length > 0 && fallbackKeys.includes(key);
+      });
+    }
 
     if (existing) {
       const existingMastery = existing.mastery;
@@ -390,10 +468,14 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
       const ref = doc(db, 'students', kidId, 'progress', selectedTopicId);
 
+      const topicDisplayTitle =
+        selectedTopicDef.displayTitle ||
+        `${selectedTopicDef.lesson} — ${selectedTopicDef.label}`;
+
       await setDoc(
         ref,
         {
-          topicName: `${selectedTopicDef.lesson} — ${selectedTopicDef.label}`,
+          topicName: topicDisplayTitle,
           area: selectedTopicDef.area,
           courseId: selectedCourseId || null,
           courseLabel: selectedCourseId ? COURSE_LABEL_BY_ID[selectedCourseId] : null,
@@ -438,7 +520,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   };
 
   const disabled =
-    topicsLoading || !selectedCourseId || courseTopics.length === 0;
+    topicsLoading || curriculumLoading || !selectedCourseId || courseTopics.length === 0;
 
   return (
     <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 text-sm">
@@ -473,6 +555,11 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           Couldn&apos;t load existing progress: {topicsError}
         </p>
       )}
+      {curriculumError && (
+        <p className="text-xs text-red-600">
+          Couldn&apos;t load curriculum: {curriculumError}
+        </p>
+      )}
 
       <div className="grid gap-2 md:grid-cols-2">
         <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
@@ -484,7 +571,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
               setCourseManuallySelected(true);
               setSelectedCourseId(e.target.value as CourseId);
             }}
-            disabled={configLoading || topicsLoading}
+            disabled={configLoading || topicsLoading || curriculumLoading}
           >
             {resolvedCourseOptions.map((c) => (
               <option key={c.id} value={c.id}>
@@ -507,7 +594,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             )}
             {courseTopics.map((t) => (
               <option key={t.id} value={t.id}>
-                {t.lesson} — {t.label}
+                {t.displayTitle || `${t.lesson} — ${t.label}`}
               </option>
             ))}
           </select>

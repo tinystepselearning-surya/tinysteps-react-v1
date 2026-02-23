@@ -48,6 +48,119 @@ const COURSE_CATALOG_SYNC = [
   { id: 'advanced-public-speaking', title: 'Public Speaking (Advanced)', area: 'speaking', level: 'advanced' },
 ];
 
+const buildDisplayTitleMap = (courseId: string, titles: string[]) =>
+  titles.reduce<Record<string, string>>((acc, title, idx) => {
+    const key = `${courseId}__lesson-${String(idx + 1).padStart(2, '0')}`;
+    acc[key] = title;
+    return acc;
+  }, {});
+
+const PHONICS_FOUNDATIONS_TITLES = [
+  'Lesson 1 — Letter sound: /s/',
+  'Lesson 2 — Letter sound: /a/',
+  'Lesson 3 — Letter sound: /t/',
+  'Lesson 4 — Letter sound: /i/',
+  'Lesson 5 — Letter sound: /p/',
+  'Lesson 6 — Letter sound: /n/',
+  'Lesson 7 — Letter sound: /c/',
+  'Lesson 8 — Letter sound: /k/',
+  'Lesson 9 — Letter sound: /e/',
+  'Lesson 10 — Letter sound: /h/',
+  'Lesson 11 — Letter sound: /r/',
+  'Lesson 12 — Letter sound: /m/',
+  'Lesson 13 — Letter sound: /d/',
+  'Lesson 14 — Letter sound: /g/',
+  'Lesson 15 — Letter sound: /o/',
+  'Lesson 16 — Letter sound: /u/',
+  'Lesson 17 — Letter sound: /l/',
+  'Lesson 18 — Letter sound: /f/',
+  'Lesson 19 — Letter sound: /b/',
+  'Lesson 20 — Letter sound: /j/',
+  'Lesson 21 — Letter sound: /z/',
+  'Lesson 22 — Letter sound: /w/',
+  'Lesson 23 — Letter sound: /v/',
+  'Lesson 24 — Letter sound: /y/',
+  'Lesson 25 — Letter sound: /x/',
+  'Lesson 26 — Letter sound: /qu/',
+  'Lesson 27 — Short vowels: a e i o u',
+  'Lesson 28 — Review: all letter sounds',
+  'Lesson 29 — Revision',
+  'Lesson 30 — Revision',
+];
+
+const EARLY_PHONICS_TITLES = [
+  'Lesson 1 — Sound Set 1: /s/ /a/ /t/',
+  'Lesson 2 — Sound Set 2: /i/ /p/ /n/',
+  'Lesson 3 — Hard /k/ sound: c & k',
+  'Lesson 4 — Sound Set 3: /e/ /h/ /r/',
+  'Lesson 5 — Sound Set 4: /m/ /d/ /g/',
+  'Lesson 6 — Sound Set 5: /o/ /u/ /l/',
+  'Lesson 7 — Sound Set 6: /f/ /b/ /j/',
+  'Lesson 8 — Sound Set 7: /z/ /w/ /v/',
+  'Lesson 9 — Special letters: y, x, qu',
+  'Lesson 10 — Short vowels: a, e, i, o, u',
+  'Lesson 11 — Digraph: sh (/sh/)',
+  'Lesson 12 — Digraph: ch + spelling: tch',
+  'Lesson 13 — Digraph: th (voiced & unvoiced)',
+  'Lesson 14 — Ending Rule: ck says /k/',
+  'Lesson 15 — End patterns: ng + silent b (mb)',
+  'Lesson 16 — Silent letters: kn = /n/',
+  'Lesson 17 — Silent letters: wr = /r/',
+  'Lesson 18 — Digraph: wh (/w/)',
+  'Lesson 19 — Tricky patterns: ph=/f/, gh (silent or /f/)',
+  'Lesson 20 — Revision: digraphs + tricky patterns',
+  'Lesson 21 — Floss Rule: double f/l/s after short vowel',
+  'Lesson 22 — Long A: ai (/ā/)',
+  'Lesson 23 — Long E: ee (/ē/)',
+  'Lesson 24 — Vowel team: ea (/ē/)',
+  'Lesson 25 — Vowel team: ie (/ī/)',
+  'Lesson 26 — Long O: oa (/ō/)',
+  'Lesson 27 — OO sounds: /oo/ vs /ʊ/',
+  'Lesson 28 — Long O: oe (/ō/)',
+  'Lesson 29 — Long U spelling: ui (fruit sound)',
+  'Lesson 30 — Long U spelling: ue (blue sound)',
+  'Lesson 31 — Long I: igh (/ī/)',
+  'Lesson 32 — Magic E: a_e (/ā/)',
+  'Lesson 33 — Magic E: e_e (/ē/)',
+  'Lesson 34 — Magic E: i_e (/ī/)',
+  'Lesson 35 — Magic E: o_e (/ō/)',
+  'Lesson 36 — Magic E: u_e (/yoo/ or /oo/)',
+  'Lesson 37 — Rabbit Rule: double consonant in 2-syllable words',
+  'Lesson 38 — Monster-le: consonant + le ending',
+  'Lesson 39 — Soft C: c says /s/ (before e/i/y)',
+  'Lesson 40 — Hard G: g says /g/',
+  'Lesson 41 — Final revision + reading check',
+];
+
+const ADVANCED_PHONICS_TITLES = [
+  'Lesson 1 — Diphthongs: ai / ay',
+  'Lesson 2 — Diphthongs: oi / oy',
+  'Lesson 3 — Diphthongs: ou / ow',
+  'Lesson 4 — Diphthongs: au / aw',
+  'Lesson 5 — Bossy R: ar',
+  'Lesson 6 — Bossy R: or',
+  'Lesson 7 — Bossy R: ir / ur / er',
+  'Lesson 8 — Three J sounds',
+  'Lesson 9 — /shun/ endings',
+  'Lesson 10 — Silent letters',
+  'Lesson 11 — Alternate A',
+  'Lesson 12 — Alternate E',
+  'Lesson 13 — Alternate I',
+  'Lesson 14 — Alternate O',
+  'Lesson 15 — Alternate U',
+  'Lesson 16 — Ending rule: c / ct sound',
+  'Lesson 17 — Revision',
+  'Lesson 18 — Revision',
+  'Lesson 19 — Revision',
+  'Lesson 20 — Revision',
+];
+
+const PHONICS_DISPLAY_TITLES = {
+  ...buildDisplayTitleMap('phonics-foundations', PHONICS_FOUNDATIONS_TITLES),
+  ...buildDisplayTitleMap('early-phonics', EARLY_PHONICS_TITLES),
+  ...buildDisplayTitleMap('advanced-phonics', ADVANCED_PHONICS_TITLES),
+};
+
 const PHONICS_CURRICULUM_TOPICS = [
   { id: 'phonics-foundations__lesson-01', courseId: 'phonics-foundations', lesson: 'Lesson-1', label: 's' },
   { id: 'phonics-foundations__lesson-02', courseId: 'phonics-foundations', lesson: 'Lesson-2', label: 'a' },
@@ -140,7 +253,10 @@ const PHONICS_CURRICULUM_TOPICS = [
   { id: 'advanced-phonics__lesson-18', courseId: 'advanced-phonics', lesson: 'Lesson-18', label: 'revision' },
   { id: 'advanced-phonics__lesson-19', courseId: 'advanced-phonics', lesson: 'Lesson-19', label: 'revision' },
   { id: 'advanced-phonics__lesson-20', courseId: 'advanced-phonics', lesson: 'Lesson-20', label: 'revision' },
-] as const;
+].map((topic) => ({
+  ...topic,
+  displayTitle: PHONICS_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
+}));
 
 interface StudentListProps {
   onEdit: (student: Student) => void;
@@ -730,13 +846,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       const existing = snap.exists() ? (snap.data() as any) : {};
       const existingTopics = Array.isArray(existing?.topics) ? existing.topics : [];
 
-      if (existingTopics.length > 0) {
-        toast({
-          title: 'Curriculum already synced',
-          description: 'Curriculum topics already exist.',
-        });
-        return;
-      }
+      const hadExisting = existingTopics.length > 0;
 
       const payload: Record<string, unknown> = {
         topics: PHONICS_CURRICULUM_TOPICS,
@@ -754,8 +864,10 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       await setDoc(curriculumRef, payload, { merge: true });
 
       toast({
-        title: 'Curriculum synced',
-        description: 'Phonics curriculum topics are now available.',
+        title: hadExisting ? 'Curriculum updated' : 'Curriculum synced',
+        description: hadExisting
+          ? `Curriculum updated (${PHONICS_CURRICULUM_TOPICS.length} topics).`
+          : 'Phonics curriculum topics are now available.',
       });
     } catch (err: any) {
       console.error('Sync curriculum failed', err);
