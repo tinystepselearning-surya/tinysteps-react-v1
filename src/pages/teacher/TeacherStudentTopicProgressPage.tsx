@@ -2,8 +2,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { collection, doc, getDoc, getDocs, query, Timestamp, where } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { toast } from '@components/hooks/use-toast';
-import { auth, db } from '../../lib/firebaseConfig';
+import { auth, db, functions } from '../../lib/firebaseConfig';
 import StudentTopicProgressEditor from '../../components/teacher/StudentTopicProgressEditor';
 import { WeeklyProgressCard } from '../../components/insights/WeeklyProgressCard';
 import {
@@ -142,6 +143,15 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
   const [sessionsTouched, setSessionsTouched] = useState(false);
   const [sessionsAutoFilledFor, setSessionsAutoFilledFor] = useState<string | null>(null);
 
+  const generateWeeklyCallable = useMemo(
+    () => httpsCallable(functions, 'generateWeeklyReport'),
+    [],
+  );
+  const publishWeeklyCallable = useMemo(
+    () => httpsCallable(functions, 'publishWeeklyReport'),
+    [],
+  );
+
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const returnTo = searchParams.get('returnTo');
   const fromStudents = searchParams.get('from') === 'students';
@@ -177,6 +187,46 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     }
     return options;
   }, []);
+
+  const applyReportToForm = (report: WeeklyReport | null) => {
+    if (!report) {
+      setForm(emptyForm);
+      setOverallManual(false);
+      return;
+    }
+
+    setForm({
+      sessionsPlanned: String(report.sessionsPlanned ?? ''),
+      sessionsAttended: String(report.sessionsAttended ?? ''),
+      scores: {
+        overall: String(report.scores?.overall ?? ''),
+        consistency: String(report.scores?.consistency ?? ''),
+        understanding: String(report.scores?.understanding ?? ''),
+        confidence: String(report.scores?.confidence ?? ''),
+      },
+      covered: (report.covered || []).join('\n'),
+      wins: (report.wins || []).join('\n'),
+      focusAreas: (report.focusAreas || []).join('\n'),
+      nextWeekPlan: (report.nextWeekPlan || []).join('\n'),
+      homePractice: {
+        quickRevision: report.homePractice?.quickRevision ?? '',
+        focusedSkill: report.homePractice?.focusedSkill ?? '',
+        confidenceBooster: report.homePractice?.confidenceBooster ?? '',
+      },
+      teacherNote: report.teacherNote ?? '',
+    });
+
+    const avg =
+      report.scores?.consistency != null &&
+      report.scores?.understanding != null &&
+      report.scores?.confidence != null
+        ? Math.round(
+            (report.scores.consistency + report.scores.understanding + report.scores.confidence) / 3,
+          )
+        : null;
+    setOverallManual(avg == null || report.scores?.overall !== avg);
+    setLoadedStatus(report.status ?? null);
+  };
 
   useEffect(() => {
     if (!selectedWeekKey && weekOptions.length > 0) {
@@ -264,43 +314,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     fetchTeacherWeeklyReport(kidId, selectedCourseId, selectedWeekKey)
       .then((report) => {
         if (!active) return;
-        if (!report) {
-          setForm(emptyForm);
-          setOverallManual(false);
-          return;
-        }
-
-        setForm({
-          sessionsPlanned: String(report.sessionsPlanned ?? ''),
-          sessionsAttended: String(report.sessionsAttended ?? ''),
-          scores: {
-            overall: String(report.scores?.overall ?? ''),
-            consistency: String(report.scores?.consistency ?? ''),
-            understanding: String(report.scores?.understanding ?? ''),
-            confidence: String(report.scores?.confidence ?? ''),
-          },
-          covered: (report.covered || []).join('\n'),
-          wins: (report.wins || []).join('\n'),
-          focusAreas: (report.focusAreas || []).join('\n'),
-          nextWeekPlan: (report.nextWeekPlan || []).join('\n'),
-          homePractice: {
-            quickRevision: report.homePractice?.quickRevision ?? '',
-            focusedSkill: report.homePractice?.focusedSkill ?? '',
-            confidenceBooster: report.homePractice?.confidenceBooster ?? '',
-          },
-          teacherNote: report.teacherNote ?? '',
-        });
-
-        const avg =
-          report.scores?.consistency != null &&
-          report.scores?.understanding != null &&
-          report.scores?.confidence != null
-            ? Math.round(
-                (report.scores.consistency + report.scores.understanding + report.scores.confidence) / 3,
-              )
-            : null;
-        setOverallManual(avg == null || report.scores?.overall !== avg);
-        setLoadedStatus(report.status ?? null);
+        applyReportToForm(report);
       })
       .finally(() => {
         if (active) setLoadingReport(false);
@@ -510,118 +524,31 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     if (!kidId || !selectedWeek || !selectedCourseId) return;
     setGeneratingWeekly(true);
     try {
-      const snap = await getDocs(collection(db, 'students', kidId, 'progress'));
-      const docs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-      const weekStart = selectedWeek.weekStartAt;
-      const weekEnd = selectedWeek.weekEndAt;
-      const prevStart = weekStart - 7 * 24 * 60 * 60 * 1000;
-      const prevEnd = weekStart - 1;
-
-      const matchesCourse = (doc: any): boolean => {
-        const courseId = String(doc?.courseId || '').trim();
-        return !courseId || courseId === selectedCourseId;
-      };
-
-      const currentDocs = docs.filter((doc) => {
-        const updatedAt = toMillis(doc.updatedAt);
-        return updatedAt >= weekStart && updatedAt <= weekEnd && matchesCourse(doc);
+      const result = await generateWeeklyCallable({
+        studentId: kidId,
+        courseId: selectedCourseId,
+        weekKey: selectedWeek.weekKey,
       });
-      const prevDocs = docs.filter((doc) => {
-        const updatedAt = toMillis(doc.updatedAt);
-        return updatedAt >= prevStart && updatedAt <= prevEnd && matchesCourse(doc);
-      });
-
-      const prevById = new Map<string, any>();
-      prevDocs.forEach((doc) => {
-        const key = String(doc?.topicId || doc?.id || '');
-        if (key) prevById.set(key, doc);
-      });
-
-      const labelFor = (doc: any): string => {
-        return String(
-          doc?.topicName || doc?.topicLabel || doc?.label || doc?.topicId || doc?.id || '',
-        ).trim();
-      };
-
-      const unique = (list: string[]): string[] => {
-        const seen = new Set<string>();
-        const out: string[] = [];
-        list.forEach((item) => {
-          const v = item.trim();
-          if (!v || seen.has(v)) return;
-          seen.add(v);
-          out.push(v);
+      const response = result.data as any;
+      if (response?.reason === 'teacher_edits') {
+        toast({
+          title: 'Draft recomputed',
+          description: 'Your edits were preserved.',
         });
-        return out;
-      };
-
-      const getScoreValue = (doc: any): number | null => {
-        const pct = doc?.scorePct;
-        if (typeof pct === 'number' && Number.isFinite(pct)) return clampScore(pct);
-        const score = doc?.score;
-        if (typeof score === 'number' && Number.isFinite(score)) return clampScore(score);
-        return scoreBandMidpoint(doc?.scoreBand);
-      };
-
-      const covered = unique(currentDocs.map(labelFor)).slice(0, 5);
-
-      const focusAreas = unique(
-        currentDocs
-          .filter((doc) => {
-            const score = getScoreValue(doc);
-            const lowScore = score != null && score <= 40;
-            const lowMastery = masteryRank(doc?.mastery) <= 1;
-            return lowScore || lowMastery;
-          })
-          .map(labelFor),
-      ).slice(0, 2);
-
-      const wins = unique(
-        currentDocs
-          .filter((doc) => {
-            const key = String(doc?.topicId || doc?.id || '');
-            const prev = key ? prevById.get(key) : null;
-            if (!prev) return false;
-            const prevScore = getScoreValue(prev) ?? 0;
-            const currentScore = getScoreValue(doc) ?? 0;
-            const prevMastery = masteryRank(prev?.mastery);
-            const currentMastery = masteryRank(doc?.mastery);
-            return currentScore > prevScore || currentMastery > prevMastery;
-          })
-          .map(labelFor),
-      ).slice(0, 2);
-
-      const nextWeekPlan = focusAreas.map((item) => `Practice ${item}`).slice(0, 2);
-
-      const planned = toInt(form.sessionsPlanned) ?? 0;
-      const attended = toInt(form.sessionsAttended) ?? 0;
-      const consistency = planned > 0 ? Math.round((attended / planned) * 100) : 0;
-
-      const understandingValues = currentDocs
-        .map((doc) => getScoreValue(doc))
-        .filter((value): value is number => value != null);
-      const understanding =
-        understandingValues.length > 0
-          ? Math.round(
-              understandingValues.reduce((acc, v) => acc + v, 0) / understandingValues.length,
-            )
-          : 0;
-
-      setOverallManual(false);
-      setForm((prev) => ({
-        ...prev,
-        covered: covered.join('\n'),
-        wins: wins.join('\n'),
-        focusAreas: focusAreas.join(', '),
-        nextWeekPlan: nextWeekPlan.join(', '),
-        scores: {
-          ...prev.scores,
-          consistency: String(consistency),
-          understanding: String(understanding),
-          confidence: '',
-          overall: '',
-        },
-      }));
+      }
+      if (response?.reason === 'published') {
+        toast({
+          title: 'Already published',
+          description: 'No overwrite performed.',
+        });
+      } else if (response?.ok === false) {
+        toast({
+          title: 'Draft not generated',
+          description: response?.message || 'Weekly report already published.',
+        });
+      }
+      const report = await fetchTeacherWeeklyReport(kidId, selectedCourseId, selectedWeek.weekKey);
+      applyReportToForm(report);
     } finally {
       setGeneratingWeekly(false);
     }
@@ -689,7 +616,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
         confidenceBooster: form.homePractice.confidenceBooster || '1 minute: confidence booster',
       },
       teacherNote: form.teacherNote || undefined,
-      status,
+      status: 'draft',
       updatedBy: uid,
       updatedAt: Date.now(),
     };
@@ -697,11 +624,24 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     setSavingStatus(status);
     try {
       await saveWeeklyReport(kidId, report);
-      setLoadedStatus(status);
-      toast({
-        title: status === 'published' ? 'Weekly report published' : 'Weekly report saved',
-        description: status === 'published' ? 'Parents can now view this report.' : 'Draft saved for later.',
-      });
+      if (status === 'published') {
+        await publishWeeklyCallable({
+          studentId: kidId,
+          courseId: selectedCourseId,
+          weekKey: selectedWeek.weekKey,
+        });
+        setLoadedStatus('published');
+        toast({
+          title: 'Weekly report published',
+          description: 'Parents can now view this report.',
+        });
+      } else {
+        setLoadedStatus('draft');
+        toast({
+          title: 'Weekly report saved',
+          description: 'Draft saved for later.',
+        });
+      }
     } catch (err) {
       toast({ title: 'Save failed', description: 'Please try again.', variant: 'destructive' });
     } finally {
@@ -810,7 +750,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
               className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               disabled={generatingWeekly || !selectedCourseId || !selectedWeekKey}
             >
-              {generatingWeekly ? 'Generating...' : 'Generate from this week'}
+              {generatingWeekly ? 'Generating...' : 'Generate draft'}
             </button>
             <button
               type="button"

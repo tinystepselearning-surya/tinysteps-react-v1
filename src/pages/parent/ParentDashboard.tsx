@@ -8,7 +8,9 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
+  orderBy,
   serverTimestamp,
   where,
 } from "firebase/firestore";
@@ -358,9 +360,12 @@ export default function ParentDashboard() {
   const [selectedCurriculumTopic, setSelectedCurriculumTopic] =
     useState<any>(null);
   const [curriculumExpanded, setCurriculumExpanded] = useState(false);
+  const [curriculumFilter, setCurriculumFilter] = useState<
+    "all" | "in_progress" | "completed"
+  >("all");
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [insightsView, setInsightsView] = useState<
-    "this-week" | "week-on-week" | "till-date" | "course-progress"
+    "this-week" | "week-on-week" | "till-date" | "monthly" | "course-progress"
   >("this-week");
 
   useEffect(() => {
@@ -371,6 +376,17 @@ export default function ParentDashboard() {
     () => kids.find((k: any) => k.id === selectedKidId),
     [kids, selectedKidId]
   );
+
+  const studentIdForProgress = useMemo(() => {
+    const kid = selectedKid as any;
+    const candidate =
+      kid?.studentId ??
+      kid?.studentUid ??
+      kid?.linkedStudentId ??
+      kid?.studentRefId ??
+      null;
+    return String(candidate || selectedKidId || "");
+  }, [selectedKid, selectedKidId]);
 
   // ---- Kid summary doc (kids/{kidId}) ----
   const kidSummaryQuery = useQuery({
@@ -431,16 +447,16 @@ export default function ParentDashboard() {
 
   // ---- Phonics progress (per-course) ----
   const phonicsProgressQuery = useQuery({
-    queryKey: ["phonicsProgress", selectedKidId],
-    enabled: !!selectedKidId,
+    queryKey: ["phonicsProgress", studentIdForProgress],
+    enabled: !!studentIdForProgress,
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
     queryFn: async () => {
-      if (!selectedKidId) return [];
+      if (!studentIdForProgress) return [];
       try {
         const snap = await getDocs(
-          collection(db, "students", selectedKidId, "progress")
+          collection(db, "students", studentIdForProgress, "progress")
         );
         return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
       } catch (err: any) {
@@ -467,7 +483,7 @@ export default function ParentDashboard() {
     const rawTopics = Array.isArray(data?.topics) ? data.topics : [];
     const byCourse: Record<
       string,
-      Array<{ id: string; label: string; matchLabel: string; order: number | null }>
+      Array<{ id: string; label: string; displayTitle: string; order: number | null }>
     > = {};
 
     rawTopics.forEach((topic: any) => {
@@ -487,7 +503,12 @@ export default function ParentDashboard() {
           : baseLabel || id;
       const order = resolveTopicOrder(topic);
       if (!byCourse[courseId]) byCourse[courseId] = [];
-      byCourse[courseId].push({ id, label, matchLabel: baseLabel || id, order });
+      byCourse[courseId].push({
+        id,
+        label,
+        displayTitle: label,
+        order,
+      });
     });
 
     Object.keys(byCourse).forEach((courseId) => {
@@ -593,12 +614,37 @@ export default function ParentDashboard() {
     },
   });
 
+  const monthlyReportsQuery = useQuery({
+    queryKey: ["monthlyReports", selectedKidId, insightsCourseId],
+    enabled: !!selectedKidId && !!insightsCourseId && activeTab === "insights",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId || !insightsCourseId) return [];
+      const base = collection(db, "students", selectedKidId, "monthlyReports");
+      const q = query(
+        base,
+        where("status", "==", "published"),
+        where("courseId", "==", insightsCourseId),
+        orderBy("monthKey", "desc"),
+        limit(1)
+      );
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => d.data());
+    },
+  });
+
   const weeklyReports = useMemo(() => {
     return (weeklyReportsQuery.data ?? []) as WeeklyReport[];
   }, [weeklyReportsQuery.data]);
 
   const latestWeeklyReport = weeklyReports[0] ?? null;
   const prevWeeklyReport = weeklyReports[1] ?? null;
+  const latestMonthlyReport = useMemo(() => {
+    const list = (monthlyReportsQuery.data ?? []) as any[];
+    return list[0] ?? null;
+  }, [monthlyReportsQuery.data]);
 
   const tillDateReport = useMemo(() => {
     if (!selectedKidId || !insightsCourseId || weeklyReports.length === 0) return null;
@@ -719,6 +765,13 @@ export default function ParentDashboard() {
     () => buildPreviewReport(selectedKidId, insightsCourseId),
     [insightsCourseId, selectedKidId]
   );
+
+  const formatMonthLabel = (key?: string) => {
+    if (!key) return "Monthly Summary";
+    const [y, m] = key.split("-");
+    const date = new Date(Number(y), Number(m) - 1, 1);
+    return date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  };
 
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
@@ -995,14 +1048,13 @@ export default function ParentDashboard() {
       const docCourseId = resolveDocCourseId(doc);
       if (docCourseId && docCourseId !== displayCourseId) return;
       addLabelEntry(doc?.topicName, doc);
-      addLabelEntry(doc?.label, doc);
-      addLabelEntry(doc?.topicLabel, doc);
     });
 
     let completedCount = 0;
     let topicsUpdated = 0;
     let idMatchCount = 0;
     let labelMatchCount = 0;
+    let lastUpdatedAtMs: number | null = null;
 
     const rows = topics.map((topic) => {
       let matchedDoc: any = null;
@@ -1018,10 +1070,7 @@ export default function ParentDashboard() {
       }
 
       if (!matchedDoc) {
-        const labelKeys = [
-          normalizeTopicText(topic.label),
-          normalizeTopicText(topic.matchLabel),
-        ].filter(Boolean);
+        const labelKeys = [normalizeTopicText(topic.displayTitle ?? topic.label)].filter(Boolean);
         for (const key of Array.from(new Set(labelKeys))) {
           const candidate = labelMap.get(key);
           if (candidate) {
@@ -1033,28 +1082,13 @@ export default function ParentDashboard() {
       }
 
       const mastery = matchedDoc?.mastery;
-      const scoreBand = matchedDoc?.scoreBand ?? null;
-      const rawScorePct = matchedDoc?.scorePct;
-      const scorePct =
-        Number.isFinite(Number(rawScorePct))
-          ? clampPercent(Number(rawScorePct))
-          : Number.isFinite(Number(matchedDoc?.score))
-            ? clampPercent(Number(matchedDoc?.score))
-            : Number.isFinite(Number(scoreBand))
-              ? clampPercent(Number(scoreBand))
-              : parseScorePercent(scoreBand ?? matchedDoc?.score);
-      const masteryPercent = masteryToPercent(mastery);
-      const percent = clampPercent(scorePct ?? masteryPercent ?? 0);
-
       const masteryLower = String(mastery ?? "").toLowerCase().trim();
-      const isScoreComplete = (scorePct ?? -1) >= 90;
       const isMastered = masteryLower === "mastered";
-      const isComplete = isMastered || isScoreComplete;
 
       let status: "not_started" | "in_progress" | "completed" = "not_started";
       if (matchedDoc) {
-        if (isComplete) status = "completed";
-        else if (percent > 0 || (masteryLower && masteryLower !== "not_started")) {
+        if (isMastered) status = "completed";
+        else if (masteryLower && masteryLower !== "not_started") {
           status = "in_progress";
         }
       }
@@ -1067,17 +1101,20 @@ export default function ParentDashboard() {
       const updatedAtMs =
         matchedDoc?.updatedAt?.toMillis?.() ??
         (typeof matchedDoc?.updatedAt === "number" ? matchedDoc.updatedAt : null);
+      if (updatedAtMs && (!lastUpdatedAtMs || updatedAtMs > lastUpdatedAtMs)) {
+        lastUpdatedAtMs = updatedAtMs;
+      }
 
       return {
         id: topic.id,
-        label: topic.label,
+        label: topic.displayTitle ?? topic.label,
         status,
-        percent,
-        scorePct: scorePct ?? null,
+        mastery: mastery ?? "",
+        focusChips: Array.isArray(matchedDoc?.selectedSubskills)
+          ? matchedDoc.selectedSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : [],
         remark: matchedDoc?.teacherRemark ?? matchedDoc?.remark ?? "",
         updatedAtMs,
-        mastery: mastery ?? "",
-        scoreBand,
       };
     });
 
@@ -1095,6 +1132,7 @@ export default function ParentDashboard() {
         topicsUpdated,
         completedCount,
         overallPct,
+        lastUpdatedAtMs,
         idMatchCount,
         labelMatchCount,
       },
@@ -1613,20 +1651,20 @@ export default function ParentDashboard() {
                       const inProgressCount = selectedCourse.rows.filter(
                         (row: any) => row.status === "in_progress"
                       ).length;
-                      const notStartedCount =
-                        selectedCourse.totalTopics -
-                        selectedCourse.completedCount -
-                        inProgressCount;
-                      const nextTopic =
-                        selectedCourse.rows.find(
-                          (row: any) => row.status === "in_progress"
-                        ) ||
-                        selectedCourse.rows.find(
-                          (row: any) => row.status === "not_started"
-                        );
+                      const filteredRows =
+                        curriculumFilter === "completed"
+                          ? selectedCourse.rows.filter(
+                              (row: any) => row.status === "completed"
+                            )
+                          : curriculumFilter === "in_progress"
+                            ? selectedCourse.rows.filter(
+                                (row: any) => row.status === "in_progress"
+                              )
+                            : selectedCourse.rows;
                       const topicsToShow = curriculumExpanded
-                        ? selectedCourse.rows
-                        : selectedCourse.rows.slice(0, showLimit);
+                        ? filteredRows
+                        : filteredRows.slice(0, showLimit);
+                      const showMore = filteredRows.length > showLimit;
 
                       return (
                         <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -1645,41 +1683,23 @@ export default function ParentDashboard() {
                                   {selectedCourse.courseLabel}
                                 </span>
                               </div>
-                              <span className="text-xs font-semibold text-gray-700">
-                                {selectedCourse.overallPct}% complete
-                              </span>
+                              <div className="text-xs text-gray-600 text-right">
+                                <div className="font-semibold text-gray-700">
+                                  Completed {selectedCourse.completedCount}/{selectedCourse.totalTopics}
+                                </div>
+                                <div>
+                                  Last updated{" "}
+                                  {selectedCourse.lastUpdatedAtMs
+                                    ? formatTimestamp(selectedCourse.lastUpdatedAtMs)
+                                    : "—"}
+                                </div>
+                              </div>
                             </div>
                           </div>
                           <div className="p-4 space-y-4">
-                            {nextTopic ? (
-                              <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-indigo-100 bg-indigo-50/60 px-3 py-2">
-                                <div className="text-xs text-indigo-700">
-                                  <span className="font-semibold">Next lesson:</span>{" "}
-                                  {nextTopic.label}
-                                </div>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedCurriculumTopic({
-                                      ...nextTopic,
-                                      courseLabel: selectedCourse.courseLabel,
-                                    });
-                                    setCurriculumTopicModalOpen(true);
-                                  }}
-                                >
-                                  Continue
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-3 py-2">
-                                All lessons completed. Great work!
-                              </div>
-                            )}
-
                             <div>
                               <div className="flex items-center justify-between text-xs text-gray-500">
-                                <span>Overall completion</span>
+                                <span>Lessons completed</span>
                                 <span>
                                   {selectedCourse.completedCount} of {selectedCourse.totalTopics} lessons completed
                                 </span>
@@ -1693,78 +1713,66 @@ export default function ParentDashboard() {
                             </div>
 
                             <div className="flex flex-wrap gap-2 text-xs">
-                              <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">
-                                Completed: {selectedCourse.completedCount}/{selectedCourse.totalTopics}
-                              </span>
-                              <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700">
-                                In progress: {inProgressCount}
-                              </span>
-                              <span className="px-2 py-1 rounded-full bg-slate-100 text-slate-600">
-                                Not started: {Math.max(notStartedCount, 0)}
-                              </span>
-                              <span className="px-2 py-1 rounded-full bg-indigo-50 text-indigo-700">
-                                Topics updated: {selectedCourse.topicsUpdated}
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-gray-500">
-                              Completed = 100% • In progress = started • Not started = 0%
+                              {[
+                                { key: "all", label: `All (${selectedCourse.totalTopics})` },
+                                { key: "in_progress", label: `In progress (${inProgressCount})` },
+                                { key: "completed", label: `Completed (${selectedCourse.completedCount})` },
+                              ].map((opt) => (
+                                <button
+                                  key={opt.key}
+                                  type="button"
+                                  onClick={() => setCurriculumFilter(opt.key as any)}
+                                  className={`px-2 py-1 rounded-full border text-xs font-semibold ${
+                                    curriculumFilter === opt.key
+                                      ? "border-indigo-600 bg-indigo-600 text-white"
+                                      : "border-gray-200 bg-white text-gray-700"
+                                  }`}
+                                >
+                                  {opt.label}
+                                </button>
+                              ))}
                             </div>
 
-                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                              {topicsToShow.map((row: any) => {
-                                const statusStyles =
-                                  row.status === "completed"
-                                    ? "bg-emerald-100 text-emerald-700"
-                                    : row.status === "in_progress"
-                                      ? "bg-blue-100 text-blue-700"
-                                      : "bg-slate-100 text-slate-600";
-                                const statusLabel =
-                                  row.status === "completed"
-                                    ? "Completed"
-                                    : row.status === "in_progress"
-                                      ? "In progress"
-                                      : "Not started";
-                                const masteryLabel = formatMasteryLabel(row.mastery);
-                                return (
-                                  <button
-                                    key={row.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedCurriculumTopic({
-                                        ...row,
-                                        courseLabel: selectedCourse.courseLabel,
-                                      });
-                                      setCurriculumTopicModalOpen(true);
-                                    }}
-                                    className="text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:border-indigo-300 hover:shadow-sm transition"
-                                  >
-                                    <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
-                                      {row.label}
-                                    </div>
-                                    <div className="mt-2 flex items-center justify-between">
-                                      <span className="text-xs text-gray-500">
-                                        {row.percent}%
-                                      </span>
-                                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${statusStyles}`}>
-                                        {statusLabel}
-                                      </span>
-                                    </div>
-                                    {masteryLabel && (
-                                      <div className="mt-1 text-[10px] text-gray-500">
-                                        Mastery: <span className="font-semibold text-gray-700">{masteryLabel}</span>
+                            {topicsToShow.length === 0 ? (
+                              <div className="text-sm text-gray-600 dark:text-gray-400">
+                                No lessons match this filter yet.
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                {topicsToShow.map((row: any) => {
+                                  const masteryLabel = formatMasteryLabel(row.mastery) || "Not started";
+                                  const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
+                                  const masteryStyles =
+                                    masteryLower === "mastered"
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : masteryLower && masteryLower !== "not_started"
+                                        ? "bg-blue-100 text-blue-700"
+                                        : "bg-slate-100 text-slate-600";
+                                  return (
+                                    <button
+                                      key={row.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedCurriculumTopic({
+                                          ...row,
+                                          courseLabel: selectedCourse.courseLabel,
+                                        });
+                                        setCurriculumTopicModalOpen(true);
+                                      }}
+                                      className="text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:border-indigo-300 hover:shadow-sm transition space-y-2"
+                                    >
+                                      <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
+                                        {row.label}
                                       </div>
-                                    )}
-                                    <div className="mt-2 h-1.5 rounded-full bg-gray-200 dark:bg-gray-700">
-                                      <div
-                                        className="h-1.5 rounded-full bg-indigo-500"
-                                        style={{ width: `${row.percent}%` }}
-                                      />
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            {selectedCourse.totalTopics > showLimit && (
+                                      <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${masteryStyles}`}>
+                                        {masteryLabel}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            {showMore && (
                               <div>
                                 <Button
                                   size="sm"
@@ -1804,52 +1812,29 @@ export default function ParentDashboard() {
                     <div className="text-xs text-gray-500">
                       {selectedCurriculumTopic.courseLabel}
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">Progress</span>
-                      <span className="font-semibold text-gray-900">
-                        {selectedCurriculumTopic.percent}%
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs text-gray-500">Mastery</span>
+                      <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
+                        {formatMasteryLabel(selectedCurriculumTopic.mastery) || "Not started"}
                       </span>
                     </div>
-                    <div className="h-2 rounded-full bg-gray-200">
-                      <div
-                        className="h-2 rounded-full bg-indigo-500"
-                        style={{ width: `${selectedCurriculumTopic.percent}%` }}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-xs text-gray-600">
+                    {selectedCurriculumTopic.focusChips?.length > 0 && (
                       <div>
-                        <div className="text-gray-500">Status</div>
-                        <div className="font-medium text-gray-900">
-                          {selectedCurriculumTopic.status === "completed"
-                            ? "Completed"
-                            : selectedCurriculumTopic.status === "in_progress"
-                              ? "In progress"
-                              : "Not started"}
+                        <div className="text-xs text-gray-500">Focus</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {selectedCurriculumTopic.focusChips.map((chip: string) => (
+                            <span
+                              key={chip}
+                              className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700"
+                            >
+                              {chip}
+                            </span>
+                          ))}
                         </div>
                       </div>
-                      <div>
-                        <div className="text-gray-500">Last updated</div>
-                        <div className="font-medium text-gray-900">
-                          {formatTimestamp(selectedCurriculumTopic.updatedAtMs)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Mastery</div>
-                        <div className="font-medium text-gray-900">
-                          {formatMasteryLabel(selectedCurriculumTopic.mastery) || "—"}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Score</div>
-                        <div className="font-medium text-gray-900">
-                          {Number.isFinite(selectedCurriculumTopic.scorePct)
-                            ? `${selectedCurriculumTopic.scorePct}%`
-                            : "—"}
-                        </div>
-                      </div>
-                    </div>
+                    )}
                     <div>
-                      <div className="text-xs text-gray-500">Last remark</div>
+                      <div className="text-xs text-gray-500">Teacher note</div>
                       <div className="text-sm text-gray-800">
                         {selectedCurriculumTopic.remark || "—"}
                       </div>
@@ -1917,6 +1902,7 @@ export default function ParentDashboard() {
                     { key: "this-week", label: "This Week" },
                     { key: "week-on-week", label: "Week-on-week" },
                     { key: "till-date", label: "Till Date" },
+                    { key: "monthly", label: "Monthly" },
                     { key: "course-progress", label: "Course Progress" },
                   ] as const
                 ).map((opt) => (
@@ -2010,6 +1996,111 @@ export default function ParentDashboard() {
                       title="Till Date Progress"
                       variant="parent"
                     />
+                  )}
+
+                  {insightsView === "monthly" && (
+                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            Monthly Summary
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {formatMonthLabel(latestMonthlyReport?.monthKey)}
+                          </div>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {latestMonthlyReport?.updatedAt
+                            ? `Updated ${new Date(
+                                latestMonthlyReport.updatedAt
+                              ).toLocaleDateString("en-IN")}`
+                            : ""}
+                        </div>
+                      </div>
+
+                      {monthlyReportsQuery.isLoading && (
+                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                          Loading monthly insights...
+                        </p>
+                      )}
+
+                      {!monthlyReportsQuery.isLoading && !latestMonthlyReport && (
+                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                          No monthly report published yet.
+                        </p>
+                      )}
+
+                      {!monthlyReportsQuery.isLoading && latestMonthlyReport && (
+                        <>
+                          <div className="mt-3 grid gap-3 md:grid-cols-3">
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <div className="text-xs text-gray-500">Sessions</div>
+                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {latestMonthlyReport.sessionsAttended ?? 0}/
+                                {latestMonthlyReport.sessionsPlanned ?? 0}
+                              </div>
+                            </div>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <div className="text-xs text-gray-500">Overall</div>
+                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {latestMonthlyReport.scores?.overall ?? 0}%
+                              </div>
+                            </div>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <div className="text-xs text-gray-500">Weeks included</div>
+                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                {latestMonthlyReport.includedWeekKeys?.length ?? 0}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 grid gap-3 md:grid-cols-2">
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <div className="text-xs text-gray-500">Highlights</div>
+                              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+                                {(latestMonthlyReport.highlights ?? []).length > 0 ? (
+                                  latestMonthlyReport.highlights.map((item: string) => (
+                                    <li key={`hl-${item}`}>{item}</li>
+                                  ))
+                                ) : (
+                                  <li>Monthly wins will appear here.</li>
+                                )}
+                              </ul>
+                            </div>
+                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                              <div className="text-xs text-gray-500">Focus areas</div>
+                              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
+                                {(latestMonthlyReport.focusAreas ?? []).length > 0 ? (
+                                  latestMonthlyReport.focusAreas.map((item: string) => (
+                                    <li key={`fa-${item}`}>{item}</li>
+                                  ))
+                                ) : (
+                                  <li>Focus areas will appear here.</li>
+                                )}
+                              </ul>
+                            </div>
+                          </div>
+
+                          <div className="mt-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                            <div className="text-xs text-gray-500">Home plan</div>
+                            <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+                              <li>
+                                {latestMonthlyReport.homePlan?.quickRevision ||
+                                  "2 minutes: quick revision"}
+                              </li>
+                              <li>
+                                {latestMonthlyReport.homePlan?.focusedSkill ||
+                                  "2 minutes: one focused skill"}
+                              </li>
+                              <li>
+                                {latestMonthlyReport.homePlan?.confidenceBooster ||
+                                  "1 minute: confidence booster"}
+                              </li>
+                            </ul>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
 
                   {insightsView === "course-progress" && (
