@@ -229,6 +229,75 @@ const labelizeLevel = (value: string): string =>
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+type ChipTone = 'blue' | 'green' | 'indigo' | 'amber' | 'slate';
+type ChipSize = 'xs' | 'sm';
+
+const CHIP_TONES: Record<ChipTone, { base: string; active: string; ring: string }> = {
+  blue: {
+    base: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+    active: 'border-blue-600 bg-blue-600 text-white shadow-sm',
+    ring: 'focus-visible:ring-blue-200',
+  },
+  green: {
+    base: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+    active: 'border-emerald-600 bg-emerald-600 text-white shadow-sm',
+    ring: 'focus-visible:ring-emerald-200',
+  },
+  indigo: {
+    base: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+    active: 'border-indigo-600 bg-indigo-600 text-white shadow-sm',
+    ring: 'focus-visible:ring-indigo-200',
+  },
+  amber: {
+    base: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+    active: 'border-amber-600 bg-amber-600 text-white shadow-sm',
+    ring: 'focus-visible:ring-amber-200',
+  },
+  slate: {
+    base: 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50',
+    active: 'border-slate-900 bg-slate-900 text-white shadow-sm',
+    ring: 'focus-visible:ring-slate-200',
+  },
+};
+
+const CHIP_SIZES: Record<ChipSize, string> = {
+  xs: 'px-2 py-0.5 text-[11px]',
+  sm: 'px-2.5 py-1 text-xs',
+};
+
+const ChipButton = ({
+  label,
+  active = false,
+  onClick,
+  disabled,
+  tone = 'slate',
+  size = 'sm',
+  ariaPressed,
+}: {
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
+  tone?: ChipTone;
+  size?: ChipSize;
+  ariaPressed?: boolean;
+}) => {
+  const styles = CHIP_TONES[tone];
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-pressed={ariaPressed ?? active}
+      className={`rounded-full border font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 ${
+        CHIP_SIZES[size]
+      } ${active ? styles.active : styles.base} ${styles.ring} disabled:opacity-60`}
+    >
+      {label}
+    </button>
+  );
+};
+
 const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   kidId,
   kidName,
@@ -248,7 +317,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [curriculumError, setCurriculumError] = useState<string | null>(null);
 
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
-  const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('');
+  const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('phonics-foundations');
   const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(PHONICS_COURSES);
   const [courseManuallySelected, setCourseManuallySelected] = useState(false);
   const [checks, setChecks] = useState<Record<string, string>>({
@@ -261,14 +330,21 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [confusions, setConfusions] = useState<string[]>([]);
   const [mastery, setMastery] = useState<string>('not_started');
   const [scoreBand, setScoreBand] = useState<string>('');
-  const [lastEvidence, setLastEvidence] = useState<string>('');
-  const [nextAction, setNextAction] = useState<string>('');
   const [teacherRemark, setTeacherRemark] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
+  const [baseline, setBaseline] = useState<string>('');
+  const [checksTouched, setChecksTouched] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const resolvedCourseOptions = useMemo<CourseDefinition[]>(() => courseOptions, [courseOptions]);
+
+  useEffect(() => {
+    if (!selectedCourseId && resolvedCourseOptions.length > 0 && !courseManuallySelected) {
+      setSelectedCourseId(resolvedCourseOptions[0].id);
+    }
+  }, [selectedCourseId, resolvedCourseOptions, courseManuallySelected]);
 
   useEffect(() => {
     let active = true;
@@ -453,8 +529,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           : existingMastery,
       );
       setScoreBand(existing.scoreBand || '');
-      setLastEvidence(existing.lastEvidence || '');
-      setNextAction(existing.nextAction || '');
       setTeacherRemark(existing.teacherRemark || '');
       const existingChecks = (existing as any).checks ?? {};
       setChecks({
@@ -463,6 +537,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         read: existingChecks?.read ?? 'not_started',
         write: existingChecks?.write ?? 'not_started',
       });
+      setChecksTouched(false);
       setSelectedSubskills(
         Array.isArray((existing as any).selectedSubskills)
           ? (existing as any).selectedSubskills.filter((item: unknown) => typeof item === 'string')
@@ -476,8 +551,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     } else {
       setMastery('not_started');
       setScoreBand('');
-      setLastEvidence('');
-      setNextAction('');
       setTeacherRemark('');
       setChecks({
         recognise: 'not_started',
@@ -485,11 +558,37 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         read: 'not_started',
         write: 'not_started',
       });
+      setChecksTouched(false);
       setSelectedSubskills([]);
       setConfusions([]);
     }
 
     setSaveMessage(null);
+    const snapshot = JSON.stringify({
+      mastery: existing ? (existing as any).mastery ?? 'not_started' : 'not_started',
+      scoreBand: existing ? (existing as any).scoreBand ?? '' : '',
+      checks: existing
+        ? {
+            recognise: (existing as any).checks?.recognise ?? 'not_started',
+            say: (existing as any).checks?.say ?? 'not_started',
+            read: (existing as any).checks?.read ?? 'not_started',
+            write: (existing as any).checks?.write ?? 'not_started',
+          }
+        : {
+            recognise: 'not_started',
+            say: 'not_started',
+            read: 'not_started',
+            write: 'not_started',
+          },
+      selectedSubskills: existing && Array.isArray((existing as any).selectedSubskills)
+        ? [...(existing as any).selectedSubskills].filter((item: unknown) => typeof item === 'string').sort()
+        : [],
+      confusions: existing && Array.isArray((existing as any).confusions)
+        ? [...(existing as any).confusions].filter((item: unknown) => typeof item === 'string').sort()
+        : [],
+      teacherRemark: existing ? (existing as any).teacherRemark ?? '' : '',
+    });
+    setBaseline(snapshot);
   }, [selectedTopicId, existingTopics]);
 
   const handleSave = async (): Promise<boolean> => {
@@ -514,8 +613,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           courseLabel: selectedCourseId ? COURSE_LABEL_BY_ID[selectedCourseId] : null,
           mastery: mastery || 'not_started',
           scoreBand: scoreBand || null,
-          lastEvidence: lastEvidence || null,
-          nextAction: nextAction || null,
           checks,
           selectedSubskills,
           confusions,
@@ -527,6 +624,16 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
       setSaveMessage('Progress saved.');
       setLastSavedAt(Date.now());
+      setBaseline(
+        JSON.stringify({
+          mastery,
+          scoreBand,
+          checks,
+          selectedSubskills: [...selectedSubskills].sort(),
+          confusions: [...confusions].sort(),
+          teacherRemark,
+        }),
+      );
       return true;
     } catch (err: any) {
       setSaveMessage(
@@ -554,19 +661,72 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   const disabled =
     topicsLoading || curriculumLoading || !selectedCourseId || courseTopics.length === 0;
-  const checkLevels = (config?.mastery ?? [
+  const DEFAULT_MASTERY_LEVELS = [
     'not_started',
     'emerging',
     'developing',
     'proficient',
     'mastered',
-  ]) as string[];
+  ];
+  const checkLevels =
+    Array.isArray(config?.mastery) && config.mastery.length > 0
+      ? config.mastery
+      : DEFAULT_MASTERY_LEVELS;
   const subskillChips = selectedTopicDef?.subskillChips ?? [];
   const confusionOptions = selectedTopicDef?.confusionOptions ?? [];
+  const containerClass = 'rounded-lg border border-slate-200 bg-white text-sm space-y-2 p-3';
+  const cardBase = 'rounded-xl border border-slate-200 p-3';
+  const snapshotNow = JSON.stringify({
+    mastery,
+    scoreBand,
+    checks,
+    selectedSubskills: [...selectedSubskills].sort(),
+    confusions: [...confusions].sort(),
+    teacherRemark,
+  });
+  const isDirty = baseline !== '' && snapshotNow !== baseline;
+  const setChecksAll = (level: string) => {
+    setChecksTouched(true);
+    setChecks({
+      recognise: level,
+      say: level,
+      read: level,
+      write: level,
+    });
+  };
+
+  useEffect(() => {
+    if (!mastery) return;
+    if (!scoreBand) {
+      const map: Record<string, string> = {
+        not_started: '0-20',
+        emerging: '21-40',
+        developing: '41-60',
+        proficient: '61-80',
+        mastered: '81-100',
+      };
+      const nextBand = map[String(mastery)] ?? '';
+      if (nextBand) setScoreBand(nextBand);
+    }
+    if (!checksTouched) {
+      setChecks({
+        recognise: mastery,
+        say: mastery,
+        read: mastery,
+        write: mastery,
+      });
+    }
+  }, [mastery, scoreBand, checksTouched]);
+
+  const checksDifferFromMastery = Object.values(checks).some((value) => value !== mastery);
+  const hasAdvancedData = confusions.length > 0 || checksDifferFromMastery;
+  const showAdvanced = advancedOpen || hasAdvancedData;
+  const masteryStatus =
+    mastery === 'proficient' || mastery === 'mastered' ? 'Completed' : 'In progress';
 
   return (
-    <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 text-sm">
-      <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+    <div className={containerClass}>
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-800">
             Topic Progress — Quick Update
@@ -577,14 +737,12 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             </p>
           )}
         </div>
-        {saving && (
-          <span className="text-xs text-slate-500">
-            Saving…
-          </span>
-        )}
-        {!saving && saveMessage && (
-          <span className="text-xs text-emerald-600">{saveMessage}</span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {saving && <span className="text-xs text-slate-500">Saving…</span>}
+          {!saving && saveMessage && (
+            <span className="text-xs text-emerald-600">{saveMessage}</span>
+          )}
+        </div>
       </div>
 
       {configError && (
@@ -602,179 +760,92 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           Couldn&apos;t load curriculum: {curriculumError}
         </p>
       )}
+      {import.meta.env.DEV && (
+        <details className="text-[10px] text-slate-500">
+          <summary className="cursor-pointer">Debug</summary>
+          <div className="mt-1">
+            selectedCourseId={selectedCourseId || "''"} · selectedTopicId={selectedTopicId || "''"} ·
+            courseTopics={courseTopics.length} · curriculumTopics={curriculumTopics.length} ·
+            curriculumLoading={String(curriculumLoading)} · curriculumError={curriculumError || 'none'}
+          </div>
+        </details>
+      )}
 
-      <div className="grid gap-2 md:grid-cols-2">
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Course
-          <select
-            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-            value={selectedCourseId}
-            onChange={(e) => {
-              setCourseManuallySelected(true);
-              setSelectedCourseId(e.target.value as CourseId);
-            }}
-            disabled={configLoading || topicsLoading || curriculumLoading}
-          >
-            {resolvedCourseOptions.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.label}
+      <div className={`${cardBase} bg-sky-50/60`}>
+        <div className="text-xs font-semibold text-slate-700">Lesson</div>
+        <div className="mt-2 grid gap-2 md:grid-cols-2">
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
+            Course
+            <select
+              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              value={selectedCourseId}
+              onChange={(e) => {
+                setCourseManuallySelected(true);
+                setSelectedCourseId(e.target.value as CourseId);
+              }}
+              disabled={configLoading || topicsLoading || curriculumLoading}
+            >
+              <option value="" disabled>
+                Select course
               </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Topic
-          <select
-            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-            value={selectedTopicId}
-            onChange={(e) => setSelectedTopicId(e.target.value)}
-            disabled={disabled}
-          >
-            {courseTopics.length === 0 && (
-              <option value="">No topics configured</option>
-            )}
-            {courseTopics.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.displayTitle || `${t.lesson} — ${t.label}`}
-              </option>
-            ))}
-          </select>
-        </label>
+              {resolvedCourseOptions.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
+            Topic
+            <select
+              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              value={selectedTopicId}
+              onChange={(e) => setSelectedTopicId(e.target.value)}
+              disabled={disabled}
+            >
+              {selectedTopicId === '' && courseTopics.length > 0 && (
+                <option value="" disabled>
+                  Select topic
+                </option>
+              )}
+              {courseTopics.length === 0 && (
+                <option value="">No topics configured</option>
+              )}
+              {courseTopics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.displayTitle || `${t.lesson} — ${t.label}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
-      <div className="grid gap-2 md:grid-cols-4">
-        <div className="md:col-span-2 space-y-1">
-          <div className="text-xs font-medium text-slate-700">Mastery</div>
+      <div className={`${cardBase} bg-emerald-50/60 space-y-3`}>
+        <div className="text-xs font-semibold text-slate-700">Quick update</div>
+        <div className="space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-xs font-medium text-slate-700">Mastery</div>
+            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+              {masteryStatus}
+            </span>
+          </div>
           <div className="flex flex-wrap gap-2">
             {checkLevels.map((m) => {
               const active = mastery === m;
               return (
-                <button
+                <ChipButton
                   key={m}
-                  type="button"
                   onClick={() => setMastery(m)}
                   disabled={disabled}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                    active
-                      ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {String(m).replace(/_/g, ' ')}
-                </button>
+                  active={active}
+                  tone="blue"
+                  size="xs"
+                  label={String(m).replace(/_/g, ' ')}
+                />
               );
             })}
           </div>
-          <div className="text-xs text-slate-500">
-            Pick the child's current level for this topic.
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <div className="text-xs font-medium text-slate-700">Score band</div>
-          <div className="flex flex-wrap gap-2">
-            {[
-              { label: '0–20', fallback: '0-20' },
-              { label: '21–40', fallback: '21-40' },
-              { label: '41–60', fallback: '41-60' },
-              { label: '61–80', fallback: '61-80' },
-              { label: '81–100', fallback: '81-100' },
-            ].map((opt) => {
-              const candidates = (config?.scoreBands ?? []) as string[];
-              const value =
-                candidates.find((c) => c === opt.label || c === opt.fallback) ?? opt.fallback;
-              const active = scoreBand === value;
-              return (
-                <button
-                  key={opt.label}
-                  type="button"
-                  onClick={() => setScoreBand(value)}
-                  disabled={disabled}
-                  className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                    active
-                      ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              );
-            })}
-          </div>
-          <div className="text-xs text-slate-500">
-            Pick a band based on today's performance.
-          </div>
-        </div>
-
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Next action
-          <select
-            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-            value={nextAction}
-            onChange={(e) => setNextAction(e.target.value)}
-            disabled={disabled}
-          >
-            <option value="">Not set</option>
-            {(config?.nextActions ?? []).map((a) => (
-              <option key={a} value={a}>
-                {a}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Teacher remark
-          <input
-            type="text"
-            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-            placeholder="One-line note for parents"
-            value={teacherRemark}
-            onChange={(e) => setTeacherRemark(e.target.value)}
-            disabled={disabled}
-          />
-        </label>
-      </div>
-
-      <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-3">
-        <div className="text-xs font-semibold text-slate-700">Quick Checks</div>
-        <div className="grid gap-2 md:grid-cols-4">
-          {[
-            { key: 'recognise', label: 'Recognise' },
-            { key: 'say', label: 'Say' },
-            { key: 'read', label: 'Read' },
-            { key: 'write', label: 'Write/Spell' },
-          ].map((check) => (
-            <div key={check.key} className="space-y-1">
-              <div className="text-[11px] font-medium text-slate-600">{check.label}</div>
-              <div className="flex flex-wrap gap-1">
-                {checkLevels.map((level) => {
-                  const active = checks[check.key] === level;
-                  return (
-                    <button
-                      key={`${check.key}-${level}`}
-                      type="button"
-                      onClick={() =>
-                        setChecks((prev) => ({
-                          ...prev,
-                          [check.key]: level,
-                        }))
-                      }
-                      disabled={disabled}
-                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
-                        active
-                          ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
-                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      {labelizeLevel(level)}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
         </div>
 
         <div className="space-y-1">
@@ -788,103 +859,192 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
               {subskillChips.map((chip) => {
                 const active = selectedSubskills.includes(chip);
                 return (
-                  <button
+                  <ChipButton
                     key={chip}
-                    type="button"
                     onClick={() =>
                       setSelectedSubskills((prev) => toggleInArray(chip, prev, 3))
                     }
                     disabled={disabled}
-                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                      active
-                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {chip}
-                  </button>
+                    active={active}
+                    tone="indigo"
+                    size="xs"
+                    label={chip}
+                  />
                 );
               })}
             </div>
           )}
         </div>
 
-        {confusionOptions.length > 0 && (
+        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
+          Teacher remark
+          <input
+            type="text"
+            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+            placeholder="One-line note for parents"
+            value={teacherRemark}
+            onChange={(e) => setTeacherRemark(e.target.value)}
+            disabled={disabled}
+          />
+        </label>
+
+      </div>
+
+      <details
+        open={showAdvanced}
+        onToggle={(e) => setAdvancedOpen((e.target as HTMLDetailsElement).open)}
+        className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2"
+      >
+        <summary className="cursor-pointer text-xs font-semibold text-slate-700">
+          Advanced (optional)
+        </summary>
+        <div className="mt-3 space-y-3">
           <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-700">Confusions (optional)</div>
+            <div className="text-xs font-medium text-slate-700">Score band</div>
             <div className="flex flex-wrap gap-2">
-              {confusionOptions.map((chip) => {
-                const active = confusions.includes(chip);
+              {[
+                { label: '0–20', fallback: '0-20' },
+                { label: '21–40', fallback: '21-40' },
+                { label: '41–60', fallback: '41-60' },
+                { label: '61–80', fallback: '61-80' },
+                { label: '81–100', fallback: '81-100' },
+              ].map((opt) => {
+                const candidates = (config?.scoreBands ?? []) as string[];
+                const value =
+                  candidates.find((c) => c === opt.label || c === opt.fallback) ?? opt.fallback;
+                const active = scoreBand === value;
                 return (
-                  <button
-                    key={chip}
-                    type="button"
-                    onClick={() =>
-                      setConfusions((prev) => toggleInArray(chip, prev))
-                    }
+                  <ChipButton
+                    key={opt.label}
+                    onClick={() => setScoreBand(value)}
                     disabled={disabled}
-                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                      active
-                        ? 'border-amber-600 bg-amber-50 text-amber-700'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {chip}
-                  </button>
+                    active={active}
+                    tone="green"
+                    size="xs"
+                    label={opt.label}
+                  />
                 );
               })}
             </div>
           </div>
-        )}
 
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-          Last evidence
-          <select
-            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-            value={lastEvidence}
-            onChange={(e) => setLastEvidence(e.target.value)}
-            disabled={disabled}
-          >
-            <option value="">Not set</option>
-            {(config?.lastEvidence ?? []).map((ev) => (
-              <option key={ev} value={ev}>
-                {ev}
-              </option>
+          {confusionOptions.length > 0 && (
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-slate-700">Confusions (optional)</div>
+              <div className="flex flex-wrap gap-2">
+                {confusionOptions.map((chip) => {
+                  const active = confusions.includes(chip);
+                  return (
+                    <ChipButton
+                      key={chip}
+                      onClick={() =>
+                        setConfusions((prev) => toggleInArray(chip, prev))
+                      }
+                      disabled={disabled}
+                      active={active}
+                      tone="amber"
+                      size="xs"
+                      label={chip}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs font-semibold text-slate-700">Quick presets</div>
+          <div className="flex flex-wrap gap-2">
+            <ChipButton
+              label="Set checks = Mastery"
+              onClick={() => setChecksAll(mastery || 'not_started')}
+              disabled={disabled}
+              tone="slate"
+              size="xs"
+            />
+            {checkLevels.map((level) => (
+              <ChipButton
+                key={`preset-${level}`}
+                onClick={() => setChecksAll(level)}
+                disabled={disabled}
+                tone="slate"
+                size="xs"
+                label={`All ${labelizeLevel(level)}`}
+              />
             ))}
-          </select>
-        </label>
-      </div>
+          </div>
 
-      <div className="flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={disabled || saving || !selectedTopicId}
-          className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {saving ? 'Saving…' : 'Save'}
-        </button>
-        {onSaveAndBack ? (
-          <button
-            type="button"
-            onClick={handleSaveAndBack}
-            disabled={disabled || saving || !selectedTopicId}
-            className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            {saving ? 'Saving…' : 'Save & Back'}
-          </button>
-        ) : null}
-        <button
-          type="button"
-          onClick={handleSaveAndNext}
-          disabled={disabled || saving || !selectedTopicId}
-          className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
-        >
-          {saving ? 'Saving…' : 'Save & Next Topic'}
-        </button>
-      </div>
-      <div className="text-xs text-slate-500">
-        Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}
+          <div className="grid gap-2 md:grid-cols-4">
+            {[
+              { key: 'recognise', label: 'Recognise' },
+              { key: 'say', label: 'Say' },
+              { key: 'read', label: 'Read' },
+              { key: 'write', label: 'Write/Spell' },
+            ].map((check) => (
+              <div key={check.key} className="space-y-1">
+                <div className="text-[11px] font-medium text-slate-600">{check.label}</div>
+                <div className="flex flex-wrap gap-1">
+                  {checkLevels.map((level) => {
+                    const active = checks[check.key] === level;
+                    return (
+                      <ChipButton
+                        key={`${check.key}-${level}`}
+                        onClick={() => {
+                          setChecksTouched(true);
+                          setChecks((prev) => ({
+                            ...prev,
+                            [check.key]: level,
+                          }));
+                        }}
+                        disabled={disabled}
+                        active={active}
+                        tone="indigo"
+                        size="xs"
+                        label={labelizeLevel(level)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </details>
+
+      <div className="sticky bottom-0 -mx-3 border-t border-slate-200 bg-white/80 px-3 py-2 backdrop-blur md:-mx-4 md:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-xs text-slate-600">
+            {isDirty ? 'Unsaved changes' : 'All changes saved'}
+            <span className="ml-2 text-slate-400">• Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={disabled || saving || !selectedTopicId || !isDirty}
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+            >
+              {saving ? 'Saving…' : 'Save'}
+            </button>
+            {onSaveAndBack ? (
+              <button
+                type="button"
+                onClick={handleSaveAndBack}
+                disabled={disabled || saving || !selectedTopicId || !isDirty}
+                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {saving ? 'Saving…' : 'Save & Back'}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={handleSaveAndNext}
+              disabled={disabled || saving || !selectedTopicId || !isDirty}
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+            >
+              {saving ? 'Saving…' : 'Save & Next Topic'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
