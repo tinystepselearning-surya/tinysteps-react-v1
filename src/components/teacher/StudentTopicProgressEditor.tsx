@@ -29,6 +29,9 @@ type CourseTopic = {
   label: string;
   displayTitle?: string;
   order?: number | null;
+  rubricType?: string;
+  subskillChips?: string[];
+  confusionOptions?: string[];
   courseId: CourseId;
   courseLabel: string;
   area: 'phonics';
@@ -213,22 +216,18 @@ const normalizeTopicText = (value?: string): string =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
-const parseCommaList = (value: string): string[] =>
-  value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-
-const formatCommaList = (value: unknown): string => {
-  if (Array.isArray(value)) {
-    return value
-      .filter((item) => typeof item === 'string' && item.trim().length > 0)
-      .map((item) => item.trim())
-      .join(', ');
+const toggleInArray = (value: string, items: string[], max?: number): string[] => {
+  if (items.includes(value)) {
+    return items.filter((item) => item !== value);
   }
-  if (typeof value === 'string') return value;
-  return '';
+  if (typeof max === 'number' && items.length >= max) return items;
+  return [...items, value];
 };
+
+const labelizeLevel = (value: string): string =>
+  value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   kidId,
@@ -252,13 +251,18 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('');
   const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(PHONICS_COURSES);
   const [courseManuallySelected, setCourseManuallySelected] = useState(false);
-  const [selectedSubskill, setSelectedSubskill] = useState<string>('');
+  const [checks, setChecks] = useState<Record<string, string>>({
+    recognise: 'not_started',
+    say: 'not_started',
+    read: 'not_started',
+    write: 'not_started',
+  });
+  const [selectedSubskills, setSelectedSubskills] = useState<string[]>([]);
+  const [confusions, setConfusions] = useState<string[]>([]);
   const [mastery, setMastery] = useState<string>('not_started');
   const [scoreBand, setScoreBand] = useState<string>('');
   const [lastEvidence, setLastEvidence] = useState<string>('');
   const [nextAction, setNextAction] = useState<string>('');
-  const [strengths, setStrengths] = useState<string>('');
-  const [weaknesses, setWeaknesses] = useState<string>('');
   const [teacherRemark, setTeacherRemark] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -299,6 +303,13 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         const lesson = String(t?.lesson ?? t?.lessonNumber ?? t?.lessonNo ?? '');
         const label = String(t?.label ?? t?.topic ?? t?.topicName ?? '');
         const displayTitle = String(t?.displayTitle ?? '').trim();
+        const rubricType = typeof t?.rubricType === 'string' ? String(t.rubricType) : undefined;
+        const subskillChips = Array.isArray(t?.subskillChips)
+          ? t.subskillChips.filter((chip: unknown) => typeof chip === 'string')
+          : [];
+        const confusionOptions = Array.isArray(t?.confusionOptions)
+          ? t.confusionOptions.filter((chip: unknown) => typeof chip === 'string')
+          : [];
         const order = Number.isFinite(Number(t?.order))
           ? Number(t.order)
           : extractLessonNumber(lesson);
@@ -308,6 +319,9 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           label,
           displayTitle: displayTitle || (lesson ? `${lesson} — ${label}` : label),
           order: order ?? null,
+          rubricType,
+          subskillChips,
+          confusionOptions,
           courseId: selectedCourseId,
           courseLabel,
           area: 'phonics',
@@ -441,19 +455,38 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       setScoreBand(existing.scoreBand || '');
       setLastEvidence(existing.lastEvidence || '');
       setNextAction(existing.nextAction || '');
-      setStrengths(formatCommaList((existing as any).strengths));
-      setWeaknesses(formatCommaList((existing as any).weaknesses));
       setTeacherRemark(existing.teacherRemark || '');
-      setSelectedSubskill(existing.subskill || '');
+      const existingChecks = (existing as any).checks ?? {};
+      setChecks({
+        recognise: existingChecks?.recognise ?? 'not_started',
+        say: existingChecks?.say ?? 'not_started',
+        read: existingChecks?.read ?? 'not_started',
+        write: existingChecks?.write ?? 'not_started',
+      });
+      setSelectedSubskills(
+        Array.isArray((existing as any).selectedSubskills)
+          ? (existing as any).selectedSubskills.filter((item: unknown) => typeof item === 'string')
+          : [],
+      );
+      setConfusions(
+        Array.isArray((existing as any).confusions)
+          ? (existing as any).confusions.filter((item: unknown) => typeof item === 'string')
+          : [],
+      );
     } else {
       setMastery('not_started');
       setScoreBand('');
       setLastEvidence('');
       setNextAction('');
-      setStrengths('');
-      setWeaknesses('');
       setTeacherRemark('');
-      setSelectedSubskill('');
+      setChecks({
+        recognise: 'not_started',
+        say: 'not_started',
+        read: 'not_started',
+        write: 'not_started',
+      });
+      setSelectedSubskills([]);
+      setConfusions([]);
     }
 
     setSaveMessage(null);
@@ -479,13 +512,13 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           area: selectedTopicDef.area,
           courseId: selectedCourseId || null,
           courseLabel: selectedCourseId ? COURSE_LABEL_BY_ID[selectedCourseId] : null,
-          subskill: selectedSubskill || null,
           mastery: mastery || 'not_started',
           scoreBand: scoreBand || null,
           lastEvidence: lastEvidence || null,
           nextAction: nextAction || null,
-          strengths: parseCommaList(strengths),
-          weaknesses: parseCommaList(weaknesses),
+          checks,
+          selectedSubskills,
+          confusions,
           teacherRemark: teacherRemark || null,
           updatedAt: serverTimestamp(),
         },
@@ -521,6 +554,15 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   const disabled =
     topicsLoading || curriculumLoading || !selectedCourseId || courseTopics.length === 0;
+  const checkLevels = (config?.mastery ?? [
+    'not_started',
+    'emerging',
+    'developing',
+    'proficient',
+    'mastered',
+  ]) as string[];
+  const subskillChips = selectedTopicDef?.subskillChips ?? [];
+  const confusionOptions = selectedTopicDef?.confusionOptions ?? [];
 
   return (
     <div className="space-y-2 rounded-lg border border-slate-200 bg-white p-3 text-sm">
@@ -605,13 +647,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         <div className="md:col-span-2 space-y-1">
           <div className="text-xs font-medium text-slate-700">Mastery</div>
           <div className="flex flex-wrap gap-2">
-            {(config?.mastery ?? [
-              'not_started',
-              'emerging',
-              'developing',
-              'proficient',
-              'mastered',
-            ]).map((m) => {
+            {checkLevels.map((m) => {
               const active = mastery === m;
               return (
                 <button
@@ -701,94 +737,122 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         </label>
       </div>
 
-      <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="text-xs font-semibold text-slate-700">Optional</div>
-          <span className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-500">
-            Optional
-          </span>
-        </div>
-        <div className="grid gap-2 md:grid-cols-2">
-          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-            Subskill
-            <input
-              type="text"
-              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-              placeholder="e.g., CVC blending"
-              value={selectedSubskill}
-              onChange={(e) => setSelectedSubskill(e.target.value)}
-              disabled={disabled}
-            />
-            <span className="text-[11px] text-slate-500">
-              Exact skill observed today (e.g., CVC blending, letter formation).
-            </span>
-            <div className="flex flex-wrap gap-2 pt-1">
-              {[
-                'CVC blending',
-                'segmenting',
-                'letter formation',
-                'sound recognition',
-                'word reading',
-                'spelling',
-                'sentence reading',
-                'pronunciation',
-              ].map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() =>
-                    setSelectedSubskill((prev) => (prev ? `${prev}, ${chip}` : chip))
-                  }
-                  className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                  disabled={disabled}
-                >
-                  {chip}
-                </button>
-              ))}
+      <div className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 space-y-3">
+        <div className="text-xs font-semibold text-slate-700">Quick Checks</div>
+        <div className="grid gap-2 md:grid-cols-4">
+          {[
+            { key: 'recognise', label: 'Recognise' },
+            { key: 'say', label: 'Say' },
+            { key: 'read', label: 'Read' },
+            { key: 'write', label: 'Write/Spell' },
+          ].map((check) => (
+            <div key={check.key} className="space-y-1">
+              <div className="text-[11px] font-medium text-slate-600">{check.label}</div>
+              <div className="flex flex-wrap gap-1">
+                {checkLevels.map((level) => {
+                  const active = checks[check.key] === level;
+                  return (
+                    <button
+                      key={`${check.key}-${level}`}
+                      type="button"
+                      onClick={() =>
+                        setChecks((prev) => ({
+                          ...prev,
+                          [check.key]: level,
+                        }))
+                      }
+                      disabled={disabled}
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
+                        active
+                          ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {labelizeLevel(level)}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </label>
-
-          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-            Last evidence
-            <select
-              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-              value={lastEvidence}
-              onChange={(e) => setLastEvidence(e.target.value)}
-              disabled={disabled}
-            >
-              <option value="">Not set</option>
-              {(config?.lastEvidence ?? []).map((ev) => (
-                <option key={ev} value={ev}>
-                  {ev}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-            Strengths (comma-separated)
-            <input
-              type="text"
-              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-              placeholder="e.g., blending, confidence"
-              value={strengths}
-              onChange={(e) => setStrengths(e.target.value)}
-              disabled={disabled}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
-            Weaknesses (comma-separated)
-            <input
-              type="text"
-              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-              placeholder="e.g., blends, pacing"
-              value={weaknesses}
-              onChange={(e) => setWeaknesses(e.target.value)}
-              disabled={disabled}
-            />
-          </label>
+          ))}
         </div>
+
+        <div className="space-y-1">
+          <div className="text-xs font-medium text-slate-700">
+            Subskills <span className="text-[11px] text-slate-500">(pick up to 3)</span>
+          </div>
+          {subskillChips.length === 0 ? (
+            <div className="text-[11px] text-slate-500">No subskills listed for this lesson.</div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {subskillChips.map((chip) => {
+                const active = selectedSubskills.includes(chip);
+                return (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() =>
+                      setSelectedSubskills((prev) => toggleInArray(chip, prev, 3))
+                    }
+                    disabled={disabled}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                      active
+                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {chip}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {confusionOptions.length > 0 && (
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-slate-700">Confusions (optional)</div>
+            <div className="flex flex-wrap gap-2">
+              {confusionOptions.map((chip) => {
+                const active = confusions.includes(chip);
+                return (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() =>
+                      setConfusions((prev) => toggleInArray(chip, prev))
+                    }
+                    disabled={disabled}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
+                      active
+                        ? 'border-amber-600 bg-amber-50 text-amber-700'
+                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {chip}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+          Last evidence
+          <select
+            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+            value={lastEvidence}
+            onChange={(e) => setLastEvidence(e.target.value)}
+            disabled={disabled}
+          >
+            <option value="">Not set</option>
+            {(config?.lastEvidence ?? []).map((ev) => (
+              <option key={ev} value={ev}>
+                {ev}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="flex flex-wrap justify-end gap-2">

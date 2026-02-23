@@ -48,7 +48,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700/80">
             {eyebrow}
           </span>
-          <h3 className="mt-1 text-base font-bold text-slate-900">{title}</h3>
+          <h2 className="mt-1 text-base font-bold text-slate-900">{title}</h2>
           <p className="mt-2 text-xs leading-relaxed text-slate-600">{desc}</p>
         </div>
       </div>

@@ -134,7 +134,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
         <div className="relative mb-6">
           <h2 className="text-2xl font-bold text-slate-900">Book Assessment</h2>
 
-          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
             <span>Takes ~20s • Reply via WhatsApp</span>
             <span className="text-slate-300">•</span>
             <a
@@ -148,7 +148,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
 
         <form onSubmit={handleSubmitWhatsApp} className="relative space-y-4">
           <div className="group space-y-1">
-            <label className="text-[10px] font-bold uppercase text-slate-400 transition-colors group-focus-within:text-orange-600">
+            <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
               Parent Name *
             </label>
             <input
@@ -164,7 +164,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           </div>
 
           <div className="group space-y-1">
-            <label className="text-[10px] font-bold uppercase text-slate-400 transition-colors group-focus-within:text-orange-600">
+            <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
               WhatsApp Number *
             </label>
             <input
@@ -181,10 +181,14 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="group space-y-1">
-              <label className="text-[10px] font-bold uppercase text-slate-400">
+              <label htmlFor="book-child-age" className="sr-only">
                 Child's Age
               </label>
+              <span className="text-[10px] font-bold uppercase text-slate-600">
+                Child's Age
+              </span>
               <select
+                id="book-child-age"
                 value={form.childAgeGrade}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, childAgeGrade: e.target.value }))
@@ -198,10 +202,14 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
             </div>
 
             <div className="group space-y-1">
-              <label className="text-[10px] font-bold uppercase text-slate-400">
+              <label htmlFor="book-interest" className="sr-only">
                 Interest
               </label>
+              <span className="text-[10px] font-bold uppercase text-slate-600">
+                Interest
+              </span>
               <select
+                id="book-interest"
                 value={form.interest}
                 onChange={(e) =>
                   setForm((p) => ({
@@ -239,7 +247,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
               >
                 <div className="mt-3 space-y-4">
                   <div className="group space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 transition-colors group-focus-within:text-orange-600">
+                    <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
                       Preferred Time (optional)
                     </label>
                     <input
@@ -257,7 +265,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
                   </div>
 
                   <div className="group space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-slate-400 transition-colors group-focus-within:text-orange-600">
+                    <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
                       Note (optional)
                     </label>
                     <input
@@ -315,7 +323,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
             Submit via Google Form
           </button>
 
-          <p className="text-center text-[10px] text-slate-400">
+          <p className="text-center text-[10px] text-slate-600">
             🔒 We value your privacy. No spam, ever.
           </p>
         </form>
@@ -340,7 +348,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
               </h3>
               <button
                 onClick={() => setShowGoogleFormModal(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-700"
                 aria-label="Close modal"
                 autoFocus
               >

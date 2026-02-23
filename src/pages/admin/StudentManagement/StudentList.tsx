@@ -161,6 +161,69 @@ const PHONICS_DISPLAY_TITLES = {
   ...buildDisplayTitleMap('advanced-phonics', ADVANCED_PHONICS_TITLES),
 };
 
+type RubricType =
+  | 'single_sound'
+  | 'sound_set'
+  | 'digraph'
+  | 'silent_letter'
+  | 'vowel_team'
+  | 'magic_e'
+  | 'rule'
+  | 'revision';
+
+const extractLessonNumber = (lesson?: string, id?: string): number | null => {
+  const raw = lesson || id || '';
+  const match = /lesson[-_ ]*0*(\d+)/i.exec(raw);
+  if (!match) return null;
+  const num = Number(match[1]);
+  return Number.isFinite(num) ? num : null;
+};
+
+const classifyRubricType = (courseId: string, lesson?: string, id?: string): RubricType => {
+  const num = extractLessonNumber(lesson, id);
+  if (courseId === 'phonics-foundations') {
+    if (num != null && num >= 1 && num <= 26) return 'single_sound';
+    return 'revision';
+  }
+  if (courseId === 'early-phonics') {
+    if (num != null && num >= 1 && num <= 9) return 'sound_set';
+    if (num === 10 || num === 20 || num === 41) return 'revision';
+    if (num != null && ((num >= 11 && num <= 13) || num === 18 || num === 19)) return 'digraph';
+    if (num != null && (num === 16 || num === 17)) return 'silent_letter';
+    if (num != null && num >= 22 && num <= 31) return 'vowel_team';
+    if (num != null && num >= 32 && num <= 36) return 'magic_e';
+    return 'rule';
+  }
+  if (courseId === 'advanced-phonics') {
+    if (num != null && num >= 1 && num <= 4) return 'vowel_team';
+    if (num != null && num >= 17) return 'revision';
+    return 'rule';
+  }
+  return 'revision';
+};
+
+const SUBSKILL_CHIPS_BY_RUBRIC: Record<RubricType, string[]> = {
+  single_sound: ['sound recognition', 'sound pronunciation', 'letter formation', 'blending', 'word reading'],
+  sound_set: ['sound recognition', 'blending', 'segmenting', 'word reading', 'letter formation'],
+  digraph: ['pattern recognition', 'sound pronunciation', 'word reading', 'spelling pattern', 'blending'],
+  silent_letter: ['pattern recognition', 'correct sound', 'word reading', 'spelling pattern'],
+  vowel_team: ['vowel team recognition', 'long vowel sound', 'word reading', 'sound discrimination', 'spelling'],
+  magic_e: ['magic-e recognition', 'short→long change', 'word reading', 'spelling', 'sound discrimination'],
+  rule: ['rule spotting', 'apply in reading', 'apply in spelling', 'word sorting', 'explain rule'],
+  revision: ['mixed reading', 'mixed spelling', 'recall speed', 'confidence'],
+};
+
+const CONFUSION_OPTIONS_BY_RUBRIC: Record<RubricType, string[]> = {
+  single_sound: ['b vs d', 'p vs b', 'm vs n', 'u vs n', 'a vs e', 'i vs e'],
+  sound_set: ['b vs d', 'p vs b', 'm vs n', 'u vs n', 'a vs e', 'i vs e'],
+  digraph: ['sh vs ch', 'th vs f', 'ph vs f', 'ck vs k'],
+  silent_letter: [],
+  vowel_team: ['ee vs ea', 'oa vs oe', 'short vs long vowel', 'oo: /oo/ vs /ʊ/', 'i_e vs igh'],
+  magic_e: ['ee vs ea', 'oa vs oe', 'short vs long vowel', 'oo: /oo/ vs /ʊ/', 'i_e vs igh'],
+  rule: ['soft c vs hard c', 'g vs j', 'double consonant rule'],
+  revision: [],
+};
+
 const PHONICS_CURRICULUM_TOPICS = [
   { id: 'phonics-foundations__lesson-01', courseId: 'phonics-foundations', lesson: 'Lesson-1', label: 's' },
   { id: 'phonics-foundations__lesson-02', courseId: 'phonics-foundations', lesson: 'Lesson-2', label: 'a' },
@@ -253,10 +316,16 @@ const PHONICS_CURRICULUM_TOPICS = [
   { id: 'advanced-phonics__lesson-18', courseId: 'advanced-phonics', lesson: 'Lesson-18', label: 'revision' },
   { id: 'advanced-phonics__lesson-19', courseId: 'advanced-phonics', lesson: 'Lesson-19', label: 'revision' },
   { id: 'advanced-phonics__lesson-20', courseId: 'advanced-phonics', lesson: 'Lesson-20', label: 'revision' },
-].map((topic) => ({
-  ...topic,
-  displayTitle: PHONICS_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
-}));
+].map((topic) => {
+  const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  return {
+    ...topic,
+    displayTitle: PHONICS_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
+    rubricType,
+    subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
+    confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
+  };
+});
 
 interface StudentListProps {
   onEdit: (student: Student) => void;

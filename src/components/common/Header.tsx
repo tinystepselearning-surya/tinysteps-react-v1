@@ -251,7 +251,14 @@ export default function Header() {
             Book Free Assessment Class
           </button>
 
-          <motion.button onClick={() => setIsOpen(!isOpen)} className="flex flex-col gap-1" type="button">
+          <motion.button
+            onClick={() => setIsOpen(!isOpen)}
+            className="flex flex-col gap-1"
+            type="button"
+            aria-label="Toggle menu"
+            aria-expanded={isOpen}
+            aria-controls="mobile-nav-menu"
+          >
             {[0, 1, 2].map((line) => (
               <motion.div
                 key={line}
@@ -272,6 +279,7 @@ export default function Header() {
       <motion.div
         initial={{ height: 0 }}
         animate={{ height: isOpen ? "auto" : 0 }}
+        id="mobile-nav-menu"
         className="md:hidden overflow-hidden bg-white/95 backdrop-blur"
       >
         <div className="space-y-4 px-5 py-6 text-sm font-semibold text-gray-700">

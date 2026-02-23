@@ -28,7 +28,7 @@ const PricingCrispSection: React.FC = () => {
         <div className="mt-10 grid gap-6 md:grid-cols-3">
           {/* Starter Pack */}
           <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
               Starter · {ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes / month
             </p>
             <div className="mt-2">
@@ -59,7 +59,7 @@ const PricingCrispSection: React.FC = () => {
             <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-500 to-pink-500 px-3 py-1 text-xs font-semibold text-white shadow-md">
               Most popular
             </div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
               Growth · {ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes / month
             </p>
             <div className="mt-2">
@@ -87,7 +87,7 @@ const PricingCrispSection: React.FC = () => {
 
           {/* Intensive Pack */}
           <div className="relative flex flex-col justify-between rounded-3xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-100 backdrop-blur-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
               Intensive · {ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes / month
             </p>
             <div className="mt-2">
@@ -114,7 +114,7 @@ const PricingCrispSection: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-500">
+        <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
           <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
             <span>✅ No long-term lock-in</span>
             <span>✅ Easy class rescheduling</span>
