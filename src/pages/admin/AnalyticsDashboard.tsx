@@ -163,44 +163,9 @@ export default function AnalyticsDashboard(): JSX.Element {
     return map;
   }, [users]);
 
-  const kidNameById = useMemo(() => {
-    const map: Record<string, string> = {};
-    students.forEach((s) => {
-      map[s.id] = s.fullName || s.name || s.displayName || s.studentName || s.id;
-      if (s.studentId) map[s.studentId] = map[s.id];
-    });
-    return map;
-  }, [students]);
-
-  const courseNameById = useMemo(() => {
-    const map: Record<string, string> = {};
-    courses.forEach((c) => {
-      const label = c.title || c.name || c.slug || c.courseId || c.id;
-      map[c.id] = label;
-      if (c.courseId) map[c.courseId] = label;
-      if (c.slug) map[c.slug] = label;
-    });
-    return map;
-  }, [courses]);
-
-  const recentEnrollments = useMemo(() => {
-    return enrollments
-      .slice()
-      .sort((a, b) => {
-        const aDate = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt || 0);
-        const bDate = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt || 0);
-        return bDate.getTime() - aDate.getTime();
-      })
-      .slice(0, 8)
-      .map((e) => ({
-        student: kidNameById[e.kidId] || kidNameById[e.studentId] || 'Unknown',
-        course: courseNameById[e.courseId] || e.courseId || 'Unknown',
-        parent: nameById[e.parentId] || 'Unknown',
-        teacher: nameById[e.teacherId] || 'Unassigned',
-        status: e.status || '—',
-        date: formatDate(e.createdAt),
-      }));
-  }, [enrollments, kidNameById, courseNameById, nameById]);
+  const kidNameById = useMemo(() => ({} as Record<string, string>), []);
+  const courseNameById = useMemo(() => ({} as Record<string, string>), []);
+  const recentEnrollments: any[] = [];
 
   const teacherEarnings = useMemo(() => {
     const teachers = users.filter(u => u.roles?.includes('teacher'));
@@ -309,50 +274,6 @@ export default function AnalyticsDashboard(): JSX.Element {
                       <td className="p-2">{t.sessions}</td>
                       <td className="p-2">{formatMoney(t.totalEarned)}</td>
                       <td className="p-2">{formatMoney(t.pending)}</td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-semibold">Recent enrollments</h3>
-              <p className="text-xs text-muted-foreground">Latest student activity.</p>
-            </div>
-            <span className="text-xs text-muted-foreground">{recentEnrollments.length} items</span>
-          </div>
-          <div className="mt-3 overflow-x-auto">
-            <table className="w-full text-sm table-auto">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="p-2">Student</th>
-                  <th className="p-2">Course</th>
-                  <th className="p-2">Parent</th>
-                  <th className="p-2">Teacher</th>
-                  <th className="p-2">Status</th>
-                  <th className="p-2">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentEnrollments.length === 0 ? (
-                  <tr>
-                    <td className="p-3 text-muted-foreground" colSpan={6}>
-                      No enrollments yet.
-                    </td>
-                  </tr>
-                ) : (
-                  recentEnrollments.map((r, idx) => (
-                    <tr key={`${r.student}-${idx}`} className="border-b last:border-b-0">
-                      <td className="p-2">{r.student}</td>
-                      <td className="p-2">{r.course}</td>
-                      <td className="p-2">{r.parent}</td>
-                      <td className="p-2">{r.teacher}</td>
-                      <td className="p-2">{r.status}</td>
-                      <td className="p-2">{r.date}</td>
                     </tr>
                   ))
                 )}
