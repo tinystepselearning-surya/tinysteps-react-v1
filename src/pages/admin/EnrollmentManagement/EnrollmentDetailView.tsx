@@ -37,6 +37,27 @@ interface EnrollmentDetailViewProps {
   onClose: () => void;
 }
 
+type Charge = {
+  id: string;
+  createdAt?: any;
+  updatedAt?: any;
+  paidAt?: any;
+  amount?: number;
+  paidAmount?: number;
+  status?: string;
+  sessionId?: string;
+};
+
+type Payment = {
+  id: string;
+  createdAt?: any;
+  paidAt?: any;
+  amount?: number;
+  appliedAmount?: number;
+  unappliedAmount?: number;
+  method?: string;
+};
+
 export default function EnrollmentDetailView({
   enrollmentId,
   onClose,
@@ -61,8 +82,8 @@ export default function EnrollmentDetailView({
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'bank_transfer' | 'online'>('UPI');
   const [paymentNote, setPaymentNote] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
-  const [charges, setCharges] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
+  const [charges, setCharges] = useState<Charge[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [financialsLoading, setFinancialsLoading] = useState(false);
   const [rateEditOpen, setRateEditOpen] = useState(false);
   const [parentRateInput, setParentRateInput] = useState('');
@@ -247,14 +268,20 @@ export default function EnrollmentDetailView({
         getDocs(paymentsQuery),
       ]);
 
-      const nextCharges: Array<Record<string, any>> = chargesSnap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
-      const nextPayments: Array<Record<string, any>> = paymentsSnap.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-      }));
+      const nextCharges: Charge[] = chargesSnap.docs.map(
+        (docSnap) =>
+          ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          }) as Charge
+      );
+      const nextPayments: Payment[] = paymentsSnap.docs.map(
+        (docSnap) =>
+          ({
+            id: docSnap.id,
+            ...docSnap.data(),
+          }) as Payment
+      );
 
       const toSortKey = (value: any) => {
         const d = toDateOrNull(value);
