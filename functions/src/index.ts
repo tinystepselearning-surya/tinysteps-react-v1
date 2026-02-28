@@ -13,6 +13,9 @@
 // Callable is for manual retry only; teacher UI must not auto-call to prevent double-processing
 export { onSessionComplete } from "./onSessionComplete";
 
+// Revenue rollups (expected + earned)
+export { onSessionRevenueWrite, recordPayment } from "./revenue";
+
 // Bulk session generator from enrollment schedule config
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
 
