@@ -300,6 +300,7 @@ export default function AssignCourseModal({
 
       await setDoc(enrollmentRef, {
         studentId: student.id,
+        kidId: student.id,
         kidIds: [student.id],
         courseId: selected,
         teacherId: null,
@@ -307,6 +308,7 @@ export default function AssignCourseModal({
         parentId: primaryParentId,
         status: 'trial',
         feePerClass,
+        ratePerSession: feePerClass,
         currency: 'INR',
         billingCycle,
         creditsTotal,

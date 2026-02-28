@@ -82,9 +82,24 @@ type KidSession = {
 type BillingCharge = {
   id: string;
   amount?: number;
+  paidAmount?: number;
   status?: string;
   createdAt?: any;
   currency?: string;
+  [key: string]: any;
+};
+
+type ParentPaymentRecord = {
+  id: string;
+  amount?: number;
+  appliedAmount?: number;
+  unappliedAmount?: number;
+  method?: string;
+  status?: string;
+  paidAt?: any;
+  createdAt?: any;
+  kidId?: string;
+  enrollmentId?: string;
   [key: string]: any;
 };
 
@@ -246,6 +261,17 @@ function parseHHMM(hhmm?: string): { hh: number; mm: number } | null {
   const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
   if (!m) return null;
   return { hh: Number(m[1]), mm: Number(m[2]) };
+}
+
+function toDateOrNull(value: any): Date | null {
+  if (!value) return null;
+  if (value instanceof Date && !isNaN(value.getTime())) return value;
+  if (typeof value?.toDate === "function") {
+    const d = value.toDate();
+    return d instanceof Date && !isNaN(d.getTime()) ? d : null;
+  }
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function sessionStartDate(s: KidSession): Date | null {
@@ -909,6 +935,21 @@ export default function ParentDashboard() {
     },
   });
 
+  // ---- Parent payments (recorded by admin) ----
+  const parentPaymentsQuery = useQuery({
+    queryKey: ["parentPayments", user?.uid],
+    enabled: !!user?.uid,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<ParentPaymentRecord[]> => {
+      if (!user?.uid) return [];
+      const q = query(collection(db, "payments"), where("parentId", "==", user.uid));
+      const snap = await getDocs(q);
+      return snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+    },
+  });
+
   // ---- Practice routing (Play button) -> Kids routes ----
   const handlePracticeClick = (gameId?: string) => {
     if (!selectedKidId) return;
@@ -1369,10 +1410,17 @@ export default function ParentDashboard() {
       if (source && source !== 'session_present_completed') return sum;
       const status = String(charge.status ?? "").toLowerCase().trim();
       const isPaid = status === "paid" || status === "settled";
-      if (!isPaid) return sum;
       const rawAmount = Number(charge.amount ?? 0);
       const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
-      return sum + amount;
+      const rawPaid = Number((charge as any).paidAmount ?? 0);
+      const paidAmount = Number.isFinite(rawPaid) ? rawPaid : 0;
+      if (isPaid) {
+        return sum + (paidAmount > 0 ? Math.min(paidAmount, amount) : amount);
+      }
+      if (paidAmount > 0) {
+        return sum + Math.min(paidAmount, amount);
+      }
+      return sum;
     }, 0);
 
     const dueNow = Math.max(totalBilled - paidThisMonth, 0);
@@ -3446,6 +3494,46 @@ export default function ParentDashboard() {
               const paymentsConfig = paymentsConfigQuery.data;
               const qrUrl = paymentsConfig?.upiQrUrl || null;
               const adminWhatsApp = paymentsConfig?.adminWhatsApp || "919876543210";
+              const paymentRows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
+              const kidPayments = selectedKid?.id
+                ? paymentRows.filter(
+                    (p) => String(p.kidId || "") === String(selectedKid.id)
+                  )
+                : paymentRows;
+              const sortedPayments = [...kidPayments].sort((a, b) => {
+                const aTime =
+                  toDateOrNull(a.paidAt || a.createdAt)?.getTime() || 0;
+                const bTime =
+                  toDateOrNull(b.paidAt || b.createdAt)?.getTime() || 0;
+                return bTime - aTime;
+              });
+              const paymentTotals = sortedPayments.reduce(
+                (acc, payment) => {
+                  const rawAmount = Number(payment?.amount ?? 0);
+                  const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
+                  const rawApplied = Number(payment?.appliedAmount ?? NaN);
+                  const applied = Number.isFinite(rawApplied)
+                    ? rawApplied
+                    : (() => {
+                        const rawUnapplied = Number(
+                          payment?.unappliedAmount ?? 0
+                        );
+                        const unapplied = Number.isFinite(rawUnapplied)
+                          ? rawUnapplied
+                          : 0;
+                        return amount - unapplied;
+                      })();
+                  const rawUnapplied = Number(payment?.unappliedAmount ?? NaN);
+                  const unapplied = Number.isFinite(rawUnapplied)
+                    ? rawUnapplied
+                    : amount - applied;
+                  acc.total += amount;
+                  acc.applied += applied;
+                  acc.unapplied += unapplied;
+                  return acc;
+                },
+                { total: 0, applied: 0, unapplied: 0 }
+              );
 
               const handleConfirmPayment = async () => {
                 setConfirmingPayment(true);
@@ -3593,6 +3681,115 @@ export default function ParentDashboard() {
                             View classes
                           </Button>
                         </div>
+                      </div>
+                    </div>
+
+                    <div className="mb-6">
+                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                        Payment History
+                      </h3>
+                      <div className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700">
+                        {parentPaymentsQuery.isLoading ? (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            Loading payments…
+                          </div>
+                        ) : sortedPayments.length === 0 ? (
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            No payments recorded yet.
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                              <div className="rounded border p-3">
+                                <div className="text-xs text-muted-foreground">
+                                  Total paid
+                                </div>
+                                <div className="text-lg font-semibold">
+                                  ₹{paymentTotals.total.toLocaleString("en-IN")}
+                                </div>
+                              </div>
+                              <div className="rounded border p-3">
+                                <div className="text-xs text-muted-foreground">
+                                  Applied to dues
+                                </div>
+                                <div className="text-lg font-semibold">
+                                  ₹{paymentTotals.applied.toLocaleString("en-IN")}
+                                </div>
+                              </div>
+                              <div className="rounded border p-3">
+                                <div className="text-xs text-muted-foreground">
+                                  Unapplied
+                                </div>
+                                <div className="text-lg font-semibold">
+                                  ₹{paymentTotals.unapplied.toLocaleString("en-IN")}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="border rounded">
+                              <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
+                                <div>Date</div>
+                                <div>Amount</div>
+                                <div>Applied</div>
+                                <div>Unapplied</div>
+                                <div>Method</div>
+                              </div>
+                              {sortedPayments.map((payment) => {
+                                const rawAmount = Number(payment?.amount ?? 0);
+                                const amount = Number.isFinite(rawAmount)
+                                  ? rawAmount
+                                  : 0;
+                                const rawApplied = Number(
+                                  payment?.appliedAmount ?? NaN
+                                );
+                                const applied = Number.isFinite(rawApplied)
+                                  ? rawApplied
+                                  : (() => {
+                                      const rawUnapplied = Number(
+                                        payment?.unappliedAmount ?? 0
+                                      );
+                                      const unapplied = Number.isFinite(rawUnapplied)
+                                        ? rawUnapplied
+                                        : 0;
+                                      return amount - unapplied;
+                                    })();
+                                const rawUnapplied = Number(
+                                  payment?.unappliedAmount ?? NaN
+                                );
+                                const unapplied = Number.isFinite(rawUnapplied)
+                                  ? rawUnapplied
+                                  : amount - applied;
+                                const paidAt = toDateOrNull(
+                                  payment.paidAt || payment.createdAt
+                                );
+                                return (
+                                  <div
+                                    key={payment.id}
+                                    className="grid grid-cols-5 gap-2 px-3 py-2 text-sm border-b last:border-b-0"
+                                  >
+                                    <div>
+                                      {paidAt
+                                        ? paidAt.toLocaleDateString("en-IN")
+                                        : "—"}
+                                    </div>
+                                    <div>
+                                      ₹{amount.toLocaleString("en-IN")}
+                                    </div>
+                                    <div>
+                                      ₹{applied.toLocaleString("en-IN")}
+                                    </div>
+                                    <div>
+                                      ₹{unapplied.toLocaleString("en-IN")}
+                                    </div>
+                                    <div className="capitalize">
+                                      {String(payment.method || "—")}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 

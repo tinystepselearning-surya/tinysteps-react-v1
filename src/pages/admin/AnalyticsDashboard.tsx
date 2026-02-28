@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../lib/firebaseConfig';
+import { useQuery } from '@tanstack/react-query';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../lib/firebaseConfig';
 
 // Lightweight helpers for export
 function exportToCSV(filename: string, rows: string[][]) {
@@ -25,6 +27,12 @@ function startOfDay(date: Date) {
   return d;
 }
 
+function monthKeyFromDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
+
 export default function AnalyticsDashboard(): JSX.Element {
   // Raw data
   const [users, setUsers] = useState<any[]>([]);
@@ -34,12 +42,17 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [payments, setPayments] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
+  const [payoutSaving, setPayoutSaving] = useState<string | null>(null);
+  const [teacherEarningsRollups, setTeacherEarningsRollups] = useState<Record<string, any>>({});
   const [fsError, setFsError] = useState<string | null>(null);
 
   // Filters
   const [rangeDays, setRangeDays] = useState<number | 'all'>(30);
   const [areaFilter, setAreaFilter] = useState<string>('All');
   const [teacherFilter, setTeacherFilter] = useState<string | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() =>
+    monthKeyFromDate(new Date())
+  );
 
   // dynamic import for charts (optional)
   const [Recharts, setRecharts] = useState<any>(null);
@@ -70,6 +83,46 @@ export default function AnalyticsDashboard(): JSX.Element {
       unsubUsers(); unsubStudents(); unsubEnroll(); unsubSessions(); unsubPayments(); unsubCourses(); unsubReports();
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadTeacherRollups = async () => {
+      const teachers = users.filter(u => u.roles?.includes('teacher'));
+      if (!teachers.length || !selectedMonth) {
+        if (!cancelled) setTeacherEarningsRollups({});
+        return;
+      }
+      try {
+        const snaps = await Promise.all(
+          teachers.map(t => getDoc(doc(db, 'teachers', t.id, 'earnings', selectedMonth)))
+        );
+        const map: Record<string, any> = {};
+        teachers.forEach((t, idx) => {
+          const snap = snaps[idx];
+          map[t.id] = snap.exists() ? snap.data() : null;
+        });
+        if (!cancelled) setTeacherEarningsRollups(map);
+      } catch (err: any) {
+        console.error('Failed to load teacher earnings rollups', err);
+        if (!cancelled) setTeacherEarningsRollups({});
+      }
+    };
+    loadTeacherRollups();
+    return () => { cancelled = true; };
+  }, [users, selectedMonth]);
+
+  const revenueMonthlyQuery = useQuery({
+    queryKey: ['adminStats', 'revenueMonthly', selectedMonth],
+    queryFn: async () => {
+      if (!selectedMonth) return null;
+      const snap = await getDoc(
+        doc(db, 'adminStats', 'revenueMonthly', 'months', selectedMonth)
+      );
+      return snap.exists() ? snap.data() : null;
+    },
+    enabled: Boolean(selectedMonth),
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Derived metrics
   const metrics = useMemo(() => {
@@ -112,6 +165,36 @@ export default function AnalyticsDashboard(): JSX.Element {
       courseCount, topicsTotal, topicsTaught
     };
   }, [users, students, enrollments, payments, sessions, courses, reports]);
+
+  const revenueMonthly = revenueMonthlyQuery.data || {};
+  const expectedRevenue = Number(revenueMonthly.expected ?? 0) || 0;
+  const earnedRevenue = Number(revenueMonthly.earned ?? 0) || 0;
+  const completedSessionsMonth = Number(revenueMonthly.completedSessions ?? 0) || 0;
+  const outstandingRevenue = expectedRevenue - earnedRevenue;
+
+  const enrollmentBuckets = useMemo(() => {
+    const activeLike = new Set([
+      'trial',
+      'active',
+      'paused',
+      'pending_teacher',
+      'pending_payment',
+      'enrolled',
+      'current',
+      'ongoing',
+    ]);
+    const past = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled']);
+    const counts = { activeLike: 0, past: 0, other: 0 };
+
+    enrollments.forEach((e) => {
+      const status = String(e.status || '').trim().toLowerCase();
+      if (activeLike.has(status)) counts.activeLike += 1;
+      else if (past.has(status)) counts.past += 1;
+      else counts.other += 1;
+    });
+
+    return counts;
+  }, [enrollments]);
 
   // Enrollment status counts
   const enrollmentStatus = useMemo(() => {
@@ -265,14 +348,14 @@ export default function AnalyticsDashboard(): JSX.Element {
   const teacherEarnings = useMemo(() => {
     const teachers = users.filter(u => u.roles?.includes('teacher'));
     return teachers.map(t => {
-      const tPayments = payments.filter(p => p.teacherId === t.id);
-      const sessionsCount = sessions.filter(s => s.teacherId === t.id).length;
-      const totalEarned = tPayments.reduce((s, p) => s + (p.amount || 0), 0);
-      const pending = tPayments.filter(p => p.status !== 'paid').reduce((s,p) => s + (p.amount || 0), 0);
-      const rate = sessionsCount ? Math.round(totalEarned / sessionsCount) : 0;
-      return { teacher: t.displayName, sessions: sessionsCount, rate, totalEarned, pending };
+      const rollup = teacherEarningsRollups[t.id] || {};
+      const sessionsCount = Number(rollup.totalSessions ?? rollup.sessionsCompleted ?? 0) || 0;
+      const totalEarned = Number(rollup.totalEarnings ?? 0) || 0;
+      const pending = Number(rollup.pendingEarnings ?? 0) || 0;
+      const rate = Number(rollup.ratePerSession ?? 0) || 0;
+      return { teacher: t.displayName, teacherId: t.id, sessions: sessionsCount, rate, totalEarned, pending };
     }).slice(0,50);
-  }, [users, payments, sessions]);
+  }, [users, teacherEarningsRollups]);
 
   // Exports
   const exportRecentEnrollmentsCSV = () => {
@@ -285,12 +368,105 @@ export default function AnalyticsDashboard(): JSX.Element {
     exportToCSV('teacher-earnings.csv', rows);
   };
 
+  const handleRecordPayout = async (teacher: { teacherId?: string; teacher?: string }) => {
+    const teacherId = teacher.teacherId || '';
+    if (!teacherId) {
+      window.alert('Missing teacherId');
+      return;
+    }
+    if (payoutSaving) return;
+
+    const amountRaw = window.prompt(`Record payout for ${teacher.teacher || teacherId} (amount)`);
+    if (!amountRaw) return;
+    const amount = Number(amountRaw);
+    if (!Number.isFinite(amount) || amount === 0) {
+      window.alert('Invalid amount');
+      return;
+    }
+    const defaultDate = new Date().toISOString().slice(0, 10);
+    const paidAt = window.prompt('Paid at (YYYY-MM-DD)', defaultDate);
+    if (!paidAt) return;
+    const method = window.prompt('Method (UPI/bank_transfer/online)', 'bank_transfer') || 'bank_transfer';
+    const note = window.prompt('Note (optional)', '') || '';
+
+    try {
+      setPayoutSaving(teacherId);
+      const fn = httpsCallable(functions, 'recordTeacherPayout');
+      await fn({
+        teacherId,
+        amount,
+        paidAt,
+        method,
+        note: note || undefined,
+      });
+      window.alert('Payout recorded');
+    } catch (err: any) {
+      window.alert(err?.message || 'Failed to record payout');
+    } finally {
+      setPayoutSaving(null);
+    }
+  };
+
   // Print / PDF (basic)
   const printDashboard = () => { window.print(); };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Admin Analytics Dashboard</h1>
+
+      {/* Monthly revenue */}
+      <div className="mb-6 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="text-sm font-medium">Month</label>
+          <input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="border p-1 rounded"
+          />
+          {revenueMonthlyQuery.isLoading ? (
+            <span className="text-xs text-gray-500">Loading revenue…</span>
+          ) : revenueMonthlyQuery.data ? (
+            <span className="text-xs text-gray-500">Rollup loaded</span>
+          ) : (
+            <span className="text-xs text-gray-500">No rollup yet</span>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Expected (month)</div>
+            <div className="text-xl font-bold">₹{expectedRevenue}</div>
+          </div>
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Earned (month)</div>
+            <div className="text-xl font-bold">₹{earnedRevenue}</div>
+          </div>
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Outstanding</div>
+            <div className="text-xl font-bold">₹{outstandingRevenue}</div>
+          </div>
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Completed sessions</div>
+            <div className="text-xl font-bold">{completedSessionsMonth}</div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Active-like enrollments</div>
+            <div className="text-xl font-bold">{enrollmentBuckets.activeLike}</div>
+          </div>
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Past enrollments</div>
+            <div className="text-xl font-bold">{enrollmentBuckets.past}</div>
+          </div>
+          <div className="border rounded p-4">
+            <div className="text-sm text-gray-500">Other / Unknown</div>
+            <div className="text-xl font-bold">{enrollmentBuckets.other}</div>
+          </div>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="flex gap-4 mb-6 items-center">
@@ -591,6 +767,7 @@ export default function AnalyticsDashboard(): JSX.Element {
                 <th className="p-2">Rate</th>
                 <th className="p-2">Total Earned</th>
                 <th className="p-2">Pending</th>
+                <th className="p-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -601,6 +778,16 @@ export default function AnalyticsDashboard(): JSX.Element {
                   <td className="p-2">₹{t.rate}</td>
                   <td className="p-2">₹{t.totalEarned}</td>
                   <td className="p-2">₹{t.pending}</td>
+                  <td className="p-2">
+                    <button
+                      type="button"
+                      className="text-xs px-2 py-1 border rounded hover:bg-gray-50"
+                      onClick={() => handleRecordPayout(t)}
+                      disabled={payoutSaving === t.teacherId}
+                    >
+                      {payoutSaving === t.teacherId ? 'Saving…' : 'Record payout'}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

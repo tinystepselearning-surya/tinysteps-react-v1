@@ -14,7 +14,7 @@
 export { onSessionComplete } from "./onSessionComplete";
 
 // Revenue rollups (expected + earned)
-export { onSessionRevenueWrite, recordPayment } from "./revenue";
+export { onSessionRevenueWrite, recordPayment, recordTeacherPayout } from "./revenue";
 
 // Bulk session generator from enrollment schedule config
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";

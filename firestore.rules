@@ -221,6 +221,11 @@ service cloud.firestore {
       allow read, create, update, delete: if isSignedIn() && request.auth.uid == teacherId;
     }
 
+    match /teachers/{teacherId}/earnings/{docId} {
+      allow read: if isAdmin() || (isTeacher() && request.auth.uid == teacherId);
+      allow write: if false;
+    }
+
     match /teachers/{teacherId}/sessionRequests/{requestId} {
       allow read, create, update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == teacherId);
     }
@@ -415,6 +420,32 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // PAYMENTS COLLECTION
+    // ----------------------------
+    match /payments/{paymentId} {
+      allow read: if isAdmin()
+        || (isParent() && resource.data.parentId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ----------------------------
+    // TEACHER PAYOUTS COLLECTION
+    // ----------------------------
+    match /teacherPayouts/{payoutId} {
+      allow read: if isAdmin()
+        || (isTeacher() && resource.data.teacherId == request.auth.uid);
+      allow write: if isAdmin();
+    }
+
+    // ----------------------------
+    // PAYMENT CONFIRMATIONS
+    // ----------------------------
+    match /paymentConfirmations/{docId} {
+      allow create: if isParent() && request.resource.data.parentUid == request.auth.uid;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
     // MESSAGES COLLECTION
     // ----------------------------
     match /messages/{messageId} {
@@ -429,6 +460,19 @@ service cloud.firestore {
         && request.auth.uid == request.resource.data.fromId;
 
       allow update, delete: if false;
+    }
+
+    // ----------------------------
+    // ADMIN STATS (ROLLUPS)
+    // ----------------------------
+    match /adminStats/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+
+      match /{document=**} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
     }
 
     // ----------------------------
