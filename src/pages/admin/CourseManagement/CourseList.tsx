@@ -30,6 +30,7 @@ interface CourseListProps {
   onViewCourse?: (courseId: string) => void;
   onEditCourse?: (courseId: string) => void;
   onDeleteCourse?: (courseId: string) => void;
+  onToggleActive?: (courseId: string, nextActive: boolean) => void;
   onCreateCourse?: () => void;
 }
 
@@ -67,6 +68,7 @@ export default function CourseList({
   onViewCourse,
   onEditCourse,
   onDeleteCourse,
+  onToggleActive,
   onCreateCourse,
 }: CourseListProps) {
   const [filters, setFilters] = useState({
@@ -282,6 +284,22 @@ export default function CourseList({
                           <Edit className="h-4 w-4" />
                         </Button>
                       )}
+
+                      {onToggleActive && (() => {
+                        const isActive =
+                          typeof course.active === 'boolean'
+                            ? course.active
+                            : String(course.status || '').toLowerCase() === 'active';
+                        return (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => onToggleActive(course.id, !isActive)}
+                          >
+                            {isActive ? 'Deactivate' : 'Activate'}
+                          </Button>
+                        );
+                      })()}
 
                       {onDeleteCourse && (
                         <Button

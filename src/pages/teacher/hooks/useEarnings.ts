@@ -49,15 +49,18 @@ const normalizeEarnings = (data: any, monthId: string): TeacherEarningsSummary =
   };
 };
 
-const fetchEarnings = async (teacherId: string): Promise<TeacherEarningsSummary> => {
+const fetchEarnings = async (
+  teacherId: string,
+  monthId?: string
+): Promise<TeacherEarningsSummary> => {
   const now = new Date();
-  const monthLocal = getMonthId(now);
+  const monthLocal = monthId || getMonthId(now);
   const monthUtc = getMonthId(now, true);
 
   const primaryRef = doc(db, 'teachers', teacherId, 'earnings', monthLocal);
   let snapshot = await getDoc(primaryRef);
 
-  if (!snapshot.exists() && monthUtc !== monthLocal) {
+  if (!snapshot.exists() && !monthId && monthUtc !== monthLocal) {
     const utcRef = doc(db, 'teachers', teacherId, 'earnings', monthUtc);
     snapshot = await getDoc(utcRef);
   }
@@ -75,11 +78,12 @@ const fetchEarnings = async (teacherId: string): Promise<TeacherEarningsSummary>
   return normalizeEarnings(legacySnap.data(), monthLocal);
 };
 
-export const useEarnings = (teacherId?: string) => {
-  const monthId = getMonthId(new Date());
+export const useEarnings = (teacherId?: string, monthId?: string) => {
+  const resolvedMonth = monthId || getMonthId(new Date());
   return useQuery<TeacherEarningsSummary>({
-    queryKey: ['teacherEarnings', teacherId, monthId],
-    queryFn: () => (teacherId ? fetchEarnings(teacherId) : Promise.resolve(defaultSummary)),
+    queryKey: ['teacherEarnings', teacherId, resolvedMonth],
+    queryFn: () =>
+      teacherId ? fetchEarnings(teacherId, resolvedMonth) : Promise.resolve(defaultSummary),
     enabled: Boolean(teacherId),
     staleTime: 1000 * 60 * 10,
   });

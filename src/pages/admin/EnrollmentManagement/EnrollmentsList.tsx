@@ -1,11 +1,17 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentsList.tsx
-import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   collection,
+  deleteDoc,
+  doc,
   getDocs,
+  limit,
   query,
   orderBy,
+  writeBatch,
+  serverTimestamp,
+  updateDoc,
   where,
   documentId,
 } from 'firebase/firestore';
@@ -20,6 +26,23 @@ import {
   TableRow,
 } from '@components/ui/table';
 import { Badge } from '@components/ui/badge';
+import { Button } from '@components/ui/button';
+import { Input } from '@components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
+import { useToast } from '@components/hooks/use-toast';
 
 type Enrollment = {
   id: string;
@@ -30,6 +53,11 @@ type Enrollment = {
   creditsRemaining?: number;
   creditsTotal?: number;
   billingCycle?: string;
+  ratePerSession?: number;
+  feePerSession?: number;
+  feePerClass?: number;
+  teacherPayPerSession?: number;
+  teacherId?: string;
 };
 
 type KidDoc = {
@@ -258,6 +286,34 @@ function normalizeEnrollmentStatus(value: any): string {
 
 export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const [statusTab, setStatusTab] = useState<'active' | 'past'>('active');
+  const [editOpen, setEditOpen] = useState(false);
+  const [editEnrollment, setEditEnrollment] = useState<Enrollment | null>(null);
+  const [editStatus, setEditStatus] = useState('active');
+  const [editParentRate, setEditParentRate] = useState('');
+  const [editTeacherRate, setEditTeacherRate] = useState('');
+  const [editTeacherId, setEditTeacherId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [teachers, setTeachers] = useState<Array<{ id: string; name?: string; email?: string }>>([]);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const loadTeachers = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'users'));
+        const rows = snap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as any) }))
+          .filter((u: any) =>
+            u.role === 'teacher' || (Array.isArray(u.roles) && u.roles.includes('teacher'))
+          )
+          .map((u: any) => ({ id: u.id, name: u.displayName || u.name, email: u.email }));
+        setTeachers(rows);
+      } catch (err) {
+        console.warn('[EnrollmentsList] Failed to load teachers', err);
+      }
+    };
+    void loadTeachers();
+  }, []);
   const enrollmentsQuery = useQuery({
     queryKey: ['adminEnrollments', reloadKey],
     queryFn: fetchEnrollments,
@@ -271,7 +327,8 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         status === 'completed' ||
         status === 'discontinued' ||
         status === 'expired' ||
-        status === 'cancelled';
+        status === 'cancelled' ||
+        status === 'archived';
       const isActive = !isPast;
       return statusTab === 'active' ? isActive : isPast;
     });
@@ -337,6 +394,172 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     );
   }
 
+  const openEdit = (enrollment: Enrollment) => {
+    const rawParent =
+      enrollment.ratePerSession ??
+      enrollment.feePerSession ??
+      enrollment.feePerClass ??
+      0;
+    const rawTeacher =
+      enrollment.teacherPayPerSession ?? 0;
+    const parentValue = Number(rawParent);
+    const teacherValue = Number(rawTeacher);
+
+    setEditEnrollment(enrollment);
+    setEditStatus(normalizeEnrollmentStatus(enrollment.status));
+    setEditParentRate(Number.isFinite(parentValue) ? String(parentValue) : '');
+    setEditTeacherRate(Number.isFinite(teacherValue) ? String(teacherValue) : '');
+    setEditTeacherId(enrollment.teacherId || '');
+    setEditOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editEnrollment) return;
+    const parentRate = Number(editParentRate);
+    if (!Number.isFinite(parentRate) || parentRate <= 0) {
+      toast({
+        title: 'Invalid fee',
+        description: 'Enter a valid fee per session.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const teacherRate = Number(editTeacherRate);
+    const teacherPayPerSession = Number.isFinite(teacherRate) ? teacherRate : 0;
+
+    try {
+      setSaving(true);
+      await updateDoc(doc(db, 'enrollments', editEnrollment.id), {
+        status: editStatus,
+        ratePerSession: parentRate,
+        feePerSession: parentRate,
+        feePerClass: parentRate,
+        teacherPayPerSession,
+        teacherId: editTeacherId || null,
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: 'Enrollment updated' });
+      setEditOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to update enrollment',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleArchive = async (enrollment: Enrollment) => {
+    try {
+      setSaving(true);
+      await updateDoc(doc(db, 'enrollments', enrollment.id), {
+        status: 'archived',
+        archivedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: 'Enrollment archived' });
+      await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to archive enrollment',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const getDeletePlan = async (enrollmentId: string) => {
+    const [chargesSnap, paymentsSnap, sessionsSnap] = await Promise.all([
+      getDocs(query(collection(db, 'billingCharges'), where('enrollmentId', '==', enrollmentId), limit(1))),
+      getDocs(query(collection(db, 'payments'), where('enrollmentId', '==', enrollmentId), limit(1))),
+      getDocs(query(collection(db, 'classSessions'), where('enrollmentId', '==', enrollmentId))),
+    ]);
+
+    if (!chargesSnap.empty || !paymentsSnap.empty) {
+      return {
+        allowed: false,
+        reason: 'Enrollment has billing activity. Archive instead.',
+        sessionIds: [] as string[],
+      };
+    }
+
+    const sessions = sessionsSnap.docs.map((docSnap) => ({
+      id: docSnap.id,
+      status: String(docSnap.data()?.status || '').toLowerCase(),
+    }));
+    const hasCompleted = sessions.some((s) => s.status === 'completed');
+    if (hasCompleted) {
+      return {
+        allowed: false,
+        reason: 'Enrollment has completed sessions. Archive instead.',
+        sessionIds: [] as string[],
+      };
+    }
+
+    return { allowed: true, reason: '', sessionIds: sessions.map((s) => s.id) };
+  };
+
+  const handleDelete = async (enrollment: Enrollment) => {
+    let plan: { allowed: boolean; reason: string; sessionIds: string[] };
+    try {
+      plan = await getDeletePlan(enrollment.id);
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to check delete eligibility',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!plan.allowed) {
+      toast({
+        title: 'Cannot delete enrollment',
+        description: plan.reason,
+        variant: 'destructive',
+      });
+      return;
+    }
+    const confirm = window.prompt(
+      'Type DELETE to permanently remove this enrollment (and any unbilled sessions).'
+    );
+    if (confirm !== 'DELETE') return;
+
+    try {
+      setSaving(true);
+      if (plan.sessionIds.length) {
+        const batches = chunk(plan.sessionIds, 450);
+        for (const batchIds of batches) {
+          const batch = writeBatch(db);
+          batchIds.forEach((sessionId) => {
+            batch.delete(doc(db, 'classSessions', sessionId));
+          });
+          await batch.commit();
+        }
+      }
+      await deleteDoc(doc(db, 'enrollments', enrollment.id));
+      toast({
+        title: 'Enrollment deleted',
+        description: plan.sessionIds.length
+          ? 'Removed scheduled sessions with no billing.'
+          : undefined,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to delete enrollment',
+        variant: 'destructive',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-3">
       {(kidsQuery.isLoading || coursesQuery.isLoading) && (
@@ -386,6 +609,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
             <TableHead>Status</TableHead>
             <TableHead>Credits</TableHead>
             <TableHead>Billing</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -422,12 +646,100 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
                 </TableCell>
 
                 <TableCell>{e.billingCycle ?? '—'}</TableCell>
+
+                <TableCell>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" onClick={() => openEdit(e)}>
+                      Edit
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => handleArchive(e)} disabled={saving}>
+                      Archive
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => handleDelete(e)} disabled={saving}>
+                      Delete
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
             );
           })}
         </TableBody>
       </Table>
       )}
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Edit Enrollment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="paused">Paused</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="discontinued">Discontinued</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Fee per session (₹)</label>
+                <Input
+                  type="number"
+                  step="1"
+                  value={editParentRate}
+                  onChange={(e) => setEditParentRate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Teacher pay per session (₹)</label>
+                <Input
+                  type="number"
+                  step="1"
+                  value={editTeacherRate}
+                  onChange={(e) => setEditTeacherRate(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Teacher</label>
+              <Select value={editTeacherId || '__none__'} onValueChange={(v) => setEditTeacherId(v === '__none__' ? '' : v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select teacher" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Unassigned</SelectItem>
+                  {teachers.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name || t.email || t.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveEdit} disabled={saving}>
+              {saving ? 'Saving…' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
