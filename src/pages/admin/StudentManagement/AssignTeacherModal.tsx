@@ -304,7 +304,7 @@ export default function AssignTeacherModal({
 
                   return (
                     <SelectItem key={e.id} value={e.id}>
-                      {label} — {e.status}
+                      {label}
                     </SelectItem>
                   );
                 })}

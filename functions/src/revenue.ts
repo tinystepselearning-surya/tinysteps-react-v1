@@ -774,6 +774,7 @@ export const recordTeacherPayout = onCall(
     const db = admin.firestore();
     const payoutRef = db.collection('teacherPayouts').doc();
     const earningsQuery = db.collection('teacherEarnings').where('teacherId', '==', teacherId);
+    const payoutRollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
 
     const allocation = await db.runTransaction(async (tx) => {
       const earningsSnap = await tx.get(earningsQuery);
@@ -782,6 +783,10 @@ export const recordTeacherPayout = onCall(
         ref: docSnap.ref,
         data: docSnap.data() || {},
       }));
+      const payoutRollupSnap = await tx.get(payoutRollupRef);
+      const existingPayments = Array.isArray(payoutRollupSnap.data()?.payments)
+        ? payoutRollupSnap.data()?.payments
+        : [];
 
       let remaining = amount;
       const appliedEarningIds: string[] = [];
@@ -947,11 +952,6 @@ export const recordTeacherPayout = onCall(
         );
       }
 
-      const payoutRollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
-      const payoutRollupSnap = await tx.get(payoutRollupRef);
-      const existingPayments = Array.isArray(payoutRollupSnap.data()?.payments)
-        ? payoutRollupSnap.data()?.payments
-        : [];
       const paymentEntry = {
         id: payoutRef.id,
         amount,

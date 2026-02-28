@@ -87,6 +87,7 @@ export default function AssignCourseModal({
   const [canAssign, setCanAssign] = useState<boolean>(false);
   const [saving, setSaving] = useState(false);
   const [feePerClassInput, setFeePerClassInput] = useState<string>('');
+  const [teacherPayPerSessionInput, setTeacherPayPerSessionInput] = useState<string>('');
 
   const { user } = useAuthStore();
 
@@ -207,11 +208,13 @@ export default function AssignCourseModal({
   useEffect(() => {
     if (!selected) {
       setFeePerClassInput('');
+      setTeacherPayPerSessionInput('');
       return;
     }
     const selectedCourse = courses.find((c) => c.id === selected);
     if (!selectedCourse) {
       setFeePerClassInput('');
+      setTeacherPayPerSessionInput('');
       return;
     }
     const rawDefault =
@@ -254,6 +257,10 @@ export default function AssignCourseModal({
       });
       return;
     }
+
+    const rawTeacherPay = Number(teacherPayPerSessionInput);
+    const teacherPayPerSession =
+      Number.isFinite(rawTeacherPay) && rawTeacherPay > 0 ? rawTeacherPay : 0;
 
     try {
       setSaving(true);
@@ -309,6 +316,7 @@ export default function AssignCourseModal({
         status: 'trial',
         feePerClass,
         ratePerSession: feePerClass,
+        teacherPayPerSession,
         currency: 'INR',
         billingCycle,
         creditsTotal,
@@ -397,6 +405,22 @@ export default function AssignCourseModal({
               value={feePerClassInput}
               onChange={(e) => setFeePerClassInput(e.target.value)}
             />
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium">Teacher pay per session (₹)</label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              placeholder="e.g., 300"
+              value={teacherPayPerSessionInput}
+              onChange={(e) => setTeacherPayPerSessionInput(e.target.value)}
+            />
+            {(!teacherPayPerSessionInput || Number(teacherPayPerSessionInput) <= 0) && (
+              <p className="text-xs text-amber-600">
+                Earnings will be ₹0 until set.
+              </p>
+            )}
           </div>
           {!canAssign && (
             <p className="text-xs text-red-500">

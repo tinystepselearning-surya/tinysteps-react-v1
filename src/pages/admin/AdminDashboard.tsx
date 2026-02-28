@@ -26,6 +26,8 @@ import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import TeacherPayments from './TeacherPayments';
+import ParentPayments from './ParentPayments';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 
@@ -337,6 +339,8 @@ export default function AdminDashboard() {
               <TabsTrigger value="courses">Course Management</TabsTrigger>
               <TabsTrigger value="lessons">Lesson Library</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="teacher-payments">Teacher Payments</TabsTrigger>
+              <TabsTrigger value="parent-payments">Parent Payments</TabsTrigger>
               <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
@@ -370,6 +374,14 @@ export default function AdminDashboard() {
                 <AdminOverviewCard />
                 <AnalyticsDashboard />
               </div>
+            </TabsContent>
+
+            <TabsContent value="teacher-payments">
+              <TeacherPayments />
+            </TabsContent>
+
+            <TabsContent value="parent-payments">
+              <ParentPayments />
             </TabsContent>
 
             <TabsContent value="settings">

@@ -415,7 +415,8 @@ service cloud.firestore {
     // BILLING CHARGES COLLECTION
     // ----------------------------
     match /billingCharges/{chargeId} {
-      allow read: if isParent() && resource.data.parentId == request.auth.uid;
+      allow read: if isAdmin()
+        || (isParent() && resource.data.parentId == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }
 
@@ -435,6 +436,14 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (isTeacher() && resource.data.teacherId == request.auth.uid);
       allow write: if isAdmin();
+    }
+
+    // ----------------------------
+    // TEACHER EARNINGS (LEGACY FALLBACK DOC)
+    // ----------------------------
+    match /teacherEarnings/{teacherId} {
+      allow read: if isAdmin() || (isTeacher() && request.auth.uid == teacherId);
+      allow write: if false;
     }
 
     // ----------------------------

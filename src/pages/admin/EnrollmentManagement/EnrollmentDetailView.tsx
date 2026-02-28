@@ -64,6 +64,10 @@ export default function EnrollmentDetailView({
   const [charges, setCharges] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [financialsLoading, setFinancialsLoading] = useState(false);
+  const [rateEditOpen, setRateEditOpen] = useState(false);
+  const [parentRateInput, setParentRateInput] = useState('');
+  const [teacherRateInput, setTeacherRateInput] = useState('');
+  const [rateSaving, setRateSaving] = useState(false);
 
   const { toast } = useToast();
 
@@ -357,6 +361,19 @@ export default function EnrollmentDetailView({
     return sum + (amount - applied);
   }, 0);
 
+  const parentRateRaw =
+    enrollment.ratePerSession ??
+    enrollment.feePerClass ??
+    enrollment.feePerSession ??
+    0;
+  const teacherRateRaw =
+    enrollment.teacherPayPerSession ??
+    enrollment.teacherRatePerSession ??
+    enrollment.teacherPay ??
+    0;
+  const parentRate = Number.isFinite(Number(parentRateRaw)) ? Number(parentRateRaw) : 0;
+  const teacherRate = Number.isFinite(Number(teacherRateRaw)) ? Number(teacherRateRaw) : 0;
+
   const topicProgress =
     typeof enrollment.topicProgress === 'object'
       ? enrollment.topicProgress
@@ -455,6 +472,66 @@ export default function EnrollmentDetailView({
     }
   };
 
+  const handleStartEditRates = () => {
+    if (!enrollment) return;
+    const rawParent =
+      enrollment.ratePerSession ??
+      enrollment.feePerClass ??
+      enrollment.feePerSession ??
+      0;
+    const rawTeacher =
+      enrollment.teacherPayPerSession ??
+      enrollment.teacherRatePerSession ??
+      enrollment.teacherPay ??
+      0;
+    const parentValue = Number(rawParent);
+    const teacherValue = Number(rawTeacher);
+    setParentRateInput(
+      Number.isFinite(parentValue) && parentValue > 0 ? String(parentValue) : ''
+    );
+    setTeacherRateInput(
+      Number.isFinite(teacherValue) && teacherValue > 0 ? String(teacherValue) : ''
+    );
+    setRateEditOpen(true);
+  };
+
+  const handleSaveRates = async () => {
+    if (!enrollment) return;
+    const parentRate = Number(parentRateInput);
+    if (!Number.isFinite(parentRate) || parentRate <= 0) {
+      toast({
+        title: 'Invalid parent rate',
+        description: 'Enter a valid fee per session.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const rawTeacher = Number(teacherRateInput);
+    const teacherPayPerSession =
+      Number.isFinite(rawTeacher) && rawTeacher > 0 ? rawTeacher : 0;
+
+    try {
+      setRateSaving(true);
+      await updateDoc(doc(db, 'enrollments', enrollment.id), {
+        ratePerSession: parentRate,
+        feePerClass: parentRate,
+        teacherPayPerSession,
+        updatedAt: serverTimestamp(),
+      });
+      toast({ title: 'Rates updated' });
+      setRateEditOpen(false);
+      await loadEnrollment();
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message || 'Failed to update rates',
+        variant: 'destructive',
+      });
+    } finally {
+      setRateSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -489,6 +566,75 @@ export default function EnrollmentDetailView({
           <div><strong>Teacher:</strong> {teacher?.name || 'Unassigned'}</div>
           <div><strong>Learning Partner:</strong> {lp?.name || 'Unassigned'}</div>
           <div><strong>Parent:</strong> {parent?.name || parent?.email || 'Unknown'}</div>
+        </CardContent>
+      </Card>
+
+      {/* Rates */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Rates</CardTitle>
+          {!rateEditOpen && (
+            <Button size="sm" variant="outline" onClick={handleStartEditRates}>
+              Edit rates
+            </Button>
+          )}
+        </CardHeader>
+        <CardContent className="text-sm space-y-2">
+          {rateEditOpen ? (
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Parent rate (₹)</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    step={1}
+                    placeholder="e.g., 599"
+                    value={parentRateInput}
+                    onChange={(e) => setParentRateInput(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Teacher rate (₹)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    placeholder="e.g., 300"
+                    value={teacherRateInput}
+                    onChange={(e) => setTeacherRateInput(e.target.value)}
+                  />
+                  {(!teacherRateInput || Number(teacherRateInput) <= 0) && (
+                    <p className="text-xs text-amber-600">
+                      Earnings will be ₹0 until set.
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button onClick={handleSaveRates} disabled={rateSaving}>
+                  {rateSaving ? 'Saving…' : 'Save rates'}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setRateEditOpen(false)}
+                  disabled={rateSaving}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <div><strong>Parent rate:</strong> {parentRate > 0 ? formatMoney(parentRate) : '—'}</div>
+              <div>
+                <strong>Teacher rate:</strong> {teacherRate > 0 ? formatMoney(teacherRate) : '—'}
+                {teacherRate <= 0 && (
+                  <span className="ml-2 text-xs text-amber-600">Not set</span>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

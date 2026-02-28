@@ -333,6 +333,46 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return map;
   }, [students]);
 
+  const knownKidIds = useMemo(() => {
+    const ids = new Set<string>();
+    students.forEach((student) => {
+      const data = student as any;
+      const kidId = data?.uid || data?.id;
+      if (kidId) ids.add(String(kidId));
+    });
+    return ids;
+  }, [students]);
+
+  const resolveSessionKidId = (session: any): string | null => {
+    if (!session) return null;
+    const direct = session.kidId || (Array.isArray(session.kidIds) ? session.kidIds[0] : null);
+    return direct ? String(direct) : null;
+  };
+
+  const visibleSessions = useMemo(() => {
+    if (knownKidIds.size === 0) return sessions;
+    return sessions.filter((session) => {
+      const kidId = resolveSessionKidId(session);
+      return kidId && knownKidIds.has(kidId);
+    });
+  }, [sessions, knownKidIds]);
+
+  const hiddenSessions = useMemo(() => {
+    if (knownKidIds.size === 0) return [];
+    return sessions.filter((session) => {
+      const kidId = resolveSessionKidId(session);
+      return !kidId || !knownKidIds.has(kidId);
+    });
+  }, [sessions, knownKidIds]);
+
+  const visibleMonthSessions = useMemo(() => {
+    if (knownKidIds.size === 0) return monthSessions;
+    return monthSessions.filter((session) => {
+      const kidId = resolveSessionKidId(session);
+      return kidId && knownKidIds.has(kidId);
+    });
+  }, [monthSessions, knownKidIds]);
+
   const getCourseLabel = (session?: Partial<TeacherSession>): string => {
     if (!session) return '';
     return (
@@ -351,7 +391,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return `${value.slice(0, max - 3)}...`;
   };
 
-  const sessionsByDate = sessions.reduce((acc, session) => {
+  const sessionsByDate = visibleSessions.reduce((acc, session) => {
     if (!acc[session.date]) acc[session.date] = [];
     acc[session.date].push(session);
     return acc;
@@ -399,7 +439,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     let lateKids = 0;
     let rescheduleKids = 0;
 
-    monthSessions.forEach((session) => {
+    visibleMonthSessions.forEach((session) => {
       const attendance = session.attendance || {};
       Object.values(attendance).forEach((entry: any) => {
         const status = entry?.status ?? entry;
@@ -411,8 +451,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     });
 
     return {
-      sessionsInMonth: monthSessions.length,
-      completedSessions: monthSessions.filter((s) => s.status === 'completed').length,
+      sessionsInMonth: visibleMonthSessions.length,
+      completedSessions: visibleMonthSessions.filter((s) => s.status === 'completed').length,
       presentKids,
       absentKids,
       lateKids,
@@ -755,6 +795,23 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
+  const hiddenCount = knownKidIds.size > 0 ? hiddenSessions.length : 0;
+
+  const handleCopyHiddenSessions = () => {
+    if (!hiddenSessions.length) return;
+    const lines = hiddenSessions.map((session: any) => {
+      const kidId = resolveSessionKidId(session) || '';
+      const enrollmentId = session.enrollmentId || '';
+      return `${session.id}\t${kidId}\t${enrollmentId}`;
+    });
+    const payload = lines.join('\n');
+    if (navigator?.clipboard?.writeText) {
+      void navigator.clipboard.writeText(payload);
+    } else {
+      window.prompt('Copy hidden session IDs', payload);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {sessionsError && (
@@ -784,6 +841,25 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <Button onClick={openBlockModal}>Block Time</Button>
         </div>
       </div>
+
+      {hiddenCount > 0 && (
+        <Card className="p-3 border border-amber-200 bg-amber-50 text-amber-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span>
+              Hidden {hiddenCount} old/unknown sessions (missing student records).
+            </span>
+            {import.meta.env.DEV && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleCopyHiddenSessions}
+              >
+                Copy hidden session IDs
+              </Button>
+            )}
+          </div>
+        </Card>
+      )}
 
       <Card className="p-4">
         <div className="flex items-center justify-between gap-4">

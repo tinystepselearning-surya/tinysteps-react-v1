@@ -1,0 +1,708 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../lib/firebaseConfig';
+import { Card } from '@components/ui/card';
+import { Input } from '@components/ui/input';
+import { Button } from '@components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@components/ui/select';
+import { Textarea } from '@components/ui/textarea';
+
+type ParentUser = {
+  id: string;
+  displayName?: string;
+  name?: string;
+  email?: string;
+  role?: string;
+  roles?: string[];
+};
+
+const monthKeyFromDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const formatMoney = (value: any) => {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return '₹0';
+  return `₹${Math.round(num).toLocaleString('en-IN')}`;
+};
+
+const isParentUser = (user: ParentUser) => {
+  if (Array.isArray(user.roles)) return user.roles.includes('parent');
+  return String(user.role || '').toLowerCase() === 'parent';
+};
+
+const toMillis = (value: any) => {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') return value.toDate().getTime();
+  if (Number.isFinite(value?.seconds)) return value.seconds * 1000;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export default function ParentPayments(): JSX.Element {
+  const [selectedMonth, setSelectedMonth] = useState<string>(() =>
+    monthKeyFromDate(new Date())
+  );
+  const [parents, setParents] = useState<ParentUser[]>([]);
+  const [charges, setCharges] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [kidMap, setKidMap] = useState<Record<string, string>>({});
+  const [courseMap, setCourseMap] = useState<Record<string, string>>({});
+  const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set());
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentParentId, setPaymentParentId] = useState<string | null>(null);
+  const [paymentParentName, setPaymentParentName] = useState<string>('');
+  const [parentEnrollments, setParentEnrollments] = useState<any[]>([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(false);
+  const [paymentEnrollmentId, setPaymentEnrollmentId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentPaidAt, setPaymentPaidAt] = useState<string>(
+    new Date().toISOString().slice(0, 10)
+  );
+  const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'bank_transfer' | 'online'>('UPI');
+  const [paymentNote, setPaymentNote] = useState('');
+  const [paymentSaving, setPaymentSaving] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'users'), (snap) => {
+      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      setParents(rows.filter(isParentUser));
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const loadRefs = async () => {
+      try {
+        const [kidsSnap, coursesSnap] = await Promise.all([
+          getDocs(collection(db, 'kids')),
+          getDocs(collection(db, 'courses')),
+        ]);
+        const nextKidMap: Record<string, string> = {};
+        kidsSnap.docs.forEach((docSnap) => {
+          const data = docSnap.data() as any;
+          const name =
+            data?.fullName ||
+            data?.name ||
+            data?.displayName ||
+            data?.studentName ||
+            data?.firstName ||
+            '';
+          nextKidMap[docSnap.id] = name || docSnap.id;
+          if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+        });
+        const nextCourseMap: Record<string, string> = {};
+        coursesSnap.docs.forEach((docSnap) => {
+          const data = docSnap.data() as any;
+          nextCourseMap[docSnap.id] = data?.title || data?.name || docSnap.id;
+          if (data?.courseId) nextCourseMap[data.courseId] = nextCourseMap[docSnap.id];
+          if (data?.slug) nextCourseMap[data.slug] = nextCourseMap[docSnap.id];
+        });
+        setKidMap(nextKidMap);
+        setCourseMap(nextCourseMap);
+      } catch (err) {
+        console.warn('[ParentPayments] Failed to load kid/course names', err);
+      }
+    };
+    void loadRefs();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedMonth) {
+      setCharges([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'billingCharges'),
+      where('monthKey', '==', selectedMonth)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setCharges(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+    });
+    return () => unsub();
+  }, [selectedMonth]);
+
+  useEffect(() => {
+    if (!selectedMonth) {
+      setPayments([]);
+      return;
+    }
+    const q = query(collection(db, 'payments'), where('monthKey', '==', selectedMonth));
+    const unsub = onSnapshot(q, (snap) => {
+      setPayments(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+    });
+    return () => unsub();
+  }, [selectedMonth]);
+
+  const rows = useMemo(() => {
+    const parentMap = new Map<
+      string,
+      {
+        parentId: string;
+        due: number;
+        paid: number;
+        applied: number;
+        unapplied: number;
+        lastPaymentAt: number | null;
+        chargesCount: number;
+        paymentsCount: number;
+      }
+    >();
+
+    const getEntry = (parentId: string) => {
+      let entry = parentMap.get(parentId);
+      if (!entry) {
+        entry = {
+          parentId,
+          due: 0,
+          paid: 0,
+          applied: 0,
+          unapplied: 0,
+          lastPaymentAt: null,
+          chargesCount: 0,
+          paymentsCount: 0,
+        };
+        parentMap.set(parentId, entry);
+      }
+      return entry;
+    };
+
+    charges.forEach((charge) => {
+      const parentId = String(charge.parentId || '');
+      if (!parentId) return;
+      const status = String(charge.status || '').toLowerCase();
+      if (status === 'void') return;
+      const amountRaw = Number(charge.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      if (amount <= 0) return;
+      const paidRaw = Number(charge.paidAmount ?? NaN);
+      const paidAmount = Number.isFinite(paidRaw) ? paidRaw : status === 'paid' ? amount : 0;
+      const due = Math.max(amount - paidAmount, 0);
+      const entry = getEntry(parentId);
+      entry.due += due;
+      entry.chargesCount += 1;
+    });
+
+    payments.forEach((payment) => {
+      const parentId = String(payment.parentId || '');
+      if (!parentId) return;
+      const amountRaw = Number(payment.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      const appliedRaw = Number(payment.appliedAmount ?? NaN);
+      const unappliedRaw = Number(payment.unappliedAmount ?? NaN);
+      const applied = Number.isFinite(appliedRaw)
+        ? appliedRaw
+        : Number.isFinite(unappliedRaw)
+          ? amount - unappliedRaw
+          : amount;
+      const unapplied = Number.isFinite(unappliedRaw)
+        ? unappliedRaw
+        : Number.isFinite(appliedRaw)
+          ? amount - appliedRaw
+          : 0;
+      const paidAt = toMillis(payment.paidAt || payment.createdAt);
+
+      const entry = getEntry(parentId);
+      entry.paid += amount;
+      entry.applied += applied;
+      entry.unapplied += unapplied;
+      entry.paymentsCount += 1;
+      if (paidAt && (!entry.lastPaymentAt || paidAt > entry.lastPaymentAt)) {
+        entry.lastPaymentAt = paidAt;
+      }
+    });
+
+    const parentNameById = new Map(
+      parents.map((p) => [p.id, p.displayName || p.name || p.email || p.id])
+    );
+
+    return Array.from(parentMap.values())
+      .map((entry) => ({
+        ...entry,
+        parentName: parentNameById.get(entry.parentId) || entry.parentId,
+      }))
+      .sort((a, b) => b.due - a.due);
+  }, [charges, payments, parents]);
+
+  const breakdownByParent = useMemo(() => {
+    const byParent = new Map<
+      string,
+      Map<
+        string,
+        {
+          enrollmentId: string;
+          kidId: string;
+          courseId: string;
+          sessions: number;
+          due: number;
+          paid: number;
+          applied: number;
+          unapplied: number;
+        }
+      >
+    >();
+
+    charges.forEach((charge) => {
+      const parentId = String(charge.parentId || '');
+      if (!parentId) return;
+      const status = String(charge.status || '').toLowerCase();
+      if (status === 'void') return;
+      const amountRaw = Number(charge.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      if (amount <= 0) return;
+      const paidRaw = Number(charge.paidAmount ?? NaN);
+      const paidAmount = Number.isFinite(paidRaw) ? paidRaw : status === 'paid' ? amount : 0;
+      const due = Math.max(amount - paidAmount, 0);
+
+      const enrollmentId = String(charge.enrollmentId || '');
+      const kidId = String(charge.kidId || '');
+      const courseId = String(charge.courseId || '');
+      const key = enrollmentId || `${kidId}:${courseId}`;
+
+      if (!byParent.has(parentId)) byParent.set(parentId, new Map());
+      const bucket = byParent.get(parentId)!;
+      if (!bucket.has(key)) {
+        bucket.set(key, {
+          enrollmentId,
+          kidId,
+          courseId,
+          sessions: 0,
+          due: 0,
+          paid: 0,
+          applied: 0,
+          unapplied: 0,
+        });
+      }
+      const entry = bucket.get(key)!;
+      entry.sessions += 1;
+      entry.due += due;
+    });
+
+    payments.forEach((payment) => {
+      const parentId = String(payment.parentId || '');
+      if (!parentId) return;
+      const enrollmentId = String(payment.enrollmentId || '');
+      if (!enrollmentId) return;
+      const amountRaw = Number(payment.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      const appliedRaw = Number(payment.appliedAmount ?? NaN);
+      const unappliedRaw = Number(payment.unappliedAmount ?? NaN);
+      const applied = Number.isFinite(appliedRaw)
+        ? appliedRaw
+        : Number.isFinite(unappliedRaw)
+          ? amount - unappliedRaw
+          : amount;
+      const unapplied = Number.isFinite(unappliedRaw)
+        ? unappliedRaw
+        : Number.isFinite(appliedRaw)
+          ? amount - appliedRaw
+          : 0;
+
+      const key = enrollmentId;
+      if (!byParent.has(parentId)) byParent.set(parentId, new Map());
+      const bucket = byParent.get(parentId)!;
+      if (!bucket.has(key)) {
+        bucket.set(key, {
+          enrollmentId,
+          kidId: String(payment.kidId || ''),
+          courseId: String(payment.courseId || ''),
+          sessions: 0,
+          due: 0,
+          paid: 0,
+          applied: 0,
+          unapplied: 0,
+        });
+      }
+      const entry = bucket.get(key)!;
+      entry.paid += amount;
+      entry.applied += applied;
+      entry.unapplied += unapplied;
+    });
+
+    const result = new Map<
+      string,
+      Array<{
+        enrollmentId: string;
+        kidId: string;
+        courseId: string;
+        sessions: number;
+        due: number;
+        paid: number;
+        applied: number;
+        unapplied: number;
+      }>
+    >();
+
+    byParent.forEach((bucket, parentId) => {
+      const entries = Array.from(bucket.values()).sort((a, b) => b.due - a.due);
+      result.set(parentId, entries);
+    });
+
+    return result;
+  }, [charges, payments]);
+
+  const totals = useMemo(() => {
+    return rows.reduce(
+      (acc, row) => {
+        acc.due += row.due;
+        acc.paid += row.paid;
+        acc.applied += row.applied;
+        acc.unapplied += row.unapplied;
+        return acc;
+      },
+      { due: 0, paid: 0, applied: 0, unapplied: 0 }
+    );
+  }, [rows]);
+
+  const loadEnrollmentsForParent = async (parentId: string) => {
+    setLoadingEnrollments(true);
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'enrollments'), where('parentId', '==', parentId))
+      );
+      setParentEnrollments(snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })));
+    } catch (err) {
+      console.error('[ParentPayments] Failed to load enrollments', err);
+      setParentEnrollments([]);
+    } finally {
+      setLoadingEnrollments(false);
+    }
+  };
+
+  const openPaymentModal = (row: { parentId: string; parentName: string }) => {
+    setPaymentParentId(row.parentId);
+    setPaymentParentName(row.parentName);
+    setPaymentEnrollmentId('');
+    setPaymentAmount('');
+    setPaymentPaidAt(new Date().toISOString().slice(0, 10));
+    setPaymentMethod('UPI');
+    setPaymentNote('');
+    setParentEnrollments([]);
+    setPaymentOpen(true);
+    void loadEnrollmentsForParent(row.parentId);
+  };
+
+  const handleRecordPayment = async () => {
+    if (!paymentParentId) {
+      window.alert('Missing parent');
+      return;
+    }
+    if (!paymentEnrollmentId) {
+      window.alert('Select an enrollment');
+      return;
+    }
+    const amount = Number(paymentAmount);
+    if (!Number.isFinite(amount) || amount === 0) {
+      window.alert('Enter a non-zero amount');
+      return;
+    }
+    if (!paymentPaidAt) {
+      window.alert('Select the paid date');
+      return;
+    }
+
+    try {
+      setPaymentSaving(true);
+      const fn = httpsCallable(functions, 'recordPayment');
+      await fn({
+        enrollmentId: paymentEnrollmentId,
+        amount,
+        paidAt: paymentPaidAt,
+        method: paymentMethod,
+        note: paymentNote || undefined,
+      });
+      window.alert('Payment recorded');
+      setPaymentOpen(false);
+    } catch (err: any) {
+      window.alert(err?.message || 'Failed to record payment');
+    } finally {
+      setPaymentSaving(false);
+    }
+  };
+
+  const toggleParent = (parentId: string) => {
+    setExpandedParents((prev) => {
+      const next = new Set(prev);
+      if (next.has(parentId)) {
+        next.delete(parentId);
+      } else {
+        next.add(parentId);
+      }
+      return next;
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-semibold">Parent Payments</h2>
+          <p className="text-sm text-muted-foreground">
+            Monthly dues and payments by parent.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium">Month</label>
+          <Input
+            type="month"
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="w-[160px]"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Outstanding (charges)</div>
+          <div className="text-lg font-semibold">{formatMoney(totals.due)}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Payments (month)</div>
+          <div className="text-lg font-semibold">{formatMoney(totals.paid)}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Applied</div>
+          <div className="text-lg font-semibold">{formatMoney(totals.applied)}</div>
+        </Card>
+        <Card className="p-4">
+          <div className="text-xs text-muted-foreground">Unapplied</div>
+          <div className="text-lg font-semibold">{formatMoney(totals.unapplied)}</div>
+        </Card>
+      </div>
+
+      <Card className="p-4">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm table-auto">
+            <thead>
+              <tr className="text-left border-b">
+                <th className="p-2">Parent</th>
+                <th className="p-2">Charges</th>
+                <th className="p-2">Outstanding</th>
+                <th className="p-2">Paid</th>
+                <th className="p-2">Applied</th>
+                <th className="p-2">Unapplied</th>
+                <th className="p-2">Last payment</th>
+                <th className="p-2">Action</th>
+                <th className="p-2">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td className="p-3 text-muted-foreground" colSpan={9}>
+                    No parent payments found for this month.
+                  </td>
+                </tr>
+              ) : (
+                rows.map((row) => {
+                  const isExpanded = expandedParents.has(row.parentId);
+                  const breakdown = breakdownByParent.get(row.parentId) || [];
+                  return (
+                    <React.Fragment key={row.parentId}>
+                      <tr className="border-b last:border-b-0">
+                        <td className="p-2">{row.parentName}</td>
+                        <td className="p-2">{row.chargesCount}</td>
+                        <td className="p-2">{formatMoney(row.due)}</td>
+                        <td className="p-2">{formatMoney(row.paid)}</td>
+                        <td className="p-2">{formatMoney(row.applied)}</td>
+                        <td className="p-2">{formatMoney(row.unapplied)}</td>
+                        <td className="p-2">
+                          {row.lastPaymentAt ? new Date(row.lastPaymentAt).toISOString().slice(0, 10) : '—'}
+                        </td>
+                        <td className="p-2">
+                          <Button size="sm" variant="outline" onClick={() => openPaymentModal(row)}>
+                            Record payment
+                          </Button>
+                        </td>
+                        <td className="p-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleParent(row.parentId)}
+                          >
+                            {isExpanded ? 'Hide' : 'Details'}
+                          </Button>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={9} className="p-2 bg-muted/30">
+                            {breakdown.length === 0 ? (
+                              <div className="text-xs text-muted-foreground">
+                                No enrollment-level data found for this month.
+                              </div>
+                            ) : (
+                              <div className="overflow-x-auto">
+                                <table className="w-full text-xs table-auto">
+                                  <thead>
+                                    <tr className="text-left border-b">
+                                      <th className="p-2">Student</th>
+                                      <th className="p-2">Course</th>
+                                      <th className="p-2">Sessions</th>
+                                      <th className="p-2">Due</th>
+                                      <th className="p-2">Paid</th>
+                                      <th className="p-2">Applied</th>
+                                      <th className="p-2">Unapplied</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {breakdown.map((entry, idx) => {
+                                      const studentLabel =
+                                        kidMap[entry.kidId] || entry.kidId || 'Unknown';
+                                      const courseLabel =
+                                        courseMap[entry.courseId] || entry.courseId || '—';
+                                      return (
+                                        <tr key={`${entry.enrollmentId || entry.kidId}-${idx}`}>
+                                          <td className="p-2">{studentLabel}</td>
+                                          <td className="p-2">{courseLabel}</td>
+                                          <td className="p-2">{entry.sessions}</td>
+                                          <td className="p-2">{formatMoney(entry.due)}</td>
+                                          <td className="p-2">{formatMoney(entry.paid)}</td>
+                                          <td className="p-2">{formatMoney(entry.applied)}</td>
+                                          <td className="p-2">{formatMoney(entry.unapplied)}</td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      <Dialog open={paymentOpen} onOpenChange={setPaymentOpen}>
+        <DialogContent className="sm:max-w-[520px]">
+          <DialogHeader>
+            <DialogTitle>Record Payment</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="text-sm">
+              Parent: <span className="font-medium">{paymentParentName || 'Unknown'}</span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Enrollment</label>
+              <Select
+                value={paymentEnrollmentId}
+                onValueChange={(value) => setPaymentEnrollmentId(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={loadingEnrollments ? 'Loading…' : 'Select enrollment'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {parentEnrollments.length === 0 ? (
+                    <SelectItem value="__empty" disabled>
+                      {loadingEnrollments ? 'Loading…' : 'No enrollments found'}
+                    </SelectItem>
+                  ) : (
+                    parentEnrollments.map((enrollment) => {
+                      const kidId =
+                        enrollment.kidId ||
+                        enrollment.studentId ||
+                        (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : '') ||
+                        'Unknown kid';
+                      const courseId = enrollment.courseId || 'Unknown course';
+                      const status = enrollment.status || 'unknown';
+                      return (
+                        <SelectItem key={enrollment.id} value={enrollment.id}>
+                          {kidId} · {courseId} · {status}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+              <div className="text-xs text-muted-foreground">
+                Payments apply to charges for the selected enrollment.
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Amount (₹)</label>
+                <Input
+                  type="number"
+                  step="1"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Paid at</label>
+                <Input
+                  type="date"
+                  value={paymentPaidAt}
+                  onChange={(e) => setPaymentPaidAt(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Method</label>
+              <Select
+                value={paymentMethod}
+                onValueChange={(value) =>
+                  setPaymentMethod(value as 'UPI' | 'bank_transfer' | 'online')
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="UPI">UPI</SelectItem>
+                  <SelectItem value="bank_transfer">Bank transfer</SelectItem>
+                  <SelectItem value="online">Online</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-medium">Note (optional)</label>
+              <Textarea
+                value={paymentNote}
+                onChange={(e) => setPaymentNote(e.target.value)}
+                placeholder="e.g., reference or adjustment note"
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPaymentOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRecordPayment} disabled={paymentSaving || loadingEnrollments}>
+              {paymentSaving ? 'Saving…' : 'Record payment'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
