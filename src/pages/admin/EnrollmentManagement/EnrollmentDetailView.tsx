@@ -243,11 +243,11 @@ export default function EnrollmentDetailView({
         getDocs(paymentsQuery),
       ]);
 
-      const nextCharges = chargesSnap.docs.map((docSnap) => ({
+      const nextCharges: Array<Record<string, any>> = chargesSnap.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data(),
       }));
-      const nextPayments = paymentsSnap.docs.map((docSnap) => ({
+      const nextPayments: Array<Record<string, any>> = paymentsSnap.docs.map((docSnap) => ({
         id: docSnap.id,
         ...docSnap.data(),
       }));
