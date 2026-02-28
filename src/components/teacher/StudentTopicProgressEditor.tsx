@@ -229,6 +229,41 @@ const labelizeLevel = (value: string): string =>
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
+const MASTERY_LEVELS: { key: string; pct: number }[] = [
+  { key: 'not_started', pct: 0 },
+  { key: 'emerging', pct: 25 },
+  { key: 'developing', pct: 50 },
+  { key: 'proficient', pct: 75 },
+  { key: 'mastered', pct: 100 },
+];
+
+const MASTERY_KEYS = new Set(MASTERY_LEVELS.map((l) => l.key));
+
+const normalizeMasteryKey = (value: any): string => {
+  const raw = String(value ?? '').toLowerCase().trim();
+  if (MASTERY_KEYS.has(raw)) return raw;
+  if (raw === 'not started') return 'not_started';
+
+  const num =
+    typeof value === 'number' && Number.isFinite(value)
+      ? value
+      : Number.isFinite(Number(raw))
+        ? Number(raw)
+        : null;
+  if (num == null) return 'not_started';
+
+  let best = MASTERY_LEVELS[0];
+  let bestDiff = Math.abs(num - best.pct);
+  for (const level of MASTERY_LEVELS) {
+    const diff = Math.abs(num - level.pct);
+    if (diff < bestDiff) {
+      best = level;
+      bestDiff = diff;
+    }
+  }
+  return best.key;
+};
+
 type ChipTone = 'blue' | 'green' | 'indigo' | 'amber' | 'slate';
 type ChipSize = 'xs' | 'sm';
 
@@ -519,15 +554,9 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     }
 
     if (existing) {
-      const existingMastery = existing.mastery;
-      // Coerce possible number | "not_started" into a string
-      setMastery(
-        existingMastery == null
-          ? 'not_started'
-          : typeof existingMastery === 'number'
-          ? String(existingMastery)
-          : existingMastery,
-      );
+      const existingMastery =
+        (existing as any).masteryKey ?? (existing as any).mastery ?? 'not_started';
+      setMastery(normalizeMasteryKey(existingMastery));
       setScoreBand(existing.scoreBand || '');
       setTeacherRemark(existing.teacherRemark || '');
       const existingChecks = (existing as any).checks ?? {};
@@ -564,8 +593,11 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     }
 
     setSaveMessage(null);
+    const baselineMastery = existing
+      ? normalizeMasteryKey((existing as any).masteryKey ?? (existing as any).mastery)
+      : 'not_started';
     const snapshot = JSON.stringify({
-      mastery: existing ? (existing as any).mastery ?? 'not_started' : 'not_started',
+      mastery: baselineMastery,
       scoreBand: existing ? (existing as any).scoreBand ?? '' : '',
       checks: existing
         ? {
@@ -684,6 +716,20 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     confusions: [...confusions].sort(),
     teacherRemark,
   });
+
+  let debugSection: React.ReactNode = null;
+  if (import.meta.env.DEV) {
+    debugSection = (
+      <details className="text-[10px] text-slate-500">
+        <summary className="cursor-pointer">Debug</summary>
+        <div className="mt-1">
+          selectedCourseId={selectedCourseId || "''"} · selectedTopicId={selectedTopicId || "''"} ·
+          courseTopics={courseTopics.length} · curriculumTopics={curriculumTopics.length} ·
+          curriculumLoading={String(curriculumLoading)} · curriculumError={curriculumError || 'none'}
+        </div>
+      </details>
+    );
+  }
   const isDirty = baseline !== '' && snapshotNow !== baseline;
   const setChecksAll = (level: string) => {
     setChecksTouched(true);
@@ -760,16 +806,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           Couldn&apos;t load curriculum: {curriculumError}
         </p>
       )}
-      {import.meta.env.DEV && (
-        <details className="text-[10px] text-slate-500">
-          <summary className="cursor-pointer">Debug</summary>
-          <div className="mt-1">
-            selectedCourseId={selectedCourseId || "''"} · selectedTopicId={selectedTopicId || "''"} ·
-            courseTopics={courseTopics.length} · curriculumTopics={curriculumTopics.length} ·
-            curriculumLoading={String(curriculumLoading)} · curriculumError={curriculumError || 'none'}
-          </div>
-        </details>
-      )}
+      {debugSection}
 
       <div className={`${cardBase} bg-sky-50/60`}>
         <div className="text-xs font-semibold text-slate-700">Lesson</div>

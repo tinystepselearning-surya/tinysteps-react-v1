@@ -194,7 +194,7 @@ export default function AssignTeacherModal({
       const enrRef = doc(db, 'enrollments', selectedEnrollment);
       await updateDoc(enrRef, {
         teacherId: selectedTeacher,
-        status: 'pending_payment',
+        status: 'active',
         updatedAt: serverTimestamp(),
       } as any);
 
@@ -245,7 +245,7 @@ export default function AssignTeacherModal({
           <DialogDescription>
             Select an enrollment and a teacher to assign. Admins and
             Learning Partners can update teacher assignments for students
-            under their supervision.
+            under their supervision. Assigning a teacher activates the enrollment.
           </DialogDescription>
         </DialogHeader>
 

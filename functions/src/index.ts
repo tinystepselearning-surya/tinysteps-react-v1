@@ -58,6 +58,13 @@ export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
 export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
 
+// Enrollment lifecycle (admin-only)
+export {
+  setEnrollmentStatus,
+  reassignEnrollmentTeacher,
+  archiveKid,
+} from "./lifecycle";
+
 // Admin-only purge (temporary)
 
 // AI: Ask TinySteps chatbot and knowledge base

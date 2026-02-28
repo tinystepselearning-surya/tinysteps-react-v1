@@ -120,6 +120,10 @@ export const createSessionsFromSchedule = onCall(
     const batch = db.batch();
     let batchOps = 0;
     const MAX_BATCH = 400; // Firestore limit is 500, stay safe
+    const uniqueKidIds = new Set<string>();
+    kidIds.forEach((id) => {
+      if (id) uniqueKidIds.add(id);
+    });
 
     // Iterate over days in range
     for (let d = new Date(rangeStartDate); d <= rangeEndDate; d.setDate(d.getDate() + 1)) {
@@ -203,6 +207,29 @@ export const createSessionsFromSchedule = onCall(
     // Commit remaining
     if (batchOps > 0) {
       await batch.commit();
+    }
+
+    // Self-heal: ensure kids.teacherIds includes this teacher (if available)
+    if (teacherId && uniqueKidIds.size > 0) {
+      const kidIdList = Array.from(uniqueKidIds);
+      for (let i = 0; i < kidIdList.length; i += MAX_BATCH) {
+        const chunk = kidIdList.slice(i, i + MAX_BATCH);
+        const kidBatch = db.batch();
+        chunk.forEach((id) => {
+          const kidRef = db.collection("kids").doc(id);
+          kidBatch.set(
+            kidRef,
+            {
+              teacherIds: admin.firestore.FieldValue.arrayUnion(teacherId),
+              teacherId,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              updatedBy: "system",
+            },
+            { merge: true }
+          );
+        });
+        await kidBatch.commit();
+      }
     }
 
     logger.info("Sessions created from schedule", {

@@ -305,7 +305,7 @@ export default function AssignCourseModal({
         teacherId: null,
         lpId: null,
         parentId: primaryParentId,
-        status: 'pending_teacher',
+        status: 'trial',
         feePerClass,
         currency: 'INR',
         billingCycle,

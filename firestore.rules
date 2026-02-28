@@ -274,20 +274,20 @@ service cloud.firestore {
     // ----------------------------
     match /students/{kidId}/progress/{topicId} {
       allow read: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
+        || (isTeacher() && isTeacherOfKid(kidId))
         || isParentOfKid(kidId);
 
       allow create, update, delete: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
+        || (isTeacher() && isTeacherOfKid(kidId));
     }
 
     match /students/{kidId}/curriculum/{topicId} {
       allow read: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
+        || (isTeacher() && isTeacherOfKid(kidId))
         || isParentOfKid(kidId);
 
       allow create, update, delete: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid);
+        || (isTeacher() && isTeacherOfKid(kidId));
     }
 
     match /students/{kidId}/weeklyReports/{reportId} {
@@ -309,9 +309,18 @@ service cloud.firestore {
         );
     }
 
+    match /students/{kidId}/monthlyReports/{docId} {
+      allow read: if isAdmin()
+        || (isTeacher() && isTeacherOfKid(kidId))
+        || (isParentOfKid(kidId) && resource.data.status == "published");
+
+      allow create, update, delete: if isAdmin()
+        || (isTeacher() && isTeacherOfKid(kidId));
+    }
+
     match /students/{kidId} {
       allow read: if isAdmin()
-        || (isTeacher() && get(/databases/$(database)/documents/kids/$(kidId)).data.teacherId == request.auth.uid)
+        || (isTeacher() && isTeacherOfKid(kidId))
         || (isParent() && get(/databases/$(database)/documents/kids/$(kidId)).data.primaryParentId == request.auth.uid);
       allow create, update, delete: if isAdmin();
     }

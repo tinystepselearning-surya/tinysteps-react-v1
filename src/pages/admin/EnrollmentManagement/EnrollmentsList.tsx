@@ -1,5 +1,5 @@
 // src/pages/admin/EnrollmentManagement/EnrollmentsList.tsx
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   collection,
@@ -246,13 +246,36 @@ function pickCourseName(c?: CourseDoc) {
   return c.name || c.title || c.courseName || '';
 }
 
+function normalizeEnrollmentStatus(value: any): string {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'active';
+  if (raw === 'pending_teacher') return 'trial';
+  if (raw === 'pending_payment' || raw === 'pending_lp') return 'active';
+  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
+  if (raw === 'canceled') return 'cancelled';
+  return raw;
+}
+
 export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
+  const [statusTab, setStatusTab] = useState<'active' | 'past'>('active');
   const enrollmentsQuery = useQuery({
     queryKey: ['adminEnrollments', reloadKey],
     queryFn: fetchEnrollments,
   });
 
   const enrollments = useMemo(() => enrollmentsQuery.data ?? [], [enrollmentsQuery.data]);
+  const filteredEnrollments = useMemo(() => {
+    return enrollments.filter((e) => {
+      const status = normalizeEnrollmentStatus(e.status);
+      const isPast =
+        status === 'completed' ||
+        status === 'discontinued' ||
+        status === 'expired' ||
+        status === 'cancelled';
+      const isActive = !isPast;
+      return statusTab === 'active' ? isActive : isPast;
+    });
+  }, [enrollments, statusTab]);
 
   const allKidIds = useMemo(() => {
     const set = new Set<string>();
@@ -322,8 +345,41 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         </div>
       )}
 
-      <Table>
+      {filteredEnrollments.length === 0 ? (
+        <div className="text-sm text-muted-foreground">
+          {statusTab === 'active' ? 'No active enrollments.' : 'No past enrollments.'}
+        </div>
+      ) : (
+        <Table>
         <TableHeader>
+          <TableRow>
+            <TableHead colSpan={5}>
+              <div className="flex flex-wrap items-center gap-2 py-1">
+                <button
+                  type="button"
+                  onClick={() => setStatusTab('active')}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    statusTab === 'active'
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-200 bg-white text-gray-700'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStatusTab('past')}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    statusTab === 'past'
+                      ? 'bg-blue-600 text-white'
+                      : 'border border-gray-200 bg-white text-gray-700'
+                  }`}
+                >
+                  Past
+                </button>
+              </div>
+            </TableHead>
+          </TableRow>
           <TableRow>
             <TableHead>Course</TableHead>
             <TableHead>Student(s)</TableHead>
@@ -334,9 +390,18 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         </TableHeader>
 
         <TableBody>
-          {enrollments.map((e) => {
+          {filteredEnrollments.map((e) => {
             const kids = (e.kidIds ?? []).map(kidLabel).join(', ');
-            const status = e.status ?? 'unknown';
+            const rawStatus = e.status ?? 'unknown';
+            const status = normalizeEnrollmentStatus(rawStatus);
+            const badgeVariant =
+              status === 'active' || status === 'trial' || status === 'paused'
+                ? 'default'
+                : status === 'cancelled'
+                  ? 'destructive'
+                  : status === 'completed' || status === 'discontinued' || status === 'expired'
+                    ? 'outline'
+                    : 'secondary';
 
             return (
               <TableRow key={e.id}>
@@ -347,7 +412,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
                 <TableCell>{kids || '—'}</TableCell>
 
                 <TableCell>
-                  <Badge variant={status === 'active' ? 'default' : 'secondary'}>
+                  <Badge variant={badgeVariant} title={rawStatus !== status ? `raw: ${rawStatus}` : undefined}>
                     {status}
                   </Badge>
                 </TableCell>
@@ -362,6 +427,7 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
           })}
         </TableBody>
       </Table>
+      )}
     </div>
   );
 }

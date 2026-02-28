@@ -5,12 +5,8 @@ import {
   getDocs,
   query,
   where,
-  updateDoc,
-  doc,
-  serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../../../lib/firebaseConfig';
-import { updateKid } from '../../../services/kidsService';
+import { db, functions } from '../../../lib/firebaseConfig';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +24,7 @@ import {
 } from '@components/ui/select';
 import { Button } from '@components/ui/button';
 import { toast } from '@components/hooks/use-toast';
+import { httpsCallable } from 'firebase/functions';
 
 interface AssignTeacherModalProps {
   enrollment: any;
@@ -115,24 +112,8 @@ export default function AssignTeacherModal({
     try {
       setSaving(true);
 
-      await updateDoc(
-        doc(db, 'enrollments', enrollment.id),
-        {
-          teacherId: selectedTeacherId,
-          status: 'pending_lp',
-          updatedAt: serverTimestamp(),
-        },
-      );
-
-      const kidId =
-        enrollment.kidId ||
-        enrollment.studentId ||
-        (Array.isArray(enrollment.kidIds) ? enrollment.kidIds[0] : null);
-      if (kidId) {
-        await updateKid(String(kidId), {
-          teacherId: selectedTeacherId,
-        } as any);
-      }
+      const fn = httpsCallable(functions, 'reassignEnrollmentTeacher');
+      await fn({ enrollmentId: enrollment.id, newTeacherId: selectedTeacherId });
 
       toast({
         title: 'Teacher assigned',

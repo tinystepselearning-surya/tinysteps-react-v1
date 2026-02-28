@@ -458,6 +458,25 @@ function enrollmentLabel(e: EnrollmentLite): string {
   return `${courseTitle}${teacher ? ` — ${teacher}` : ''}${feeText}`;
 }
 
+function normalizeEnrollmentStatus(value: any): string {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return 'active';
+  if (raw === 'pending_teacher') return 'trial';
+  if (raw === 'pending_payment' || raw === 'pending_lp') return 'active';
+  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
+  if (raw === 'canceled') return 'cancelled';
+  return raw;
+}
+
+function isPastEnrollmentStatus(status: string): boolean {
+  return (
+    status === 'completed' ||
+    status === 'discontinued' ||
+    status === 'expired' ||
+    status === 'cancelled'
+  );
+}
+
 export default function StudentList({ onEdit, onDelete, onAssignCourse }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [parents, setParents] = useState<User[]>([]);
@@ -465,6 +484,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [parentFilter, setParentFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [enrollmentStatusTab, setEnrollmentStatusTab] = useState<'active' | 'past'>('active');
   const [page, setPage] = useState(0);
 
   const [assignCourseFor, setAssignCourseFor] = useState<Student | null>(null);
@@ -498,16 +518,20 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const isAdmin = user?.role === 'admin';
 
   const handleDeleteEnrollment = async (enrollmentId: string) => {
-    if (!window.confirm('Delete this enrollment?')) return;
+    if (!window.confirm('Discontinue this enrollment?')) return;
     try {
-      await import('firebase/firestore').then(({ deleteDoc, doc }) =>
-        deleteDoc(doc(db, 'enrollments', enrollmentId))
-      );
-      toast({ title: 'Enrollment removed' });
+      const functions = getFunctions(undefined, 'asia-south1');
+      const setEnrollmentStatus = httpsCallable(functions, 'setEnrollmentStatus');
+      await setEnrollmentStatus({
+        enrollmentId,
+        status: 'discontinued',
+        reason: 'admin_deleted',
+      });
+      toast({ title: 'Enrollment discontinued' });
       enrollmentsQuery.refetch();
     } catch (err) {
       console.error(err);
-      toast({ title: 'Error', description: 'Failed to delete enrollment', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to discontinue enrollment', variant: 'destructive' });
     }
   };
 
@@ -1125,6 +1149,33 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       )}
 
       <Card>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4">
+          <div className="text-sm font-medium text-gray-700">Enrollments</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setEnrollmentStatusTab('active')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                enrollmentStatusTab === 'active'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-200 bg-white text-gray-700'
+              }`}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              onClick={() => setEnrollmentStatusTab('past')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                enrollmentStatusTab === 'past'
+                  ? 'bg-blue-600 text-white'
+                  : 'border border-gray-200 bg-white text-gray-700'
+              }`}
+            >
+              Past
+            </button>
+          </div>
+        </div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -1139,7 +1190,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           </TableHeader>
 
           <TableBody>
-            {paged.map(s => (
+            {paged.map(s => {
+              const allEnrollments = enrollmentsByStudent[s.id] || [];
+              const filteredEnrollments = allEnrollments.filter((e: any) => {
+                const status = normalizeEnrollmentStatus(e.status);
+                const isPast = isPastEnrollmentStatus(status);
+                return enrollmentStatusTab === 'active' ? !isPast : isPast;
+              });
+              return (
               <TableRow key={s.id}>
                 <TableCell>
                   <div className="font-medium">{s.fullName}</div>
@@ -1160,14 +1218,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
                 {/* ✅ Enrollments in its own column */}
                 <TableCell>
-                  {enrollmentsByStudent[s.id] && enrollmentsByStudent[s.id].length > 0 ? (
+                  {filteredEnrollments.length > 0 ? (
                     <div className="space-y-1">
-                      {enrollmentsByStudent[s.id].map((e: any) => (
+                      {filteredEnrollments.map((e: any) => (
                         <div key={e.id} className="text-sm flex items-center justify-between">
                           <div>
                             <strong>{e.course?.title || e.courseId}</strong>
                             {e.teacher && ` — ${e.teacher.name || e.teacher.email}`}
-                            {` — ${e.status}`}
+                            {` — ${normalizeEnrollmentStatus(e.status)}`}
                             {safeNumber(e.feePerClass, 0) > 0 ? ` — ₹${e.feePerClass}/class` : ''}
                           </div>
                           <div className="ml-4">
@@ -1189,7 +1247,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                       ))}
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-400">No enrollments</div>
+                    <div className="text-sm text-gray-400">
+                      {enrollmentStatusTab === 'active' ? 'No active enrollments' : 'No past enrollments'}
+                    </div>
                   )}
                 </TableCell>
 
@@ -1254,7 +1314,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   </div>
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
 

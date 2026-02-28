@@ -155,6 +155,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const returnTo = searchParams.get('returnTo');
   const fromStudents = searchParams.get('from') === 'students';
+  const requestedCourseId = searchParams.get('courseId');
   const activeTab = searchParams.get('tab') === 'weekly' ? 'weekly' : 'topic';
 
   const setTab = (tab: 'topic' | 'weekly') => {
@@ -304,6 +305,15 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
       active = false;
     };
   }, [kidId, selectedCourseId]);
+
+  useEffect(() => {
+    if (!requestedCourseId || courseOptions.length === 0) return;
+    const exists = courseOptions.some((opt) => opt.courseId === requestedCourseId);
+    if (!exists) return;
+    if (selectedCourseId !== requestedCourseId) {
+      setSelectedCourseId(requestedCourseId);
+    }
+  }, [requestedCourseId, courseOptions, selectedCourseId]);
 
   useEffect(() => {
     if (!kidId || !selectedCourseId || !selectedWeekKey) return;

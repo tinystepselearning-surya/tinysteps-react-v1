@@ -204,7 +204,7 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
         parentLabel: parentLabel,
 
         // billing / credits
-        status: 'pending_teacher',
+        status: 'trial',
         ratePerSession,
         billingCycle,
         creditsTotal: credits,
@@ -335,6 +335,9 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
                 </div>
                 <div>
                   Course: <strong>{courseLabel}</strong>
+                </div>
+                <div>
+                  Status: <strong>Trial</strong>
                 </div>
                 <div>
                   Estimated sessions: <strong>{estimatedSessions}</strong>

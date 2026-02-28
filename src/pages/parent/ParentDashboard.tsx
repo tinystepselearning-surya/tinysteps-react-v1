@@ -120,6 +120,13 @@ const phonicsLabelsByCourseId: Record<string, string> = {
   "advanced-phonics": "Advanced Phonics",
 };
 
+const titleCaseFromId = (value: string): string =>
+  String(value || "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+
 const phonicsGradientsByCourseId: Record<string, string> = {
   "phonics-foundations": "from-indigo-50 to-purple-50",
   "early-phonics": "from-emerald-50 to-teal-50",
@@ -573,20 +580,83 @@ export default function ParentDashboard() {
     return Array.from(new Set(phonicsCourseIdsFromEnrollments));
   }, [phonicsCourseIdsFromEnrollments]);
 
+  const hasEnrollmentCourses = useMemo(() => {
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+    return enrollments.some((enr) => Boolean(enr.courseId));
+  }, [enrollmentsQuery.data]);
+
+  const weeklyReportsForOptionsQuery = useQuery({
+    queryKey: ["weeklyReportsForOptions", selectedKidId],
+    enabled: !!selectedKidId && activeTab === "insights" && !hasEnrollmentCourses,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId) return [];
+      return fetchPublishedWeeklyReports(selectedKidId);
+    },
+  });
+
+  const coursesLookupQuery = useQuery({
+    queryKey: ["coursesLookup"],
+    enabled: activeTab === "insights",
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const snap = await getDocs(collection(db, "courses"));
+      const map: Record<string, string> = {};
+      snap.forEach((docSnap) => {
+        const data = docSnap.data() as any;
+        const label = String(
+          data?.label || data?.name || data?.title || data?.courseLabel || docSnap.id
+        ).trim();
+        if (label) {
+          map[docSnap.id] = label;
+          if (data?.courseId && !map[data.courseId]) {
+            map[data.courseId] = label;
+          }
+        }
+      });
+      return map;
+    },
+  });
+
+  const formatCourseLabel = (courseId: string, fallback?: string) => {
+    const trimmed = String(fallback || "").trim();
+    if (trimmed && trimmed !== courseId) return trimmed;
+    const fromLookup = coursesLookupQuery.data?.[courseId];
+    if (fromLookup) return fromLookup;
+    return titleCaseFromId(courseId);
+  };
+
   const insightsCourseOptions = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
     const map = new Map<string, string>();
     enrollments.forEach((enr) => {
       const courseId = String(enr.courseId || "").trim();
       if (!courseId) return;
-      const label = String(enr.courseLabel || enr.courseName || courseId).trim();
+      const label = formatCourseLabel(courseId, String(enr.courseLabel || enr.courseName || "").trim());
       if (!map.has(courseId)) map.set(courseId, label || courseId);
+    });
+    if (map.size > 0) {
+      return Array.from(map.entries()).map(([courseId, label]) => ({
+        courseId,
+        label,
+      }));
+    }
+
+    const reports = (weeklyReportsForOptionsQuery.data ?? []) as WeeklyReport[];
+    reports.forEach((report) => {
+      const courseId = String(report.courseId || "").trim();
+      if (!courseId) return;
+      if (!map.has(courseId)) map.set(courseId, formatCourseLabel(courseId));
     });
     return Array.from(map.entries()).map(([courseId, label]) => ({
       courseId,
       label,
     }));
-  }, [enrollmentsQuery.data]);
+  }, [enrollmentsQuery.data, weeklyReportsForOptionsQuery.data, coursesLookupQuery.data]);
 
   useEffect(() => {
     if (!insightsCourseOptions.length) {

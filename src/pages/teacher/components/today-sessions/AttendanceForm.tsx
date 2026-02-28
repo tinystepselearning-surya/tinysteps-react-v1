@@ -11,6 +11,7 @@ import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderB
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -118,6 +119,7 @@ const parseScoreValue = (value: any): number | undefined => {
 };
 
 export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, onClose, onSubmit }) => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState<Record<string, AttendanceEntryState>>({});
@@ -847,7 +849,24 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({ open, session, o
                       ) : curriculumError ? (
                         <p className="text-sm text-red-500">Unable to load topics.</p>
                       ) : topics.length === 0 ? (
-                        <p className="text-sm text-gray-500">No curriculum topics available for this course.</p>
+                        <div className="space-y-2">
+                          <p className="text-sm text-gray-500">
+                            Topics are updated from the Student Progress page.
+                          </p>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() =>
+                              navigate(
+                                `/teacher/students/${kidId}/topic-progress?from=schedule&tab=topic&courseId=${encodeURIComponent(
+                                  effectiveCourseId,
+                                )}`,
+                              )
+                            }
+                          >
+                            Open Student Progress
+                          </Button>
+                        </div>
                       ) : (
                         <div className="space-y-4 mt-2">
                           {Object.entries(
