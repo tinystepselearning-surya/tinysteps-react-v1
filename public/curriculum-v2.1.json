@@ -3,1274 +3,1300 @@
     "phonics-foundation": {
       "weeks": [
         {
-          "title": "Week 1: SATPIN Set 1",
-          "focus": "/s/ /a/ /t/ /p/ /i/ /n/",
+          "title": "Stage 1 — First letter sounds",
+          "focus": "Learn the first letter sounds and match them to pictures.",
           "learns": [
-            "Phonemic awareness: listening, rhyme, oral blending",
-            "Identify sounds (not letter names)",
-            "Sound–motion hooks",
-            "Intro to blending",
-            "CVC words: at, in, sat, pin"
+            "Hear and say the first letter sounds",
+            "Match sounds to letters and pictures",
+            "Build sound confidence"
           ],
           "activities": [
-            "Listen & identify each sound",
-            "Make sound‑motions",
-            "Blend sounds into words",
-            "Match letter cards",
-            "Oral blending games without letters"
+            "Sound-motion practice",
+            "Picture-sound matching",
+            "Quick recall games"
           ],
           "homework": [
-            "Sound recognition worksheet (5 min)",
-            "Listen & repeat audio (2 min)"
+            "2–3 minute sound review",
+            "Say sounds with picture cards"
           ],
-          "mastery": "Identifies all 6 sounds ✓"
+          "mastery": "Identifies the first letter sounds"
         },
         {
-          "title": "Week 2: Set 2 + CK Rule",
-          "focus": "/m/ /d/ /g/ /o/ /c/ /k/ + CK",
+          "title": "Stage 2 — Letter sounds set 2",
+          "focus": "Build quick recall of more letter sounds.",
           "learns": [
-            "6 new sounds (multimodal)",
-            "CK rule (back, pack)",
-            "Blend word families"
+            "Add new letter sounds",
+            "Blend early sounds in simple words",
+            "Spot sounds in words"
           ],
           "activities": [
-            "CK detective (find CK words)",
-            "Word family ladders",
-            "Build words with letter cards"
+            "Sound set drills",
+            "Blend and tap words",
+            "Sound spotting games"
           ],
           "homework": [
-            "List 10 words using these sounds"
+            "Say the new sounds daily",
+            "Find sounds in 3 words"
           ],
-          "mastery": "Reads CK words in context ✓"
+          "mastery": "Recalls the second sound set quickly"
         },
         {
-          "title": "Week 3: Sets 3–4 + Floss",
-          "focus": "/e/ /u/ /r/ /h/ /b/ /f/ /l/",
+          "title": "Stage 3 — Letter sounds set 3",
+          "focus": "Add new letter sounds and use them in simple words.",
           "learns": [
-            "Add new sounds to deck",
-            "Floss rule (ff, ll, ss) with examples"
+            "Learn new sounds in context",
+            "Blend CVC words with the new sounds",
+            "Recognize sounds in pictures"
           ],
           "activities": [
-            "Word sort (ff/ll/ss)",
-            "Tap & blend drill",
-            "Dictation (10 words)",
-            "Mini readers (2–3 lines)"
+            "Sound-to-picture match",
+            "CVC blending practice",
+            "Mini word reads"
           ],
           "homework": [
-            "Blend practice (5 min)",
-            "Floss rule worksheet"
+            "Blend 3 simple words",
+            "Sound review cards"
           ],
-          "mastery": "Applies ff/ll/ss ends ✓"
+          "mastery": "Blends CVC words with the new sounds"
         },
         {
-          "title": "Week 4: CVC + Missing Letters (j v w x y z)",
-          "focus": "CVC blending & segmenting + /j/ /v/ /w/ /x/ /y/ /z/",
+          "title": "Stage 4 — Letter sounds set 4",
+          "focus": "Practice additional consonant sounds with picture-word matching.",
           "learns": [
-            "Onset–rime blending",
-            "Segmenting for spelling",
-            "Introduce remaining consonant sounds: j, v, w, x(/ks/), y(/y/), z",
-            "Read & spell simple consonant blends (st, cl, nd, mp, etc.)"
+            "Extend sound bank",
+            "Blend and segment simple words",
+            "Improve sound discrimination"
           ],
           "activities": [
-            "Sound safari: find pictures for j/v/w/x/y/z",
-            "Tap & blend drill (CVC)",
-            "Read 8 CVC lines",
-            "Quick dictation (5 words)"
+            "Sound sorting",
+            "Word building",
+            "Read short word lists"
           ],
           "homework": [
-            "5-minute mixed sounds review",
-            "CVC spell (5 words)"
+            "Short word list practice",
+            "Say sounds with actions"
           ],
-          "mastery": "Identifies j/v/w/x/y/z + reads 20+ CVC words ✓"
+          "mastery": "Identifies and blends the new sounds"
         },
         {
-          "title": "Week 5: Digraphs 1",
-          "focus": "sh, ch, th, wh, qu",
+          "title": "Stage 5 — Letter sounds set 5",
+          "focus": "Complete the core set of letter sounds.",
           "learns": [
-            "2 letters = 1 sound",
-            "qu = /kw/"
+            "Complete the core sound set",
+            "Blend across mixed sounds",
+            "Build confidence in recall"
           ],
           "activities": [
-            "Digraph hunt",
-            "Sort & read",
-            "Picture prompts with target words"
+            "Mixed sound games",
+            "Quick recall races",
+            "Mini blending practice"
           ],
           "homework": [
-            "Digraph worksheet",
-            "Reader: 1 page"
+            "2–3 minute mixed sound review",
+            "Read 3 short words"
           ],
-          "mastery": "Identifies 5 digraphs (sh/ch/th/wh) + qu ✓"
+          "mastery": "Completes core sound set confidently"
         },
         {
-          "title": "Week 6: Digraphs 2 + c+le",
-          "focus": "ng, nk + consonant+le",
+          "title": "Stage 6 — Short vowels + review",
+          "focus": "Short vowels + review all sounds.",
           "learns": [
-            "ng/nk endings",
-            "Monster le story & rule"
+            "Recognize short vowels",
+            "Blend with short vowels",
+            "Review all sounds"
           ],
           "activities": [
-            "Monster le guard game",
-            "Read & mark endings",
-            "Build words from tiles"
+            "Short vowel practice",
+            "CVC blending",
+            "Mixed review games"
           ],
           "homework": [
-            "C+le sort",
-            "ng/nk reader"
+            "Short vowel word practice",
+            "Sound review cards"
           ],
-          "mastery": "Reads words with ng/nk & c+le ✓"
-        },
-        {
-          "title": "Week 7: Magic‑e",
-          "focus": "a_e, i_e, o_e, u_e, e_e",
-          "learns": [
-            "Long vowel via silent e",
-            "Minimal pairs (cap–cape)"
-          ],
-          "activities": [
-            "Magic‑e flip cards",
-            "Pairs game",
-            "Mini story with a_e/i_e"
-          ],
-          "homework": [
-            "Pairs list (10 pairs)",
-            "Reader: magic‑e page"
-          ],
-          "mastery": "Reads minimal pairs accurately ✓"
-        },
-        {
-          "title": "Week 8: Long Vowels 1",
-          "focus": "ai/ay, ee/ea",
-          "learns": [
-            "ai/ay positions",
-            "ee/ea contrasts"
-          ],
-          "activities": [
-            "Word family ladders",
-            "Phrase cards (read & act)"
-          ],
-          "homework": [
-            "ai/ay worksheet",
-            "ee/ea reader"
-          ],
-          "mastery": "Chooses correct team in context ✓"
-        },
-        {
-          "title": "Week 9: Long Vowels 2",
-          "focus": "oa/oe, igh/ie",
-          "learns": [
-            "oa/oe positions",
-            "igh/ie patterns"
-          ],
-          "activities": [
-            "Sort & read",
-            "Make a mini story using targets"
-          ],
-          "homework": [
-            "igh/ie practice",
-            "Reader: long‑vowel mix"
-          ],
-          "mastery": "Reads long‑vowel mix with 90%+ accuracy ✓"
-        },
-        {
-          "title": "Week 10: R‑controlled 1",
-          "focus": "ar, or",
-          "learns": [
-            "R changes vowel sound",
-            "ar/or in sentences"
-          ],
-          "activities": [
-            "Read & mark r‑controlled",
-            "Picture match"
-          ],
-          "homework": [
-            "ar/or word list (10)",
-            "Reader page"
-          ],
-          "mastery": "Identifies ar/or reliably ✓"
-        },
-        {
-          "title": "Week 11: R‑controlled 2",
-          "focus": "er, ir, ur",
-          "learns": [
-            "er/ir/ur similar sound",
-            "Spelling exposure"
-          ],
-          "activities": [
-            "Sort & read (er/ir/ur)",
-            "Dictation (8–10)"
-          ],
-          "homework": [
-            "er/ir/ur worksheet",
-            "Reader"
-          ],
-          "mastery": "Sorts & reads er/ir/ur ✓"
-        },
-        {
-          "title": "Week 12: Review + Tricky Words 1",
-          "learns": [
-            "the, to, do, was, are, said, come"
-          ],
-          "activities": [
-            "Game‑day review",
-            "Capstone read"
-          ],
-          "homework": [
-            "Tricky words spaced practice"
-          ],
-          "mastery": "Capstone: read decodable page (95%+) + write 5 sentences ✓"
+          "mastery": "Reads short vowel CVC words"
         }
-      ],
-      "meta": {
-        "label": "Phonics – Foundation (New Readers)",
-        "ages": "4–7",
-        "cefr": "Pre-A1–A1 (early reading)",
-        "notes": "Systematic synthetic phonics covering single-letter sounds through basic digraphs, long vowels, r-controlled vowels, and high-frequency ‘tricky’ words."
-      }
+      ]
+    },
+    "phonics-brush-up": {
+      "weeks": [
+        {
+          "title": "Stage 1 — Sound sets 1–5",
+          "focus": "Blend sound sets 1–5 and read simple CVC words.",
+          "learns": [
+            "Blend sound sets 1–5",
+            "Read simple CVC words",
+            "Build decoding confidence"
+          ],
+          "activities": [
+            "Sound set drills",
+            "CVC blending",
+            "Mini readers"
+          ],
+          "homework": [
+            "CVC word list practice",
+            "Sound recall cards"
+          ],
+          "mastery": "Reads CVC words with sound sets 1–5"
+        },
+        {
+          "title": "Stage 2 — Sound sets 6–7 + short vowels",
+          "focus": "Finish sound sets + short vowels for smoother blending.",
+          "learns": [
+            "Complete sound sets 6–7",
+            "Recognize short vowels quickly",
+            "Blend with short vowels"
+          ],
+          "activities": [
+            "Short vowel games",
+            "Blend-and-read practice",
+            "Word building"
+          ],
+          "homework": [
+            "Short vowel review",
+            "Read 5 CVC words"
+          ],
+          "mastery": "Blends short vowel words smoothly"
+        },
+        {
+          "title": "Stage 3 — Digraphs + silent letters",
+          "focus": "Learn digraphs and silent letters in words.",
+          "learns": [
+            "Recognize common digraphs",
+            "Spot silent letters",
+            "Read words with digraphs"
+          ],
+          "activities": [
+            "Digraph sorting",
+            "Silent letter spotting",
+            "Word reading practice"
+          ],
+          "homework": [
+            "Digraph word practice",
+            "Silent letter review"
+          ],
+          "mastery": "Reads digraph and silent-letter words"
+        },
+        {
+          "title": "Stage 4 — Vowel teams + long vowels",
+          "focus": "Practice vowel teams and long vowel patterns.",
+          "learns": [
+            "Recognize vowel teams",
+            "Read long vowel words",
+            "Compare short vs long"
+          ],
+          "activities": [
+            "Vowel team games",
+            "Word sorting",
+            "Reading practice"
+          ],
+          "homework": [
+            "Vowel team word list",
+            "Short vs long review"
+          ],
+          "mastery": "Reads long vowel words with vowel teams"
+        },
+        {
+          "title": "Stage 5 — Magic E",
+          "focus": "Master Magic E long vowels.",
+          "learns": [
+            "Understand the Magic E rule",
+            "Read Magic E words",
+            "Spell simple Magic E words"
+          ],
+          "activities": [
+            "Magic E word building",
+            "Short vs long contrast",
+            "Mini reading practice"
+          ],
+          "homework": [
+            "Magic E word list",
+            "Short vs long check"
+          ],
+          "mastery": "Reads Magic E words accurately"
+        },
+        {
+          "title": "Stage 6 — Longer words + review",
+          "focus": "Apply rules in longer words and review.",
+          "learns": [
+            "Apply multiple patterns in words",
+            "Read longer words",
+            "Review key rules"
+          ],
+          "activities": [
+            "Longer word practice",
+            "Mixed rule review",
+            "Fluency practice"
+          ],
+          "homework": [
+            "Mixed review cards",
+            "Read short sentences"
+          ],
+          "mastery": "Applies patterns in longer words"
+        }
+      ]
     },
     "phonics-advanced": {
-  "weeks": [
-    {
-      "title": "Week 1: Diagnostic + Syllable Types",
-      "learns": [
-        "Closed, open, magic-e, r-controlled, vowel team, consonant+le",
-        "How syllable type helps you choose vowel sound",
-        "Advanced tricky words (Week 1 set)"
-      ],
-      "activities": [
-        "Diagnostic passage (decode + fluency)",
-        "Syllable type sort",
-        "Mark vowels + split 2-syllable words",
-        "Tricky word read + use-in-a-sentence (Week 1 set)"
-      ],
-      "homework": [
-        "5-min daily syllable split practice (10 words)",
-        "Tricky words Week 1: because, people, again, every, different, even, many, answer, money, busy, any, sure"
-      ],
-      "mastery": "Identifies 5–6 syllable types + splits 8/10 words correctly + reads Week 1 tricky set ✓"
+      "weeks": [
+        {
+          "title": "Stage 1 — Diphthongs",
+          "focus": "Diphthongs and gliding vowel sounds.",
+          "learns": [
+            "Recognize diphthongs",
+            "Read diphthong words",
+            "Hear sound glides"
+          ],
+          "activities": [
+            "Diphthong sorting",
+            "Word reading practice",
+            "Sound glide drills"
+          ],
+          "homework": [
+            "Diphthong word list",
+            "Sound discrimination"
+          ],
+          "mastery": "Reads diphthong words confidently"
+        },
+        {
+          "title": "Stage 2 — Bossy R",
+          "focus": "Bossy R patterns for ar/or/er/ir/ur.",
+          "learns": [
+            "Recognize r-controlled vowels",
+            "Read r-controlled words",
+            "Compare ar/or/er/ir/ur"
+          ],
+          "activities": [
+            "Bossy R sorting",
+            "Word reading practice",
+            "Spelling choices"
+          ],
+          "homework": [
+            "Bossy R word list",
+            "Quick r-sound review"
+          ],
+          "mastery": "Reads r-controlled words accurately"
+        },
+        {
+          "title": "Stage 3 — Special sounds + silent letters",
+          "focus": "Special sounds and silent letter patterns.",
+          "learns": [
+            "Recognize special sounds",
+            "Spot silent letters",
+            "Read tricky patterns"
+          ],
+          "activities": [
+            "Pattern sorting",
+            "Silent letter spotting",
+            "Reading practice"
+          ],
+          "homework": [
+            "Tricky word list",
+            "Pattern review"
+          ],
+          "mastery": "Reads special-sound words with accuracy"
+        },
+        {
+          "title": "Stage 4 — Alternate vowels",
+          "focus": "Alternate vowel spellings in words.",
+          "learns": [
+            "Identify alternate vowel spellings",
+            "Choose correct vowel sound",
+            "Read words in context"
+          ],
+          "activities": [
+            "Vowel choice games",
+            "Word sorting",
+            "Reading practice"
+          ],
+          "homework": [
+            "Alternate vowel review",
+            "Read short sentences"
+          ],
+          "mastery": "Chooses correct alternate vowel sounds"
+        },
+        {
+          "title": "Stage 5 — Endings",
+          "focus": "Endings and suffix sounds.",
+          "learns": [
+            "Recognize common endings",
+            "Read ending patterns",
+            "Spell ending sounds"
+          ],
+          "activities": [
+            "Word building with endings",
+            "Reading practice",
+            "Dictation drills"
+          ],
+          "homework": [
+            "Ending word list",
+            "Spelling check"
+          ],
+          "mastery": "Applies endings correctly in words"
+        },
+        {
+          "title": "Stage 6 — Revision",
+          "focus": "Mixed revision + fluency practice.",
+          "learns": [
+            "Review all advanced patterns",
+            "Read with fluency",
+            "Build accuracy in connected text"
+          ],
+          "activities": [
+            "Mixed review games",
+            "Fluency reading",
+            "Error correction"
+          ],
+          "homework": [
+            "Mixed review list",
+            "Short passage reading"
+          ],
+          "mastery": "Shows accuracy and confidence in mixed reading"
+        }
+      ]
     },
-    {
-      "title": "Week 2: Long Vowels — A patterns (ai, ay, a_e, eigh/ei)",
-      "learns": [
-        "ai/ay position rule (middle vs end)",
-        "a_e as split digraph",
-        "Alternative spellings eigh/ei (preview + recognition)",
-        "Advanced tricky words (Week 2 set)"
-      ],
-      "activities": [
-        "Word sort (ai/ay/a_e/eigh/ei)",
-        "Dictation (10–12 words)",
-        "Sentence creation (3–5 sentences using target words)",
-        "Tricky word sort: A-pattern tricky words (Week 2 set)"
-      ],
-      "homework": [
-        "ai/ay/a_e practice sheet",
-        "Read 1 short passage highlighting A patterns",
-        "Tricky words Week 2: break, great, steak, they, their, there, eight, weight, straight, raise, afraid, maybe"
-      ],
-      "mastery": "Chooses correct A pattern in context (80%+) + reads Week 2 tricky set ✓"
+    "basic-grammar": {
+      "weeks": [
+        {
+          "title": "Stage 1 — Sentence Foundations",
+          "focus": "Build simple sentences with nouns and verbs.",
+          "learns": [
+            "Identify nouns and verbs",
+            "Build simple sentences",
+            "Use capitals and full stops"
+          ],
+          "activities": [
+            "Sentence building",
+            "Word sorting",
+            "Editing basics"
+          ],
+          "homework": [
+            "Write 3 simple sentences",
+            "Capitals + full stop check"
+          ],
+          "mastery": "Writes correct simple sentences"
+        },
+        {
+          "title": "Stage 2 — Meaning Builders",
+          "focus": "Add meaning using adjectives, articles, and pronouns.",
+          "learns": [
+            "Use adjectives to add detail",
+            "Choose a/an/the correctly",
+            "Replace nouns with pronouns"
+          ],
+          "activities": [
+            "Add-detail sentences",
+            "Article choice practice",
+            "Pronoun swap"
+          ],
+          "homework": [
+            "Write 3 detailed sentences",
+            "Article check"
+          ],
+          "mastery": "Uses adjectives and articles correctly"
+        },
+        {
+          "title": "Stage 3 — Where/When/How",
+          "focus": "Use prepositions and adverbs to add detail.",
+          "learns": [
+            "Use prepositions for place",
+            "Use adverbs for how/when",
+            "Add phrases to sentences"
+          ],
+          "activities": [
+            "Preposition games",
+            "Adverb edits",
+            "Sentence expansion"
+          ],
+          "homework": [
+            "Add 2 phrases to a sentence",
+            "Preposition review"
+          ],
+          "mastery": "Adds prepositional/adverb detail"
+        },
+        {
+          "title": "Stage 4 — Longer Sentences",
+          "focus": "Join ideas and use plurals correctly.",
+          "learns": [
+            "Use conjunctions to join ideas",
+            "Make plurals",
+            "Fix run-on sentences"
+          ],
+          "activities": [
+            "Join sentences practice",
+            "Plural sorting",
+            "Run-on fixes"
+          ],
+          "homework": [
+            "Write 2 joined sentences",
+            "Plural check"
+          ],
+          "mastery": "Joins ideas and uses plurals"
+        },
+        {
+          "title": "Stage 5 — Asking + Punctuation",
+          "focus": "Ask questions and punctuate sentences.",
+          "learns": [
+            "Use question words",
+            "Punctuate questions and statements",
+            "Use exclamations"
+          ],
+          "activities": [
+            "Question practice",
+            "Punctuation editing",
+            "Sentence sorting"
+          ],
+          "homework": [
+            "Write 3 questions",
+            "Punctuation check"
+          ],
+          "mastery": "Uses question marks and punctuation"
+        },
+        {
+          "title": "Stage 6 — Tenses Basics",
+          "focus": "Use past, present, and future in simple sentences.",
+          "learns": [
+            "Recognize simple tenses",
+            "Use time words",
+            "Fix tense mistakes"
+          ],
+          "activities": [
+            "Tense choice practice",
+            "Sentence editing",
+            "Time word sorting"
+          ],
+          "homework": [
+            "Write sentences in 3 tenses",
+            "Tense check"
+          ],
+          "mastery": "Uses simple tenses correctly"
+        }
+      ]
     },
-    {
-      "title": "Week 3: Long Vowels — E & I patterns (ee/ea/e_e, igh/ie/i_e, y)",
-      "learns": [
-        "ee vs ea (common vs less common cases)",
-        "i_e vs igh vs ie",
-        "y as long i at word end (try, fly) and y as long e (happy)",
-        "Advanced tricky words (Week 3 set)"
-      ],
-      "activities": [
-        "Minimal pairs + read aloud",
-        "Dictation (12 words)",
-        "Spot-the-pattern paragraph (circle patterns)",
-        "Tricky word hunt in a short text (Week 3 set)"
-      ],
-      "homework": [
-        "Reader: E/I/Y mix",
-        "Pattern hunt: find 10 words in a story/book",
-        "Tricky words Week 3: been, pretty, friend, piece, field, chief, believe, climb, behind, country, anyone, hundred"
-      ],
-      "mastery": "Reads E/I/Y set with 90%+ accuracy + explains the pattern + reads Week 3 tricky set ✓"
+    "advanced-grammar": {
+      "weeks": [
+        {
+          "title": "Stage 1 — Tense Control",
+          "focus": "Control tense choices and keep them consistent.",
+          "learns": [
+            "Choose the right tense",
+            "Avoid tense shifts",
+            "Edit tense mistakes"
+          ],
+          "activities": [
+            "Tense selection drills",
+            "Editing practice",
+            "Time clause use"
+          ],
+          "homework": [
+            "Edit a paragraph for tense",
+            "Tense consistency check"
+          ],
+          "mastery": "Keeps tense consistent in writing"
+        },
+        {
+          "title": "Stage 2 — Perfect Tenses + Modals",
+          "focus": "Use perfect tenses and modals accurately.",
+          "learns": [
+            "Use perfect tenses",
+            "Choose modals by meaning",
+            "Edit modal errors"
+          ],
+          "activities": [
+            "Perfect tense practice",
+            "Modal choice tasks",
+            "Sentence editing"
+          ],
+          "homework": [
+            "Write 3 perfect tense sentences",
+            "Modal choice check"
+          ],
+          "mastery": "Uses perfect tenses and modals accurately"
+        },
+        {
+          "title": "Stage 3 — Clauses + Complex Sentences",
+          "focus": "Build complex sentences with clauses.",
+          "learns": [
+            "Identify clause types",
+            "Build complex sentences",
+            "Punctuate clauses"
+          ],
+          "activities": [
+            "Clause sorting",
+            "Sentence combining",
+            "Punctuation edits"
+          ],
+          "homework": [
+            "Write 2 complex sentences",
+            "Clause check"
+          ],
+          "mastery": "Writes complex sentences with clauses"
+        },
+        {
+          "title": "Stage 4 — Voice + Reported Speech",
+          "focus": "Use voice and reported speech clearly.",
+          "learns": [
+            "Use active vs passive",
+            "Convert to reported speech",
+            "Edit for clarity"
+          ],
+          "activities": [
+            "Voice transformations",
+            "Reported speech practice",
+            "Editing tasks"
+          ],
+          "homework": [
+            "Convert 3 sentences",
+            "Reported speech check"
+          ],
+          "mastery": "Uses voice and reported speech"
+        },
+        {
+          "title": "Stage 5 — Paragraph Cohesion",
+          "focus": "Write cohesive paragraphs with transitions.",
+          "learns": [
+            "Use transitions",
+            "Organize paragraphs",
+            "Edit for flow"
+          ],
+          "activities": [
+            "Transition practice",
+            "Paragraph planning",
+            "Cohesion edits"
+          ],
+          "homework": [
+            "Write a cohesive paragraph",
+            "Transition check"
+          ],
+          "mastery": "Writes cohesive paragraphs"
+        },
+        {
+          "title": "Stage 6 — Tone + Argument + Impact",
+          "focus": "Write with tone, argument, and impact.",
+          "learns": [
+            "Adjust tone",
+            "Build claim + reason",
+            "Use evidence and word choice"
+          ],
+          "activities": [
+            "Argument building",
+            "Word choice editing",
+            "Final writing practice"
+          ],
+          "homework": [
+            "Write a short argument",
+            "Tone check"
+          ],
+          "mastery": "Writes with clear tone and impact"
+        }
+      ]
     },
-    {
-      "title": "Week 4: Long Vowels — O & U patterns (oa/oe/o_e, oo, ue/ui/u_e/ew)",
-      "learns": [
-        "oa/oe/o_e patterns",
-        "oo has 2 sounds (book vs moon)",
-        "u spellings: ue/ui/u_e/ew (clue, fruit, flute, chew)",
-        "Advanced tricky words (Week 4 set)"
-      ],
-      "activities": [
-        "Word ladders (o patterns)",
-        "oo two-sound sort",
-        "Phrase reading + quick dictation (10)",
-        "Tricky word read + choose the correct word in sentence (Week 4 set)"
-      ],
-      "homework": [
-        "Practice set + 1 passage",
-        "oo two-sound worksheet",
-        "Tricky words Week 4: could, would, should, through, though, thought, enough, young, rough, cough, built, juice"
-      ],
-      "mastery": "Reads O/U patterns in context (85%+) + reads Week 4 tricky set ✓"
+    "basic-public-speaking": {
+      "weeks": [
+        {
+          "title": "Stage 1 — Comfort + Routine",
+          "focus": "Feel comfortable speaking in class routines.",
+          "learns": [
+            "Practice warm-ups",
+            "Use eye contact and posture",
+            "Speak with a friendly voice"
+          ],
+          "activities": [
+            "Warm-up routines",
+            "Intro practice",
+            "Confidence games"
+          ],
+          "homework": [
+            "Practice a simple intro",
+            "Confidence check"
+          ],
+          "mastery": "Speaks comfortably in class"
+        },
+        {
+          "title": "Stage 2 — Clear Speaking",
+          "focus": "Speak clearly with pace, volume, and full words.",
+          "learns": [
+            "Use full sentences",
+            "Speak clearly and slowly",
+            "Pause between ideas"
+          ],
+          "activities": [
+            "Clear speech drills",
+            "Volume practice",
+            "Pacing games"
+          ],
+          "homework": [
+            "Read 3 sentences clearly",
+            "Pacing check"
+          ],
+          "mastery": "Speaks clearly and at a steady pace"
+        },
+        {
+          "title": "Stage 3 — Describe + Show & Tell",
+          "focus": "Describe objects with details and expression.",
+          "learns": [
+            "Give 2–3 details",
+            "Use describing words",
+            "Add simple gestures"
+          ],
+          "activities": [
+            "Picture talk",
+            "Detail building",
+            "Show & tell practice"
+          ],
+          "homework": [
+            "Describe an object with details",
+            "Detail check"
+          ],
+          "mastery": "Describes with clear details"
+        },
+        {
+          "title": "Stage 4 — Mini Talks + Q&A",
+          "focus": "Give short talks and answer simple questions.",
+          "learns": [
+            "Speak for 30–60 seconds",
+            "Use sequence words",
+            "Answer simple questions"
+          ],
+          "activities": [
+            "Mini talk practice",
+            "Q&A drills",
+            "Sequence practice"
+          ],
+          "homework": [
+            "Deliver a short talk",
+            "Answer 2 questions"
+          ],
+          "mastery": "Gives short talks and answers questions"
+        },
+        {
+          "title": "Stage 5 — Story Basics",
+          "focus": "Tell a short story in order.",
+          "learns": [
+            "Use beginning-middle-end",
+            "Add a character voice",
+            "Emphasize key words"
+          ],
+          "activities": [
+            "Story sequencing",
+            "Voice practice",
+            "Audience practice"
+          ],
+          "homework": [
+            "Tell a short story",
+            "Story order check"
+          ],
+          "mastery": "Tells a short story in order"
+        },
+        {
+          "title": "Stage 6 — Presentation Readiness",
+          "focus": "Practice presentations with confidence.",
+          "learns": [
+            "Present with a prop/visual",
+            "Handle small mistakes calmly",
+            "Show confidence"
+          ],
+          "activities": [
+            "Presentation practice",
+            "Mistake recovery drills",
+            "Showcase"
+          ],
+          "homework": [
+            "Deliver a mini presentation",
+            "Confidence check"
+          ],
+          "mastery": "Presents confidently with clarity"
+        }
+      ]
     },
-    {
-      "title": "Week 5: R-controlled vowels (ar/er/ir/or/ur) + tricky contrasts",
-      "learns": [
-        "ar/er/ir/or/ur patterns",
-        "Common confusions: or vs aw/au (preview)",
-        "Spelling exposure for er/ir/ur (same sound)",
-        "Advanced tricky words (Week 5 set)"
-      ],
-      "activities": [
-        "Sort & read",
-        "Timed read (1 minute) + error check",
-        "Dictation (10–12 words)",
-        "Tricky word contrast: wor/or/ir/ear/war (Week 5 set)"
-      ],
-      "homework": [
-        "R-controlled worksheet",
-        "Read short paragraph and underline r-controlled",
-        "Tricky words Week 5: world, work, worm, word, worse, worth, learn, early, heard, heart, warm, quarter"
-      ],
-      "mastery": "Sorts r-controlled accurately + reads passage with 90%+ accuracy + reads Week 5 tricky set ✓"
+    "advanced-public-speaking": {
+      "weeks": [
+        {
+          "title": "Stage 1 — Presence + Engagement",
+          "focus": "Engage the audience with confident presence.",
+          "learns": [
+            "Strong opening lines",
+            "Audience engagement",
+            "Clear articulation"
+          ],
+          "activities": [
+            "Presence drills",
+            "Opening practice",
+            "Engagement cues"
+          ],
+          "homework": [
+            "Deliver a strong opening",
+            "Engagement check"
+          ],
+          "mastery": "Opens with confidence and presence"
+        },
+        {
+          "title": "Stage 2 — Structure + Supporting Details",
+          "focus": "Structure talks with strong openings and details.",
+          "learns": [
+            "Use hook-body-close",
+            "Add supporting details",
+            "Stay on message"
+          ],
+          "activities": [
+            "Structure practice",
+            "Detail building",
+            "Transition practice"
+          ],
+          "homework": [
+            "Deliver a structured talk",
+            "Structure check"
+          ],
+          "mastery": "Speaks with clear structure"
+        },
+        {
+          "title": "Stage 3 — Story Performance",
+          "focus": "Perform stories with voice and emotion.",
+          "learns": [
+            "Use emotion in storytelling",
+            "Add character voice",
+            "Use pauses for effect"
+          ],
+          "activities": [
+            "Story performance practice",
+            "Voice variety drills",
+            "Pause practice"
+          ],
+          "homework": [
+            "Perform a short story",
+            "Expression check"
+          ],
+          "mastery": "Performs stories with expression"
+        },
+        {
+          "title": "Stage 4 — Impromptu + Q&A",
+          "focus": "Handle impromptu questions calmly.",
+          "learns": [
+            "Use thinking time strategies",
+            "Answer tough questions",
+            "Stay clear under pressure"
+          ],
+          "activities": [
+            "Impromptu practice",
+            "Q&A drills",
+            "Confidence resets"
+          ],
+          "homework": [
+            "Answer 3 impromptu prompts",
+            "Clarity check"
+          ],
+          "mastery": "Handles impromptu Q&A clearly"
+        },
+        {
+          "title": "Stage 5 — Persuasion + Debate",
+          "focus": "Use persuasion and debate skills.",
+          "learns": [
+            "Make a claim and reason",
+            "Rebut politely",
+            "Close strongly"
+          ],
+          "activities": [
+            "Debate practice",
+            "Rebuttal drills",
+            "Conclusion practice"
+          ],
+          "homework": [
+            "Deliver a short persuasive talk",
+            "Rebuttal check"
+          ],
+          "mastery": "Uses persuasion and rebuttal"
+        },
+        {
+          "title": "Stage 6 — Presentation Mastery",
+          "focus": "Deliver polished presentations.",
+          "learns": [
+            "Use visuals and notes",
+            "Manage timing and pacing",
+            "Engage the audience"
+          ],
+          "activities": [
+            "Full presentation rehearsal",
+            "Timing drills",
+            "Audience engagement"
+          ],
+          "homework": [
+            "Deliver a full presentation",
+            "Final showcase"
+          ],
+          "mastery": "Delivers a polished presentation"
+        }
+      ]
     },
-    {
-      "title": "Week 6: Diphthongs & /aw/ spellings (oi/oy, ou/ow, au/aw + all/alk/al)",
-      "learns": [
-        "oi/oy positions",
-        "ou/ow patterns",
-        "au/aw and other /aw/ spellings: all, alk, al (ball, talk, calm)",
-        "Advanced tricky words (Week 6 set)"
-      ],
-      "activities": [
-        "Picture prompts with words",
-        "Diphthong + /aw/ spelling sort",
-        "Dictation (12 words)",
-        "Tricky word sort: ow/ou vs aw/au vs oa (Week 6 set)"
-      ],
-      "homework": [
-        "Diphthong deck practice (5 min/day)",
-        "Aw/Au/All/Alk/Al mini passage",
-        "Tricky words Week 6: know, show, grow, boat, road, bought, daughter, caught, talk, walk, calm, always"
-      ],
-      "mastery": "Reads/uses diphthongs + /aw/ spellings correctly in sentences + reads Week 6 tricky set ✓"
-    },
-    {
-      "title": "Week 7: Soft/Hard C & G + J spellings + Silent letters",
-      "learns": [
-        "Soft c/g before e, i, y",
-        "j/dge/ge (three j spellings)",
-        "Silent letters: kn, wr, mb, gn, lk",
-        "Advanced tricky words (Week 7 set)"
-      ],
-      "activities": [
-        "Rule chart + examples",
-        "Edit & fix sheet (apply rules)",
-        "Silent-letter word sort & read",
-        "Tricky word practice: highlight the rule (Week 7 set)"
-      ],
-      "homework": [
-        "Soft/Hard c-g practice sheet",
-        "Silent-letter word list + 5 sentences",
-        "Tricky words Week 7: city, cycle, giant, gym, guess, guide, juice, edge, knee, write, thumb, sign"
-      ],
-      "mastery": "Applies soft/hard + j spellings + identifies silent letters (80%+) + reads Week 7 tricky set ✓"
-    },
-    {
-      "title": "Week 8: Schwa & reduced vowels (including -tion/-sion/-ture)",
-      "learns": [
-        "Schwa = unstressed vowel sound",
-        "Schwa in common endings: -tion/-sion/-ture/-age/-able (intro)",
-        "Spelling strategies: base word + chunking",
-        "Advanced tricky words (Week 8 set)"
-      ],
-      "activities": [
-        "Spot the schwa (mark weak vowels)",
-        "Chunking practice (break long words)",
-        "Dictation (10 schwa words)",
-        "Ending sort: -tion/-sion/-ture (Week 8 set)"
-      ],
-      "homework": [
-        "Schwa hunt: find 10 schwa words in reading",
-        "Short worksheet (mark schwa vowels)",
-        "Tricky words Week 8: action, station, fiction, mission, vision, measure, picture, nature, animal, family, second, chocolate"
-      ],
-      "mastery": "Marks schwa in words + reads schwa endings accurately + reads Week 8 tricky set ✓"
-    },
-    {
-      "title": "Week 9: Consonant+le + Doubling rules + suffix basics (-ing/-ed/-es)",
-      "learns": [
-        "Consonant+le syllable (ta-ble, bub-ble)",
-        "Doubling (rabbit) rule for adding suffixes",
-        "Suffix basics: -ing/-ed/-es (spelling changes)",
-        "Advanced tricky words (Week 9 set)"
-      ],
-      "activities": [
-        "Split & read (c+le words)",
-        "Add-suffix game",
-        "Dictation (10 mixed suffix words)",
-        "Tricky word build: base word → changed word (Week 9 set)"
-      ],
-      "homework": [
-        "c+le sort",
-        "Suffix add worksheet",
-        "Tricky words Week 9: little, middle, table, bottle, trouble, doubled, running, hopped, making, having, cried, carried"
-      ],
-      "mastery": "Decodes multisyllabic words + applies doubling when adding suffixes + reads Week 9 tricky set ✓"
-    },
-    {
-      "title": "Week 10: Morphology (prefixes/suffixes) + meaning helps reading",
-      "learns": [
-        "Prefixes: un-, re-, pre-, mis-, dis-",
-        "Suffixes: -ful/-less/-ment/-ness/-able",
-        "How meaning supports decoding + spelling",
-        "Advanced tricky words (Week 10 set)"
-      ],
-      "activities": [
-        "Build-a-word (prefix/root/suffix)",
-        "Morphology sort (meaning groups)",
-        "Write 6 sentences using new words",
-        "Tricky word meaning match (Week 10 set)"
-      ],
-      "homework": [
-        "Affix notebook: 5 new words/day for 3 days",
-        "Tricky words Week 10: unhappy, reread, preview, mistake, dishonest, careful, fearless, movement, kindness, readable, useless, hopeful"
-      ],
-      "mastery": "Explains 5 affixes + uses them correctly in sentences + reads Week 10 tricky set ✓"
-    },
-    {
-      "title": "Week 11: Multisyllabic strategies + fluency",
-      "learns": [
-        "Chunking + stress patterns (where to stress)",
-        "Phrasing + expression for meaning",
-        "Advanced tricky words (Week 11 set)"
-      ],
-      "activities": [
-        "Timed passages (150–300w)",
-        "Prosody practice (pause, emphasis)",
-        "Error-correction strategy (self-fix)",
-        "Fluency challenge: tricky words in a passage (Week 11 set)"
-      ],
-      "homework": [
-        "Daily 2-min reread of same passage (fluency)",
-        "Tricky words Week 11: important, interest, favorite, remember, probably, actually, immediately, usually, business, comfortable, vegetable, government"
-      ],
-      "mastery": "Fluent passage read + improved accuracy/time across 3 reads + reads Week 11 tricky set ✓"
-    },
-    {
-      "title": "Week 12: Review + Capstone (Read + Write with rubric)",
-      "learns": [
-        "Comprehensive review of patterns",
-        "Advanced tricky words (Week 12 capstone list)"
-      ],
-      "activities": [
-        "Capstone passage (150–300w) + comprehension (5 Qs)",
-        "Write a paragraph (8–10 sentences) using 8 target words",
-        "Tricky words review game (Weeks 1–11) + Week 12 list"
-      ],
-      "homework": [
-        "Capstone corrections + final clean copy",
-        "Tricky words Week 12 (Capstone list): because, their, there, friend, enough, could, should, world, know, write, picture, important"
-      ],
-      "mastery": "Reads 150–300w (95%+ accuracy) + answers 4/5 Qs + writes 8–10 sentences + uses 8 target tricky words ✓"
-    }
-  ],
-  "meta": {
-    "label": "Phonics – Advanced Patterns & Morphology",
-    "ages": "8–12",
-    "cefr": "A2–B1 (reading & spelling)",
-    "notes": "Advanced vowel teams, r-controlled patterns, diphthongs, soft/hard consonants, silent letters, schwa, syllable types, suffix rules, and prefixes/suffixes for decoding + spelling."
-  }
-},
-    "phonics-brush-up": {
-  "weeks": [
-    {
-      "title": "Week 1: Baseline Check + Personalized Plan",
-      "focus": "Find gaps fast + set a clear target",
-      "learns": [
-        "Quick diagnostic of sounds, blending, and reading stamina",
-        "Identify exactly what the child misses (sounds / blending / rules / fluency)",
-        "Personalized weekly goal (1–2 priorities only)"
-      ],
-      "activities": [
-        "Sound check: 20 mixed sounds (incl. sh/ch/th, ai/ee, ar/or)",
-        "Blending check: 10 CVC + 5 CCVC (stop, flag)",
-        "Reading check: 1 short decodable (accuracy + speed)",
-        "Spelling check: 8 words (CVC + 2 digraph + 2 long vowel)",
-        "Create the 'Focus Ladder' (Top 3 weak areas)"
-      ],
-      "homework": [
-        "2-minute daily sound review (flash/audio)",
-        "1 short decodable reread (same page for 3 days)"
-      ],
-      "mastery": "Baseline recorded + Focus Ladder created ✓"
-    },
-    {
-      "title": "Week 2: CVC Blending Refresh + Consonant Blends",
-      "focus": "CVC → CCVC/ CVCC (blends at start/end)",
-      "learns": [
-        "Slow → smooth blending (no guessing)",
-        "Segmenting to spell (stretch the word)",
-        "Common blends: st, sp, sk, sl, cl, bl, fl, gl, cr, fr, gr, tr",
-        "End blends: nd, nt, mp, ft, lk"
-      ],
-      "activities": [
-        "Tap-and-blend drill (10 CVC → 10 CCVC/CVCC)",
-        "Minimal pairs game (pin/pan, cap/cab)",
-        "Build-a-word tiles (change 1 sound at a time)",
-        "Quick dictation (8 words + 2 sentences)"
-      ],
-      "homework": [
-        "Daily 5-min blending (10 words)",
-        "Spell 5 words (say → tap → write)"
-      ],
-      "mastery": "Reads 20+ CVC/CCVC/CVCC with 90%+ accuracy ✓"
-    },
-    {
-      "title": "Week 3: Digraphs Fix-It Week",
-      "focus": "sh, ch, th, wh, qu (+ ng, nk if needed)",
-      "learns": [
-        "2 letters = 1 sound (digraph)",
-        "th can be voiced/unvoiced (simple exposure)",
-        "qu = /kw/",
-        "ng/nk endings (optional extension for stronger kids)"
-      ],
-      "activities": [
-        "Digraph detective (hunt in words + highlight)",
-        "Sort & read: sh/ch/th/wh/qu",
-        "Read a short digraph passage",
-        "Dictation (10 words) + 'fix the mistake' sheet"
-      ],
-      "homework": [
-        "Worksheet + 1-page reader",
-        "Make 5 sentences using digraph words (choose from word bank)"
-      ],
-      "mastery": "Identifies 5 digraphs + reads them in a passage ✓"
-    },
-    {
-      "title": "Week 4: Magic-e Brush Up (Split Digraphs)",
-      "focus": "a_e, i_e, o_e, u_e (and e_e if needed)",
-      "learns": [
-        "Magic-e changes short vowel to long vowel",
-        "Reads minimal pairs without confusion (cap/cape)",
-        "Spells magic-e words (made vs mad)"
-      ],
-      "activities": [
-        "Flip-cards: short → long (10 pairs)",
-        "Minimal pair sorting + speed read",
-        "Sentence read + underline magic-e",
-        "Dictation (8 words + 2 sentences)"
-      ],
-      "homework": [
-        "Pairs list (10 pairs)",
-        "Mini reader page (magic-e)"
-      ],
-      "mastery": "Reads minimal pairs with 90%+ accuracy + spells 6/8 correctly ✓"
-    },
-    {
-      "title": "Week 5: Vowel Teams (ai/ay, ee/ea) + Confusions",
-      "focus": "Choose the right team in real reading",
-      "learns": [
-        "ai usually in middle; ay often at end (simple rule)",
-        "ee vs ea (common words practice)",
-        "Stop guessing: scan for vowel team first"
-      ],
-      "activities": [
-        "Word ladders (rain→train; see→tree)",
-        "Team sort (ai/ay + ee/ea)",
-        "Phrase cards (read & act)",
-        "Dictation (10 team words) + 1 short paragraph read"
-      ],
-      "homework": [
-        "ai/ay worksheet + ee/ea worksheet (short)",
-        "Read 1 paragraph and circle vowel teams"
-      ],
-      "mastery": "Reads vowel-team words in context (85%+) ✓"
-    },
-    {
-      "title": "Week 6: R-Controlled Rescue (Bossy R)",
-      "focus": "ar/or + er/ir/ur (and quick review of confusion sets)",
-      "learns": [
-        "R changes the vowel sound",
-        "er/ir/ur often sound similar (spelling exposure)",
-        "Common tricky set practice: her/here, for/four (exposure)"
-      ],
-      "activities": [
-        "Sort & read (ar/or/er/ir/ur)",
-        "Timed read: short r-controlled passage",
-        "Dictation (10 words) + 2 sentences",
-        "Picture match: choose correct r-word"
-      ],
-      "homework": [
-        "r-controlled worksheet",
-        "Read 1 page and underline r-controlled"
-      ],
-      "mastery": "Sorts r-controlled accurately + reads passage with 90%+ accuracy ✓"
-    },
-    {
-      "title": "Week 7: Multisyllabic On-Ramp (2-Syllable Words)",
-      "focus": "Chunk → read (no fear of big words)",
-      "learns": [
-        "Syllable basics: closed/open/magic-e/consonant+le (intro)",
-        "Split 2-syllable words and read smoothly",
-        "Simple suffixes: -s, -es, -ing, -ed (intro)"
-      ],
-      "activities": [
-        "Chunk & read: 12 two-syllable words",
-        "Syllable type spot (quick marking)",
-        "Add suffix game (play→playing, jump→jumped)",
-        "Short passage read (2-syllable focus)"
-      ],
-      "homework": [
-        "2-syllable list (10): split with a line and read",
-        "Suffix mini practice (8 words)"
-      ],
-      "mastery": "Reads 10/12 two-syllable words correctly + applies suffixes ✓"
-    },
-    {
-      "title": "Week 8: Review + Fluency + Tricky Words (Bridge Set)",
-      "focus": "Lock everything + build confidence",
-      "learns": [
-        "Spiral review of weak areas (from Week 1 ladder)",
-        "Fluency routine: accuracy → smoothness → expression",
-        "Tricky words (bridge set) with spaced practice"
-      ],
-      "activities": [
-        "Game Day: mixed skills stations (blends, digraphs, magic-e, teams, r-controlled)",
-        "Fluency: repeated reading (same passage 3 times)",
-        "Tricky words: read → clap syllables (if long) → use in sentence",
-        "Mini assessment + celebrate growth"
-      ],
-      "homework": [
-        "Bridge tricky words (15) spaced practice: once daily for 5 days",
-        "Personal reader 20–60 words (reread x3 across the week)"
-      ],
-      "mastery": "Personal reader 20–60 words with 95%+ accuracy + improved fluency ✓"
-    }
-  ],
-  "meta": {
-    "label": "Phonics – Brush Up (Bridge & Fluency)",
-    "ages": "6–9",
-    "cefr": "A1–A2 (consolidation)",
-    "notes": "A fast gap-filling course to rebuild confidence and fluency: CVC→blends, digraphs, magic-e, vowel teams, r-controlled vowels, and a gentle on-ramp to 2-syllable decoding with measurable weekly mastery."
-  }
-},
     "grammar-essentials": {
       "weeks": [
         {
-          "title": "Week 1: Nouns & Articles (a/an/the)",
+          "title": "Stage 1 — Sentence Foundations",
+          "focus": "Build simple sentences with nouns and verbs.",
           "learns": [
-            "Common vs proper nouns",
-            "Articles usage"
+            "Identify nouns and verbs",
+            "Build simple sentences",
+            "Use capitals and full stops"
           ],
           "activities": [
-            "Label 10 pictures",
-            "Write 3 sentences"
+            "Sentence building",
+            "Word sorting",
+            "Editing basics"
           ],
           "homework": [
-            "Article worksheet + short read"
+            "Write 3 simple sentences",
+            "Capitals + full stop check"
           ],
-          "mastery": "Correct a/an/the in sentences ✓"
+          "mastery": "Writes correct simple sentences"
         },
         {
-          "title": "Week 2: Pronouns & Agreement",
+          "title": "Stage 2 — Meaning Builders",
+          "focus": "Add meaning using adjectives, articles, and pronouns.",
           "learns": [
-            "I/you/he/she/it/we/they",
-            "Replace nouns with pronouns",
-            "Subject vs object pronouns (I/me, he/him, etc.)"
+            "Use adjectives to add detail",
+            "Choose a/an/the correctly",
+            "Replace nouns with pronouns"
           ],
           "activities": [
-            "Swap & fix sheet",
-            "Mini dialogue"
+            "Add-detail sentences",
+            "Article choice practice",
+            "Pronoun swap"
           ],
           "homework": [
-            "Pronoun practice"
+            "Write 3 detailed sentences",
+            "Article check"
           ],
-          "mastery": "Pronoun‑noun agreement ✓"
+          "mastery": "Uses adjectives and articles correctly"
         },
         {
-          "title": "Week 3: Verbs — Present Simple & Continuous",
+          "title": "Stage 3 — Where/When/How",
+          "focus": "Use prepositions and adverbs to add detail.",
           "learns": [
-            "I play vs I am playing",
-            "He/She/It + -s in present simple",
-            "do/does questions"
+            "Use prepositions for place",
+            "Use adverbs for how/when",
+            "Add phrases to sentences"
           ],
           "activities": [
-            "Dialogue cards",
-            "Picture prompts"
+            "Preposition games",
+            "Adverb edits",
+            "Sentence expansion"
           ],
           "homework": [
-            "Verb change drill"
+            "Add 2 phrases to a sentence",
+            "Preposition review"
           ],
-          "mastery": "Uses present forms correctly ✓"
+          "mastery": "Adds prepositional/adverb detail"
         },
         {
-          "title": "Week 4: Verbs — Past Simple",
+          "title": "Stage 4 — Longer Sentences",
+          "focus": "Join ideas and use plurals correctly.",
           "learns": [
-            "Regular vs irregular",
-            "‑ed spelling rules"
+            "Use conjunctions to join ideas",
+            "Make plurals",
+            "Fix run-on sentences"
           ],
           "activities": [
-            "Irregular card game",
-            "Sentence fix"
+            "Join sentences practice",
+            "Plural sorting",
+            "Run-on fixes"
           ],
           "homework": [
-            "Past tense sheet"
+            "Write 2 joined sentences",
+            "Plural check"
           ],
-          "mastery": "Forms past correctly ✓"
+          "mastery": "Joins ideas and uses plurals"
         },
         {
-          "title": "Week 5: Adjectives + Degrees",
+          "title": "Stage 5 — Asking + Punctuation",
+          "focus": "Ask questions and punctuate sentences.",
           "learns": [
-            "Positive/comparative/superlative"
+            "Use question words",
+            "Punctuate questions and statements",
+            "Use exclamations"
           ],
           "activities": [
-            "Compare poster",
-            "Describe & compare"
+            "Question practice",
+            "Punctuation editing",
+            "Sentence sorting"
           ],
           "homework": [
-            "Degrees drill"
+            "Write 3 questions",
+            "Punctuation check"
           ],
-          "mastery": "Uses -er/-est correctly ✓"
+          "mastery": "Uses question marks and punctuation"
         },
         {
-          "title": "Week 6: Prepositions (time/place)",
+          "title": "Stage 6 — Tenses Basics",
+          "focus": "Use past, present, and future in simple sentences.",
           "learns": [
-            "in/on/under/beside/between",
-            "in/on/at/during/after"
+            "Recognize simple tenses",
+            "Use time words",
+            "Fix tense mistakes"
           ],
           "activities": [
-            "Where/when map",
-            "Mini dialogue"
+            "Tense choice practice",
+            "Sentence editing",
+            "Time word sorting"
           ],
           "homework": [
-            "Preposition sheet"
+            "Write sentences in 3 tenses",
+            "Tense check"
           ],
-          "mastery": "Chooses correct preposition ✓"
-        },
-        {
-          "title": "Week 7: Conjunctions",
-          "learns": [
-            "and/but/so/because"
-          ],
-          "activities": [
-            "Join strips",
-            "Fix run‑ons"
-          ],
-          "homework": [
-            "Conjunction mix"
-          ],
-          "mastery": "Joins ideas appropriately ✓"
-        },
-        {
-          "title": "Week 8: Sentence Types",
-          "learns": [
-            "Statements, questions, commands, exclamations",
-            "Basic subject + predicate structure"
-          ],
-          "activities": [
-            "Punctuate cards",
-            "Sort types"
-          ],
-          "homework": [
-            "Write one of each"
-          ],
-          "mastery": "Identifies & writes all 4 types ✓"
-        },
-        {
-          "title": "Week 9: Punctuation Basics",
-          "learns": [
-            ". ! ?",
-            "Capitalization",
-            "Commas in lists"
-          ],
-          "activities": [
-            "Comic balloons",
-            "Edit & fix"
-          ],
-          "homework": [
-            "Punctuation page"
-          ],
-          "mastery": "Punctuates 8/10 correctly ✓"
-        },
-        {
-          "title": "Week 10: Subject–Verb Agreement",
-          "learns": [
-            "this/that; is/are; was/were"
-          ],
-          "activities": [
-            "Is/Are detective",
-            "Sentence fix"
-          ],
-          "homework": [
-            "Agreement drill"
-          ],
-          "mastery": "SV agreement in writing ✓"
-        },
-        {
-          "title": "Week 11: Tense Mix + Paragraph",
-          "learns": [
-            "Keep tense consistent",
-            "Topic → 3–5 linked sentences"
-          ],
-          "activities": [
-            "Paragraph scaffold",
-            "Peer edit"
-          ],
-          "homework": [
-            "4‑sentence paragraph"
-          ],
-          "mastery": "4–6 sentence coherent paragraph ✓"
-        },
-        {
-          "title": "Week 12: Review + Capstone",
-          "learns": [
-            "Edit & publish paragraph"
-          ],
-          "activities": [
-            "Capstone paragraph"
-          ],
-          "mastery": "6–8 sentence descriptive paragraph ✓"
+          "mastery": "Uses simple tenses correctly"
         }
-      ],
-      "meta": {
-        "label": "Grammar – Essentials",
-        "ages": "7–11",
-        "cefr": "A1–A2",
-        "notes": "Core sentence grammar for primary learners: parts of speech, basic tenses, sentence types, punctuation, and short paragraphs."
-      }
+      ]
     },
     "grammar-mastery": {
       "weeks": [
         {
-          "title": "Week 1: 12 Tenses Overview",
+          "title": "Stage 1 — Tense Control",
+          "focus": "Control tense choices and keep them consistent.",
           "learns": [
-            "Timeline & aspect sense"
+            "Choose the right tense",
+            "Avoid tense shifts",
+            "Edit tense mistakes"
           ],
           "activities": [
-            "Tense map",
-            "Diagnostic writing"
-          ],
-          "mastery": "Identifies 12 tenses ✓"
-        },
-        {
-          "title": "Week 2: Present Perfect vs Past Simple",
-          "learns": [
-            "for/since",
-            "ever/never"
-          ],
-          "activities": [
-            "Contrast drills",
-            "Correct & explain"
+            "Tense selection drills",
+            "Editing practice",
+            "Time clause use"
           ],
           "homework": [
-            "PP vs PS worksheet"
+            "Edit a paragraph for tense",
+            "Tense consistency check"
           ],
-          "mastery": "Chooses correct tense ✓"
+          "mastery": "Keeps tense consistent in writing"
         },
         {
-          "title": "Week 3: Past Perfect & Sequencing",
+          "title": "Stage 2 — Perfect Tenses + Modals",
+          "focus": "Use perfect tenses and modals accurately.",
           "learns": [
-            "Before/after events",
-            "Had+V3"
+            "Use perfect tenses",
+            "Choose modals by meaning",
+            "Edit modal errors"
           ],
           "activities": [
-            "Story reorder",
-            "Combine sentences"
+            "Perfect tense practice",
+            "Modal choice tasks",
+            "Sentence editing"
           ],
-          "mastery": "Sequences with PP ✓"
+          "homework": [
+            "Write 3 perfect tense sentences",
+            "Modal choice check"
+          ],
+          "mastery": "Uses perfect tenses and modals accurately"
         },
         {
-          "title": "Week 4: Future Forms",
+          "title": "Stage 3 — Clauses + Complex Sentences",
+          "focus": "Build complex sentences with clauses.",
           "learns": [
-            "will/going to/present continuous (plans)"
+            "Identify clause types",
+            "Build complex sentences",
+            "Punctuate clauses"
           ],
           "activities": [
-            "Plan a week",
-            "Dialogue role‑play"
+            "Clause sorting",
+            "Sentence combining",
+            "Punctuation edits"
           ],
-          "mastery": "Uses appropriate future form ✓"
+          "homework": [
+            "Write 2 complex sentences",
+            "Clause check"
+          ],
+          "mastery": "Writes complex sentences with clauses"
         },
         {
-          "title": "Week 5: Adverbs",
+          "title": "Stage 4 — Voice + Reported Speech",
+          "focus": "Use voice and reported speech clearly.",
           "learns": [
-            "manner/degree/frequency/place/time"
+            "Use active vs passive",
+            "Convert to reported speech",
+            "Edit for clarity"
           ],
           "activities": [
-            "Positioning game",
-            "Rewrite with adverbs"
+            "Voice transformations",
+            "Reported speech practice",
+            "Editing tasks"
           ],
-          "mastery": "Places adverbs correctly ✓"
+          "homework": [
+            "Convert 3 sentences",
+            "Reported speech check"
+          ],
+          "mastery": "Uses voice and reported speech"
         },
         {
-          "title": "Week 6: Prepositions (Advanced)",
+          "title": "Stage 5 — Paragraph Cohesion",
+          "focus": "Write cohesive paragraphs with transitions.",
           "learns": [
-            "Collocations"
+            "Use transitions",
+            "Organize paragraphs",
+            "Edit for flow"
           ],
           "activities": [
-            "Fill & fix",
-            "Picture prompts"
+            "Transition practice",
+            "Paragraph planning",
+            "Cohesion edits"
           ],
-          "mastery": "Uses natural prepositions ✓"
+          "homework": [
+            "Write a cohesive paragraph",
+            "Transition check"
+          ],
+          "mastery": "Writes cohesive paragraphs"
         },
         {
-          "title": "Week 7: Clauses & Sentence Types",
+          "title": "Stage 6 — Tone + Argument + Impact",
+          "focus": "Write with tone, argument, and impact.",
           "learns": [
-            "Independent vs dependent",
-            "Complex & compound",
-            "Zero & first conditional (if/when + present)"
+            "Adjust tone",
+            "Build claim + reason",
+            "Use evidence and word choice"
           ],
           "activities": [
-            "Combine & split",
-            "Punctuation"
+            "Argument building",
+            "Word choice editing",
+            "Final writing practice"
           ],
-          "mastery": "Controls complex/compound ✓"
-        },
-        {
-          "title": "Week 8: Modals",
-          "learns": [
-            "can/could/must/should/may/might"
+          "homework": [
+            "Write a short argument",
+            "Tone check"
           ],
-          "activities": [
-            "Advice & obligation",
-            "Debate starters"
-          ],
-          "mastery": "Chooses modal appropriately ✓"
-        },
-        {
-          "title": "Week 9: Reported Speech",
-          "learns": [
-            "Backshifting",
-            "Said→told"
-          ],
-          "activities": [
-            "News report",
-            "Dialogue to report"
-          ],
-          "mastery": "Reports accurately ✓"
-        },
-        {
-          "title": "Week 10: Passive Voice",
-          "learns": [
-            "be + V3",
-            "When to use"
-          ],
-          "activities": [
-            "Headline rewrite",
-            "Process describe"
-          ],
-          "mastery": "Forms passive correctly ✓"
-        },
-        {
-          "title": "Week 11: Punctuation & Cohesion",
-          "learns": [
-            "Quotes, apostrophes",
-            "Connectors & basic relative clauses (who/which/that)"
-          ],
-          "activities": [
-            "Edit passage",
-            "Connector sort"
-          ],
-          "mastery": "Cohesive paragraph ✓"
-        },
-        {
-          "title": "Week 12: Review + Capstone",
-          "learns": [
-            "120–180 word informative/argument paragraph"
-          ],
-          "activities": [
-            "Plan→Draft→Edit"
-          ],
-          "mastery": "Capstone paragraph with rubric ✓"
+          "mastery": "Writes with clear tone and impact"
         }
-      ],
-      "meta": {
-        "label": "Grammar – Mastery",
-        "ages": "10–14",
-        "cefr": "A2–B1",
-        "notes": "Tense system, clauses, modals, passive, reported speech, cohesion, and 120–180 word compositions."
-      }
+      ]
     },
     "public-speaking-foundations": {
       "weeks": [
         {
-          "title": "Week 1: Promises & Intro",
+          "title": "Stage 1 — Comfort + Routine",
+          "focus": "Feel comfortable speaking in class routines.",
           "learns": [
-            "Class promises",
-            "Name‑age‑favourite",
-            "One-mic listening rule (one speaker, others listen)"
+            "Practice warm-ups",
+            "Use eye contact and posture",
+            "Speak with a friendly voice"
           ],
           "activities": [
-            "Posture & smile",
-            "10–15s intro",
-            "Cheer & clap practice after each turn"
+            "Warm-up routines",
+            "Intro practice",
+            "Confidence games"
           ],
-          "mastery": "Comfortable intro ✓"
+          "homework": [
+            "Practice a simple intro",
+            "Confidence check"
+          ],
+          "mastery": "Speaks comfortably in class"
         },
         {
-          "title": "Week 2: Voice/Face/Body",
+          "title": "Stage 2 — Clear Speaking",
+          "focus": "Speak clearly with pace, volume, and full words.",
           "learns": [
-            "Volume & pace",
-            "Expressions",
-            "Hands & feet"
+            "Use full sentences",
+            "Speak clearly and slowly",
+            "Pause between ideas"
           ],
           "activities": [
-            "Mirror drill",
-            "Freeze‑pose"
+            "Clear speech drills",
+            "Volume practice",
+            "Pacing games"
           ],
-          "mastery": "Audible & clear ✓"
+          "homework": [
+            "Read 3 sentences clearly",
+            "Pacing check"
+          ],
+          "mastery": "Speaks clearly and at a steady pace"
         },
         {
-          "title": "Week 3: Show & Tell (3 points)",
+          "title": "Stage 3 — Describe + Show & Tell",
+          "focus": "Describe objects with details and expression.",
           "learns": [
-            "3‑point structure"
+            "Give 2–3 details",
+            "Use describing words",
+            "Add simple gestures"
           ],
           "activities": [
-            "Show item",
-            "Say 3 points"
+            "Picture talk",
+            "Detail building",
+            "Show & tell practice"
           ],
-          "mastery": "30s 3‑point talk ✓"
+          "homework": [
+            "Describe an object with details",
+            "Detail check"
+          ],
+          "mastery": "Describes with clear details"
         },
         {
-          "title": "Week 4: Picture Talk (B‑M‑E)",
+          "title": "Stage 4 — Mini Talks + Q&A",
+          "focus": "Give short talks and answer simple questions.",
           "learns": [
-            "Beginning‑Middle‑End"
+            "Speak for 30–60 seconds",
+            "Use sequence words",
+            "Answer simple questions"
           ],
           "activities": [
-            "Sequencing",
-            "Describe picture"
+            "Mini talk practice",
+            "Q&A drills",
+            "Sequence practice"
           ],
-          "mastery": "B‑M‑E structure ✓"
+          "homework": [
+            "Deliver a short talk",
+            "Answer 2 questions"
+          ],
+          "mastery": "Gives short talks and answers questions"
         },
         {
-          "title": "Week 5: Sentence Dice & Emoji Voice",
+          "title": "Stage 5 — Story Basics",
+          "focus": "Tell a short story in order.",
           "learns": [
-            "Sentence building",
-            "Expressive voice"
+            "Use beginning-middle-end",
+            "Add a character voice",
+            "Emphasize key words"
           ],
           "activities": [
-            "Dice game",
-            "Emoji voices"
+            "Story sequencing",
+            "Voice practice",
+            "Audience practice"
           ],
-          "mastery": "Speaks in full sentences ✓"
+          "homework": [
+            "Tell a short story",
+            "Story order check"
+          ],
+          "mastery": "Tells a short story in order"
         },
         {
-          "title": "Week 6: Place Talk (5 senses)",
+          "title": "Stage 6 — Presentation Readiness",
+          "focus": "Practice presentations with confidence.",
           "learns": [
-            "Sensory details"
+            "Present with a prop/visual",
+            "Handle small mistakes calmly",
+            "Show confidence"
           ],
           "activities": [
-            "Park/beach/birthday"
+            "Presentation practice",
+            "Mistake recovery drills",
+            "Showcase"
           ],
-          "mastery": "Adds 2–3 details ✓"
-        },
-        {
-          "title": "Week 7: Story Retell with Props",
-          "learns": [
-            "Recall & sequence"
+          "homework": [
+            "Deliver a mini presentation",
+            "Confidence check"
           ],
-          "activities": [
-            "Prop story"
-          ],
-          "mastery": "Retells with prompt ✓"
-        },
-        {
-          "title": "Week 8: Opinion (I like… because…)",
-          "learns": [
-            "Opinion + reason"
-          ],
-          "activities": [
-            "Prompt jar"
-          ],
-          "mastery": "States opinion + reason ✓"
-        },
-        {
-          "title": "Week 9: Friend/Pet Talk",
-          "learns": [
-            "Details & feelings"
-          ],
-          "activities": [
-            "Describe & emote"
-          ],
-          "mastery": "Gives 3+ details ✓"
-        },
-        {
-          "title": "Week 10: Capstone Practice",
-          "learns": [
-            "Timing & clarity"
-          ],
-          "activities": [
-            "Timed runs"
-          ],
-          "mastery": "Hits 30–45s ✓"
-        },
-        {
-          "title": "Week 11: Visual Aid",
-          "learns": [
-            "Use a poster/picture"
-          ],
-          "activities": [
-            "Make & present"
-          ],
-          "mastery": "Refers to visual ✓"
-        },
-        {
-          "title": "Week 12: Capstone 30–45s",
-          "learns": [
-            "Final rehearsal"
-          ],
-          "activities": [
-            "Capstone talk"
-          ],
-          "mastery": "Capstone delivered ✓"
+          "mastery": "Presents confidently with clarity"
         }
-      ],
-      "meta": {
-        "label": "Public Speaking – Foundations",
-        "ages": "5–9",
-        "cefr": "Pre-A1–A1 (speaking)",
-        "notes": "Builds confidence through introductions, show-and-tell, picture talk, opinions, and 30–45 second talks."
-      }
+      ]
     },
     "public-speaking-excellence": {
       "weeks": [
         {
-          "title": "Week 1: S.P.E.A.K. + Baseline",
+          "title": "Stage 1 — Presence + Engagement",
+          "focus": "Engage the audience with confident presence.",
           "learns": [
-            "Stand tall • Pace steady • Eye contact • Act natural • Keep it clear",
-            "Simple tools for nerves (breathe, smile, positive self-talk)"
+            "Strong opening lines",
+            "Audience engagement",
+            "Clear articulation"
           ],
           "activities": [
-            "Baseline video",
-            "Habit checklist"
+            "Presence drills",
+            "Opening practice",
+            "Engagement cues"
           ],
-          "mastery": "Applies 3/5 habits ✓"
+          "homework": [
+            "Deliver a strong opening",
+            "Engagement check"
+          ],
+          "mastery": "Opens with confidence and presence"
         },
         {
-          "title": "Week 2: Hook–Body–Close",
+          "title": "Stage 2 — Structure + Supporting Details",
+          "focus": "Structure talks with strong openings and details.",
           "learns": [
-            "Openers & closers",
-            "Story frameworks"
+            "Use hook-body-close",
+            "Add supporting details",
+            "Stay on message"
           ],
           "activities": [
-            "Write H‑B‑C",
-            "Tell short story"
+            "Structure practice",
+            "Detail building",
+            "Transition practice"
           ],
-          "mastery": "Clear structure ✓"
+          "homework": [
+            "Deliver a structured talk",
+            "Structure check"
+          ],
+          "mastery": "Speaks with clear structure"
         },
         {
-          "title": "Week 3: Informative Speech",
+          "title": "Stage 3 — Story Performance",
+          "focus": "Perform stories with voice and emotion.",
           "learns": [
-            "Explain 'How it works'"
+            "Use emotion in storytelling",
+            "Add character voice",
+            "Use pauses for effect"
           ],
           "activities": [
-            "Outline → examples"
+            "Story performance practice",
+            "Voice variety drills",
+            "Pause practice"
           ],
-          "mastery": "60–90s informative ✓"
+          "homework": [
+            "Perform a short story",
+            "Expression check"
+          ],
+          "mastery": "Performs stories with expression"
         },
         {
-          "title": "Week 4: Persuasive Speech",
+          "title": "Stage 4 — Impromptu + Q&A",
+          "focus": "Handle impromptu questions calmly.",
           "learns": [
-            "Claim‑reason‑evidence"
+            "Use thinking time strategies",
+            "Answer tough questions",
+            "Stay clear under pressure"
           ],
           "activities": [
-            "Draft & deliver"
+            "Impromptu practice",
+            "Q&A drills",
+            "Confidence resets"
           ],
-          "mastery": "States claim with reasons ✓"
+          "homework": [
+            "Answer 3 impromptu prompts",
+            "Clarity check"
+          ],
+          "mastery": "Handles impromptu Q&A clearly"
         },
         {
-          "title": "Week 5: Opinion/Reason/Example",
+          "title": "Stage 5 — Persuasion + Debate",
+          "focus": "Use persuasion and debate skills.",
           "learns": [
-            "Transitions & cohesion"
+            "Make a claim and reason",
+            "Rebut politely",
+            "Close strongly"
           ],
           "activities": [
-            "Opinion drills",
-            "Linkers"
+            "Debate practice",
+            "Rebuttal drills",
+            "Conclusion practice"
           ],
-          "mastery": "Uses transitions ✓"
+          "homework": [
+            "Deliver a short persuasive talk",
+            "Rebuttal check"
+          ],
+          "mastery": "Uses persuasion and rebuttal"
         },
         {
-          "title": "Week 6: Visual Aids",
+          "title": "Stage 6 — Presentation Mastery",
+          "focus": "Deliver polished presentations.",
           "learns": [
-            "Poster/slide use"
+            "Use visuals and notes",
+            "Manage timing and pacing",
+            "Engage the audience"
           ],
           "activities": [
-            "Design simple slide",
-            "Present with aid"
+            "Full presentation rehearsal",
+            "Timing drills",
+            "Audience engagement"
           ],
-          "mastery": "Refers naturally to visuals ✓"
-        },
-        {
-          "title": "Week 7: Debate Basics",
-          "learns": [
-            "For/against",
-            "Rebuttal starters"
+          "homework": [
+            "Deliver a full presentation",
+            "Final showcase"
           ],
-          "activities": [
-            "Mini debate"
-          ],
-          "mastery": "Gives rebuttal ✓"
-        },
-        {
-          "title": "Week 8: Impromptu Jar",
-          "learns": [
-            "1‑min prep",
-            "Think→Speak"
-          ],
-          "activities": [
-            "Impromptu rounds"
-          ],
-          "mastery": "Delivers 60–90s impromptu ✓"
-        },
-        {
-          "title": "Week 9: Picture & Data Prompts",
-          "learns": [
-            "Describe→Infer→Conclude"
-          ],
-          "activities": [
-            "Prompt carousel"
-          ],
-          "mastery": "Structured response ✓"
-        },
-        {
-          "title": "Week 10: Vocal Variety & Body Language",
-          "learns": [
-            "Pace, pause, emphasis",
-            "Gestures"
-          ],
-          "activities": [
-            "Mark script",
-            "Mirror practice"
-          ],
-          "mastery": "Controls pace & pause ✓"
-        },
-        {
-          "title": "Week 11: Rehearsal & Peer Feedback",
-          "learns": [
-            "Feedback rubric",
-            "Giving & receiving kind, specific feedback"
-          ],
-          "activities": [
-            "Peer review",
-            "Refine talk"
-          ],
-          "mastery": "Addresses feedback ✓"
-        },
-        {
-          "title": "Week 12: Capstone 1–2 min",
-          "learns": [
-            "Final performance"
-          ],
-          "activities": [
-            "Capstone video"
-          ],
-          "mastery": "Capstone delivered ✓"
+          "mastery": "Delivers a polished presentation"
         }
-      ],
-      "meta": {
-        "label": "Public Speaking – Excellence",
-        "ages": "9–13",
-        "cefr": "A2–B1 (speaking)",
-        "notes": "Structured speeches, persuasive talks, debate, impromptu speaking, vocal variety, and 1–2 minute capstone talks."
-      }
+      ]
     }
   }
 }

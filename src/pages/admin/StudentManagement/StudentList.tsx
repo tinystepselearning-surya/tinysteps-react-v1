@@ -5,6 +5,7 @@ import {
   collectionGroup,
   query,
   orderBy,
+  limit,
   getDocs,
   deleteDoc,
   doc,
@@ -943,10 +944,10 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     // load parents list for filters
     const loadParents = async () => {
       try {
-        const q = query(collection(db, 'users'));
+        const q = query(collection(db, 'users'), where('role', '==', 'parent'));
         const snap = await getDocs(q);
         const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
-        setParents(allUsers.filter(u => u.role === 'parent'));
+        setParents(allUsers);
       } catch (err) {
         console.error('parents load error', err);
       }
@@ -955,7 +956,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   }, []);
 
   useEffect(() => {
-    const q = query(collection(db, 'kids'), orderBy('createdAt', 'desc'));
+    const q = query(collection(db, 'kids'), orderBy('createdAt', 'desc'), limit(1000));
     const unsub = onSnapshot(
       q,
       snap => {
@@ -975,7 +976,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     const q = query(
       collectionGroup(db, 'sessionRequests'),
+      where('status', '==', 'requested'),
       orderBy('startAt', 'asc'),
+      limit(200),
     );
 
     const unsub = onSnapshot(
