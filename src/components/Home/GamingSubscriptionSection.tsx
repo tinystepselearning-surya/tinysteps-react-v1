@@ -24,7 +24,7 @@ const plans = [
 			'Sentence surgery, punctuation hits, tense battles—grammar practice that feels like play.',
 		features: [
 			'Adaptive difficulty',
-			'Weekly accuracy report',
+			'Stage-based accuracy report',
 			'Rewards kids for editing correctly',
 		],
 	},
@@ -139,7 +139,7 @@ export default function GamingSubscriptionSection({
 							<ol className="list-decimal pl-4 space-y-1">
 								<li>Pick single track or the all-access bundle.</li>
 								<li>
-									Kids get weekly missions inside the Tiny Steps Games app.
+									Kids get lesson-aligned missions inside the Tiny Steps Games app.
 								</li>
 								<li>Parents receive AI insight summaries + habit nudges.</li>
 							</ol>

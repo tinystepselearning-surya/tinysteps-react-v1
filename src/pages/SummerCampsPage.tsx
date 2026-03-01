@@ -72,7 +72,7 @@ const FAQS = [
   {
     question: 'What is this summer camp?',
     answer:
-      'Tiny Steps Summer Camps are short, structured online programs (3 weeks) focused on a single outcome: stronger reading, clearer phonics, or confident speaking. Children attend live mentor-led sessions with clear milestones, practice tasks, and weekly feedback so parents can see progress quickly.',
+      'Tiny Steps Summer Camps are short, structured online programs (3 weeks) focused on a single outcome: stronger reading, clearer phonics, or confident speaking. Children attend live mentor-led sessions with clear milestones, practice tasks, and stage-based feedback so parents can see progress quickly.',
   },
   {
     question: 'Who is it for?',

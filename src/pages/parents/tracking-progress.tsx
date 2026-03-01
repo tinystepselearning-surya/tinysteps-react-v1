@@ -14,7 +14,7 @@ const TrackingProgress: React.FC = () => {
 
     <div className="mt-4 rounded-lg bg-pink-50 p-4 border border-pink-200">
       <p className="text-sm font-medium text-pink-900">
-        Visible progress keeps both kids and parents motivated. Weekly updates, milestone reports, and dashboard insights show exactly where your child stands and what comes next.
+        Visible progress keeps both kids and parents motivated. Stage-based updates, milestone reports, and dashboard insights show exactly where your child stands and what comes next.
       </p>
     </div>
 
@@ -24,8 +24,8 @@ const TrackingProgress: React.FC = () => {
     <h2 className="mt-6 font-semibold">Step-by-step</h2>
     <ul className="list-disc ml-6 mt-2">
       <li>Open the parent dashboard to view session notes and goals.</li>
-      <li>Ask for a short milestone summary after 4–6 weeks.</li>
-      <li>Use small weekly targets at home to reinforce learning.</li>
+      <li>Ask for a short milestone summary after 8–12 lessons.</li>
+      <li>Use small lesson targets at home to reinforce learning.</li>
     </ul>
 
     <h3 className="mt-4 font-semibold">Common mistakes</h3>
@@ -48,11 +48,11 @@ const TrackingProgress: React.FC = () => {
       <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Weekly session notes:</strong> Each week, teachers document what was learned, what went well, and one focus area for next week.</span>
+          <span><strong>Lesson notes:</strong> After each lesson, teachers document what was learned, what went well, and one focus area for next time.</span>
         </div>
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Milestone summaries:</strong> After 4–6 weeks, request a brief summary showing mastered skills and next learning goals.</span>
+          <span><strong>Milestone summaries:</strong> After 8–12 lessons, request a brief summary showing mastered skills and next learning goals.</span>
         </div>
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>

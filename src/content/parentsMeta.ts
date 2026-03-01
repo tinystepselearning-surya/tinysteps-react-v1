@@ -84,7 +84,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "description": "Consistent attendance matters—aim for at least one class per week and short daily practice.",
       "inLanguage": "en-IN",
       "step": [
-        { "@type": "HowToStep", "text": "Choose a consistent weekly slot during booking." },
+        { "@type": "HowToStep", "text": "Choose a consistent class slot during booking." },
         { "@type": "HowToStep", "text": "Set a short pre-class routine: 2–3 minutes to warm up." },
         { "@type": "HowToStep", "text": "Inform support early for rescheduling." }
       ]
@@ -119,8 +119,8 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "inLanguage": "en-IN",
       "step": [
         { "@type": "HowToStep", "text": "Open the parent dashboard to view session notes and goals." },
-        { "@type": "HowToStep", "text": "Ask for a short milestone summary after 4–6 weeks." },
-        { "@type": "HowToStep", "text": "Use small weekly targets at home to reinforce learning." }
+        { "@type": "HowToStep", "text": "Ask for a short milestone summary after 8–12 lessons." },
+        { "@type": "HowToStep", "text": "Use small lesson targets at home to reinforce learning." }
       ]
     }
   },
@@ -135,7 +135,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "description": "Keep practice short and playful: 5–10 minutes of focused work after class is most effective.",
       "inLanguage": "en-IN",
       "step": [
-        { "@type": "HowToStep", "text": "Review the teacher's short goal for the week." },
+        { "@type": "HowToStep", "text": "Review the teacher's short goal for the lesson." },
         { "@type": "HowToStep", "text": "Do a 5‑minute practice together using prompts from the lesson." },
         { "@type": "HowToStep", "text": "Praise effort and note one target for next time." }
       ]
@@ -203,7 +203,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "description": "Parents often push too fast or compare progress—focus on steady, small wins.",
       "inLanguage": "en-IN",
       "step": [
-        { "@type": "HowToStep", "text": "Set one small weekly target with the teacher." },
+        { "@type": "HowToStep", "text": "Set one small lesson target with the teacher." },
         { "@type": "HowToStep", "text": "Create a 5‑minute daily routine to support that target." },
         { "@type": "HowToStep", "text": "Review progress every two weeks and adjust goals." }
       ]

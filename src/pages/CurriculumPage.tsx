@@ -74,7 +74,7 @@ function safeCourse(value: string | null): string | null {
     applySeo({
       title: "English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps",
       description:
-        "A clear, week-by-week English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones.",
+        "A clear, lesson-by-lesson English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones.",
       canonicalPath: "/curriculum",
       ogType: "website",
       jsonLd: [breadcrumb],
@@ -143,9 +143,9 @@ function safeCourse(value: string | null): string | null {
 
   return (
     <div className="page-gradient relative overflow-hidden">
-      <Meta
+        <Meta
         title="English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps"
-        description="A clear, week-by-week English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones."
+        description="A clear, lesson-by-lesson English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones."
         canonical="https://tinystepslearning.com/curriculum"
       />
 
@@ -153,7 +153,7 @@ function safeCourse(value: string | null): string | null {
         <div className="glass-panel soft-grid overflow-hidden px-6 py-10 text-center">
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3-15</div>
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
-          <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive week-by-week details so parents know exactly what’s next.</p>
+          <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive lesson-by-lesson details so parents know exactly what’s next.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
             <span className="rounded-full bg-white/80 px-4 py-1">Phonics mastery</span>
             <span className="rounded-full bg-white/80 px-4 py-1">Grammar confidence</span>
@@ -212,7 +212,7 @@ function safeCourse(value: string | null): string | null {
         <SmartCard title="Phonics pathways" description="Early, Advanced, and Foundations" badge="Ages 3-12">
           <ul className="list-disc pl-5 text-sm text-gray-600">
             <li>SATPIN → vowel teams → multisyllabic strategies</li>
-            <li>Weekly mastery checks + decodable reading</li>
+            <li>Lesson mastery checks + decodable reading</li>
           </ul>
         </SmartCard>
         <SmartCard title="Grammar roadmap" description="Basic + Mastery modules" badge="Ages 5-15">
@@ -248,47 +248,47 @@ function safeCourse(value: string | null): string | null {
       <div className="mx-auto max-w-6xl px-6 py-10 space-y-12">
         {tab === 'phonics' && (
           <div key="phonics" className="space-y-10">
-            <CollapsibleCard icon={<span>📚</span>} title="Phonics: From Sounds to Fluent Reading" subtext="Cambridge-aligned | Ages 3-12 | Three Tracks" className="glass-panel">
+            <CollapsibleCard icon={<span>📚</span>} title="Phonics: From Sounds to Fluent Reading" subtext="Cambridge-aligned | Ages 3-12 | Lesson-based tracks" className="glass-panel">
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
-                  <div className="font-semibold">EARLY PHONICS (Ages 3-7, 12 weeks)</div>
+                  <div className="font-semibold">PHONICS FOUNDATIONS (30 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Letters & Sounds → Blending → Core Rules</li>
-                    <li>CVC reading from sound recognition</li>
-                    <li>Perfect for ages 3-7 with no reading</li>
+                    <li>Letter sounds + short vowels</li>
+                    <li>Build sound confidence and early blending</li>
+                    <li>Perfect for ages 3-7 with no reading base</li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-semibold">ADVANCED PHONICS (Ages 6-12, 12 weeks)</div>
+                  <div className="font-semibold">EARLY PHONICS (41 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Long vowels → R-controlled → Multisyllabic</li>
-                    <li>From decoding to fluent novel reading</li>
+                    <li>Sound sets → digraphs → vowel teams</li>
+                    <li>Magic E + longer word rules</li>
+                    <li>Great for ages 4-8 building reading fluency</li>
+                  </ul>
+                </div>
+                <div>
+                  <div className="font-semibold">ADVANCED PHONICS (20 lessons)</div>
+                  <ul className="list-disc pl-5 text-sm text-gray-700">
+                    <li>Diphthongs → Bossy R → alternate vowels</li>
+                    <li>Endings + fluency practice</li>
                     <li>Perfect for ages 6-12 with reading base</li>
-                  </ul>
-                </div>
-                <div>
-                  <div className="font-semibold">PHONICS BRUSH-UP (Ages 5-10, 8-12 weeks)</div>
-                  <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Customized gap-filling program</li>
-                    <li>Targets specific phonics weaknesses</li>
-                    <li>Brush-up / On-ramp track</li>
                   </ul>
                 </div>
               </div>
             </CollapsibleCard>
 
             <div id="course-phonics-foundation" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-foundation' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Early Phonics (12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Foundations (30 lessons)</h3>
               <WeekAccordion key="phonics-foundation" items={getWeeks('phonics-foundation')} />
             </div>
 
             <div id="course-phonics-advanced" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-advanced' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Phonics (12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Phonics (20 lessons)</h3>
               <WeekAccordion key="phonics-advanced" items={getWeeks('phonics-advanced')} />
             </div>
 
             <div id="course-phonics-brush-up" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'phonics-brush-up' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Phonics Brush-Up (8–12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Early Phonics (41 lessons)</h3>
               <WeekAccordion key="phonics-brush-up" items={getWeeks('phonics-brush-up')} />
             </div>
           </div>
@@ -296,17 +296,17 @@ function safeCourse(value: string | null): string | null {
 
         {tab === 'grammar' && (
           <div key="grammar" className="space-y-10">
-            <CollapsibleCard icon={<span>📝</span>} title="Grammar: Speaking & Writing Mastery" subtext="Parts of speech → Sentences → Tenses | Ages 5-15" className="glass-panel">
+            <CollapsibleCard icon={<span>📝</span>} title="Grammar: Speaking & Writing Mastery" subtext="Parts of speech → Sentences → Tenses | Lesson-based" className="glass-panel">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="font-semibold">BASIC GRAMMAR (Ages 5-10, 12 weeks)</div>
+                  <div className="font-semibold">BASIC GRAMMAR (36 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Nouns → Verbs → Adjectives → Tenses</li>
                     <li>Foundation for clear communication</li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-semibold">ADVANCED GRAMMAR (Ages 8-15, 12 weeks)</div>
+                  <div className="font-semibold">ADVANCED GRAMMAR (36 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>All 12 tenses → Complex sentences → Advanced punctuation</li>
                     <li>Essay/presentation ready</li>
@@ -316,12 +316,12 @@ function safeCourse(value: string | null): string | null {
             </CollapsibleCard>
 
             <div id="course-grammar-essentials" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'grammar-essentials' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Basic Grammar (12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Basic Grammar (36 lessons)</h3>
               <WeekAccordion key="grammar-essentials" items={getWeeks('grammar-essentials')} />
             </div>
 
             <div id="course-grammar-mastery" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'grammar-mastery' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Grammar (12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Grammar (36 lessons)</h3>
               <WeekAccordion key="grammar-mastery" items={getWeeks('grammar-mastery')} />
             </div>
           </div>
@@ -329,17 +329,17 @@ function safeCourse(value: string | null): string | null {
 
         {tab === 'speaking' && (
           <div key="speaking" className="space-y-10">
-            <CollapsibleCard icon={<span>🎤</span>} title="Public Speaking: Confidence to Expertise" subtext="Find your voice → Speak with structure | Ages 4-15" className="glass-panel">
+            <CollapsibleCard icon={<span>🎤</span>} title="Public Speaking: Confidence to Expertise" subtext="Find your voice → Speak with structure | Lesson-based" className="glass-panel">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="font-semibold">BASIC PUBLIC SPEAKING (Ages 4-7, 12 weeks)</div>
+                  <div className="font-semibold">BASIC PUBLIC SPEAKING (36 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Confidence → Clear voice & body language</li>
                     <li>From 15–45s talks to structured stories</li>
                   </ul>
                 </div>
                 <div>
-                  <div className="font-semibold">ADVANCED PUBLIC SPEAKING (Ages 7-15, 12 weeks)</div>
+                  <div className="font-semibold">ADVANCED PUBLIC SPEAKING (36 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Hook‑Body‑Close → Persuade & debate</li>
                     <li>From 60–120s speeches to presentations</li>
@@ -349,12 +349,12 @@ function safeCourse(value: string | null): string | null {
             </CollapsibleCard>
 
             <div id="course-public-speaking-foundations" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'public-speaking-foundations' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Basic Public Speaking (12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Basic Public Speaking (36 lessons)</h3>
               <WeekAccordion key="public-speaking-foundations" items={getWeeks('public-speaking-foundations')} />
             </div>
 
             <div id="course-public-speaking-excellence" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'public-speaking-excellence' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Public Speaking (12 weeks)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Public Speaking (36 lessons)</h3>
               <WeekAccordion key="public-speaking-excellence" items={getWeeks('public-speaking-excellence')} />
             </div>
           </div>

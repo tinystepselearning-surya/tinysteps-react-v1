@@ -91,7 +91,7 @@ const rawBlogPosts: BlogPost[] = [
 
       { type: 'h2', content: 'What to do in Week 2 (teaser + next step)' },
       { type: 'p', content: 'Week 2 builds on blending: we add two more sounds, increase blending practice, and introduce short decodable books. The aim is fluent decoding of many CVC words by the end of the fortnight.' },
-      { type: 'p', content: 'If you want guided lessons and a clear progression, Tiny Steps has a structured Phonics program with week-by-week lessons.' },
+      { type: 'p', content: 'If you want guided lessons and a clear progression, Tiny Steps has a structured Phonics program with lesson-by-lesson milestones.' },
       { type: 'p', content: 'Try this next: pick 3 CVC words your child liked this week and practise blending them twice a day for three days.' }
     ]
   },

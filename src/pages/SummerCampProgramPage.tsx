@@ -36,7 +36,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Free reading check and placement',
       '3 live sessions per week + micro practice',
-      'Weekly progress card and teacher feedback',
+      'Stage progress card and teacher feedback',
     ],
     faq: [
       {
@@ -81,7 +81,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Free reading check and placement',
       '3 live sessions per week + guided practice',
-      'Weekly progress card and teacher feedback',
+      'Stage progress card and teacher feedback',
     ],
     faq: [
       {
@@ -126,7 +126,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Quick speaking check and placement',
       '2-3 live sessions per week + mini practice',
-      'Weekly progress card and teacher feedback',
+      'Stage progress card and teacher feedback',
     ],
     faq: [
       {
@@ -267,7 +267,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
             <p className="mt-2 text-sm text-gray-700">
-              Children make measurable progress through weekly milestones and teacher feedback.
+              Children make measurable progress through clear milestones and teacher feedback.
               Expect stronger skills, more confidence, and a clear next-step plan after 3 weeks.
             </p>
           </div>

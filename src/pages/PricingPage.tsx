@@ -60,17 +60,12 @@ const PriceRangeLine: FC<{ minOriginal: number; maxOriginal: number }> = ({
   );
 };
 
-const parseWeeks = (duration: string) => {
+const parseLessons = (duration: string) => {
   const match = duration.match(/(\d+)(?:[–-](\d+))?/);
   if (!match) return { min: 0, max: 0 };
   const min = parseInt(match[1], 10);
   const max = match[2] ? parseInt(match[2], 10) : min;
   return { min, max };
-};
-
-const parseClassesPerWeek = (frequency: string) => {
-  const match = frequency.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : 2;
 };
 
 const planMeta = {
@@ -83,7 +78,7 @@ const planMeta = {
     features: [
       'Personalised assessment + roadmap',
       'Live 1:1 classes with expert mentors',
-      'Weekly AI insight recap',
+      'Stage-based insight recap',
       'WhatsApp nudges for practice',
     ],
   },
@@ -137,11 +132,9 @@ const PricingPage: FC = () => {
   const coursePricing = useMemo(
     () =>
       catalogs.map((course) => {
-        const weeks = parseWeeks(course.duration);
-        const classesPerWeek = parseClassesPerWeek(course.frequency);
-        const effectiveClassesPerWeek = Math.max(classesPerWeek, 3);
-        const minSessions = weeks.min * effectiveClassesPerWeek;
-        const maxSessions = weeks.max * effectiveClassesPerWeek;
+        const lessons = parseLessons(course.duration);
+        const minSessions = lessons.min;
+        const maxSessions = lessons.max;
 
         // Use the current per-class rate for fee estimates
         const minFee = totalFeeForSessions(minSessions, DEFAULT_PACK_RATE);
@@ -149,9 +142,8 @@ const PricingPage: FC = () => {
 
         return {
           course,
-          weeks,
-          classesPerWeek,
-          effectiveClassesPerWeek,
+          lessons,
+          pace: course.frequency,
           minSessions,
           maxSessions,
           minFee,
@@ -413,9 +405,9 @@ const PricingPage: FC = () => {
             <thead>
               <tr className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
                 <th className="px-4 py-3">Course</th>
-                <th className="px-4 py-3">Duration</th>
-                <th className="px-4 py-3">Classes / week</th>
-                <th className="px-4 py-3">Total sessions</th>
+                <th className="px-4 py-3">Lessons</th>
+                <th className="px-4 py-3">Pace</th>
+                <th className="px-4 py-3">Estimated sessions</th>
                 <th className="px-4 py-3">
                   Total fee (Premium 1:1 estimate)
                 </th>
@@ -425,9 +417,8 @@ const PricingPage: FC = () => {
               {coursePricing.map(
                 ({
                   course,
-                  weeks,
-                  classesPerWeek,
-                  effectiveClassesPerWeek,
+                  lessons,
+                  pace,
                   minSessions,
                   maxSessions,
                   minFee,
@@ -443,11 +434,11 @@ const PricingPage: FC = () => {
                       </div>
                     </td>
                     <td className="px-4 py-4">
-                      {weeks.min === weeks.max
-                        ? `${weeks.min} weeks`
-                        : `${weeks.min}–${weeks.max} weeks`}
+                      {lessons.min === lessons.max
+                        ? `${lessons.min} lessons`
+                        : `${lessons.min}–${lessons.max} lessons`}
                     </td>
-                    <td className="px-4 py-4">{effectiveClassesPerWeek} per week</td>
+                    <td className="px-4 py-4">{pace}</td>
                     <td className="px-4 py-4">
                       {minSessions === maxSessions
                         ? minSessions
@@ -467,7 +458,7 @@ const PricingPage: FC = () => {
           </table>
         </div>
         <p className="mt-3 text-xs text-gray-500 text-center">
-          We follow a mastery-first approach. Most children complete in the typical timeline shown, but we adjust pacing based on the child’s assessment and progress.
+          We follow a mastery-first approach. Lesson counts are fixed, but session counts can vary based on pace and assessment.
         </p>
         <div className="mt-8 grid gap-4 md:grid-cols-3 text-sm text-gray-600">
           <div className="glass-panel p-5">
@@ -476,7 +467,7 @@ const PricingPage: FC = () => {
             </div>
             <ul className="mt-2 list-disc pl-5">
               <li>Live 1:1 or small-group sessions</li>
-              <li>Weekly mastery reports</li>
+              <li>Stage-based mastery reports</li>
               <li>Recorded sessions + resources</li>
             </ul>
           </div>

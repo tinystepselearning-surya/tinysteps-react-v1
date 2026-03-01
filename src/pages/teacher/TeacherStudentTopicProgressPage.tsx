@@ -15,6 +15,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const returnTo = searchParams.get('returnTo');
   const fromStudents = searchParams.get('from') === 'students';
+  const enrollmentId = searchParams.get('enrollmentId');
 
   const handleBack = () => {
     if (returnTo) {
@@ -33,7 +34,15 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
 
     let active = true;
     const getNameFromDoc = (data: any) =>
-      data?.fullName ?? data?.displayName ?? data?.name ?? null;
+      data?.fullName ??
+      data?.displayName ??
+      data?.studentName ??
+      data?.kidName ??
+      data?.childName ??
+      data?.name ??
+      (data?.firstName || data?.lastName
+        ? `${data?.firstName ?? ''} ${data?.lastName ?? ''}`.trim()
+        : null);
 
     setLoadingName(true);
 
@@ -50,9 +59,21 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
       if (!active) return;
       if (studentSnap.exists()) {
         setKidName(getNameFromDoc(studentSnap.data()));
-      } else {
-        setKidName(null);
+        setLoadingName(false);
+        return;
       }
+
+      if (enrollmentId) {
+        const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+        if (!active) return;
+        if (enrollmentSnap.exists()) {
+          setKidName(getNameFromDoc(enrollmentSnap.data()));
+          setLoadingName(false);
+          return;
+        }
+      }
+
+      setKidName(null);
       setLoadingName(false);
     };
 
@@ -61,7 +82,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
     return () => {
       active = false;
     };
-  }, [kidId]);
+  }, [kidId, enrollmentId]);
 
   if (!kidId) {
     return (
@@ -98,11 +119,15 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
       </div>
 
       <header>
-        <p className="text-sm text-slate-700">Student: {kidName ?? 'Student'}</p>
+        <p className="text-sm text-slate-700">
+          Student: {kidName ?? kidId ?? 'Student'}
+        </p>
         {loadingName && (
           <p className="mt-1 text-xs text-slate-500">Loading student name…</p>
         )}
-        <p className="mt-1 text-xs text-slate-500">Student ID: {kidId}</p>
+        {kidName && (
+          <p className="mt-1 text-xs text-slate-500">Student ID: {kidId}</p>
+        )}
       </header>
 
       <StudentTopicProgressEditor

@@ -90,30 +90,30 @@ const ParentalControlsView: FC = () => {
         </div>
       </motion.div>
 
-      {/* Weekly Report */}
+      {/* Stage Progress */}
       <motion.div
         className="bg-indigo-100 rounded-3xl p-6"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8 }}
       >
-        <h2 className="text-2xl font-bold mb-4">Weekly Report 📈</h2>
+        <h2 className="text-2xl font-bold mb-4">Stage Progress 📈</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <p className="text-2xl font-bold">7</p>
-            <p className="text-sm">Sessions attended</p>
+            <p className="text-2xl font-bold">Stage 2</p>
+            <p className="text-sm">Current stage</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold">3</p>
-            <p className="text-sm">Badges earned</p>
+            <p className="text-2xl font-bold">Clarity</p>
+            <p className="text-sm">Focus area</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold">52</p>
-            <p className="text-sm">Words learned</p>
+            <p className="text-2xl font-bold">12</p>
+            <p className="text-sm">Lessons completed</p>
           </div>
           <div className="text-center">
-            <p className="text-2xl font-bold">95%</p>
-            <p className="text-sm">Average score</p>
+            <p className="text-2xl font-bold">Growing</p>
+            <p className="text-sm">Confidence</p>
           </div>
         </div>
       </motion.div>

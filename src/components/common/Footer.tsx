@@ -10,10 +10,10 @@ const socialLinks = [
 const courseLinks = [
   { label: "Phonics Foundation", href: "/courses" },
   { label: "Phonics Advanced", href: "/courses" },
-  { label: "Grammar Essentials", href: "/courses" },
-  { label: "Grammar Mastery", href: "/courses" },
-  { label: "Public Speaking Foundations", href: "/courses" },
-  { label: "Public Speaking Excellence", href: "/courses" },
+  { label: "Basic Grammar", href: "/courses" },
+  { label: "Advanced Grammar", href: "/courses" },
+  { label: "Public Speaking (Basic)", href: "/courses" },
+  { label: "Public Speaking (Advanced)", href: "/courses" },
 ];
 
 const resourceLinks = [
@@ -40,7 +40,7 @@ const Footer = () => {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="text-white text-xl font-semibold">Get the Tiny Steps parent newsletter</div>
-              <p className="text-white/80 text-sm">Weekly phonics, grammar, and speaking tips plus printable resources.</p>
+              <p className="text-white/80 text-sm">Lesson-based phonics, grammar, and speaking tips plus printable resources.</p>
               <p className="text-white/60 text-xs">Join 3500+ families who love our tips!</p>
             </div>
             <form className="flex w-full max-w-md gap-2">

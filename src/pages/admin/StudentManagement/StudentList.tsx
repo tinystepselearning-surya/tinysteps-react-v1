@@ -1438,7 +1438,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       area: 'grammar',
       label: 'Grammar',
       topics: GRAMMAR_CURRICULUM_TOPICS,
-      courseIds: ['basic-grammar', 'advanced-grammar', 'intermediate-grammar'],
+      courseIds: ['basic-grammar', 'advanced-grammar'],
     });
 
   const handleSyncCurriculumSpeaking = () =>
@@ -1446,7 +1446,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       area: 'speaking',
       label: 'Speaking',
       topics: SPEAKING_CURRICULUM_TOPICS,
-      courseIds: ['basic-public-speaking', 'advanced-public-speaking', 'intermediate-public-speaking'],
+      courseIds: ['basic-public-speaking', 'advanced-public-speaking'],
     });
 
   async function handleRejectRequest(req: SessionRequestRow) {

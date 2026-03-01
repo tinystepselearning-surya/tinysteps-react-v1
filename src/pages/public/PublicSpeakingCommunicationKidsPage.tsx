@@ -26,19 +26,19 @@ const FAQS = [
   },
   {
     question: 'Will this help with school presentations and class participation?',
-    answer: 'Yes! School presentations, show & tell, and class discussions are exactly what we practice. Children learn to organize thoughts, speak clearly, make eye contact, and handle Q&A. Parents and teachers typically notice improved confidence and participation within weeks.'
+    answer: 'Yes! School presentations, show & tell, and class discussions are exactly what we practice. Children learn to organize thoughts, speak clearly, make eye contact, and handle Q&A. Parents and teachers typically notice improved confidence and participation within a few lessons.'
   },
   {
     question: 'How often should my child take speaking classes?',
-    answer: 'We recommend 2–3 classes per week for consistent progress. Speaking confidence grows with regular practice—like a muscle. Most children show noticeable improvement in confidence, clarity, and willingness to speak within 4–6 weeks of consistent classes.'
+    answer: 'We recommend 2–3 classes per week for consistent progress. Speaking confidence grows with regular practice—like a muscle. Most children show noticeable improvement in confidence, clarity, and willingness to speak within 8–12 lessons.'
   },
   {
     question: 'How do you track progress in speaking skills?',
-    answer: 'We track confidence level, voice clarity, eye contact, body language, sentence fluency, storytelling ability, and willingness to volunteer answers. Weekly reports show specific improvements, strengths, areas to practice, and tips for home. You\'ll see measurable growth over time.'
+    answer: 'We track confidence level, voice clarity, eye contact, body language, sentence fluency, storytelling ability, and willingness to volunteer answers. Stage-based updates show specific improvements, strengths, areas to practice, and tips for home. You\'ll see measurable growth over time.'
   },
   {
     question: 'How long until I see my child\'s confidence improve?',
-    answer: 'Most parents notice small changes within 2–3 weeks: speaking in full sentences at home, volunteering more at school, or trying new speaking activities. Deeper confidence (public speaking comfort, presentations without anxiety) develops over 8–12 weeks with consistent practice.'
+    answer: 'Most parents notice small changes within 4–6 lessons: speaking in full sentences at home, volunteering more at school, or trying new speaking activities. Deeper confidence (public speaking comfort, presentations without anxiety) develops over 20–30 lessons with consistent practice.'
   },
   {
     question: 'Can speaking classes help children who mumble or speak too softly?',
@@ -50,7 +50,7 @@ const FAQS = [
   },
   {
     question: 'Do you teach debate skills or just basic speaking?',
-    answer: 'Both! Beginners focus on confidence, clarity, and storytelling. Intermediate students work on structured speeches and presentations. Advanced learners tackle debate basics, persuasive speaking, and handling opposing viewpoints. We adapt to your child\'s level and interests.'
+    answer: 'Both! Beginners focus on confidence, clarity, and storytelling. Advanced learners tackle structured speeches, debate basics, persuasive speaking, and handling opposing viewpoints. We adapt to your child\'s level and interests.'
   }
 ];
 
@@ -206,7 +206,7 @@ export default function PublicSpeakingCommunicationKidsPage() {
             </p>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-2">Weekly Progress Reports</h3>
+            <h3 className="font-bold text-lg mb-2">Stage Progress Updates</h3>
             <p>
               Parents receive detailed notes on what your child practiced, strengths they showed, and areas to work on. Tips for practicing at home included.
             </p>

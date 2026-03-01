@@ -5,26 +5,29 @@ import LearningJourney from '../components/programs/LearningJourney';
 
 const levels = [
   {
-    name: 'Foundations',
-    outcomes: ['15-45 second talks, show & tell', 'Voice, face & body language warmups', 'Confidence rituals + gamified practice'],
+    name: 'Public Speaking (Basic)',
+    outcomes: [
+      '15-60 second talks, show & tell',
+      'Voice, face & body language warmups',
+      'Confidence routines + practice prompts',
+    ],
     pdf: '/curriculum'
   },
   {
-    name: 'Confidence',
-    outcomes: ['Hook-Body-Close framework', 'Impromptu jar, debates, Q&A', 'Weekly video feedback'],
-    pdf: '/curriculum'
-  },
-  {
-    name: 'Super Speakers',
-    outcomes: ['Persuasive + informative speeches', 'Visual aids, storytelling, stagecraft', 'Capstone recording + rubric score'],
+    name: 'Public Speaking (Advanced)',
+    outcomes: [
+      'Structure, storytelling, and Q&A',
+      'Persuasion + debate foundations',
+      'Capstone presentation showcase',
+    ],
     pdf: '/curriculum'
   }
 ];
 
 const stages = [
-  { title: 'Weeks 1-4 • Confidence seed', duration: 'Month 1', description: 'Micro-speaks, posture, voice games, S.P.E.A.K habit.' },
-  { title: 'Weeks 5-8 • Structure & expression', duration: 'Month 2', description: 'Hook-Body-Close, gestures, vocal variety, storytelling.' },
-  { title: 'Weeks 9-12 • Performance', duration: 'Month 3', description: 'Debates, visual aids, capstone speech + parent showcase.' }
+  { title: 'Stage 1 • Comfort + clarity', duration: 'Lessons 1–12', description: 'Confidence routines, clear speech, simple structure.' },
+  { title: 'Stage 2 • Story + Q&A', duration: 'Lessons 13–24', description: 'Describe, show & tell, mini talks, friendly questions.' },
+  { title: 'Stage 3 • Presentation readiness', duration: 'Lessons 25–36', description: 'Audience practice, strong openings, showcase speech.' }
 ];
 
 export default function SpeakingPage() {
@@ -33,7 +36,7 @@ export default function SpeakingPage() {
       <ProgramHero
         program="Public Speaking"
         title="Super Speakers Studio"
-        subtitle="From shy to spotlight-ready with live coaches, AI observation notes, and weekly showcase videos."
+        subtitle="From shy to spotlight-ready with live coaches, AI observation notes, and stage-based showcases."
         badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[
           'Show & tell, storytelling, debates, persuasive speeches',

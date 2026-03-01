@@ -354,7 +354,7 @@ export default function SummerCamp2026Page() {
           <div className="flex gap-4 items-start">
             <span className="text-3xl">📊</span>
             <div>
-              <h3 className="font-bold text-lg text-gray-900 mb-1">Weekly Progress Reports</h3>
+              <h3 className="font-bold text-lg text-gray-900 mb-1">Camp Progress Updates</h3>
               <p className="text-gray-700 text-sm">
                 Every Friday, receive a detailed report showing skills mastered, challenges observed, and activities practiced. Know exactly where your child stands.
               </p>

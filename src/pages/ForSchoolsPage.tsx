@@ -134,7 +134,7 @@ const ForSchoolsPage: React.FC = () => {
           className="mt-3 text-sm font-medium text-primary underline"
           onClick={() => setShowSampleSchedule(true)}
         >
-          View a sample weekly schedule
+          View a sample lesson schedule
         </button>
       </section>
 

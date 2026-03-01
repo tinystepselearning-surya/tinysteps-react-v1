@@ -51,7 +51,7 @@ const cards: WhyCard[] = [
     title: "Personalised 1:1 Teaching",
     subtext: "Paced to your child — not the batch",
     gradient: "from-[#ffe9cf] via-white to-[#fff2e1]",
-    headline: "We adjust pace weekly so your child doesn’t feel “left behind.”",
+    headline: "We adjust pace by lessons so your child doesn’t feel “left behind.”",
     childGets: [
       "Short, focused practice (kids don’t get bored)",
       "If stuck: we slow down + reinforce the exact weak spot",
@@ -101,7 +101,7 @@ const cards: WhyCard[] = [
       "Small wins celebrated so motivation stays high",
     ],
     parentGets: [
-      "Weekly snapshot: strong skills + current focus",
+      "Stage snapshot: strong skills + current focus",
       "What changed at home: reading/speaking behavior cues",
       "Next action: a tiny optional practice prompt",
     ],

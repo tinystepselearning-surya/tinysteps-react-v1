@@ -27,7 +27,7 @@ const LevelTabs = ({ levels }: any) => {
           </ul>
           <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-600">
             <div className="font-semibold text-gray-900">Download curriculum</div>
-            <p>Get the full weekly plan for {active.name}. Includes home practice + assessments.</p>
+            <p>Get the full lesson-by-lesson plan for {active.name}. Includes home practice + assessments.</p>
             <a href={active.pdf || '/curriculum'} className="mt-2 inline-flex items-center text-tiny-blue-600">Download PDF →</a>
           </div>
         </div>

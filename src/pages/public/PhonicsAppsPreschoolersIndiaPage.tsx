@@ -41,7 +41,7 @@ const FAQS = [
   },
   {
     question: 'How do I know my child is progressing?',
-    answer: 'Look for signs like quicker sound recall, smoother blending, and trying to read labels or simple words. A good app will also show mastered sounds and completed levels. Weekly checks with a parent or mentor keep progress on track.'
+    answer: 'Look for signs like quicker sound recall, smoother blending, and trying to read labels or simple words. A good app will also show mastered sounds and completed levels. Stage check-ins with a parent or mentor keep progress on track.'
   },
   {
     question: 'Should apps be used before or after live classes?',

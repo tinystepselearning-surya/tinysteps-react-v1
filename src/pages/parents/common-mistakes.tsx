@@ -23,7 +23,7 @@ const CommonMistakes: React.FC = () => {
 
     <h2 className="mt-6 font-semibold">Step-by-step</h2>
     <ul className="list-disc ml-6 mt-2">
-      <li>Set one small weekly target with the teacher.</li>
+      <li>Set one small lesson target with the teacher.</li>
       <li>Create a 5‑minute daily routine to support that target.</li>
       <li>Review progress every two weeks and adjust goals.</li>
     </ul>
@@ -49,7 +49,7 @@ const CommonMistakes: React.FC = () => {
       <div className="mt-4 grid grid-cols-1 gap-3 text-sm text-gray-700">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Consistency over intensity:</strong> Weekly classes + 5-minute daily practice beats cramming and intense sessions.</span>
+          <span><strong>Consistency over intensity:</strong> Regular classes + 5-minute daily practice beats cramming and intense sessions.</span>
         </div>
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>

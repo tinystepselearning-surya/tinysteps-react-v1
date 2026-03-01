@@ -4,26 +4,29 @@ import LearningJourney from '../components/programs/LearningJourney';
 
 const levels = [
   {
-    name: 'Foundations',
-    outcomes: ['Nouns, verbs, adjectives mastery', 'Sentence building + punctuation', 'Weekly AI grammar checks'],
+    name: 'Basic Grammar',
+    outcomes: [
+      'Nouns, verbs, adjectives mastery',
+      'Sentence building + punctuation',
+      'Lesson-by-lesson editing practice',
+    ],
     pdf: '/curriculum'
   },
   {
-    name: 'Intermediate',
-    outcomes: ['Tenses, subject-verb agreement, pronouns', 'Paragraph writing with feedback', 'Editing labs + rubrics'],
-    pdf: '/curriculum'
-  },
-  {
-    name: 'Advanced',
-    outcomes: ['Clauses, modals, reported speech', 'Creative + opinion writing packs', 'Capstone: 120-word essay with rubric'],
+    name: 'Advanced Grammar',
+    outcomes: [
+      'Clauses, modals, reported speech',
+      'Paragraph writing with feedback',
+      'Capstone writing showcase',
+    ],
     pdf: '/curriculum'
   }
 ];
 
 const stages = [
-  { title: 'Weeks 1-4 • Grammar games', duration: 'Month 1', description: 'Parts of speech, sentence dice, daily story prompts.' },
-  { title: 'Weeks 5-8 • Tenses + paragraphs', duration: 'Month 2', description: 'Tense wheel, editing relay, structured paragraphs.' },
-  { title: 'Weeks 9-12 • Writing lab', duration: 'Month 3', description: 'Narrative + opinion writing, peer reviews, publishing.' }
+  { title: 'Stage 1 • Sentence foundations', duration: 'Lessons 1–12', description: 'Parts of speech, simple sentences, quick edits.' },
+  { title: 'Stage 2 • Meaning + structure', duration: 'Lessons 13–24', description: 'Prepositions, conjunctions, plurals, run-on fixes.' },
+  { title: 'Stage 3 • Tenses + writing', duration: 'Lessons 25–36', description: 'Questions, punctuation, tense accuracy, capstone writing.' }
 ];
 
 export default function GrammarPage() {
@@ -33,7 +36,7 @@ export default function GrammarPage() {
         program="Grammar"
         title="Grammar & Writing Lab"
         subtitle="Playful grammar drills + AI writing coach ensure kids write clearly and confidently."
-        badges={['Ages 5–15', 'Live feedback', 'Weekly writing samples']}
+        badges={['Ages 5–15', 'Live feedback', 'Lesson-based writing samples']}
         highlights={[
           'Sentence dice, grammar bingo, editing relays',
           'AI writing assistant + downloadable worksheets',

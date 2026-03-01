@@ -61,7 +61,6 @@ const CourseDetailPage: FC = () => {
     courseCode: course.slug.toUpperCase().replace(/-/g, '_'),
     educationLevel: course.level,
     audience: { '@type': 'EducationalAudience', educationalRole: 'student', age: course.age.replace('Ages ', '') },
-    duration: 'P12W',
     hasCourseInstance: {
       '@type': 'CourseInstance',
       courseMode: 'OnlineCoursePlatform',
@@ -117,7 +116,7 @@ const CourseDetailPage: FC = () => {
               <WeekAccordion items={weeksState} />
             </div>
           ) : (
-            <p className="mt-2 text-sm text-gray-700">Detailed week‑by‑week curriculum coming soon.</p>
+            <p className="mt-2 text-sm text-gray-700">Detailed lesson‑by‑lesson curriculum coming soon.</p>
           )}
         </div>
 

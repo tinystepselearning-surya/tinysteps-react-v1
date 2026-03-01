@@ -120,9 +120,9 @@ export default function OnlinePhonicsReadingClassesPage() {
             </p>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-2">Weekly Progress Updates</h3>
+            <h3 className="font-bold text-lg mb-2">Stage Progress Updates</h3>
             <p>
-              Detailed reports show what your child mastered, what's next, and tips for supporting learning at home.
+              Parent-friendly insights show what your child mastered, what’s next, and tips for supporting learning at home.
             </p>
           </div>
         </div>
@@ -190,7 +190,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           <div>
             <h3 className="font-bold text-lg mb-2 text-gray-900">How quickly will my child start reading?</h3>
             <p className="text-gray-700 text-sm">
-              Most children start blending simple CVC words (cat, dog, sun) within 4–6 weeks of consistent classes (2–3 per week). Reading full sentences typically happens within 8–12 weeks, depending on starting level and practice frequency.
+              Most children start blending simple CVC words (cat, dog, sun) within 4–6 lessons of consistent classes (2–3 per week). Reading full sentences typically happens within 20–30 lessons, depending on starting level and practice frequency.
             </p>
           </div>
 
@@ -232,7 +232,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           <div>
             <h3 className="font-bold text-lg mb-2 text-gray-900">How will I track my child's progress?</h3>
             <p className="text-gray-700 text-sm">
-              Every week, you receive a detailed progress report showing which sounds and words your child mastered, areas to focus on, and specific tips for home practice. You'll see concrete evidence of improvement—like moving from 5 sounds to 15 sounds, or reading their first sentence.
+              You receive stage-based progress updates showing which sounds and words your child mastered, areas to focus on, and specific tips for home practice. You'll see concrete evidence of improvement—like moving from 5 sounds to 15 sounds, or reading their first sentence.
             </p>
           </div>
         </div>

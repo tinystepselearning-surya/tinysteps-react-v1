@@ -6,7 +6,7 @@ const pillars = [
     title: 'Approaches to Learning',
     detail: 'Communication · Thinking · Research · Social · Self-Management',
     bullets: [
-      'Weekly reflections and voice/video journals nurture communication + self-management.',
+      'Lesson reflections and voice/video journals nurture communication + self-management.',
       'Inquiry prompts in every unit connect literacy skills to real-life contexts.',
     ],
   },
@@ -22,7 +22,7 @@ const pillars = [
     title: 'IB Learner Profile',
     detail: 'Inquirer · Communicator · Reflective · Principled',
     bullets: [
-      'Learners set weekly goals, reflect using “Glow & Grow,” and share evidence with parents.',
+      'Learners set lesson goals, reflect using “Glow & Grow,” and share evidence with parents.',
       'Capstone speeches + writing tasks emphasise principled expression and empathy.',
     ],
   },

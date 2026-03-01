@@ -11,12 +11,13 @@ export type DayItem = {
 };
 
 export type WeekItem = {
-  title: string; // e.g., "Week 1: SATPIN Set 1"
+  title: string; // e.g., "Stage 1 — Sentence Foundations"
   focus?: string;
   learns?: string[]; // learning outcomes
   activities?: string[];
   homework?: string[];
   mastery?: string; // mastery check / output
+  lessons?: string[]; // lesson list for the stage
   days?: DayItem[]; // optional day-by-day breakdown
 };
 
@@ -40,8 +41,8 @@ export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: 
   return (
     <div className="space-y-4">
       <div className="mb-3 flex flex-wrap gap-3 text-sm">
-        <button className="rounded-full border border-gray-200 bg-white/80 px-4 py-1.5 text-gray-700 shadow-sm" onClick={expandAll}>Expand all weeks</button>
-        <button className="rounded-full border border-gray-200 bg-white/60 px-4 py-1.5 text-gray-700 shadow-sm" onClick={collapseAll}>Collapse all</button>
+        <button className="rounded-full border border-gray-200 bg-white/80 px-4 py-1.5 text-gray-700 shadow-sm" onClick={expandAll}>Expand all stages</button>
+        <button className="rounded-full border border-gray-200 bg-white/60 px-4 py-1.5 text-gray-700 shadow-sm" onClick={collapseAll}>Collapse all stages</button>
       </div>
 
       {items.map((w, i) => {
@@ -60,7 +61,7 @@ export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: 
                 onClick={() => toggle(i)}
               >
                 <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${accent.pill} text-white font-semibold shadow-md`}>
-                  W{i + 1}
+                  S{i + 1}
                 </div>
                 <div className="flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -79,6 +80,16 @@ export const WeekAccordion: React.FC<{ items: WeekItem[] } & { defaultOpenAll?: 
               </button>
               <div id={id} className={cn('collapsible-body border-t border-gray-50 px-5 pb-5 pt-2', isOpen ? 'open' : '')}>
                 <div className="grid gap-4 md:grid-cols-2">
+                  {w.lessons && (
+                    <div className="rounded-2xl border border-gray-100 bg-white p-4 text-sm text-gray-700">
+                      <div className="font-semibold text-gray-900">Lessons in this stage</div>
+                      <ul className="mt-2 list-disc pl-4">
+                        {w.lessons.map((l) => (
+                          <li key={l}>{l}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                   {w.learns && (
                     <div className="rounded-2xl border border-gray-100 bg-gray-50/70 p-4 text-sm text-gray-700">
                       <div className="font-semibold text-gray-900">What we learn</div>

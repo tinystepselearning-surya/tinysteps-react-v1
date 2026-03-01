@@ -185,7 +185,7 @@ export default function BookDemoPage() {
               </div>
               <div>
                 <h3 className="font-semibold">Simple Progress Updates</h3>
-                <p className="text-gray-700">Weekly reports show exactly what your child learned</p>
+                <p className="text-gray-700">Stage-based updates show exactly what your child learned</p>
               </div>
             </div>
 

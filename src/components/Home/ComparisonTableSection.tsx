@@ -20,7 +20,7 @@ const comparisons: ComparisonRow[] = [
 		others: 'cross'
 	},
 	{
-		feature: 'Weekly progress dashboards for parents',
+		feature: 'Stage-based progress dashboards for parents',
 		tinySteps: 'check',
 		others: 'cross'
 	},

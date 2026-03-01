@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 const steps = [
   {
     title: 'Step 1: Initial Assessment',
-    duration: 'Week 1',
+    duration: 'Lesson 1',
     body: [
       'Your child\'s first class is an assessment session — not real learning yet.',
       'We discover current level, learning style, personality, and specific needs.',
@@ -12,8 +12,8 @@ const steps = [
     ]
   },
   {
-    title: 'Step 2: Intensive Learning (Weeks 2–8)',
-    duration: '8 weeks, 2–3 classes/week',
+    title: 'Step 2: Intensive Learning (Lessons 2–20)',
+    duration: 'Lesson-based, pace flexible',
     body: [
       'Phonics: sounds → word building → fluency → spelling patterns.',
       'Grammar: parts of speech → sentence building → tenses → fix common mistakes.',
@@ -22,12 +22,12 @@ const steps = [
     ]
   },
   {
-    title: 'Step 3: Consolidation & Confidence (Weeks 9–12)',
-    duration: '4 weeks, 2 classes/week',
+    title: 'Step 3: Consolidation & Confidence (Lessons 21–36)',
+    duration: 'Lesson-based, pace flexible',
     body: [
       'Reads stories, speaks in sentences, answers without hesitation, corrects themselves.',
       'Public speaking intensifies: show & tell, story without prompts, Q&A.',
-      'Milestones: Week 10 first unprompted conversation • Week 11 reads without pointing • Week 12 speaks on camera.'
+      'Milestones: around Lesson 10 first unprompted conversation • around Lesson 20 reads without pointing • around Lesson 30 speaks on camera.'
     ]
   },
   {
@@ -35,7 +35,7 @@ const steps = [
     duration: 'Ongoing',
     body: [
       'Reads independently, speaks confidently, asks questions, wants to learn more.',
-      'Paths: advanced levels • group prep • weekly maintenance.',
+      'Paths: advanced levels • group prep • lesson refresh.',
       'Habit: reading for pleasure • speaking naturally • confidence at school.'
     ]
   }
@@ -46,7 +46,7 @@ const LearningJourneySection: React.FC = () => {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
-          <h2 className="font-heading text-3xl font-bold md:text-4xl">Your Child\'s 3-Month Transformation</h2>
+          <h2 className="font-heading text-3xl font-bold md:text-4xl">Your Child\'s Lesson-by-Lesson Transformation</h2>
         </div>
         <div className="relative">
           <div className="absolute left-1/2 top-0 hidden h-full w-0.5 -translate-x-1/2 bg-gradient-to-b from-primary-500 to-secondary-500 md:block" />
@@ -78,4 +78,3 @@ const LearningJourneySection: React.FC = () => {
 };
 
 export default LearningJourneySection;
-

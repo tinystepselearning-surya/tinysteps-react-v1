@@ -113,7 +113,7 @@ export default function TeamPage() {
               </div>
               <h3 className="mb-2 text-lg font-semibold">Progress Tracking</h3>
               <p className="text-gray-600">
-                Weekly parent reports, topic-level mastery bands, and clear next-step guidance so you always know where your child stands.
+                Stage-based parent updates, topic-level mastery bands, and clear next-step guidance so you always know where your child stands.
               </p>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function TeamPage() {
                 </svg>
               </div>
               <p className="mb-4 text-gray-700">
-                "My daughter went from struggling with letter sounds to reading simple books in just 14 weeks. The weekly 
+                "My daughter went from struggling with letter sounds to reading simple books in just 14 lessons. The lesson 
                 progress reports helped me understand exactly what she was learning. Best decision we made for her education."
               </p>
               <p className="text-sm font-medium text-gray-900">– Parent of 5-year-old, Phonics Mastery Program</p>

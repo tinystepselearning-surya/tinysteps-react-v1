@@ -177,7 +177,7 @@ const ConversionHero: React.FC = () => {
               <SunTile
                 eyebrow="Confidence"
                 title="Public Speaking"
-                desc="Weekly confidence building drills."
+                desc="Stage-based confidence building drills."
                 icon={<span className="text-2xl">✨</span>}
               />
             </div>

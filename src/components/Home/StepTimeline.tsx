@@ -64,13 +64,13 @@ const stages: Stage[] = [
     parentGets: [
       "Simple explanation of the rule taught (parent-friendly)",
       "Common mistakes to watch for (1–2 only)",
-      "Weekly skill summary (grammar + writing)",
+      "Stage skill summary (grammar + writing)",
     ],
     proofTiles: [
       { label: "Rule in 1 Line", desc: "What your child learned today" },
       { label: "Mistake Watch", desc: "1–2 likely errors + quick fix" },
       { label: "Practice Sheet", desc: "Short, focused practice (optional)" },
-      { label: "Weekly Summary", desc: "What improved + what’s next" },
+      { label: "Stage Summary", desc: "What improved + what’s next" },
     ],
     ctaLabel: "See a sample grammar activity",
   },

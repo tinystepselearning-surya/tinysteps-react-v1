@@ -1,5 +1,5 @@
 // src/pages/parent/ParentDashboard.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState, type ComponentType } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -21,6 +21,17 @@ import { db, auth } from "../../lib/firebaseConfig";
 
 import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
+import {
+  CalendarDays,
+  CircleUser,
+  CreditCard,
+  Gamepad2,
+  Home,
+  ChevronDown,
+  LogOut,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,6 +52,31 @@ type TabKey =
   | "classes"
   | "profile"
   | "payments";
+
+type ParentNavItem = {
+  id: TabKey;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+};
+
+const parentNavItems: ParentNavItem[] = [
+  { id: "dashboard", label: "Overview", icon: Home },
+  { id: "insights", label: "Insights", icon: TrendingUp },
+  { id: "games-progress", label: "Games Progress", icon: Gamepad2 },
+  { id: "skills", label: "Skills", icon: Sparkles },
+  { id: "classes", label: "Classes", icon: CalendarDays },
+  { id: "payments", label: "Payments", icon: CreditCard },
+];
+
+const parentTabLabels: Record<TabKey, string> = {
+  dashboard: "Overview",
+  insights: "Insights",
+  "games-progress": "Games Progress",
+  skills: "Skills",
+  classes: "Classes",
+  profile: "Profile",
+  payments: "Payments",
+};
 
 function safeTab(value: string | null): TabKey {
   const validTabs: TabKey[] = [
@@ -101,12 +137,22 @@ type ParentPaymentRecord = {
 
 type Enrollment = {
   id: string;
+  parentId?: string;
+  kidId?: string;
+  kidIds?: string[];
+  studentId?: string;
   courseId?: string;
   courseName?: string;
   courseLabel?: string;
   course?: { area?: string };
   courseArea?: string;
   area?: string;
+  status?: string;
+  enrollmentDate?: any;
+  startDate?: any;
+  ratePerSession?: number;
+  feePerClass?: number;
+  feePerSession?: number;
   [key: string]: any;
 };
 
@@ -314,6 +360,82 @@ const STAGE_HINTS_BY_COURSE: Record<string, Record<number, string>> = {
   },
 };
 
+type StageDefinition = {
+  stageOrder: number;
+  label: string;
+  start: number;
+  end: number;
+};
+
+const STAGE_DEFINITIONS_BY_COURSE: Record<string, StageDefinition[]> = {
+  "phonics-foundations": [
+    { stageOrder: 1, label: "Stage 1 — First letter sounds", start: 1, end: 5 },
+    { stageOrder: 2, label: "Stage 2 — Letter sounds set 2", start: 6, end: 10 },
+    { stageOrder: 3, label: "Stage 3 — Letter sounds set 3", start: 11, end: 15 },
+    { stageOrder: 4, label: "Stage 4 — Letter sounds set 4", start: 16, end: 20 },
+    { stageOrder: 5, label: "Stage 5 — Letter sounds set 5", start: 21, end: 25 },
+    { stageOrder: 6, label: "Stage 6 — Short vowels + review", start: 26, end: 30 },
+  ],
+  "early-phonics": [
+    { stageOrder: 1, label: "Stage 1 — Sound sets 1–5", start: 1, end: 6 },
+    { stageOrder: 2, label: "Stage 2 — Sound sets 6–7 + short vowels", start: 7, end: 10 },
+    { stageOrder: 3, label: "Stage 3 — Digraphs + silent letters", start: 11, end: 20 },
+    { stageOrder: 4, label: "Stage 4 — Vowel teams + long vowels", start: 21, end: 31 },
+    { stageOrder: 5, label: "Stage 5 — Magic E", start: 32, end: 36 },
+    { stageOrder: 6, label: "Stage 6 — Longer words + review", start: 37, end: 41 },
+  ],
+  "advanced-phonics": [
+    { stageOrder: 1, label: "Stage 1 — Diphthongs", start: 1, end: 4 },
+    { stageOrder: 2, label: "Stage 2 — Bossy R", start: 5, end: 7 },
+    { stageOrder: 3, label: "Stage 3 — Special sounds + silent letters", start: 8, end: 10 },
+    { stageOrder: 4, label: "Stage 4 — Alternate vowels", start: 11, end: 15 },
+    { stageOrder: 5, label: "Stage 5 — Endings", start: 16, end: 16 },
+    { stageOrder: 6, label: "Stage 6 — Revision", start: 17, end: 20 },
+  ],
+  "basic-grammar": [
+    { stageOrder: 1, label: "Stage 1 — Sentence Foundations", start: 1, end: 6 },
+    { stageOrder: 2, label: "Stage 2 — Meaning Builders", start: 7, end: 12 },
+    { stageOrder: 3, label: "Stage 3 — Where/When/How", start: 13, end: 18 },
+    { stageOrder: 4, label: "Stage 4 — Longer Sentences", start: 19, end: 24 },
+    { stageOrder: 5, label: "Stage 5 — Asking + Punctuation", start: 25, end: 30 },
+    { stageOrder: 6, label: "Stage 6 — Tenses Basics", start: 31, end: 36 },
+  ],
+  "advanced-grammar": [
+    { stageOrder: 1, label: "Stage 1 — Tense Control", start: 1, end: 6 },
+    { stageOrder: 2, label: "Stage 2 — Perfect Tenses + Modals", start: 7, end: 12 },
+    { stageOrder: 3, label: "Stage 3 — Clauses + Complex Sentences", start: 13, end: 18 },
+    { stageOrder: 4, label: "Stage 4 — Voice + Reported Speech", start: 19, end: 24 },
+    { stageOrder: 5, label: "Stage 5 — Paragraph Cohesion", start: 25, end: 30 },
+    { stageOrder: 6, label: "Stage 6 — Tone + Argument + Impact", start: 31, end: 36 },
+  ],
+  "basic-public-speaking": [
+    { stageOrder: 1, label: "Stage 1 — Comfort + Routine", start: 1, end: 6 },
+    { stageOrder: 2, label: "Stage 2 — Clear Speaking", start: 7, end: 12 },
+    { stageOrder: 3, label: "Stage 3 — Describe + Show & Tell", start: 13, end: 18 },
+    { stageOrder: 4, label: "Stage 4 — Mini Talks + Q&A", start: 19, end: 24 },
+    { stageOrder: 5, label: "Stage 5 — Story Basics", start: 25, end: 30 },
+    { stageOrder: 6, label: "Stage 6 — Presentation Readiness", start: 31, end: 36 },
+  ],
+  "advanced-public-speaking": [
+    { stageOrder: 1, label: "Stage 1 — Presence + Engagement", start: 1, end: 6 },
+    { stageOrder: 2, label: "Stage 2 — Structure + Supporting Details", start: 7, end: 12 },
+    { stageOrder: 3, label: "Stage 3 — Story Performance", start: 13, end: 18 },
+    { stageOrder: 4, label: "Stage 4 — Impromptu + Q&A", start: 19, end: 24 },
+    { stageOrder: 5, label: "Stage 5 — Persuasion + Debate", start: 25, end: 30 },
+    { stageOrder: 6, label: "Stage 6 — Presentation Mastery", start: 31, end: 36 },
+  ],
+};
+
+const resolveStageByLessonNumber = (
+  courseId: string,
+  lessonNumber: number | null | undefined,
+): StageDefinition | null => {
+  if (!lessonNumber) return null;
+  const stages = STAGE_DEFINITIONS_BY_COURSE[courseId];
+  if (!stages) return null;
+  return stages.find((stage) => lessonNumber >= stage.start && lessonNumber <= stage.end) ?? null;
+};
+
 const STAGE_EXPECTATIONS_BY_COURSE: Record<string, Record<number, string[]>> = {
   "phonics-foundations": {
     1: ["Recognize first letter sounds", "Match sounds to pictures"],
@@ -434,6 +556,58 @@ const calcStageProgressPct = (rows: Array<any>): number => {
   const total = rows.reduce((sum, row) => sum + masteryPctFromKey(row.mastery), 0);
   return clampPercent(Math.round(total / rows.length));
 };
+
+function parseStageOrderFromLabel(label?: string | null): number | null {
+  const raw = String(label ?? "").trim();
+  if (!raw) return null;
+  const match = raw.match(/stage\s*(\d+)/i);
+  if (!match) return null;
+  const n = Number(match[1]);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+function buildStageOrderMap(
+  topics: Array<{ stageLabel?: string | null; stageOrder?: number | null; order: number | null }>,
+) {
+  const labelKey = (label?: string | null) => (label && String(label).trim()) || "Lessons";
+  const orderMap = new Map<string, number>();
+  const usedOrders = new Set<number>();
+
+  topics.forEach((topic) => {
+    const label = labelKey(topic.stageLabel);
+    const explicit =
+      typeof topic.stageOrder === "number" && Number.isFinite(topic.stageOrder) && topic.stageOrder > 0
+        ? topic.stageOrder
+        : null;
+    const parsed = parseStageOrderFromLabel(label);
+    const resolved = explicit ?? parsed;
+    if (resolved) {
+      const existing = orderMap.get(label);
+      if (!existing || resolved < existing) {
+        orderMap.set(label, resolved);
+      }
+      usedOrders.add(resolved);
+    }
+  });
+
+  let nextOrder = 1;
+  const allocate = () => {
+    while (usedOrders.has(nextOrder)) nextOrder += 1;
+    const value = nextOrder;
+    usedOrders.add(value);
+    nextOrder += 1;
+    return value;
+  };
+
+  topics.forEach((topic) => {
+    const label = labelKey(topic.stageLabel);
+    if (!orderMap.has(label)) {
+      orderMap.set(label, allocate());
+    }
+  });
+
+  return orderMap;
+}
 
 function resolveTopicOrder(topic: any): number | null {
   if (typeof topic?.order === "number") return topic.order;
@@ -640,6 +814,7 @@ export default function ParentDashboard() {
     "all" | "in_progress" | "completed"
   >("all");
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
+  const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
     if (!selectedKidId && kids.length > 0) setSelectedKidId(kids[0].id);
@@ -741,7 +916,7 @@ export default function ParentDashboard() {
 
   const curriculumTopicsQuery = useQuery({
     queryKey: ["curriculumTopics"],
-    enabled: activeTab === "dashboard",
+    enabled: activeTab === "dashboard" || activeTab === "insights" || activeTab === "skills",
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
@@ -796,14 +971,17 @@ export default function ParentDashboard() {
           ? `${lesson} — ${baseLabel || id}`
           : baseLabel || id;
       const order = resolveTopicOrder(topic);
+      const stageFromLesson = resolveStageByLessonNumber(courseId, order);
+      const resolvedStageLabel = stageLabel || stageFromLesson?.label || null;
+      const resolvedStageOrder = stageOrder ?? stageFromLesson?.stageOrder ?? null;
       if (!byCourse[courseId]) byCourse[courseId] = [];
       byCourse[courseId].push({
         id,
         label,
         displayTitle: label,
         order,
-        stageLabel: stageLabel || null,
-        stageOrder,
+        stageLabel: resolvedStageLabel,
+        stageOrder: resolvedStageOrder,
       });
     });
 
@@ -817,6 +995,20 @@ export default function ParentDashboard() {
         if (aOrder !== null && bOrder === null) return -1;
         if (aOrder === null && bOrder !== null) return 1;
         return a.label.localeCompare(b.label);
+      });
+
+      const stageOrderMap = buildStageOrderMap(byCourse[courseId]);
+      byCourse[courseId] = byCourse[courseId].map((topic) => {
+        const key = (topic.stageLabel && topic.stageLabel.trim()) || "Lessons";
+        const resolvedStageOrder =
+          typeof topic.stageOrder === "number" && Number.isFinite(topic.stageOrder) && topic.stageOrder > 0
+            ? topic.stageOrder
+            : parseStageOrderFromLabel(key) ?? stageOrderMap.get(key) ?? null;
+        return {
+          ...topic,
+          stageLabel: key,
+          stageOrder: resolvedStageOrder,
+        };
       });
     });
 
@@ -871,7 +1063,7 @@ export default function ParentDashboard() {
 
   const coursesLookupQuery = useQuery({
     queryKey: ["coursesLookup"],
-    enabled: activeTab === "insights",
+    enabled: activeTab === "insights" || profileOpen,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
@@ -1037,37 +1229,6 @@ export default function ParentDashboard() {
 
     navigate(`${base}${kidParam}`);
   };
-
-  // ---- Skills tab state ----
-  const [selectedSkillStageId, setSelectedSkillStageId] = useState<string | null>(
-    null
-  );
-  const skillsScrollContainerRef = useRef<HTMLDivElement>(null);
-  const [skillsScrollAtEnd, setSkillsScrollAtEnd] = useState(false);
-  const [skillsViewMode, setSkillsViewMode] = useState<"scroll" | "list">(
-    "scroll"
-  );
-
-  useEffect(() => {
-    const updateSkillsScrollPosition = () => {
-      if (!skillsScrollContainerRef.current) return;
-      const { scrollLeft, scrollWidth, clientWidth } =
-        skillsScrollContainerRef.current;
-      setSkillsScrollAtEnd(scrollLeft + clientWidth >= scrollWidth - 2);
-    };
-
-    const container = skillsScrollContainerRef.current;
-    if (!container) return;
-
-    updateSkillsScrollPosition();
-    container.addEventListener("scroll", updateSkillsScrollPosition);
-    window.addEventListener("resize", updateSkillsScrollPosition);
-
-    return () => {
-      container.removeEventListener("scroll", updateSkillsScrollPosition);
-      window.removeEventListener("resize", updateSkillsScrollPosition);
-    };
-  }, [activeTab]);
 
   // ---- Classes tab state (Calendar) ----
   const [classesMonth, setClassesMonth] = useState<Date>(() => {
@@ -1330,6 +1491,106 @@ export default function ParentDashboard() {
     topicCourseById,
   ]);
 
+  const skillsInsightData = useMemo(() => {
+    const selectedCourse = phonicsProgressByCourse[0];
+    if (!selectedCourse) return null;
+    const rows = selectedCourse.rows ?? [];
+
+    const skillMap = new Map<
+      string,
+      { count: number; scoreTotal: number; lastUpdatedAtMs: number }
+    >();
+    const stageMap = new Map<string, { label: string; order: number; skills: Map<string, number> }>();
+    const recentUpdates: Array<{ tag: string; stageLabel: string; stageOrder: number; updatedAtMs: number }> = [];
+
+    rows.forEach((row: any) => {
+      const skills = Array.isArray(row.focusChips) ? row.focusChips : [];
+      if (!skills.length) return;
+
+      const masteryKey = masteryKeyFromValue(row.mastery);
+      const masteryRank = Math.max(0, STAGE_MASTERY_ORDER.indexOf(masteryKey));
+      const stageLabel = row.stageLabel || "Stage";
+      const stageOrder =
+        typeof row.stageOrder === "number" && row.stageOrder > 0
+          ? row.stageOrder
+          : parseStageOrderFromLabel(stageLabel) ?? 0;
+
+      let stageEntry = stageMap.get(stageLabel);
+      if (!stageEntry) {
+        stageEntry = { label: stageLabel, order: stageOrder, skills: new Map() };
+      }
+
+      skills.forEach((rawTag: string) => {
+        const tag = String(rawTag || "").trim();
+        if (!tag) return;
+
+        const existing = skillMap.get(tag) ?? {
+          count: 0,
+          scoreTotal: 0,
+          lastUpdatedAtMs: 0,
+        };
+        existing.count += 1;
+        existing.scoreTotal += masteryRank;
+        existing.lastUpdatedAtMs = Math.max(
+          existing.lastUpdatedAtMs,
+          row.updatedAtMs ?? 0
+        );
+        skillMap.set(tag, existing);
+
+        stageEntry?.skills.set(tag, (stageEntry?.skills.get(tag) ?? 0) + 1);
+
+        if (row.updatedAtMs) {
+          recentUpdates.push({
+            tag,
+            stageLabel,
+            stageOrder,
+            updatedAtMs: row.updatedAtMs,
+          });
+        }
+      });
+
+      stageMap.set(stageLabel, stageEntry);
+    });
+
+    const skills = Array.from(skillMap.entries()).map(([tag, data]) => ({
+      tag,
+      count: data.count,
+      avgScore: data.scoreTotal / data.count,
+      lastUpdatedAtMs: data.lastUpdatedAtMs,
+    }));
+
+    const strengths = [...skills]
+      .sort((a, b) => b.avgScore - a.avgScore || b.count - a.count)
+      .slice(0, 6);
+    const needsPractice = [...skills]
+      .sort((a, b) => a.avgScore - b.avgScore || b.count - a.count)
+      .slice(0, 6);
+
+    const stageGroups = Array.from(stageMap.values())
+      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
+      .map((stage) => ({
+        label: stage.label,
+        order: stage.order,
+        topSkills: Array.from(stage.skills.entries())
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([tag, count]) => ({ tag, count })),
+      }));
+
+    const recent = recentUpdates
+      .sort((a, b) => b.updatedAtMs - a.updatedAtMs)
+      .slice(0, 6);
+
+    return {
+      courseLabel: selectedCourse.courseLabel,
+      strengths,
+      needsPractice,
+      stageGroups,
+      recentUpdates: recent,
+      totalSkills: skills.length,
+    };
+  }, [phonicsProgressByCourse]);
+
   const normalizedInsightsCourseId = useMemo(() => {
     return normalizeCurriculumCourseId(insightsCourseId) || null;
   }, [insightsCourseId]);
@@ -1371,6 +1632,8 @@ export default function ParentDashboard() {
       addLabelEntry(doc?.topicName, doc);
     });
 
+    const stageOrderMap = buildStageOrderMap(topics);
+
     const rows = topics.map((topic) => {
       let matchedDoc: any = null;
       const docById = progressByTopicId[topic.id];
@@ -1395,10 +1658,16 @@ export default function ParentDashboard() {
         matchedDoc?.updatedAt?.toMillis?.() ??
         (typeof matchedDoc?.updatedAt === "number" ? matchedDoc.updatedAt : null);
 
+      const label = topic.stageLabel ?? "Lessons";
+      const order =
+        typeof topic.stageOrder === "number" && topic.stageOrder > 0
+          ? topic.stageOrder
+          : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
+
       return {
         id: topic.id,
-        stageLabel: topic.stageLabel ?? "Lessons",
-        stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : 999,
+        stageLabel: label,
+        stageOrder: order,
         mastery: matchedDoc?.mastery ?? "",
         focusChips: Array.isArray(matchedDoc?.selectedSubskills)
           ? matchedDoc.selectedSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
@@ -1424,6 +1693,8 @@ export default function ParentDashboard() {
         const masteryKey = aggregateStageMastery(group.rows.map((r) => r.mastery));
         const stageHint = STAGE_HINTS_BY_COURSE[normalizedInsightsCourseId]?.[group.order] ?? "";
         const progressPct = calcStageProgressPct(group.rows);
+        const completedCount = group.rows.filter((row: any) => masteryKeyFromValue(row.mastery) === "mastered").length;
+        const totalCount = group.rows.length;
         const expectations =
           STAGE_EXPECTATIONS_BY_COURSE[normalizedInsightsCourseId]?.[group.order] ?? [];
         return {
@@ -1433,6 +1704,8 @@ export default function ParentDashboard() {
           focusChips: pickStageFocus(group.rows),
           stageHint,
           progressPct,
+          completedCount,
+          totalCount,
           expectations,
         };
       });
@@ -1625,6 +1898,183 @@ export default function ParentDashboard() {
     };
   }, [billingChargesQuery.data, monthSessions, selectedKidId]);
 
+  const profilePaymentsSummary = useMemo(() => {
+    const rows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
+    const kidId = selectedKidId ? String(selectedKidId) : null;
+    const filtered = kidId
+      ? rows.filter((p) => String(p.kidId || "") === kidId)
+      : rows;
+    return filtered.reduce(
+      (acc, payment) => {
+        const rawAmount = Number(payment?.amount ?? 0);
+        const amount = Number.isFinite(rawAmount) ? rawAmount : 0;
+        const rawApplied = Number(payment?.appliedAmount ?? NaN);
+        const applied = Number.isFinite(rawApplied)
+          ? rawApplied
+          : (() => {
+              const rawUnapplied = Number(payment?.unappliedAmount ?? 0);
+              const unapplied = Number.isFinite(rawUnapplied) ? rawUnapplied : 0;
+              return amount - unapplied;
+            })();
+        const rawUnapplied = Number(payment?.unappliedAmount ?? NaN);
+        const unapplied = Number.isFinite(rawUnapplied)
+          ? rawUnapplied
+          : amount - applied;
+        acc.total += amount;
+        acc.applied += applied;
+        acc.unapplied += unapplied;
+        acc.count += 1;
+        return acc;
+      },
+      { total: 0, applied: 0, unapplied: 0, count: 0 }
+    );
+  }, [parentPaymentsQuery.data, selectedKidId]);
+
+  const profileEnrollments = useMemo(() => {
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+    const kidId = selectedKidId ? String(selectedKidId) : "";
+    const filtered = enrollments.filter((enr) => {
+      if (!kidId) return true;
+      if (String(enr.kidId || "") === kidId) return true;
+      if (String(enr.studentId || "") === kidId) return true;
+      if (Array.isArray(enr.kidIds) && enr.kidIds.some((id) => String(id) === kidId)) return true;
+      return false;
+    });
+    return filtered.map((enr) => {
+      const courseId = String(enr.courseId || "").trim();
+      const fallbackLabel = String(enr.courseLabel || enr.courseName || "").trim();
+      const label = courseId ? formatCourseLabel(courseId, fallbackLabel) : fallbackLabel || "Course";
+      const rawFee =
+        enr.feePerClass ??
+        enr.feePerSession ??
+        enr.ratePerSession ??
+        (enr as any).rate ??
+        null;
+      const fee = rawFee !== null && Number.isFinite(Number(rawFee)) ? Number(rawFee) : null;
+      return {
+        id: enr.id,
+        courseId,
+        courseLabel: label,
+        status: String(enr.status || "active"),
+        fee,
+      };
+    });
+  }, [enrollmentsQuery.data, selectedKidId, coursesLookupQuery.data]);
+
+  const renderProfileContent = () => {
+    const kidName = selectedKid?.fullName || "Child";
+    const hasKids = kids.length > 0;
+    const hasEnrollments = profileEnrollments.length > 0;
+
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Card className="p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-400">Parent</div>
+            <div className="mt-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+              {user?.displayName || "Parent"}
+            </div>
+            <div className="text-sm text-slate-600 dark:text-slate-300">
+              {user?.email || "Email not available"}
+            </div>
+          </Card>
+          <Card className="p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-400">Children</div>
+            {hasKids ? (
+              <div className="mt-2 space-y-2">
+                {kids.map((kid: any) => (
+                  <div
+                    key={kid.id}
+                    className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm ${
+                      String(kid.id) === String(selectedKidId)
+                        ? "border-indigo-200 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 text-slate-700 dark:border-slate-800 dark:text-slate-200"
+                    }`}
+                  >
+                    <span>{kid.fullName || kid.name || "Unnamed"}</span>
+                    {String(kid.id) === String(selectedKidId) && (
+                      <span className="text-xs font-semibold">Viewing</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-2 text-sm text-slate-500">No children linked yet.</div>
+            )}
+          </Card>
+        </div>
+
+        <Card className="p-4">
+          <div className="text-xs uppercase tracking-wide text-slate-400">Enrollments</div>
+          {hasEnrollments ? (
+            <div className="mt-3 space-y-3">
+              {profileEnrollments.map((enr) => (
+                <div
+                  key={enr.id}
+                  className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <div className="font-semibold">{enr.courseLabel}</div>
+                    <div className="text-xs text-slate-500">Status: {enr.status}</div>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    Fee per class: {enr.fee !== null ? `₹${enr.fee.toLocaleString("en-IN")}` : "—"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-2 text-sm text-slate-500">
+              No enrollments found for {kidName}.
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-4">
+          <div className="text-xs uppercase tracking-wide text-slate-400">Payments</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+              <div className="text-xs text-slate-500">Due now</div>
+              <div className="text-lg font-semibold">
+                ₹{billingSummary.dueNow.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
+              </div>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200">
+              <div className="text-xs text-slate-500">Paid so far</div>
+              <div className="text-lg font-semibold">
+                ₹{profilePaymentsSummary.total.toLocaleString("en-IN")}
+              </div>
+              <div className="mt-1 text-xs text-slate-500">
+                Payments recorded: {profilePaymentsSummary.count}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-4">
+          <div className="text-xs uppercase tracking-wide text-slate-400">Class Insights</div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+              <div className="text-xs text-slate-500">Completed (this month)</div>
+              <div className="text-lg font-semibold">{billingSummary.chargesThisMonth}</div>
+            </div>
+            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+              <div className="text-xs text-slate-500">Upcoming</div>
+              <div className="text-lg font-semibold">{classesCounts.upcoming}</div>
+            </div>
+            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+              <div className="text-xs text-slate-500">Total this month</div>
+              <div className="text-lg font-semibold">{classesCounts.total}</div>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  };
+
   const billingLoading = billingChargesQuery.isLoading || kidSessionsQuery.isLoading;
 
   // Calendar grid helpers
@@ -1732,29 +2182,31 @@ export default function ParentDashboard() {
 
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {stageSummaries.map((stage) => {
-          const colors = getStageColors(stage.order);
+        {stageSummaries.map((stage, index) => {
+          const displayOrder =
+            typeof stage.order === "number" && stage.order > 0 ? stage.order : index + 1;
+          const colors = getStageColors(displayOrder);
           const masteryText = formatMasteryLabel(stage.masteryKey) || "Getting started";
-          const ringLabel =
-            masteryText === "Getting started" || masteryText === "Not started"
-              ? "Start"
-              : masteryText === "In progress"
-                ? "On it"
-                : masteryText;
-          const title = stripStagePrefix(stage.label, stage.order);
+          const statusText =
+            masteryText.toLowerCase() === "getting started" ? "Not started" : masteryText;
+          const title = stripStagePrefix(stage.label, displayOrder);
           const stageHint =
             stage.stageHint ||
-            STAGE_HINTS_BY_COURSE[courseId || ""]?.[stage.order] ||
+            STAGE_HINTS_BY_COURSE[courseId || ""]?.[displayOrder] ||
             "";
           const expectations =
             stage.expectations ||
-            STAGE_EXPECTATIONS_BY_COURSE[courseId || ""]?.[stage.order] ||
+            STAGE_EXPECTATIONS_BY_COURSE[courseId || ""]?.[displayOrder] ||
             [];
           const progressPct = typeof stage.progressPct === "number" ? stage.progressPct : 0;
+          const ringLabel = masteryText.toLowerCase() === "getting started" ? "Start" : masteryText;
+          const completedCount =
+            typeof stage.completedCount === "number" ? stage.completedCount : null;
+          const totalCount = typeof stage.totalCount === "number" ? stage.totalCount : null;
 
           return (
             <div
-              key={`${stage.order}-${stage.label}`}
+              key={`${displayOrder}-${stage.label}`}
               className="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm"
               style={{
                 background: `linear-gradient(135deg, ${colors.soft} 0%, #ffffff 60%)`,
@@ -1765,7 +2217,7 @@ export default function ParentDashboard() {
                   <div
                     className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badgeBg} ${colors.badgeText}`}
                   >
-                    Stage {stage.order}
+                    Stage {displayOrder}
                   </div>
                   <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
                     {title}
@@ -1815,8 +2267,15 @@ export default function ParentDashboard() {
               <div className="mt-3">
                 <div className="flex items-center justify-between text-[11px] text-gray-500">
                   <span>Progress</span>
-                  <span className="font-semibold text-gray-700">{masteryText}</span>
+                  <span className="font-semibold text-gray-700">{statusText}</span>
                 </div>
+                {completedCount !== null && totalCount !== null && (
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-gray-500">
+                    <span>
+                      {completedCount}/{totalCount} lessons
+                    </span>
+                  </div>
+                )}
                 <div className="mt-2 h-2 rounded-full bg-white/70 border border-white">
                   <div
                     className={`h-2 rounded-full ${colors.bar}`}
@@ -1841,168 +2300,160 @@ export default function ParentDashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto space-y-6">
-        {/* Header + child selector */}
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  Hi, {user?.displayName || "Parent"} 👋
-                </h1>
-                {selectedKid && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Viewing: {selectedKid.fullName || "Child"}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          <aside className="w-full lg:w-72 lg:sticky lg:top-6 lg:self-start">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm overflow-hidden">
+              <div className="px-4 pb-4 pt-3 space-y-4">
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Active Child
+                    </label>
+                  </div>
+
+                  {kidsQuery.isLoading ? (
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
+                      Loading kids...
+                    </div>
+                  ) : kids.length === 0 ? (
+                    <div className="text-sm text-slate-600 dark:text-slate-400">
+                      No kids linked yet.
+                    </div>
+                  ) : (
+                    <>
+                      <select
+                        value={selectedKidId}
+                        onChange={(e) => setSelectedKidId(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 mb-3"
+                      >
+                        {kids.map((k: any) => (
+                          <option key={k.id} value={k.id}>
+                            {k.fullName || "Unnamed"}
+                          </option>
+                        ))}
+                      </select>
+
+                      <Button
+                        onClick={() =>
+                          navigate(`/kids?kidId=${encodeURIComponent(selectedKidId)}`)
+                        }
+                        disabled={!selectedKidId}
+                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                      >
+                        Open Kids Portal
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <nav className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 lg:mx-0 lg:px-0 lg:pb-0 lg:block lg:space-y-1 lg:overflow-visible">
+                  {parentNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setTab(item.id)}
+                        aria-current={isActive ? "page" : undefined}
+                        className={`group flex items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition flex-shrink-0 min-w-[150px] lg:min-w-0 lg:w-full ${
+                          isActive
+                            ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                        }`}
+                      >
+                        <span
+                          className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                            isActive
+                              ? "bg-white/15 text-white dark:bg-slate-900/10 dark:text-slate-900"
+                              : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-slate-700"
+                          }`}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </span>
+                        <span className="flex-1">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </nav>
+
+                <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="font-semibold text-slate-700 dark:text-slate-200 mb-1">
+                    Confidence at a glance
+                  </div>
+                  Clear milestones, upcoming classes, and payments together.
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <main className="flex-1">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm px-6 py-5">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    Parent Dashboard
                   </p>
-                )}
+                  <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                    Hi, {user?.displayName || "Parent"}
+                  </h1>
+                  {selectedKid && (
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Viewing: {selectedKid.fullName || "Child"}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-3">
+                    <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Section
+                    </div>
+                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {parentTabLabels[activeTab]}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setProfileOpen(true)}
+                      title="View profile"
+                      className="h-10 px-4 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-900 dark:bg-slate-800/70 dark:text-slate-100 dark:hover:bg-slate-700 ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm"
+                    >
+                      <CircleUser className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                      <span className="text-base font-semibold underline-offset-4 hover:underline">
+                        {user?.displayName || "Parent"}
+                      </span>
+                      <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleLogout}
+                      className="h-9 px-3 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="hidden sm:inline">Logout</span>
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                className="md:hidden"
-              >
-                Logout
-              </Button>
             </div>
-          </div>
 
-          <div className="w-full md:w-96 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Select Child
-              </label>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
-                className="hidden md:inline-flex text-xs"
-              >
-                Logout
-              </Button>
-            </div>
+            <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+              <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                  <DialogTitle>Profile & Payments</DialogTitle>
+                </DialogHeader>
+                {renderProfileContent()}
+              </DialogContent>
+            </Dialog>
 
-            {kidsQuery.isLoading ? (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                Loading kids…
-              </div>
-            ) : kids.length === 0 ? (
-              <div className="text-sm text-gray-600 dark:text-gray-400">
-                No kids linked yet.
-              </div>
-            ) : (
-              <>
-                <select
-                  value={selectedKidId}
-                  onChange={(e) => setSelectedKidId(e.target.value)}
-                  className="w-full px-3 py-2 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 mb-3"
-                >
-                  {kids.map((k: any) => (
-                    <option key={k.id} value={k.id}>
-                      {k.fullName || "Unnamed"}
-                    </option>
-                  ))}
-                </select>
-
-                {/* ✅ Change: Open Kids Portal (not Games portal) */}
-                <Button
-                  onClick={() =>
-                    navigate(`/kids?kidId=${encodeURIComponent(selectedKidId)}`)
-                  }
-                  disabled={!selectedKidId}
-                  className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
-                >
-                  Open Kids Portal
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="inline-flex flex-wrap rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden">
-          <button
-            type="button"
-            onClick={() => setTab("dashboard")}
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === "dashboard"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("insights")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "insights"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Insights
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("games-progress")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "games-progress"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Games Progress
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("skills")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "skills"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Skills
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("classes")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "classes"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Classes
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("profile")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "profile"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Profile
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("payments")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "payments"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Payments
-          </button>
-        </div>
-
-        {/* Content */}
-        {activeTab === "dashboard" && (
+            <div className="mt-6 space-y-6">
+              {/* Content */}
+              {activeTab === "dashboard" && (
           <div className="space-y-6">
             <Card className="p-6 space-y-4">
               <div className="flex items-start justify-between gap-4">
@@ -2064,10 +2515,19 @@ export default function ParentDashboard() {
                         string,
                         { label: string; order: number; rows: any[] }
                       >();
+                      const stageOrderMap = buildStageOrderMap(
+                        selectedCourse.rows.map((row: any) => ({
+                          stageLabel: row.stageLabel,
+                          stageOrder: row.stageOrder,
+                          order: null,
+                        }))
+                      );
                       selectedCourse.rows.forEach((row: any) => {
-                        const order =
-                          typeof row.stageOrder === "number" ? row.stageOrder : 999;
                         const label = row.stageLabel || "Lessons";
+                        const order =
+                          typeof row.stageOrder === "number" && row.stageOrder > 0
+                            ? row.stageOrder
+                            : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
                         const key = `${order}__${label}`;
                         const existing = stageGroups.get(key);
                         if (existing) {
@@ -2081,6 +2541,11 @@ export default function ParentDashboard() {
                         .map((group) => {
                           const masteryKey = aggregateStageMastery(group.rows.map((r) => r.mastery));
                           const progressPct = calcStageProgressPct(group.rows);
+                          const completedCount = group.rows.filter(
+                            (row: any) =>
+                              row.status === "completed" || masteryKeyFromValue(row.mastery) === "mastered"
+                          ).length;
+                          const totalCount = group.rows.length;
                           const expectations =
                             STAGE_EXPECTATIONS_BY_COURSE[selectedCourse.courseId]?.[group.order] ?? [];
                           return {
@@ -2089,9 +2554,21 @@ export default function ParentDashboard() {
                             masteryKey,
                             focusChips: pickStageFocus(group.rows),
                             progressPct,
+                            completedCount,
+                            totalCount,
                             expectations,
                           };
                         });
+                      const completedStages = stageSummaries.filter(
+                        (stage) => (stage.progressPct ?? 0) >= 100
+                      ).length;
+                      const currentStage =
+                        stageSummaries.find(
+                          (stage) => (stage.progressPct ?? 0) > 0 && (stage.progressPct ?? 0) < 100
+                        ) ?? stageSummaries.find((stage) => (stage.progressPct ?? 0) === 0) ?? null;
+                      const nextStage = currentStage
+                        ? stageSummaries.find((stage) => stage.order > (currentStage.order ?? 0)) ?? null
+                        : null;
 
                       const showLimit = 10;
                       const inProgressCount = selectedCourse.rows.filter(
@@ -2143,7 +2620,58 @@ export default function ParentDashboard() {
                             </div>
                           </div>
                           <div className="p-4 space-y-4">
-                            {renderStageGrid(stageSummaries, selectedCourse.courseId)}
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                              <div className="flex items-center justify-between gap-3">
+                                <div>
+                                  <div className="text-xs uppercase tracking-wide text-slate-500">
+                                    Stage Snapshot
+                                  </div>
+                                  <div className="text-sm font-semibold text-slate-900">
+                                    Quick overview before you dive into details.
+                                  </div>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setTab("insights")}
+                                  className="text-xs"
+                                >
+                                  View Stage Insights
+                                </Button>
+                              </div>
+                              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                                <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 via-sky-50 to-indigo-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
+                                  <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                                    Current Stage
+                                  </div>
+                                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                                    {currentStage
+                                      ? stripStagePrefix(currentStage.label, currentStage.order ?? 0)
+                                      : "—"}
+                                  </div>
+                                </div>
+                                <div className="rounded-lg border border-amber-100 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
+                                  <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                                    Stages Completed
+                                  </div>
+                                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                                    {completedStages}/{stageSummaries.length}
+                                  </div>
+                                </div>
+                                <div className="rounded-lg border border-violet-100 bg-gradient-to-br from-violet-50 via-indigo-50 to-sky-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
+                                  <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                                    Next Stage
+                                  </div>
+                                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                                    {nextStage
+                                      ? stripStagePrefix(nextStage.label, nextStage.order ?? 0)
+                                      : completedStages === stageSummaries.length && stageSummaries.length > 0
+                                        ? "All stages completed"
+                                        : "—"}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                             <div>
                               <div className="flex items-center justify-between text-xs text-gray-500">
                                 <span>Lessons completed</span>
@@ -2388,6 +2916,7 @@ export default function ParentDashboard() {
                 lastUpdatedAt={overviewMetrics.lastUpdatedAt}
                 currentStageId={overviewMetrics.currentStageId}
                 stageProgressPct={overviewMetrics.stageProgressPct}
+                variant="compact"
               />
             ) : (
               <Card className="p-6">
@@ -2440,14 +2969,11 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {/* SKILLS TAB - unchanged */}
+        {/* SKILLS TAB - teacher tagged skills */}
         {activeTab === "skills" && (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {(() => {
-              const weakTop = kidSummaryQuery.data?.summary?.weakTop ?? [];
-              const hasSkillData = weakTop.length > 0;
-
-              const formatTag = (tag: string): string => {
+              const formatSkillTag = (tag: string): string => {
                 if (!tag) return "—";
                 if (tag.startsWith("letter:")) {
                   const letter = tag.split(":")[1]?.toUpperCase() || "";
@@ -2467,482 +2993,175 @@ export default function ParentDashboard() {
                 return tag.charAt(0).toUpperCase() + tag.slice(1);
               };
 
-              const tagToStage = (tag: string): string => {
-                if (!tag) return "Sounds";
-                const lower = tag.toLowerCase();
-
-                if (
-                  lower.startsWith("letter:") ||
-                  lower.startsWith("sound:") ||
-                  lower.includes("letter_sounds")
-                ) {
-                  return "Sounds";
-                }
-                if (lower.includes("blending") || lower.startsWith("blend:"))
-                  return "Blending";
-                if (
-                  lower.startsWith("cvc:") ||
-                  lower.startsWith("word:") ||
-                  lower.includes("cvc")
-                )
-                  return "CVC Words";
-                if (
-                  lower.startsWith("rule:") ||
-                  lower.startsWith("digraph:") ||
-                  lower.startsWith("magic-e:") ||
-                  lower.startsWith("floss:") ||
-                  lower.startsWith("ck:")
-                )
-                  return "Rules";
-                if (
-                  lower.startsWith("fluency:") ||
-                  lower.startsWith("read:") ||
-                  lower.startsWith("speed:")
-                )
-                  return "Fluency";
-                if (
-                  lower.startsWith("story:") ||
-                  lower.startsWith("sentence:") ||
-                  lower.startsWith("comprehension:")
-                )
-                  return "Confident";
-                return "Sounds";
-              };
+              const skillsData = skillsInsightData;
+              const hasSkillData = Boolean(skillsData && skillsData.totalSkills > 0);
 
               if (!hasSkillData) {
                 return (
                   <Card className="p-8 bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
                     <div className="flex flex-col items-center text-center space-y-4 max-w-md mx-auto">
                       <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center">
-                        <span className="text-3xl">📊</span>
+                        <span className="text-3xl">🎯</span>
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
                           Skills insights are getting ready
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Once your child plays a few levels, you'll see what
-                          they're strong at and what needs practice.
+                          Once teachers tag skills on lessons, this page will show
+                          strengths, practice areas, and stage-wise focus.
                         </p>
                       </div>
-                      <Button
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
-                        onClick={() => setTab("games-progress")}
-                      >
-                        Play a game
-                      </Button>
                     </div>
                   </Card>
                 );
               }
 
-              const stageGroups: Record<
-                string,
-                Array<{ tag: string; wrong: number }>
-              > = {};
-              weakTop.forEach((skill: { tag?: string; wrong?: number }) => {
-                const tag = skill.tag || "";
-                const stage = tagToStage(tag);
-                if (!stageGroups[stage]) stageGroups[stage] = [];
-                stageGroups[stage].push({
-                  tag,
-                  wrong: typeof skill.wrong === "number" ? skill.wrong : 0,
-                });
-              });
-
-              const stageInfo: Record<string, { emoji: string; helper: string }> =
-                {
-                  Sounds: {
-                    emoji: "🎵",
-                    helper: "Focus on letter sounds and phonemic awareness",
-                  },
-                  Blending: {
-                    emoji: "🔗",
-                    helper: "Work on combining sounds smoothly",
-                  },
-                  "CVC Words": {
-                    emoji: "🧩",
-                    helper: "Practice simple consonant-vowel-consonant words",
-                  },
-                  Fluency: {
-                    emoji: "⚡",
-                    helper: "Build reading speed and accuracy",
-                  },
-                  Rules: {
-                    emoji: "📘",
-                    helper: "Master phonics rules and patterns",
-                  },
-                  Confident: {
-                    emoji: "🌟",
-                    helper: "Strengthen reading comprehension",
-                  },
-                };
-
-              const stageOrder = [
-                "Sounds",
-                "Blending",
-                "CVC Words",
-                "Fluency",
-                "Rules",
-                "Confident",
-              ];
-
               return (
-                <Card className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                    Skills
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    {selectedKid?.fullName
-                      ? `Viewing: ${selectedKid.fullName}`
-                      : "Select a child"}
-                  </p>
+                <div className="space-y-6">
+                  <Card className="p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                      <div>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                          Skills Snapshot
+                        </h2>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {selectedKid?.fullName
+                            ? `Viewing: ${selectedKid.fullName}`
+                            : "Select a child"}{" "}
+                          {skillsData?.courseLabel ? `· ${skillsData.courseLabel}` : ""}
+                        </p>
+                      </div>
+                      <div className="text-xs uppercase tracking-wide text-gray-500">
+                        Updated by teacher
+                      </div>
+                    </div>
 
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
-                          Skills by Stage
-                        </h3>
-
-                        <div className="flex items-center gap-3">
-                          {skillsViewMode === "scroll" && !skillsScrollAtEnd && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Swipe to see more →
-                            </div>
-                          )}
-
-                          <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-700 overflow-hidden">
-                            <button
-                              onClick={() => setSkillsViewMode("scroll")}
-                              className={`px-3 py-1 text-xs font-medium transition-colors ${
-                                skillsViewMode === "scroll"
-                                  ? "bg-indigo-600 text-white"
-                                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                              }`}
-                            >
-                              Scroll
-                            </button>
-                            <button
-                              onClick={() => setSkillsViewMode("list")}
-                              className={`px-3 py-1 text-xs font-medium border-l border-gray-300 dark:border-gray-700 transition-colors ${
-                                skillsViewMode === "list"
-                                  ? "bg-indigo-600 text-white"
-                                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                              }`}
-                            >
-                              List
-                            </button>
-                          </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
+                        <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
+                          Strengths
                         </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {skillsData?.strengths.map((skill) => (
+                            <span
+                              key={`strength-${skill.tag}`}
+                              className="px-2.5 py-1 rounded-full bg-white text-emerald-800 text-xs font-semibold border border-emerald-200"
+                            >
+                              {formatSkillTag(skill.tag)}
+                            </span>
+                          ))}
+                        </div>
+                        {skillsData?.strengths.length === 0 && (
+                          <div className="text-xs text-emerald-700 mt-2">
+                            Strengths will appear as mastery grows.
+                          </div>
+                        )}
                       </div>
 
-                      {skillsViewMode === "scroll" ? (
-                        <div className="relative">
-                          <div
-                            ref={skillsScrollContainerRef}
-                            className="flex gap-3 overflow-x-auto snap-x snap-mandatory py-2 scrollbar-hide"
-                            style={{
-                              scrollbarWidth: "none",
-                              msOverflowStyle: "none",
-                            }}
-                          >
-                            {stageOrder.map((stage) => {
-                              const skills = stageGroups[stage] || [];
-                              const info = stageInfo[stage];
-                              const hasSkills = skills.length > 0;
-                              const isSelected = selectedSkillStageId === stage;
-
-                              return (
-                                <button
-                                  key={stage}
-                                  onClick={() =>
-                                    setSelectedSkillStageId(
-                                      isSelected ? null : stage
-                                    )
-                                  }
-                                  className={`flex-shrink-0 min-w-[260px] md:min-w-[300px] p-4 rounded-xl snap-start transition-all ${
-                                    isSelected
-                                      ? "bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-indigo-950 border-2 border-indigo-300 dark:border-indigo-700 shadow-lg"
-                                      : "bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md"
-                                  }`}
-                                >
-                                  <div className="flex items-start justify-between gap-3 mb-3">
-                                    <div className="flex items-center gap-3">
-                                      <span
-                                        className={`text-3xl flex-shrink-0 ${
-                                          !hasSkills ? "opacity-50" : ""
-                                        }`}
-                                      >
-                                        {info?.emoji || "📌"}
-                                      </span>
-                                      <div className="text-left">
-                                        <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-                                          {stage}
-                                        </div>
-                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                          Stage {stageOrder.indexOf(stage) + 1}{" "}
-                                          of 6
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  <div className="space-y-2">
-                                    <div
-                                      className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                                        hasSkills
-                                          ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
-                                          : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                      }`}
-                                    >
-                                      {hasSkills ? "Has insights" : "No data yet"}
-                                    </div>
-
-                                    {hasSkills ? (
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {skills.slice(0, 2).map((skill, idx) => (
-                                          <div
-                                            key={idx}
-                                            className="px-2 py-1 rounded bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-xs text-orange-800 dark:text-orange-200"
-                                          >
-                                            {formatTag(skill.tag)}
-                                          </div>
-                                        ))}
-                                        {skills.length > 2 && (
-                                          <div className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
-                                            +{skills.length - 2} more
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                                        Play a few games to unlock insights
-                                      </p>
-                                    )}
-                                  </div>
-
-                                  <div className="mt-3 text-xs font-medium text-indigo-600 dark:text-indigo-400 text-right">
-                                    {isSelected ? "▲ Close" : "View"}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {!skillsScrollAtEnd && (
-                            <div className="absolute top-0 bottom-0 right-0 w-12 bg-gradient-to-l from-gray-50 via-gray-50/80 to-transparent dark:from-slate-900 dark:via-slate-900/80 dark:to-transparent pointer-events-none" />
-                          )}
+                      <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+                        <div className="text-xs uppercase tracking-wide text-amber-700 font-semibold">
+                          Needs Practice
                         </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {skillsData?.needsPractice.map((skill) => (
+                            <span
+                              key={`practice-${skill.tag}`}
+                              className="px-2.5 py-1 rounded-full bg-white text-amber-800 text-xs font-semibold border border-amber-200"
+                            >
+                              {formatSkillTag(skill.tag)}
+                            </span>
+                          ))}
+                        </div>
+                        {skillsData?.needsPractice.length === 0 && (
+                          <div className="text-xs text-amber-700 mt-2">
+                            Practice areas will show up once a few lessons are tagged.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                        Skills by Stage
+                      </h3>
+                      <span className="text-xs text-gray-500">
+                        {skillsData?.stageGroups.length || 0} stages
+                      </span>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                      {skillsData?.stageGroups.map((stage, idx) => {
+                        const displayOrder = stage.order > 0 ? stage.order : idx + 1;
+                        return (
+                          <div
+                            key={stage.label}
+                            className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
+                          >
+                            <div className="text-xs uppercase tracking-wide text-gray-500">
+                              Stage {displayOrder}
+                            </div>
+                            <div className="text-sm font-semibold text-gray-900 mt-1">
+                              {stripStagePrefix(stage.label, displayOrder)}
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {stage.topSkills.map((skill) => (
+                                <span
+                                  key={`${stage.label}-${skill.tag}`}
+                                  className="px-2 py-1 rounded-full bg-slate-50 text-xs text-slate-700 border border-slate-200"
+                                >
+                                  {formatSkillTag(skill.tag)}
+                                </span>
+                              ))}
+                              {stage.topSkills.length === 0 && (
+                                <span className="text-xs text-gray-500">
+                                  No skills tagged yet.
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </Card>
+
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+                        Recent Skill Updates
+                      </h3>
+                    </div>
+                    <div className="space-y-2">
+                      {skillsData?.recentUpdates.length ? (
+                        skillsData.recentUpdates.map((update, idx) => {
+                          const displayOrder =
+                            update.stageOrder > 0
+                              ? update.stageOrder
+                              : parseStageOrderFromLabel(update.stageLabel) ?? 0;
+                          return (
+                          <div
+                            key={`${update.tag}-${idx}`}
+                            className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700"
+                          >
+                            <span>
+                              {formatSkillTag(update.tag)} ·{" "}
+                              {stripStagePrefix(update.stageLabel, displayOrder)}
+                            </span>
+                            <span className="text-gray-500">
+                              {update.updatedAtMs ? formatTimestamp(update.updatedAtMs) : "—"}
+                            </span>
+                          </div>
+                        );
+                        })
                       ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                          {stageOrder.map((stage) => {
-                            const skills = stageGroups[stage] || [];
-                            const info = stageInfo[stage];
-                            const hasSkills = skills.length > 0;
-                            const isSelected = selectedSkillStageId === stage;
-
-                            return (
-                              <button
-                                key={stage}
-                                onClick={() =>
-                                  setSelectedSkillStageId(
-                                    isSelected ? null : stage
-                                  )
-                                }
-                                className={`p-4 rounded-xl transition-all ${
-                                  isSelected
-                                    ? "bg-gradient-to-br from-white to-indigo-50 dark:from-slate-800 dark:to-indigo-950 border-2 border-indigo-300 dark:border-indigo-700 shadow-lg"
-                                    : "bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-gray-200 dark:border-gray-700 hover:border-indigo-200 dark:hover:border-indigo-800 hover:shadow-md"
-                                }`}
-                              >
-                                <div className="flex items-start justify-between gap-3 mb-3">
-                                  <div className="flex items-center gap-3">
-                                    <span
-                                      className={`text-3xl flex-shrink-0 ${
-                                        !hasSkills ? "opacity-50" : ""
-                                      }`}
-                                    >
-                                      {info?.emoji || "📌"}
-                                    </span>
-                                    <div className="text-left">
-                                      <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-                                        {stage}
-                                      </div>
-                                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                        Stage {stageOrder.indexOf(stage) + 1} of
-                                        6
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div
-                                    className={`px-2 py-1 rounded-full text-xs font-medium inline-block ${
-                                      hasSkills
-                                        ? "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
-                                        : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
-                                    }`}
-                                  >
-                                    {hasSkills ? "Has insights" : "No data yet"}
-                                  </div>
-
-                                  {hasSkills ? (
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {skills.slice(0, 2).map((skill, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="px-2 py-1 rounded bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-xs text-orange-800 dark:text-orange-200"
-                                        >
-                                          {formatTag(skill.tag)}
-                                        </div>
-                                      ))}
-                                      {skills.length > 2 && (
-                                        <div className="px-2 py-1 text-xs text-gray-500 dark:text-gray-400">
-                                          +{skills.length - 2} more
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                      Play a few games to unlock insights
-                                    </p>
-                                  )}
-                                </div>
-
-                                <div className="mt-3 text-xs font-medium text-indigo-600 dark:text-indigo-400 text-right">
-                                  {isSelected ? "▲ Close" : "View"}
-                                </div>
-                              </button>
-                            );
-                          })}
+                        <div className="text-xs text-gray-500">
+                          Recent updates will appear here once teachers tag skills.
                         </div>
                       )}
                     </div>
-
-                    {selectedSkillStageId && (
-                      <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-indigo-200 dark:border-indigo-800 shadow-md">
-                        {(() => {
-                          const skills = stageGroups[selectedSkillStageId] || [];
-                          const info = stageInfo[selectedSkillStageId];
-                          const hasSkills = skills.length > 0;
-
-                          const formatTag = (tag: string): string => {
-                            if (!tag) return "—";
-                            if (tag.startsWith("letter:")) {
-                              const letter = tag.split(":")[1]?.toUpperCase() || "";
-                              return `Letter ${letter}`;
-                            }
-                            if (tag.startsWith("sound:")) {
-                              const sound = tag.substring(6);
-                              return `Sound ${sound}`;
-                            }
-                            if (tag.startsWith("subtopic:")) {
-                              const sub = tag.substring(9).replace(/_/g, " ");
-                              return sub
-                                .split(" ")
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(" ");
-                            }
-                            return tag.charAt(0).toUpperCase() + tag.slice(1);
-                          };
-
-                          return (
-                            <div className="space-y-5">
-                              <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-4xl">
-                                    {info?.emoji || "📌"}
-                                  </span>
-                                  <div>
-                                    <h5 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                                      {selectedSkillStageId}
-                                    </h5>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                      {info?.helper || "Practice these skills"}
-                                    </p>
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={() => setSelectedSkillStageId(null)}
-                                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                                  aria-label="Close"
-                                >
-                                  <svg
-                                    className="w-5 h-5 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M6 18L18 6M6 6l12 12"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-
-                              {hasSkills ? (
-                                <>
-                                  <div>
-                                    <div className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-                                      Needs Practice
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {skills.map((skill, idx) => (
-                                        <div
-                                          key={`${skill.tag}-${idx}`}
-                                          className="px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-sm font-medium text-orange-800 dark:text-orange-200"
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <span>{formatTag(skill.tag)}</span>
-                                            {skill.wrong > 0 && (
-                                              <span className="text-xs text-orange-600 dark:text-orange-400 font-bold">
-                                                {skill.wrong}
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <Button
-                                      className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
-                                      onClick={() => setTab("games-progress")}
-                                    >
-                                      Practice with games
-                                    </Button>
-                                  </div>
-                                </>
-                              ) : (
-                                <>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Play a few games in this stage to unlock
-                                    insights.
-                                  </p>
-                                  <div>
-                                    <Button
-                                      variant="outline"
-                                      className="border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950"
-                                      onClick={() => setTab("games-progress")}
-                                    >
-                                      Practice games
-                                    </Button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          );
-                        })()}
-                      </Card>
-                    )}
-                  </div>
-                </Card>
+                  </Card>
+                </div>
               );
             })()}
           </div>
@@ -2998,31 +3217,23 @@ export default function ParentDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-5">
-                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Total</div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{classesCounts.total}</div>
-                </div>
-                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Completed</div>
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{classesCounts.completed}</div>
-                </div>
-                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Upcoming</div>
-                  <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{classesCounts.upcoming}</div>
-                </div>
-                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">In progress</div>
-                  <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{classesCounts.in_progress}</div>
-                </div>
-                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Cancelled</div>
-                  <div className="text-2xl font-bold text-gray-700 dark:text-gray-200">{classesCounts.cancelled}</div>
-                </div>
-                <div className="p-3 rounded-lg bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">No-show</div>
-                  <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{classesCounts.no_show}</div>
-                </div>
+              <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                {[
+                  { label: "Total", value: classesCounts.total, cls: "text-slate-800 dark:text-slate-100", bg: "bg-slate-50 dark:bg-slate-900/50", border: "border-slate-200 dark:border-slate-800" },
+                  { label: "Completed", value: classesCounts.completed, cls: "text-green-700 dark:text-green-300", bg: "bg-emerald-50 dark:bg-emerald-900/20", border: "border-emerald-200 dark:border-emerald-800/40" },
+                  { label: "Upcoming", value: classesCounts.upcoming, cls: "text-indigo-700 dark:text-indigo-300", bg: "bg-indigo-50 dark:bg-indigo-900/20", border: "border-indigo-200 dark:border-indigo-800/40" },
+                  { label: "In progress", value: classesCounts.in_progress, cls: "text-blue-700 dark:text-blue-300", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-200 dark:border-sky-800/40" },
+                  { label: "Cancelled", value: classesCounts.cancelled, cls: "text-gray-600 dark:text-gray-300", bg: "bg-gray-50 dark:bg-gray-900/40", border: "border-gray-200 dark:border-gray-700" },
+                  { label: "No-show", value: classesCounts.no_show, cls: "text-orange-700 dark:text-orange-300", bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-200 dark:border-orange-800/40" },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className={`flex items-center gap-2 rounded-full border ${item.border} ${item.bg} px-3 py-1.5 shadow-sm`}
+                  >
+                    <span className="text-gray-500 dark:text-gray-400">{item.label}</span>
+                    <span className={`font-semibold ${item.cls}`}>{item.value}</span>
+                  </div>
+                ))}
               </div>
 
               <div className="mt-6 grid grid-cols-7 gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
@@ -3031,24 +3242,34 @@ export default function ParentDashboard() {
                 ))}
               </div>
 
-              <div className="mt-2 grid grid-cols-7 gap-2">
+              <div className="mt-2 grid grid-cols-7 gap-1.5">
                 {calendarDays.map((cell) => {
                   const dt = cell.date;
                   if (!dt) {
                     return (
-                      <div key={cell.key} className="h-24 rounded-lg bg-transparent" />
+                      <div key={cell.key} className="h-14 md:h-16 rounded-lg bg-transparent" />
                     );
                   }
 
                   const dayKey = toYMD(dt);
                   const list = sessionsByDay[dayKey] || [];
                   const isToday = dayKey === toYMD(new Date());
+                  const dominantStatus = (() => {
+                    if (list.length === 0) return null;
+                    const counts = list.reduce<Record<string, number>>((acc, s) => {
+                      const st = normalizeStatus(s.status);
+                      acc[st] = (acc[st] || 0) + 1;
+                      return acc;
+                    }, {});
+                    const priority = ["in_progress", "scheduled", "completed", "no_show", "cancelled"];
+                    return priority.find((p) => counts[p]) || Object.keys(counts)[0] || null;
+                  })();
 
                   return (
                     <button
                       key={cell.key}
                       onClick={() => openDay(dayKey)}
-                      className={`h-24 rounded-lg border text-left p-2 transition-all hover:shadow-md ${
+                      className={`h-14 md:h-16 rounded-lg border text-left p-1.5 transition-all hover:shadow-md ${
                         isToday
                           ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-950/30"
                           : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
@@ -3066,34 +3287,16 @@ export default function ParentDashboard() {
                         )}
                       </div>
 
-                      <div className="mt-2 space-y-1">
-                        {list.slice(0, 2).map((s) => {
-                          const start = sessionStartDate(s);
-                          const time =
-                            start ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}` : (s.startTime || "—");
-                          const st = normalizeStatus(s.status);
-                          return (
-                            <div key={s.id} className="flex items-center justify-between gap-2">
-                              <div className="text-[11px] text-gray-700 dark:text-gray-300 truncate">
-                                {time}
-                              </div>
-                              <div className={`text-[10px] px-2 py-0.5 rounded-full ${statusBadgeClass(st)}`}>
-                                {statusLabel(st)}
-                              </div>
-                            </div>
-                          );
-                        })}
-
-                        {list.length > 2 && (
-                          <div className="text-[11px] text-gray-500 dark:text-gray-400">
-                            +{list.length - 2} more
+                      <div className="mt-2">
+                        {dominantStatus ? (
+                          <div
+                            className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${statusBadgeClass(dominantStatus)}`}
+                          >
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-current/70" />
+                            {statusLabel(dominantStatus)}
                           </div>
-                        )}
-
-                        {list.length === 0 && (
-                          <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                            —
-                          </div>
+                        ) : (
+                          <div className="text-[10px] text-gray-400 dark:text-gray-500">—</div>
                         )}
                       </div>
                     </button>
@@ -3192,73 +3395,12 @@ export default function ParentDashboard() {
                 </DialogContent>
               </Dialog>
 
-              <div className="mt-6 p-4 rounded-lg bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
-                <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
-                  Fees & Dues
-                </div>
-                {billingLoading ? (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Loading fees…
-                  </div>
-                ) : billingSummary.totalCharges === 0 ? (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Due now: ₹0
-                    <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                      No charges yet this month.
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-700 dark:text-gray-300 space-y-1">
-                    <div>
-                      Completed this month: {billingSummary.chargesThisMonth}
-                    </div>
-                    {billingSummary.avgRate > 0 && (
-                      <div>
-                        Rate per class: ₹{billingSummary.avgRate.toLocaleString("en-IN")}
-                      </div>
-                    )}
-                    <div>
-                      Due now: ₹{billingSummary.dueNow.toLocaleString("en-IN")}
-                    </div>
-                    {billingSummary.chargesThisMonth > 0 && (
-                      <div>
-                        Billed this month: ₹{billingSummary.billedThisMonth.toLocaleString("en-IN")}
-                      </div>
-                    )}
-                    {billingSummary.paidThisMonth > 0 && (
-                      <div>
-                        Paid this month: ₹{billingSummary.paidThisMonth.toLocaleString("en-IN")}
-                      </div>
-                    )}
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      Charges: {billingSummary.totalCharges}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      Calculated from {billingSummary.chargesThisMonth} completed classes (Present/Late) in {classesMonthLabel}.
-                    </div>
-                  </div>
-                )}
-              </div>
             </Card>
           </div>
         )}
 
         {activeTab === "profile" && (
-          <div className="space-y-4">
-            <Card className="p-6">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                Profile
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                {selectedKid?.fullName
-                  ? `Viewing: ${selectedKid.fullName}`
-                  : "Select a child"}
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                This section will show insights once backend rollups are enabled.
-              </p>
-            </Card>
-          </div>
+          renderProfileContent()
         )}
 
         {/* PAYMENTS TAB - unchanged */}
@@ -3266,10 +3408,54 @@ export default function ParentDashboard() {
           <div className="space-y-4">
             {(() => {
               const membership = selectedKid?.membership;
-              const startDate = membership?.startDate?.toDate?.() || null;
-              const endDate = membership?.endDate?.toDate?.() || null;
+              const membershipStartDate = toDateOrNull(membership?.startDate);
+              const membershipEndDate = toDateOrNull(membership?.endDate);
+              const enrollmentsForKid = (enrollmentsQuery.data ?? []) as Enrollment[];
+              const enrollmentDates = enrollmentsForKid
+                .map((enr) => toDateOrNull(enr.enrollmentDate ?? enr.createdAt))
+                .filter((d): d is Date => Boolean(d));
+              const enrollmentStartDates = enrollmentsForKid
+                .map((enr) => toDateOrNull(enr.startDate))
+                .filter((d): d is Date => Boolean(d));
+
+              const enrollmentDate =
+                enrollmentDates.length > 0
+                  ? enrollmentDates.reduce((a, b) =>
+                      a.getTime() <= b.getTime() ? a : b
+                    )
+                  : null;
+              const enrollmentStartDate =
+                enrollmentStartDates.length > 0
+                  ? enrollmentStartDates.reduce((a, b) =>
+                      a.getTime() <= b.getTime() ? a : b
+                    )
+                  : null;
+
+              const displayStartDate = enrollmentStartDate || membershipStartDate;
+
               const today = new Date();
-              const isActive = endDate && today <= endDate;
+              const hasActiveEnrollment = enrollmentsForKid.some((enr) => {
+                const st = String(enr.status || "").toLowerCase().trim();
+                return (
+                  st === "active" ||
+                  st === "trial" ||
+                  st === "enrolled" ||
+                  st === "current" ||
+                  st === "in_progress"
+                );
+              });
+              const nowMs = Date.now();
+              const hasActiveClasses = allKidSessions.some((s) => {
+                const st = normalizeStatus(s.status);
+                if (st === "completed" || st === "cancelled" || st === "no_show") return false;
+                const start = sessionStartDate(s);
+                if (!start) return st === "scheduled" || st === "in_progress";
+                return st === "in_progress" || start.getTime() >= nowMs;
+              });
+              const isActive =
+                (!!membershipEndDate && today <= membershipEndDate) ||
+                hasActiveClasses ||
+                hasActiveEnrollment;
 
               const paymentsConfig = paymentsConfigQuery.data;
               const qrUrl = paymentsConfig?.upiQrUrl || null;
@@ -3324,8 +3510,8 @@ export default function ParentDashboard() {
                     parentName: user?.displayName || user?.email || "Unknown",
                     childId: selectedKid?.id || null,
                     childName: selectedKid?.fullName || "Unknown",
-                    membershipStartDate: startDate,
-                    membershipEndDate: endDate,
+                    membershipStartDate: membershipStartDate || enrollmentStartDate,
+                    membershipEndDate: membershipEndDate,
                     createdAt: serverTimestamp(),
                     status: "pending",
                   });
@@ -3334,11 +3520,11 @@ export default function ParentDashboard() {
                 }
 
                 const childName = selectedKid?.fullName || "my child";
-                const startStr = startDate
-                  ? startDate.toLocaleDateString("en-IN")
+                const startStr = (membershipStartDate || enrollmentStartDate)
+                  ? (membershipStartDate || enrollmentStartDate)!.toLocaleDateString("en-IN")
                   : "N/A";
-                const endStr = endDate
-                  ? endDate.toLocaleDateString("en-IN")
+                const endStr = membershipEndDate
+                  ? membershipEndDate.toLocaleDateString("en-IN")
                   : "N/A";
                 const message = `Hi, I paid Tiny Steps membership for ${childName}. Membership: ${startStr} to ${endStr}. I am attaching the payment screenshot.`;
                 const whatsappUrl = `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(
@@ -3383,11 +3569,21 @@ export default function ParentDashboard() {
                         <div className="space-y-2">
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600 dark:text-gray-400">
+                              Enrollment Date
+                            </span>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              {enrollmentDate
+                                ? enrollmentDate.toLocaleDateString("en-IN")
+                                : "—"}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">
                               Start Date
                             </span>
                             <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {startDate
-                                ? startDate.toLocaleDateString("en-IN")
+                              {displayStartDate
+                                ? displayStartDate.toLocaleDateString("en-IN")
                                 : "—"}
                             </span>
                           </div>
@@ -3396,8 +3592,8 @@ export default function ParentDashboard() {
                               End Date
                             </span>
                             <span className="font-medium text-gray-900 dark:text-gray-100">
-                              {endDate
-                                ? endDate.toLocaleDateString("en-IN")
+                              {membershipEndDate
+                                ? membershipEndDate.toLocaleDateString("en-IN")
                                 : "—"}
                             </span>
                           </div>
@@ -3640,6 +3836,9 @@ export default function ParentDashboard() {
             })()}
           </div>
         )}
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   );

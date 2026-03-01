@@ -196,7 +196,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             </li>
             <li className="flex items-start">
               <span className="text-[#4a7c2c] font-bold mr-3">✓</span>
-              <span><strong>Progress transparency:</strong> Weekly reports showing mastered skills, upcoming topics, and home practice tips. Lesson recordings for parent review.</span>
+              <span><strong>Progress transparency:</strong> Stage-based reports showing mastered skills, upcoming topics, and home practice tips. Lesson recordings for parent review.</span>
             </li>
             <li className="flex items-start">
               <span className="text-[#4a7c2c] font-bold mr-3">✓</span>
@@ -233,7 +233,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           <li>✓ <strong>Systematic SATPIN-based curriculum</strong> from letter sounds to fluent reading in 12–16 weeks</li>
           <li>✓ <strong>1:1 live sessions (25–30 min)</strong> with certified mentors trained in phonics methodology</li>
           <li>✓ <strong>AI-guided practice games</strong> (Phonics Mission, CVC Builder) for daily reinforcement</li>
-          <li>✓ <strong>Weekly progress reports</strong> showing mastered skills, upcoming topics, and home practice tips</li>
+          <li>✓ <strong>Stage-based progress reports</strong> showing mastered skills, upcoming topics, and home practice tips</li>
           <li>✓ <strong>Lesson recordings</strong> for parent review and quality assurance</li>
           <li>✓ <strong>Pronunciation coaching</strong> targeting Indian English clarity (R/L/TH/W-V sounds)</li>
           <li>✓ <strong>Digital materials</strong> (worksheets, flashcards, practice activities) included—no extra purchases</li>
@@ -277,7 +277,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           <div className="flex items-start gap-4 bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
             <span className="text-3xl">📊</span>
             <div>
-              <h3 className="font-bold text-[#2d5016] mb-1">Weekly progress reports</h3>
+              <h3 className="font-bold text-[#2d5016] mb-1">Stage progress updates</h3>
               <p className="text-gray-700">
                 After each session, you receive a detailed report: skills mastered this week, teacher notes, next week's focus, and a 5-minute home practice activity. No surprises—you always know where your child stands.
               </p>
@@ -432,7 +432,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           </Link>
           <Link to="/curriculum" className="border border-gray-200 rounded-lg p-4 hover:border-[#4a7c2c] hover:shadow-md transition">
             <h3 className="font-bold text-[#4a7c2c] mb-2">Curriculum</h3>
-            <p className="text-sm text-gray-700">Week-by-week breakdown of what children learn at each level</p>
+            <p className="text-sm text-gray-700">Lesson-by-lesson breakdown of what children learn at each level</p>
           </Link>
           <Link to="/contact" className="border border-gray-200 rounded-lg p-4 hover:border-[#4a7c2c] hover:shadow-md transition">
             <h3 className="font-bold text-[#4a7c2c] mb-2">Book Free Assessment</h3>

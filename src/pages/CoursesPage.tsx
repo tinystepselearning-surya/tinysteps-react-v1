@@ -35,16 +35,16 @@ const TRACK_META: Record<Track, { title: string; subtitle: string; emoji: string
   },
 };
 
-const LEVEL_OPTIONS = ["all", "Foundation", "Basic", "Intermediate", "Advanced", "Brush-Up"] as const;
+const LEVEL_OPTIONS = ["all", "Foundation", "Basic", "Advanced", "Brush-Up"] as const;
 
 const COURSE_ORDER = [
-  "phonics foundation",
-  "phonics advanced",
-  "phonics brush-up",
-  "grammar essentials",
-  "grammar mastery",
-  "public speaking foundations",
-  "public speaking excellence",
+  "phonics foundations",
+  "early phonics",
+  "advanced phonics",
+  "basic grammar",
+  "advanced grammar",
+  "public speaking (basic)",
+  "public speaking (advanced)",
 ];
 
 function sortCourses(a: any, b: any) {
@@ -68,7 +68,7 @@ const CoursesHero = () => (
         <p className="text-sm uppercase tracking-widest text-white/80">Live 1:1 English programs</p>
         <h1 className="mt-3 text-4xl font-bold md:text-5xl">Choose the perfect track for your child</h1>
         <p className="mt-4 text-white/90">
-          Phonics, grammar, public speaking, and brush-up paths—mapped week-by-week with transparent pricing.
+          Phonics, grammar, public speaking, and brush-up paths—mapped lesson-by-lesson with transparent pricing.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
@@ -125,7 +125,7 @@ const CoursesPage: FC = () => {
     applySeo({
       title: "Online English Courses for Kids: Phonics, Grammar & Public Speaking | Tiny Steps",
       description:
-        "1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured week-by-week courses with clear progress and parent updates.",
+        "1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured lesson-by-lesson courses with clear progress and parent updates.",
       canonicalPath: "/courses",
       ogType: "website",
       jsonLd: [organizationSchema, breadcrumb, ...courseSchemas],

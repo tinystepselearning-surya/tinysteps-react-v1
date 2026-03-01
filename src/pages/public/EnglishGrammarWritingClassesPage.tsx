@@ -18,11 +18,11 @@ const FAQS = [
   },
   {
     question: 'How often should my child take grammar classes?',
-    answer: 'We recommend 2–3 classes per week for consistent progress. Grammar skills build on each other, so regular practice helps concepts become automatic. Most children see noticeable improvements in writing clarity and confidence within 4–6 weeks.'
+    answer: 'We recommend 2–3 classes per week for consistent progress. Grammar skills build on each other, so regular practice helps concepts become automatic. Most children see noticeable improvements in writing clarity and confidence within 8–12 lessons.'
   },
   {
     question: 'Will this help with my child\'s school writing assignments?',
-    answer: 'Absolutely. Strong grammar is the foundation of all good writing. Our students typically see better grades in English, improved essay scores, and more confidence in written assignments across all subjects. Parents often tell us teachers notice the improvement within weeks.'
+    answer: 'Absolutely. Strong grammar is the foundation of all good writing. Our students typically see better grades in English, improved essay scores, and more confidence in written assignments across all subjects. Parents often tell us teachers notice improvement within a few lessons.'
   },
   {
     question: 'My child struggles with spelling and punctuation. Can you help?',
@@ -42,15 +42,15 @@ const FAQS = [
   },
   {
     question: 'How long until I see improvement in my child\'s writing?',
-    answer: 'Most parents notice clearer sentences and fewer basic errors within 3–4 weeks of consistent classes (2–3 times per week). Deeper skills like paragraph organization and complex sentence structure develop over 8–12 weeks. Every child progresses at their own pace.'
+    answer: 'Most parents notice clearer sentences and fewer basic errors within 6–10 lessons of consistent classes (2–3 times per week). Deeper skills like paragraph organization and complex sentence structure develop over 20–30 lessons. Every child progresses at their own pace.'
   },
   {
     question: 'How will I know if my child is making progress?',
-    answer: 'Every week, you receive a detailed progress report showing what grammar concepts your child mastered, writing samples with feedback, areas to focus on next, and tips for home practice. You\'ll see concrete improvement in their writing over time.'
+    answer: 'You receive stage-based updates showing what grammar concepts your child mastered, writing samples with feedback, areas to focus on next, and tips for home practice. You\'ll see concrete improvement in their writing over time.'
   },
   {
     question: 'How do you track progress in grammar and writing?',
-    answer: 'We track mastery of specific grammar concepts (parts of speech, tenses, punctuation), writing clarity, sentence variety, and error patterns. Weekly reports show skills mastered, writing samples, and next steps. You see exactly where your child is improving and what to practice at home.'
+    answer: 'We track mastery of specific grammar concepts (parts of speech, tenses, punctuation), writing clarity, sentence variety, and error patterns. Stage updates show skills mastered, writing samples, and next steps so you see exactly where your child is improving.'
   }
 ];
 
@@ -129,7 +129,7 @@ export default function EnglishGrammarWritingClassesPage() {
           Help your child write clear, confident sentences and master grammar rules that stick—with 1:1 mentorship tailored to their pace (Ages 5–12).
         </p>
         <p className="text-gray-600 mb-8">
-          No more confusing worksheets or boring drills. Our mentors use games, clear examples, and guided writing practice to make grammar click. Weekly progress reports show exactly what your child is mastering.
+          No more confusing worksheets or boring drills. Our mentors use games, clear examples, and guided writing practice to make grammar click. Stage-based progress updates show exactly what your child is mastering.
         </p>
         <Link
           to="/contact"
@@ -227,7 +227,7 @@ export default function EnglishGrammarWritingClassesPage() {
             </p>
           </div>
           <div>
-            <h3 className="font-bold text-lg mb-2">Weekly Progress Updates</h3>
+            <h3 className="font-bold text-lg mb-2">Stage Progress Updates</h3>
             <p>
               Detailed reports show grammar mastery, writing improvements, areas to focus on, and actionable tips for practicing at home.
             </p>

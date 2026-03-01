@@ -885,7 +885,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [selectedSubskills, setSelectedSubskills] = useState<string[]>([]);
   const [confusions, setConfusions] = useState<string[]>([]);
   const [mastery, setMastery] = useState<string>('not_started');
-  const [scoreBand, setScoreBand] = useState<string>('');
   const [teacherRemark, setTeacherRemark] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -1124,7 +1123,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       const existingMastery =
         (existing as any).masteryKey ?? (existing as any).mastery ?? 'not_started';
       setMastery(normalizeMasteryKey(existingMastery));
-      setScoreBand(existing.scoreBand || '');
       setTeacherRemark(existing.teacherRemark || '');
       const existingChecks = (existing as any).checks ?? {};
       setChecks({
@@ -1136,7 +1134,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       setChecksTouched(false);
     } else {
       setMastery('not_started');
-      setScoreBand('');
       setTeacherRemark('');
       setChecks({
         recognise: 'not_started',
@@ -1170,7 +1167,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       : 'not_started';
     const snapshot = JSON.stringify({
       mastery: baselineMastery,
-      scoreBand: existing ? (existing as any).scoreBand ?? '' : '',
       checks: existing
         ? {
             recognise: (existing as any).checks?.recognise ?? 'not_started',
@@ -1212,7 +1208,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           courseId: selectedCourseId || null,
           courseLabel: selectedCourseId ? COURSE_LABEL_BY_ID[selectedCourseId] : null,
           mastery: mastery || 'not_started',
-          scoreBand: scoreBand || null,
           checks,
           selectedSubskills,
           confusions,
@@ -1227,7 +1222,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       setBaseline(
         JSON.stringify({
           mastery,
-          scoreBand,
           checks,
           selectedSubskills: [...selectedSubskills].sort(),
           confusions: [...confusions].sort(),
@@ -1279,7 +1273,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const cardBase = 'rounded-xl border border-slate-200 p-3';
   const snapshotNow = JSON.stringify({
     mastery,
-    scoreBand,
     checks,
     selectedSubskills: [...selectedSubskills].sort(),
     confusions: [...confusions].sort(),

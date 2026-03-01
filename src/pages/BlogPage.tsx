@@ -16,7 +16,7 @@ const FAQS = [
   },
   {
     question: 'How often are new articles published?',
-    answer: 'We publish new articles regularly across phonics, grammar, speaking, and parent tips. Check back weekly for fresh routines, games, and classroom‑aligned strategies.'
+    answer: 'We publish new articles regularly across phonics, grammar, speaking, and parent tips. Check back often for fresh routines, games, and classroom‑aligned strategies.'
   },
   {
     question: 'Are the tips suitable for preschoolers?',
@@ -112,7 +112,7 @@ const BlogPage: FC = () => {
     '@context': 'https://schema.org',
     '@type': 'CollectionPage',
     name: 'Tiny Steps Blog',
-    description: 'Weekly phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building.',
+    description: 'Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building.',
     url: 'https://tinystepslearning.com/blog',
     mainEntity: {
       '@type': 'ItemList',
@@ -170,7 +170,7 @@ const BlogPage: FC = () => {
   useEffect(() => {
     applySeo({
       title: 'Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Indian Parents',
-      description: 'Weekly phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning.',
+      description: 'Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning.',
       canonicalPath: '/blog',
       ogType: 'website',
       jsonLd: [organizationSchema, breadcrumb, blogSchema, collectionSchema, faqSchema],
@@ -179,7 +179,7 @@ const BlogPage: FC = () => {
 
   return (
     <div className="bg-white">
-      <Meta title="Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Indian Parents" description="Weekly phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
+      <Meta title="Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Indian Parents" description="Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-6 text-center">
           <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Indian Parents</h1>
@@ -329,7 +329,7 @@ const BlogPage: FC = () => {
         </section>
 
         <div className="mt-12 mx-auto max-w-xl rounded-2xl bg-gradient-to-r from-primary-50 to-secondary-50 p-6 text-center ring-1 ring-slate-200">
-          <div className="font-semibold">Get weekly tips for your child\'s English journey</div>
+          <div className="font-semibold">Get practical tips for your child\'s English journey</div>
           <div className="mt-3"><NewsletterForm /></div>
         </div>
       </div>

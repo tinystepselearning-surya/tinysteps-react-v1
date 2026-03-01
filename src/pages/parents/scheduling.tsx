@@ -23,7 +23,7 @@ const Scheduling: React.FC = () => {
 
     <h2 className="mt-6 font-semibold">Step-by-step</h2>
     <ul className="list-disc ml-6 mt-2">
-      <li>Choose a consistent weekly slot during booking.</li>
+      <li>Choose a consistent class slot during booking.</li>
       <li>Set a short pre-class routine: 2–3 minutes to warm up.</li>
       <li>Inform support early for rescheduling.</li>
     </ul>

@@ -15,29 +15,41 @@ import {
 
 const levels = [
   {
-    name: 'Beginner',
-    outcomes: ['SATPIN mastery & blending routines', 'Tricky words set A', 'Daily AI reading prompts'],
+    name: 'Foundations',
+    outcomes: [
+      'Letter sounds + SATPIN blending routines',
+      'Short vowels + early CVC words',
+      'Lesson-by-lesson practice prompts',
+    ],
     pdf: '/curriculum'
   },
   {
-    name: 'Intermediate',
-    outcomes: ['Digraphs, vowel teams, silent-e', 'Dictation + spelling rules', 'Weekly fluency recordings'],
+    name: 'Early Phonics',
+    outcomes: [
+      'Digraphs, vowel teams, silent-e',
+      'Magic E + long vowel patterns',
+      'Stage check-ins for fluency',
+    ],
     pdf: '/curriculum'
   },
   {
-    name: 'Advanced',
-    outcomes: ['Multisyllabic decoding & morphology', 'Comprehension questions + writing', 'Capstone: 150-word reading video'],
+    name: 'Advanced Phonics',
+    outcomes: [
+      'Diphthongs, bossy R, alternate vowels',
+      'Multisyllabic decoding + spelling rules',
+      'Fluency + comprehension practice',
+    ],
     pdf: '/curriculum'
   }
 ];
 
 const stages = [
-  { title: 'Weeks 1-4 • Sounds to words', duration: 'Month 1', description: 'SATPIN, blending club, AI-driven home practice.' },
-  { title: 'Weeks 5-8 • Rules & teams', duration: 'Month 2', description: 'Digraphs, magic-e, vowel teams, tricky words set B.' },
-  { title: 'Weeks 9-12 • Fluency & writing', duration: 'Month 3', description: 'Reading passages with expression, spelling, and short paragraphs.' }
+  { title: 'Stage 1 • Sounds to words', duration: 'Lessons 1–10', description: 'SATPIN, blending club, AI-driven home practice.' },
+  { title: 'Stage 2 • Rules & teams', duration: 'Lessons 11–24', description: 'Digraphs, magic-e, vowel teams, tricky patterns.' },
+  { title: 'Stage 3 • Fluency & writing', duration: 'Lessons 25–36+', description: 'Reading passages with expression, spelling, and short paragraphs.' }
 ];
 
-const oneToOnePricingCopy = `1:1 live phonics classes at Tiny Steps: Starter (${ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month, Growth (${ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}/month, Intensive (${ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}/month. ${formatINR(PER_CLASS_PRICE)} per class. Typical course total: ${formatINR(COURSE_FEE_RANGE_24_36.min)}–${formatINR(COURSE_FEE_RANGE_24_36.max)} for 24–36 sessions. Free assessment class to start.`;
+const oneToOnePricingCopy = `1:1 live phonics classes at Tiny Steps: Starter (${ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month, Growth (${ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}/month, Intensive (${ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}/month. ${formatINR(PER_CLASS_PRICE)} per class. Most families choose a pace that fits their child’s lesson progress.`;
 
 const groupPricingCopy = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1')
   .map((row) => `${row.ratio} ${formatINR(row.monthlyFee)}`)
@@ -47,7 +59,7 @@ export default function PhonicsPage() {
   useEffect(() => {
     applySeo({
       title: "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps",
-      description: "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Weekly parent progress reports. Book free trial.",
+      description: "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Stage-based parent insights. Book free trial.",
       canonicalPath: "/phonics",
       ogType: "website",
       jsonLd: [
@@ -55,7 +67,7 @@ export default function PhonicsPage() {
           "@context": "https://schema.org",
           "@type": "Course",
           "name": "Phonics Superstar Program",
-          "description": "Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights. SATPIN to advanced decoding in 12 weeks.",
+          "description": "Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
           "provider": {
             "@type": "Organization",
             "name": "Tiny Steps Online School",
@@ -83,7 +95,7 @@ export default function PhonicsPage() {
               "name": "What age is best to start phonics?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 weeks to blend first words like 'sat' or 'pin'."
+                "text": "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 lessons to blend first words like 'sat' or 'pin'."
               }
             },
             {
@@ -91,7 +103,7 @@ export default function PhonicsPage() {
               "name": "How long does it take to learn phonics?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Most children master basic phonics in 12-16 weeks with consistent practice. Blending typically clicks in 4-6 weeks. Progress depends on age, frequency, and teaching method."
+                "text": "Most children master basic phonics in 30-40 lessons with consistent practice. Blending typically clicks in the first 4-6 lessons. Progress depends on age, pace, and teaching method."
               }
             },
             {
@@ -99,7 +111,7 @@ export default function PhonicsPage() {
               "name": "What is the SATPIN method?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within 2-3 weeks."
+                "text": "SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within a few lessons."
               }
             },
             {
@@ -107,7 +119,7 @@ export default function PhonicsPage() {
               "name": "Is online phonics effective for kids?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Weekly parent feedback ensures accountability."
+                "text": "Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Stage-based parent feedback ensures accountability."
               }
             },
             {
@@ -123,7 +135,7 @@ export default function PhonicsPage() {
               "name": "What's the difference between 1:1 and group phonics classes?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": `1:1 classes adapt to your child's pace, give instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`
+                "text": `1:1 classes adapt to your child's pace, give instant feedback, and move through lessons faster. Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`
               }
             },
             {
@@ -139,7 +151,7 @@ export default function PhonicsPage() {
               "name": "Can my 7-year-old who struggles with reading catch up?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. Intensive phonics (3x/week) closes gaps in 8-12 weeks. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives 95%+ success."
+                "text": "Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success."
               }
             }
           ]
@@ -155,7 +167,7 @@ export default function PhonicsPage() {
         <p className="text-lg font-semibold text-gray-900">
           Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 across India. 
           We teach systematic phonics (SATPIN method) with multisensory activities, blending practice, 
-          and decodable reading. Most children read their first words within 4-6 weeks.
+          and decodable reading. Most children read their first words within 4-6 lessons.
         </p>
       </div>
 
@@ -167,7 +179,7 @@ export default function PhonicsPage() {
         highlights={[
           'SATPIN + digraphs + multisyllabic decoding',
           'Recorded practice + decodable libraries',
-          'Weekly feedback + WhatsApp nudges'
+          'Stage-based feedback + WhatsApp nudges'
         ]}
       />
       <LevelTabs levels={levels} />
@@ -197,19 +209,19 @@ export default function PhonicsPage() {
         <div className="space-y-6">
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">What age is best to start phonics?</h3>
-            <p className="text-gray-700">Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 weeks to blend first words like 'sat' or 'pin'.</p>
+            <p className="text-gray-700">Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 lessons to blend first words like 'sat' or 'pin'.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">How long does it take to learn phonics?</h3>
-            <p className="text-gray-700">Most children master basic phonics in 12-16 weeks with consistent practice. Blending typically clicks in 4-6 weeks. Progress depends on age, frequency, and teaching method.</p>
+            <p className="text-gray-700">Most children master basic phonics in 30-40 lessons with consistent practice. Blending typically clicks in the first 4-6 lessons. Progress depends on age, pace, and teaching method.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">What is the SATPIN method?</h3>
-            <p className="text-gray-700">SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within 2-3 weeks.</p>
+            <p className="text-gray-700">SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within a few lessons.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Is online phonics effective for kids?</h3>
-            <p className="text-gray-700">Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Weekly parent feedback ensures accountability.</p>
+            <p className="text-gray-700">Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Stage-based parent feedback ensures accountability.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">How much do phonics classes cost in India?</h3>
@@ -217,7 +229,7 @@ export default function PhonicsPage() {
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">What's the difference between 1:1 and group phonics classes?</h3>
-            <p className="text-gray-700">1:1 classes adapt to your child's pace, give instant feedback, and finish faster (12 weeks vs 20+ weeks). Group classes cost less; current monthly fees per child (12 classes): {groupPricingCopy}.</p>
+            <p className="text-gray-700">1:1 classes adapt to your child's pace, give instant feedback, and move through lessons faster. Group classes cost less; current monthly fees per child (12 classes): {groupPricingCopy}.</p>
           </div>
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Do you teach Jolly Phonics or synthetic phonics?</h3>
@@ -225,7 +237,7 @@ export default function PhonicsPage() {
           </div>
           <div className="pb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Can my 7-year-old who struggles with reading catch up?</h3>
-            <p className="text-gray-700">Yes. Intensive phonics (3x/week) closes gaps in 8-12 weeks. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives 95%+ success.</p>
+            <p className="text-gray-700">Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success.</p>
           </div>
         </div>
       </section>
@@ -245,7 +257,7 @@ export default function PhonicsPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-2xl">📈</span>
-                <span>Weekly progress tracking and parent reports</span>
+                <span>Lesson progress tracking and parent insights</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="text-2xl">🎓</span>

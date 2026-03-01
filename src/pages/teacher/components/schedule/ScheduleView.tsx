@@ -1209,22 +1209,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
                 const isRescheduleRequested = Object.values(session.attendance || {})
                   .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
-                
-                // Collect topic labels for completed sessions
-                const topicLabels: string[] = [];
-                if (session.status === 'completed' && session.attendance) {
-                  const topicIds = Object.values(session.attendance)
-                    .filter((e: any) => e?.status === 'present' || e?.status === 'late')
-                    .flatMap((e: any) => (Array.isArray(e?.topics) ? e.topics : []));
-                  
-                  // De-dupe while preserving order
-                  const uniqueTopicIds = [...new Set(topicIds)];
-                  uniqueTopicIds.forEach((id) => {
-                    if (id) {
-                      topicLabels.push(topicLabelById.get(id) ?? id);
-                    }
-                  });
-                }
 
                 return (
                   <div 
@@ -1252,21 +1236,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         </Badge>
                       )}
                     </div>
-                    {topicLabels.length > 0 && (
-                      <div className="mt-2 text-xs text-muted-foreground flex flex-wrap gap-1 items-center">
-                        <span>Topics:</span>
-                        {topicLabels.slice(0, 4).map((label, i) => (
-                          <span key={i} className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs">
-                            {label}
-                          </span>
-                        ))}
-                        {topicLabels.length > 4 && (
-                          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs">
-                            +{topicLabels.length - 4}
-                          </span>
-                        )}
-                      </div>
-                    )}
                   </div>
                 );
                 })}

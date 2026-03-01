@@ -14,7 +14,7 @@ const HelpingWithHomework: React.FC = () => {
 
     <div className="mt-4 rounded-lg bg-indigo-50 p-4 border border-indigo-200">
       <p className="text-sm font-medium text-indigo-900">
-        Quality beats quantity. A focused 5–10 minute practice session daily is more effective than longer, inconsistent sessions. Use the weekly goal your teacher shares.
+        Quality beats quantity. A focused 5–10 minute practice session daily is more effective than longer, inconsistent sessions. Use the lesson goal your teacher shares.
       </p>
     </div>
 
