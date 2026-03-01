@@ -2199,7 +2199,6 @@ export default function ParentDashboard() {
             STAGE_EXPECTATIONS_BY_COURSE[courseId || ""]?.[displayOrder] ||
             [];
           const progressPct = typeof stage.progressPct === "number" ? stage.progressPct : 0;
-          const ringLabel = masteryText.toLowerCase() === "getting started" ? "Start" : masteryText;
           const completedCount =
             typeof stage.completedCount === "number" ? stage.completedCount : null;
           const totalCount = typeof stage.totalCount === "number" ? stage.totalCount : null;
@@ -2235,7 +2234,7 @@ export default function ParentDashboard() {
                   }}
                 >
                   <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-[10px] font-semibold">
-                    <span style={{ color: colors.accent }}>{ringLabel}</span>
+                    <span style={{ color: colors.accent }}>{progressPct}%</span>
                   </div>
                 </div>
               </div>
