@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -55,33 +55,29 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
 
   useEffect(() => {
-    const onErr = (err: any) => setFsError(err?.message || 'Some analytics data could not be loaded.');
-    const unsubUsers = onSnapshot(
-      collection(db, 'users'),
-      snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      onErr
-    );
-    const unsubStudents = onSnapshot(
-      collection(db, 'kids'),
-      snap => setStudents(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      onErr
-    );
-    const unsubEnroll = onSnapshot(
-      collection(db, 'enrollments'),
-      snap => setEnrollments(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      onErr
-    );
-    const unsubCourses = onSnapshot(
-      collection(db, 'courses'),
-      snap => setCourses(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
-      onErr
-    );
-
+    let active = true;
+    const loadCore = async () => {
+      try {
+        const [usersSnap, studentsSnap, enrollSnap, coursesSnap] = await Promise.all([
+          getDocs(collection(db, 'users')),
+          getDocs(collection(db, 'kids')),
+          getDocs(collection(db, 'enrollments')),
+          getDocs(collection(db, 'courses')),
+        ]);
+        if (!active) return;
+        setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setEnrollments(enrollSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setCourses(coursesSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+      } catch (err: any) {
+        if (active) {
+          setFsError(err?.message || 'Some analytics data could not be loaded.');
+        }
+      }
+    };
+    void loadCore();
     return () => {
-      unsubUsers();
-      unsubStudents();
-      unsubEnroll();
-      unsubCourses();
+      active = false;
     };
   }, []);
 

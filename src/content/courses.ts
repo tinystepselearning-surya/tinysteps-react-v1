@@ -76,7 +76,7 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'grammar-essentials',
+    slug: 'basic-grammar',
     icon: '✍️',
     name: 'Basic Grammar',
     track: 'grammar',
@@ -94,7 +94,7 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'grammar-mastery',
+    slug: 'advanced-grammar',
     icon: '🧠',
     name: 'Advanced Grammar',
     track: 'grammar',
@@ -112,7 +112,7 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'public-speaking-foundations',
+    slug: 'basic-public-speaking',
     icon: '🎤',
     name: 'Public Speaking (Basic)',
     track: 'speaking',
@@ -130,7 +130,7 @@ export const catalogs: CourseCatalogItem[] = [
     ],
   },
   {
-    slug: 'public-speaking-excellence',
+    slug: 'advanced-public-speaking',
     icon: '🏆',
     name: 'Public Speaking (Advanced)',
     track: 'speaking',

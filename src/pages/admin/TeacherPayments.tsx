@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   collection,
   doc,
+  documentId,
   getDoc,
   getDocs,
   onSnapshot,
@@ -56,6 +57,12 @@ const isTeacherUser = (user: TeacherUser) => {
   return String(user.role || '').toLowerCase() === 'teacher';
 };
 
+const chunkIds = (ids: string[], size = 10) => {
+  const out: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
+  return out;
+};
+
 export default function TeacherPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
@@ -79,48 +86,88 @@ export default function TeacherPayments(): JSX.Element {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'users'), (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-      setTeachers(rows.filter(isTeacherUser));
-    });
-    return () => unsub();
-  }, []);
-
-  useEffect(() => {
     const loadRefs = async () => {
       try {
-        const [kidsSnap, coursesSnap] = await Promise.all([
-          getDocs(collection(db, 'kids')),
-          getDocs(collection(db, 'courses')),
-        ]);
-        const nextKidMap: Record<string, string> = {};
-        kidsSnap.docs.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          const name =
-            data?.fullName ||
-            data?.name ||
-            data?.displayName ||
-            data?.studentName ||
-            data?.firstName ||
-            '';
-          nextKidMap[docSnap.id] = name || docSnap.id;
-          if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+        const teacherIds = new Set<string>();
+        const kidIds = new Set<string>();
+        const courseIds = new Set<string>();
+
+        payouts.forEach((p) => {
+          const tid = String(p.teacherId || '');
+          if (tid) teacherIds.add(tid);
         });
-        const nextCourseMap: Record<string, string> = {};
-        coursesSnap.docs.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          nextCourseMap[docSnap.id] = data?.title || data?.name || docSnap.id;
-          if (data?.courseId) nextCourseMap[data.courseId] = nextCourseMap[docSnap.id];
-          if (data?.slug) nextCourseMap[data.slug] = nextCourseMap[docSnap.id];
+
+        earnings.forEach((e) => {
+          const tid = String(e.teacherId || '');
+          if (tid) teacherIds.add(tid);
+          const kidId = String(e.kidId || '');
+          if (kidId) kidIds.add(kidId);
+          const courseId = String(e.courseId || '');
+          if (courseId) courseIds.add(courseId);
         });
-        setKidMap(nextKidMap);
-        setCourseMap(nextCourseMap);
+
+        if (teacherIds.size === 0) {
+          setTeachers([]);
+        } else {
+          const teacherDocs: TeacherUser[] = [];
+          for (const chunk of chunkIds(Array.from(teacherIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'users'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) =>
+              teacherDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
+            );
+          }
+          setTeachers(teacherDocs.filter(isTeacherUser));
+        }
+
+        if (kidIds.size === 0) {
+          setKidMap({});
+        } else {
+          const nextKidMap: Record<string, string> = {};
+          for (const chunk of chunkIds(Array.from(kidIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'kids'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              const name =
+                data?.fullName ||
+                data?.name ||
+                data?.displayName ||
+                data?.studentName ||
+                data?.firstName ||
+                '';
+              nextKidMap[docSnap.id] = name || docSnap.id;
+              if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+            });
+          }
+          setKidMap(nextKidMap);
+        }
+
+        if (courseIds.size === 0) {
+          setCourseMap({});
+        } else {
+          const nextCourseMap: Record<string, string> = {};
+          for (const chunk of chunkIds(Array.from(courseIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'courses'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              nextCourseMap[docSnap.id] = data?.title || data?.name || docSnap.id;
+              if (data?.courseId) nextCourseMap[data.courseId] = nextCourseMap[docSnap.id];
+              if (data?.slug) nextCourseMap[data.slug] = nextCourseMap[docSnap.id];
+            });
+          }
+          setCourseMap(nextCourseMap);
+        }
       } catch (err) {
-        console.warn('[TeacherPayments] Failed to load kid/course names', err);
+        console.warn('[TeacherPayments] Failed to load referenced data', err);
       }
     };
     void loadRefs();
-  }, []);
+  }, [payouts, earnings]);
 
   useEffect(() => {
     if (!selectedMonth) {

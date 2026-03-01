@@ -23,8 +23,8 @@ function isValidTab(v: any): v is ValidTab {
 
 function inferTabFromCourseSlug(courseSlug: string): ValidTab {
   const s = (courseSlug || '').toLowerCase();
-  if (s.startsWith('grammar')) return 'grammar';
-  if (s.startsWith('public-speaking') || s.startsWith('speaking')) return 'speaking';
+  if (s.includes('grammar')) return 'grammar';
+  if (s.includes('public-speaking') || s.includes('speaking')) return 'speaking';
   return 'phonics';
 }
 
@@ -33,6 +33,10 @@ const COURSE_SLUG_ALIASES: Record<string, string> = {
   'phonics-foundation': 'phonics-early',
   'phonics-early': 'phonics-foundation',
   'phonics-foundations': 'phonics-brush-up', // backward compat: old name → new key
+  'grammar-essentials': 'basic-grammar',
+  'grammar-mastery': 'advanced-grammar',
+  'public-speaking-foundations': 'basic-public-speaking',
+  'public-speaking-excellence': 'advanced-public-speaking',
 };
 
 function safeTab(value: string | null): Tab {
@@ -43,9 +47,9 @@ function safeTab(value: string | null): Tab {
 function safeCourse(value: string | null): string | null {
   const raw = (value ?? '').trim();
   if (!raw) return null;
-  if (curriculumBySlug?.[raw]) return raw;
   const alt = COURSE_SLUG_ALIASES[raw];
   if (alt && curriculumBySlug?.[alt]) return alt;
+  if (curriculumBySlug?.[raw]) return raw;
   return raw;
 }
   const CurriculumPage: FC = () => {
@@ -84,9 +88,19 @@ function safeCourse(value: string | null): string | null {
 
   const getWeeks = (courseSlug: string): WeekItem[] => {
     const pickWeeks = (slug: string): WeekItem[] => {
-      const overrideWeeks = curriculumData?.courses?.[slug]?.weeks ?? [];
-      const baseWeeks = curriculumBySlug?.[slug]?.weeks ?? [];
-      return (overrideWeeks.length ? overrideWeeks : baseWeeks) as WeekItem[];
+      const overrideWeeks = (curriculumData?.courses?.[slug]?.weeks ?? []) as WeekItem[];
+      const baseWeeks = (curriculumBySlug?.[slug]?.weeks ?? []) as WeekItem[];
+      if (baseWeeks.length && overrideWeeks.length === baseWeeks.length) {
+        return baseWeeks.map((base, idx) => ({
+          ...base,
+          focus: overrideWeeks[idx]?.focus ?? base.focus,
+          learns: overrideWeeks[idx]?.learns ?? base.learns,
+          activities: overrideWeeks[idx]?.activities ?? base.activities,
+          homework: overrideWeeks[idx]?.homework ?? base.homework,
+          mastery: overrideWeeks[idx]?.mastery ?? base.mastery,
+        })) as WeekItem[];
+      }
+      return (baseWeeks.length ? baseWeeks : overrideWeeks) as WeekItem[];
     };
 
     const primary = pickWeeks(courseSlug);
@@ -215,7 +229,7 @@ function safeCourse(value: string | null): string | null {
             <li>Lesson mastery checks + decodable reading</li>
           </ul>
         </SmartCard>
-        <SmartCard title="Grammar roadmap" description="Basic + Mastery modules" badge="Ages 5-15">
+        <SmartCard title="Grammar roadmap" description="Basic + Advanced modules" badge="Ages 5-15">
           <ul className="list-disc pl-5 text-sm text-gray-600">
             <li>Parts of speech → complex tenses</li>
             <li>Paragraphs, editing drills, rubric-based outputs</li>
@@ -315,14 +329,14 @@ function safeCourse(value: string | null): string | null {
               </div>
             </CollapsibleCard>
 
-            <div id="course-grammar-essentials" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'grammar-essentials' ? 'ring-2 ring-primary-300' : ''}`}>
+            <div id="course-basic-grammar" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'basic-grammar' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Basic Grammar (36 lessons)</h3>
-              <WeekAccordion key="grammar-essentials" items={getWeeks('grammar-essentials')} />
+              <WeekAccordion key="basic-grammar" items={getWeeks('basic-grammar')} />
             </div>
 
-            <div id="course-grammar-mastery" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'grammar-mastery' ? 'ring-2 ring-primary-300' : ''}`}>
+            <div id="course-advanced-grammar" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'advanced-grammar' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Grammar (36 lessons)</h3>
-              <WeekAccordion key="grammar-mastery" items={getWeeks('grammar-mastery')} />
+              <WeekAccordion key="advanced-grammar" items={getWeeks('advanced-grammar')} />
             </div>
           </div>
         )}
@@ -348,14 +362,14 @@ function safeCourse(value: string | null): string | null {
               </div>
             </CollapsibleCard>
 
-            <div id="course-public-speaking-foundations" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'public-speaking-foundations' ? 'ring-2 ring-primary-300' : ''}`}>
+            <div id="course-basic-public-speaking" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'basic-public-speaking' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Basic Public Speaking (36 lessons)</h3>
-              <WeekAccordion key="public-speaking-foundations" items={getWeeks('public-speaking-foundations')} />
+              <WeekAccordion key="basic-public-speaking" items={getWeeks('basic-public-speaking')} />
             </div>
 
-            <div id="course-public-speaking-excellence" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'public-speaking-excellence' ? 'ring-2 ring-primary-300' : ''}`}>
+            <div id="course-advanced-public-speaking" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'advanced-public-speaking' ? 'ring-2 ring-primary-300' : ''}`}>
               <h3 className="mb-3 font-heading text-2xl font-bold">Advanced Public Speaking (36 lessons)</h3>
-              <WeekAccordion key="public-speaking-excellence" items={getWeeks('public-speaking-excellence')} />
+              <WeekAccordion key="advanced-public-speaking" items={getWeeks('advanced-public-speaking')} />
             </div>
           </div>
         )}

@@ -16,15 +16,15 @@ const programs = [
     icon: '✍️',
     age: 'Ages 6-12',
     blurb: 'Parts of speech, tenses, and writing labs with stage checks.',
-    href: '/courses/grammar-essentials',
+    href: '/courses/basic-grammar',
     accent: 'from-amber-100 via-white to-rose-100'
   },
   {
     title: 'Super Speakers',
     icon: '🎤',
     age: 'Ages 4-15',
-    blurb: 'Confidence drills, debates, and capstone speeches.',
-    href: '/courses/public-speaking-foundations',
+    blurb: 'Confidence drills, clear speaking, and short presentations.',
+    href: '/courses/basic-public-speaking',
     accent: 'from-green-100 via-white to-sky-100'
   },
   {

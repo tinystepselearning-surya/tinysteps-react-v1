@@ -10,20 +10,43 @@ import { applySeo } from '../lib/seo';
 
 const CourseDetailPage: FC = () => {
   const params = useParams();
-  const slug = params.slug ?? params.courseId;
+  const rawSlug = params.slug ?? params.courseId;
+  const normalizeSlug = (value?: string | null) => {
+    const key = String(value ?? '').trim();
+    if (!key) return '';
+    const lower = key.toLowerCase();
+    if (lower === 'grammar-essentials') return 'basic-grammar';
+    if (lower === 'grammar-mastery') return 'advanced-grammar';
+    if (lower === 'public-speaking-foundations') return 'basic-public-speaking';
+    if (lower === 'public-speaking-excellence') return 'advanced-public-speaking';
+    return lower;
+  };
+  const slug = normalizeSlug(rawSlug);
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
-  const base = curriculumBySlug[slug || ''] || {};
+  const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
   const [weeksState, setWeeks] = useState(weeks);
 
   useEffect(() => {
     (async () => {
       if (!slug) return;
-      const override = await getCourseWeeksOverride(slug);
-      if (override && override.length) setWeeks(override);
-      else setWeeks(weeks);
+      const override = await getCourseWeeksOverride(rawSlug || slug);
+      const baseWeeks = weeks;
+      if (override && override.length && baseWeeks?.length && override.length === baseWeeks.length) {
+        const merged = baseWeeks.map((baseItem, idx) => ({
+          ...baseItem,
+          focus: override[idx]?.focus ?? baseItem.focus,
+          learns: override[idx]?.learns ?? baseItem.learns,
+          activities: override[idx]?.activities ?? baseItem.activities,
+          homework: override[idx]?.homework ?? baseItem.homework,
+          mastery: override[idx]?.mastery ?? baseItem.mastery,
+        }));
+        setWeeks(merged);
+        return;
+      }
+      setWeeks(baseWeeks);
     })();
-  }, [slug, weeks]);
+  }, [slug, rawSlug, weeks]);
 
   useEffect(() => {
     if (course) document.title = `${course.name} | Tiny Steps`;

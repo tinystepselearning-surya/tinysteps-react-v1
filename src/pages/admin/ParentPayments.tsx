@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, doc, getDocs, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, documentId, getDocs, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
@@ -55,6 +55,12 @@ const toMillis = (value: any) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const chunkIds = (ids: string[], size = 10) => {
+  const out: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) out.push(ids.slice(i, i + size));
+  return out;
+};
+
 export default function ParentPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
@@ -81,48 +87,92 @@ export default function ParentPayments(): JSX.Element {
   const [deleteSavingId, setDeleteSavingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, 'users'), (snap) => {
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
-      setParents(rows.filter(isParentUser));
-    });
-    return () => unsub();
-  }, []);
-
-  useEffect(() => {
     const loadRefs = async () => {
       try {
-        const [kidsSnap, coursesSnap] = await Promise.all([
-          getDocs(collection(db, 'kids')),
-          getDocs(collection(db, 'courses')),
-        ]);
-        const nextKidMap: Record<string, string> = {};
-        kidsSnap.docs.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          const name =
-            data?.fullName ||
-            data?.name ||
-            data?.displayName ||
-            data?.studentName ||
-            data?.firstName ||
-            '';
-          nextKidMap[docSnap.id] = name || docSnap.id;
-          if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+        const parentIds = new Set<string>();
+        const kidIds = new Set<string>();
+        const courseIds = new Set<string>();
+
+        charges.forEach((charge) => {
+          const parentId = String(charge.parentId || '');
+          if (parentId) parentIds.add(parentId);
+          const kidId = String(charge.kidId || '');
+          if (kidId) kidIds.add(kidId);
+          const courseId = String(charge.courseId || '');
+          if (courseId) courseIds.add(courseId);
         });
-        const nextCourseMap: Record<string, string> = {};
-        coursesSnap.docs.forEach((docSnap) => {
-          const data = docSnap.data() as any;
-          nextCourseMap[docSnap.id] = data?.title || data?.name || docSnap.id;
-          if (data?.courseId) nextCourseMap[data.courseId] = nextCourseMap[docSnap.id];
-          if (data?.slug) nextCourseMap[data.slug] = nextCourseMap[docSnap.id];
+
+        payments.forEach((payment) => {
+          const parentId = String(payment.parentId || '');
+          if (parentId) parentIds.add(parentId);
+          const kidId = String(payment.kidId || '');
+          if (kidId) kidIds.add(kidId);
+          const courseId = String(payment.courseId || '');
+          if (courseId) courseIds.add(courseId);
         });
-        setKidMap(nextKidMap);
-        setCourseMap(nextCourseMap);
+
+        if (parentIds.size === 0) {
+          setParents([]);
+        } else {
+          const parentDocs: ParentUser[] = [];
+          for (const chunk of chunkIds(Array.from(parentIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'users'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) =>
+              parentDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
+            );
+          }
+          setParents(parentDocs.filter(isParentUser));
+        }
+
+        if (kidIds.size === 0) {
+          setKidMap({});
+        } else {
+          const nextKidMap: Record<string, string> = {};
+          for (const chunk of chunkIds(Array.from(kidIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'kids'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              const name =
+                data?.fullName ||
+                data?.name ||
+                data?.displayName ||
+                data?.studentName ||
+                data?.firstName ||
+                '';
+              nextKidMap[docSnap.id] = name || docSnap.id;
+              if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+            });
+          }
+          setKidMap(nextKidMap);
+        }
+
+        if (courseIds.size === 0) {
+          setCourseMap({});
+        } else {
+          const nextCourseMap: Record<string, string> = {};
+          for (const chunk of chunkIds(Array.from(courseIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'courses'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              nextCourseMap[docSnap.id] = data?.title || data?.name || docSnap.id;
+              if (data?.courseId) nextCourseMap[data.courseId] = nextCourseMap[docSnap.id];
+              if (data?.slug) nextCourseMap[data.slug] = nextCourseMap[docSnap.id];
+            });
+          }
+          setCourseMap(nextCourseMap);
+        }
       } catch (err) {
-        console.warn('[ParentPayments] Failed to load kid/course names', err);
+        console.warn('[ParentPayments] Failed to load referenced data', err);
       }
     };
     void loadRefs();
-  }, []);
+  }, [charges, payments]);
 
   useEffect(() => {
     if (!selectedMonth) {
