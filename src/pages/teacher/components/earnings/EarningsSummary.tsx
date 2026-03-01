@@ -21,6 +21,11 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const resolvedTeacherId = teacherId || user?.uid;
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
   const { data, isLoading, isError, error } = useEarnings(resolvedTeacherId, selectedMonth);
+  const received = useMemo(() => {
+    const total = Number(data?.totalEarnings || 0);
+    const pending = Number(data?.pendingEarnings || 0);
+    return Math.max(total - pending, 0);
+  }, [data?.totalEarnings, data?.pendingEarnings]);
 
   if (isLoading) {
     return (
@@ -84,12 +89,6 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       </Card>
     );
   }
-
-  const received = useMemo(() => {
-    const total = Number(data.totalEarnings || 0);
-    const pending = Number(data.pendingEarnings || 0);
-    return Math.max(total - pending, 0);
-  }, [data.totalEarnings, data.pendingEarnings]);
 
   return (
     <div className="grid lg:grid-cols-2 gap-4">
