@@ -573,10 +573,10 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
           {statusTab === 'active' ? 'No active enrollments.' : 'No past enrollments.'}
         </div>
       ) : (
-        <Table>
+        <Table className="w-full table-fixed text-sm">
         <TableHeader>
           <TableRow>
-            <TableHead colSpan={5}>
+            <TableHead colSpan={6}>
               <div className="flex flex-wrap items-center gap-2 py-1">
                 <button
                   type="button"
@@ -604,12 +604,12 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
             </TableHead>
           </TableRow>
           <TableRow>
-            <TableHead>Course</TableHead>
-            <TableHead>Student(s)</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Credits</TableHead>
-            <TableHead>Billing</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Course</TableHead>
+            <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Student(s)</TableHead>
+            <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Status</TableHead>
+            <TableHead className="px-3 py-2 text-xs font-semibold w-[100px]">Credits</TableHead>
+            <TableHead className="px-3 py-2 text-xs font-semibold w-[100px]">Billing</TableHead>
+            <TableHead className="px-3 py-2 text-xs font-semibold w-[140px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -629,33 +629,39 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
             return (
               <TableRow key={e.id}>
-                <TableCell className="font-medium">
-                  {courseLabel(e.courseId)}
+                <TableCell className="px-3 py-2 font-medium">
+                  <div className="max-w-[200px] truncate" title={courseLabel(e.courseId)}>
+                    {courseLabel(e.courseId)}
+                  </div>
                 </TableCell>
 
-                <TableCell>{kids || '—'}</TableCell>
+                <TableCell className="px-3 py-2">
+                  <div className="max-w-[200px] truncate" title={kids || ''}>
+                    {kids || '—'}
+                  </div>
+                </TableCell>
 
-                <TableCell>
+                <TableCell className="px-3 py-2">
                   <Badge variant={badgeVariant} title={rawStatus !== status ? `raw: ${rawStatus}` : undefined}>
                     {status}
                   </Badge>
                 </TableCell>
 
-                <TableCell>
+                <TableCell className="px-3 py-2">
                   {(e.creditsRemaining ?? 0)} / {(e.creditsTotal ?? 0)}
                 </TableCell>
 
-                <TableCell>{e.billingCycle ?? '—'}</TableCell>
+                <TableCell className="px-3 py-2">{e.billingCycle ?? '—'}</TableCell>
 
-                <TableCell>
-                  <div className="flex flex-wrap gap-2">
-                    <Button size="sm" variant="outline" onClick={() => openEdit(e)}>
+                <TableCell className="px-3 py-2">
+                  <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openEdit(e)}>
                       Edit
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => handleArchive(e)} disabled={saving}>
+                    <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => handleArchive(e)} disabled={saving}>
                       Archive
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={() => handleDelete(e)} disabled={saving}>
+                    <Button size="sm" variant="destructive" className="h-7 px-2 text-xs" onClick={() => handleDelete(e)} disabled={saving}>
                       Delete
                     </Button>
                   </div>

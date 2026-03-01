@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { applySeo } from "../lib/seo";
 import type { FC } from "react";
 import { CourseCard } from "../components/courses/CourseCard";
-import { ParentReportPreview } from "../components/courses/ParentReportPreview";
 import { catalogs } from "../content/courses";
 import { DEFAULT_PER_CLASS_PRICE, formatINR } from '../constants/pricing';
 import { organizationSchema } from '../lib/schemas';
@@ -315,10 +314,6 @@ const CoursesPage: FC = () => {
             </section>
           )}
 
-          {/* Parent report preview */}
-          <div data-animate="fade-up" data-animate-delay="0.05s" className="glass-panel">
-            <ParentReportPreview track={track} />
-          </div>
         </div>
       </div>
     </div>

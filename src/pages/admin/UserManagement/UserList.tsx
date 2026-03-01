@@ -94,37 +94,45 @@ function UserTable({
   };
 
   return (
-    <Table>
+    <Table className="w-full table-fixed text-sm">
       <TableHeader>
         <TableRow>
-          <TableHead>Email</TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Role</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Created</TableHead>
-          <TableHead>Actions</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Email</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold w-[160px]">Name</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Role</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Status</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Created</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold w-[140px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
 
       <TableBody>
         {users.map((user) => (
           <TableRow key={user.id}>
-            <TableCell>{user.email || '—'}</TableCell>
-            <TableCell>{user.name || '—'}</TableCell>
+            <TableCell className="px-3 py-2">
+              <div className="max-w-[200px] truncate" title={user.email || ''}>
+                {user.email || '—'}
+              </div>
+            </TableCell>
+            <TableCell className="px-3 py-2">
+              <div className="max-w-[160px] truncate" title={user.name || ''}>
+                {user.name || '—'}
+              </div>
+            </TableCell>
 
-            <TableCell>
+            <TableCell className="px-3 py-2">
               <Badge variant={getRoleBadgeVariant(user.role)}>
                 {user.role || 'unknown'}
               </Badge>
             </TableCell>
 
-            <TableCell>
+            <TableCell className="px-3 py-2">
               <Badge variant={getStatusBadgeVariant(user.status)}>
                 {user.status || 'unknown'}
               </Badge>
             </TableCell>
 
-            <TableCell>
+            <TableCell className="px-3 py-2">
               {(() => {
                 const createdAt =
                   user.createdAt instanceof Date
@@ -135,33 +143,18 @@ function UserTable({
               })()}
             </TableCell>
 
-            <TableCell>
-              <div className="flex flex-wrap gap-2">
+            <TableCell className="px-3 py-2">
+              <div className="flex flex-col gap-1">
                 <Button size="sm" variant="outline" onClick={() => onEdit(user)}>
                   Edit
                 </Button>
-
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onSendResetLink(user)}
-                >
-                  Send Reset Link
+                <Button size="sm" variant="outline" onClick={() => onSendResetLink(user)}>
+                  Reset Link
                 </Button>
-
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => onArchive(user)}
-                >
+                <Button size="sm" variant="secondary" onClick={() => onArchive(user)}>
                   Archive
                 </Button>
-
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => onDelete(user)}
-                >
+                <Button size="sm" variant="destructive" onClick={() => onDelete(user)}>
                   Delete
                 </Button>
               </div>
@@ -518,7 +511,7 @@ export function UserList() {
       />
 
       {/* Table */}
-      <Card>
+      <Card className="overflow-hidden">
         <UserTable
           users={users}
           onEdit={(u) => setEditingUser(u)}

@@ -6,7 +6,7 @@ export default function OnlinePhonicsReadingClassesPage() {
   useEffect(() => {
     applySeo({
       title: "Online Phonics & Reading Classes for Kids (Ages 3–8) | Tiny Steps",
-      description: "1:1 online phonics & reading classes for kids (Ages 3–8). Letter sounds, blending, CVC reading, and confidence—taught with fun games and weekly progress updates. Book a free assessment.",
+      description: "1:1 online phonics & reading classes for kids (Ages 3–8). Letter sounds, blending, CVC reading, and confidence—taught with fun games and stage-based progress updates. Book a free assessment.",
       canonicalPath: "/online-phonics-reading-classes",
       ogType: "website",
       jsonLd: [
@@ -40,7 +40,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           1:1 personalized instruction for ages 3–8. Build confidence in letter sounds, blending, and reading.
         </p>
         <p className="text-gray-600 mb-8">
-          Taught by experienced mentors using proven phonics methods, fun games, and weekly progress reports for parents.
+          Taught by experienced mentors using proven phonics methods, fun games, and stage-based progress updates for parents.
         </p>
         <Link
           to="/contact"
@@ -54,7 +54,7 @@ export default function OnlinePhonicsReadingClassesPage() {
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are online phonics and reading classes?</h2>
         <p className="text-gray-700 leading-relaxed">
-          Online phonics and reading classes teach children ages 3–8 letter sounds, blending, and reading through live 1:1 sessions with expert mentors. Each class uses proven methods like SATPIN, interactive games, and guided practice tailored to your child's pace—with weekly progress reports so parents see exactly what skills are improving and what to practice at home.
+          Online phonics and reading classes teach children ages 3–8 letter sounds, blending, and reading through live 1:1 sessions with expert mentors. Each class uses proven methods like SATPIN, interactive games, and guided practice tailored to your child's pace—with stage-based progress updates so parents see exactly what skills are improving and what to practice at home.
         </p>
       </section>
 

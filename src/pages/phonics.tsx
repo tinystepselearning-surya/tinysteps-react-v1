@@ -55,7 +55,7 @@ export default function PhonicsPage() {
           "@context": "https://schema.org",
           "@type": "Course",
           "name": "Phonics Superstar Program",
-          "description": "Systematic, multi-sensory phonics taught live with AI reading coaches and weekly parent insights. SATPIN to advanced decoding in 12 weeks.",
+          "description": "Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights. SATPIN to advanced decoding in 12 weeks.",
           "provider": {
             "@type": "Organization",
             "name": "Tiny Steps Online School",
@@ -162,7 +162,7 @@ export default function PhonicsPage() {
       <ProgramHero
         program="Phonics"
         title="Phonics Superstar Program"
-        subtitle="Systematic, multi-sensory phonics taught live with AI reading coaches and weekly parent insights."
+        subtitle="Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights."
         badges={['Ages 3–12', 'Live 1:1 or pods', 'AI progress dashboard']}
         highlights={[
           'SATPIN + digraphs + multisyllabic decoding',

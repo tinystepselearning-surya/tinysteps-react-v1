@@ -4,6 +4,7 @@
 import { type FC, useState, useRef, useEffect } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
+import { masteryLabel, masteryPctFromKey } from '../../../../lib/mastery';
 
 interface ParentOverviewCardsProps {
   confidenceNow: number | null;
@@ -228,9 +229,9 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
         <Card className="p-4">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Confidence</div>
           <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-            {confidenceNow !== null ? confidenceNow : '—'}
+            {confidenceNow !== null ? masteryLabel(confidenceNow) : '—'}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">out of 100</div>
+          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">recent sessions</div>
         </Card>
 
         {/* Games Completed Card */}
@@ -246,9 +247,9 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
         <Card className="p-4">
           <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Avg Score</div>
           <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-            {avgScore !== null ? `${Math.round(avgScore)}%` : '—'}
+            {avgScore !== null ? masteryLabel(avgScore) : '—'}
           </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">accuracy</div>
+          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">accuracy level</div>
         </Card>
 
         {/* Total Points Card */}
@@ -348,12 +349,14 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                     <div>
                       <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
                         <span className="font-medium">Progress</span>
-                        <span className="font-bold text-indigo-600 dark:text-indigo-400">{stageProgressPct ?? 0}%</span>
+                        <span className="font-bold text-indigo-600 dark:text-indigo-400">
+                          {stageProgressPct == null ? '—' : masteryLabel(stageProgressPct)}
+                        </span>
                       </div>
                       <div className="w-full bg-white/60 dark:bg-slate-800/60 rounded-full h-4 overflow-hidden shadow-inner">
                         <div
                           className="bg-gradient-to-r from-sky-500 via-indigo-600 to-purple-600 dark:from-sky-400 dark:via-indigo-500 dark:to-purple-500 h-full rounded-full transition-all duration-500 shadow-sm"
-                          style={{ width: `${Math.min(stageProgressPct ?? 0, 100)}%` }}
+                          style={{ width: `${Math.min(masteryPctFromKey(stageProgressPct), 100)}%` }}
                         />
                       </div>
                       {/* Next Milestone */}
@@ -486,7 +489,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                               : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                           }`}
                         >
-                          {status === 'done' ? '✓ Done' : status === 'in-progress' ? '⏳ In progress' : 'Not started'}
+                          {status === 'done' ? '✓ Done' : status === 'in-progress' ? '⏳ In progress' : 'Getting started'}
                         </div>
                         
                         {/* View indicator */}
@@ -641,7 +644,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                   <div className="flex items-start gap-3">
                     <div className="text-2xl">✨</div>
                     <div>
-                      <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Get Weekly Insights</div>
+                      <div className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Stage Insights</div>
                       <div className="text-xs text-gray-600 dark:text-gray-400">Parent dashboard</div>
                     </div>
                   </div>

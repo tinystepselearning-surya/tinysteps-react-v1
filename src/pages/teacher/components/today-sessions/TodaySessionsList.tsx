@@ -40,7 +40,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     }
   };
 
-  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[] }>; sessionNotes: string }) => {
+  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[] }>; sessionNotes: string }) => {
     if (!selectedSession) return;
     try {
       const batch = writeBatch(db);
@@ -84,28 +84,21 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         const topics = entry?.topics ?? [];
         if (!Array.isArray(topics) || topics.length === 0) continue;
 
-        // Convert mastery to number (0-100)
-        const masteryNum = Number.isFinite(Number(entry.mastery)) ? Number(entry.mastery) : 50;
-        
-        // Derive scoreBand from mastery
-        const scoreBand = masteryNum <= 20 ? '0-20' :
-                         masteryNum <= 40 ? '21-40' :
-                         masteryNum <= 60 ? '41-60' :
-                         masteryNum <= 80 ? '61-80' : '81-100';
-
         for (const topicId of topics) {
           if (!topicId) continue;
           const progRef = doc(db, 'students', kidId, 'progress', topicId);
-          batch.set(progRef, {
-            mastery: masteryNum,
-            scoreBand: scoreBand,
+          const payload: Record<string, any> = {
             teacherRemark: entry.notes ?? '',
             lastEvidence: 'attendance',
             lastSessionId: selectedSession.id,
             updatedAt: serverTimestamp(),
             updatedBy: user?.uid ?? null,
             source: 'attendance',
-          }, { merge: true });
+          };
+          if (typeof entry.mastery === 'string' && entry.mastery) {
+            payload.mastery = entry.mastery;
+          }
+          batch.set(progRef, payload, { merge: true });
         }
       }
 

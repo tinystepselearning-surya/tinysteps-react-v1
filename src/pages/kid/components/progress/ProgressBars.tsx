@@ -1,5 +1,6 @@
 import type { FC } from 'react';
 import { Card } from '@components/ui/card';
+import { masteryLabel, masteryPctFromKey } from '../../../../lib/mastery';
 
 interface ProgressBarsProps {
   kidId?: string;
@@ -62,20 +63,20 @@ export const ProgressBars: FC<ProgressBarsProps> = ({ kidId }) => {
                 </div>
               </div>
               <span className="text-lg font-bold text-blue-600">
-                {subject.progress}%
+                {masteryLabel(subject.progress)}
               </span>
             </div>
 
             <div className="w-full bg-gray-200 rounded-full h-4">
               <div
                 className={`h-4 rounded-full transition-all duration-500 ${subject.color}`}
-                style={{ width: `${subject.progress}%` }}
+                style={{ width: `${masteryPctFromKey(subject.progress)}%` }}
               />
             </div>
 
             <div className="flex justify-between text-sm text-gray-500">
               <span>Keep going! 🎉</span>
-              <span>{subject.progress}/100</span>
+              <span>{masteryLabel(subject.progress)}</span>
             </div>
           </div>
         ))}

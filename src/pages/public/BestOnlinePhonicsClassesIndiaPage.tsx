@@ -105,7 +105,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               "name": "Do I get progress reports for online phonics classes?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. Quality programs provide weekly progress reports showing mastered skills, upcoming topics, and home practice tips. Tiny Steps includes lesson recordings, mastery bands, and monthly parent calls for full transparency."
+                "text": "Yes. Quality programs provide stage-based progress updates showing mastered skills, upcoming topics, and home practice tips. Tiny Steps includes lesson recordings, mastery bands, and monthly parent calls for full transparency."
               }
             },
             {
@@ -168,7 +168,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are the best online phonics classes in India?</h2>
         <p className="text-gray-700 leading-relaxed">
-          The best online phonics classes for Indian children provide 1:1 personalized instruction using systematic synthetic phonics (SATPIN, Jolly Phonics), live mentor feedback, weekly progress reports, and curricula aligned to IB/CBSE standards. Tiny Steps Learning offers 1:1 online phonics, grammar, and public speaking classes for ages 3–12, combining proven methods with AI-guided practice, lesson recordings, and parent transparency—helping children master reading in 12–16 weeks with consistent practice.
+          The best online phonics classes for Indian children provide 1:1 personalized instruction using systematic synthetic phonics (SATPIN, Jolly Phonics), live mentor feedback, stage-based progress updates, and curricula aligned to IB/CBSE standards. Tiny Steps Learning offers 1:1 online phonics, grammar, and public speaking classes for ages 3–12, combining proven methods with AI-guided practice, lesson recordings, and parent transparency—helping children master reading in 12–16 weeks with consistent practice.
         </p>
       </section>
 
@@ -371,7 +371,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                 <td className="border border-gray-300 px-4 py-3 font-semibold text-gray-900">1:1 online phonics school</td>
                 <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Personalized pacing, pronunciation fixes, catching up fast</td>
                 <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Higher cost; mentor quality varies widely</td>
-                <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Certified mentors, weekly progress reports, lesson recordings</td>
+                <td className="border border-gray-300 px-4 py-3 text-sm text-gray-700">Certified mentors, stage-based progress updates, lesson recordings</td>
               </tr>
               <tr className="bg-gray-50">
                 <td className="border border-gray-300 px-4 py-3 font-semibold text-gray-900">Small group online class</td>
@@ -482,7 +482,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           <div className="border-b border-gray-200 pb-6">
             <h3 className="text-lg font-bold text-[#2d5016] mb-2">Do I get progress reports for online phonics classes?</h3>
             <p className="text-gray-700">
-              Yes. Quality programs provide weekly progress reports showing mastered skills, upcoming topics, and home practice tips. Tiny Steps includes lesson recordings, mastery bands, and monthly parent calls for full transparency.
+              Yes. Quality programs provide stage-based progress updates showing mastered skills, upcoming topics, and home practice tips. Tiny Steps includes lesson recordings, mastery bands, and monthly parent calls for full transparency.
             </p>
           </div>
 

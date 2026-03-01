@@ -115,7 +115,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
       "@context": "https://schema.org",
       "@type": "HowTo",
       "name": "Track your child's progress",
-      "description": "We send weekly updates and milestone reports. Use the parent dashboard for details.",
+      "description": "We send stage-based updates and milestone reports. Use the parent dashboard for details.",
       "inLanguage": "en-IN",
       "step": [
         { "@type": "HowToStep", "text": "Open the parent dashboard to view session notes and goals." },

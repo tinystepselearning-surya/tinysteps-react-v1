@@ -18,7 +18,7 @@ const TrackingProgress: React.FC = () => {
       </p>
     </div>
 
-    <p className="mt-4">We send weekly updates and milestone reports. Use the parent dashboard for details.</p>
+    <p className="mt-4">We send stage-based updates and milestone reports. Use the parent dashboard for details.</p>
     <p className="mt-2 text-sm text-gray-700">Short progress notes help focus next steps.</p>
 
     <h2 className="mt-6 font-semibold">Step-by-step</h2>

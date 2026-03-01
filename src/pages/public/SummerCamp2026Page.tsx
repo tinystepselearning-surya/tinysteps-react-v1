@@ -158,7 +158,7 @@ export default function SummerCamp2026Page() {
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-2">What is Summer English Camp 2026?</h2>
         <p className="text-gray-700 leading-relaxed">
-          Summer English Camp 2026 is a 7-week online program for children ages 3–12 to build reading fluency, grammar confidence, and public speaking skills. Each child gets daily live classes with expert mentors, guided practice, and weekly progress reports for parents. Perfect for beginners or students looking to accelerate their English journey.
+          Summer English Camp 2026 is a 7-week online program for children ages 3–12 to build reading fluency, grammar confidence, and public speaking skills. Each child gets daily live classes with expert mentors, guided practice, and stage-based progress updates for parents. Perfect for beginners or students looking to accelerate their English journey.
         </p>
       </section>
 
@@ -343,7 +343,7 @@ export default function SummerCamp2026Page() {
           </div>
         </div>
         <p className="text-center text-sm text-gray-600 mt-6">
-          All outcomes are tracked weekly and shared with parents. <Link to="/curriculum" className="text-[#4a7c2c] underline font-semibold">Explore our full curriculum</Link> to see the complete learning pathway.
+          All outcomes are tracked by stage and shared with parents. <Link to="/curriculum" className="text-[#4a7c2c] underline font-semibold">Explore our full curriculum</Link> to see the complete learning pathway.
         </p>
       </section>
 

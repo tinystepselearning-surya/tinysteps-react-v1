@@ -82,7 +82,7 @@ const FAQS = [
   {
     question: 'How are group classes different from 1:1?',
     answer:
-      'Group classes (1:4–1:6) focus on motivation and peer learning at a lower fee per child, while premium 1:1 is faster and fully personalized. Both include weekly progress cards and teacher feedback, but 1:1 allows deeper customization.',
+      'Group classes (1:4–1:6) focus on motivation and peer learning at a lower fee per child, while premium 1:1 is faster and fully personalized. Both include stage-based progress updates and teacher feedback, but 1:1 allows deeper customization.',
   },
   {
     question: 'What happens if we miss a class?',
@@ -143,7 +143,7 @@ export default function SummerCampsPage() {
     applySeo({
       title: 'Online Summer Camps for Kids (Reading, Phonics, Speaking) | Tiny Steps',
       description:
-        '3‑week online summer camps for ages 4–12. Reading, phonics, and confident speaking tracks with group classes or premium 1:1. Clear outcomes, weekly progress cards, and live mentor feedback.',
+        '3‑week online summer camps for ages 4–12. Reading, phonics, and confident speaking tracks with group classes or premium 1:1. Clear outcomes, stage-based progress updates, and live mentor feedback.',
       canonicalPath: '/summer-camps',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, courseListSchema, faqSchema],
@@ -177,7 +177,7 @@ export default function SummerCampsPage() {
               <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Group Classes</p>
               <p className="mt-2 text-sm text-gray-700">
                 Best for motivation + peer learning + affordability.
-                Format: 1:4 or 1:6. Includes weekly progress card + teacher feedback.
+                Format: 1:4 or 1:6. Includes stage-based progress updates + teacher feedback.
               </p>
               <div className="mt-4">
                 <Link
@@ -236,7 +236,7 @@ export default function SummerCampsPage() {
             <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
             <p className="mt-2 text-sm text-gray-700">
               Children finish with measurable progress: clearer decoding, smoother reading, or stronger
-              speaking confidence. You’ll receive weekly progress cards and teacher feedback that show
+              speaking confidence. You’ll receive stage-based progress updates and teacher feedback that show
               mastered skills and next steps.
             </p>
           </div>

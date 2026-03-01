@@ -71,7 +71,7 @@ function getStatusBadge(completed: number, total: number) {
     return { label: "—", cls: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300" };
   }
   if (completed <= 0) {
-    return { label: "Not started", cls: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200" };
+    return { label: "Getting started", cls: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-200" };
   }
   if (completed >= total) {
     return { label: "Completed", cls: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" };

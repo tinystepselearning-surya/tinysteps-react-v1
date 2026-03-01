@@ -263,7 +263,7 @@ const PricingPage: FC = () => {
     <div className="page-gradient min-h-screen">
       <Meta
         title="Pricing | Tiny Steps Online School"
-        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and weekly parent progress insights. Free assessment class; flexible monthly plans."
+        description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and stage-based parent progress insights. Free assessment class; flexible monthly plans."
         canonical="https://tinystepslearning.com/pricing"
         jsonLd={offerCatalog}
       />

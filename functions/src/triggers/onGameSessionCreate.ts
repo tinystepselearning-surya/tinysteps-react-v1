@@ -5,17 +5,6 @@ import * as logger from 'firebase-functions/logger';
 const db = getFirestore();
 
 /**
- * Get ISO week number for a date
- */
-function getWeekNumber(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-}
-
-/**
  * onGameSessionCreate - Firestore trigger for gameSessions/{eventId}
  * 
  * Applies minimal rollups when a new game session is recorded.
@@ -254,35 +243,6 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
           skillsCount: skillResults.length,
         });
       }
-
-      // Update weekly rollup
-      const now = new Date();
-      const year = now.getFullYear();
-      const weekNum = getWeekNumber(now);
-      const weekKey = `${year}-W${String(weekNum).padStart(2, '0')}`;
-      
-      const weeklyRef = db.doc(`kids/${kidId}/weekly/${weekKey}`);
-      const weeklyUpdate: any = {
-        year,
-        week: weekNum,
-        levelsCompleted: FieldValue.increment(isFirstCompletion ? 1 : 0),
-        gamesPlayed: FieldValue.increment(1),
-        totalPoints: FieldValue.increment(pointsEarned || 0),
-        lastUpdatedAt: FieldValue.serverTimestamp(),
-      };
-
-      if (typeof accuracy === 'number') {
-        weeklyUpdate.totalAccuracy = FieldValue.increment(accuracy);
-        weeklyUpdate.sessionsCount = FieldValue.increment(1);
-      }
-
-      await weeklyRef.set(weeklyUpdate, { merge: true });
-
-      logger.info(`[onGameSessionCreate] Updated weekly rollup`, {
-        eventId,
-        kidId,
-        weekKey,
-      });
 
       // Write idempotency marker
       await markerRef.set({

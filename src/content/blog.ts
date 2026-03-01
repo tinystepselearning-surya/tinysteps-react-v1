@@ -183,7 +183,7 @@ const rawBlogPosts: BlogPost[] = [
         date: '2026-01-10',
         readTime: '7 min',
         excerpt:
-          "If you’re searching online English classes for kids in India, here’s a simple parent checklist: phonics-first reading, speaking confidence, writing, and weekly progress updates—without overwhelm.",
+          "If you’re searching online English classes for kids in India, here’s a simple parent checklist: phonics-first reading, speaking confidence, writing, and stage-based progress updates—without overwhelm.",
         hero: '/blog/hero-parent-tips.jpg',
         body: [
           { type: 'p', content: "If you’re typing “online English classes for kids India” into Google, you’re not alone. Most parents want the same outcome: better communication, stronger reading, fewer writing struggles—and confidence in school." },
@@ -198,8 +198,8 @@ const rawBlogPosts: BlogPost[] = [
           { type: 'p', content: 'Good spoken English classes for kids scaffold speaking: 10–15s → 30s → 60s using prompts and roleplay.' },
           { type: 'h2', content: '5) Grammar should show up inside real sentences' },
           { type: 'p', content: 'Grammar is learned through use, not lectures. Look for sentence games and speaking-to-writing activities.' },
-          { type: 'h2', content: '6) Demand weekly progress updates (simple and clear)' },
-          { type: 'p', content: 'Ask for weekly updates: what was taught, what the child can do now, what to practice, and the next goal.' },
+          { type: 'h2', content: '6) Demand clear progress updates (simple and clear)' },
+          { type: 'p', content: 'Ask for stage-based updates: what was taught, what the child can do now, what to practice, and the next goal.' },
           { type: 'h2', content: 'If you want, start with a free level check' },
           { type: 'p', content: 'A good online English tutor for kids will first identify your child’s level then recommend a plan. Explore our courses and FAQs.' },
         ]

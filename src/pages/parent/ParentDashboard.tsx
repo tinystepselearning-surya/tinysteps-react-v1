@@ -30,18 +30,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { WeeklyProgressCard } from "../../components/insights/WeeklyProgressCard";
-import {
-  fetchPublishedWeeklyReports,
-  type WeeklyReport,
-} from "../../lib/insights/weeklyReports";
+ 
+import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 
 type TabKey =
   | "dashboard"
   | "insights"
   | "games-progress"
   | "skills"
-  | "weekly"
   | "classes"
   | "profile"
   | "payments";
@@ -52,11 +48,11 @@ function safeTab(value: string | null): TabKey {
     "insights",
     "games-progress",
     "skills",
-    "weekly",
     "classes",
     "profile",
     "payments",
   ];
+  if (value === "weekly") return "insights";
   if (value === "reports") return "dashboard";
   return validTabs.includes(value as TabKey) ? (value as TabKey) : "dashboard";
 }
@@ -129,6 +125,47 @@ const PHONICS_COURSE_ID_ALIASES: Record<string, string> = {
   advanced: "advanced-phonics",
 };
 
+const normalizeCurriculumCourseId = (value?: string | null): string | null => {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return null;
+  if (PHONICS_COURSE_IDS.includes(raw)) return raw;
+  if (PHONICS_COURSE_ID_ALIASES[raw]) return PHONICS_COURSE_ID_ALIASES[raw];
+
+  if (raw === "basic-grammar" || raw === "grammar-essentials" || raw === "grammar essentials") {
+    return "basic-grammar";
+  }
+  if (raw === "advanced-grammar" || raw === "grammar-mastery" || raw === "grammar mastery") {
+    return "advanced-grammar";
+  }
+  if (raw.includes("grammar")) {
+    if (raw.includes("intermediate")) return "basic-grammar";
+    if (raw.includes("advanced") || raw.includes("mastery")) return "advanced-grammar";
+    return "basic-grammar";
+  }
+
+  if (
+    raw === "basic-public-speaking"
+    || raw === "public-speaking-basic"
+    || raw === "public-speaking-foundations"
+  ) {
+    return "basic-public-speaking";
+  }
+  if (
+    raw === "advanced-public-speaking"
+    || raw === "public-speaking-advanced"
+    || raw === "public-speaking-excellence"
+  ) {
+    return "advanced-public-speaking";
+  }
+  if (raw.includes("speaking") || raw.includes("speech") || raw.includes("public")) {
+    if (raw.includes("intermediate")) return "basic-public-speaking";
+    if (raw.includes("advanced") || raw.includes("excellence")) return "advanced-public-speaking";
+    return "basic-public-speaking";
+  }
+
+  return null;
+};
+
 const phonicsLabelsByCourseId: Record<string, string> = {
   "phonics-foundations": "Phonics Foundations",
   "early-phonics": "Early Phonics",
@@ -174,23 +211,229 @@ function parseScorePercent(value: unknown): number | null {
 }
 
 function masteryToPercent(value: unknown): number | null {
-  const mastery = String(value ?? "").trim().toLowerCase();
+  const mastery = String(value ?? "").trim();
   if (!mastery) return null;
-  if (mastery === "not_started") return 0;
-  if (mastery === "emerging") return 25;
-  if (mastery === "developing") return 50;
-  if (mastery === "proficient") return 75;
-  if (mastery === "mastered") return 100;
-  return null;
+  return masteryPctFromKey(mastery);
 }
 
 function formatMasteryLabel(value?: string | null): string {
-  const raw = String(value ?? "").trim().toLowerCase();
+  const raw = String(value ?? "").trim();
   if (!raw) return "";
-  if (raw === "not_started") return "Not started";
-  const cleaned = raw.replace(/_/g, " ");
-  return cleaned.replace(/\b\w/g, (ch) => ch.toUpperCase());
+  return masteryLabel(raw);
 }
+
+const STAGE_MASTERY_ORDER: MasteryKey[] = [
+  "not_started",
+  "emerging",
+  "developing",
+  "proficient",
+  "mastered",
+];
+
+function aggregateStageMastery(values: Array<any>): MasteryKey {
+  if (!values.length) return "not_started";
+  const ranks = values.map((value) => STAGE_MASTERY_ORDER.indexOf(masteryKeyFromValue(value)));
+  const total = ranks.reduce((sum, rank) => sum + (Number.isFinite(rank) ? rank : 0), 0);
+  const avg = total / ranks.length;
+  const idx = Math.max(0, Math.min(STAGE_MASTERY_ORDER.length - 1, Math.round(avg)));
+  return STAGE_MASTERY_ORDER[idx];
+}
+
+function pickStageFocus(rows: Array<any>): string[] {
+  if (!rows.length) return [];
+  const sorted = rows
+    .slice()
+    .sort((a, b) => (b.updatedAtMs ?? 0) - (a.updatedAtMs ?? 0));
+  for (const row of sorted) {
+    const chips = Array.isArray(row.focusChips) && row.focusChips.length > 0
+      ? row.focusChips
+      : Array.isArray(row.confusionChips) && row.confusionChips.length > 0
+        ? row.confusionChips
+        : [];
+    if (chips.length > 0) return chips.slice(0, 2);
+  }
+  return [];
+}
+
+const STAGE_HINTS_BY_COURSE: Record<string, Record<number, string>> = {
+  "phonics-foundations": {
+    1: "Learn the first letter sounds and match them to pictures.",
+    2: "Build quick recall of more letter sounds.",
+    3: "Add new letter sounds and use them in simple words.",
+    4: "Practice additional consonant sounds with picture-word matching.",
+    5: "Complete the core set of letter sounds.",
+    6: "Short vowels + review all sounds.",
+  },
+  "early-phonics": {
+    1: "Blend sound sets 1–5 and read simple CVC words.",
+    2: "Finish sound sets + short vowels for smoother blending.",
+    3: "Learn digraphs and silent letters in words.",
+    4: "Practice vowel teams and long vowel patterns.",
+    5: "Master Magic E long vowels.",
+    6: "Apply rules in longer words and review.",
+  },
+  "advanced-phonics": {
+    1: "Diphthongs and gliding vowel sounds.",
+    2: "Bossy R patterns for ar/or/er/ir/ur.",
+    3: "Special sounds + silent letter patterns.",
+    4: "Alternate vowel spellings in words.",
+    5: "Endings and suffix sounds.",
+    6: "Mixed revision + fluency practice.",
+  },
+  "basic-grammar": {
+    1: "Build simple sentences with nouns and verbs.",
+    2: "Add meaning using adjectives, articles, and pronouns.",
+    3: "Use prepositions and adverbs to add detail.",
+    4: "Join ideas and use plurals correctly.",
+    5: "Ask questions and punctuate sentences.",
+    6: "Use past, present, and future in simple sentences.",
+  },
+  "advanced-grammar": {
+    1: "Control tense choices and keep them consistent.",
+    2: "Use perfect tenses and modals accurately.",
+    3: "Build complex sentences with clauses.",
+    4: "Use voice and reported speech clearly.",
+    5: "Write cohesive paragraphs with transitions.",
+    6: "Write with tone, argument, and impact.",
+  },
+  "basic-public-speaking": {
+    1: "Feel comfortable speaking in class routines.",
+    2: "Speak clearly with pace, volume, and full words.",
+    3: "Describe objects with details and expression.",
+    4: "Give short talks and answer simple questions.",
+    5: "Tell a short story in order.",
+    6: "Practice presentations with confidence.",
+  },
+  "advanced-public-speaking": {
+    1: "Engage the audience with confident presence.",
+    2: "Structure talks with strong openings and details.",
+    3: "Perform stories with voice and emotion.",
+    4: "Handle impromptu questions calmly.",
+    5: "Use persuasion and debate skills.",
+    6: "Deliver polished presentations.",
+  },
+};
+
+const STAGE_EXPECTATIONS_BY_COURSE: Record<string, Record<number, string[]>> = {
+  "phonics-foundations": {
+    1: ["Recognize first letter sounds", "Match sounds to pictures"],
+    2: ["Recall more letter sounds", "Spot sounds at word starts"],
+    3: ["Practice new letter sounds", "Blend simple sounds"],
+    4: ["Strengthen sound recall", "Identify sounds in words"],
+    5: ["Complete the core sounds", "Build quick sound confidence"],
+    6: ["Short vowel sounds", "Review all letter sounds"],
+  },
+  "early-phonics": {
+    1: ["Blend CVC words", "Sound sets 1–5"],
+    2: ["Short vowels in CVC", "Sound sets 6–7"],
+    3: ["Digraphs and silent letters", "Read common patterns"],
+    4: ["Vowel teams + long vowels", "Practice igh/ai/oa"],
+    5: ["Magic E long vowels", "Spell with Magic E"],
+    6: ["Longer words + review", "Apply patterns in reading"],
+  },
+  "advanced-phonics": {
+    1: ["Diphthong sounds", "ai/ay, oi/oy, ou/ow"],
+    2: ["Bossy R patterns", "ar/or/er/ir/ur"],
+    3: ["Special sounds", "Silent letters in words"],
+    4: ["Alternate vowel spellings", "Choose the right vowel"],
+    5: ["Endings + suffix sounds", "c/ct and /shun/"],
+    6: ["Revision + fluency", "Mixed reading practice"],
+  },
+  "basic-grammar": {
+    1: ["Nouns + verbs in sentences", "Capitals + full stop"],
+    2: ["Adjectives + articles", "Pronouns in sentences"],
+    3: ["Prepositions + adverbs", "Add detail to meaning"],
+    4: ["Join ideas with conjunctions", "Use plurals correctly"],
+    5: ["Question forms", "Punctuation practice"],
+    6: ["Past/present/future", "Fix tense mistakes"],
+  },
+  "advanced-grammar": {
+    1: ["Control tense choices", "Edit tense shifts"],
+    2: ["Perfect tenses", "Modal meaning/choice"],
+    3: ["Clauses + complex sentences", "Fix fragments"],
+    4: ["Active vs passive", "Reported speech edits"],
+    5: ["Paragraph cohesion", "Transitions + punctuation"],
+    6: ["Tone + argument", "Polished writing showcase"],
+  },
+  "basic-public-speaking": {
+    1: ["Comfort + routine", "Eye contact + posture"],
+    2: ["Clear speech", "Slow pace + full words"],
+    3: ["Describe with 2–3 details", "Simple gestures"],
+    4: ["Short talk 30–60 seconds", "Answer easy questions"],
+    5: ["Tell a short story", "Beginning-middle-end"],
+    6: ["Mini presentation", "Handle small mistakes calmly"],
+  },
+  "advanced-public-speaking": {
+    1: ["Engaging openings", "Confident presence"],
+    2: ["Structure talk", "Supporting details"],
+    3: ["Story performance", "Voice + emotion"],
+    4: ["Impromptu response", "Q&A strategies"],
+    5: ["Persuasion + debate", "Rebuttal practice"],
+    6: ["Polished presentation", "Use notes + visuals"],
+  },
+};
+
+const STAGE_COLORS = [
+  {
+    accent: "#2563eb",
+    soft: "#dbeafe",
+    badgeBg: "bg-blue-100",
+    badgeText: "text-blue-700",
+    bar: "bg-blue-500",
+  },
+  {
+    accent: "#0ea5e9",
+    soft: "#cffafe",
+    badgeBg: "bg-cyan-100",
+    badgeText: "text-cyan-700",
+    bar: "bg-cyan-500",
+  },
+  {
+    accent: "#8b5cf6",
+    soft: "#ede9fe",
+    badgeBg: "bg-violet-100",
+    badgeText: "text-violet-700",
+    bar: "bg-violet-500",
+  },
+  {
+    accent: "#f59e0b",
+    soft: "#fef3c7",
+    badgeBg: "bg-amber-100",
+    badgeText: "text-amber-700",
+    bar: "bg-amber-500",
+  },
+  {
+    accent: "#ec4899",
+    soft: "#fce7f3",
+    badgeBg: "bg-pink-100",
+    badgeText: "text-pink-700",
+    bar: "bg-pink-500",
+  },
+  {
+    accent: "#10b981",
+    soft: "#d1fae5",
+    badgeBg: "bg-emerald-100",
+    badgeText: "text-emerald-700",
+    bar: "bg-emerald-500",
+  },
+];
+
+const getStageColors = (order: number) => {
+  if (!Number.isFinite(order) || order < 1) return STAGE_COLORS[0];
+  return STAGE_COLORS[(order - 1) % STAGE_COLORS.length];
+};
+
+const stripStagePrefix = (label: string, order: number): string => {
+  if (!label) return `Stage ${order}`;
+  const cleaned = label.replace(/^Stage\\s*\\d+\\s*[—-]\\s*/i, "").trim();
+  return cleaned || label;
+};
+
+const calcStageProgressPct = (rows: Array<any>): number => {
+  if (!rows.length) return 0;
+  const total = rows.reduce((sum, row) => sum + masteryPctFromKey(row.mastery), 0);
+  return clampPercent(Math.round(total / rows.length));
+};
 
 function resolveTopicOrder(topic: any): number | null {
   if (typeof topic?.order === "number") return topic.order;
@@ -397,9 +640,6 @@ export default function ParentDashboard() {
     "all" | "in_progress" | "completed"
   >("all");
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
-  const [insightsView, setInsightsView] = useState<
-    "this-week" | "week-on-week" | "till-date" | "monthly" | "course-progress"
-  >("this-week");
 
   useEffect(() => {
     if (!selectedKidId && kids.length > 0) setSelectedKidId(kids[0].id);
@@ -511,24 +751,45 @@ export default function ParentDashboard() {
     },
   });
 
-  const curriculumTopicsByCourseId = useMemo(() => {
+  const curriculumTopicsByCourseId = useMemo<
+    Record<
+      string,
+      {
+        id: string;
+        label: string;
+        displayTitle: string;
+        order: number | null;
+        stageLabel?: string | null;
+        stageOrder?: number | null;
+      }[]
+    >
+  >(() => {
     const data = curriculumTopicsQuery.data;
     const rawTopics = Array.isArray(data?.topics) ? data.topics : [];
     const byCourse: Record<
       string,
-      Array<{ id: string; label: string; displayTitle: string; order: number | null }>
+      Array<{
+        id: string;
+        label: string;
+        displayTitle: string;
+        order: number | null;
+        stageLabel?: string | null;
+        stageOrder?: number | null;
+      }>
     > = {};
 
     rawTopics.forEach((topic: any) => {
       const id = String(topic?.id ?? "");
       if (!id) return;
-      const courseId = normalizePhonicsCourseId(topic?.courseId ?? topic?.course);
+      const courseId = normalizeCurriculumCourseId(topic?.courseId ?? topic?.course);
       if (!courseId) return;
       const baseLabel = String(
         topic?.label ?? topic?.topicName ?? topic?.name ?? id
       ).trim();
       const displayTitle = String(topic?.displayTitle ?? '').trim();
       const lesson = topic?.lesson ? String(topic.lesson).trim() : "";
+      const stageLabel = typeof topic?.stageLabel === "string" ? topic.stageLabel.trim() : "";
+      const stageOrder = typeof topic?.stageOrder === "number" ? topic.stageOrder : null;
       const label = displayTitle
         ? displayTitle
         : lesson
@@ -541,6 +802,8 @@ export default function ParentDashboard() {
         label,
         displayTitle: label,
         order,
+        stageLabel: stageLabel || null,
+        stageOrder,
       });
     });
 
@@ -606,23 +869,6 @@ export default function ParentDashboard() {
     return Array.from(new Set(phonicsCourseIdsFromEnrollments));
   }, [phonicsCourseIdsFromEnrollments]);
 
-  const hasEnrollmentCourses = useMemo(() => {
-    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
-    return enrollments.some((enr) => Boolean(enr.courseId));
-  }, [enrollmentsQuery.data]);
-
-  const weeklyReportsForOptionsQuery = useQuery({
-    queryKey: ["weeklyReportsForOptions", selectedKidId],
-    enabled: !!selectedKidId && activeTab === "insights" && !hasEnrollmentCourses,
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: "always",
-    queryFn: async () => {
-      if (!selectedKidId) return [];
-      return fetchPublishedWeeklyReports(selectedKidId);
-    },
-  });
-
   const coursesLookupQuery = useQuery({
     queryKey: ["coursesLookup"],
     enabled: activeTab === "insights",
@@ -671,18 +917,11 @@ export default function ParentDashboard() {
         label,
       }));
     }
-
-    const reports = (weeklyReportsForOptionsQuery.data ?? []) as WeeklyReport[];
-    reports.forEach((report) => {
-      const courseId = String(report.courseId || "").trim();
-      if (!courseId) return;
-      if (!map.has(courseId)) map.set(courseId, formatCourseLabel(courseId));
-    });
     return Array.from(map.entries()).map(([courseId, label]) => ({
       courseId,
       label,
     }));
-  }, [enrollmentsQuery.data, weeklyReportsForOptionsQuery.data, coursesLookupQuery.data]);
+  }, [enrollmentsQuery.data, coursesLookupQuery.data]);
 
   useEffect(() => {
     if (!insightsCourseOptions.length) {
@@ -698,176 +937,6 @@ export default function ParentDashboard() {
     }
   }, [insightsCourseId, insightsCourseOptions, selectedKidId]);
 
-  const weeklyReportsQuery = useQuery({
-    queryKey: ["weeklyReports", selectedKidId, insightsCourseId],
-    enabled: !!selectedKidId && !!insightsCourseId && activeTab === "insights",
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: "always",
-    queryFn: async () => {
-      if (!selectedKidId || !insightsCourseId) return [];
-      return fetchPublishedWeeklyReports(selectedKidId, insightsCourseId);
-    },
-  });
-
-  const monthlyReportsQuery = useQuery({
-    queryKey: ["monthlyReports", selectedKidId, insightsCourseId],
-    enabled: !!selectedKidId && !!insightsCourseId && activeTab === "insights",
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: "always",
-    queryFn: async () => {
-      if (!selectedKidId || !insightsCourseId) return [];
-      const base = collection(db, "students", selectedKidId, "monthlyReports");
-      const q = query(
-        base,
-        where("status", "==", "published"),
-        where("courseId", "==", insightsCourseId),
-        orderBy("monthKey", "desc"),
-        limit(1)
-      );
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => d.data());
-    },
-  });
-
-  const weeklyReports = useMemo(() => {
-    return (weeklyReportsQuery.data ?? []) as WeeklyReport[];
-  }, [weeklyReportsQuery.data]);
-
-  const latestWeeklyReport = weeklyReports[0] ?? null;
-  const prevWeeklyReport = weeklyReports[1] ?? null;
-  const latestMonthlyReport = useMemo(() => {
-    const list = (monthlyReportsQuery.data ?? []) as any[];
-    return list[0] ?? null;
-  }, [monthlyReportsQuery.data]);
-
-  const tillDateReport = useMemo(() => {
-    if (!selectedKidId || !insightsCourseId || weeklyReports.length === 0) return null;
-    const count = weeklyReports.length;
-    const sumOverall = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.scores?.overall) || 0),
-      0
-    );
-    const sumConsistency = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.scores?.consistency) || 0),
-      0
-    );
-    const sumUnderstanding = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.scores?.understanding) || 0),
-      0
-    );
-    const sumConfidence = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.scores?.confidence) || 0),
-      0
-    );
-    const sessionsPlanned = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.sessionsPlanned) || 0),
-      0
-    );
-    const sessionsAttended = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.sessionsAttended) || 0),
-      0
-    );
-    const latest = weeklyReports[0];
-    return {
-      studentId: selectedKidId,
-      courseId: insightsCourseId,
-      weekKey: "Till Date",
-      weekStartAt: latest.weekStartAt,
-      weekEndAt: latest.weekEndAt,
-      sessionsPlanned,
-      sessionsAttended,
-      scores: {
-        overall: clampPercent(sumOverall / count),
-        consistency: clampPercent(sumConsistency / count),
-        understanding: clampPercent(sumUnderstanding / count),
-        confidence: clampPercent(sumConfidence / count),
-      },
-      covered: [`Average progress across ${count} weeks`],
-      wins: ["Positive progress tracked weekly"],
-      focusAreas: ["Based on weekly reports"],
-      nextWeekPlan: ["Continue with the weekly plan"],
-      homePractice: {
-        quickRevision: latest.homePractice?.quickRevision || "2 minutes: quick revision",
-        focusedSkill: latest.homePractice?.focusedSkill || "2 minutes: one focused skill",
-        confidenceBooster: latest.homePractice?.confidenceBooster || "1 minute: confidence booster",
-      },
-      teacherNote: latest.teacherNote,
-      status: "published" as const,
-      updatedBy: latest.updatedBy || "",
-      updatedAt: latest.updatedAt ?? Date.now(),
-    } as WeeklyReport;
-  }, [weeklyReports, insightsCourseId, selectedKidId]);
-
-  const insightsSummary = useMemo(() => {
-    if (weeklyReports.length === 0) return null;
-    const count = weeklyReports.length;
-    const sumOverall = weeklyReports.reduce(
-      (acc, r) => acc + (Number(r.scores?.overall) || 0),
-      0
-    );
-    return {
-      count,
-      avgOverall: clampPercent(sumOverall / count),
-      lastUpdatedAt: weeklyReports[0]?.updatedAt ?? null,
-    };
-  }, [weeklyReports]);
-
-  const buildPreviewReport = (kidId?: string, courseId?: string): WeeklyReport => {
-    const now = Date.now();
-    return {
-      studentId: kidId || "preview",
-      courseId: courseId || "preview",
-      weekKey: "Preview",
-      weekStartAt: now,
-      weekEndAt: now,
-      sessionsPlanned: 0,
-      sessionsAttended: 0,
-      scores: {
-        overall: 0,
-        consistency: 0,
-        understanding: 0,
-        confidence: 0,
-      },
-      covered: [
-        "Weekly learning summary",
-        "One key skill practiced",
-        "Teacher notes + next steps",
-      ],
-      wins: [
-        "More focus during class",
-        "Better follow-through at home",
-        "Small improvements week-on-week",
-      ],
-      focusAreas: ["One key gap highlighted (so practice stays simple)"],
-      nextWeekPlan: [
-        "Continue the same schedule",
-        "Daily micro-practice",
-        "Review progress next week",
-      ],
-      homePractice: {
-        quickRevision: "2 minutes: quick revision",
-        focusedSkill: "2 minutes: one focused skill",
-        confidenceBooster: "1 minute: confidence booster",
-      },
-      status: "published",
-      updatedBy: "",
-      updatedAt: now,
-    };
-  };
-
-  const weeklyPreviewReport = useMemo<WeeklyReport>(
-    () => buildPreviewReport(selectedKidId, insightsCourseId),
-    [insightsCourseId, selectedKidId]
-  );
-
-  const formatMonthLabel = (key?: string) => {
-    if (!key) return "Monthly Summary";
-    const [y, m] = key.split("-");
-    const date = new Date(Number(y), Number(m) - 1, 1);
-    return date.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-  };
 
   /**
    * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
@@ -1219,10 +1288,15 @@ export default function ParentDashboard() {
       return {
         id: topic.id,
         label: topic.displayTitle ?? topic.label,
+        stageLabel: topic.stageLabel ?? null,
+        stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : null,
         status,
         mastery: mastery ?? "",
         focusChips: Array.isArray(matchedDoc?.selectedSubskills)
           ? matchedDoc.selectedSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : [],
+        confusionChips: Array.isArray(matchedDoc?.confusions)
+          ? matchedDoc.confusions.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
         remark: matchedDoc?.teacherRemark ?? matchedDoc?.remark ?? "",
         updatedAtMs,
@@ -1250,6 +1324,122 @@ export default function ParentDashboard() {
     ];
   }, [
     displayCourseId,
+    curriculumTopicsByCourseId,
+    phonicsProgressQuery.data,
+    progressByTopicId,
+    topicCourseById,
+  ]);
+
+  const normalizedInsightsCourseId = useMemo(() => {
+    return normalizeCurriculumCourseId(insightsCourseId) || null;
+  }, [insightsCourseId]);
+
+  const insightsStageData = useMemo(() => {
+    if (!normalizedInsightsCourseId) return null;
+    const topics = curriculumTopicsByCourseId[normalizedInsightsCourseId] ?? [];
+    if (topics.length === 0) {
+      return { courseId: normalizedInsightsCourseId, stageSummaries: [] as any[] };
+    }
+
+    const progressDocs = (phonicsProgressQuery.data ?? []) as any[];
+    const resolveDocCourseId = (doc: any): string | null => {
+      if (!doc) return null;
+      const direct = normalizeCurriculumCourseId(
+        doc?.courseId ?? doc?.course?.id ?? doc?.course
+      );
+      if (direct) return direct;
+      const key = String(doc?.topicId ?? doc?.id ?? "").trim();
+      return key ? topicCourseById[key] ?? null : null;
+    };
+
+    const labelMap = new Map<string, any>();
+    const labelUpdatedAt = new Map<string, number>();
+    const addLabelEntry = (rawLabel: string | undefined | null, doc: any) => {
+      const key = normalizeTopicText(rawLabel || "");
+      if (!key) return;
+      const nextTime = doc?.updatedAt?.toMillis?.() ?? 0;
+      const prevTime = labelUpdatedAt.get(key) ?? -1;
+      if (nextTime >= prevTime) {
+        labelMap.set(key, doc);
+        labelUpdatedAt.set(key, nextTime);
+      }
+    };
+
+    progressDocs.forEach((doc) => {
+      const docCourseId = resolveDocCourseId(doc);
+      if (docCourseId && docCourseId !== normalizedInsightsCourseId) return;
+      addLabelEntry(doc?.topicName, doc);
+    });
+
+    const rows = topics.map((topic) => {
+      let matchedDoc: any = null;
+      const docById = progressByTopicId[topic.id];
+      if (docById) {
+        const docCourseId = resolveDocCourseId(docById);
+        if (!docCourseId || docCourseId === normalizedInsightsCourseId) {
+          matchedDoc = docById;
+        }
+      }
+      if (!matchedDoc) {
+        const labelKeys = [normalizeTopicText(topic.displayTitle ?? topic.label)].filter(Boolean);
+        for (const key of Array.from(new Set(labelKeys))) {
+          const candidate = labelMap.get(key);
+          if (candidate) {
+            matchedDoc = candidate;
+            break;
+          }
+        }
+      }
+
+      const updatedAtMs =
+        matchedDoc?.updatedAt?.toMillis?.() ??
+        (typeof matchedDoc?.updatedAt === "number" ? matchedDoc.updatedAt : null);
+
+      return {
+        id: topic.id,
+        stageLabel: topic.stageLabel ?? "Lessons",
+        stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : 999,
+        mastery: matchedDoc?.mastery ?? "",
+        focusChips: Array.isArray(matchedDoc?.selectedSubskills)
+          ? matchedDoc.selectedSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : [],
+        confusionChips: Array.isArray(matchedDoc?.confusions)
+          ? matchedDoc.confusions.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : [],
+        updatedAtMs,
+      };
+    });
+
+    const stageGroups = new Map<string, { label: string; order: number; rows: any[] }>();
+    rows.forEach((row) => {
+      const key = `${row.stageOrder}__${row.stageLabel}`;
+      const existing = stageGroups.get(key);
+      if (existing) existing.rows.push(row);
+      else stageGroups.set(key, { label: row.stageLabel, order: row.stageOrder, rows: [row] });
+    });
+
+    const stageSummaries = Array.from(stageGroups.values())
+      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
+      .map((group) => {
+        const masteryKey = aggregateStageMastery(group.rows.map((r) => r.mastery));
+        const stageHint = STAGE_HINTS_BY_COURSE[normalizedInsightsCourseId]?.[group.order] ?? "";
+        const progressPct = calcStageProgressPct(group.rows);
+        const expectations =
+          STAGE_EXPECTATIONS_BY_COURSE[normalizedInsightsCourseId]?.[group.order] ?? [];
+        return {
+          label: group.label,
+          order: group.order,
+          masteryKey,
+          focusChips: pickStageFocus(group.rows),
+          stageHint,
+          progressPct,
+          expectations,
+        };
+      });
+
+    return { courseId: normalizedInsightsCourseId, stageSummaries };
+  }, [
+    normalizedInsightsCourseId,
     curriculumTopicsByCourseId,
     phonicsProgressQuery.data,
     progressByTopicId,
@@ -1525,6 +1715,122 @@ export default function ParentDashboard() {
     };
   }, [kidSummaryQuery.data]);
 
+  const renderStageGrid = (
+    stageSummaries: Array<any>,
+    courseId: string | null,
+    emptyLabel?: string,
+  ) => {
+    if (!stageSummaries || stageSummaries.length === 0) {
+      return (
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            {emptyLabel || "Stage breakdown isn’t available yet."}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {stageSummaries.map((stage) => {
+          const colors = getStageColors(stage.order);
+          const masteryText = formatMasteryLabel(stage.masteryKey) || "Getting started";
+          const ringLabel =
+            masteryText === "Getting started" || masteryText === "Not started"
+              ? "Start"
+              : masteryText === "In progress"
+                ? "On it"
+                : masteryText;
+          const title = stripStagePrefix(stage.label, stage.order);
+          const stageHint =
+            stage.stageHint ||
+            STAGE_HINTS_BY_COURSE[courseId || ""]?.[stage.order] ||
+            "";
+          const expectations =
+            stage.expectations ||
+            STAGE_EXPECTATIONS_BY_COURSE[courseId || ""]?.[stage.order] ||
+            [];
+          const progressPct = typeof stage.progressPct === "number" ? stage.progressPct : 0;
+
+          return (
+            <div
+              key={`${stage.order}-${stage.label}`}
+              className="rounded-2xl border border-gray-200 dark:border-gray-700 p-4 shadow-sm"
+              style={{
+                background: `linear-gradient(135deg, ${colors.soft} 0%, #ffffff 60%)`,
+              }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div
+                    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${colors.badgeBg} ${colors.badgeText}`}
+                  >
+                    Stage {stage.order}
+                  </div>
+                  <div className="mt-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    {title}
+                  </div>
+                  {stageHint && (
+                    <div className="mt-1 text-xs text-gray-700 dark:text-gray-300">
+                      {stageHint}
+                    </div>
+                  )}
+                </div>
+                <div
+                  className="h-12 w-12 rounded-full p-[3px] flex-shrink-0"
+                  style={{
+                    background: `conic-gradient(${colors.accent} ${progressPct}%, ${colors.soft} ${progressPct}% 100%)`,
+                  }}
+                >
+                  <div className="h-full w-full rounded-full bg-white flex items-center justify-center text-[10px] font-semibold">
+                    <span style={{ color: colors.accent }}>{ringLabel}</span>
+                  </div>
+                </div>
+              </div>
+
+              {expectations.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                    What to expect
+                  </div>
+                  <ul className="mt-1 space-y-1 text-xs text-gray-700 dark:text-gray-300">
+                    {expectations.map((item: string) => (
+                      <li key={item}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {stage.focusChips?.length > 0 && (
+                <div className="mt-3">
+                  <div className="text-[10px] uppercase tracking-wide text-gray-500">
+                    Next focus
+                  </div>
+                  <div className="mt-1 text-xs text-gray-700 dark:text-gray-300">
+                    {stage.focusChips.join(", ")}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-[11px] text-gray-500">
+                  <span>Progress</span>
+                  <span className="font-semibold text-gray-700">{masteryText}</span>
+                </div>
+                <div className="mt-2 h-2 rounded-full bg-white/70 border border-white">
+                  <div
+                    className={`h-2 rounded-full ${colors.bar}`}
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -1662,17 +1968,6 @@ export default function ParentDashboard() {
           </button>
           <button
             type="button"
-            onClick={() => setTab("weekly")}
-            className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
-              activeTab === "weekly"
-                ? "bg-blue-600 text-white"
-                : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200"
-            }`}
-          >
-            Weekly
-          </button>
-          <button
-            type="button"
             onClick={() => setTab("classes")}
             className={`px-4 py-2 text-sm font-medium border-l border-gray-300 dark:border-gray-700 ${
               activeTab === "classes"
@@ -1765,6 +2060,39 @@ export default function ParentDashboard() {
                         );
                       }
 
+                      const stageGroups = new Map<
+                        string,
+                        { label: string; order: number; rows: any[] }
+                      >();
+                      selectedCourse.rows.forEach((row: any) => {
+                        const order =
+                          typeof row.stageOrder === "number" ? row.stageOrder : 999;
+                        const label = row.stageLabel || "Lessons";
+                        const key = `${order}__${label}`;
+                        const existing = stageGroups.get(key);
+                        if (existing) {
+                          existing.rows.push(row);
+                        } else {
+                          stageGroups.set(key, { label, order, rows: [row] });
+                        }
+                      });
+                      const stageSummaries = Array.from(stageGroups.values())
+                        .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
+                        .map((group) => {
+                          const masteryKey = aggregateStageMastery(group.rows.map((r) => r.mastery));
+                          const progressPct = calcStageProgressPct(group.rows);
+                          const expectations =
+                            STAGE_EXPECTATIONS_BY_COURSE[selectedCourse.courseId]?.[group.order] ?? [];
+                          return {
+                            label: group.label,
+                            order: group.order,
+                            masteryKey,
+                            focusChips: pickStageFocus(group.rows),
+                            progressPct,
+                            expectations,
+                          };
+                        });
+
                       const showLimit = 10;
                       const inProgressCount = selectedCourse.rows.filter(
                         (row: any) => row.status === "in_progress"
@@ -1815,6 +2143,7 @@ export default function ParentDashboard() {
                             </div>
                           </div>
                           <div className="p-4 space-y-4">
+                            {renderStageGrid(stageSummaries, selectedCourse.courseId)}
                             <div>
                               <div className="flex items-center justify-between text-xs text-gray-500">
                                 <span>Lessons completed</span>
@@ -1858,7 +2187,7 @@ export default function ParentDashboard() {
                             ) : (
                               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                                 {topicsToShow.map((row: any) => {
-                                  const masteryLabel = formatMasteryLabel(row.mastery) || "Not started";
+                                  const masteryText = formatMasteryLabel(row.mastery) || "Getting started";
                                   const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
                                   const masteryStyles =
                                     masteryLower === "mastered"
@@ -1883,7 +2212,7 @@ export default function ParentDashboard() {
                                         {row.label}
                                       </div>
                                       <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${masteryStyles}`}>
-                                        {masteryLabel}
+                                        {masteryText}
                                       </div>
                                     </button>
                                   );
@@ -1930,10 +2259,17 @@ export default function ParentDashboard() {
                     <div className="text-xs text-gray-500">
                       {selectedCurriculumTopic.courseLabel}
                     </div>
+                    {selectedCurriculumTopic.stageLabel && (
+                      <div className="text-xs text-gray-500">
+                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
+                          {selectedCurriculumTopic.stageLabel}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-xs text-gray-500">Mastery</span>
                       <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
-                        {formatMasteryLabel(selectedCurriculumTopic.mastery) || "Not started"}
+                        {formatMasteryLabel(selectedCurriculumTopic.mastery) || "Getting started"}
                       </span>
                     </div>
                     {selectedCurriculumTopic.focusChips?.length > 0 && (
@@ -1975,7 +2311,7 @@ export default function ParentDashboard() {
                     Insights
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Weekly progress cards shared by your teacher.
+                    Stage-based learning progress with clear next steps.
                   </p>
                 </div>
                 <div className="text-2xl">📈</div>
@@ -1983,7 +2319,7 @@ export default function ParentDashboard() {
 
               {insightsCourseOptions.length === 0 && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No enrolled courses found. Please contact admin.
+                  Stage insights will appear once a course is assigned.
                 </p>
               )}
 
@@ -2014,241 +2350,11 @@ export default function ParentDashboard() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    { key: "this-week", label: "This Week" },
-                    { key: "week-on-week", label: "Week-on-week" },
-                    { key: "till-date", label: "Till Date" },
-                    { key: "monthly", label: "Monthly" },
-                    { key: "course-progress", label: "Course Progress" },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    onClick={() => setInsightsView(opt.key)}
-                    className={`rounded-full border px-4 py-1.5 text-sm font-semibold ${
-                      insightsView === opt.key
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              {weeklyReportsQuery.isLoading && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Loading insights...
-                </p>
-              )}
-
-              {!weeklyReportsQuery.isLoading &&
-                (weeklyReportsQuery.isError || weeklyReports.length === 0) && (
-                  <div className="space-y-4">
-                    {weeklyReportsQuery.isError && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        We couldn't load reports right now.
-                      </p>
-                    )}
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                      <div className="font-semibold">No weekly report published yet</div>
-                      <div className="mt-1 text-amber-800">
-                        Once your teacher publishes, you'll see weekly progress, focus areas, and
-                        a 5-minute home plan here.
-                      </div>
-                    </div>
-
-                    <WeeklyProgressCard
-                      report={weeklyPreviewReport}
-                      title="Weekly Progress Card"
-                      variant="parent"
-                    />
-
-                    <div>
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        What you'll see here
-                      </div>
-                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
-                        <li>Overall progress (%)</li>
-                        <li>Consistency (%)</li>
-                        <li>Understanding (%)</li>
-                        <li>Confidence (%)</li>
-                        <li>What we covered</li>
-                        <li>Wins this week</li>
-                        <li>Focus areas</li>
-                        <li>Next week plan</li>
-                        <li>Home practice (5 mins/day)</li>
-                      </ul>
-                    </div>
-                  </div>
-                )}
-
-              {weeklyReports.length > 0 && (
+              {insightsCourseOptions.length > 0 && (
                 <>
-                  {insightsView === "this-week" && latestWeeklyReport && (
-                    <WeeklyProgressCard report={latestWeeklyReport} variant="parent" />
-                  )}
-
-                  {insightsView === "week-on-week" && latestWeeklyReport && (
-                    <div className="space-y-3">
-                      <WeeklyProgressCard
-                        report={latestWeeklyReport}
-                        prevReport={prevWeeklyReport}
-                        showDeltas
-                        variant="parent"
-                      />
-                      {!prevWeeklyReport && (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          No previous week yet. Deltas will appear after the next report.
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {insightsView === "till-date" && tillDateReport && (
-                    <WeeklyProgressCard
-                      report={tillDateReport}
-                      title="Till Date Progress"
-                      variant="parent"
-                    />
-                  )}
-
-                  {insightsView === "monthly" && (
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            Monthly Summary
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {formatMonthLabel(latestMonthlyReport?.monthKey)}
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-500">
-                          {latestMonthlyReport?.updatedAt
-                            ? `Updated ${new Date(
-                                latestMonthlyReport.updatedAt
-                              ).toLocaleDateString("en-IN")}`
-                            : ""}
-                        </div>
-                      </div>
-
-                      {monthlyReportsQuery.isLoading && (
-                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                          Loading monthly insights...
-                        </p>
-                      )}
-
-                      {!monthlyReportsQuery.isLoading && !latestMonthlyReport && (
-                        <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                          No monthly report published yet.
-                        </p>
-                      )}
-
-                      {!monthlyReportsQuery.isLoading && latestMonthlyReport && (
-                        <>
-                          <div className="mt-3 grid gap-3 md:grid-cols-3">
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <div className="text-xs text-gray-500">Sessions</div>
-                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {latestMonthlyReport.sessionsAttended ?? 0}/
-                                {latestMonthlyReport.sessionsPlanned ?? 0}
-                              </div>
-                            </div>
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <div className="text-xs text-gray-500">Overall</div>
-                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {latestMonthlyReport.scores?.overall ?? 0}%
-                              </div>
-                            </div>
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <div className="text-xs text-gray-500">Weeks included</div>
-                              <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                {latestMonthlyReport.includedWeekKeys?.length ?? 0}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-3 grid gap-3 md:grid-cols-2">
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <div className="text-xs text-gray-500">Highlights</div>
-                              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
-                                {(latestMonthlyReport.highlights ?? []).length > 0 ? (
-                                  latestMonthlyReport.highlights.map((item: string) => (
-                                    <li key={`hl-${item}`}>{item}</li>
-                                  ))
-                                ) : (
-                                  <li>Monthly wins will appear here.</li>
-                                )}
-                              </ul>
-                            </div>
-                            <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                              <div className="text-xs text-gray-500">Focus areas</div>
-                              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700 dark:text-gray-300">
-                                {(latestMonthlyReport.focusAreas ?? []).length > 0 ? (
-                                  latestMonthlyReport.focusAreas.map((item: string) => (
-                                    <li key={`fa-${item}`}>{item}</li>
-                                  ))
-                                ) : (
-                                  <li>Focus areas will appear here.</li>
-                                )}
-                              </ul>
-                            </div>
-                          </div>
-
-                          <div className="mt-3 rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                            <div className="text-xs text-gray-500">Home plan</div>
-                            <ul className="mt-2 space-y-1 text-sm text-gray-700 dark:text-gray-300">
-                              <li>
-                                {latestMonthlyReport.homePlan?.quickRevision ||
-                                  "2 minutes: quick revision"}
-                              </li>
-                              <li>
-                                {latestMonthlyReport.homePlan?.focusedSkill ||
-                                  "2 minutes: one focused skill"}
-                              </li>
-                              <li>
-                                {latestMonthlyReport.homePlan?.confidenceBooster ||
-                                  "1 minute: confidence booster"}
-                              </li>
-                            </ul>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  {insightsView === "course-progress" && (
-                    <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        Course Progress Summary
-                      </div>
-                      <div className="mt-2 grid gap-3 md:grid-cols-3">
-                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                          <div className="text-xs text-gray-500">Weeks published</div>
-                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {insightsSummary?.count ?? 0}
-                          </div>
-                        </div>
-                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                          <div className="text-xs text-gray-500">Average overall</div>
-                          <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                            {insightsSummary?.avgOverall ?? 0}%
-                          </div>
-                        </div>
-                        <div className="rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                          <div className="text-xs text-gray-500">Last updated</div>
-                          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            {insightsSummary?.lastUpdatedAt
-                              ? new Date(insightsSummary.lastUpdatedAt).toLocaleDateString("en-IN")
-                              : "-"}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {renderStageGrid(
+                    insightsStageData?.stageSummaries ?? [],
+                    insightsStageData?.courseId ?? null,
                   )}
                 </>
               )}
@@ -2837,332 +2943,6 @@ export default function ParentDashboard() {
                     )}
                   </div>
                 </Card>
-              );
-            })()}
-          </div>
-        )}
-
-        {/* WEEKLY TAB - unchanged */}
-        {activeTab === "weekly" && (
-          <div className="space-y-4">
-            {/* (existing weekly content left as-is in your file) */}
-            {/** Keeping your existing weekly implementation untouched */}
-            {/** ... */}
-            {/* NOTE: You already pasted full weekly earlier; keep it exactly same in your repo */}
-            {/** If you want, I can re-paste your full weekly block too, but it’s unchanged */}
-            {/** For safety, leave your existing Weekly block as you pasted earlier */}
-            {/** */}
-            {(() => {
-              const summary = kidSummaryQuery.data?.summary;
-              const weeklyData = summary?.weekly || null;
-              const currentStage = summary?.stage?.currentStageId || 1;
-              const weakTop = summary?.weakTop || [];
-
-              const gamesPlayed =
-                weeklyData?.gamesPlayed ?? summary?.gamesPlayed ?? null;
-              const levelsCompleted = weeklyData?.levelsCompleted ?? null;
-              const avgAccuracy =
-                weeklyData?.avgAccuracy ?? summary?.avgAccuracy ?? null;
-              const totalPoints =
-                weeklyData?.totalPoints ?? summary?.totalPoints ?? null;
-
-              const dailyActivity = weeklyData?.dailyActivity || [];
-              const hasActivityData = dailyActivity.length > 0;
-
-              const stageNames: Record<number, string> = {
-                1: "Stage 1: Sounds",
-                2: "Stage 2: Blending",
-                3: "Stage 3: CVC Words",
-                4: "Stage 4: Fluency",
-                5: "Stage 5: Rules",
-                6: "Stage 6: Confident Reader",
-              };
-              const stageName = stageNames[currentStage] || "Stage 1: Sounds";
-
-              const formatTag = (tag: string): string => {
-                if (!tag) return "—";
-                if (tag.startsWith("letter:")) {
-                  const letter = tag.split(":")[1]?.toUpperCase() || "";
-                  return `Letter ${letter}`;
-                }
-                if (tag.startsWith("sound:")) {
-                  const sound = tag.substring(6);
-                  return `Sound ${sound}`;
-                }
-                if (tag.startsWith("subtopic:")) {
-                  const sub = tag.substring(9).replace(/_/g, " ");
-                  return sub
-                    .split(" ")
-                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                    .join(" ");
-                }
-                return tag.charAt(0).toUpperCase() + tag.slice(1);
-              };
-
-              return (
-                <>
-                  <Card className="p-6">
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                      Weekly
-                    </h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                      {selectedKid?.fullName
-                        ? `Viewing: ${selectedKid.fullName}`
-                        : "Select a child"}
-                    </p>
-
-                    <div className="mb-6">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-                        Weekly Snapshot
-                      </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-gray-200 dark:border-gray-700">
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            Games Played
-                          </div>
-                          <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {gamesPlayed !== null ? gamesPlayed : "—"}
-                          </div>
-                          {gamesPlayed === null && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data yet
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-gray-200 dark:border-gray-700">
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            Levels Done
-                          </div>
-                          <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {levelsCompleted !== null ? levelsCompleted : "—"}
-                          </div>
-                          {levelsCompleted === null && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data yet
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-gray-200 dark:border-gray-700">
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            Avg Accuracy
-                          </div>
-                          <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                            {avgAccuracy !== null
-                              ? `${Math.round(avgAccuracy)}%`
-                              : "—"}
-                          </div>
-                          {avgAccuracy === null && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data yet
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-4 rounded-lg bg-gradient-to-br from-white to-gray-50 dark:from-slate-800 dark:to-slate-900 border border-gray-200 dark:border-gray-700">
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                            Total Points
-                          </div>
-                          <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                            {totalPoints !== null ? totalPoints : "—"}
-                          </div>
-                          {totalPoints === null && (
-                            <div className="text-xs text-gray-400 mt-1">
-                              No data yet
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mb-6">
-                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-3">
-                        Weekly Activity
-                      </h3>
-                      {hasActivityData ? (
-                        <div className="flex justify-between gap-2">
-                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(
-                            (day, idx) => {
-                              const dayData = dailyActivity[idx] || {
-                                levels: 0,
-                              };
-                              const levels = dayData.levels || 0;
-                              const maxLevels = 10;
-                              const heightPct = Math.min(
-                                (levels / maxLevels) * 100,
-                                100
-                              );
-
-                              return (
-                                <div
-                                  key={day}
-                                  className="flex-1 flex flex-col items-center"
-                                >
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                                    {day}
-                                  </div>
-                                  <div className="w-full h-20 bg-gray-100 dark:bg-gray-800 rounded-t relative">
-                                    <div
-                                      className="absolute bottom-0 w-full bg-gradient-to-t from-indigo-600 to-purple-600 rounded-t transition-all"
-                                      style={{ height: `${heightPct}%` }}
-                                    />
-                                  </div>
-                                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mt-1">
-                                    {levels}
-                                  </div>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-                      ) : (
-                        <div className="p-8 text-center rounded-lg bg-gray-50 dark:bg-slate-800/50 border border-gray-200 dark:border-gray-700">
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            Play a game to start your weekly report
-                          </p>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setTab("games-progress")}
-                          >
-                            Browse Games
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-
-                  <Card className="p-6 bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-900 dark:to-indigo-950 border border-indigo-100 dark:border-indigo-900/30">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-2">
-                      This Week&apos;s Focus
-                    </h3>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                          Current Stage
-                        </div>
-                        <div className="text-lg font-bold text-indigo-700 dark:text-indigo-300">
-                          {stageName}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                          Goal
-                        </div>
-                        <div className="text-sm text-gray-700 dark:text-gray-300">
-                          Play 3 short games (10 mins/day)
-                        </div>
-                      </div>
-                      <Button
-                        className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md"
-                        onClick={() => setTab("games-progress")}
-                      >
-                        Start practice
-                      </Button>
-                    </div>
-                  </Card>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card className="p-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                        🎉 Wins
-                      </h3>
-                      <ul className="space-y-2">
-                        {gamesPlayed && gamesPlayed > 0 ? (
-                          <>
-                            <li className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                              <span className="text-green-600 dark:text-green-400 flex-shrink-0">
-                                ✓
-                              </span>
-                              <span>
-                                Played {gamesPlayed} game
-                                {gamesPlayed > 1 ? "s" : ""} this week
-                              </span>
-                            </li>
-                            {levelsCompleted && levelsCompleted > 0 && (
-                              <li className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <span className="text-green-600 dark:text-green-400 flex-shrink-0">
-                                  ✓
-                                </span>
-                                <span>
-                                  Completed {levelsCompleted} level
-                                  {levelsCompleted > 1 ? "s" : ""}
-                                </span>
-                              </li>
-                            )}
-                            {avgAccuracy && avgAccuracy >= 70 && (
-                              <li className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                                <span className="text-green-600 dark:text-green-400 flex-shrink-0">
-                                  ✓
-                                </span>
-                                <span>
-                                  Great accuracy at {Math.round(avgAccuracy)}%
-                                </span>
-                              </li>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <li className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                              <span className="text-green-600 dark:text-green-400 flex-shrink-0">
-                                ✓
-                              </span>
-                              <span>Ready to start the journey</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
-                              <span className="text-green-600 dark:text-green-400 flex-shrink-0">
-                                ✓
-                              </span>
-                              <span>All games unlocked and ready</span>
-                            </li>
-                          </>
-                        )}
-                      </ul>
-                    </Card>
-
-                    <Card className="p-6">
-                      <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-3">
-                        📝 Needs Practice
-                      </h3>
-                      {weakTop.length > 0 ? (
-                        <div className="flex flex-wrap gap-2">
-                          {weakTop.slice(0, 3).map(
-                            (
-                              skill: { tag?: string; wrong?: number },
-                              idx: number
-                            ) => {
-                              const tag = skill.tag || "—";
-                              const wrong =
-                                typeof skill.wrong === "number"
-                                  ? skill.wrong
-                                  : 0;
-                              return (
-                                <div
-                                  key={`${tag}-${idx}`}
-                                  className="px-3 py-2 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 text-sm font-medium text-orange-800 dark:text-orange-200"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span>{formatTag(tag)}</span>
-                                    {wrong > 0 && (
-                                      <span className="text-xs text-orange-600 dark:text-orange-400 font-bold">
-                                        {wrong}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            }
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Play more games to see areas for improvement
-                        </p>
-                      )}
-                    </Card>
-                  </div>
-                </>
               );
             })()}
           </div>

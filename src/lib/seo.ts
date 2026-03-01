@@ -243,7 +243,7 @@ export type RouteConfig = {
 export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
   '/': {
     title: 'Tiny Steps Learning | 1:1 Online English Classes for Kids',
-    description: 'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class.',
+    description: 'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.png',

@@ -308,12 +308,13 @@ export default function AdminDashboard() {
   if (!canViewAdmin) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
       <Header user={user} />
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-w-0">
         <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
 
-        <main className="flex-1 p-8">
+        <main className="flex-1 min-w-0 p-6 md:p-8 overflow-x-hidden">
+          <div className="mx-auto w-full max-w-[1280px] min-w-0">
           <div className="mb-4 rounded bg-yellow-100 border p-3 text-sm font-semibold">
             🔧 ADMIN DASHBOARD – v2 CLEAN
           </div>
@@ -331,7 +332,7 @@ export default function AdminDashboard() {
           )}
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="mb-6">
+            <TabsList className="mb-6 flex flex-wrap h-auto gap-2">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="students">Student Management</TabsTrigger>
               <TabsTrigger value="enrollments">Enrollment Management</TabsTrigger>
@@ -391,6 +392,7 @@ export default function AdminDashboard() {
               </div>
             </TabsContent>
           </Tabs>
+          </div>
         </main>
       </div>
 

@@ -6,6 +6,7 @@ import { Input } from '../../../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../../../components/ui/select';
 import { useParentChildren } from '../../hooks/useParentChildren';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { masteryLabel, masteryPctFromKey } from '../../../../lib/mastery';
 
 const ChildrenManagement: React.FC = () => {
   const { user } = useAuthStore();
@@ -34,20 +35,24 @@ const ChildrenManagement: React.FC = () => {
       }
     });
 
-  const ProgressBar: React.FC<{ value: number; label: string }> = ({ value, label }) => (
-    <div className="mb-2">
-      <div className="flex justify-between text-xs mb-1">
-        <span>{label}</span>
-        <span>{value}%</span>
+  const ProgressBar: React.FC<{ value: any; label: string }> = ({ value, label }) => {
+    const pct = masteryPctFromKey(value);
+    const labelText = masteryLabel(value);
+    return (
+      <div className="mb-2">
+        <div className="flex justify-between text-xs mb-1">
+          <span>{label}</span>
+          <span>{labelText}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-1.5">
+          <div
+            className="bg-blue-600 h-1.5 rounded-full"
+            style={{ width: `${pct}%` }}
+          ></div>
+        </div>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-1.5">
-        <div
-          className="bg-blue-600 h-1.5 rounded-full"
-          style={{ width: `${value}%` }}
-        ></div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   if (isLoading) {
     return <div className="p-6">Loading children...</div>;

@@ -2,7 +2,7 @@
 export const teacherAnalyticsDashboard = {
   classOverview: {
     averageAccuracy: '78%',
-    improvementRate: '+5% per week',
+    improvementRate: '+5% per stage',
     skillsNeedingWork: ['Blending', 'Subject-Verb Agreement'],
     atRiskStudents: ['John (45% accuracy)', 'Sarah (52% accuracy)'],
     topPerformers: ['Alex (95%)', 'Emily (92%)'],
@@ -30,11 +30,11 @@ export const teacherAnalyticsDashboard = {
       { skill: 'Digraphs', avgAccuracy: '52%', affectedStudents: 6 },
       { skill: 'Subject-Verb Agreement', avgAccuracy: '61%', affectedStudents: 5 },
     ],
-    skillProgression: 'Blending: Week 1 (10%) → Week 2 (25%) → Week 3 (45%)',
-    benchmarks: '90% should reach 80% accuracy by Week 4',
+    skillProgression: 'Blending: Stage 1 (10%) → Stage 2 (25%) → Stage 3 (45%)',
+    benchmarks: '90% should reach 80% accuracy by Stage 4',
   },
   reportGeneration: {
-    weeklyClassReport: 'Generate PDF',
+    weeklyClassReport: 'Generate stage report',
     parentProgressReport: "Send to John's parents",
     interventionPlan: 'Generate for at-risk students',
     customReport: 'Filter by skill, student, date range',
@@ -43,12 +43,12 @@ export const teacherAnalyticsDashboard = {
 
 export const parentInsights = {
   weeklyParentEmail: {
-    subject: "John's Learning Progress - Week 3",
+    subject: "John's Learning Progress - Stage 3",
     content: {
       topAchievement:
         '🎉 Mastered CVC Words! John can now spell cat, dog, sit, run, pig with 95% accuracy!',
       skillFocus:
-        "This week: Blending sounds\nJohn is learning to blend sounds together (/c/ /a/ /t/ = 'cat'). This is important for reading!",
+        "This stage: Blending sounds\nJohn is learning to blend sounds together (/c/ /a/ /t/ = 'cat'). This is important for reading!",
       homeActivitySuggestion: `Here's what you can do at home:
 1. Blend game: Say individual sounds and have John blend them
 2. Sound walk: Go for a walk and identify sounds in words
@@ -60,7 +60,7 @@ Why: Spaced practice helps brain remember better!`,
       areasToWork:
         'John is still working on pronunciation of /r/ sound. Practice "r" words: red, run, rain, roof',
       encouragement: "Great job supporting John's learning! Parents who practice at home see 50% faster progress.",
-      nextMilestone: 'By next week, John should be able to blend any CVC word!',
+      nextMilestone: 'By the next stage, John should be able to blend any CVC word!',
     },
   },
   homeActivityLibrary: {

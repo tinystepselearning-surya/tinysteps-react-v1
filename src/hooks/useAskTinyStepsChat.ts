@@ -52,7 +52,7 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "how_it_works",
     title: "How it works",
     text:
-      "Parents share the child’s age/level. We do a FREE assessment, recommend the best track + level, confirm slots, then start 1:1 sessions with weekly progress updates.",
+      "Parents share the child’s age/level. We do a FREE assessment, recommend the best track + level, confirm slots, then start 1:1 sessions with stage-based progress updates.",
   },
 ];
 

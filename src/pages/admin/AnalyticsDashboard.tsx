@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -49,6 +48,8 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [students, setStudents] = useState<any[]>([]);
   const [enrollments, setEnrollments] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [charges, setCharges] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [teacherEarningsRollups, setTeacherEarningsRollups] = useState<Record<string, any>>({});
   const [fsError, setFsError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
@@ -85,6 +86,36 @@ export default function AnalyticsDashboard(): JSX.Element {
   }, []);
 
   useEffect(() => {
+    if (!selectedMonth) {
+      setCharges([]);
+      setPayments([]);
+      return;
+    }
+    const chargesQuery = query(
+      collection(db, 'billingCharges'),
+      where('monthKey', '==', selectedMonth)
+    );
+    const paymentsQuery = query(
+      collection(db, 'payments'),
+      where('monthKey', '==', selectedMonth)
+    );
+    const unsubCharges = onSnapshot(
+      chargesQuery,
+      (snap) => setCharges(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
+    );
+    const unsubPayments = onSnapshot(
+      paymentsQuery,
+      (snap) => setPayments(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
+    );
+    return () => {
+      unsubCharges();
+      unsubPayments();
+    };
+  }, [selectedMonth]);
+
+  useEffect(() => {
     let cancelled = false;
     const loadTeacherRollups = async () => {
       const teachers = users.filter(u => u.roles?.includes('teacher'));
@@ -112,24 +143,61 @@ export default function AnalyticsDashboard(): JSX.Element {
     };
   }, [users, selectedMonth]);
 
-  const revenueMonthlyQuery = useQuery({
-    queryKey: ['adminStats', 'revenueMonthly', selectedMonth],
-    queryFn: async () => {
-      if (!selectedMonth) return null;
-      const snap = await getDoc(
-        doc(db, 'adminStats', 'revenueMonthly', 'months', selectedMonth)
-      );
-      return snap.exists() ? snap.data() : null;
-    },
-    enabled: Boolean(selectedMonth),
-    staleTime: 1000 * 60 * 5,
-  });
+  const revenueTotals = useMemo(() => {
+    let chargesTotal = 0;
+    let dueTotal = 0;
+    let appliedTotal = 0;
+    let unappliedTotal = 0;
+    let chargesCount = 0;
 
-  const revenueMonthly = revenueMonthlyQuery.data || {};
-  const expectedRevenue = Number(revenueMonthly.expected ?? 0) || 0;
-  const earnedRevenue = Number(revenueMonthly.earned ?? 0) || 0;
-  const completedSessionsMonth = Number(revenueMonthly.completedSessions ?? 0) || 0;
-  const outstandingRevenue = expectedRevenue - earnedRevenue;
+    charges.forEach((charge) => {
+      const status = String(charge.status || '').toLowerCase();
+      if (status === 'void') return;
+      const amountRaw = Number(charge.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      if (amount <= 0) return;
+      chargesTotal += amount;
+      chargesCount += 1;
+
+      const paidRaw = Number(charge.paidAmount ?? NaN);
+      const paidAmount = Number.isFinite(paidRaw) ? paidRaw : status === 'paid' ? amount : 0;
+      dueTotal += Math.max(amount - paidAmount, 0);
+    });
+
+    payments.forEach((payment) => {
+      const amountRaw = Number(payment.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      if (!amount) return;
+      const appliedRaw = Number(payment.appliedAmount ?? NaN);
+      const unappliedRaw = Number(payment.unappliedAmount ?? NaN);
+      const applied = Number.isFinite(appliedRaw)
+        ? appliedRaw
+        : Number.isFinite(unappliedRaw)
+          ? amount - unappliedRaw
+          : amount;
+      const unapplied = Number.isFinite(unappliedRaw)
+        ? unappliedRaw
+        : Number.isFinite(appliedRaw)
+          ? amount - appliedRaw
+          : 0;
+
+      appliedTotal += applied;
+      unappliedTotal += unapplied;
+    });
+
+    return {
+      chargesTotal,
+      dueTotal,
+      appliedTotal,
+      unappliedTotal,
+      chargesCount,
+    };
+  }, [charges, payments]);
+
+  const expectedRevenue = revenueTotals.chargesTotal;
+  const earnedRevenue = revenueTotals.appliedTotal;
+  const outstandingRevenue = revenueTotals.dueTotal;
+  const completedSessionsMonth = revenueTotals.chargesCount;
 
   const enrollmentBuckets = useMemo(() => {
     const activeLike = new Set([
@@ -204,20 +272,8 @@ export default function AnalyticsDashboard(): JSX.Element {
             onChange={(e) => setSelectedMonth(e.target.value)}
             className="w-[160px]"
           />
-          <span
-            className={
-              revenueMonthlyQuery.isLoading
-                ? 'text-xs text-muted-foreground px-2 py-1 rounded-full border'
-                : revenueMonthlyQuery.data
-                  ? 'text-xs text-emerald-700 px-2 py-1 rounded-full border border-emerald-200 bg-emerald-50'
-                  : 'text-xs text-amber-700 px-2 py-1 rounded-full border border-amber-200 bg-amber-50'
-            }
-          >
-            {revenueMonthlyQuery.isLoading
-              ? 'Loading…'
-              : revenueMonthlyQuery.data
-                ? 'Rollup loaded'
-                : 'No rollup yet'}
+          <span className="text-xs text-muted-foreground px-2 py-1 rounded-full border">
+            Live from billing
           </span>
         </div>
       </div>

@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { ChildProgressSnapshot } from '../../../../types/Parent';
 import { cn } from '@components/lib/utils';
+import { masteryLabel, masteryPctFromKey } from '../../../../lib/mastery';
 
 interface ChildProgressOverviewProps {
   progress: ChildProgressSnapshot[];
@@ -30,16 +31,25 @@ export const ChildProgressOverview: FC<ChildProgressOverviewProps> = ({ progress
           </div>
           {['phonics', 'grammar', 'speaking'].map((topic) => (
             <div key={topic}>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{topic.charAt(0).toUpperCase() + topic.slice(1)}</span>
-                <span>{Number(snapshot[topic as keyof typeof snapshot])}%</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full">
-                <div
-                  className={cn('h-2 rounded-full', getBarColor(Number(snapshot[topic as keyof typeof snapshot]) as number))}
-                  style={{ width: `${Number(snapshot[topic as keyof typeof snapshot])}%` }}
-                />
-              </div>
+              {(() => {
+                const raw = snapshot[topic as keyof typeof snapshot];
+                const pct = masteryPctFromKey(raw);
+                const label = masteryLabel(raw);
+                return (
+                  <>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{topic.charAt(0).toUpperCase() + topic.slice(1)}</span>
+                      <span>{label}</span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full">
+                      <div
+                        className={cn('h-2 rounded-full', getBarColor(pct))}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           ))}
           {snapshot.recentActivities && snapshot.recentActivities.length > 0 && (

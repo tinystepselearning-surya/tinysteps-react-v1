@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
+import { masteryLabel } from '../../../../lib/mastery';
 
 interface WorksheetsListProps {
   kidId?: string;
@@ -126,7 +127,7 @@ export const WorksheetsList: FC<WorksheetsListProps> = ({ kidId }) => {
                       {worksheet.difficulty}
                     </Badge>
                     <p className="text-sm text-green-700 mt-1">
-                      Score: {worksheet.score}%
+                      Level: {masteryLabel(worksheet.score)}
                     </p>
                   </div>
                 </div>

@@ -14,7 +14,7 @@ type MetaProps = {
 
 const DEFAULT_TITLE = 'Tiny Steps Learning | 1:1 Online English Classes for Kids';
 const DEFAULT_DESCRIPTION =
-  'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple weekly progress updates for parents. Book a free assessment class.';
+  'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class.';
 
 const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }) => {
   useEffect(() => {
@@ -108,4 +108,3 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }
 };
 
 export default Meta;
-

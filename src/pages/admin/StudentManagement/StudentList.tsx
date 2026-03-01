@@ -41,10 +41,8 @@ const COURSE_CATALOG_SYNC = [
   { id: 'early-phonics', title: 'Early Phonics', area: 'phonics', level: 'early' },
   { id: 'advanced-phonics', title: 'Advanced Phonics', area: 'phonics', level: 'advanced' },
   { id: 'basic-grammar', title: 'Basic Grammar', area: 'grammar', level: 'basic' },
-  { id: 'intermediate-grammar', title: 'Intermediate Grammar', area: 'grammar', level: 'intermediate' },
   { id: 'advanced-grammar', title: 'Advanced Grammar', area: 'grammar', level: 'advanced' },
   { id: 'basic-public-speaking', title: 'Public Speaking (Basic)', area: 'speaking', level: 'basic' },
-  { id: 'intermediate-public-speaking', title: 'Public Speaking (Intermediate)', area: 'speaking', level: 'intermediate' },
   { id: 'advanced-public-speaking', title: 'Public Speaking (Advanced)', area: 'speaking', level: 'advanced' },
 ];
 
@@ -161,13 +159,288 @@ const PHONICS_DISPLAY_TITLES = {
   ...buildDisplayTitleMap('advanced-phonics', ADVANCED_PHONICS_TITLES),
 };
 
+const buildLessonTitles = (labels: string[]) =>
+  labels.map((label, idx) => `Lesson ${idx + 1} — ${label}`);
+
+type StageDefinition = {
+  stageOrder: number;
+  label: string;
+  start: number;
+  end: number;
+};
+
+const STAGE_DEFINITIONS_BY_COURSE: Record<string, StageDefinition[]> = {
+  'phonics-foundations': [
+    { stageOrder: 1, label: 'Stage 1 — First letter sounds', start: 1, end: 5 },
+    { stageOrder: 2, label: 'Stage 2 — Letter sounds set 2', start: 6, end: 10 },
+    { stageOrder: 3, label: 'Stage 3 — Letter sounds set 3', start: 11, end: 15 },
+    { stageOrder: 4, label: 'Stage 4 — Letter sounds set 4', start: 16, end: 20 },
+    { stageOrder: 5, label: 'Stage 5 — Letter sounds set 5', start: 21, end: 25 },
+    { stageOrder: 6, label: 'Stage 6 — Short vowels + review', start: 26, end: 30 },
+  ],
+  'early-phonics': [
+    { stageOrder: 1, label: 'Stage 1 — Sound sets 1–5', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Sound sets 6–7 + short vowels', start: 7, end: 10 },
+    { stageOrder: 3, label: 'Stage 3 — Digraphs + silent letters', start: 11, end: 20 },
+    { stageOrder: 4, label: 'Stage 4 — Vowel teams + long vowels', start: 21, end: 31 },
+    { stageOrder: 5, label: 'Stage 5 — Magic E', start: 32, end: 36 },
+    { stageOrder: 6, label: 'Stage 6 — Longer words + review', start: 37, end: 41 },
+  ],
+  'advanced-phonics': [
+    { stageOrder: 1, label: 'Stage 1 — Diphthongs', start: 1, end: 4 },
+    { stageOrder: 2, label: 'Stage 2 — Bossy R', start: 5, end: 7 },
+    { stageOrder: 3, label: 'Stage 3 — Special sounds + silent letters', start: 8, end: 10 },
+    { stageOrder: 4, label: 'Stage 4 — Alternate vowels', start: 11, end: 15 },
+    { stageOrder: 5, label: 'Stage 5 — Endings', start: 16, end: 16 },
+    { stageOrder: 6, label: 'Stage 6 — Revision', start: 17, end: 20 },
+  ],
+  'basic-grammar': [
+    { stageOrder: 1, label: 'Stage 1 — Sentence Foundations', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Meaning Builders', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Where/When/How', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Longer Sentences', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Asking + Punctuation', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Tenses Basics', start: 31, end: 36 },
+  ],
+  'advanced-grammar': [
+    { stageOrder: 1, label: 'Stage 1 — Tense Control', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Perfect Tenses + Modals', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Clauses + Complex Sentences', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Voice + Reported Speech', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Paragraph Cohesion', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Tone + Argument + Impact', start: 31, end: 36 },
+  ],
+  'basic-public-speaking': [
+    { stageOrder: 1, label: 'Stage 1 — Comfort + Routine', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Clear Speaking', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Describe + Show & Tell', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Mini Talks + Q&A', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Story Basics', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Presentation Readiness', start: 31, end: 36 },
+  ],
+  'advanced-public-speaking': [
+    { stageOrder: 1, label: 'Stage 1 — Presence + Engagement', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Structure + Supporting Details', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Story Performance', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Impromptu + Q&A', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Persuasion + Debate', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Presentation Mastery', start: 31, end: 36 },
+  ],
+};
+
+const resolveStageByLessonNumber = (
+  courseId: string,
+  lessonNumber: number | null | undefined,
+): StageDefinition | null => {
+  if (!lessonNumber) return null;
+  const stages = STAGE_DEFINITIONS_BY_COURSE[courseId];
+  if (!stages) return null;
+  return stages.find((stage) => lessonNumber >= stage.start && lessonNumber <= stage.end) ?? null;
+};
+
+const GRAMMAR_BASIC_LABELS = [
+  'Nouns: people, places, things',
+  'Pronouns: he/she/they',
+  'Make a simple sentence (noun + verb)',
+  'Verb choice: is/are',
+  'Fix sentence basics (caps + full stop)',
+  'Revision: sentence foundations',
+  'Verbs: action words',
+  'Adjectives: describing words',
+  'Add an adjective',
+  'Articles: a/an/the',
+  'Capital letters check',
+  'Revision: meaning builders',
+  'Prepositions: in/on/under',
+  'Adverbs: how/when',
+  'Add a preposition phrase',
+  'Choose the correct preposition',
+  'Edit for adverbs',
+  'Revision: where/when/how',
+  'Conjunctions: and/but/because',
+  'Plurals: s/es',
+  'Join two sentences',
+  'Plural vs singular',
+  'Fix run-on sentences',
+  'Revision: longer sentences',
+  'Question words: who/what/where',
+  'Questions vs statements',
+  'Question marks',
+  'Exclamations: wow!/oh!',
+  'Edit question sentences',
+  'Revision: asking + punctuation',
+  'Tenses: past/present/future',
+  'Irregular verbs: go/went',
+  'Time words in sentences',
+  'Choose the correct tense',
+  'Fix tense mistakes',
+  'Revision: tenses capstone',
+];
+
+const GRAMMAR_ADVANCED_LABELS = [
+  'Simple vs continuous tense',
+  'Time clauses (when/while)',
+  'Choose the correct tense',
+  'Edit tense shifts',
+  'Tense consistency in paragraphs',
+  'Revision: tense control',
+  'Perfect tenses (have/has/had)',
+  'Present perfect vs past simple',
+  'Modals: can/must/should',
+  'Modal meaning & choice',
+  'Edit modal sentences',
+  'Revision: perfect + modals',
+  'Clauses: independent/dependent',
+  'Relative clauses: who/which/that',
+  'Complex sentences',
+  'Clause punctuation (comma)',
+  'Fix fragments',
+  'Revision: clauses',
+  'Passive voice',
+  'Active → passive',
+  'Reported speech',
+  'Reported speech tense shifts',
+  'Edit for clarity (voice + speech)',
+  'Revision: voice + speech',
+  'Punctuation: commas/semicolons',
+  'Transition words',
+  'Paragraph structure',
+  'Choose a transition',
+  'Edit paragraph cohesion',
+  'Revision: paragraphs',
+  'Tone + formality',
+  'Argument structure: claim/reason',
+  'Evidence sentence',
+  'Word choice for impact',
+  'Counterargument',
+  'Revision: capstone',
+];
+
+const SPEAKING_BASIC_LABELS = [
+  'Confidence warm-up',
+  'Eye contact + posture',
+  'Speak loud enough',
+  'Two-line introduction',
+  'Smile + friendly voice',
+  'Revision: comfort check',
+  'Full sentences',
+  'Slow pace',
+  'Say full words (clear endings)',
+  'Voice clarity',
+  'Pauses between ideas',
+  'Revision: clarity check',
+  'Picture talk',
+  '3 details about an object',
+  'Senses words',
+  'Simple gestures',
+  'Emotion words',
+  'Revision: describe and tell',
+  'Answering questions',
+  'One-minute talk',
+  'Sequence words (first/next)',
+  'Topic sentence + 2 details',
+  'Voice variety',
+  'Revision: Q&A',
+  'Story: beginning-middle-end',
+  'Describe a person/place',
+  'Show & tell with props',
+  'Emphasis on key words',
+  'Small audience practice',
+  'Revision: mini presentation',
+  'Class presentation practice',
+  'Speaking with a simple visual',
+  'Handling mistakes calmly',
+  'Final delivery practice',
+  'Confidence reflection',
+  'Revision: celebration',
+];
+
+const SPEAKING_ADVANCED_LABELS = [
+  'Audience engagement',
+  'Confident openings',
+  'Stage presence',
+  'Clear speech (articulation)',
+  'Pacing for impact',
+  'Revision: presence check',
+  'Hook-body-close',
+  'Supporting details',
+  'Evidence and examples',
+  'Sequence + transitions',
+  'Stay on message',
+  'Revision: structure',
+  'Storytelling with emotion',
+  'Character voices',
+  'Scene setting',
+  'Pause for effect',
+  'Voice variety',
+  'Revision: story performance',
+  'Impromptu speaking',
+  'Thinking time strategies',
+  'Answering tough questions',
+  'Clarity under pressure',
+  'Confidence reset',
+  'Revision: impromptu',
+  'Persuasion basics',
+  'Agree/disagree politely',
+  'Rebuttal practice',
+  'Strong conclusion',
+  'Audience Q&A',
+  'Revision: debate',
+  'Presentation with visuals',
+  'Speaking with notes',
+  'Timing and pacing',
+  'Engaging the audience',
+  'Final capstone speech',
+  'Revision: showcase',
+];
+
+const CURRICULUM_DISPLAY_TITLES = {
+  ...PHONICS_DISPLAY_TITLES,
+  ...buildDisplayTitleMap('basic-grammar', buildLessonTitles(GRAMMAR_BASIC_LABELS)),
+  ...buildDisplayTitleMap('advanced-grammar', buildLessonTitles(GRAMMAR_ADVANCED_LABELS)),
+  ...buildDisplayTitleMap('basic-public-speaking', buildLessonTitles(SPEAKING_BASIC_LABELS)),
+  ...buildDisplayTitleMap('advanced-public-speaking', buildLessonTitles(SPEAKING_ADVANCED_LABELS)),
+};
+
+const buildSequentialTopics = (
+  courseId: string,
+  area: 'phonics' | 'grammar' | 'speaking',
+  labels: string[],
+) =>
+  labels.map((label, idx) => {
+    const lessonNumber = idx + 1;
+    const stage = resolveStageByLessonNumber(courseId, lessonNumber);
+    return {
+      id: `${courseId}__lesson-${String(lessonNumber).padStart(2, '0')}`,
+      courseId,
+      area,
+      lesson: `Lesson-${lessonNumber}`,
+      label,
+      stageLabel: stage?.label ?? null,
+      stageOrder: stage?.stageOrder ?? null,
+    };
+  });
+
 type RubricType =
   | 'single_sound'
+  | 'short_vowels'
   | 'sound_set'
   | 'digraph'
   | 'silent_letter'
   | 'vowel_team'
   | 'magic_e'
+  | 'diphthong'
+  | 'r_controlled'
+  | 'alternate_vowel'
+  | 'suffix_ending'
+  | 'concept'
+  | 'sentence_building'
+  | 'usage_practice'
+  | 'writing_editing'
+  | 'confidence'
+  | 'clarity'
+  | 'structure'
+  | 'expression'
   | 'rule'
   | 'revision';
 
@@ -183,6 +456,7 @@ const classifyRubricType = (courseId: string, lesson?: string, id?: string): Rub
   const num = extractLessonNumber(lesson, id);
   if (courseId === 'phonics-foundations') {
     if (num != null && num >= 1 && num <= 26) return 'single_sound';
+    if (num === 27) return 'short_vowels';
     return 'revision';
   }
   if (courseId === 'early-phonics') {
@@ -195,31 +469,102 @@ const classifyRubricType = (courseId: string, lesson?: string, id?: string): Rub
     return 'rule';
   }
   if (courseId === 'advanced-phonics') {
-    if (num != null && num >= 1 && num <= 4) return 'vowel_team';
+    if (num != null && num >= 1 && num <= 4) return 'diphthong';
+    if (num != null && num >= 5 && num <= 7) return 'r_controlled';
+    if (num === 9 || num === 16) return 'suffix_ending';
+    if (num === 10) return 'silent_letter';
+    if (num != null && num >= 11 && num <= 15) return 'alternate_vowel';
     if (num != null && num >= 17) return 'revision';
     return 'rule';
+  }
+
+  if (courseId === 'basic-grammar' || courseId === 'advanced-grammar') {
+    if (num == null) return 'revision';
+    const mod = num % 6;
+    if (mod === 0) return 'revision';
+    if (mod === 1 || mod === 2) return 'concept';
+    if (mod === 3) return 'sentence_building';
+    if (mod === 4) return 'usage_practice';
+    return 'writing_editing';
+  }
+
+  if (
+    courseId === 'basic-public-speaking'
+    || courseId === 'advanced-public-speaking'
+  ) {
+    if (num == null) return 'revision';
+    const mod = num % 6;
+    if (mod === 0) return 'revision';
+    if (mod === 1 || mod === 2) return 'confidence';
+    if (mod === 3) return 'clarity';
+    if (mod === 4) return 'structure';
+    return 'expression';
   }
   return 'revision';
 };
 
 const SUBSKILL_CHIPS_BY_RUBRIC: Record<RubricType, string[]> = {
-  single_sound: ['sound recognition', 'sound pronunciation', 'letter formation', 'blending', 'word reading'],
-  sound_set: ['sound recognition', 'blending', 'segmenting', 'word reading', 'letter formation'],
-  digraph: ['pattern recognition', 'sound pronunciation', 'word reading', 'spelling pattern', 'blending'],
-  silent_letter: ['pattern recognition', 'correct sound', 'word reading', 'spelling pattern'],
-  vowel_team: ['vowel team recognition', 'long vowel sound', 'word reading', 'sound discrimination', 'spelling'],
-  magic_e: ['magic-e recognition', 'short→long change', 'word reading', 'spelling', 'sound discrimination'],
+  single_sound: [
+    'letter recognition',
+    'sound pronunciation',
+    'initial sound spotting',
+    'letter formation',
+    'picture-word match',
+  ],
+  short_vowels: ['short vowel recognition', 'sound discrimination', 'CVC blending', 'CVC word reading', 'CVC spelling'],
+  sound_set: ['sound recall', 'blending', 'segmenting', 'CVC word reading', 'simple dictation'],
+  digraph: ['digraph recognition', 'sound pronunciation', 'word reading', 'spelling (digraph)', 'dictation'],
+  silent_letter: ['spot silent letters', 'pronounce correctly', 'word reading', 'spelling pattern', 'dictation'],
+  vowel_team: [
+    'vowel team recognition',
+    'sound pronunciation',
+    'word reading',
+    'spelling (vowel team)',
+    'sound discrimination',
+  ],
+  magic_e: ['magic e rule', 'short vs long', 'word reading', 'spelling (magic e)', 'dictation'],
+  diphthong: ['diphthong recognition', 'sound glide practice', 'word reading', 'spelling choice', 'sound discrimination'],
+  r_controlled: [
+    'bossy r recognition',
+    'sound pronunciation',
+    'word reading',
+    'spelling (r-controlled)',
+    'sound discrimination',
+  ],
+  alternate_vowel: ['alternate vowel recognition', 'sound choice', 'word reading', 'spelling', 'sound discrimination'],
+  suffix_ending: ['ending pattern recognition', 'word building', 'word reading', 'spelling', 'dictation'],
+  concept: ['identify rule', 'definition recall', 'label parts', 'spot examples', 'sort words'],
+  sentence_building: ['make a sentence', 'expand sentence', 'word order', 'join sentences', 'use connectors'],
+  usage_practice: ['choose correct form', 'fill blanks correctly', 'apply rule in sentence', 'explain choice', 'spot the error'],
+  writing_editing: ['fix punctuation', 'correct grammar mistake', 'rewrite better sentence', 'fix run-on/fragment', 'improve clarity'],
+  confidence: ['eye contact', 'posture', 'volume', 'calm start', 'speak without prompting'],
+  clarity: ['speak clearly', 'slow pace', 'say full words', 'articulation', 'pause between ideas'],
+  structure: ['topic sentence', 'sequence words', 'supporting details', 'stay on topic', 'conclusion'],
+  expression: ['voice variety', 'gestures', 'facial expression', 'emphasis', 'pause for effect'],
   rule: ['rule spotting', 'apply in reading', 'apply in spelling', 'word sorting', 'explain rule'],
-  revision: ['mixed reading', 'mixed spelling', 'recall speed', 'confidence'],
+  revision: ['mixed practice', 'independent use', 'speed + accuracy', 'confidence', 'minimal teacher help'],
 };
 
 const CONFUSION_OPTIONS_BY_RUBRIC: Record<RubricType, string[]> = {
   single_sound: ['b vs d', 'p vs b', 'm vs n', 'u vs n', 'a vs e', 'i vs e'],
+  short_vowels: ['a vs e', 'e vs i', 'i vs o', 'o vs u'],
   sound_set: ['b vs d', 'p vs b', 'm vs n', 'u vs n', 'a vs e', 'i vs e'],
   digraph: ['sh vs ch', 'th vs f', 'ph vs f', 'ck vs k'],
   silent_letter: [],
-  vowel_team: ['ee vs ea', 'oa vs oe', 'short vs long vowel', 'oo: /oo/ vs /ʊ/', 'i_e vs igh'],
-  magic_e: ['ee vs ea', 'oa vs oe', 'short vs long vowel', 'oo: /oo/ vs /ʊ/', 'i_e vs igh'],
+  vowel_team: ['ee vs ea', 'oa vs oe', 'oo: /oo/ vs /ʊ/', 'i_e vs igh'],
+  magic_e: ['short vs long', 'i_e vs igh', 'oa vs oe'],
+  diphthong: ['ai vs ay', 'oi vs oy', 'ou vs ow', 'au vs aw'],
+  r_controlled: ['ar vs or', 'ir vs er', 'ur vs er'],
+  alternate_vowel: ['a (cat) vs a (cake)', 'o (hot) vs o (go)', 'u (cup) vs u (rule)'],
+  suffix_ending: ['/shun/ spellings', 'c vs ct ending'],
+  concept: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  sentence_building: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  usage_practice: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  writing_editing: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  confidence: ['shy/low confidence', 'too soft voice', 'low eye contact', 'needs prompting', 'nervous'],
+  clarity: ['too fast', 'mumbling', 'unclear speech', 'drops word endings', 'too soft voice'],
+  structure: ['off-topic', 'missing details', 'no clear ending', 'rambling', 'forgets sequence'],
+  expression: ['monotone voice', 'no pauses', 'flat expression', 'weak emphasis', 'too fast'],
   rule: ['soft c vs hard c', 'g vs j', 'double consonant rule'],
   revision: [],
 };
@@ -283,8 +628,8 @@ const PHONICS_CURRICULUM_TOPICS = [
   { id: 'early-phonics__lesson-26', courseId: 'early-phonics', lesson: 'Lesson-26', label: 'oa' },
   { id: 'early-phonics__lesson-27', courseId: 'early-phonics', lesson: 'Lesson-27', label: 'oo' },
   { id: 'early-phonics__lesson-28', courseId: 'early-phonics', lesson: 'Lesson-28', label: 'oe' },
-  { id: 'early-phonics__lesson-29', courseId: 'early-phonics', lesson: 'Lesson-29', label: 'oo-ui' },
-  { id: 'early-phonics__lesson-30', courseId: 'early-phonics', lesson: 'Lesson-30', label: 'oo-ue' },
+  { id: 'early-phonics__lesson-29', courseId: 'early-phonics', lesson: 'Lesson-29', label: 'ui' },
+  { id: 'early-phonics__lesson-30', courseId: 'early-phonics', lesson: 'Lesson-30', label: 'ue' },
   { id: 'early-phonics__lesson-31', courseId: 'early-phonics', lesson: 'Lesson-31', label: 'igh' },
   { id: 'early-phonics__lesson-32', courseId: 'early-phonics', lesson: 'Lesson-32', label: 'a_e' },
   { id: 'early-phonics__lesson-33', courseId: 'early-phonics', lesson: 'Lesson-33', label: 'e_e' },
@@ -318,9 +663,56 @@ const PHONICS_CURRICULUM_TOPICS = [
   { id: 'advanced-phonics__lesson-20', courseId: 'advanced-phonics', lesson: 'Lesson-20', label: 'revision' },
 ].map((topic) => {
   const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  const stage = resolveStageByLessonNumber(
+    topic.courseId,
+    extractLessonNumber(topic.lesson, topic.id),
+  );
   return {
     ...topic,
-    displayTitle: PHONICS_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
+    area: 'phonics',
+    displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
+    stageLabel: stage?.label ?? null,
+    stageOrder: stage?.stageOrder ?? null,
+    rubricType,
+    subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
+    confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
+  };
+});
+
+const GRAMMAR_CURRICULUM_TOPICS = [
+  ...buildSequentialTopics('basic-grammar', 'grammar', GRAMMAR_BASIC_LABELS),
+  ...buildSequentialTopics('advanced-grammar', 'grammar', GRAMMAR_ADVANCED_LABELS),
+].map((topic) => {
+  const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  const stage = resolveStageByLessonNumber(
+    topic.courseId,
+    extractLessonNumber(topic.lesson, topic.id),
+  );
+  return {
+    ...topic,
+    displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
+    stageLabel: stage?.label ?? null,
+    stageOrder: stage?.stageOrder ?? null,
+    rubricType,
+    subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
+    confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
+  };
+});
+
+const SPEAKING_CURRICULUM_TOPICS = [
+  ...buildSequentialTopics('basic-public-speaking', 'speaking', SPEAKING_BASIC_LABELS),
+  ...buildSequentialTopics('advanced-public-speaking', 'speaking', SPEAKING_ADVANCED_LABELS),
+].map((topic) => {
+  const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  const stage = resolveStageByLessonNumber(
+    topic.courseId,
+    extractLessonNumber(topic.lesson, topic.id),
+  );
+  return {
+    ...topic,
+    displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
+    stageLabel: stage?.label ?? null,
+    stageOrder: stage?.stageOrder ?? null,
     rubricType,
     subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
     confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
@@ -365,6 +757,16 @@ type SessionRequestRow = {
   note?: string;
   status?: string;
 };
+
+const StatusPill = ({ ok, label }: { ok: boolean; label: string }) => (
+  <span
+    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+      ok ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
+    }`}
+  >
+    {ok ? '✓' : '!'} {label}
+  </span>
+);
 
 function computeAgeYearsFromDob(dob?: string): number | null {
   try {
@@ -511,7 +913,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     running: false,
   });
   const [syncCurriculumStatus, setSyncCurriculumStatus] = useState({
-    running: false,
+    phonics: false,
+    grammar: false,
+    speaking: false,
   });
 
   const { user } = useAuthStore();
@@ -876,7 +1280,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const handleSyncCourseCatalog = async () => {
     if (!isAdmin || syncStatus.running) return;
 
-    const confirmed = window.confirm('Sync the course catalog with the standard 9 courses?');
+    const confirmed = window.confirm('Sync the course catalog with the standard 7 courses?');
     if (!confirmed) return;
 
     setSyncStatus({ running: true });
@@ -910,6 +1314,23 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         await setDoc(ref, payload, { merge: true });
       }
 
+      const legacyCourseIds = ['intermediate-grammar', 'intermediate-public-speaking'];
+      for (const legacyId of legacyCourseIds) {
+        const ref = doc(db, 'courses', legacyId);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) continue;
+        await setDoc(
+          ref,
+          {
+            status: 'archived',
+            active: false,
+            updatedAt: serverTimestamp(),
+            updatedBy: user?.uid ?? null,
+          },
+          { merge: true },
+        );
+      }
+
       toast({
         title: 'Course catalog synced',
         description: 'Standard courses are now active in /courses.',
@@ -926,23 +1347,53 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     }
   };
 
-  const handleSyncCurriculum = async () => {
-    if (!isAdmin || syncCurriculumStatus.running) return;
+  const isCurriculumSyncing =
+    syncCurriculumStatus.phonics || syncCurriculumStatus.grammar || syncCurriculumStatus.speaking;
 
-    const confirmed = window.confirm('Sync phonics curriculum topics to Firestore?');
+  const mergeCurriculumTopics = (
+    existingTopics: any[],
+    area: 'phonics' | 'grammar' | 'speaking',
+    courseIds: string[],
+    newTopics: any[],
+  ) => {
+    const areaKey = area.toLowerCase();
+    const courseIdSet = new Set(courseIds.map((id) => id.toLowerCase()));
+    const filtered = existingTopics.filter((topic) => {
+      const topicArea = String(topic?.area ?? '').toLowerCase();
+      const topicCourseId = String(topic?.courseId ?? '').toLowerCase();
+      return !(topicArea === areaKey || courseIdSet.has(topicCourseId));
+    });
+    return [...filtered, ...newTopics];
+  };
+
+  const syncCurriculumArea = async (options: {
+    area: 'phonics' | 'grammar' | 'speaking';
+    label: string;
+    topics: any[];
+    courseIds: string[];
+  }) => {
+    if (!isAdmin || isCurriculumSyncing || syncCurriculumStatus[options.area]) return;
+
+    const confirmed = window.confirm(`Sync ${options.label} curriculum topics to Firestore?`);
     if (!confirmed) return;
 
-    setSyncCurriculumStatus({ running: true });
+    setSyncCurriculumStatus((prev) => ({ ...prev, [options.area]: true }));
     try {
       const curriculumRef = doc(db, 'config', 'curriculumTopics');
       const snap = await getDoc(curriculumRef);
       const existing = snap.exists() ? (snap.data() as any) : {};
       const existingTopics = Array.isArray(existing?.topics) ? existing.topics : [];
 
-      const hadExisting = existingTopics.length > 0;
+      const updatedTopics = mergeCurriculumTopics(
+        existingTopics,
+        options.area,
+        options.courseIds,
+        options.topics,
+      );
+      const hadExisting = updatedTopics.length !== options.topics.length;
 
       const payload: Record<string, unknown> = {
-        topics: PHONICS_CURRICULUM_TOPICS,
+        topics: updatedTopics,
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid ?? null,
       };
@@ -959,8 +1410,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       toast({
         title: hadExisting ? 'Curriculum updated' : 'Curriculum synced',
         description: hadExisting
-          ? `Curriculum updated (${PHONICS_CURRICULUM_TOPICS.length} topics).`
-          : 'Phonics curriculum topics are now available.',
+          ? `Curriculum updated (${options.topics.length} topics).`
+          : `${options.label} curriculum topics are now available.`,
       });
     } catch (err: any) {
       console.error('Sync curriculum failed', err);
@@ -970,9 +1421,33 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         variant: 'destructive',
       });
     } finally {
-      setSyncCurriculumStatus({ running: false });
+      setSyncCurriculumStatus((prev) => ({ ...prev, [options.area]: false }));
     }
   };
+
+  const handleSyncCurriculumPhonics = () =>
+    syncCurriculumArea({
+      area: 'phonics',
+      label: 'Phonics',
+      topics: PHONICS_CURRICULUM_TOPICS,
+      courseIds: ['phonics-foundations', 'early-phonics', 'advanced-phonics'],
+    });
+
+  const handleSyncCurriculumGrammar = () =>
+    syncCurriculumArea({
+      area: 'grammar',
+      label: 'Grammar',
+      topics: GRAMMAR_CURRICULUM_TOPICS,
+      courseIds: ['basic-grammar', 'advanced-grammar', 'intermediate-grammar'],
+    });
+
+  const handleSyncCurriculumSpeaking = () =>
+    syncCurriculumArea({
+      area: 'speaking',
+      label: 'Speaking',
+      topics: SPEAKING_CURRICULUM_TOPICS,
+      courseIds: ['basic-public-speaking', 'advanced-public-speaking', 'intermediate-public-speaking'],
+    });
 
   async function handleRejectRequest(req: SessionRequestRow) {
     if (user?.role !== 'admin') return;
@@ -1016,10 +1491,26 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             <Button
               size="sm"
               variant="outline"
-              onClick={handleSyncCurriculum}
-              disabled={syncCurriculumStatus.running}
+              onClick={handleSyncCurriculumPhonics}
+              disabled={isCurriculumSyncing}
             >
-              {syncCurriculumStatus.running ? 'Syncing Curriculum...' : 'Sync Curriculum (Phonics)'}
+              {syncCurriculumStatus.phonics ? 'Syncing Curriculum...' : 'Sync Curriculum (Phonics)'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSyncCurriculumGrammar}
+              disabled={isCurriculumSyncing}
+            >
+              {syncCurriculumStatus.grammar ? 'Syncing Grammar...' : 'Sync Curriculum (Grammar)'}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSyncCurriculumSpeaking}
+              disabled={isCurriculumSyncing}
+            >
+              {syncCurriculumStatus.speaking ? 'Syncing Speaking...' : 'Sync Curriculum (Speaking)'}
             </Button>
           </div>
         )}
@@ -1148,7 +1639,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         </Card>
       )}
 
-      <Card>
+      <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4">
           <div className="text-sm font-medium text-gray-700">Enrollments</div>
           <div className="flex flex-wrap items-center gap-2">
@@ -1176,16 +1667,16 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             </button>
           </div>
         </div>
-        <Table>
+        <Table className="w-full table-fixed text-sm">
           <TableHeader>
             <TableRow>
-              <TableHead>Student</TableHead>
-              <TableHead>Parents</TableHead>
-              <TableHead>Age</TableHead>
-              <TableHead>Grade</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Enrollments</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[160px]">Student</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[180px]">Parents</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[70px]">Age</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[80px]">Grade</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[90px]">Status</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold">Enrollments</TableHead>
+              <TableHead className="px-3 py-2 text-xs font-semibold w-[150px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -1197,41 +1688,67 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                 const isPast = isPastEnrollmentStatus(status);
                 return enrollmentStatusTab === 'active' ? !isPast : isPast;
               });
+              const hasCourse = filteredEnrollments.length > 0;
+              const hasTeacher = filteredEnrollments.some(
+                (e: any) => Boolean(e.teacherId || e.teacher?.uid || e.teacher?.id)
+              );
+              const hasSchedule = filteredEnrollments.some(
+                (e: any) => (e.schedule?.weekdays?.length || 0) > 0
+              );
               return (
               <TableRow key={s.id}>
-                <TableCell>
-                  <div className="font-medium">{s.fullName}</div>
+                <TableCell className="px-3 py-2 align-top">
+                  <div className="font-medium max-w-[160px] truncate" title={s.fullName || ''}>
+                    {s.fullName}
+                  </div>
                 </TableCell>
 
-                <TableCell>
+                <TableCell className="px-3 py-2 align-top">
                   {(s.parentIds || []).map(pid => {
                     const p = parents.find(x => (x as any).uid === pid || x.id === pid);
-                    return <div key={pid}>{p?.email || pid}</div>;
+                    const label = p?.email || pid;
+                    return (
+                      <div key={pid} className="max-w-[180px] truncate" title={label}>
+                        {label}
+                      </div>
+                    );
                   })}
                 </TableCell>
 
                 {/* ✅ Age instead of DOB */}
-                <TableCell>{displayAgeYears(s)}</TableCell>
+                <TableCell className="px-3 py-2 align-top">{displayAgeYears(s)}</TableCell>
 
-                <TableCell>{s.grade}</TableCell>
-                <TableCell>{(s as any).status}</TableCell>
+                <TableCell className="px-3 py-2 align-top">{s.grade}</TableCell>
+                <TableCell className="px-3 py-2 align-top">{(s as any).status}</TableCell>
 
                 {/* ✅ Enrollments in its own column */}
-                <TableCell>
+                <TableCell className="px-3 py-2 align-top">
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    <StatusPill ok={hasCourse} label="Course" />
+                    <StatusPill ok={hasTeacher} label="Teacher" />
+                    <StatusPill ok={hasSchedule} label="Schedule" />
+                  </div>
                   {filteredEnrollments.length > 0 ? (
-                    <div className="space-y-1">
+                    <div className="space-y-1 text-xs">
                       {filteredEnrollments.map((e: any) => (
-                        <div key={e.id} className="text-sm flex items-center justify-between">
-                          <div>
-                            <strong>{e.course?.title || e.courseId}</strong>
-                            {e.teacher && ` — ${e.teacher.name || e.teacher.email}`}
-                            {` — ${normalizeEnrollmentStatus(e.status)}`}
-                            {safeNumber(e.feePerClass, 0) > 0 ? ` — ₹${e.feePerClass}/class` : ''}
+                        <div key={e.id} className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="font-semibold truncate block" title={e.course?.title || e.courseId}>
+                              {e.course?.title || e.courseId}
+                            </span>
+                            <span className="text-muted-foreground truncate block" title={e.teacher?.name || e.teacher?.email || ''}>
+                              {e.teacher ? e.teacher.name || e.teacher.email : 'Unassigned'}
+                            </span>
+                            <span className="text-muted-foreground truncate block">
+                              {normalizeEnrollmentStatus(e.status)}
+                              {safeNumber(e.feePerClass, 0) > 0 ? ` · ₹${e.feePerClass}/class` : ''}
+                            </span>
                           </div>
-                          <div className="ml-4">
+                          <div className="shrink-0">
                             <Button
                               size="sm"
                               variant="destructive"
+                              className="h-7 px-2 text-xs"
                               onClick={() => handleDeleteEnrollment(e.id)}
                               disabled={
                                 !(
@@ -1253,10 +1770,11 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   )}
                 </TableCell>
 
-                <TableCell>
-                  <div className="flex gap-2 flex-wrap">
+                <TableCell className="px-3 py-2 align-top">
+                  <div className="grid gap-1">
                     <Button
                       size="sm"
+                      className="h-7 px-2 text-xs"
                       onClick={() => onAssignCourse(s)}
                       disabled={
                         !(
@@ -1265,11 +1783,12 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                         )
                       }
                     >
-                      Assign Course
+                      Course
                     </Button>
 
                     <Button
                       size="sm"
+                      className="h-7 px-2 text-xs"
                       onClick={() => setAssignTeacherFor(s)}
                       disabled={
                         !(
@@ -1278,21 +1797,23 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                         )
                       }
                     >
-                      Assign Teacher
+                      Teacher
                     </Button>
 
                     <Button
                       size="sm"
+                      className="h-7 px-2 text-xs"
                       onClick={() => setAssignLPFor(s)}
                       disabled={!(user?.role === 'admin')}
                     >
-                      {user?.role === 'admin' ? 'Assign LP' : 'Not Authorized'}
+                      {user?.role === 'admin' ? 'LP' : 'No Access'}
                     </Button>
 
                     {/* ✅ NEW: Schedule Classes */}
                     <Button
                       size="sm"
                       variant="outline"
+                      className="h-7 px-2 text-xs"
                       onClick={() => openScheduleModal(s)}
                       disabled={
                         !(
@@ -1301,14 +1822,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                         )
                       }
                     >
-                      Schedule Classes
+                      Schedule
                     </Button>
 
-                    <Button size="sm" variant="destructive" onClick={() => onDelete(s.id)}>
+                    <Button size="sm" variant="destructive" className="h-7 px-2 text-xs" onClick={() => onDelete(s.id)}>
                       Delete
                     </Button>
 
-                    <Button size="sm" variant="secondary" onClick={() => onEdit(s)}>
+                    <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => onEdit(s)}>
                       Edit
                     </Button>
                   </div>

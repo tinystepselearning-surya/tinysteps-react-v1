@@ -16,7 +16,14 @@ interface StudentTopicProgressEditorProps {
   onSaveAndBack?: () => void;
 }
 
-type CourseId = 'phonics-foundations' | 'early-phonics' | 'advanced-phonics';
+type CourseId =
+  | 'phonics-foundations'
+  | 'early-phonics'
+  | 'advanced-phonics'
+  | 'basic-grammar'
+  | 'advanced-grammar'
+  | 'basic-public-speaking'
+  | 'advanced-public-speaking';
 
 type CourseDefinition = {
   id: CourseId;
@@ -29,18 +36,24 @@ type CourseTopic = {
   label: string;
   displayTitle?: string;
   order?: number | null;
-  rubricType?: string;
+  stageLabel?: string | null;
+  stageOrder?: number | null;
+  rubricType?: RubricType;
   subskillChips?: string[];
   confusionOptions?: string[];
   courseId: CourseId;
   courseLabel: string;
-  area: 'phonics';
+  area: 'phonics' | 'grammar' | 'speaking';
 };
 
-const PHONICS_COURSES: CourseDefinition[] = [
+const COURSE_DEFINITIONS: CourseDefinition[] = [
   { id: 'phonics-foundations', label: 'Phonics Foundations' },
   { id: 'early-phonics', label: 'Early Phonics' },
   { id: 'advanced-phonics', label: 'Advanced Phonics' },
+  { id: 'basic-grammar', label: 'Basic Grammar' },
+  { id: 'advanced-grammar', label: 'Advanced Grammar' },
+  { id: 'basic-public-speaking', label: 'Public Speaking (Basic)' },
+  { id: 'advanced-public-speaking', label: 'Public Speaking (Advanced)' },
 ];
 
 const normalizeSlug = (value: string): string =>
@@ -49,9 +62,10 @@ const normalizeSlug = (value: string): string =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '');
 
-const extractLessonNumber = (value?: string): number | null => {
-  if (!value) return null;
-  const match = /lesson[-\s]*0*(\d+)/i.exec(value);
+const extractLessonNumber = (value?: string, id?: string): number | null => {
+  const raw = value || id || '';
+  if (!raw) return null;
+  const match = /lesson[-\s]*0*(\d+)/i.exec(raw);
   if (!match) return null;
   const num = Number(match[1]);
   return Number.isFinite(num) ? num : null;
@@ -65,7 +79,409 @@ const makeTopicId = (courseId: CourseId, lesson: string): string => {
   return `${courseId}__${normalizeSlug(lesson)}`;
 };
 
-const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
+type StageDefinition = {
+  stageOrder: number;
+  label: string;
+  start: number;
+  end: number;
+};
+
+const STAGE_DEFINITIONS_BY_COURSE: Record<CourseId, StageDefinition[]> = {
+  'phonics-foundations': [
+    { stageOrder: 1, label: 'Stage 1 — First letter sounds', start: 1, end: 5 },
+    { stageOrder: 2, label: 'Stage 2 — Letter sounds set 2', start: 6, end: 10 },
+    { stageOrder: 3, label: 'Stage 3 — Letter sounds set 3', start: 11, end: 15 },
+    { stageOrder: 4, label: 'Stage 4 — Letter sounds set 4', start: 16, end: 20 },
+    { stageOrder: 5, label: 'Stage 5 — Letter sounds set 5', start: 21, end: 25 },
+    { stageOrder: 6, label: 'Stage 6 — Short vowels + review', start: 26, end: 30 },
+  ],
+  'early-phonics': [
+    { stageOrder: 1, label: 'Stage 1 — Sound sets 1–5', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Sound sets 6–7 + short vowels', start: 7, end: 10 },
+    { stageOrder: 3, label: 'Stage 3 — Digraphs + silent letters', start: 11, end: 20 },
+    { stageOrder: 4, label: 'Stage 4 — Vowel teams + long vowels', start: 21, end: 31 },
+    { stageOrder: 5, label: 'Stage 5 — Magic E', start: 32, end: 36 },
+    { stageOrder: 6, label: 'Stage 6 — Longer words + review', start: 37, end: 41 },
+  ],
+  'advanced-phonics': [
+    { stageOrder: 1, label: 'Stage 1 — Diphthongs', start: 1, end: 4 },
+    { stageOrder: 2, label: 'Stage 2 — Bossy R', start: 5, end: 7 },
+    { stageOrder: 3, label: 'Stage 3 — Special sounds + silent letters', start: 8, end: 10 },
+    { stageOrder: 4, label: 'Stage 4 — Alternate vowels', start: 11, end: 15 },
+    { stageOrder: 5, label: 'Stage 5 — Endings', start: 16, end: 16 },
+    { stageOrder: 6, label: 'Stage 6 — Revision', start: 17, end: 20 },
+  ],
+  'basic-grammar': [
+    { stageOrder: 1, label: 'Stage 1 — Sentence Foundations', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Meaning Builders', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Where/When/How', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Longer Sentences', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Asking + Punctuation', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Tenses Basics', start: 31, end: 36 },
+  ],
+  'advanced-grammar': [
+    { stageOrder: 1, label: 'Stage 1 — Tense Control', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Perfect Tenses + Modals', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Clauses + Complex Sentences', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Voice + Reported Speech', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Paragraph Cohesion', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Tone + Argument + Impact', start: 31, end: 36 },
+  ],
+  'basic-public-speaking': [
+    { stageOrder: 1, label: 'Stage 1 — Comfort + Routine', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Clear Speaking', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Describe + Show & Tell', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Mini Talks + Q&A', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Story Basics', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Presentation Readiness', start: 31, end: 36 },
+  ],
+  'advanced-public-speaking': [
+    { stageOrder: 1, label: 'Stage 1 — Presence + Engagement', start: 1, end: 6 },
+    { stageOrder: 2, label: 'Stage 2 — Structure + Supporting Details', start: 7, end: 12 },
+    { stageOrder: 3, label: 'Stage 3 — Story Performance', start: 13, end: 18 },
+    { stageOrder: 4, label: 'Stage 4 — Impromptu + Q&A', start: 19, end: 24 },
+    { stageOrder: 5, label: 'Stage 5 — Persuasion + Debate', start: 25, end: 30 },
+    { stageOrder: 6, label: 'Stage 6 — Presentation Mastery', start: 31, end: 36 },
+  ],
+};
+
+const resolveStageByLessonNumber = (
+  courseId: CourseId,
+  lessonNumber: number | null | undefined,
+): StageDefinition | null => {
+  if (!lessonNumber) return null;
+  const stages = STAGE_DEFINITIONS_BY_COURSE[courseId];
+  if (!stages) return null;
+  return stages.find((stage) => lessonNumber >= stage.start && lessonNumber <= stage.end) ?? null;
+};
+
+const buildSequentialTopics = (
+  courseId: CourseId,
+  courseLabel: string,
+  area: CourseTopic['area'],
+  labels: string[],
+): CourseTopic[] =>
+  labels.map((label, idx) => {
+    const lessonNumber = idx + 1;
+    const lesson = `Lesson-${lessonNumber}`;
+    const stage = resolveStageByLessonNumber(courseId, lessonNumber);
+    return {
+      id: makeTopicId(courseId, lesson),
+      lesson,
+      label,
+      courseId,
+      courseLabel,
+      area,
+      stageLabel: stage?.label ?? null,
+      stageOrder: stage?.stageOrder ?? null,
+    };
+  });
+
+type RubricType =
+  | 'single_sound'
+  | 'short_vowels'
+  | 'sound_set'
+  | 'digraph'
+  | 'silent_letter'
+  | 'vowel_team'
+  | 'magic_e'
+  | 'diphthong'
+  | 'r_controlled'
+  | 'alternate_vowel'
+  | 'suffix_ending'
+  | 'concept'
+  | 'sentence_building'
+  | 'usage_practice'
+  | 'writing_editing'
+  | 'confidence'
+  | 'clarity'
+  | 'structure'
+  | 'expression'
+  | 'rule'
+  | 'revision';
+
+const classifyRubricType = (courseId: CourseId, lesson?: string, id?: string): RubricType => {
+  const raw = lesson || id || '';
+  const num = extractLessonNumber(raw);
+
+  if (courseId === 'phonics-foundations') {
+    if (num != null && num >= 1 && num <= 26) return 'single_sound';
+    if (num === 27) return 'short_vowels';
+    return 'revision';
+  }
+
+  if (courseId === 'early-phonics') {
+    if (num != null && num >= 1 && num <= 9) return 'sound_set';
+    if (num === 10 || num === 20 || num === 41) return 'revision';
+    if (num != null && (num === 11 || num === 12 || num === 13 || num === 18 || num === 19)) return 'digraph';
+    if (num != null && (num === 16 || num === 17)) return 'silent_letter';
+    if (num != null && num >= 22 && num <= 31) return 'vowel_team';
+    if (num != null && num >= 32 && num <= 36) return 'magic_e';
+    return 'rule';
+  }
+
+  if (courseId === 'advanced-phonics') {
+    if (num != null && num >= 1 && num <= 4) return 'diphthong';
+    if (num != null && num >= 5 && num <= 7) return 'r_controlled';
+    if (num === 9 || num === 16) return 'suffix_ending';
+    if (num === 10) return 'silent_letter';
+    if (num != null && num >= 11 && num <= 15) return 'alternate_vowel';
+    if (num != null && num >= 17) return 'revision';
+    return 'rule';
+  }
+
+  if (courseId === 'basic-grammar' || courseId === 'advanced-grammar') {
+    if (num == null) return 'revision';
+    const mod = num % 6;
+    if (mod === 0) return 'revision';
+    if (mod === 1 || mod === 2) return 'concept';
+    if (mod === 3) return 'sentence_building';
+    if (mod === 4) return 'usage_practice';
+    return 'writing_editing';
+  }
+
+  if (
+    courseId === 'basic-public-speaking'
+    || courseId === 'advanced-public-speaking'
+  ) {
+    if (num == null) return 'revision';
+    const mod = num % 6;
+    if (mod === 0) return 'revision';
+    if (mod === 1 || mod === 2) return 'confidence';
+    if (mod === 3) return 'clarity';
+    if (mod === 4) return 'structure';
+    return 'expression';
+  }
+
+  return 'revision';
+};
+
+const SUBSKILL_CHIPS_BY_RUBRIC: Record<RubricType, string[]> = {
+  single_sound: [
+    'letter recognition',
+    'sound pronunciation',
+    'initial sound spotting',
+    'letter formation',
+    'picture-word match',
+  ],
+  short_vowels: ['short vowel recognition', 'sound discrimination', 'CVC blending', 'CVC word reading', 'CVC spelling'],
+  sound_set: ['sound recall', 'blending', 'segmenting', 'CVC word reading', 'simple dictation'],
+  digraph: ['digraph recognition', 'sound pronunciation', 'word reading', 'spelling (digraph)', 'dictation'],
+  silent_letter: ['spot silent letters', 'pronounce correctly', 'word reading', 'spelling pattern', 'dictation'],
+  vowel_team: [
+    'vowel team recognition',
+    'sound pronunciation',
+    'word reading',
+    'spelling (vowel team)',
+    'sound discrimination',
+  ],
+  magic_e: ['magic e rule', 'short vs long', 'word reading', 'spelling (magic e)', 'dictation'],
+  diphthong: ['diphthong recognition', 'sound glide practice', 'word reading', 'spelling choice', 'sound discrimination'],
+  r_controlled: [
+    'bossy r recognition',
+    'sound pronunciation',
+    'word reading',
+    'spelling (r-controlled)',
+    'sound discrimination',
+  ],
+  alternate_vowel: ['alternate vowel recognition', 'sound choice', 'word reading', 'spelling', 'sound discrimination'],
+  suffix_ending: ['ending pattern recognition', 'word building', 'word reading', 'spelling', 'dictation'],
+  concept: ['identify rule', 'definition recall', 'label parts', 'spot examples', 'sort words'],
+  sentence_building: ['make a sentence', 'expand sentence', 'word order', 'join sentences', 'use connectors'],
+  usage_practice: ['choose correct form', 'fill blanks correctly', 'apply rule in sentence', 'explain choice', 'spot the error'],
+  writing_editing: ['fix punctuation', 'correct grammar mistake', 'rewrite better sentence', 'fix run-on/fragment', 'improve clarity'],
+  confidence: ['eye contact', 'posture', 'volume', 'calm start', 'speak without prompting'],
+  clarity: ['speak clearly', 'slow pace', 'say full words', 'articulation', 'pause between ideas'],
+  structure: ['topic sentence', 'sequence words', 'supporting details', 'stay on topic', 'conclusion'],
+  expression: ['voice variety', 'gestures', 'facial expression', 'emphasis', 'pause for effect'],
+  rule: ['rule spotting', 'apply in reading', 'apply in spelling', 'word sorting', 'explain rule'],
+  revision: ['mixed practice', 'independent use', 'speed + accuracy', 'confidence', 'minimal teacher help'],
+};
+
+const CONFUSION_OPTIONS_BY_RUBRIC: Record<RubricType, string[]> = {
+  single_sound: ['b vs d', 'p vs b', 'm vs n', 'u vs n', 'a vs e', 'i vs e'],
+  short_vowels: ['a vs e', 'e vs i', 'i vs o', 'o vs u'],
+  sound_set: ['b vs d', 'p vs b', 'm vs n', 'u vs n', 'a vs e', 'i vs e'],
+  digraph: ['sh vs ch', 'th vs f', 'ph vs f', 'ck vs k'],
+  silent_letter: [],
+  vowel_team: ['ee vs ea', 'oa vs oe', 'oo: /oo/ vs /ʊ/', 'i_e vs igh'],
+  magic_e: ['short vs long', 'i_e vs igh', 'oa vs oe'],
+  diphthong: ['ai vs ay', 'oi vs oy', 'ou vs ow', 'au vs aw'],
+  r_controlled: ['ar vs or', 'ir vs er', 'ur vs er'],
+  alternate_vowel: ['a (cat) vs a (cake)', 'o (hot) vs o (go)', 'u (cup) vs u (rule)'],
+  suffix_ending: ['/shun/ spellings', 'c vs ct ending'],
+  concept: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  sentence_building: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  usage_practice: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  writing_editing: ['subject–verb agreement', 'tense confusion', 'articles a/an/the', 'prepositions', 'punctuation'],
+  confidence: ['shy/low confidence', 'too soft voice', 'low eye contact', 'needs prompting', 'nervous'],
+  clarity: ['too fast', 'mumbling', 'unclear speech', 'drops word endings', 'too soft voice'],
+  structure: ['off-topic', 'missing details', 'no clear ending', 'rambling', 'forgets sequence'],
+  expression: ['monotone voice', 'no pauses', 'flat expression', 'weak emphasis', 'too fast'],
+  rule: ['soft c vs hard c', 'g vs j', 'double consonant rule'],
+  revision: [],
+};
+
+const isRubricType = (value: any): value is RubricType =>
+  typeof value === 'string' && value in SUBSKILL_CHIPS_BY_RUBRIC;
+
+const GRAMMAR_BASIC_LABELS = [
+  'Nouns: people, places, things',
+  'Pronouns: he/she/they',
+  'Make a simple sentence (noun + verb)',
+  'Verb choice: is/are',
+  'Fix sentence basics (caps + full stop)',
+  'Revision: sentence foundations',
+  'Verbs: action words',
+  'Adjectives: describing words',
+  'Add an adjective',
+  'Articles: a/an/the',
+  'Capital letters check',
+  'Revision: meaning builders',
+  'Prepositions: in/on/under',
+  'Adverbs: how/when',
+  'Add a preposition phrase',
+  'Choose the correct preposition',
+  'Edit for adverbs',
+  'Revision: where/when/how',
+  'Conjunctions: and/but/because',
+  'Plurals: s/es',
+  'Join two sentences',
+  'Plural vs singular',
+  'Fix run-on sentences',
+  'Revision: longer sentences',
+  'Question words: who/what/where',
+  'Questions vs statements',
+  'Question marks',
+  'Exclamations: wow!/oh!',
+  'Edit question sentences',
+  'Revision: asking + punctuation',
+  'Tenses: past/present/future',
+  'Irregular verbs: go/went',
+  'Time words in sentences',
+  'Choose the correct tense',
+  'Fix tense mistakes',
+  'Revision: tenses capstone',
+];
+
+const GRAMMAR_ADVANCED_LABELS = [
+  'Simple vs continuous tense',
+  'Time clauses (when/while)',
+  'Choose the correct tense',
+  'Edit tense shifts',
+  'Tense consistency in paragraphs',
+  'Revision: tense control',
+  'Perfect tenses (have/has/had)',
+  'Present perfect vs past simple',
+  'Modals: can/must/should',
+  'Modal meaning & choice',
+  'Edit modal sentences',
+  'Revision: perfect + modals',
+  'Clauses: independent/dependent',
+  'Relative clauses: who/which/that',
+  'Complex sentences',
+  'Clause punctuation (comma)',
+  'Fix fragments',
+  'Revision: clauses',
+  'Passive voice',
+  'Active → passive',
+  'Reported speech',
+  'Reported speech tense shifts',
+  'Edit for clarity (voice + speech)',
+  'Revision: voice + speech',
+  'Punctuation: commas/semicolons',
+  'Transition words',
+  'Paragraph structure',
+  'Choose a transition',
+  'Edit paragraph cohesion',
+  'Revision: paragraphs',
+  'Tone + formality',
+  'Argument structure: claim/reason',
+  'Evidence sentence',
+  'Word choice for impact',
+  'Counterargument',
+  'Revision: capstone',
+];
+
+const SPEAKING_BASIC_LABELS = [
+  'Confidence warm-up',
+  'Eye contact + posture',
+  'Speak loud enough',
+  'Two-line introduction',
+  'Smile + friendly voice',
+  'Revision: comfort check',
+  'Full sentences',
+  'Slow pace',
+  'Say full words (clear endings)',
+  'Voice clarity',
+  'Pauses between ideas',
+  'Revision: clarity check',
+  'Picture talk',
+  '3 details about an object',
+  'Senses words',
+  'Simple gestures',
+  'Emotion words',
+  'Revision: describe and tell',
+  'Answering questions',
+  'One-minute talk',
+  'Sequence words (first/next)',
+  'Topic sentence + 2 details',
+  'Voice variety',
+  'Revision: Q&A',
+  'Story: beginning-middle-end',
+  'Describe a person/place',
+  'Show & tell with props',
+  'Emphasis on key words',
+  'Small audience practice',
+  'Revision: mini presentation',
+  'Class presentation practice',
+  'Speaking with a simple visual',
+  'Handling mistakes calmly',
+  'Final delivery practice',
+  'Confidence reflection',
+  'Revision: celebration',
+];
+
+const SPEAKING_ADVANCED_LABELS = [
+  'Audience engagement',
+  'Confident openings',
+  'Stage presence',
+  'Clear speech (articulation)',
+  'Pacing for impact',
+  'Revision: presence check',
+  'Hook-body-close',
+  'Supporting details',
+  'Evidence and examples',
+  'Sequence + transitions',
+  'Stay on message',
+  'Revision: structure',
+  'Storytelling with emotion',
+  'Character voices',
+  'Scene setting',
+  'Pause for effect',
+  'Voice variety',
+  'Revision: story performance',
+  'Impromptu speaking',
+  'Thinking time strategies',
+  'Answering tough questions',
+  'Clarity under pressure',
+  'Confidence reset',
+  'Revision: impromptu',
+  'Persuasion basics',
+  'Agree/disagree politely',
+  'Rebuttal practice',
+  'Strong conclusion',
+  'Audience Q&A',
+  'Revision: debate',
+  'Presentation with visuals',
+  'Speaking with notes',
+  'Timing and pacing',
+  'Engaging the audience',
+  'Final capstone speech',
+  'Revision: showcase',
+];
+
+const TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
   'phonics-foundations': [
     { lesson: 'Lesson-1', label: 's' },
     { lesson: 'Lesson-2', label: 'a' },
@@ -103,6 +519,14 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     courseId: 'phonics-foundations',
     courseLabel: 'Phonics Foundations',
     area: 'phonics',
+    stageLabel: resolveStageByLessonNumber(
+      'phonics-foundations',
+      extractLessonNumber(topic.lesson),
+    )?.label ?? null,
+    stageOrder: resolveStageByLessonNumber(
+      'phonics-foundations',
+      extractLessonNumber(topic.lesson),
+    )?.stageOrder ?? null,
   })),
   'early-phonics': [
     { lesson: 'Lesson 1', label: 's a t' },
@@ -133,8 +557,8 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     { lesson: 'Lesson-26', label: 'oa' },
     { lesson: 'Lesson-27', label: 'oo' },
     { lesson: 'Lesson-28', label: 'oe' },
-    { lesson: 'Lesson-29', label: 'oo-ui' },
-    { lesson: 'Lesson-30', label: 'oo-ue' },
+    { lesson: 'Lesson-29', label: 'ui' },
+    { lesson: 'Lesson-30', label: 'ue' },
     { lesson: 'Lesson-31', label: 'igh' },
     { lesson: 'Lesson-32', label: 'a_e' },
     { lesson: 'Lesson-33', label: 'e_e' },
@@ -152,6 +576,14 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     courseId: 'early-phonics',
     courseLabel: 'Early Phonics',
     area: 'phonics',
+    stageLabel: resolveStageByLessonNumber(
+      'early-phonics',
+      extractLessonNumber(topic.lesson),
+    )?.label ?? null,
+    stageOrder: resolveStageByLessonNumber(
+      'early-phonics',
+      extractLessonNumber(topic.lesson),
+    )?.stageOrder ?? null,
   })),
   'advanced-phonics': [
     { lesson: 'Lesson 1', label: 'ai, ay' },
@@ -180,10 +612,32 @@ const PHONICS_TOPICS_BY_COURSE: Record<CourseId, CourseTopic[]> = {
     courseId: 'advanced-phonics',
     courseLabel: 'Advanced Phonics',
     area: 'phonics',
+    stageLabel: resolveStageByLessonNumber(
+      'advanced-phonics',
+      extractLessonNumber(topic.lesson),
+    )?.label ?? null,
+    stageOrder: resolveStageByLessonNumber(
+      'advanced-phonics',
+      extractLessonNumber(topic.lesson),
+    )?.stageOrder ?? null,
   })),
+  'basic-grammar': buildSequentialTopics('basic-grammar', 'Basic Grammar', 'grammar', GRAMMAR_BASIC_LABELS),
+  'advanced-grammar': buildSequentialTopics('advanced-grammar', 'Advanced Grammar', 'grammar', GRAMMAR_ADVANCED_LABELS),
+  'basic-public-speaking': buildSequentialTopics(
+    'basic-public-speaking',
+    'Public Speaking (Basic)',
+    'speaking',
+    SPEAKING_BASIC_LABELS,
+  ),
+  'advanced-public-speaking': buildSequentialTopics(
+    'advanced-public-speaking',
+    'Public Speaking (Advanced)',
+    'speaking',
+    SPEAKING_ADVANCED_LABELS,
+  ),
 };
 
-const COURSE_LABEL_BY_ID = PHONICS_COURSES.reduce<Record<CourseId, string>>(
+const COURSE_LABEL_BY_ID = COURSE_DEFINITIONS.reduce<Record<CourseId, string>>(
   (acc, course) => {
     acc[course.id] = course.label;
     return acc;
@@ -192,6 +646,10 @@ const COURSE_LABEL_BY_ID = PHONICS_COURSES.reduce<Record<CourseId, string>>(
     'phonics-foundations': 'Phonics Foundations',
     'early-phonics': 'Early Phonics',
     'advanced-phonics': 'Advanced Phonics',
+    'basic-grammar': 'Basic Grammar',
+    'advanced-grammar': 'Advanced Grammar',
+    'basic-public-speaking': 'Public Speaking (Basic)',
+    'advanced-public-speaking': 'Public Speaking (Advanced)',
   },
 );
 
@@ -199,16 +657,55 @@ const normalizeCourseId = (value?: string): CourseId | null => {
   if (!value) return null;
   const normalized = value.trim().toLowerCase();
   if (normalized === 'phonics-foundations' || normalized === 'phonics foundation') return 'phonics-foundations';
+  if (normalized === 'phonics-foundation' || normalized === 'phonics foundations') return 'phonics-foundations';
   if (normalized === 'foundational' || normalized === 'foundational course') return 'phonics-foundations';
   if (normalized === 'early-phonics' || normalized === 'early phonics') return 'early-phonics';
   if (normalized === 'phonics-early' || normalized === 'early') return 'early-phonics';
   if (normalized === 'advanced-phonics' || normalized === 'advanced phonics') return 'advanced-phonics';
   if (normalized === 'phonics-advanced' || normalized === 'advanced') return 'advanced-phonics';
+
+  if (normalized === 'basic-grammar' || normalized === 'grammar-essentials' || normalized === 'grammar essentials') {
+    return 'basic-grammar';
+  }
+  if (normalized === 'advanced-grammar' || normalized === 'grammar-mastery' || normalized === 'grammar mastery') {
+    return 'advanced-grammar';
+  }
+  if (normalized.includes('grammar')) {
+    if (normalized.includes('intermediate')) return 'basic-grammar';
+    if (normalized.includes('advanced') || normalized.includes('mastery')) return 'advanced-grammar';
+    return 'basic-grammar';
+  }
+
+  if (
+    normalized === 'basic-public-speaking'
+    || normalized === 'public-speaking-basic'
+    || normalized === 'public-speaking-foundations'
+  ) {
+    return 'basic-public-speaking';
+  }
+  if (
+    normalized === 'advanced-public-speaking'
+    || normalized === 'public-speaking-advanced'
+    || normalized === 'public-speaking-excellence'
+  ) {
+    return 'advanced-public-speaking';
+  }
+  if (normalized.includes('speaking') || normalized.includes('speech') || normalized.includes('public')) {
+    if (normalized.includes('intermediate')) return 'basic-public-speaking';
+    if (normalized.includes('advanced') || normalized.includes('excellence')) return 'advanced-public-speaking';
+    return 'basic-public-speaking';
+  }
   return null;
 };
 
 const normalizeCourseName = (value?: string): CourseId | null =>
   normalizeCourseId(value);
+
+const areaForCourseId = (courseId: CourseId): CourseTopic['area'] => {
+  if (courseId.includes('grammar')) return 'grammar';
+  if (courseId.includes('public-speaking')) return 'speaking';
+  return 'phonics';
+};
 
 const normalizeTopicText = (value?: string): string =>
   String(value ?? '')
@@ -228,6 +725,30 @@ const labelizeLevel = (value: string): string =>
   value
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
+
+const RUBRIC_LABEL: Record<RubricType, string> = {
+  single_sound: 'Single sound',
+  short_vowels: 'Short vowels',
+  sound_set: 'Sound set',
+  digraph: 'Digraph / pattern',
+  silent_letter: 'Silent letters',
+  vowel_team: 'Vowel teams',
+  magic_e: 'Magic E',
+  diphthong: 'Diphthongs',
+  r_controlled: 'Bossy R',
+  alternate_vowel: 'Alternate vowels',
+  suffix_ending: 'Endings / suffix',
+  concept: 'Concept',
+  sentence_building: 'Sentence building',
+  usage_practice: 'Usage practice',
+  writing_editing: 'Writing and editing',
+  confidence: 'Confidence',
+  clarity: 'Clarity',
+  structure: 'Structure',
+  expression: 'Expression',
+  rule: 'Rule',
+  revision: 'Revision',
+};
 
 const MASTERY_LEVELS: { key: string; pct: number }[] = [
   { key: 'not_started', pct: 0 },
@@ -353,7 +874,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   const [selectedTopicId, setSelectedTopicId] = useState<string>('');
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('phonics-foundations');
-  const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(PHONICS_COURSES);
+  const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(COURSE_DEFINITIONS);
   const [courseManuallySelected, setCourseManuallySelected] = useState(false);
   const [checks, setChecks] = useState<Record<string, string>>({
     recognise: 'not_started',
@@ -414,13 +935,31 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         const lesson = String(t?.lesson ?? t?.lessonNumber ?? t?.lessonNo ?? '');
         const label = String(t?.label ?? t?.topic ?? t?.topicName ?? '');
         const displayTitle = String(t?.displayTitle ?? '').trim();
-        const rubricType = typeof t?.rubricType === 'string' ? String(t.rubricType) : undefined;
-        const subskillChips = Array.isArray(t?.subskillChips)
+        const areaRaw = String(t?.area ?? '').toLowerCase();
+        const topicArea: CourseTopic['area'] =
+          areaRaw === 'grammar' ? 'grammar' : areaRaw === 'speaking' ? 'speaking' : areaForCourseId(selectedCourseId);
+        const stageLabelFromDb = typeof t?.stageLabel === 'string' ? t.stageLabel : null;
+        const stageOrderFromDb = typeof t?.stageOrder === 'number' ? t.stageOrder : null;
+        const computedStage = resolveStageByLessonNumber(
+          selectedCourseId,
+          extractLessonNumber(lesson, String(t?.id ?? '')),
+        );
+        const rubricRaw = t?.rubricType;
+        const computedRubric = isRubricType(rubricRaw)
+          ? rubricRaw
+          : classifyRubricType(selectedCourseId, lesson, String(t?.id ?? ''));
+        const subskillChipsFromDb = Array.isArray(t?.subskillChips)
           ? t.subskillChips.filter((chip: unknown) => typeof chip === 'string')
           : [];
-        const confusionOptions = Array.isArray(t?.confusionOptions)
+        const confusionFromDb = Array.isArray(t?.confusionOptions)
           ? t.confusionOptions.filter((chip: unknown) => typeof chip === 'string')
           : [];
+        const finalSubskills = subskillChipsFromDb.length > 0
+          ? subskillChipsFromDb
+          : (SUBSKILL_CHIPS_BY_RUBRIC[computedRubric] ?? []);
+        const finalConfusions = confusionFromDb.length > 0
+          ? confusionFromDb
+          : (CONFUSION_OPTIONS_BY_RUBRIC[computedRubric] ?? []);
         const order = Number.isFinite(Number(t?.order))
           ? Number(t.order)
           : extractLessonNumber(lesson);
@@ -430,12 +969,14 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           label,
           displayTitle: displayTitle || (lesson ? `${lesson} — ${label}` : label),
           order: order ?? null,
-          rubricType,
-          subskillChips,
-          confusionOptions,
+          stageLabel: stageLabelFromDb ?? computedStage?.label ?? null,
+          stageOrder: stageOrderFromDb ?? computedStage?.stageOrder ?? null,
+          rubricType: computedRubric,
+          subskillChips: finalSubskills,
+          confusionOptions: finalConfusions,
           courseId: selectedCourseId,
           courseLabel,
-          area: 'phonics',
+          area: topicArea,
         } as CourseTopic;
       });
 
@@ -452,13 +993,39 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       });
     }
 
-    return PHONICS_TOPICS_BY_COURSE[selectedCourseId] || [];
+    const fallbackTopics = TOPICS_BY_COURSE[selectedCourseId] || [];
+    return fallbackTopics.map((topic) => {
+      const computedRubric = classifyRubricType(selectedCourseId, topic.lesson, topic.id);
+      return {
+        ...topic,
+        rubricType: computedRubric,
+        subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[computedRubric] ?? [],
+        confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[computedRubric] ?? [],
+      };
+    });
   }, [curriculumTopics, selectedCourseId]);
 
   const selectedTopicDef: CourseTopic | undefined = useMemo(
     () => courseTopics.find((t) => t.id === selectedTopicId),
     [courseTopics, selectedTopicId],
   );
+
+  const topicGroups = useMemo(() => {
+    if (courseTopics.length === 0) return [];
+    const map = new Map<string, { label: string; order: number; topics: CourseTopic[] }>();
+    courseTopics.forEach((topic) => {
+      const order = typeof topic.stageOrder === 'number' ? topic.stageOrder : 999;
+      const label = topic.stageLabel || 'Lessons';
+      const key = `${order}__${label}`;
+      const entry = map.get(key);
+      if (entry) entry.topics.push(topic);
+      else map.set(key, { label, order, topics: [topic] });
+    });
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.order !== b.order) return a.order - b.order;
+      return a.label.localeCompare(b.label);
+    });
+  }, [courseTopics]);
 
   // Load student courses
   useEffect(() => {
@@ -488,23 +1055,23 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           const uniqueIds = Array.from(new Set([...explicitIds, ...nameSources]));
           const normalizedActive = normalizeCourseId(String(data.activeCourseId || ''));
           if (uniqueIds.length > 0) {
-            const options = PHONICS_COURSES.filter((c) => uniqueIds.includes(c.id));
+            const options = COURSE_DEFINITIONS.filter((c) => uniqueIds.includes(c.id));
             const defaultCourse = (normalizedActive && uniqueIds.includes(normalizedActive))
               ? normalizedActive
               : uniqueIds[0];
             setCourseOptions(options);
             setSelectedCourseId((prev) => (courseManuallySelected ? prev : (defaultCourse || prev || options[0]?.id || '')));
           } else {
-            setCourseOptions(PHONICS_COURSES);
+            setCourseOptions(COURSE_DEFINITIONS);
             setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'phonics-foundations'));
           }
         } else {
-          setCourseOptions(PHONICS_COURSES);
+          setCourseOptions(COURSE_DEFINITIONS);
           setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'phonics-foundations'));
         }
       } catch {
         if (!active) return;
-        setCourseOptions(PHONICS_COURSES);
+        setCourseOptions(COURSE_DEFINITIONS);
         setSelectedCourseId((prev) => (courseManuallySelected ? prev : prev || 'phonics-foundations'));
       }
     };
@@ -567,16 +1134,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         write: existingChecks?.write ?? 'not_started',
       });
       setChecksTouched(false);
-      setSelectedSubskills(
-        Array.isArray((existing as any).selectedSubskills)
-          ? (existing as any).selectedSubskills.filter((item: unknown) => typeof item === 'string')
-          : [],
-      );
-      setConfusions(
-        Array.isArray((existing as any).confusions)
-          ? (existing as any).confusions.filter((item: unknown) => typeof item === 'string')
-          : [],
-      );
     } else {
       setMastery('not_started');
       setScoreBand('');
@@ -588,11 +1145,26 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         write: 'not_started',
       });
       setChecksTouched(false);
-      setSelectedSubskills([]);
-      setConfusions([]);
     }
 
     setSaveMessage(null);
+    const allowedSubskills = new Set((selectedTopicDef?.subskillChips ?? []) as string[]);
+    const allowedConfusions = new Set((selectedTopicDef?.confusionOptions ?? []) as string[]);
+    const rawSelectedSubskills = existing && Array.isArray((existing as any).selectedSubskills)
+      ? (existing as any).selectedSubskills.filter((item: unknown) => typeof item === 'string')
+      : [];
+    const rawConfusions = existing && Array.isArray((existing as any).confusions)
+      ? (existing as any).confusions.filter((item: unknown) => typeof item === 'string')
+      : [];
+    const filteredSubskills = allowedSubskills.size > 0
+      ? rawSelectedSubskills.filter((s: string) => allowedSubskills.has(s)).slice(0, 3)
+      : rawSelectedSubskills.slice(0, 3);
+    const filteredConfusions = allowedConfusions.size > 0
+      ? rawConfusions.filter((s: string) => allowedConfusions.has(s))
+      : rawConfusions;
+    setSelectedSubskills(filteredSubskills);
+    setConfusions(filteredConfusions);
+
     const baselineMastery = existing
       ? normalizeMasteryKey((existing as any).masteryKey ?? (existing as any).mastery)
       : 'not_started';
@@ -612,16 +1184,12 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             read: 'not_started',
             write: 'not_started',
           },
-      selectedSubskills: existing && Array.isArray((existing as any).selectedSubskills)
-        ? [...(existing as any).selectedSubskills].filter((item: unknown) => typeof item === 'string').sort()
-        : [],
-      confusions: existing && Array.isArray((existing as any).confusions)
-        ? [...(existing as any).confusions].filter((item: unknown) => typeof item === 'string').sort()
-        : [],
+      selectedSubskills: [...filteredSubskills].sort(),
+      confusions: [...filteredConfusions].sort(),
       teacherRemark: existing ? (existing as any).teacherRemark ?? '' : '',
     });
     setBaseline(snapshot);
-  }, [selectedTopicId, existingTopics]);
+  }, [selectedTopicId, existingTopics, selectedTopicDef]);
 
   const handleSave = async (): Promise<boolean> => {
     if (!kidId || !selectedTopicId || !selectedTopicDef) return false;
@@ -706,6 +1274,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       : DEFAULT_MASTERY_LEVELS;
   const subskillChips = selectedTopicDef?.subskillChips ?? [];
   const confusionOptions = selectedTopicDef?.confusionOptions ?? [];
+  const showChecks = selectedTopicDef?.area === 'phonics';
   const containerClass = 'rounded-lg border border-slate-200 bg-white text-sm space-y-2 p-3';
   const cardBase = 'rounded-xl border border-slate-200 p-3';
   const snapshotNow = JSON.stringify({
@@ -743,18 +1312,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   useEffect(() => {
     if (!mastery) return;
-    if (!scoreBand) {
-      const map: Record<string, string> = {
-        not_started: '0-20',
-        emerging: '21-40',
-        developing: '41-60',
-        proficient: '61-80',
-        mastered: '81-100',
-      };
-      const nextBand = map[String(mastery)] ?? '';
-      if (nextBand) setScoreBand(nextBand);
-    }
-    if (!checksTouched) {
+    if (showChecks && !checksTouched) {
       setChecks({
         recognise: mastery,
         say: mastery,
@@ -762,10 +1320,12 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         write: mastery,
       });
     }
-  }, [mastery, scoreBand, checksTouched]);
+  }, [mastery, showChecks, checksTouched]);
 
-  const checksDifferFromMastery = Object.values(checks).some((value) => value !== mastery);
-  const hasAdvancedData = confusions.length > 0 || checksDifferFromMastery;
+  const checksDifferFromMastery = showChecks
+    ? Object.values(checks).some((value) => value !== mastery)
+    : false;
+  const hasAdvancedData = confusions.length > 0 || (showChecks && checksDifferFromMastery);
   const showAdvanced = advancedOpen || hasAdvancedData;
   const masteryStatus =
     mastery === 'proficient' || mastery === 'mastered' ? 'Completed' : 'In progress';
@@ -848,14 +1408,31 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
               {courseTopics.length === 0 && (
                 <option value="">No topics configured</option>
               )}
-              {courseTopics.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.displayTitle || `${t.lesson} — ${t.label}`}
-                </option>
+              {topicGroups.map((group) => (
+                <optgroup key={`${group.order}-${group.label}`} label={group.label}>
+                  {group.topics.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.displayTitle || `${t.lesson} — ${t.label}`}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
         </div>
+        {selectedTopicDef?.rubricType ? (
+          <div className="mt-2 text-[11px] text-slate-600">
+            Rubric: <span className="font-semibold">{RUBRIC_LABEL[selectedTopicDef.rubricType]}</span>
+          </div>
+        ) : null}
+        {selectedTopicDef?.stageLabel ? (
+          <div className="mt-2 text-[11px] text-slate-600">
+            Stage:{' '}
+            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 font-semibold text-slate-700">
+              {selectedTopicDef.stageLabel}
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className={`${cardBase} bg-emerald-50/60 space-y-3`}>
@@ -936,35 +1513,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           Advanced (optional)
         </summary>
         <div className="mt-3 space-y-3">
-          <div className="space-y-1">
-            <div className="text-xs font-medium text-slate-700">Score band</div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { label: '0–20', fallback: '0-20' },
-                { label: '21–40', fallback: '21-40' },
-                { label: '41–60', fallback: '41-60' },
-                { label: '61–80', fallback: '61-80' },
-                { label: '81–100', fallback: '81-100' },
-              ].map((opt) => {
-                const candidates = (config?.scoreBands ?? []) as string[];
-                const value =
-                  candidates.find((c) => c === opt.label || c === opt.fallback) ?? opt.fallback;
-                const active = scoreBand === value;
-                return (
-                  <ChipButton
-                    key={opt.label}
-                    onClick={() => setScoreBand(value)}
-                    disabled={disabled}
-                    active={active}
-                    tone="green"
-                    size="xs"
-                    label={opt.label}
-                  />
-                );
-              })}
-            </div>
-          </div>
-
           {confusionOptions.length > 0 && (
             <div className="space-y-1">
               <div className="text-xs font-medium text-slate-700">Confusions (optional)</div>
@@ -989,61 +1537,65 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             </div>
           )}
 
-          <div className="text-xs font-semibold text-slate-700">Quick presets</div>
-          <div className="flex flex-wrap gap-2">
-            <ChipButton
-              label="Set checks = Mastery"
-              onClick={() => setChecksAll(mastery || 'not_started')}
-              disabled={disabled}
-              tone="slate"
-              size="xs"
-            />
-            {checkLevels.map((level) => (
-              <ChipButton
-                key={`preset-${level}`}
-                onClick={() => setChecksAll(level)}
-                disabled={disabled}
-                tone="slate"
-                size="xs"
-                label={`All ${labelizeLevel(level)}`}
-              />
-            ))}
-          </div>
-
-          <div className="grid gap-2 md:grid-cols-4">
-            {[
-              { key: 'recognise', label: 'Recognise' },
-              { key: 'say', label: 'Say' },
-              { key: 'read', label: 'Read' },
-              { key: 'write', label: 'Write/Spell' },
-            ].map((check) => (
-              <div key={check.key} className="space-y-1">
-                <div className="text-[11px] font-medium text-slate-600">{check.label}</div>
-                <div className="flex flex-wrap gap-1">
-                  {checkLevels.map((level) => {
-                    const active = checks[check.key] === level;
-                    return (
-                      <ChipButton
-                        key={`${check.key}-${level}`}
-                        onClick={() => {
-                          setChecksTouched(true);
-                          setChecks((prev) => ({
-                            ...prev,
-                            [check.key]: level,
-                          }));
-                        }}
-                        disabled={disabled}
-                        active={active}
-                        tone="indigo"
-                        size="xs"
-                        label={labelizeLevel(level)}
-                      />
-                    );
-                  })}
-                </div>
+          {showChecks && (
+            <>
+              <div className="text-xs font-semibold text-slate-700">Quick presets</div>
+              <div className="flex flex-wrap gap-2">
+                <ChipButton
+                  label="Set checks = Mastery"
+                  onClick={() => setChecksAll(mastery || 'not_started')}
+                  disabled={disabled}
+                  tone="slate"
+                  size="xs"
+                />
+                {checkLevels.map((level) => (
+                  <ChipButton
+                    key={`preset-${level}`}
+                    onClick={() => setChecksAll(level)}
+                    disabled={disabled}
+                    tone="slate"
+                    size="xs"
+                    label={`All ${labelizeLevel(level)}`}
+                  />
+                ))}
               </div>
-            ))}
-          </div>
+
+              <div className="grid gap-2 md:grid-cols-4">
+                {[
+                  { key: 'recognise', label: 'Recognise' },
+                  { key: 'say', label: 'Say' },
+                  { key: 'read', label: 'Read' },
+                  { key: 'write', label: 'Write/Spell' },
+                ].map((check) => (
+                  <div key={check.key} className="space-y-1">
+                    <div className="text-[11px] font-medium text-slate-600">{check.label}</div>
+                    <div className="flex flex-wrap gap-1">
+                      {checkLevels.map((level) => {
+                        const active = checks[check.key] === level;
+                        return (
+                          <ChipButton
+                            key={`${check.key}-${level}`}
+                            onClick={() => {
+                              setChecksTouched(true);
+                              setChecks((prev) => ({
+                                ...prev,
+                                [check.key]: level,
+                              }));
+                            }}
+                            disabled={disabled}
+                            active={active}
+                            tone="indigo"
+                            size="xs"
+                            label={labelizeLevel(level)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </details>
 

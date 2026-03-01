@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { useTeacherStats } from '../../hooks/useTeacherStats';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { masteryLabel } from '../../../../lib/mastery';
 
 interface TeacherStatsProps {
   teacherId?: string;
@@ -74,9 +75,9 @@ export const TeacherStats: FC<TeacherStatsProps> = ({ teacherId }) => {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <StatBlock label="Total Sessions" value={data.totalSessions} />
         <StatBlock label="Students" value={data.totalStudents} />
-        <StatBlock label="Attendance" value={`${data.averageAttendance}%`} />
+        <StatBlock label="Attendance" value={masteryLabel(data.averageAttendance)} />
         <StatBlock label="Satisfaction" value={data.averageSatisfaction.toFixed(1)} />
-        <StatBlock label="Completion" value={`${data.completionRate}%`} />
+        <StatBlock label="Completion" value={masteryLabel(data.completionRate)} />
       </div>
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Sessions by Course</h3>

@@ -253,7 +253,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
             <p className="mt-2 text-sm text-gray-700">
               {program.title} is a short, focused online summer camp with mentor-led sessions,
-              simple practice tasks, and weekly parent feedback. The goal is a clear, visible
+              simple practice tasks, and stage-based parent feedback. The goal is a clear, visible
               improvement in a single skill track within 3 weeks.
             </p>
           </div>
@@ -275,7 +275,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             <h2 className="text-lg font-semibold text-gray-900">Group vs Premium 1:1</h2>
             <p className="mt-2 text-sm text-gray-700">
               Group classes build motivation and are more affordable. Premium 1:1 is faster and
-              fully personalized. Both include weekly progress cards and teacher feedback.
+              fully personalized. Both include stage-based progress updates and teacher feedback.
             </p>
           </div>
         </div>
@@ -320,7 +320,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
               </p>
               <p className="mt-2 text-sm text-gray-700">
                 Best for motivation, peer learning, and affordability. Format: 1:4 or 1:6.
-                Includes weekly progress cards and teacher feedback.
+                Includes stage-based progress updates and teacher feedback.
               </p>
               <div className="mt-4">
                 <Link
@@ -378,7 +378,7 @@ export default function SummerCampProgramPage() {
     const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
     const title = batchSlug ? `${baseTitle} ${batchTitle} | Tiny Steps` : `${baseTitle} | Tiny Steps`;
     const description = program
-      ? `${program.title} for ${program.ages}. ${program.focus}. Group classes or premium 1:1 with weekly progress cards.`
+      ? `${program.title} for ${program.ages}. ${program.focus}. Group classes or premium 1:1 with stage-based progress updates.`
       : 'Summer camp program details coming soon.';
 
     const breadcrumbSchema = {

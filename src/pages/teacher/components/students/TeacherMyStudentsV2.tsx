@@ -425,7 +425,7 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
               : 'No upcoming class';
             const lastLabel = summary?.lastSession
               ? formatDateTime(summary.lastSession.startAt)
-              : 'Not started yet';
+              : 'Getting started';
 
             return (
               <div key={enr.id} className="rounded-lg border border-gray-200 bg-white p-4">
@@ -467,19 +467,6 @@ export function TeacherMyStudentsV2({ teacherId }: { teacherId?: string }) {
                       disabled={!enr.resolvedKidId}
                     >
                       Open Topics
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        navigate(
-                          `/teacher/students/${enr.resolvedKidId}/topic-progress?from=students&tab=weekly${
-                            enr.courseId ? `&courseId=${encodeURIComponent(enr.courseId)}` : ''
-                          }&enrollmentId=${encodeURIComponent(enr.id)}`
-                        )
-                      }
-                      disabled={!enr.resolvedKidId}
-                    >
-                      Weekly Insights
                     </Button>
                     <Button onClick={() => navigate('/teacher?tab=schedule')}>Schedule</Button>
                   </div>

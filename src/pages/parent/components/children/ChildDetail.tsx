@@ -1,6 +1,7 @@
 import type { FC } from 'react';
 import { Card } from '@components/ui/card';
 import { ParentChildSummary } from '../../../../types/Parent';
+import { masteryLabel } from '../../../../lib/mastery';
 
 interface ChildDetailProps {
   child?: ParentChildSummary | null;
@@ -26,15 +27,15 @@ export const ChildDetail: FC<ChildDetailProps> = ({ child }) => {
       <div className="grid grid-cols-3 gap-4">
         <div>
           <p className="text-xs text-muted-foreground">Phonics</p>
-          <p className="text-2xl font-semibold">{child.phonicsMastery ?? 0}%</p>
+          <p className="text-2xl font-semibold">{masteryLabel(child.phonicsMastery)}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Grammar</p>
-          <p className="text-2xl font-semibold">{child.grammarMastery ?? 0}%</p>
+          <p className="text-2xl font-semibold">{masteryLabel(child.grammarMastery)}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">Speaking</p>
-          <p className="text-2xl font-semibold">{child.speakingMastery ?? 0}%</p>
+          <p className="text-2xl font-semibold">{masteryLabel(child.speakingMastery)}</p>
         </div>
       </div>
     </Card>

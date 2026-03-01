@@ -4,6 +4,7 @@ import { Button } from '../../../../components/ui/button';
 import { Badge } from '../../../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs';
 import { ParentChildSummary } from '../../../../types/Parent';
+import { masteryLabel, masteryPctFromKey } from '../../../../lib/mastery';
 
 interface ChildDetailViewProps {
   childId?: string;
@@ -12,20 +13,24 @@ interface ChildDetailViewProps {
 const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
   const [selectedChild, setSelectedChild] = useState<ParentChildSummary | null>(null);
 
-  const ProgressBar: React.FC<{ value: number; label: string }> = ({ value, label }) => (
-    <div className="mb-4">
-      <div className="flex justify-between text-sm mb-2">
-        <span>{label}</span>
-        <span>{value}%</span>
+  const ProgressBar: React.FC<{ value: any; label: string }> = ({ value, label }) => {
+    const pct = masteryPctFromKey(value);
+    const labelText = masteryLabel(value);
+    return (
+      <div className="mb-4">
+        <div className="flex justify-between text-sm mb-2">
+          <span>{label}</span>
+          <span>{labelText}</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-600 h-2 rounded-full"
+            style={{ width: `${pct}%` }}
+          ></div>
+        </div>
       </div>
-      <div className="w-full bg-gray-200 rounded-full h-2">
-        <div
-          className="bg-blue-600 h-2 rounded-full"
-          style={{ width: `${value}%` }}
-        ></div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   const child = selectedChild;
 
@@ -110,7 +115,9 @@ const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm">Progress: 8/12 sessions</p>
-                      <p className="text-sm text-gray-600">Mastery: 75%</p>
+                      <p className="text-sm text-gray-600">
+                        Mastery: {masteryLabel(child.phonicsMastery)}
+                      </p>
                       <p className="text-sm text-gray-600">Start: Nov 1, 2025</p>
                       <p className="text-sm text-gray-600">End: Dec 15, 2025</p>
                       <Badge variant="default">Active</Badge>
@@ -135,7 +142,7 @@ const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Mastery</p>
-                  <p className="font-medium">{child.phonicsMastery}%</p>
+                  <p className="font-medium">{masteryLabel(child.phonicsMastery)}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Topics Completed</p>
@@ -204,7 +211,7 @@ const ChildDetailView: React.FC<ChildDetailViewProps> = ({ childId }) => {
                   </div>
                   <div className="text-right">
                     <Badge variant="default">Completed</Badge>
-                    <p className="text-sm mt-1">Mastery: +5%</p>
+                    <p className="text-sm mt-1">Mastery: Improving</p>
                     <Button variant="outline" size="sm" className="mt-2">View Details</Button>
                   </div>
                 </div>

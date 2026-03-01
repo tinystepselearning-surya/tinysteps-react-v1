@@ -27,14 +27,15 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   };
 
   return (
-    <div className="flex gap-4 items-center">
+    <div className="flex flex-wrap gap-3 items-center">
       <Input
         placeholder="Search by name or email"
         value={searchTerm}
         onChange={handleSearchChange}
+        className="w-full md:w-64"
       />
       <Select value={roleFilter} onValueChange={(v: string) => setRoleFilter(v)}>
-        <SelectTrigger>
+        <SelectTrigger className="w-full md:w-44">
           <SelectValue placeholder="Filter by role" />
         </SelectTrigger>
         <SelectContent>
@@ -47,7 +48,7 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
         </SelectContent>
       </Select>
       <Select value={statusFilter} onValueChange={(v: string) => setStatusFilter(v)}>
-        <SelectTrigger>
+        <SelectTrigger className="w-full md:w-44">
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
@@ -57,12 +58,15 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           <SelectItem value="archived">Archived</SelectItem>
         </SelectContent>
       </Select>
-      <Button variant="outline" onClick={() => {
-        setSearchTerm('');
-        setRoleFilter('all');
-        setStatusFilter('all');
-        onFiltersChange();
-      }}>
+      <Button
+        variant="outline"
+        onClick={() => {
+          setSearchTerm('');
+          setRoleFilter('all');
+          setStatusFilter('all');
+          onFiltersChange();
+        }}
+      >
         Clear Filters
       </Button>
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
@@ -78,6 +78,7 @@ export default function ParentPayments(): JSX.Element {
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'bank_transfer' | 'online'>('UPI');
   const [paymentNote, setPaymentNote] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
+  const [deleteSavingId, setDeleteSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'users'), (snap) => {
@@ -448,6 +449,42 @@ export default function ParentPayments(): JSX.Element {
     });
   };
 
+  const handleDeleteParentRow = async (parentId: string, parentName: string) => {
+    const confirm = window.prompt(
+      `Type DELETE to remove all charges and payments for ${parentName || parentId} in ${selectedMonth}.`
+    );
+    if (confirm !== 'DELETE') return;
+
+    const chargeIds = charges.filter((c) => c.parentId === parentId).map((c) => c.id);
+    const paymentIds = payments.filter((p) => p.parentId === parentId).map((p) => p.id);
+    const total = chargeIds.length + paymentIds.length;
+    if (total === 0) {
+      window.alert('No charges or payments found to delete for this parent.');
+      return;
+    }
+
+    try {
+      setDeleteSavingId(parentId);
+      const allTargets = [
+        ...chargeIds.map((id) => ({ col: 'billingCharges', id })),
+        ...paymentIds.map((id) => ({ col: 'payments', id })),
+      ];
+      for (let i = 0; i < allTargets.length; i += 450) {
+        const batch = writeBatch(db);
+        const slice = allTargets.slice(i, i + 450);
+        slice.forEach((item) => {
+          batch.delete(doc(db, item.col, item.id));
+        });
+        await batch.commit();
+      }
+      window.alert('Removed charges and payments for this parent.');
+    } catch (err: any) {
+      window.alert(err?.message || 'Failed to delete parent charges/payments');
+    } finally {
+      setDeleteSavingId(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -527,9 +564,19 @@ export default function ParentPayments(): JSX.Element {
                           {row.lastPaymentAt ? new Date(row.lastPaymentAt).toISOString().slice(0, 10) : '—'}
                         </td>
                         <td className="p-2">
-                          <Button size="sm" variant="outline" onClick={() => openPaymentModal(row)}>
-                            Record payment
-                          </Button>
+                          <div className="flex flex-wrap gap-2">
+                            <Button size="sm" variant="outline" onClick={() => openPaymentModal(row)}>
+                              Record payment
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              disabled={deleteSavingId === row.parentId}
+                              onClick={() => handleDeleteParentRow(row.parentId, row.parentName)}
+                            >
+                              {deleteSavingId === row.parentId ? 'Deleting…' : 'Delete row'}
+                            </Button>
+                          </div>
                         </td>
                         <td className="p-2">
                           <Button

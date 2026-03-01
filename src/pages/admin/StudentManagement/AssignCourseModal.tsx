@@ -56,10 +56,8 @@ const defaultCourses = [
   'Early Phonics',
   'Advanced Phonics',
   'Basic Grammar',
-  'Intermediate Grammar',
   'Advanced Grammar',
   'Public Speaking (Basic)',
-  'Public Speaking (Intermediate)',
   'Public Speaking (Advanced)',
 ];
 
@@ -144,11 +142,20 @@ export default function AssignCourseModal({
     const areaOrder = ['phonics', 'grammar', 'speaking'];
     const levelOrderByArea: Record<string, string[]> = {
       phonics: ['foundations', 'early', 'advanced'],
-      grammar: ['basic', 'intermediate', 'advanced'],
-      speaking: ['basic', 'intermediate', 'advanced'],
+      grammar: ['basic', 'advanced'],
+      speaking: ['basic', 'advanced'],
     };
 
-    return [...courses].sort((a, b) => {
+    const filteredCourses = courses.filter((course) => {
+      const id = String(course.id || '').toLowerCase();
+      if (id.includes('intermediate-grammar') || id.includes('intermediate-public-speaking')) return false;
+      const level = normalizeLevel(course.level || course.levelName);
+      const area = normalizeArea(course.area);
+      if ((area === 'grammar' || area === 'speaking') && level === 'intermediate') return false;
+      return true;
+    });
+
+    return [...filteredCourses].sort((a, b) => {
       const areaA = normalizeArea(a.area);
       const areaB = normalizeArea(b.area);
       const areaIdxA = areaOrder.indexOf(areaA);

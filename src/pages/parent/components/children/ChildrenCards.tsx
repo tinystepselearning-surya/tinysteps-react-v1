@@ -3,6 +3,7 @@ import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { ParentChildSummary } from '../../../../types/Parent';
+import { masteryLabel } from '../../../../lib/mastery';
 
 interface ChildrenCardsProps {
   childrenData: ParentChildSummary[];
@@ -40,7 +41,10 @@ export const ChildrenCards: React.FC<ChildrenCardsProps> = ({ childrenData, onSe
           </div>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>Courses: {(child.courses || []).join(', ') || '—'}</p>
-            <p>Phonics {child.phonicsMastery ?? 0}% · Grammar {child.grammarMastery ?? 0}% · Speaking {child.speakingMastery ?? 0}%</p>
+            <p>
+              Phonics {masteryLabel(child.phonicsMastery)} · Grammar {masteryLabel(child.grammarMastery)} · Speaking{' '}
+              {masteryLabel(child.speakingMastery)}
+            </p>
           </div>
           <Button
             variant={selectedId === child.id ? 'default' : 'secondary'}

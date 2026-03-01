@@ -46,9 +46,6 @@ export { createStudentForParent } from "./parentStudents";
 export { runInsightsRollupNow } from "./runInsightsRollupNow";
 export { setInsightsEnabled } from "./setInsightsEnabled";
 
-// Weekly report generation + publish
-export { generateWeeklyReport, publishWeeklyReport } from "./weeklyReports";
-
 // Scheduled batch insights rollups
 export {
   batchInsightsRollup11am,

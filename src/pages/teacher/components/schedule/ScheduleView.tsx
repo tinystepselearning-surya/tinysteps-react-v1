@@ -49,7 +49,6 @@ interface CurriculumTopic {
 type TopicUpdatePayload = {
   topicId: string;
   mastery?: string;
-  score?: number;
   teacherRemark?: string;
   topicName?: string;
 };
@@ -58,6 +57,10 @@ const COURSE_LABEL_BY_ID: Record<string, string> = {
   'phonics-foundations': 'Phonics Foundations',
   'early-phonics': 'Early Phonics',
   'advanced-phonics': 'Advanced Phonics',
+  'basic-grammar': 'Basic Grammar',
+  'advanced-grammar': 'Advanced Grammar',
+  'basic-public-speaking': 'Public Speaking (Basic)',
+  'advanced-public-speaking': 'Public Speaking (Advanced)',
   foundational: 'Phonics Foundations',
   early: 'Early Phonics',
   advanced: 'Advanced Phonics',
@@ -71,6 +74,12 @@ const COURSE_ID_ALIASES: Record<string, string> = {
   early: 'early-phonics',
   'phonics-advanced': 'advanced-phonics',
   advanced: 'advanced-phonics',
+  'grammar-essentials': 'basic-grammar',
+  'grammar-mastery': 'advanced-grammar',
+  'intermediate-grammar': 'basic-grammar',
+  'public-speaking-foundations': 'basic-public-speaking',
+  'public-speaking-excellence': 'advanced-public-speaking',
+  'intermediate-public-speaking': 'basic-public-speaking',
 };
 
 const normalizeCourseId = (value?: string | null): string | null => {
@@ -610,10 +619,53 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
-  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: number; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string } }) => {
+  const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
     try {
       const batch = writeBatch(db);
+
+      if (data.meta?.attendanceOnly) {
+        const existingAttendance = ((selectedSession as any)?.attendance || {}) as Record<string, any>;
+        const mergedAttendance: Record<string, any> = { ...existingAttendance };
+
+        Object.entries(data.attendance || {}).forEach(([kidId, entry]) => {
+          const prev = existingAttendance[kidId];
+          const prevObj =
+            typeof prev === 'object' && prev !== null
+              ? prev
+              : prev
+                ? { status: prev }
+                : {};
+          mergedAttendance[kidId] = {
+            ...prevObj,
+            status: entry.status,
+            notes: entry.notes ?? prevObj?.notes ?? '',
+          };
+        });
+
+        const hasPresentOrLate = Object.values(mergedAttendance || {}).some((entry: any) => {
+          const status = entry?.status ?? entry;
+          return status === 'present' || status === 'late';
+        });
+
+        const sessionUpdate: Record<string, any> = {
+          attendance: mergedAttendance,
+          notes: data.sessionNotes,
+          updatedAt: serverTimestamp(),
+          updatedBy: user?.uid ?? null,
+        };
+
+        if (hasPresentOrLate) {
+          sessionUpdate.status = 'completed';
+        }
+
+        const classSessionRef = doc(db, 'classSessions', selectedSession.id);
+        batch.set(classSessionRef, sessionUpdate, { merge: true });
+        await batch.commit();
+        toast({ title: 'Attendance saved', description: 'Attendance updated.' });
+        setSelectedSession(null);
+        return;
+      }
       
       // Update session document
       const hasPresentOrLate = Object.values(data.attendance || {}).some((entry: any) => {
@@ -664,9 +716,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           if (!topicId) continue;
           const update = updatesById.get(topicId);
           const mastery = typeof update?.mastery === 'string' ? update.mastery.trim() : '';
-          const scoreRaw = update?.score;
-          const score = Number.isFinite(Number(scoreRaw)) ? Number(scoreRaw) : null;
-          const isCompleted = mastery === 'proficient' || mastery === 'mastered' || (score !== null && score >= 81);
+          const isCompleted = mastery === 'proficient' || mastery === 'mastered';
           const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
           const resolvedCourseId = sessionCourseId || topicCourseById.get(topicId) || '';
           const resolvedCourseLabel =
@@ -712,15 +762,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           const update = updatesById.get(topicId);
           const mastery = typeof update?.mastery === 'string' ? update.mastery.trim() : '';
           const teacherRemark = typeof update?.teacherRemark === 'string' ? update.teacherRemark.trim() : '';
-          const scoreRaw = update?.score;
-          const score = Number.isFinite(Number(scoreRaw)) ? Number(scoreRaw) : null;
-          const scorePct = score === null ? null : Math.max(0, Math.min(100, Math.round(score)));
-          const scoreBand = score === null ? null : (
-                           score <= 20 ? '0-20' :
-                           score <= 40 ? '21-40' :
-                           score <= 60 ? '41-60' :
-                           score <= 80 ? '61-80' : '81-100'
-          );
           const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
           const resolvedCourseId = sessionCourseId || topicCourseById.get(topicId) || '';
           const resolvedCourseLabel =
@@ -739,9 +780,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           };
           if (mastery) payload.mastery = mastery;
           if (teacherRemark) payload.teacherRemark = teacherRemark;
-          if (score !== null) payload.score = score;
-          if (scorePct !== null) payload.scorePct = scorePct;
-          if (scoreBand) payload.scoreBand = scoreBand;
           if (resolvedCourseId) payload.courseId = resolvedCourseId;
           if (resolvedCourseLabel) {
             payload.courseLabel = resolvedCourseLabel;
@@ -1247,6 +1285,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         session={selectedSession}
         onClose={() => setSelectedSession(null)}
         onSubmit={handleAttendanceSubmit}
+        attendanceOnly
       />
 
       <Dialog

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRealtimeData } from '../../hooks/useRealtime';
+import { masteryLabel, masteryPctFromKey } from '../../lib/mastery';
 
 type Props = {
   childId: string;
@@ -27,9 +28,9 @@ export default function ParentProgressDashboard({ childId }: Props) {
   const masteryByArea: Record<string, number[]> = {};
   filtered.forEach((p: any) => {
     const area = p.area || 'general';
-    const scoreBand = Number(p.score || p.scoreBand || 0);
+    const pct = masteryPctFromKey(p.mastery ?? p.scoreBand ?? p.score);
     if (!masteryByArea[area]) masteryByArea[area] = [];
-    masteryByArea[area].push(scoreBand);
+    masteryByArea[area].push(pct);
   });
 
   const entries = Object.entries(masteryByArea);
@@ -39,10 +40,11 @@ export default function ParentProgressDashboard({ childId }: Props) {
     <div className="space-y-4">
       {entries.map(([area, scores]) => {
         const avg = scores.reduce((a, b) => a + b, 0) / Math.max(1, scores.length);
+        const label = masteryLabel(avg);
         return (
           <div key={area} className="p-4 bg-white rounded shadow">
             <h3 className="font-semibold capitalize">{area}</h3>
-            <div className="text-2xl font-bold">{Math.round(avg)}%</div>
+            <div className="text-2xl font-bold">{label}</div>
             <div className="mt-2">
               <ProgressBar value={avg} />
             </div>

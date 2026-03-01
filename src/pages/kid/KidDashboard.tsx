@@ -19,6 +19,7 @@ import {
   useKidTopicProgress,
   type KidTopicProgress,
 } from '../../hooks/useKidTopicProgress';
+import { masteryLabel } from '../../lib/mastery';
 
 // Extend the base type with fields this page needs
 type KidSummary = FilteredChild & {
@@ -31,12 +32,6 @@ type KidSummary = FilteredChild & {
 function formatStatus(status?: KidSummary['status']): string {
   if (!status) return 'active';
   return status.replace('_', ' ');
-}
-
-function percent(value?: number): string {
-  if (value == null || Number.isNaN(value)) return '0%';
-  const clamped = Math.max(0, Math.min(100, Math.round(value)));
-  return `${clamped}%`;
 }
 
 function formatDateTime(value: any): string {
@@ -198,7 +193,7 @@ const KidDashboard: React.FC = () => {
                     Phonics Mastery
                   </p>
                   <p className="text-2xl font-semibold">
-                    {percent(selectedKid.phonicsMastery)}
+                    {masteryLabel(selectedKid.phonicsMastery)}
                   </p>
                   <p className="text-xs text-slate-500">
                     Based on recent worksheet & game data.
@@ -211,7 +206,7 @@ const KidDashboard: React.FC = () => {
                     Grammar Mastery
                   </p>
                   <p className="text-2xl font-semibold">
-                    {percent(selectedKid.grammarMastery)}
+                    {masteryLabel(selectedKid.grammarMastery)}
                   </p>
                   <p className="text-xs text-slate-500">
                     Sentence building & parts of speech.
@@ -224,7 +219,7 @@ const KidDashboard: React.FC = () => {
                     Speaking Mastery
                   </p>
                   <p className="text-2xl font-semibold">
-                    {percent(selectedKid.speakingMastery)}
+                    {masteryLabel(selectedKid.speakingMastery)}
                   </p>
                   <p className="text-xs text-slate-500">
                     Public speaking & confidence tasks.
@@ -280,11 +275,11 @@ const KidDashboard: React.FC = () => {
                           <div className="font-semibold truncate">
                             {t.topicName || t.id}
                           </div>
-                          {typeof t.mastery === 'number' && (
+                          {(t.mastery != null || t.masteryKey) && (
                             <div className="text-xs text-slate-600">
                               Mastery:{' '}
                               <span className="font-semibold">
-                                {t.mastery}%
+                                {masteryLabel(t.masteryKey ?? t.mastery)}
                               </span>
                             </div>
                           )}
@@ -298,11 +293,6 @@ const KidDashboard: React.FC = () => {
                           {t.subskill && (
                             <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100">
                               Skill: {t.subskill}
-                            </span>
-                          )}
-                          {t.scoreBand && (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100">
-                              Score: {t.scoreBand}
                             </span>
                           )}
                           {t.lastEvidence && (

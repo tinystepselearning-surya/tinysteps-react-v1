@@ -3,6 +3,7 @@ import { Card, CardContent } from '@components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { Badge } from '@components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
+import { masteryLabel } from '../lib/mastery';
 
 const SessionTracking: React.FC = () => {
   const [selectedChild, setSelectedChild] = React.useState('');
@@ -10,7 +11,7 @@ const SessionTracking: React.FC = () => {
   // No sample child data is shipped. The UI shows actual children via data hooks in real use.
   const children: { id: string; name: string }[] = [];
 
-  const sessions: { id: number; childId: string; date: string; time: string; course: string; teacher?: string; attendance?: string; mastery?: number; feedback?: string; notes?: string }[] = [];
+  const sessions: { id: number; childId: string; date: string; time: string; course: string; teacher?: string; attendance?: string; mastery?: number | string; feedback?: string; notes?: string }[] = [];
 
   const filteredSessions = selectedChild ? sessions.filter(s => s.childId === selectedChild) : sessions;
 
@@ -51,7 +52,7 @@ const SessionTracking: React.FC = () => {
                 <TableHead>Course</TableHead>
                 <TableHead>Teacher</TableHead>
                 <TableHead>Attendance</TableHead>
-                <TableHead>Mastery (%)</TableHead>
+                <TableHead>Mastery</TableHead>
                 <TableHead>Feedback</TableHead>
                 <TableHead>Notes</TableHead>
               </TableRow>
@@ -67,7 +68,7 @@ const SessionTracking: React.FC = () => {
                       {session.attendance}
                     </Badge>
                   </TableCell>
-                  <TableCell>{session.mastery}%</TableCell>
+                  <TableCell>{masteryLabel(session.mastery)}</TableCell>
                   <TableCell>{session.feedback}</TableCell>
                   <TableCell>{session.notes}</TableCell>
                 </TableRow>

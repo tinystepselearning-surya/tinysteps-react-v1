@@ -1,6 +1,6 @@
 import type { FC, ReactNode } from 'react';
 import { Button } from '../../../../components/ui/button';
-import { Home, TrendingUp, Lightbulb, Calendar, FileText, User, CreditCard } from 'lucide-react';
+import { Home, TrendingUp, Lightbulb, FileText, User, CreditCard } from 'lucide-react';
 
 interface SidebarItem {
   id: string;
@@ -12,7 +12,6 @@ const sidebarItems: SidebarItem[] = [
   { id: 'dashboard', label: 'Overview', icon: <Home className="w-4 h-4" /> },
   { id: 'games-progress', label: 'Games Progress', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'skills', label: 'Skills', icon: <Lightbulb className="w-4 h-4" /> },
-  { id: 'weekly', label: 'Weekly', icon: <Calendar className="w-4 h-4" /> },
   { id: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
   { id: 'profile', label: 'Profile', icon: <User className="w-4 h-4" /> },
   { id: 'payments', label: 'Payments', icon: <CreditCard className="w-4 h-4" /> },
