@@ -570,6 +570,545 @@ const CONFUSION_OPTIONS_BY_RUBRIC: Record<RubricType, string[]> = {
   revision: [],
 };
 
+type TopicOverride = {
+  rubricType?: RubricType;
+  subskillChips?: string[];
+  confusionOptions?: string[];
+};
+
+const FOUNDATION_CONFUSIONS_BY_LETTER: Record<string, string[]> = {
+  a: ['a vs e'],
+  b: ['b vs d', 'b vs p'],
+  c: ['c vs k'],
+  d: ['b vs d'],
+  e: ['e vs i', 'a vs e'],
+  f: ['f vs v'],
+  g: ['g vs j'],
+  h: [],
+  i: ['i vs e'],
+  j: ['j vs g'],
+  k: ['k vs c'],
+  l: ['l vs r'],
+  m: ['m vs n'],
+  n: ['m vs n', 'n vs u'],
+  o: ['o vs u'],
+  p: ['p vs b'],
+  q: ['q vs k'],
+  r: ['r vs l'],
+  s: ['s vs z'],
+  t: ['t vs d'],
+  u: ['u vs n'],
+  v: ['v vs w'],
+  w: ['v vs w'],
+  x: ['x (/ks/) vs s'],
+  y: ['y vs i'],
+  z: ['z vs s'],
+};
+
+const buildGrammarOverride = (label: string): TopicOverride | null => {
+  const l = label.toLowerCase();
+  if (l.includes('revision')) {
+    return {
+      subskillChips: SUBSKILL_CHIPS_BY_RUBRIC.revision,
+      confusionOptions: [],
+    };
+  }
+  if (l.includes('noun')) {
+    return {
+      subskillChips: ['identify nouns', 'label nouns', 'sort nouns', 'use nouns in sentence', 'capitalize names'],
+      confusionOptions: ['noun vs verb', 'noun vs pronoun', 'proper vs common'],
+    };
+  }
+  if (l.includes('pronoun')) {
+    return {
+      subskillChips: ['choose pronoun', 'replace noun', 'subject pronouns', 'pronoun agreement', 'use pronouns in sentence'],
+      confusionOptions: ['he vs she', 'him vs he', 'they vs he'],
+    };
+  }
+  if (l.includes('irregular verb')) {
+    return {
+      subskillChips: ['irregular verb forms', 'choose correct form', 'use in sentence', 'read irregular verbs', 'spell irregular verbs'],
+      confusionOptions: ['go vs went', 'see vs saw', 'have vs had'],
+    };
+  }
+  if (l.includes('verb')) {
+    return {
+      subskillChips: ['identify verbs', 'choose correct verb', 'use action verbs', 'verb in sentence', 'verb agreement'],
+      confusionOptions: ['is vs are', 'was vs were', 'do vs does'],
+    };
+  }
+  if (l.includes('adjective')) {
+    return {
+      subskillChips: ['identify adjectives', 'add adjective', 'choose describing word', 'expand sentence', 'use adjective in sentence'],
+      confusionOptions: ['adjective vs noun', 'adjective vs adverb', 'wrong describing word'],
+    };
+  }
+  if (l.includes('article')) {
+    return {
+      subskillChips: ['a/an choice', 'use the', 'insert missing article', 'fix article errors', 'article in sentence'],
+      confusionOptions: ['a vs an', 'a/an vs the', 'missing article'],
+    };
+  }
+  if (l.includes('preposition')) {
+    return {
+      subskillChips: ['identify prepositions', 'choose correct preposition', 'add preposition phrase', 'use in sentence', 'preposition picture match'],
+      confusionOptions: ['in vs on', 'under vs over', 'at vs in'],
+    };
+  }
+  if (l.includes('adverb')) {
+    return {
+      subskillChips: ['identify adverbs', 'add adverb', 'choose adverb', 'edit for adverbs', 'use adverb in sentence'],
+      confusionOptions: ['adverb vs adjective', 'too many adverbs', 'wrong adverb choice'],
+    };
+  }
+  if (l.includes('conjunction') || l.includes('join two sentences')) {
+    return {
+      subskillChips: ['identify conjunctions', 'choose connector', 'join two sentences', 'use and/but/because', 'fix run-on'],
+      confusionOptions: ['and vs but', 'because vs so', 'run-on sentence'],
+    };
+  }
+  if (l.includes('plural')) {
+    return {
+      subskillChips: ['make plural', 'choose s/es', 'singular vs plural', 'plural spelling', 'use plurals in sentence'],
+      confusionOptions: ['s vs es', 'y to ies', 'singular vs plural'],
+    };
+  }
+  if (l.includes('run-on') || l.includes('fragment')) {
+    return {
+      subskillChips: ['spot run-on/fragment', 'split sentences', 'add punctuation', 'rewrite correctly', 'read for clarity'],
+      confusionOptions: ['run-on vs complete', 'fragment vs sentence', 'missing punctuation'],
+    };
+  }
+  if (l.includes('question')) {
+    return {
+      subskillChips: ['use question words', 'write a question', 'question mark', 'question vs statement', 'edit questions'],
+      confusionOptions: ['missing question mark', 'question vs statement', 'wrong word order'],
+    };
+  }
+  if (l.includes('exclamation')) {
+    return {
+      subskillChips: ['use exclamation mark', 'exclaim vs statement', 'punctuation choice', 'express excitement', 'edit punctuation'],
+      confusionOptions: ['exclamation vs period', 'exclamation vs question', 'overuse of !'],
+    };
+  }
+  if (l.includes('capital')) {
+    return {
+      subskillChips: ['capitalize first word', 'capitalize names', 'fix capital errors', 'sentence basics', 'edit for capitals'],
+      confusionOptions: ['missing capital', 'mid-sentence caps', 'name not capitalized'],
+    };
+  }
+  if (l.includes('punctuation')) {
+    return {
+      subskillChips: ['fix punctuation', 'choose correct end mark', 'edit sentence endings', 'read for clarity', 'rewrite correctly'],
+      confusionOptions: ['missing punctuation', 'question vs statement', 'exclamation vs period'],
+    };
+  }
+  if (l.includes('tense') || l.includes('past') || l.includes('present') || l.includes('future')) {
+    return {
+      subskillChips: ['identify tense', 'choose correct tense', 'use time words', 'fix tense mistakes', 'write tense sentences'],
+      confusionOptions: ['past vs present', 'present vs future', 'was vs were'],
+    };
+  }
+  if (l.includes('time words')) {
+    return {
+      subskillChips: ['time words meaning', 'choose correct time word', 'match time word to tense', 'use in sentence', 'spot time words'],
+      confusionOptions: ['yesterday vs tomorrow', 'today vs tomorrow', 'last vs next'],
+    };
+  }
+  if (l.includes('perfect')) {
+    return {
+      subskillChips: ['use present perfect', 'use past perfect', 'use future perfect', 'choose auxiliary', 'edit perfect tense'],
+      confusionOptions: ['has vs have', 'had vs has', 'been vs being'],
+    };
+  }
+  if (l.includes('modal')) {
+    return {
+      subskillChips: ['modal meaning', 'choose modal', 'use modal in sentence', 'edit modal sentence', 'spot modal'],
+      confusionOptions: ['can vs could', 'should vs would', 'may vs might'],
+    };
+  }
+  if (l.includes('clause') || l.includes('complex')) {
+    return {
+      subskillChips: ['identify clauses', 'independent vs dependent', 'combine clauses', 'punctuate clauses', 'fix fragments'],
+      confusionOptions: ['fragment vs sentence', 'run-on vs clause', 'comma splice'],
+    };
+  }
+  if (l.includes('reported speech')) {
+    return {
+      subskillChips: ['change tense', 'use reporting verbs', 'convert direct to reported', 'pronoun shift', 'punctuate correctly'],
+      confusionOptions: ['said vs told', 'tense shift missing', 'quote punctuation'],
+    };
+  }
+  if (l.includes('passive') || l.includes('active')) {
+    return {
+      subskillChips: ['active vs passive', 'convert to passive', 'use by-phrase', 'choose correct form', 'edit voice'],
+      confusionOptions: ['active vs passive', 'was vs were', 'missing by-phrase'],
+    };
+  }
+  if (l.includes('transition') || l.includes('paragraph') || l.includes('cohesion')) {
+    return {
+      subskillChips: ['use transitions', 'topic sentence', 'supporting details', 'organize paragraph', 'edit for flow'],
+      confusionOptions: ['missing transitions', 'off-topic detail', 'weak topic sentence'],
+    };
+  }
+  if (l.includes('tone') || l.includes('formality')) {
+    return {
+      subskillChips: ['formal vs informal', 'adjust tone', 'word choice', 'audience awareness', 'edit for tone'],
+      confusionOptions: ['too casual', 'too formal', 'inconsistent tone'],
+    };
+  }
+  if (l.includes('claim') || l.includes('reason') || l.includes('evidence') || l.includes('counterargument')) {
+    return {
+      subskillChips: ['claim and reason', 'evidence sentence', 'counterargument', 'strong conclusion', 'word choice impact'],
+      confusionOptions: ['claim vs reason', 'weak evidence', 'off-topic argument'],
+    };
+  }
+  if (l.includes('clarity')) {
+    return {
+      subskillChips: ['rewrite for clarity', 'remove extra words', 'correct grammar mistake', 'improve sentence flow', 'edit carefully'],
+      confusionOptions: ['run-on sentence', 'fragment vs sentence', 'missing punctuation'],
+    };
+  }
+  return null;
+};
+
+const buildSpeakingOverride = (label: string): TopicOverride | null => {
+  const l = label.toLowerCase();
+  if (l.includes('revision')) {
+    return {
+      subskillChips: SUBSKILL_CHIPS_BY_RUBRIC.revision,
+      confusionOptions: [],
+    };
+  }
+  if (l.includes('warm-up')) {
+    return {
+      subskillChips: ['warm-up routine', 'calm breathing', 'confidence start', 'voice check', 'ready posture'],
+      confusionOptions: ['shy/low confidence', 'needs prompting', 'too soft voice'],
+    };
+  }
+  if (l.includes('eye contact')) {
+    return {
+      subskillChips: ['eye contact', 'look at audience', 'hold gaze', 'smile', 'start confidently'],
+      confusionOptions: ['low eye contact', 'looks down', 'nervous'],
+    };
+  }
+  if (l.includes('posture')) {
+    return {
+      subskillChips: ['posture', 'stand still', 'hands by side', 'face audience', 'confident stance'],
+      confusionOptions: ['slouching', 'fidgeting', 'turns away'],
+    };
+  }
+  if (l.includes('volume') || l.includes('voice volume')) {
+    return {
+      subskillChips: ['volume control', 'speak loudly enough', 'clear voice', 'confidence start', 'steady pace'],
+      confusionOptions: ['too soft voice', 'too loud', 'mumbling'],
+    };
+  }
+  if (l.includes('self-introduction')) {
+    return {
+      subskillChips: ['say name clearly', 'greet audience', 'full sentence intro', 'eye contact', 'clear ending'],
+      confusionOptions: ['forgets name', 'too soft voice', 'no greeting'],
+    };
+  }
+  if (l.includes('full sentences')) {
+    return {
+      subskillChips: ['full sentences', 'complete thoughts', 'subject + verb', 'speak clearly', 'pause between ideas'],
+      confusionOptions: ['sentence fragments', 'missing verbs', 'mumbles'],
+    };
+  }
+  if (l.includes('clear speech') || l.includes('slow pace') || l.includes('word ending') || l.includes('clarity check')) {
+    return {
+      subskillChips: ['speak clearly', 'slow pace', 'say full words', 'articulation', 'pause between ideas'],
+      confusionOptions: ['too fast', 'mumbling', 'drops word endings'],
+    };
+  }
+  if (l.includes('pause')) {
+    return {
+      subskillChips: ['use pauses', 'separate ideas', 'steady pace', 'breathing control', 'clear speech'],
+      confusionOptions: ['no pauses', 'too fast', 'runs sentences together'],
+    };
+  }
+  if (l.includes('picture talk') || l.includes('describe') || l.includes('details')) {
+    return {
+      subskillChips: ['describe object', 'use 3 details', 'use describing words', 'stay on topic', 'clear sentence'],
+      confusionOptions: ['missing details', 'off-topic', 'too short'],
+    };
+  }
+  if (l.includes('gesture')) {
+    return {
+      subskillChips: ['use gestures', 'match gesture to words', 'open posture', 'facial expression', 'eye contact'],
+      confusionOptions: ['no gestures', 'too much movement', 'distracting hands'],
+    };
+  }
+  if (l.includes('emotion')) {
+    return {
+      subskillChips: ['emotion words', 'express feelings', 'voice tone', 'facial expression', 'clear sentence'],
+      confusionOptions: ['flat expression', 'wrong emotion word', 'monotone'],
+    };
+  }
+  if (l.includes('answer questions')) {
+    return {
+      subskillChips: ['listen to question', 'answer in full sentence', 'stay on topic', 'eye contact', 'clear voice'],
+      confusionOptions: ['off-topic', 'one-word answers', 'too soft voice'],
+    };
+  }
+  if (l.includes('one-minute') || l.includes('mini speech') || l.includes('capstone')) {
+    return {
+      subskillChips: ['speak 30–60 seconds', 'stay on topic', 'sequence ideas', 'clear voice', 'strong ending'],
+      confusionOptions: ['too short', 'off-topic', 'no ending'],
+    };
+  }
+  if (l.includes('sequence') || l.includes('hook-body-close') || l.includes('structure')) {
+    return {
+      subskillChips: ['sequence words', 'organize ideas', 'supporting details', 'stay on topic', 'strong conclusion'],
+      confusionOptions: ['missing sequence', 'mixed order', 'no clear ending'],
+    };
+  }
+  if (l.includes('voice variety') || l.includes('emphasis') || l.includes('expression') || l.includes('pause for effect')) {
+    return {
+      subskillChips: ['voice variety', 'emphasis', 'pace changes', 'expression', 'pause for effect'],
+      confusionOptions: ['monotone', 'no emphasis', 'too fast'],
+    };
+  }
+  if (l.includes('story') || l.includes('beginning') || l.includes('character')) {
+    return {
+      subskillChips: ['beginning-middle-end', 'character voice', 'stay on story', 'clear ending', 'expression'],
+      confusionOptions: ['missing ending', 'mixed order', 'off-topic'],
+    };
+  }
+  if (l.includes('presentation') || l.includes('visual') || l.includes('notes')) {
+    return {
+      subskillChips: ['clear opening', 'use visual/prop', 'steady pace', 'eye contact', 'confident ending'],
+      confusionOptions: ['nervous', 'too soft voice', 'reads without looking up'],
+    };
+  }
+  if (l.includes('mistakes') || l.includes('confidence reset')) {
+    return {
+      subskillChips: ['pause and restart', 'stay calm', 'keep going', 'self-correct', 'confidence reset'],
+      confusionOptions: ['stops speaking', 'gets flustered', 'needs prompting'],
+    };
+  }
+  if (l.includes('impromptu') || l.includes('tough questions')) {
+    return {
+      subskillChips: ['thinking time strategy', 'answer clearly', 'stay calm', 'structure reply', 'confidence reset'],
+      confusionOptions: ['freezes', 'off-topic', 'too soft voice'],
+    };
+  }
+  if (l.includes('persuasion') || l.includes('rebuttal') || l.includes('debate')) {
+    return {
+      subskillChips: ['state opinion', 'give reason', 'rebut politely', 'strong conclusion', 'audience Q&A'],
+      confusionOptions: ['unclear opinion', 'weak reason', 'off-topic'],
+    };
+  }
+  if (l.includes('engagement') || l.includes('presence') || l.includes('opening')) {
+    return {
+      subskillChips: ['strong opening', 'stage presence', 'audience engagement', 'clear articulation', 'confident tone'],
+      confusionOptions: ['low energy', 'no eye contact', 'too soft voice'],
+    };
+  }
+  return null;
+};
+
+const buildPhonicsOverride = (
+  courseId: string,
+  lessonNumber: number | null,
+  label: string,
+): TopicOverride | null => {
+  if (!lessonNumber) return null;
+  const lowerLabel = label.toLowerCase();
+
+  if (courseId === 'phonics-foundations' && lessonNumber <= 26) {
+    const letter = lowerLabel.trim().split(/\s+/)[0];
+    const confusions = FOUNDATION_CONFUSIONS_BY_LETTER[letter] ?? [];
+    return confusions.length ? { confusionOptions: confusions } : { confusionOptions: [] };
+  }
+
+  if (courseId !== 'early-phonics' && courseId !== 'advanced-phonics') return null;
+
+  if (courseId === 'early-phonics') {
+    if (lessonNumber === 10) {
+      return {
+        rubricType: 'short_vowels',
+        subskillChips: ['short vowel recognition', 'sound discrimination', 'CVC blending', 'CVC word reading', 'CVC spelling'],
+        confusionOptions: ['a vs e', 'e vs i', 'i vs o', 'o vs u'],
+      };
+    }
+    const overridesByLesson: Record<number, TopicOverride> = {
+      3: {
+        subskillChips: ['k sound recognition', 'c vs k choice', 'read c/k words', 'spell c/k words', 'dictation'],
+        confusionOptions: ['c vs k', 'ck vs k', 'c vs s'],
+      },
+      8: {
+        subskillChips: ['sound recognition (z/w/v)', 'sound discrimination', 'read z/w/v words', 'spell z/w/v words', 'dictation'],
+        confusionOptions: ['v vs w', 'z vs s', 'v vs b'],
+      },
+      9: {
+        subskillChips: ['sound recognition (y/x/q)', 'letter-sound match', 'read y/x/q words', 'spell y/x/q words', 'dictation'],
+        confusionOptions: ['q vs k', 'x (/ks/) vs s', 'y vs i'],
+      },
+      11: {
+        subskillChips: ['sh sound recognition', 'read sh words', 'spell sh words', 'word reading', 'dictation'],
+        confusionOptions: ['sh vs ch', 'sh vs s'],
+      },
+      12: {
+        subskillChips: ['ch sound recognition', 'tch spelling after short vowel', 'read ch/tch words', 'spell ch/tch words', 'dictation'],
+        confusionOptions: ['ch vs tch', 'ch vs sh'],
+      },
+      13: {
+        subskillChips: ['th sound recognition', 'voiced vs unvoiced th', 'read th words', 'spell th words', 'dictation'],
+        confusionOptions: ['th vs f', 'th vs t'],
+      },
+      14: {
+        subskillChips: ['ck pattern recognition', 'k sound spelling choice', 'read ck words', 'spell ck words', 'dictation'],
+        confusionOptions: ['ck vs k', 'ck vs c'],
+      },
+      15: {
+        subskillChips: ['ng sound', 'read ng words', 'spell ng words', 'spot silent b', 'spell mb words', 'dictation'],
+        confusionOptions: ['ng vs n', 'mb vs m', 'mb vs mp'],
+      },
+      16: {
+        subskillChips: ['spot silent letter', 'read kn words', 'spell kn words', 'pronounce correctly', 'dictation'],
+        confusionOptions: ['kn vs n', 'kn vs k'],
+      },
+      17: {
+        subskillChips: ['spot silent letter', 'read wr words', 'spell wr words', 'pronounce correctly', 'dictation'],
+        confusionOptions: ['wr vs r', 'wr vs w'],
+      },
+      18: {
+        subskillChips: ['wh sound recognition', 'read wh words', 'spell wh words', 'word reading', 'dictation'],
+        confusionOptions: ['wh vs w'],
+      },
+      19: {
+        subskillChips: ['ph sound recognition', 'gh pattern recognition', 'read ph/gh words', 'spell ph/gh words', 'dictation'],
+        confusionOptions: ['ph vs f', 'gh vs g', 'gh silent'],
+      },
+      21: {
+        subskillChips: ['double consonant rule', 'read floss words', 'spell floss words', 'word sorting', 'dictation'],
+        confusionOptions: ['f vs ff', 'l vs ll', 's vs ss'],
+      },
+      22: {
+        subskillChips: ['ai pattern recognition', 'long a sound', 'read ai words', 'spell ai words', 'sound discrimination'],
+        confusionOptions: ['ai vs ay', 'ai vs a_e'],
+      },
+      23: {
+        subskillChips: ['ee pattern recognition', 'long e sound', 'read ee words', 'spell ee words', 'sound discrimination'],
+        confusionOptions: ['ee vs ea', 'ee vs e_e'],
+      },
+      24: {
+        subskillChips: ['ea pattern recognition', 'long e sound', 'read ea words', 'spell ea words', 'sound discrimination'],
+        confusionOptions: ['ea vs ee', 'ea vs e_e'],
+      },
+      25: {
+        subskillChips: ['ie pattern recognition', 'long i sound', 'read ie words', 'spell ie words', 'sound discrimination'],
+        confusionOptions: ['ie vs i_e', 'ie vs igh'],
+      },
+      26: {
+        subskillChips: ['oa pattern recognition', 'long o sound', 'read oa words', 'spell oa words', 'sound discrimination'],
+        confusionOptions: ['oa vs oe', 'oa vs o_e'],
+      },
+      27: {
+        subskillChips: ['oo sound recognition', 'sound discrimination', 'read oo words', 'spell oo words', 'word reading'],
+        confusionOptions: ['oo: /oo/ vs /ʊ/', 'oo vs u_e'],
+      },
+      28: {
+        subskillChips: ['oe pattern recognition', 'long o sound', 'read oe words', 'spell oe words', 'sound discrimination'],
+        confusionOptions: ['oa vs oe', 'oe vs o_e'],
+      },
+      29: {
+        subskillChips: ['ui pattern recognition', 'long u sound', 'read ui words', 'spell ui words', 'sound discrimination'],
+        confusionOptions: ['ui vs ue', 'ui vs u_e'],
+      },
+      30: {
+        subskillChips: ['ue pattern recognition', 'long u sound', 'read ue words', 'spell ue words', 'sound discrimination'],
+        confusionOptions: ['ue vs ui', 'ue vs u_e'],
+      },
+      31: {
+        subskillChips: ['igh pattern recognition', 'long i sound', 'read igh words', 'spell igh words', 'sound discrimination'],
+        confusionOptions: ['i_e vs igh', 'igh vs y'],
+      },
+      32: {
+        subskillChips: ['magic e rule', 'short vs long a', 'read a_e words', 'spell a_e words', 'dictation'],
+        confusionOptions: ['a_e vs ai', 'a_e vs ay', 'short vs long a'],
+      },
+      33: {
+        subskillChips: ['magic e rule', 'short vs long e', 'read e_e words', 'spell e_e words', 'dictation'],
+        confusionOptions: ['e_e vs ee', 'short vs long e'],
+      },
+      34: {
+        subskillChips: ['magic e rule', 'short vs long i', 'read i_e words', 'spell i_e words', 'dictation'],
+        confusionOptions: ['i_e vs igh', 'short vs long i'],
+      },
+      35: {
+        subskillChips: ['magic e rule', 'short vs long o', 'read o_e words', 'spell o_e words', 'dictation'],
+        confusionOptions: ['o_e vs oa', 'short vs long o'],
+      },
+      36: {
+        subskillChips: ['magic e rule', 'short vs long u', 'read u_e words', 'spell u_e words', 'dictation'],
+        confusionOptions: ['u_e vs ue', 'short vs long u'],
+      },
+      37: {
+        subskillChips: ['double consonant spotting', 'rabbit rule', 'read rabbit words', 'spell rabbit words', 'word sorting'],
+        confusionOptions: ['double vs single consonant', 'rabbit vs one syllable'],
+      },
+      38: {
+        subskillChips: ['-le ending recognition', 'read consonant+le words', 'spell -le words', 'syllable division', 'word sorting'],
+        confusionOptions: ['le vs el', 'ble vs bel'],
+      },
+      39: {
+        subskillChips: ['soft c rule', 'read soft c words', 'spell soft c words', 'sound discrimination', 'word sorting'],
+        confusionOptions: ['soft c vs hard c', 'c vs s'],
+      },
+      40: {
+        subskillChips: ['hard g rule', 'read hard g words', 'spell hard g words', 'sound discrimination', 'word sorting'],
+        confusionOptions: ['g vs j', 'soft g vs hard g'],
+      },
+    };
+    return overridesByLesson[lessonNumber] ?? null;
+  }
+
+  if (courseId === 'advanced-phonics' && lessonNumber === 9) {
+    return {
+      rubricType: 'suffix_ending',
+      subskillChips: ['/shun/ recognition', 'choose spelling', 'read /shun/ words', 'spell /shun/ words', 'dictation'],
+      confusionOptions: ['tion vs sion', 'tion vs cian', 'sion vs cian'],
+    };
+  }
+  if (courseId === 'advanced-phonics' && lessonNumber === 8) {
+    return {
+      subskillChips: ['j sound recognition', 'choose j spelling', 'read j sound words', 'spell j sound words', 'dictation'],
+      confusionOptions: ['j vs g', 'dge vs ge', 'j vs dge'],
+    };
+  }
+  return null;
+};
+
+const applyLessonOverrides = (
+  topic: { courseId: string; lesson?: string; id?: string; label?: string },
+  rubricType: RubricType,
+): { rubricType: RubricType; subskillChips: string[]; confusionOptions: string[] } => {
+  const lessonNumber = extractLessonNumber(topic.lesson, topic.id);
+  const label = String(topic.label ?? '');
+  let override: TopicOverride | null = null;
+
+  if (topic.courseId.startsWith('phonics')) {
+    override = buildPhonicsOverride(topic.courseId, lessonNumber, label);
+  } else if (topic.courseId.includes('grammar')) {
+    override = buildGrammarOverride(label);
+  } else if (topic.courseId.includes('public-speaking')) {
+    override = buildSpeakingOverride(label);
+  }
+
+  const finalRubric = override?.rubricType ?? rubricType;
+  const subskillChips = override?.subskillChips ?? SUBSKILL_CHIPS_BY_RUBRIC[finalRubric];
+  const confusionOptions = override?.confusionOptions ?? CONFUSION_OPTIONS_BY_RUBRIC[finalRubric];
+
+  return {
+    rubricType: finalRubric,
+    subskillChips,
+    confusionOptions,
+  };
+};
+
 const PHONICS_CURRICULUM_TOPICS = [
   { id: 'phonics-foundations__lesson-01', courseId: 'phonics-foundations', lesson: 'Lesson-1', label: 's' },
   { id: 'phonics-foundations__lesson-02', courseId: 'phonics-foundations', lesson: 'Lesson-2', label: 'a' },
@@ -664,6 +1203,7 @@ const PHONICS_CURRICULUM_TOPICS = [
   { id: 'advanced-phonics__lesson-20', courseId: 'advanced-phonics', lesson: 'Lesson-20', label: 'revision' },
 ].map((topic) => {
   const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  const overrides = applyLessonOverrides(topic, rubricType);
   const stage = resolveStageByLessonNumber(
     topic.courseId,
     extractLessonNumber(topic.lesson, topic.id),
@@ -674,9 +1214,9 @@ const PHONICS_CURRICULUM_TOPICS = [
     displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
     stageLabel: stage?.label ?? null,
     stageOrder: stage?.stageOrder ?? null,
-    rubricType,
-    subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
-    confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
+    rubricType: overrides.rubricType,
+    subskillChips: overrides.subskillChips,
+    confusionOptions: overrides.confusionOptions,
   };
 });
 
@@ -685,6 +1225,7 @@ const GRAMMAR_CURRICULUM_TOPICS = [
   ...buildSequentialTopics('advanced-grammar', 'grammar', GRAMMAR_ADVANCED_LABELS),
 ].map((topic) => {
   const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  const overrides = applyLessonOverrides(topic, rubricType);
   const stage = resolveStageByLessonNumber(
     topic.courseId,
     extractLessonNumber(topic.lesson, topic.id),
@@ -694,9 +1235,9 @@ const GRAMMAR_CURRICULUM_TOPICS = [
     displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
     stageLabel: stage?.label ?? null,
     stageOrder: stage?.stageOrder ?? null,
-    rubricType,
-    subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
-    confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
+    rubricType: overrides.rubricType,
+    subskillChips: overrides.subskillChips,
+    confusionOptions: overrides.confusionOptions,
   };
 });
 
@@ -705,6 +1246,7 @@ const SPEAKING_CURRICULUM_TOPICS = [
   ...buildSequentialTopics('advanced-public-speaking', 'speaking', SPEAKING_ADVANCED_LABELS),
 ].map((topic) => {
   const rubricType = classifyRubricType(topic.courseId, topic.lesson, topic.id);
+  const overrides = applyLessonOverrides(topic, rubricType);
   const stage = resolveStageByLessonNumber(
     topic.courseId,
     extractLessonNumber(topic.lesson, topic.id),
@@ -714,9 +1256,9 @@ const SPEAKING_CURRICULUM_TOPICS = [
     displayTitle: CURRICULUM_DISPLAY_TITLES[topic.id] ?? `${topic.lesson} — ${topic.label}`,
     stageLabel: stage?.label ?? null,
     stageOrder: stage?.stageOrder ?? null,
-    rubricType,
-    subskillChips: SUBSKILL_CHIPS_BY_RUBRIC[rubricType],
-    confusionOptions: CONFUSION_OPTIONS_BY_RUBRIC[rubricType],
+    rubricType: overrides.rubricType,
+    subskillChips: overrides.subskillChips,
+    confusionOptions: overrides.confusionOptions,
   };
 });
 

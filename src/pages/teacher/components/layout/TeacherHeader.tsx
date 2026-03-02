@@ -3,17 +3,30 @@ import type { FC } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
-import { Card } from '@components/ui/card';
+import {
+  Bell,
+  ChevronDown,
+  CircleUser,
+  LogOut,
+} from 'lucide-react';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 
 interface TeacherHeaderProps {
   name?: string;
   upcomingCount?: number;
+  activeSectionLabel?: string;
   onToggleNotifications?: () => void;
+  onProfileClick?: () => void;
 }
 
-export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount, onToggleNotifications }) => {
+export const TeacherHeader: FC<TeacherHeaderProps> = ({
+  name,
+  upcomingCount,
+  activeSectionLabel,
+  onToggleNotifications,
+  onProfileClick,
+}) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
 
@@ -27,44 +40,56 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({ name, upcomingCount, onT
     }
   };
 
-  const initials = name
-    ?.split(' ')
-    .map((part) => part[0] || '')
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
-
   return (
-    <Card className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
-      <div>
-        <p className="text-sm text-muted-foreground">Welcome back</p>
-        <h1 className="text-2xl font-bold">{name || 'Teacher'}</h1>
-        {typeof upcomingCount === 'number' && (
-          <p className="text-sm text-muted-foreground mt-1">
-            You have <span className="font-semibold">{upcomingCount}</span> session
-            {upcomingCount === 1 ? '' : 's'} today.
+    <div className="rounded-2xl border border-slate-200 bg-white/90 px-6 py-5 shadow-sm">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            Teacher Dashboard
           </p>
-        )}
-      </div>
-      <div className="flex items-center gap-4">
-        {/* Notifications bell */}
-        <button
-          onClick={onToggleNotifications}
-          className="relative p-2 rounded-full hover:bg-white/20 transition-colors"
-          aria-label="Notifications"
-        >
-          🔔
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-            2
-          </span>
-        </button>
-        <div className="h-12 w-12 rounded-full bg-white/80 dark:bg-slate-800 text-blue-600 flex items-center justify-center font-semibold">
-          {initials || 'TT'}
+          <h1 className="text-2xl font-semibold text-slate-900">
+            Hi, {name || 'Teacher'}
+          </h1>
+          {typeof upcomingCount === 'number' && (
+            <p className="text-sm text-slate-600">
+              You have <span className="font-semibold">{upcomingCount}</span> session
+              {upcomingCount === 1 ? '' : 's'} today.
+            </p>
+          )}
         </div>
-        <Button variant="outline" onClick={handleLogout}>
-          Logout
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+            <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-400">
+              Section
+            </span>
+            {activeSectionLabel || 'Overview'}
+          </div>
+          <button
+            type="button"
+            onClick={onProfileClick}
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-indigo-300 hover:text-indigo-700"
+          >
+            <CircleUser className="h-4 w-4" />
+            {name || 'Teacher'}
+            <ChevronDown className="h-4 w-4 text-slate-400" />
+          </button>
+          <button
+            type="button"
+            onClick={onToggleNotifications}
+            className="relative rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-indigo-300 hover:text-indigo-700"
+            aria-label="Notifications"
+          >
+            <Bell className="h-4 w-4" />
+            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-rose-500 text-[10px] font-semibold text-white flex items-center justify-center">
+              2
+            </span>
+          </button>
+          <Button variant="outline" onClick={handleLogout} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 };

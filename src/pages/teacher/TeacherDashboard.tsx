@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
 
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
@@ -160,8 +161,11 @@ export default function TeacherDashboard() {
   }, [navigate]);
 
   const [showNotifications, setShowNotifications] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const teacherId = user?.uid;
+  const activeSectionLabel =
+    TAB_ITEMS.find((item) => item.id === tab)?.label ?? 'Overview';
   // Defer subscribing to sessions until the "today" tab is active
   // so heavy listeners don't block other tabs like Lesson Library.
   // Provide a placeholder empty array for header counts when not active.
@@ -201,14 +205,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-4 md:p-8">
-      {/* Diagnostic banners removed for production cleanliness */}
-      <TeacherHeader
-        name={user.displayName || user.email || 'Teacher'}
-        upcomingCount={sessions.length}
-        onToggleNotifications={() => setShowNotifications(true)}
-      />
-
+    <div className="min-h-screen bg-slate-50/60 px-4 py-6 md:px-8">
       <div className="flex gap-6">
         <TeacherSidebar
           active={tab}
@@ -218,6 +215,13 @@ export default function TeacherDashboard() {
         />
 
         <main className="flex-1 space-y-6">
+          <TeacherHeader
+            name={user.displayName || user.email || 'Teacher'}
+            upcomingCount={sessions.length}
+            activeSectionLabel={activeSectionLabel}
+            onToggleNotifications={() => setShowNotifications(true)}
+            onProfileClick={() => setProfileOpen(true)}
+          />
           <Tabs value={tab} onValueChange={setTabAndUrl} className="space-y-4">
             {/* Mobile tabs for when sidebar is hidden */}
             <TabsList className="lg:hidden">
@@ -321,6 +325,17 @@ export default function TeacherDashboard() {
           <NotificationsPanel teacherId={teacherId} onClose={() => setShowNotifications(false)} />
         </React.Suspense>
       )}
+
+      <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Profile</DialogTitle>
+          </DialogHeader>
+          <React.Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
+            <TeacherProfile teacherId={teacherId} />
+          </React.Suspense>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

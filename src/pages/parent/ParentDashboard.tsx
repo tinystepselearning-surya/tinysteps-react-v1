@@ -6,6 +6,7 @@ import {
   addDoc,
   collection,
   doc,
+  documentId,
   getDoc,
   getDocs,
   limit,
@@ -141,6 +142,9 @@ type Enrollment = {
   kidId?: string;
   kidIds?: string[];
   studentId?: string;
+  teacherId?: string;
+  teacherUid?: string;
+  teacherUserId?: string;
   courseId?: string;
   courseName?: string;
   courseLabel?: string;
@@ -154,6 +158,15 @@ type Enrollment = {
   feePerClass?: number;
   feePerSession?: number;
   [key: string]: any;
+};
+
+const chunkIds = <T,>(items: T[], size = 10): T[][] => {
+  if (!items.length) return [];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
 };
 
 const PHONICS_COURSE_IDS = [
@@ -291,11 +304,16 @@ function pickStageFocus(rows: Array<any>): string[] {
     .slice()
     .sort((a, b) => (b.updatedAtMs ?? 0) - (a.updatedAtMs ?? 0));
   for (const row of sorted) {
-    const chips = Array.isArray(row.focusChips) && row.focusChips.length > 0
-      ? row.focusChips
-      : Array.isArray(row.confusionChips) && row.confusionChips.length > 0
-        ? row.confusionChips
-        : [];
+    const chips =
+      Array.isArray(row.practiceChips) && row.practiceChips.length > 0
+        ? row.practiceChips
+        : Array.isArray(row.strengthChips) && row.strengthChips.length > 0
+          ? row.strengthChips
+          : Array.isArray(row.focusChips) && row.focusChips.length > 0
+            ? row.focusChips
+            : Array.isArray(row.confusionChips) && row.confusionChips.length > 0
+              ? row.confusionChips
+              : [];
     if (chips.length > 0) return chips.slice(0, 2);
   }
   return [];
@@ -809,10 +827,10 @@ export default function ParentDashboard() {
     useState(false);
   const [selectedCurriculumTopic, setSelectedCurriculumTopic] =
     useState<any>(null);
-  const [curriculumExpanded, setCurriculumExpanded] = useState(false);
   const [curriculumFilter, setCurriculumFilter] = useState<
     "all" | "in_progress" | "completed"
   >("all");
+  const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -1082,6 +1100,56 @@ export default function ParentDashboard() {
           }
         }
       });
+      return map;
+    },
+  });
+
+  const teacherIdsForProfile = useMemo(() => {
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+    const ids = new Set<string>();
+    enrollments.forEach((enr) => {
+      const candidate = String(
+        enr.teacherId ||
+          enr.teacherUid ||
+          enr.teacherUserId ||
+          (enr as any).teacher ||
+          ""
+      ).trim();
+      if (candidate) ids.add(candidate);
+    });
+    return Array.from(ids);
+  }, [enrollmentsQuery.data]);
+
+  const teacherLookupQuery = useQuery({
+    queryKey: ["teacherLookup", teacherIdsForProfile],
+    enabled: profileOpen && teacherIdsForProfile.length > 0,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const map: Record<string, { name: string; email?: string }> = {};
+      if (!teacherIdsForProfile.length) return map;
+      const usersCol = collection(db, "users");
+      const chunks = chunkIds(teacherIdsForProfile, 10);
+      for (const chunk of chunks) {
+        const snap = await getDocs(
+          query(usersCol, where(documentId(), "in", chunk))
+        );
+        snap.forEach((docSnap) => {
+          const data = docSnap.data() as any;
+          const name = String(
+            data?.displayName ||
+              data?.name ||
+              data?.fullName ||
+              data?.email ||
+              docSnap.id
+          ).trim();
+          map[docSnap.id] = {
+            name: name || "Teacher",
+            email: data?.email ? String(data.email).trim() : undefined,
+          };
+        });
+      }
       return map;
     },
   });
@@ -1453,6 +1521,14 @@ export default function ParentDashboard() {
         stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : null,
         status,
         mastery: mastery ?? "",
+        strengthChips: Array.isArray(matchedDoc?.strengthSubskills)
+          ? matchedDoc.strengthSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : [],
+        practiceChips: Array.isArray(matchedDoc?.needsPracticeSubskills)
+          ? matchedDoc.needsPracticeSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : Array.isArray(matchedDoc?.practiceSubskills)
+            ? matchedDoc.practiceSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+            : [],
         focusChips: Array.isArray(matchedDoc?.selectedSubskills)
           ? matchedDoc.selectedSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
@@ -1496,17 +1572,16 @@ export default function ParentDashboard() {
     if (!selectedCourse) return null;
     const rows = selectedCourse.rows ?? [];
 
-    const skillMap = new Map<
+    const inferredSkillMap = new Map<
       string,
       { count: number; scoreTotal: number; lastUpdatedAtMs: number }
     >();
+    const strengthSkillMap = new Map<string, { count: number; lastUpdatedAtMs: number }>();
+    const practiceSkillMap = new Map<string, { count: number; lastUpdatedAtMs: number }>();
     const stageMap = new Map<string, { label: string; order: number; skills: Map<string, number> }>();
     const recentUpdates: Array<{ tag: string; stageLabel: string; stageOrder: number; updatedAtMs: number }> = [];
 
     rows.forEach((row: any) => {
-      const skills = Array.isArray(row.focusChips) ? row.focusChips : [];
-      if (!skills.length) return;
-
       const masteryKey = masteryKeyFromValue(row.mastery);
       const masteryRank = Math.max(0, STAGE_MASTERY_ORDER.indexOf(masteryKey));
       const stageLabel = row.stageLabel || "Stage";
@@ -1514,28 +1589,23 @@ export default function ParentDashboard() {
         typeof row.stageOrder === "number" && row.stageOrder > 0
           ? row.stageOrder
           : parseStageOrderFromLabel(stageLabel) ?? 0;
+      const strengthTags = Array.isArray(row.strengthChips) ? row.strengthChips : [];
+      const practiceTags = Array.isArray(row.practiceChips) ? row.practiceChips : [];
+      const fallbackTags = Array.isArray(row.focusChips) ? row.focusChips : [];
+      const combinedTags =
+        strengthTags.length > 0 || practiceTags.length > 0
+          ? Array.from(new Set([...strengthTags, ...practiceTags]))
+          : fallbackTags;
+      if (!combinedTags.length) return;
 
       let stageEntry = stageMap.get(stageLabel);
       if (!stageEntry) {
         stageEntry = { label: stageLabel, order: stageOrder, skills: new Map() };
       }
 
-      skills.forEach((rawTag: string) => {
+      combinedTags.forEach((rawTag: string) => {
         const tag = String(rawTag || "").trim();
         if (!tag) return;
-
-        const existing = skillMap.get(tag) ?? {
-          count: 0,
-          scoreTotal: 0,
-          lastUpdatedAtMs: 0,
-        };
-        existing.count += 1;
-        existing.scoreTotal += masteryRank;
-        existing.lastUpdatedAtMs = Math.max(
-          existing.lastUpdatedAtMs,
-          row.updatedAtMs ?? 0
-        );
-        skillMap.set(tag, existing);
 
         stageEntry?.skills.set(tag, (stageEntry?.skills.get(tag) ?? 0) + 1);
 
@@ -1549,22 +1619,68 @@ export default function ParentDashboard() {
         }
       });
 
+      if (strengthTags.length > 0 || practiceTags.length > 0) {
+        strengthTags.forEach((rawTag: string) => {
+          const tag = String(rawTag || "").trim();
+          if (!tag) return;
+          const existing = strengthSkillMap.get(tag) ?? { count: 0, lastUpdatedAtMs: 0 };
+          existing.count += 1;
+          existing.lastUpdatedAtMs = Math.max(existing.lastUpdatedAtMs, row.updatedAtMs ?? 0);
+          strengthSkillMap.set(tag, existing);
+        });
+        practiceTags.forEach((rawTag: string) => {
+          const tag = String(rawTag || "").trim();
+          if (!tag) return;
+          const existing = practiceSkillMap.get(tag) ?? { count: 0, lastUpdatedAtMs: 0 };
+          existing.count += 1;
+          existing.lastUpdatedAtMs = Math.max(existing.lastUpdatedAtMs, row.updatedAtMs ?? 0);
+          practiceSkillMap.set(tag, existing);
+        });
+      } else {
+        fallbackTags.forEach((rawTag: string) => {
+          const tag = String(rawTag || "").trim();
+          if (!tag) return;
+          const existing = inferredSkillMap.get(tag) ?? {
+            count: 0,
+            scoreTotal: 0,
+            lastUpdatedAtMs: 0,
+          };
+          existing.count += 1;
+          existing.scoreTotal += masteryRank;
+          existing.lastUpdatedAtMs = Math.max(
+            existing.lastUpdatedAtMs,
+            row.updatedAtMs ?? 0
+          );
+          inferredSkillMap.set(tag, existing);
+        });
+      }
+
       stageMap.set(stageLabel, stageEntry);
     });
 
-    const skills = Array.from(skillMap.entries()).map(([tag, data]) => ({
+    const hasExplicitSkills = strengthSkillMap.size > 0 || practiceSkillMap.size > 0;
+    const inferredSkills = Array.from(inferredSkillMap.entries()).map(([tag, data]) => ({
       tag,
       count: data.count,
       avgScore: data.scoreTotal / data.count,
       lastUpdatedAtMs: data.lastUpdatedAtMs,
     }));
-
-    const strengths = [...skills]
-      .sort((a, b) => b.avgScore - a.avgScore || b.count - a.count)
-      .slice(0, 6);
-    const needsPractice = [...skills]
-      .sort((a, b) => a.avgScore - b.avgScore || b.count - a.count)
-      .slice(0, 6);
+    const strengths = hasExplicitSkills
+      ? Array.from(strengthSkillMap.entries())
+          .map(([tag, data]) => ({ tag, count: data.count, lastUpdatedAtMs: data.lastUpdatedAtMs }))
+          .sort((a, b) => b.count - a.count || b.lastUpdatedAtMs - a.lastUpdatedAtMs)
+          .slice(0, 6)
+      : [...inferredSkills]
+          .sort((a, b) => b.avgScore - a.avgScore || b.count - a.count)
+          .slice(0, 6);
+    const needsPractice = hasExplicitSkills
+      ? Array.from(practiceSkillMap.entries())
+          .map(([tag, data]) => ({ tag, count: data.count, lastUpdatedAtMs: data.lastUpdatedAtMs }))
+          .sort((a, b) => b.count - a.count || b.lastUpdatedAtMs - a.lastUpdatedAtMs)
+          .slice(0, 6)
+      : [...inferredSkills]
+          .sort((a, b) => a.avgScore - b.avgScore || b.count - a.count)
+          .slice(0, 6);
 
     const stageGroups = Array.from(stageMap.values())
       .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
@@ -1587,7 +1703,7 @@ export default function ParentDashboard() {
       needsPractice,
       stageGroups,
       recentUpdates: recent,
-      totalSkills: skills.length,
+      totalSkills: hasExplicitSkills ? strengthSkillMap.size + practiceSkillMap.size : inferredSkills.length,
     };
   }, [phonicsProgressByCourse]);
 
@@ -1669,6 +1785,14 @@ export default function ParentDashboard() {
         stageLabel: label,
         stageOrder: order,
         mastery: matchedDoc?.mastery ?? "",
+        strengthChips: Array.isArray(matchedDoc?.strengthSubskills)
+          ? matchedDoc.strengthSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : [],
+        practiceChips: Array.isArray(matchedDoc?.needsPracticeSubskills)
+          ? matchedDoc.needsPracticeSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+          : Array.isArray(matchedDoc?.practiceSubskills)
+            ? matchedDoc.practiceSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
+            : [],
         focusChips: Array.isArray(matchedDoc?.selectedSubskills)
           ? matchedDoc.selectedSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
@@ -1944,6 +2068,15 @@ export default function ParentDashboard() {
       const courseId = String(enr.courseId || "").trim();
       const fallbackLabel = String(enr.courseLabel || enr.courseName || "").trim();
       const label = courseId ? formatCourseLabel(courseId, fallbackLabel) : fallbackLabel || "Course";
+      const teacherId = String(
+        enr.teacherId ||
+          enr.teacherUid ||
+          enr.teacherUserId ||
+          (enr as any).teacher ||
+          ""
+      ).trim();
+      const teacherProfile = teacherId ? teacherLookupQuery.data?.[teacherId] : undefined;
+      const teacherName = teacherProfile?.name || "";
       const rawFee =
         enr.feePerClass ??
         enr.feePerSession ??
@@ -1957,9 +2090,11 @@ export default function ParentDashboard() {
         courseLabel: label,
         status: String(enr.status || "active"),
         fee,
+        teacherId,
+        teacherName,
       };
     });
-  }, [enrollmentsQuery.data, selectedKidId, coursesLookupQuery.data]);
+  }, [enrollmentsQuery.data, selectedKidId, coursesLookupQuery.data, teacherLookupQuery.data]);
 
   const renderProfileContent = () => {
     const kidName = selectedKid?.fullName || "Child";
@@ -2016,6 +2151,9 @@ export default function ParentDashboard() {
                   <div>
                     <div className="font-semibold">{enr.courseLabel}</div>
                     <div className="text-xs text-slate-500">Status: {enr.status}</div>
+                    <div className="text-xs text-slate-500">
+                      Teacher: {enr.teacherName || "Assigned soon"}
+                    </div>
                   </div>
                   <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Fee per class: {enr.fee !== null ? `₹${enr.fee.toLocaleString("en-IN")}` : "—"}
@@ -2561,15 +2699,17 @@ export default function ParentDashboard() {
                       const completedStages = stageSummaries.filter(
                         (stage) => (stage.progressPct ?? 0) >= 100
                       ).length;
-                      const currentStage =
-                        stageSummaries.find(
-                          (stage) => (stage.progressPct ?? 0) > 0 && (stage.progressPct ?? 0) < 100
-                        ) ?? stageSummaries.find((stage) => (stage.progressPct ?? 0) === 0) ?? null;
-                      const nextStage = currentStage
-                        ? stageSummaries.find((stage) => stage.order > (currentStage.order ?? 0)) ?? null
+                      const stagesWithProgress = stageSummaries.filter(
+                        (stage) => (stage.progressPct ?? 0) > 0
+                      );
+                      const activeStage =
+                        stagesWithProgress.length > 0
+                          ? stagesWithProgress[stagesWithProgress.length - 1]
+                          : stageSummaries.find((stage) => (stage.progressPct ?? 0) === 0) ?? null;
+                      const nextStage = activeStage
+                        ? stageSummaries.find((stage) => stage.order > (activeStage.order ?? 0)) ?? null
                         : null;
 
-                      const showLimit = 10;
                       const inProgressCount = selectedCourse.rows.filter(
                         (row: any) => row.status === "in_progress"
                       ).length;
@@ -2583,10 +2723,45 @@ export default function ParentDashboard() {
                                 (row: any) => row.status === "in_progress"
                               )
                             : selectedCourse.rows;
-                      const topicsToShow = curriculumExpanded
-                        ? filteredRows
-                        : filteredRows.slice(0, showLimit);
-                      const showMore = filteredRows.length > showLimit;
+                      const lessonStageGroups = new Map<
+                        string,
+                        { label: string; order: number; rows: any[] }
+                      >();
+                      filteredRows.forEach((row: any) => {
+                        const label = row.stageLabel || "Lessons";
+                        const order =
+                          typeof row.stageOrder === "number" && row.stageOrder > 0
+                            ? row.stageOrder
+                            : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
+                        const key = `${order}__${label}`;
+                        const existing = lessonStageGroups.get(key);
+                        if (existing) {
+                          existing.rows.push(row);
+                        } else {
+                          lessonStageGroups.set(key, { label, order, rows: [row] });
+                        }
+                      });
+                      const stageSummaryByKey = new Map(
+                        stageSummaries.map((stage) => [
+                          `${stage.order ?? 0}__${stage.label}`,
+                          stage,
+                        ])
+                      );
+                      const lessonStageKeys = Array.from(lessonStageGroups.keys());
+                      const collapseAllStages = () => {
+                        const next: Record<string, boolean> = {};
+                        lessonStageKeys.forEach((key) => {
+                          next[key] = true;
+                        });
+                        setCollapsedStages(next);
+                      };
+                      const expandAllStages = () => {
+                        const next: Record<string, boolean> = {};
+                        lessonStageKeys.forEach((key) => {
+                          next[key] = false;
+                        });
+                        setCollapsedStages(next);
+                      };
 
                       return (
                         <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
@@ -2641,11 +2816,11 @@ export default function ParentDashboard() {
                               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                                 <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 via-sky-50 to-indigo-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
                                   <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                                    Current Stage
+                                    Highest Stage Reached
                                   </div>
                                   <div className="mt-1 text-sm font-semibold text-slate-900">
-                                    {currentStage
-                                      ? stripStagePrefix(currentStage.label, currentStage.order ?? 0)
+                                    {activeStage
+                                      ? stripStagePrefix(activeStage.label, activeStage.order ?? 0)
                                       : "—"}
                                   </div>
                                 </div>
@@ -2686,7 +2861,7 @@ export default function ParentDashboard() {
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-2 text-xs">
+                            <div className="flex flex-wrap items-center gap-2 text-xs">
                               {[
                                 { key: "all", label: `All (${selectedCourse.totalTopics})` },
                                 { key: "in_progress", label: `In progress (${inProgressCount})` },
@@ -2705,58 +2880,136 @@ export default function ParentDashboard() {
                                   {opt.label}
                                 </button>
                               ))}
+                              <button
+                                type="button"
+                                onClick={expandAllStages}
+                                className="px-2 py-1 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
+                              >
+                                Expand all
+                              </button>
+                              <button
+                                type="button"
+                                onClick={collapseAllStages}
+                                className="px-2 py-1 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
+                              >
+                                Collapse all
+                              </button>
                             </div>
 
-                            {topicsToShow.length === 0 ? (
+                            {filteredRows.length === 0 ? (
                               <div className="text-sm text-gray-600 dark:text-gray-400">
                                 No lessons match this filter yet.
                               </div>
                             ) : (
-                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                {topicsToShow.map((row: any) => {
-                                  const masteryText = formatMasteryLabel(row.mastery) || "Getting started";
-                                  const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
-                                  const masteryStyles =
-                                    masteryLower === "mastered"
-                                      ? "bg-emerald-100 text-emerald-700"
-                                      : masteryLower && masteryLower !== "not_started"
-                                        ? "bg-blue-100 text-blue-700"
-                                        : "bg-slate-100 text-slate-600";
-                                  return (
-                                    <button
-                                      key={row.id}
-                                      type="button"
-                                      onClick={() => {
-                                        setSelectedCurriculumTopic({
-                                          ...row,
-                                          courseLabel: selectedCourse.courseLabel,
-                                        });
-                                        setCurriculumTopicModalOpen(true);
-                                      }}
-                                      className="text-left rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 hover:border-indigo-300 hover:shadow-sm transition space-y-2"
-                                    >
-                                      <div className="text-xs font-semibold text-gray-900 dark:text-gray-100 truncate">
-                                        {row.label}
+                              <div className="space-y-4">
+                                {Array.from(lessonStageGroups.values())
+                                  .sort((a, b) =>
+                                    a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)
+                                  )
+                                  .map((group) => {
+                                    const key = `${group.order}__${group.label}`;
+                                    const summary = stageSummaryByKey.get(key);
+                                    const isCollapsed = collapsedStages[key] ?? true;
+                                    return (
+                                      <div key={key} className="space-y-2">
+                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                                          <div className="text-sm font-semibold text-slate-800">
+                                            {stripStagePrefix(group.label, group.order)}
+                                          </div>
+                                          <div className="flex flex-wrap items-center gap-2">
+                                            {summary ? (
+                                              <>
+                                                <span>
+                                                  {summary.completedCount}/{summary.totalCount} lessons
+                                                </span>
+                                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
+                                                  {Math.round(summary.progressPct ?? 0)}%
+                                                </span>
+                                              </>
+                                            ) : (
+                                              <span>{group.rows.length} lessons</span>
+                                            )}
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setCollapsedStages((prev) => ({
+                                                  ...prev,
+                                                  [key]: !prev[key],
+                                                }))
+                                              }
+                                              className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600"
+                                            >
+                                              {isCollapsed ? "Expand" : "Collapse"}
+                                            </button>
+                                          </div>
+                                        </div>
+                                        {!isCollapsed && (
+                                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                            {group.rows.map((row: any) => {
+                                            const masteryText = formatMasteryLabel(row.mastery) || "Getting started";
+                                            const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
+                                            const masteryStyles =
+                                              masteryLower === "mastered"
+                                                ? "bg-emerald-100 text-emerald-700"
+                                                : masteryLower && masteryLower !== "not_started"
+                                                  ? "bg-blue-100 text-blue-700"
+                                                  : "bg-slate-100 text-slate-600";
+                                            const accentDot =
+                                              masteryLower === "mastered"
+                                                ? "bg-emerald-500"
+                                                : masteryLower && masteryLower !== "not_started"
+                                                  ? "bg-blue-500"
+                                                  : "bg-slate-300";
+                                            return (
+                                              <button
+                                                key={row.id}
+                                                type="button"
+                                                onClick={() => {
+                                                  setSelectedCurriculumTopic({
+                                                    ...row,
+                                                    courseLabel: selectedCourse.courseLabel,
+                                                  });
+                                                  setCurriculumTopicModalOpen(true);
+                                                }}
+                                                className="group relative text-left rounded-xl border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                                              >
+                                                <div className="flex items-start justify-between gap-2">
+                                                  <div className="flex items-center gap-2">
+                                                    <span className={`mt-1 h-2 w-2 rounded-full ${accentDot}`} />
+                                                    <div className="text-xs font-semibold text-slate-900 truncate">
+                                                      {row.label}
+                                                    </div>
+                                                  </div>
+                                                  <span className="text-[10px] text-slate-400 group-hover:text-indigo-500">
+                                                    View
+                                                  </span>
+                                                </div>
+                                                <div className="mt-2 flex items-center justify-between">
+                                                  <div
+                                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${masteryStyles}`}
+                                                  >
+                                                    {masteryText}
+                                                  </div>
+                                                  <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
+                                                    <div
+                                                      className="h-full rounded-full bg-indigo-400"
+                                                      style={{
+                                                        width: `${Math.min(
+                                                          100,
+                                                          Math.max(8, masteryToPercent(row.mastery) ?? 8)
+                                                        )}%`,
+                                                      }}
+                                                    />
+                                                  </div>
+                                                </div>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                        )}
                                       </div>
-                                      <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${masteryStyles}`}>
-                                        {masteryText}
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                            {showMore && (
-                              <div>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => setCurriculumExpanded((prev) => !prev)}
-                                >
-                                  {curriculumExpanded
-                                    ? "Show less"
-                                    : `Show all lessons (${selectedCourse.totalTopics})`}
-                                </Button>
+                                    );
+                                  })}
                               </div>
                             )}
                           </div>
