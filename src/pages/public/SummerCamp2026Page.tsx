@@ -5,10 +5,10 @@ import { Link } from 'react-router-dom';
 const WHATSAPP_NUMBER = '919618398383';
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi! I want to know more about Summer English Camp 2026.')}`;
 const QUICK_ANSWERS = [
-  { label: 'Dates', value: 'March–April 2026 (final batch dates announcing soon)' },
-  { label: 'Fees', value: 'Shared after assessment; early-bird offers may apply' },
+  { label: 'Dates', value: 'April 1–June 15, 2026 (10 weeks)' },
+  { label: 'Fees', value: 'Same as standard group and premium 1:1 pricing; shared after assessment' },
   { label: 'Age group', value: 'Ages 3–12' },
-  { label: 'Format', value: 'Live online (1:1 or small group)' },
+  { label: 'Format', value: 'Live online (group classes or premium 1:1)' },
   { label: 'Daily time', value: '45-minute live class + 10–15 minutes practice' },
   { label: 'Outcomes', value: 'Reading fluency, grammar confidence, clear speaking' },
 ];
@@ -37,7 +37,7 @@ const FAQS = [
   },
   {
     question: 'Can I enroll my child for only phonics or only speaking?',
-    answer: "The camp is designed as an integrated program covering all three skills for maximum impact. However, mentors can emphasize specific areas based on your child's needs. Contact us to discuss custom options."
+    answer: "The camp is designed as an integrated program covering all three skills for maximum impact. However, mentors can emphasize specific areas based on your child's needs."
   },
   {
     question: 'What devices do we need?',
@@ -45,11 +45,11 @@ const FAQS = [
   },
   {
     question: 'How much does the camp cost?',
-    answer: 'Fees are shared after a short assessment to match the right level. Early registrations may receive priority booking and special offers.'
+    answer: 'Fees follow our standard group and premium 1:1 pricing. They are shared after a short assessment to match the right level.'
   },
   {
     question: 'Will my child get a certificate at the end?',
-    answer: 'Yes! Every child who completes the camp receives a digital certificate of achievement, a personalized progress portfolio, and a showcase video highlighting their best work during the 7 weeks.'
+    answer: 'Yes! Every child who completes the camp receives a digital certificate of achievement, a personalized progress portfolio, and a showcase video highlighting their best work during the 10 weeks.'
   },
   {
     question: 'What happens after the camp ends?',
@@ -90,8 +90,8 @@ const webPageSchema = {
   '@type': 'WebPage',
   '@id': 'https://tinystepslearning.com/summer-english-camp-2026#webpage',
   url: 'https://tinystepslearning.com/summer-english-camp-2026',
-  name: 'Summer English Camp 2026 | Ages 3–12 | Tiny Steps Learning',
-  description: '7-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors.',
+  name: 'Online Summer English Camp 2026 | Ages 3–12 | Tiny Steps Learning',
+  description: '10-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors.',
   inLanguage: 'en-IN',
   publisher: {
     '@id': 'https://tinystepslearning.com/#organization'
@@ -121,8 +121,8 @@ const faqSchema = {
 export default function SummerCamp2026Page() {
   useEffect(() => {
     applySeo({
-      title: "Summer English Camp 2026 | Ages 3–12 | Phonics, Grammar & Speaking | Tiny Steps",
-      description: "7-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors. Limited seats available.",
+      title: "Online Summer English Camp 2026 | Ages 3–12 | Phonics, Grammar & Speaking | Tiny Steps",
+      description: "10-week online summer camp for kids ages 3–12. Build reading fluency, grammar confidence, and speaking skills through daily live classes with expert mentors. Limited seats available.",
       canonicalPath: "/summer-english-camp-2026",
       ogType: "website",
       jsonLd: [organizationSchema, breadcrumbSchema, webPageSchema, faqSchema],
@@ -130,43 +130,44 @@ export default function SummerCamp2026Page() {
   }, []);
 
   return (
-    <div className="container mx-auto px-6 py-12 max-w-5xl">
-      {/* Hero Section */}
-      <section className="mb-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-[#2d5016] mb-4">
-          Summer English Camp 2026
-        </h1>
+    <>
+      <div className="container mx-auto px-6 pt-12 pb-24 md:pb-12 max-w-5xl">
+        {/* Hero Section */}
+        <section className="mb-16 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-[#2d5016] mb-4">
+            Summer English Camp 2026
+          </h1>
         <p className="text-xl md:text-2xl text-gray-700 mb-6 max-w-3xl mx-auto">
-          Give your child a head start with <strong>confident reading, clear speaking, and strong grammar</strong> in just 7 weeks
+          Give your child a head start with <strong>confident reading, clear speaking, and strong grammar</strong> in 10 weeks
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
-          <Link
-            to="/contact"
-            className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
-          >
-            Book Free Assessment
-          </Link>
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-3 px-8 rounded-lg transition"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-              <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            Enquire on WhatsApp
-          </a>
-        </div>
-        <p className="text-sm text-gray-500">Limited seats • Ages 3–12 • Live 1:1 and small group classes</p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
+            <Link
+              to="/contact"
+              className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
+            >
+              Book Free Assessment
+            </Link>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 border-2 border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white font-bold py-3 px-8 rounded-lg transition"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Enquire on WhatsApp
+            </a>
+          </div>
+        <p className="text-sm text-gray-500">Limited seats • Ages 3–12 • Group classes + premium 1:1</p>
       </section>
 
       {/* AEO Direct Answer Block */}
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-2">What is Summer English Camp 2026?</h2>
         <p className="text-gray-700 leading-relaxed">
-          Summer English Camp 2026 is a 7-week online program for children ages 3–12 to build reading fluency, grammar confidence, and public speaking skills. Each child gets daily live classes with expert mentors, guided practice, and stage-based progress updates for parents. Perfect for beginners or students looking to accelerate their English journey.
+          Summer English Camp 2026 is a 10-week online program for children ages 3–12 following our core curriculum in phonics, grammar, and public speaking. Children attend live mentor-led classes with guided practice and stage-based progress updates for parents. Group classes are the default, with a premium 1:1 option.
         </p>
       </section>
 
@@ -205,10 +206,10 @@ export default function SummerCamp2026Page() {
       <section className="mb-12 bg-yellow-50 border border-yellow-300 p-6 rounded-lg">
         <h2 className="text-2xl font-bold text-[#2d5016] mb-3">📅 Camp Dates</h2>
         <p className="text-gray-700 mb-2">
-          <strong>When:</strong> March/April 2026 (final batch dates announcing soon)
+          <strong>When:</strong> April 1–June 15, 2026
         </p>
         <p className="text-gray-700 mb-2">
-          <strong>Duration:</strong> 7 weeks, daily live classes
+          <strong>Duration:</strong> 10 weeks, daily live classes
         </p>
         <p className="text-sm text-gray-600 mt-4">
           💡 <strong>Early bird reservations open now.</strong> <Link to="/contact" className="text-[#4a7c2c] underline font-semibold">Book your free assessment</Link> to secure your child's spot before seats fill up.
@@ -327,7 +328,7 @@ export default function SummerCamp2026Page() {
       <section className="mb-12">
         <h2 className="text-3xl font-bold text-[#2d5016] mb-6">🎯 Measurable Learning Outcomes</h2>
         <p className="text-gray-700 mb-6">
-          By the end of the 7-week camp, your child will achieve visible, measurable progress:
+          By the end of the 10-week camp, your child will achieve visible, measurable progress:
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
@@ -410,7 +411,7 @@ export default function SummerCamp2026Page() {
             <div>
               <h3 className="font-bold text-lg text-gray-900 mb-1">Final Camp Certificate & Portfolio</h3>
               <p className="text-gray-700 text-sm">
-                At the end of 7 weeks, your child receives a digital certificate, a showcase video of their best work, and a personalized learning portfolio to continue their journey.
+                At the end of 10 weeks, your child receives a digital certificate, a showcase video of their best work, and a personalized learning portfolio to continue their journey.
               </p>
             </div>
           </div>
@@ -472,51 +473,72 @@ export default function SummerCamp2026Page() {
           </div>
         </div>
       </section>
-
       {/* CTA Footer */}
-      <section className="bg-[#2d5016] text-white p-8 md:p-12 rounded-lg text-center">
-        <h2 className="text-3xl font-bold mb-4">Ready to Give Your Child a Confident English Summer?</h2>
-        <p className="mb-6 text-lg max-w-2xl mx-auto">
-          Limited seats available. Book a free assessment today to understand your child's current level and secure their spot in Summer Camp 2026.
-        </p>
-        <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
-          <Link
-            to="/contact"
-            className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
-          >
-            Book Free Assessment
-          </Link>
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-4 px-8 rounded-lg transition text-lg inline-flex items-center justify-center gap-2"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-              <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            Enquire on WhatsApp
-          </a>
+        <section className="bg-[#2d5016] text-white p-8 md:p-12 rounded-lg text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to Give Your Child a Confident English Summer?</h2>
+          <p className="mb-6 text-lg max-w-2xl mx-auto">
+            Limited seats available. Book a free assessment today to understand your child's current level and secure their spot in Summer Camp 2026.
+          </p>
+          <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
+            <Link
+              to="/contact"
+              className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
+            >
+              Book Free Assessment
+            </Link>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-2 border-white text-white hover:bg-white hover:text-[#2d5016] font-bold py-4 px-8 rounded-lg transition text-lg inline-flex items-center justify-center gap-2"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                <path d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              Enquire on WhatsApp
+            </a>
+          </div>
+          <div className="flex flex-wrap gap-4 justify-center text-sm">
+            <Link to="/courses" className="text-white hover:text-gray-200 underline">
+              Explore Courses
+            </Link>
+            <span className="text-gray-400">•</span>
+            <Link to="/curriculum" className="text-white hover:text-gray-200 underline">
+              View Curriculum
+            </Link>
+            <span className="text-gray-400">•</span>
+            <Link to="/phonics" className="text-white hover:text-gray-200 underline">
+              Phonics Program
+            </Link>
+            <span className="text-gray-400">•</span>
+            <Link to="/pricing" className="text-white hover:text-gray-200 underline">
+              Pricing Info
+            </Link>
+          </div>
+        </section>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="flex items-center justify-between gap-3 rounded-t-2xl border border-gray-200 bg-white/95 px-3 py-3 shadow-lg backdrop-blur">
+            <Link
+              to="/contact"
+              className="flex-1 rounded-full bg-[#4a7c2c] px-4 py-2 text-center text-sm font-semibold text-white"
+            >
+              Book Free Assessment
+            </Link>
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 rounded-full border-2 border-[#25D366] px-4 py-2 text-center text-sm font-semibold text-[#25D366]"
+            >
+              WhatsApp
+            </a>
+          </div>
         </div>
-        <div className="flex flex-wrap gap-4 justify-center text-sm">
-          <Link to="/courses" className="text-white hover:text-gray-200 underline">
-            Explore Courses
-          </Link>
-          <span className="text-gray-400">•</span>
-          <Link to="/curriculum" className="text-white hover:text-gray-200 underline">
-            View Curriculum
-          </Link>
-          <span className="text-gray-400">•</span>
-          <Link to="/phonics" className="text-white hover:text-gray-200 underline">
-            Phonics Program
-          </Link>
-          <span className="text-gray-400">•</span>
-          <Link to="/pricing" className="text-white hover:text-gray-200 underline">
-            Pricing Info
-          </Link>
-        </div>
-      </section>
-    </div>
+      </div>
+    </>
   );
 }

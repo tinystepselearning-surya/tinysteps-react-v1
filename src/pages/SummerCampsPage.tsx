@@ -7,8 +7,8 @@ const PROGRAMS = [
     id: 'reading-jumpstart',
     title: 'Reading Jumpstart',
     ages: 'Ages 4–7',
-    duration: '3 weeks',
-    focus: 'Foundational reading fluency + decoding',
+    duration: '10 weeks',
+    focus: 'Full curriculum with extra focus on foundational reading fluency + decoding',
     outcomes: [
       'Blend CVC words confidently',
       'Read simple sentences with accuracy',
@@ -19,8 +19,8 @@ const PROGRAMS = [
     id: 'phonics-foundations',
     title: 'Phonics Foundations',
     ages: 'Ages 4–8',
-    duration: '3 weeks',
-    focus: 'SATPIN sounds + blending routines',
+    duration: '10 weeks',
+    focus: 'Full curriculum with extra focus on SATPIN sounds + blending routines',
     outcomes: [
       'Master core sounds',
       'Blend faster with fewer prompts',
@@ -31,8 +31,8 @@ const PROGRAMS = [
     id: 'confident-speaking',
     title: 'Confident Speaking',
     ages: 'Ages 6–12',
-    duration: '3 weeks',
-    focus: 'Clear speech + expressive communication',
+    duration: '10 weeks',
+    focus: 'Full curriculum with extra focus on clear speech + expressive communication',
     outcomes: [
       'Speak with confidence in 60–90 seconds',
       'Use structure: intro, body, close',
@@ -45,7 +45,7 @@ const BATCHES = [
   {
     id: 'reading-jumpstart/batch-may-2026-morning-ist',
     label: 'Reading Jumpstart • Morning IST',
-    dates: 'May 4–23, 2026',
+    dates: 'Apr 1–Jun 15, 2026',
     time: '9:00–9:40 AM IST',
     mode: 'Online',
     capacity: 'Max 6 kids',
@@ -53,7 +53,7 @@ const BATCHES = [
   {
     id: 'reading-jumpstart/batch-may-2026-evening-ist',
     label: 'Reading Jumpstart • Evening IST',
-    dates: 'May 4–23, 2026',
+    dates: 'Apr 1–Jun 15, 2026',
     time: '6:00–6:40 PM IST',
     mode: 'Online',
     capacity: 'Max 6 kids',
@@ -61,7 +61,7 @@ const BATCHES = [
   {
     id: 'phonics-foundations/batch-may-2026-morning-ist',
     label: 'Phonics Foundations • Morning IST',
-    dates: 'May 4–23, 2026',
+    dates: 'Apr 1–Jun 15, 2026',
     time: '10:00–10:40 AM IST',
     mode: 'Online',
     capacity: 'Max 6 kids',
@@ -72,22 +72,22 @@ const FAQS = [
   {
     question: 'What is this summer camp?',
     answer:
-      'Tiny Steps Summer Camps are short, structured online programs (3 weeks) focused on a single outcome: stronger reading, clearer phonics, or confident speaking. Children attend live mentor-led sessions with clear milestones, practice tasks, and stage-based feedback so parents can see progress quickly.',
+      'Tiny Steps Summer Camps are 10-week online programs (April 1–June 15, 2026) following our core curriculum in phonics, grammar, and public speaking. Group classes are the default, with a premium 1:1 option for faster personalization.',
   },
   {
     question: 'Who is it for?',
     answer:
-      'These camps are for ages 4–12, grouped by ability level. If your child is just starting to read, the Reading Jumpstart or Phonics Foundations tracks work best. If your child reads but needs clarity or confidence, the Confident Speaking camp is ideal.',
+      'These camps are for ages 4–12, grouped by ability level after a quick assessment. If your child is just starting to read, the Reading Jumpstart or Phonics Foundations tracks work best. If your child reads but needs clarity or confidence, the Confident Speaking camp is ideal.',
   },
   {
     question: 'How are group classes different from 1:1?',
     answer:
-      'Group classes (1:4–1:6) focus on motivation and peer learning at a lower fee per child, while premium 1:1 is faster and fully personalized. Both include stage-based progress updates and teacher feedback, but 1:1 allows deeper customization.',
+      'Group classes (1:4–1:6) focus on motivation and peer learning at a lower fee per child, while premium 1:1 is faster and fully personalized. Fees follow our standard group and premium 1:1 pricing. Both include stage-based progress updates and teacher feedback, but 1:1 allows deeper customization.',
   },
   {
     question: 'What happens if we miss a class?',
     answer:
-      'We share quick recap notes and practice tasks after each class. If a child misses a session, mentors send a short catch‑up plan so they can rejoin the next class without falling behind.',
+      'We share quick recap notes and practice tasks after each class. If a child misses a session, mentors send a short catch‑up plan so they can rejoin smoothly without falling behind.',
   },
 ];
 
@@ -96,6 +96,7 @@ export default function SummerCampsPage() {
     const faqSchema = {
       '@context': 'https://schema.org',
       '@type': 'FAQPage',
+      '@id': 'https://tinystepslearning.com/summer-camps#faq',
       mainEntity: FAQS.map((faq) => ({
         '@type': 'Question',
         name: faq.question,
@@ -141,9 +142,9 @@ export default function SummerCampsPage() {
     };
 
     applySeo({
-      title: 'Online Summer Camps for Kids (Reading, Phonics, Speaking) | Tiny Steps',
+      title: 'Online Summer Camps for Kids (Ages 4–12) | 10-Week Reading, Phonics & Speaking',
       description:
-        '3‑week online summer camps for ages 4–12. Reading, phonics, and confident speaking tracks with group classes or premium 1:1. Clear outcomes, stage-based progress updates, and live mentor feedback.',
+        'Online 10‑week summer camps for ages 4–12 with reading, phonics, and speaking tracks. Choose group batches or premium 1:1 for faster progress, with clear outcomes and mentor feedback.',
       canonicalPath: '/summer-camps',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, courseListSchema, faqSchema],
@@ -151,18 +152,24 @@ export default function SummerCampsPage() {
   }, []);
 
   return (
-    <div className="bg-white">
+    <div className="bg-white pb-24 md:pb-0">
       <section className="relative overflow-hidden bg-gradient-to-br from-sky-50 via-white to-emerald-50">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
             Summer Camps 2026
           </p>
           <h1 className="mt-3 text-4xl font-bold text-gray-900 md:text-5xl">
-            3 weeks to stronger reading + confident speaking
+            10 weeks to stronger reading + clearer phonics + confident speaking
           </h1>
           <p className="mt-4 max-w-3xl text-lg text-gray-700">
             Online summer camps for ages 4–12. Choose group classes for motivation
             and affordability, or premium 1:1 for faster, personalized progress.
+          </p>
+          <p className="mt-3 text-sm text-gray-600">
+            Summer camp runs April 1–June 15, 2026 (10 weeks). Group classes are the default, with a premium 1:1 option.
+          </p>
+          <p className="mt-1 text-xs text-gray-600">
+            Fees follow our standard group and premium 1:1 pricing.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
@@ -171,6 +178,9 @@ export default function SummerCampsPage() {
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Ages 8–10</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Ages 10–12</span>
           </div>
+          <p className="mt-2 text-xs text-gray-600">
+            Age ranges are guidelines; final grouping is based on level after a quick assessment.
+          </p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
@@ -222,22 +232,30 @@ export default function SummerCampsPage() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-6xl px-6 pt-10">
+        <div className="rounded-2xl border border-emerald-100 bg-white p-4 text-sm text-gray-700">
+          Prefer the full 10-week reading + grammar + speaking camp for ages 3–12?{' '}
+          <Link to="/summer-english-camp-2026" className="font-semibold text-emerald-700 hover:text-emerald-800">
+            View Summer English Camp 2026 →
+          </Link>
+        </div>
+      </section>
+
       <section className="mx-auto max-w-6xl px-6 py-12">
         <div className="grid gap-6 md:grid-cols-2">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
             <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
             <p className="mt-2 text-sm text-gray-700">
-              A 3‑week online camp with a single, clear outcome: better reading, stronger phonics,
-              or confident speaking. Each week includes live mentor‑led classes, practice tasks,
-              and parent‑friendly progress updates so you can see improvement quickly.
+              A 10‑week online summer camp following our core curriculum in phonics, grammar, and public
+              speaking. Delivered primarily in group classes with a premium 1:1 option, plus mentor‑led
+              sessions, practice tasks, and parent‑friendly progress updates.
             </p>
           </div>
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
             <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
             <p className="mt-2 text-sm text-gray-700">
-              Children finish with measurable progress: clearer decoding, smoother reading, or stronger
-              speaking confidence. You’ll receive stage-based progress updates and teacher feedback that show
-              mastered skills and next steps.
+              Children finish with measurable progress across phonics, grammar, and speaking. You’ll receive
+              stage-based progress updates and teacher feedback that show mastered skills and next steps.
             </p>
           </div>
         </div>
@@ -246,7 +264,7 @@ export default function SummerCampsPage() {
       <section className="mx-auto max-w-6xl px-6 pb-12">
         <h2 className="text-2xl font-semibold text-gray-900">Choose a program</h2>
         <p className="mt-2 text-sm text-gray-600">
-          Pick the camp that matches your child’s current level and goal.
+          Pick the focus track that matches your child’s current level and goal. All tracks follow the full curriculum.
         </p>
         <div className="mt-6 grid gap-5 md:grid-cols-3">
           {PROGRAMS.map((program) => (
@@ -305,6 +323,25 @@ export default function SummerCampsPage() {
           ))}
         </div>
       </section>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="flex items-center justify-between gap-3 rounded-t-2xl border border-gray-200 bg-white/95 px-3 py-3 shadow-lg backdrop-blur">
+            <Link
+              to="/?book=1"
+              className="flex-1 rounded-full bg-emerald-600 px-4 py-2 text-center text-sm font-semibold text-white"
+            >
+              Book Free Reading Check
+            </Link>
+            <a
+              href="https://wa.me/919618398383"
+              className="flex-1 rounded-full border border-emerald-600 px-4 py-2 text-center text-sm font-semibold text-emerald-700"
+            >
+              WhatsApp
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

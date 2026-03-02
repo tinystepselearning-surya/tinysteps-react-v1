@@ -180,7 +180,7 @@ export default function HomePage() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026</p>
                 <h2 className="mt-2 text-2xl font-semibold text-gray-900">Online Summer English Camp for ages 3–12</h2>
-                <p className="mt-1 text-sm text-gray-700">Phonics, grammar, and confident speaking in 7 weeks. Limited seats.</p>
+                <p className="mt-1 text-sm text-gray-700">Phonics, grammar, and confident speaking in 10 weeks (Apr 1–Jun 15). Limited seats.</p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link

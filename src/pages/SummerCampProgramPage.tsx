@@ -20,8 +20,8 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     slug: 'reading-jumpstart',
     title: 'Reading Jumpstart',
     ages: 'Ages 4-7',
-    outcome: '3 weeks to stronger decoding and smoother reading',
-    focus: 'Foundational reading fluency and decoding',
+    outcome: '10-week summer camp with extra focus on reading',
+    focus: 'Full curriculum (phonics, grammar, speaking) with extra focus on foundational reading fluency and decoding',
     format: 'Group classes (1:4 or 1:6) or Premium 1:1',
     outcomes: [
       'Blend CVC words confidently',
@@ -42,7 +42,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'What is Reading Jumpstart?',
         answer:
-          'A 3-week online reading camp focused on decoding and fluency. Children learn to blend, read simple sentences, and build daily reading stamina with mentor-led sessions and a clear weekly routine.',
+          'A 10-week online summer camp following our core curriculum with extra focus on decoding and reading fluency. Children learn to blend, read simple sentences, and build daily reading stamina with mentor-led sessions and a clear weekly routine.',
       },
       {
         question: 'Who is it for?',
@@ -65,8 +65,8 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     slug: 'phonics-foundations',
     title: 'Phonics Foundations',
     ages: 'Ages 4-8',
-    outcome: '3 weeks to stronger sounds and confident blending',
-    focus: 'SATPIN sounds, blending routines, and accuracy',
+    outcome: '10-week summer camp with extra focus on phonics',
+    focus: 'Full curriculum (phonics, grammar, speaking) with extra focus on SATPIN sounds, blending routines, and accuracy',
     format: 'Group classes (1:4 or 1:6) or Premium 1:1',
     outcomes: [
       'Master core sounds',
@@ -87,7 +87,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'What is Phonics Foundations?',
         answer:
-          'A 3-week phonics camp that strengthens sound knowledge, blending, and accuracy using guided practice and short daily routines.',
+          'A 10-week summer camp that follows our core curriculum with extra focus on sound knowledge, blending, and accuracy using guided practice and short daily routines.',
       },
       {
         question: 'Who is it for?',
@@ -110,8 +110,8 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     slug: 'confident-speaking',
     title: 'Confident Speaking',
     ages: 'Ages 6-12',
-    outcome: '3 weeks to clearer speech and confident delivery',
-    focus: 'Clear speech, structure, and confidence',
+    outcome: '10-week summer camp with extra focus on speaking',
+    focus: 'Full curriculum (phonics, grammar, speaking) with extra focus on clear speech, structure, and confidence',
     format: 'Group classes (1:4 or 1:6) or Premium 1:1',
     outcomes: [
       'Speak with confidence in 60-90 seconds',
@@ -132,7 +132,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'What is Confident Speaking?',
         answer:
-          'A 3-week speaking camp that helps children speak clearly with structure, better voice control, and confidence in short talks.',
+          'A 10-week summer camp that follows our core curriculum with extra focus on speaking clearly, using structure, and building confidence in short talks.',
       },
       {
         question: 'Who is it for?',
@@ -226,7 +226,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{program.ages}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">3 weeks</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">10 weeks</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Online</span>
           </div>
 
@@ -252,9 +252,9 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
             <p className="mt-2 text-sm text-gray-700">
-              {program.title} is a short, focused online summer camp with mentor-led sessions,
-              simple practice tasks, and stage-based parent feedback. The goal is a clear, visible
-              improvement in a single skill track within 3 weeks.
+              {program.title} is a 10-week online summer camp that follows our core curriculum
+              (phonics, grammar, and speaking) with extra focus on this track. Expect mentor-led
+              sessions, practice tasks, and stage-based parent feedback across the full 10 weeks.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -268,7 +268,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
             <p className="mt-2 text-sm text-gray-700">
               Children make measurable progress through clear milestones and teacher feedback.
-              Expect stronger skills, more confidence, and a clear next-step plan after 3 weeks.
+              Expect stronger skills, more confidence, and a clear next-step plan after 10 weeks.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
