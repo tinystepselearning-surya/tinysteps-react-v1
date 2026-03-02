@@ -2,12 +2,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
 import { formatBlogDate } from '../lib/date';
 import { fetchMdxPosts } from '../content/blogMdx';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
+
+function requestFullscreenSafe() {
+  try {
+    const el: any = document.documentElement;
+    if (el?.requestFullscreen) return el.requestFullscreen();
+    if (el?.webkitRequestFullscreen) return el.webkitRequestFullscreen?.(); // Safari
+  } catch {
+    // ignore
+  }
+  return Promise.resolve();
+}
 
 const FAQS = [
   {
@@ -45,9 +56,11 @@ const FAQS = [
 ];
 
 const BlogPage: FC = () => {
+  const navigate = useNavigate();
   const [topic, setTopic] = useState<'All'|'Phonics'|'Grammar'|'Public Speaking'|'Parent Tips'|'Research'>('All');
   const [sort, setSort] = useState<'Newest'|'Most Popular'|'Most Read'>('Newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const goToChristmasTree = () => navigate('/seasonal/christmas-tree');
   const posts = useMemo(() => {
     const list = blogPosts.filter((p) => topic === 'All' || p.category === topic);
     if (sort === 'Newest') return list.sort((a,b)=> (a.date<b.date?1:-1));
@@ -185,6 +198,39 @@ const BlogPage: FC = () => {
           <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Indian Parents</h1>
           <p className="mt-2 text-base text-gray-700">Expert tips, research‑backed articles, success stories</p>
         </div>
+
+        <section className="mb-6">
+          <div className="overflow-hidden rounded-2xl border bg-white shadow-lg">
+            <div className="relative flex h-28 items-center justify-between md:h-32">
+              <img
+                src="/seasonal/christmas/homepagetile.jpg"
+                alt="Christmas banner"
+                className="absolute inset-0 h-full w-full object-cover"
+                draggable={false}
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30" />
+
+              <div className="relative z-10 flex w-full items-center justify-between px-6">
+                <div className="text-white">
+                  <div className="text-xl font-semibold">Merry Christmas</div>
+                  <div className="text-sm opacity-90">Festive fun: decorate the tree and celebrate!</div>
+                </div>
+
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
+                  onClick={async () => {
+                    await requestFullscreenSafe();
+                    goToChristmasTree();
+                  }}
+                >
+                  Open Game
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section className="mb-6 bg-blue-50 border-l-4 border-[#4a7c2c] p-5 rounded-lg">
           <h2 className="text-lg font-bold text-[#2d5016] mb-2">What will parents find on the Tiny Steps blog?</h2>

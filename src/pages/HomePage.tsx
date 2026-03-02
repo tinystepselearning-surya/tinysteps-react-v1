@@ -109,22 +109,9 @@ const Footer = safeLazy(
   ])
 );
 
-function requestFullscreenSafe() {
-  try {
-    const el: any = document.documentElement;
-    if (el?.requestFullscreen) return el.requestFullscreen();
-    if (el?.webkitRequestFullscreen) return el.webkitRequestFullscreen?.(); // Safari
-  } catch {
-    // ignore
-  }
-  return Promise.resolve();
-}
-
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const goToChristmasTree = () => navigate("/seasonal/christmas-tree");
 
   useEffect(() => {
     if (location.search && location.search.includes("book=1")) {
@@ -185,36 +172,29 @@ export default function HomePage() {
       {/* HERO */}
       <ConversionHero />
 
-      {/* Optional seasonal tile */}
+      {/* Summer Camp CTA */}
       <section className="px-6 py-6">
         <div className="mx-auto max-w-6xl">
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-lg">
-            <div className="relative flex h-28 items-center justify-between md:h-32">
-              <img
-                src="/seasonal/christmas/homepagetile.jpg"
-                alt="Christmas banner"
-                className="absolute inset-0 h-full w-full object-cover"
-                draggable={false}
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30" />
-
-              <div className="relative z-10 flex w-full items-center justify-between px-6">
-                <div className="text-white">
-                  <div className="text-xl font-semibold">Merry Christmas</div>
-                  <div className="text-sm opacity-90">Festive fun: decorate the tree and celebrate!</div>
-                </div>
-
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
-                  onClick={async () => {
-                    await requestFullscreenSafe();
-                    goToChristmasTree();
-                  }}
+          <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-sky-50 p-6 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026</p>
+                <h2 className="mt-2 text-2xl font-semibold text-gray-900">Online Summer English Camp for ages 3–12</h2>
+                <p className="mt-1 text-sm text-gray-700">Phonics, grammar, and confident speaking in 7 weeks. Limited seats.</p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  to="/summer-english-camp-2026"
+                  className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition"
                 >
-                  Open Game
-                </button>
+                  View Camp
+                </Link>
+                <Link
+                  to="/summer-camps"
+                  className="inline-flex items-center justify-center rounded-full border border-emerald-600 px-5 py-2.5 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 transition"
+                >
+                  See Camps
+                </Link>
               </div>
             </div>
           </div>

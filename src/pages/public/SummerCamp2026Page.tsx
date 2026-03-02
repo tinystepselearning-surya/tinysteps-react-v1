@@ -4,6 +4,14 @@ import { Link } from 'react-router-dom';
 
 const WHATSAPP_NUMBER = '919618398383';
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi! I want to know more about Summer English Camp 2026.')}`;
+const QUICK_ANSWERS = [
+  { label: 'Dates', value: 'March–April 2026 (final batch dates announcing soon)' },
+  { label: 'Fees', value: 'Shared after assessment; early-bird offers may apply' },
+  { label: 'Age group', value: 'Ages 3–12' },
+  { label: 'Format', value: 'Live online (1:1 or small group)' },
+  { label: 'Daily time', value: '45-minute live class + 10–15 minutes practice' },
+  { label: 'Outcomes', value: 'Reading fluency, grammar confidence, clear speaking' },
+];
 
 // Single source of truth for FAQ data
 const FAQS = [
@@ -37,7 +45,7 @@ const FAQS = [
   },
   {
     question: 'How much does the camp cost?',
-    answer: 'Pricing will be announced once final dates are confirmed (by end of February). Early registrations through the free assessment may receive priority booking and special offers.'
+    answer: 'Fees are shared after a short assessment to match the right level. Early registrations may receive priority booking and special offers.'
   },
   {
     question: 'Will my child get a certificate at the end?',
@@ -162,6 +170,22 @@ export default function SummerCamp2026Page() {
         </p>
       </section>
 
+      {/* Quick Answers */}
+      <section className="mb-12 bg-white border border-gray-200 p-6 rounded-lg">
+        <h2 className="text-xl font-bold text-[#2d5016] mb-4">Quick answers (for parents)</h2>
+        <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-700">
+          {QUICK_ANSWERS.map(item => (
+            <div key={item.label} className="flex items-start gap-2">
+              <span className="text-[#4a7c2c] font-bold">✓</span>
+              <div>
+                <p className="font-semibold text-gray-900">{item.label}</p>
+                <p>{item.value}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Online-only + Global Availability */}
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-3">Online-only • Open Worldwide</h2>
@@ -181,7 +205,7 @@ export default function SummerCamp2026Page() {
       <section className="mb-12 bg-yellow-50 border border-yellow-300 p-6 rounded-lg">
         <h2 className="text-2xl font-bold text-[#2d5016] mb-3">📅 Camp Dates</h2>
         <p className="text-gray-700 mb-2">
-          <strong>When:</strong> March/April 2026 (exact dates will be announced by end of February 2026)
+          <strong>When:</strong> March/April 2026 (final batch dates announcing soon)
         </p>
         <p className="text-gray-700 mb-2">
           <strong>Duration:</strong> 7 weeks, daily live classes

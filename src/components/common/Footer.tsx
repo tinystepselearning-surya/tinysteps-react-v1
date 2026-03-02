@@ -19,6 +19,7 @@ const courseLinks = [
 const resourceLinks = [
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'Summer Camps', href: '/summer-camps' },
   { label: 'Blog', href: '/blog' },
   { label: 'FAQ', href: '/faq' },
   { label: 'Careers', href: '/careers' },
