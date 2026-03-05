@@ -26,6 +26,7 @@ const SummerCampProgramPage = lazy(() => import('../pages/SummerCampProgramPage'
 const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
+const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForKidsPage'));
 const SummerCamp2026Page = lazy(() => import('../pages/public/SummerCamp2026Page'));
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
@@ -151,6 +152,7 @@ const router = createBrowserRouter(
         { path: 'summer-camps', element: <SummerCampsPage /> },
         { path: 'summer-camps/:programSlug/:batchSlug', element: <SummerCampProgramPage /> },
         { path: 'summer-camps/:programSlug', element: <SummerCampProgramPage /> },
+        { path: 'phonics-classes-for-kids', element: <PhonicsClassesForKidsPage /> },
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },

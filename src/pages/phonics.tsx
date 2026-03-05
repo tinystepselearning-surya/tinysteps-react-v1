@@ -55,23 +55,51 @@ const groupPricingCopy = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1')
   .map((row) => `${row.ratio} ${formatINR(row.monthlyFee)}`)
   .join(', ');
 
-export default function PhonicsPage() {
+type PhonicsSeoOverrides = {
+  title?: string;
+  description?: string;
+  canonicalPath?: string;
+  breadcrumbName?: string;
+};
+
+type PhonicsPageProps = {
+  seoOverrides?: PhonicsSeoOverrides;
+  heroTitleOverride?: string;
+  heroSubtitleOverride?: string;
+  introCopy?: string;
+};
+
+export default function PhonicsPage({
+  seoOverrides,
+  heroTitleOverride,
+  heroSubtitleOverride,
+  introCopy,
+}: PhonicsPageProps) {
+  const title = seoOverrides?.title ?? "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps";
+  const description = seoOverrides?.description ?? "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Stage-based parent insights. Book free trial.";
+  const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics-classes-for-kids";
+  const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics Classes for Kids";
+  const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
+  const heroTitle = heroTitleOverride ?? "Phonics Superstar Program";
+  const heroSubtitle = heroSubtitleOverride ?? "Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights.";
+  const aeoCopy = introCopy ?? "Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 across India. We teach systematic phonics (SATPIN method) with multisensory activities, blending practice, and decodable reading. Most children read their first words within 4-6 lessons.";
+
   useEffect(() => {
     applySeo({
-      title: "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps",
-      description: "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Stage-based parent insights. Book free trial.",
-      canonicalPath: "/phonics",
+      title,
+      description,
+      canonicalPath,
       ogType: "website",
       jsonLd: [
         {
           "@context": "https://schema.org",
           "@type": "Course",
-          "name": "Phonics Superstar Program",
-          "description": "Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
+          "name": "Online Phonics Classes for Kids",
+          "description": "Systematic, multi-sensory phonics taught live with stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
           "provider": {
             "@type": "Organization",
-            "name": "Tiny Steps Online School",
-            "sameAs": "https://tinystepslearning.com"
+            "name": "Tiny Steps Learning",
+            "url": "https://tinystepslearning.com"
           },
           "hasCourseInstance": {
             "@type": "CourseInstance",
@@ -83,7 +111,7 @@ export default function PhonicsPage() {
           "@type": "BreadcrumbList",
           "itemListElement": [
             { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
-            { "@type": "ListItem", "position": 2, "name": "Phonics" }
+            { "@type": "ListItem", "position": 2, "name": breadcrumbName, "item": canonicalUrl }
           ]
         },
         {
@@ -158,23 +186,24 @@ export default function PhonicsPage() {
         }
       ]
     });
-  }, []);
+  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl]);
 
   return (
     <div>
       {/* Answer Block for AEO */}
       <div className="bg-blue-50 border-l-4 border-blue-600 p-6 max-w-4xl mx-auto my-8">
         <p className="text-lg font-semibold text-gray-900">
-          Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 across India. 
-          We teach systematic phonics (SATPIN method) with multisensory activities, blending practice, 
-          and decodable reading. Most children read their first words within 4-6 lessons.
+          {aeoCopy}
+        </p>
+        <p className="mt-3 text-sm text-gray-700">
+          Looking for <Link to="/phonics-classes-for-kids" className="text-blue-700 underline">phonics classes for kids</Link>? Start here.
         </p>
       </div>
 
       <ProgramHero
         program="Phonics"
-        title="Phonics Superstar Program"
-        subtitle="Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights."
+        title={heroTitle}
+        subtitle={heroSubtitle}
         badges={['Ages 3–12', 'Live 1:1 or pods', 'AI progress dashboard']}
         highlights={[
           'SATPIN + digraphs + multisyllabic decoding',

@@ -82,8 +82,8 @@ const courseSchema = {
   '@context': 'https://schema.org',
   '@type': 'Course',
   '@id': 'https://tinystepslearning.com/public-speaking-communication-kids#course',
-  name: 'Public Speaking & Communication Classes',
-  description: '1:1 online public speaking and communication instruction for ages 4–12. Master confidence, voice clarity, body language, storytelling, and presentation skills with live mentors and supportive practice.',
+  name: 'Public Speaking Classes for Kids',
+  description: '1:1 public speaking classes for kids ages 4–12. Build confidence, voice clarity, storytelling, and presentation skills with live mentors and supportive practice.',
   provider: {
     '@id': 'https://tinystepslearning.com/#organization'
   },
@@ -110,8 +110,8 @@ const faqSchema = {
 export default function PublicSpeakingCommunicationKidsPage() {
   useEffect(() => {
     applySeo({
-      title: "Public Speaking & Communication Classes for Kids (Ages 4–12) | Tiny Steps",
-      description: "Online public speaking and communication classes for kids (Ages 4–12). Build confidence, eye contact, posture, storytelling, and presentation skills with friendly mentors. Book a free assessment.",
+      title: "Public Speaking Classes for Kids (Ages 4–12) | Tiny Steps Learning",
+      description: "1:1 public speaking classes for kids ages 4–12. Confidence, voice clarity, storytelling, presentations, and communication skills. Free assessment.",
       canonicalPath: "/public-speaking-communication-kids",
       ogType: "website",
       jsonLd: [organizationSchema, breadcrumbSchema, courseSchema, faqSchema],
@@ -137,6 +137,13 @@ export default function PublicSpeakingCommunicationKidsPage() {
         >
           Book a Free Assessment
         </Link>
+      </section>
+
+      <section className="mb-6 text-center">
+        <p className="text-sm text-gray-700">
+          Tiny Steps Learning runs <strong>public speaking classes for kids</strong> that build confidence and
+          communication skills through supportive, step-by-step practice.
+        </p>
       </section>
 
       {/* AEO Direct Answer Block */}

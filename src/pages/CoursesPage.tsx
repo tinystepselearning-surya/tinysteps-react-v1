@@ -70,6 +70,11 @@ const CoursesHero = () => (
         <p className="mt-4 text-white/90">
           Phonics, grammar, public speaking, and brush-up paths—mapped lesson-by-lesson with transparent pricing.
         </p>
+        <p className="mt-3 text-sm text-white/80">
+          Looking for <Link to="/phonics-classes-for-kids" className="underline">phonics classes for kids</Link>,{' '}
+          <Link to="/english-grammar-writing-classes" className="underline">grammar classes for kids</Link>, or{' '}
+          <Link to="/public-speaking-communication-kids" className="underline">public speaking classes for kids</Link>?
+        </p>
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>

@@ -82,8 +82,8 @@ const courseSchema = {
   '@context': 'https://schema.org',
   '@type': 'Course',
   '@id': 'https://tinystepslearning.com/english-grammar-writing-classes#course',
-  name: 'Online English Grammar & Writing Classes',
-  description: '1:1 online grammar and writing instruction for ages 5–12. Master sentence structure, punctuation, parts of speech, and creative writing with live mentors and interactive practice.',
+  name: 'Online Grammar Classes for Kids',
+  description: '1:1 online grammar classes for kids ages 5–12. Master sentence structure, punctuation, parts of speech, and guided writing with live mentors and interactive practice.',
   provider: {
     '@id': 'https://tinystepslearning.com/#organization'
   },
@@ -110,8 +110,8 @@ const faqSchema = {
 export default function EnglishGrammarWritingClassesPage() {
   useEffect(() => {
     applySeo({
-      title: "Online English Grammar & Writing Classes (Ages 5–12) | Tiny Steps",
-      description: "Online grammar and writing classes for kids (Ages 5–12). Clear explanations, games, sentence building, and guided writing—plus stage-based progress updates. Book a free assessment.",
+      title: "Online Grammar Classes for Kids (Ages 5–12) | Tiny Steps Learning",
+      description: "1:1 online grammar classes for kids ages 5–12. Sentence building, punctuation, parts of speech, and guided writing. Free assessment.",
       canonicalPath: "/english-grammar-writing-classes",
       ogType: "website",
       jsonLd: [organizationSchema, breadcrumbSchema, courseSchema, faqSchema],
@@ -137,6 +137,13 @@ export default function EnglishGrammarWritingClassesPage() {
         >
           Book a Free Assessment
         </Link>
+      </section>
+
+      <section className="mb-6 text-center">
+        <p className="text-sm text-gray-700">
+          Tiny Steps Learning offers <strong>online grammar classes</strong> focused on clear writing and confident expression.
+          These <strong>grammar classes for kids</strong> cover sentence building, punctuation, and parts of speech.
+        </p>
       </section>
 
       {/* AEO Direct Answer Block */}
