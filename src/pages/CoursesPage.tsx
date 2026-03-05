@@ -6,6 +6,7 @@ import { CourseCard } from "../components/courses/CourseCard";
 import { catalogs } from "../content/courses";
 import { DEFAULT_PER_CLASS_PRICE, formatINR } from '../constants/pricing';
 import { organizationSchema } from '../lib/schemas';
+import { Link } from "react-router-dom";
 
 const DASH_RE = /[\u2010\u2011\u2012\u2013\u2014\u2212]/g; // hyphen variants
 const norm = (v: any) =>

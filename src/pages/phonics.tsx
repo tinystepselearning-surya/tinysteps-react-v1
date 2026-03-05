@@ -67,6 +67,9 @@ type PhonicsPageProps = {
   heroTitleOverride?: string;
   heroSubtitleOverride?: string;
   introCopy?: string;
+  afterHeroContent?: React.ReactNode;
+  afterContent?: React.ReactNode;
+  extraJsonLd?: object[];
 };
 
 export default function PhonicsPage({
@@ -74,6 +77,9 @@ export default function PhonicsPage({
   heroTitleOverride,
   heroSubtitleOverride,
   introCopy,
+  afterHeroContent,
+  afterContent,
+  extraJsonLd,
 }: PhonicsPageProps) {
   const title = seoOverrides?.title ?? "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps";
   const description = seoOverrides?.description ?? "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Stage-based parent insights. Book free trial.";
@@ -85,108 +91,110 @@ export default function PhonicsPage({
   const aeoCopy = introCopy ?? "Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 across India. We teach systematic phonics (SATPIN method) with multisensory activities, blending practice, and decodable reading. Most children read their first words within 4-6 lessons.";
 
   useEffect(() => {
+    const baseJsonLd = [
+      {
+        "@context": "https://schema.org",
+        "@type": "Course",
+        "name": "Online Phonics Classes for Kids",
+        "description": "Systematic, multi-sensory phonics taught live with stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
+        "provider": {
+          "@type": "Organization",
+          "name": "Tiny Steps Learning",
+          "url": "https://tinystepslearning.com"
+        },
+        "hasCourseInstance": {
+          "@type": "CourseInstance",
+          "courseMode": "OnlineCoursePlatform"
+        }
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
+          { "@type": "ListItem", "position": 2, "name": breadcrumbName, "item": canonicalUrl }
+        ]
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What age is best to start phonics?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 lessons to blend first words like 'sat' or 'pin'."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How long does it take to learn phonics?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Most children master basic phonics in 30-40 lessons with consistent practice. Blending typically clicks in the first 4-6 lessons. Progress depends on age, pace, and teaching method."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What is the SATPIN method?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within a few lessons."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is online phonics effective for kids?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Stage-based parent feedback ensures accountability."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How much do phonics classes cost in India?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": oneToOnePricingCopy
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What's the difference between 1:1 and group phonics classes?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `1:1 classes adapt to your child's pace, give instant feedback, and move through lessons faster. Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Do you teach Jolly Phonics or synthetic phonics?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "We use systematic synthetic phonics with SATPIN order, multisensory actions, and blending drills. We customize based on IB or CBSE school needs."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can my 7-year-old who struggles with reading catch up?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success."
+            }
+          }
+        ]
+      }
+    ];
+
     applySeo({
       title,
       description,
       canonicalPath,
       ogType: "website",
-      jsonLd: [
-        {
-          "@context": "https://schema.org",
-          "@type": "Course",
-          "name": "Online Phonics Classes for Kids",
-          "description": "Systematic, multi-sensory phonics taught live with stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
-          "provider": {
-            "@type": "Organization",
-            "name": "Tiny Steps Learning",
-            "url": "https://tinystepslearning.com"
-          },
-          "hasCourseInstance": {
-            "@type": "CourseInstance",
-            "courseMode": "OnlineCoursePlatform"
-          }
-        },
-        {
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
-            { "@type": "ListItem", "position": 2, "name": breadcrumbName, "item": canonicalUrl }
-          ]
-        },
-        {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          "mainEntity": [
-            {
-              "@type": "Question",
-              "name": "What age is best to start phonics?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 lessons to blend first words like 'sat' or 'pin'."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How long does it take to learn phonics?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Most children master basic phonics in 30-40 lessons with consistent practice. Blending typically clicks in the first 4-6 lessons. Progress depends on age, pace, and teaching method."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What is the SATPIN method?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within a few lessons."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Is online phonics effective for kids?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Stage-based parent feedback ensures accountability."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "How much do phonics classes cost in India?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": oneToOnePricingCopy
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "What's the difference between 1:1 and group phonics classes?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": `1:1 classes adapt to your child's pace, give instant feedback, and move through lessons faster. Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Do you teach Jolly Phonics or synthetic phonics?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "We use systematic synthetic phonics with SATPIN order, multisensory actions, and blending drills. We customize based on IB or CBSE school needs."
-              }
-            },
-            {
-              "@type": "Question",
-              "name": "Can my 7-year-old who struggles with reading catch up?",
-              "acceptedAnswer": {
-                "@type": "Answer",
-                "text": "Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success."
-              }
-            }
-          ]
-        }
-      ]
+      jsonLd: extraJsonLd?.length ? [...baseJsonLd, ...extraJsonLd] : baseJsonLd,
     });
-  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl]);
+  }, [title, description, canonicalPath, breadcrumbName, canonicalUrl, extraJsonLd]);
 
   return (
     <div>
@@ -211,6 +219,7 @@ export default function PhonicsPage({
           'Stage-based feedback + WhatsApp nudges'
         ]}
       />
+      {afterHeroContent}
       <LevelTabs levels={levels} />
       <LearningJourney stages={stages} />
 
@@ -231,6 +240,8 @@ export default function PhonicsPage({
           <span className="text-lg">→</span>
         </Link>
       </section>
+
+      {afterContent}
 
       {/* FAQ Section */}
       <section className="max-w-4xl mx-auto px-6 py-12">

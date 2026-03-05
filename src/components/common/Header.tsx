@@ -15,6 +15,69 @@ const dashboardPaths: Record<string, string> = {
   learningPartner: "/learning-partner",
   learningpartner: "/learning-partner",
 };
+const TICKER_VERSION = "2026-03-05";
+const DISMISS_KEY = `ts_ticker_dismissed_${TICKER_VERSION}`;
+const TICKER_ITEMS = [
+  "Summer Camp 2026 • New batches starting weekly",
+  "Ages 4–10 • 35–40 min live classes",
+  "Phonics + Reading + Speaking • Daily practice",
+  "Limited seats • Early-bird options",
+  "Parents get weekly progress updates",
+  "Book a trial on tinystepslearning.com",
+];
+
+function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const [isDismissed, setIsDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsDismissed(window.localStorage.getItem(DISMISS_KEY) === "1");
+  }, []);
+
+  if (isLoggedIn || isDismissed) return null;
+
+  const doubledItems = [...TICKER_ITEMS, ...TICKER_ITEMS];
+  const summaryText = TICKER_ITEMS.join(" • ");
+
+  return (
+    <div className="border-b border-slate-200 bg-white/70 text-slate-700 backdrop-blur">
+      <style>{`
+        @keyframes tsMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+        .ts-marquee { animation: tsMarquee 40s linear infinite; will-change: transform; }
+        .group:hover .ts-marquee { animation-play-state: paused; }
+        @media (prefers-reduced-motion: reduce) { .ts-marquee { animation: none; transform: none; } }
+      `}</style>
+      <div className="group relative overflow-hidden px-4 py-1">
+        <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-amber-400 via-emerald-400 to-sky-400" />
+        <p className="sr-only">{summaryText}</p>
+        <div
+          className="ts-marquee flex w-max items-center gap-8 whitespace-nowrap pr-10 text-xs font-medium"
+          aria-hidden="true"
+        >
+          {doubledItems.map((item, index) => (
+            <span key={`${item}-${index}`} className="inline-flex items-center gap-2 text-slate-700">
+              <span className="h-1 w-1 rounded-full bg-slate-400" />
+              {item}
+            </span>
+          ))}
+        </div>
+        <button
+          type="button"
+          aria-label="Dismiss announcement"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-500 transition hover:text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
+          onClick={() => {
+            if (typeof window !== "undefined") {
+              window.localStorage.setItem(DISMISS_KEY, "1");
+            }
+            setIsDismissed(true);
+          }}
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function Header() {
   const { user, clearUser } = useAuthStore();
@@ -143,6 +206,7 @@ export default function Header() {
           : "bg-transparent"
       }`}
     >
+      <PublicAnnouncementTicker isLoggedIn={!!user} />
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
         <motion.div
           className="flex cursor-pointer items-center gap-2"

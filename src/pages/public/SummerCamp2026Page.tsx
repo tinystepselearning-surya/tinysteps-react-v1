@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 
@@ -11,6 +11,36 @@ const QUICK_ANSWERS = [
   { label: 'Format', value: 'Live online (group classes or premium 1:1)' },
   { label: 'Daily time', value: '45-minute live class + 10–15 minutes practice' },
   { label: 'Outcomes', value: 'Reading fluency, grammar confidence, clear speaking' },
+];
+const STRETCH_CARDS = [
+  {
+    id: 'curriculum',
+    title: 'Structured Curriculum',
+    desc: 'Stage-wise phonics path + clear outcomes.',
+    cta: 'See curriculum',
+    href: '/curriculum',
+  },
+  {
+    id: 'live',
+    title: 'Live Interactive Classes',
+    desc: '35–40 min sessions with trained teachers.',
+    cta: 'How classes work',
+    href: '/how-it-works',
+  },
+  {
+    id: 'progress',
+    title: 'Parent Progress Updates',
+    desc: 'Weekly insights + next steps for practice.',
+    cta: 'View dashboard',
+    href: '/parent-dashboard-preview',
+  },
+  {
+    id: 'camp',
+    title: 'Summer Camp Highlights',
+    desc: 'Daily speaking prompts + reading + fun activities.',
+    cta: 'View camp plan',
+    href: '/summer-english-camp-2026',
+  },
 ];
 
 // Single source of truth for FAQ data
@@ -118,6 +148,46 @@ const faqSchema = {
   }))
 };
 
+function StretchCardsRow() {
+  const [activeId, setActiveId] = useState<string>(STRETCH_CARDS[0].id);
+
+  return (
+    <div className="flex flex-col gap-4 md:flex-row">
+      {STRETCH_CARDS.map((card) => {
+        const isActive = activeId === card.id;
+        return (
+          <Link
+            key={card.id}
+            to={card.href}
+            onMouseEnter={() => setActiveId(card.id)}
+            onFocus={() => setActiveId(card.id)}
+            onClick={(event) => {
+              if (typeof window !== 'undefined') {
+                const prefersTap = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+                if (prefersTap && !isActive) {
+                  event.preventDefault();
+                  setActiveId(card.id);
+                }
+              }
+            }}
+            className={`relative overflow-hidden rounded-2xl border bg-white p-6 shadow-sm transition-all duration-300 ${isActive ? 'md:flex-[2_1_0%]' : 'md:flex-[1_1_0%] opacity-90 hover:opacity-100'}`}
+          >
+            <div className="flex h-full flex-col gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{card.title}</h3>
+                <p className="mt-2 text-sm text-gray-600">{card.desc}</p>
+              </div>
+              <div className="mt-auto text-sm font-semibold text-[#4a7c2c]">
+                {card.cta} →
+              </div>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function SummerCamp2026Page() {
   useEffect(() => {
     applySeo({
@@ -161,6 +231,17 @@ export default function SummerCamp2026Page() {
             </a>
           </div>
         <p className="text-sm text-gray-500">Limited seats • Ages 3–12 • Group classes + premium 1:1</p>
+      </section>
+
+      <section className="mb-12">
+        <div className="mb-6 flex flex-col gap-2 text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#4a7c2c]">Quick Highlights</p>
+          <h2 className="text-2xl md:text-3xl font-bold text-[#2d5016]">Why families choose this camp</h2>
+          <p className="text-sm text-gray-600">
+            Tap a card to expand on mobile, or hover on desktop.
+          </p>
+        </div>
+        <StretchCardsRow />
       </section>
 
       {/* AEO Direct Answer Block */}
