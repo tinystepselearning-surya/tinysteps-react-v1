@@ -2,7 +2,7 @@
 import React from 'react';
 
 const stats = [
-  { label: '3500+ students', detail: 'India • US • UK • Canada • Singapore • Malaysia • Vietnam • UAE • Australia' },
+  { label: '3500+ students', detail: '15+ countries • India • UAE • Vietnam • Singapore • Malaysia • UK • Canada • USA • Sweden • Germany • Australia • Sri Lanka • Pakistan' },
   { label: '95% parent satisfaction', detail: 'Stage-based insights + mentor calls' },
   { label: 'AI-driven curriculum', detail: 'Personalised learning path + dashboard' }
 ];

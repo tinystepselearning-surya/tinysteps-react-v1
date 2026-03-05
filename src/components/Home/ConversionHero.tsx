@@ -1,9 +1,38 @@
 import React from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  BookOpenText,
+  CheckCircle2,
+  Globe2,
+  Mic2,
+  Sparkles,
+  Star,
+} from "lucide-react";
 import BookAssessmentForm from "../forms/BookAssessmentForm";
 
 // Constants
 const SUN_ORANGE = "#ff6a00";
+
+const heroHighlights = [
+  {
+    eyebrow: "The Format",
+    title: "1:1 Live Online",
+    desc: "Live 1:1 classes with pacing adjusted in real time.",
+    icon: <Sparkles className="h-5 w-5 text-orange-600" aria-hidden="true" />,
+  },
+  {
+    eyebrow: "The Reach",
+    title: "Global Families",
+    desc: "Families from 15+ countries across Asia, Europe, North America, and the Middle East.",
+    icon: <Globe2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
+  },
+  {
+    eyebrow: "The Outcome",
+    title: "Confident Speaking",
+    desc: "Reading, grammar, and spoken English grow together.",
+    icon: <Mic2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
+  },
+];
 
 // --- Components ---
 
@@ -25,11 +54,11 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
   <motion.div
     whileHover={{ y: -6, scale: 1.02 }}
     transition={{ type: "spring", stiffness: 260, damping: 22 }}
-    className={`group relative flex flex-col justify-between p-5 transition-all ${
+    className={`group relative flex flex-col justify-between p-1 transition-all ${
       size === "large" ? "md:col-span-2" : "col-span-1"
     }`}
   >
-    <GlassCard className="h-full border-white/70 transition-all duration-500 group-hover:border-orange-200/70 group-hover:shadow-[0_18px_50px_rgba(255,106,0,0.12)]">
+    <GlassCard className="h-full min-h-[208px] border-white/70 transition-all duration-500 group-hover:border-orange-200/70 group-hover:shadow-[0_18px_50px_rgba(255,106,0,0.12)] md:min-h-[220px]">
       {/* premium hover glow (subtle) */}
       <div className="pointer-events-none absolute inset-0 rounded-[24px] opacity-0 transition-opacity duration-500 group-hover:opacity-100">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,106,0,0.20),transparent_60%)]" />
@@ -39,8 +68,8 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
       {/* top highlight hairline */}
       <div className="pointer-events-none absolute left-0 top-0 h-px w-full opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-gradient-to-r from-transparent via-orange-300/70 to-transparent" />
 
-      <div className="relative p-5">
-        <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm transition-transform duration-300 group-hover:rotate-6">
+      <div className="relative p-3.5 md:p-4">
+        <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:rotate-6 md:h-10 md:w-10">
           {icon}
         </div>
 
@@ -48,8 +77,8 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700/80">
             {eyebrow}
           </span>
-          <h2 className="mt-1 text-base font-bold text-slate-900">{title}</h2>
-          <p className="mt-2 text-xs leading-relaxed text-slate-600">{desc}</p>
+          <h2 className="mt-1 text-[15px] font-bold leading-tight text-slate-900 md:text-base">{title}</h2>
+          <p className="mt-1.5 text-[12px] leading-6 text-slate-600 md:text-[12.5px] md:leading-6">{desc}</p>
         </div>
       </div>
 
@@ -66,7 +95,7 @@ const ConversionHero: React.FC = () => {
   const y2 = useTransform(scrollY, [0, 500], [0, 40]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden px-4 py-12 md:px-8">
+    <section className="relative min-h-screen overflow-hidden px-4 pb-10 pt-6 md:px-8 md:pb-12 md:pt-8">
       {/* ✅ Classy Sunrise Background (more depth, less wash) */}
       <div className="pointer-events-none absolute inset-0">
         {/* base */}
@@ -123,7 +152,7 @@ const ConversionHero: React.FC = () => {
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl">
-        <div className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           {/* LEFT CONTENT */}
           <div className="flex flex-col justify-center">
             <motion.div
@@ -142,11 +171,12 @@ const ConversionHero: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mt-8 text-5xl font-black tracking-tight text-slate-900 md:text-7xl leading-[0.95]"
+              className="mt-6 max-w-4xl text-4xl font-black leading-[0.95] tracking-tight text-slate-900 md:text-6xl lg:text-7xl"
             >
-              IB-aligned <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-rose-500">
-                Phonics & Grammar
+              Gentle, high-impact
+              <br />
+              <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
+                English foundations
               </span>
             </motion.h1>
 
@@ -154,33 +184,63 @@ const ConversionHero: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="mt-6 max-w-lg text-lg text-slate-600 leading-relaxed"
+              className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
-              A structured, stress-free journey for ages 3–12. We build the bridge
-              between "learning to read" and "loving to speak."
+              A structured, low-stress journey for ages 3-12. Tiny Steps blends
+              phonics, grammar, and speaking into one calm weekly rhythm so kids
+              read better, write better, and speak with more confidence.
             </motion.p>
 
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="mt-6 flex flex-wrap gap-4"
+            >
+              <a
+                href="/courses"
+                className="inline-flex w-full items-center justify-center rounded-full border border-slate-300/90 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-orange-300 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 sm:w-auto"
+              >
+                Explore programs
+              </a>
+            </motion.div>
+
             {/* BENTO GRID VALUE PROPS */}
-            <div className="mt-10 grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
-              <SunTile
-                eyebrow="The Format"
-                title="1:1 Live Online"
-                desc="Personalized pace for every child."
-                icon={<span className="text-2xl">🎯</span>}
-              />
-              <SunTile
-                eyebrow="The Reach"
-                title="Global Families"
-                desc="India, US, and Singapore."
-                icon={<span className="text-2xl">🌍</span>}
-              />
-              <SunTile
-                eyebrow="Confidence"
-                title="Public Speaking"
-                desc="Stage-based confidence building drills."
-                icon={<span className="text-2xl">✨</span>}
-              />
+            <div className="mt-6 grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+              {heroHighlights.map((item) => (
+                <SunTile
+                  key={item.title}
+                  eyebrow={item.eyebrow}
+                  title={item.title}
+                  desc={item.desc}
+                  icon={item.icon}
+                />
+              ))}
             </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.42 }}
+              className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600"
+            >
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
+                <span className="inline-flex items-center gap-1 text-amber-500">
+                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
+                </span>
+                <span className="font-semibold text-slate-700">
+                  Parent-loved live classes
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm backdrop-blur">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                Weekly parent updates and clear next steps
+              </span>
+            </motion.div>
           </div>
 
           {/* RIGHT FORM CARD */}
@@ -188,19 +248,49 @@ const ConversionHero: React.FC = () => {
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.35 }}
-            className="relative"
+            className="relative lg:pl-6"
           >
+            <motion.div
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+                  <BookOpenText className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">
+                    Structured Path
+                  </div>
+                  <div className="text-sm font-semibold text-slate-800">
+                    Phonics to speaking
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
             <BookAssessmentForm defaultInterest="Phonics" />
 
             {/* Floating Decorative Element */}
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ repeat: Infinity, duration: 4 }}
-              className="absolute -bottom-6 -left-6 h-20 w-20 rounded-3xl bg-white p-4 shadow-xl"
+              className="absolute -bottom-4 -left-2 h-20 w-20 rounded-3xl bg-white p-4 shadow-xl md:-left-6"
             >
               <div className="flex h-full w-full items-center justify-center rounded-xl bg-orange-50 text-2xl">
                 🎓
               </div>
+            </motion.div>
+
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 5, delay: 0.4 }}
+              className="absolute -bottom-6 right-4 hidden rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur sm:inline-flex"
+            >
+              <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" aria-hidden="true" />
+              Reply via WhatsApp
             </motion.div>
           </motion.div>
         </div>

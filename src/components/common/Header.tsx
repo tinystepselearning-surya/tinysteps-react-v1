@@ -286,7 +286,7 @@ export default function Header() {
           {/* Blue CTA */}
           <Link
             to={ctaLink.href}
-            className="ml-4 inline-flex items-center justify-center h-12 rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 text-sm font-semibold text-white shadow-[0_15px_35px_rgba(15,23,42,0.35)] transition hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+            className="ml-4 inline-flex h-11 items-center justify-center rounded-full border border-slate-200 bg-white/90 px-5 text-sm font-semibold text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition hover:border-slate-300 hover:bg-white hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-400"
           >
             {ctaLink.label}
           </Link>
@@ -297,7 +297,7 @@ export default function Header() {
           <button
             onClick={handleBookAssessment}
             aria-label="Book Free Assessment Class"
-            className="inline-flex items-center justify-center h-12 rounded-full bg-gradient-to-r from-[#ff8f5c] via-[#ffb347] to-[#59c3ff] px-5 text-sm font-semibold text-white shadow-[0_12px_25px_rgba(255,143,92,0.35)]"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500"
             type="button"
           >
             Book Free Assessment Class
@@ -309,7 +309,7 @@ export default function Header() {
           <button
             onClick={handleBookAssessment}
             aria-label="Book Free Assessment Class"
-            className="rounded-full bg-gradient-to-r from-[#ff8f5c] to-[#59c3ff] px-4 py-2 text-xs font-semibold text-white"
+            className="rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm"
             type="button"
           >
             Book Free Assessment Class
@@ -356,7 +356,7 @@ export default function Header() {
           <Link
             to={ctaLink.href}
             onClick={() => setIsOpen(false)}
-            className="mt-2 block rounded-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] px-5 py-2 text-center font-semibold text-white shadow-md"
+            className="mt-2 block rounded-full border border-slate-200 bg-white px-5 py-2 text-center font-semibold text-slate-700 shadow-sm"
           >
             {ctaLink.label}
           </Link>

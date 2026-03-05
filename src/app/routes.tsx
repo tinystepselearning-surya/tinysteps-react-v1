@@ -36,6 +36,7 @@ const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/Phon
 const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
+const CometCourierGame = lazy(() => import('../pages/dev/CometCourierGame'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
 const ParentGettingStarted = lazy(() => import('../pages/parents/getting-started'));
@@ -111,6 +112,7 @@ const router = createBrowserRouter(
   [
     // Public chrome-less seasonal route (renders without main Layout/header)
     { path: 'seasonal/christmas-tree', element: <ChristmasTreeDecoratePublic /> },
+    { path: 'dev/comet-courier', element: <CometCourierGame /> },
     {
       element: <Layout />,
       errorElement: <NotFoundPage />,
@@ -295,6 +297,7 @@ const router = createBrowserRouter(
             { index: true, element: <KidsPortal /> },
             { path: 'games', element: <KidsGamesHub /> },
             { path: 'games/english-excellence', element: <KidsEnglishExcellence /> },
+            { path: 'games/comet-courier', element: <CometCourierGame /> },
             { path: 'games/phonics', element: <KidsPhonicsLibrary /> },
             { path: 'games/phonics/letter-sound', element: <KidsPhonicsMission /> },
             { path: 'games/phonics/balloon-pop', element: <KidsBalloonPop /> },

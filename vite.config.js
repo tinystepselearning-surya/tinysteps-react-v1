@@ -19,10 +19,9 @@ export default defineConfig({
     },
   },
   server: {
-    host: 'localhost',
-    port: 5173, // Ensure this matches the browser's expected port
+    host: true,
     hmr: {
-      port: 5173, // Ensure HMR uses the correct port
+      protocol: 'ws',
     },
   },
 });

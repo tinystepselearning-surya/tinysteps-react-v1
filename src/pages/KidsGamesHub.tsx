@@ -194,7 +194,23 @@ const KidsGamesHub: React.FC = () => {
       {/* Quick Access Section */}
       <div className="w-full max-w-5xl mx-auto" style={{ zIndex: 10 }}>
         <h3 className="text-2xl font-bold text-white/70 mb-6 text-center">Quick Access</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <button
+            id="comet-courier-card"
+            type="button"
+            onClick={() => navigate(`/kids/games/comet-courier${kidId ? `?kidId=${kidId}` : ''}`)}
+            className="mission-card"
+            style={{
+              animation: 'floaty 7s ease-in-out infinite 0.15s',
+              minHeight: '120px',
+              background: 'linear-gradient(160deg, rgba(122, 255, 219, 0.16), rgba(255, 176, 94, 0.12))',
+              borderColor: 'rgba(122, 255, 219, 0.35)',
+            }}
+          >
+            <h4 className="text-lg font-bold text-emerald-200">Comet Courier</h4>
+            <p className="text-xs text-white/80 mt-1">Collect stars. Dodge drones.</p>
+          </button>
+
           {/* Phonics Library */}
           <button
             type="button"

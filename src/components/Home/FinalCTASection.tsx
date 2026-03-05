@@ -27,7 +27,7 @@ const FinalCTASection: React.FC = () => {
           <Button size="lg" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">
-            <p>Join 3500+ families across India, the US, UK, Canada, Singapore, Malaysia, Vietnam, UAE & Australia.</p>
+            <p>Join 3500+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
             <p>⭐⭐⭐⭐⭐ 4.9/5 - Parent Reviews • 95% see improvement • 89% more confidence • 92% enjoy English</p>
           </div>
         </div>
