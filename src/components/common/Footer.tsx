@@ -63,7 +63,7 @@ const Footer = () => {
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 9 countries, 95% satisfaction. Foundations today, confidence forever.</p>
+            <p className="mt-4 text-sm text-white/80">Live 1:1 phonics, grammar, and public speaking programs for ages 3–12. 3500+ families across 15+ countries, 95% satisfaction. Foundations today, confidence forever.</p>
             <div className="mt-4 flex gap-4">
               {socialLinks.map((link) => (
                 <a

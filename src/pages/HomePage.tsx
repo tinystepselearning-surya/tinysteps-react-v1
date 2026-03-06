@@ -81,15 +81,6 @@ const SocialProofCrispSection = safeLazy(
   ])
 );
 
-const StatsStripSection = safeLazy(
-  pick([
-    "../components/Home/StatsStrip.tsx",
-    "../components/Home/StatsStrip.jsx",
-    "../components/Home/StatsStrip/index.tsx",
-    "../components/Home/StatsStrip/index.jsx",
-  ])
-);
-
 const PricingCrispSection = safeLazy(
   pick([
     "../components/Home/PricingCrispSection.tsx",
@@ -140,9 +131,9 @@ export default function HomePage() {
 
   useEffect(() => {
     applySeo({
-      title: "Tiny Steps Learning | Phonics & Grammar for Kids (3–12)",
+      title: "Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning",
       description:
-        "Tiny Steps Learning helps children build strong phonics and grammar foundations through simple, fun, step-by-step learning.",
+        "1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.",
       canonicalPath: "/",
       ogType: "website",
       jsonLd: [
@@ -169,8 +160,8 @@ export default function HomePage() {
   return (
     <>
       <Meta
-        title="Tiny Steps Online English School | 1:1 Phonics, Grammar & Public Speaking for Kids (3–12)"
-        description="Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class."
+        title="Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning"
+        description="1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment."
         keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India"
         canonical="https://tinystepslearning.com/"
       />
@@ -180,9 +171,6 @@ export default function HomePage() {
 
       {/* HERO */}
       <ConversionHero />
-      <Suspense fallback={null}>
-        <StatsStripSection />
-      </Suspense>
 
       {/* Summer Camp CTA */}
       <section className="px-6 py-6">

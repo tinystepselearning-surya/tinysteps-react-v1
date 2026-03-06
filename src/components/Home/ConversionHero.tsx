@@ -191,6 +191,15 @@ const ConversionHero: React.FC = () => {
               read better, write better, and speak with more confidence.
             </motion.p>
 
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.33 }}
+              className="mt-3 max-w-2xl text-sm font-semibold text-slate-700 md:text-base"
+            >
+              Tiny Steps offers 1:1 online phonics classes, grammar classes, and public speaking classes for kids ages 3–12.
+            </motion.p>
+
             <motion.div
               initial={{ opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
@@ -203,6 +212,37 @@ const ConversionHero: React.FC = () => {
               >
                 Explore programs
               </a>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.38 }}
+              className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"
+            >
+              <a href="/phonics-classes-for-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
+                phonics classes for kids
+              </a>
+              <a href="/english-grammar-writing-classes" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
+                grammar classes for kids
+              </a>
+              <a href="/public-speaking-communication-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
+                public speaking classes for kids
+              </a>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.41 }}
+              className="mt-4 max-w-2xl rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm backdrop-blur"
+            >
+              <p className="font-medium text-slate-800">
+                Structured curriculum, trained teachers, weekly parent updates, and personalized pacing — designed to help children read, write, and speak with confidence.
+              </p>
+              <p className="mt-1 text-slate-600">
+                Calm routines, clear milestones, and consistent feedback make progress easy to see.
+              </p>
             </motion.div>
 
             {/* BENTO GRID VALUE PROPS */}
