@@ -22,7 +22,7 @@ const roleRedirectMap: Record<AuthRole, string> = {
   teacher: '/teacher',
   parent: '/parent',
   kid: '/parent/kids',
-  learningPartner: '/learning-partner',
+  learningPartner: '/learning-partner/dashboard',
 };
 
 /**

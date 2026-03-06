@@ -59,7 +59,7 @@ export default function BookDemoPage() {
           </div>
 
           <Link
-            to="/#book-trial"
+            to="/?book=1"
             className="block w-full rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 py-4 text-center text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
           >
             Book Free Assessment Now
@@ -211,7 +211,7 @@ export default function BookDemoPage() {
           Book your free assessment class today. No commitment required.
         </p>
         <Link
-          to="/#book-trial"
+          to="/?book=1"
           className="inline-block rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
         >
           Book Free Assessment Now

@@ -1,6 +1,7 @@
 // @ts-nocheck
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
+import AdvisorContactForm from '../components/common/AdvisorContactForm';
 import Meta from '../components/common/Meta';
 import { trackEvent } from '../lib/analytics';
 import { useAuthStore } from '../store/useAuthStore';
@@ -27,7 +28,7 @@ const ContactPage: FC = () => {
             <ul className="mt-4 space-y-3 text-gray-700">
               <li><span className="font-semibold">Phone:</span> <a href="tel:+919618398383" className="text-tiny-blue-600">{phone}</a></li>
               {!user && (
-                <li><span className="font-semibold">WhatsApp:</span> <a href={whatsappLink} onClick={() => trackEvent('cta_click', { location: 'contact', label: 'whatsapp_chat' })} className="text-tiny-green-600">Chat with our parent advisor</a></li>
+                <li><span className="font-semibold">WhatsApp:</span> <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('cta_click', { location: 'contact', label: 'whatsapp_chat' })} className="text-tiny-green-600">Chat on WhatsApp - opens new window</a></li>
               )}
               {user && (
                 <li><span className="font-semibold">Support:</span> <a href="/contact" className="text-tiny-blue-600">Use the contact form to reach our team</a></li>
@@ -49,18 +50,26 @@ const ContactPage: FC = () => {
             </div>
           </div>
         </div>
-        <div className="glass-panel p-6">
-          <h2 className="text-xl font-semibold text-gray-900">Book Free Assessment Class</h2>
-          <p className="mt-3 text-sm text-gray-600">
-            Tap below to book your free assessment on the home page.
-          </p>
-          <Link
-            to="/#book-trial"
-            onClick={() => trackEvent('cta_click', { location: 'contact', label: 'book_assessment' })}
-            className="mt-6 block w-full rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 py-3 text-center text-white font-semibold hover:shadow-lg transition"
-          >
-            Book Free Assessment
-          </Link>
+        <div className="space-y-6">
+          <div className="glass-panel p-6">
+            <h2 className="text-xl font-semibold text-gray-900">Book Free Assessment Class</h2>
+            <p className="mt-3 text-sm text-gray-600">
+              Tap below to book your free assessment on the home page.
+            </p>
+            <Link
+              to="/?book=1"
+              onClick={() => trackEvent('cta_click', { location: 'contact', label: 'book_assessment' })}
+              className="mt-6 block w-full rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 py-3 text-center text-white font-semibold hover:shadow-lg transition"
+            >
+              Book Free Assessment
+            </Link>
+          </div>
+
+          <AdvisorContactForm
+            topic="Contact page"
+            title="Need a reply by email?"
+            description="Use this fallback form if you do not want to use WhatsApp."
+          />
         </div>
       </section>
     </div>

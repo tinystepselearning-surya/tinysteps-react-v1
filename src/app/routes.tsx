@@ -1,6 +1,6 @@
 // src/app/routes.tsx
 import { lazy, Suspense, type FC } from 'react';
-import { createBrowserRouter, Outlet, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Outlet, Navigate, useLocation } from 'react-router-dom';
 
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const Login = lazy(() => import('../pages/Login'));
@@ -36,6 +36,10 @@ const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/Phon
 const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
+const LearningPartnerPage = lazy(() => import('../pages/public/LearningPartnerPage'));
+const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage'));
+const TermsAndConditionsPage = lazy(() => import('../pages/TermsAndConditionsPage'));
+const RefundGuaranteePage = lazy(() => import('../pages/RefundGuaranteePage'));
 const CometCourierGame = lazy(() => import('../pages/dev/CometCourierGame'));
 // Parents / Help hub
 const ParentsHubPage = lazy(() => import('../pages/parents/ParentsHubPage'));
@@ -85,28 +89,46 @@ import PhonePeCallback from '../pages/payments/PhonePeCallback';
 
 // Layout
 import Header from '../components/common/Header';
+import Footer from '../components/common/Footer';
 import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
 import FloatingAssistant from '../components/common/FloatingAssistant';
 import BackToTopButton from '../components/common/BackToTopButton';
 import ScrollToTop from '../components/common/ScrollToTop';
 
-const Layout: FC = () => (
-  <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
-    <AnalyticsTracker />
-    <ScrollToTop />
-    <Header />
-    <main className="min-h-screen pt-8 md:pt-12 lg:pt-16 pb-16">
-      <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-        <Outlet />
-      </Suspense>
-    </main>
-    <Suspense fallback={null}>
-      <FloatingAssistant />
-      <BackToTopButton />
-    </Suspense>
-  </div>
-);
+const APP_ROUTE_PREFIXES = [
+  '/surya',
+  '/teacher',
+  '/parent',
+  '/kids',
+  '/learning-partner/dashboard',
+  '/learningpartner/dashboard',
+];
+
+const Layout: FC = () => {
+  const location = useLocation();
+  const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+
+  return (
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
+      <AnalyticsTracker />
+      <ScrollToTop />
+      {!hideMarketingChrome ? <Header /> : null}
+      <main className={`min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`}>
+        <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+          <Outlet />
+        </Suspense>
+      </main>
+      {!hideMarketingChrome ? <Footer /> : null}
+      {!hideMarketingChrome ? (
+        <Suspense fallback={null}>
+          <FloatingAssistant />
+          <BackToTopButton />
+        </Suspense>
+      ) : null}
+    </div>
+  );
+};
 
 const router = createBrowserRouter(
   [
@@ -125,11 +147,15 @@ const router = createBrowserRouter(
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
+        { path: 'learning-partner', element: <LearningPartnerPage /> },
         { path: 'team', element: <TeamPage /> },
         { path: 'careers', element: <CareersPage /> },
         { path: 'courses', element: <CoursesPage /> },
         { path: 'courses/:slug', element: <CourseDetailPage /> },
         { path: 'curriculum', element: <CurriculumPage /> },
+        { path: 'privacy-policy', element: <PrivacyPolicyPage /> },
+        { path: 'terms-and-conditions', element: <TermsAndConditionsPage /> },
+        { path: 'refund-guarantee', element: <RefundGuaranteePage /> },
         // Parents / Help hub
         { path: 'parents', element: <ParentsHubPage /> },
         { path: 'parents/getting-started', element: <ParentGettingStarted /> },
@@ -315,7 +341,7 @@ const router = createBrowserRouter(
 
         // ---------- Learning Partner dashboard ----------
         {
-          path: 'learning-partner',
+          path: 'learning-partner/dashboard',
           element: (
             <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
               <RoleGate
@@ -327,6 +353,7 @@ const router = createBrowserRouter(
           children: [{ index: true, element: <LPDashboard /> }],
         },
         { path: 'learningpartner', element: <Navigate to="/learning-partner" replace /> },
+        { path: 'learningpartner/dashboard', element: <Navigate to="/learning-partner/dashboard" replace /> },
 
         // ---------- Misc aliases ----------
         { path: 'kid', element: <Navigate to="/parent/kids" replace /> },

@@ -491,12 +491,17 @@ const PricingPage: FC = () => {
                   Chat with us on{' '}
                   <a
                     href="https://wa.me/919618398383"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-tiny-green-600"
                   >
-                    WhatsApp
+                    WhatsApp - opens new window
                   </a>
-                  . We set up 2-month or 3-month payment splits for most
-                  families.
+                  , or use our{' '}
+                  <a href="/contact" className="text-tiny-blue-600">
+                    contact form
+                  </a>
+                  . We set up 2-month or 3-month payment splits for most families.
                 </>
               ) : (
                 <>

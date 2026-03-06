@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import {
   COURSE_FEE_RANGE_24_36,
   formatINR,
@@ -44,14 +45,6 @@ const PricingCrispSection: React.FC = () => {
               <li>• Around 2 classes per week</li>
               <li>• Phonics, grammar, or public speaking</li>
             </ul>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <button className="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition">
-                Book Free Assessment Class
-              </button>
-              <button className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-                Learn More
-              </button>
-            </div>
           </div>
 
           {/* Growth Pack (Most Popular) */}
@@ -75,14 +68,6 @@ const PricingCrispSection: React.FC = () => {
               <li>• Around 3–4 classes per week</li>
               <li>• Phonics, grammar, or public speaking</li>
             </ul>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <button className="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition">
-                Book Free Assessment Class
-              </button>
-              <button className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-                Learn More
-              </button>
-            </div>
           </div>
 
           {/* Intensive Pack */}
@@ -103,14 +88,6 @@ const PricingCrispSection: React.FC = () => {
               <li>• Around 5–6 classes per week</li>
               <li>• Phonics, grammar, or public speaking</li>
             </ul>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <button className="inline-flex flex-1 items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-sky-500 px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:shadow-lg transition">
-                Book Free Assessment Class
-              </button>
-              <button className="inline-flex flex-1 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition">
-                Learn More
-              </button>
-            </div>
           </div>
         </div>
 
@@ -123,6 +100,14 @@ const PricingCrispSection: React.FC = () => {
           <p>
             Course total estimate: {formatINR(COURSE_FEE_RANGE_24_36.min)}–{formatINR(COURSE_FEE_RANGE_24_36.max)} for 24–36 sessions.
           </p>
+          <div className="mt-4">
+            <Link
+              to="/pricing"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+            >
+              View pricing details
+            </Link>
+          </div>
         </div>
       </div>
     </section>

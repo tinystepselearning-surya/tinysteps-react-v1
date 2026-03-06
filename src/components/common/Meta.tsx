@@ -51,7 +51,7 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }
       canonicalPath.startsWith('/teacher') ||
       canonicalPath.startsWith('/parent') ||
       canonicalPath.startsWith('/kids') ||
-      canonicalPath.startsWith('/learning-partner') ||
+      canonicalPath.startsWith('/learning-partner/dashboard') ||
       canonicalPath.startsWith('/surya')
     );
 

@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
+import Meta from '../../components/common/Meta';
+import PageHero from '../../components/common/PageHero';
 
 export default function BestOnlinePhonicsClassesIndiaPage() {
   useEffect(() => {
@@ -147,22 +149,37 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
   }, []);
 
   return (
-    <div className="container mx-auto px-6 py-12 max-w-4xl">
-      {/* Header */}
-      <header className="mb-12 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold text-[#2d5016] mb-4">
-          Best Online Phonics Classes in India (2026)
-        </h1>
-        <p className="text-xl text-gray-700 mb-6">
-          Parent checklist for choosing effective online phonics classes for Indian children ages 3–12
-        </p>
-        <Link
-          to="/contact"
-          className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
-        >
-          Book Free Assessment
-        </Link>
-      </header>
+    <div className="bg-white">
+      <Meta
+        title="Best Online Phonics Classes in India (2026) | Tiny Steps Learning"
+        description="Use this parent checklist to compare online phonics classes in India and understand what to look for before enrolling your child."
+        canonical="https://tinystepslearning.com/best-online-phonics-classes-india"
+      />
+
+      <PageHero
+        eyebrow="Parent Checklist"
+        title="Best Online Phonics Classes in India"
+        description="Use this 2026 checklist to compare teaching quality, class format, parent visibility, and curriculum fit before you enrol your child."
+        badges={['India-focused checklist', 'For ages 3–12', '1:1 vs group explained']}
+        actions={
+          <>
+            <Link
+              to="/?book=1"
+              className="inline-flex items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+            >
+              Book Free Assessment
+            </Link>
+            <Link
+              to="/contact"
+              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+            >
+              Contact the team
+            </Link>
+          </>
+        }
+      />
+
+      <div className="container mx-auto max-w-4xl px-6 pb-12">
 
       {/* AEO Direct Answer Block */}
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
@@ -529,6 +546,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           Book Free Assessment
         </Link>
       </section>
+      </div>
     </div>
   );
 }

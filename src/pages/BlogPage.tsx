@@ -61,13 +61,6 @@ const BlogPage: FC = () => {
   const [sort, setSort] = useState<'Newest'|'Most Popular'|'Most Read'>('Newest');
   const [searchQuery, setSearchQuery] = useState('');
   const goToChristmasTree = () => navigate('/seasonal/christmas-tree');
-  const posts = useMemo(() => {
-    const list = blogPosts.filter((p) => topic === 'All' || p.category === topic);
-    if (sort === 'Newest') return list.sort((a,b)=> (a.date<b.date?1:-1));
-    if (sort === 'Most Popular') return list.sort((a,b)=> ((b.popularScore||0) - (a.popularScore||0)));
-    if (sort === 'Most Read') return list.sort((a,b)=> ((b.viewsCount||0) - (a.viewsCount||0)));
-    return list;
-  }, [topic, sort]);
   const [mdxPosts, setMdxPosts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -91,7 +84,13 @@ const BlogPage: FC = () => {
     return combined.filter((p) => {
       if (topic !== 'All' && p.category !== topic) return false;
       if (!normalizedQuery) return true;
-      const searchable = `${p.title} ${p.excerpt} ${p.category} ${p.author}`.toLowerCase();
+      const keywordText = Array.isArray(p.body)
+        ? p.body.map((block) => block.content).join(' ')
+        : '';
+      const faqText = Array.isArray(p.faq)
+        ? p.faq.map((item) => `${item.question} ${item.answer}`).join(' ')
+        : '';
+      const searchable = `${p.title} ${p.excerpt} ${p.category} ${p.author} ${p.metaDescription || ''} ${keywordText} ${faqText}`.toLowerCase();
       return searchable.includes(normalizedQuery);
     });
   }, [combined, topic, normalizedQuery]);
@@ -289,6 +288,11 @@ const BlogPage: FC = () => {
               </select>
             </div>
           </div>
+        </div>
+
+        <div className="mb-6 text-sm text-gray-600">
+          Showing <span className="font-semibold text-gray-900">{sortedPosts.length}</span> blog post{sortedPosts.length === 1 ? '' : 's'}
+          {searchQuery.trim() ? <> for <span className="font-semibold text-gray-900">"{searchQuery.trim()}"</span></> : null}
         </div>
 
         {featured && (

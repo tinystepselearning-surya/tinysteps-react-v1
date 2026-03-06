@@ -1,6 +1,7 @@
 import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
+import Meta from '../components/common/Meta';
 
 const levels = [
   {
@@ -32,6 +33,11 @@ const stages = [
 export default function GrammarPage() {
   return (
     <div>
+      <Meta
+        title="Online Grammar and Writing Classes for Kids | Tiny Steps Learning"
+        description="Live online grammar and writing classes for kids with sentence building, punctuation, guided writing, and stage-based parent updates."
+        canonical="https://tinystepslearning.com/grammar"
+      />
       <ProgramHero
         program="Grammar"
         title="Grammar & Writing Lab"

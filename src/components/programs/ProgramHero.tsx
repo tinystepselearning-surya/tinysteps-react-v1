@@ -25,9 +25,9 @@ const ProgramHero = ({ title, subtitle, badges, highlights, program }: any) => (
         </ul>
       </div>
       <div className="glass-panel p-6">
-        <div className="text-sm uppercase tracking-widest text-gray-500">Chat with a mentor</div>
+        <div className="text-sm uppercase tracking-widest text-gray-500">Talk to our team</div>
         <h3 className="text-xl font-semibold text-gray-900">{program} inquiry form</h3>
-        <p className="text-sm text-gray-600">Share details and our team replies on WhatsApp within 6 hours.</p>
+        <p className="text-sm text-gray-600">Share details here for an in-app confirmation, or use the WhatsApp option if you prefer.</p>
         <div className="mt-4">
           <ProgramLeadForm program={program} />
         </div>

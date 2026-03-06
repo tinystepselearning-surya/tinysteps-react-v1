@@ -2,6 +2,7 @@
 import ProgramHero from '../components/programs/ProgramHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
+import Meta from '../components/common/Meta';
 
 const levels = [
   {
@@ -33,6 +34,11 @@ const stages = [
 export default function SpeakingPage() {
   return (
     <div>
+      <Meta
+        title="Online Public Speaking Classes for Kids | Tiny Steps Learning"
+        description="Live online public speaking classes for kids focused on confidence, clarity, storytelling, and presentation structure with coach feedback."
+        canonical="https://tinystepslearning.com/speaking"
+      />
       <ProgramHero
         program="Public Speaking"
         title="Super Speakers Studio"

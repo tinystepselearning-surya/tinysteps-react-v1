@@ -201,24 +201,10 @@ const ConversionHero: React.FC = () => {
             </motion.p>
 
             <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="mt-6 flex flex-wrap gap-4"
-            >
-              <a
-                href="/courses"
-                className="inline-flex w-full items-center justify-center rounded-full border border-slate-300/90 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-700 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-orange-300 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 sm:w-auto"
-              >
-                Explore programs
-              </a>
-            </motion.div>
-
-            <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.38 }}
-              className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"
+              className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"
             >
               <a href="/phonics-classes-for-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
                 phonics classes for kids

@@ -219,7 +219,7 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({
               rel="noopener noreferrer"
               className="text-sm text-blue-600 hover:underline"
             >
-              Talk to a human advisor on WhatsApp →
+              Chat on WhatsApp - opens new window →
             </a>
           </div>
         </div>

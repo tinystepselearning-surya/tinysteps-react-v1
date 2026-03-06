@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import Button from '../Button/Button';
 
 const FinalCTASection: React.FC = () => {
@@ -24,7 +25,9 @@ const FinalCTASection: React.FC = () => {
           </ul>
         </div>
         <div className="mt-8 flex flex-col items-center gap-2">
-          <Button size="lg" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
+          <Link to="/?book=1">
+            <Button size="lg" aria-label="Book Free Assessment Class">Book Free Assessment Class</Button>
+          </Link>
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">
             <p>Join 3500+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>

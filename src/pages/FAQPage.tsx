@@ -137,7 +137,7 @@ const FAQPage: FC = () => {
           <div className="mt-10 rounded-3xl bg-white/80 p-6 text-sm text-gray-700 shadow-card-hover">
           <div className="font-semibold text-gray-900">Still have questions?</div>
           <p className="mt-2">{!user ? (
-              <>Message us on <a href="https://wa.me/919618398383" className="text-tiny-green-600">WhatsApp</a> or <a href="/contact" className="text-tiny-blue-600">contact us</a>. We’ll send personalised recommendations within 12 hours.</>
+              <>Message us on <a href="https://wa.me/919618398383" target="_blank" rel="noopener noreferrer" className="text-tiny-green-600">WhatsApp - opens new window</a> or <a href="/contact" className="text-tiny-blue-600">use the contact form</a>. We’ll send personalised recommendations within 12 hours.</>
             ) : (
               <>Message our support team via <a href="/contact" className="text-tiny-blue-600">Contact form</a>. We’ll respond within 12 hours.</>
             )}</p>

@@ -100,15 +100,6 @@ const FinalCTASection = safeLazy(
   ])
 );
 
-const Footer = safeLazy(
-  pick([
-    "../components/common/Footer.tsx",
-    "../components/common/Footer.jsx",
-    "../components/common/Footer/index.tsx",
-    "../components/common/Footer/index.jsx",
-  ])
-);
-
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -324,9 +315,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <Suspense fallback={null}>
-        <Footer />
-      </Suspense>
     </>
   );
 }

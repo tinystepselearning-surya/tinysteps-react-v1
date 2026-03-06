@@ -295,10 +295,18 @@ export default function SummerCampsPage() {
               </Link>
               <a
                 href="https://wa.me/919618398383"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-emerald-600 px-5 py-2.5 text-sm font-semibold text-emerald-700"
               >
-                WhatsApp
+                Chat on WhatsApp - opens new window
               </a>
+              <Link
+                to="/contact"
+                className="inline-flex items-center justify-center rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700"
+              >
+                Send an email inquiry
+              </Link>
             </div>
           </div>
         </section>
@@ -417,9 +425,11 @@ export default function SummerCampsPage() {
               </Link>
               <a
                 href="https://wa.me/919618398383"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="flex-1 rounded-full border border-emerald-600 px-4 py-2 text-center text-sm font-semibold text-emerald-700"
               >
-                WhatsApp
+                Open WhatsApp
               </a>
             </div>
           </div>

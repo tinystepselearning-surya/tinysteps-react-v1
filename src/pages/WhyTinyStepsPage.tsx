@@ -1,6 +1,7 @@
 import type { FC } from "react";
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import Meta from "../components/common/Meta";
 
 type Item = {
   title: string;
@@ -195,6 +196,12 @@ const WhyTinyStepsPage: FC = () => {
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      <Meta
+        title="Why Tiny Steps | English Foundations That Build Real Confidence"
+        description="See why parents choose Tiny Steps for calm, structured phonics, grammar, reading, and speaking support with clear progress and child-friendly routines."
+        canonical="https://tinystepslearning.com/why-tiny-steps"
+      />
+
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
@@ -232,31 +239,18 @@ const WhyTinyStepsPage: FC = () => {
               ))}
             </div>
 
-            <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="mt-8 flex justify-center">
               <Link to="/?book=1" className="w-full sm:w-auto">
                 <PrimaryButton>Book Free Assessment Class</PrimaryButton>
               </Link>
-
-              <Link to="/courses" className="w-full sm:w-auto">
-                <SecondaryButton>View Courses</SecondaryButton>
-              </Link>
-
-              <Link to="/curriculum" className="w-full sm:w-auto">
-                <SecondaryButton>See Curriculum</SecondaryButton>
-              </Link>
             </div>
 
-            <div className="mt-3">
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
-              >
-                <span className="text-emerald-700">
-                  <IconWhatsapp />
-                </span>
-                WhatsApp Advisor
+            <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm font-semibold text-slate-700">
+              <Link to="/courses" className="hover:text-slate-900">View courses</Link>
+              <Link to="/curriculum" className="hover:text-slate-900">See curriculum</Link>
+              <Link to="/contact" className="hover:text-slate-900">Contact the team</Link>
+              <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="hover:text-slate-900">
+                Chat on WhatsApp - opens new window
               </a>
             </div>
           </div>
@@ -337,8 +331,8 @@ const WhyTinyStepsPage: FC = () => {
                   <Link to="/curriculum" className="block" onClick={(e) => e.stopPropagation()}>
                     <SecondaryButton>View Curriculum</SecondaryButton>
                   </Link>
-                  <Link to="/?book=1" className="block" onClick={(e) => e.stopPropagation()}>
-                    <PrimaryButton>Book Assessment</PrimaryButton>
+                  <Link to="/courses" className="block" onClick={(e) => e.stopPropagation()}>
+                    <SecondaryButton>Compare Courses</SecondaryButton>
                   </Link>
                 </div>
 
@@ -420,29 +414,21 @@ const WhyTinyStepsPage: FC = () => {
 
               <div className="rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-6">
                 <div className="flex flex-col gap-3">
-                  <a href="#book-trial">
+                  <Link to="/?book=1">
                     <PrimaryButton>Book Free Assessment Class</PrimaryButton>
-                  </a>
-
-                  <Link to="/courses">
-                    <SecondaryButton>Explore Courses</SecondaryButton>
                   </Link>
 
-                  <Link to="/curriculum">
-                    <SecondaryButton>View Curriculum</SecondaryButton>
-                  </Link>
-
-                  <a
-                    href={WHATSAPP_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="rounded-xl border px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 inline-flex items-center justify-center gap-2"
-                  >
-                    <span className="text-emerald-700">
-                      <IconWhatsapp />
-                    </span>
-                    WhatsApp Advisor
-                  </a>
+                  <div className="flex flex-wrap gap-4 text-sm font-semibold text-slate-700">
+                    <Link to="/courses" className="hover:text-slate-900">
+                      Explore courses
+                    </Link>
+                    <Link to="/curriculum" className="hover:text-slate-900">
+                      View curriculum
+                    </Link>
+                    <Link to="/contact" className="hover:text-slate-900">
+                      Email our team
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="mt-4 text-xs text-slate-500">
@@ -799,26 +785,6 @@ function IconChart() {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function IconWhatsapp() {
-  // simple chat bubble icon (no brand claim)
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M20 11.5a7.5 7.5 0 0 1-11.7 6.2L4 19l1.4-4.1A7.5 7.5 0 1 1 20 11.5z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 10.5c.6 2 2.5 3.7 4.5 4.2.5.1 1-.3 1.2-.7l.3-.7"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
       />
     </svg>
   );

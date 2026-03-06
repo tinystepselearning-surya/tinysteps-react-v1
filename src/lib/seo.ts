@@ -21,7 +21,7 @@ const PRIVATE_PATH_PREFIXES = [
   '/teacher',
   '/parent',
   '/kids',
-  '/learning-partner',
+  '/learning-partner/dashboard',
   '/surya'
 ];
 
@@ -484,10 +484,10 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/kids',
     robots: 'noindex, nofollow',
   },
-  '/learning-partner': {
+  '/learning-partner/dashboard': {
     title: 'Learning Partner Dashboard | Tiny Steps Learning',
     description: 'Learning partner dashboard.',
-    canonicalPath: '/learning-partner',
+    canonicalPath: '/learning-partner/dashboard',
     robots: 'noindex, nofollow',
   },
 };
