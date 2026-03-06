@@ -127,12 +127,29 @@ function buildMetaDescription(src: any) {
     return obj;
   }, [post, metaSource]);
 
+  const faqSchema = useMemo(() => {
+    if (!post?.faq?.length) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: post.faq.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: item.answer,
+        },
+      })),
+    };
+  }, [post]);
+
   const jsonLd = useMemo(() => {
     const blocks: any[] = [];
     blocks.push(breadcrumbSchema);
     if (articleSchema) blocks.push(articleSchema);
+    if (faqSchema) blocks.push(faqSchema);
     return blocks;
-  }, [breadcrumbSchema, articleSchema]);
+  }, [breadcrumbSchema, articleSchema, faqSchema]);
 
   useEffect(() => {
     if (!slug) return;
@@ -224,6 +241,20 @@ function buildMetaDescription(src: any) {
           })()}
           {MdxComp && <MdxComp />}
         </article>
+
+        <section className="mt-10 px-0">
+          <div className="mx-auto max-w-3xl">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+              <h2 className="text-xl font-semibold">Explore Tiny Steps classes</h2>
+              <p className="mt-1 text-sm text-gray-700">Choose a program aligned to your child’s goals and level.</p>
+              <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
+                <Link to="/phonics-classes-for-kids" className="text-primary-600">phonics classes for kids</Link>
+                <Link to="/english-grammar-writing-classes" className="text-primary-600">grammar classes for kids</Link>
+                <Link to="/public-speaking-communication-kids" className="text-primary-600">public speaking classes for kids</Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* About the Author section */}
         <AboutAuthor />

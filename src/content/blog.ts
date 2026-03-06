@@ -6,11 +6,112 @@ export type BlogPost = {
   date: string; // ISO date
   readTime: string;
   hero?: string; // image url
+  metaDescription?: string;
   excerpt: string;
   body: { type: 'h2'|'h3'|'p'|'li'; content: string }[];
+  faq?: { question: string; answer: string }[];
   viewsCount?: number;
   popularScore?: number;
 };
+
+type PhonicsSeoPost = {
+  slug: string;
+  title: string;
+  focus: string;
+  readTime?: string;
+};
+
+const PHONICS_SEO_FAQ = [
+  {
+    question: 'What age should kids start phonics?',
+    answer: 'Most children start between ages 3 and 5 once they can hear and repeat sounds. Keep lessons short, playful, and focused on sound recognition first.',
+  },
+  {
+    question: 'How long does phonics take to learn?',
+    answer: 'Foundations typically take 30–40 lessons with steady practice, while blending often clicks in the first 4–6 lessons.',
+  },
+  {
+    question: 'What are phonics classes?',
+    answer: 'Phonics classes teach children how letters map to sounds, then guide them to blend sounds into words and read simple decodable text.',
+  },
+];
+
+const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
+  { slug: 'best-online-phonics-classes-for-kids', title: 'Best Online Phonics Classes for Kids (Complete Parent Guide)', focus: 'best online phonics classes for kids' },
+  { slug: 'how-phonics-classes-help-kids-read', title: 'How Phonics Classes Help Kids Start Reading Early', focus: 'how phonics classes help kids read' },
+  { slug: 'benefits-of-phonics-for-kids', title: 'Top 7 Benefits of Phonics Classes for Kids', focus: 'benefits of phonics for kids' },
+  { slug: 'what-age-to-start-phonics', title: 'What Age Should Kids Start Phonics?', focus: 'what age to start phonics' },
+  { slug: 'how-to-choose-phonics-classes', title: 'How to Choose the Best Phonics Classes for Your Child', focus: 'how to choose phonics classes' },
+  { slug: 'synthetic-phonics-vs-traditional-reading', title: 'Synthetic Phonics vs Traditional Reading: Which Is Better?', focus: 'synthetic phonics vs traditional reading' },
+  { slug: 'online-phonics-classes-vs-school', title: 'Online Phonics Classes vs School Phonics: What Parents Should Know', focus: 'online phonics classes vs school' },
+  { slug: 'how-long-does-phonics-take', title: 'How Long Does It Take for a Child to Learn Phonics?', focus: 'how long does phonics take' },
+  { slug: 'what-is-phonics-for-kids', title: 'What Is Phonics? A Simple Guide for Parents', focus: 'what is phonics for kids' },
+  { slug: 'how-phonics-builds-reading-confidence', title: 'How Phonics Helps Children Become Confident Readers', focus: 'how phonics builds reading confidence' },
+  { slug: 'phonics-rules-for-beginners', title: 'Common Phonics Rules Every Child Should Learn', focus: 'phonics rules for beginners' },
+  { slug: 'how-phonics-improves-spelling', title: 'How Phonics Improves Spelling and Reading Skills', focus: 'how phonics improves spelling' },
+  { slug: 'science-of-phonics-learning', title: 'The Science Behind Phonics Learning for Kids', focus: 'science of phonics learning' },
+  { slug: 'phonics-activities-for-kids-at-home', title: '10 Fun Phonics Activities Parents Can Do at Home', focus: 'phonics activities for kids at home' },
+  { slug: 'phonics-games-for-letter-sounds', title: 'Phonics Games That Help Kids Learn Letter Sounds', focus: 'phonics games for letter sounds' },
+  { slug: 'phonics-blending-activities', title: 'Simple Blending Activities to Teach Kids Reading', focus: 'phonics blending activities' },
+  { slug: 'cvc-words-explained-for-parents', title: 'CVC Words Explained for Parents', focus: 'CVC words explained for parents' },
+  { slug: 'online-phonics-games', title: 'Fun Phonics Games for Online Learning', focus: 'online phonics games' },
+  { slug: 'satpin-phonics-guide', title: 'SATPIN Phonics Explained for Parents', focus: 'SATPIN phonics guide' },
+  { slug: 'how-kids-learn-blending', title: 'How Kids Learn to Blend Sounds in Phonics', focus: 'how kids learn blending' },
+  { slug: 'digraphs-and-tricky-words', title: 'Understanding Digraphs and Tricky Words', focus: 'digraphs and tricky words' },
+  { slug: 'long-vowel-sounds-for-kids', title: 'Long Vowel Sounds Explained for Kids', focus: 'long vowel sounds for kids' },
+  { slug: 'r-controlled-vowels-explained', title: 'R-Controlled Vowels Made Easy for Children', focus: 'r-controlled vowels explained' },
+  { slug: 'why-parents-choose-online-phonics', title: 'Why Parents Prefer Online Phonics Classes Today', focus: 'why parents choose online phonics' },
+  { slug: 'how-tiny-steps-builds-reading-confidence', title: 'How Tiny Steps Helps Kids Become Confident Readers', focus: 'how Tiny Steps builds reading confidence' },
+];
+
+function makePhonicsExcerpt(focus: string) {
+  return `Parents searching ${focus} want clear answers and simple next steps. This guide explains phonics benefits, class options, and how Tiny Steps supports confident readers.`;
+}
+
+function makeParentsShouldKnow(focus: string) {
+  return `If you’re comparing ${focus}, prioritize a program that starts with sound-letter links, then moves into blending and short decodable reading with gentle, consistent feedback.`;
+}
+
+const WHY_PHONICS_IMPORTANT =
+  'Phonics connects letters to sounds, which is the key to decoding new words. When children can blend sounds, they read more independently and build confidence faster.';
+
+const HOW_TINY_STEPS_TEACHES =
+  'Tiny Steps uses systematic phonics, step-by-step blending practice, and decodable reading. Lessons are live and paced to the child, with weekly parent updates so progress is easy to track.';
+
+function buildFaqBody() {
+  const blocks: { type: 'h2'|'h3'|'p'|'li'; content: string }[] = [
+    { type: 'h2', content: 'FAQ' },
+  ];
+  PHONICS_SEO_FAQ.forEach((item) => {
+    blocks.push({ type: 'h3', content: item.question });
+    blocks.push({ type: 'p', content: item.answer });
+  });
+  return blocks;
+}
+
+function makePhonicsPost(post: PhonicsSeoPost): BlogPost {
+  const excerpt = makePhonicsExcerpt(post.focus);
+  return {
+    slug: post.slug,
+    title: post.title,
+    category: 'Phonics',
+    author: 'Tiny Steps Learning',
+    date: '2026-03-05',
+    readTime: post.readTime ?? '6 min',
+    excerpt,
+    metaDescription: excerpt,
+    faq: PHONICS_SEO_FAQ,
+    body: [
+      { type: 'h2', content: 'What parents should know' },
+      { type: 'p', content: makeParentsShouldKnow(post.focus) },
+      { type: 'h2', content: 'Why phonics is important' },
+      { type: 'p', content: WHY_PHONICS_IMPORTANT },
+      { type: 'h2', content: 'How Tiny Steps teaches phonics' },
+      { type: 'p', content: HOW_TINY_STEPS_TEACHES },
+      ...buildFaqBody(),
+    ],
+  };
+}
 
 const rawBlogPosts: BlogPost[] = [
   {
@@ -174,6 +275,8 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'p', content: 'Week 3 introduces tricky words and high-frequency words while keeping blending practice alive. If you want guided lesson plans that follow this progression, Tiny Steps has structured lessons and short daily activities to help.' }
     ]
   },
+  // Phonics SEO series (Mar 2026)
+  ...PHONICS_SEO_POSTS.map(makePhonicsPost),
       // New SEO-targeted posts (Jan 2026)
       {
         slug: 'online-english-classes-for-kids-india',
