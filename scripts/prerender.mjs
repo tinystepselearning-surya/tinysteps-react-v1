@@ -30,6 +30,7 @@ const SEED_ROUTES = [
   "/best-online-phonics-classes-india",
   "/phonics-apps-for-preschoolers-india",
   "/summer-english-camp-2026",
+  "/phonics-classes-for-kids",
   "/english-grammar-writing-classes",
   "/public-speaking-communication-kids",
   // Parents hub + help pages
@@ -214,6 +215,12 @@ const ROUTE_SEO_CONFIG = {
     canonicalPath: '/phonics-apps-for-preschoolers-india',
     robots: 'index, follow',
   },
+  '/phonics-classes-for-kids': {
+    title: 'Phonics Classes for Kids | Tiny Steps Learning',
+    description: 'Explore Tiny Steps phonics tracks for ages 3-12: Phonics Foundations (30 lessons), Early Phonics (41 lessons), and Advanced Phonics (20 lessons).',
+    canonicalPath: '/phonics-classes-for-kids',
+    robots: 'index, follow',
+  },
   '/contact': {
     title: 'Contact Us | Tiny Steps Learning',
     description: 'Have questions? Get in touch with our team. We\'re here to help you find the perfect English class for your child.',
@@ -330,13 +337,13 @@ const ROUTE_SEO_CONFIG = {
   },
   '/english-grammar-writing-classes': {
     title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
-    description: 'Improve grammar and writing skills with 1:1 online classes. For kids ages 7–12. Clear explanations, practical exercises, and feedback.',
+    description: 'Explore Tiny Steps grammar tracks: Basic Grammar (36 lessons) and Advanced Grammar (36 lessons) for sentence structure, grammar control, and writing clarity.',
     canonicalPath: '/english-grammar-writing-classes',
     robots: 'index, follow',
   },
   '/public-speaking-communication-kids': {
     title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
-    description: 'Build speaking confidence and communication skills. 1:1 online classes for kids ages 7–12. Presentations, fluency, and self-expression.',
+    description: 'Explore Tiny Steps public speaking tracks: Public Speaking (Basic) and Public Speaking (Advanced), each with 36 lessons for confidence, structure, and presentation skills.',
     canonicalPath: '/public-speaking-communication-kids',
     robots: 'index, follow',
   },

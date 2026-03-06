@@ -1,4 +1,5 @@
 // src/lib/seo.ts
+import { SUBJECT_LANDING_ROUTE_META } from '../content/publicSubjectLandings';
 import { organizationSchema } from './schemas';
 
 type SeoConfig = {
@@ -405,18 +406,7 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/online-phonics-reading-classes',
     ogType: 'website',
   },
-  '/english-grammar-writing-classes': {
-    title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
-    description: 'Improve grammar and writing skills with 1:1 online classes. For kids ages 7–12. Clear explanations, practical exercises, and feedback.',
-    canonicalPath: '/english-grammar-writing-classes',
-    ogType: 'website',
-  },
-  '/public-speaking-communication-kids': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
-    description: 'Build speaking confidence and communication skills. 1:1 online classes for kids ages 7–12. Presentations, fluency, and self-expression.',
-    canonicalPath: '/public-speaking-communication-kids',
-    ogType: 'website',
-  },
+  ...SUBJECT_LANDING_ROUTE_META,
   // Protected / Portal Routes — NOINDEX
   '/login': {
     title: 'Sign In | Tiny Steps Learning',
