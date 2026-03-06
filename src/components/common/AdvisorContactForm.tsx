@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
 
 type AdvisorContactFormProps = {
   topic?: string;
@@ -10,6 +11,7 @@ type AdvisorContactFormProps = {
 const initialValues = {
   name: '',
   email: '',
+  phone: '',
   message: '',
 };
 
@@ -21,15 +23,43 @@ export default function AdvisorContactForm({
 }: AdvisorContactFormProps) {
   const [values, setValues] = useState(initialValues);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (field: keyof typeof initialValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitted(true);
-    setValues(initialValues);
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...values,
+          topic,
+          pagePath: typeof window !== 'undefined' ? window.location.pathname : '',
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to submit contact form');
+      }
+
+      setSubmitted(true);
+      setValues(initialValues);
+    } catch {
+      setError(`We could not send your message right now. Please email ${PUBLIC_CONTACT_EMAIL}.`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -57,6 +87,14 @@ export default function AdvisorContactForm({
           className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
           required
         />
+        <input
+          type="tel"
+          value={values.phone}
+          onChange={(event) => handleChange('phone', event.target.value)}
+          placeholder="Phone or WhatsApp number"
+          className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-slate-400"
+          required
+        />
         <textarea
           value={values.message}
           onChange={(event) => handleChange('message', event.target.value)}
@@ -67,15 +105,22 @@ export default function AdvisorContactForm({
         />
         <button
           type="submit"
+          disabled={isSubmitting}
           className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
         >
-          Send message
+          {isSubmitting ? 'Sending...' : 'Send message'}
         </button>
       </form>
 
       {submitted ? (
         <div className="mt-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
-          Thanks. We received your {topic.toLowerCase()} request and will reply by email.
+          Thank you! We&apos;ll get back to you soon.
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+          {error}
         </div>
       ) : null}
     </div>

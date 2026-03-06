@@ -139,20 +139,19 @@ export default function PhonicsGamesPreschoolersPage() {
         <p className="text-xl text-gray-700 mb-6">
           No-print, easy games for ages 3–6 to build letter sounds and blending at home.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            to="/courses"
-            className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-6 rounded-lg transition"
-          >
-            Explore Courses
+        <Link
+          to="/contact"
+          className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-6 rounded-lg transition"
+        >
+          Book Free Assessment
+        </Link>
+        <p className="mt-4 text-sm text-gray-600">
+          Want the complete curriculum view?{' '}
+          <Link to="/courses" className="font-semibold text-[#4a7c2c] underline">
+            Explore courses
           </Link>
-          <Link
-            to="/contact"
-            className="inline-block bg-white border border-[#4a7c2c] text-[#2d5016] font-bold py-3 px-6 rounded-lg transition"
-          >
-            Book Free Assessment
-          </Link>
-        </div>
+          .
+        </p>
       </header>
 
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
@@ -252,7 +251,7 @@ export default function PhonicsGamesPreschoolersPage() {
             to="/contact"
             className="inline-block bg-white border border-[#4a7c2c] text-[#2d5016] font-bold py-3 px-6 rounded-lg transition"
           >
-            Contact Us
+            Book Free Assessment
           </Link>
         </div>
       </section>

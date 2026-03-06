@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import AdvisorContactForm from '../components/common/AdvisorContactForm';
 import Meta from '../components/common/Meta';
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import { trackEvent } from '../lib/analytics';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -33,7 +34,7 @@ const ContactPage: FC = () => {
               {user && (
                 <li><span className="font-semibold">Support:</span> <a href="/contact" className="text-tiny-blue-600">Use the contact form to reach our team</a></li>
               )}
-              <li><span className="font-semibold">Email:</span> <a href="mailto:hello@tinystepslearning.com" className="text-tiny-blue-600">hello@tinystepslearning.com</a></li>
+              <li><span className="font-semibold">Email:</span> <a href={PUBLIC_CONTACT_MAILTO} className="text-tiny-blue-600">{PUBLIC_CONTACT_EMAIL}</a></li>
               <li>
                 <span className="font-semibold">Location:</span> Hyderabad, Telangana (online-only; serving families across the globe)
               </li>

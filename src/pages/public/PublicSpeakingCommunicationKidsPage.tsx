@@ -289,13 +289,14 @@ export default function PublicSpeakingCommunicationKidsPage() {
             >
               View Full FAQ
             </Link>
-            <Link
-              to="/contact"
-              className="inline-block bg-[#4a7c2c] text-white font-semibold py-3 px-6 rounded-lg hover:bg-[#2d5016] transition"
-            >
-              Book Free Assessment
-            </Link>
           </div>
+          <p className="mt-4 text-sm text-gray-600">
+            Want a recommendation for shy, beginner, or advanced speakers?{' '}
+            <Link to="/contact" className="font-semibold text-[#4a7c2c] underline">
+              Use the contact form
+            </Link>
+            .
+          </p>
         </div>
       </section>
 

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
 import AdvisorContactForm from './AdvisorContactForm';
 import NewsletterForm from './NewsletterForm';
 
@@ -140,8 +141,8 @@ export default function Footer() {
                   </li>
                 ) : null}
                 <li>
-                  <a href="mailto:hello@tinystepslearning.com" className="transition hover:text-tiny-blue-300">
-                    Email: hello@tinystepslearning.com
+                  <a href={PUBLIC_CONTACT_MAILTO} className="transition hover:text-tiny-blue-300">
+                    Email: {PUBLIC_CONTACT_EMAIL}
                   </a>
                 </li>
                 <li className="text-xs text-white/60">Hours: Mon-Fri 9 AM-6 PM IST • Sat 10 AM-2 PM IST</li>

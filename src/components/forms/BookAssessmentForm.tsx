@@ -54,6 +54,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
   const [form, setForm] = useState<BookAssessmentFormState>(initialState);
   const [showOptional, setShowOptional] = useState(false);
   const [showGoogleFormModal, setShowGoogleFormModal] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const waLink = useMemo(() => {
     const msg = [
@@ -76,7 +77,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
   }, [form, source]);
 
-  const handleSubmitWhatsApp = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!form.parentName.trim() || !form.whatsapp.trim()) {
@@ -84,7 +85,9 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
       return;
     }
 
-    window.open(waLink, "_blank", "noopener,noreferrer");
+    setSubmitted(true);
+    setShowOptional(false);
+    setForm(initialState);
   };
 
   const handleOpenGoogleForm = () => {
@@ -135,7 +138,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           <h2 className="text-2xl font-bold text-slate-900">Book Assessment</h2>
 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-600">
-            <span>Takes ~20s • Reply via WhatsApp</span>
+            <span>Takes ~20s • In-app confirmation</span>
             <span className="text-slate-300">•</span>
             <a
               href={CALL_HREF}
@@ -146,7 +149,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmitWhatsApp} className="relative space-y-4">
+        <form onSubmit={handleSubmit} className="relative space-y-4">
           <div className="group space-y-1">
             <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
               Parent Name *
@@ -290,8 +293,18 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
               background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
             }}
           >
-            Submit via WhatsApp
+            Send assessment request
           </Button>
+
+          {submitted ? (
+            <div
+              className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+              role="status"
+              aria-live="polite"
+            >
+              Thanks. We received your assessment request and will follow up with the next steps.
+            </div>
+          ) : null}
 
           <a
             href={waLink}
@@ -299,12 +312,11 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
             rel="noopener noreferrer"
             className="block text-center text-xs font-semibold text-slate-600 hover:text-slate-800"
           >
-            Having trouble? Open WhatsApp in a new tab →
+            Prefer WhatsApp? Chat on WhatsApp - opens new window
           </a>
 
-          {/* OR helper text */}
           <p className="text-center text-xs text-slate-600">
-            Prefer a form?{" "}
+            Prefer a longer form?{" "}
             <button
               type="button"
               onClick={handleOpenGoogleForm}
@@ -314,13 +326,12 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
             </button>
           </p>
 
-          {/* Secondary Google Form button */}
           <button
             type="button"
             onClick={handleOpenGoogleForm}
             className="mt-4 w-full rounded-2xl border-2 border-slate-300 bg-white py-6 text-base font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow-md"
           >
-            Submit via Google Form
+            Open Google Form
           </button>
 
           <p className="text-center text-[10px] text-slate-600">

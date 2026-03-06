@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React from 'react';
-import Button from '../Button/Button';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const plans = [
@@ -144,17 +144,22 @@ export default function GamingSubscriptionSection({
 								<li>Parents receive AI insight summaries + habit nudges.</li>
 							</ol>
 							{!user && (
-								<Button
-									onClick={() =>
-										window.open(
-											'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20Tell%20me%20about%20the%20game%20subscriptions.%20',
-											'_blank'
-										)
-									}
-									className="w-full"
-								>
-									Learn More
-								</Button>
+								<div className="space-y-3">
+									<Link
+										to="/contact"
+										className="inline-flex w-full items-center justify-center rounded-2xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow transition hover:bg-gray-800"
+									>
+										Ask for a callback
+									</Link>
+									<a
+										href="https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20Tell%20me%20about%20the%20game%20subscriptions.%20"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="inline-flex w-full items-center justify-center rounded-2xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+									>
+										Chat on WhatsApp - opens new window
+									</a>
+								</div>
 							)}
 						</div>
 					</div>

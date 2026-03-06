@@ -58,6 +58,9 @@ export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
 export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
 
+// Public website contact form
+export { contactForm } from "./contactForm";
+
 // Enrollment lifecycle (admin-only)
 export {
   setEnrollmentStatus,

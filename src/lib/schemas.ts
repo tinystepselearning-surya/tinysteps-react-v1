@@ -3,6 +3,8 @@
  * Used across pages for consistent structured data (SEO + voice search)
  */
 
+import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
+
 export const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -20,7 +22,7 @@ export const organizationSchema = {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
     telephone: '+91-9618398383',
-    email: 'support@tinystepslearning.com',
+    email: PUBLIC_CONTACT_EMAIL,
     url: 'https://tinystepslearning.com/contact',
     areaServed: 'IN',
     availableLanguage: ['en']
@@ -48,7 +50,7 @@ export const localBusinessSchema = {
   image: 'https://tinystepslearning.com/logo.png',
   description: 'Online English learning platform',
   telephone: '+91-9618398383',
-  email: 'support@tinystepslearning.com',
+  email: PUBLIC_CONTACT_EMAIL,
   url: 'https://tinystepslearning.com',
   address: {
     '@type': 'PostalAddress',

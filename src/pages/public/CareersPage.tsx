@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { applySeo } from '../../lib/seo';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
+import AdvisorContactForm from '../../components/common/AdvisorContactForm';
 
 const BASE_MESSAGE =
   'Hi Tiny Steps Team! I want to apply for [Teacher / Learning Partner / Curriculum Admin].';
@@ -77,8 +78,8 @@ const ROLES = [
 
 const PROCESS_STEPS = [
   {
-    title: 'Message on WhatsApp',
-    description: 'Send your details and preferred role to our team.',
+    title: 'Share your details',
+    description: 'Apply by contact form or WhatsApp with your preferred role and experience.',
   },
   {
     title: 'Quick Screening',
@@ -132,7 +133,7 @@ export default function CareersPage() {
     applySeo({
       title: 'Careers | Join the Tiny Steps Team',
       description:
-        'We’re hiring remote part-time Online Teachers, Learning Partners, and Curriculum Administrators. Work with children aged 3–12. Apply on WhatsApp.',
+        'We’re hiring remote part-time Online Teachers, Learning Partners, and Curriculum Administrators. Work with children aged 3–12 and apply online.',
       canonicalPath: '/careers',
       ogType: 'website',
     });
@@ -149,7 +150,7 @@ export default function CareersPage() {
           <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-700">
             Remote • Part-time • Meaningful work with children (ages 3–12)
           </p>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Button
               asChild
               variant="default"
@@ -157,12 +158,15 @@ export default function CareersPage() {
               className="bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
             >
               <a href={buildWhatsAppLink()} target="_blank" rel="noopener noreferrer">
-                Message on WhatsApp to Apply
+                Chat on WhatsApp - opens new window
               </a>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <a href="#apply-form">Apply without WhatsApp</a>
             </Button>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            We typically respond within 24 hours.
+            We typically respond within 24 hours. Use the form below if you prefer email.
           </p>
         </div>
       </section>
@@ -204,19 +208,27 @@ export default function CareersPage() {
               </div>
 
               <div className="mt-6">
-                <Button
-                  asChild
-                  variant="default"
-                  className="w-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
-                >
-                  <a
-                    href={buildWhatsAppLink(role.ctaRole)}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                <div className="space-y-3">
+                  <Button
+                    asChild
+                    variant="default"
+                    className="w-full bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
                   >
-                    Apply on WhatsApp
+                    <a
+                      href={buildWhatsAppLink(role.ctaRole)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Chat on WhatsApp - opens new window
+                    </a>
+                  </Button>
+                  <a
+                    href="#apply-form"
+                    className="block text-center text-sm font-semibold text-primary hover:underline"
+                  >
+                    Apply without WhatsApp
                   </a>
-                </Button>
+                </div>
               </div>
             </Card>
           ))}
@@ -252,13 +264,23 @@ export default function CareersPage() {
         </div>
       </section>
 
+      <section id="apply-form" className="mx-auto max-w-4xl px-6 pb-16">
+        <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:p-8">
+          <AdvisorContactForm
+            topic="Careers application"
+            title="Apply without WhatsApp"
+            description="Share the role, city, experience, weekly availability, and resume link. We will follow up by email."
+          />
+        </div>
+      </section>
+
       <section className="px-6 pb-20">
         <div className="mx-auto max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-sm">
           <h2 className="text-2xl font-bold text-gray-900">Ready to apply?</h2>
           <p className="mt-2 text-gray-600">
-            Message us with your details and preferred role.
+            Share your details on WhatsApp or use the form above if you prefer email.
           </p>
-          <div className="mt-6 flex justify-center">
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <Button
               asChild
               variant="default"
@@ -266,8 +288,11 @@ export default function CareersPage() {
               className="bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_15px_35px_rgba(15,23,42,0.25)] hover:shadow-[0_20px_40px_rgba(37,99,235,0.35)]"
             >
               <a href={buildWhatsAppLink()} target="_blank" rel="noopener noreferrer">
-                Apply on WhatsApp
+                Chat on WhatsApp - opens new window
               </a>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <a href="#apply-form">Open application form</a>
             </Button>
           </div>
         </div>
@@ -275,15 +300,14 @@ export default function CareersPage() {
 
       <div className="md:hidden fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-gray-900">Apply on WhatsApp</div>
+          <div className="text-sm font-semibold text-gray-900">Apply without WhatsApp if needed</div>
           <Button
             asChild
             size="sm"
-            variant="default"
-            className="bg-gradient-to-r from-[#0f172a] via-[#2563eb] to-[#7c3aed] text-white shadow-[0_12px_25px_rgba(15,23,42,0.25)] hover:shadow-[0_16px_30px_rgba(37,99,235,0.35)]"
+            variant="outline"
           >
-            <a href={buildWhatsAppLink()} target="_blank" rel="noopener noreferrer">
-              WhatsApp
+            <a href="#apply-form">
+              Application form
             </a>
           </Button>
         </div>

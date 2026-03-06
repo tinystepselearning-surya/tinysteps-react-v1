@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FC } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import NavBar from './NavBar/NavBar';
 
 export const Header: FC = () => {
@@ -80,7 +81,7 @@ export const Footer: FC = () => (
         <div>
           <h3 className="font-semibold mb-4">Connect</h3>
           <ul className="space-y-2">
-            <li><a href="mailto:hello@tinystepslearning.com" className="hover:text-blue-400 transition">hello@tinystepslearning.com</a></li>
+            <li><a href={PUBLIC_CONTACT_MAILTO} className="hover:text-blue-400 transition">{PUBLIC_CONTACT_EMAIL}</a></li>
             <li><a href="tel:+919666095553" className="hover:text-blue-400 transition">+91 96660 95553</a></li>
             <li><a href="#" className="hover:text-blue-400 transition">Book a Learning Call</a></li>
           </ul>

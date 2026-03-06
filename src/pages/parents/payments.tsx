@@ -38,8 +38,11 @@ const Payments: React.FC = () => {
       <Link to="/parent/payments" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
         Open Payments Dashboard →
       </Link>
-      <a href="https://wa.me/919618398383" className="text-primary-600 text-sm font-medium hover:underline">
-        WhatsApp us for payment plan options
+      <Link to="/contact" className="text-primary-600 text-sm font-medium hover:underline">
+        Use the contact form for payment plan options
+      </Link>
+      <a href="https://wa.me/919618398383" target="_blank" rel="noopener noreferrer" className="text-primary-600 text-sm font-medium hover:underline">
+        Chat on WhatsApp - opens new window
       </a>
     </div>
 
@@ -52,7 +55,7 @@ const Payments: React.FC = () => {
         </div>
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>
-          <span><strong>Payment plans:</strong> Contact our team via WhatsApp or form to discuss monthly payment options, discounts, or refund eligibility.</span>
+          <span><strong>Payment plans:</strong> Contact our team through the contact form or WhatsApp to discuss monthly payment options, discounts, or refund eligibility.</span>
         </div>
         <div className="flex items-start gap-3">
           <span className="mt-0.5 inline-block h-2 w-2 rounded-full bg-primary-600 flex-shrink-0"></span>

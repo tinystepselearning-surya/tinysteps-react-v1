@@ -29,16 +29,16 @@ describe('FloatingAssistant', () => {
     act(() => useAuthStore.setState({ user: null }))
     act(() => render(<FloatingAssistant />))
     // advance timers to flush the setTimeout in the component
-  await act(async () => { vi.runAllTimers(); await Promise.resolve() })
-    expect(screen.getByText(/Ask TinySteps/i)).toBeInTheDocument()
-    expect(screen.getByText(/WhatsApp Advisor/i)).toBeInTheDocument()
+    await act(async () => { vi.runAllTimers(); await Promise.resolve() })
+    expect(screen.getAllByText(/Leave a message/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Chat on WhatsApp - opens new window/i)).toBeInTheDocument()
   })
 
   it('does not render for logged-in users', async () => {
     act(() => useAuthStore.setState({ user: { uid: 'u1', email: 'test@example.com', displayName: 'Test', role: 'parent' } }))
     act(() => render(<FloatingAssistant />))
-  await act(async () => { vi.runAllTimers(); await Promise.resolve() })
+    await act(async () => { vi.runAllTimers(); await Promise.resolve() })
     // should not find the label
-    expect(screen.queryByText(/Ask TinySteps/i)).toBeNull()
+    expect(screen.queryByText(/Leave a message/i)).toBeNull()
   })
 })

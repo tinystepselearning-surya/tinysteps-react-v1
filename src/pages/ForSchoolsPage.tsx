@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Meta from '../components/common/Meta';
 import Modal from '@/common/Modal';
+import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 
 const ForSchoolsPage: React.FC = () => {
   const [showSampleSchedule, setShowSampleSchedule] = useState(false);
@@ -164,10 +165,10 @@ const ForSchoolsPage: React.FC = () => {
           Share a few details about your school and we’ll schedule a short call to explore the right model for you.
         </p>
         <a
-          href="mailto:hello@tinystepslearning.com?subject=School%20Partnership%20Inquiry"
+          href={`${PUBLIC_CONTACT_MAILTO}?subject=School%20Partnership%20Inquiry`}
           className="inline-block bg-white text-primary-500 font-medium px-6 py-3 rounded-lg shadow-md hover:bg-gray-100"
         >
-          Discuss a school partnership
+          Discuss a school partnership with {PUBLIC_CONTACT_EMAIL}
         </a>
       </section>
     </div>
