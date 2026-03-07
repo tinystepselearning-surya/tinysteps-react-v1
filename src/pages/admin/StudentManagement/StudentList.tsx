@@ -2261,7 +2261,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                 </TableCell>
 
                 {/* ✅ Age instead of DOB */}
-                <TableCell className="px-3 py-2 align-top">{displayAgeYears(s)}</TableCell>
+                <TableCell className="px-3 py-2 align-top">
+                  <div className="flex flex-col items-start gap-1">
+                    <span>{displayAgeYears(s)}</span>
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-0 text-xs font-medium text-primary hover:bg-transparent"
+                        onClick={() => onEdit(s)}
+                      >
+                        Edit age
+                      </Button>
+                    )}
+                  </div>
+                </TableCell>
 
                 <TableCell className="px-3 py-2 align-top">{s.grade}</TableCell>
                 <TableCell className="px-3 py-2 align-top">{(s as any).status}</TableCell>

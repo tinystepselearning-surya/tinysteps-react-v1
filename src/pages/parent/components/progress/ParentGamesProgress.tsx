@@ -16,11 +16,14 @@ type GameCatalogItem = {
 type ParentGamesProgressProps = {
   kidSummaryData: AnyObj | null;
   gamesCatalog: GameCatalogItem[];
+  gameSummaries?: Record<string, any> | null;
   onPracticeClick: (gameId?: string) => void;
   skillTagStats?: Record<string, any> | null;
 };
 
 const TOTAL_LETTERS = 26;
+const LETTER_SOUNDS_GAME_ID = "letter-sound-match";
+const LETTER_SOUNDS_PROGRESS_DOC_ID = "phonics_letter_sound";
 
 /** Small helper */
 function formatDateMaybe(value: any): string | null {
@@ -44,6 +47,13 @@ function formatDateMaybe(value: any): string | null {
 function clampPct(pct: number) {
   if (!Number.isFinite(pct)) return 0;
   return Math.max(0, Math.min(100, pct));
+}
+
+function toCount(value: any): number {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.max(0, Math.floor(value));
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === "object") return Object.keys(value).length;
+  return 0;
 }
 
 function ProgressBar({
@@ -487,6 +497,17 @@ function getTheme(gameId: string) {
         pillTo: "to-lime-600",
         border: "border-emerald-100 dark:border-emerald-900/30",
       };
+    case "letter-sound-match":
+    case "phonics_letter_sound":
+    case "phonics_letter_sound_match":
+      return {
+        emoji: "🔊",
+        glowFrom: "from-pink-500/25",
+        glowTo: "to-orange-400/20",
+        pillFrom: "from-pink-600",
+        pillTo: "to-orange-500",
+        border: "border-pink-100 dark:border-pink-900/30",
+      };
     default:
       return {
         emoji: "🎮",
@@ -502,6 +523,7 @@ function getTheme(gameId: string) {
 export function ParentGamesProgress({
   kidSummaryData,
   gamesCatalog,
+  gameSummaries,
   onPracticeClick,
   skillTagStats,
 }: ParentGamesProgressProps) {
@@ -509,6 +531,7 @@ export function ParentGamesProgress({
   const progress = kidSummaryData?.progress || {};
   const byGame = progress?.byGame || {};
   const summaryGames = summary?.games || {};
+  const summaries = gameSummaries || {};
 
   const lastUpdated =
     formatDateMaybe(summary?.lastUpdatedAt) ||
@@ -516,7 +539,25 @@ export function ParentGamesProgress({
     null;
 
   const games: GameCatalogItem[] = useMemo(() => {
-    const list = Array.isArray(gamesCatalog) ? [...gamesCatalog] : [];
+    const input = Array.isArray(gamesCatalog) ? [...gamesCatalog] : [];
+    const deduped = new Map<string, GameCatalogItem>();
+    input.forEach((game) => {
+      if (!game?.id) return;
+      const canonicalId =
+        game.id === "phonics_letter_sound" || game.id === "phonics_letter_sound_match"
+          ? "letter-sound-match"
+          : game.id;
+      if (!deduped.has(canonicalId)) {
+        const isLetterSounds = canonicalId === LETTER_SOUNDS_GAME_ID;
+        deduped.set(canonicalId, {
+          ...game,
+          id: canonicalId,
+          title: isLetterSounds ? "Letter Sounds" : game.title,
+          subtitle: isLetterSounds ? "Matches sounds to letters" : game.subtitle,
+        });
+      }
+    });
+    const list = Array.from(deduped.values());
     const ids = new Set(list.map((g) => g.id));
 
     if (!ids.has("letter-tracing")) {
@@ -535,6 +576,15 @@ export function ParentGamesProgress({
         subtitle: "Hear sounds in words",
         area: "phonics",
         totalLevels: 5,
+      });
+    }
+    if (!ids.has(LETTER_SOUNDS_GAME_ID)) {
+      list.push({
+        id: LETTER_SOUNDS_GAME_ID,
+        title: "Letter Sounds",
+        subtitle: "Matches sounds to letters",
+        area: "phonics",
+        totalLevels: 7,
       });
     }
     return list;
@@ -596,17 +646,41 @@ export function ParentGamesProgress({
         {games.map((game) => {
           const gameId = game.id || "unknown";
           const theme = getTheme(gameId);
+          const isLetterSounds = gameId === LETTER_SOUNDS_GAME_ID;
 
-          const prog = byGame?.[gameId] || {};
-          const sumG = summaryGames?.[gameId] || {};
+          const prog =
+            byGame?.[gameId] ||
+            (isLetterSounds
+              ? byGame?.["phonics_letter_sound"] || byGame?.["phonics_letter_sound_match"]
+              : null) ||
+            {};
+          const sumG =
+            summaryGames?.[gameId] ||
+            (isLetterSounds
+              ? summaryGames?.["phonics_letter_sound"] || summaryGames?.["phonics_letter_sound_match"]
+              : null) ||
+            {};
+          const summaryDoc =
+            summaries?.[gameId] ||
+            (isLetterSounds
+              ? summaries?.[LETTER_SOUNDS_PROGRESS_DOC_ID] || summaries?.["phonics_letter_sound_match"]
+              : null) ||
+            {};
 
           const lastPlayed =
-            formatDateMaybe(prog?.lastPlayedAt) || formatDateMaybe(sumG?.lastPlayedAt) || null;
+            formatDateMaybe(summaryDoc?.lastPlayedAt) ||
+            formatDateMaybe(prog?.lastPlayedAt) ||
+            formatDateMaybe(sumG?.lastPlayedAt) ||
+            null;
 
           const isLetterTracing = gameId === "letter-tracing";
 
-          let total = Number(prog?.totalLevels ?? game.totalLevels ?? sumG?.totalLevels ?? 0) || 0;
-          let completed = Number(prog?.completedLevels ?? prog?.levelsCompleted ?? sumG?.completedLevels ?? 0) || 0;
+          let total = toCount(prog?.totalLevels) || Number(game.totalLevels ?? sumG?.totalLevels ?? 0) || 0;
+          let completed =
+            toCount(prog?.completedLevels) ||
+            toCount(prog?.levelsCompleted) ||
+            toCount(summaryDoc?.completedLevelCount) ||
+            toCount(sumG?.completedLevels);
 
           if (isLetterTracing) {
             total = TOTAL_LETTERS;
@@ -615,6 +689,8 @@ export function ParentGamesProgress({
             if (!total) total = game.totalLevels || 5;
           }
 
+          const masteryStarsTotal = Number(summaryDoc?.bestStarsTotal ?? 0) || 0;
+          const maxMasteryStars = total > 0 ? total * 8 : 0;
           const pct = total > 0 ? (completed / total) * 100 : 0;
           const badge = getStatusBadge(completed, total);
 
@@ -657,7 +733,7 @@ export function ParentGamesProgress({
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">
-                      {isLetterTracing ? "Letters" : "Levels"}
+                      {isLetterTracing ? "Letters" : "Levels completed"}
                     </div>
                     <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
                       {completed}/{total}
@@ -773,15 +849,33 @@ export function ParentGamesProgress({
                     </div>
                   ) : null}
 
+                  {isLetterSounds ? (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-300">
+                        <span>Mastery stars earned</span>
+                        <span className="font-semibold">
+                          {maxMasteryStars > 0 ? `${masteryStarsTotal}/${maxMasteryStars}` : masteryStarsTotal}
+                        </span>
+                      </div>
+                      <div className="text-[11px] text-gray-500 dark:text-gray-400">
+                        Practising letter-sound recognition
+                      </div>
+                    </div>
+                  ) : null}
+
                   <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                    <span>Last:</span>
+                    <span>Last played:</span>
                     <span className="font-medium">{lastPlayed || "—"}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 pt-2">
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {isLetterTracing ? "Trace neatly ✨" : "Play & learn ✨"}
+                    {isLetterTracing
+                      ? "Trace neatly ✨"
+                      : isLetterSounds
+                        ? "Hear sound → choose letter ✨"
+                        : "Play & learn ✨"}
                   </div>
 
                   <Button

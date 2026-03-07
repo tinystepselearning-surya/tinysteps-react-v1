@@ -810,6 +810,7 @@ export default function ParentDashboard() {
   const { user, isLoading, clearUser } = useAuthStore();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const requestedKidId = searchParams.get("kidId")?.trim() || "";
 
   const activeTab = safeTab(searchParams.get("tab"));
 
@@ -868,8 +869,17 @@ export default function ParentDashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   useEffect(() => {
-    if (!selectedKidId && kids.length > 0) setSelectedKidId(kids[0].id);
-  }, [kids, selectedKidId]);
+    if (kids.length === 0) return;
+    if (
+      requestedKidId &&
+      kids.some((kid: any) => kid.id === requestedKidId) &&
+      selectedKidId !== requestedKidId
+    ) {
+      setSelectedKidId(requestedKidId);
+      return;
+    }
+    if (!selectedKidId) setSelectedKidId(kids[0].id);
+  }, [kids, requestedKidId, selectedKidId]);
 
   const selectedKid = useMemo(
     () => kids.find((k: any) => k.id === selectedKidId),
@@ -1254,6 +1264,25 @@ export default function ParentDashboard() {
     },
   });
 
+  // ---- Per-game summaries (kids/{kidId}/gameSummaries/*) ----
+  // Used to render reliable per-game progress (e.g. Letter Sounds completion/stars)
+  const gameSummariesQuery = useQuery({
+    queryKey: ["gameSummaries", selectedKidId],
+    enabled: !!selectedKidId && activeTab === "games-progress",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId) return null;
+      const snap = await getDocs(collection(db, "kids", selectedKidId, "gameSummaries"));
+      const map: Record<string, any> = {};
+      snap.forEach((d) => {
+        map[d.id] = d.data();
+      });
+      return map;
+    },
+  });
+
   // ---- Games catalog ----
   const gamesCatalogQuery = useQuery({
     queryKey: ["gamesCatalog"],
@@ -1263,7 +1292,29 @@ export default function ParentDashboard() {
     queryFn: async () => {
       const snap = await getDoc(doc(db, "config", "gamesCatalog"));
       const data = snap.exists() ? (snap.data() as any) : null;
-      return Array.isArray(data?.games) ? data.games : [];
+      const games = data?.games;
+      if (Array.isArray(games)) return games;
+      if (!games || typeof games !== "object") return [];
+
+      return Object.entries(games)
+        .map(([id, game]: [string, any]) => {
+          const canonicalId =
+            id === "phonics_letter_sound" || id === "phonics_letter_sound_match"
+              ? "letter-sound-match"
+              : id;
+          return {
+            id: canonicalId,
+            title: game?.title || id,
+            subtitle: game?.subtitle || game?.description || "",
+            area: game?.category || "",
+            totalLevels: typeof game?.totalLevels === "number" ? game.totalLevels : undefined,
+            order: typeof game?.order === "number" ? game.order : Number.MAX_SAFE_INTEGER,
+            active: game?.active !== false,
+          };
+        })
+        .filter((game: any) => game.active !== false)
+        .sort((a: any, b: any) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
+        .map(({ order, active, ...rest }: any) => rest);
     },
   });
 
@@ -1316,17 +1367,22 @@ export default function ParentDashboard() {
   const handlePracticeClick = (gameId?: string) => {
     if (!selectedKidId) return;
 
+    const canonicalGameId =
+      gameId === "phonics_letter_sound" || gameId === "phonics_letter_sound_match"
+        ? "letter-sound-match"
+        : gameId;
+
     const kidParam = `?kidId=${encodeURIComponent(selectedKidId)}`;
     const routeByGame: Record<string, string> = {
       "letter-tracing": "/kids/games/phonics/letter-tracing",
       "sound-detective": "/kids/games/phonics/sound-detective",
+      "letter-sound-match": "/kids/games/phonics/letter-sound",
       // Add more mappings as you add routes:
       // "rhyme-time": "/kids/games/phonics/rhyme-time",
-      // "letter-sound-match": "/kids/games/phonics/letter-sound-match",
     };
 
     const base =
-      (gameId && routeByGame[gameId]) ? routeByGame[gameId] : "/kids/games/english-excellence";
+      (canonicalGameId && routeByGame[canonicalGameId]) ? routeByGame[canonicalGameId] : "/kids/games/english-excellence";
 
     navigate(`${base}${kidParam}`);
   };
@@ -2627,7 +2683,16 @@ export default function ParentDashboard() {
                     <>
                       <select
                         value={selectedKidId}
-                        onChange={(e) => setSelectedKidId(e.target.value)}
+                        onChange={(e) => {
+                          const nextKidId = e.target.value;
+                          setSelectedKidId(nextKidId);
+                          setSearchParams((prev) => {
+                            const next = new URLSearchParams(prev);
+                            if (nextKidId) next.set("kidId", nextKidId);
+                            else next.delete("kidId");
+                            return next;
+                          });
+                        }}
                         className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 mb-3"
                       >
                         {kids.map((k: any) => (
@@ -2644,7 +2709,7 @@ export default function ParentDashboard() {
                         disabled={!selectedKidId}
                         className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
                       >
-                        Open English Excellence Mission
+                        Open Games Portal
                       </Button>
                     </>
                   )}
@@ -3522,6 +3587,7 @@ export default function ParentDashboard() {
               <ParentGamesProgress
                 kidSummaryData={kidSummaryQuery.data ?? null}
                 gamesCatalog={gamesCatalogQuery.data ?? []}
+                gameSummaries={gameSummariesQuery.data ?? null}
                 onPracticeClick={(gameId) => handlePracticeClick(gameId)}
                 skillTagStats={skillTagStatsQuery.data ?? null}
               />

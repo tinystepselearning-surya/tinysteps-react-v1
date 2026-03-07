@@ -933,11 +933,12 @@ const KidsEnglishExcellence: React.FC = () => {
   };
 
   const handleBackNavigation = () => {
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      navigate(-1);
-      return;
+    const parentUrl = new URL("/parent", window.location.origin);
+    parentUrl.searchParams.set("tab", "games-progress");
+    if (kidId) {
+      parentUrl.searchParams.set("kidId", kidId);
     }
-    navigate(appendKidId("/parent"));
+    navigate(`${parentUrl.pathname}${parentUrl.search}`);
   };
 
   const setTileProgress = (tileId: string, patch: Partial<TileProgress>) => {

@@ -112,8 +112,8 @@ export async function ensureGamesCatalogPatched(
 
     // Letter Sound Match game
     const letterSoundPatch: any = {};
-    if (letterSoundGame.progressDocId !== "phonics_letter_sound_match") {
-      letterSoundPatch.progressDocId = "phonics_letter_sound_match";
+    if (letterSoundGame.progressDocId !== "phonics_letter_sound") {
+      letterSoundPatch.progressDocId = "phonics_letter_sound";
       patchedPaths.push("games.letter-sound-match.progressDocId");
       needsPatch = true;
     }

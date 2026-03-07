@@ -13,7 +13,6 @@
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { doc, getDoc, getFirestore } from "firebase/firestore";
 
 import {
   TRACE_LETTERS,
@@ -26,12 +25,9 @@ import {
   type TracePair,
 } from "./tracing/traceLetters";
 
-import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 import { applyKidAndMissionContext, buildMissionReturnHref } from "./missionNavigation";
 
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing";
-const GAME_ID = "letter-tracing";
-const PROGRESS_DOC_ID = "phonics_letter_tracing";
 
 type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
@@ -116,51 +112,6 @@ function expandViewBox(viewBox: string, pad: number): string {
   return `${nx} ${ny} ${nw} ${nh}`;
 }
 
-function extractMasteredItems(data: any): string[] {
-  const out: string[] = [];
-
-  const pushMany = (arr: any) => {
-    if (!Array.isArray(arr)) return;
-    for (const v of arr) {
-      const s = String(v ?? "").trim();
-      if (s) out.push(s);
-    }
-  };
-
-  const pushFromTruthMap = (obj: any) => {
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) return;
-    for (const [k, v] of Object.entries(obj)) {
-      if (!v) continue;
-      const s = String(k ?? "").trim();
-      if (s) out.push(s);
-    }
-  };
-
-  // Most common shapes
-  pushMany(data?.masteredItems);
-  pushMany(data?.mastered);
-  pushMany(data?.itemsMastered);
-  pushMany(data?.summary?.masteredItems);
-  pushMany(data?.stats?.masteredItems);
-
-  // If stored as map { "A": true, "b": true }
-  pushFromTruthMap(data?.masteredItemsMap);
-  pushFromTruthMap(data?.masteredMap);
-  pushFromTruthMap(data?.masteredItemsById);
-
-  // If stored per level (best-effort)
-  if (Array.isArray(data?.levels)) {
-    for (const lv of data.levels) {
-      pushMany(lv?.masteredItems);
-      pushFromTruthMap(lv?.masteredItemsMap);
-    }
-  }
-
-  // Unique
-  return Array.from(new Set(out));
-}
-
-
 function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
   return (clientX: number, clientY: number) => {
     const svg = svgRef.current;
@@ -178,84 +129,128 @@ function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
   };
 }
 
-function extractUpdatedAtMs(data: any): number | undefined {
-  const candidates = [
-    data?.updatedAt,
-    data?.lastUpdatedAt,
-    data?.refreshedAt,
-    data?.syncedAt,
-    data?.lastPlayedAt,
-    data?.summary?.updatedAt,
-    data?.stats?.updatedAt,
-  ];
+type LastPos = { level: 0 | 1; pair: number; step: CaseStep };
 
-  for (const v of candidates) {
-    if (!v) continue;
-    if (typeof v === "number") return v;
-    if (v instanceof Date) return v.getTime();
-    if (typeof v?.toMillis === "function") return v.toMillis();
-    if (typeof v?.seconds === "number") return v.seconds * 1000;
+function coerceLastPos(value: any): LastPos | null {
+  if (!value || typeof value !== "object") return null;
+  const levelRaw = Number(value.level ?? value.levelId ?? value.lvl ?? value.levelNum);
+  const pairRaw = Number(value.pair ?? value.pairIndex ?? value.index ?? value.i);
+  const stepRaw = Number(value.step ?? value.caseStep ?? value.case ?? value.s);
+
+  const level: 0 | 1 = levelRaw === 0 ? 0 : 1;
+  const pair = Number.isFinite(pairRaw) ? Math.max(0, Math.floor(pairRaw)) : 0;
+  const step: CaseStep = stepRaw === 1 ? 1 : 0;
+  return { level, pair, step };
+}
+
+function firstIncompletePretraceIndex(mastered: Set<string>, startIndex = 0) {
+  const start = clamp(startIndex, 0, Math.max(0, PRETRACE_LEVEL.items.length - 1));
+  for (let i = start; i < PRETRACE_LEVEL.items.length; i++) {
+    if (!mastered.has(String(PRETRACE_LEVEL.items[i]))) return i;
   }
-  return undefined;
+  for (let i = 0; i < start; i++) {
+    if (!mastered.has(String(PRETRACE_LEVEL.items[i]))) return i;
+  }
+  return start;
 }
 
-/** -------- Skill tag helpers (fixes upper/lower progress rollup) -------- */
-function normalizeLetterTagFromId(letterId: string | null | undefined): string | null {
-  if (!letterId) return null;
-  const ch = String(letterId).trim().charAt(0);
-  if (!/^[A-Za-z]$/.test(ch)) return null;
-  return `letter:${ch.toLowerCase()}`; // ✅ always a-z
+function firstIncompleteLetterPos(
+  mastered: Set<string>,
+  pairs: TracePair[],
+  startPair = 0,
+  startStep: CaseStep = 0
+): { pair: number; step: CaseStep } {
+  const totalPairs = Math.max(1, pairs.length);
+  const startLinear = clamp(startPair, 0, totalPairs - 1) * 2 + (startStep === 1 ? 1 : 0);
+
+  for (let linear = startLinear; linear < totalPairs * 2; linear++) {
+    const pair = Math.floor(linear / 2);
+    const step = (linear % 2) as CaseStep;
+    const current = pairs[pair];
+    if (!current) continue;
+
+    const itemId = step === 0 ? String(current.upper ?? "") : String(current.lower ?? "");
+    if (!itemId) continue;
+    if (!mastered.has(itemId)) return { pair, step };
+  }
+
+  for (let linear = 0; linear < startLinear; linear++) {
+    const pair = Math.floor(linear / 2);
+    const step = (linear % 2) as CaseStep;
+    const current = pairs[pair];
+    if (!current) continue;
+
+    const itemId = step === 0 ? String(current.upper ?? "") : String(current.lower ?? "");
+    if (!itemId) continue;
+    if (!mastered.has(itemId)) return { pair, step };
+  }
+
+  return { pair: clamp(startPair, 0, totalPairs - 1), step: startStep };
 }
 
-function caseTagFromStep(step: CaseStep): "case:upper" | "case:lower" {
-  return step === 0 ? "case:upper" : "case:lower";
+function getResumeStartLevel0(mastered: Set<string>, lastPos: LastPos | null) {
+  const start = lastPos?.level === 0 ? lastPos.pair : 0;
+  return { pair: firstIncompletePretraceIndex(mastered, start), step: 0 as const };
 }
 
-function stripLetterAndCaseTags(tags: string[]) {
-  return (Array.isArray(tags) ? tags : []).filter((t) => {
-    const s = String(t).toLowerCase();
-    if (s.startsWith("letter:")) return false;
-    if (s.startsWith("case:")) return false;
-    return true;
-  });
+function getResumeStartLevel1(mastered: Set<string>, lastPos: LastPos | null, pairs: TracePair[]) {
+  if (lastPos?.level === 1) {
+    return firstIncompleteLetterPos(mastered, pairs, lastPos.pair, lastPos.step);
+  }
+  return firstIncompleteLetterPos(mastered, pairs, 0, 0);
 }
 
-function uniqTags(tags: Array<string | null | undefined>) {
-  const out: string[] = [];
+type TracingLocalState = {
+  masteredItems?: string[];
+  lastPos?: LastPos | null;
+  updatedAtMs?: number;
+};
+
+function localStateKey(kidId: string) {
+  return `ts_letter_tracing_state_v1:${kidId}`;
+}
+
+function uniqStrings(values: any): string[] {
+  if (!Array.isArray(values)) return [];
   const seen = new Set<string>();
-  for (const t of tags) {
-    const v = (t ?? "").trim();
-    if (!v) continue;
-    if (seen.has(v)) continue;
-    seen.add(v);
-    out.push(v);
+  const out: string[] = [];
+  for (const v of values) {
+    const s = String(v ?? "").trim();
+    if (!s || seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
   }
   return out;
 }
 
-function buildLetterTracingSkillTags(args: {
-  baseTags: string[];
-  isPretrace: boolean;
-  levelForTracking: number;
-  step: CaseStep;
-  currentLetterId: LetterId | null;
-}) {
-  const cleanedBase = stripLetterAndCaseTags(args.baseTags);
+function readLocalState(kidId: string): TracingLocalState | null {
+  try {
+    const raw = localStorage.getItem(localStateKey(kidId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    const updatedAtRaw = Number((parsed as any).updatedAtMs);
+    return {
+      masteredItems: uniqStrings((parsed as any).masteredItems),
+      lastPos: coerceLastPos((parsed as any).lastPos),
+      updatedAtMs: Number.isFinite(updatedAtRaw) ? updatedAtRaw : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
 
-  const letterTag = args.isPretrace ? null : normalizeLetterTagFromId(args.currentLetterId);
-  const caseTag = args.isPretrace ? null : caseTagFromStep(args.step);
-  const subtopicTag = args.isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${args.levelForTracking}`;
-
-  // ✅ Final tags used by rollup (case + normalized letter)
-  return uniqTags([...cleanedBase, letterTag, caseTag, subtopicTag]);
+function writeLocalState(kidId: string, data: TracingLocalState) {
+  try {
+    localStorage.setItem(localStateKey(kidId), JSON.stringify(data));
+  } catch {}
 }
 
 type ProgressState = {
-  status: "idle" | "loading" | "ready" | "error";
+  status: "idle" | "loading" | "ready";
   mastered: Set<string>;
-  sourcePath?: string;
+  lastPos?: LastPos | null;
   updatedAtMs?: number;
-  error?: string;
 };
 
 // Quick dots (shown in the top bar)
@@ -662,76 +657,98 @@ export default function LetterTracingGame() {
   const [progress, setProgress] = useState<ProgressState>({
     status: "idle",
     mastered: new Set<string>(),
+    lastPos: null,
   });
 
-  const fetchProgress = useCallback(async () => {
+  const loadLocalProgress = useCallback(() => {
     if (!kidId) {
-      setProgress({ status: "idle", mastered: new Set<string>() });
+      setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
       return;
     }
 
-    setProgress((p) => ({
-      ...p,
-      status: "loading",
-      error: undefined,
-    }));
-
-    const db = getFirestore();
-
-    // Try common doc locations (supports multiple backend shapes).
-    const candidates: Array<{ path: [string, ...string[]]; label: string }> = [
-      { path: ["kids", kidId, "progress", PROGRESS_DOC_ID], label: "kids/{kidId}/progress/{docId}" },
-      { path: ["kids", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "kids/{kidId}/gamesProgress/{docId}" },
-      { path: ["kids", kidId, "progress", GAME_ID], label: "kids/{kidId}/progress/{gameId}" },
-      { path: ["kids", kidId, "gameSummaries", GAME_ID], label: "kids/{kidId}/gameSummaries/{gameId}" },
-      { path: ["students", kidId, "progress", PROGRESS_DOC_ID], label: "students/{kidId}/progress/{docId}" },
-      { path: ["students", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "students/{kidId}/gamesProgress/{docId}" },
-    ];
-
-    for (const c of candidates) {
-      try {
-        const snap = await getDoc(doc(db, ...c.path));
-        if (!snap.exists()) continue;
-
-        const data = snap.data();
-        const items = extractMasteredItems(data);
-        const updatedAtMs = extractUpdatedAtMs(data);
-
-        setProgress({
-          status: "ready",
-          mastered: new Set(items),
-          sourcePath: c.label,
-          updatedAtMs,
-        });
-        return;
-      } catch {
-        // try next
-      }
-    }
-
-    // nothing found yet (first-time users)
+    setProgress((p) => ({ ...p, status: "loading" }));
+    const local = readLocalState(kidId);
+    const localMastered = uniqStrings(local?.masteredItems);
     setProgress({
       status: "ready",
-      mastered: new Set<string>(),
-      sourcePath: "not-found",
-      updatedAtMs: undefined,
+      mastered: new Set(localMastered),
+      lastPos: local?.lastPos ?? null,
+      updatedAtMs: local?.updatedAtMs,
     });
   }, [kidId]);
 
   // Fetch ONCE when kid changes. No polling.
   useEffect(() => {
     if (!kidId) return;
-    void fetchProgress();
-  }, [kidId, fetchProgress]);
+    loadLocalProgress();
+  }, [kidId, loadLocalProgress]);
+
+  const persistLocalProgress = useCallback(
+    (next: { masteredItems?: string[]; lastPos?: LastPos | null; updatedAtMs?: number }) => {
+      if (!kidId) return;
+      const prev = readLocalState(kidId) ?? {};
+      const mergedMastered = uniqStrings([...(prev.masteredItems ?? []), ...(next.masteredItems ?? [])]);
+      const merged: TracingLocalState = {
+        masteredItems: mergedMastered,
+        lastPos: next.lastPos ?? prev.lastPos ?? null,
+        updatedAtMs: next.updatedAtMs ?? prev.updatedAtMs ?? Date.now(),
+      };
+      writeLocalState(kidId, merged);
+      setProgress((curr) => ({
+        ...curr,
+        status: "ready",
+        mastered: new Set(mergedMastered),
+        lastPos: merged.lastPos ?? null,
+        updatedAtMs: merged.updatedAtMs,
+      }));
+    },
+    [kidId]
+  );
+
+  const persistLocalLastPos = useCallback(
+    (pos: LastPos) => {
+      persistLocalProgress({ lastPos: pos, updatedAtMs: Date.now() });
+    },
+    [persistLocalProgress]
+  );
+
+  useEffect(() => {
+    if (mode !== "play") return;
+    const levelForPos: 0 | 1 = isPretrace ? 0 : 1;
+    persistLocalLastPos({ level: levelForPos, pair: safePairIndex, step });
+  }, [mode, isPretrace, safePairIndex, step, persistLocalLastPos]);
+
+  const resetLocalProgress = useCallback(() => {
+    if (!kidId) return;
+    const ok = window.confirm("Reset Letter Tracing progress for this child on this device?");
+    if (!ok) return;
+
+    try {
+      localStorage.removeItem(localStateKey(kidId));
+    } catch {
+      // ignore localStorage errors
+    }
+
+    setProgress({
+      status: "ready",
+      mastered: new Set<string>(),
+      lastPos: null,
+      updatedAtMs: Date.now(),
+    });
+  }, [kidId]);
 
   // --------------------
   // Progress counts memo (used in Levels header)
   // --------------------
   const progressCounts = useMemo(() => {
     const mastered = progress.mastered;
+    const lastPos = progress.lastPos ?? null;
 
     const preTotal = PRETRACE_LEVEL.items.length;
     const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
+
+    const resume0 = getResumeStartLevel0(mastered, lastPos);
+    const resume1 = getResumeStartLevel1(mastered, lastPos, allLetterPairs);
 
     let upperDone = 0;
     let lowerDone = 0;
@@ -748,8 +765,10 @@ export default function LetterTracingGame() {
       upperTotal: 26,
       lowerDone,
       lowerTotal: 26,
+      resume0,
+      resume1,
     };
-  }, [progress.mastered, allLetterPairs]);
+  }, [progress.mastered, progress.lastPos, allLetterPairs]);
 
   // --------------------
   // Stroke engine state
@@ -771,6 +790,7 @@ export default function LetterTracingGame() {
   const [started, setStarted] = useState(false);
   const [lastIndex, setLastIndex] = useState(0);
   const lastIndexRef = useRef(0);
+  const [showLevel1Preview, setShowLevel1Preview] = useState(true);
 
   const [letterDone, setLetterDone] = useState(false);
   const [confetti, setConfetti] = useState(false);
@@ -1265,9 +1285,14 @@ const futureTapTargets = useMemo(() => {
     const sp = new URLSearchParams();
     applyKidAndMissionContext(sp, searchParams, kidId);
 
-    sp.set("level", String(levelNum === 0 ? 0 : 1));
-    sp.set("pair", String(pairIdx));
-    sp.set("step", String(stepNum));
+    const level = levelNum === 0 ? 0 : 1;
+    const maxPair = level === 0 ? Math.max(0, PRETRACE_LEVEL.items.length - 1) : Math.max(0, allLetterPairs.length - 1);
+    const safePair = clamp(Number(pairIdx) || 0, 0, maxPair);
+    const safeStep: CaseStep = stepNum === 1 ? 1 : 0;
+
+    sp.set("level", String(level));
+    sp.set("pair", String(safePair));
+    sp.set("step", String(safeStep));
 
     // ✅ Always immersive flag (iOS-safe, no native fullscreen)
     sp.set("fs", "1");
@@ -1287,11 +1312,24 @@ const futureTapTargets = useMemo(() => {
 
   function goLevels() {
     clearTimers();
-    setFs(false);
-
     const sp = new URLSearchParams();
     applyKidAndMissionContext(sp, searchParams, kidId);
     navigateTo(sp, true);
+  }
+
+  function getNextPosAfterCurrentCompletion(): LastPos {
+    if (isPretrace) {
+      const nextIdx = safePairIndex + 1;
+      if (nextIdx < PRETRACE_LEVEL.items.length) return { level: 0, pair: nextIdx, step: 0 };
+      return { level: 1, pair: 0, step: 0 };
+    }
+
+    if (step === 0) return { level: 1, pair: safePairIndex, step: 1 };
+
+    const nextPair = safePairIndex + 1;
+    if (nextPair < enabledPairs.length) return { level: 1, pair: nextPair, step: 0 };
+
+    return { level: 1, pair: 0, step: 0 };
   }
 
   function replay() {
@@ -1320,31 +1358,15 @@ const futureTapTargets = useMemo(() => {
     clearTimers();
     if (mode !== "play") return;
 
-    // Level 0: move through warmup shapes, then go to Level 1
-    if (isPretrace) {
-      const nextIdx = safePairIndex + 1;
-      if (nextIdx < PRETRACE_LEVEL.items.length) {
-        navigatePlay(0, nextIdx, 0, false);
-        return;
-      }
-      navigatePlay(1, 0, 0, false);
+    const nextPos = getNextPosAfterCurrentCompletion();
+    const reachedEndOfLevel1 = !isPretrace && step === 1 && safePairIndex + 1 >= enabledPairs.length;
+
+    if (reachedEndOfLevel1) {
+      void goLevels();
       return;
     }
 
-    // Level 1: each pair = Capital → Small → next pair
-    if (step === 0) {
-      navigatePlay(1, safePairIndex, 1, false);
-      return;
-    }
-
-    const nextPair = safePairIndex + 1;
-    if (nextPair < enabledPairs.length) {
-      navigatePlay(1, nextPair, 0, false);
-      return;
-    }
-
-    // Done A–Z
-    void goLevels();
+    navigatePlay(nextPos.level, nextPos.pair, nextPos.step, false);
   }
 
   function completeStroke() {
@@ -1390,53 +1412,14 @@ const futureTapTargets = useMemo(() => {
     if (!kidId) return;
 
     try {
-      const spentMs = timeStart ? Math.max(0, Math.round(performance.now() - timeStart)) : 0;
-      const levelForTracking = isPretrace ? 0 : 1;
       const masteredItem = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
-
-      const baseTags = Array.isArray(letterData?.skillTags) ? letterData!.skillTags : [];
-
-      const skillTags = buildLetterTracingSkillTags({
-        baseTags,
-        isPretrace,
-        levelForTracking,
-        step,
-        currentLetterId,
+      const nextPos = getNextPosAfterCurrentCompletion();
+      const completedAtMs = Date.now();
+      persistLocalProgress({
+        masteredItems: masteredItem ? [masteredItem] : [],
+        lastPos: nextPos,
+        updatedAtMs: completedAtMs,
       });
-
-      const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = Object.fromEntries(
-        skillTags.map((tag) => [tag, { attempts: 1, correct: 1, wrong: 0 }])
-      );
-
-      // Fire-and-forget progress write
-      recordLevelResult({
-        gameId: GAME_ID,
-        progressDocId: PROGRESS_DOC_ID,
-        kidId,
-        levelId: levelForTracking,
-        completed: true,
-        accuracyPct: 100,
-        durationSec: Math.round(spentMs / 1000),
-        score: 100,
-        skillTags,
-        tagDeltas,
-        masteredItems: [masteredItem].filter(Boolean),
-        completedAt: Date.now(),
-      } as any).catch(() => {});
-
-      // ✅ Optimistic UI update (so progress shows immediately without refresh)
-      if (masteredItem) {
-        setProgress((prev) => {
-          const next = new Set(prev.mastered);
-          next.add(String(masteredItem));
-          return {
-            ...prev,
-            status: prev.status === "idle" ? "ready" : prev.status,
-            mastered: next,
-            updatedAtMs: Date.now(),
-          };
-        });
-      }
     } catch {
       // never block gameplay for tracking errors
     }
@@ -1562,28 +1545,19 @@ const futureTapTargets = useMemo(() => {
     const pretraceChips = (PRETRACE_LEVEL.items ?? [])
       .map((id) => ({ id, label: PRETRACE_ITEMS[id]?.label ?? String(id) }))
       .filter((x) => Boolean(x.label))
-      .slice(0, 6);
+      .slice(0, 4);
 
     // overall counts
-    const preTotal = PRETRACE_LEVEL.items.length;
-    const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
-
-    const upperSet = new Set<string>();
-    const lowerSet = new Set<string>();
-    for (const lv of LEVELS) {
-      for (const p of lv.pairs ?? []) {
-        if (p.upper) upperSet.add(String(p.upper));
-        if (p.lower) lowerSet.add(String(p.lower));
-      }
-    }
-    const upperTotal = upperSet.size;
-    const lowerTotal = lowerSet.size;
-    const upperDone = Array.from(upperSet).filter((id) => mastered.has(id)).length;
-    const lowerDone = Array.from(lowerSet).filter((id) => mastered.has(id)).length;
-
+    const preTotal = progressCounts.preTotal;
+    const preDone = progressCounts.preDone;
+    const upperTotal = progressCounts.upperTotal;
+    const upperDone = progressCounts.upperDone;
+    const lowerTotal = progressCounts.lowerTotal;
+    const lowerDone = progressCounts.lowerDone;
     const letterTotal = upperTotal + lowerTotal;
     const letterDoneCount = upperDone + lowerDone;
     const letterPct = letterTotal > 0 ? Math.round((letterDoneCount / letterTotal) * 100) : 0;
+    const warmupPct = preTotal > 0 ? Math.round((preDone / preTotal) * 100) : 0;
 
     const updatedLabel =
       progress.updatedAtMs && Number.isFinite(progress.updatedAtMs)
@@ -1604,64 +1578,46 @@ const futureTapTargets = useMemo(() => {
     };
 
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-10">
-        <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
-          <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
+      <div className="mx-auto w-full max-w-6xl px-3 py-3 lg:h-[calc(100dvh-1.5rem)] lg:overflow-hidden">
+        <div className="relative overflow-hidden rounded-[24px] border bg-white/60 p-4 shadow-sm backdrop-blur lg:h-full">
+          <div className="pointer-events-none absolute -top-24 left-[-8%] h-64 w-64 rounded-full bg-sky-200/45 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 right-[-8%] h-64 w-64 rounded-full bg-pink-200/45 blur-3xl" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
 
-          <div className="relative">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
+          <div className="relative flex h-full flex-col">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
                   Letter Tracing Adventure
                 </h1>
 
-                <p className="mt-2 max-w-2xl text-sm text-slate-700">
+                <p className="mt-1 max-w-2xl text-sm text-slate-700">
                   Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
                   <span className="font-semibold">Small</span> letters.
                 </p>
 
-                {/* Progress summary */}
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🎯 Letters: {letterDoneCount}/{letterTotal} ({letterPct}%)
                   </span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🔠 Capital: {upperDone}/{upperTotal}
                   </span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🔡 Small: {lowerDone}/{lowerTotal}
                   </span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
-                    ✍️ Warm-up: {preDone}/{preTotal}
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    ✍️ Warm-up: {preDone}/{preTotal} ({warmupPct}%)
                   </span>
                   {updatedLabel && (
-                    <span className="rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-white/60">
-                      Last synced: {updatedLabel}
+                    <span className="rounded-full bg-white/75 px-3 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-white/60">
+                      Updated: {updatedLabel}
                     </span>
                   )}
                 </div>
-
-                {/* Progress bar */}
-                <div className="mt-3 w-full max-w-xl">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
-                    <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${letterPct}%` }} />
-                  </div>
-                </div>
               </div>
 
-              <div className="flex items-center flex-wrap gap-2">
-                <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-                  🔠 {progressCounts.upperDone}/{progressCounts.upperTotal}
-                </span>
-                <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-                  🔡 {progressCounts.lowerDone}/{progressCounts.lowerTotal}
-                </span>
-                <span className="rounded-full border bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800">
-                  ✍️ {progressCounts.preDone}/{progressCounts.preTotal}
-                </span>
-
+              <div className="flex shrink-0 items-center flex-wrap gap-2">
                 <button
                   onClick={goGamesPortal}
                   className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
@@ -1670,7 +1626,7 @@ const futureTapTargets = useMemo(() => {
                 </button>
 
                 <button
-                  onClick={() => void fetchProgress()}
+                  onClick={() => void loadLocalProgress()}
                   disabled={!kidId || progress.status === "loading"}
                   className={[
                     "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
@@ -1680,61 +1636,52 @@ const futureTapTargets = useMemo(() => {
                   {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
                 </button>
 
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  ⭐ Start at the star
-                </span>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  ✋ Lift between strokes
-                </span>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  🎉 Earn confetti
-                </span>
+                <button
+                  onClick={resetLocalProgress}
+                  disabled={!kidId}
+                  className={[
+                    "rounded-full border border-rose-200 bg-rose-50/90 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:shadow-md",
+                    !kidId ? "opacity-60 cursor-not-allowed" : "",
+                  ].join(" ")}
+                >
+                  Reset Progress
+                </button>
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* Learning Path */}
-              <div className="lg:col-span-2">
-                <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
-                  <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
-
-                  <div className="space-y-4 pl-12">
+            <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-3">
+              <div className="min-h-0 lg:col-span-2">
+                <div className="rounded-2xl border border-white/60 bg-white/65 p-3 shadow-sm backdrop-blur lg:h-full lg:overflow-auto">
+                  <div className="space-y-3">
                     {/* Level 0 */}
                     <button
-                      onClick={() => void handlePlayButtonClick(0, 0, 0)}
+                      onClick={() =>
+                        void handlePlayButtonClick(0, progressCounts.resume0.pair, progressCounts.resume0.step)
+                      }
                       className={[
-                        "group relative w-full rounded-3xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-4 text-left shadow-sm transition",
+                        "group w-full rounded-2xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-3 text-left shadow-sm transition",
                         "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
                       ].join(" ")}
                     >
-                      <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
-                          <span className="text-lg">🚀</span>
-                        </div>
-                      </div>
-
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-lg font-extrabold text-slate-900">{PRETRACE_LEVEL.title}</div>
-                          <div className="mt-0.5 text-sm font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
+                          <div className="text-base font-extrabold text-slate-900">🚀 {PRETRACE_LEVEL.title}</div>
+                          <div className="mt-0.5 text-xs font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
                         </div>
 
-                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                          <span className="animate-pulse">●</span> Ready
-                          <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
-                            {preDone}/{preTotal}
-                          </span>
+                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                          Ready • {preDone}/{preTotal}
                         </span>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {pretraceChips.map((c, i) => {
                           const done = mastered.has(String(c.id));
                           return (
                             <span
                               key={`${c.label}-${i}`}
                               className={[
-                                "rounded-full px-3 py-1 text-xs font-semibold ring-1",
+                                "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1",
                                 done
                                   ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
                                   : "bg-white/80 text-slate-700 ring-white/70",
@@ -1745,12 +1692,12 @@ const futureTapTargets = useMemo(() => {
                             </span>
                           );
                         })}
-                        <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
+                        <span className="rounded-full bg-slate-900/90 px-2.5 py-1 text-[11px] font-semibold text-white">
                           {PRETRACE_LEVEL.items.length} activities
                         </span>
                       </div>
 
-                      <div className="mt-3">
+                      <div className="mt-2">
                         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
                           <div
                             className="h-full rounded-full bg-emerald-500/70"
@@ -1759,9 +1706,9 @@ const futureTapTargets = useMemo(() => {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between">
-                        <div className="text-xs font-semibold text-slate-600">Start here to make hands ready ✨</div>
-                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <div className="text-xs font-semibold text-slate-600">Start here to warm up hand control ✨</div>
+                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">Start →</div>
                       </div>
                     </button>
 
@@ -1785,45 +1732,35 @@ const futureTapTargets = useMemo(() => {
                         <div
                           key={lv.levelId}
                           className={[
-                            "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
+                            "group w-full rounded-2xl border p-3 text-left shadow-sm transition backdrop-blur",
                             ready
                               ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg"
                               : "border-white/40 bg-white/50 opacity-60",
                           ].join(" ")}
                         >
-                          <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                            <div
-                              className={[
-                                "flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4",
-                                ready ? "ring-fuchsia-100" : "ring-slate-100",
-                              ].join(" ")}
-                            >
-                              <span className="text-lg">{ready ? "⭐" : "🔒"}</span>
-                            </div>
-                          </div>
-
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <div className="text-lg font-extrabold text-slate-900">{lv.title}</div>
+                              <div className="text-base font-extrabold text-slate-900">
+                                {ready ? "⭐" : "🔒"} {lv.title}
+                              </div>
                               {lv.subtitle && (
-                                <div className="mt-0.5 text-sm font-semibold text-slate-600">{lv.subtitle}</div>
+                                <div className="mt-0.5 text-xs font-semibold text-slate-600">{lv.subtitle}</div>
                               )}
                             </div>
 
                             <div className="flex flex-col items-end gap-2">
-                              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                                <span className="animate-pulse">●</span> Ready
-                                <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
-                                  {lp.done}/{lp.total}
-                                </span>
+                              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                                Ready • {lp.done}/{lp.total}
                               </span>
 
                               <button
                                 type="button"
                                 disabled={!ready}
-                                onClick={() => void handlePlayButtonClick(lv.levelId, 0, 0)}
+                                onClick={() =>
+                                  void handlePlayButtonClick(lv.levelId, progressCounts.resume1.pair, progressCounts.resume1.step)
+                                }
                                 className={[
-                                  "rounded-full px-4 py-2 text-sm font-extrabold shadow-sm transition",
+                                  "rounded-full px-5 py-2.5 text-sm font-extrabold shadow-sm transition",
                                   ready
                                     ? "bg-slate-900 text-white hover:bg-slate-800"
                                     : "cursor-not-allowed bg-slate-400 text-white",
@@ -1834,128 +1771,97 @@ const futureTapTargets = useMemo(() => {
                             </div>
                           </div>
 
-                          {/* ✅ Letters (no scroll) — show all at once */}
-                          <div className="mt-3 space-y-3">
-                            {/* Capital */}
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <div className="text-[11px] font-extrabold text-slate-600">🔠 Capital</div>
-                                <div className="text-[11px] font-semibold text-slate-500">{upperDoneLv}/{upperLetters.length}</div>
-                              </div>
-
-                              {/* Desktop: 13 columns → exactly 2 rows */}
-                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
-                                {upperLetters.map((ch) => {
-                                  const done = mastered.has(ch);
-                                  return (
-                                    <div
-                                      key={`U-${ch}`}
-                                      className={[
-                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                      ].join(" ")}
-                                    >
-                                      {ch}
-                                      {done && (
-                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                          ✓
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Mobile: wraps automatically (no horizontal scroll) */}
-                              <div className="mt-2 grid md:hidden gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}>
-                                {upperLetters.map((ch) => {
-                                  const done = mastered.has(ch);
-                                  return (
-                                    <div
-                                      key={`U-m-${ch}`}
-                                      className={[
-                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                      ].join(" ")}
-                                    >
-                                      {ch}
-                                      {done && (
-                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                          ✓
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-
-                            {/* Small */}
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <div className="text-[11px] font-extrabold text-slate-600">🔡 Small</div>
-                                <div className="text-[11px] font-semibold text-slate-500">{lowerDoneLv}/{lowerLetters.length}</div>
-                              </div>
-
-                              {/* Desktop: 13 columns → exactly 2 rows */}
-                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
-                                {lowerLetters.map((ch) => {
-                                  const done = mastered.has(ch);
-                                  return (
-                                    <div
-                                      key={`L-${ch}`}
-                                      className={[
-                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                      ].join(" ")}
-                                    >
-                                      {ch}
-                                      {done && (
-                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                          ✓
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-
-                              {/* Mobile: wraps automatically (no horizontal scroll) */}
-                              <div className="mt-2 grid md:hidden gap-2" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}>
-                                {lowerLetters.map((ch) => {
-                                  const done = mastered.has(ch);
-                                  return (
-                                    <div
-                                      key={`L-m-${ch}`}
-                                      className={[
-                                        "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                        done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                      ].join(" ")}
-                                    >
-                                      {ch}
-                                      {done && (
-                                        <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                          ✓
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-white/70">
+                              🔠 Capital {upperDoneLv}/{upperLetters.length}
+                            </span>
+                            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-white/70">
+                              🔡 Small {lowerDoneLv}/{lowerLetters.length}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowLevel1Preview((v) => !v)}
+                              className="rounded-full border bg-white/80 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-white"
+                            >
+                              {showLevel1Preview ? "Hide letters preview" : "Preview letters"}
+                            </button>
                           </div>
 
                           {lp.total > 0 && (
-                            <div className="mt-3">
-                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
+                            <div className="mt-2">
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/60">
                                 <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${lp.pct}%` }} />
                               </div>
                             </div>
                           )}
 
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="text-xs font-semibold text-slate-600">All letters are shown — tap Start to begin</div>
-                            <div className="text-sm font-black text-slate-900/50">→</div>
+                          {showLevel1Preview && (
+                            <div className="mt-2 space-y-2 rounded-xl border border-white/60 bg-white/60 p-2.5">
+                              <div className="text-[11px] font-semibold text-slate-600">
+                                Tap any letter to practice directly
+                              </div>
+                              <div>
+                                <div className="text-[11px] font-extrabold text-slate-600">🔠 Capital letters</div>
+                                <div
+                                  className="mt-1 grid gap-1.5"
+                                  style={{ gridTemplateColumns: "repeat(auto-fit, minmax(26px, 1fr))" }}
+                                >
+                                  {upperLetters.map((ch, pairIdx) => {
+                                    const done = mastered.has(ch);
+                                    return (
+                                      <button
+                                        key={`U-${ch}`}
+                                        type="button"
+                                        onClick={() => navigatePlay(1, pairIdx, 0, false)}
+                                        title={`Trace capital ${ch}`}
+                                        className={[
+                                          "relative flex h-8 items-center justify-center rounded-lg text-xs font-extrabold ring-1 transition",
+                                          "cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300",
+                                          done
+                                            ? "bg-gradient-to-b from-emerald-300 to-emerald-400 text-emerald-950 ring-emerald-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]"
+                                            : "bg-white/80 text-slate-700 ring-white/70",
+                                        ].join(" ")}
+                                      >
+                                        {ch}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="text-[11px] font-extrabold text-slate-600">🔡 Small letters</div>
+                                <div
+                                  className="mt-1 grid gap-1.5"
+                                  style={{ gridTemplateColumns: "repeat(auto-fit, minmax(26px, 1fr))" }}
+                                >
+                                  {lowerLetters.map((ch, pairIdx) => {
+                                    const done = mastered.has(ch);
+                                    return (
+                                      <button
+                                        key={`L-${ch}`}
+                                        type="button"
+                                        onClick={() => navigatePlay(1, pairIdx, 1, false)}
+                                        title={`Trace small ${ch}`}
+                                        className={[
+                                          "relative flex h-8 items-center justify-center rounded-lg text-xs font-extrabold ring-1 transition",
+                                          "cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300",
+                                          done
+                                            ? "bg-gradient-to-b from-emerald-300 to-emerald-400 text-emerald-950 ring-emerald-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]"
+                                            : "bg-white/80 text-slate-700 ring-white/70",
+                                        ].join(" ")}
+                                      >
+                                        {ch}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-2 text-xs font-semibold text-slate-600">
+                            Capital then small letter, one pair at a time.
                           </div>
                         </div>
                       );
@@ -1964,17 +1870,16 @@ const futureTapTargets = useMemo(() => {
                 </div>
               </div>
 
-              {/* Right “How to play” panel */}
               <div className="lg:col-span-1">
-                <div className="rounded-3xl border border-white/60 bg-white/65 p-5 shadow-sm backdrop-blur">
+                <div className="h-full rounded-2xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-extrabold text-slate-900">How to play</div>
                     <div className="text-xs font-semibold text-slate-600">Quick tips</div>
                   </div>
 
-                  <ol className="mt-4 space-y-3 text-sm text-slate-700">
+                  <ol className="mt-3 space-y-2.5 text-sm text-slate-700">
                     <li className="flex gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
+                      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
                         1
                       </span>
                       <div>
@@ -1984,7 +1889,7 @@ const futureTapTargets = useMemo(() => {
                     </li>
 
                     <li className="flex gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
+                      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
                         2
                       </span>
                       <div>
@@ -1994,7 +1899,7 @@ const futureTapTargets = useMemo(() => {
                     </li>
 
                     <li className="flex gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
+                      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
                         3
                       </span>
                       <div>
@@ -2004,27 +1909,14 @@ const futureTapTargets = useMemo(() => {
                     </li>
                   </ol>
 
-                  <div className="mt-5 rounded-2xl bg-slate-900/90 p-4 text-white">
+                  <div className="mt-3 rounded-2xl bg-slate-900/90 p-3 text-white">
                     <div className="text-sm font-extrabold">Pro tip</div>
                     <p className="mt-1 text-sm text-white/80">
-                      Use <span className="font-semibold text-white">Fullscreen</span> (or immersive mode) for the best tracing experience.
+                      Start at the ⭐ star and lift your finger between strokes for cleaner letters.
                     </p>
                   </div>
-
-                  <div className="mt-4 text-xs font-semibold text-slate-500">
-                    🌟 This screen is a “learning path” — kids feel like they’re moving forward level by level.
-                  </div>
-
-                  {/* Debug hint */}
-                  {progress.status === "ready" && progress.sourcePath && progress.sourcePath !== "not-found" && (
-                    <div className="mt-3 text-[11px] font-semibold text-slate-400">Progress source: {progress.sourcePath}</div>
-                  )}
                 </div>
               </div>
-            </div>
-
-            <div className="mt-5 text-center text-xs font-semibold text-slate-600">
-              Tip: Start from Level 0 even if the child knows letters — it improves pencil control ✍️
             </div>
           </div>
         </div>
@@ -2178,21 +2070,19 @@ const futureTapTargets = useMemo(() => {
               Next
             </button>
 
-            {fs ? (
-              <button
-                onClick={() => void setFs(false)}
-                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-              >
-                Exit
-              </button>
-            ) : (
-              <button
-                onClick={() => void setFs(true)}
-                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-              >
-                Fullscreen
-              </button>
-            )}
+            <button
+              onClick={() => void goLevels()}
+              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+            >
+              Exit
+            </button>
+
+            <button
+              onClick={() => void setFs(!fs)}
+              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+            >
+              {fs ? "Windowed" : "Fullscreen"}
+            </button>
 
             <button
               onClick={() => void goLevels()}

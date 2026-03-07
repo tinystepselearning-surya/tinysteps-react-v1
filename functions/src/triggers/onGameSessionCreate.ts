@@ -4,8 +4,33 @@ import * as logger from 'firebase-functions/logger';
 
 const db = getFirestore();
 
+const LETTER_SOUNDS_GAME_ID = 'letter-sound-match';
+const LETTER_SOUNDS_PROGRESS_DOC_ID = 'phonics_letter_sound';
+const LEGACY_LETTER_SOUNDS_GAME_IDS = new Set(['phonics_letter_sound']);
+const LEGACY_LETTER_SOUNDS_PROGRESS_IDS = new Set(['phonics_letter_sound_match']);
+
+function normalizeGameIdentity(gameIdRaw: string, progressDocIdRaw: string): { gameId: string; progressDocId: string } {
+  const gameId = String(gameIdRaw || '').trim();
+  const progressDocId = String(progressDocIdRaw || '').trim();
+
+  const isLetterSoundsAlias =
+    gameId === LETTER_SOUNDS_GAME_ID ||
+    LEGACY_LETTER_SOUNDS_GAME_IDS.has(gameId) ||
+    progressDocId === LETTER_SOUNDS_PROGRESS_DOC_ID ||
+    LEGACY_LETTER_SOUNDS_PROGRESS_IDS.has(progressDocId);
+
+  if (!isLetterSoundsAlias) {
+    return { gameId, progressDocId };
+  }
+
+  return {
+    gameId: LETTER_SOUNDS_GAME_ID,
+    progressDocId: LETTER_SOUNDS_PROGRESS_DOC_ID,
+  };
+}
+
 /**
- * onGameSessionCreate - Firestore trigger for gameSessions/{eventId}
+ * onGameSessionCreate - Firestore trigger for kids/{kidId}/gameSessions/{eventId}
  * 
  * Applies minimal rollups when a new game session is recorded.
  * Idempotent via marker doc: kids/{kidId}/rollupsApplied/{eventId}
@@ -24,11 +49,11 @@ const db = getFirestore();
  */
 export const onGameSessionCreateTrigger = onDocumentCreated(
   {
-    document: 'gameSessions/{eventId}',
+    document: 'kids/{kidId}/gameSessions/{eventId}',
     region: 'asia-south1',
   },
   async (event) => {
-    const eventId = event.params.eventId;
+    const { kidId, eventId } = event.params as { kidId: string; eventId: string };
     const sessionData = event.data?.data();
 
     if (!sessionData) {
@@ -37,20 +62,25 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
     }
 
     const {
-      kidId,
-      gameId,
-      progressDocId,
+      gameId: rawGameId,
+      progressDocId: rawProgressDocId,
       levelId,
       pointsEarned,
       accuracy,
       skillResults,
     } = sessionData;
+    const { gameId, progressDocId } = normalizeGameIdentity(rawGameId, rawProgressDocId);
+
+    const resolvedKidId =
+      (typeof sessionData.kidId === 'string' && sessionData.kidId.trim()) ||
+      (typeof kidId === 'string' && kidId.trim()) ||
+      '';
 
     // Validate required fields
-    if (!kidId || !gameId || !progressDocId || levelId === undefined) {
+    if (!resolvedKidId || !gameId || !progressDocId || levelId === undefined) {
       logger.error(`[onGameSessionCreate] Missing required fields`, {
         eventId,
-        kidId,
+        kidId: resolvedKidId || kidId,
         gameId,
         progressDocId,
         levelId,
@@ -60,7 +90,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
     logger.info(`[onGameSessionCreate] Processing`, {
       eventId,
-      kidId,
+      kidId: resolvedKidId,
       gameId,
       progressDocId,
       levelId,
@@ -69,18 +99,18 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
     // TEMPORARY DEBUG LOG
     console.log('[onGameSessionCreate] DEBUG:', {
       eventId,
-      kidId,
+      kidId: resolvedKidId,
       gameId,
       skillResultsLength: Array.isArray(skillResults) ? skillResults.length : 0,
       skillResultsSample: Array.isArray(skillResults) ? skillResults.slice(0, 2) : null,
     });
 
     // Check idempotency marker
-    const markerRef = db.doc(`kids/${kidId}/rollupsApplied/${eventId}`);
+    const markerRef = db.doc(`kids/${resolvedKidId}/rollupsApplied/${eventId}`);
     const markerSnap = await markerRef.get();
 
     if (markerSnap.exists) {
-      logger.info(`[onGameSessionCreate] Already processed (marker exists)`, { eventId, kidId });
+      logger.info(`[onGameSessionCreate] Already processed (marker exists)`, { eventId, kidId: resolvedKidId });
       return;
     }
 
@@ -104,28 +134,28 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       }
 
       // Check level completion marker
-      const levelMarkerRef = db.doc(`kids/${kidId}/levelCompletions/${progressDocId}__${levelId}`);
+      const levelMarkerRef = db.doc(`kids/${resolvedKidId}/levelCompletions/${progressDocId}__${levelId}`);
       const levelMarkerSnap = await levelMarkerRef.get();
       const isFirstCompletion = !levelMarkerSnap.exists;
 
       // Create level completion marker if first time
       if (isFirstCompletion) {
         await levelMarkerRef.set({
-          kidId,
+          kidId: resolvedKidId,
           progressDocId,
           levelId,
           createdAt: FieldValue.serverTimestamp(),
         });
         logger.info(`[onGameSessionCreate] Level completion marker created`, {
           eventId,
-          kidId,
+          kidId: resolvedKidId,
           progressDocId,
           levelId,
         });
       }
 
       // Update gameProgress
-      const progressRef = db.doc(`kids/${kidId}/gameProgress/${progressDocId}`);
+      const progressRef = db.doc(`kids/${resolvedKidId}/gameProgress/${progressDocId}`);
       const progressUpdate: any = {
         lastPlayedAt: FieldValue.serverTimestamp(),
       };
@@ -144,14 +174,14 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
       logger.info(`[onGameSessionCreate] Updated gameProgress`, {
         eventId,
-        kidId,
+        kidId: resolvedKidId,
         progressDocId,
         incrementedLevels: isFirstCompletion,
         totalLevels,
       });
 
       // Update summary
-      const summaryRef = db.doc(`kids/${kidId}/summary/overall`);
+      const summaryRef = db.doc(`kids/${resolvedKidId}/summary/overall`);
       const summaryUpdate: any = {
         [`games.${gameId}.plays`]: FieldValue.increment(1),
         [`games.${gameId}.lastPlayedAt`]: FieldValue.serverTimestamp(),
@@ -173,7 +203,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
       logger.info(`[onGameSessionCreate] Updated summary`, {
         eventId,
-        kidId,
+        kidId: resolvedKidId,
         gameId,
         pointsEarned: pointsEarned || 0,
       });
@@ -182,7 +212,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       if (Array.isArray(skillResults) && skillResults.length > 0) {
         console.log('[onGameSessionCreate] SKILL ROLLUP START:', {
           eventId,
-          kidId,
+          kidId: resolvedKidId,
           skillResultsCount: skillResults.length,
           firstTwoTags: skillResults.slice(0, 2).map((s: any) => s.tag),
         });
@@ -197,14 +227,14 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
             // Sanitize tag for Firestore doc ID (replace /, \, ., : with _)
             const safeTag = tag.replace(/\//g, '_').replace(/\\/g, '_').replace(/\./g, '_').replace(/:/g, '_');
-            const skillRef = db.doc(`kids/${kidId}/skillTagStats/${safeTag}`);
+            const skillRef = db.doc(`kids/${resolvedKidId}/skillTagStats/${safeTag}`);
 
             console.log('[onGameSessionCreate] SKILL WRITE:', {
               eventId,
               index,
               originalTag: tag,
               safeTag,
-              path: `kids/${kidId}/skillTagStats/${safeTag}`,
+              path: `kids/${resolvedKidId}/skillTagStats/${safeTag}`,
               increments: { attempts, correct, wrong },
             });
 
@@ -225,7 +255,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
           } catch (skillError: any) {
             logger.error('[onGameSessionCreate] SKILL WRITE FAILED:', {
               eventId,
-              kidId,
+              kidId: resolvedKidId,
               index,
               tag: skill?.tag,
               errorMessage: skillError.message,
@@ -239,7 +269,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
         logger.info(`[onGameSessionCreate] Updated skill tag stats`, {
           eventId,
-          kidId,
+          kidId: resolvedKidId,
           skillsCount: skillResults.length,
         });
       }
@@ -247,13 +277,13 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       // Write idempotency marker
       await markerRef.set({
         eventId,
-        kidId,
+        kidId: resolvedKidId,
         processedAt: FieldValue.serverTimestamp(),
       });
 
       logger.info(`[onGameSessionCreate] Rollup complete`, {
         eventId,
-        kidId,
+        kidId: resolvedKidId,
         gameId,
         progressDocId,
         levelId,
@@ -261,7 +291,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
     } catch (error: any) {
       logger.error(`[onGameSessionCreate] Failed to apply rollups`, {
         eventId,
-        kidId,
+        kidId: resolvedKidId,
         gameId,
         progressDocId,
         levelId,

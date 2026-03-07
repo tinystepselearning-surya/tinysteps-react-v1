@@ -6,6 +6,7 @@ import { applyKidAndMissionContext, buildMissionReturnHref } from "./kids/games/
 
 // --- Config ---
 const TOTAL_ROUNDS = 8;
+const MASTERY_UNLOCK_STARS = 6;
 // Bump when generation / hint logic changes (affects resume validation)
 const QUESTION_SET_VERSION = 4;
 
@@ -58,7 +59,7 @@ const LEVELS: LevelDef[] = [
   // Group 1: s, a, t, i, p, n
   {
     id: 1,
-    title: "Level 1 (s a t i p n)",
+    title: "Starter Sounds",
     items: [
       { grapheme: "s", cue: "sss" },
       { grapheme: "a", cue: "aaa" },
@@ -73,7 +74,7 @@ const LEVELS: LevelDef[] = [
   // Group 2: c, k, e, h, r, m, d
   {
     id: 2,
-    title: "Level 2 (c k e h r m d)",
+    title: "More Core Sounds",
     items: [
       { grapheme: "c", cue: "k" },
       { grapheme: "k", cue: "k" },
@@ -89,7 +90,7 @@ const LEVELS: LevelDef[] = [
   // Group 3: g, o, u, l, f, b
   {
     id: 3,
-    title: "Level 3 (g o u l f b)",
+    title: "Build Sound Power",
     items: [
       { grapheme: "g", cue: "g" },
       { grapheme: "o", cue: "o" },
@@ -104,7 +105,7 @@ const LEVELS: LevelDef[] = [
   // Group 4: j
   {
     id: 4,
-    title: "Level 4 (j)",
+    title: "J Sound Focus",
     items: [{ grapheme: "j", cue: "j" }],
     choicesCount: 3,
   },
@@ -112,7 +113,7 @@ const LEVELS: LevelDef[] = [
   // Group 5: z, w, v
   {
     id: 5,
-    title: "Level 5 (z w v)",
+    title: "Z, W, V Practice",
     items: [
       { grapheme: "z", cue: "zzz" },
       { grapheme: "w", cue: "w" },
@@ -124,7 +125,7 @@ const LEVELS: LevelDef[] = [
   // Group 6: y, x
   {
     id: 6,
-    title: "Level 6 (y x)",
+    title: "Y, X Practice",
     items: [
       { grapheme: "y", cue: "y" },
       { grapheme: "x", cue: "ks" },
@@ -135,11 +136,44 @@ const LEVELS: LevelDef[] = [
   // Group 7: q
   {
     id: 7,
-    title: "Level 7 (q)",
+    title: "Q Sound Focus",
     items: [{ grapheme: "q", cue: "kw" }],
     choicesCount: 3,
   },
 ];
+
+const getLettersPreview = (level: LevelDef) =>
+  level.items.map((it) => (it.display || it.grapheme).toLowerCase()).join(" ");
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
+const computeMasteryStars = (params: {
+  attempts: number;
+  correct: number;
+  hintCounts: Record<string, number>;
+  answeredBeforeListen: number;
+}): number => {
+  const { attempts, correct, hintCounts, answeredBeforeListen } = params;
+  if (correct <= 0 || attempts <= 0) return 0;
+
+  const accuracyRatio = correct / Math.max(1, attempts);
+  const baseStars = accuracyRatio * TOTAL_ROUNDS;
+
+  const hint1 = hintCounts["hint:1"] || 0;
+  const hint2 = hintCounts["hint:2"] || 0;
+  const hint3 = hintCounts["hint:3"] || 0;
+  const hint4 = hintCounts["hint:4"] || 0;
+  const supportPenalty =
+    hint1 * 0.1 +
+    hint2 * 0.2 +
+    hint3 * 0.35 +
+    hint4 * 0.5 +
+    answeredBeforeListen * 0.08;
+
+  const adjusted = baseStars - supportPenalty;
+  const rounded = Math.round(adjusted);
+  return clamp(rounded, 0, TOTAL_ROUNDS);
+};
 
 // For later levels (like j/q), we need distractors from earlier letters.
 const ALL_GRAPHEMES = LEVELS.flatMap((l) => l.items.map((i) => i.grapheme));
@@ -331,8 +365,9 @@ const setUnlockedLevel = (n: number, kidId?: string) => {
   } catch {}
 };
 
-// --- Firestore Progress Helpers ---
-const GAME_ID = "phonics_letter_sound";
+// --- Firestore/Game Identity ---
+const LETTER_SOUNDS_GAME_ID = "letter-sound-match";
+const LETTER_SOUNDS_PROGRESS_DOC_ID = "phonics_letter_sound";
 
 type GameResume = {
   level: number;
@@ -354,7 +389,7 @@ const getGameProgressDoc = async (kidId: string): Promise<GameProgressDoc | null
   try {
     const { doc, getDoc, getFirestore } = await import("firebase/firestore");
     const db = getFirestore();
-    const docRef = doc(db, "kids", kidId, "gameProgress", GAME_ID);
+    const docRef = doc(db, "kids", kidId, "gameProgress", LETTER_SOUNDS_PROGRESS_DOC_ID);
     const snapshot = await getDoc(docRef);
     return snapshot.exists() ? (snapshot.data() as GameProgressDoc) : null;
   } catch (e) {
@@ -367,7 +402,7 @@ const saveGameProgressDoc = async (kidId: string, data: Partial<GameProgressDoc>
   try {
     const { doc, setDoc, getFirestore, serverTimestamp } = await import("firebase/firestore");
     const db = getFirestore();
-    const docRef = doc(db, "kids", kidId, "gameProgress", GAME_ID);
+    const docRef = doc(db, "kids", kidId, "gameProgress", LETTER_SOUNDS_PROGRESS_DOC_ID);
     await setDoc(docRef, { ...data, lastPlayedAt: serverTimestamp() }, { merge: true });
   } catch (e) {
     console.error("Failed to save game progress:", e);
@@ -1198,7 +1233,7 @@ const KidsPhonicsMission: React.FC = () => {
     if (!choicesEnabled || !hasListenedThisRound) {
       answeredBeforeListenRef.current += 1;
       setAudioUnlocked(true);
-      setNudgeText("Tap listen first");
+      setNudgeText("Tap Listen, then choose the letter");
       // Replay prompt to guide
       playPromptForGrapheme(currentQuestion.target);
       // Track behavior
@@ -1236,15 +1271,20 @@ const KidsPhonicsMission: React.FC = () => {
       correctRef.current++;
       bumpLetter(currentQuestion.target, "correct");
       setFeedback("correct");
-      setNudgeText("Great job!");
+      setNudgeText("Great job! Get ready for the next sound");
       setPulseCorrect(false);
 
       // Minimal celebration (no fireworks here)
       playClaps();
       triggerMiniCelebrate();
 
-      const newStars = starsEarned + 1;
-      setStarsEarned((s) => s + 1);
+      const provisionalStars = computeMasteryStars({
+        attempts: attemptsRef.current,
+        correct: correctRef.current,
+        hintCounts: hintLevelCountsRef.current,
+        answeredBeforeListen: answeredBeforeListenRef.current,
+      });
+      setStarsEarned(provisionalStars);
 
       // Advance in ~2.2s (not 4s)
       const t = window.setTimeout(() => {
@@ -1259,12 +1299,19 @@ const KidsPhonicsMission: React.FC = () => {
 
         // Mission complete
         setIsComplete(true);
+        const finalStars = computeMasteryStars({
+          attempts: attemptsRef.current,
+          correct: correctRef.current,
+          hintCounts: hintLevelCountsRef.current,
+          answeredBeforeListen: answeredBeforeListenRef.current,
+        });
+        setStarsEarned(finalStars);
 
         if (selectedLevel) {
           const prevBest = bestStarsMap[selectedLevel] || 0;
 
-          if (newStars > prevBest) {
-            const nextMap = { ...bestStarsMap, [selectedLevel]: newStars };
+          if (finalStars > prevBest) {
+            const nextMap = { ...bestStarsMap, [selectedLevel]: finalStars };
             setBestStarsMap(nextMap);
             writeBestStars(nextMap, kidId);
           }
@@ -1310,11 +1357,11 @@ const KidsPhonicsMission: React.FC = () => {
 
                 await recordLevelResult({
                   kidId,
-                  gameId: "letter-sound-match",
-                  progressDocId: "phonics_letter_sound",
+                  gameId: LETTER_SOUNDS_GAME_ID,
+                  progressDocId: LETTER_SOUNDS_PROGRESS_DOC_ID,
                   levelId: selectedLevel,
                   completed: true,
-                  stars: newStars,
+                  stars: finalStars,
                   score: correctRef.current,
                   accuracyPct: accuracy * 100,
                   durationSec,
@@ -1328,7 +1375,7 @@ const KidsPhonicsMission: React.FC = () => {
 
           // Save completion to Firestore
           if (kidId) {
-            const mergedBest = { ...bestStarsMap, [selectedLevel]: Math.max(prevBest, newStars) };
+            const mergedBest = { ...bestStarsMap, [selectedLevel]: Math.max(prevBest, finalStars) };
             const bestByLevel: Record<string, number> = {};
             Object.entries(mergedBest).forEach(([k, v]) => (bestByLevel[k] = v));
 
@@ -1340,7 +1387,7 @@ const KidsPhonicsMission: React.FC = () => {
           }
 
           // Unlock next level if criteria met
-          if (newStars >= 6 && selectedLevel < 7) {
+          if (finalStars >= MASTERY_UNLOCK_STARS && selectedLevel < 7) {
             const newUnlocked = Math.max(getUnlockedLevel(kidId), selectedLevel + 1);
             setUnlockedLevel(newUnlocked, kidId);
             setHighestUnlocked(newUnlocked);
@@ -1356,7 +1403,7 @@ const KidsPhonicsMission: React.FC = () => {
     wrongRef.current++;
     bumpLetter(currentQuestion.target, "wrong");
     setFeedback("wrong");
-    setNudgeText("Listen again");
+    setNudgeText("Not that one. Tap Listen and try again");
     scheduleSoonReview(currentQuestion.target);
 
     const nextWrong = wrongThisRound + 1;
@@ -1415,6 +1462,14 @@ const KidsPhonicsMission: React.FC = () => {
       pushTimeout(t);
     }
 
+    const updatedMasteryStars = computeMasteryStars({
+      attempts: attemptsRef.current,
+      correct: correctRef.current,
+      hintCounts: hintLevelCountsRef.current,
+      answeredBeforeListen: answeredBeforeListenRef.current,
+    });
+    setStarsEarned(updatedMasteryStars);
+
     // Reset feedback after a teachable window (not 350ms)
     const reset = window.setTimeout(() => {
       setFeedback(null);
@@ -1428,6 +1483,8 @@ const KidsPhonicsMission: React.FC = () => {
     if (!isComplete) return;
     triggerBigCelebrate();
   }, [isComplete, triggerBigCelebrate]);
+
+  const accuracyPct = Math.round((correctRef.current / Math.max(1, attemptsRef.current)) * 100);
 
   // --- UI ---
   return (
@@ -1444,6 +1501,7 @@ const KidsPhonicsMission: React.FC = () => {
             .level-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:16px; max-width:900px; }
             .level-card { padding:18px; border-radius:16px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); cursor:pointer; }
             .level-card.locked { opacity:0.4; cursor:not-allowed; }
+            @media (max-width: 760px) { .level-grid { grid-template-columns: 1fr; max-width: 560px; } }
             @media (prefers-reduced-motion: reduce) { .level-card { transition:none !important } }
           `}</style>
 
@@ -1456,8 +1514,9 @@ const KidsPhonicsMission: React.FC = () => {
           </Link>
 
           <div className="w-full max-w-6xl mx-auto text-center mb-8">
-            <h1 className="text-5xl font-bold text-white">Choose Level</h1>
-            <p className="text-white/70 mt-2">Pick a Jolly Phonics level to play</p>
+            <h1 className="text-5xl font-bold text-white">Letter Sounds Adventure</h1>
+            <p className="text-white/70 mt-2">Listen to a sound, then tap the matching letter.</p>
+            <p className="text-white/60 mt-1 text-sm">Unlock rule: earn {MASTERY_UNLOCK_STARS}+ mastery stars to open the next level.</p>
 
             {!kidId && (
               <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
@@ -1485,14 +1544,14 @@ const KidsPhonicsMission: React.FC = () => {
               let badge = "Not started";
               let starsToShow = 0;
 
-              if (best >= 6) {
-                badge = "Completed";
+              if (best >= MASTERY_UNLOCK_STARS) {
+                badge = "Mastery ready";
                 starsToShow = best;
               } else if (savedProgress && (savedProgress.starsEarned > 0 || savedProgress.currentRound > 0)) {
-                badge = "In progress";
+                badge = "Practicing";
                 starsToShow = savedProgress.starsEarned;
               } else if (best > 0) {
-                badge = "In progress";
+                badge = "Practicing";
                 starsToShow = best;
               }
 
@@ -1511,15 +1570,15 @@ const KidsPhonicsMission: React.FC = () => {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-2xl font-bold text-white">{l.title}</div>
+                        <div className="text-2xl font-bold text-white">{`Level ${l.id} · ${l.title}`}</div>
                         <div className="text-sm text-white/80 mt-2 leading-snug whitespace-normal">
-                          {l.items.map((it) => (it.display || it.grapheme).toLowerCase()).join(" ")}
+                          {getLettersPreview(l)}
                         </div>
                       </div>
-                      <div className="text-sm text-white/60">{locked ? "Locked 🔒" : "Play"}</div>
+                      <div className="text-sm text-white/60">{locked ? "Locked 🔒" : "Start"}</div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div aria-label={`Stars: ${starsToShow} of ${TOTAL_ROUNDS}`} className="text-yellow-300">
+                      <div aria-label={`Mastery stars: ${starsToShow} of ${TOTAL_ROUNDS}`} className="text-yellow-300">
                         {Array.from({ length: TOTAL_ROUNDS }).map((_, i) => (
                           <span
                             key={i}
@@ -1530,6 +1589,16 @@ const KidsPhonicsMission: React.FC = () => {
                         ))}
                       </div>
                       <div className="text-sm text-white/60">{badge}</div>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-white/65">
+                      <span>
+                        {locked
+                          ? l.id > 1
+                            ? `Finish level ${l.id - 1} with ${MASTERY_UNLOCK_STARS}+ stars`
+                            : "Locked"
+                          : "Ready to play"}
+                      </span>
+                      <span>{`Best mastery: ${starsToShow}/${TOTAL_ROUNDS}`}</span>
                     </div>
                   </div>
                 </button>
@@ -1639,7 +1708,7 @@ const KidsPhonicsMission: React.FC = () => {
 
           {isComplete ? (
             <div className="text-center z-10 p-8 bg-black/30 backdrop-blur-md rounded-3xl border border-white/20">
-              <h1 className="text-6xl font-bold text-yellow-300 mb-4">Mission Complete!</h1>
+              <h1 className="text-6xl font-bold text-yellow-300 mb-4">Level Complete!</h1>
               <div className="text-5xl mb-6">
                 {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
                   <span key={i} className="text-3xl">
@@ -1647,7 +1716,8 @@ const KidsPhonicsMission: React.FC = () => {
                   </span>
                 ))}
               </div>
-              <p className="text-2xl mb-4">You earned {starsEarned} stars!</p>
+              <p className="text-2xl mb-2">Mastery Stars: {starsEarned}/{TOTAL_ROUNDS}</p>
+              <p className="text-lg text-white/85 mb-4">Accuracy this round: {accuracyPct}%</p>
               <div className="flex items-center justify-center gap-4">
                 <button
                   onClick={() => {
@@ -1679,7 +1749,7 @@ const KidsPhonicsMission: React.FC = () => {
                   Choose Level
                 </button>
 
-                {selectedLevel && starsEarned >= 6 && selectedLevel < 7 && (
+                {selectedLevel && starsEarned >= MASTERY_UNLOCK_STARS && selectedLevel < 7 && (
                   <button
                     onClick={() => {
                       const next = selectedLevel + 1;
@@ -1699,33 +1769,40 @@ const KidsPhonicsMission: React.FC = () => {
             </div>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center px-4" style={{ zIndex: 10, paddingTop: 60 }}>
-              {/* Progress Stars */}
               <div
-                className="absolute top-6 left-1/2 transform -translate-x-1/2 flex justify-center gap-2"
-                aria-label={`Progress: ${starsEarned} of ${TOTAL_ROUNDS} stars earned`}
+                className="absolute top-5 left-1/2 transform -translate-x-1/2 flex flex-col items-center justify-center gap-1"
                 style={{ zIndex: 20 }}
               >
-                {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
-                  <span key={i} className="text-4xl drop-shadow-lg" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
-                    {i < starsEarned ? "★" : "☆"}
-                  </span>
-                ))}
+                <div className="text-sm md:text-base font-semibold text-gray-800/90 drop-shadow-md">
+                  {`Question ${Math.min(currentRound + 1, TOTAL_ROUNDS)} of ${TOTAL_ROUNDS}`}
+                </div>
+                <div
+                  className="flex justify-center gap-1"
+                  aria-label={`Mastery stars: ${starsEarned} of ${TOTAL_ROUNDS}`}
+                >
+                  {Array.from({ length: TOTAL_ROUNDS }, (_, i) => (
+                    <span key={i} className="text-2xl md:text-3xl drop-shadow-lg" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                      {i < starsEarned ? "★" : "☆"}
+                    </span>
+                  ))}
+                </div>
+                <div className="text-xs md:text-sm font-semibold text-gray-700/85">Mastery stars update with accuracy + hints</div>
               </div>
 
               <div
-                className="absolute top-24 left-1/2 text-3xl md:text-4xl font-bold text-gray-800 drop-shadow-lg text-center"
+                className="absolute top-24 left-1/2 text-2xl md:text-3xl font-bold text-gray-800 drop-shadow-lg text-center"
                 style={{
                   transform: "translateX(-50%)",
-                  width: "min(1100px, 92vw)",
+                  width: "min(980px, 94vw)",
                   textShadow: "2px 2px 4px rgba(255,255,255,0.5), 0 0 8px rgba(255,255,255,0.3)",
                   zIndex: 20,
                 }}
               >
-                Tap the letter that says this sound
+                1) Tap Listen, 2) Tap the letter that matches the sound
               </div>
 
-              <div className="w-full flex items-center justify-center" style={{ maxWidth: 1280, margin: "0 auto", padding: "0 56px" }}>
-                <div className="flex flex-col md:flex-row items-center justify-center" style={{ gap: "160px", transform: "translateY(24px)" }}>
+              <div className="w-full flex items-center justify-center" style={{ maxWidth: 1280, margin: "0 auto", padding: "0 clamp(16px, 4vw, 56px)" }}>
+                <div className="flex flex-col md:flex-row items-center justify-center" style={{ gap: "clamp(24px, 7vw, 120px)", transform: "translateY(24px)" }}>
                   {/* Listen */}
                   <div className="flex flex-col items-center justify-center gap-6">
                     <button
@@ -1737,8 +1814,8 @@ const KidsPhonicsMission: React.FC = () => {
                         (!hasListenedThisRound || feedback === "wrong" || nudgeText) ? "listen-btn-booming" : "",
                       ].join(" ")}
                       style={{
-                        width: 340,
-                        height: 340,
+                        width: "clamp(200px, 30vw, 310px)",
+                        height: "clamp(200px, 30vw, 310px)",
                         background: "linear-gradient(135deg, #FF8C42 0%, #FF6B35 100%)",
                         border: "8px solid rgba(255,255,255,0.9)",
                         touchAction: "manipulation",
@@ -1753,19 +1830,20 @@ const KidsPhonicsMission: React.FC = () => {
                         style={{ width: "70%", height: "70%", objectFit: "contain", pointerEvents: "none" }}
                       />
                     </button>
-                    <div className="text-4xl font-bold text-gray-800" style={{ textShadow: "2px 2px 4px rgba(255,255,255,0.6)" }}>
-                      listen
+                    <div className="text-3xl md:text-4xl font-bold text-gray-800" style={{ textShadow: "2px 2px 4px rgba(255,255,255,0.6)" }}>
+                      Listen
                     </div>
 
                     {!hasListenedThisRound && (
-                      <div className="text-xl font-semibold text-gray-800/90" style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.6)" }}>
-                        Tap listen first
+                      <div className="text-lg md:text-xl font-semibold text-gray-800/90 text-center" style={{ textShadow: "1px 1px 2px rgba(255,255,255,0.6)" }}>
+                        Tap Listen first
                       </div>
                     )}
                   </div>
 
                   {/* Choices */}
-                  <div className="flex flex-col items-stretch justify-center" style={{ gap: "34px", width: 420 }}>
+                  <div className="flex flex-col items-stretch justify-center" style={{ gap: "clamp(14px, 2.6vh, 28px)", width: "min(420px, 92vw)" }}>
+                    <div className="text-sm md:text-base font-semibold text-gray-800/85 text-center">After you listen, tap one letter.</div>
                     {currentQuestion.choices.map((choice) => {
                       const allItems = LEVELS.flatMap((l) => l.items);
                       const item = allItems.find((x) => x.grapheme === choice);
@@ -1795,10 +1873,10 @@ const KidsPhonicsMission: React.FC = () => {
                             pulseCorrect && isCorrect ? "pulse-correct" : "",
                           ].join(" ")}
                           style={{
-                            height: 160,
+                            height: "clamp(96px, 16vh, 150px)",
                             background: "linear-gradient(135deg, #FFDAB9 0%, #FFB88C 100%)",
                             border: "6px solid rgba(139, 69, 19, 0.4)",
-                            fontSize: displayText.length > 1 ? "5rem" : "6rem",
+                            fontSize: displayText.length > 1 ? "clamp(2.8rem, 7vw, 4.2rem)" : "clamp(3.4rem, 8.4vw, 5rem)",
                             fontWeight: 700,
                             touchAction: "manipulation",
                             userSelect: "none",

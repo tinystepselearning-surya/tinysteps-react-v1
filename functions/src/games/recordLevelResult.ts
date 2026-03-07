@@ -15,6 +15,34 @@ type CatalogStatus = {
   reason?: string;
 };
 
+const LETTER_SOUNDS_GAME_ID = "letter-sound-match";
+const LETTER_SOUNDS_PROGRESS_DOC_ID = "phonics_letter_sound";
+const LEGACY_LETTER_SOUNDS_GAME_IDS = new Set(["phonics_letter_sound"]);
+const LEGACY_LETTER_SOUNDS_PROGRESS_IDS = new Set(["phonics_letter_sound_match"]);
+
+function normalizeGameIdentity(gameIdRaw: string, progressDocIdRaw: string): { gameId: string; progressDocId: string } {
+  const trimmedGameId = String(gameIdRaw || "").trim();
+  const trimmedProgressDocId = String(progressDocIdRaw || "").trim();
+
+  const isLetterSoundsAlias =
+    trimmedGameId === LETTER_SOUNDS_GAME_ID ||
+    LEGACY_LETTER_SOUNDS_GAME_IDS.has(trimmedGameId) ||
+    trimmedProgressDocId === LETTER_SOUNDS_PROGRESS_DOC_ID ||
+    LEGACY_LETTER_SOUNDS_PROGRESS_IDS.has(trimmedProgressDocId);
+
+  if (!isLetterSoundsAlias) {
+    return {
+      gameId: trimmedGameId,
+      progressDocId: trimmedProgressDocId || trimmedGameId,
+    };
+  }
+
+  return {
+    gameId: LETTER_SOUNDS_GAME_ID,
+    progressDocId: LETTER_SOUNDS_PROGRESS_DOC_ID,
+  };
+}
+
 function safeNum(v: any, d = 0): number {
   return typeof v === "number" && Number.isFinite(v) ? v : d;
 }
@@ -160,8 +188,9 @@ export const recordLevelResult = onCall({ region: "asia-south1" }, async (reques
   // Required identifiers
   const eventId = String(data.eventId || "").trim();
   const kidId = String(data.kidId || "").trim();
-  const gameId = String(data.gameId || "").trim();
-  const progressDocId = String(data.progressDocId || data.gameId || "").trim();
+  const rawGameId = String(data.gameId || "").trim();
+  const rawProgressDocId = String(data.progressDocId || data.gameId || "").trim();
+  const { gameId, progressDocId } = normalizeGameIdentity(rawGameId, rawProgressDocId);
   const levelId = data.levelId;
 
   if (!eventId) throw new HttpsError("invalid-argument", "Missing eventId");

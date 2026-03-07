@@ -197,6 +197,16 @@ export default function SentenceStepperStage4() {
 
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
   const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const missionStage = searchParams.get("eemStage");
+  const missionTile = (searchParams.get("eemTile") || "").toLowerCase();
+  const activityContextLabel =
+    missionStage === "3"
+      ? missionTile.includes("read_sentences")
+        ? "Stage 3 • Read Sentences"
+        : missionTile.includes("early_reader_fluency")
+          ? "Stage 3 • Early Reader Fluency"
+          : "Stage 3 • Make Sentences"
+      : "Early Reader Fluency";
   const roundsPerPack = 10;
 
   // Fullscreen element ref
@@ -699,7 +709,7 @@ export default function SentenceStepperStage4() {
         <div ref={fullscreenRef} className="w-full max-w-4xl rounded-3xl bg-white/90 border border-slate-200 shadow-sm p-6">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <div className="text-slate-500 text-sm">Stage 4 • Early Reader Fluency</div>
+              <div className="text-slate-500 text-sm">{activityContextLabel}</div>
               <div className="text-slate-900 text-2xl font-semibold">Sentence Stepper</div>
               <div className="text-slate-600 text-sm mt-1">
                 Tap words left-to-right to read short decodable phrases.
@@ -788,7 +798,7 @@ export default function SentenceStepperStage4() {
           <div className="w-full rounded-3xl bg-white/85 shadow-sm border border-slate-200 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-slate-500 text-sm">Stage 4 • Early Reader Fluency</div>
+                <div className="text-slate-500 text-sm">{activityContextLabel}</div>
                 <div className="text-slate-900 text-xl font-semibold">Sentence Stepper</div>
                 <div className="text-slate-600 text-sm">
                   Level {packIndex + 1} • Pack {activePackId} • Round {Math.min(roundCountInPack + 1, roundsPerPack)} / {roundsPerPack}

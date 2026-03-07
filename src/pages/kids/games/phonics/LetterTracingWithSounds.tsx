@@ -6,12 +6,10 @@
 // ✅ Dropdown jump + Next button like old game
 // ✅ Adds a Sound button to play letter sound (expects /public/games/phonics/a.mp3 ... z.mp3)
 // ✅ On letter completion → auto plays letter sound + shows a reward image (best-effort from /public paths)
-// ✅ Saves progress via recordLevelResult + stores resume point (lastPos)
+// ✅ Uses browser-local progress/resume for this game (same-device persistence)
 
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { doc, getDoc, getDocFromServer, getFirestore } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import {
   TRACE_LETTERS,
@@ -24,12 +22,9 @@ import {
   type TracePair,
 } from "./tracing/traceLetters";
 
-import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 import { applyKidAndMissionContext, buildMissionReturnHref } from "./missionNavigation";
 
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing-sounds";
-const GAME_ID = "letter-tracing";
-const PROGRESS_DOC_ID = "phonics_letter_tracing";
 
 type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
@@ -42,12 +37,10 @@ type TraceLevelView = { levelId: number; title: string; subtitle?: string; pairs
 type LastPos = { level: 0 | 1; pair: number; step: CaseStep };
 
 type ProgressState = {
-  status: "idle" | "loading" | "ready" | "error";
+  status: "idle" | "loading" | "ready";
   mastered: Set<string>;
   lastPos?: LastPos | null;
-  sourcePath?: string;
   updatedAtMs?: number;
-  error?: string;
 };
 
 // ⭐ asset in /public/star.png
@@ -560,144 +553,14 @@ function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
   );
 }
 
-/** Pull mastered items from different possible Firestore shapes */
-function extractMasteredItems(data: any): string[] {
-  const out: string[] = [];
-
-  const pushArr = (arr: any) => {
-    if (!Array.isArray(arr)) return;
-    for (const v of arr) {
-      const s = String(v ?? "").trim();
-      if (s) out.push(s);
-    }
-  };
-
-  // Common shapes
-  pushArr(data?.masteredItems);
-  pushArr(data?.summary?.masteredItems);
-  pushArr(data?.stats?.masteredItems);
-
-  // Per-level map (levels)
-  const levels = data?.levels ?? data?.byLevel ?? data?.progressByLevel ?? data?.levelProgress;
-  if (levels && typeof levels === "object") {
-    for (const k of Object.keys(levels)) {
-      const lv = (levels as any)[k];
-      pushArr(lv?.masteredItems);
-      pushArr(lv?.stats?.masteredItems);
-      pushArr(lv?.summary?.masteredItems);
-    }
-  }
-
-  // Sometimes stored as arrays of objects
-  const levelArr = data?.levelsArr ?? data?.levelsArray;
-  if (Array.isArray(levelArr)) {
-    for (const lv of levelArr) pushArr(lv?.masteredItems);
-  }
-
-  return Array.from(new Set(out)).filter(Boolean);
-}
-
-/** Best-effort updatedAt extraction */
-function extractUpdatedAtMs(data: any): number | undefined {
-  const candidates = [
-    data?.updatedAtMs,
-    data?.updatedAt,
-    data?.lastUpdatedAt,
-    data?.summary?.updatedAtMs,
-    data?.summary?.updatedAt,
-    data?.stats?.updatedAtMs,
-    data?.stats?.updatedAt,
-    data?.lastPosUpdatedAt,
-  ];
-
-  for (const v of candidates) {
-    if (!v) continue;
-    // Firestore Timestamp
-    if (typeof v?.toMillis === "function") {
-      const ms = v.toMillis();
-      if (Number.isFinite(ms)) return ms;
-    }
-    // number ms
-    if (typeof v === "number" && Number.isFinite(v)) return v;
-    // Date
-    if (v instanceof Date) return v.getTime();
-  }
-
-  return undefined;
-}
-
-// --------- Auth + Outbox helpers (survive hard-refresh) ---------
-function waitForAuthInit(timeoutMs = 5000) {
-  const auth = getAuth();
-  if (auth.currentUser) return Promise.resolve();
-
-  return new Promise<void>((resolve) => {
-    let done = false;
-    const finish = () => {
-      if (done) return;
-      done = true;
-      try {
-        unsub();
-      } catch {}
-      resolve();
-    };
-
-    const timer = window.setTimeout(finish, Math.max(500, timeoutMs));
-
-    const unsub = onAuthStateChanged(
-      auth,
-      () => {
-        window.clearTimeout(timer);
-        finish();
-      },
-      () => {
-        window.clearTimeout(timer);
-        finish();
-      }
-    );
-  });
-}
-
-function outboxKey(kidId: string) {
-  return `ts_progress_outbox_v2:${kidId}:${PROGRESS_DOC_ID}`;
-}
-
-type Outbox = {
-  // ✅ SHADOW progress (UI must survive refresh until scheduler updates Firestore progress doc)
-  shadowMasteredItems?: string[]; // e.g., ["A","a","line"]
-  shadowLastPos?: LastPos;
-  shadowUpdatedAtMs?: number;
-
-  // ✅ Retry only (if recordLevelResult fails)
-  pendingPayload?: any;
-
-  // Optional: throttle replay attempts
-  lastReplayAtMs?: number;
-  replayCount?: number;
+type TracingLocalState = {
+  masteredItems?: string[];
+  lastPos?: LastPos | null;
+  updatedAtMs?: number;
 };
 
-function readOutbox(kidId: string): Outbox | null {
-  try {
-    const raw = localStorage.getItem(outboxKey(kidId));
-    if (!raw) return null;
-    const obj = JSON.parse(raw);
-    if (!obj || typeof obj !== "object") return null;
-    return obj as Outbox;
-  } catch {
-    return null;
-  }
-}
-
-function writeOutbox(kidId: string, data: Outbox) {
-  try {
-    localStorage.setItem(outboxKey(kidId), JSON.stringify(data));
-  } catch {}
-}
-
-function clearOutbox(kidId: string) {
-  try {
-    localStorage.removeItem(outboxKey(kidId));
-  } catch {}
+function localStateKey(kidId: string) {
+  return `ts_letter_tracing_sounds_state_v1:${kidId}`;
 }
 
 function uniqStrings(arr: any): string[] {
@@ -712,6 +575,30 @@ function uniqStrings(arr: any): string[] {
     out.push(s);
   }
   return out;
+}
+
+function readLocalState(kidId: string): TracingLocalState | null {
+  try {
+    const raw = localStorage.getItem(localStateKey(kidId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+
+    const updatedAtRaw = Number((parsed as any).updatedAtMs);
+    return {
+      masteredItems: uniqStrings((parsed as any).masteredItems),
+      lastPos: coerceLastPos((parsed as any).lastPos),
+      updatedAtMs: Number.isFinite(updatedAtRaw) ? updatedAtRaw : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalState(kidId: string, data: TracingLocalState) {
+  try {
+    localStorage.setItem(localStateKey(kidId), JSON.stringify(data));
+  } catch {}
 }
 
 function coerceLastPos(v: any): LastPos | null {
@@ -770,14 +657,28 @@ function firstIncompleteLetterPos(
     if (!mastered.has(id)) return { pair, step };
   }
 
+  for (let lin = 0; lin < startLinear; lin++) {
+    const pair = Math.floor(lin / 2);
+    const step = (lin % 2) as CaseStep;
+    const upper = String.fromCharCode(65 + pair);
+    const lower = String.fromCharCode(97 + pair);
+    const id = step === 0 ? upper : lower;
+    if (!mastered.has(id)) return { pair, step };
+  }
+
   return { pair: clamp(startPair, 0, totalPairs - 1), step: startStep };
 }
 
 function getResumeStartLevel0(mastered: Set<string>, lastPos: LastPos | null) {
-  if (lastPos?.level === 0) {
-    return { pair: clamp(lastPos.pair, 0, PRETRACE_LEVEL.items.length - 1), step: 0 as const };
+  const start = lastPos?.level === 0 ? lastPos.pair : 0;
+  const cappedStart = clamp(start, 0, Math.max(0, PRETRACE_LEVEL.items.length - 1));
+  for (let i = cappedStart; i < PRETRACE_LEVEL.items.length; i++) {
+    if (!mastered.has(String(PRETRACE_LEVEL.items[i]))) return { pair: i, step: 0 as const };
   }
-  return { pair: firstIncompletePretraceIndex(mastered), step: 0 as const };
+  for (let i = 0; i < cappedStart; i++) {
+    if (!mastered.has(String(PRETRACE_LEVEL.items[i]))) return { pair: i, step: 0 as const };
+  }
+  return { pair: cappedStart, step: 0 as const };
 }
 
 function getResumeStartLevel1(mastered: Set<string>, lastPos: LastPos | null) {
@@ -785,61 +686,6 @@ function getResumeStartLevel1(mastered: Set<string>, lastPos: LastPos | null) {
     return firstIncompleteLetterPos(mastered, lastPos.pair, lastPos.step);
   }
   return firstIncompleteLetterPos(mastered, 0, 0);
-}
-
-function labelForLevel1Pos(pos: { pair: number; step: CaseStep }) {
-  const ch = pos.step === 0 ? String.fromCharCode(65 + pos.pair) : String.fromCharCode(97 + pos.pair);
-  return `${ch} (${pos.step === 0 ? "Capital" : "Small"})`;
-}
-
-/** -------- Skill tag helpers (fixes upper/lower progress rollup) -------- */
-function normalizeLetterTagFromId(letterId: string | null | undefined): string | null {
-  if (!letterId) return null;
-  const ch = String(letterId).trim().charAt(0);
-  if (!/^[A-Za-z]$/.test(ch)) return null;
-  return `letter:${ch.toLowerCase()}`; // ✅ always a-z
-}
-
-function caseTagFromStep(step: CaseStep): "case:upper" | "case:lower" {
-  return step === 0 ? "case:upper" : "case:lower";
-}
-
-function stripLetterAndCaseTags(tags: string[]) {
-  return (Array.isArray(tags) ? tags : []).filter((t) => {
-    const s = String(t).toLowerCase();
-    if (s.startsWith("letter:")) return false;
-    if (s.startsWith("case:")) return false;
-    return true;
-  });
-}
-
-function uniqTags(tags: Array<string | null | undefined>) {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (const t of tags) {
-    const v = (t ?? "").trim();
-    if (!v) continue;
-    if (seen.has(v)) continue;
-    seen.add(v);
-    out.push(v);
-  }
-  return out;
-}
-
-function buildLetterTracingSkillTags(args: {
-  baseTags: string[];
-  isPretrace: boolean;
-  levelForTracking: number;
-  step: CaseStep;
-  currentLetterId: LetterId | null;
-}) {
-  const cleanedBase = stripLetterAndCaseTags(args.baseTags);
-
-  const letterTag = args.isPretrace ? null : normalizeLetterTagFromId(args.currentLetterId);
-  const caseTag = args.isPretrace ? null : caseTagFromStep(args.step);
-  const subtopicTag = args.isPretrace ? "subtopic:pretracing" : `subtopic:tracing_level_${args.levelForTracking}`;
-
-  return uniqTags([...cleanedBase, letterTag, caseTag, subtopicTag]);
 }
 
 // 🔊 letter sound expected in /public/games/phonics/a.mp3 ... z.mp3
@@ -1300,191 +1146,81 @@ export default function LetterTracingWithSounds() {
     lastPos: null,
   });
 
-  const fetchProgress = useCallback(
-    async (opts?: { forceServer?: boolean }) => {
-      if (!kidId) {
-        setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
-        return;
-      }
-
-      setProgress((p) => ({ ...p, status: "loading", error: undefined }));
-
-      await waitForAuthInit(5000);
-      const db = getFirestore();
-
-      const candidates: Array<{ path: string[]; label: string }> = [
-        { path: ["kids", kidId, "progress", PROGRESS_DOC_ID], label: "kids/{kidId}/progress/{docId}" },
-        { path: ["kids", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "kids/{kidId}/gamesProgress/{docId}" },
-        { path: ["kids", kidId, "progress", GAME_ID], label: "kids/{kidId}/progress/{gameId}" },
-        { path: ["kids", kidId, "gamesProgress", GAME_ID], label: "kids/{kidId}/gamesProgress/{gameId}" },
-        { path: ["kids", kidId, "gameSummaries", GAME_ID], label: "kids/{kidId}/gameSummaries/{gameId}" },
-        { path: ["students", kidId, "progress", PROGRESS_DOC_ID], label: "students/{kidId}/progress/{docId}" },
-        { path: ["students", kidId, "gamesProgress", PROGRESS_DOC_ID], label: "students/{kidId}/gamesProgress/{docId}" },
-        { path: ["students", kidId, "progress", GAME_ID], label: "students/{kidId}/progress/{gameId}" },
-        { path: ["students", kidId, "gamesProgress", GAME_ID], label: "students/{kidId}/gamesProgress/{gameId}" },
-      ];
-
-      const ob = readOutbox(kidId);
-      const shadowItems = uniqStrings(ob?.shadowMasteredItems);
-      const shadowLastPos = ob?.shadowLastPos ? coerceLastPos(ob.shadowLastPos) : null;
-      const shadowUpdatedAtMs = typeof ob?.shadowUpdatedAtMs === "number" ? ob.shadowUpdatedAtMs : undefined;
-
-      let lastErr: any = null;
-
-      for (const c of candidates) {
-        try {
-          const ref = doc(db, ...(c.path as [string, ...string[]]));
-          const snap = opts?.forceServer ? await getDocFromServer(ref) : await getDoc(ref);
-          if (!snap.exists()) continue;
-
-          const data = snap.data();
-
-          let items = extractMasteredItems(data);
-          let updatedAtMs = extractUpdatedAtMs(data);
-          let lastPos = extractLastPos(data);
-
-          // ✅ MERGE SHADOW into UI (so refresh never "loses" progress)
-          const serverSet = new Set(items);
-          if (shadowItems.length) {
-            for (const s of shadowItems) {
-              if (!serverSet.has(s)) items.push(s);
-            }
-          }
-
-          // ✅ Prefer shadow lastPos (because it represents latest local resume point)
-          if (shadowLastPos) lastPos = shadowLastPos;
-
-          // ✅ updatedAtMs best-effort
-          if (shadowUpdatedAtMs && (!updatedAtMs || shadowUpdatedAtMs > updatedAtMs)) {
-            updatedAtMs = shadowUpdatedAtMs;
-          }
-
-          // ✅ PRUNE SHADOW when server progress doc finally contains it
-          if (ob) {
-            const remainingShadow = shadowItems.filter((s) => !serverSet.has(s));
-            const nextOb: Outbox = { ...ob, shadowMasteredItems: remainingShadow };
-
-            // if server caught up fully, we can drop shadowUpdatedAtMs too
-            if (remainingShadow.length === 0) {
-              delete nextOb.shadowMasteredItems;
-              delete nextOb.shadowUpdatedAtMs;
-              // keep shadowLastPos only if you want, but usually safe to drop once caught up
-              delete nextOb.shadowLastPos;
-            }
-
-            const hasAnything =
-              (nextOb.shadowMasteredItems && nextOb.shadowMasteredItems.length > 0) ||
-              !!nextOb.pendingPayload;
-
-            if (hasAnything) writeOutbox(kidId, nextOb);
-            else clearOutbox(kidId);
-          }
-
-          setProgress({
-            status: "ready",
-            mastered: new Set(items),
-            lastPos,
-            sourcePath: c.label,
-            updatedAtMs,
-          });
-          return;
-        } catch (err: any) {
-          lastErr = err;
-        }
-      }
-
-      // Not found anywhere → show SHADOW (still survives hard refresh)
-      const shadowItemsFallback = uniqStrings(ob?.shadowMasteredItems);
-      const shadowLastPosFallback = ob?.shadowLastPos ? coerceLastPos(ob.shadowLastPos) : null;
-      const shadowUpdatedAtMsFallback = typeof ob?.shadowUpdatedAtMs === "number" ? ob.shadowUpdatedAtMs : undefined;
-
-      const merged = new Set<string>();
-      let lastPos: LastPos | null = null;
-      let updatedAtMs: number | undefined = undefined;
-
-      for (const s of shadowItemsFallback) merged.add(s);
-      if (shadowLastPosFallback) lastPos = shadowLastPosFallback;
-      if (shadowUpdatedAtMsFallback) updatedAtMs = shadowUpdatedAtMsFallback;
-
-      setProgress({
-        status: "ready",
-        mastered: merged,
-        lastPos,
-        sourcePath: "not-found",
-        updatedAtMs,
-        error: lastErr ? String(lastErr?.code || lastErr?.message || lastErr) : undefined,
-      });
-    },
-    [kidId]
-  );
-
-  useEffect(() => {
-    if (!kidId) return;
-    void fetchProgress();
-  }, [kidId, fetchProgress]);
-
-  // Replay pending payload (retry only) with throttling
-  const flushOutboxIfNeeded = useCallback(async () => {
-    if (!kidId) return;
-    await waitForAuthInit(5000);
-
-    const ob = readOutbox(kidId);
-    const payload = ob?.pendingPayload;
-    if (!payload) return;
-
-    // throttle retries (avoid spam on repeated reloads)
-    const now = Date.now();
-    const last = typeof ob?.lastReplayAtMs === "number" ? ob.lastReplayAtMs : 0;
-    if (now - last < 20_000) return; // 20s throttle
-
-    const masteredItem = String(payload?.masteredItems?.[0] ?? "").trim();
-
-    // If server already has it, drop pending retry
-    try {
-      const db = getFirestore();
-      const ref = doc(db, "kids", kidId, "progress", PROGRESS_DOC_ID);
-      const snap = await getDocFromServer(ref);
-      if (snap.exists() && masteredItem) {
-        const serverItems = new Set(extractMasteredItems(snap.data()));
-        if (serverItems.has(masteredItem)) {
-          const next: Outbox = { ...(ob as Outbox) };
-          delete next.pendingPayload;
-          next.lastReplayAtMs = now;
-          writeOutbox(kidId, next);
-          return;
-        }
-      }
-    } catch {
-      // ignore
+  const loadLocalProgress = useCallback(() => {
+    if (!kidId) {
+      setProgress({ status: "idle", mastered: new Set<string>(), lastPos: null });
+      return;
     }
 
-    // Attempt replay once
-    try {
-      const next: Outbox = { ...(ob as Outbox), lastReplayAtMs: now, replayCount: (ob?.replayCount ?? 0) + 1 };
-      writeOutbox(kidId, next);
-
-      await recordLevelResult(payload);
-
-      const cur = readOutbox(kidId);
-      if (!cur) return;
-      const after: Outbox = { ...cur };
-      delete after.pendingPayload;
-
-      const hasAnything =
-        (after.shadowMasteredItems && after.shadowMasteredItems.length > 0) ||
-        !!after.pendingPayload;
-
-      if (hasAnything) writeOutbox(kidId, after);
-      else clearOutbox(kidId);
-    } catch {
-      // keep pendingPayload
-    }
+    setProgress((p) => ({ ...p, status: "loading" }));
+    const local = readLocalState(kidId);
+    const localMastered = uniqStrings(local?.masteredItems);
+    setProgress({
+      status: "ready",
+      mastered: new Set(localMastered),
+      lastPos: local?.lastPos ?? null,
+      updatedAtMs: local?.updatedAtMs,
+    });
   }, [kidId]);
 
   useEffect(() => {
     if (!kidId) return;
-    void flushOutboxIfNeeded();
-  }, [kidId, flushOutboxIfNeeded]);
+    loadLocalProgress();
+  }, [kidId, loadLocalProgress]);
+
+  const persistLocalProgress = useCallback(
+    (next: { masteredItems?: string[]; lastPos?: LastPos | null; updatedAtMs?: number }) => {
+      if (!kidId) return;
+      const prev = readLocalState(kidId) ?? {};
+      const mergedMastered = uniqStrings([...(prev.masteredItems ?? []), ...(next.masteredItems ?? [])]);
+      const merged: TracingLocalState = {
+        masteredItems: mergedMastered,
+        lastPos: next.lastPos ?? prev.lastPos ?? null,
+        updatedAtMs: next.updatedAtMs ?? prev.updatedAtMs ?? Date.now(),
+      };
+      writeLocalState(kidId, merged);
+      setProgress((curr) => ({
+        ...curr,
+        status: "ready",
+        mastered: new Set(mergedMastered),
+        lastPos: merged.lastPos ?? null,
+        updatedAtMs: merged.updatedAtMs,
+      }));
+    },
+    [kidId]
+  );
+
+  const persistLocalLastPos = useCallback(
+    (pos: LastPos) => {
+      persistLocalProgress({ lastPos: pos, updatedAtMs: Date.now() });
+    },
+    [persistLocalProgress]
+  );
+
+  useEffect(() => {
+    if (mode !== "play") return;
+    const levelForPos: 0 | 1 = isPretrace ? 0 : 1;
+    persistLocalLastPos({ level: levelForPos, pair: safePairIndex, step });
+  }, [mode, isPretrace, safePairIndex, step, persistLocalLastPos]);
+
+  const resetLocalProgress = useCallback(() => {
+    if (!kidId) return;
+    const ok = window.confirm("Reset Letter Tracing (With Sounds) progress for this child on this device?");
+    if (!ok) return;
+
+    try {
+      localStorage.removeItem(localStateKey(kidId));
+    } catch {
+      // ignore localStorage errors
+    }
+
+    setProgress({
+      status: "ready",
+      mastered: new Set<string>(),
+      lastPos: null,
+      updatedAtMs: Date.now(),
+    });
+  }, [kidId]);
 
   type ProgressCounts = {
     preDone: number;
@@ -1493,12 +1229,8 @@ export default function LetterTracingWithSounds() {
     upperTotal: number;
     lowerDone: number;
     lowerTotal: number;
-
     resume0: { pair: number; step: 0 };
-    resume0Label: string;
-
     resume1: { pair: number; step: CaseStep };
-    resume1Label: string;
   };
 
   const progressCounts = useMemo((): ProgressCounts => {
@@ -1506,11 +1238,7 @@ export default function LetterTracingWithSounds() {
     const lastPos = progress.lastPos ?? null;
 
     const resume0 = getResumeStartLevel0(mastered, lastPos);
-    const resume0Id = PRETRACE_LEVEL.items[clamp(resume0.pair, 0, PRETRACE_LEVEL.items.length - 1)];
-    const resume0Label = PRETRACE_ITEMS[resume0Id]?.label ?? String(resume0Id);
-
     const resume1 = getResumeStartLevel1(mastered, lastPos);
-    const resume1Label = labelForLevel1Pos(resume1);
 
     const preTotal = PRETRACE_LEVEL.items.length;
     const preDone = PRETRACE_LEVEL.items.reduce((acc, id) => acc + (mastered.has(String(id)) ? 1 : 0), 0);
@@ -1530,9 +1258,7 @@ export default function LetterTracingWithSounds() {
       lowerDone,
       lowerTotal: 26,
       resume0,
-      resume0Label,
       resume1,
-      resume1Label,
     };
   }, [progress.mastered, progress.lastPos, allLetterPairs]);
 
@@ -1545,6 +1271,7 @@ export default function LetterTracingWithSounds() {
   const DEFAULT_TRACE_COLOR = QUICK_COLORS[0];
   const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_TRACE_COLOR);
   const [colorModalOpen, setColorModalOpen] = useState(false);
+  const [showLevel1Preview, setShowLevel1Preview] = useState(true);
 
   const effectiveColor = selectedColor; // always available
   const canTrace = true; // kept for minimal diffs; always true now
@@ -2229,9 +1956,14 @@ export default function LetterTracingWithSounds() {
     const sp = new URLSearchParams();
     applyKidAndMissionContext(sp, searchParams, kidId);
 
-    sp.set("level", String(levelNum === 0 ? 0 : 1));
-    sp.set("pair", String(pairIdx));
-    sp.set("step", String(stepNum));
+    const level = levelNum === 0 ? 0 : 1;
+    const maxPair = level === 0 ? Math.max(0, PRETRACE_LEVEL.items.length - 1) : Math.max(0, allLetterPairs.length - 1);
+    const safePair = clamp(Number(pairIdx) || 0, 0, maxPair);
+    const safeStep: CaseStep = stepNum === 1 ? 1 : 0;
+
+    sp.set("level", String(level));
+    sp.set("pair", String(safePair));
+    sp.set("step", String(safeStep));
 
     sp.set("fs", "1"); // ✅ always immersive (NO native fullscreen)
     navigateTo(sp, false);
@@ -2387,32 +2119,8 @@ export default function LetterTracingWithSounds() {
     if (!kidId) return;
 
     try {
-      const spentMs = timeStart ? Math.max(0, Math.round(performance.now() - timeStart)) : 0;
-      const levelForTracking = isPretrace ? 0 : 1;
       const masteredItem = isPretrace ? pretraceId ?? "" : currentLetterId ?? "";
-
-      const baseTags = Array.isArray(letterData?.skillTags) ? letterData!.skillTags : [];
-      const skillTags = buildLetterTracingSkillTags({
-        baseTags,
-        isPretrace,
-        levelForTracking,
-        step,
-        currentLetterId,
-      });
-
-      const wrongCount = (startMissesRef.current || 0) + (offPathNudgesRef.current || 0);
-      const attempts = 1 + wrongCount;
-      const correct = 1;
-      const wrong = wrongCount;
-
-      const accuracyPct = Math.round((correct / Math.max(1, attempts)) * 100);
-
-      const traceDurationMs = timeStart ? Math.max(0, Math.round(performance.now() - timeStart)) : 0;
-
-      const maxScaffold = scaffoldMaxRef.current || 0;
-
-      const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> =
-        Object.fromEntries(skillTags.map((tag) => [tag, { attempts, correct, wrong }]));
+      const completedAtMs = Date.now();
 
       // ✅ resume point
       const nextPos: LastPos = (() => {
@@ -2430,78 +2138,11 @@ export default function LetterTracingWithSounds() {
         return { level: 1, pair: 0, step: 0 };
       })();
 
-      // Persist SHADOW progress first (so hard-refresh never loses UI progress)
-      try {
-        const payload = {
-          gameId: GAME_ID,
-          progressDocId: PROGRESS_DOC_ID,
-          kidId,
-          levelId: levelForTracking,
-          completed: true,
-          accuracyPct,
-          durationSec: Math.round(traceDurationMs / 1000),
-          score: accuracyPct,
-          skillTags,
-          tagDeltas,
-          meta: {
-            startMisses: startMissesRef.current,
-            offPathNudges: offPathNudgesRef.current,
-            maxScaffold,
-          },
-          masteredItems: [masteredItem].filter(Boolean),
-          completedAt: Date.now(),
-          lastPos: nextPos,
-          lastPosUpdatedAt: Date.now(),
-        } as any;
-
-        const prev = readOutbox(kidId) ?? {};
-        const prevShadow = uniqStrings((prev as Outbox).shadowMasteredItems);
-        const nextShadow = Array.from(new Set([...prevShadow, String(masteredItem || "")].filter(Boolean)));
-
-        // ✅ keep SHADOW always, and only use pendingPayload for retry
-        writeOutbox(kidId, {
-          ...(prev as Outbox),
-          shadowMasteredItems: nextShadow,
-          shadowLastPos: nextPos,
-          shadowUpdatedAtMs: Date.now(),
-          pendingPayload: payload,
-        });
-
-        recordLevelResult(payload)
-          .then(() => {
-            // ✅ DO NOT clear shadow here — server progress doc may update only 3×/day
-            const cur = readOutbox(kidId);
-            if (!cur) return;
-
-            // remove pending retry only
-            const next: Outbox = { ...cur };
-            delete next.pendingPayload;
-
-            const hasAnything =
-              (next.shadowMasteredItems && next.shadowMasteredItems.length > 0) ||
-              !!next.pendingPayload;
-
-            if (hasAnything) writeOutbox(kidId, next);
-            else clearOutbox(kidId);
-          })
-          .catch(() => {
-            // keep pendingPayload so we can retry later
-          });
-      } catch {}
-
-      if (masteredItem) {
-        setProgress((prev) => {
-          const next = new Set(prev.mastered);
-          next.add(String(masteredItem));
-          return {
-            ...prev,
-            status: prev.status === "idle" ? "ready" : prev.status,
-            mastered: next,
-            lastPos: nextPos,
-            updatedAtMs: Date.now(),
-          };
-        });
-      }
+      persistLocalProgress({
+        masteredItems: masteredItem ? [masteredItem] : [],
+        lastPos: nextPos,
+        updatedAtMs: completedAtMs,
+      });
     } catch {
       // never block gameplay
     }
@@ -2517,12 +2158,12 @@ export default function LetterTracingWithSounds() {
     waitForAudioEnd,
     triggerConfetti,
     kidId,
-    timeStart,
     pretraceId,
     currentLetterId,
     step,
     safePairIndex,
     enabledPairs.length,
+    persistLocalProgress,
   ]);
 
   /* --------------------
@@ -2675,6 +2316,7 @@ export default function LetterTracingWithSounds() {
      LEVELS screen
   -------------------- */
   if (mode === "levels") {
+    // ✅ Show ONLY Level 1 (A–Z) here (Level 0 is rendered separately)
     const LEVELS: TraceLevelView[] = [
       {
         levelId: 1,
@@ -2689,22 +2331,23 @@ export default function LetterTracingWithSounds() {
     const pretraceChips = (PRETRACE_LEVEL.items ?? [])
       .map((id) => ({ id, label: PRETRACE_ITEMS[id]?.label ?? String(id) }))
       .filter((x) => Boolean(x.label))
-      .slice(0, 6);
+      .slice(0, 4);
 
-    const preTotal = PRETRACE_LEVEL.items.length;
-    const preDone = PRETRACE_LEVEL.items.filter((id) => mastered.has(String(id))).length;
-
-    const upperTotal = 26;
-    const lowerTotal = 26;
+    const preTotal = progressCounts.preTotal;
+    const preDone = progressCounts.preDone;
+    const upperTotal = progressCounts.upperTotal;
     const upperDone = progressCounts.upperDone;
+    const lowerTotal = progressCounts.lowerTotal;
     const lowerDone = progressCounts.lowerDone;
-
     const letterTotal = upperTotal + lowerTotal;
     const letterDoneCount = upperDone + lowerDone;
     const letterPct = letterTotal > 0 ? Math.round((letterDoneCount / letterTotal) * 100) : 0;
+    const warmupPct = preTotal > 0 ? Math.round((preDone / preTotal) * 100) : 0;
 
     const updatedLabel =
-      progress.updatedAtMs && Number.isFinite(progress.updatedAtMs) ? new Date(progress.updatedAtMs).toLocaleString() : undefined;
+      progress.updatedAtMs && Number.isFinite(progress.updatedAtMs)
+        ? new Date(progress.updatedAtMs).toLocaleString()
+        : undefined;
 
     const levelProgress = (lv: TraceLevelView) => {
       const ids: string[] = [];
@@ -2720,50 +2363,49 @@ export default function LetterTracingWithSounds() {
     };
 
     return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-10">
-        <div className="relative overflow-hidden rounded-[28px] border bg-white/60 p-6 shadow-sm backdrop-blur">
-          <div className="pointer-events-none absolute -top-24 left-[-10%] h-72 w-72 rounded-full bg-sky-200/50 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-pink-200/50 blur-3xl" />
+      <div className="mx-auto w-full max-w-6xl px-3 py-3 lg:h-[calc(100dvh-1.5rem)] lg:overflow-hidden">
+        <div className="relative overflow-hidden rounded-[24px] border bg-white/60 p-4 shadow-sm backdrop-blur lg:h-full">
+          <div className="pointer-events-none absolute -top-24 left-[-8%] h-64 w-64 rounded-full bg-sky-200/45 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 right-[-8%] h-64 w-64 rounded-full bg-pink-200/45 blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(56,189,248,0.22),transparent_45%),radial-gradient(circle_at_80%_30%,rgba(244,114,182,0.18),transparent_45%),radial-gradient(circle_at_45%_85%,rgba(34,197,94,0.10),transparent_45%)]" />
 
-          <div className="relative">
-            <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-              <div>
-                <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-900">
+          <div className="relative flex h-full flex-col">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
                   Letter Tracing Adventure (With Sounds)
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm text-slate-700">
+
+                <p className="mt-1 max-w-2xl text-sm text-slate-700">
                   Start with warm-up shapes → then trace <span className="font-semibold">Capital</span> and{" "}
-                  <span className="font-semibold">Small</span> letters.
+                  <span className="font-semibold">Small</span> letters with sound feedback.
                 </p>
 
-                <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🎯 Letters: {letterDoneCount}/{letterTotal} ({letterPct}%)
                   </span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🔠 Capital: {upperDone}/{upperTotal}
                   </span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
                     🔡 Small: {lowerDone}/{lowerTotal}
                   </span>
-                  <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
-                    ✍️ Warm-up: {preDone}/{preTotal}
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    ✍️ Warm-up: {preDone}/{preTotal} ({warmupPct}%)
+                  </span>
+                  <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-extrabold text-slate-800 ring-1 ring-white/60">
+                    🔊 Sounds enabled
                   </span>
                   {updatedLabel && (
-                    <span className="rounded-full bg-white/70 px-3 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-white/60">
-                      Last synced: {updatedLabel}
+                    <span className="rounded-full bg-white/75 px-3 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-white/60">
+                      Updated: {updatedLabel}
                     </span>
                   )}
                 </div>
-
-                <div className="mt-3 w-full max-w-xl">
-                  <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
-                    <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${letterPct}%` }} />
-                  </div>
-                </div>
               </div>
 
-              <div className="flex items-center flex-wrap gap-2">
+              <div className="flex shrink-0 items-center flex-wrap gap-2">
                 <button
                   onClick={goGamesPortal}
                   className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
@@ -2772,7 +2414,7 @@ export default function LetterTracingWithSounds() {
                 </button>
 
                 <button
-                  onClick={() => void fetchProgress({ forceServer: true })}
+                  onClick={() => void loadLocalProgress()}
                   disabled={!kidId || progress.status === "loading"}
                   className={[
                     "rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md",
@@ -2782,63 +2424,52 @@ export default function LetterTracingWithSounds() {
                   {progress.status === "loading" ? "Refreshing…" : "Refresh progress"}
                 </button>
 
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  ⭐ Start at the star
-                </span>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  ✋ Lift between strokes
-                </span>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-semibold text-slate-700 ring-1 ring-white/60">
-                  🔊 Sound plays on completion
-                </span>
+                <button
+                  onClick={resetLocalProgress}
+                  disabled={!kidId}
+                  className={[
+                    "rounded-full border border-rose-200 bg-rose-50/90 px-4 py-2 text-sm font-semibold text-rose-700 shadow-sm hover:shadow-md",
+                    !kidId ? "opacity-60 cursor-not-allowed" : "",
+                  ].join(" ")}
+                >
+                  Reset Progress
+                </button>
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <div className="relative rounded-3xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
-                  <div className="pointer-events-none absolute left-7 top-6 bottom-6 w-[3px] rounded-full bg-gradient-to-b from-sky-300 via-fuchsia-300 to-emerald-300 opacity-60" />
-
-                  <div className="space-y-4 pl-12">
+            <div className="mt-3 grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-3">
+              <div className="min-h-0 lg:col-span-2">
+                <div className="rounded-2xl border border-white/60 bg-white/65 p-3 shadow-sm backdrop-blur lg:h-full lg:overflow-auto">
+                  <div className="space-y-3">
                     {/* Level 0 */}
                     <button
-                      onClick={() => handlePlayButtonClick(0, progressCounts.resume0.pair, 0)}
+                      onClick={() =>
+                        void handlePlayButtonClick(0, progressCounts.resume0.pair, progressCounts.resume0.step)
+                      }
                       className={[
-                        "group relative w-full rounded-3xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-4 text-left shadow-sm transition",
+                        "group w-full rounded-2xl border border-white/60 bg-gradient-to-r from-white/85 to-sky-50/60 p-3 text-left shadow-sm transition",
                         "hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
                       ].join(" ")}
                     >
-                      <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-sky-100">
-                          <span className="text-lg">🚀</span>
-                        </div>
-                      </div>
-
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="text-lg font-extrabold text-slate-900">{PRETRACE_LEVEL.title}</div>
-                          <div className="mt-0.5 text-sm font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
-                          <div className="mt-1 text-xs font-semibold text-slate-600">
-                            Resume: {progressCounts.resume0Label}
-                          </div>
+                          <div className="text-base font-extrabold text-slate-900">🚀 {PRETRACE_LEVEL.title}</div>
+                          <div className="mt-0.5 text-xs font-semibold text-slate-600">{PRETRACE_LEVEL.subtitle}</div>
                         </div>
 
-                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                          <span className="animate-pulse">●</span> Ready
-                          <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
-                            {preDone}/{preTotal}
-                          </span>
+                        <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                          Ready • {preDone}/{preTotal}
                         </span>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-2 flex flex-wrap gap-1.5">
                         {pretraceChips.map((c, i) => {
                           const done = mastered.has(String(c.id));
                           return (
                             <span
                               key={`${c.label}-${i}`}
                               className={[
-                                "rounded-full px-3 py-1 text-xs font-semibold ring-1",
+                                "rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1",
                                 done
                                   ? "bg-emerald-50 text-emerald-800 ring-emerald-100"
                                   : "bg-white/80 text-slate-700 ring-white/70",
@@ -2849,12 +2480,12 @@ export default function LetterTracingWithSounds() {
                             </span>
                           );
                         })}
-                        <span className="rounded-full bg-slate-900/90 px-3 py-1 text-xs font-semibold text-white">
+                        <span className="rounded-full bg-slate-900/90 px-2.5 py-1 text-[11px] font-semibold text-white">
                           {PRETRACE_LEVEL.items.length} activities
                         </span>
                       </div>
 
-                      <div className="mt-3">
+                      <div className="mt-2">
                         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
                           <div
                             className="h-full rounded-full bg-emerald-500/70"
@@ -2863,188 +2494,164 @@ export default function LetterTracingWithSounds() {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between">
-                        <div className="text-xs font-semibold text-slate-600">Start here to make hands ready ✨</div>
-                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <div className="text-xs font-semibold text-slate-600">Start here to warm up hand control ✨</div>
+                        <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">Start →</div>
                       </div>
                     </button>
 
                     {/* Level 1 */}
                     {LEVELS.map((lv) => {
+                      const ready = true;
                       const lp = levelProgress(lv);
 
-                      // ✅ show Upper and Lower separately
-                      const upperBadges = (lv.pairs ?? [])
-                        .map((p) => {
-                          const label = p?.upper ? String(p.upper) : "";
-                          if (!label) return null;
-                          const done = mastered.has(label);
-                          return { label, done };
-                        })
-                        .filter(Boolean) as Array<{ label: string; done: boolean }>;
+                      const upperLetters = (lv.pairs ?? [])
+                        .map((p) => (p?.upper ? String(p.upper) : null))
+                        .filter(Boolean) as string[];
 
-                      const lowerBadges = (lv.pairs ?? [])
-                        .map((p) => {
-                          const label = p?.lower ? String(p.lower) : "";
-                          if (!label) return null;
-                          const done = mastered.has(label);
-                          return { label, done };
-                        })
-                        .filter(Boolean) as Array<{ label: string; done: boolean }>;
+                      const lowerLetters = (lv.pairs ?? [])
+                        .map((p) => (p?.lower ? String(p.lower) : null))
+                        .filter(Boolean) as string[];
 
-                      const upperDone = upperBadges.filter((b) => b.done).length;
-                      const lowerDone = lowerBadges.filter((b) => b.done).length;
+                      const upperDoneLv = upperLetters.filter((ch) => mastered.has(ch)).length;
+                      const lowerDoneLv = lowerLetters.filter((ch) => mastered.has(ch)).length;
 
                       return (
-                        <button
+                        <div
                           key={lv.levelId}
-                          onClick={() => handlePlayButtonClick(lv.levelId, progressCounts.resume1.pair, progressCounts.resume1.step)}
                           className={[
-                            "group relative w-full rounded-3xl border p-4 text-left shadow-sm transition backdrop-blur",
-                            "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0",
+                            "group w-full rounded-2xl border p-3 text-left shadow-sm transition backdrop-blur",
+                            ready
+                              ? "border-white/60 bg-gradient-to-r from-white/85 to-pink-50/60 hover:-translate-y-0.5 hover:shadow-lg"
+                              : "border-white/40 bg-white/50 opacity-60",
                           ].join(" ")}
                         >
-                          <div className="absolute -left-[52px] top-1/2 -translate-y-1/2">
-                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow ring-4 ring-fuchsia-100">
-                              <span className="text-lg">⭐</span>
-                            </div>
-                          </div>
-
                           <div className="flex items-start justify-between gap-3">
                             <div>
-                              <div className="text-lg font-extrabold text-slate-900">{lv.title}</div>
-                              {lv.subtitle && <div className="mt-0.5 text-sm font-semibold text-slate-600">{lv.subtitle}</div>}
-                              <div className="mt-1 text-xs font-semibold text-slate-600">
-                                Resume: {progressCounts.resume1Label}
+                              <div className="text-base font-extrabold text-slate-900">
+                                {ready ? "⭐" : "🔒"} {lv.title}
                               </div>
+                              {lv.subtitle && (
+                                <div className="mt-0.5 text-xs font-semibold text-slate-600">{lv.subtitle}</div>
+                              )}
                             </div>
 
-                            <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-extrabold text-emerald-700 ring-1 ring-emerald-100">
-                              <span className="animate-pulse">●</span> Ready
-                              <span className="rounded-full bg-white/70 px-2 py-0.5 text-[11px] font-extrabold text-slate-800 ring-1 ring-white/60">
-                                {lp.done}/{lp.total}
+                            <div className="flex flex-col items-end gap-2">
+                              <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-extrabold text-emerald-700 ring-1 ring-emerald-100">
+                                Ready • {lp.done}/{lp.total}
                               </span>
-                            </span>
+
+                              <button
+                                type="button"
+                                disabled={!ready}
+                                onClick={() =>
+                                  void handlePlayButtonClick(lv.levelId, progressCounts.resume1.pair, progressCounts.resume1.step)
+                                }
+                                className={[
+                                  "rounded-full px-5 py-2.5 text-sm font-extrabold shadow-sm transition",
+                                  ready
+                                    ? "bg-slate-900 text-white hover:bg-slate-800"
+                                    : "cursor-not-allowed bg-slate-400 text-white",
+                                ].join(" ")}
+                              >
+                                Start →
+                              </button>
+                            </div>
                           </div>
 
-                          {/* ✅ Letters (no scroll) — show all at once */}
-                          <div className="mt-3 space-y-3">
-                            {/* Capital */}
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <div className="text-[11px] font-extrabold text-slate-600">🔠 Capital</div>
-                                <div className="text-[11px] font-semibold text-slate-500">{upperDone}/26</div>
-                              </div>
-
-                              {/* Desktop: exactly 13 columns → 2 rows */}
-                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
-                                {upperBadges.map((t) => (
-                                  <div
-                                    key={`U-${t.label}`}
-                                    className={[
-                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                    ].join(" ")}
-                                  >
-                                    {t.label}
-                                    {t.done && (
-                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                        ✓
-                                      </span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-
-                              {/* Mobile: auto-fit (no horizontal scroll) */}
-                              <div
-                                className="mt-2 grid md:hidden gap-2"
-                                style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}
-                              >
-                                {upperBadges.map((t) => (
-                                  <div
-                                    key={`U-m-${t.label}`}
-                                    className={[
-                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                    ].join(" ")}
-                                  >
-                                    {t.label}
-                                    {t.done && (
-                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                        ✓
-                                      </span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Small */}
-                            <div>
-                              <div className="flex items-center justify-between">
-                                <div className="text-[11px] font-extrabold text-slate-600">🔡 Small</div>
-                                <div className="text-[11px] font-semibold text-slate-500">{lowerDone}/26</div>
-                              </div>
-
-                              {/* Desktop: exactly 13 columns → 2 rows */}
-                              <div className="mt-2 hidden md:grid gap-2" style={{ gridTemplateColumns: "repeat(13, minmax(0, 1fr))" }}>
-                                {lowerBadges.map((t) => (
-                                  <div
-                                    key={`L-${t.label}`}
-                                    className={[
-                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                    ].join(" ")}
-                                  >
-                                    {t.label}
-                                    {t.done && (
-                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                        ✓
-                                      </span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-
-                              {/* Mobile: auto-fit (no horizontal scroll) */}
-                              <div
-                                className="mt-2 grid md:hidden gap-2"
-                                style={{ gridTemplateColumns: "repeat(auto-fit, minmax(34px, 1fr))" }}
-                              >
-                                {lowerBadges.map((t) => (
-                                  <div
-                                    key={`L-m-${t.label}`}
-                                    className={[
-                                      "relative flex h-10 items-center justify-center rounded-xl text-sm font-extrabold ring-1",
-                                      t.done ? "bg-emerald-50 text-emerald-800 ring-emerald-100" : "bg-white/80 text-slate-700 ring-white/70",
-                                    ].join(" ")}
-                                  >
-                                    {t.label}
-                                    {t.done && (
-                                      <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white text-[12px] font-black shadow">
-                                        ✓
-                                      </span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
+                          <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-white/70">
+                              🔠 Capital {upperDoneLv}/{upperLetters.length}
+                            </span>
+                            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-700 ring-1 ring-white/70">
+                              🔡 Small {lowerDoneLv}/{lowerLetters.length}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setShowLevel1Preview((v) => !v)}
+                              className="rounded-full border bg-white/80 px-3 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-white"
+                            >
+                              {showLevel1Preview ? "Hide letters preview" : "Preview letters"}
+                            </button>
                           </div>
 
                           {lp.total > 0 && (
-                            <div className="mt-3">
-                              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200/60">
+                            <div className="mt-2">
+                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200/60">
                                 <div className="h-full rounded-full bg-emerald-500/70" style={{ width: `${lp.pct}%` }} />
                               </div>
                             </div>
                           )}
 
-                          <div className="mt-3 flex items-center justify-between">
-                            <div className="text-xs font-semibold text-slate-600">Tap to begin this level</div>
-                            <div className="text-sm font-black text-slate-900/50 transition group-hover:translate-x-1">→</div>
+                          {showLevel1Preview && (
+                            <div className="mt-2 space-y-2 rounded-xl border border-white/60 bg-white/60 p-2.5">
+                              <div className="text-[11px] font-semibold text-slate-600">
+                                Tap any letter to practice directly
+                              </div>
+                              <div>
+                                <div className="text-[11px] font-extrabold text-slate-600">🔠 Capital letters</div>
+                                <div
+                                  className="mt-1 grid gap-1.5"
+                                  style={{ gridTemplateColumns: "repeat(auto-fit, minmax(26px, 1fr))" }}
+                                >
+                                  {upperLetters.map((ch, pairIdx) => {
+                                    const done = mastered.has(ch);
+                                    return (
+                                      <button
+                                        key={`U-${ch}`}
+                                        type="button"
+                                        onClick={() => navigatePlay(1, pairIdx, 0, false)}
+                                        title={`Trace capital ${ch}`}
+                                        className={[
+                                          "relative flex h-8 items-center justify-center rounded-lg text-xs font-extrabold ring-1 transition",
+                                          "cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300",
+                                          done
+                                            ? "bg-gradient-to-b from-emerald-300 to-emerald-400 text-emerald-950 ring-emerald-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]"
+                                            : "bg-white/80 text-slate-700 ring-white/70",
+                                        ].join(" ")}
+                                      >
+                                        {ch}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+
+                              <div>
+                                <div className="text-[11px] font-extrabold text-slate-600">🔡 Small letters</div>
+                                <div
+                                  className="mt-1 grid gap-1.5"
+                                  style={{ gridTemplateColumns: "repeat(auto-fit, minmax(26px, 1fr))" }}
+                                >
+                                  {lowerLetters.map((ch, pairIdx) => {
+                                    const done = mastered.has(ch);
+                                    return (
+                                      <button
+                                        key={`L-${ch}`}
+                                        type="button"
+                                        onClick={() => navigatePlay(1, pairIdx, 1, false)}
+                                        title={`Trace small ${ch}`}
+                                        className={[
+                                          "relative flex h-8 items-center justify-center rounded-lg text-xs font-extrabold ring-1 transition",
+                                          "cursor-pointer hover:-translate-y-0.5 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-300",
+                                          done
+                                            ? "bg-gradient-to-b from-emerald-300 to-emerald-400 text-emerald-950 ring-emerald-500 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)]"
+                                            : "bg-white/80 text-slate-700 ring-white/70",
+                                        ].join(" ")}
+                                      >
+                                        {ch}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="mt-2 text-xs font-semibold text-slate-600">
+                            Capital then small letter, one pair at a time.
                           </div>
-                        </button>
+                        </div>
                       );
                     })}
                   </div>
@@ -3052,15 +2659,15 @@ export default function LetterTracingWithSounds() {
               </div>
 
               <div className="lg:col-span-1">
-                <div className="rounded-3xl border border-white/60 bg-white/65 p-5 shadow-sm backdrop-blur">
+                <div className="h-full rounded-2xl border border-white/60 bg-white/65 p-4 shadow-sm backdrop-blur">
                   <div className="flex items-center justify-between">
                     <div className="text-sm font-extrabold text-slate-900">How to play</div>
                     <div className="text-xs font-semibold text-slate-600">Quick tips</div>
                   </div>
 
-                  <ol className="mt-4 space-y-3 text-sm text-slate-700">
+                  <ol className="mt-3 space-y-2.5 text-sm text-slate-700">
                     <li className="flex gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
+                      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-extrabold">
                         1
                       </span>
                       <div>
@@ -3070,7 +2677,7 @@ export default function LetterTracingWithSounds() {
                     </li>
 
                     <li className="flex gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
+                      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-pink-100 text-pink-700 font-extrabold">
                         2
                       </span>
                       <div>
@@ -3080,32 +2687,24 @@ export default function LetterTracingWithSounds() {
                     </li>
 
                     <li className="flex gap-3">
-                      <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
+                      <span className="mt-0.5 inline-flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-extrabold">
                         3
                       </span>
                       <div>
-                        <div className="font-bold text-slate-900">Sound</div>
-                        <div className="text-slate-600">Plays on completion (and via 🔊 button).</div>
+                        <div className="font-bold text-slate-900">Listen and repeat</div>
+                        <div className="text-slate-600">Letter sound plays on completion (and via 🔊).</div>
                       </div>
                     </li>
                   </ol>
 
-                  <div className="mt-5 rounded-2xl bg-slate-900/90 p-4 text-white">
+                  <div className="mt-3 rounded-2xl bg-slate-900/90 p-3 text-white">
                     <div className="text-sm font-extrabold">Pro tip</div>
                     <p className="mt-1 text-sm text-white/80">
-                      Use <span className="font-semibold text-white">Fullscreen</span> (or immersive mode) for the best tracing experience.
+                      Start at the ⭐ star and lift your finger between strokes for cleaner letters.
                     </p>
                   </div>
-
-                  {progress.status === "ready" && progress.sourcePath && progress.sourcePath !== "not-found" && (
-                    <div className="mt-3 text-[11px] font-semibold text-slate-400">Progress source: {progress.sourcePath}</div>
-                  )}
                 </div>
               </div>
-            </div>
-
-            <div className="mt-5 text-center text-xs font-semibold text-slate-600">
-              Tip: Start from Level 0 even if the child knows letters — it improves pencil control ✍️
             </div>
           </div>
         </div>
@@ -3333,23 +2932,24 @@ export default function LetterTracingWithSounds() {
               Next
             </button>
 
-            {fs ? (
-              <button
-                onClick={() => void goLevels()}
-                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-              >
-                Exit
-              </button>
-            ) : (
-              <button
-                onClick={() => void setFs(true)}
-                className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
-              >
-                Immersive
-              </button>
-            )}
+            <button
+              onClick={() => void goLevels()}
+              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+            >
+              Exit
+            </button>
 
-            <button onClick={goLevels} className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold">
+            <button
+              onClick={() => void setFs(!fs)}
+              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+            >
+              {fs ? "Windowed" : "Fullscreen"}
+            </button>
+
+            <button
+              onClick={() => void goLevels()}
+              className="rounded-full border bg-white px-4 py-2 text-xs sm:text-sm font-semibold"
+            >
               Levels
             </button>
           </div>

@@ -17,7 +17,7 @@ const MAX_POSSIBLE_STARS = TOTAL_ROUNDS * TOTAL_LEVELS; // 56
 
 interface GameProgressData {
   bestStarsByLevel?: Record<string, number>;
-  completedLevels?: number[];
+  completedLevels?: number[] | number | Record<string, unknown>;
   resume?: {
     level?: number;
     round?: number;
@@ -75,7 +75,7 @@ export const onGameProgressWrite = onDocumentWritten(
 
     // Calculate summary metrics
     const bestStarsTotal = calculateBestStarsTotal(progressData.bestStarsByLevel);
-    const completedLevelCount = progressData.completedLevels?.length || 0;
+    const completedLevelCount = getCompletedLevelsCount(progressData.completedLevels);
     const hasResume = checkHasResume(progressData.resume);
     const completionPercent = calculateCompletionPercent(bestStarsTotal);
 
@@ -118,6 +118,19 @@ function calculateBestStarsTotal(bestStarsByLevel?: Record<string, number>): num
     const validStars = typeof stars === 'number' && stars >= 0 ? stars : 0;
     return sum + validStars;
   }, 0);
+}
+
+function getCompletedLevelsCount(
+  completedLevels?: GameProgressData['completedLevels']
+): number {
+  if (Array.isArray(completedLevels)) return completedLevels.length;
+  if (typeof completedLevels === 'number' && Number.isFinite(completedLevels)) {
+    return Math.max(0, Math.floor(completedLevels));
+  }
+  if (completedLevels && typeof completedLevels === 'object') {
+    return Object.keys(completedLevels).length;
+  }
+  return 0;
 }
 
 /**

@@ -158,24 +158,33 @@ export default function EditStudentForm({ student, open, onClose, onUpdated }: P
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <Input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            placeholder="Full Name"
-            disabled={!canEdit}
-          />
+          <div className="space-y-1.5">
+            <div className="text-sm font-medium text-foreground">Student name</div>
+            <Input
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Full Name"
+              disabled={!canEdit}
+            />
+          </div>
 
-          <Input
-            type="number"
-            inputMode="numeric"
-            min={2}
-            max={15}
-            step={1}
-            value={ageYears}
-            onChange={(e) => setAgeYears(e.target.value)}
-            placeholder="Age (years) e.g., 5"
-            disabled={!canEdit}
-          />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-foreground">Age (years)</div>
+              <div className="text-xs text-muted-foreground">Editable by admin</div>
+            </div>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={2}
+              max={15}
+              step={1}
+              value={ageYears}
+              onChange={(e) => setAgeYears(e.target.value)}
+              placeholder="Enter age, e.g. 5"
+              disabled={!canEdit}
+            />
+          </div>
 
           <Select value={grade} onValueChange={(value: string) => setGrade(value)} disabled={!canEdit}>
             <SelectTrigger className="w-full">
