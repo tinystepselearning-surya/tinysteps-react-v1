@@ -298,6 +298,36 @@ const STAGE_MASTERY_ORDER: MasteryKey[] = [
   "mastered",
 ];
 
+const PARENT_STAR_GUIDE = [
+  { stars: "⭐☆☆☆☆", label: "Just started" },
+  { stars: "⭐⭐☆☆☆", label: "Emerging" },
+  { stars: "⭐⭐⭐☆☆", label: "Growing well" },
+  { stars: "⭐⭐⭐⭐☆", label: "Strong" },
+  { stars: "⭐⭐⭐⭐⭐", label: "Excellent" },
+] as const;
+
+function masteryToStarLevel(value: unknown): number {
+  const masteryKey = masteryKeyFromValue(value);
+  switch (masteryKey) {
+    case "mastered":
+      return 5;
+    case "proficient":
+      return 4;
+    case "developing":
+      return 3;
+    case "emerging":
+      return 2;
+    case "not_started":
+    default:
+      return 1;
+  }
+}
+
+function starString(level: number): string {
+  const safeLevel = Math.max(1, Math.min(5, Math.round(level)));
+  return `${"⭐".repeat(safeLevel)}${"☆".repeat(5 - safeLevel)}`;
+}
+
 function aggregateStageMastery(values: Array<any>): MasteryKey {
   if (!values.length) return "not_started";
   const ranks = values.map((value) => STAGE_MASTERY_ORDER.indexOf(masteryKeyFromValue(value)));
@@ -3121,15 +3151,20 @@ export default function ParentDashboard() {
                                         </div>
                                         {!isCollapsed && (
                                           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                            <div className="col-span-full rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-[11px] text-slate-600">
+                                              <div className="font-semibold text-slate-700">How to read this</div>
+                                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                                                {PARENT_STAR_GUIDE.map((item) => (
+                                                  <span key={item.stars}>
+                                                    {item.stars} = {item.label}
+                                                  </span>
+                                                ))}
+                                              </div>
+                                            </div>
                                             {group.rows.map((row: any) => {
-                                            const masteryText = formatMasteryLabel(row.mastery) || "Getting started";
+                                            const starLevel = masteryToStarLevel(row.mastery);
+                                            const starRating = starString(starLevel);
                                             const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
-                                            const masteryStyles =
-                                              masteryLower === "mastered"
-                                                ? "bg-emerald-100 text-emerald-700"
-                                                : masteryLower && masteryLower !== "not_started"
-                                                  ? "bg-blue-100 text-blue-700"
-                                                  : "bg-slate-100 text-slate-600";
                                             const accentDot =
                                               masteryLower === "mastered"
                                                 ? "bg-emerald-500"
@@ -3150,9 +3185,9 @@ export default function ParentDashboard() {
                                                 className="group relative text-left rounded-xl border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
                                               >
                                                 <div className="flex items-start justify-between gap-2">
-                                                  <div className="flex items-center gap-2">
+                                                  <div className="flex min-w-0 flex-1 items-start gap-2">
                                                     <span className={`mt-1 h-2 w-2 rounded-full ${accentDot}`} />
-                                                    <div className="text-xs font-semibold text-slate-900 truncate">
+                                                    <div className="text-xs font-semibold leading-5 text-slate-900 whitespace-normal break-words">
                                                       {row.label}
                                                     </div>
                                                   </div>
@@ -3162,20 +3197,10 @@ export default function ParentDashboard() {
                                                 </div>
                                                 <div className="mt-2 flex items-center justify-between">
                                                   <div
-                                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${masteryStyles}`}
+                                                    className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-sm font-semibold tracking-[0.08em] text-amber-700"
+                                                    aria-label={`Lesson progress ${starRating}`}
                                                   >
-                                                    {masteryText}
-                                                  </div>
-                                                  <div className="h-1.5 w-12 overflow-hidden rounded-full bg-slate-100">
-                                                    <div
-                                                      className="h-full rounded-full bg-indigo-400"
-                                                      style={{
-                                                        width: `${Math.min(
-                                                          100,
-                                                          Math.max(8, masteryToPercent(row.mastery) ?? 8)
-                                                        )}%`,
-                                                      }}
-                                                    />
+                                                    {starRating}
                                                   </div>
                                                 </div>
                                               </button>
@@ -3233,6 +3258,7 @@ export default function ParentDashboard() {
                       values={selectedCurriculumTopic.progressRatings ?? {}}
                       readOnly
                       className="p-3"
+                      parentFriendly
                     />
                     {selectedCurriculumTopic.focusChips?.length > 0 && (
                       <div>
