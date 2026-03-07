@@ -448,6 +448,12 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/phonics-games-for-preschoolers',
     ogType: 'website',
   },
+  '/phonics-learning-games': {
+    title: 'Phonics Practice Games for Kids | Tiny Steps Learning',
+    description: 'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day free trial.',
+    canonicalPath: '/phonics-learning-games',
+    ogType: 'website',
+  },
   '/summer-camps': {
     title: 'Online Summer Camps for Kids | Tiny Steps Learning',
     description: 'Explore Tiny Steps online summer camps with 10-week group and premium 1:1 options for reading, phonics, grammar, and speaking.',

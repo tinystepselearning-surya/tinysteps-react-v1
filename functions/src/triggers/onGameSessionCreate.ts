@@ -9,6 +9,56 @@ const LETTER_SOUNDS_PROGRESS_DOC_ID = 'phonics_letter_sound';
 const LEGACY_LETTER_SOUNDS_GAME_IDS = new Set(['phonics_letter_sound']);
 const LEGACY_LETTER_SOUNDS_PROGRESS_IDS = new Set(['phonics_letter_sound_match']);
 
+type LightweightGameMeta = {
+  title: string;
+  areaPractised: string;
+  expertiseArea: string;
+  totalLevels?: number;
+};
+
+const LIGHTWEIGHT_GAME_META: Record<string, LightweightGameMeta> = {
+  "letter-tracing": {
+    title: "Letter Tracing",
+    areaPractised: "Letter formation",
+    expertiseArea: "phonics",
+    totalLevels: 59,
+  },
+  "letter-tracing-sounds": {
+    title: "Letter Tracing + Sounds",
+    areaPractised: "Letter formation with sound support",
+    expertiseArea: "phonics",
+    totalLevels: 59,
+  },
+  "letter-sound-match": {
+    title: "Letter Sounds",
+    areaPractised: "Letter-sound recognition",
+    expertiseArea: "phonics",
+    totalLevels: 7,
+  },
+  "balloon-pop": {
+    title: "Balloon Pop",
+    areaPractised: "Sound matching",
+    expertiseArea: "phonics",
+    totalLevels: 7,
+  },
+  "sound-detective": {
+    title: "Sound Listening",
+    areaPractised: "Listening and sound identification",
+    expertiseArea: "phonics",
+    totalLevels: 7,
+  },
+};
+
+function getGameMeta(gameId: string): LightweightGameMeta {
+  return (
+    LIGHTWEIGHT_GAME_META[gameId] || {
+      title: gameId,
+      areaPractised: "Practice",
+      expertiseArea: "general_english",
+    }
+  );
+}
+
 function normalizeGameIdentity(gameIdRaw: string, progressDocIdRaw: string): { gameId: string; progressDocId: string } {
   const gameId = String(gameIdRaw || '').trim();
   const progressDocId = String(progressDocIdRaw || '').trim();
@@ -67,6 +117,9 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       levelId,
       pointsEarned,
       accuracy,
+      durationSec,
+      timeSpentSec,
+      timeSpentMs,
       skillResults,
     } = sessionData;
     const { gameId, progressDocId } = normalizeGameIdentity(rawGameId, rawProgressDocId);
@@ -96,15 +149,6 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       levelId,
     });
 
-    // TEMPORARY DEBUG LOG
-    console.log('[onGameSessionCreate] DEBUG:', {
-      eventId,
-      kidId: resolvedKidId,
-      gameId,
-      skillResultsLength: Array.isArray(skillResults) ? skillResults.length : 0,
-      skillResultsSample: Array.isArray(skillResults) ? skillResults.slice(0, 2) : null,
-    });
-
     // Check idempotency marker
     const markerRef = db.doc(`kids/${resolvedKidId}/rollupsApplied/${eventId}`);
     const markerSnap = await markerRef.get();
@@ -116,6 +160,7 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
     try {
       // Fetch game catalog for totalLevels
+      const gameMeta = getGameMeta(gameId);
       let totalLevels: number | null = null;
       try {
         const catalogDoc = await db.doc('config/gamesCatalog').get();
@@ -132,6 +177,18 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
           error: error.message,
         });
       }
+      if (totalLevels === null && typeof gameMeta.totalLevels === "number") {
+        totalLevels = gameMeta.totalLevels;
+      }
+
+      const normalizedTimeSpentMs =
+        typeof timeSpentMs === "number" && Number.isFinite(timeSpentMs)
+          ? Math.max(0, Math.floor(timeSpentMs))
+          : typeof timeSpentSec === "number" && Number.isFinite(timeSpentSec)
+            ? Math.max(0, Math.floor(timeSpentSec * 1000))
+            : typeof durationSec === "number" && Number.isFinite(durationSec)
+              ? Math.max(0, Math.floor(durationSec * 1000))
+              : 0;
 
       // Check level completion marker
       const levelMarkerRef = db.doc(`kids/${resolvedKidId}/levelCompletions/${progressDocId}__${levelId}`);
@@ -157,17 +214,28 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       // Update gameProgress
       const progressRef = db.doc(`kids/${resolvedKidId}/gameProgress/${progressDocId}`);
       const progressUpdate: any = {
+        gameId,
+        title: gameMeta.title,
+        areaPractised: gameMeta.areaPractised,
+        expertiseArea: gameMeta.expertiseArea,
+        started: true,
         lastPlayedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+        progressStatus: "in_progress",
       };
 
       // Only increment completedLevels if first completion
       if (isFirstCompletion) {
         progressUpdate.completedLevels = FieldValue.increment(1);
+        progressUpdate.levelsCompleted = FieldValue.increment(1);
       }
 
       // Set totalLevels if available
       if (totalLevels !== null) {
         progressUpdate.totalLevels = totalLevels;
+      }
+      if (normalizedTimeSpentMs > 0) {
+        progressUpdate.totalTimeSpentMs = FieldValue.increment(normalizedTimeSpentMs);
       }
 
       await progressRef.set(progressUpdate, { merge: true });
@@ -185,8 +253,19 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       const summaryUpdate: any = {
         [`games.${gameId}.plays`]: FieldValue.increment(1),
         [`games.${gameId}.lastPlayedAt`]: FieldValue.serverTimestamp(),
+        [`games.${gameId}.title`]: gameMeta.title,
+        [`games.${gameId}.areaPractised`]: gameMeta.areaPractised,
+        [`games.${gameId}.expertiseArea`]: gameMeta.expertiseArea,
+        [`games.${gameId}.progressStatus`]: "in_progress",
+        lastGamePlayedId: gameId,
+        lastGamePlayedTitle: gameMeta.title,
+        lastGamePlayedAt: FieldValue.serverTimestamp(),
         lastUpdatedAt: FieldValue.serverTimestamp(),
       };
+      if (normalizedTimeSpentMs > 0) {
+        summaryUpdate[`games.${gameId}.totalTimeSpentMs`] = FieldValue.increment(normalizedTimeSpentMs);
+        summaryUpdate.totalGameTimeSpentMs = FieldValue.increment(normalizedTimeSpentMs);
+      }
 
       // Add points if present
       if (typeof pointsEarned === 'number' && pointsEarned > 0) {
@@ -210,33 +289,16 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
 
       // Update skill tag stats
       if (Array.isArray(skillResults) && skillResults.length > 0) {
-        console.log('[onGameSessionCreate] SKILL ROLLUP START:', {
-          eventId,
-          kidId: resolvedKidId,
-          skillResultsCount: skillResults.length,
-          firstTwoTags: skillResults.slice(0, 2).map((s: any) => s.tag),
-        });
-
         const skillUpdatePromises = skillResults.map(async (skill: any, index: number) => {
           try {
             const { tag, attempts, correct, wrong } = skill;
             if (!tag || typeof attempts !== 'number') {
-              console.log('[onGameSessionCreate] SKILL SKIPPED:', { eventId, tag, attempts, index });
               return;
             }
 
             // Sanitize tag for Firestore doc ID (replace /, \, ., : with _)
             const safeTag = tag.replace(/\//g, '_').replace(/\\/g, '_').replace(/\./g, '_').replace(/:/g, '_');
             const skillRef = db.doc(`kids/${resolvedKidId}/skillTagStats/${safeTag}`);
-
-            console.log('[onGameSessionCreate] SKILL WRITE:', {
-              eventId,
-              index,
-              originalTag: tag,
-              safeTag,
-              path: `kids/${resolvedKidId}/skillTagStats/${safeTag}`,
-              increments: { attempts, correct, wrong },
-            });
 
             const skillUpdate: any = {
               tag,
@@ -251,7 +313,6 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
             }
 
             await skillRef.set(skillUpdate, { merge: true });
-            console.log('[onGameSessionCreate] SKILL WRITE SUCCESS:', { eventId, safeTag });
           } catch (skillError: any) {
             logger.error('[onGameSessionCreate] SKILL WRITE FAILED:', {
               eventId,

@@ -168,6 +168,9 @@ function safeCourse(value: string | null): string | null {
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3-15</div>
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
           <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive lesson-by-lesson details so parents know exactly what’s next.</p>
+          <p className="mt-2 text-sm text-gray-600">
+            For daily home reinforcement, see our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics learning games</Link> with tracing, sound practice, and a 3-day free trial.
+          </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
             <span className="rounded-full bg-white/80 px-4 py-1">Phonics mastery</span>
             <span className="rounded-full bg-white/80 px-4 py-1">Grammar confidence</span>

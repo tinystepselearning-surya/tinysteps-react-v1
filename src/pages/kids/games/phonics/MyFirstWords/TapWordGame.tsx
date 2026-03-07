@@ -764,8 +764,10 @@ export default function TapWordGame({
                     ].join(" ")}
                     style={{
                       background: bg,
-                      animation:
-                        shakeWord === w ? "tsShake 520ms ease-in-out" : undefined,
+                      animationName: shakeWord === w ? "tsShake" : undefined,
+                      animationDuration: shakeWord === w ? "520ms" : undefined,
+                      animationTimingFunction: shakeWord === w ? "ease-in-out" : undefined,
+                      animationFillMode: shakeWord === w ? "both" : undefined,
                       animationDelay: !picked ? `${i * 140}ms` : undefined,
                       opacity: disabledAll && !isPicked ? 0.92 : 1,
                     }}

@@ -46,6 +46,10 @@ export async function recordLevelResult(
   result: LevelResult
 ): Promise<RecordLevelResultResponse> {
   try {
+    const shouldDebugRecordLevelResult =
+      import.meta.env.DEV &&
+      typeof window !== "undefined" &&
+      (window as any).__TS_DEBUG_GAME_RECORDING__ === true;
     const [{ httpsCallable, getFunctions }, firebase] = await Promise.all([
       import("firebase/functions"),
       import("../../lib/firebaseConfig"),
@@ -145,13 +149,15 @@ export async function recordLevelResult(
       (payload as any).lastPosUpdatedAt = (r as any).lastPosUpdatedAt ?? Date.now();
     }
 
-    console.debug("[recordLevelResult] sending", {
-      kidId: result.kidId,
-      gameId: result.gameId,
-      levelId: result.levelId,
-      eventId,
-      schemaVersion: 1,
-    });
+    if (shouldDebugRecordLevelResult) {
+      console.debug("[recordLevelResult] sending", {
+        kidId: result.kidId,
+        gameId: result.gameId,
+        levelId: result.levelId,
+        eventId,
+        schemaVersion: 1,
+      });
+    }
 
     const response = await callable(payload);
     const data = response.data as RecordLevelResultResponse;
@@ -163,15 +169,17 @@ export async function recordLevelResult(
     // Clear eventId on success (idempotency complete)
     sessionStorage.removeItem(storageKey);
 
-    console.log("[recordLevelResult] Level result recorded successfully:", {
-      gameId: result.gameId,
-      levelId: result.levelId,
-      completed,
-      progressDocId: data.progressDocId,
-      completedLevelsCount: data.completedLevelsCount,
-      tagsUpdated: data.tagsUpdated,
-      catalogStatus: data.catalogStatus,
-    });
+    if (shouldDebugRecordLevelResult) {
+      console.debug("[recordLevelResult] Level result recorded successfully:", {
+        gameId: result.gameId,
+        levelId: result.levelId,
+        completed,
+        progressDocId: data.progressDocId,
+        completedLevelsCount: data.completedLevelsCount,
+        tagsUpdated: data.tagsUpdated,
+        catalogStatus: data.catalogStatus,
+      });
+    }
 
     return data;
   } catch (error: any) {

@@ -198,6 +198,12 @@ const ROUTE_SEO_CONFIG = {
     canonicalPath: '/phonics-classes-for-kids',
     robots: 'index, follow',
   },
+  '/phonics-learning-games': {
+    title: 'Phonics Practice Games for Kids | Tiny Steps Learning',
+    description: 'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day free trial.',
+    canonicalPath: '/phonics-learning-games',
+    robots: 'index, follow',
+  },
   '/contact': {
     title: 'Contact Us | Tiny Steps Learning',
     description: 'Have questions? Get in touch with our team. We\'re here to help you find the perfect English class for your child.',

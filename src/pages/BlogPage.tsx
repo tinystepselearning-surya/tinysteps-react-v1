@@ -246,6 +246,7 @@ const BlogPage: FC = () => {
               <Link to="/parents/getting-started" className="text-primary-600 font-medium">Getting started with phonics at home</Link>
               <Link to="/parents/reading-at-home" className="text-primary-600">10-minute daily reading routine</Link>
               <Link to="/parents/phonics-mission" className="text-primary-600">How to use Phonics Mission games</Link>
+              <Link to="/phonics-learning-games" className="text-primary-600">Phonics learning games with a 3-day free trial</Link>
             </div>
           </div>
         </div>

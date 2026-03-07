@@ -630,8 +630,7 @@ export default function CvcWordReaderGame() {
   // Telemetry stub (wire to Firebase later)
   // --------------------
   function logEvent(name: string, payload: Record<string, any> = {}) {
-    // eslint-disable-next-line no-console
-    console.log("[TS_GAME_EVENT]", {
+    const logPayload = {
       gameId: GAME_ID,
       progressDocId: PROGRESS_DOC_ID,
       level: levelKeyParam,
@@ -640,7 +639,15 @@ export default function CvcWordReaderGame() {
       ...payload,
       name,
       ts: Date.now(),
-    });
+    };
+    const anyWin = window as any;
+    if (typeof anyWin.__TS_LOG__ === "function") {
+      anyWin.__TS_LOG__(name, logPayload);
+      return;
+    }
+    if (import.meta.env.DEV && anyWin.__TS_DEBUG_GAME_EVENTS__ === true) {
+      console.debug("[TS_GAME_EVENT]", logPayload);
+    }
   }
 
   // --------------------
@@ -650,6 +657,10 @@ export default function CvcWordReaderGame() {
     const d: any = document;
     const isFs = !!document.fullscreenElement || !!d.webkitFullscreenElement || !!d.msFullscreenElement;
     if (!isFs) return;
+    const isActive =
+      document.visibilityState !== "hidden" &&
+      (typeof document.hasFocus !== "function" || document.hasFocus());
+    if (!isActive) return;
 
     const exit = document.exitFullscreen || d.webkitExitFullscreen || d.msExitFullscreen;
     try {

@@ -25,6 +25,8 @@ import {
 import { applyKidAndMissionContext, buildMissionReturnHref } from "./missionNavigation";
 
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing-sounds";
+const TRACING_SOUNDS_GAME_ID = "letter-tracing-sounds";
+const TRACING_SOUNDS_PROGRESS_DOC_ID = "phonics_letter_tracing_sounds";
 
 type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
@@ -93,6 +95,13 @@ const INSTRUCTION_BAR_H = 56;
 -------------------- */
 function clamp(n: number, a: number, b: number): number {
   return Math.max(a, Math.min(b, n));
+}
+
+function deriveProgressStatus(levelsCompleted: number, totalLevels: number) {
+  if (levelsCompleted <= 0) return "getting_started";
+  if (totalLevels > 0 && levelsCompleted >= totalLevels) return "completed";
+  if (totalLevels > 0 && levelsCompleted / totalLevels >= 0.5) return "progressing";
+  return "in_progress";
 }
 
 function dist(a: { x: number; y: number }, b: { x: number; y: number }) {
@@ -1261,6 +1270,72 @@ export default function LetterTracingWithSounds() {
       resume1,
     };
   }, [progress.mastered, progress.lastPos, allLetterPairs]);
+
+  const playSessionStartedAtRef = useRef<number | null>(null);
+
+  const syncParentProgress = useCallback(
+    (sessionDurationMs = 0) => {
+      if (!kidId) return;
+
+      const levelsCompleted = progressCounts.preDone + progressCounts.upperDone + progressCounts.lowerDone;
+      const totalLevels = progressCounts.preTotal + progressCounts.upperTotal + progressCounts.lowerTotal;
+      const progressStatus = deriveProgressStatus(levelsCompleted, totalLevels);
+      const durationMs = Math.max(0, Math.floor(sessionDurationMs));
+
+      void (async () => {
+        try {
+          const { doc, getFirestore, increment, serverTimestamp, setDoc } = await import("firebase/firestore");
+          const db = getFirestore();
+          const ref = doc(db, "kids", kidId, "gameProgress", TRACING_SOUNDS_PROGRESS_DOC_ID);
+          const payload: Record<string, unknown> = {
+            gameId: TRACING_SOUNDS_GAME_ID,
+            title: "Letter Tracing + Sounds",
+            areaPractised: "Letter formation with sound support",
+            expertiseArea: "phonics",
+            started: true,
+            levelsCompleted,
+            totalLevels,
+            progressStatus,
+            lastPlayedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          };
+          if (durationMs > 0) payload.totalTimeSpentMs = increment(durationMs);
+          await setDoc(ref, payload, { merge: true });
+        } catch {
+          // Non-blocking parent summary sync
+        }
+      })();
+    },
+    [
+      kidId,
+      progressCounts.lowerDone,
+      progressCounts.lowerTotal,
+      progressCounts.preDone,
+      progressCounts.preTotal,
+      progressCounts.upperDone,
+      progressCounts.upperTotal,
+    ]
+  );
+
+  useEffect(() => {
+    if (mode === "play") {
+      if (playSessionStartedAtRef.current === null) playSessionStartedAtRef.current = Date.now();
+      return;
+    }
+    if (playSessionStartedAtRef.current === null) return;
+    const elapsed = Date.now() - playSessionStartedAtRef.current;
+    playSessionStartedAtRef.current = null;
+    syncParentProgress(elapsed);
+  }, [mode, syncParentProgress]);
+
+  useEffect(() => {
+    return () => {
+      if (playSessionStartedAtRef.current === null) return;
+      const elapsed = Date.now() - playSessionStartedAtRef.current;
+      playSessionStartedAtRef.current = null;
+      syncParentProgress(elapsed);
+    };
+  }, [syncParentProgress]);
 
   /* --------------------
      Engine state

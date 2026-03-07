@@ -202,6 +202,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="px-6 py-2 pb-8">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-sky-100 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.04)]">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-700">Daily Practice</p>
+              <h2 className="mt-2 text-2xl font-semibold text-gray-900">Need a simple phonics practice routine between classes?</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700">
+                Explore Tiny Steps phonics learning games with tracing, sound practice, reading-readiness flow, and a 3-day free trial.
+              </p>
+            </div>
+            <Link
+              to="/phonics-learning-games"
+              className="inline-flex items-center justify-center rounded-full border border-sky-600 bg-sky-50 px-5 py-2.5 text-sm font-semibold text-sky-700 transition hover:-translate-y-0.5 hover:bg-sky-100"
+            >
+              Explore learning games
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* ✅ Restored sections */}
       <Suspense fallback={null}>
         <GlobalImpactSection />

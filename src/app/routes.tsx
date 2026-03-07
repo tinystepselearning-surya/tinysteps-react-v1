@@ -34,6 +34,7 @@ const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/P
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
 const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
 const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
+const LearningGamesMarketingPage = lazy(() => import('../pages/public/LearningGamesMarketingPage'));
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
 const LearningPartnerPage = lazy(() => import('../pages/public/LearningPartnerPage'));
@@ -209,6 +210,7 @@ const router = createBrowserRouter(
         { path: 'best-online-phonics-classes-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
+        { path: 'phonics-learning-games', element: <LearningGamesMarketingPage /> },
         { path: 'summer-camps', element: <SummerCampsPage /> },
         { path: 'summer-camps/:programSlug/:batchSlug', element: <SummerCampProgramPage /> },
         { path: 'summer-camps/:programSlug', element: <SummerCampProgramPage /> },

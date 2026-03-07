@@ -28,6 +28,8 @@ import {
 import { applyKidAndMissionContext, buildMissionReturnHref } from "./missionNavigation";
 
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing";
+const TRACING_GAME_ID = "letter-tracing";
+const TRACING_PROGRESS_DOC_ID = "phonics_letter_tracing";
 
 type Mode = "levels" | "play";
 type CaseStep = 0 | 1; // 0=Upper, 1=Lower
@@ -127,6 +129,13 @@ function useSvgPoint(svgRef: React.RefObject<SVGSVGElement | null>) {
     const p = pt.matrixTransform(ctm.inverse());
     return { x: p.x, y: p.y };
   };
+}
+
+function deriveProgressStatus(levelsCompleted: number, totalLevels: number) {
+  if (levelsCompleted <= 0) return "getting_started";
+  if (totalLevels > 0 && levelsCompleted >= totalLevels) return "completed";
+  if (totalLevels > 0 && levelsCompleted / totalLevels >= 0.5) return "progressing";
+  return "in_progress";
 }
 
 type LastPos = { level: 0 | 1; pair: number; step: CaseStep };
@@ -769,6 +778,72 @@ export default function LetterTracingGame() {
       resume1,
     };
   }, [progress.mastered, progress.lastPos, allLetterPairs]);
+
+  const playSessionStartedAtRef = useRef<number | null>(null);
+
+  const syncParentProgress = useCallback(
+    (sessionDurationMs = 0) => {
+      if (!kidId) return;
+
+      const levelsCompleted = progressCounts.preDone + progressCounts.upperDone + progressCounts.lowerDone;
+      const totalLevels = progressCounts.preTotal + progressCounts.upperTotal + progressCounts.lowerTotal;
+      const progressStatus = deriveProgressStatus(levelsCompleted, totalLevels);
+      const durationMs = Math.max(0, Math.floor(sessionDurationMs));
+
+      void (async () => {
+        try {
+          const { doc, getFirestore, increment, serverTimestamp, setDoc } = await import("firebase/firestore");
+          const db = getFirestore();
+          const ref = doc(db, "kids", kidId, "gameProgress", TRACING_PROGRESS_DOC_ID);
+          const payload: Record<string, unknown> = {
+            gameId: TRACING_GAME_ID,
+            title: "Letter Tracing",
+            areaPractised: "Letter formation",
+            expertiseArea: "phonics",
+            started: true,
+            levelsCompleted,
+            totalLevels,
+            progressStatus,
+            lastPlayedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          };
+          if (durationMs > 0) payload.totalTimeSpentMs = increment(durationMs);
+          await setDoc(ref, payload, { merge: true });
+        } catch {
+          // Non-blocking parent summary sync
+        }
+      })();
+    },
+    [
+      kidId,
+      progressCounts.lowerDone,
+      progressCounts.lowerTotal,
+      progressCounts.preDone,
+      progressCounts.preTotal,
+      progressCounts.upperDone,
+      progressCounts.upperTotal,
+    ]
+  );
+
+  useEffect(() => {
+    if (mode === "play") {
+      if (playSessionStartedAtRef.current === null) playSessionStartedAtRef.current = Date.now();
+      return;
+    }
+    if (playSessionStartedAtRef.current === null) return;
+    const elapsed = Date.now() - playSessionStartedAtRef.current;
+    playSessionStartedAtRef.current = null;
+    syncParentProgress(elapsed);
+  }, [mode, syncParentProgress]);
+
+  useEffect(() => {
+    return () => {
+      if (playSessionStartedAtRef.current === null) return;
+      const elapsed = Date.now() - playSessionStartedAtRef.current;
+      playSessionStartedAtRef.current = null;
+      syncParentProgress(elapsed);
+    };
+  }, [syncParentProgress]);
 
   // --------------------
   // Stroke engine state

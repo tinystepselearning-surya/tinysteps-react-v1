@@ -1241,29 +1241,6 @@ export default function ParentDashboard() {
   }, [insightsCourseId, insightsCourseOptions, selectedKidId]);
 
 
-  /**
-   * ✅ skillTagStats: used by ParentGamesProgress (letter-tracing: lower/upper)
-   * Manual refresh model: fetch when entering Games Progress tab (no polling)
-   */
-  const skillTagStatsQuery = useQuery({
-    queryKey: ["skillTagStats", selectedKidId],
-    enabled: !!selectedKidId && activeTab === "games-progress",
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: "always",
-    queryFn: async () => {
-      if (!selectedKidId) return null;
-      const snap = await getDocs(
-        collection(db, "kids", selectedKidId, "skillTagStats")
-      );
-      const map: Record<string, any> = {};
-      snap.forEach((d) => {
-        map[d.id] = d.data();
-      });
-      return map;
-    },
-  });
-
   // ---- Per-game summaries (kids/{kidId}/gameSummaries/*) ----
   // Used to render reliable per-game progress (e.g. Letter Sounds completion/stars)
   const gameSummariesQuery = useQuery({
@@ -1275,6 +1252,32 @@ export default function ParentDashboard() {
     queryFn: async () => {
       if (!selectedKidId) return null;
       const snap = await getDocs(collection(db, "kids", selectedKidId, "gameSummaries"));
+      const map: Record<string, any> = {};
+      snap.forEach((d) => {
+        map[d.id] = d.data();
+      });
+      return map;
+    },
+  });
+
+  const hasAnyGameSummaries =
+    !!gameSummariesQuery.data && Object.keys(gameSummariesQuery.data).length > 0;
+  const shouldFetchLiveGameProgress =
+    !!selectedKidId &&
+    activeTab === "games-progress" &&
+    (gameSummariesQuery.isError || (gameSummariesQuery.isFetched && !hasAnyGameSummaries));
+
+  // ---- Canonical live game progress (kids/{kidId}/gameProgress/*) ----
+  // Fallback only: fetch live docs when per-game summaries are missing.
+  const gameProgressQuery = useQuery({
+    queryKey: ["gameProgress", selectedKidId],
+    enabled: shouldFetchLiveGameProgress,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId) return null;
+      const snap = await getDocs(collection(db, "kids", selectedKidId, "gameProgress"));
       const map: Record<string, any> = {};
       snap.forEach((d) => {
         map[d.id] = d.data();
@@ -1301,7 +1304,15 @@ export default function ParentDashboard() {
           const canonicalId =
             id === "phonics_letter_sound" || id === "phonics_letter_sound_match"
               ? "letter-sound-match"
-              : id;
+              : id === "phonics_balloon_pop"
+                ? "balloon-pop"
+                : id === "phonics_sound_detective"
+                  ? "sound-detective"
+                  : id === "phonics_letter_tracing"
+                    ? "letter-tracing"
+                    : id === "phonics_letter_tracing_sounds"
+                      ? "letter-tracing-sounds"
+                      : id;
           return {
             id: canonicalId,
             title: game?.title || id,
@@ -1370,13 +1381,23 @@ export default function ParentDashboard() {
     const canonicalGameId =
       gameId === "phonics_letter_sound" || gameId === "phonics_letter_sound_match"
         ? "letter-sound-match"
+        : gameId === "phonics_balloon_pop"
+          ? "balloon-pop"
+          : gameId === "phonics_sound_detective"
+            ? "sound-detective"
+            : gameId === "phonics_letter_tracing"
+              ? "letter-tracing"
+              : gameId === "phonics_letter_tracing_sounds"
+                ? "letter-tracing-sounds"
         : gameId;
 
     const kidParam = `?kidId=${encodeURIComponent(selectedKidId)}`;
     const routeByGame: Record<string, string> = {
       "letter-tracing": "/kids/games/phonics/letter-tracing",
+      "letter-tracing-sounds": "/kids/games/phonics/letter-tracing-sounds",
       "sound-detective": "/kids/games/phonics/sound-detective",
       "letter-sound-match": "/kids/games/phonics/letter-sound",
+      "balloon-pop": "/kids/games/phonics/balloon-pop",
       // Add more mappings as you add routes:
       // "rhyme-time": "/kids/games/phonics/rhyme-time",
     };
@@ -1408,12 +1429,18 @@ export default function ParentDashboard() {
     refetchOnMount: "always",
     queryFn: async (): Promise<KidSession[]> => {
       if (!selectedKidId || !user?.uid) return [];
+      const shouldDebugParentDashboard =
+        import.meta.env.DEV &&
+        typeof window !== "undefined" &&
+        (window as any).__TS_DEBUG_PARENT_DASHBOARD__ === true;
 
-      console.log("🔍 [ParentDashboard] Fetching sessions for:", {
-        selectedKidId,
-        parentUid: user.uid,
-        parentEmail: user.email,
-      });
+      if (shouldDebugParentDashboard) {
+        console.debug("🔍 [ParentDashboard] Fetching sessions for:", {
+          selectedKidId,
+          parentUid: user.uid,
+          parentEmail: user.email,
+        });
+      }
 
       const classSessionsCol = collection(db, "classSessions");
 
@@ -1425,10 +1452,12 @@ export default function ParentDashboard() {
           where("parentId", "==", user.uid)
         );
         const snapA = await getDocs(qA);
-        console.log("✅ [Query A] classSessions kidIds array-contains + parentId:", {
-          count: snapA.size,
-          docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
-        });
+        if (shouldDebugParentDashboard) {
+          console.debug("✅ [Query A] classSessions kidIds array-contains + parentId:", {
+            count: snapA.size,
+            docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
+          });
+        }
 
         // Fallback: sessions.kidId == kid (older schema) AND parentId matches
         const qB = query(
@@ -1437,17 +1466,21 @@ export default function ParentDashboard() {
           where("parentId", "==", user.uid)
         );
         const snapB = await getDocs(qB);
-        console.log("✅ [Query B] classSessions kidId equality + parentId:", {
-          count: snapB.size,
-          docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
-        });
+        if (shouldDebugParentDashboard) {
+          console.debug("✅ [Query B] classSessions kidId equality + parentId:", {
+            count: snapB.size,
+            docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
+          });
+        }
 
         const map = new Map<string, KidSession>();
         snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
         snapB.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
 
         const all = Array.from(map.values());
-        console.log("📊 [Final Result] Total unique sessions:", all.length);
+        if (shouldDebugParentDashboard) {
+          console.debug("📊 [Final Result] Total unique sessions:", all.length);
+        }
 
         // Sort by start date (best effort)
         all.sort((a, b) => {
@@ -2094,6 +2127,7 @@ export default function ParentDashboard() {
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;
+    if (typeof window === "undefined" || (window as any).__TS_DEBUG_PARENT_DASHBOARD__ !== true) return;
     if (phonicsLoading) return;
     const progressDocs = (phonicsProgressQuery.data ?? []) as any[];
     const sample = progressDocs.slice(0, 3).map((doc) => ({
@@ -2102,7 +2136,7 @@ export default function ParentDashboard() {
       topicName: doc?.topicName ?? doc?.label ?? null,
     }));
     const courseDebug = phonicsProgressByCourse[0];
-    console.log("[Curriculum Debug]", {
+    console.debug("[Curriculum Debug]", {
       displayCourseIdentifier: displayCourseId,
       enrolledCourseIdentifiers: enrolledCourseIds,
       sessionCourseIdentifiers: sessionsPhonicsCourseIds,
@@ -3527,7 +3561,7 @@ export default function ParentDashboard() {
                   : "Select a child"}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                (Progress updates when you reopen this page — no auto-refresh.)
+                (Progress updates in scheduled refresh windows — recent play may take a little time to appear.)
               </p>
             </div>
 
@@ -3587,9 +3621,9 @@ export default function ParentDashboard() {
               <ParentGamesProgress
                 kidSummaryData={kidSummaryQuery.data ?? null}
                 gamesCatalog={gamesCatalogQuery.data ?? []}
+                gameProgressDocs={shouldFetchLiveGameProgress ? gameProgressQuery.data ?? null : null}
                 gameSummaries={gameSummariesQuery.data ?? null}
                 onPracticeClick={(gameId) => handlePracticeClick(gameId)}
-                skillTagStats={skillTagStatsQuery.data ?? null}
               />
             )}
           </div>

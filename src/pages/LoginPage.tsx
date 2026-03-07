@@ -1,7 +1,7 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
 import { applySeo } from '../lib/seo';
-import { useSearchParams, useLocation } from 'react-router-dom';
+import { useSearchParams, useLocation, Link } from 'react-router-dom';
 import { handleLogin, handleLoginWithGoogle } from '../lib/auth';
 import type { AuthRole } from '../store/useAuthStore';
 import AuthPageBrandHeader from '../components/common/AuthPageBrandHeader';
@@ -119,6 +119,16 @@ export default function LoginPage() {
           {expectedRole && (
             <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
               {getRoleMessage()}
+            </div>
+          )}
+
+          {isParent && (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              Need extra at-home phonics practice? Try our{' '}
+              <Link to="/phonics-learning-games" className="font-semibold underline underline-offset-2">
+                learning games
+              </Link>{' '}
+              with a 3-day free trial, then continue at ₹199/month or ₹999 lifetime per child.
             </div>
           )}
 

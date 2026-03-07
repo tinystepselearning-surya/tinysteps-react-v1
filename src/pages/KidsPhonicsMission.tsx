@@ -369,33 +369,18 @@ const setUnlockedLevel = (n: number, kidId?: string) => {
 const LETTER_SOUNDS_GAME_ID = "letter-sound-match";
 const LETTER_SOUNDS_PROGRESS_DOC_ID = "phonics_letter_sound";
 
-type GameResume = {
-  level: number;
-  round: number;
-  stars: number;
-  questions: Question[];
-  updatedAt?: any;
-};
-
 type GameProgressDoc = {
+  gameId?: string;
+  title?: string;
+  areaPractised?: string;
+  expertiseArea?: string;
+  started?: boolean;
+  totalLevels?: number;
+  levelsCompleted?: number;
+  progressStatus?: "not_started" | "getting_started" | "in_progress" | "progressing" | "completed";
+  totalTimeSpentMs?: number;
   bestStarsByLevel?: Record<string, number>;
-  completedLevels?: number[];
-  resume?: GameResume | null;
   lastPlayedAt?: any;
-  version?: number;
-};
-
-const getGameProgressDoc = async (kidId: string): Promise<GameProgressDoc | null> => {
-  try {
-    const { doc, getDoc, getFirestore } = await import("firebase/firestore");
-    const db = getFirestore();
-    const docRef = doc(db, "kids", kidId, "gameProgress", LETTER_SOUNDS_PROGRESS_DOC_ID);
-    const snapshot = await getDoc(docRef);
-    return snapshot.exists() ? (snapshot.data() as GameProgressDoc) : null;
-  } catch (e) {
-    console.error("Failed to read game progress:", e);
-    return null;
-  }
 };
 
 const saveGameProgressDoc = async (kidId: string, data: Partial<GameProgressDoc>): Promise<void> => {
@@ -647,9 +632,6 @@ const KidsPhonicsMission: React.FC = () => {
 
   const gameRef = useRef<HTMLDivElement | null>(null);
 
-  const lastFirestoreSaveRef = useRef<number>(0);
-  const firestoreSaveTimeoutRef = useRef<number | null>(null);
-
   // --- Prompt audio (recorded mp3) ---
   const promptAudioCacheRef = useRef<Record<string, HTMLAudioElement>>({});
   const activePromptAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -821,9 +803,9 @@ const KidsPhonicsMission: React.FC = () => {
     []
   );
 
-  // Helper to start a level atomically (uses Firestore/local resume + merges bestStars)
+  // Helper to start a level atomically (local resume + local best stars)
   const startLevel = useCallback(
-    async (levelId: number) => {
+    (levelId: number) => {
       clearAllTimeouts();
 
       setQuestions([]);
@@ -857,76 +839,6 @@ const KidsPhonicsMission: React.FC = () => {
       hintLevelCountsRef.current = {};
 
       let resumeData: SavedProgress | null = null;
-      let firestoreBestStars: Record<number, number> | null = null;
-
-      // Firestore first
-      if (kidId) {
-        try {
-          const fsDoc = await getGameProgressDoc(kidId);
-          if (fsDoc) {
-            if (fsDoc.bestStarsByLevel) {
-              firestoreBestStars = {};
-              Object.entries(fsDoc.bestStarsByLevel).forEach(([k, v]) => {
-                const lvl = parseInt(k, 10);
-                if (!isNaN(lvl)) firestoreBestStars![lvl] = v;
-              });
-            }
-
-            if (
-              fsDoc.resume &&
-              fsDoc.resume.level === levelId &&
-              fsDoc.version === QUESTION_SET_VERSION
-            ) {
-              const r = fsDoc.resume;
-              const levelDef = LEVELS.find((l) => l.id === levelId);
-
-              if (
-                levelDef &&
-                r.round >= 0 &&
-                r.round < TOTAL_ROUNDS &&
-                r.stars >= 0 &&
-                r.stars <= TOTAL_ROUNDS &&
-                Array.isArray(r.questions) &&
-                r.questions.length === TOTAL_ROUNDS
-              ) {
-                const pool = getIntroducedGraphemes(levelDef.id);
-
-                const allQuestionsValid = r.questions.every((q) => {
-                  return (
-                    q &&
-                    typeof q === "object" &&
-                    typeof q.target === "string" &&
-                    pool.includes(q.target) &&
-                    Array.isArray(q.choices) &&
-                    q.choices.length === levelDef.choicesCount &&
-                    q.choices.includes(q.target) &&
-                    q.choices.every((c) => typeof c === "string" && pool.includes(c))
-                  );
-                });
-
-                if (allQuestionsValid) {
-                  resumeData = {
-                    version: QUESTION_SET_VERSION,
-                    questions: r.questions,
-                    currentRound: r.round,
-                    starsEarned: r.stars,
-                    updatedAt: r.updatedAt || Date.now(),
-                  };
-                }
-              }
-            }
-          }
-        } catch (e) {
-          console.warn("Firestore load failed, falling back to localStorage:", e);
-        }
-      }
-
-      // Merge Firestore best stars into state + localStorage
-      if (firestoreBestStars) {
-        const merged = { ...readBestStars(kidId), ...firestoreBestStars };
-        setBestStarsMap(merged);
-        writeBestStars(merged, kidId);
-      }
 
       // Fallback to localStorage resume (STRICT validation)
       if (!resumeData) {
@@ -1033,8 +945,6 @@ const KidsPhonicsMission: React.FC = () => {
           confettiSfxRef.current.currentTime = 0;
         }
       } catch {}
-
-      if (firestoreSaveTimeoutRef.current) clearTimeout(firestoreSaveTimeoutRef.current);
       clearAllTimeouts();
       void exitImmersiveMode();
     };
@@ -1056,39 +966,6 @@ const KidsPhonicsMission: React.FC = () => {
       );
     }
   }, [selectedLevel, starsEarned, currentRound, questions, isComplete, kidId]);
-
-  // Throttled Firestore autosave (every 3 seconds max)
-  useEffect(() => {
-    if (!kidId || !selectedLevel || questions.length === 0 || isComplete) return;
-
-    const now = Date.now();
-    const timeSinceLastSave = now - lastFirestoreSaveRef.current;
-
-    const doSave = () => {
-      saveGameProgressDoc(kidId, {
-        resume: {
-          level: selectedLevel,
-          round: currentRound,
-          stars: starsEarned,
-          questions,
-          updatedAt: now,
-        },
-        version: QUESTION_SET_VERSION,
-      }).catch((e) => console.warn("Firestore autosave failed:", e));
-      lastFirestoreSaveRef.current = now;
-    };
-
-    if (timeSinceLastSave >= 3000) {
-      doSave();
-    } else {
-      if (firestoreSaveTimeoutRef.current) clearTimeout(firestoreSaveTimeoutRef.current);
-      firestoreSaveTimeoutRef.current = window.setTimeout(doSave, 3000 - timeSinceLastSave);
-    }
-
-    return () => {
-      if (firestoreSaveTimeoutRef.current) clearTimeout(firestoreSaveTimeoutRef.current);
-    };
-  }, [kidId, selectedLevel, currentRound, starsEarned, questions, isComplete]);
 
   // Listen for fullscreen changes (ESC) to ensure cleanup
   useEffect(() => {
@@ -1374,15 +1251,29 @@ const KidsPhonicsMission: React.FC = () => {
           }
 
           // Save completion to Firestore
-          if (kidId) {
-            const mergedBest = { ...bestStarsMap, [selectedLevel]: Math.max(prevBest, finalStars) };
+          if (kidId && finalStars > prevBest) {
+            const mergedBest = { ...bestStarsMap, [selectedLevel]: finalStars };
             const bestByLevel: Record<string, number> = {};
             Object.entries(mergedBest).forEach(([k, v]) => (bestByLevel[k] = v));
+            const levelsCompleted = Object.values(bestByLevel).reduce((count, stars) => count + (stars > 0 ? 1 : 0), 0);
+            const totalLevels = LEVELS.length;
+            const progressStatus: GameProgressDoc["progressStatus"] =
+              levelsCompleted >= totalLevels
+                ? "completed"
+                : levelsCompleted >= Math.ceil(totalLevels / 2)
+                  ? "progressing"
+                  : "in_progress";
 
             saveGameProgressDoc(kidId, {
+              gameId: LETTER_SOUNDS_GAME_ID,
+              title: "Letter Sounds",
+              areaPractised: "Letter-sound recognition",
+              expertiseArea: "phonics",
+              started: true,
+              totalLevels,
+              levelsCompleted,
+              progressStatus,
               bestStarsByLevel: bestByLevel,
-              resume: null,
-              version: QUESTION_SET_VERSION,
             }).catch(() => {});
           }
 
@@ -1675,19 +1566,6 @@ const KidsPhonicsMission: React.FC = () => {
           <button
             type="button"
             onClick={() => {
-              // Save progress immediately before leaving
-              if (kidId && selectedLevel && questions.length > 0 && !isComplete) {
-                saveGameProgressDoc(kidId, {
-                  resume: {
-                    level: selectedLevel,
-                    round: currentRound,
-                    stars: starsEarned,
-                    questions,
-                    updatedAt: Date.now(),
-                  },
-                  version: QUESTION_SET_VERSION,
-                }).catch(() => {});
-              }
               stopPromptAudio();
               void exitImmersiveMode();
               clearAllTimeouts();

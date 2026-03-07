@@ -79,8 +79,13 @@ const RoleGate: React.FC<RoleGateProps> = ({
   const effectiveRole = latestRole ?? (user?.role as Role | null) ?? null;
   const isAllowed = superUser || (!!effectiveRole && allowedRoles.includes(effectiveRole));
 
-  if (import.meta.env.DEV) {
-    console.log('[RoleGate] Check access:', {
+  const shouldDebugRoleGate =
+    import.meta.env.DEV &&
+    typeof window !== "undefined" &&
+    (window as any).__TS_DEBUG_ROLE_GATE__ === true;
+
+  if (shouldDebugRoleGate) {
+    console.debug('[RoleGate] Check access:', {
       allowedRoles,
       effectiveRole,
       latestRole,

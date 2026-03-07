@@ -76,6 +76,9 @@ const CoursesHero = () => (
           <Link to="/english-grammar-writing-classes" className="underline">grammar classes for kids</Link>, or{' '}
           <Link to="/public-speaking-communication-kids" className="underline">public speaking classes for kids</Link>?
         </p>
+        <p className="mt-2 text-sm text-white/80">
+          Need guided daily practice too? Explore <Link to="/phonics-learning-games" className="underline">phonics learning games</Link> with a 3-day free trial and parent-friendly plans.
+        </p>
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>

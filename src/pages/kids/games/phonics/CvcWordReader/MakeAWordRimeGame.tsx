@@ -399,18 +399,33 @@ function safeRequestFullscreen(el: HTMLElement) {
 
 function safeExitFullscreen() {
   const d: any = document as any;
+  const isFs =
+    !!document.fullscreenElement ||
+    !!d.webkitFullscreenElement ||
+    !!d.mozFullScreenElement ||
+    !!d.msFullscreenElement;
+  if (!isFs) return;
+
+  const isActive =
+    document.visibilityState !== "hidden" &&
+    (typeof document.hasFocus !== "function" || document.hasFocus());
+  if (!isActive) return;
+
   const fn =
     document.exitFullscreen ||
     d.webkitExitFullscreen ||
     d.mozCancelFullScreen ||
     d.msExitFullscreen;
 
-  if (fn) {
-    try {
-      fn.call(document);
-    } catch {
-      // ignore
+  if (!fn) return;
+
+  try {
+    const maybePromise = fn.call(document);
+    if (maybePromise && typeof maybePromise.catch === "function") {
+      maybePromise.catch(() => {});
     }
+  } catch {
+    // ignore
   }
 }
 
@@ -532,7 +547,9 @@ export default function MakeAWordRimeGame() {
     // Hook for your app: window.__TS_LOG__(name, payload)
     const anyWin = window as any;
     if (typeof anyWin.__TS_LOG__ === "function") anyWin.__TS_LOG__(name, payload);
-    else console.log("[MAW]", payload);
+    else if (import.meta.env.DEV && anyWin.__TS_DEBUG_GAME_EVENTS__ === true) {
+      console.debug("[MAW]", payload);
+    }
   };
 
   // ---------- Audio helpers ----------
