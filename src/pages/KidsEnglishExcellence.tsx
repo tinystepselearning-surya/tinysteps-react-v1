@@ -739,9 +739,9 @@ const STAGES: Stage[] = [
     stageTitle: "Read & Understand",
     tiles: [
       { title: "Fluent Reading", desc: "speed + smooth (calm)", comingSoon: true },
-      { title: "Story Reading", desc: "short passages", comingSoon: true },
+      { title: "Story Reading", desc: "short passages", route: "/kids/games/reading/story-reading" },
       { title: "New Words from Reading", desc: "vocab in context", comingSoon: true },
-      { title: "Comprehension Questions", desc: "who/what/where/why", comingSoon: true },
+      { title: "Comprehension Questions", desc: "who/what/where/why", route: "/kids/games/reading/comprehension" },
       { title: "Summarize Simply", desc: "tell 1–2 lines", comingSoon: true },
     ],
   },
