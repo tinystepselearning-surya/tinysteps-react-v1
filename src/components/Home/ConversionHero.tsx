@@ -15,21 +15,21 @@ const SUN_ORANGE = "#ff6a00";
 
 const heroHighlights = [
   {
-    eyebrow: "The Format",
-    title: "1:1 Live Online",
-    desc: "Live 1:1 classes with pacing adjusted in real time.",
+    eyebrow: "THE APPROACH",
+    title: "Personalised Learning Pace",
+    desc: "1:1 and small-group classes designed around each child’s level, pace, and confidence.",
     icon: <Sparkles className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
   {
-    eyebrow: "The Reach",
+    eyebrow: "THE REACH",
     title: "Global Families",
-    desc: "Families from 15+ countries across Asia, Europe, North America, and the Middle East.",
+    desc: "Trusted by families across 15+ countries in Asia, Europe, North America, and the Middle East.",
     icon: <Globe2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
   {
-    eyebrow: "The Outcome",
-    title: "Confident Speaking",
-    desc: "Reading, grammar, and spoken English grow together.",
+    eyebrow: "THE OUTCOME",
+    title: "Confident English Skills",
+    desc: "Phonics, grammar, reading, and speaking built through calm routines and clear progress.",
     icon: <Mic2 className="h-5 w-5 text-orange-600" aria-hidden="true" />,
   },
 ];
@@ -69,14 +69,16 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
       <div className="pointer-events-none absolute left-0 top-0 h-px w-full opacity-0 transition-opacity duration-500 group-hover:opacity-100 bg-gradient-to-r from-transparent via-orange-300/70 to-transparent" />
 
       <div className="relative p-3.5 md:p-4">
-        <div className="mb-2 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:rotate-6 md:h-10 md:w-10">
-          {icon}
-        </div>
-
-        <div>
+        <div className="mb-2 flex items-center gap-2.5">
+          <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white shadow-sm transition-transform duration-300 group-hover:rotate-6 md:h-10 md:w-10">
+            {icon}
+          </div>
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700/80">
             {eyebrow}
           </span>
+        </div>
+
+        <div>
           <h2 className="mt-1 text-[15px] font-bold leading-tight text-slate-900 md:text-base">{title}</h2>
           <p className="mt-1.5 text-[12px] leading-6 text-slate-600 md:text-[12.5px] md:leading-6">{desc}</p>
         </div>
@@ -164,7 +166,7 @@ const ConversionHero: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
               </span>
-              TINY STEPS LEARNING • PREMIUM 1:1 FOUNDATIONS
+              TRUSTED BY FAMILIES ACROSS 15+ COUNTRIES
             </motion.div>
 
             <motion.h1
@@ -197,7 +199,7 @@ const ConversionHero: React.FC = () => {
               transition={{ delay: 0.33 }}
               className="mt-3 max-w-2xl text-sm font-semibold text-slate-700 md:text-base"
             >
-              Tiny Steps offers 1:1 online phonics classes, grammar classes, and public speaking classes for kids ages 3–12.
+              Personalised English learning for children ages 3–12.
             </motion.p>
 
             <motion.div
@@ -217,6 +219,19 @@ const ConversionHero: React.FC = () => {
               </a>
             </motion.div>
 
+            {/* BENTO GRID VALUE PROPS */}
+            <div className="mt-6 grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+              {heroHighlights.map((item) => (
+                <SunTile
+                  key={item.title}
+                  eyebrow={item.eyebrow}
+                  title={item.title}
+                  desc={item.desc}
+                  icon={item.icon}
+                />
+              ))}
+            </div>
+
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -230,19 +245,6 @@ const ConversionHero: React.FC = () => {
                 Calm routines, clear milestones, and consistent feedback make progress easy to see.
               </p>
             </motion.div>
-
-            {/* BENTO GRID VALUE PROPS */}
-            <div className="mt-6 grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
-              {heroHighlights.map((item) => (
-                <SunTile
-                  key={item.title}
-                  eyebrow={item.eyebrow}
-                  title={item.title}
-                  desc={item.desc}
-                  icon={item.icon}
-                />
-              ))}
-            </div>
 
             <motion.div
               initial={{ opacity: 0, y: 18 }}

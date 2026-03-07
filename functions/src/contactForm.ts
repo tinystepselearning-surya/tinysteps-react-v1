@@ -5,7 +5,7 @@ import * as logger from 'firebase-functions/logger';
 if (!admin.apps.length) admin.initializeApp();
 
 const REGION = 'asia-south1';
-const SUPPORT_EMAIL = 'Priya@tinystepslearning.com';
+const SUPPORT_EMAIL = 'tinystepselearning@gmail.com';
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type ContactPayload = {

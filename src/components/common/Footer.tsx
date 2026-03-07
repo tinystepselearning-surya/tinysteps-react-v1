@@ -1,8 +1,15 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
 import AdvisorContactForm from './AdvisorContactForm';
-import NewsletterForm from './NewsletterForm';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../ui/dialog';
 
 const socialLinks = [
   { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
@@ -35,39 +42,28 @@ const legalLinks = [
 
 export default function Footer() {
   const { user } = useAuthStore();
+  const [contactOpen, setContactOpen] = useState(false);
 
   return (
     <footer className="bg-[#060a16] text-gray-200">
-      <div className="mx-auto max-w-6xl space-y-10 px-6 py-12">
-        <div className="rounded-3xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 p-6 shadow-2xl">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="max-w-2xl">
-              <div className="text-xl font-semibold text-white">Get the Tiny Steps parent newsletter</div>
-              <p className="mt-2 text-sm text-white/85">
-                Lesson-based phonics, grammar, and speaking tips plus printable resources.
-              </p>
-            </div>
-            <div className="w-full max-w-md">
-              <NewsletterForm compact />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
-          <div>
+      <div className="mx-auto max-w-6xl space-y-8 px-6 py-12">
+        <div className="grid gap-8 lg:grid-cols-[1.05fr_0.82fr_0.92fr_1fr] lg:items-start lg:gap-10">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-tiny-blue-500 to-tiny-purple-500 font-bold">
-                TS
-              </div>
+              <img
+                src="/logo.png"
+                alt="Tiny Steps logo"
+                className="h-11 w-11 rounded-2xl bg-white p-1.5 object-contain shadow-sm ring-1 ring-white/15"
+              />
               <div>
                 <div className="font-semibold text-white">Tiny Steps Learning</div>
                 <p className="text-sm text-gray-400">Live online English classes for children ages 3–12.</p>
               </div>
             </div>
-            <p className="mt-4 text-sm text-white/80">
-              Structured phonics, grammar, and public speaking programs with live mentors, steady routines, and clear parent updates.
+            <p className="max-w-sm text-sm leading-6 text-white/80">
+              Structured phonics, grammar, and public speaking with live mentors, steady routines, and clear parent updates.
             </p>
-            <div className="mt-4 flex gap-4">
+            <div className="flex gap-4">
               {socialLinks.map((link) => (
                 <a
                   key={link.label}
@@ -83,33 +79,37 @@ export default function Footer() {
             </div>
           </div>
 
-          <div>
-            <h3 className="mb-3 font-semibold text-white">Programs</h3>
-            <ul className="space-y-2 text-sm">
-              {courseLinks.map((link) => (
-                <li key={link.href}>
-                  <Link to={link.href} className="transition hover:text-tiny-blue-300">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          <div className="space-y-5">
+            <div>
+              <h3 className="mb-3 font-semibold text-white">Programs</h3>
+              <ul className="space-y-2 text-sm">
+                {courseLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link to={link.href} className="transition hover:text-tiny-blue-300">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-3 font-semibold text-white">Legal</h3>
+              <ul className="space-y-2 text-sm">
+                {legalLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link to={link.href} className="transition hover:text-tiny-blue-300">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
-          <div>
-            <h3 className="mb-3 font-semibold text-white">Explore</h3>
+          <div className="space-y-4">
+            <h3 className="font-semibold text-white">Explore</h3>
             <ul className="space-y-2 text-sm">
               {exploreLinks.map((link) => (
-                <li key={link.href}>
-                  <Link to={link.href} className="transition hover:text-tiny-blue-300">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <h3 className="mb-3 mt-6 font-semibold text-white">Legal</h3>
-            <ul className="space-y-2 text-sm">
-              {legalLinks.map((link) => (
                 <li key={link.href}>
                   <Link to={link.href} className="transition hover:text-tiny-blue-300">
                     {link.label}
@@ -149,25 +149,52 @@ export default function Footer() {
               </ul>
             </div>
 
-            <AdvisorContactForm
-              compact
-              topic="Footer contact"
-              title="No WhatsApp?"
-              description="Use the form and our team will reply by email."
-            />
+            <div className="border-t border-white/10 pt-4">
+              <button
+                type="button"
+                onClick={() => setContactOpen(true)}
+                className="inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+              >
+                Get in Touch
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
-          <span>SSL Secure</span>
-          <span>UPI / Cards / Netbanking</span>
-          <span>Data protection aware</span>
-          <span>Family-first support</span>
+        <div className="space-y-4 border-t border-white/10 pt-6">
+          <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
+            <span>SSL Secure</span>
+            <span>UPI / Cards / Netbanking</span>
+            <span>Data protection aware</span>
+            <span>Family-first support</span>
+          </div>
+
+          <div className="text-center text-xs text-white/70">
+            © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.
+          </div>
         </div>
 
-        <div className="text-center text-xs text-white/70">
-          © {new Date().getFullYear()} Tiny Steps Learning. Built for joyful learning in India and beyond.
-        </div>
+        <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+          <DialogContent className="max-w-lg border-slate-200 bg-white p-0 sm:rounded-[28px]">
+            <DialogHeader className="border-b border-slate-100 px-6 pb-4 pt-6">
+              <DialogTitle className="text-left text-xl font-semibold text-slate-900">
+                Get in Touch
+              </DialogTitle>
+              <DialogDescription className="text-left text-sm text-slate-600">
+                Share a few details and the Tiny Steps team will follow up by email.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="p-6 pt-5">
+              <AdvisorContactForm
+                compact
+                topic="Footer contact"
+                title="Prefer email or a callback?"
+                description="Use the form and our team will reply by email."
+                surface="plain"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </footer>
   );

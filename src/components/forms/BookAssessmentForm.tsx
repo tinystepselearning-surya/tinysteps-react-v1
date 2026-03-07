@@ -316,23 +316,16 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           </a>
 
           <p className="text-center text-xs text-slate-600">
-            Prefer a longer form?{" "}
+            You can also share your details through our{" "}
             <button
               type="button"
               onClick={handleOpenGoogleForm}
               className="font-semibold text-slate-700 hover:text-slate-900 underline decoration-slate-300/70 underline-offset-4"
             >
-              Submit via Google Form
+              Google Form
             </button>
+            .
           </p>
-
-          <button
-            type="button"
-            onClick={handleOpenGoogleForm}
-            className="mt-4 w-full rounded-2xl border-2 border-slate-300 bg-white py-6 text-base font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 hover:shadow-md"
-          >
-            Open Google Form
-          </button>
 
           <p className="text-center text-[10px] text-slate-600">
             🔒 We value your privacy. No spam, ever.

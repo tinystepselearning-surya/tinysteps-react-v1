@@ -6,6 +6,7 @@ type AdvisorContactFormProps = {
   compact?: boolean;
   title?: string;
   description?: string;
+  surface?: 'card' | 'plain';
 };
 
 const initialValues = {
@@ -20,6 +21,7 @@ export default function AdvisorContactForm({
   compact = false,
   title = 'Prefer email or a callback?',
   description = 'Share a few details and we will follow up by email.',
+  surface = 'card',
 }: AdvisorContactFormProps) {
   const [values, setValues] = useState(initialValues);
   const [submitted, setSubmitted] = useState(false);
@@ -63,7 +65,13 @@ export default function AdvisorContactForm({
   };
 
   return (
-    <div className={`rounded-3xl border border-slate-200 bg-white/90 shadow-sm ${compact ? 'p-4' : 'p-6'}`}>
+    <div
+      className={
+        surface === 'plain'
+          ? ''
+          : `rounded-3xl border border-slate-200 bg-white/90 shadow-sm ${compact ? 'p-4' : 'p-6'}`
+      }
+    >
       <div>
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Contact Form</p>
         <h3 className="mt-2 text-lg font-semibold text-slate-900">{title}</h3>
