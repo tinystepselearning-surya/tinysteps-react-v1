@@ -992,7 +992,7 @@ const CometCourierGame: React.FC = () => {
   };
 
   const stageWidth = uiState.isFullscreen ? 'min(100vw - 48px, 1320px)' : 'min(100%, 960px)';
-  const routeLabel = inKidsHub ? 'Kids Games Hub' : 'Dev Preview';
+  const routeLabel = inKidsHub ? 'English Excellence Mission' : 'Dev Preview';
 
   return (
     <div
@@ -1037,14 +1037,14 @@ const CometCourierGame: React.FC = () => {
             {inKidsHub && (
               <button
                 type="button"
-                onClick={() => navigate(`/kids/games${kidId ? `?kidId=${encodeURIComponent(kidId)}` : ''}`)}
+                onClick={() => navigate(`/kids/games/english-excellence${kidId ? `?kidId=${encodeURIComponent(kidId)}` : ''}`)}
                 style={{
                   ...hudBadgeStyle,
                   cursor: 'pointer',
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.18), rgba(182,235,255,0.12))',
                 }}
               >
-                Back To Games Hub
+                Back To Mission
               </button>
             )}
           </div>

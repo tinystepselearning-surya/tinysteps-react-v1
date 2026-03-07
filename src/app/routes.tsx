@@ -1,6 +1,6 @@
 // src/app/routes.tsx
 import { lazy, Suspense, type FC } from 'react';
-import { createBrowserRouter, Outlet, Navigate, useLocation } from 'react-router-dom';
+import { createBrowserRouter, Outlet, Navigate, useLocation, redirect, type LoaderFunctionArgs } from 'react-router-dom';
 
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const Login = lazy(() => import('../pages/Login'));
@@ -105,6 +105,39 @@ const APP_ROUTE_PREFIXES = [
   '/learningpartner/dashboard',
 ];
 
+const ENGLISH_EXCELLENCE_SHELL_PATH = '/kids/games/english-excellence';
+
+const resolveKidIdFromStorage = () => {
+  try {
+    const stored = localStorage.getItem('ts_active_kid_v1');
+    return stored ? stored.trim() : '';
+  } catch {
+    return '';
+  }
+};
+
+const buildMissionShellTarget = (
+  currentSearch: string,
+  explicitKidId?: string,
+) => {
+  const params = new URLSearchParams(currentSearch);
+  const nextKidId = explicitKidId || params.get('kidId') || resolveKidIdFromStorage();
+  if (nextKidId) params.set('kidId', nextKidId);
+  const search = params.toString();
+  return search ? `${ENGLISH_EXCELLENCE_SHELL_PATH}?${search}` : ENGLISH_EXCELLENCE_SHELL_PATH;
+};
+
+const missionShellRedirectLoader = ({ request }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  return redirect(buildMissionShellTarget(url.search));
+};
+
+const legacyKidDashboardRedirectLoader = ({ request, params }: LoaderFunctionArgs) => {
+  const url = new URL(request.url);
+  const childId = typeof params.childId === 'string' ? params.childId : undefined;
+  return redirect(buildMissionShellTarget(url.search, childId));
+};
+
 const Layout: FC = () => {
   const location = useLocation();
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
@@ -143,7 +176,6 @@ const router = createBrowserRouter(
         { index: true, element: <HomePage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
-        { path: 'seasonal/christmas-tree', element: <ChristmasTreeDecoratePublic /> },
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
@@ -211,6 +243,9 @@ const router = createBrowserRouter(
         { path: 'teacher/lessons-test', element: <LessonLibraryPage /> },
         // Also accept absolute path variant to avoid any client-side route normalization issues
         { path: '/teacher/lessons-test', element: <LessonLibraryPage /> },
+        // Canonicalize legacy child entry paths to English Excellence Mission
+        { path: '/kids', loader: missionShellRedirectLoader },
+        { path: '/kids/games', loader: missionShellRedirectLoader },
 
         // ---------- Admin area – ONLY under /surya ----------
         {
@@ -320,8 +355,11 @@ const router = createBrowserRouter(
             </Suspense>
           ),
           children: [
-            { index: true, element: <KidsPortal /> },
-            { path: 'games', element: <KidsGamesHub /> },
+            { index: true, loader: missionShellRedirectLoader },
+            // Legacy kids shell paths retained as aliases only.
+            { path: 'portal', element: <KidsPortal /> },
+            { path: 'games', loader: missionShellRedirectLoader },
+            { path: 'games/hub', element: <KidsGamesHub /> },
             { path: 'games/english-excellence', element: <KidsEnglishExcellence /> },
             { path: 'games/comet-courier', element: <CometCourierGame /> },
             { path: 'games/phonics', element: <KidsPhonicsLibrary /> },
@@ -333,8 +371,8 @@ const router = createBrowserRouter(
             { path: 'games/phonics/cvc-word-reader', element: <CvcWordReaderGame /> },
             { path: 'games/phonics/cvc-word-reader/make-a-word', element: <MakeAWordRimeGame /> },
             { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
-            // Temporary: make /kids/games/speaking safe (redirect to games hub)
-            { path: 'games/speaking', element: <KidsGamesHub /> },
+            { path: 'games/grammar', loader: missionShellRedirectLoader },
+            { path: 'games/speaking', loader: missionShellRedirectLoader },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },
           ],
         },
@@ -356,8 +394,8 @@ const router = createBrowserRouter(
         { path: 'learningpartner/dashboard', element: <Navigate to="/learning-partner/dashboard" replace /> },
 
         // ---------- Misc aliases ----------
-        { path: 'kid', element: <Navigate to="/parent/kids" replace /> },
-        { path: 'kids/:childId/dashboard', element: <Navigate to="/parent" replace /> },
+        { path: 'kid', element: <Navigate to="/kids/games/english-excellence" replace /> },
+        { path: 'kids/:childId/dashboard', loader: legacyKidDashboardRedirectLoader },
 
         // Beta analytics route removed - component file does not exist
         // {

@@ -25,6 +25,7 @@ import {
 } from "./tracing/traceLetters";
 
 import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
+import { applyKidAndMissionContext, buildMissionReturnHref } from "./missionNavigation";
 
 const BASE_ROUTE = "/kids/games/phonics/letter-tracing-sounds";
 const GAME_ID = "letter-tracing";
@@ -2201,17 +2202,16 @@ export default function LetterTracingWithSounds() {
     navigate(url, { replace });
   }
 
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+
   function goGamesPortal() {
-    const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
-    const url = sp.toString() ? `/kids/games/phonics?${sp.toString()}` : "/kids/games/phonics";
-    navigate(url, { replace: true });
+    navigate(missionReturnHref, { replace: true });
   }
 
   // ✅ Preserve immersive if already ON
   function navigatePlay(levelNum: number, pairIdx: number, stepNum: CaseStep, replace = false) {
     const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
+    applyKidAndMissionContext(sp, searchParams, kidId);
 
     const lvl = levelNum === 0 ? 0 : 1;
     sp.set("level", String(lvl));
@@ -2227,7 +2227,7 @@ export default function LetterTracingWithSounds() {
     clearTimers();
 
     const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
+    applyKidAndMissionContext(sp, searchParams, kidId);
 
     sp.set("level", String(levelNum === 0 ? 0 : 1));
     sp.set("pair", String(pairIdx));
@@ -2251,7 +2251,7 @@ export default function LetterTracingWithSounds() {
     clearTimers();
 
     const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
+    applyKidAndMissionContext(sp, searchParams, kidId);
 
     // ✅ no level/pair/step, and no fs
     navigateTo(sp, true);
@@ -2768,7 +2768,7 @@ export default function LetterTracingWithSounds() {
                   onClick={goGamesPortal}
                   className="rounded-full border bg-white/80 px-4 py-2 text-sm font-semibold shadow-sm hover:shadow-md"
                 >
-                  ← Back to Games
+                  ← Back to Mission
                 </button>
 
                 <button

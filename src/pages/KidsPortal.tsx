@@ -1,28 +1,25 @@
 // src/pages/KidsPortal.tsx
 import React, { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 
 export default function KidsPortal() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
   let kidId = searchParams.get('kidId') || '';
 
-  // Fallback: if no kidId in URL, try localStorage
+  // Fallback: if no kidId in URL, try local storage.
   useEffect(() => {
-    if (!kidId && user?.uid) {
+    if (!kidId) {
       try {
-        const stored = localStorage.getItem(`ts_parent_selected_kid_v1:${user.uid}`);
+        const stored = localStorage.getItem('ts_active_kid_v1');
         if (stored) {
-          // Redirect to same page with kidId
-          navigate(`/kids?kidId=${encodeURIComponent(stored)}`, { replace: true });
+          navigate(`/kids/portal?kidId=${encodeURIComponent(stored)}`, { replace: true });
         }
       } catch {
         // ignore storage errors
       }
     }
-  }, [kidId, user?.uid, navigate]);
+  }, [kidId, navigate]);
 
   // Helper to preserve kidId in navigation
   const withKid = (path: string) => {
@@ -326,10 +323,10 @@ export default function KidsPortal() {
               <p className="text-sm md:text-base text-purple-300 mt-1">Mission Control</p>
             </div>
             <Link
-              to={withKid('/parent?tab=kids')}
+              to={withKid('/kids/games/english-excellence')}
               className="px-6 py-3 bg-white/10 backdrop-blur-md border border-white/30 text-white font-semibold rounded-full shadow-xl hover:bg-white/20 hover:shadow-2xl hover:scale-105 transition-all duration-200"
             >
-              ← Back to Parent
+              ← Back to Mission
             </Link>
           </div>
 
@@ -359,7 +356,7 @@ export default function KidsPortal() {
             <div className="relative anim flex justify-center items-center" style={{ animation: 'floaty 5s ease-in-out infinite', animationDelay: '0s' }}>
               <button
                 type="button"
-                onClick={() => navigate(withKid('/kids/games'))}
+                onClick={() => navigate(withKid('/kids/games/english-excellence'))}
                 className="planet-button"
               >
                 {/* Planet surface layers */}

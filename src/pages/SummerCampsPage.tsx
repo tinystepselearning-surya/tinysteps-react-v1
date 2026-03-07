@@ -86,8 +86,8 @@ const STRETCH_CARDS = [
     id: 'progress',
     title: 'Parent Progress Updates',
     desc: 'Weekly insights + next steps for practice.',
-    cta: 'View dashboard',
-    href: '/parent-dashboard-preview',
+    cta: 'See parent guide',
+    href: '/parents/phonics-mission',
   },
   {
     id: 'camp',

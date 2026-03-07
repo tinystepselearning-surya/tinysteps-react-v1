@@ -57,11 +57,11 @@ const CourseDetailPage: FC = () => {
     applySeo({
       title: 'Course not found | Tiny Steps Learning',
       description: 'The course you are looking for does not exist.',
-      canonicalPath: '/courses',
+      canonicalPath: rawSlug ? `/courses/${rawSlug}` : '/courses',
       robots: 'noindex, follow',
       ogType: 'website',
     });
-  }, [course]);
+  }, [course, rawSlug]);
 
   if (!course) {
     return (

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { buildMissionReturnHref } from "../missionNavigation";
 
 type Item = {
   onset: string; // c
@@ -446,7 +447,8 @@ function clamp(n: number, lo: number, hi: number) {
 export default function MakeAWordRimeGame() {
   const navigate = useNavigate();
   const [sp] = useSearchParams();
-  const kidId = sp.get("kidId") ?? "";
+  const kidId = sp.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref = buildMissionReturnHref(sp, kidId);
 
   // Celebration (shorter + calmer than before)
   const CONFETTI_MS = 2800;
@@ -839,10 +841,10 @@ export default function MakeAWordRimeGame() {
   }, [screen, phase, isCelebrating, hasActedThisRound, animKey, hintLevel, current.word]);
 
   // ---------- Navigation ----------
-  const goBackToLibrary = () => {
+  const goBackToMission = () => {
     safeExitFullscreen();
     cancelSpeech();
-    navigate(`/kids/games/phonics?kidId=${encodeURIComponent(kidId)}&phase=cvc_word_reader`);
+    navigate(missionReturnHref, { replace: true });
   };
 
   const goToFamily = (id: string) => {
@@ -1300,9 +1302,9 @@ export default function MakeAWordRimeGame() {
 
         <button
           className="px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 hover:bg-white/20 active:scale-[0.98] transition"
-          onClick={goBackToLibrary}
+          onClick={goBackToMission}
         >
-          ← Back to Phonics Library
+          ← Back to Mission
         </button>
       </div>
 
@@ -1313,10 +1315,10 @@ export default function MakeAWordRimeGame() {
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="text-3xl font-extrabold text-slate-900">Choose a Level</div>
               <button
-                onClick={goBackToLibrary}
+                onClick={goBackToMission}
                 className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-900 font-bold transition active:scale-[0.98]"
               >
-                ← Back to Phonics Library
+                ← Back to Mission
               </button>
             </div>
 
@@ -1404,10 +1406,10 @@ export default function MakeAWordRimeGame() {
 
             <div className="mt-5">
               <button
-                onClick={goBackToLibrary}
+                onClick={goBackToMission}
                 className="text-sm font-bold text-slate-600 hover:text-slate-900 underline underline-offset-4"
               >
-                ← Back to Phonics Library
+                ← Back to Mission
               </button>
             </div>
           </div>

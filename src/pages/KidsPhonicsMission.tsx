@@ -1,8 +1,8 @@
 // src/pages/KidsPhonicsMission.tsx
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { Link, useSearchParams, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
 import { recordLevelResult } from "../games/engine/recordLevelResult";
+import { applyKidAndMissionContext, buildMissionReturnHref } from "./kids/games/phonics/missionNavigation";
 
 // --- Config ---
 const TOTAL_ROUNDS = 8;
@@ -516,7 +516,6 @@ const generateQuestionsForLevel = (levelDef: LevelDef): Question[] => {
 const KidsPhonicsMission: React.FC = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   let kidId = searchParams.get("kidId") || "";
@@ -553,10 +552,7 @@ const KidsPhonicsMission: React.FC = () => {
   useEffect(() => {
     if (!kidId) {
       try {
-        let stored = localStorage.getItem("ts_active_kid_v1");
-        if (!stored && user?.uid) {
-          stored = localStorage.getItem(`ts_parent_selected_kid_v1:${user.uid}`);
-        }
+        const stored = localStorage.getItem("ts_active_kid_v1");
         if (stored) {
           const newParams = new URLSearchParams(searchParams);
           newParams.set("kidId", stored);
@@ -566,7 +562,7 @@ const KidsPhonicsMission: React.FC = () => {
         // ignore
       }
     }
-  }, [kidId, user?.uid, searchParams, location.pathname, navigate]);
+  }, [kidId, searchParams, location.pathname, navigate]);
 
   // Persist kidId to localStorage when present
   useEffect(() => {
@@ -579,11 +575,15 @@ const KidsPhonicsMission: React.FC = () => {
     }
   }, [kidId]);
 
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+
   // Helper to preserve kidId in all navigation
   const withKid = (path: string) => {
-    if (!kidId) return path;
-    const sep = path.includes("?") ? "&" : "?";
-    return path.includes("kidId=") ? path : `${path}${sep}kidId=${encodeURIComponent(kidId)}`;
+    const [pathname, queryString = ""] = path.split("?");
+    const params = new URLSearchParams(queryString);
+    applyKidAndMissionContext(params, searchParams, kidId);
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
   };
 
   const timeoutsRef = useRef<number[]>([]);
@@ -1448,11 +1448,11 @@ const KidsPhonicsMission: React.FC = () => {
           `}</style>
 
           <Link
-            to={withKid("/kids/games/phonics")}
+            to={missionReturnHref}
             className="absolute top-5 right-5 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold shadow-lg text-white hover:text-white focus:text-white"
             style={{ zIndex: 50 }}
           >
-            ← Back to Phonics Library
+            ← Back to Mission
           </Link>
 
           <div className="w-full max-w-6xl mx-auto text-center mb-8">
@@ -1463,13 +1463,13 @@ const KidsPhonicsMission: React.FC = () => {
               <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
                 <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
                 <p className="text-yellow-100/80 text-sm mb-4">
-                  Please go back and choose a child to track progress.
+                  Progress can continue on this device. Add `kidId` later for synced per-child tracking.
                 </p>
                 <Link
-                  to={withKid("/parent")}
+                  to={missionReturnHref}
                   className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
                 >
-                  ← Back to Parent Dashboard
+                  ← Open English Excellence Mission
                 </Link>
               </div>
             )}

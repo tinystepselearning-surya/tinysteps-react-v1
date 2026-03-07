@@ -1326,7 +1326,7 @@ export default function ParentDashboard() {
     };
 
     const base =
-      (gameId && routeByGame[gameId]) ? routeByGame[gameId] : "/kids/games";
+      (gameId && routeByGame[gameId]) ? routeByGame[gameId] : "/kids/games/english-excellence";
 
     navigate(`${base}${kidParam}`);
   };
@@ -2639,12 +2639,12 @@ export default function ParentDashboard() {
 
                       <Button
                         onClick={() =>
-                          navigate(`/kids?kidId=${encodeURIComponent(selectedKidId)}`)
+                          navigate(`/kids/games/english-excellence?kidId=${encodeURIComponent(selectedKidId)}`)
                         }
                         disabled={!selectedKidId}
                         className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
                       >
-                        Open Kids Portal
+                        Open English Excellence Mission
                       </Button>
                     </>
                   )}

@@ -243,8 +243,8 @@ export type RouteConfig = {
  */
 export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
   '/': {
-    title: 'Tiny Steps Learning | 1:1 Online English Classes for Kids',
-    description: 'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class.',
+    title: 'Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning',
+    description: '1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.png',
@@ -327,6 +327,30 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     canonicalPath: '/careers',
     ogType: 'website',
   },
+  '/learning-partner': {
+    title: 'Learning Partner Support | Tiny Steps Learning',
+    description: 'Learn how Tiny Steps Learning Partners support parents, teachers, and children with onboarding, scheduling, and steady progress.',
+    canonicalPath: '/learning-partner',
+    ogType: 'website',
+  },
+  '/privacy-policy': {
+    title: 'Privacy Policy | Tiny Steps Learning',
+    description: 'Read the Tiny Steps Learning privacy policy covering family data collection, children’s privacy, cookies, security, retention, and parent rights.',
+    canonicalPath: '/privacy-policy',
+    ogType: 'website',
+  },
+  '/terms-and-conditions': {
+    title: 'Terms and Conditions | Tiny Steps Learning',
+    description: 'Review the Tiny Steps Learning terms covering enrolment, payments, scheduling, conduct, intellectual property, liability, and governing law.',
+    canonicalPath: '/terms-and-conditions',
+    ogType: 'website',
+  },
+  '/refund-guarantee': {
+    title: 'Refund and Guarantee Policy | Tiny Steps Learning',
+    description: 'Read the Tiny Steps Learning refund and guarantee policy covering assessments, 7-day refunds, unused classes, mentor fit, and refund processing timelines.',
+    canonicalPath: '/refund-guarantee',
+    ogType: 'website',
+  },
   '/parents': {
     title: 'Parents Hub | Tiny Steps Learning',
     description: 'Resources and guides for parents. Learn how to support your child\'s English learning journey at home.',
@@ -404,6 +428,30 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     title: 'Online Phonics & Reading Classes for Kids | Tiny Steps Learning',
     description: 'Specialized 1:1 online phonics and reading classes. Master early literacy with expert guidance and interactive practice.',
     canonicalPath: '/online-phonics-reading-classes',
+    ogType: 'website',
+  },
+  '/best-online-phonics-classes-india': {
+    title: 'Best Online Phonics Classes in India | Tiny Steps Learning',
+    description: 'Compare online phonics classes in India with a clear parent checklist covering method, teacher quality, class format, pricing, and progress tracking.',
+    canonicalPath: '/best-online-phonics-classes-india',
+    ogType: 'website',
+  },
+  '/phonics-apps-for-preschoolers-india': {
+    title: 'Phonics Apps for Preschoolers in India | Tiny Steps Learning',
+    description: 'Parent-friendly guide to phonics apps for preschoolers in India with screen-time advice, app selection criteria, and a simple home routine.',
+    canonicalPath: '/phonics-apps-for-preschoolers-india',
+    ogType: 'website',
+  },
+  '/phonics-games-for-preschoolers': {
+    title: 'Phonics Games for Preschoolers | Tiny Steps Learning',
+    description: 'Simple phonics games for preschoolers that build letter-sound recognition, blending confidence, and short daily practice habits.',
+    canonicalPath: '/phonics-games-for-preschoolers',
+    ogType: 'website',
+  },
+  '/summer-camps': {
+    title: 'Online Summer Camps for Kids | Tiny Steps Learning',
+    description: 'Explore Tiny Steps online summer camps with 10-week group and premium 1:1 options for reading, phonics, grammar, and speaking.',
+    canonicalPath: '/summer-camps',
     ogType: 'website',
   },
   ...SUBJECT_LANDING_ROUTE_META,

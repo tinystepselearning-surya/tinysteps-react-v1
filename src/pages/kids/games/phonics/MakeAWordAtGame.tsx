@@ -521,7 +521,7 @@ export default function MakeAWordRimeGame() {
 
   const goBackToLibrary = () => {
     safeExitFullscreen();
-    navigate(`/kids/games/phonics?kidId=${encodeURIComponent(kidId)}&phase=cvc_word_reader`);
+    navigate(`/kids/games/english-excellence?kidId=${encodeURIComponent(kidId)}`);
   };
 
   const speak = (text: string) => {
@@ -671,7 +671,7 @@ export default function MakeAWordRimeGame() {
           className="px-4 py-2 rounded-full bg-white/15 text-white border border-white/30 hover:bg-white/20"
           onClick={goBackToLibrary}
         >
-          ← Back to Phonics Library
+          ← Back to Mission
         </button>
       </div>
 

@@ -78,7 +78,7 @@
         ]
       },
       {
-        "source": "/learning-partner/**",
+        "source": "/learning-partner/dashboard",
         "headers": [
           {
             "key": "X-Robots-Tag",
@@ -87,7 +87,25 @@
         ]
       },
       {
-        "source": "/learningpartner/**",
+        "source": "/learning-partner/dashboard/**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
+        "source": "/learningpartner/dashboard",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex, nofollow, noarchive"
+          }
+        ]
+      },
+      {
+        "source": "/learningpartner/dashboard/**",
         "headers": [
           {
             "key": "X-Robots-Tag",
@@ -205,17 +223,82 @@
       }
     ],
     "redirects": [
+      { "source": "/signup", "destination": "/book-demo", "type": 301 },
+      { "source": "/privacy", "destination": "/privacy-policy", "type": 301 },
+      { "source": "/privacy.html", "destination": "/privacy-policy", "type": 301 },
+      { "source": "/terms.html", "destination": "/terms-and-conditions", "type": 301 },
+      { "source": "/terms-of-service", "destination": "/terms-and-conditions", "type": 301 },
+      { "source": "/learningpartner", "destination": "/learning-partner", "type": 301 },
+      { "source": "/blog/week1", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
+      { "source": "/blog/week2", "destination": "/blog/week-2-phonics-blending-club", "type": 301 },
+      { "source": "/blog/week3", "destination": "/blog/week-3-phonics-tricky-words", "type": 301 },
+      { "source": "/blog/week5", "destination": "/blog/week-5-phonics-r-controlled", "type": 301 },
+      { "source": "/blog/week6", "destination": "/blog/week-6-phonics-comprehension", "type": 301 },
+      { "source": "/blog/week7", "destination": "/blog/week-7-grammar-nouns-to-paragraphs", "type": 301 },
+      { "source": "/blog/week9", "destination": "/blog/week-9-grammar-conjunctions", "type": 301 },
+      { "source": "/blog/week10", "destination": "/blog/week-10-grammar-subject-verb", "type": 301 },
       { "source": "/blog/phonics-at-home-activities", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
+      { "source": "/blog/phonics-at-home-activities/", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
       { "source": "/about", "destination": "/why-tiny-steps", "type": 301 },
-      { "regex": "/main/?$", "destination": "/", "type": 301 },
-      { "regex": "/main/courses/phonics/?$", "destination": "/phonics", "type": 301 },
-      { "regex": "/main/(?P<path>.+)", "destination": "/:path", "type": 301 }
+      { "source": "/why-us", "destination": "/why-tiny-steps", "type": 301 },
+      { "source": "/courses/phonics-foundations", "destination": "/courses/phonics-foundation", "type": 301 },
+      { "source": "/courses/grammar-essentials", "destination": "/courses/basic-grammar", "type": 301 },
+      { "source": "/courses/grammar-mastery", "destination": "/courses/advanced-grammar", "type": 301 },
+      { "source": "/courses/public-speaking-foundations", "destination": "/courses/basic-public-speaking", "type": 301 },
+      { "source": "/courses/public-speaking-excellence", "destination": "/courses/advanced-public-speaking", "type": 301 },
+      { "source": "/courses/phonics", "destination": "/phonics", "type": 301 },
+      { "source": "/courses/grammar", "destination": "/grammar", "type": 301 },
+      { "source": "/courses/public-speaking", "destination": "/speaking", "type": 301 },
+      { "source": "/main/courses", "destination": "/courses", "type": 301 },
+      { "source": "/main/courses/phonics", "destination": "/phonics", "type": 301 },
+      { "source": "/main/courses/grammar", "destination": "/grammar", "type": 301 },
+      { "source": "/main/courses/public-speaking", "destination": "/speaking", "type": 301 },
+      { "source": "/main/courses/phonics-foundation", "destination": "/courses/phonics-foundation", "type": 301 },
+      { "source": "/main/courses/phonics-brush-up", "destination": "/courses/phonics-brush-up", "type": 301 },
+      { "source": "/main/courses/phonics-advanced", "destination": "/courses/phonics-advanced", "type": 301 },
+      { "source": "/main/courses/basic-grammar", "destination": "/courses/basic-grammar", "type": 301 },
+      { "source": "/main/courses/advanced-grammar", "destination": "/courses/advanced-grammar", "type": 301 },
+      { "source": "/main/courses/basic-public-speaking", "destination": "/courses/basic-public-speaking", "type": 301 },
+      { "source": "/main/courses/advanced-public-speaking", "destination": "/courses/advanced-public-speaking", "type": 301 },
+      { "source": "/main/parents", "destination": "/parents", "type": 301 },
+      { "source": "/main/parents/getting-started", "destination": "/parents/getting-started", "type": 301 },
+      { "source": "/main/parents/choosing-course", "destination": "/parents/choosing-course", "type": 301 },
+      { "source": "/main/parents/scheduling", "destination": "/parents/scheduling", "type": 301 },
+      { "source": "/main/parents/payments", "destination": "/parents/payments", "type": 301 },
+      { "source": "/main/parents/tracking-progress", "destination": "/parents/tracking-progress", "type": 301 },
+      { "source": "/main/parents/helping-with-homework", "destination": "/parents/helping-with-homework", "type": 301 },
+      { "source": "/main/parents/phonics-mission", "destination": "/parents/phonics-mission", "type": 301 },
+      { "source": "/main/parents/reading-at-home", "destination": "/parents/reading-at-home", "type": 301 },
+      { "source": "/main/parents/speech-confidence", "destination": "/parents/speech-confidence", "type": 301 },
+      { "source": "/main/parents/common-mistakes", "destination": "/parents/common-mistakes", "type": 301 },
+      { "regex": "/main/?$", "destination": "/", "type": 301 }
     ],
     "rewrites": [
       {
         "source": "/api/contact",
         "function": {
           "functionId": "contactForm",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/blog/**",
+        "function": {
+          "functionId": "notFoundRoute",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/courses/**",
+        "function": {
+          "functionId": "notFoundRoute",
+          "region": "asia-south1"
+        }
+      },
+      {
+        "source": "/main/**",
+        "function": {
+          "functionId": "notFoundRoute",
           "region": "asia-south1"
         }
       },

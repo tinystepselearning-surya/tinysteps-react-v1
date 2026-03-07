@@ -35,8 +35,8 @@ const PhonicsMission: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/kids/games/phonics/letter-sound" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Open Phonics Mission Games →
+      <Link to="/phonics-classes-for-kids" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Explore phonics classes →
       </Link>
       <Link to="/courses" className="text-primary-600 text-sm font-medium hover:underline">
         Ready to take a phonics course? Book your free assessment

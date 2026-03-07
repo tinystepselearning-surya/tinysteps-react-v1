@@ -60,6 +60,7 @@ export { recordLevelResult } from "./games/recordLevelResult";
 
 // Public website contact form
 export { contactForm } from "./contactForm";
+export { notFoundRoute } from "./notFoundRoute";
 
 // Enrollment lifecycle (admin-only)
 export {

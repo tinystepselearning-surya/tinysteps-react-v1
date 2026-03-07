@@ -228,11 +228,11 @@ const KidsPhonicsLibrary: React.FC = () => {
       <div className="comet" aria-hidden />
 
       <Link
-        to={withKid('/kids/games')}
+        to={withKid('/kids/games/english-excellence')}
         className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
         style={{ zIndex: 40 }}
       >
-        ← Back to Games Hub
+        ← Back to Mission
       </Link>
 
       <div className="w-full max-w-6xl mx-auto text-center mb-6" style={{ zIndex: 10 }}>
@@ -272,12 +272,14 @@ const KidsPhonicsLibrary: React.FC = () => {
         ) : (
           <div className="w-full max-w-3xl mx-auto mb-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg" style={{ zIndex: 10 }}>
             <p className="text-yellow-200 font-semibold mb-2">⚠️ No child selected</p>
-            <p className="text-yellow-100/80 text-sm mb-3">Please go back and choose a child to track progress.</p>
+            <p className="text-yellow-100/80 text-sm mb-3">
+              Progress can continue on this device. Add `kidId` later for synced per-child tracking.
+            </p>
             <Link
-              to={withKid('/parent')}
+              to={withKid('/kids/games/english-excellence')}
               className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
             >
-              ← Back to Parent Dashboard
+              ← Open English Excellence Mission
             </Link>
           </div>
         )

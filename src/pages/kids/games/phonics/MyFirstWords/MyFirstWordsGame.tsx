@@ -9,6 +9,7 @@ import {
   LEVELS,
   VOWEL_GROUPS,
 } from "./myFirstWordsData";
+import { applyKidAndMissionContext, buildMissionReturnHref } from "../missionNavigation";
 
 export default function MyFirstWordsGame() {
   const navigate = useNavigate();
@@ -17,6 +18,7 @@ export default function MyFirstWordsGame() {
 
   const kidId =
     searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
 
   type Mode = "slide_join" | "tap_word";
 
@@ -76,6 +78,7 @@ export default function MyFirstWordsGame() {
 
     setSearchParams((prev) => {
       const p = new URLSearchParams(prev);
+      applyKidAndMissionContext(p, searchParams, kidId);
       p.set("mode", next);
       return p;
     });
@@ -83,14 +86,7 @@ export default function MyFirstWordsGame() {
 
   function goBack() {
     exitFullscreenIfAny();
-
-    navigate(
-      `/kids/games/phonics${
-        kidId
-          ? `?kidId=${encodeURIComponent(kidId)}&phase=blend_builder`
-          : "?phase=blend_builder"
-      }`
-    );
+    navigate(missionReturnHref);
   }
 
   function onBackToGroups() {
@@ -202,7 +198,7 @@ export default function MyFirstWordsGame() {
             onClick={goBack}
             className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200 z-10"
           >
-            ← Back to Phonics Library
+            ← Back to Mission
           </button>
 
           <div className="w-full max-w-6xl mx-auto text-center mb-8 relative z-10">

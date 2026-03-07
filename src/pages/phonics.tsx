@@ -83,8 +83,8 @@ export default function PhonicsPage({
 }: PhonicsPageProps) {
   const title = seoOverrides?.title ?? "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps";
   const description = seoOverrides?.description ?? "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Stage-based parent insights. Book free trial.";
-  const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics-classes-for-kids";
-  const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics Classes for Kids";
+  const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
+  const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Phonics Superstar Program";
   const heroSubtitle = heroSubtitleOverride ?? "Systematic, multi-sensory phonics taught live with AI reading coaches and stage-based parent insights.";

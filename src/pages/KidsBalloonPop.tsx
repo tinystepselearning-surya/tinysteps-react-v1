@@ -1,6 +1,7 @@
 // src/pages/KidsBalloonPop.tsx
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import { applyKidAndMissionContext, buildMissionReturnHref } from "./kids/games/phonics/missionNavigation";
 
 type Balloon = {
   id: number;
@@ -243,6 +244,7 @@ const KidsBalloonPop: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const kidId = searchParams.get("kidId") || "";
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
 
   const sfx = useBalloonPopSfx();
 
@@ -261,11 +263,13 @@ const KidsBalloonPop: React.FC = () => {
 
   const navigateWithKid = useCallback(
     (path: string) => {
-      const params = new URLSearchParams();
-      if (kidId) params.set("kidId", kidId);
-      navigate(`${path}?${params.toString()}`);
+      const [pathname, queryString = ""] = path.split("?");
+      const params = new URLSearchParams(queryString);
+      applyKidAndMissionContext(params, searchParams, kidId);
+      const query = params.toString();
+      navigate(query ? `${pathname}?${query}` : pathname);
     },
-    [kidId, navigate]
+    [kidId, navigate, searchParams]
   );
 
   const goToLevels = useCallback(() => {
@@ -323,7 +327,7 @@ const KidsBalloonPop: React.FC = () => {
 
       // Update URL
       const params = new URLSearchParams();
-      if (kidId) params.set("kidId", kidId);
+      applyKidAndMissionContext(params, searchParams, kidId);
       params.set("level", String(levelId));
       navigate(`/kids/games/phonics/balloon-pop?${params.toString()}`, { replace: true });
 
@@ -351,7 +355,7 @@ const KidsBalloonPop: React.FC = () => {
       setLevelComplete(false);
       lastCorrectPopRef.current = Date.now();
     },
-    [kidId, navigate, progress.unlocked]
+    [kidId, navigate, progress.unlocked, searchParams]
   );
 
   const exitFullscreen = useCallback(() => {
@@ -677,11 +681,11 @@ const KidsBalloonPop: React.FC = () => {
         `}</style>
 
         <Link
-          to={kidId ? `/kids/games/phonics?kidId=${encodeURIComponent(kidId)}` : "/kids/games/phonics"}
+          to={missionReturnHref}
           className="absolute top-3 right-3 px-4 py-2 bg-black/90 hover:bg-black/95 text-white font-semibold rounded-full shadow-lg transition-all duration-200"
           style={{ zIndex: 50 }}
         >
-          ← Back to Phonics Library
+          ← Back to Mission
         </Link>
 
         <div className="w-full max-w-6xl mx-auto text-center mb-8">
@@ -691,12 +695,14 @@ const KidsBalloonPop: React.FC = () => {
           {!kidId && (
             <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-md mx-auto">
               <p className="text-yellow-200 font-semibold mb-3">⚠️ No child selected</p>
-              <p className="text-yellow-100/80 text-sm mb-4">Please go back and choose a child to track progress.</p>
+              <p className="text-yellow-100/80 text-sm mb-4">
+                Progress can continue on this device. Add `kidId` later for synced per-child tracking.
+              </p>
               <Link
-                to="/parent"
+                to={missionReturnHref}
                 className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
               >
-                ← Back to Parent Dashboard
+                ← Open English Excellence Mission
               </Link>
             </div>
           )}

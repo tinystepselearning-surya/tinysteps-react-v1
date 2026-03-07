@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { applyKidAndMissionContext, buildMissionReturnHref } from "../missionNavigation";
 
 /**
  * Tiny Steps — Game 3: CVC Word Reader
@@ -442,6 +443,7 @@ export default function CvcWordReaderGame() {
   }, [searchParams]);
 
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
 
   // URL param: level = a|e|i|o|u
   const levelKeyParam = (searchParams.get("level") as any) as "a" | "e" | "i" | "o" | "u" | null;
@@ -741,10 +743,7 @@ export default function CvcWordReaderGame() {
   // --------------------
   function goPhonicsLibraryCvcTab() {
     safeExitFullscreen();
-    const qs = new URLSearchParams();
-    if (kidId) qs.set("kidId", kidId);
-    qs.set("phase", "cvc_word_reader");
-    navigate(`/kids/games/phonics?${qs.toString()}`);
+    navigate(missionReturnHref, { replace: true });
   }
 
   function goLevels() {
@@ -776,9 +775,9 @@ export default function CvcWordReaderGame() {
   async function startLevel(key: "a" | "e" | "i" | "o" | "u") {
     // Build params from ref (fresh)
     const sp = new URLSearchParams(searchParamsRef.current);
+    applyKidAndMissionContext(sp, searchParamsRef.current, kidId);
     sp.set("level", key);
     sp.delete("fs");
-    if (kidId) sp.set("kidId", kidId);
 
     setSearchParams(sp, { replace: false });
 
@@ -1500,7 +1499,7 @@ export default function CvcWordReaderGame() {
         <div className="flex items-center justify-between">
           <div className="text-xl font-semibold text-slate-900">3. CVC Word Reader</div>
           <button onClick={goPhonicsLibraryCvcTab} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
-            ← Back to Phonics Library
+            ← Back to Mission
           </button>
         </div>
 
@@ -1599,7 +1598,7 @@ export default function CvcWordReaderGame() {
             </button>
 
             <button onClick={goPhonicsLibraryCvcTab} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">
-              ↩ Back to Phonics Library
+              ↩ Back to Mission
             </button>
 
             <button onClick={enterFullscreenManual} className="rounded-full border bg-white px-4 py-2 text-sm font-semibold">

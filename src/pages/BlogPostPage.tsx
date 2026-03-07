@@ -154,17 +154,28 @@ function buildMetaDescription(src: any) {
   useEffect(() => {
     if (!slug) return;
     const canonical = `/blog/${slug}`;
-
     const source = metaSource || {};
-    const title = source.title ? `${source.title} | Tiny Steps Blog` : 'Blog | Tiny Steps Blog';
-    const description = buildMetaDescription(source) || 'Tiny Steps Learning blog post.';
     const isArticle = Boolean(source.title || post);
+
+    if (!isArticle) {
+      applySeo({
+        title: 'Article not found | Tiny Steps Blog',
+        description: 'The article you requested is not available.',
+        canonicalPath: canonical,
+        robots: 'noindex, follow',
+        ogType: 'website',
+      });
+      return;
+    }
+
+    const title = `${source.title} | Tiny Steps Blog`;
+    const description = buildMetaDescription(source) || 'Tiny Steps Learning blog post.';
 
     applySeo({
       title,
       description,
-      canonicalPath: isArticle ? canonical : '/blog',
-      ogType: isArticle ? 'article' : 'website',
+      canonicalPath: canonical,
+      ogType: 'article',
       jsonLd,
     });
   }, [slug, metaSource, jsonLd, breadcrumbSchema, post]);

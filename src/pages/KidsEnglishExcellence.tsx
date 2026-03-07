@@ -1,6 +1,6 @@
 // src/pages/KidsEnglishExcellence.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 // ============================================================================
 // CLEAN PPT-STYLE JOURNEY (Compact + Professional)
@@ -700,7 +700,7 @@ const STAGES: Stage[] = [
       {
         title: "More Blending",
         desc: "blend builder activities",
-        route: "/kids/games/phonics?phase=blend_builder",
+        route: "/kids/games/phonics/my-first-words?mode=tap_word",
       },
       {
         title: "Read Tiny Words",
@@ -710,7 +710,7 @@ const STAGES: Stage[] = [
       {
         title: "Word Families",
         desc: "make-a-word (rimes)",
-        route: "/kids/games/phonics?phase=cvc_word_reader",
+        route: "/kids/games/phonics/cvc-word-reader/make-a-word",
       },
       { title: "Spelling Practice", desc: "hear → spell", comingSoon: true },
     ],
@@ -722,12 +722,12 @@ const STAGES: Stage[] = [
       {
         title: "Read Sentences",
         desc: "tap-to-read (guided)",
-        route: "/kids/games/phonics/sentence-stepper",
+        route: "/kids/games/phonics/sentence-stepper?pack=4.0",
       },
       {
         title: "Early Reader Fluency",
         desc: "sentence packs",
-        route: "/kids/games/phonics?phase=early_reader_fluency",
+        route: "/kids/games/phonics/sentence-stepper?pack=4.3",
       },
       { title: "Sentence Builder", desc: "put words in order", comingSoon: true },
       { title: "Grammar Fix", desc: "simple corrections", comingSoon: true },
@@ -811,7 +811,14 @@ const KidsEnglishExcellence: React.FC = () => {
   const [searchParams] = useSearchParams();
   const kidId = searchParams.get("kidId") || "";
 
-  const [selectedStageIndex, setSelectedStageIndex] = useState(0);
+  const [selectedStageIndex, setSelectedStageIndex] = useState(() => {
+    const raw = searchParams.get("eemStage");
+    const stageNum = raw ? Number.parseInt(raw, 10) : NaN;
+    if (Number.isFinite(stageNum) && stageNum >= 1 && stageNum <= STAGES.length) {
+      return stageNum - 1;
+    }
+    return 0;
+  });
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
   // Progress store (per kid)
@@ -916,11 +923,21 @@ const KidsEnglishExcellence: React.FC = () => {
     return `${route}${sep}kidId=${encodeURIComponent(kidId)}`;
   };
 
-  const appendEemMeta = (route: string, tileId: string) => {
+  const appendEemMeta = (route: string, tileId: string, stageNumber: number) => {
     const withKid = appendKidId(route);
     const sep = withKid.includes("?") ? "&" : "?";
     const returnTo = "/kids/games/english-excellence";
-    return `${withKid}${sep}eemTile=${encodeURIComponent(tileId)}&eemReturn=${encodeURIComponent(returnTo)}`;
+    return `${withKid}${sep}eemTile=${encodeURIComponent(tileId)}&eemStage=${encodeURIComponent(
+      String(stageNumber)
+    )}&eemReturn=${encodeURIComponent(returnTo)}`;
+  };
+
+  const handleBackNavigation = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(appendKidId("/parent"));
   };
 
   const setTileProgress = (tileId: string, patch: Partial<TileProgress>) => {
@@ -948,7 +965,7 @@ const KidsEnglishExcellence: React.FC = () => {
       });
 
       setPulseTileId(tileId);
-      window.setTimeout(() => navigate(appendEemMeta(tile.route!, tileId)), 200);
+      window.setTimeout(() => navigate(appendEemMeta(tile.route!, tileId, stageNumber)), 200);
       return;
     }
 
@@ -957,7 +974,7 @@ const KidsEnglishExcellence: React.FC = () => {
       lastOpenedAt: now,
     });
 
-    navigate(appendEemMeta(tile.route, tileId));
+    navigate(appendEemMeta(tile.route, tileId, stageNumber));
   };
 
   const toggleCompleted = (e: React.MouseEvent, stageNumber: number, tile: Tile) => {
@@ -1322,13 +1339,27 @@ const KidsEnglishExcellence: React.FC = () => {
         <div className="grain" />
       </div>
 
-      {/* Back */}
-      <Link
-        to={`/kids/games${kidId ? `?kidId=${kidId}` : ""}`}
-        className="absolute top-6 right-6 px-5 py-2 bg-white/70 backdrop-blur-md border border-slate-900/10 text-slate-900 font-semibold rounded-full shadow-sm hover:bg-white/85 hover:scale-105 transition-all duration-200 z-50"
-      >
-        ← Back to Games Hub
-      </Link>
+      {/* In-layer top strip */}
+      <div className="relative z-20 w-full max-w-6xl mx-auto px-4 mb-2">
+        <div className="flex items-center justify-between rounded-2xl border border-slate-900/10 bg-white/65 backdrop-blur-md px-3 py-2 shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-sky-600 text-[11px] font-black text-white">
+              TS
+            </span>
+            <span className="text-sm font-black tracking-wide text-slate-900">Tiny Steps</span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleBackNavigation}
+            className="inline-flex items-center gap-1 rounded-full border border-slate-900/15 bg-white/80 px-3 py-1.5 text-xs font-extrabold text-slate-800 shadow-sm hover:bg-white"
+            aria-label="Go back"
+            title="Go back"
+          >
+            <span aria-hidden>←</span> Back
+          </button>
+        </div>
+      </div>
 
       {/* Header */}
       <div className="relative z-10 text-center max-w-4xl mx-auto mt-2 mb-7 px-4">
@@ -1504,15 +1535,6 @@ const KidsEnglishExcellence: React.FC = () => {
           })}
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <button
-            type="button"
-            onClick={() => navigate(appendKidId("/kids/games/phonics"))}
-            className="px-5 py-2.5 rounded-full bg-white/70 border border-slate-900/10 text-slate-800 hover:bg-white/85 transition font-bold shadow-sm"
-          >
-            Browse Full Phonics Library →
-          </button>
-        </div>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
+import { buildMissionReturnHref } from "./missionNavigation";
 
 const BASE = "/games/phonics/sound-detective";
 const CONFETTI_SFX_SRC = "/confetti.mp3";
@@ -179,6 +180,7 @@ export default function SoundDetectiveGame() {
   const storedKidId =
     typeof window !== "undefined" ? (localStorage.getItem("ts_active_kid_v1") || "") : "";
   const kidId = urlKidId || storedKidId;
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
 
   useEffect(() => {
     if (!kidId) return;
@@ -700,11 +702,11 @@ export default function SoundDetectiveGame() {
 
       <div className="absolute top-5 right-5">
         <Link
-          to={kidId ? `/kids/games/phonics?kidId=${encodeURIComponent(kidId)}` : "/kids/games/phonics"}
+          to={missionReturnHref}
           className="px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-white/20 transition-all duration-200 font-semibold text-white"
           style={{ zIndex: 50 }}
         >
-          ← Back to Phonics Library
+          ← Back to Mission
         </Link>
       </div>
 

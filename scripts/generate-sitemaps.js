@@ -2,6 +2,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from './seo-route-inventory.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,6 +39,7 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   const publicDir = path.join(root, 'public');
   const blogTs = path.join(root, 'src', 'content', 'blog.ts');
   const coursesTs = path.join(root, 'src', 'content', 'courses.ts');
+  const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
 
   const blogSlugs = extractSlugsFromFile(blogTs, 'slug');
@@ -46,50 +48,31 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 
   
 
-  // sitemap-static.xml (top-level static pages)
+  const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
+  const parentRoutes = uniqueRoutes(PARENT_HELP_ROUTES);
+
+  // sitemap-static.xml (top-level canonical marketing pages)
   const staticXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+
-    toUrl('https://tinystepslearning.com/', fmt(new Date()), '1.0', 'weekly')+
-    toUrl('https://tinystepslearning.com/courses', lastmodFrom(coursesTs), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/curriculum', lastmodFrom(path.join(publicDir, 'curriculum-v2.1.json')), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/phonics', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/grammar', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/speaking', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/online-phonics-reading-classes', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/english-grammar-writing-classes', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/public-speaking-communication-kids', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/best-online-phonics-classes-india', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/summer-english-camp-2026', fmt(new Date()), '0.9', 'weekly')+
-    toUrl('https://tinystepslearning.com/blog', fmt(new Date()), '0.8', 'daily')+
-    toUrl('https://tinystepslearning.com/pricing', fmt(new Date()), '0.8', 'monthly')+
-    toUrl('https://tinystepslearning.com/contact', fmt(new Date()), '0.8', 'monthly')+
-    toUrl('https://tinystepslearning.com/why-tiny-steps', fmt(new Date()), '0.8', 'monthly')+
-    toUrl('https://tinystepslearning.com/faq', fmt(new Date()), '0.8', 'weekly')+
-    toUrl('https://tinystepslearning.com/for-schools', fmt(new Date()), '0.7', 'monthly')+
-    toUrl('https://tinystepslearning.com/careers', fmt(new Date()), '0.7', 'monthly')+
+    staticRoutes.map((route) => {
+      const loc = route === '/' ? 'https://tinystepslearning.com/' : `https://tinystepslearning.com${route}`;
+      const priority = route === '/' ? '1.0' : route === '/blog' ? '0.8' : route === '/courses' ? '0.9' : '0.8';
+      const changefreq = route === '/blog' ? 'daily' : route === '/' || route === '/courses' ? 'weekly' : 'monthly';
+      return toUrl(loc, fmt(new Date()), priority, changefreq);
+    }).join('')+
   `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-static.xml'), staticXml);
 
-  // sitemap-parents.xml (separate file for parents hub)
+  // sitemap-parents.xml (canonical parents hub pages only)
   let parentsXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  parentsXml += toUrl('https://tinystepslearning.com/parents', fmt(new Date()), '0.85', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/getting-started', fmt(new Date()), '0.75', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/choosing-course', fmt(new Date()), '0.75', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/scheduling', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/payments', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/tracking-progress', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/helping-with-homework', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/phonics-mission', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/reading-at-home', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/speech-confidence', fmt(new Date()), '0.7', 'weekly');
-  parentsXml += toUrl('https://tinystepslearning.com/parents/common-mistakes', fmt(new Date()), '0.7', 'weekly');
+  parentsXml += parentRoutes.map((route) => toUrl(`https://tinystepslearning.com${route}`, lastmodFrom(parentsMetaTs), route === '/parents' ? '0.85' : '0.7', 'weekly')).join('');
   parentsXml += `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-parents.xml'), parentsXml);
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  for (const slug of [...new Set([...blogSlugs, ...mdxSlugs])]) {
+  for (const slug of uniqueRoutes([...blogSlugs, ...mdxSlugs])) {
     const mdxPath = path.join(mdxDir, `${slug}.mdx`);
-    const last = fs.existsSync(mdxPath) ? lastmodFrom(mdxPath) : fmt(new Date());
+    const last = fs.existsSync(mdxPath) ? lastmodFrom(mdxPath) : lastmodFrom(blogTs);
     blogXml += toUrl(`https://tinystepslearning.com/blog/${slug}`, last, '0.8', 'weekly');
   }
   blogXml += `\n</urlset>`;
@@ -97,7 +80,7 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 
   // sitemap-courses.xml
   let courseXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  for (const slug of new Set(courseSlugs)) {
+  for (const slug of uniqueRoutes(courseSlugs)) {
     const last = lastmodFrom(coursesTs);
     courseXml += toUrl(`https://tinystepslearning.com/courses/${slug}`, last, '0.8', 'weekly');
   }

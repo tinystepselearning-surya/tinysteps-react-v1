@@ -1,28 +1,25 @@
 // src/pages/KidsGamesHub.tsx
 import React, { useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
 
 const KidsGamesHub: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
   let kidId = searchParams.get('kidId') || '';
 
-  // Fallback: if no kidId in URL, try localStorage
+  // Fallback: if no kidId in URL, try local storage.
   useEffect(() => {
-    if (!kidId && user?.uid) {
+    if (!kidId) {
       try {
-        const stored = localStorage.getItem(`ts_parent_selected_kid_v1:${user.uid}`);
+        const stored = localStorage.getItem('ts_active_kid_v1');
         if (stored) {
-          // Redirect to same page with kidId
-          navigate(`/kids/games?kidId=${encodeURIComponent(stored)}`, { replace: true });
+          navigate(`/kids/games/hub?kidId=${encodeURIComponent(stored)}`, { replace: true });
         }
       } catch {
         // ignore storage errors
       }
     }
-  }, [kidId, user?.uid, navigate]);
+  }, [kidId, navigate]);
 
   return (
     <div
@@ -140,11 +137,11 @@ const KidsGamesHub: React.FC = () => {
 
       {/* Back Button */}
       <Link
-        to={`/kids${kidId ? `?kidId=${kidId}` : ''}`}
+        to={`/kids/games/english-excellence${kidId ? `?kidId=${kidId}` : ''}`}
         className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
         style={{ zIndex: 40 }}
       >
-        ← Back to Kids Portal
+        ← Back to Mission
       </Link>
 
       {/* Header */}
@@ -156,12 +153,14 @@ const KidsGamesHub: React.FC = () => {
         {!kidId && (
           <div className="mt-6 p-4 bg-yellow-500/20 border border-yellow-500/40 rounded-lg max-w-2xl mx-auto">
             <p className="text-yellow-200 font-semibold mb-2">⚠️ No child selected</p>
-            <p className="text-yellow-100/80 text-sm mb-3">Please go back to Parent Dashboard and choose a child.</p>
+            <p className="text-yellow-100/80 text-sm mb-3">
+              Progress can still continue on this device. Add a child ID to sync per-child tracking.
+            </p>
             <Link
-              to="/parent"
+              to="/kids/games/english-excellence"
               className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
             >
-              ← Back to Parent Dashboard
+              ← Open English Excellence Mission
             </Link>
           </div>
         )}

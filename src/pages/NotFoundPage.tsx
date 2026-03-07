@@ -6,7 +6,6 @@ export default function NotFoundPage() {
   useEffect(() => {
     applySeo({
       title: '404 - Page Not Found | Tiny Steps Learning',
-      canonicalPath: '/',
       robots: 'noindex, nofollow',
     });
   }, []);

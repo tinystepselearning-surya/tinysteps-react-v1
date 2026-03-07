@@ -3,55 +3,32 @@ import { spawn } from "child_process";
 import fs from "fs/promises";
 import path from "path";
 import { chromium } from "playwright";
+import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
 
 const DIST = path.resolve(process.cwd(), "dist");
 const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4173;
 const HOST = `http://127.0.0.1:${PORT}`;
 
-// Keep these as your "always prerender" routes
-const SEED_ROUTES = [
-  "/",
-  "/phonics",
-  "/courses",
-  "/courses/basic-grammar",
-  "/courses/advanced-grammar",
-  "/courses/phonics-brush-up",
-  "/courses/phonics-foundation",
-  "/courses/basic-public-speaking",
-  "/courses/advanced-public-speaking",
-  "/curriculum",
-  "/pricing",
-  "/faq",
-  "/contact",
-  "/team",
-  "/careers",
-  "/blog",
-  "/book-demo",
-  "/best-online-phonics-classes-india",
-  "/phonics-apps-for-preschoolers-india",
-  "/summer-english-camp-2026",
-  "/phonics-classes-for-kids",
-  "/english-grammar-writing-classes",
-  "/public-speaking-communication-kids",
-  // Parents hub + help pages
-  "/parents",
-  "/parents/getting-started",
-  "/parents/choosing-course",
-  "/parents/scheduling",
-  "/parents/payments",
-  "/parents/tracking-progress",
-  "/parents/helping-with-homework",
-  "/parents/phonics-mission",
-  "/parents/reading-at-home",
-  "/parents/speech-confidence",
-  "/parents/common-mistakes",
-];
+const COURSE_SOURCE = path.resolve(process.cwd(), "src", "content", "courses.ts");
 
 // Fallback blog posts (used only if auto-discovery finds 0)
 const BLOG_FALLBACK_ROUTES = [
   "/blog/week-1-phonics-satpin-launch",
   "/blog/week-2-phonics-blending-club",
 ];
+
+async function extractSlugsFromFile(filePath) {
+  try {
+    const src = await fs.readFile(filePath, "utf8");
+    const regex = /slug\s*:\s*['"`]([^'"`]+)['"`]/g;
+    const slugs = [];
+    let match;
+    while ((match = regex.exec(src))) slugs.push(match[1]);
+    return [...new Set(slugs)];
+  } catch {
+    return [];
+  }
+}
 
 function startPreview() {
   const bin = path.resolve(process.cwd(), "node_modules", ".bin", "vite");
@@ -156,8 +133,8 @@ async function discoverBlogRoutes(page) {
  */
 const ROUTE_SEO_CONFIG = {
   '/': {
-    title: 'Tiny Steps Learning | 1:1 Online English Classes for Kids',
-    description: 'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and clear stage-by-stage progress updates for parents. Book a free assessment class.',
+    title: 'Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning',
+    description: '1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.',
     canonicalPath: '/',
     robots: 'index, follow',
   },
@@ -483,6 +460,12 @@ async function prerender() {
     try {
       browser = await chromium.launch();
       const page = await browser.newPage();
+      const courseSlugs = await extractSlugsFromFile(COURSE_SOURCE);
+      const seedRoutes = uniqueRoutes([
+        ...STATIC_MARKETING_ROUTES,
+        ...PARENT_HELP_ROUTES,
+        ...courseSlugs.map((slug) => `/courses/${slug}`),
+      ]);
 
       // ✅ Auto-discover all blog post routes from /blog (AEO/SEO)
       let blogRoutes = [];
@@ -504,7 +487,7 @@ async function prerender() {
         console.warn(`[prerender] Truncated blog routes to ${MAX_BLOG_ROUTES}`);
       }
 
-      const ROUTES = Array.from(new Set([...SEED_ROUTES, ...blogRoutes]));
+      const ROUTES = Array.from(new Set([...seedRoutes, ...blogRoutes]));
 
       console.log(`\n🚀 Prerendering ${ROUTES.length} routes...\n`);
 

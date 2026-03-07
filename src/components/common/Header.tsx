@@ -10,7 +10,7 @@ const dashboardPaths: Record<string, string> = {
   admin: '/surya',
   teacher: '/teacher',
   parent: '/parent',
-  kid: '/kids',
+  kid: '/kids/games/english-excellence',
   learningPartner: '/learning-partner/dashboard',
   learningpartner: '/learning-partner/dashboard',
 };

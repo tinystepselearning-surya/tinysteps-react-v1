@@ -18,12 +18,12 @@ const TrackingProgress: React.FC = () => {
       </p>
     </div>
 
-    <p className="mt-4">We send stage-based updates and milestone reports. Use the parent dashboard for details.</p>
+    <p className="mt-4">We send stage-based updates and milestone reports so parents can understand what changed and what to reinforce next.</p>
     <p className="mt-2 text-sm text-gray-700">Short progress notes help focus next steps.</p>
 
     <h2 className="mt-6 font-semibold">Step-by-step</h2>
     <ul className="list-disc ml-6 mt-2">
-      <li>Open the parent dashboard to view session notes and goals.</li>
+      <li>Ask for session notes and current goals after each milestone check.</li>
       <li>Ask for a short milestone summary after 8–12 lessons.</li>
       <li>Use small lesson targets at home to reinforce learning.</li>
     </ul>
@@ -35,8 +35,8 @@ const TrackingProgress: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/parent" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Open Parent Dashboard →
+      <Link to="/contact" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Ask for a progress update →
       </Link>
       <Link to="/parents/helping-with-homework" className="text-primary-600 text-sm font-medium hover:underline">
         Learn how to support progress at home

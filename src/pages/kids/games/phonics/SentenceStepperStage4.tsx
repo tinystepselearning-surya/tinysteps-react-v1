@@ -1,6 +1,7 @@
 // src/pages/kids/games/phonics/SentenceStepperStage4.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { buildMissionReturnHref } from "./missionNavigation";
 
 /**
  * Sentence Stepper (Stage 4: Early Reader Fluency)
@@ -195,6 +196,7 @@ export default function SentenceStepperStage4() {
   const navigate = useNavigate();
 
   const kidId = searchParams.get("kidId") || localStorage.getItem("ts_active_kid_v1") || "";
+  const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
   const roundsPerPack = 10;
 
   // Fullscreen element ref
@@ -675,10 +677,7 @@ export default function SentenceStepperStage4() {
   async function goBackToLibrary() {
     cancelSpeech();
     await exitFullscreen();
-    const sp = new URLSearchParams();
-    if (kidId) sp.set("kidId", kidId);
-    sp.set("phase", "early_reader_fluency");
-    navigate(`/kids/games/phonics?${sp.toString()}`);
+    navigate(missionReturnHref, { replace: true });
   }
 
   function continueAfterLevel() {
@@ -719,7 +718,7 @@ export default function SentenceStepperStage4() {
               onClick={goBackToLibrary}
               className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-[0.99] transition"
             >
-              ← Back
+              ← Back to Mission
             </button>
           </div>
 
@@ -774,7 +773,7 @@ export default function SentenceStepperStage4() {
               onClick={goBackToLibrary}
               className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-[0.99] transition"
             >
-              ← Back
+              ← Back to Mission
             </button>
 
             <button
