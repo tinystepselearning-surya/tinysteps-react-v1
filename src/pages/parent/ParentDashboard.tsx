@@ -47,6 +47,7 @@ import AppShellHeader from "../../components/common/AppShellHeader";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
+  SKILL_RATING_MAX,
   normalizeProgressRatings,
   normalizeProgressSkillsMeta,
   skillRatingLegendLabel,
@@ -298,34 +299,27 @@ const STAGE_MASTERY_ORDER: MasteryKey[] = [
   "mastered",
 ];
 
-const PARENT_STAR_GUIDE = [
-  { stars: "⭐☆☆☆☆", label: "Just started" },
-  { stars: "⭐⭐☆☆☆", label: "Emerging" },
-  { stars: "⭐⭐⭐☆☆", label: "Growing well" },
-  { stars: "⭐⭐⭐⭐☆", label: "Strong" },
-  { stars: "⭐⭐⭐⭐⭐", label: "Excellent" },
+const TEACHER_STAR_GUIDE = [
+  { stars: "☆☆☆☆", label: "Not started" },
+  { stars: "⭐☆☆☆", label: "Emerging" },
+  { stars: "⭐⭐☆☆", label: "Developing" },
+  { stars: "⭐⭐⭐☆", label: "Proficient" },
+  { stars: "⭐⭐⭐⭐", label: "Mastered" },
 ] as const;
 
-function masteryToStarLevel(value: unknown): number {
-  const masteryKey = masteryKeyFromValue(value);
-  switch (masteryKey) {
-    case "mastered":
-      return 5;
-    case "proficient":
-      return 4;
-    case "developing":
-      return 3;
-    case "emerging":
-      return 2;
-    case "not_started":
-    default:
-      return 1;
-  }
+function starString(level: number): string {
+  const safeLevel = Math.max(0, Math.min(SKILL_RATING_MAX, Math.round(level)));
+  return `${"⭐".repeat(safeLevel)}${"☆".repeat(SKILL_RATING_MAX - safeLevel)}`;
 }
 
-function starString(level: number): string {
-  const safeLevel = Math.max(1, Math.min(5, Math.round(level)));
-  return `${"⭐".repeat(safeLevel)}${"☆".repeat(5 - safeLevel)}`;
+function getLessonNeedsPracticeChips(row: any): string[] {
+  if (Array.isArray(row?.practiceChips) && row.practiceChips.length > 0) {
+    return row.practiceChips;
+  }
+  if (Array.isArray(row?.focusChips) && row.focusChips.length > 0) {
+    return row.focusChips;
+  }
+  return [];
 }
 
 function aggregateStageMastery(values: Array<any>): MasteryKey {
@@ -1819,11 +1813,22 @@ export default function ParentDashboard() {
         averageTotal += lesson.averageRating;
         averageCount += 1;
       }
-      (lesson.strongestSkills ?? []).forEach((skill: any) => {
-        strongestMap.set(skill.label, (strongestMap.get(skill.label) ?? 0) + 1);
+      const exactStrengths =
+        Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0
+          ? lesson.strengthChips
+          : (lesson.strongestSkills ?? []).map((skill: any) => skill.label);
+      const exactPractice =
+        Array.isArray(lesson.practiceChips) && lesson.practiceChips.length > 0
+          ? lesson.practiceChips
+          : Array.isArray(lesson.focusChips) && lesson.focusChips.length > 0
+            ? lesson.focusChips
+            : (lesson.needsPracticeSkills ?? []).map((skill: any) => skill.label);
+
+      exactStrengths.forEach((skill: string) => {
+        strongestMap.set(skill, (strongestMap.get(skill) ?? 0) + 1);
       });
-      (lesson.needsPracticeSkills ?? []).forEach((skill: any) => {
-        practiceMap.set(skill.label, (practiceMap.get(skill.label) ?? 0) + 1);
+      exactPractice.forEach((skill: string) => {
+        practiceMap.set(skill, (practiceMap.get(skill) ?? 0) + 1);
       });
     });
 
@@ -3022,6 +3027,37 @@ export default function ParentDashboard() {
                                       {recentTeacherRatingsSummary.latestLesson.remark}
                                     </div>
                                   ) : null}
+                                  {((Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
+                                    recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0) ||
+                                    getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0) && (
+                                    <div className="flex flex-wrap gap-2 pt-1">
+                                      {Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
+                                      recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                          {recentTeacherRatingsSummary.latestLesson.strengthChips.map((chip: string) => (
+                                            <span
+                                              key={`dashboard-strength-${chip}`}
+                                              className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"
+                                            >
+                                              {chip}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      ) : null}
+                                      {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                          {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).map((chip: string) => (
+                                            <span
+                                              key={`dashboard-practice-${chip}`}
+                                              className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
+                                            >
+                                              {chip}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      ) : null}
+                                    </div>
+                                  )}
                                 </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
@@ -3138,10 +3174,13 @@ export default function ParentDashboard() {
                                             <button
                                               type="button"
                                               onClick={() =>
-                                                setCollapsedStages((prev) => ({
-                                                  ...prev,
-                                                  [key]: !prev[key],
-                                                }))
+                                                setCollapsedStages((prev) => {
+                                                  const current = prev[key] ?? true;
+                                                  return {
+                                                    ...prev,
+                                                    [key]: !current,
+                                                  };
+                                                })
                                               }
                                               className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600"
                                             >
@@ -3154,7 +3193,7 @@ export default function ParentDashboard() {
                                             <div className="col-span-full rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-[11px] text-slate-600">
                                               <div className="font-semibold text-slate-700">How to read this</div>
                                               <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                                                {PARENT_STAR_GUIDE.map((item) => (
+                                                {TEACHER_STAR_GUIDE.map((item) => (
                                                   <span key={item.stars}>
                                                     {item.stars} = {item.label}
                                                   </span>
@@ -3162,8 +3201,13 @@ export default function ParentDashboard() {
                                               </div>
                                             </div>
                                             {group.rows.map((row: any) => {
-                                            const starLevel = masteryToStarLevel(row.mastery);
+                                            const ratingSummary = summarizeProgressRatings(
+                                              row.progressRatings ?? {},
+                                              Array.isArray(row.progressSkills) ? row.progressSkills : [],
+                                            );
+                                            const starLevel = ratingSummary.roundedAverageRating;
                                             const starRating = starString(starLevel);
+                                            const ratingLabel = skillRatingLegendLabel(starLevel);
                                             const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
                                             const accentDot =
                                               masteryLower === "mastered"
@@ -3202,6 +3246,9 @@ export default function ParentDashboard() {
                                                   >
                                                     {starRating}
                                                   </div>
+                                                  <span className="text-[10px] font-semibold text-slate-500">
+                                                    {ratingLabel}
+                                                  </span>
                                                 </div>
                                               </button>
                                             );
@@ -3234,6 +3281,14 @@ export default function ParentDashboard() {
                 </DialogHeader>
                 {selectedCurriculumTopic ? (
                   <div className="space-y-3 text-sm">
+                    {(() => {
+                      const lessonStrengths =
+                        Array.isArray(selectedCurriculumTopic.strengthChips)
+                          ? selectedCurriculumTopic.strengthChips
+                          : [];
+                      const lessonNeedsPractice = getLessonNeedsPracticeChips(selectedCurriculumTopic);
+                      return (
+                        <>
                     <div className="font-semibold text-gray-900">
                       {selectedCurriculumTopic.label}
                     </div>
@@ -3258,16 +3313,30 @@ export default function ParentDashboard() {
                       values={selectedCurriculumTopic.progressRatings ?? {}}
                       readOnly
                       className="p-3"
-                      parentFriendly
                     />
-                    {selectedCurriculumTopic.focusChips?.length > 0 && (
+                    {lessonStrengths.length > 0 && (
                       <div>
-                        <div className="text-xs text-gray-500">Focus</div>
+                        <div className="text-xs text-gray-500">Strengths</div>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {selectedCurriculumTopic.focusChips.map((chip: string) => (
+                          {lessonStrengths.map((chip: string) => (
                             <span
                               key={chip}
-                              className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-semibold text-indigo-700"
+                              className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700"
+                            >
+                              {chip}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {lessonNeedsPractice.length > 0 && (
+                      <div>
+                        <div className="text-xs text-gray-500">Needs practice</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {lessonNeedsPractice.map((chip: string) => (
+                            <span
+                              key={chip}
+                              className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700"
                             >
                               {chip}
                             </span>
@@ -3281,6 +3350,9 @@ export default function ParentDashboard() {
                         {selectedCurriculumTopic.remark || "—"}
                       </div>
                     </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 ) : (
                   <div className="text-sm text-gray-600">No lesson selected.</div>
@@ -3571,6 +3643,48 @@ export default function ParentDashboard() {
 	                            />
 	                          </div>
 
+                            {((Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
+                              recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0) ||
+                              getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0) && (
+                              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                {Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
+                                recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0 ? (
+                                  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2">
+                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                      Strengths
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {recentTeacherRatingsSummary.latestLesson.strengthChips.map((chip: string) => (
+                                        <span
+                                          key={`latest-strength-${chip}`}
+                                          className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-800"
+                                        >
+                                          {chip}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null}
+                                {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0 ? (
+                                  <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2">
+                                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                                      Needs practice
+                                    </div>
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                      {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).map((chip: string) => (
+                                        <span
+                                          key={`latest-practice-${chip}`}
+                                          className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-xs font-semibold text-amber-800"
+                                        >
+                                          {chip}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null}
+                              </div>
+                            )}
+
 	                          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
 	                            <div className="space-y-1">
 	                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -3706,6 +3820,45 @@ export default function ParentDashboard() {
 	                                className="border-slate-200 bg-slate-50/70"
 	                              />
 	                            </div>
+                              {((Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0) ||
+                                getLessonNeedsPracticeChips(lesson).length > 0) && (
+                                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                  {Array.isArray(lesson.strengthChips) && lesson.strengthChips.length > 0 ? (
+                                    <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2">
+                                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                        Strengths
+                                      </div>
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {lesson.strengthChips.map((chip: string) => (
+                                          <span
+                                            key={`${lesson.id}-strength-${chip}`}
+                                            className="rounded-full border border-emerald-200 bg-white px-2 py-0.5 text-xs font-semibold text-emerald-800"
+                                          >
+                                            {chip}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                  {getLessonNeedsPracticeChips(lesson).length > 0 ? (
+                                    <div className="rounded-xl border border-amber-200 bg-amber-50/70 px-3 py-2">
+                                      <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+                                        Needs practice
+                                      </div>
+                                      <div className="mt-2 flex flex-wrap gap-2">
+                                        {getLessonNeedsPracticeChips(lesson).map((chip: string) => (
+                                          <span
+                                            key={`${lesson.id}-practice-${chip}`}
+                                            className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-xs font-semibold text-amber-800"
+                                          >
+                                            {chip}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              )}
 	                            {lesson.remark ? (
 	                              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
 	                                <span className="font-semibold text-slate-800">Teacher note:</span> {lesson.remark}

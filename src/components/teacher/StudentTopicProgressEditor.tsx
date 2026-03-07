@@ -881,7 +881,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [progressRatings, setProgressRatings] = useState<ProgressRatings>({});
   const [strengthSubskills, setStrengthSubskills] = useState<string[]>([]);
   const [practiceSubskills, setPracticeSubskills] = useState<string[]>([]);
-  const [confusions, setConfusions] = useState<string[]>([]);
   const [teacherRemark, setTeacherRemark] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
@@ -1140,7 +1139,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
     setSaveMessage(null);
     const allowedSubskills = new Set((selectedTopicDef?.subskillChips ?? []) as string[]);
-    const allowedConfusions = new Set((selectedTopicDef?.confusionOptions ?? []) as string[]);
     const rawStrengthSubskills = existing && Array.isArray((existing as any).strengthSubskills)
       ? (existing as any).strengthSubskills.filter((item: unknown) => typeof item === 'string')
       : [];
@@ -1152,9 +1150,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     const rawSelectedSubskills = existing && Array.isArray((existing as any).selectedSubskills)
       ? (existing as any).selectedSubskills.filter((item: unknown) => typeof item === 'string')
       : [];
-    const rawConfusions = existing && Array.isArray((existing as any).confusions)
-      ? (existing as any).confusions.filter((item: unknown) => typeof item === 'string')
-      : [];
     const filterToAllowed = (items: string[], limit = 3) =>
       allowedSubskills.size > 0
         ? items.filter((s: string) => allowedSubskills.has(s)).slice(0, limit)
@@ -1162,9 +1157,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     const filteredStrengths = filterToAllowed(rawStrengthSubskills, 3);
     const filteredPractice = filterToAllowed(rawPracticeSubskills, 3);
     const filteredFallback = filterToAllowed(rawSelectedSubskills, 3);
-    const filteredConfusions = allowedConfusions.size > 0
-      ? rawConfusions.filter((s: string) => allowedConfusions.has(s))
-      : rawConfusions;
     if (filteredStrengths.length === 0 && filteredPractice.length === 0 && filteredFallback.length > 0) {
       setStrengthSubskills(filteredFallback);
       setPracticeSubskills([]);
@@ -1172,7 +1164,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       setStrengthSubskills(filteredStrengths);
       setPracticeSubskills(filteredPractice);
     }
-    setConfusions(filteredConfusions);
 
     const baselineSkillRatings = normalizeProgressRatings(existing?.progressRatings, progressSkills, {
       legacyRatings: existing?.skillRatings,
@@ -1187,7 +1178,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         ...(filteredStrengths.length === 0 && filteredPractice.length === 0 ? filteredFallback : filteredStrengths),
         ...(filteredStrengths.length === 0 && filteredPractice.length === 0 ? [] : filteredPractice),
       ])].sort(),
-      confusions: [...filteredConfusions].sort(),
       teacherRemark: existing ? (existing as any).teacherRemark ?? '' : '',
     });
     setBaseline(snapshot);
@@ -1228,7 +1218,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           strengthSubskills: [...strengthSubskills].sort(),
           needsPracticeSubskills: [...practiceSubskills].sort(),
           selectedSubskills: [...combinedSubskills].sort(),
-          confusions,
           teacherRemark: teacherRemark || null,
           updatedAt: serverTimestamp(),
         },
@@ -1243,7 +1232,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           strengthSubskills: [...strengthSubskills].sort(),
           needsPracticeSubskills: [...practiceSubskills].sort(),
           selectedSubskills: [...combinedSubskills].sort(),
-          confusions: [...confusions].sort(),
           teacherRemark,
         }),
       );
@@ -1282,9 +1270,8 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const disabled =
     topicsLoading || curriculumLoading || !selectedCourseId || courseTopics.length === 0;
   const subskillChips = selectedTopicDef?.subskillChips ?? [];
-  const confusionOptions = selectedTopicDef?.confusionOptions ?? [];
-  const containerClass = 'rounded-lg border border-slate-200 bg-white text-sm space-y-2 p-2.5';
-  const cardBase = 'rounded-xl border border-slate-200 p-2.5';
+  const containerClass = 'rounded-lg border border-slate-200 bg-white text-sm space-y-1.5 p-2';
+  const cardBase = 'rounded-xl border border-slate-200 p-2';
   const combinedSubskills = useMemo(
     () => Array.from(new Set([...strengthSubskills, ...practiceSubskills])),
     [strengthSubskills, practiceSubskills],
@@ -1294,23 +1281,9 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     strengthSubskills: [...strengthSubskills].sort(),
     needsPracticeSubskills: [...practiceSubskills].sort(),
     selectedSubskills: [...combinedSubskills].sort(),
-    confusions: [...confusions].sort(),
     teacherRemark,
   });
 
-  let debugSection: React.ReactNode = null;
-  if (import.meta.env.DEV) {
-    debugSection = (
-      <details className="text-[10px] text-slate-500">
-        <summary className="cursor-pointer">Debug</summary>
-        <div className="mt-1">
-          selectedCourseId={selectedCourseId || "''"} · selectedTopicId={selectedTopicId || "''"} ·
-          courseTopics={courseTopics.length} · curriculumTopics={curriculumTopics.length} ·
-          curriculumLoading={String(curriculumLoading)} · curriculumError={curriculumError || 'none'}
-        </div>
-      </details>
-      );
-  }
   const isDirty = baseline !== '' && snapshotNow !== baseline;
   const toggleStrength = (chip: string) => {
     setStrengthSubskills((prev) => {
@@ -1333,24 +1306,14 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
 
   return (
     <div className={containerClass}>
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-sm font-semibold text-slate-800">
-            Topic Progress
-          </h2>
-          {kidName && (
-            <p className="text-xs text-slate-500">
-              Updating progress for: {kidName}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      {(saving || saveMessage) ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {saving && <span className="text-xs text-slate-500">Saving…</span>}
           {!saving && saveMessage && (
             <span className="text-xs text-emerald-600">{saveMessage}</span>
           )}
         </div>
-      </div>
+      ) : null}
 
       {configError && (
         <p className="text-xs text-red-600">
@@ -1367,11 +1330,10 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           Couldn&apos;t load curriculum: {curriculumError}
         </p>
       )}
-      {debugSection}
 
       <div className={`${cardBase} bg-sky-50/60`}>
         <div className="text-xs font-semibold text-slate-700">Lesson</div>
-        <div className="mt-2 grid gap-2 md:grid-cols-2">
+        <div className="mt-1.5 grid gap-1.5 md:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
             Course
             <select
@@ -1421,19 +1383,6 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             </select>
           </label>
         </div>
-        {selectedTopicDef?.rubricType ? (
-          <div className="mt-2 text-[11px] text-slate-600">
-            Rubric: <span className="font-semibold">{RUBRIC_LABEL[selectedTopicDef.rubricType]}</span>
-          </div>
-        ) : null}
-        {selectedTopicDef?.stageLabel ? (
-          <div className="mt-2 text-[11px] text-slate-600">
-            Stage:{' '}
-            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 font-semibold text-slate-700">
-              {selectedTopicDef.stageLabel}
-            </span>
-          </div>
-        ) : null}
       </div>
 
       <ChildSkillRatingCard
@@ -1442,25 +1391,17 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         skills={progressSkills}
         values={progressRatings}
         onChange={disabled ? undefined : handleSkillRatingChange}
+        compact
       />
 
-      <div className={`${cardBase} bg-white/90 space-y-3`}>
-        <div className="space-y-1">
-          <div className="text-xs font-semibold text-slate-700">Teacher note for parent</div>
-          <textarea
-            rows={2}
-            className="min-h-[68px] w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-5"
-            placeholder="Write one short note for parents about today&apos;s progress."
-            value={teacherRemark}
-            onChange={(e) => setTeacherRemark(e.target.value)}
-            disabled={disabled}
-          />
-        </div>
-
-        <div className="grid gap-3 lg:grid-cols-2">
-          <div className="space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
-              Strengths
+      <div className={`${cardBase} bg-white/90 space-y-2.5`}>
+        <div className="grid gap-2.5 lg:grid-cols-2">
+          <div className="space-y-2 rounded-xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-100/80 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" />
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-800">
+                Strengths
+              </div>
             </div>
             {subskillChips.length === 0 ? (
               <div className="text-[11px] text-slate-500">No subskills listed for this lesson.</div>
@@ -1484,9 +1425,12 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
             )}
           </div>
 
-          <div className="space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
-              Needs practice
+          <div className="space-y-2 rounded-xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-orange-100/80 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.14)]" />
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800">
+                Needs practice
+              </div>
             </div>
             {subskillChips.length === 0 ? (
               <div className="text-[11px] text-slate-500">No subskills listed for this lesson.</div>
@@ -1511,34 +1455,22 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           </div>
         </div>
 
-        {confusionOptions.length > 0 && (
-          <div className="space-y-2">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
-              Area to watch
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {confusionOptions.map((chip) => {
-                const active = confusions.includes(chip);
-                return (
-                  <ChipButton
-                    key={chip}
-                    onClick={() => setConfusions((prev) => toggleInArray(chip, prev))}
-                    disabled={disabled}
-                    active={active}
-                    tone="amber"
-                    size="xs"
-                    label={chip}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <div className="space-y-1">
+          <div className="text-xs font-semibold text-slate-700">Teacher note for parent</div>
+          <textarea
+            rows={2}
+            className="min-h-[56px] w-full resize-none rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm leading-5"
+            placeholder="Write one short note for parents about today&apos;s progress."
+            value={teacherRemark}
+            onChange={(e) => setTeacherRemark(e.target.value)}
+            disabled={disabled}
+          />
+        </div>
       </div>
 
-      <div className="sticky bottom-0 -mx-3 border-t border-slate-200 bg-white/80 px-3 py-2 backdrop-blur md:-mx-4 md:px-4">
+      <div className="sticky bottom-0 -mx-2 border-t border-slate-200 bg-white/90 px-2 py-1.5 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-xs text-slate-600">
+          <div className="text-[11px] text-slate-600">
             {isDirty ? 'Unsaved changes' : 'All changes saved'}
             <span className="ml-2 text-slate-400">• Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}</span>
           </div>
@@ -1547,7 +1479,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
               type="button"
               onClick={handleSave}
               disabled={disabled || saving || !selectedTopicId || !isDirty}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -1556,7 +1488,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
                 type="button"
                 onClick={handleSaveAndBack}
                 disabled={disabled || saving || !selectedTopicId || !isDirty}
-                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="inline-flex items-center rounded-md bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {saving ? 'Saving…' : 'Save & Back'}
               </button>
@@ -1565,7 +1497,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
               type="button"
               onClick={handleSaveAndNext}
               disabled={disabled || saving || !selectedTopicId || !isDirty}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
             >
               {saving ? 'Saving…' : 'Save & Next Topic'}
             </button>
