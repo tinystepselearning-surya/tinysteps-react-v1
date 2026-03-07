@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { app } from '../../lib/firebaseConfig';
+import TinyStepsBrand from '../../components/common/TinyStepsBrand';
 
 const PhonePeCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -71,7 +72,8 @@ const PhonePeCallback: React.FC = () => {
   const goToDashboard = () => navigate('/parent');
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-12">
+    <div className="mx-auto max-w-lg px-4 py-12">
+      <TinyStepsBrand subtitle="Parent billing" className="mb-6 w-fit" />
       <h1 className="text-2xl font-bold mb-4">PhonePe Payment Status</h1>
       <div className="mb-4 rounded-xl border bg-white p-4 shadow-sm">
         <p className="mb-2 text-sm">{message}</p>

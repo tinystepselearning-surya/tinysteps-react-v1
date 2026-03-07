@@ -22,6 +22,7 @@ import { db, auth } from "../../lib/firebaseConfig";
 
 import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
+import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
 import {
   CalendarDays,
   CircleUser,
@@ -42,8 +43,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import AppShellHeader from "../../components/common/AppShellHeader";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
+import {
+  normalizeProgressRatings,
+  normalizeProgressSkillsMeta,
+  skillRatingLegendLabel,
+  summarizeProgressRatings,
+} from "../../lib/skillRatings";
+import { getProgressSkillsForLesson } from "../../lib/progressSkills";
 
 type TabKey =
   | "dashboard"
@@ -1513,6 +1522,19 @@ export default function ParentDashboard() {
       if (updatedAtMs && (!lastUpdatedAtMs || updatedAtMs > lastUpdatedAtMs)) {
         lastUpdatedAtMs = updatedAtMs;
       }
+      const topicMeta = topic as any;
+      const progressSkills = getProgressSkillsForLesson({
+        courseId: displayCourseId,
+        topicId: topic.id,
+        lessonId: topicMeta.lesson ?? topic.id,
+        rubricType: topicMeta.rubricType ?? null,
+        stageLabel: topic.stageLabel ?? null,
+        lessonTitle: topic.displayTitle ?? topic.label,
+        topicLabel: topic.label,
+        area: topicMeta.area ?? "phonics",
+        subskillChips: topicMeta.subskillChips ?? [],
+        progressSkillsMeta: matchedDoc?.progressRatingsMeta,
+      });
 
       return {
         id: topic.id,
@@ -1521,6 +1543,16 @@ export default function ParentDashboard() {
         stageOrder: typeof topic.stageOrder === "number" ? topic.stageOrder : null,
         status,
         mastery: mastery ?? "",
+        progressSkills,
+        progressRatings: normalizeProgressRatings(
+          matchedDoc?.progressRatings,
+          progressSkills,
+          {
+            legacyRatings: matchedDoc?.skillRatings,
+            mastery: matchedDoc?.mastery,
+            checks: matchedDoc?.checks,
+          },
+        ),
         strengthChips: Array.isArray(matchedDoc?.strengthSubskills)
           ? matchedDoc.strengthSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
@@ -1707,6 +1739,81 @@ export default function ParentDashboard() {
     };
   }, [phonicsProgressByCourse]);
 
+  const recentTeacherRatings = useMemo(() => {
+    const selectedCourse = phonicsProgressByCourse[0];
+    if (!selectedCourse) return [] as any[];
+
+    return (selectedCourse.rows ?? [])
+      .map((row: any) => {
+        const progressSkills = Array.isArray(row.progressSkills)
+          ? row.progressSkills
+          : normalizeProgressSkillsMeta(row.progressRatingsMeta);
+        const progressRatings = normalizeProgressRatings(
+          row.progressRatings,
+          progressSkills,
+          {
+            legacyRatings: row.skillRatings,
+            mastery: row.mastery,
+            checks: row.checks,
+          },
+        );
+        const summary = summarizeProgressRatings(progressRatings, progressSkills);
+        const hasMeaningfulData =
+          summary.ratedSkillCount > 0 ||
+          Boolean(String(row.remark ?? "").trim()) ||
+          row.updatedAtMs;
+        return {
+          ...row,
+          courseLabel: selectedCourse.courseLabel,
+          progressSkills,
+          progressRatings,
+          ...summary,
+          hasMeaningfulData,
+        };
+      })
+      .filter((row: any) => row.hasMeaningfulData && row.progressSkills.length > 0)
+      .sort((a: any, b: any) => (b.updatedAtMs ?? 0) - (a.updatedAtMs ?? 0))
+      .slice(0, 6);
+  }, [phonicsProgressByCourse]);
+
+  const recentTeacherRatingsSummary = useMemo(() => {
+    if (recentTeacherRatings.length === 0) return null;
+
+    const strongestMap = new Map<string, number>();
+    const practiceMap = new Map<string, number>();
+    let averageTotal = 0;
+    let averageCount = 0;
+
+    recentTeacherRatings.forEach((lesson: any) => {
+      if (lesson.ratedSkillCount > 0) {
+        averageTotal += lesson.averageRating;
+        averageCount += 1;
+      }
+      (lesson.strongestSkills ?? []).forEach((skill: any) => {
+        strongestMap.set(skill.label, (strongestMap.get(skill.label) ?? 0) + 1);
+      });
+      (lesson.needsPracticeSkills ?? []).forEach((skill: any) => {
+        practiceMap.set(skill.label, (practiceMap.get(skill.label) ?? 0) + 1);
+      });
+    });
+
+    const averageRecentRating = averageCount > 0 ? averageTotal / averageCount : 0;
+
+    return {
+      latestLesson: recentTeacherRatings[0],
+      averageRecentRating,
+      averageRecentLabel: skillRatingLegendLabel(Math.round(averageRecentRating)),
+      strongestSkills: Array.from(strongestMap.entries())
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, 4)
+        .map(([label]) => label),
+      needsPracticeSkills: Array.from(practiceMap.entries())
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .slice(0, 4)
+        .map(([label]) => label),
+    };
+  }, [recentTeacherRatings]);
+
   const normalizedInsightsCourseId = useMemo(() => {
     return normalizeCurriculumCourseId(insightsCourseId) || null;
   }, [insightsCourseId]);
@@ -1779,12 +1886,35 @@ export default function ParentDashboard() {
         typeof topic.stageOrder === "number" && topic.stageOrder > 0
           ? topic.stageOrder
           : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
+      const topicMeta = topic as any;
+      const progressSkills = getProgressSkillsForLesson({
+        courseId: normalizedInsightsCourseId,
+        topicId: topic.id,
+        lessonId: topicMeta.lesson ?? topic.id,
+        rubricType: topicMeta.rubricType ?? null,
+        stageLabel: topic.stageLabel ?? null,
+        lessonTitle: topic.displayTitle ?? topic.label,
+        topicLabel: topic.label,
+        area: topicMeta.area ?? "phonics",
+        subskillChips: topicMeta.subskillChips ?? [],
+        progressSkillsMeta: matchedDoc?.progressRatingsMeta,
+      });
 
       return {
         id: topic.id,
         stageLabel: label,
         stageOrder: order,
         mastery: matchedDoc?.mastery ?? "",
+        progressSkills,
+        progressRatings: normalizeProgressRatings(
+          matchedDoc?.progressRatings,
+          progressSkills,
+          {
+            legacyRatings: matchedDoc?.skillRatings,
+            mastery: matchedDoc?.mastery,
+            checks: matchedDoc?.checks,
+          },
+        ),
         strengthChips: Array.isArray(matchedDoc?.strengthSubskills)
           ? matchedDoc.strengthSubskills.filter((item: unknown) => typeof item === "string").slice(0, 3)
           : [],
@@ -2527,22 +2657,17 @@ export default function ParentDashboard() {
           </aside>
 
           <main className="flex-1">
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm px-6 py-5">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    Parent Dashboard
-                  </p>
-                  <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                    Hi, {user?.displayName || "Parent"}
-                  </h1>
-                  {selectedKid && (
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
-                      Viewing: {selectedKid.fullName || "Child"}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <AppShellHeader
+              roleLabel="Parent"
+              title={<>Hi, {user?.displayName || "Parent"}</>}
+              subtitle={
+                selectedKid
+                  ? `Viewing: ${selectedKid.fullName || "Child"}`
+                  : "Track your child’s classes, insights, and payments in one place."
+              }
+              className="dark:border-slate-800 dark:bg-slate-900"
+              actions={
+                <>
                   <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-3">
                     <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Section
@@ -2575,9 +2700,9 @@ export default function ParentDashboard() {
                       <span className="hidden sm:inline">Logout</span>
                     </Button>
                   </div>
-                </div>
-              </div>
-            </div>
+                </>
+              }
+            />
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
               <DialogContent className="max-w-3xl">
@@ -2844,11 +2969,62 @@ export default function ParentDashboard() {
                                         : "—"}
                                   </div>
                                 </div>
+                            </div>
+                          </div>
+                          {recentTeacherRatingsSummary?.latestLesson && (
+                            <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-indigo-50 px-4 py-3 shadow-sm">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="space-y-1">
+                                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                                    Latest Teacher-Rated Progress
+                                  </div>
+                                  <div className="text-sm font-semibold text-slate-900">
+                                    {recentTeacherRatingsSummary.latestLesson.label}
+                                  </div>
+                                  <div className="text-xs text-slate-500">
+                                    {recentTeacherRatingsSummary.latestLesson.stageLabel || selectedCourse.courseLabel}
+                                    {recentTeacherRatingsSummary.latestLesson.updatedAtMs
+                                      ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
+                                      : ""}
+                                  </div>
+                                  {recentTeacherRatingsSummary.latestLesson.remark ? (
+                                    <div className="max-w-2xl text-xs text-slate-600">
+                                      {recentTeacherRatingsSummary.latestLesson.remark}
+                                    </div>
+                                  ) : null}
+                                </div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
+                                    {recentTeacherRatingsSummary.latestLesson.ratedSkillCount}/
+                                    {recentTeacherRatingsSummary.latestLesson.totalSkillCount} skills rated
+                                  </span>
+                                  <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+                                    {recentTeacherRatingsSummary.latestLesson.roundedAverageRating}/4 ·{" "}
+                                    {skillRatingLegendLabel(
+                                      recentTeacherRatingsSummary.latestLesson.roundedAverageRating,
+                                    )}
+                                  </span>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedCurriculumTopic({
+                                        ...recentTeacherRatingsSummary.latestLesson,
+                                        courseLabel: selectedCourse.courseLabel,
+                                      });
+                                      setCurriculumTopicModalOpen(true);
+                                    }}
+                                    className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
+                                  >
+                                    View lesson
+                                  </Button>
+                                </div>
                               </div>
                             </div>
-                            <div>
-                              <div className="flex items-center justify-between text-xs text-gray-500">
-                                <span>Lessons completed</span>
+                          )}
+                          <div>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <span>Lessons completed</span>
                                 <span>
                                   {selectedCourse.completedCount} of {selectedCourse.totalTopics} lessons completed
                                 </span>
@@ -3046,12 +3222,18 @@ export default function ParentDashboard() {
                         </span>
                       </div>
                     )}
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs text-gray-500">Mastery</span>
-                      <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
-                        {formatMasteryLabel(selectedCurriculumTopic.mastery) || "Getting started"}
-                      </span>
-                    </div>
+                    <ChildSkillRatingCard
+                      title="Child Progress"
+                      subtitle="Teacher ratings for this lesson."
+                      skills={
+                        Array.isArray(selectedCurriculumTopic.progressSkills)
+                          ? selectedCurriculumTopic.progressSkills
+                          : normalizeProgressSkillsMeta(selectedCurriculumTopic.progressRatingsMeta)
+                      }
+                      values={selectedCurriculumTopic.progressRatings ?? {}}
+                      readOnly
+                      className="p-3"
+                    />
                     {selectedCurriculumTopic.focusChips?.length > 0 && (
                       <div>
                         <div className="text-xs text-gray-500">Focus</div>
@@ -3132,6 +3314,34 @@ export default function ParentDashboard() {
 
               {insightsCourseOptions.length > 0 && (
                 <>
+                  {recentTeacherRatingsSummary?.latestLesson && (
+                    <div className="rounded-xl border border-sky-100 bg-sky-50/70 px-4 py-3">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                            Teacher ratings
+                          </div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            {recentTeacherRatingsSummary.latestLesson.label}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {recentTeacherRatingsSummary.latestLesson.stageLabel || recentTeacherRatingsSummary.latestLesson.courseLabel}
+                            {recentTeacherRatingsSummary.latestLesson.updatedAtMs
+                              ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
+                              : ""}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-slate-700">
+                            Recent average {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
+                          </span>
+                          <span className="rounded-full bg-indigo-600 px-2.5 py-1 font-semibold text-white">
+                            {recentTeacherRatingsSummary.averageRecentLabel}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {renderStageGrid(
                     insightsStageData?.stageSummaries ?? [],
                     insightsStageData?.courseId ?? null,
@@ -3246,7 +3456,9 @@ export default function ParentDashboard() {
               };
 
               const skillsData = skillsInsightData;
-              const hasSkillData = Boolean(skillsData && skillsData.totalSkills > 0);
+              const hasSkillData = Boolean(
+                (skillsData && skillsData.totalSkills > 0) || recentTeacherRatings.length > 0
+              );
 
               if (!hasSkillData) {
                 return (
@@ -3257,11 +3469,11 @@ export default function ParentDashboard() {
                       </div>
                       <div>
                         <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-2">
-                          Skills insights are getting ready
+                          Teacher ratings are getting ready
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Once teachers tag skills on lessons, this page will show
-                          strengths, practice areas, and stage-wise focus.
+                          Once teachers rate a few lessons, this page will show
+                          lesson-based stars, teacher notes, and practice signals.
                         </p>
                       </div>
                     </div>
@@ -3269,73 +3481,222 @@ export default function ParentDashboard() {
                 );
               }
 
-              return (
-                <div className="space-y-6">
-                  <Card className="p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                          Skills Snapshot
-                        </h2>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          {selectedKid?.fullName
-                            ? `Viewing: ${selectedKid.fullName}`
-                            : "Select a child"}{" "}
-                          {skillsData?.courseLabel ? `· ${skillsData.courseLabel}` : ""}
-                        </p>
-                      </div>
-                      <div className="text-xs uppercase tracking-wide text-gray-500">
-                        Updated by teacher
-                      </div>
-                    </div>
+	              return (
+	                <div className="space-y-6">
+	                  <Card className="p-6 space-y-5">
+	                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+	                      <div>
+	                        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+	                          Teacher Progress Snapshot
+	                        </h2>
+	                        <p className="text-sm text-gray-600 dark:text-gray-400">
+	                          {selectedKid?.fullName
+	                            ? `Viewing: ${selectedKid.fullName}`
+	                            : "Select a child"}{" "}
+	                          {skillsData?.courseLabel ? `· ${skillsData.courseLabel}` : ""}
+	                        </p>
+	                      </div>
+	                      <div className="text-xs uppercase tracking-wide text-gray-500">
+	                        Lesson-based ratings
+	                      </div>
+	                    </div>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
-                        <div className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">
-                          Strengths
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {skillsData?.strengths.map((skill) => (
-                            <span
-                              key={`strength-${skill.tag}`}
-                              className="px-2.5 py-1 rounded-full bg-white text-emerald-800 text-xs font-semibold border border-emerald-200"
-                            >
-                              {formatSkillTag(skill.tag)}
-                            </span>
-                          ))}
-                        </div>
-                        {skillsData?.strengths.length === 0 && (
-                          <div className="text-xs text-emerald-700 mt-2">
-                            Strengths will appear as mastery grows.
-                          </div>
-                        )}
-                      </div>
+	                    {recentTeacherRatingsSummary?.latestLesson ? (
+	                      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+	                        <div className="rounded-2xl border border-sky-100 bg-gradient-to-br from-sky-50 via-white to-indigo-50 p-4">
+	                          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+	                            <div>
+	                              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+	                                Latest rated lesson
+	                              </div>
+	                              <div className="mt-1 text-lg font-semibold text-slate-900">
+	                                {recentTeacherRatingsSummary.latestLesson.label}
+	                              </div>
+	                              <div className="mt-1 text-xs text-slate-500">
+	                                {recentTeacherRatingsSummary.latestLesson.stageLabel || recentTeacherRatingsSummary.latestLesson.courseLabel}
+	                                {recentTeacherRatingsSummary.latestLesson.updatedAtMs
+	                                  ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
+	                                  : ""}
+	                              </div>
+	                            </div>
+	                            <div className="flex flex-wrap items-center gap-2">
+	                              <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
+	                                {recentTeacherRatingsSummary.latestLesson.ratedSkillCount}/
+	                                {recentTeacherRatingsSummary.latestLesson.totalSkillCount} skills rated
+	                              </span>
+	                              <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
+	                                {recentTeacherRatingsSummary.latestLesson.roundedAverageRating}/4 ·{" "}
+	                                {skillRatingLegendLabel(
+	                                  recentTeacherRatingsSummary.latestLesson.roundedAverageRating,
+	                                )}
+	                              </span>
+	                            </div>
+	                          </div>
 
-                      <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
-                        <div className="text-xs uppercase tracking-wide text-amber-700 font-semibold">
-                          Needs Practice
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {skillsData?.needsPractice.map((skill) => (
-                            <span
-                              key={`practice-${skill.tag}`}
-                              className="px-2.5 py-1 rounded-full bg-white text-amber-800 text-xs font-semibold border border-amber-200"
-                            >
-                              {formatSkillTag(skill.tag)}
-                            </span>
-                          ))}
-                        </div>
-                        {skillsData?.needsPractice.length === 0 && (
-                          <div className="text-xs text-amber-700 mt-2">
-                            Practice areas will show up once a few lessons are tagged.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </Card>
+	                          <div className="mt-4">
+	                            <ChildSkillRatingCard
+	                              title={null}
+	                              skills={recentTeacherRatingsSummary.latestLesson.progressSkills}
+	                              values={recentTeacherRatingsSummary.latestLesson.progressRatings}
+	                              readOnly
+	                              compact
+	                              showLegend={false}
+	                              className="border-slate-200 bg-white/90"
+	                            />
+	                          </div>
 
-                  <Card className="p-6">
-                    <div className="flex items-center justify-between mb-4">
+	                          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+	                            <div className="space-y-1">
+	                              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+	                                Teacher note
+	                              </div>
+	                              <div className="text-sm text-slate-700">
+	                                {recentTeacherRatingsSummary.latestLesson.remark || "No note added for this lesson yet."}
+	                              </div>
+	                            </div>
+	                            <Button
+	                              variant="outline"
+	                              size="sm"
+	                              onClick={() => {
+	                                setSelectedCurriculumTopic(recentTeacherRatingsSummary.latestLesson);
+	                                setCurriculumTopicModalOpen(true);
+	                              }}
+	                              className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
+	                            >
+	                              Open lesson details
+	                            </Button>
+	                          </div>
+	                        </div>
+
+	                        <div className="space-y-4">
+	                          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+	                            <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+	                              Recent lesson performance
+	                            </div>
+	                            <div className="mt-2 text-2xl font-semibold text-slate-900">
+	                              {recentTeacherRatingsSummary.averageRecentRating.toFixed(1)}/4
+	                            </div>
+	                            <div className="mt-1 text-sm text-slate-600">
+	                              {recentTeacherRatingsSummary.averageRecentLabel} across recent teacher-rated lessons
+	                            </div>
+	                          </div>
+
+	                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+	                            <div className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 font-semibold">
+	                              Strongest skills
+	                            </div>
+	                            <div className="mt-3 flex flex-wrap gap-2">
+	                              {recentTeacherRatingsSummary.strongestSkills.map((skill) => (
+	                                <span
+	                                  key={`strength-${skill}`}
+	                                  className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-800"
+	                                >
+	                                  {skill}
+	                                </span>
+	                              ))}
+	                              {recentTeacherRatingsSummary.strongestSkills.length === 0 && (
+	                                <span className="text-xs text-emerald-700">
+	                                  Stronger areas will appear as more lessons are rated.
+	                                </span>
+	                              )}
+	                            </div>
+	                          </div>
+
+	                          <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4">
+	                            <div className="text-[10px] uppercase tracking-[0.18em] text-amber-700 font-semibold">
+	                              Needs practice
+	                            </div>
+	                            <div className="mt-3 flex flex-wrap gap-2">
+	                              {recentTeacherRatingsSummary.needsPracticeSkills.map((skill) => (
+	                                <span
+	                                  key={`practice-${skill}`}
+	                                  className="rounded-full border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-800"
+	                                >
+	                                  {skill}
+	                                </span>
+	                              ))}
+	                              {recentTeacherRatingsSummary.needsPracticeSkills.length === 0 && (
+	                                <span className="text-xs text-amber-700">
+	                                  Practice areas will show once teachers rate more lessons.
+	                                </span>
+	                              )}
+	                            </div>
+	                          </div>
+	                        </div>
+	                        </div>
+	                    ) : (
+	                      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-sm text-slate-500">
+	                        Teacher lesson ratings will appear here once a lesson is reviewed with stars.
+	                      </div>
+	                    )}
+	                  </Card>
+
+	                  <Card className="p-6">
+	                    <div className="flex items-center justify-between mb-4">
+	                      <div>
+	                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
+	                          Recent Teacher Ratings
+	                        </h3>
+	                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+	                          Lesson-by-lesson star ratings shared by your child&apos;s teacher.
+	                        </p>
+	                      </div>
+	                      <span className="text-xs text-gray-500">
+	                        {recentTeacherRatings.length} recent lessons
+	                      </span>
+	                    </div>
+	                    <div className="space-y-4">
+	                      {recentTeacherRatings.length > 0 ? (
+	                        recentTeacherRatings.map((lesson: any) => (
+	                          <div
+	                            key={`lesson-rating-${lesson.id}`}
+	                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+	                          >
+	                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+	                              <div>
+	                                <div className="text-sm font-semibold text-slate-900">{lesson.label}</div>
+	                                <div className="mt-1 text-xs text-slate-500">
+	                                  {lesson.stageLabel || lesson.courseLabel}
+	                                  {lesson.updatedAtMs ? ` · ${formatTimestamp(lesson.updatedAtMs)}` : ""}
+	                                </div>
+	                              </div>
+	                              <div className="flex flex-wrap items-center gap-2 text-xs">
+	                                <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-700">
+	                                  {lesson.ratedSkillCount}/{lesson.totalSkillCount} skills
+	                                </span>
+	                                <span className="rounded-full bg-indigo-600 px-2.5 py-1 font-semibold text-white">
+	                                  {lesson.roundedAverageRating}/4 · {skillRatingLegendLabel(lesson.roundedAverageRating)}
+	                                </span>
+	                              </div>
+	                            </div>
+	                            <div className="mt-3">
+	                              <ChildSkillRatingCard
+	                                title={null}
+	                                skills={lesson.progressSkills}
+	                                values={lesson.progressRatings}
+	                                readOnly
+	                                compact
+	                                showLegend={false}
+	                                className="border-slate-200 bg-slate-50/70"
+	                              />
+	                            </div>
+	                            {lesson.remark ? (
+	                              <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+	                                <span className="font-semibold text-slate-800">Teacher note:</span> {lesson.remark}
+	                              </div>
+	                            ) : null}
+	                          </div>
+	                        ))
+	                      ) : (
+	                        <div className="text-sm text-gray-500">
+	                          Recent lesson ratings will appear here once teachers rate lessons.
+	                        </div>
+	                      )}
+	                    </div>
+	                  </Card>
+
+	                  <Card className="p-6">
+	                    <div className="flex items-center justify-between mb-4">
                       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">
                         Skills by Stage
                       </h3>

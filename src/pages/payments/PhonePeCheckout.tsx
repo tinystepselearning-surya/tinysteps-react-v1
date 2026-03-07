@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '../../components/ui/card';
+import TinyStepsBrand from '../../components/common/TinyStepsBrand';
 import { app, db } from '../../lib/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -114,8 +115,10 @@ const PhonePeCheckout: React.FC = () => {
     invoice?.amount != null ? `₹${invoice.amount.toFixed(2)}` : '—';
 
   return (
-    <div className="min-h-screen flex justify-center items-center bg-slate-50 px-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="min-h-screen bg-slate-50 px-4 py-6">
+      <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center gap-6">
+        <TinyStepsBrand subtitle="Parent billing" className="w-fit" />
+        <Card className="w-full max-w-md self-center shadow-lg">
         <CardHeader>
           <CardTitle className="text-xl font-semibold">
             Tiny Steps – Payment
@@ -205,6 +208,7 @@ const PhonePeCheckout: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

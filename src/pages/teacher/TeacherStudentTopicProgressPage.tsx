@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { doc, getDoc } from 'firebase/firestore';
 import StudentTopicProgressEditor from '../../components/teacher/StudentTopicProgressEditor';
 import { db } from '../../lib/firebaseConfig';
+import TinyStepsBrand from '../../components/common/TinyStepsBrand';
 
 const TeacherStudentTopicProgressPage: React.FC = () => {
   const { kidId } = useParams<{ kidId: string }>();
@@ -94,27 +95,37 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
   }
 
   return (
-    <div className="px-4 pb-8 space-y-4">
+    <div className="px-4 pb-8 pt-4 space-y-4">
       <div className="sticky top-0 z-20 -mx-4 border-b border-slate-200 bg-white/90 px-4 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
-          >
-            ← {fromStudents || returnTo ? 'Back to My Students' : 'Back'}
-          </button>
-          <div className="text-sm font-semibold text-slate-900">
-            {kidName ?? 'Student'} • Topic Progress
+          <div className="flex min-w-0 items-center gap-4">
+            <TinyStepsBrand subtitle="Teacher workspace" className="shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                Teacher
+              </div>
+              <div className="truncate text-sm font-semibold text-slate-900">
+                {kidName ?? 'Student'} • Topic Progress
+              </div>
+            </div>
           </div>
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-sm font-semibold text-slate-500 hover:text-slate-900"
-            aria-label="Close"
-          >
-            ✕ Close
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+            >
+              ← {fromStudents || returnTo ? 'Back to My Students' : 'Back'}
+            </button>
+            <button
+              type="button"
+              onClick={handleBack}
+              className="text-sm font-semibold text-slate-500 hover:text-slate-900"
+              aria-label="Close"
+            >
+              ✕ Close
+            </button>
+          </div>
         </div>
       </div>
 

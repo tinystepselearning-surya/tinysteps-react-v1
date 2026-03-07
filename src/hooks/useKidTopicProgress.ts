@@ -2,6 +2,18 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
+import {
+  deriveLegacyProgressFromRatings,
+  hasExplicitProgressRatings,
+  normalizeProgressRatings,
+  normalizeProgressSkillsMeta,
+  type ProgressRatings,
+} from '../lib/skillRatings';
+import {
+  LEGACY_PROGRESS_SKILLS,
+  progressSkillsFromRatingKeys,
+  type ProgressSkillDefinition,
+} from '../lib/progressSkills';
 
 export interface KidTopicProgress {
   id: string;
@@ -11,6 +23,9 @@ export interface KidTopicProgress {
   mastery?: number | null;
   masteryKey?: string | null;
   masteryPct?: number | null;
+  progressRatings?: ProgressRatings;
+  progressSkillsMeta?: ProgressSkillDefinition[];
+  skillRatings?: ProgressRatings;
   scoreBand?: string | null;
   lastEvidence?: string | null;
   nextAction?: string | null;
@@ -103,7 +118,39 @@ export function useKidTopicProgress(
 
         const arr: KidTopicProgress[] = snap.docs.map((d) => {
           const data = d.data() as any;
-          const masteryNorm = normalizeMastery(data.mastery);
+          const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
+          const resolvedArea =
+            data.area === 'phonics' || data.area === 'grammar' || data.area === 'speaking'
+              ? data.area
+              : 'general';
+          const resolvedSkills =
+            progressSkillsMeta.length > 0
+              ? progressSkillsMeta
+              : hasExplicitProgressRatings(data.progressRatings)
+                ? progressSkillsFromRatingKeys(Object.keys(data.progressRatings), resolvedArea)
+                : hasExplicitProgressRatings(data.skillRatings)
+                  ? LEGACY_PROGRESS_SKILLS
+                  : [];
+          const progressRatings = normalizeProgressRatings(
+            data.progressRatings,
+            resolvedSkills,
+            {
+              legacyRatings: data.skillRatings,
+              mastery: data.mastery,
+              checks: data.checks,
+            },
+          );
+          const legacyFromRatings = deriveLegacyProgressFromRatings(
+            progressRatings,
+            resolvedSkills.length > 0 ? resolvedSkills : LEGACY_PROGRESS_SKILLS,
+          );
+          const masteryNorm =
+            hasExplicitProgressRatings(data.progressRatings) || hasExplicitProgressRatings(data.skillRatings)
+            ? {
+                masteryKey: legacyFromRatings.masteryKey,
+                masteryPct: legacyFromRatings.masteryPct,
+              }
+            : normalizeMastery(data.mastery);
 
           return {
             // Spread raw Firestore data *first* so our computed fields win
@@ -112,6 +159,9 @@ export function useKidTopicProgress(
             topicName: data.topicName ?? data.name ?? d.id,
             area: data.area,
             subskill: data.subskill,
+            progressRatings,
+            progressSkillsMeta,
+            skillRatings: progressRatings,
             mastery: masteryNorm.masteryPct,
             masteryKey: masteryNorm.masteryKey,
             masteryPct: masteryNorm.masteryPct,

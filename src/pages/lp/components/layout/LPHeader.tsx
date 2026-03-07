@@ -4,6 +4,7 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import AppShellHeader from '../../../../components/common/AppShellHeader';
 
 interface LPHeaderProps {
   name: string;
@@ -24,16 +25,15 @@ export const LPHeader: FC<LPHeaderProps> = ({ name }) => {
   };
 
   return (
-    <header className="flex items-center justify-between mb-6">
-      <div>
-        <h1 className="text-3xl font-bold">Learning Partner Hub</h1>
-        <p className="text-muted-foreground">Welcome back, {name}</p>
-      </div>
-      <div className="flex items-center gap-4">
+    <AppShellHeader
+      roleLabel="Learning Partner"
+      title="Learning Partner Hub"
+      subtitle={<>Welcome back, <span className="font-semibold text-slate-900">{name}</span></>}
+      actions={
         <Button variant="outline" onClick={handleLogout}>
           Logout
         </Button>
-      </div>
-    </header>
+      }
+    />
   );
-};;
+};

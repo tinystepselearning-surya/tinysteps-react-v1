@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import AppShellHeader from '../../../../components/common/AppShellHeader';
 
 interface TeacherHeaderProps {
   name?: string;
@@ -41,23 +42,21 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white/90 px-6 py-5 shadow-sm">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-            Teacher Dashboard
-          </p>
-          <h1 className="text-2xl font-semibold text-slate-900">
-            Hi, {name || 'Teacher'}
-          </h1>
-          {typeof upcomingCount === 'number' && (
-            <p className="text-sm text-slate-600">
-              You have <span className="font-semibold">{upcomingCount}</span> session
+    <AppShellHeader
+      roleLabel="Teacher"
+      title={<>Hi, {name || 'Teacher'}</>}
+      subtitle={
+        typeof upcomingCount === 'number'
+          ? (
+            <>
+              You have <span className="font-semibold text-slate-900">{upcomingCount}</span> session
               {upcomingCount === 1 ? '' : 's'} today.
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
+            </>
+          )
+          : 'Stay on top of lessons, student progress, and upcoming sessions.'
+      }
+      actions={
+        <>
           <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
             <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-400">
               Section
@@ -88,8 +87,8 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    />
   );
 };

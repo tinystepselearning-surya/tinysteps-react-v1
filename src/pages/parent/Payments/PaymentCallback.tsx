@@ -6,6 +6,7 @@ import { toast } from '@components/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import TinyStepsBrand from '../../../components/common/TinyStepsBrand';
 
 const PaymentCallback: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -76,8 +77,10 @@ const PaymentCallback: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="mx-auto flex min-h-screen max-w-4xl flex-col justify-center gap-6">
+        <TinyStepsBrand subtitle="Parent billing" className="w-fit" />
+        <Card className="w-full max-w-md self-center">
         <CardHeader className="text-center">
           <CardTitle className="flex items-center justify-center gap-2">
             {status === 'loading' && <Loader2 className="h-6 w-6 animate-spin" />}
@@ -126,6 +129,7 @@ const PaymentCallback: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

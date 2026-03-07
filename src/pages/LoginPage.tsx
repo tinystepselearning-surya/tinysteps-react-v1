@@ -4,6 +4,7 @@ import { applySeo } from '../lib/seo';
 import { useSearchParams, useLocation } from 'react-router-dom';
 import { handleLogin, handleLoginWithGoogle } from '../lib/auth';
 import type { AuthRole } from '../store/useAuthStore';
+import AuthPageBrandHeader from '../components/common/AuthPageBrandHeader';
 
 const VALID_ROLES: AuthRole[] = [
   'admin',
@@ -101,8 +102,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-orange-50">
-      <div className="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/85 p-7 shadow-[0_18px_60px_rgba(2,6,23,0.12)] backdrop-blur sm:p-8">
+      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:py-10">
+        {expectedRole ? <AuthPageBrandHeader label={title} /> : null}
+
+        <div className="flex flex-1 items-center justify-center py-6">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/85 p-7 shadow-[0_18px_60px_rgba(2,6,23,0.12)] backdrop-blur sm:p-8">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
               {title}
@@ -199,6 +203,7 @@ export default function LoginPage() {
           <p className="mt-5 text-center text-xs text-slate-500">
             Trouble signing in? Message us on WhatsApp and we’ll help.
           </p>
+        </div>
         </div>
       </div>
     </div>

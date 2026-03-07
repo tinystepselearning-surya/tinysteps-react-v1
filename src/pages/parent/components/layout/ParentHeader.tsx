@@ -1,10 +1,10 @@
 import type { FC } from 'react';
-import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
+import AppShellHeader from '../../../../components/common/AppShellHeader';
 
 interface ParentHeaderProps {
   name?: string;
@@ -24,24 +24,30 @@ export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpe
     } catch (error) {
       console.error('Logout error: ', error);
     }
-  }
+  };
   return (
-    <Card className="p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between bg-gradient-to-r from-rose-50 to-orange-50 dark:from-slate-900 dark:to-slate-800">
-      <div>
-        <p className="text-sm text-muted-foreground">Welcome back</p>
-        <h1 className="text-2xl font-bold">{name || 'Parent'}</h1>
-        {typeof totalChildren === 'number' && (
-          <p className="text-sm text-muted-foreground mt-1">
-            Managing <span className="font-semibold">{totalChildren}</span> child{totalChildren === 1 ? '' : 'ren'}.
-          </p>
-        )}
-      </div>
-      <div className="flex items-center gap-3">
-        <Button variant="default" onClick={onOpenKidsView}>Kids Page</Button>
-        <Button variant="outline" onClick={() => navigate('/parent/profile')}>Edit Profile</Button>
-        <Button variant="secondary" onClick={() => navigate('/parent/payments')}>Payment Methods</Button>
-        <Button variant="outline" onClick={handleLogout}>Logout</Button>
-      </div>
-    </Card>
+    <AppShellHeader
+      roleLabel="Parent"
+      title={`Welcome back, ${name || 'Parent'}`}
+      subtitle={
+        typeof totalChildren === 'number'
+          ? (
+            <>
+              Managing <span className="font-semibold text-slate-900">{totalChildren}</span> child
+              {totalChildren === 1 ? '' : 'ren'}.
+            </>
+          )
+          : 'Track classes, progress, and payments in one place.'
+      }
+      className="bg-gradient-to-r from-rose-50 via-white to-orange-50 dark:from-slate-900 dark:to-slate-800"
+      actions={
+        <>
+          {onOpenKidsView ? <Button variant="default" onClick={onOpenKidsView}>Kids Page</Button> : null}
+          <Button variant="outline" onClick={() => navigate('/parent/profile')}>Edit Profile</Button>
+          <Button variant="secondary" onClick={() => navigate('/parent/payments')}>Payment Methods</Button>
+          <Button variant="outline" onClick={handleLogout}>Logout</Button>
+        </>
+      }
+    />
   );
 };

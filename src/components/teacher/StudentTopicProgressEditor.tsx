@@ -9,6 +9,13 @@ import {
   useKidTopicProgress,
   type KidTopicProgress,
 } from '../../hooks/useKidTopicProgress';
+import ChildSkillRatingCard from '../progress/ChildSkillRatingCard';
+import {
+  deriveLegacyProgressFromRatings,
+  normalizeProgressRatings,
+  type ProgressRatings,
+} from '../../lib/skillRatings';
+import { getProgressSkillsForLesson } from '../../lib/progressSkills';
 
 interface StudentTopicProgressEditorProps {
   kidId: string;
@@ -721,11 +728,6 @@ const toggleInArray = (value: string, items: string[], max?: number): string[] =
   return [...items, value];
 };
 
-const labelizeLevel = (value: string): string =>
-  value
-    .replace(/_/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-
 const RUBRIC_LABEL: Record<RubricType, string> = {
   single_sound: 'Single sound',
   short_vowels: 'Short vowels',
@@ -859,7 +861,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   kidName,
   onSaveAndBack,
 }) => {
-  const { config, loading: configLoading, error: configError } =
+  const { loading: configLoading, error: configError } =
     useProgressPicklists();
 
   const {
@@ -876,23 +878,15 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('phonics-foundations');
   const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(COURSE_DEFINITIONS);
   const [courseManuallySelected, setCourseManuallySelected] = useState(false);
-  const [checks, setChecks] = useState<Record<string, string>>({
-    recognise: 'not_started',
-    say: 'not_started',
-    read: 'not_started',
-    write: 'not_started',
-  });
+  const [progressRatings, setProgressRatings] = useState<ProgressRatings>({});
   const [strengthSubskills, setStrengthSubskills] = useState<string[]>([]);
   const [practiceSubskills, setPracticeSubskills] = useState<string[]>([]);
   const [confusions, setConfusions] = useState<string[]>([]);
-  const [mastery, setMastery] = useState<string>('not_started');
   const [teacherRemark, setTeacherRemark] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [lastSavedAt, setLastSavedAt] = useState<number | null>(null);
   const [baseline, setBaseline] = useState<string>('');
-  const [checksTouched, setChecksTouched] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const resolvedCourseOptions = useMemo<CourseDefinition[]>(() => courseOptions, [courseOptions]);
 
@@ -1009,6 +1003,21 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     () => courseTopics.find((t) => t.id === selectedTopicId),
     [courseTopics, selectedTopicId],
   );
+  const progressSkills = useMemo(
+    () =>
+      getProgressSkillsForLesson({
+        courseId: selectedCourseId || undefined,
+        topicId: selectedTopicDef?.id,
+        lessonId: selectedTopicDef?.lesson,
+        rubricType: selectedTopicDef?.rubricType,
+        stageLabel: selectedTopicDef?.stageLabel,
+        lessonTitle: selectedTopicDef?.displayTitle,
+        topicLabel: selectedTopicDef?.label,
+        area: selectedTopicDef?.area,
+        subskillChips: selectedTopicDef?.subskillChips,
+      }),
+    [selectedCourseId, selectedTopicDef],
+  );
 
   const topicGroups = useMemo(() => {
     if (courseTopics.length === 0) return [];
@@ -1120,30 +1129,14 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       });
     }
 
-    if (existing) {
-      const existingMastery =
-        (existing as any).masteryKey ?? (existing as any).mastery ?? 'not_started';
-      setMastery(normalizeMasteryKey(existingMastery));
-      setTeacherRemark(existing.teacherRemark || '');
-      const existingChecks = (existing as any).checks ?? {};
-      setChecks({
-        recognise: existingChecks?.recognise ?? 'not_started',
-        say: existingChecks?.say ?? 'not_started',
-        read: existingChecks?.read ?? 'not_started',
-        write: existingChecks?.write ?? 'not_started',
-      });
-      setChecksTouched(false);
-    } else {
-      setMastery('not_started');
-      setTeacherRemark('');
-      setChecks({
-        recognise: 'not_started',
-        say: 'not_started',
-        read: 'not_started',
-        write: 'not_started',
-      });
-      setChecksTouched(false);
-    }
+    setProgressRatings(
+      normalizeProgressRatings(existing?.progressRatings, progressSkills, {
+        legacyRatings: existing?.skillRatings,
+        mastery: (existing as any)?.masteryKey ?? (existing as any)?.mastery,
+        checks: (existing as any)?.checks,
+      }),
+    );
+    setTeacherRemark(existing?.teacherRemark || '');
 
     setSaveMessage(null);
     const allowedSubskills = new Set((selectedTopicDef?.subskillChips ?? []) as string[]);
@@ -1181,24 +1174,13 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     }
     setConfusions(filteredConfusions);
 
-    const baselineMastery = existing
-      ? normalizeMasteryKey((existing as any).masteryKey ?? (existing as any).mastery)
-      : 'not_started';
+    const baselineSkillRatings = normalizeProgressRatings(existing?.progressRatings, progressSkills, {
+      legacyRatings: existing?.skillRatings,
+      mastery: (existing as any)?.masteryKey ?? (existing as any)?.mastery,
+      checks: (existing as any)?.checks,
+    });
     const snapshot = JSON.stringify({
-      mastery: baselineMastery,
-      checks: existing
-        ? {
-            recognise: (existing as any).checks?.recognise ?? 'not_started',
-            say: (existing as any).checks?.say ?? 'not_started',
-            read: (existing as any).checks?.read ?? 'not_started',
-            write: (existing as any).checks?.write ?? 'not_started',
-          }
-        : {
-            recognise: 'not_started',
-            say: 'not_started',
-            read: 'not_started',
-            write: 'not_started',
-          },
+      progressRatings: baselineSkillRatings,
       strengthSubskills: [...(filteredStrengths.length === 0 && filteredPractice.length === 0 ? filteredFallback : filteredStrengths)].sort(),
       needsPracticeSubskills: [...(filteredStrengths.length === 0 && filteredPractice.length === 0 ? [] : filteredPractice)].sort(),
       selectedSubskills: [...new Set([
@@ -1209,7 +1191,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       teacherRemark: existing ? (existing as any).teacherRemark ?? '' : '',
     });
     setBaseline(snapshot);
-  }, [selectedTopicId, existingTopics, selectedTopicDef]);
+  }, [selectedTopicId, existingTopics, selectedTopicDef, progressSkills]);
 
   const handleSave = async (): Promise<boolean> => {
     if (!kidId || !selectedTopicId || !selectedTopicDef) return false;
@@ -1219,6 +1201,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       setSaveMessage(null);
 
       const ref = doc(db, 'students', kidId, 'progress', selectedTopicId);
+      const legacyProgress = deriveLegacyProgressFromRatings(progressRatings, progressSkills);
 
       const topicDisplayTitle =
         selectedTopicDef.displayTitle ||
@@ -1234,8 +1217,14 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           area: selectedTopicDef.area,
           courseId: selectedCourseId || null,
           courseLabel: selectedCourseId ? COURSE_LABEL_BY_ID[selectedCourseId] : null,
-          mastery: mastery || 'not_started',
-          checks,
+          progressRatings,
+          progressRatingsMeta: progressSkills.map((skill) => ({
+            key: skill.key,
+            label: skill.label,
+            area: skill.area,
+          })),
+          mastery: legacyProgress.mastery,
+          checks: legacyProgress.checks,
           strengthSubskills: [...strengthSubskills].sort(),
           needsPracticeSubskills: [...practiceSubskills].sort(),
           selectedSubskills: [...combinedSubskills].sort(),
@@ -1250,8 +1239,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
       setLastSavedAt(Date.now());
       setBaseline(
         JSON.stringify({
-          mastery,
-          checks,
+          progressRatings,
           strengthSubskills: [...strengthSubskills].sort(),
           needsPracticeSubskills: [...practiceSubskills].sort(),
           selectedSubskills: [...combinedSubskills].sort(),
@@ -1284,31 +1272,25 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     }
   };
 
+  const handleSkillRatingChange = (key: string, value: number) => {
+    setProgressRatings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
   const disabled =
     topicsLoading || curriculumLoading || !selectedCourseId || courseTopics.length === 0;
-  const DEFAULT_MASTERY_LEVELS = [
-    'not_started',
-    'emerging',
-    'developing',
-    'proficient',
-    'mastered',
-  ];
-  const checkLevels =
-    Array.isArray(config?.mastery) && config.mastery.length > 0
-      ? config.mastery
-      : DEFAULT_MASTERY_LEVELS;
   const subskillChips = selectedTopicDef?.subskillChips ?? [];
   const confusionOptions = selectedTopicDef?.confusionOptions ?? [];
-  const showChecks = selectedTopicDef?.area === 'phonics';
-  const containerClass = 'rounded-lg border border-slate-200 bg-white text-sm space-y-2 p-3';
-  const cardBase = 'rounded-xl border border-slate-200 p-3';
+  const containerClass = 'rounded-lg border border-slate-200 bg-white text-sm space-y-2 p-2.5';
+  const cardBase = 'rounded-xl border border-slate-200 p-2.5';
   const combinedSubskills = useMemo(
     () => Array.from(new Set([...strengthSubskills, ...practiceSubskills])),
     [strengthSubskills, practiceSubskills],
   );
   const snapshotNow = JSON.stringify({
-    mastery,
-    checks,
+    progressRatings,
     strengthSubskills: [...strengthSubskills].sort(),
     needsPracticeSubskills: [...practiceSubskills].sort(),
     selectedSubskills: [...combinedSubskills].sort(),
@@ -1327,18 +1309,9 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           curriculumLoading={String(curriculumLoading)} · curriculumError={curriculumError || 'none'}
         </div>
       </details>
-    );
+      );
   }
   const isDirty = baseline !== '' && snapshotNow !== baseline;
-  const setChecksAll = (level: string) => {
-    setChecksTouched(true);
-    setChecks({
-      recognise: level,
-      say: level,
-      read: level,
-      write: level,
-    });
-  };
   const toggleStrength = (chip: string) => {
     setStrengthSubskills((prev) => {
       const next = toggleInArray(chip, prev, 3);
@@ -1358,32 +1331,12 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     });
   };
 
-  useEffect(() => {
-    if (!mastery) return;
-    if (showChecks && !checksTouched) {
-      setChecks({
-        recognise: mastery,
-        say: mastery,
-        read: mastery,
-        write: mastery,
-      });
-    }
-  }, [mastery, showChecks, checksTouched]);
-
-  const checksDifferFromMastery = showChecks
-    ? Object.values(checks).some((value) => value !== mastery)
-    : false;
-  const hasAdvancedData = confusions.length > 0 || (showChecks && checksDifferFromMastery);
-  const showAdvanced = advancedOpen || hasAdvancedData;
-  const masteryStatus =
-    mastery === 'proficient' || mastery === 'mastered' ? 'Completed' : 'In progress';
-
   return (
     <div className={containerClass}>
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-sm font-semibold text-slate-800">
-            Topic Progress — Quick Update
+            Topic Progress
           </h2>
           {kidName && (
             <p className="text-xs text-slate-500">
@@ -1483,121 +1436,68 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         ) : null}
       </div>
 
-      <div className={`${cardBase} bg-emerald-50/60 space-y-3`}>
-        <div className="text-xs font-semibold text-slate-700">Quick update</div>
-        <div className="grid gap-3 lg:grid-cols-3">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs font-medium text-slate-700">Mastery</div>
-              <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
-                {masteryStatus}
-              </span>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {checkLevels.map((m) => {
-                const active = mastery === m;
-                return (
-                  <ChipButton
-                    key={m}
-                    onClick={() => setMastery(m)}
-                    disabled={disabled}
-                    active={active}
-                    tone="blue"
-                    size="xs"
-                    label={String(m).replace(/_/g, ' ')}
-                  />
-                );
-              })}
-            </div>
-          </div>
+      <ChildSkillRatingCard
+        title="Child Progress"
+        subtitle="Mark stars for each skill after the lesson."
+        skills={progressSkills}
+        values={progressRatings}
+        onChange={disabled ? undefined : handleSkillRatingChange}
+      />
 
-          {subskillChips.length === 0 ? (
-            <div className="text-[11px] text-slate-500 lg:col-span-2">
-              No subskills listed for this lesson.
-            </div>
-          ) : (
-            <>
-              <div>
-                <div className="text-[11px] font-semibold text-emerald-700">
-                  Strengths <span className="text-slate-500">(pick up to 3)</span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {subskillChips.map((chip) => {
-                    const active = strengthSubskills.includes(chip);
-                    return (
-                      <ChipButton
-                        key={`strength-${chip}`}
-                        onClick={() => toggleStrength(chip)}
-                        disabled={disabled}
-                        active={active}
-                        tone="green"
-                        size="xs"
-                        label={chip}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-              <div>
-                <div className="text-[11px] font-semibold text-amber-700">
-                  Needs practice <span className="text-slate-500">(pick up to 3)</span>
-                </div>
-                <div className="mt-1 flex flex-wrap gap-2">
-                  {subskillChips.map((chip) => {
-                    const active = practiceSubskills.includes(chip);
-                    return (
-                      <ChipButton
-                        key={`practice-${chip}`}
-                        onClick={() => togglePractice(chip)}
-                        disabled={disabled}
-                        active={active}
-                        tone="amber"
-                        size="xs"
-                        label={chip}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-
-        <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-          Teacher remark
-          <input
-            type="text"
-            className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
-            placeholder="One-line note for parents"
+      <div className={`${cardBase} bg-white/90 space-y-3`}>
+        <div className="space-y-1">
+          <div className="text-xs font-semibold text-slate-700">Teacher note for parent</div>
+          <textarea
+            rows={2}
+            className="min-h-[68px] w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm leading-5"
+            placeholder="Write one short note for parents about today&apos;s progress."
             value={teacherRemark}
             onChange={(e) => setTeacherRemark(e.target.value)}
             disabled={disabled}
           />
-        </label>
+        </div>
 
-      </div>
-
-      <details
-        open={showAdvanced}
-        onToggle={(e) => setAdvancedOpen((e.target as HTMLDetailsElement).open)}
-        className="rounded-lg border border-slate-200 bg-white/70 px-3 py-2"
-      >
-        <summary className="cursor-pointer text-xs font-semibold text-slate-700">
-          Advanced (optional)
-        </summary>
-        <div className="mt-3 space-y-3">
-          {confusionOptions.length > 0 && (
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-slate-700">Confusions (optional)</div>
-              <div className="flex flex-wrap gap-2">
-                {confusionOptions.map((chip) => {
-                  const active = confusions.includes(chip);
+        <div className="grid gap-3 lg:grid-cols-2">
+          <div className="space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">
+              Strengths
+            </div>
+            {subskillChips.length === 0 ? (
+              <div className="text-[11px] text-slate-500">No subskills listed for this lesson.</div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {subskillChips.map((chip) => {
+                  const active = strengthSubskills.includes(chip);
                   return (
                     <ChipButton
-                      key={chip}
-                      onClick={() =>
-                        setConfusions((prev) => toggleInArray(chip, prev))
-                      }
+                      key={`strength-${chip}`}
+                      onClick={() => toggleStrength(chip)}
+                      disabled={disabled}
+                      active={active}
+                      tone="green"
+                      size="xs"
+                      label={chip}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-700">
+              Needs practice
+            </div>
+            {subskillChips.length === 0 ? (
+              <div className="text-[11px] text-slate-500">No subskills listed for this lesson.</div>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {subskillChips.map((chip) => {
+                  const active = practiceSubskills.includes(chip);
+                  return (
+                    <ChipButton
+                      key={`practice-${chip}`}
+                      onClick={() => togglePractice(chip)}
                       disabled={disabled}
                       active={active}
                       tone="amber"
@@ -1607,70 +1507,34 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
                   );
                 })}
               </div>
-            </div>
-          )}
-
-          {showChecks && (
-            <>
-              <div className="text-xs font-semibold text-slate-700">Quick presets</div>
-              <div className="flex flex-wrap gap-2">
-                <ChipButton
-                  label="Set checks = Mastery"
-                  onClick={() => setChecksAll(mastery || 'not_started')}
-                  disabled={disabled}
-                  tone="slate"
-                  size="xs"
-                />
-                {checkLevels.map((level) => (
-                  <ChipButton
-                    key={`preset-${level}`}
-                    onClick={() => setChecksAll(level)}
-                    disabled={disabled}
-                    tone="slate"
-                    size="xs"
-                    label={`All ${labelizeLevel(level)}`}
-                  />
-                ))}
-              </div>
-
-              <div className="grid gap-2 md:grid-cols-4">
-                {[
-                  { key: 'recognise', label: 'Recognise' },
-                  { key: 'say', label: 'Say' },
-                  { key: 'read', label: 'Read' },
-                  { key: 'write', label: 'Write/Spell' },
-                ].map((check) => (
-                  <div key={check.key} className="space-y-1">
-                    <div className="text-[11px] font-medium text-slate-600">{check.label}</div>
-                    <div className="flex flex-wrap gap-1">
-                      {checkLevels.map((level) => {
-                        const active = checks[check.key] === level;
-                        return (
-                          <ChipButton
-                            key={`${check.key}-${level}`}
-                            onClick={() => {
-                              setChecksTouched(true);
-                              setChecks((prev) => ({
-                                ...prev,
-                                [check.key]: level,
-                              }));
-                            }}
-                            disabled={disabled}
-                            active={active}
-                            tone="indigo"
-                            size="xs"
-                            label={labelizeLevel(level)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
-      </details>
+
+        {confusionOptions.length > 0 && (
+          <div className="space-y-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+              Area to watch
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {confusionOptions.map((chip) => {
+                const active = confusions.includes(chip);
+                return (
+                  <ChipButton
+                    key={chip}
+                    onClick={() => setConfusions((prev) => toggleInArray(chip, prev))}
+                    disabled={disabled}
+                    active={active}
+                    tone="amber"
+                    size="xs"
+                    label={chip}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       <div className="sticky bottom-0 -mx-3 border-t border-slate-200 bg-white/80 px-3 py-2 backdrop-blur md:-mx-4 md:px-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
