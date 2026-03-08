@@ -801,6 +801,103 @@ const statusLabel = (s: TileStatus) => {
 };
 
 // ============================================================================
+// UNLOCK & READINESS LOGIC (Patch 2)
+// ============================================================================
+
+/**
+ * Get the tile with a specific gameId within a stage
+ */
+const getTileByGameId = (stageId: string, gameId: string): Tile | undefined => {
+  const stage = STAGES.find((s) => s.stageId === stageId);
+  return stage?.tiles.find((t) => t.gameId === gameId);
+};
+
+/**
+ * Check if a tile is completed based on explicit IDs
+ */
+const isTileCompleted = (store: ProgressStore, gameId: string): boolean => {
+  // Find the tile to get its ID format
+  for (const stage of STAGES) {
+    for (const tile of stage.tiles) {
+      if (tile.gameId === gameId) {
+        const tileId = getTileId(stage.stageNumber, tile.gameTitle ?? tile.title, gameId);
+        return store.tiles[tileId]?.status === "completed";
+      }
+    }
+  }
+  return false;
+};
+
+/**
+ * Check if a tile is unlocked based on unlock rules within its stage
+ * Rules:
+ * - First tile is always available (unless comingSoon)
+ * - Each next tile unlocks when previous tile is completed
+ * - comingSoon tiles are always locked
+ */
+const isTileUnlocked = (store: ProgressStore, stageId: string, gameId: string): boolean => {
+  const stage = STAGES.find((s) => s.stageId === stageId);
+  if (!stage) return false;
+
+  const tileIndex = stage.tiles.findIndex((t) => t.gameId === gameId);
+  if (tileIndex === -1) return false;
+
+  const tile = stage.tiles[tileIndex];
+  if (tile.comingSoon) return false; // Always locked if comingSoon
+
+  // First tile is available by default
+  if (tileIndex === 0) return true;
+
+  // Check if previous tile is completed
+  const prevTile = stage.tiles[tileIndex - 1];
+  return isTileCompleted(store, prevTile.gameId);
+};
+
+/**
+ * Get overall progress for a stage
+ */
+const getStageProgress = (store: ProgressStore, stageId: string) => {
+  const stage = STAGES.find((s) => s.stageId === stageId);
+  if (!stage) return { completed: 0, total: 0, pct: 0 };
+
+  const completed = stage.tiles.filter((t) => isTileCompleted(store, t.gameId)).length;
+  const total = stage.tiles.length;
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+  return { completed, total, pct };
+};
+
+/**
+ * Minimal local telemetry logger (no backend writes in Patch 2)
+ * Logs to console in dev; can be extended to send to backend later
+ */
+const logEemTelemetry = (event: {
+  missionId: string;
+  stageId: string;
+  moduleId: string;
+  gameId: string;
+  gameTitle: string;
+  action: "tile_open" | "tile_complete_toggle" | "tile_unlock_check";
+}) => {
+  const timestamp = new Date().toISOString();
+  const logEntry = {
+    timestamp,
+    mission: event.missionId,
+    stage: event.stageId,
+    module: event.moduleId,
+    game: event.gameId,
+    title: event.gameTitle,
+    action: event.action,
+  };
+
+  // Console log in dev
+  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
+    console.log("[EEM Telemetry]", logEntry);
+  }
+
+  // TODO: Wire to backend analytics in Patch 3 (e.g., Firebase, Posthog, etc.)
+};
+
+// ============================================================================
 // COMPONENT
 // ============================================================================
 
@@ -951,10 +1048,26 @@ const KidsEnglishExcellence: React.FC = () => {
   const handleTileClick = (stageNumber: number, tile: Tile) => {
     if (tile.comingSoon || !tile.route) return;
 
+    // Patch 2: Check unlock rules based on explicit IDs
+    const stage = STAGES[selectedStageIndex];
+    if (!isTileUnlocked(store, stage.stageId, tile.gameId)) {
+      return; // Tile is locked, do not proceed
+    }
+
     const displayTitle = tile.gameTitle ?? tile.title;
     const tileId = getTileId(stageNumber, displayTitle, tile.gameId);
     const status = getTileStatus(tileId);
     const now = Date.now();
+
+    // Log telemetry
+    logEemTelemetry({
+      missionId: MISSION_ID,
+      stageId: stage.stageId,
+      moduleId: tile.moduleId,
+      gameId: tile.gameId,
+      gameTitle: displayTitle,
+      action: "tile_open",
+    });
 
     if (status === "not_started") {
       setTileProgress(tileId, {
@@ -986,6 +1099,18 @@ const KidsEnglishExcellence: React.FC = () => {
     const tileId = getTileId(stageNumber, displayTitle, tile.gameId);
     const status = getTileStatus(tileId);
     const now = Date.now();
+
+    const stage = STAGES[selectedStageIndex];
+
+    // Log telemetry
+    logEemTelemetry({
+      missionId: MISSION_ID,
+      stageId: stage.stageId,
+      moduleId: tile.moduleId,
+      gameId: tile.gameId,
+      gameTitle: displayTitle,
+      action: "tile_complete_toggle",
+    });
 
     if (status === "completed") {
       setTileProgress(tileId, { status: "in_progress", completedAt: undefined, lastOpenedAt: now });
@@ -1443,7 +1568,9 @@ const KidsEnglishExcellence: React.FC = () => {
       <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-20">
         <div className="tiles-grid">
           {currentStage.tiles.map((tile, idx) => {
-            const locked = tile.comingSoon || !tile.route;
+            // Patch 2: Use unlock rules based on explicit IDs
+            const isUnlocked = !tile.comingSoon && !!tile.route && isTileUnlocked(store, currentStage.stageId, tile.gameId);
+            const locked = !isUnlocked;
             const displayTitle = tile.gameTitle ?? tile.title;
             const tileId = getTileId(currentStage.stageNumber, displayTitle, tile.gameId);
             const icon = getIcon(displayTitle);
