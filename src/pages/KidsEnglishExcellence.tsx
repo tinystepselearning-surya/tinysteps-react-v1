@@ -694,7 +694,7 @@ const STAGES: Stage[] = [
       { gameId: "eem-g06-root-word-builder", gameTitle: "Root Word Builder", moduleId: "eem-m03-roots-prefixes", gameOrder: 1, desc: "build from roots", comingSoon: true },
       { gameId: "eem-g07-prefix-power", gameTitle: "Prefix Power", moduleId: "eem-m03-roots-prefixes", gameOrder: 2, desc: "add prefixes (un-, re-)", comingSoon: true },
       { gameId: "eem-g08-suffix-maker", gameTitle: "Suffix Maker", moduleId: "eem-m04-suffixes-word-families", gameOrder: 3, desc: "add suffixes (-ing, -ed)", comingSoon: true },
-      { gameId: "eem-g09-word-family-match", gameTitle: "Word Family Match", moduleId: "eem-m04-suffixes-word-families", gameOrder: 4, desc: "match word families", route: "/kids/games/phonics/cvc-word-reader/make-a-word" },
+      { gameId: "eem-g09-word-family-match", gameTitle: "Word Family Match", moduleId: "eem-m04-suffixes-word-families", gameOrder: 4, desc: "drag tiles to build word families", route: "/kids/games/phonics/cvc-word-reader/make-a-word" },
       { gameId: "eem-g10-compound-word-builder", gameTitle: "Compound Word Builder", moduleId: "eem-m05-compounds-word-weaving", gameOrder: 5, desc: "join two words", comingSoon: true },
       { gameId: "eem-g11-word-weaving", gameTitle: "Word Weaving", moduleId: "eem-m05-compounds-word-weaving", gameOrder: 6, desc: "blend + combine", comingSoon: true },
     ],
