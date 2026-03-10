@@ -706,7 +706,7 @@ export default function MakeAWordRimeGame() {
     if (screen !== "play") setConfetti([]);
     // don’t leave hanging speech when leaving play
     if (screen !== "play") cancelSpeech();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [screen]);
 
   // ---------- Queue initialization / resets ----------
@@ -778,7 +778,7 @@ export default function MakeAWordRimeGame() {
     setFirstActionMs(null);
 
     cancelSpeech();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [animKey]);
 
   // ✅ FIX #1: Auto cue gating with hard unlock timeout (never stuck on "Listen…")

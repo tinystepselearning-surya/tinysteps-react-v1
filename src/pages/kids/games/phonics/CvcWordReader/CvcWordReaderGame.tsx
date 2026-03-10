@@ -810,7 +810,7 @@ export default function CvcWordReaderGame() {
       goLevels();
       return;
     }
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
+     
     startLevel(next);
   }
 
@@ -906,7 +906,7 @@ export default function CvcWordReaderGame() {
 
   useEffect(() => {
     resetRound();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [item?.id]);
 
   function clearShakeLater(keys: SlotKey[]) {
@@ -1013,7 +1013,7 @@ export default function CvcWordReaderGame() {
 
     const t = window.setTimeout(() => {
       setHintLetter(correct);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+       
       playPhoneme(expected);
       setPrompt("Try this one.");
       logEvent("auto_hint", { slot: expected, correct });
@@ -1101,13 +1101,13 @@ export default function CvcWordReaderGame() {
       if (attempts === 1) {
         setPrompt("Listen… try again.");
         setHintLetter(null);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+         
         playPhoneme(slotKey);
         fireShake([slotKey]);
       } else if (attempts === 2) {
         setPrompt("This one is the right sound.");
         setHintLetter(correctLetter);
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+         
         playPhoneme(slotKey);
         fireShake([slotKey]);
       } else if (attempts === 3) {
@@ -1121,7 +1121,7 @@ export default function CvcWordReaderGame() {
         setHintLetter(correctLetter);
         setReteachMode(true);
         scheduleReviewIfNeeded("reteach");
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+         
         playSlowAudio();
       }
 
@@ -1519,7 +1519,7 @@ export default function CvcWordReaderGame() {
             <button
               key={g.key}
               onClick={() => {
-                // eslint-disable-next-line @typescript-eslint/no-floating-promises
+                 
                 startLevel(g.key);
               }}
               className="rounded-xl border bg-white p-5 text-left shadow-sm transition hover:shadow-md hover:border-slate-300"

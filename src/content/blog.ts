@@ -1980,7 +1980,7 @@ function checkBlogExcerpts(posts: BlogPost[]) {
   const bad = rows.filter((r) => !r.ok || r.changed);
 
   // Pretty console table in dev tools / terminal logs
-  // eslint-disable-next-line no-console
+   
   console.table(
     rows.map((r) => ({
       ok: r.ok ? '✅' : '❌',
@@ -1992,7 +1992,7 @@ function checkBlogExcerpts(posts: BlogPost[]) {
   );
 
   if (bad.length) {
-    // eslint-disable-next-line no-console
+     
     console.warn(
       `[blog] ${bad.length} excerpt(s) need attention. Target ${EXCERPT_MIN}–${EXCERPT_MAX} chars (after trimming).`
     );

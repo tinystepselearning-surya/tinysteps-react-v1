@@ -306,7 +306,7 @@ export function UserList() {
       }
     } catch (err) {
       // ignore malformed URL or other errors
-      // eslint-disable-next-line no-console
+       
       console.debug('createdUserId handling failed', err);
     }
     // Only run once on mount

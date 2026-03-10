@@ -402,7 +402,7 @@ export function useAskTinyStepsChat() {
         });
       } catch (e) {
         // Do not break chat UX if logging fails
-        // eslint-disable-next-line no-console
+         
         console.error("AskTinySteps logging error:", e);
         // Optional lightweight UI hint:
         // setError("Chat saved locally, but logging failed.");

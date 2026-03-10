@@ -367,8 +367,19 @@ const KidsBalloonPop: React.FC = () => {
       else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
     } catch {}
 
+    // Patch 3: Signal EEM completion if this level was completed
+    if (levelComplete) {
+      const eemTile = searchParams.get("eemTile");
+      if (eemTile) {
+        const returnUrl = new URL(missionReturnHref, window.location.origin);
+        returnUrl.searchParams.set("eemDone", eemTile);
+        navigate(`${returnUrl.pathname}${returnUrl.search}`, { replace: true });
+        return;
+      }
+    }
+
     goToLevels();
-  }, [goToLevels]);
+  }, [goToLevels, levelComplete, searchParams, missionReturnHref, navigate]);
 
   useEffect(() => {
     const handleFSChange = () => {

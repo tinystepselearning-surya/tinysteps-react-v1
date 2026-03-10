@@ -633,6 +633,10 @@ type Tile = {
   desc: string;
   route?: string;
   comingSoon?: boolean;
+  /** Game status label: 'live' (actively playable), 'legacyLive' (older version still playable), 'ready' (functional but not prioritized), 'comingSoon' (planned, not yet implemented), 'replaced' (superseded but both exist), 'hidden' (intentionally removed) */
+  status?: 'live' | 'legacyLive' | 'ready' | 'comingSoon' | 'replaced' | 'hidden';
+  /** If non-null, indicates this game was replaced by the referenced gameId */
+  supersededBy?: string;
   roundIds?: string[]; // placeholder for future round data
 };
 
@@ -678,11 +682,11 @@ const STAGES: Stage[] = [
     stageTitle: "Letters & Sounds",
     stageOrder: 1,
     tiles: [
-      { gameId: "eem-g01-hear-and-spell", gameTitle: "Hear and Spell", moduleId: "eem-m01-sound-spelling-foundations", gameOrder: 1, desc: "sound → letter match", comingSoon: true },
-      { gameId: "eem-g02-letter-tile-spelling", gameTitle: "Letter Tile Spelling", moduleId: "eem-m01-sound-spelling-foundations", gameOrder: 2, desc: "tap tiles to spell", comingSoon: true },
-      { gameId: "eem-g03-choose-correct-spelling", gameTitle: "Choose the Correct Spelling", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 3, desc: "pick right letter sound", comingSoon: true },
-      { gameId: "eem-g04-sound-spotter", gameTitle: "Sound Spotter", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 4, desc: "find the sound (visual)", route: "/kids/games/phonics/balloon-pop" },
-      { gameId: "eem-g05-phonics-pattern-sort", gameTitle: "Phonics Pattern Sort", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 5, desc: "group by sound pattern", route: "/kids/games/phonics/sound-detective" },
+      { gameId: "eem-g00-letter-tracing", gameTitle: "Letter Tracing", moduleId: "eem-m00-pre-writing-tracing", gameOrder: 0, desc: "trace letter shapes smoothly", route: "/kids/games/phonics/letter-tracing", status: 'live' },
+      { gameId: "eem-g00b-letter-tracing-sounds", gameTitle: "Letter Tracing + Sounds", moduleId: "eem-m00-pre-writing-tracing", gameOrder: 1, desc: "trace while hearing letter sounds", route: "/kids/games/phonics/letter-tracing-sounds", status: 'live' },
+      { gameId: "eem-g04-letter-sounds", gameTitle: "Letter Sounds", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 2, desc: "letter → sound match", route: "/kids/games/phonics/sound-listening", status: 'live' },
+      { gameId: "eem-g04b-balloon-pop", gameTitle: "Balloon Pop", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 3, desc: "pop balloons with the correct sound", route: "/kids/games/phonics/balloon-pop", status: 'live' },
+      { gameId: "eem-g05-sound-listening", gameTitle: "Sound Listening", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 4, desc: "listen and tap the correct picture", route: "/kids/games/phonics/sound-detective", status: 'live' },
     ],
   },
   {
@@ -691,12 +695,11 @@ const STAGES: Stage[] = [
     stageTitle: "Build Words",
     stageOrder: 2,
     tiles: [
-      { gameId: "eem-g06-root-word-builder", gameTitle: "Root Word Builder", moduleId: "eem-m03-roots-prefixes", gameOrder: 1, desc: "build from roots", comingSoon: true },
-      { gameId: "eem-g07-prefix-power", gameTitle: "Prefix Power", moduleId: "eem-m03-roots-prefixes", gameOrder: 2, desc: "add prefixes (un-, re-)", comingSoon: true },
-      { gameId: "eem-g08-suffix-maker", gameTitle: "Suffix Maker", moduleId: "eem-m04-suffixes-word-families", gameOrder: 3, desc: "add suffixes (-ing, -ed)", comingSoon: true },
-      { gameId: "eem-g09-word-family-match", gameTitle: "Word Family Match", moduleId: "eem-m04-suffixes-word-families", gameOrder: 4, desc: "drag tiles to build word families", route: "/kids/games/phonics/cvc-word-reader/make-a-word" },
-      { gameId: "eem-g10-compound-word-builder", gameTitle: "Compound Word Builder", moduleId: "eem-m05-compounds-word-weaving", gameOrder: 5, desc: "join two words", comingSoon: true },
-      { gameId: "eem-g11-word-weaving", gameTitle: "Word Weaving", moduleId: "eem-m05-compounds-word-weaving", gameOrder: 6, desc: "blend + combine", comingSoon: true },
+      { gameId: "eem-g06-blend-2-sounds", gameTitle: "Blend 2 Sounds", moduleId: "eem-m02-blending-foundations", gameOrder: 1, desc: "combine two sounds into words", route: "/kids/games/phonics/my-first-words?level=1", status: 'live' },
+      { gameId: "eem-g06b-more-blending", gameTitle: "More Blending", moduleId: "eem-m02-blending-foundations", gameOrder: 2, desc: "blend three sounds and more", route: "/kids/games/phonics/my-first-words?level=2", status: 'live' },
+      { gameId: "eem-g08b-read-tiny-words", gameTitle: "Read Tiny Words", moduleId: "eem-m03-cvc-blending", gameOrder: 3, desc: "read 3-letter CVC words", route: "/kids/games/phonics/cvc-word-reader", status: 'live' },
+      { gameId: "eem-g09-word-families", gameTitle: "Word Families", moduleId: "eem-m04-suffixes-word-families", gameOrder: 4, desc: "make-a-word (rimes)", route: "/kids/games/phonics/cvc-word-reader/make-a-word", status: 'live' },
+      { gameId: "eem-g10-spelling-practice", gameTitle: "Spelling Practice", moduleId: "eem-m05-spelling-pattern-application", gameOrder: 5, desc: "hear → spell", route: "/kids/games/phonics/spelling-practice", status: 'live' },
     ],
   },
   {
@@ -705,12 +708,13 @@ const STAGES: Stage[] = [
     stageTitle: "Make Sentences",
     stageOrder: 3,
     tiles: [
-      { gameId: "eem-g12-sentence-builder", gameTitle: "Sentence Builder", moduleId: "eem-m06-sentence-order-context", gameOrder: 1, desc: "put words in order", route: "/kids/games/phonics/sentence-stepper?pack=4.0" },
-      { gameId: "eem-g13-fill-the-blank", gameTitle: "Fill the Blank", moduleId: "eem-m06-sentence-order-context", gameOrder: 2, desc: "complete sentences", route: "/kids/games/phonics/sentence-stepper?pack=4.3" },
-      { gameId: "eem-g14-find-correct-sentence", gameTitle: "Find the Correct Sentence", moduleId: "eem-m07-grammar-correctness", gameOrder: 3, desc: "spot the right one", comingSoon: true },
-      { gameId: "eem-g15-sentence-repair", gameTitle: "Sentence Repair", moduleId: "eem-m07-grammar-correctness", gameOrder: 4, desc: "fix mistakes", comingSoon: true },
-      { gameId: "eem-g16-collocation-builder", gameTitle: "Collocation Builder", moduleId: "eem-m08-collocations-idioms", gameOrder: 5, desc: "word pairs that go together", comingSoon: true },
-      { gameId: "eem-g17-idiom-in-a-sentence", gameTitle: "Idiom in a Sentence", moduleId: "eem-m08-collocations-idioms", gameOrder: 6, desc: "use idioms naturally", comingSoon: true },
+      { gameId: "eem-g12-read-sentences", gameTitle: "Read Sentences", moduleId: "eem-m06-sentence-order-context", gameOrder: 1, desc: "tap words in order to read decodable sentences", route: "/kids/games/phonics/sentence-stepper?pack=4.0&eemTile=read_sentences&eemStage=3", status: 'live' },
+      { gameId: "eem-g12b-early-reader-fluency", gameTitle: "Early Reader Fluency", moduleId: "eem-m06-sentence-order-context", gameOrder: 2, desc: "read sentences with increasing fluency", route: "/kids/games/phonics/sentence-stepper?pack=4.3&eemTile=early_reader_fluency&eemStage=3", status: 'live' },
+      { gameId: "eem-g13-fill-the-blank", gameTitle: "Sentence Builder", moduleId: "eem-m06-sentence-order-context", gameOrder: 3, desc: "put words in order to build sentences", route: "/kids/games/phonics/sentence-stepper?pack=4.2&eemStage=3", status: 'live' },
+      { gameId: "eem-g14-grammar-fix", gameTitle: "Grammar Fix", moduleId: "eem-m07-grammar-correctness", gameOrder: 4, desc: "fix grammar mistakes in sentences", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g15-better-sentences", gameTitle: "Better Sentences", moduleId: "eem-m07-grammar-correctness", gameOrder: 5, desc: "improve sentences for clarity", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g16-collocation-builder", gameTitle: "Collocation Builder", moduleId: "eem-m08-collocations-idioms", gameOrder: 6, desc: "word pairs that go together", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g17-idiom-in-a-sentence", gameTitle: "Idiom in a Sentence", moduleId: "eem-m08-collocations-idioms", gameOrder: 7, desc: "use idioms naturally", comingSoon: true, status: 'comingSoon' },
     ],
   },
   {
@@ -719,12 +723,14 @@ const STAGES: Stage[] = [
     stageTitle: "Read & Understand",
     stageOrder: 4,
     tiles: [
-      { gameId: "eem-g18-story-reading", gameTitle: "Story Reading", moduleId: "eem-m09-story-reading", gameOrder: 1, desc: "read short passages", route: "/kids/games/reading/story-reading" },
-      { gameId: "eem-g19-comprehension-questions", gameTitle: "Comprehension Questions", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 2, desc: "who/what/where/why", route: "/kids/games/reading/comprehension" },
-      { gameId: "eem-g20-new-words-from-reading", gameTitle: "New Words from Reading", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 3, desc: "vocab in context", route: "/kids/games/reading/new-words" },
-      { gameId: "eem-g21-meaning-from-context", gameTitle: "Meaning from Context", moduleId: "eem-m11-context-meaning-relations", gameOrder: 4, desc: "figure out word meaning", comingSoon: true },
-      { gameId: "eem-g22-synonym-antonym-hunt", gameTitle: "Synonym & Antonym Hunt", moduleId: "eem-m11-context-meaning-relations", gameOrder: 5, desc: "find similar/opposite words", comingSoon: true },
-      { gameId: "eem-g23-crossword-from-reading", gameTitle: "Crossword from Reading", moduleId: "eem-m12-reading-crossword-recall", gameOrder: 6, desc: "puzzle based on passage", comingSoon: true },
+      { gameId: "eem-g18-fluent-reading", gameTitle: "Fluent Reading", moduleId: "eem-m09-story-reading", gameOrder: 1, desc: "read passages fluently with expression", route: "/kids/games/reading/story-reading", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g18b-story-reading", gameTitle: "Story Reading", moduleId: "eem-m09-story-reading", gameOrder: 2, desc: "read and explore short stories", route: "/kids/games/reading/story-reading", status: 'live' },
+      { gameId: "eem-g20-new-words-from-reading", gameTitle: "New Words from Reading", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 3, desc: "discover vocabulary in context", route: "/kids/games/reading/new-words", status: 'live' },
+      { gameId: "eem-g19-comprehension-questions", gameTitle: "Comprehension Questions", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 4, desc: "who/what/where/why questions", route: "/kids/games/reading/comprehension", status: 'live' },
+      { gameId: "eem-g20b-summarize-simply", gameTitle: "Summarize Simply", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 5, desc: "write simple summaries of stories", route: "/kids/games/reading/new-words", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g21-meaning-from-context", gameTitle: "Meaning from Context", moduleId: "eem-m11-context-meaning-relations", gameOrder: 6, desc: "figure out word meaning", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g22-synonym-antonym-hunt", gameTitle: "Synonym & Antonym Hunt", moduleId: "eem-m11-context-meaning-relations", gameOrder: 7, desc: "find similar/opposite words", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g23-crossword-from-reading", gameTitle: "Crossword from Reading", moduleId: "eem-m12-reading-crossword-recall", gameOrder: 8, desc: "puzzle based on passage", comingSoon: true, status: 'comingSoon' },
     ],
   },
   {
@@ -733,10 +739,10 @@ const STAGES: Stage[] = [
     stageTitle: "Speak with Confidence",
     stageOrder: 5,
     tiles: [
-      { gameId: "eem-g24-use-the-word-aloud", gameTitle: "Use the Word Aloud", moduleId: "eem-m13-speaking-expression", gameOrder: 1, desc: "say the word in a sentence", comingSoon: true },
-      { gameId: "eem-g25-explain-the-meaning", gameTitle: "Explain the Meaning", moduleId: "eem-m13-speaking-expression", gameOrder: 2, desc: "describe in your own words", comingSoon: true },
-      { gameId: "eem-g26-present-argument-guided", gameTitle: "Present an Argument – Guided", moduleId: "eem-m13-speaking-expression", gameOrder: 3, desc: "speak with guide", comingSoon: true },
-      { gameId: "eem-g27-present-argument-timed", gameTitle: "Present an Argument – Timed", moduleId: "eem-m13-speaking-expression", gameOrder: 4, desc: "quick presentation", comingSoon: true },
+      { gameId: "eem-g24-use-the-word-aloud", gameTitle: "Use the Word Aloud", moduleId: "eem-m13-speaking-expression", gameOrder: 1, desc: "say the word in a sentence", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g25-explain-the-meaning", gameTitle: "Explain the Meaning", moduleId: "eem-m13-speaking-expression", gameOrder: 2, desc: "describe in your own words", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g26-present-argument-guided", gameTitle: "Present an Argument – Guided", moduleId: "eem-m13-speaking-expression", gameOrder: 3, desc: "speak with guide", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g27-present-argument-timed", gameTitle: "Present an Argument – Timed", moduleId: "eem-m13-speaking-expression", gameOrder: 4, desc: "quick presentation", comingSoon: true, status: 'comingSoon' },
     ],
   },
   {
@@ -745,12 +751,12 @@ const STAGES: Stage[] = [
     stageTitle: "Review & Championship",
     stageOrder: 6,
     tiles: [
-      { gameId: "eem-g28-spaced-review-replay", gameTitle: "Spaced Review Replay", moduleId: "eem-m14-review-arena", gameOrder: 1, desc: "review past lessons", comingSoon: true },
-      { gameId: "eem-g29-timed-round-quiz", gameTitle: "Timed Round Quiz", moduleId: "eem-m14-review-arena", gameOrder: 2, desc: "quiz against the clock", comingSoon: true },
-      { gameId: "eem-g30-mixed-round-challenge", gameTitle: "Mixed Round Challenge", moduleId: "eem-m14-review-arena", gameOrder: 3, desc: "all skills mixed", comingSoon: true },
-      { gameId: "eem-g31-general-knowledge-quick-quiz", gameTitle: "General Knowledge Quick Quiz", moduleId: "eem-m14-review-arena", gameOrder: 4, desc: "knowledge check", comingSoon: true },
-      { gameId: "eem-g32-mock-test", gameTitle: "Mock Test", moduleId: "eem-m15-mock-championship", gameOrder: 5, desc: "full-length practice", comingSoon: true },
-      { gameId: "eem-g33-championship-mode", gameTitle: "Championship Mode", moduleId: "eem-m15-mock-championship", gameOrder: 6, desc: "final achievement test", comingSoon: true },
+      { gameId: "eem-g28-spaced-review-replay", gameTitle: "Spaced Review Replay", moduleId: "eem-m14-review-arena", gameOrder: 1, desc: "review past lessons", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g29-timed-round-quiz", gameTitle: "Timed Round Quiz", moduleId: "eem-m14-review-arena", gameOrder: 2, desc: "quiz against the clock", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g30-mixed-round-challenge", gameTitle: "Mixed Round Challenge", moduleId: "eem-m14-review-arena", gameOrder: 3, desc: "all skills mixed", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g31-general-knowledge-quick-quiz", gameTitle: "General Knowledge Quick Quiz", moduleId: "eem-m14-review-arena", gameOrder: 4, desc: "knowledge check", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g32-mock-test", gameTitle: "Mock Test", moduleId: "eem-m15-mock-championship", gameOrder: 5, desc: "full-length practice", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g33-championship-mode", gameTitle: "Championship Mode", moduleId: "eem-m15-mock-championship", gameOrder: 6, desc: "final achievement test", comingSoon: true, status: 'comingSoon' },
     ],
   },
 ];
@@ -944,7 +950,7 @@ const KidsEnglishExcellence: React.FC = () => {
     const parsed = safeParse<ProgressStore>(localStorage.getItem(key));
     if (parsed && parsed.v === 1 && parsed.tiles) setStore(parsed);
     else setStore({ v: 1, tiles: {} });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [kidId]);
 
   // Save per-kid progress
@@ -994,7 +1000,7 @@ const KidsEnglishExcellence: React.FC = () => {
     const total = currentStage.tiles.length;
     const playable = currentStage.tiles.filter((t) => !t.comingSoon && !!t.route).length;
     const completed = currentStage.tiles.reduce((acc, t) => {
-      const tid = getTileId(currentStage.stageNumber, t.title, t.gameId);
+      const tid = getTileId(currentStage.stageNumber, t.gameTitle, t.gameId);
       return acc + (getTileStatus(tid) === "completed" ? 1 : 0);
     }, 0);
     const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -1003,7 +1009,7 @@ const KidsEnglishExcellence: React.FC = () => {
   }, [currentStage, store]);
 
   const overallStats = useMemo(() => {
-    const allTiles = STAGES.flatMap((st) => st.tiles.map((t) => getTileId(st.stageNumber, t.title, t.gameId)));
+    const allTiles = STAGES.flatMap((st) => st.tiles.map((t) => getTileId(st.stageNumber, t.gameTitle, t.gameId)));
     const total = allTiles.length;
     let completed = 0;
     for (const tid of allTiles) if (getTileStatus(tid) === "completed") completed += 1;

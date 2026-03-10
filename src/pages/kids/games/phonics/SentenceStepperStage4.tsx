@@ -261,7 +261,7 @@ export default function SentenceStepperStage4() {
 
   function track(ev: TelemetryEvent) {
     // Replace with your analytics pipeline
-    // eslint-disable-next-line no-console
+     
     console.log("[telemetry]", ev);
   }
 

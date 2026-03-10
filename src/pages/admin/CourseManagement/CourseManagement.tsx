@@ -94,7 +94,7 @@ export default function CourseManagement() {
       // show success toast
       toast({ title: 'Course created', description: `${t} was added.` });
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error('[courses] create failed', err);
       toast({ title: 'Failed to create course', description: String((err as any)?.message || err), variant: 'destructive' });
     } finally {

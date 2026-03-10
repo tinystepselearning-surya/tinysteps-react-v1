@@ -36,10 +36,16 @@ export const organizationSchema = {
   ],
   aggregateRating: {
     '@type': 'AggregateRating',
-    ratingValue: '4.9',
-    ratingCount: '250+',
-    bestRating: '5',
-    worstRating: '1'
+    // schema.org expects numeric values for all of these properties.  
+    // Previously we emitted strings (and even a "250+" display placeholder) which
+    // triggered Search Console warnings about "Invalid integer in property
+    // \"ratingCount\"".  The markup is site‑wide so we hardcode the real raw
+    // numbers here and let the front end decide whether to render a human‑readable
+    // version elsewhere.
+    ratingValue: 4.9,
+    ratingCount: 250,
+    bestRating: 5,
+    worstRating: 1
   }
 };
 

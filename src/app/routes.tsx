@@ -80,6 +80,7 @@ const MakeAWordRimeGame = lazy(() => import('../pages/kids/games/phonics/CvcWord
 const SentenceStepperStage4 = lazy(() => import('../pages/kids/games/phonics/SentenceStepperStage4'));
 const StoryReadingGame = lazy(() => import('../pages/kids/games/reading/StoryReading/StoryReadingGame'));
 const ComprehensionGame = lazy(() => import('../pages/kids/games/reading/ComprehensionGame/ComprehensionGame'));
+const NewWordsFromReading = lazy(() => import('../pages/kids/games/reading/NewWordsFromReading/NewWordsFromReading'));
 // BetaAnalytics component removed - file does not exist
 // const BetaAnalytics = lazy(
 //   () => import('../pages/admin/beta-analytics.jsx') as any,
@@ -377,6 +378,7 @@ const router = createBrowserRouter(
             { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
             { path: 'games/reading/story-reading', element: <StoryReadingGame /> },
             { path: 'games/reading/comprehension', element: <ComprehensionGame /> },
+            { path: 'games/reading/new-words', element: <NewWordsFromReading /> },
             { path: 'games/grammar', loader: missionShellRedirectLoader },
             { path: 'games/speaking', loader: missionShellRedirectLoader },
             { path: 'games/phonics/sound-detective', element: <SoundDetectiveGame /> },
