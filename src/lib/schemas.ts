@@ -33,20 +33,7 @@ export const organizationSchema = {
     'https://www.youtube.com/@TinyStepsLearning',
     'https://www.linkedin.com/company/tinystepslearning',
     'https://wa.me/919618398383'
-  ],
-  aggregateRating: {
-    '@type': 'AggregateRating',
-    // schema.org expects numeric values for all of these properties.  
-    // Previously we emitted strings (and even a "250+" display placeholder) which
-    // triggered Search Console warnings about "Invalid integer in property
-    // \"ratingCount\"".  The markup is site‑wide so we hardcode the real raw
-    // numbers here and let the front end decide whether to render a human‑readable
-    // version elsewhere.
-    ratingValue: 4.9,
-    ratingCount: 250,
-    bestRating: 5,
-    worstRating: 1
-  }
+  ]
 };
 
 export const localBusinessSchema = {
