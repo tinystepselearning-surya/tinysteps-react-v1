@@ -97,7 +97,7 @@ const ConversionHero: React.FC = () => {
   const y2 = useTransform(scrollY, [0, 500], [0, 40]);
 
   return (
-    <section className="relative min-h-screen overflow-hidden px-4 pb-10 pt-6 md:px-8 md:pb-12 md:pt-8">
+    <section className="relative min-h-[82vh] overflow-hidden px-4 pb-10 pt-6 md:min-h-screen md:px-8 md:pb-12 md:pt-8">
       {/* ✅ Classy Sunrise Background (more depth, less wash) */}
       <div className="pointer-events-none absolute inset-0">
         {/* base */}
@@ -116,7 +116,7 @@ const ConversionHero: React.FC = () => {
             background:
               "radial-gradient(circle at 35% 35%, rgba(255,106,0,0.36) 0%, rgba(255,150,90,0.14) 38%, rgba(255,255,255,0) 72%)",
           }}
-          className="absolute left-[-6%] top-[-18%] h-[720px] w-[720px] rounded-full blur-[140px]"
+          className="absolute left-[-6%] top-[-18%] hidden h-[720px] w-[720px] rounded-full blur-[140px] md:block"
           aria-hidden
         />
 
@@ -130,7 +130,7 @@ const ConversionHero: React.FC = () => {
             background:
               "radial-gradient(circle at 60% 38%, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 26%, rgba(255,255,255,0) 62%)",
           }}
-          className="absolute right-[-12%] top-[6%] h-[760px] w-[760px] rounded-full blur-[70px]"
+          className="absolute right-[-12%] top-[6%] hidden h-[760px] w-[760px] rounded-full blur-[70px] md:block"
           aria-hidden
         />
 
@@ -220,7 +220,7 @@ const ConversionHero: React.FC = () => {
             </motion.div>
 
             {/* BENTO GRID VALUE PROPS */}
-            <div className="mt-6 grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-6 hidden grid-cols-1 gap-1 md:grid md:grid-cols-2 lg:grid-cols-3">
               {heroHighlights.map((item) => (
                 <SunTile
                   key={item.title}

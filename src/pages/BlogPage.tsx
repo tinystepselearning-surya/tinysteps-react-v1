@@ -4,7 +4,7 @@ import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
-import { formatBlogDate } from '../lib/date';
+import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import { fetchMdxPosts } from '../content/blogMdx';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
@@ -114,8 +114,16 @@ const BlogPage: FC = () => {
     blogPost: combined.map((post) => ({
       '@type': 'BlogPosting',
       headline: post.title,
-      datePublished: post.date,
-      author: { '@type': 'Person', name: post.author || 'Tiny Steps' },
+      datePublished: isoDateFromYMD(post.date),
+      dateModified: isoDateFromYMD(post.date),
+      image: post.hero
+        ? (String(post.hero).startsWith('http') ? post.hero : `https://tinystepslearning.com${post.hero}`)
+        : 'https://tinystepslearning.com/logo.png',
+      author: {
+        '@type': 'Organization',
+        name: 'Tiny Steps Learning',
+        url: 'https://tinystepslearning.com',
+      },
       url: `https://tinystepslearning.com/blog/${post.slug}`
     }))
   }), [combined]);

@@ -1,6 +1,6 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useState } from "react";
 import { applySeo } from "../lib/seo";
 import { organizationSchema, localBusinessSchema } from "../lib/schemas";
 import { useNavigate, useLocation, Link } from "react-router-dom";
@@ -103,6 +103,7 @@ const FinalCTASection = safeLazy(
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showDeferredSections, setShowDeferredSections] = useState(false);
 
   useEffect(() => {
     if (location.search && location.search.includes("book=1")) {
@@ -146,6 +147,32 @@ export default function HomePage() {
         },
       ],
     });
+  }, []);
+
+  useEffect(() => {
+    const activate = () => setShowDeferredSections(true);
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    if (typeof win.requestIdleCallback === "function") {
+      idleId = win.requestIdleCallback(activate, { timeout: 1200 });
+    } else {
+      timeoutId = window.setTimeout(activate, 900);
+    }
+
+    return () => {
+      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
+        win.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   return (
@@ -225,118 +252,126 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ✅ Restored sections */}
-      <Suspense fallback={null}>
-        <GlobalImpactSection />
-      </Suspense>
+      {showDeferredSections ? (
+        <>
+          {/* ✅ Restored sections */}
+          <Suspense fallback={null}>
+            <GlobalImpactSection />
+          </Suspense>
 
-      <Suspense fallback={null}>
-        <DemoShowcase />
-      </Suspense>
+          <Suspense fallback={null}>
+            <DemoShowcase />
+          </Suspense>
 
-      {/* WhyChooseCollapsibleSection intentionally removed */}
+          {/* WhyChooseCollapsibleSection intentionally removed */}
 
-      {/* ✅ PPT-style Journey Roadmap (above Learning Stages) */}
-      <section className="px-6 py-12">
-        <div className="mx-auto max-w-6xl">
-          <LearningJourneyRoadmapPPT />
-        </div>
-      </section>
+          {/* ✅ PPT-style Journey Roadmap (above Learning Stages) */}
+          <section className="px-6 py-12">
+            <div className="mx-auto max-w-6xl">
+              <LearningJourneyRoadmapPPT />
+            </div>
+          </section>
 
-      <Suspense fallback={null}>
-        <StepTimeline />
-      </Suspense>
+          <Suspense fallback={null}>
+            <StepTimeline />
+          </Suspense>
 
-      <Suspense fallback={null}>
-        <SocialProofCrispSection />
-      </Suspense>
+          <Suspense fallback={null}>
+            <SocialProofCrispSection />
+          </Suspense>
 
-      <Suspense fallback={null}>
-        <PricingCrispSection />
-      </Suspense>
+          <Suspense fallback={null}>
+            <PricingCrispSection />
+          </Suspense>
+        </>
+      ) : null}
 
-      {/* Parents Help Hub CTA — small, calm, AEO-friendly */}
-      <section className="px-6 py-8">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-[32px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] backdrop-blur sm:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents</p>
-                <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Parents Help Hub</h2>
-                <p className="mt-3 text-gray-700 sm:text-base">Clear, step-by-step phonics and home practice guides for ages 3-12, written to reduce guesswork and make daily support feel manageable.</p>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-3 lg:w-[360px] lg:grid-cols-1">
-                {[
-                  "Short, practical guides",
-                  "Home routines that fit real schedules",
-                  "Friendly support for common phonics questions",
-                ].map((item) => (
-                  <div key={item} className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700">
-                    {item}
+      {showDeferredSections ? (
+        <>
+          {/* Parents Help Hub CTA — small, calm, AEO-friendly */}
+          <section className="px-6 py-8">
+            <div className="mx-auto max-w-6xl">
+              <div className="rounded-[32px] border border-slate-200/80 bg-white/90 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] backdrop-blur sm:p-8">
+                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="max-w-2xl">
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents</p>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Parents Help Hub</h2>
+                    <p className="mt-3 text-gray-700 sm:text-base">Clear, step-by-step phonics and home practice guides for ages 3-12, written to reduce guesswork and make daily support feel manageable.</p>
                   </div>
-                ))}
+                  <div className="grid gap-2 sm:grid-cols-3 lg:w-[360px] lg:grid-cols-1">
+                    {[
+                      "Short, practical guides",
+                      "Home routines that fit real schedules",
+                      "Friendly support for common phonics questions",
+                    ].map((item) => (
+                      <div key={item} className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-sm font-medium text-slate-700">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <ul className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+                  <li>
+                    <Link to="/parents" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-primary-700 transition hover:border-primary-200 hover:bg-primary-50/60">
+                      <span className="font-semibold">View all guides</span>
+                      <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/parents/getting-started" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
+                      <span>Getting started with phonics at home</span>
+                      <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/parents/reading-at-home" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
+                      <span>10-minute daily reading routine</span>
+                      <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/parents/phonics-mission" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
+                      <span>How to use Phonics Mission games</span>
+                      <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/parents/common-mistakes" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
+                      <span>Common phonics mistakes to avoid</span>
+                      <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  </li>
+                </ul>
               </div>
             </div>
+          </section>
 
-            <ul className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-              <li>
-                <Link to="/parents" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-primary-700 transition hover:border-primary-200 hover:bg-primary-50/60">
-                  <span className="font-semibold">View all guides</span>
-                  <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/parents/getting-started" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
-                  <span>Getting started with phonics at home</span>
-                  <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/parents/reading-at-home" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
-                  <span>10-minute daily reading routine</span>
-                  <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/parents/phonics-mission" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
-                  <span>How to use Phonics Mission games</span>
-                  <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/parents/common-mistakes" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
-                  <span>Common phonics mistakes to avoid</span>
-                  <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </section>
+          <Suspense fallback={null}>
+            <FinalCTASection />
+          </Suspense>
 
-      <Suspense fallback={null}>
-        <FinalCTASection />
-      </Suspense>
+          {/* Locations served — helps 'near me' intent while clarifying we're online */}
+          <section className="px-6 py-10">
+            <div className="mx-auto max-w-6xl">
+              <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
+                <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">English classes for kids worldwide</h2>
+                <p className="mt-3 max-w-3xl text-gray-700">Tiny Steps now supports admissions from 15+ countries. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more.</p>
 
-      {/* Locations served — helps 'near me' intent while clarifying we're online */}
-      <section className="px-6 py-10">
-        <div className="mx-auto max-w-6xl">
-          <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
-            <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">English classes for kids worldwide</h2>
-            <p className="mt-3 max-w-3xl text-gray-700">Tiny Steps now supports admissions from 15+ countries. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more.</p>
+                <div className="mt-5 flex flex-wrap gap-2">
+                  {['India','UAE','Vietnam','Singapore','Malaysia','UK','Canada','USA','Sweden','Germany','Australia','Sri Lanka','Pakistan'].map((c) => (
+                    <span key={c} className="rounded-full border border-white bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm">{c}</span>
+                  ))}
+                </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              {['India','UAE','Vietnam','Singapore','Malaysia','UK','Canada','USA','Sweden','Germany','Australia','Sri Lanka','Pakistan'].map((c) => (
-                <span key={c} className="rounded-full border border-white bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm">{c}</span>
-              ))}
+                <div className="mt-6">
+                  <a href="/courses" className="inline-flex items-center rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-primary-700">See courses</a>
+                </div>
+              </div>
             </div>
-
-            <div className="mt-6">
-              <a href="/courses" className="inline-flex items-center rounded-full bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-primary-700">See courses</a>
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
+        </>
+      ) : null}
 
     </>
   );
