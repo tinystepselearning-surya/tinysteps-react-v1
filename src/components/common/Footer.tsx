@@ -51,8 +51,12 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <img
-                src="/logo.png"
+                src="/apple-touch-icon.png"
                 alt="Tiny Steps logo"
+                width={44}
+                height={44}
+                decoding="async"
+                loading="lazy"
                 className="h-11 w-11 rounded-2xl bg-white p-1.5 object-contain shadow-sm ring-1 ring-white/15"
               />
               <div>

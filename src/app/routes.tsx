@@ -1,5 +1,5 @@
 // src/app/routes.tsx
-import { lazy, Suspense, type FC } from 'react';
+import { lazy, Suspense, useEffect, useState, type FC } from 'react';
 import { createBrowserRouter, Outlet, Navigate, useLocation, redirect, type LoaderFunctionArgs } from 'react-router-dom';
 
 const LoginPage = lazy(() => import('../pages/LoginPage'));
@@ -96,9 +96,9 @@ import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
 import RoleGate from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
-import FloatingAssistant from '../components/common/FloatingAssistant';
 import BackToTopButton from '../components/common/BackToTopButton';
 import ScrollToTop from '../components/common/ScrollToTop';
+const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 
 const APP_ROUTE_PREFIXES = [
   '/surya',
@@ -145,6 +145,35 @@ const legacyKidDashboardRedirectLoader = ({ request, params }: LoaderFunctionArg
 const Layout: FC = () => {
   const location = useLocation();
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+  const [showFloatingTools, setShowFloatingTools] = useState(false);
+
+  useEffect(() => {
+    if (hideMarketingChrome) return;
+
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    const activate = () => setShowFloatingTools(true);
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    if (typeof win.requestIdleCallback === 'function') {
+      idleId = win.requestIdleCallback(activate, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(activate, 1200);
+    }
+
+    return () => {
+      if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
+        win.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [hideMarketingChrome]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
@@ -157,7 +186,7 @@ const Layout: FC = () => {
         </Suspense>
       </main>
       {!hideMarketingChrome ? <Footer /> : null}
-      {!hideMarketingChrome ? (
+      {!hideMarketingChrome && showFloatingTools ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />

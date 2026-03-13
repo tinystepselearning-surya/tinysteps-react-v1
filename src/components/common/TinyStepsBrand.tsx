@@ -20,8 +20,12 @@ export default function TinyStepsBrand({
   const content = (
     <>
       <img
-        src="/logo.png"
+        src="/apple-touch-icon.png"
         alt="Tiny Steps logo"
+        width={44}
+        height={44}
+        decoding="async"
+        loading="lazy"
         className="h-11 w-11 shrink-0 rounded-full object-contain shadow-sm ring-1 ring-slate-200/80"
       />
       <div className="min-w-0">

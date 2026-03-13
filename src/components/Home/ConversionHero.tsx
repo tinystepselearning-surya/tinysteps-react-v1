@@ -1,5 +1,4 @@
 import React from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
 import {
   BookOpenText,
   CheckCircle2,
@@ -51,10 +50,8 @@ const GlassCard = ({
 );
 
 const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
-  <motion.div
-    whileHover={{ y: -6, scale: 1.02 }}
-    transition={{ type: "spring", stiffness: 260, damping: 22 }}
-    className={`group relative flex flex-col justify-between p-1 transition-all ${
+  <div
+    className={`group relative flex flex-col justify-between p-1 transition-all hover:-translate-y-1.5 ${
       size === "large" ? "md:col-span-2" : "col-span-1"
     }`}
   >
@@ -87,15 +84,10 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
       {/* Subtle accent line */}
       <div className="absolute bottom-0 left-0 h-1 w-0 bg-gradient-to-r from-orange-500/70 to-transparent transition-all duration-500 group-hover:w-full" />
     </GlassCard>
-  </motion.div>
+  </div>
 );
 
 const ConversionHero: React.FC = () => {
-  // Parallax background effect
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 500], [0, -90]);
-  const y2 = useTransform(scrollY, [0, 500], [0, 40]);
-
   return (
     <section className="relative min-h-[82vh] overflow-hidden px-4 pb-10 pt-6 md:min-h-screen md:px-8 md:pb-12 md:pt-8">
       {/* ✅ Classy Sunrise Background (more depth, less wash) */}
@@ -110,9 +102,8 @@ const ConversionHero: React.FC = () => {
         />
 
         {/* strong sun glow top-left (focused) */}
-        <motion.div
+        <div
           style={{
-            y: y1,
             background:
               "radial-gradient(circle at 35% 35%, rgba(255,106,0,0.36) 0%, rgba(255,150,90,0.14) 38%, rgba(255,255,255,0) 72%)",
           }}
@@ -124,9 +115,8 @@ const ConversionHero: React.FC = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_22%_18%,rgba(255,170,120,0.10),transparent_62%)]" />
 
         {/* ✅ white spotlight behind the form (right side pop) */}
-        <motion.div
+        <div
           style={{
-            y: y2,
             background:
               "radial-gradient(circle at 60% 38%, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.55) 26%, rgba(255,255,255,0) 62%)",
           }}
@@ -157,9 +147,7 @@ const ConversionHero: React.FC = () => {
         <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           {/* LEFT CONTENT */}
           <div className="flex flex-col justify-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+            <div
               className="inline-flex w-fit items-center gap-3 rounded-full border border-orange-200/60 bg-white/80 px-4 py-2 text-[12px] font-bold text-orange-800 shadow-sm backdrop-blur-md"
             >
               <span className="relative flex h-2 w-2">
@@ -167,12 +155,9 @@ const ConversionHero: React.FC = () => {
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
               </span>
               TRUSTED BY FAMILIES ACROSS 15+ COUNTRIES
-            </motion.div>
+            </div>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+            <h1
               className="mt-6 max-w-4xl text-4xl font-black leading-[0.95] tracking-tight text-slate-900 md:text-6xl lg:text-7xl"
             >
               Gentle, high-impact
@@ -180,32 +165,23 @@ const ConversionHero: React.FC = () => {
               <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
                 English foundations
               </span>
-            </motion.h1>
+            </h1>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
+            <p
               className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
               A structured, low-stress journey for ages 3-12. Tiny Steps blends
               phonics, grammar, and speaking into one calm weekly rhythm so kids
               read better, write better, and speak with more confidence.
-            </motion.p>
+            </p>
 
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.33 }}
+            <p
               className="mt-3 max-w-2xl text-sm font-semibold text-slate-700 md:text-base"
             >
               Personalised English learning for children ages 3–12.
-            </motion.p>
+            </p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.38 }}
+            <div
               className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"
             >
               <a href="/phonics-classes-for-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
@@ -217,7 +193,7 @@ const ConversionHero: React.FC = () => {
               <a href="/public-speaking-communication-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
                 public speaking classes for kids
               </a>
-            </motion.div>
+            </div>
 
             {/* BENTO GRID VALUE PROPS */}
             <div className="mt-6 hidden grid-cols-1 gap-1 md:grid md:grid-cols-2 lg:grid-cols-3">
@@ -232,10 +208,7 @@ const ConversionHero: React.FC = () => {
               ))}
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.41 }}
+            <div
               className="mt-4 max-w-2xl rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 text-sm text-slate-700 shadow-sm backdrop-blur"
             >
               <p className="font-medium text-slate-800">
@@ -244,12 +217,9 @@ const ConversionHero: React.FC = () => {
               <p className="mt-1 text-slate-600">
                 Calm routines, clear milestones, and consistent feedback make progress easy to see.
               </p>
-            </motion.div>
+            </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.42 }}
+            <div
               className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600"
             >
               <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
@@ -268,22 +238,12 @@ const ConversionHero: React.FC = () => {
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
                 Weekly parent updates and clear next steps
               </span>
-            </motion.div>
+            </div>
           </div>
 
           {/* RIGHT FORM CARD */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.35 }}
-            className="relative lg:pl-6"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-              className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block"
-            >
+          <div className="relative lg:pl-6">
+            <div className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
                   <BookOpenText className="h-5 w-5" aria-hidden="true" />
@@ -297,30 +257,22 @@ const ConversionHero: React.FC = () => {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             <BookAssessmentForm defaultInterest="Phonics" />
 
             {/* Floating Decorative Element */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 4 }}
-              className="absolute -bottom-4 -left-2 h-20 w-20 rounded-3xl bg-white p-4 shadow-xl md:-left-6"
-            >
+            <div className="absolute -bottom-4 -left-2 h-20 w-20 animate-bounce rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">
               <div className="flex h-full w-full items-center justify-center rounded-xl bg-orange-50 text-2xl">
                 🎓
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 5, delay: 0.4 }}
-              className="absolute -bottom-6 right-4 hidden rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur sm:inline-flex"
-            >
+            <div className="absolute -bottom-6 right-4 hidden animate-bounce rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur [animation-duration:4s] [animation-delay:0.4s] sm:inline-flex">
               <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" aria-hidden="true" />
               Reply via WhatsApp
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         </div>
       </div>
     </section>

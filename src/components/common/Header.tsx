@@ -1,6 +1,5 @@
 // @ts-nocheck
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -164,10 +163,7 @@ export default function Header() {
   };
 
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
+    <nav
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         isSticky ? 'bg-white/88 shadow-[0_15px_35px_rgba(8,15,40,0.12)] backdrop-blur-lg' : 'bg-transparent'
       }`}
@@ -181,7 +177,15 @@ export default function Header() {
           onClick={() => navigate('/')}
           aria-label="Go to Tiny Steps home page"
         >
-          <img src="/logo.png" alt="Tiny Steps Logo" className="h-11 w-11 object-contain" />
+          <img
+            src="/apple-touch-icon.png"
+            alt="Tiny Steps Logo"
+            width={44}
+            height={44}
+            decoding="async"
+            fetchPriority="high"
+            className="h-11 w-11 object-contain"
+          />
           <div>
             <div className="font-bold text-gray-900">Tiny Steps</div>
             <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
@@ -272,26 +276,28 @@ export default function Header() {
             onClick={() => setIsOpen((current) => !current)}
           >
             {[0, 1, 2].map((line) => (
-              <motion.div
+              <div
                 key={line}
-                className="h-0.5 w-6 bg-gray-900"
-                animate={{
-                  rotate: isOpen ? (line === 0 ? 45 : line === 2 ? -45 : 0) : 0,
-                  y: isOpen ? (line === 0 ? 6 : line === 2 ? -6 : 0) : 0,
-                  opacity: isOpen && line === 1 ? 0 : 1,
-                }}
-                transition={{ duration: 0.25 }}
+                className={`h-0.5 w-6 bg-gray-900 transition-all duration-200 ${
+                  isOpen
+                    ? line === 0
+                      ? "translate-y-[6px] rotate-45"
+                      : line === 2
+                      ? "-translate-y-[6px] -rotate-45"
+                      : "opacity-0"
+                    : ""
+                }`}
               />
             ))}
           </button>
         </div>
       </div>
 
-      <motion.div
+      <div
         id="mobile-nav-menu"
-        initial={{ height: 0 }}
-        animate={{ height: isOpen ? 'auto' : 0 }}
-        className="overflow-hidden bg-white/96 backdrop-blur lg:hidden"
+        className={`overflow-hidden bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
+          isOpen ? "max-h-[520px]" : "max-h-0"
+        }`}
       >
         <div className="space-y-5 px-5 py-6 text-sm font-semibold text-slate-700">
           <div className="space-y-3">
@@ -327,7 +333,7 @@ export default function Header() {
             </div>
           </div>
         </div>
-      </motion.div>
-    </motion.nav>
+      </div>
+    </nav>
   );
 }
