@@ -16,6 +16,36 @@ const ctaClass =
 
 export default function SubjectLandingPage({ subject }: SubjectLandingPageProps) {
   const data = useMemo(() => getSubjectLandingData(subject), [subject]);
+  const isPhonicsLanding = subject === 'phonics';
+
+  const phonicsFaq = useMemo(
+    () =>
+      isPhonicsLanding
+        ? [
+            {
+              question: 'Do you teach Jolly Phonics or synthetic phonics?',
+              answer:
+                'Tiny Steps follows systematic synthetic phonics. We teach SATPIN-first progression and also use multisensory actions and routines familiar to parents who know Jolly Phonics.',
+            },
+            {
+              question: 'What if my child already did Jolly Phonics at school?',
+              answer:
+                'That is fine. We place your child by skill level, then continue with blending, digraphs, long vowels, and reading fluency so there are no gaps.',
+            },
+            {
+              question: 'Do you cover advanced phonics online?',
+              answer:
+                'Yes. Advanced phonics covers alternate vowel spellings, diphthongs, bossy-r, multisyllabic decoding, spelling patterns, and reading fluency.',
+            },
+            {
+              question: 'Is this systematic or “systemic” phonics?',
+              answer:
+                'Parents often mean systematic phonics. Tiny Steps uses a clear lesson sequence, weekly practice goals, and stage-based progression instead of random worksheets.',
+            },
+          ]
+        : [],
+    [isPhonicsLanding],
+  );
 
   const breadcrumbSchema = useMemo(
     () => ({
@@ -60,14 +90,30 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
   );
 
   useEffect(() => {
+    const jsonLdBlocks: object[] = [breadcrumbSchema, courseListSchema];
+    if (phonicsFaq.length) {
+      jsonLdBlocks.push({
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: phonicsFaq.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      });
+    }
+
     applySeo({
       title: data.seoTitle,
       description: data.seoDescription,
       canonicalPath: data.route,
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, courseListSchema],
+      jsonLd: jsonLdBlocks,
     });
-  }, [breadcrumbSchema, courseListSchema, data.route, data.seoDescription, data.seoTitle]);
+  }, [breadcrumbSchema, courseListSchema, data.route, data.seoDescription, data.seoTitle, phonicsFaq]);
 
   return (
     <div className="space-y-6 pb-16">
@@ -85,6 +131,15 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
 
       <section className="px-6">
         <div className={sectionShell}>
+          {isPhonicsLanding ? (
+            <div className="max-w-4xl rounded-3xl border border-sky-200 bg-sky-50 p-5">
+              <h2 className="text-2xl font-bold text-slate-900">Systematic synthetic phonics for every stage</h2>
+              <p className="mt-3 text-base leading-7 text-slate-700">
+                Tiny Steps supports parents searching for phonics, jolly phonics, synthetic phonics, and advanced phonics. Our pathway starts with SATPIN and extends to digraphs, long vowels, bossy-r, and multisyllabic decoding in live online classes.
+              </p>
+            </div>
+          ) : null}
+
           <div className="max-w-3xl">
             <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>
               Who It Is For
@@ -116,6 +171,27 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
           </div>
         </div>
       </section>
+
+      {phonicsFaq.length ? (
+        <section className="px-6">
+          <div className={sectionShell}>
+            <div className="max-w-3xl">
+              <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>Parent FAQs</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+                Common questions on Jolly, synthetic, and advanced phonics
+              </h2>
+            </div>
+            <div className="mt-8 space-y-4">
+              {phonicsFaq.map((item) => (
+                <article key={item.question} className={cardShell}>
+                  <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.answer}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
 
       <section className="px-6">
         <div className={sectionShell}>

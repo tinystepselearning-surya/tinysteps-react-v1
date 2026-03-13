@@ -63,9 +63,9 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
   phonics: {
     route: '/phonics-classes-for-kids',
     breadcrumbName: 'Phonics Classes for Kids',
-    seoTitle: 'Phonics Classes for Kids | Tiny Steps Learning',
+    seoTitle: 'Online Phonics Classes for Kids | Synthetic & Jolly-Style Support | Tiny Steps Learning',
     seoDescription:
-      'Explore Tiny Steps phonics tracks for ages 3-12: Phonics Foundations (30 lessons), Early Phonics (41 lessons), and Advanced Phonics (20 lessons).',
+      'Explore online phonics classes for kids ages 3-12 with systematic synthetic phonics, SATPIN progression, Jolly Phonics style actions, and advanced decoding support.',
     eyebrow: 'Tiny Steps Phonics',
     heroTitle: 'Phonics Classes for Kids',
     heroDescription:

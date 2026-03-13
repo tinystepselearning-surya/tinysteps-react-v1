@@ -156,6 +156,8 @@ function buildMetaDescription(src: any) {
     const canonical = `/blog/${slug}`;
     const source = metaSource || {};
     const isArticle = Boolean(source.title || post);
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const isFutureDated = Boolean(source.date && String(source.date) > todayIso);
 
     if (!isArticle) {
       applySeo({
@@ -164,6 +166,17 @@ function buildMetaDescription(src: any) {
         canonicalPath: canonical,
         robots: 'noindex, follow',
         ogType: 'website',
+      });
+      return;
+    }
+
+    if (isFutureDated) {
+      applySeo({
+        title: `${source.title} | Tiny Steps Blog`,
+        description: 'This article is scheduled and will be published soon.',
+        canonicalPath: canonical,
+        robots: 'noindex, follow',
+        ogType: 'article',
       });
       return;
     }

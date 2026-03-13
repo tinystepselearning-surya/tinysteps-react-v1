@@ -79,9 +79,14 @@ const BlogPage: FC = () => {
   }));
 
   const combined = useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const publishedPosts = useMemo(
+    () => combined.filter((post) => !post.date || String(post.date) <= todayIso),
+    [combined, todayIso],
+  );
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const combinedFiltered = useMemo(() => {
-    return combined.filter((p) => {
+    return publishedPosts.filter((p) => {
       if (topic !== 'All' && p.category !== topic) return false;
       if (!normalizedQuery) return true;
       const keywordText = Array.isArray(p.body)
@@ -93,7 +98,7 @@ const BlogPage: FC = () => {
       const searchable = `${p.title} ${p.excerpt} ${p.category} ${p.author} ${p.metaDescription || ''} ${keywordText} ${faqText}`.toLowerCase();
       return searchable.includes(normalizedQuery);
     });
-  }, [combined, topic, normalizedQuery]);
+  }, [publishedPosts, topic, normalizedQuery]);
 
   // Ensure the rendered list respects the selected `sort` option.
   const sortedPosts = useMemo(() => {
@@ -111,7 +116,7 @@ const BlogPage: FC = () => {
     '@context': 'https://schema.org',
     '@type': 'Blog',
     name: 'Tiny Steps Blog',
-    blogPost: combined.map((post) => ({
+    blogPost: publishedPosts.map((post) => ({
       '@type': 'BlogPosting',
       headline: post.title,
       datePublished: isoDateFromYMD(post.date),
@@ -126,7 +131,7 @@ const BlogPage: FC = () => {
       },
       url: `https://tinystepslearning.com/blog/${post.slug}`
     }))
-  }), [combined]);
+  }), [publishedPosts]);
 
   const collectionSchema = useMemo(() => ({
     '@context': 'https://schema.org',
@@ -136,14 +141,14 @@ const BlogPage: FC = () => {
     url: 'https://tinystepslearning.com/blog',
     mainEntity: {
       '@type': 'ItemList',
-      itemListElement: combined.slice(0, 20).map((post, idx) => ({
+      itemListElement: publishedPosts.slice(0, 20).map((post, idx) => ({
         '@type': 'ListItem',
         position: idx + 1,
         url: `https://tinystepslearning.com/blog/${post.slug}`,
         name: post.title
       }))
     }
-  }), [combined]);
+  }), [publishedPosts]);
 
   const organizationSchema = useMemo(() => ({
     '@context': 'https://schema.org',

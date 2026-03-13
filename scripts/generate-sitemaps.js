@@ -18,6 +18,19 @@ function extractSlugsFromFile(filePath, key) {
   } catch (e) { return []; }
 }
 
+function extractBlogSlugDateMap(filePath) {
+  try {
+    const src = fs.readFileSync(filePath, 'utf-8');
+    const map = new Map();
+    const regex = /slug\s*:\s*['"`]([^'"`]+)['"`][\s\S]*?date\s*:\s*['"`]([0-9]{4}-[0-9]{2}-[0-9]{2})['"`]/g;
+    let match;
+    while ((match = regex.exec(src))) {
+      map.set(match[1], match[2]);
+    }
+    return map;
+  } catch (e) { return new Map(); }
+}
+
 function listMdxSlugs(dir) {
   try {
     return fs.readdirSync(dir).filter(f => f.endsWith('.mdx')).map(f => f.replace(/\.mdx$/, ''));
@@ -43,6 +56,7 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   const mdxDir = path.join(root, 'src', 'content', 'blog');
 
   const blogSlugs = extractSlugsFromFile(blogTs, 'slug');
+  const blogSlugDateMap = extractBlogSlugDateMap(blogTs);
   const mdxSlugs = listMdxSlugs(mdxDir);
   const courseSlugs = extractSlugsFromFile(coursesTs, 'slug');
 
@@ -70,7 +84,10 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
+  const today = fmt(new Date());
   for (const slug of uniqueRoutes([...blogSlugs, ...mdxSlugs])) {
+    const mappedDate = blogSlugDateMap.get(slug);
+    if (mappedDate && mappedDate > today) continue;
     const mdxPath = path.join(mdxDir, `${slug}.mdx`);
     const last = fs.existsSync(mdxPath) ? lastmodFrom(mdxPath) : lastmodFrom(blogTs);
     blogXml += toUrl(`https://tinystepslearning.com/blog/${slug}`, last, '0.8', 'weekly');
