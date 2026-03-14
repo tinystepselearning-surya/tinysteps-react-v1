@@ -232,6 +232,23 @@ const router = createBrowserRouter(
         { path: 'privacy-policy', element: <PrivacyPolicyPage /> },
         { path: 'terms-and-conditions', element: <TermsAndConditionsPage /> },
         { path: 'refund-guarantee', element: <RefundGuaranteePage /> },
+        // Legacy legal URL aliases -> canonical
+        { path: 'privacy', element: <Navigate to="/privacy-policy" replace /> },
+        { path: 'privacy.html', element: <Navigate to="/privacy-policy" replace /> },
+        { path: 'terms.html', element: <Navigate to="/terms-and-conditions" replace /> },
+        { path: 'terms-of-service', element: <Navigate to="/terms-and-conditions" replace /> },
+        // Legacy blog short URLs -> canonical slugs
+        { path: 'blog/week3', element: <Navigate to="/blog/week-3-phonics-tricky-words" replace /> },
+        { path: 'blog/week6', element: <Navigate to="/blog/week-6-phonics-comprehension" replace /> },
+        { path: 'blog/week7', element: <Navigate to="/blog/week-7-grammar-nouns-to-paragraphs" replace /> },
+        { path: 'blog/week8', element: <Navigate to="/blog/week-8-grammar-tenses" replace /> },
+        { path: 'blog/week9', element: <Navigate to="/blog/week-9-grammar-conjunctions" replace /> },
+        { path: 'blog/week10', element: <Navigate to="/blog/week-10-grammar-subject-verb" replace /> },
+        { path: 'blog/week6.html', element: <Navigate to="/blog/week-6-phonics-comprehension" replace /> },
+        { path: 'blog/week8.html', element: <Navigate to="/blog/week-8-grammar-tenses" replace /> },
+        // Legacy /main shell URLs -> canonical hubs
+        { path: 'main/courses', element: <Navigate to="/courses" replace /> },
+        { path: 'main/parents', element: <Navigate to="/parents" replace /> },
         // Parents / Help hub
         { path: 'parents', element: <ParentsHubPage /> },
         { path: 'parents/getting-started', element: <ParentGettingStarted /> },
@@ -353,18 +370,8 @@ const router = createBrowserRouter(
             },
           ],
         },
-        {
-          path: 'teachers',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['teacher']}
-                loginPath="/teacher/login"
-              />
-            </Suspense>
-          ),
-          children: [{ index: true, element: <TeacherDashboard /> }],
-        },
+        // Legacy public /teachers URL should resolve to the canonical team page
+        { path: 'teachers', element: <Navigate to="/team" replace /> },
 
         // ---------- Parent dashboard + payments ----------
         {

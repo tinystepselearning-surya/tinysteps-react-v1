@@ -51,15 +51,6 @@
         ]
       },
       {
-        "source": "/teachers/**",
-        "headers": [
-          {
-            "key": "X-Robots-Tag",
-            "value": "noindex, nofollow, noarchive"
-          }
-        ]
-      },
-      {
         "source": "/kids/**",
         "headers": [
           {
@@ -225,15 +216,19 @@
     "redirects": [
       { "source": "/signup", "destination": "/book-demo", "type": 301 },
       { "source": "/privacy", "destination": "/privacy-policy", "type": 301 },
+      { "source": "/privacy/", "destination": "/privacy-policy", "type": 301 },
       { "source": "/privacy.html", "destination": "/privacy-policy", "type": 301 },
+      { "source": "/privacy-policy/", "destination": "/privacy-policy", "type": 301 },
       { "source": "/terms.html", "destination": "/terms-and-conditions", "type": 301 },
       { "source": "/terms-of-service", "destination": "/terms-and-conditions", "type": 301 },
+      { "source": "/terms-and-conditions/", "destination": "/terms-and-conditions", "type": 301 },
       { "source": "/learningpartner", "destination": "/learning-partner", "type": 301 },
       { "source": "/blog/week1", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
       { "source": "/blog/week2", "destination": "/blog/week-2-phonics-blending-club", "type": 301 },
       { "source": "/blog/week3", "destination": "/blog/week-3-phonics-tricky-words", "type": 301 },
       { "source": "/blog/week5", "destination": "/blog/week-5-phonics-r-controlled", "type": 301 },
       { "source": "/blog/week6", "destination": "/blog/week-6-phonics-comprehension", "type": 301 },
+      { "source": "/blog/week6.html", "destination": "/blog/week-6-phonics-comprehension", "type": 301 },
       { "source": "/blog/week7", "destination": "/blog/week-7-grammar-nouns-to-paragraphs", "type": 301 },
       { "source": "/blog/week8", "destination": "/blog/week-8-grammar-tenses", "type": 301 },
       { "source": "/blog/week9", "destination": "/blog/week-9-grammar-conjunctions", "type": 301 },
@@ -246,6 +241,7 @@
       { "source": "/blog/phonics-at-home-activities/", "destination": "/blog/week-1-phonics-satpin-launch", "type": 301 },
       { "source": "/about", "destination": "/why-tiny-steps", "type": 301 },
       { "source": "/teachers", "destination": "/team", "type": 301 },
+      { "source": "/teachers/", "destination": "/team", "type": 301 },
       { "source": "/why-us", "destination": "/why-tiny-steps", "type": 301 },
       { "source": "/courses/phonics-foundations", "destination": "/courses/phonics-foundation", "type": 301 },
       { "source": "/courses/grammar-essentials", "destination": "/courses/basic-grammar", "type": 301 },
