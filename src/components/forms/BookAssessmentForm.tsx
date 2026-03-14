@@ -85,6 +85,13 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
       return;
     }
 
+    const popup = window.open(waLink, "_blank", "noopener,noreferrer");
+    if (!popup) {
+      // Fallback when popup is blocked: navigate in the same tab.
+      window.location.href = waLink;
+      return;
+    }
+
     setSubmitted(true);
     setShowOptional(false);
     setForm(initialState);
