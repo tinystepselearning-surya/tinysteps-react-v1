@@ -249,6 +249,26 @@ function latestTimestampFromMap(map: Record<string, any> | null | undefined): nu
   return latest;
 }
 
+function latestTimestampFromGameSummariesMap(
+  map: Record<string, any> | null | undefined,
+): number {
+  if (!map || typeof map !== "object") return 0;
+  let latest = 0;
+  Object.entries(map).forEach(([docId, doc]) => {
+    // Games refresh freshness must ignore __overview rollup updates.
+    if (docId === "__overview") return;
+    if (!doc || typeof doc !== "object") return;
+    latest = Math.max(
+      latest,
+      millisFromUnknownTimestamp((doc as any).updatedAt),
+      millisFromUnknownTimestamp((doc as any).lastPlayedAt),
+      millisFromUnknownTimestamp((doc as any).completedAt),
+      millisFromUnknownTimestamp((doc as any).lastSeenAt),
+    );
+  });
+  return latest;
+}
+
 function latestTimestampFromKidSummary(kidSummary: any): number {
   if (!kidSummary || typeof kidSummary !== "object") return 0;
   const summary = kidSummary?.summary || {};
@@ -277,8 +297,19 @@ function latestCanonicalGamesTimestamp(
   gameSummaries: Record<string, any> | null | undefined,
   gameProgress: Record<string, any> | null | undefined,
 ): number {
+  // Shared canonical freshness for overview surfaces; __overview is intentionally included here.
   return Math.max(
     latestTimestampFromMap(gameSummaries),
+    latestTimestampFromMap(gameProgress),
+  );
+}
+
+function latestCanonicalGameDocsTimestamp(
+  gameSummaries: Record<string, any> | null | undefined,
+  gameProgress: Record<string, any> | null | undefined,
+): number {
+  return Math.max(
+    latestTimestampFromGameSummariesMap(gameSummaries),
     latestTimestampFromMap(gameProgress),
   );
 }
@@ -292,9 +323,114 @@ function latestGamesFreshnessSignal({
   gameProgress: Record<string, any> | null | undefined;
   kidSummary: any;
 }): number {
-  const canonicalTs = latestCanonicalGamesTimestamp(gameSummaries, gameProgress);
+  const canonicalTs = latestCanonicalGameDocsTimestamp(gameSummaries, gameProgress);
   if (canonicalTs > 0) return canonicalTs;
   return latestTimestampFromKidSummary(kidSummary);
+}
+
+function toCountMaybe(value: any): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.max(0, Math.floor(value));
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === "object") return Object.keys(value).length;
+  return null;
+}
+
+function resolveLevelsCompleted(value: Record<string, any> | null | undefined): number | null {
+  if (!value || typeof value !== "object") return null;
+  const candidates = [
+    toCountMaybe(value.levelsCompleted),
+    toCountMaybe(value.completedLevelCount),
+    toCountMaybe(value.completedLevels),
+    toCountMaybe(value.completedItems),
+    toCountMaybe(value.masteredCount),
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === "number") return candidate;
+  }
+  return null;
+}
+
+function resolveTimeSpentMs(value: Record<string, any> | null | undefined): number | null {
+  if (!value || typeof value !== "object") return null;
+  const msCandidates = [
+    value.totalTimeSpentMs,
+    value.timeSpentMs,
+    value.totalTimeMs,
+    value.durationMs,
+  ];
+  for (const candidate of msCandidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      return Math.max(0, Math.floor(candidate));
+    }
+  }
+
+  const secCandidates = [value.timeSpentSec, value.durationSec];
+  for (const candidate of secCandidates) {
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      return Math.max(0, Math.floor(candidate * 1000));
+    }
+  }
+  return null;
+}
+
+function sumTimeSpentFromCanonical(
+  gameSummaries: Record<string, any> | null | undefined,
+  gameProgress: Record<string, any> | null | undefined,
+): number | null {
+  const summaryMap = gameSummaries || {};
+  const progressMap = gameProgress || {};
+  const summaryEntries = Object.entries(summaryMap).filter(([docId]) => docId !== "__overview");
+  const hasCanonicalData =
+    summaryEntries.length > 0 || Object.keys(progressMap).length > 0;
+  if (!hasCanonicalData) return null;
+
+  const perGameMax = new Map<string, number>();
+  const ingest = (docId: string, row: any) => {
+    if (!row || typeof row !== "object") return;
+    const canonicalId = canonicalizeParentGameId(
+      String(row.gameId || row.progressDocId || docId || ""),
+    );
+    if (!canonicalId) return;
+    const timeSpentMs = resolveTimeSpentMs(row);
+    if (typeof timeSpentMs !== "number" || timeSpentMs <= 0) return;
+    perGameMax.set(canonicalId, Math.max(perGameMax.get(canonicalId) || 0, timeSpentMs));
+  };
+
+  summaryEntries.forEach(([docId, row]) => ingest(docId, row));
+  Object.entries(progressMap).forEach(([docId, row]) => ingest(docId, row));
+
+  const total = Array.from(perGameMax.values()).reduce((sum, value) => sum + value, 0);
+  return total > 0 ? total : 0;
+}
+
+function countCompletedGamesFromCanonical(
+  gameSummaries: Record<string, any> | null | undefined,
+  gameProgress: Record<string, any> | null | undefined,
+): number | null {
+  const summaryMap = gameSummaries || {};
+  const progressMap = gameProgress || {};
+  // __overview is aggregate-only metadata and must not count as a completed game.
+  const summaryEntries = Object.entries(summaryMap).filter(([docId]) => docId !== "__overview");
+  const hasCanonicalData =
+    summaryEntries.length > 0 || Object.keys(progressMap).length > 0;
+  if (!hasCanonicalData) return null;
+
+  const completedByGame = new Map<string, number>();
+  const ingest = (docId: string, row: any) => {
+    if (!row || typeof row !== "object") return;
+    const canonicalId = canonicalizeParentGameId(
+      String(row.gameId || row.progressDocId || docId || ""),
+    );
+    if (!canonicalId) return;
+    const completed = resolveLevelsCompleted(row);
+    if (typeof completed !== "number") return;
+    completedByGame.set(canonicalId, Math.max(completedByGame.get(canonicalId) || 0, completed));
+  };
+
+  summaryEntries.forEach(([docId, row]) => ingest(docId, row));
+  Object.entries(progressMap).forEach(([docId, row]) => ingest(docId, row));
+
+  return Array.from(completedByGame.values()).filter((value) => value > 0).length;
 }
 
 function hasGamesSummaryCoverageGaps(
@@ -314,6 +450,8 @@ function hasGamesSummaryCoverageGaps(
   const safeSummaryMap = summaryMap || {};
   const coveredGameIds = new Set<string>();
   Object.entries(safeSummaryMap).forEach(([docId, data]) => {
+    // Coverage checks are game-doc-only; __overview should never satisfy catalog coverage.
+    if (docId === "__overview") return;
     const row = (data || {}) as Record<string, any>;
     const candidates = [
       canonicalizeParentGameId(docId),
@@ -327,6 +465,46 @@ function hasGamesSummaryCoverageGaps(
     if (!coveredGameIds.has(gameId)) return true;
   }
   return false;
+}
+
+function mapJourneyStageIdForDisplay(
+  stageId: number | null | undefined,
+  stageProgressPct: number | null | undefined,
+): number | null {
+  if (typeof stageId !== "number" || !Number.isFinite(stageId)) return null;
+  const rounded = Math.round(stageId);
+  if (rounded >= 1 && rounded <= 5) return rounded;
+  // Temporary UI compatibility: legacy model tops out at stage 6.
+  // Treat fully completed legacy stage 6 as display stage 7 (Review & Championship).
+  if (rounded === 6) {
+    const progress = typeof stageProgressPct === "number" && Number.isFinite(stageProgressPct)
+      ? stageProgressPct
+      : 0;
+    return progress >= 100 ? 7 : 6;
+  }
+  if (rounded === 7) return 7;
+  return null;
+}
+
+function journeyStageMessageForDisplay(stageId: number | null | undefined): string {
+  switch (stageId) {
+    case 1:
+      return "Building strong letter-sound foundations";
+    case 2:
+      return "Blending sounds into early words";
+    case 3:
+      return "Growing word-building confidence";
+    case 4:
+      return "Strengthening reading fluency";
+    case 5:
+      return "Building grammar power";
+    case 6:
+      return "Practicing speaking with confidence";
+    case 7:
+      return "Reviewing skills for championship mastery";
+    default:
+      return "Keep practicing to unlock new challenges!";
+  }
 }
 
 const PHONICS_COURSE_ID_ALIASES: Record<string, string> = {
@@ -1396,7 +1574,7 @@ export default function ParentDashboard() {
   // Used to render reliable per-game progress (e.g. Letter Sounds completion/stars)
   const gameSummariesQuery = useQuery({
     queryKey: ["gameSummaries", selectedKidId],
-    enabled: !!selectedKidId && activeTab === "games-progress",
+    enabled: !!selectedKidId && (activeTab === "games-progress" || activeTab === "dashboard"),
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
@@ -1414,7 +1592,7 @@ export default function ParentDashboard() {
   // ---- Lightweight game activity freshness head (kids/{kidId}/activity/head) ----
   const gameActivityHeadQuery = useQuery({
     queryKey: ["gameActivityHead", selectedKidId],
-    enabled: !!selectedKidId && activeTab === "games-progress",
+    enabled: !!selectedKidId && (activeTab === "games-progress" || activeTab === "dashboard"),
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
@@ -1474,7 +1652,7 @@ export default function ParentDashboard() {
     );
 
   // ---- Canonical live game progress (kids/{kidId}/gameProgress/*) ----
-  // Fallback only: fetch live docs when per-game summaries are missing.
+  // Intentional temporary fallback for sparse/legacy kids when canonical summaries are missing.
   const gameProgressQuery = useQuery({
     queryKey: ["gameProgress", selectedKidId],
     enabled: shouldFetchLiveGameProgress,
@@ -1501,6 +1679,78 @@ export default function ParentDashboard() {
       kidSummary: kidSummaryQuery.data ?? null,
     });
   }, [gameActivityHeadQuery.data, gameSummariesQuery.data, gameProgressQuery.data, kidSummaryQuery.data]);
+
+  const overviewCanonicalFreshnessMs = useMemo(() => {
+    const headTs = latestTimestampFromActivityHead(gameActivityHeadQuery.data ?? null);
+    if (headTs > 0) return headTs;
+    // Overview freshness intentionally uses shared canonical freshness (including __overview rollup writes).
+    return latestCanonicalGamesTimestamp(
+      gameSummariesQuery.data ?? null,
+      gameProgressQuery.data ?? null,
+    );
+  }, [gameActivityHeadQuery.data, gameSummariesQuery.data, gameProgressQuery.data]);
+
+  const canonicalGamesCompleted = useMemo(
+    () =>
+      countCompletedGamesFromCanonical(
+        gameSummariesQuery.data ?? null,
+        gameProgressQuery.data ?? null,
+      ),
+    [gameSummariesQuery.data, gameProgressQuery.data],
+  );
+
+  const canonicalTimePractisedMs = useMemo(
+    () =>
+      sumTimeSpentFromCanonical(
+        gameSummariesQuery.data ?? null,
+        gameProgressQuery.data ?? null,
+      ),
+    [gameSummariesQuery.data, gameProgressQuery.data],
+  );
+
+  // Canonical-first Parent Overview intelligence reads from gameSummaries/__overview.
+  const canonicalLearningLevelAccuracy10 = useMemo(() => {
+    const overviewDoc = (gameSummariesQuery.data as Record<string, any> | null | undefined)?.__overview;
+    const rawValue = overviewDoc?.learningLevelAccuracy10;
+    if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) return null;
+    return Math.max(0, Math.min(100, rawValue));
+  }, [gameSummariesQuery.data]);
+
+  const canonicalTotalPointsLifetime = useMemo(() => {
+    const overviewDoc = (gameSummariesQuery.data as Record<string, any> | null | undefined)?.__overview;
+    const rawValue = overviewDoc?.totalPointsLifetime;
+    if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) return null;
+    return Math.max(0, Math.round(rawValue));
+  }, [gameSummariesQuery.data]);
+
+  const canonicalConfidenceNow = useMemo(() => {
+    const overviewDoc = (gameSummariesQuery.data as Record<string, any> | null | undefined)?.__overview;
+    const rawValue = overviewDoc?.confidenceNow;
+    if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) return null;
+    return Math.max(0, Math.min(100, rawValue));
+  }, [gameSummariesQuery.data]);
+
+  const canonicalRecommendedNext = useMemo(() => {
+    const overviewDoc = (gameSummariesQuery.data as Record<string, any> | null | undefined)?.__overview;
+    const value = overviewDoc?.recommendedNext;
+    if (!value || typeof value !== "object") return null;
+    return value as Record<string, any>;
+  }, [gameSummariesQuery.data]);
+
+  const canonicalJourneyCurrentStageId = useMemo(() => {
+    const overviewDoc = (gameSummariesQuery.data as Record<string, any> | null | undefined)?.__overview;
+    const rawValue = overviewDoc?.journeyCurrentStageId;
+    if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) return null;
+    const clamped = Math.max(1, Math.min(7, Math.round(rawValue)));
+    return clamped;
+  }, [gameSummariesQuery.data]);
+
+  const canonicalJourneyStageProgressPct = useMemo(() => {
+    const overviewDoc = (gameSummariesQuery.data as Record<string, any> | null | undefined)?.__overview;
+    const rawValue = overviewDoc?.journeyStageProgressPct;
+    if (typeof rawValue !== "number" || !Number.isFinite(rawValue)) return null;
+    return Math.max(0, Math.min(100, rawValue));
+  }, [gameSummariesQuery.data]);
 
   useEffect(() => {
     setGamesRefreshStatus({ tone: "neutral", message: null });
@@ -1562,7 +1812,7 @@ export default function ParentDashboard() {
       ]);
       const refreshedSummaryMap = ((summariesRes as any)?.data ?? null) as Record<string, any> | null;
       const refreshedProgressMap = ((progressRes as any)?.data ?? null) as Record<string, any> | null;
-      const canonicalAfterMs = latestCanonicalGamesTimestamp(
+      const canonicalAfterMs = latestCanonicalGameDocsTimestamp(
         refreshedSummaryMap,
         refreshedProgressMap,
       );
@@ -2779,12 +3029,22 @@ export default function ParentDashboard() {
     const summary = data.summary;
     const progress = data.progress;
 
-    const confidenceNow = summary?.confidenceNow ?? null;
+    const confidenceNow =
+      typeof canonicalConfidenceNow === "number"
+        ? canonicalConfidenceNow
+        : summary?.confidenceNow ?? null;
 
     const byGame = progress?.byGame || {};
-    const gamesCompleted = Object.values(byGame).filter(
+    const rootGamesCompleted = Object.values(byGame).filter(
       (g: any) => (g?.completedLevels ?? 0) > 0
     ).length;
+    const gamesCompleted = canonicalGamesCompleted ?? rootGamesCompleted;
+    const rootTimePractisedMs =
+      typeof summary?.timeSpentWeekSec === "number" && Number.isFinite(summary.timeSpentWeekSec)
+        ? Math.max(0, Math.floor(summary.timeSpentWeekSec * 1000))
+        : null;
+    const totalTimePractisedMs =
+      typeof canonicalTimePractisedMs === "number" ? canonicalTimePractisedMs : rootTimePractisedMs;
 
     const gamesStats = summary?.games || {};
     const nums = Object.values(gamesStats)
@@ -2798,36 +3058,60 @@ export default function ParentDashboard() {
       .filter((n): n is number => typeof n === "number");
 
     const avgScore =
-      typeof summary?.avgAccuracy10 === "number"
+      typeof canonicalLearningLevelAccuracy10 === "number"
+        ? canonicalLearningLevelAccuracy10
+        : typeof summary?.avgAccuracy10 === "number"
         ? summary.avgAccuracy10
         : nums.length > 0
           ? nums.reduce((sum, a) => sum + a, 0) / nums.length
           : null;
 
-    const totalPoints = summary?.totalPoints ?? null;
+    const totalPoints =
+      typeof canonicalTotalPointsLifetime === "number"
+        ? canonicalTotalPointsLifetime
+        : summary?.totalPoints ?? null;
 
-    const stageId = summary?.stage?.currentStageId;
-    const stageProgressPct = summary?.stage?.stageProgressPct ?? null;
+    const rawJourneyStageId =
+      typeof canonicalJourneyCurrentStageId === "number"
+        ? canonicalJourneyCurrentStageId
+        : summary?.stage?.currentStageId ?? null;
+    const stageProgressPct =
+      typeof canonicalJourneyStageProgressPct === "number"
+        ? canonicalJourneyStageProgressPct
+        : summary?.stage?.stageProgressPct ?? null;
+    const stageId = mapJourneyStageIdForDisplay(rawJourneyStageId, stageProgressPct);
+    const stageMessage = journeyStageMessageForDisplay(stageId);
 
-    let stageMessage = "Keep practicing to unlock new challenges!";
-    if (stageId === 1) stageMessage = "Building foundation skills";
-    else if (stageId === 2) stageMessage = "Growing stronger every day";
-    else if (stageId === 3) stageMessage = "Making excellent progress";
-    else if (stageId === 4) stageMessage = "Mastering advanced concepts";
-
-    const lastUpdatedAt = summary?.lastUpdatedAt?.toMillis?.() ?? null;
+    const rootLastUpdatedAt = latestTimestampFromKidSummary(data);
+    const lastUpdatedAt =
+      overviewCanonicalFreshnessMs > 0
+        ? overviewCanonicalFreshnessMs
+        : rootLastUpdatedAt > 0
+          ? rootLastUpdatedAt
+          : null;
 
     return {
       confidenceNow,
       gamesCompleted,
       avgScore,
       totalPoints,
+      totalTimePractisedMs,
       stageMessage,
       lastUpdatedAt,
-      currentStageId: stageId ?? null,
+      currentStageId: stageId,
       stageProgressPct,
     };
-  }, [kidSummaryQuery.data]);
+  }, [
+    kidSummaryQuery.data,
+    canonicalGamesCompleted,
+    canonicalTimePractisedMs,
+    overviewCanonicalFreshnessMs,
+    canonicalLearningLevelAccuracy10,
+    canonicalTotalPointsLifetime,
+    canonicalConfidenceNow,
+    canonicalJourneyCurrentStageId,
+    canonicalJourneyStageProgressPct,
+  ]);
 
   const renderStageGrid = (
     stageSummaries: Array<any>,
@@ -3842,6 +4126,7 @@ export default function ParentDashboard() {
                 gamesCompleted={overviewMetrics.gamesCompleted}
                 avgScore={overviewMetrics.avgScore}
                 totalPoints={overviewMetrics.totalPoints}
+                totalTimePractisedMs={overviewMetrics.totalTimePractisedMs}
                 stageMessage={overviewMetrics.stageMessage}
                 lastUpdatedAt={overviewMetrics.lastUpdatedAt}
                 currentStageId={overviewMetrics.currentStageId}
@@ -3858,28 +4143,35 @@ export default function ParentDashboard() {
               </Card>
             )}
 
-            {kidSummaryQuery.data?.summary?.recommendedNext && (
+            {(canonicalRecommendedNext || kidSummaryQuery.data?.summary?.recommendedNext) && (
               <Card className="p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">
                   Today's Recommendation
                 </h3>
                 <div className="space-y-2">
+                  {(() => {
+                    const recommendedNext = canonicalRecommendedNext || kidSummaryQuery.data?.summary?.recommendedNext;
+                    return (
+                      <>
                   <div className="font-medium text-blue-600 dark:text-blue-400">
-                    {kidSummaryQuery.data.summary.recommendedNext.gameId ||
+                    {recommendedNext?.gameId ||
                       "Practice time!"}
                   </div>
-                  {kidSummaryQuery.data.summary.recommendedNext.reason && (
+                  {recommendedNext?.reason && (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {kidSummaryQuery.data.summary.recommendedNext.reason}
+                      {recommendedNext.reason}
                     </p>
                   )}
-                  {kidSummaryQuery.data.summary.recommendedNext.estMinutes && (
+                  {recommendedNext?.estMinutes && (
                     <div className="text-xs text-gray-500">
                       Estimated:{" "}
-                      {kidSummaryQuery.data.summary.recommendedNext.estMinutes}{" "}
+                      {recommendedNext.estMinutes}{" "}
                       minutes
                     </div>
                   )}
+                      </>
+                    );
+                  })()}
                 </div>
               </Card>
             )}

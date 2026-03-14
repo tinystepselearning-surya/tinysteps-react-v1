@@ -113,11 +113,150 @@ const STAGE1_ID_ALIASES: Record<string, string> = {
   phonics_balloon_pop: "balloon-pop",
   "sound-detective": "sound-detective",
   phonics_sound_detective: "sound-detective",
+  "my-first-words": "my-first-words",
+  my_first_words_v1: "my-first-words",
+  my_first_words: "my-first-words",
+  phonics_my_first_words: "my-first-words",
+  "cvc-word-builder": "cvc-word-builder",
+  cvc_word_reader_v1: "cvc-word-builder",
+  cvc_word_reader: "cvc-word-builder",
+  "cvc-word-reader": "cvc-word-builder",
+  phonics_cvc_word_reader: "cvc-word-builder",
+  phonics_cvc_word_builder: "cvc-word-builder",
+  "spelling-practice": "cvc-word-builder",
+  phonics_spelling_practice: "cvc-word-builder",
+  "make-a-word-rime": "cvc-word-builder",
+  "sentence-stepper": "sentence-stepper",
+  sentence_stepper: "sentence-stepper",
+  "story-reading": "story-reading",
+  story_reading: "story-reading",
+  "comprehension": "comprehension",
+  comprehension_game: "comprehension",
+  "new-words": "new-words",
+  new_words: "new-words",
+  "build-better-sentences": "build-better-sentences",
+  build_better_sentences: "build-better-sentences",
+  "grammar-fix": "grammar-fix",
+  grammar_fix: "grammar-fix",
+  "collocation-builder": "collocation-builder",
+  collocation_builder: "collocation-builder",
+  "idiom-in-a-sentence": "idiom-in-a-sentence",
+  idiom_in_a_sentence: "idiom-in-a-sentence",
+};
+
+const CANONICAL_FALLBACK_META: Record<
+  string,
+  Pick<ParentGameMeta, "title" | "subtitle" | "areaPractised">
+> = {
+  "my-first-words": {
+    title: "My First Words",
+    subtitle: "Builds early blending confidence",
+    areaPractised: "Word building",
+  },
+  "cvc-word-builder": {
+    title: "CVC Word Builder",
+    subtitle: "Builds and reads simple words",
+    areaPractised: "Word building",
+  },
+  "sentence-stepper": {
+    title: "Sentence Stepper",
+    subtitle: "Builds sentence reading fluency",
+    areaPractised: "Reading fluency",
+  },
+  "story-reading": {
+    title: "Story Reading",
+    subtitle: "Reads short stories for fluency",
+    areaPractised: "Reading practice",
+  },
+  comprehension: {
+    title: "Comprehension",
+    subtitle: "Answers meaning-based questions",
+    areaPractised: "Reading comprehension",
+  },
+  "new-words": {
+    title: "New Words from Reading",
+    subtitle: "Learns vocabulary from passages",
+    areaPractised: "Vocabulary in context",
+  },
+  "build-better-sentences": {
+    title: "Build Better Sentences",
+    subtitle: "Improves sentence construction",
+    areaPractised: "Grammar practice",
+  },
+  "grammar-fix": {
+    title: "Grammar Fix",
+    subtitle: "Finds and fixes grammar mistakes",
+    areaPractised: "Grammar practice",
+  },
+  "collocation-builder": {
+    title: "Collocation Builder",
+    subtitle: "Chooses natural word combinations",
+    areaPractised: "Grammar and usage",
+  },
+  "idiom-in-a-sentence": {
+    title: "Idiom in a Sentence",
+    subtitle: "Uses idioms in context",
+    areaPractised: "Grammar and usage",
+  },
 };
 
 function canonicalizeGameId(id: string): string {
   const key = String(id || "").trim();
   return STAGE1_ID_ALIASES[key] || key;
+}
+
+function labelFromGameId(id: string): string {
+  return String(id || "")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function fallbackMetaForGameId(id: string): Pick<ParentGameMeta, "title" | "subtitle" | "areaPractised"> {
+  const canonicalId = canonicalizeGameId(id);
+  const stage1Meta = STAGE1_GAME_META[canonicalId];
+  if (stage1Meta) {
+    return {
+      title: stage1Meta.title,
+      subtitle: stage1Meta.subtitle,
+      areaPractised: stage1Meta.areaPractised,
+    };
+  }
+  const known = CANONICAL_FALLBACK_META[canonicalId];
+  if (known) return known;
+  const title = labelFromGameId(canonicalId) || canonicalId;
+  if (canonicalId.includes("reading") || canonicalId.includes("comprehension")) {
+    return { title, subtitle: "Builds reading confidence", areaPractised: "Reading practice" };
+  }
+  if (canonicalId.includes("grammar") || canonicalId.includes("sentence") || canonicalId.includes("collocation")) {
+    return { title, subtitle: "Strengthens sentence and grammar skills", areaPractised: "Grammar practice" };
+  }
+  if (canonicalId.includes("sound") || canonicalId.includes("letter")) {
+    return { title, subtitle: "Builds core phonics skills", areaPractised: "Listening and sound identification" };
+  }
+  if (canonicalId.includes("word")) {
+    return { title, subtitle: "Strengthens word recognition and building", areaPractised: "Word building" };
+  }
+  return { title, subtitle: "Practice game", areaPractised: "Practice" };
+}
+
+function collectCanonicalGameIdsFromMap(source: Record<string, any> | null | undefined): string[] {
+  if (!source || typeof source !== "object") return [];
+  const ids = new Set<string>();
+  Object.entries(source).forEach(([docId, data]) => {
+    if (docId === "__overview") return;
+    const row = (data && typeof data === "object") ? (data as AnyObj) : {};
+    const candidates = [docId, row.gameId, row.progressDocId];
+    for (const raw of candidates) {
+      const canonical = canonicalizeGameId(String(raw || "").trim());
+      if (!canonical || canonical === "__overview") continue;
+      ids.add(canonical);
+    }
+  });
+  return Array.from(ids);
 }
 
 function formatDateMaybe(value: any): string | null {
@@ -415,12 +554,14 @@ export function ParentGamesProgress({
       if (!game?.id) continue;
       const canonicalId = canonicalizeGameId(game.id);
       const meta = STAGE1_GAME_META[canonicalId];
+      const knownFallbackMeta = CANONICAL_FALLBACK_META[canonicalId];
       if (deduped.has(canonicalId)) continue;
       deduped.set(canonicalId, {
         ...game,
         id: canonicalId,
-        title: meta?.title || game.title,
-        subtitle: meta?.subtitle || game.subtitle,
+        title: meta?.title || knownFallbackMeta?.title || game.title,
+        subtitle: meta?.subtitle || knownFallbackMeta?.subtitle || game.subtitle,
+        area: game.area || knownFallbackMeta?.areaPractised,
         totalLevels: typeof meta?.totalLevels === "number" ? meta.totalLevels : game.totalLevels,
       });
     }
@@ -438,9 +579,30 @@ export function ParentGamesProgress({
         area: "phonics",
         totalLevels: meta.totalLevels,
       });
+      existing.add(meta.id);
     }
-    return list;
-  }, [gamesCatalog]);
+
+    const canonicalActivityIds = new Set<string>([
+      ...collectCanonicalGameIdsFromMap(summaries),
+      ...collectCanonicalGameIdsFromMap(liveProgressByGame),
+      ...collectCanonicalGameIdsFromMap(summaryGames),
+      ...collectCanonicalGameIdsFromMap(byGame),
+    ]);
+    const extras: GameCatalogItem[] = [];
+    canonicalActivityIds.forEach((gameId) => {
+      if (existing.has(gameId)) return;
+      const meta = fallbackMetaForGameId(gameId);
+      extras.push({
+        id: gameId,
+        title: meta.title,
+        subtitle: meta.subtitle,
+        area: meta.areaPractised,
+      });
+    });
+    extras.sort((a, b) => a.title.localeCompare(b.title));
+
+    return [...list, ...extras];
+  }, [gamesCatalog, summaries, liveProgressByGame, summaryGames, byGame]);
 
   return (
     <div className="space-y-4">
@@ -472,10 +634,12 @@ export function ParentGamesProgress({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {games.map((game) => {
           const gameId = canonicalizeGameId(game.id || "unknown");
-          const meta = STAGE1_GAME_META[gameId];
+          const stage1Meta = STAGE1_GAME_META[gameId];
+          const knownFallbackMeta = CANONICAL_FALLBACK_META[gameId];
+          const friendlyMeta = fallbackMetaForGameId(gameId);
           const theme = themeForGame(gameId);
-          const progressKeys = withCompatibleKeys(meta?.progressKeys || [gameId], gameId);
-          const summaryKeys = withCompatibleKeys(meta?.summaryKeys || progressKeys, gameId);
+          const progressKeys = withCompatibleKeys(stage1Meta?.progressKeys || [gameId], gameId);
+          const summaryKeys = withCompatibleKeys(stage1Meta?.summaryKeys || progressKeys, gameId);
 
           const summaryDoc = pickFirstObjectByKeys(summaries, summaryKeys) || {};
           const liveProgressDoc = pickFirstObjectByKeys(liveProgressByGame, progressKeys) || {};
@@ -488,8 +652,13 @@ export function ParentGamesProgress({
             rootSummaryDoc: useLegacyRootFallback ? rootSummaryDoc : {},
             rootProgressDoc: useLegacyRootFallback ? rootProgressDoc : {},
             liveProgressDoc,
-            fallbackTotalLevels: Number(meta?.totalLevels ?? game.totalLevels ?? 0),
-            fallbackArea: meta?.areaPractised || game.subtitle || "Practice",
+            fallbackTotalLevels: Number(stage1Meta?.totalLevels ?? game.totalLevels ?? 0),
+            fallbackArea:
+              game.area ||
+              stage1Meta?.areaPractised ||
+              knownFallbackMeta?.areaPractised ||
+              friendlyMeta.areaPractised ||
+              "Practice",
           });
 
           const total = Math.max(snapshot.totalLevels, 0);
@@ -509,8 +678,12 @@ export function ParentGamesProgress({
                       <span className="text-xl">{theme.emoji}</span>
                     </div>
                     <div>
-                      <div className="font-extrabold text-gray-900 dark:text-gray-100 leading-tight">{meta?.title || game.title}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{meta?.subtitle || game.subtitle || "Practice"}</div>
+                      <div className="font-extrabold text-gray-900 dark:text-gray-100 leading-tight">
+                        {stage1Meta?.title || knownFallbackMeta?.title || game.title || friendlyMeta.title}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {stage1Meta?.subtitle || knownFallbackMeta?.subtitle || game.subtitle || friendlyMeta.subtitle}
+                      </div>
                     </div>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${badge.cls}`}>{badge.label}</span>

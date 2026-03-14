@@ -16,6 +16,7 @@ type ChooseBestItem = {
   prompt: string;
   options: [string, string];
   answerIndex: 0 | 1;
+  grammarFocus: string;
   hint1: string;
   hint2: string;
 };
@@ -26,6 +27,7 @@ const STAGE_ITEMS: ChooseBestItem[] = [
     prompt: 'Choose the better sentence.',
     options: ['She go to school every day.', 'She goes to school every day.'],
     answerIndex: 1,
+    grammarFocus: 'Verb agreement',
     hint1: 'Check if the action word matches "She".',
     hint2: 'Look at the word "go/goes".',
   },
@@ -34,6 +36,7 @@ const STAGE_ITEMS: ChooseBestItem[] = [
     prompt: 'Choose the better sentence.',
     options: ['I saw a elephant at the zoo.', 'I saw an elephant at the zoo.'],
     answerIndex: 1,
+    grammarFocus: 'Article use',
     hint1: 'Check the article before "elephant".',
     hint2: 'Focus on "a/an".',
   },
@@ -42,6 +45,7 @@ const STAGE_ITEMS: ChooseBestItem[] = [
     prompt: 'Choose the better sentence.',
     options: ['Riya and Sam are friends. They play together.', 'Riya and Sam are friends. She play together.'],
     answerIndex: 0,
+    grammarFocus: 'Pronoun (subjective)',
     hint1: 'Two people need a plural pronoun.',
     hint2: 'Focus on "They/She".',
   },
@@ -50,6 +54,7 @@ const STAGE_ITEMS: ChooseBestItem[] = [
     prompt: 'Choose the better sentence.',
     options: ['The book is on the table.', 'The book is in the table.'],
     answerIndex: 0,
+    grammarFocus: 'Preposition choice',
     hint1: 'Pick the preposition that fits location naturally.',
     hint2: 'Focus on "on/in".',
   },
@@ -58,6 +63,7 @@ const STAGE_ITEMS: ChooseBestItem[] = [
     prompt: 'Choose the better sentence.',
     options: ['We are playing in the park.', 'We are playing in the.'],
     answerIndex: 0,
+    grammarFocus: 'Sentence completeness',
     hint1: 'One sentence should feel complete.',
     hint2: 'Check if all needed words are present.',
   },
@@ -66,6 +72,7 @@ const STAGE_ITEMS: ChooseBestItem[] = [
     prompt: 'Choose the better sentence.',
     options: ['He quickly finished his homework.', 'He finished quickly his homework.'],
     answerIndex: 0,
+    grammarFocus: 'Adverb placement',
     hint1: 'Pick the sentence that sounds clearer and natural.',
     hint2: 'Compare word order around "quickly".',
   },
@@ -282,7 +289,10 @@ export default function BuildBetterSentencesChooseBetter() {
                         : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-300 hover:bg-indigo-50'
                     }`}
                   >
-                    {option}
+                    <span className="block">{option}</span>
+                    <span className="mt-1 block text-xs font-semibold text-slate-500">
+                      Grammar focus: {item.grammarFocus}
+                    </span>
                   </button>
                 );
               })}

@@ -19,6 +19,7 @@ import {
   loadGrammarFixProgress,
 } from "./kids/games/grammar/grammarFixProgress";
 import { CB_STAGE_3A, CB_STAGE_3B, CB_STAGE_3C, loadCollocationBuilderProgress } from "./kids/games/grammar/collocationBuilderProgress";
+import { frontendJourneyStageLabelForKidsStageId } from "../lib/frontendJourneyStages";
 
 // ============================================================================
 // CLEAN PPT-STYLE JOURNEY (Compact + Professional)
@@ -32,6 +33,7 @@ type JourneyStop = {
   category: JourneyCategory;
 };
 
+// Marketing roadmap display only (Home page). Gameplay stage truth lives in STAGES + shared frontend journey catalog.
 const JOURNEY_STOPS: JourneyStop[] = [
   { key: "S1", title: "Pre-Writing Skills (Tracing)", category: "phonics" },
   { key: "S2", title: "Letter–Sound Correspondence & Letter Formation", category: "phonics" },
@@ -799,11 +801,14 @@ const ACTIVITY_CONTENT_CONTRACTS = {
 // STAGES (with frozen stageId, gameId, moduleId)
 // ============================================================================
 
+const stageTitleFromSharedCatalog = (stageId: string, fallbackLabel: string): string =>
+  frontendJourneyStageLabelForKidsStageId(stageId, fallbackLabel);
+
 const STAGES: Stage[] = [
   {
     stageId: "eem-stage-1-letters-sounds",
     stageNumber: 1,
-    stageTitle: "Letters & Sounds",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-1-letters-sounds", "Letters & Sounds"),
     stageOrder: 1,
     tiles: [
       { gameId: "eem-g00-letter-tracing", gameTitle: "Letter Tracing", moduleId: "eem-m00-pre-writing-tracing", gameOrder: 0, desc: "trace letter shapes smoothly", route: "/kids/games/phonics/letter-tracing", status: 'live' },
@@ -816,7 +821,7 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-2-build-words",
     stageNumber: 2,
-    stageTitle: "Build Words",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-2-build-words", "Build Words"),
     stageOrder: 2,
     tiles: [
       { gameId: "eem-g06-blend-2-sounds", gameTitle: "Blend 2 Sounds", moduleId: "eem-m02-blending-foundations", gameOrder: 1, desc: "combine two sounds into words", route: "/kids/games/phonics/my-first-words?level=1", status: 'live' },
@@ -829,7 +834,7 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-3-make-sentences",
     stageNumber: 3,
-    stageTitle: "Make Sentences",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-3-make-sentences", "Make Sentences"),
     stageOrder: 3,
     tiles: [
       { gameId: "eem-g12-read-sentences", gameTitle: "Read Sentences", moduleId: "eem-m06-sentence-order-context", gameOrder: 1, desc: "tap words in order to read decodable sentences", route: "/kids/games/phonics/sentence-stepper?pack=4.0&eemTile=read_sentences&eemStage=3", status: 'live' },
@@ -840,7 +845,7 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-4-read-understand",
     stageNumber: 4,
-    stageTitle: "Fluent Reading",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-4-read-understand", "Fluent Reading"),
     stageOrder: 4,
     tiles: [
       { gameId: "eem-g18-fluent-reading", gameTitle: "Fluent Reading", moduleId: "eem-m09-story-reading", gameOrder: 1, desc: "read passages fluently with expression", route: "/kids/games/reading/story-reading", status: 'live' },
@@ -856,7 +861,7 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-5-grammar-practice",
     stageNumber: 5,
-    stageTitle: "Grammar Practice",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-5-grammar-practice", "Grammar Practice"),
     stageOrder: 5,
     tiles: [
       {
@@ -1154,7 +1159,7 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-6-speak-confidence",
     stageNumber: 6,
-    stageTitle: "Speak with Confidence",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-6-speak-confidence", "Speak with Confidence"),
     stageOrder: 6,
     tiles: [
       { gameId: "eem-g24-use-the-word-aloud", gameTitle: "Use the Word Aloud", moduleId: "eem-m13-speaking-expression", gameOrder: 1, desc: "say the word in a sentence", comingSoon: true, status: 'comingSoon' },
@@ -1166,7 +1171,7 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-7-review-championship",
     stageNumber: 7,
-    stageTitle: "Review & Championship",
+    stageTitle: stageTitleFromSharedCatalog("eem-stage-7-review-championship", "Review & Championship"),
     stageOrder: 7,
     tiles: [
       { gameId: "eem-g28-spaced-review-replay", gameTitle: "Spaced Review Replay", moduleId: "eem-m14-review-arena", gameOrder: 1, desc: "review past lessons", comingSoon: true, status: 'comingSoon' },
@@ -1987,8 +1992,15 @@ const KidsEnglishExcellence: React.FC = () => {
             subtitleClassName="tracking-[0.18em]"
           />
 
-          <div className="text-center text-base md:text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 via-slate-900 to-sky-700 whitespace-nowrap overflow-hidden text-ellipsis">
-            English Excellence Mission
+          <div className="flex justify-center">
+            <div className="inline-flex items-center rounded-full border border-indigo-400/40 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 px-4 py-1.5 shadow-[0_8px_24px_rgba(59,130,246,0.35)]">
+              <span
+                className="text-center text-sm md:text-2xl font-black tracking-[0.02em] text-white whitespace-nowrap overflow-hidden text-ellipsis"
+                style={{ textShadow: "0 2px 8px rgba(2, 6, 23, 0.45)" }}
+              >
+                English Excellence Mission
+              </span>
+            </div>
           </div>
 
           <button
@@ -2008,11 +2020,13 @@ const KidsEnglishExcellence: React.FC = () => {
         <div className="grid grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)] gap-3 items-start xl:h-full">
           {/* Left: Vertical training tracks panel */}
           <aside className="rounded-2xl border border-violet-300/20 bg-slate-950/42 backdrop-blur-md shadow-sm p-2.5 xl:h-full xl:flex xl:flex-col">
-            <div
-              className="mb-2 bg-gradient-to-r from-fuchsia-300 via-cyan-300 to-lime-300 bg-clip-text text-[10px] font-extrabold uppercase tracking-[0.18em] text-transparent"
-              style={{ textShadow: "0 0 12px rgba(56, 189, 248, 0.55)" }}
-            >
-              Training Tracks
+            <div className="mb-2 inline-flex items-center gap-2 rounded-lg border border-cyan-300/35 bg-slate-900/65 px-2.5 py-1 shadow-[0_6px_18px_rgba(34,211,238,0.25)]">
+              <span
+                className="bg-gradient-to-r from-cyan-200 via-fuchsia-200 to-lime-200 bg-clip-text text-xs font-black uppercase tracking-[0.2em] text-transparent"
+                style={{ textShadow: "0 0 10px rgba(34, 211, 238, 0.42)" }}
+              >
+                Training Tracks
+              </span>
             </div>
             <div
               className="grid gap-1.5 xl:flex-1 xl:min-h-0"

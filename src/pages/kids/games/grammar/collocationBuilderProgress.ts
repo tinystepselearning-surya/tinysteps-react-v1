@@ -1,6 +1,11 @@
+import { recordLevelResult } from '../../../../games/engine/recordLevelResult';
+
 export const CB_STAGE_3A = 'cb-3a-match-pairs';
 export const CB_STAGE_3B = 'cb-3b-choose-natural-pair';
 export const CB_STAGE_3C = 'cb-3c-fill-sentence';
+
+const CANONICAL_GAME_ID = 'collocation-builder';
+const CANONICAL_PROGRESS_DOC_ID = 'collocation-builder';
 
 export type CollocationStageProgress = {
   unlocked: boolean;
@@ -85,6 +90,40 @@ type StageResultInput = {
   retryCount: number;
 };
 
+function recordCollocationStageCompletion({
+  kidId,
+  levelId,
+  stageTag,
+  result,
+  mastered,
+}: {
+  kidId: string;
+  levelId: number;
+  stageTag: string;
+  result: StageResultInput;
+  mastered: boolean;
+}) {
+  if (!kidId) return;
+
+  void recordLevelResult({
+    kidId,
+    gameId: CANONICAL_GAME_ID,
+    progressDocId: CANONICAL_PROGRESS_DOC_ID,
+    levelId,
+    completed: true,
+    accuracyPct: result.accuracyPct,
+    skillTags: [
+      'area:grammar',
+      'subtopic:collocation_builder',
+      `stage:${stageTag}`,
+      mastered ? 'outcome:mastery' : 'outcome:practice',
+    ],
+    completedAt: Date.now(),
+  } as any).catch((err) => {
+    console.error('[collocationBuilderProgress] recordLevelResult failed:', err);
+  });
+}
+
 export const applyCollocationStage3AResult = (
   kidId: string,
   result: StageResultInput,
@@ -110,6 +149,13 @@ export const applyCollocationStage3AResult = (
   };
 
   saveCollocationBuilderProgress(kidId, next);
+  recordCollocationStageCompletion({
+    kidId,
+    levelId: 1,
+    stageTag: CB_STAGE_3A,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -138,6 +184,13 @@ export const applyCollocationStage3BResult = (
   };
 
   saveCollocationBuilderProgress(kidId, next);
+  recordCollocationStageCompletion({
+    kidId,
+    levelId: 2,
+    stageTag: CB_STAGE_3B,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -166,6 +219,13 @@ export const applyCollocationStage3CResult = (
   };
 
   saveCollocationBuilderProgress(kidId, next);
+  recordCollocationStageCompletion({
+    kidId,
+    levelId: 3,
+    stageTag: CB_STAGE_3C,
+    result,
+    mastered,
+  });
   return next;
 };
 

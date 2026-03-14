@@ -14,7 +14,10 @@ import {
 type FillBlankItem = {
   itemId: string;
   sentence: string;
-  options: string[];
+  options: Array<{
+    value: string;
+    grammarTag: string;
+  }>;
   answer: string;
   skillFocus: string;
   hint1: string;
@@ -24,7 +27,11 @@ const STAGE_ITEMS: FillBlankItem[] = [
   {
     itemId: 'bbs-1b-001',
     sentence: 'The boy ___ to school every day.',
-    options: ['go', 'goes', 'going'],
+    options: [
+      { value: 'go', grammarTag: 'Verb (base form)' },
+      { value: 'goes', grammarTag: 'Verb (present tense)' },
+      { value: 'going', grammarTag: 'Verb (continuous form)' },
+    ],
     answer: 'goes',
     skillFocus: 'subject-verb-agreement',
     hint1: 'We need the action word that matches one boy.',
@@ -32,7 +39,11 @@ const STAGE_ITEMS: FillBlankItem[] = [
   {
     itemId: 'bbs-1b-002',
     sentence: 'I saw ___ elephant at the zoo.',
-    options: ['a', 'an', 'the'],
+    options: [
+      { value: 'a', grammarTag: 'Article' },
+      { value: 'an', grammarTag: 'Article' },
+      { value: 'the', grammarTag: 'Article (definite)' },
+    ],
     answer: 'an',
     skillFocus: 'article-use',
     hint1: 'Use the article sound that fits before "elephant".',
@@ -40,7 +51,11 @@ const STAGE_ITEMS: FillBlankItem[] = [
   {
     itemId: 'bbs-1b-003',
     sentence: 'She is sitting ___ the chair.',
-    options: ['on', 'in', 'at'],
+    options: [
+      { value: 'on', grammarTag: 'Preposition' },
+      { value: 'in', grammarTag: 'Preposition' },
+      { value: 'at', grammarTag: 'Preposition' },
+    ],
     answer: 'on',
     skillFocus: 'prepositions',
     hint1: 'Choose the word that shows position on top of something.',
@@ -48,7 +63,11 @@ const STAGE_ITEMS: FillBlankItem[] = [
   {
     itemId: 'bbs-1b-004',
     sentence: 'Riya and Sam are playing. ___ are happy.',
-    options: ['He', 'She', 'They'],
+    options: [
+      { value: 'He', grammarTag: 'Pronoun (subjective, singular)' },
+      { value: 'She', grammarTag: 'Pronoun (subjective, singular)' },
+      { value: 'They', grammarTag: 'Pronoun (subjective, plural)' },
+    ],
     answer: 'They',
     skillFocus: 'pronouns',
     hint1: 'Two people together need a plural pronoun.',
@@ -56,7 +75,11 @@ const STAGE_ITEMS: FillBlankItem[] = [
   {
     itemId: 'bbs-1b-005',
     sentence: 'The rabbit is very ___.',
-    options: ['soft', 'softly', 'softer'],
+    options: [
+      { value: 'soft', grammarTag: 'Adjective' },
+      { value: 'softly', grammarTag: 'Adverb' },
+      { value: 'softer', grammarTag: 'Comparative adjective' },
+    ],
     answer: 'soft',
     skillFocus: 'adjective-choice',
     hint1: 'Pick a describing word for the rabbit.',
@@ -64,7 +87,11 @@ const STAGE_ITEMS: FillBlankItem[] = [
   {
     itemId: 'bbs-1b-006',
     sentence: 'We ___ milk in the morning.',
-    options: ['drink', 'drinks', 'drinking'],
+    options: [
+      { value: 'drink', grammarTag: 'Verb (base form)' },
+      { value: 'drinks', grammarTag: 'Verb (present tense singular)' },
+      { value: 'drinking', grammarTag: 'Verb (continuous form)' },
+    ],
     answer: 'drink',
     skillFocus: 'verb-form',
     hint1: 'With "we", use the base action word.',
@@ -95,7 +122,7 @@ export default function BuildBetterSentencesFillBlank() {
   const item = STAGE_ITEMS[itemIndex];
   const hiddenWrongOption = useMemo(() => {
     if (hintStep < 2) return null;
-    return item.options.find((option) => option !== item.answer) || null;
+    return item.options.find((option) => option.value !== item.answer)?.value || null;
   }, [hintStep, item]);
 
   const accuracyPct = submissions > 0 ? Math.round((correctSubmissions / submissions) * 100) : 0;
@@ -142,6 +169,18 @@ export default function BuildBetterSentencesFillBlank() {
       url.searchParams.set('eemDone', missionTileId);
     }
 
+    return `${url.pathname}${url.search}${url.hash}`;
+  };
+
+  const buildStageHref = (path: string) => {
+    const url = new URL(path, window.location.origin);
+    const carryKeys = ['kidId', 'eemTile', 'eemStage', 'eemReturn'] as const;
+    for (const key of carryKeys) {
+      const value = searchParams.get(key);
+      if (value && !url.searchParams.has(key)) {
+        url.searchParams.set(key, value);
+      }
+    }
     return `${url.pathname}${url.search}${url.hash}`;
   };
 
@@ -203,7 +242,7 @@ export default function BuildBetterSentencesFillBlank() {
       setFeedback('Stage 1C is locked. Master Stage 1B first.');
       return;
     }
-    navigate('/kids/games/grammar/build-better-sentences/choose-better-sentence');
+    navigate(buildStageHref('/kids/games/grammar/build-better-sentences/choose-better-sentence'));
   };
 
   return (
@@ -217,7 +256,7 @@ export default function BuildBetterSentencesFillBlank() {
           </div>
           <button
             type="button"
-            onClick={() => navigate('/kids/games/grammar/build-better-sentences')}
+            onClick={() => navigate(buildStageHref('/kids/games/grammar/build-better-sentences'))}
             className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
           >
             Stage 1A
@@ -258,7 +297,7 @@ export default function BuildBetterSentencesFillBlank() {
             <div className="mt-4 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => navigate('/kids/games/grammar/build-better-sentences')}
+                onClick={() => navigate(buildStageHref('/kids/games/grammar/build-better-sentences'))}
                 className="rounded-xl border border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
               >
                 Play Stage 1A
@@ -276,7 +315,7 @@ export default function BuildBetterSentencesFillBlank() {
           <>
             <div className="mb-4 flex items-center justify-between text-sm">
               <span className="font-semibold text-slate-700">Item {itemIndex + 1} / {STAGE_ITEMS.length}</span>
-              <span className="text-slate-500">Hints used: {hintsUsed}</span>
+              <span className="text-slate-500">Accuracy: {accuracyPct}% • Hints used: {hintsUsed}</span>
             </div>
 
             <div className="mb-5 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-4">
@@ -286,13 +325,13 @@ export default function BuildBetterSentencesFillBlank() {
 
             <div className="mb-5 grid gap-3 sm:grid-cols-2">
               {item.options.map((option) => {
-                const hidden = hiddenWrongOption === option;
-                const selected = lastChoice === option;
+                const hidden = hiddenWrongOption === option.value;
+                const selected = lastChoice === option.value;
                 return (
                   <button
-                    key={`${item.itemId}-${option}`}
+                    key={`${item.itemId}-${option.value}`}
                     type="button"
-                    onClick={() => onOptionTap(option)}
+                    onClick={() => onOptionTap(option.value)}
                     disabled={hidden}
                     className={`rounded-2xl border px-4 py-4 text-base font-bold transition ${
                       hidden
@@ -302,7 +341,14 @@ export default function BuildBetterSentencesFillBlank() {
                           : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-300 hover:bg-indigo-50'
                     }`}
                   >
-                    {hidden ? '—' : option}
+                    {hidden ? (
+                      '—'
+                    ) : (
+                      <>
+                        <span className="block">{option.value}</span>
+                        <span className="mt-1 block text-xs font-semibold text-slate-500">{option.grammarTag}</span>
+                      </>
+                    )}
                   </button>
                 );
               })}
@@ -359,7 +405,7 @@ export default function BuildBetterSentencesFillBlank() {
               </button>
               <button
                 type="button"
-                onClick={() => navigate('/kids/games/grammar/build-better-sentences')}
+                onClick={() => navigate(buildStageHref('/kids/games/grammar/build-better-sentences'))}
                 className="rounded-xl border border-indigo-600 bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700"
               >
                 Play Stage 1A

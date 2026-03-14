@@ -16,6 +16,7 @@ type ExpandSentenceItem = {
   baseSentence: string;
   options: [string, string];
   answerIndex: 0 | 1;
+  grammarFocus: string;
   skillFocus: string;
 };
 
@@ -26,6 +27,7 @@ const STAGE_ITEMS: ExpandSentenceItem[] = [
     baseSentence: 'The boy ran.',
     options: ['The boy ran.', 'The boy ran to school quickly.'],
     answerIndex: 1,
+    grammarFocus: 'Sentence expansion (time/place/detail)',
     skillFocus: 'sentence-expansion',
   },
   {
@@ -34,6 +36,7 @@ const STAGE_ITEMS: ExpandSentenceItem[] = [
     baseSentence: 'The bird sang.',
     options: ['The little bird sang sweetly in the morning.', 'The bird sang.'],
     answerIndex: 0,
+    grammarFocus: 'Adjective and adverb detail',
     skillFocus: 'descriptive-detail',
   },
   {
@@ -42,6 +45,7 @@ const STAGE_ITEMS: ExpandSentenceItem[] = [
     baseSentence: 'We played.',
     options: ['We played in the park after school.', 'We played.'],
     answerIndex: 0,
+    grammarFocus: 'Prepositional phrase (place/time)',
     skillFocus: 'place-and-time-detail',
   },
   {
@@ -50,6 +54,7 @@ const STAGE_ITEMS: ExpandSentenceItem[] = [
     baseSentence: 'She read a book.',
     options: ['She read.', 'She read a storybook quietly before bedtime.'],
     answerIndex: 1,
+    grammarFocus: 'Sentence completeness and clarity',
     skillFocus: 'clarity-and-detail',
   },
   {
@@ -58,6 +63,7 @@ const STAGE_ITEMS: ExpandSentenceItem[] = [
     baseSentence: 'The dog barked.',
     options: ['The dog barked loudly at the gate.', 'Dog barked.'],
     answerIndex: 0,
+    grammarFocus: 'Noun phrase and adverb detail',
     skillFocus: 'sentence-completeness',
   },
   {
@@ -66,6 +72,7 @@ const STAGE_ITEMS: ExpandSentenceItem[] = [
     baseSentence: 'They ate lunch.',
     options: ['They ate lunch in the classroom.', 'They lunch.'],
     answerIndex: 0,
+    grammarFocus: 'Verb form and sentence completeness',
     skillFocus: 'sentence-improvement',
   },
 ];
@@ -277,7 +284,10 @@ export default function BuildBetterSentencesExpandSentence() {
                         : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-300 hover:bg-indigo-50'
                     }`}
                   >
-                    {option}
+                    <span className="block">{option}</span>
+                    <span className="mt-1 block text-xs font-semibold text-slate-500">
+                      Grammar focus: {item.grammarFocus}
+                    </span>
                   </button>
                 );
               })}

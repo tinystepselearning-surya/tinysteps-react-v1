@@ -1,7 +1,17 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { buildMissionReturnHref } from '../missionNavigation';
 import { READING_PACKS, ReadingPack } from '../../../../../content/readingPacks';
+import { recordLevelResult } from '../../../../../games/engine/recordLevelResult';
+
+const CANONICAL_GAME_ID = 'new-words';
+const CANONICAL_PROGRESS_DOC_ID = 'new-words';
+
+function resolvePackLevelId(pack: ReadingPack): number {
+  const parsed = Number.parseInt(String(pack.id || '').replace(/[^0-9]/g, ''), 10);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  return Math.max(1, Number(pack.level) || 1);
+}
 
 export default function NewWordsFromReading() {
   const [searchParams] = useSearchParams();
@@ -15,6 +25,8 @@ export default function NewWordsFromReading() {
   const [index, setIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
+  const packStartedAtRef = useRef<number>(0);
+  const completionSentRef = useRef<boolean>(false);
 
   // Packs that have vocabulary defined
   const packsWithVocab = READING_PACKS.filter((p) => p.vocabulary && p.vocabulary.length > 0);
@@ -25,6 +37,8 @@ export default function NewWordsFromReading() {
     setIndex(0);
     setScore(0);
     setSelectedOption(null);
+    packStartedAtRef.current = Date.now();
+    completionSentRef.current = false;
   };
 
   const currentVocab = selectedPack?.vocabulary || [];
@@ -50,6 +64,36 @@ export default function NewWordsFromReading() {
         setIndex((i) => i + 1);
         setSelectedOption(null);
       } else {
+        if (selectedPack && kidId && !completionSentRef.current) {
+          completionSentRef.current = true;
+          const finalScore = score + (isCorrect ? 1 : 0);
+          const totalWords = Math.max(1, currentVocab.length);
+          const levelId = resolvePackLevelId(selectedPack);
+          const timeSpentMs = Math.max(0, Date.now() - packStartedAtRef.current);
+          const accuracyPct = Math.round((finalScore / totalWords) * 100);
+
+          void recordLevelResult({
+            kidId,
+            gameId: CANONICAL_GAME_ID,
+            progressDocId: CANONICAL_PROGRESS_DOC_ID,
+            levelId,
+            completed: true,
+            score: finalScore,
+            accuracyPct: Math.max(0, Math.min(100, accuracyPct)),
+            attempts: totalWords,
+            timeSpentMs,
+            skillTags: [
+              'area:reading',
+              'subtopic:new_words',
+              `pack:${selectedPack.id}`,
+              `level:${selectedPack.level}`,
+              ...((selectedPack.tags || []).map((tag) => `topic:${String(tag).toLowerCase()}`)),
+            ],
+            completedAt: Date.now(),
+          } as any).catch((err) => {
+            console.error('[NewWordsFromReading] recordLevelResult failed:', err);
+          });
+        }
         setState('results');
       }
     }, 1000);
@@ -61,6 +105,8 @@ export default function NewWordsFromReading() {
     setIndex(0);
     setSelectedOption(null);
     setScore(0);
+    packStartedAtRef.current = 0;
+    completionSentRef.current = false;
   };
 
   const finishToMission = () => {

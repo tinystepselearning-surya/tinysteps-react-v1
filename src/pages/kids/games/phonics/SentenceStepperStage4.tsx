@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { buildMissionReturnHref } from "./missionNavigation";
+import { recordLevelResult } from "../../../../games/engine/recordLevelResult";
 
 /**
  * Sentence Stepper (Stage 4: Early Reader Fluency)
@@ -191,6 +192,9 @@ function shuffle<T>(arr: T[]): T[] {
 
 type SupportMode = "GUIDED_NEXT_ONLY" | "GUIDED_REDIRECTS";
 
+const CANONICAL_GAME_ID = "sentence-stepper";
+const CANONICAL_PROGRESS_DOC_ID = "sentence-stepper";
+
 export default function SentenceStepperStage4() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -253,6 +257,8 @@ export default function SentenceStepperStage4() {
   const roundStartTs = useRef<number>(0);
   const firstTapTs = useRef<number | null>(null);
   const idleTimerRef = useRef<number | null>(null);
+  const packRunStartedAtRef = useRef<number>(Date.now());
+  const packResultSentRef = useRef<boolean>(false);
 
   // Speech synthesis robustness
   const [audioSupported, setAudioSupported] = useState(true);
@@ -461,6 +467,8 @@ export default function SentenceStepperStage4() {
     setRoundCountInPack(0);
     setFluentRoundsInPack(0);
     setHintedRoundsInPack(0);
+    packRunStartedAtRef.current = Date.now();
+    packResultSentRef.current = false;
 
     resetRoundState();
 
@@ -656,6 +664,37 @@ export default function SentenceStepperStage4() {
   const [showLevelComplete, setShowLevelComplete] = useState(false);
   const [lastMastery, setLastMastery] = useState<{ mastery: boolean; accuracy: number; hintRate: number } | null>(null);
 
+  function recordPackCompletion(mastery: boolean, accuracy: number) {
+    if (!kidId) return;
+    if (packResultSentRef.current) return;
+    packResultSentRef.current = true;
+
+    const elapsedMs = Math.max(0, Date.now() - packRunStartedAtRef.current);
+    const levelId = Math.max(1, packIndex + 1);
+    const attempts = Math.max(1, roundCountInPack);
+
+    void recordLevelResult({
+      kidId,
+      gameId: CANONICAL_GAME_ID,
+      progressDocId: CANONICAL_PROGRESS_DOC_ID,
+      levelId,
+      completed: true,
+      timeSpentMs: elapsedMs,
+      attempts,
+      accuracyPct: Math.max(0, Math.min(100, Math.round(accuracy * 100))),
+      skillTags: [
+        "area:reading",
+        "subtopic:sentence_stepper",
+        `pack:${activePackId}`,
+        `level:${levelId}`,
+        mastery ? "outcome:mastery" : "outcome:practice",
+      ],
+      completedAt: Date.now(),
+    } as any).catch((err) => {
+      console.error("[SentenceStepperStage4] recordLevelResult failed:", err);
+    });
+  }
+
   useEffect(() => {
     if (!hasStarted) return;
     if (roundCountInPack < roundsPerPack) return;
@@ -663,6 +702,8 @@ export default function SentenceStepperStage4() {
     const accuracy = fluentRoundsInPack / Math.max(1, roundCountInPack);
     const hintRate = hintedRoundsInPack / Math.max(1, roundCountInPack);
     const mastery = accuracy >= 0.8 && hintRate <= 0.3;
+
+    recordPackCompletion(mastery, accuracy);
 
     track({ type: "pack_mastery", kidId, packId: activePackId, mastery, accuracy, hintRate, ts: Date.now() });
 

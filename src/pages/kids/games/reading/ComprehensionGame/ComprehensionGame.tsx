@@ -1,8 +1,18 @@
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { buildMissionReturnHref } from "../missionNavigation";
 import { READING_PACKS, ReadingPack } from "../../../../../content/readingPacks";
+import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
+
+const CANONICAL_GAME_ID = "comprehension";
+const CANONICAL_PROGRESS_DOC_ID = "comprehension";
+
+function resolvePackLevelId(pack: ReadingPack): number {
+  const parsed = Number.parseInt(String(pack.id || "").replace(/[^0-9]/g, ""), 10);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  return Math.max(1, Number(pack.level) || 1);
+}
 
 // ============================================================================
 // COMPONENT
@@ -21,6 +31,8 @@ export default function ComprehensionGame() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState(0);
+  const packStartedAtRef = useRef<number>(0);
+  const completionSentRef = useRef<boolean>(false);
 
   const packsWithQuestions = READING_PACKS.filter(p => p.questions && p.questions.length > 0);
   const currentQuestion = selectedPack?.questions?.[questionIndex];
@@ -28,7 +40,42 @@ export default function ComprehensionGame() {
   const selectPack = (pack: ReadingPack) => {
     setSelectedPack(pack);
     setGameState('reading');
+    packStartedAtRef.current = Date.now();
+    completionSentRef.current = false;
   };
+
+  function recordPackCompletion(pack: ReadingPack, finalScore: number) {
+    if (!kidId) return;
+    if (completionSentRef.current) return;
+    completionSentRef.current = true;
+
+    const totalQuestions = Math.max(1, pack.questions?.length || 0);
+    const levelId = resolvePackLevelId(pack);
+    const timeSpentMs = Math.max(0, Date.now() - packStartedAtRef.current);
+    const accuracyPct = Math.round((finalScore / totalQuestions) * 100);
+
+    void recordLevelResult({
+      kidId,
+      gameId: CANONICAL_GAME_ID,
+      progressDocId: CANONICAL_PROGRESS_DOC_ID,
+      levelId,
+      completed: true,
+      score: finalScore,
+      accuracyPct: Math.max(0, Math.min(100, accuracyPct)),
+      attempts: totalQuestions,
+      timeSpentMs,
+      skillTags: [
+        "area:reading",
+        "subtopic:comprehension",
+        `pack:${pack.id}`,
+        `level:${pack.level}`,
+        ...((pack.tags || []).map((tag) => `topic:${String(tag).toLowerCase()}`)),
+      ],
+      completedAt: Date.now(),
+    } as any).catch((err) => {
+      console.error("[ComprehensionGame] recordLevelResult failed:", err);
+    });
+  }
 
   const handleOptionClick = (optionIndex: number) => {
     if (selectedOption !== null) return;
@@ -46,6 +93,10 @@ export default function ComprehensionGame() {
         setSelectedOption(null);
         setIsCorrect(null);
       } else {
+        if (selectedPack) {
+          const finalScore = score + (correct ? 1 : 0);
+          recordPackCompletion(selectedPack, finalScore);
+        }
         setGameState('results');
       }
     }, 1200);
@@ -58,6 +109,8 @@ export default function ComprehensionGame() {
     setScore(0);
     setSelectedOption(null);
     setIsCorrect(null);
+    packStartedAtRef.current = 0;
+    completionSentRef.current = false;
   }
 
   const handleFinish = () => {

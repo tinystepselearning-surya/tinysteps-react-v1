@@ -1,7 +1,12 @@
+import { recordLevelResult } from '../../../../games/engine/recordLevelResult';
+
 export const GF_STAGE_2A = 'gf-2a-spot-one-error';
 export const GF_STAGE_2B = 'gf-2b-fix-one-error';
 export const GF_STAGE_2C = 'gf-2c-fix-full-sentence';
 export const GF_STAGE_2D = 'gf-2d-timed-correction';
+
+const CANONICAL_GAME_ID = 'grammar-fix';
+const CANONICAL_PROGRESS_DOC_ID = 'grammar-fix';
 
 export type GrammarFixStageProgress = {
   unlocked: boolean;
@@ -97,6 +102,40 @@ type StageResultInput = {
   retryCount: number;
 };
 
+function recordGrammarFixStageCompletion({
+  kidId,
+  levelId,
+  stageTag,
+  result,
+  mastered,
+}: {
+  kidId: string;
+  levelId: number;
+  stageTag: string;
+  result: StageResultInput;
+  mastered: boolean;
+}) {
+  if (!kidId) return;
+
+  void recordLevelResult({
+    kidId,
+    gameId: CANONICAL_GAME_ID,
+    progressDocId: CANONICAL_PROGRESS_DOC_ID,
+    levelId,
+    completed: true,
+    accuracyPct: result.accuracyPct,
+    skillTags: [
+      'area:grammar',
+      'subtopic:grammar_fix',
+      `stage:${stageTag}`,
+      mastered ? 'outcome:mastery' : 'outcome:practice',
+    ],
+    completedAt: Date.now(),
+  } as any).catch((err) => {
+    console.error('[grammarFixProgress] recordLevelResult failed:', err);
+  });
+}
+
 export const applyGrammarFixStage2AResult = (
   kidId: string,
   result: StageResultInput,
@@ -122,6 +161,13 @@ export const applyGrammarFixStage2AResult = (
   };
 
   saveGrammarFixProgress(kidId, next);
+  recordGrammarFixStageCompletion({
+    kidId,
+    levelId: 1,
+    stageTag: GF_STAGE_2A,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -150,6 +196,13 @@ export const applyGrammarFixStage2BResult = (
   };
 
   saveGrammarFixProgress(kidId, next);
+  recordGrammarFixStageCompletion({
+    kidId,
+    levelId: 2,
+    stageTag: GF_STAGE_2B,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -181,6 +234,13 @@ export const applyGrammarFixStage2CResult = (
   };
 
   saveGrammarFixProgress(kidId, next);
+  recordGrammarFixStageCompletion({
+    kidId,
+    levelId: 3,
+    stageTag: GF_STAGE_2C,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -209,6 +269,13 @@ export const applyGrammarFixStage2DResult = (
   };
 
   saveGrammarFixProgress(kidId, next);
+  recordGrammarFixStageCompletion({
+    kidId,
+    levelId: 4,
+    stageTag: GF_STAGE_2D,
+    result,
+    mastered,
+  });
   return next;
 };
 

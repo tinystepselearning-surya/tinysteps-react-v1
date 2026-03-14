@@ -11,7 +11,10 @@ import {
 
 type ReorderItem = {
   itemId: string;
-  prompt: string[];
+  prompt: Array<{
+    text: string;
+    grammarTag: string;
+  }>;
   answer: string[];
   finalSentence: string;
 };
@@ -19,31 +22,52 @@ type ReorderItem = {
 const STAGE_ITEMS: ReorderItem[] = [
   {
     itemId: 'bbs-1a-001',
-    prompt: ['is', 'The cat', 'sleeping'],
+    prompt: [
+      { text: 'is', grammarTag: 'Verb (helping)' },
+      { text: 'The cat', grammarTag: 'Noun phrase (subject)' },
+      { text: 'sleeping', grammarTag: 'Verb (action)' },
+    ],
     answer: ['The cat', 'is', 'sleeping'],
     finalSentence: 'The cat is sleeping.',
   },
   {
     itemId: 'bbs-1a-002',
-    prompt: ['to school', 'Riya', 'walks'],
+    prompt: [
+      { text: 'to school', grammarTag: 'Prepositional phrase' },
+      { text: 'Riya', grammarTag: 'Proper noun (subject)' },
+      { text: 'walks', grammarTag: 'Verb (present tense)' },
+    ],
     answer: ['Riya', 'walks', 'to school'],
     finalSentence: 'Riya walks to school.',
   },
   {
     itemId: 'bbs-1a-003',
-    prompt: ['the park', 'They', 'in', 'play'],
+    prompt: [
+      { text: 'the park', grammarTag: 'Noun phrase (place)' },
+      { text: 'They', grammarTag: 'Pronoun (subjective)' },
+      { text: 'in', grammarTag: 'Preposition' },
+      { text: 'play', grammarTag: 'Verb (base form)' },
+    ],
     answer: ['They', 'play', 'in', 'the park'],
     finalSentence: 'They play in the park.',
   },
   {
     itemId: 'bbs-1a-004',
-    prompt: ['reads', 'Aman', 'every night'],
+    prompt: [
+      { text: 'reads', grammarTag: 'Verb (present tense)' },
+      { text: 'Aman', grammarTag: 'Proper noun (subject)' },
+      { text: 'every night', grammarTag: 'Adverbial phrase (time)' },
+    ],
     answer: ['Aman', 'reads', 'every night'],
     finalSentence: 'Aman reads every night.',
   },
   {
     itemId: 'bbs-1a-005',
-    prompt: ['beautifully', 'sings', 'She'],
+    prompt: [
+      { text: 'beautifully', grammarTag: 'Adverb' },
+      { text: 'sings', grammarTag: 'Verb (present tense)' },
+      { text: 'She', grammarTag: 'Pronoun (subjective)' },
+    ],
     answer: ['She', 'sings', 'beautifully'],
     finalSentence: 'She sings beautifully.',
   },
@@ -70,11 +94,11 @@ export default function BuildBetterSentencesReorder() {
   const [progress, setProgress] = useState(() => loadBbsProgress(kidId));
 
   const item = STAGE_ITEMS[itemIndex];
-  const selectedWords = selectedIndices.map((idx) => item.prompt[idx]);
+  const selectedWords = selectedIndices.map((idx) => item.prompt[idx].text);
 
   const firstWordInPromptIndex = useMemo(() => {
     const first = item.answer[0];
-    return item.prompt.findIndex((w) => w === first);
+    return item.prompt.findIndex((token) => token.text === first);
   }, [item]);
 
   const firstWordLocked = hintStep >= 2 && selectedIndices[0] === firstWordInPromptIndex;
@@ -118,6 +142,18 @@ export default function BuildBetterSentencesReorder() {
       url.searchParams.set('eemDone', missionTileId);
     }
 
+    return `${url.pathname}${url.search}${url.hash}`;
+  };
+
+  const buildStageHref = (path: string) => {
+    const url = new URL(path, window.location.origin);
+    const carryKeys = ['kidId', 'eemTile', 'eemStage', 'eemReturn'] as const;
+    for (const key of carryKeys) {
+      const value = searchParams.get(key);
+      if (value && !url.searchParams.has(key)) {
+        url.searchParams.set(key, value);
+      }
+    }
     return `${url.pathname}${url.search}${url.hash}`;
   };
 
@@ -214,7 +250,7 @@ export default function BuildBetterSentencesReorder() {
       setFeedback('Stage 1B is locked. Master Stage 1A first.');
       return;
     }
-    navigate('/kids/games/grammar/build-better-sentences/fill-missing-word');
+    navigate(buildStageHref('/kids/games/grammar/build-better-sentences/fill-missing-word'));
   };
 
   return (
@@ -279,7 +315,7 @@ export default function BuildBetterSentencesReorder() {
           <>
             <div className="mb-4 flex items-center justify-between text-sm">
               <span className="font-semibold text-slate-700">Item {itemIndex + 1} / {STAGE_ITEMS.length}</span>
-              <span className="text-slate-500">Hints used: {hintsUsed}</span>
+              <span className="text-slate-500">Accuracy: {accuracyPct}% • Hints used: {hintsUsed}</span>
             </div>
 
             <div className="mb-5 min-h-16 rounded-2xl border border-indigo-200 bg-indigo-50 px-3 py-3">
@@ -288,12 +324,12 @@ export default function BuildBetterSentencesReorder() {
             </div>
 
             <div className="mb-5 flex flex-wrap gap-3">
-              {item.prompt.map((word, idx) => {
+              {item.prompt.map((token, idx) => {
                 const isSelected = selectedIndices.includes(idx);
                 const isHinted = hintStep >= 1 && idx === firstWordInPromptIndex;
                 return (
                   <button
-                    key={`${item.itemId}-${idx}`}
+                    key={`${item.itemId}-${idx}-${token.text}`}
                     type="button"
                     onClick={() => onWordTap(idx)}
                     disabled={isSelected}
@@ -305,7 +341,8 @@ export default function BuildBetterSentencesReorder() {
                           : 'border-slate-300 bg-white text-slate-900 hover:border-indigo-300 hover:bg-indigo-50'
                     }`}
                   >
-                    {word}
+                    <span className="block">{token.text}</span>
+                    <span className="mt-1 block text-xs font-semibold text-slate-500">{token.grammarTag}</span>
                   </button>
                 );
               })}

@@ -1,7 +1,12 @@
+import { recordLevelResult } from '../../../../games/engine/recordLevelResult';
+
 export const BBS_STAGE_1A = 'bbs-1a-reorder';
 export const BBS_STAGE_1B = 'bbs-1b-fill-missing-word';
 export const BBS_STAGE_1C = 'bbs-1c-choose-better-sentence';
 export const BBS_STAGE_1D = 'bbs-1d-expand-sentence';
+
+const CANONICAL_GAME_ID = 'build-better-sentences';
+const CANONICAL_PROGRESS_DOC_ID = 'build-better-sentences';
 
 export type StageProgress = {
   unlocked: boolean;
@@ -97,6 +102,40 @@ type StageResultInput = {
   retryCount: number;
 };
 
+function recordBbsStageCompletion({
+  kidId,
+  levelId,
+  stageTag,
+  result,
+  mastered,
+}: {
+  kidId: string;
+  levelId: number;
+  stageTag: string;
+  result: StageResultInput;
+  mastered: boolean;
+}) {
+  if (!kidId) return;
+
+  void recordLevelResult({
+    kidId,
+    gameId: CANONICAL_GAME_ID,
+    progressDocId: CANONICAL_PROGRESS_DOC_ID,
+    levelId,
+    completed: true,
+    accuracyPct: result.accuracyPct,
+    skillTags: [
+      'area:grammar',
+      'subtopic:build_better_sentences',
+      `stage:${stageTag}`,
+      mastered ? 'outcome:mastery' : 'outcome:practice',
+    ],
+    completedAt: Date.now(),
+  } as any).catch((err) => {
+    console.error('[buildBetterSentencesProgress] recordLevelResult failed:', err);
+  });
+}
+
 export const applyStage1AResult = (
   kidId: string,
   result: StageResultInput,
@@ -122,6 +161,13 @@ export const applyStage1AResult = (
   };
 
   saveBbsProgress(kidId, next);
+  recordBbsStageCompletion({
+    kidId,
+    levelId: 1,
+    stageTag: BBS_STAGE_1A,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -150,6 +196,13 @@ export const applyStage1BResult = (
   };
 
   saveBbsProgress(kidId, next);
+  recordBbsStageCompletion({
+    kidId,
+    levelId: 2,
+    stageTag: BBS_STAGE_1B,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -178,6 +231,13 @@ export const applyStage1CResult = (
   };
 
   saveBbsProgress(kidId, next);
+  recordBbsStageCompletion({
+    kidId,
+    levelId: 3,
+    stageTag: BBS_STAGE_1C,
+    result,
+    mastered,
+  });
   return next;
 };
 
@@ -203,6 +263,13 @@ export const applyStage1DResult = (
   };
 
   saveBbsProgress(kidId, next);
+  recordBbsStageCompletion({
+    kidId,
+    levelId: 4,
+    stageTag: BBS_STAGE_1D,
+    result,
+    mastered,
+  });
   return next;
 };
 

@@ -5,12 +5,14 @@ import { type FC, useState, useRef, useEffect } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { masteryLabel, masteryPctFromKey } from '../../../../lib/mastery';
+import { FRONTEND_JOURNEY_STAGE_COUNT, FRONTEND_JOURNEY_STAGES } from '../../../../lib/frontendJourneyStages';
 
 interface ParentOverviewCardsProps {
   confidenceNow: number | null;
   gamesCompleted: number | null;
   avgScore: number | null;
   totalPoints: number | null;
+  totalTimePractisedMs?: number | null;
   stageMessage?: string;
   lastUpdatedAt?: number | null;
   currentStageId?: number | null;
@@ -18,117 +20,127 @@ interface ParentOverviewCardsProps {
   variant?: 'full' | 'compact';
 }
 
-// Learning Journey stages with expanded content
-const LEARNING_STAGES = [
-  {
-    id: 1,
-    label: 'Sound Foundations',
-    shortLabel: 'Sounds',
-    emoji: '🎵',
-    goal: 'Master individual letter sounds and build phonemic awareness',
+type LearningStageDetails = {
+  emoji: string;
+  goal: string;
+  learnBullets: string[];
+  activities: string[];
+};
+
+const LEARNING_STAGE_DETAILS: Record<number, LearningStageDetails> = {
+  1: {
+    emoji: '🔤',
+    goal: 'Build strong letter-sound recognition and phonemic awareness',
     learnBullets: [
-      'Recognize all 26 letter sounds',
-      'Distinguish between similar sounds',
-      'Connect sounds to letters confidently'
+      'Recognize core letter sounds',
+      'Match sounds to letters confidently',
+      'Hear and identify sound differences'
     ],
     activities: [
-      'Letter Sound Match game',
-      'Sound Detective challenges',
-      'Balloon Pop phonics practice'
+      'Letter Sound Match',
+      'Sound Detective',
+      'Letter Tracing with Sounds'
     ]
   },
-  {
-    id: 2,
-    label: 'My First Words',
-    shortLabel: 'Blends',
+  2: {
     emoji: '🔗',
-    goal: 'Learn to combine sounds smoothly and recognize common blends',
+    goal: 'Blend sounds and decode early word patterns',
     learnBullets: [
-      'Blend consonants together (bl, cr, st)',
-      'Smooth sound transitions',
-      'Identify blends in words'
+      'Combine simple sound chunks',
+      'Read short blended words',
+      'Strengthen decoding flow'
     ],
     activities: [
-      'Blend Slide interactive game',
-      'Blend Build word creator',
-      'Sound Sequencer practice'
+      'My First Words checkpoints',
+      'Tap and Slide blend practice',
+      'Early blend drills'
     ]
   },
-  {
-    id: 3,
-    label: 'CVC Word Reader',
-    shortLabel: 'CVC Words',
+  3: {
     emoji: '🧩',
-    goal: 'Decode simple consonant-vowel-consonant words independently',
+    goal: 'Arrange and read meaningful sentences with confidence',
     learnBullets: [
-      'Read CVC words (cat, dog, sit)',
-      'Sound out short vowel patterns',
-      'Build reading confidence'
+      'Build sentence order correctly',
+      'Read short sentences smoothly',
+      'Use context to complete sentences'
     ],
     activities: [
-      'CVC Word Builder game',
-      'Word Quest challenges',
-      'Rhyme Time activities'
+      'Sentence Stepper',
+      'Read Sentences',
+      'Sentence Builder packs'
     ]
   },
-  {
-    id: 4,
-    label: 'Early Reader Fluency',
-    shortLabel: 'Fluency',
+  4: {
     emoji: '⚡',
-    goal: 'Increase reading speed and accuracy with practice',
+    goal: 'Improve reading flow, understanding, and consistency',
     learnBullets: [
-      'Read with speed and accuracy',
-      'Recognize sight words instantly',
-      'Build reading stamina'
+      'Read connected text more smoothly',
+      'Track meaning while reading',
+      'Build stamina for longer passages'
     ],
     activities: [
-      'Vowel Explorer games',
-      'Timed reading challenges',
-      'Fluency practice sessions'
+      'Story Reading',
+      'Comprehension and New Words',
+      'Fluent Reading practice'
     ]
   },
-  {
-    id: 5,
-    label: 'Rules Track',
-    shortLabel: 'Rules',
+  5: {
     emoji: '📘',
-    goal: 'Master phonics rules and spelling patterns',
+    goal: 'Strengthen sentence accuracy and grammar control',
     learnBullets: [
-      'Learn silent e and vowel teams',
-      'Understand phonics rules',
-      'Apply patterns to new words'
+      'Fix grammar errors confidently',
+      'Build stronger sentence structure',
+      'Use collocations and usage patterns'
     ],
     activities: [
-      'Rules-based word games',
-      'Pattern recognition practice',
-      'Spelling challenges'
+      'Grammar Fix',
+      'Build Better Sentences',
+      'Collocation Builder'
     ]
   },
-  {
-    id: 6,
-    label: 'Confident Reader',
-    shortLabel: 'Confident',
-    emoji: '🌟',
-    goal: 'Read fluently with comprehension and expression',
+  6: {
+    emoji: '🎤',
+    goal: 'Practice clear speaking and verbal confidence',
     learnBullets: [
-      'Read longer texts smoothly',
-      'Understand what you read',
-      'Express yourself confidently'
+      'Speak clearly with structure',
+      'Build confidence in oral responses',
+      'Prepare for presentation skills'
     ],
     activities: [
-      'Story Builder activities',
-      'Reading comprehension games',
-      'Creative reading challenges'
+      'Speaking practice routines',
+      'Argument practice drills',
+      'Presentation readiness tasks'
     ]
   },
-];
+  7: {
+    emoji: '🏆',
+    goal: 'Consolidate all skills through review and final challenge',
+    learnBullets: [
+      'Review across reading, grammar, and speaking',
+      'Close remaining weak spots',
+      'Demonstrate consistent mastery'
+    ],
+    activities: [
+      'Cross-stage review challenges',
+      'Mixed skill checkpoints',
+      'Championship finale'
+    ]
+  },
+};
+
+const LEARNING_STAGES = FRONTEND_JOURNEY_STAGES.map((stage) => ({
+  ...stage,
+  ...LEARNING_STAGE_DETAILS[stage.id],
+}));
+
+const TOTAL_JOURNEY_STAGES = FRONTEND_JOURNEY_STAGE_COUNT;
 
 export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
   confidenceNow,
   gamesCompleted,
   avgScore,
   totalPoints,
+  totalTimePractisedMs,
   stageMessage,
   lastUpdatedAt,
   currentStageId,
@@ -152,9 +164,20 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const formatDurationShort = (ms: number): string => {
+    const safeMs = Math.max(0, Math.floor(ms));
+    const totalMin = Math.floor(safeMs / 60000);
+    if (totalMin <= 0) return '0m';
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    if (h <= 0) return `${m}m`;
+    if (m === 0) return `${h}h`;
+    return `${h}h ${m}m`;
+  };
+
   // Helper to get next milestone message
   const getNextMilestone = (stageId: number | null | undefined, progressPct: number | null | undefined): string => {
-    if (!stageId || stageId < 1 || stageId > 6) return 'Complete first activities to begin your journey';
+    if (!stageId || stageId < 1 || stageId > TOTAL_JOURNEY_STAGES) return 'Complete first activities to begin your journey';
     
     const progress = progressPct ?? 0;
     const stageName = LEARNING_STAGES[stageId - 1].label;
@@ -165,24 +188,46 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
     if (progress < 100) return `Finish ${stageName} to unlock next stage`;
     
     // 100% complete
-    if (stageId === 6) return 'Journey complete! 🎉';
+    if (stageId === TOTAL_JOURNEY_STAGES) return 'Journey complete! 🎉';
     return `Ready to start ${LEARNING_STAGES[stageId].label}`;
   };
 
-  const hasValidStageId = currentStageId && currentStageId >= 1 && currentStageId <= 6;
+  const hasValidStageId =
+    typeof currentStageId === 'number' &&
+    currentStageId >= 1 &&
+    currentStageId <= TOTAL_JOURNEY_STAGES;
+  const activeStageId = hasValidStageId ? currentStageId : null;
 
   // Horizontal scroll state: track which stage is expanded (default to Stage 1 if no data)
-  const [expandedStageId, setExpandedStageId] = useState<number>(hasValidStageId ? currentStageId : 1);
+  const [expandedStageId, setExpandedStageId] = useState<number>(activeStageId ?? 1);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAtStart, setIsAtStart] = useState(true);
   const [isAtEnd, setIsAtEnd] = useState(false);
 
-  // Helper to get stage status
-  const getStageStatus = (stageId: number): 'done' | 'in-progress' | 'not-started' => {
-    if (!hasValidStageId) return 'not-started';
-    if (stageId < currentStageId) return 'done';
-    if (stageId === currentStageId) return (stageProgressPct ?? 0) > 0 ? 'in-progress' : 'not-started';
-    return 'not-started';
+  type StageStatus = 'done' | 'in-progress' | 'getting-started' | 'locked';
+  const getStageStatus = (stageId: number): StageStatus => {
+    if (!hasValidStageId) return stageId === 1 ? 'getting-started' : 'locked';
+    if (!activeStageId) return stageId === 1 ? 'getting-started' : 'locked';
+    if (stageId < activeStageId) return 'done';
+    if (stageId === activeStageId) {
+      if (activeStageId === TOTAL_JOURNEY_STAGES && (stageProgressPct ?? 0) >= 100) return 'done';
+      if ((stageProgressPct ?? 0) > 0) return 'in-progress';
+      return 'getting-started';
+    }
+    return 'locked';
+  };
+
+  const getStageStatusBadge = (status: StageStatus): { label: string; cls: string } => {
+    if (status === 'done') {
+      return { label: 'Completed', cls: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300' };
+    }
+    if (status === 'in-progress') {
+      return { label: 'In progress', cls: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300' };
+    }
+    if (status === 'getting-started') {
+      return { label: 'Getting started', cls: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300' };
+    }
+    return { label: 'Locked', cls: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400' };
   };
 
   const getStageTileTone = (stageId: number): { bg: string; border: string } => {
@@ -193,6 +238,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
       { bg: 'from-lime-50 via-emerald-50 to-cyan-50', border: 'border-lime-100' },
       { bg: 'from-orange-50 via-yellow-50 to-amber-50', border: 'border-orange-100' },
       { bg: 'from-fuchsia-50 via-rose-50 to-pink-50', border: 'border-fuchsia-100' },
+      { bg: 'from-cyan-50 via-sky-50 to-indigo-50', border: 'border-cyan-100' },
     ];
     const idx = Math.max(0, Math.min(tones.length - 1, stageId - 1));
     return tones[idx];
@@ -244,11 +290,23 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Confidence Card */}
         <Card className="p-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Confidence</div>
-          <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-            {confidenceNow !== null ? masteryLabel(confidenceNow) : '—'}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">recent sessions</div>
+          {confidenceNow !== null ? (
+            <>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Confidence</div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {masteryLabel(confidenceNow)}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">recent sessions</div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Last Played</div>
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {lastUpdatedAt ? formatRelativeTime(lastUpdatedAt) : '—'}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">game activity</div>
+            </>
+          )}
         </Card>
 
         {/* Games Completed Card */}
@@ -271,11 +329,23 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
 
         {/* Total Points Card */}
         <Card className="p-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Points</div>
-          <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
-            {totalPoints !== null ? totalPoints.toLocaleString() : '—'}
-          </div>
-          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">points</div>
+          {totalPoints !== null ? (
+            <>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Points</div>
+              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                {totalPoints.toLocaleString()}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">points</div>
+            </>
+          ) : (
+            <>
+              <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Time Practised</div>
+              <div className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                {typeof totalTimePractisedMs === 'number' ? formatDurationShort(totalTimePractisedMs) : '—'}
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">across games</div>
+            </>
+          )}
         </Card>
       </div>
 
@@ -285,12 +355,12 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Learning Journey</h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Stage-based path to reading success.
+                Stage-based path to language confidence.
               </p>
             </div>
             {hasValidStageId ? (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                Current: Stage {currentStageId} · {LEARNING_STAGES[currentStageId - 1].shortLabel}
+                Current: Stage {activeStageId} · {LEARNING_STAGES[(activeStageId || 1) - 1].shortLabel}
               </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">Not started yet</div>
@@ -304,7 +374,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                   Ready to begin?
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Start with Sound Foundations and watch progress build across 6 stages.
+                  Start with Letters & Sounds and watch progress build across 7 stages.
                 </p>
               </div>
             ) : (
@@ -323,7 +393,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
                   <span>🎯</span>
-                  <span>{getNextMilestone(currentStageId, stageProgressPct)}</span>
+                  <span>{getNextMilestone(activeStageId, stageProgressPct)}</span>
                 </div>
               </div>
             )}
@@ -332,7 +402,8 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
             {LEARNING_STAGES.map((stage) => {
               const status = getStageStatus(stage.id);
-              const isCurrent = hasValidStageId && currentStageId === stage.id;
+              const isCurrent = hasValidStageId && activeStageId === stage.id;
+              const statusBadge = getStageStatusBadge(status);
 
               return (
                 <div
@@ -347,20 +418,14 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                           {stage.label}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Stage {stage.id} of 6
+                          Stage {stage.id} of {TOTAL_JOURNEY_STAGES}
                         </div>
                       </div>
                     </div>
                     <span
-                      className={`px-2 py-1 rounded-full text-[11px] font-medium ${
-                        status === 'done'
-                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                          : status === 'in-progress'
-                          ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                      }`}
+                      className={`px-2 py-1 rounded-full text-[11px] font-medium ${statusBadge.cls}`}
                     >
-                      {status === 'done' ? '✓ Done' : status === 'in-progress' ? 'In progress' : 'Getting started'}
+                      {statusBadge.label}
                     </span>
                   </div>
 
@@ -396,7 +461,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
             <div className="flex items-start justify-between mb-8">
               <div>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-1">Learning Journey</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Your child&apos;s path to reading success</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Your child&apos;s path to language confidence</p>
               </div>
               
               {/* Right Decorative Panel */}
@@ -417,13 +482,13 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                       Ready to begin?
                     </h3>
                     <p className="text-base text-gray-600 dark:text-gray-400 max-w-2xl">
-                      Start your child&apos;s phonics journey with sound foundations and watch them progress through 6 stages to confident reading.
+                      Start your child&apos;s journey with Letters & Sounds and progress across 7 stages to Review & Championship.
                     </p>
                     
                     {/* Feature Chips */}
                     <div className="flex flex-wrap gap-2">
                       <div className="px-3 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-indigo-200 dark:border-indigo-800 text-sm font-medium text-indigo-700 dark:text-indigo-300">
-                        📚 6 Stages
+                        📚 7 Stages
                       </div>
                       <div className="px-3 py-1.5 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-sky-200 dark:border-sky-800 text-sm font-medium text-sky-700 dark:text-sky-300">
                         ⏱️ 3–5 min/day
@@ -464,7 +529,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                       <div>
                         <div className="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-1 uppercase tracking-wide">Current Stage</div>
                         <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                          Stage {currentStageId}: {LEARNING_STAGES[currentStageId - 1].label}
+                          Stage {activeStageId}: {LEARNING_STAGES[(activeStageId || 1) - 1].label}
                         </div>
                       </div>
 
@@ -485,7 +550,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                         {/* Next Milestone */}
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center gap-1">
                           <span>🎯</span>
-                          <span>{getNextMilestone(currentStageId, stageProgressPct)}</span>
+                          <span>{getNextMilestone(activeStageId, stageProgressPct)}</span>
                         </div>
                       </div>
                     </div>
@@ -500,7 +565,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                           </div>
                         </div>
                         <div className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                          Complete 1 level in <span className="font-bold text-indigo-700 dark:text-indigo-300">{LEARNING_STAGES[currentStageId - 1].label}</span>
+                          Complete 1 level in <span className="font-bold text-indigo-700 dark:text-indigo-300">{LEARNING_STAGES[(activeStageId || 1) - 1].label}</span>
                         </div>
                         <Button 
                           size="sm"
@@ -576,6 +641,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                     {LEARNING_STAGES.map((stage) => {
                       const status = getStageStatus(stage.id);
                       const isSelected = expandedStageId === stage.id;
+                      const statusBadge = getStageStatusBadge(status);
                     
                     return (
                       <button
@@ -595,7 +661,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                                 {stage.label}
                               </div>
                               <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                Stage {stage.id} of 6
+                                Stage {stage.id} of {TOTAL_JOURNEY_STAGES}
                               </div>
                             </div>
                           </div>
@@ -604,15 +670,9 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                         <div className="flex items-center justify-between">
                           {/* Status Badge */}
                           <div
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              status === 'done'
-                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
-                                : status === 'in-progress'
-                                ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
-                                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                            }`}
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${statusBadge.cls}`}
                           >
-                            {status === 'done' ? '✓ Done' : status === 'in-progress' ? '⏳ In progress' : 'Getting started'}
+                            {statusBadge.label}
                           </div>
                           
                           {/* View indicator */}
@@ -651,7 +711,7 @@ export const ParentOverviewCards: FC<ParentOverviewCardsProps> = ({
                                   {stage.label}
                                 </h5>
                                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                  Stage {stage.id} of 6
+                                  Stage {stage.id} of {TOTAL_JOURNEY_STAGES}
                                 </p>
                               </div>
                             </div>

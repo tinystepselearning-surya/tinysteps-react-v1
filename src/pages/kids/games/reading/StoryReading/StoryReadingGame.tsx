@@ -1,8 +1,18 @@
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { buildMissionReturnHref } from "../missionNavigation";
 import { READING_PACKS, ReadingPack } from "../../../../../content/readingPacks";
+import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
+
+const CANONICAL_GAME_ID = "story-reading";
+const CANONICAL_PROGRESS_DOC_ID = "story-reading";
+
+function resolvePackLevelId(pack: ReadingPack): number {
+  const parsed = Number.parseInt(String(pack.id || "").replace(/[^0-9]/g, ""), 10);
+  if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  return Math.max(1, Number(pack.level) || 1);
+}
 
 // ============================================================================
 // COMPONENT
@@ -16,8 +26,37 @@ export default function StoryReadingGame() {
   const missionTileId = searchParams.get("eemTile") || 'story-reading';
 
   const [selectedPack, setSelectedPack] = useState<ReadingPack | null>(null);
+  const packStartedAtRef = useRef<number>(0);
+  const completionSentRef = useRef<boolean>(false);
 
   const handleFinish = () => {
+    if (selectedPack && kidId && !completionSentRef.current) {
+      completionSentRef.current = true;
+      const levelId = resolvePackLevelId(selectedPack);
+      const timeSpentMs = Math.max(0, Date.now() - packStartedAtRef.current);
+      const skillTags = [
+        "area:reading",
+        "subtopic:story_reading",
+        `pack:${selectedPack.id}`,
+        `level:${selectedPack.level}`,
+        ...((selectedPack.tags || []).map((tag) => `topic:${String(tag).toLowerCase()}`)),
+      ];
+
+      void recordLevelResult({
+        kidId,
+        gameId: CANONICAL_GAME_ID,
+        progressDocId: CANONICAL_PROGRESS_DOC_ID,
+        levelId,
+        completed: true,
+        timeSpentMs,
+        attempts: 1,
+        skillTags,
+        completedAt: Date.now(),
+      } as any).catch((err) => {
+        console.error("[StoryReadingGame] recordLevelResult failed:", err);
+      });
+    }
+
     const returnUrl = new URL(missionReturnHref, window.location.origin);
     // For now, we just navigate back. We can add completion logic later.
     // returnUrl.searchParams.set("eemDone", missionTileId);
@@ -26,10 +65,14 @@ export default function StoryReadingGame() {
 
   const selectPack = (pack: ReadingPack) => {
     setSelectedPack(pack);
+    packStartedAtRef.current = Date.now();
+    completionSentRef.current = false;
   };
   
   const backToSelection = () => {
     setSelectedPack(null);
+    packStartedAtRef.current = 0;
+    completionSentRef.current = false;
   }
 
   if (selectedPack) {
