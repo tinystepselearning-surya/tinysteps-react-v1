@@ -53,6 +53,7 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   const blogTs = path.join(root, 'src', 'content', 'blog.ts');
   const coursesTs = path.join(root, 'src', 'content', 'courses.ts');
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
+  const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
 
   const blogSlugs = extractSlugsFromFile(blogTs, 'slug');
@@ -64,14 +65,16 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 
   const staticRoutes = uniqueRoutes(STATIC_MARKETING_ROUTES);
   const parentRoutes = uniqueRoutes(PARENT_HELP_ROUTES);
+  const today = fmt(new Date());
 
   // sitemap-static.xml (top-level canonical marketing pages)
+  const staticLastmod = lastmodFrom(appRoutesTs);
   const staticXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+
     staticRoutes.map((route) => {
       const loc = route === '/' ? 'https://tinystepslearning.com/' : `https://tinystepslearning.com${route}`;
       const priority = route === '/' ? '1.0' : route === '/blog' ? '0.8' : route === '/courses' ? '0.9' : '0.8';
       const changefreq = route === '/blog' ? 'daily' : route === '/' || route === '/courses' ? 'weekly' : 'monthly';
-      return toUrl(loc, fmt(new Date()), priority, changefreq);
+      return toUrl(loc, staticLastmod, priority, changefreq);
     }).join('')+
   `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-static.xml'), staticXml);
@@ -84,12 +87,11 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  const today = fmt(new Date());
   for (const slug of uniqueRoutes([...blogSlugs, ...mdxSlugs])) {
     const mappedDate = blogSlugDateMap.get(slug);
     if (mappedDate && mappedDate > today) continue;
     const mdxPath = path.join(mdxDir, `${slug}.mdx`);
-    const last = fs.existsSync(mdxPath) ? lastmodFrom(mdxPath) : lastmodFrom(blogTs);
+    const last = mappedDate || (fs.existsSync(mdxPath) ? lastmodFrom(mdxPath) : lastmodFrom(blogTs));
     blogXml += toUrl(`https://tinystepslearning.com/blog/${slug}`, last, '0.8', 'weekly');
   }
   blogXml += `\n</urlset>`;

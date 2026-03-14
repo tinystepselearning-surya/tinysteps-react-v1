@@ -10,6 +10,8 @@ const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4
 const HOST = `http://127.0.0.1:${PORT}`;
 
 const COURSE_SOURCE = path.resolve(process.cwd(), "src", "content", "courses.ts");
+const BLOG_SOURCE = path.resolve(process.cwd(), "src", "content", "blog.ts");
+const BLOG_MDX_DIR = path.resolve(process.cwd(), "src", "content", "blog");
 
 // Fallback blog posts (used only if auto-discovery finds 0)
 const BLOG_FALLBACK_ROUTES = [
@@ -25,6 +27,17 @@ async function extractSlugsFromFile(filePath) {
     let match;
     while ((match = regex.exec(src))) slugs.push(match[1]);
     return [...new Set(slugs)];
+  } catch {
+    return [];
+  }
+}
+
+async function extractMdxSlugsFromDir(dirPath) {
+  try {
+    const files = await fs.readdir(dirPath);
+    return files
+      .filter((file) => file.endsWith(".mdx"))
+      .map((file) => file.replace(/\.mdx$/, ""));
   } catch {
     return [];
   }
@@ -474,16 +487,29 @@ async function prerender() {
       ]);
 
       // ✅ Auto-discover all blog post routes from /blog (AEO/SEO)
-      let blogRoutes = [];
+      let discoveredBlogRoutes = [];
       try {
-        blogRoutes = await discoverBlogRoutes(page);
+        discoveredBlogRoutes = await discoverBlogRoutes(page);
       } catch (e) {
         console.warn("[prerender] Blog discovery failed; will fall back to fixed slugs.");
       }
 
+      const blogSourceSlugs = await extractSlugsFromFile(BLOG_SOURCE);
+      const mdxSourceSlugs = await extractMdxSlugsFromDir(BLOG_MDX_DIR);
+      const sourceBlogRoutes = uniqueRoutes([
+        ...blogSourceSlugs.map((slug) => `/blog/${slug}`),
+        ...mdxSourceSlugs.map((slug) => `/blog/${slug}`),
+      ]);
+
+      let blogRoutes = uniqueRoutes([...sourceBlogRoutes, ...discoveredBlogRoutes]);
+
       if (blogRoutes.length === 0) {
         blogRoutes = BLOG_FALLBACK_ROUTES;
         console.warn(`[prerender] Using fallback blog routes (${blogRoutes.length})`);
+      } else {
+        console.log(
+          `[prerender] Blog routes from source/discovery: ${blogRoutes.length} (source: ${sourceBlogRoutes.length}, discovered: ${discoveredBlogRoutes.length})`
+        );
       }
 
       // Safety limit (avoid accidental runaway)
