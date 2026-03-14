@@ -29,6 +29,15 @@ type LevelConfig = {
 
 // --- CONFIG (pedagogy-friendly defaults) ---
 const TARGET_CORRECT = 10;
+const ACTIVE_BALLOON_COUNT = 4;
+const TARGET_AUTO_CUE_INTERVAL_MS = 3500;
+const TARGET_AUTO_CUE_SFX_GAP_MS = 800;
+const TARGET_AUTO_CUE_INITIAL_DELAY_MS = 300;
+const MASTERY_MIN_ACCURACY_PCT = 80;
+const MASTERY_MAX_SUPPORT_EVENTS = 3;
+const EEM_MISSION_ID = "english-excellence-mission-v2";
+const pendingMissionDoneKey = (kidId: string) =>
+  `ts_eem_done_pending_${EEM_MISSION_ID}_${kidId || "guest"}`;
 
 // Reduce early load slightly (you can tune)
 const JOLLY_LEVELS: LevelConfig[] = [
@@ -43,7 +52,19 @@ const JOLLY_LEVELS: LevelConfig[] = [
 
 type Progress = {
   unlocked: number;
-  completed: Record<number, { stars: number; bestScore: number }>;
+  completed: Record<
+    number,
+    {
+      stars: number;
+      bestScore: number;
+      mastered?: boolean;
+      completedSessions?: number;
+      bestAccuracyPct?: number;
+      lastAccuracyPct?: number;
+      lastHintCount?: number;
+      lastSupportLoad?: number;
+    }
+  >;
 };
 
 const BALLOON_BODY_W = 120;
@@ -59,6 +80,12 @@ const prefersReducedMotion =
 
 const rand = (min: number, max: number) => Math.random() * (max - min) + min;
 const choice = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)];
+const normalizeLetter = (value: string) => (value || "").toLowerCase().trim();
+const difficultyForLevel = (levelId: number): "easy" | "medium" | "hard" => {
+  if (levelId <= 2) return "easy";
+  if (levelId <= 5) return "medium";
+  return "hard";
+};
 
 const getProgressKey = (kidId: string) =>
   kidId ? `ts_balloonpop_progress_${kidId}` : "ts_balloonpop_progress_guest";
@@ -95,7 +122,7 @@ const makeBalloonNoOverlap = (
 ): Balloon => {
   for (let attempt = 0; attempt < 25; attempt++) {
     const x = rand(10, 90);
-    const y = rand(110, 170);
+    const y = rand(70, 96);
     const overlaps = existing.some((b) => Math.abs(x - b.x) < MIN_DX && Math.abs(y - b.y) < MIN_DY);
     if (!overlaps) {
       return {
@@ -113,7 +140,7 @@ const makeBalloonNoOverlap = (
   const count = existing.length + 1;
   const spacing = count > 1 ? 76 / (count - 1) : 0;
   const x = 12 + (id % count) * spacing;
-  const y = 110 + ((id % 3) * 18);
+  const y = 72 + ((id % 3) * 10);
   return { id, letter: choice(letters), x, y, speed: rand(speedMin, speedMax), wobblePhase: rand(0, Math.PI * 2) };
 };
 
@@ -222,7 +249,8 @@ function useBalloonPopSfx() {
 
   const prime = React.useCallback(async () => {
     const p = poolsRef.current!;
-    await Promise.all([p.sfx.pop.prime(), p.sfx.correct.prime(), p.sfx.wrong.prime(), p.sfx.confetti.prime()]);
+    const results = await Promise.all([p.sfx.pop.prime(), p.sfx.correct.prime(), p.sfx.wrong.prime(), p.sfx.confetti.prime()]);
+    return results.some(Boolean);
   }, []);
 
   const playSfx = React.useCallback(async (key: SfxKey, volume?: number) => {
@@ -237,22 +265,37 @@ function useBalloonPopSfx() {
     return await p.letters[key].play(volume);
   }, []);
 
-  return { prime, playSfx, playLetter };
+  const primeLetters = React.useCallback(async (letters: string[]) => {
+    const p = poolsRef.current!;
+    const unique = Array.from(new Set((letters || []).map((l) => (l || "").toLowerCase()).filter(Boolean)));
+    if (unique.length === 0) return false;
+    const results = await Promise.all(
+      unique.map(async (key) => {
+        if (!p.letters[key]) p.letters[key] = makePool(letterSoundUrl(key), 2);
+        return p.letters[key].prime();
+      })
+    );
+    return results.some(Boolean);
+  }, []);
+
+  return { prime, playSfx, playLetter, primeLetters };
 }
 
 const KidsBalloonPop: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const kidId = searchParams.get("kidId") || "";
+  const eemTile = searchParams.get("eemTile") || "";
   const missionReturnHref = buildMissionReturnHref(searchParams, kidId);
+  const missionDoneStorageKey = pendingMissionDoneKey(kidId);
 
   const sfx = useBalloonPopSfx();
 
   const audioPrimedRef = useRef(false);
   const ensureAudioPrimed = useCallback(async () => {
     if (audioPrimedRef.current) return;
-    audioPrimedRef.current = true;
-    await sfx.prime();
+    const ok = await sfx.prime();
+    audioPrimedRef.current = !!ok;
   }, [sfx]);
 
   const [progress, setProgress] = useState<Progress>(() => loadProgress(kidId));
@@ -290,9 +333,22 @@ const KidsBalloonPop: React.FC = () => {
 
   const [levelComplete, setLevelComplete] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [sessionMastered, setSessionMastered] = useState(false);
+  const [sessionAccuracyPct, setSessionAccuracyPct] = useState(0);
+  const [sessionSupportLoad, setSessionSupportLoad] = useState(0);
+  const [reviewLetters, setReviewLetters] = useState<string[]>([]);
 
   const [hintUntil, setHintUntil] = useState<number>(0);
   const wrongStreakRef = useRef(0);
+  const supportStatsRef = useRef({ hintPulseCount: 0, rescueCount: 0, hearAgainCount: 0 });
+  const letterStatsRef = useRef<Record<string, { attempts: number; correct: number; wrong: number }>>({});
+  const confusionStatsRef = useRef<Record<string, number>>({});
+  const fsNoticeTimeoutRef = useRef<number | null>(null);
+  const autoCueRef = useRef<{ letter: string; at: number }>({ letter: "", at: 0 });
+  const lastTargetCueAtRef = useRef(0);
+  const autoCueSuppressedUntilRef = useRef(0);
+  const nextTargetCueTimeoutRef = useRef<number | null>(null);
+  const [missionCompletionPending, setMissionCompletionPending] = useState(false);
 
   const rafRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
@@ -301,28 +357,84 @@ const KidsBalloonPop: React.FC = () => {
   const startTimeRef = useRef<number>(Date.now());
   const confettiGeneratedRef = useRef<boolean>(false);
 
+  useEffect(() => {
+    if (!eemTile) {
+      setMissionCompletionPending(false);
+      return;
+    }
+    try {
+      setMissionCompletionPending(sessionStorage.getItem(missionDoneStorageKey) === eemTile);
+    } catch {
+      setMissionCompletionPending(false);
+    }
+  }, [eemTile, missionDoneStorageKey]);
+
+  const setMissionDonePending = useCallback(
+    (pending: boolean) => {
+      setMissionCompletionPending(pending);
+      if (!eemTile) return;
+      try {
+        if (pending) {
+          sessionStorage.setItem(missionDoneStorageKey, eemTile);
+        } else {
+          sessionStorage.removeItem(missionDoneStorageKey);
+        }
+      } catch {
+        // ignore
+      }
+    },
+    [eemTile, missionDoneStorageKey]
+  );
+
+  const missionBackHref = useCallback(() => {
+    const returnUrl = new URL(missionReturnHref, "https://tinysteps.local");
+    if ((levelComplete || missionCompletionPending) && eemTile) {
+      returnUrl.searchParams.set("eemDone", eemTile);
+    }
+    return `${returnUrl.pathname}${returnUrl.search}${returnUrl.hash}`;
+  }, [eemTile, levelComplete, missionCompletionPending, missionReturnHref]);
+
+  const bumpLetterStat = useCallback((letter: string, outcome: "correct" | "wrong") => {
+    const key = normalizeLetter(letter);
+    if (!key || !/^[a-z]$/.test(key)) return;
+    const prev = letterStatsRef.current[key] || { attempts: 0, correct: 0, wrong: 0 };
+    prev.attempts += 1;
+    if (outcome === "correct") prev.correct += 1;
+    else prev.wrong += 1;
+    letterStatsRef.current[key] = prev;
+  }, []);
+
+  const bumpConfusionStat = useCallback((targetLetter: string, clickedLetter: string) => {
+    const targetKey = normalizeLetter(targetLetter);
+    const clickedKey = normalizeLetter(clickedLetter);
+    if (!targetKey || !clickedKey || targetKey === clickedKey) return;
+    const key = `confusion:${targetKey}-${clickedKey}`;
+    confusionStatsRef.current[key] = (confusionStatsRef.current[key] || 0) + 1;
+  }, []);
+
   // --- Fullscreen helpers ---
   const playLevel = useCallback(
     async (levelId: number) => {
       if (levelId > progress.unlocked) return;
 
-      setFullscreenMode(true);
       setFeedback(null);
+      setSessionMastered(false);
+      setSessionAccuracyPct(0);
+      setSessionSupportLoad(0);
+      setReviewLetters([]);
       setFsBlocked(false);
 
-      // Wait a tick for container render
-      await new Promise((r) => setTimeout(r, 50));
-
-      // Request fullscreen inside user gesture
+      // Fullscreen is best-effort; gameplay should still work when blocked.
       try {
-        const elem = containerRef.current;
-        if (!elem) return;
-
+        const elem = document.documentElement;
         if (elem.requestFullscreen) await elem.requestFullscreen();
         else if ((elem as any).webkitRequestFullscreen) await (elem as any).webkitRequestFullscreen();
       } catch {
         setFsBlocked(true);
-        setTimeout(() => setFsBlocked(false), 4000);
+        if (fsNoticeTimeoutRef.current) {
+          window.clearTimeout(fsNoticeTimeoutRef.current);
+        }
+        fsNoticeTimeoutRef.current = window.setTimeout(() => setFsBlocked(false), 2200);
       }
 
       // Update URL
@@ -336,12 +448,12 @@ const KidsBalloonPop: React.FC = () => {
       if (!level) return;
 
       const initial: Balloon[] = [];
-      for (let i = 0; i < level.balloonCount; i++) {
+      for (let i = 0; i < ACTIVE_BALLOON_COUNT; i++) {
         initial.push(makeBalloonNoOverlap(i, level.letters, level.speedMin, level.speedMax, initial));
       }
 
       const t = choice(level.letters);
-      const desiredTargetCount = Math.min(2, level.balloonCount, level.letters.length);
+      const desiredTargetCount = Math.min(2, ACTIVE_BALLOON_COUNT, level.letters.length);
 
       setBalloons(ensureTargetCount(initial, t, desiredTargetCount));
       setTarget(t);
@@ -349,8 +461,20 @@ const KidsBalloonPop: React.FC = () => {
       setScore(0);
       setCorrectCount(0);
       setMistakes(0);
+      letterStatsRef.current = {};
+      confusionStatsRef.current = {};
+      supportStatsRef.current = { hintPulseCount: 0, rescueCount: 0, hearAgainCount: 0 };
       wrongStreakRef.current = 0;
+      autoCueRef.current = { letter: "", at: 0 };
+      lastTargetCueAtRef.current = 0;
+      autoCueSuppressedUntilRef.current = 0;
+      if (nextTargetCueTimeoutRef.current) {
+        window.clearTimeout(nextTargetCueTimeoutRef.current);
+        nextTargetCueTimeoutRef.current = null;
+      }
+      startTimeRef.current = Date.now();
 
+      setFullscreenMode(true);
       setHasStarted(false);
       setLevelComplete(false);
       lastCorrectPopRef.current = Date.now();
@@ -361,33 +485,39 @@ const KidsBalloonPop: React.FC = () => {
   const exitFullscreen = useCallback(() => {
     setFullscreenMode(false);
     setHasStarted(false);
+    if (nextTargetCueTimeoutRef.current) {
+      window.clearTimeout(nextTargetCueTimeoutRef.current);
+      nextTargetCueTimeoutRef.current = null;
+    }
 
     try {
       if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
       else if ((document as any).webkitExitFullscreen) (document as any).webkitExitFullscreen();
     } catch {}
 
-    // Patch 3: Signal EEM completion if this level was completed
-    if (levelComplete) {
-      const eemTile = searchParams.get("eemTile");
-      if (eemTile) {
-        const returnUrl = new URL(missionReturnHref, window.location.origin);
-        returnUrl.searchParams.set("eemDone", eemTile);
-        navigate(`${returnUrl.pathname}${returnUrl.search}`, { replace: true });
-        return;
-      }
+    if ((levelComplete || missionCompletionPending) && eemTile) {
+      setMissionDonePending(false);
+      navigate(missionBackHref(), { replace: true });
+      return;
     }
 
     goToLevels();
-  }, [goToLevels, levelComplete, searchParams, missionReturnHref, navigate]);
+  }, [eemTile, goToLevels, levelComplete, missionBackHref, missionCompletionPending, navigate, setMissionDonePending]);
 
   useEffect(() => {
     const handleFSChange = () => {
       const isFull = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
-      if (!isFull && fullscreenMode) {
-        setFullscreenMode(false);
-        setHasStarted(false);
-        goToLevels();
+      if (isFull) {
+        setFsBlocked(false);
+        return;
+      }
+      if (fullscreenMode) {
+        // Do not force-exit gameplay on fullscreen exit.
+        setFsBlocked(true);
+        if (fsNoticeTimeoutRef.current) {
+          window.clearTimeout(fsNoticeTimeoutRef.current);
+        }
+        fsNoticeTimeoutRef.current = window.setTimeout(() => setFsBlocked(false), 2200);
       }
     };
     document.addEventListener("fullscreenchange", handleFSChange);
@@ -395,8 +525,12 @@ const KidsBalloonPop: React.FC = () => {
     return () => {
       document.removeEventListener("fullscreenchange", handleFSChange);
       document.removeEventListener("webkitfullscreenchange", handleFSChange);
+      if (fsNoticeTimeoutRef.current) {
+        window.clearTimeout(fsNoticeTimeoutRef.current);
+        fsNoticeTimeoutRef.current = null;
+      }
     };
-  }, [fullscreenMode, goToLevels]);
+  }, [fullscreenMode]);
 
   useEffect(() => {
     document.body.style.overflow = fullscreenMode ? "hidden" : "";
@@ -415,7 +549,7 @@ const KidsBalloonPop: React.FC = () => {
         const next = makeBalloonNoOverlap(id, currentLevel.letters, currentLevel.speedMin, currentLevel.speedMax, others);
 
         const updated = prev.map((b) => (b.id === id ? next : b));
-        const desiredTargetCount = Math.min(2, currentLevel.balloonCount, currentLevel.letters.length);
+        const desiredTargetCount = Math.min(2, ACTIVE_BALLOON_COUNT, currentLevel.letters.length);
         const t = (ensureTarget ?? target) || "";
         return t ? ensureTargetCount(updated, t, desiredTargetCount) : updated;
       });
@@ -435,7 +569,7 @@ const KidsBalloonPop: React.FC = () => {
         attempts += 1;
       }
 
-      const desiredTargetCount = Math.min(2, currentLevel.balloonCount, currentLevel.letters.length);
+      const desiredTargetCount = Math.min(2, ACTIVE_BALLOON_COUNT, currentLevel.letters.length);
       setBalloons((prevB) => ensureTargetCount(prevB, next, desiredTargetCount));
       lastCorrectPopRef.current = Date.now();
       return next;
@@ -443,24 +577,66 @@ const KidsBalloonPop: React.FC = () => {
     [currentLevel]
   );
 
-  const completeLevel = useCallback(() => {
+  const completeLevel = useCallback((finalCorrectCount?: number) => {
     if (!currentLevel) return;
 
+    const sessionCorrect = finalCorrectCount ?? correctCount;
+    const sessionMistakes = mistakes;
+    const attempts = sessionCorrect + sessionMistakes;
+    const accuracyPct = attempts > 0 ? (sessionCorrect / attempts) * 100 : 0;
+    const supportLoad = supportStatsRef.current.hintPulseCount + supportStatsRef.current.rescueCount * 2;
+    const hintCount =
+      supportStatsRef.current.hintPulseCount +
+      supportStatsRef.current.rescueCount +
+      supportStatsRef.current.hearAgainCount;
+    const isMastered = accuracyPct >= MASTERY_MIN_ACCURACY_PCT && supportLoad <= MASTERY_MAX_SUPPORT_EVENTS;
+    const difficulty = difficultyForLevel(currentLevel.id);
+    const timeSpentMs = Math.max(0, Date.now() - startTimeRef.current);
+    const durationSec = Math.max(1, Math.round(timeSpentMs / 1000));
+    const sessionScore = sessionCorrect;
+    const masteredItems = Object.entries(letterStatsRef.current)
+      .filter(([, stats]) => stats.attempts > 0 && stats.correct / stats.attempts >= 0.8)
+      .map(([letter]) => `letter:${letter}`);
+    const weakItems = Object.entries(letterStatsRef.current)
+      .filter(([, stats]) => stats.attempts > 0 && stats.wrong >= stats.correct)
+      .map(([letter]) => `letter:${letter}`);
+    const weakLetterList = weakItems.map((item) => item.replace("letter:", "")).slice(0, 4);
+
+    setSessionMastered(isMastered);
+    setSessionAccuracyPct(Math.round(accuracyPct));
+    setSessionSupportLoad(supportLoad);
+    setReviewLetters(weakLetterList);
+    if (nextTargetCueTimeoutRef.current) {
+      window.clearTimeout(nextTargetCueTimeoutRef.current);
+      nextTargetCueTimeoutRef.current = null;
+    }
     setLevelComplete(true);
     confettiGeneratedRef.current = false;
+    if (eemTile) {
+      setMissionDonePending(true);
+    }
 
     sfx.playSfx("confetti", 1.0);
 
     // Stars based on mistakes (not punitive)
-    const stars = mistakes === 0 ? 3 : mistakes <= 2 ? 2 : 1;
+    const stars = sessionMistakes === 0 ? 3 : sessionMistakes <= 2 ? 2 : 1;
+    const previous = progress.completed[currentLevel.id];
 
     const newProgress: Progress = {
-      unlocked: Math.min(7, Math.max(progress.unlocked, currentLevel.id + 1)),
+      unlocked: isMastered
+        ? Math.min(7, Math.max(progress.unlocked, currentLevel.id + 1))
+        : progress.unlocked,
       completed: {
         ...progress.completed,
         [currentLevel.id]: {
           stars,
-          bestScore: Math.max(progress.completed[currentLevel.id]?.bestScore || 0, score),
+          bestScore: Math.max(previous?.bestScore || 0, sessionScore),
+          mastered: Boolean(previous?.mastered || isMastered),
+          completedSessions: (previous?.completedSessions || 0) + 1,
+          bestAccuracyPct: Math.max(previous?.bestAccuracyPct || 0, Math.round(accuracyPct)),
+          lastAccuracyPct: Math.round(accuracyPct),
+          lastHintCount: hintCount,
+          lastSupportLoad: supportLoad,
         },
       },
     };
@@ -473,7 +649,60 @@ const KidsBalloonPop: React.FC = () => {
       (async () => {
         try {
           const { recordLevelResult } = await import("../games/engine/recordLevelResult");
-          const attempts = correctCount + mistakes;
+          const tagDeltas: Record<string, { attempts: number; correct: number; wrong: number }> = {};
+          Object.entries(letterStatsRef.current).forEach(([letter, stats]) => {
+            if (stats.attempts > 0) {
+              tagDeltas[`letter:${letter}`] = {
+                attempts: stats.attempts,
+                correct: stats.correct,
+                wrong: stats.wrong,
+              };
+            }
+          });
+          tagDeltas["subtopic:letter_sounds"] = {
+            attempts,
+            correct: sessionCorrect,
+            wrong: sessionMistakes,
+          };
+          if (supportStatsRef.current.hintPulseCount > 0) {
+            tagDeltas["support:hint_pulse"] = {
+              attempts: supportStatsRef.current.hintPulseCount,
+              correct: 0,
+              wrong: 0,
+            };
+          }
+          if (supportStatsRef.current.rescueCount > 0) {
+            tagDeltas["support:errorless_rescue"] = {
+              attempts: supportStatsRef.current.rescueCount,
+              correct: 0,
+              wrong: 0,
+            };
+          }
+          Object.entries(confusionStatsRef.current).forEach(([confTag, count]) => {
+            if (count > 0) {
+              tagDeltas[confTag] = { attempts: count, correct: 0, wrong: count };
+            }
+          });
+
+          const confusionTags = Object.keys(confusionStatsRef.current).filter((k) => confusionStatsRef.current[k] > 0);
+          const letterTags = Object.keys(letterStatsRef.current).map((letter) => `letter:${letter}`);
+          const skillTags = Array.from(
+            new Set([
+              "grade:1",
+              `level:${currentLevel.id}`,
+              "round:8",
+              "domain:phonetics",
+              "subtopic:letter_sounds",
+              `difficulty:${difficulty}`,
+              `mastery:${isMastered ? "yes" : "no"}`,
+              `hint_count:${hintCount}`,
+              `retry_count:${sessionMistakes}`,
+              ...letterTags,
+              ...confusionTags.slice(0, 8),
+              ...weakItems.map((item) => `weak:${item}`),
+            ])
+          );
+
           await recordLevelResult({
             kidId,
             gameId: "balloon-pop",
@@ -481,18 +710,27 @@ const KidsBalloonPop: React.FC = () => {
             levelId: currentLevel.id,
             completed: true,
             stars,
-            score: correctCount,
-            accuracyPct: attempts > 0 ? (correctCount / attempts) * 100 : 0,
-            tagDeltas: {
-              "subtopic:letter_sounds": { attempts, correct: correctCount, wrong: mistakes },
-            },
-          });
+            score: sessionScore,
+            accuracyPct,
+            durationSec,
+            timeSpentMs,
+            attempts,
+            correct: sessionCorrect,
+            wrong: sessionMistakes,
+            skillTags,
+            tagDeltas,
+            masteredItems,
+            weakItems,
+            hintCount,
+            retryCount: sessionMistakes,
+            masteryAchieved: isMastered,
+          } as any);
         } catch {
           // non-blocking
         }
       })();
     }
-  }, [currentLevel, mistakes, progress, kidId, sfx, score, correctCount]);
+  }, [correctCount, currentLevel, eemTile, kidId, mistakes, progress, sfx, setMissionDonePending]);
 
   const playNextLevel = useCallback(() => {
     if (!currentLevel || currentLevel.id >= 7) return;
@@ -506,12 +744,63 @@ const KidsBalloonPop: React.FC = () => {
     playLevel(currentLevel.id);
   }, [currentLevel, playLevel]);
 
-  // Big cue button: (optional) reinforces letter with sound
+  const suppressAutoCueFor = useCallback((ms: number) => {
+    const until = Date.now() + Math.max(0, ms);
+    autoCueSuppressedUntilRef.current = Math.max(autoCueSuppressedUntilRef.current, until);
+  }, []);
+
+  const playTargetCue = useCallback(async (letter: string, countAsSupport: boolean, force = false) => {
+    if (!letter) return;
+    const now = Date.now();
+    if (!force && now - lastTargetCueAtRef.current < 700) return;
+    lastTargetCueAtRef.current = now;
+    if (countAsSupport) supportStatsRef.current.hearAgainCount += 1;
+    try {
+      await ensureAudioPrimed();
+      await sfx.playLetter(letter, 0.95);
+    } catch {
+      // non-blocking
+    }
+  }, [ensureAudioPrimed, sfx]);
+
+  // Big cue button: reinforces the target sound
   const handleHearAgain = useCallback(async () => {
-    if (!target) return;
-    await ensureAudioPrimed();
-    await sfx.playLetter(target, 0.95);
-  }, [target, ensureAudioPrimed, sfx]);
+    suppressAutoCueFor(TARGET_AUTO_CUE_SFX_GAP_MS);
+    await playTargetCue(target, true);
+  }, [playTargetCue, suppressAutoCueFor, target]);
+
+  useEffect(() => {
+    return () => {
+      if (nextTargetCueTimeoutRef.current) {
+        window.clearTimeout(nextTargetCueTimeoutRef.current);
+        nextTargetCueTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!hasStarted || levelComplete || !fullscreenMode || !target) return;
+
+    autoCueRef.current = { letter: target, at: Date.now() };
+    let cancelled = false;
+    const playIfReady = () => {
+      if (cancelled) return;
+      if (Date.now() < autoCueSuppressedUntilRef.current) return;
+      void playTargetCue(target, false);
+    };
+
+    const now = Date.now();
+    const suppressionDelay = Math.max(0, autoCueSuppressedUntilRef.current - now);
+    const kickoffDelay = Math.max(TARGET_AUTO_CUE_INITIAL_DELAY_MS, suppressionDelay + 100);
+    const kickoffTimer = window.setTimeout(playIfReady, kickoffDelay);
+    const intervalId = window.setInterval(playIfReady, TARGET_AUTO_CUE_INTERVAL_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(kickoffTimer);
+      window.clearInterval(intervalId);
+    };
+  }, [fullscreenMode, hasStarted, levelComplete, target, playTargetCue]);
 
   // --- Core fix: only correct balloons pop ---
   const handlePop = useCallback(
@@ -529,8 +818,11 @@ const KidsBalloonPop: React.FC = () => {
 
       if (!wasCorrect) {
         // WRONG: do NOT pop. Shake + feedback + hint ladder.
+        suppressAutoCueFor(TARGET_AUTO_CUE_SFX_GAP_MS);
         await ensureAudioPrimed();
         sfx.playSfx("wrong", 0.9);
+        bumpLetterStat(target, "wrong");
+        bumpConfusionStat(target, b.letter);
 
         setBalloons((prev) =>
           prev.map((x) =>
@@ -538,20 +830,31 @@ const KidsBalloonPop: React.FC = () => {
           )
         );
 
-        setMistakes((m) => m + 1);
-        setFeedback("Try again!");
-        window.setTimeout(() => setFeedback(null), 700);
-
         // Increase wrong streak and escalate help
         const nextStreak = wrongStreakRef.current + 1;
         wrongStreakRef.current = nextStreak;
+        const cueLetter = target.toUpperCase();
+
+        setMistakes((m) => m + 1);
+        if (nextStreak <= 1) {
+          setFeedback(`Let's find ${cueLetter}`);
+          setHintUntil(now + 700);
+        } else if (nextStreak === 2) {
+          setFeedback(`Find the glowing ${cueLetter}`);
+          setHintUntil(now + 1200);
+        } else {
+          setFeedback(`${cueLetter} is ready. Tap it.`);
+        }
+        window.setTimeout(() => setFeedback(null), 950);
 
         if (nextStreak === 2) {
           // Pulse target balloons
-          setHintUntil(now + 900);
+          supportStatsRef.current.hintPulseCount += 1;
+          setHintUntil(now + 1200);
         } else if (nextStreak >= 3) {
           // Errorless rescue: temporarily disable/dim non-target balloons
-          const lockMs = 1500;
+          const lockMs = 1800;
+          supportStatsRef.current.rescueCount += 1;
           setHintUntil(now + lockMs);
           setBalloons((prev) =>
             prev.map((x) =>
@@ -564,8 +867,9 @@ const KidsBalloonPop: React.FC = () => {
 
         // Optional gentle re-cue after wrong
         window.setTimeout(() => {
-          void handleHearAgain();
-        }, 250);
+          if (Date.now() < autoCueSuppressedUntilRef.current) return;
+          void playTargetCue(target, false);
+        }, TARGET_AUTO_CUE_SFX_GAP_MS);
 
         return;
       }
@@ -574,9 +878,11 @@ const KidsBalloonPop: React.FC = () => {
       wrongStreakRef.current = 0;
       setHintUntil(0);
 
+      suppressAutoCueFor(TARGET_AUTO_CUE_SFX_GAP_MS);
       await ensureAudioPrimed();
       sfx.playSfx("pop", 0.85);
       sfx.playSfx("correct", 0.9);
+      bumpLetterStat(target, "correct");
 
       setBalloons((prev) => prev.map((x) => (x.id === id ? { ...x, isPopping: true, popAt: now } : x)));
 
@@ -585,7 +891,7 @@ const KidsBalloonPop: React.FC = () => {
       setCorrectCount((c) => {
         const nc = c + 1;
         if (nc >= TARGET_CORRECT) {
-          window.setTimeout(() => completeLevel(), 350);
+          window.setTimeout(() => completeLevel(nc), 350);
         }
         return nc;
       });
@@ -593,13 +899,20 @@ const KidsBalloonPop: React.FC = () => {
       // Choose next target and ensure it exists
       const nextTarget = pickNewTarget(target);
       setTarget(nextTarget);
+      if (nextTargetCueTimeoutRef.current) {
+        window.clearTimeout(nextTargetCueTimeoutRef.current);
+      }
+      nextTargetCueTimeoutRef.current = window.setTimeout(() => {
+        lastTargetCueAtRef.current = Date.now();
+        void sfx.playLetter(nextTarget, 0.95);
+      }, 320);
 
       // Respawn the popped balloon after burst
       window.setTimeout(() => {
         respawn(id, nextTarget);
       }, 240);
     },
-    [hasStarted, levelComplete, balloons, target, ensureAudioPrimed, sfx, handleHearAgain, pickNewTarget, respawn, completeLevel]
+    [hasStarted, levelComplete, balloons, target, ensureAudioPrimed, sfx, pickNewTarget, respawn, completeLevel, bumpLetterStat, bumpConfusionStat, playTargetCue, suppressAutoCueFor]
   );
 
   // --- Animation loop (fixed: no balloon-count growth) ---
@@ -611,7 +924,7 @@ const KidsBalloonPop: React.FC = () => {
       return;
     }
 
-    const desiredTargetCount = Math.min(2, currentLevel.balloonCount, currentLevel.letters.length);
+    const desiredTargetCount = Math.min(2, ACTIVE_BALLOON_COUNT, currentLevel.letters.length);
 
     // Reduced motion: slower interval updates
     if (prefersReducedMotion) {
@@ -692,7 +1005,7 @@ const KidsBalloonPop: React.FC = () => {
         `}</style>
 
         <Link
-          to={missionReturnHref}
+          to={missionBackHref()}
           className="absolute top-3 right-3 px-4 py-2 bg-black/90 hover:bg-black/95 text-white font-semibold rounded-full shadow-lg transition-all duration-200"
           style={{ zIndex: 50 }}
         >
@@ -710,7 +1023,7 @@ const KidsBalloonPop: React.FC = () => {
                 Progress can continue on this device. Add `kidId` later for synced per-child tracking.
               </p>
               <Link
-                to={missionReturnHref}
+                to={missionBackHref()}
                 className="inline-block px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg transition-colors"
               >
                 ← Open English Excellence Mission
@@ -744,7 +1057,7 @@ const KidsBalloonPop: React.FC = () => {
                       <div className="text-sm text-white/80 mt-2">{level.letters.join(" ")}</div>
                       {completed && (
                         <div className="text-xs text-green-300 mt-1 font-semibold">
-                          Completed • Best: {completed.bestScore}
+                          {completed.mastered ? "Mastered ✅" : "Completed • Practice to unlock"} • Best: {completed.bestScore}
                         </div>
                       )}
                     </div>
@@ -828,24 +1141,15 @@ const KidsBalloonPop: React.FC = () => {
         </div>
       </div>
 
-      {/* Helper text */}
-      <div className="absolute top-20 left-6 z-30 flex items-center gap-3">
-        <div className="text-white/70 text-sm font-medium backdrop-blur-sm bg-black/10 px-3 py-1.5 rounded-lg">
-          👆 Tap the balloon with letter: <span className="font-bold text-white text-lg">{target}</span>
-        </div>
-        <button
-          onClick={handleHearAgain}
-          className="px-3 py-1.5 bg-blue-500/90 hover:bg-blue-600 text-white text-sm font-semibold rounded-lg shadow-lg backdrop-blur-sm transition-all"
-          style={{ touchAction: "manipulation" }}
-        >
-          🔊 Hear Again
-        </button>
+      {/* Secondary helper copy (dominant cue is the bottom sound/letter button) */}
+      <div className="absolute top-20 left-6 z-30 text-white/75 text-sm font-medium backdrop-blur-sm bg-black/10 px-3 py-1.5 rounded-lg">
+        Listen, then pop the matching balloon.
       </div>
 
       {/* Fullscreen blocked toast */}
       {fsBlocked && (
         <div className="absolute top-20 left-1/2 -translate-x-1/2 bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-lg z-50">
-          Tap fullscreen icon / allow fullscreen
+          Fullscreen unavailable. You can keep playing.
         </div>
       )}
 
@@ -853,11 +1157,17 @@ const KidsBalloonPop: React.FC = () => {
       {!hasStarted && !levelComplete && (
         <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <button
-            onClick={async () => {
-              await ensureAudioPrimed();
+            onClick={() => {
+              void ensureAudioPrimed();
+              if (currentLevel?.letters?.length) {
+                void sfx.primeLetters(currentLevel.letters);
+              }
               setHasStarted(true);
-              // Optional: play target sound once at start (reinforces without requiring)
-              if (target) await sfx.playLetter(target, 0.95);
+              if (target) {
+                lastTargetCueAtRef.current = Date.now();
+                void sfx.playLetter(target, 0.95);
+              }
+              suppressAutoCueFor(TARGET_AUTO_CUE_INTERVAL_MS);
             }}
             className="px-16 py-8 bg-gradient-to-r from-green-400 via-green-500 to-green-600 hover:from-green-500 hover:via-green-600 hover:to-green-700 text-white text-5xl font-black rounded-3xl shadow-2xl transform hover:scale-105 transition-all duration-200"
             style={{
@@ -879,6 +1189,7 @@ const KidsBalloonPop: React.FC = () => {
 
           const shouldPulse = b.letter === target && !b.isPopping && now < hintUntil;
           const isDisabled = !!(b.disabledUntil && now < b.disabledUntil);
+          const isDimmedByGuidance = !isDisabled && now < hintUntil && b.letter !== target;
           const isShaking = !!(b.shakeUntil && now < b.shakeUntil);
 
           if (b.isPopping) {
@@ -939,8 +1250,8 @@ const KidsBalloonPop: React.FC = () => {
                 cursor: isDisabled ? "default" : "pointer",
                 padding: 8,
                 willChange: "transform",
-                opacity: isDisabled ? 0.55 : 1,
-                filter: isDisabled ? "grayscale(0.2)" : "none",
+                opacity: isDisabled ? 0.55 : isDimmedByGuidance ? 0.72 : 1,
+                filter: isDisabled ? "grayscale(0.2)" : isDimmedByGuidance ? "saturate(0.75) brightness(0.9)" : "none",
                 animation: shouldPulse ? "hintPulse 0.8s ease-in-out" : isShaking ? "wrongWiggle 0.26s ease-in-out" : "none",
                 touchAction: "manipulation",
                 userSelect: "none",
@@ -1054,10 +1365,10 @@ const KidsBalloonPop: React.FC = () => {
             WebkitUserSelect: "none",
           }}
         >
-          <div className="flex items-center gap-3">
-            <span className="text-xl opacity-80">POP:</span>
+          <div className="flex flex-col items-center leading-none">
+            <span className="text-sm opacity-90 mb-1">Listen and pop</span>
             <span className={`${target.length > 1 ? "text-5xl" : "text-6xl"} drop-shadow-lg`}>{target}</span>
-            <span className="text-xl opacity-80">🔊</span>
+            <span className="text-sm opacity-90 mt-1">Tap to hear again 🔊</span>
           </div>
         </button>
       )}
@@ -1106,6 +1417,38 @@ const KidsBalloonPop: React.FC = () => {
             <p className="text-3xl text-white mb-8">
               Score: <span className="font-bold text-yellow-200">{score}</span>
             </p>
+            <p className="text-lg text-white/90 mb-2">
+              Accuracy: <span className="font-bold">{sessionAccuracyPct}%</span> • Support: <span className="font-bold">{sessionSupportLoad}</span>
+            </p>
+            <p className="text-xl text-white/95 mb-2 max-w-xl font-semibold">
+              {sessionMastered
+                ? "You finished and mastered this level. Next level is unlocked."
+                : "You finished this level. Replay once more to unlock the next level."}
+            </p>
+            {!sessionMastered && (
+              <p className="text-sm text-white/80 mb-6 max-w-xl">
+                Keep practicing with clear pops and little help to unlock.
+              </p>
+            )}
+
+            {reviewLetters.length > 0 && (
+              <div className="mb-6 px-4 py-4 bg-white/15 rounded-2xl border border-white/20">
+                <p className="text-sm text-white/85 mb-3">Quick review: tap any tricky letter to hear it again.</p>
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  {reviewLetters.map((letter) => (
+                    <button
+                      key={letter}
+                      onClick={() => void playTargetCue(letter, false)}
+                      className="w-14 h-14 rounded-full bg-white/90 text-gray-900 text-3xl font-black shadow-md hover:bg-white"
+                      style={{ touchAction: "manipulation" }}
+                      aria-label={`Review ${letter}`}
+                    >
+                      {letter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-4 flex-wrap justify-center">
               {currentLevel.id < 7 && currentLevel.id + 1 <= progress.unlocked && (

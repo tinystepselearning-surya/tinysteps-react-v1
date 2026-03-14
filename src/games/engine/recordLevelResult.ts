@@ -105,18 +105,31 @@ export async function recordLevelResult(
     const completed =
       typeof r.completed === "boolean" ? r.completed : true;
 
-    const attempts = Object.values(safeTagDeltas).reduce(
+    const attemptsFromTags = Object.values(safeTagDeltas).reduce(
       (sum, td) => sum + (td?.attempts ?? 0),
       0
     );
-    const correct = Object.values(safeTagDeltas).reduce(
+    const correctFromTags = Object.values(safeTagDeltas).reduce(
       (sum, td) => sum + (td?.correct ?? 0),
       0
     );
-    const wrong = Object.values(safeTagDeltas).reduce(
+    const wrongFromTags = Object.values(safeTagDeltas).reduce(
       (sum, td) => sum + (td?.wrong ?? 0),
       0
     );
+
+    const attempts =
+      typeof r.attempts === "number" && Number.isFinite(r.attempts)
+        ? Math.max(0, r.attempts)
+        : attemptsFromTags;
+    const correct =
+      typeof r.correct === "number" && Number.isFinite(r.correct)
+        ? Math.max(0, r.correct)
+        : correctFromTags;
+    const wrong =
+      typeof r.wrong === "number" && Number.isFinite(r.wrong)
+        ? Math.max(0, r.wrong)
+        : wrongFromTags;
 
     // Add required fields for backend validation
     const payload = {

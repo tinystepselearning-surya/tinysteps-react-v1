@@ -731,6 +731,8 @@ type ProgressStore = {
 // ============================================================================
 
 const MISSION_ID = "english-excellence-mission-v2";
+const pendingMissionDoneKey = (kidId: string) =>
+  `ts_eem_done_pending_${MISSION_ID}_${kidId || "guest"}`;
 const ALWAYS_OPEN_STAGE_IDS = new Set<string>([
   "eem-stage-1-letters-sounds",
   "eem-stage-2-build-words",
@@ -1430,7 +1432,15 @@ const KidsEnglishExcellence: React.FC = () => {
 
   // Optional completion hook: ?eemDone=<tileId>
   useEffect(() => {
-    const done = searchParams.get("eemDone");
+    let done = searchParams.get("eemDone");
+    const cameFromQuery = !!done;
+    if (!done) {
+      try {
+        done = sessionStorage.getItem(pendingMissionDoneKey(kidId)) || "";
+      } catch {
+        done = "";
+      }
+    }
     if (!done) return;
 
     setStore((prev) => {
@@ -1445,11 +1455,19 @@ const KidsEnglishExcellence: React.FC = () => {
       return next;
     });
 
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete("eemDone");
-    navigate({ search: newParams.toString() }, { replace: true });
+    try {
+      sessionStorage.removeItem(pendingMissionDoneKey(kidId));
+    } catch {
+      // ignore
+    }
+
+    if (cameFromQuery) {
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("eemDone");
+      navigate({ search: newParams.toString() }, { replace: true });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, kidId]);
 
   const currentStage = STAGES[selectedStageIndex];
 
