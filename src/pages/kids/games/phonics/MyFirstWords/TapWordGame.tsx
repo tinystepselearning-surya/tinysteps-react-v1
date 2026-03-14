@@ -3,8 +3,6 @@ import { recordLevelResult } from "../../../../../games/engine/recordLevelResult
 
 import type { VowelGroup, VowelGroupId } from "./myFirstWordsData";
 import {
-  GAME_ID,
-  PROGRESS_DOC_ID,
   SND_CONFETTI,
   mergeSoundUrl,
   clamp,
@@ -29,6 +27,10 @@ type Props = {
 };
 
 type Phase = "playing" | "success_pause" | "group_complete";
+
+const CANONICAL_GAME_ID = "my-first-words";
+const CANONICAL_PROGRESS_DOC_ID = "phonics_my_first_words";
+const TAP_WORD_LEVEL_ID = 2;
 
 export default function TapWordGame({
   kidId,
@@ -64,7 +66,10 @@ export default function TapWordGame({
 
   // tracking
   const [attempts, setAttempts] = useState(0);
-  const [startTs, setStartTs] = useState<number | null>(null);
+  const runStartTsRef = useRef<number | null>(null);
+  const runAttemptsRef = useRef(0);
+  const runMasteredWordsRef = useRef<Set<string>>(new Set());
+  const runResultSentRef = useRef(false);
 
   // audio
   const audioUnlockedRef = useRef(false);
@@ -90,7 +95,10 @@ export default function TapWordGame({
     setIdx(0);
 
     setAttempts(0);
-    setStartTs(performance.now());
+    runStartTsRef.current = performance.now();
+    runAttemptsRef.current = 0;
+    runMasteredWordsRef.current = new Set();
+    runResultSentRef.current = false;
 
     setPicked(null);
     setLocked(false);
@@ -126,7 +134,6 @@ export default function TapWordGame({
     setHeartsLeft(3);
     setGuideMsg("Tap Listen!");
     setAttempts(0);
-    setStartTs(performance.now());
     setShowCorrectBanner(false);
   }, [target, group.words]);
 
@@ -224,29 +231,36 @@ export default function TapWordGame({
     playConfetti();
   }
 
-  function recordProgress(masteredWord: string, attemptsUsed: number) {
+  function recordRunCompletion() {
     if (!kidId) return;
+    if (runResultSentRef.current) return;
 
-    const spentMs = startTs ? Math.max(0, Math.round(performance.now() - startTs)) : 0;
+    const spentMs =
+      runStartTsRef.current != null
+        ? Math.max(0, Math.round(performance.now() - runStartTsRef.current))
+        : 0;
+    const masteredItems = Array.from(runMasteredWordsRef.current);
+    const attemptsUsed = Math.max(1, runAttemptsRef.current);
 
     try {
       recordLevelResult({
-        gameId: GAME_ID,
-        progressDocId: PROGRESS_DOC_ID,
+        gameId: CANONICAL_GAME_ID,
+        progressDocId: CANONICAL_PROGRESS_DOC_ID,
         kidId,
-        levelId: idx + 1,
+        levelId: TAP_WORD_LEVEL_ID,
+        completed: true,
         timeSpentMs: spentMs,
-        attempts: Math.max(1, attemptsUsed),
-        masteredItems: [masteredWord],
+        attempts: attemptsUsed,
+        masteredItems,
         skillTags: [
           "area:phonics",
           "subtopic:my_first_words",
           "mode:tap_word",
           `group:${groupId}`,
-          `word:${masteredWord}`,
         ],
         completedAt: Date.now(),
       } as any);
+      runResultSentRef.current = true;
     } catch (err) {
       console.error("recordLevelResult failed:", err);
     }
@@ -256,7 +270,6 @@ export default function TapWordGame({
     const last = list.length - 1;
     setIdx((p) => clamp(p + 1, 0, last));
     setAttempts(0);
-    setStartTs(performance.now());
   }
 
   function onPick(w: string) {
@@ -264,6 +277,7 @@ export default function TapWordGame({
 
     const nextAttempts = attempts + 1;
     setAttempts(nextAttempts);
+    runAttemptsRef.current += 1;
     setPicked(w);
 
     if (w === target) {
@@ -271,9 +285,9 @@ export default function TapWordGame({
       setLocked(true);
       setGuideMsg("Yay! ⭐");
       setStarsEarned((s) => Math.min(3, s + 1));
+      runMasteredWordsRef.current.add(target);
       fireSuccess();
       playWord();
-      recordProgress(target, nextAttempts);
 
       // 👇 IMPORTANT: slow + obvious transition
       setPhase("success_pause");
@@ -287,6 +301,7 @@ export default function TapWordGame({
         setShowCorrectBanner(false);
 
         if (isLast) {
+          recordRunCompletion();
           setPhase("group_complete");
           setLocked(false);
           return;

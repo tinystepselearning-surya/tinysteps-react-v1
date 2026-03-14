@@ -1,6 +1,24 @@
 // src/pages/KidsEnglishExcellence.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import TinyStepsBrand from "../components/common/TinyStepsBrand";
+import MagicBento from "../components/common/MagicBento";
+import LiquidEther from "../components/components/LiquidEther";
+import {
+  BBS_STAGE_1A,
+  BBS_STAGE_1B,
+  BBS_STAGE_1C,
+  BBS_STAGE_1D,
+  loadBbsProgress,
+} from "./kids/games/grammar/buildBetterSentencesProgress";
+import {
+  GF_STAGE_2A,
+  GF_STAGE_2B,
+  GF_STAGE_2C,
+  GF_STAGE_2D,
+  loadGrammarFixProgress,
+} from "./kids/games/grammar/grammarFixProgress";
+import { CB_STAGE_3A, CB_STAGE_3B, CB_STAGE_3C, loadCollocationBuilderProgress } from "./kids/games/grammar/collocationBuilderProgress";
 
 // ============================================================================
 // CLEAN PPT-STYLE JOURNEY (Compact + Professional)
@@ -629,7 +647,50 @@ type Tile = {
   gameTitle: string; // display title
   moduleId: string; // module ID (e.g., "eem-m01-sound-spelling-foundations")
   gameOrder: number; // order within stage (1-indexed)
-  title?: string; // legacy fallback (for backward compat)
+  title?: string; // placeholder skeleton alias for future UI readers
+  description?: string; // placeholder skeleton alias for future UI readers
+  order?: number; // placeholder skeleton alias for future UI readers
+  unlockAfterGameId?: string; // explicit progression dependency
+  sampleItems?: Array<{
+    itemId: string;
+    stageId: string;
+    activityType:
+      | "reorder"
+      | "fillBlank"
+      | "chooseBest"
+      | "errorSpot"
+      | "errorFix"
+      | "matchPairs"
+      | "contextChoice";
+    prompt: unknown;
+    answer: unknown;
+    options?: string[];
+  }>;
+  stages?: Array<{
+    stageId: string;
+    title: string;
+    skillFocus: string;
+    difficulty: "easy" | "medium" | "hard";
+    activityType:
+      | "reorder"
+      | "fillBlank"
+      | "chooseBest"
+      | "errorSpot"
+      | "errorFix"
+      | "matchPairs"
+      | "contextChoice";
+    masteryTarget: {
+      accuracyPct: number;
+      maxHints: number;
+    };
+    hintMode: "guided" | "standard" | "minimal";
+    promptShape: string;
+    answerShape: string;
+    supportsHints: boolean;
+    supportsAudio: boolean;
+    maxOptions: number;
+    minItemsRecommended: number;
+  }>;
   desc: string;
   route?: string;
   comingSoon?: boolean;
@@ -668,6 +729,69 @@ type ProgressStore = {
 // ============================================================================
 
 const MISSION_ID = "english-excellence-mission-v2";
+const ALWAYS_OPEN_STAGE_IDS = new Set<string>([
+  "eem-stage-1-letters-sounds",
+  "eem-stage-2-build-words",
+]);
+
+const ACTIVITY_CONTENT_CONTRACTS = {
+  reorder: {
+    promptShape: "tokenList",
+    answerShape: "orderedSentence",
+    supportsHints: true,
+    supportsAudio: false,
+    maxOptions: 0,
+    minItemsRecommended: 8,
+  },
+  fillBlank: {
+    promptShape: "sentenceWithBlank",
+    answerShape: "singleTokenOrPhrase",
+    supportsHints: true,
+    supportsAudio: true,
+    maxOptions: 4,
+    minItemsRecommended: 8,
+  },
+  chooseBest: {
+    promptShape: "sentenceOptions",
+    answerShape: "optionIndex",
+    supportsHints: true,
+    supportsAudio: false,
+    maxOptions: 4,
+    minItemsRecommended: 8,
+  },
+  errorSpot: {
+    promptShape: "singleSentence",
+    answerShape: "errorTokenOrIndex",
+    supportsHints: true,
+    supportsAudio: false,
+    maxOptions: 0,
+    minItemsRecommended: 8,
+  },
+  errorFix: {
+    promptShape: "singleSentenceWithError",
+    answerShape: "correctedSentence",
+    supportsHints: true,
+    supportsAudio: false,
+    maxOptions: 0,
+    minItemsRecommended: 8,
+  },
+  matchPairs: {
+    promptShape: "pairColumns",
+    answerShape: "pairedMatches",
+    supportsHints: true,
+    supportsAudio: false,
+    maxOptions: 8,
+    minItemsRecommended: 8,
+  },
+  contextChoice: {
+    promptShape: "scenarioWithOptions",
+    answerShape: "optionIndex",
+    supportsHints: true,
+    supportsAudio: false,
+    maxOptions: 4,
+    minItemsRecommended: 8,
+  },
+} as const;
 
 // ============================================================================
 // STAGES (mapped to existing routes you already have)
@@ -684,7 +808,7 @@ const STAGES: Stage[] = [
     tiles: [
       { gameId: "eem-g00-letter-tracing", gameTitle: "Letter Tracing", moduleId: "eem-m00-pre-writing-tracing", gameOrder: 0, desc: "trace letter shapes smoothly", route: "/kids/games/phonics/letter-tracing", status: 'live' },
       { gameId: "eem-g00b-letter-tracing-sounds", gameTitle: "Letter Tracing + Sounds", moduleId: "eem-m00-pre-writing-tracing", gameOrder: 1, desc: "trace while hearing letter sounds", route: "/kids/games/phonics/letter-tracing-sounds", status: 'live' },
-      { gameId: "eem-g04-letter-sounds", gameTitle: "Letter Sounds", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 2, desc: "letter → sound match", route: "/kids/games/phonics/sound-listening", status: 'live' },
+      { gameId: "eem-g04-letter-sounds", gameTitle: "Letter Sounds", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 2, desc: "letter → sound match", route: "/kids/games/phonics/letter-sound", status: 'live' },
       { gameId: "eem-g04b-balloon-pop", gameTitle: "Balloon Pop", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 3, desc: "pop balloons with the correct sound", route: "/kids/games/phonics/balloon-pop", status: 'live' },
       { gameId: "eem-g05-sound-listening", gameTitle: "Sound Listening", moduleId: "eem-m02-phonics-spelling-patterns", gameOrder: 4, desc: "listen and tap the correct picture", route: "/kids/games/phonics/sound-detective", status: 'live' },
     ],
@@ -716,28 +840,322 @@ const STAGES: Stage[] = [
   {
     stageId: "eem-stage-4-read-understand",
     stageNumber: 4,
-    stageTitle: "Grammar & Reading",
+    stageTitle: "Fluent Reading",
     stageOrder: 4,
     tiles: [
-      { gameId: "eem-g14-grammar-fix", gameTitle: "Grammar Fix", moduleId: "eem-m07-grammar-correctness", gameOrder: 1, desc: "fix grammar mistakes in sentences", comingSoon: true, status: 'comingSoon' },
-      { gameId: "eem-g15-better-sentences", gameTitle: "Better Sentences", moduleId: "eem-m07-grammar-correctness", gameOrder: 2, desc: "improve sentences for clarity", comingSoon: true, status: 'comingSoon' },
-      { gameId: "eem-g16-collocation-builder", gameTitle: "Collocation Builder", moduleId: "eem-m08-collocations-idioms", gameOrder: 3, desc: "word pairs that go together", comingSoon: true, status: 'comingSoon' },
-      { gameId: "eem-g17-idiom-in-a-sentence", gameTitle: "Idiom in a Sentence", moduleId: "eem-m08-collocations-idioms", gameOrder: 4, desc: "use idioms naturally", comingSoon: true, status: 'comingSoon' },
-      { gameId: "eem-g18-fluent-reading", gameTitle: "Fluent Reading", moduleId: "eem-m09-story-reading", gameOrder: 5, desc: "read passages fluently with expression", route: "/kids/games/reading/story-reading", status: 'live' },
-      { gameId: "eem-g18b-story-reading", gameTitle: "Story Reading", moduleId: "eem-m09-story-reading", gameOrder: 6, desc: "read and explore short stories", route: "/kids/games/reading/story-reading", status: 'live' },
-      { gameId: "eem-g20-new-words-from-reading", gameTitle: "New Words from Reading", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 7, desc: "discover vocabulary in context", route: "/kids/games/reading/new-words", status: 'live' },
-      { gameId: "eem-g19-comprehension-questions", gameTitle: "Comprehension Questions", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 8, desc: "who/what/where/why questions", route: "/kids/games/reading/comprehension", status: 'live' },
-      { gameId: "eem-g20b-summarize-simply", gameTitle: "Summarize Simply", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 9, desc: "write simple summaries of stories", route: "/kids/games/reading/new-words", status: 'live' },
-      { gameId: "eem-g21-meaning-from-context", gameTitle: "Meaning from Context", moduleId: "eem-m11-context-meaning-relations", gameOrder: 10, desc: "figure out word meaning", comingSoon: true, status: 'comingSoon' },
-      { gameId: "eem-g22-synonym-antonym-hunt", gameTitle: "Synonym & Antonym Hunt", moduleId: "eem-m11-context-meaning-relations", gameOrder: 11, desc: "find similar/opposite words", comingSoon: true, status: 'comingSoon' },
-      { gameId: "eem-g23-crossword-from-reading", gameTitle: "Crossword from Reading", moduleId: "eem-m12-reading-crossword-recall", gameOrder: 12, desc: "puzzle based on passage", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g18-fluent-reading", gameTitle: "Fluent Reading", moduleId: "eem-m09-story-reading", gameOrder: 1, desc: "read passages fluently with expression", route: "/kids/games/reading/story-reading", status: 'live' },
+      { gameId: "eem-g18b-story-reading", gameTitle: "Story Reading", moduleId: "eem-m09-story-reading", gameOrder: 2, desc: "read and explore short stories", route: "/kids/games/reading/story-reading", status: 'live' },
+      { gameId: "eem-g19-comprehension-questions", gameTitle: "Comprehension Questions", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 3, desc: "who/what/where/why questions", route: "/kids/games/reading/comprehension", status: 'live' },
+      { gameId: "eem-g20-new-words-from-reading", gameTitle: "New Words from Reading", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 4, desc: "discover vocabulary in context", route: "/kids/games/reading/new-words", status: 'live' },
+      { gameId: "eem-g20b-summarize-simply", gameTitle: "Summarize Simply", moduleId: "eem-m10-comprehension-vocabulary", gameOrder: 5, desc: "write simple summaries of stories", route: "/kids/games/reading/new-words", status: 'live' },
+      { gameId: "eem-g21-meaning-from-context", gameTitle: "Meaning from Context", moduleId: "eem-m11-context-meaning-relations", gameOrder: 6, desc: "figure out word meaning", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g22-synonym-antonym-hunt", gameTitle: "Synonym & Antonym Hunt", moduleId: "eem-m11-context-meaning-relations", gameOrder: 7, desc: "find similar/opposite words", comingSoon: true, status: 'comingSoon' },
+      { gameId: "eem-g23-crossword-from-reading", gameTitle: "Crossword from Reading", moduleId: "eem-m12-reading-crossword-recall", gameOrder: 8, desc: "puzzle based on passage", comingSoon: true, status: 'comingSoon' },
     ],
   },
   {
-    stageId: "eem-stage-5-speak-confidence",
+    stageId: "eem-stage-5-grammar-practice",
     stageNumber: 5,
-    stageTitle: "Speak with Confidence",
+    stageTitle: "Grammar Practice",
     stageOrder: 5,
+    tiles: [
+      {
+        gameId: "eem-g15-better-sentences",
+        gameTitle: "Build Better Sentences",
+        title: "Build Better Sentences",
+        moduleId: "eem-m07-grammar-correctness",
+        gameOrder: 1,
+        order: 1,
+        desc: "build and improve clear, meaningful sentences",
+        description: "build and improve clear, meaningful sentences",
+        route: "/kids/games/grammar/build-better-sentences",
+        status: 'live',
+        sampleItems: [
+          {
+            itemId: "gps-sample-01",
+            stageId: "gps-1a-reorder-words",
+            activityType: "reorder",
+            prompt: ["is", "The cat", "sleeping"],
+            answer: "The cat is sleeping.",
+          },
+          {
+            itemId: "gps-sample-02",
+            stageId: "gps-1c-choose-better-sentence",
+            activityType: "chooseBest",
+            prompt: "Choose the clearer sentence.",
+            options: ["The boy ran.", "The boy ran to school quickly."],
+            answer: 1,
+          },
+        ],
+        stages: [
+          {
+            stageId: "gps-1a-reorder-words",
+            title: "Reorder Words",
+            skillFocus: "sentence-order",
+            difficulty: "easy",
+            activityType: "reorder",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "guided",
+            ...ACTIVITY_CONTENT_CONTRACTS.reorder,
+          },
+          {
+            stageId: "gps-1b-fill-missing-word",
+            title: "Fill Missing Word",
+            skillFocus: "sentence-completion",
+            difficulty: "easy",
+            activityType: "fillBlank",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "guided",
+            ...ACTIVITY_CONTENT_CONTRACTS.fillBlank,
+          },
+          {
+            stageId: "gps-1c-choose-better-sentence",
+            title: "Choose Better Sentence",
+            skillFocus: "sentence-quality",
+            difficulty: "medium",
+            activityType: "chooseBest",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.chooseBest,
+          },
+          {
+            stageId: "gps-1d-expand-sentence",
+            title: "Expand Sentence",
+            skillFocus: "sentence-expansion",
+            difficulty: "medium",
+            activityType: "chooseBest",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.chooseBest,
+          },
+        ],
+      },
+      {
+        gameId: "eem-g14-grammar-fix",
+        gameTitle: "Grammar Fix",
+        title: "Grammar Fix",
+        moduleId: "eem-m07-grammar-correctness",
+        gameOrder: 2,
+        order: 2,
+        unlockAfterGameId: "eem-g15-better-sentences",
+        desc: "spot and fix sentence-level grammar errors",
+        description: "spot and fix sentence-level grammar errors",
+        route: "/kids/games/grammar/grammar-fix/spot-one-error",
+        status: 'live',
+        sampleItems: [
+          {
+            itemId: "gpf-sample-01",
+            stageId: "gpf-2a-spot-one-error",
+            activityType: "errorSpot",
+            prompt: "She go to school every day.",
+            answer: "go",
+          },
+          {
+            itemId: "gpf-sample-02",
+            stageId: "gpf-2b-fix-one-error",
+            activityType: "errorFix",
+            prompt: "I saw elephant at the zoo.",
+            answer: "I saw an elephant at the zoo.",
+          },
+        ],
+        stages: [
+          {
+            stageId: "gpf-2a-spot-one-error",
+            title: "Spot One Error",
+            skillFocus: "error-detection",
+            difficulty: "easy",
+            activityType: "errorSpot",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "guided",
+            ...ACTIVITY_CONTENT_CONTRACTS.errorSpot,
+          },
+          {
+            stageId: "gpf-2b-fix-one-error",
+            title: "Fix One Error",
+            skillFocus: "single-error-correction",
+            difficulty: "medium",
+            activityType: "errorFix",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.errorFix,
+          },
+          {
+            stageId: "gpf-2c-fix-full-sentence",
+            title: "Fix Full Sentence",
+            skillFocus: "sentence-editing",
+            difficulty: "medium",
+            activityType: "errorFix",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.errorFix,
+          },
+          {
+            stageId: "gpf-2d-timed-correction",
+            title: "Timed Correction",
+            skillFocus: "accuracy-under-time",
+            difficulty: "hard",
+            activityType: "errorSpot",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "minimal",
+            ...ACTIVITY_CONTENT_CONTRACTS.errorSpot,
+          },
+        ],
+      },
+      {
+        gameId: "eem-g16-collocation-builder",
+        gameTitle: "Collocation Builder",
+        title: "Collocation Builder",
+        moduleId: "eem-m08-collocations-idioms",
+        gameOrder: 3,
+        order: 3,
+        unlockAfterGameId: "eem-g14-grammar-fix",
+        desc: "choose natural word partnerships",
+        description: "choose natural word partnerships",
+        route: "/kids/games/grammar/collocation-builder/match-pairs",
+        status: 'live',
+        sampleItems: [
+          {
+            itemId: "gpc-sample-01",
+            stageId: "gpc-3a-match-pairs",
+            activityType: "matchPairs",
+            prompt: ["do", "make", "take"],
+            answer: ["do homework", "make a cake", "take a photo"],
+          },
+          {
+            itemId: "gpc-sample-02",
+            stageId: "gpc-3b-choose-natural-pair",
+            activityType: "chooseBest",
+            prompt: "Choose the natural collocation.",
+            options: ["do a mistake", "make a mistake", "take a mistake"],
+            answer: 1,
+          },
+        ],
+        stages: [
+          {
+            stageId: "gpc-3a-match-pairs",
+            title: "Match Pairs",
+            skillFocus: "collocation-matching",
+            difficulty: "easy",
+            activityType: "matchPairs",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "guided",
+            ...ACTIVITY_CONTENT_CONTRACTS.matchPairs,
+          },
+          {
+            stageId: "gpc-3b-choose-natural-pair",
+            title: "Choose Natural Pair",
+            skillFocus: "collocation-selection",
+            difficulty: "medium",
+            activityType: "chooseBest",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.chooseBest,
+          },
+          {
+            stageId: "gpc-3c-fill-collocation-in-sentence",
+            title: "Fill Collocation in Sentence",
+            skillFocus: "contextual-collocation",
+            difficulty: "medium",
+            activityType: "fillBlank",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.fillBlank,
+          },
+          {
+            stageId: "gpc-3d-confusion-practice",
+            title: "Confusion Practice",
+            skillFocus: "near-confusion-disambiguation",
+            difficulty: "hard",
+            activityType: "contextChoice",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "minimal",
+            ...ACTIVITY_CONTENT_CONTRACTS.contextChoice,
+          },
+        ],
+      },
+      {
+        gameId: "eem-g17-idiom-in-a-sentence",
+        gameTitle: "Idiom in a Sentence",
+        title: "Idiom in a Sentence",
+        moduleId: "eem-m08-collocations-idioms",
+        gameOrder: 4,
+        order: 4,
+        unlockAfterGameId: "eem-g16-collocation-builder",
+        desc: "use idioms appropriately in context",
+        description: "use idioms appropriately in context",
+        comingSoon: true,
+        status: 'comingSoon',
+        sampleItems: [
+          {
+            itemId: "gpi-sample-01",
+            stageId: "gpi-4a-match-meaning",
+            activityType: "matchPairs",
+            prompt: ["piece of cake", "break the ice"],
+            answer: ["very easy", "start a conversation"],
+          },
+          {
+            itemId: "gpi-sample-02",
+            stageId: "gpi-4b-choose-context",
+            activityType: "contextChoice",
+            prompt: "Which sentence correctly uses 'piece of cake'?",
+            options: [
+              "The cake was a piece of cake in the box.",
+              "The test was a piece of cake for Ria.",
+              "Ria bought a piece of cake notebook.",
+            ],
+            answer: 1,
+          },
+        ],
+        stages: [
+          {
+            stageId: "gpi-4a-match-meaning",
+            title: "Match Meaning",
+            skillFocus: "idiom-meaning",
+            difficulty: "easy",
+            activityType: "matchPairs",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "guided",
+            ...ACTIVITY_CONTENT_CONTRACTS.matchPairs,
+          },
+          {
+            stageId: "gpi-4b-choose-context",
+            title: "Choose Context",
+            skillFocus: "idiom-context-fit",
+            difficulty: "medium",
+            activityType: "contextChoice",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.contextChoice,
+          },
+          {
+            stageId: "gpi-4c-complete-sentence",
+            title: "Complete Sentence",
+            skillFocus: "idiom-application",
+            difficulty: "medium",
+            activityType: "fillBlank",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "standard",
+            ...ACTIVITY_CONTENT_CONTRACTS.fillBlank,
+          },
+          {
+            stageId: "gpi-4d-reject-awkward-usage",
+            title: "Reject Awkward Usage",
+            skillFocus: "appropriateness-judgement",
+            difficulty: "hard",
+            activityType: "contextChoice",
+            masteryTarget: { accuracyPct: 80, maxHints: 2 },
+            hintMode: "minimal",
+            ...ACTIVITY_CONTENT_CONTRACTS.contextChoice,
+          },
+        ],
+      },
+    ],
+  },
+  {
+    stageId: "eem-stage-6-speak-confidence",
+    stageNumber: 6,
+    stageTitle: "Speak with Confidence",
+    stageOrder: 6,
     tiles: [
       { gameId: "eem-g24-use-the-word-aloud", gameTitle: "Use the Word Aloud", moduleId: "eem-m13-speaking-expression", gameOrder: 1, desc: "say the word in a sentence", comingSoon: true, status: 'comingSoon' },
       { gameId: "eem-g25-explain-the-meaning", gameTitle: "Explain the Meaning", moduleId: "eem-m13-speaking-expression", gameOrder: 2, desc: "describe in your own words", comingSoon: true, status: 'comingSoon' },
@@ -746,10 +1164,10 @@ const STAGES: Stage[] = [
     ],
   },
   {
-    stageId: "eem-stage-6-review-championship",
-    stageNumber: 6,
+    stageId: "eem-stage-7-review-championship",
+    stageNumber: 7,
     stageTitle: "Review & Championship",
-    stageOrder: 6,
+    stageOrder: 7,
     tiles: [
       { gameId: "eem-g28-spaced-review-replay", gameTitle: "Spaced Review Replay", moduleId: "eem-m14-review-arena", gameOrder: 1, desc: "review past lessons", comingSoon: true, status: 'comingSoon' },
       { gameId: "eem-g29-timed-round-quiz", gameTitle: "Timed Round Quiz", moduleId: "eem-m14-review-arena", gameOrder: 2, desc: "quiz against the clock", comingSoon: true, status: 'comingSoon' },
@@ -850,6 +1268,16 @@ const isTileUnlocked = (store: ProgressStore, stageId: string, gameId: string): 
 
   const tile = stage.tiles[tileIndex];
   if (tile.comingSoon) return false; // Always locked if comingSoon
+  if (!tile.route) return false;
+
+  // Stage 1 + Stage 2 are fully playable mission stages:
+  // if a real route exists, keep tiles directly tappable.
+  if (ALWAYS_OPEN_STAGE_IDS.has(stageId)) return true;
+
+  // Explicit dependency wins when provided.
+  if (tile.unlockAfterGameId) {
+    return isTileCompleted(store, tile.unlockAfterGameId);
+  }
 
   // First tile is available by default
   if (tileIndex === 0) return true;
@@ -911,6 +1339,32 @@ const KidsEnglishExcellence: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const kidId = searchParams.get("kidId") || "";
+  const bbsProgress = useMemo(() => loadBbsProgress(kidId), [kidId]);
+  const grammarFixProgress = useMemo(() => loadGrammarFixProgress(kidId), [kidId]);
+  const collocationProgress = useMemo(() => loadCollocationBuilderProgress(kidId), [kidId]);
+  const isBbsMasteredForGrammarUnlock = Boolean(
+    bbsProgress.gameCompleted && bbsProgress[BBS_STAGE_1D]?.mastered
+  );
+  const isGrammarFixMasteredForCollocationUnlock = Boolean(
+    grammarFixProgress.gameCompleted && grammarFixProgress[GF_STAGE_2D]?.mastered
+  );
+  const isBbsInProgress =
+    Boolean(bbsProgress[BBS_STAGE_1A]?.completed) ||
+    Boolean(bbsProgress[BBS_STAGE_1B]?.completed) ||
+    Boolean(bbsProgress[BBS_STAGE_1C]?.completed) ||
+    Boolean(bbsProgress[BBS_STAGE_1D]?.completed);
+  const isGrammarFixInProgress =
+    Boolean(grammarFixProgress[GF_STAGE_2A]?.completed) ||
+    Boolean(grammarFixProgress[GF_STAGE_2B]?.completed) ||
+    Boolean(grammarFixProgress[GF_STAGE_2C]?.completed) ||
+    Boolean(grammarFixProgress[GF_STAGE_2D]?.completed);
+  const isCollocationMastered = Boolean(
+    collocationProgress.gameCompleted && collocationProgress[CB_STAGE_3C]?.mastered
+  );
+  const isCollocationInProgress =
+    Boolean(collocationProgress[CB_STAGE_3A]?.completed) ||
+    Boolean(collocationProgress[CB_STAGE_3B]?.completed) ||
+    Boolean(collocationProgress[CB_STAGE_3C]?.completed);
 
   const [selectedStageIndex, setSelectedStageIndex] = useState(() => {
     const raw = searchParams.get("eemStage");
@@ -996,18 +1450,6 @@ const KidsEnglishExcellence: React.FC = () => {
 
   const getTileStatus = (tileId: string): TileStatus => store.tiles[tileId]?.status || "not_started";
 
-  const stageStats = useMemo(() => {
-    const total = currentStage.tiles.length;
-    const playable = currentStage.tiles.filter((t) => !t.comingSoon && !!t.route).length;
-    const completed = currentStage.tiles.reduce((acc, t) => {
-      const tid = getTileId(currentStage.stageNumber, t.gameTitle, t.gameId);
-      return acc + (getTileStatus(tid) === "completed" ? 1 : 0);
-    }, 0);
-    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
-    return { total, playable, completed, pct };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentStage, store]);
-
   const overallStats = useMemo(() => {
     const allTiles = STAGES.flatMap((st) => st.tiles.map((t) => getTileId(st.stageNumber, t.gameTitle, t.gameId)));
     const total = allTiles.length;
@@ -1017,6 +1459,29 @@ const KidsEnglishExcellence: React.FC = () => {
     return { total, completed, pct };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [store]);
+
+  const trainingTracks = useMemo(() => {
+    return STAGES.map((stage) => {
+      const completed = stage.tiles.filter((tile) => isTileCompleted(store, tile.gameId)).length;
+      const total = stage.tiles.length;
+      const playable = stage.tiles.filter((tile) => !tile.comingSoon && !!tile.route).length;
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      return {
+        stageId: stage.stageId,
+        stageNumber: stage.stageNumber,
+        title: stage.stageTitle,
+        completed,
+        total,
+        playable,
+        pct,
+      };
+    });
+  }, [store]);
+
+  const totalReadyTracks = useMemo(
+    () => trainingTracks.reduce((sum, track) => sum + track.playable, 0),
+    [trainingTracks]
+  );
 
   const appendKidId = (route: string) => {
     if (!kidId) return route;
@@ -1056,7 +1521,17 @@ const KidsEnglishExcellence: React.FC = () => {
 
     // Patch 2: Check unlock rules based on explicit IDs
     const stage = STAGES[selectedStageIndex];
-    if (!isTileUnlocked(store, stage.stageId, tile.gameId)) {
+    const isGrammarFixGate =
+      stage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g14-grammar-fix";
+    const isCollocationGate =
+      stage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g16-collocation-builder";
+    if (isGrammarFixGate && !isBbsMasteredForGrammarUnlock) {
+      return;
+    }
+    if (isCollocationGate && !isGrammarFixMasteredForCollocationUnlock) {
+      return;
+    }
+    if (!isGrammarFixGate && !isCollocationGate && !isTileUnlocked(store, stage.stageId, tile.gameId)) {
       return; // Tile is locked, do not proceed
     }
 
@@ -1134,38 +1609,16 @@ const KidsEnglishExcellence: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-start py-8 px-4 overflow-hidden text-slate-900 bg-gradient-to-br from-sky-50 via-indigo-50 to-cyan-50">
+    <div className="relative min-h-screen xl:h-screen flex flex-col items-center justify-start py-4 px-4 overflow-hidden text-slate-900 bg-gradient-to-br from-sky-50 via-indigo-50 to-cyan-50">
       <style>{`
-        /* Soft calm blobs (light theme) */
-        .soft-blob {
-          position: absolute;
-          filter: blur(90px);
-          opacity: 0.45;
-          animation: drift 18s ease-in-out infinite alternate;
-          pointer-events: none;
-        }
-        .b1 { top: -14%; left: -10%; width: 52vw; height: 52vh; background: rgba(56,189,248,0.55); }  /* sky */
-        .b2 { top: 8%; right: -14%; width: 60vw; height: 60vh; background: rgba(99,102,241,0.45); animation-delay: -6s; } /* indigo */
-        .b3 { bottom: -16%; left: 16%; width: 55vw; height: 45vh; background: rgba(34,211,238,0.40); animation-delay: -9s; } /* cyan */
-        @keyframes drift {
-          0% { transform: translate(0, 0) scale(1) rotate(0deg); }
-          100% { transform: translate(26px, 18px) scale(1.06) rotate(3deg); }
-        }
-
-        /* Subtle grain */
-        .grain {
-          position: absolute; inset: 0; opacity: 0.035; pointer-events: none;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-        }
-
         /* Tabs */
         .tab-pill { transition: all 0.22s ease; }
         .tab-pill.active { box-shadow: 0 8px 24px rgba(99,102,241,0.20); transform: scale(1.02); }
 
-        /* Compact tiles (light glass) */
+        /* Compact tiles (dark gaming) */
         .tile {
-          background: rgba(255,255,255,0.65);
-          border: 1px solid rgba(15,23,42,0.08);
+          background: linear-gradient(180deg, rgba(2, 2, 14, 0.97) 0%, rgba(8, 4, 22, 0.93) 100%);
+          border: 1px solid rgba(167, 139, 250, 0.32);
           backdrop-filter: blur(10px);
           transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background 180ms ease;
           position: relative;
@@ -1173,12 +1626,10 @@ const KidsEnglishExcellence: React.FC = () => {
         }
         .tile:hover {
           transform: translateY(-3px);
-          border-color: rgba(99,102,241,0.28);
-          background: rgba(255,255,255,0.78);
-          box-shadow: 0 14px 28px -16px rgba(15,23,42,0.35);
+          border-color: rgba(168, 85, 247, 0.82);
+          box-shadow: 0 18px 32px -18px rgba(2, 6, 23, 0.95), 0 0 0 1px rgba(147, 51, 234, 0.3) inset;
         }
-        .tile.locked { opacity: 0.65; cursor: not-allowed; }
-        .tile.locked:hover { transform: none; box-shadow: none; border-color: rgba(15,23,42,0.08); background: rgba(255,255,255,0.65); }
+        .tile.locked { opacity: 0.72; cursor: not-allowed; }
 
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(10px);} to { opacity: 1; transform: translateY(0);} }
 
@@ -1216,6 +1667,50 @@ const KidsEnglishExcellence: React.FC = () => {
         }
         @media (min-width: 1024px) {
           .tiles-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+        }
+
+        /* LMS dashboard cards */
+        .lms-kpi {
+          border: 1px solid rgba(167, 139, 250, 0.22);
+          background: linear-gradient(180deg, rgba(10, 7, 26, 0.85) 0%, rgba(16, 10, 34, 0.78) 100%);
+          border-radius: 16px;
+          padding: 14px;
+          box-shadow: 0 8px 24px -18px rgba(15, 23, 42, 0.65);
+          backdrop-filter: blur(8px);
+        }
+
+        .track-card {
+          border: 1px solid rgba(15, 23, 42, 0.10);
+          background: rgba(255,255,255,0.72);
+          border-radius: 16px;
+          padding: 14px;
+          min-width: 220px;
+          text-align: left;
+          transition: all 180ms ease;
+          box-shadow: 0 8px 20px -18px rgba(15, 23, 42, 0.4);
+        }
+        .track-card:hover {
+          transform: translateY(-2px);
+          background: rgba(255,255,255,0.85);
+          border-color: rgba(59, 130, 246, 0.3);
+        }
+        .track-card.active {
+          border-color: rgba(79, 70, 229, 0.35);
+          box-shadow: 0 14px 28px -18px rgba(79, 70, 229, 0.45);
+          background: rgba(255,255,255,0.9);
+        }
+
+        .track-progress {
+          height: 8px;
+          border-radius: 999px;
+          background: rgba(15, 23, 42, 0.08);
+          overflow: hidden;
+        }
+        .track-progress > span {
+          display: block;
+          height: 100%;
+          border-radius: inherit;
+          background: linear-gradient(90deg, #4f46e5, #0284c7);
         }
 
         /* ========== PLANET STYLES ========== */
@@ -1452,7 +1947,6 @@ const KidsEnglishExcellence: React.FC = () => {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .soft-blob { animation: none !important; }
           .tile { transition: none !important; }
           .pulse, .pulse::after { animation: none !important; }
           .ts-planet .orb { animation: none !important; }
@@ -1463,22 +1957,38 @@ const KidsEnglishExcellence: React.FC = () => {
         }
       `}</style>
 
-      {/* Background Layers */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="soft-blob b1 rounded-full" />
-        <div className="soft-blob b2 rounded-full" />
-        <div className="soft-blob b3 rounded-full" />
-        <div className="grain" />
+      {/* Background Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+        <LiquidEther
+          className="absolute inset-0 opacity-95"
+          style={{ width: "100%", height: "100%" }}
+          mouseForce={20}
+          cursorSize={100}
+          isViscous
+          viscous={30}
+          colors={["#1A063F", "#3B1289", "#6D28D9"]}
+          autoDemo
+          autoSpeed={0.5}
+          autoIntensity={2.2}
+          isBounce={false}
+          resolution={0.5}
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#04020d]/74 via-[#090318]/60 to-[#12042c]/76" />
       </div>
 
       {/* In-layer top strip */}
       <div className="relative z-20 w-full max-w-6xl mx-auto px-4 mb-2">
-        <div className="flex items-center justify-between rounded-2xl border border-slate-900/10 bg-white/65 backdrop-blur-md px-3 py-2 shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-sky-600 text-[11px] font-black text-white">
-              TS
-            </span>
-            <span className="text-sm font-black tracking-wide text-slate-900">Tiny Steps</span>
+        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-2xl border border-slate-900/10 bg-white/65 backdrop-blur-md px-3 py-2 shadow-sm">
+          <TinyStepsBrand
+            to=""
+            subtitle="Kid workspace"
+            className="pointer-events-none px-0 py-0 hover:bg-transparent"
+            titleClassName="text-base"
+            subtitleClassName="tracking-[0.18em]"
+          />
+
+          <div className="text-center text-base md:text-xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 via-slate-900 to-sky-700 whitespace-nowrap overflow-hidden text-ellipsis">
+            English Excellence Mission
           </div>
 
           <button
@@ -1493,183 +2003,308 @@ const KidsEnglishExcellence: React.FC = () => {
         </div>
       </div>
 
-      {/* Header */}
-      <div className="relative z-10 text-center max-w-4xl mx-auto mt-2 mb-7 px-4">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 border border-slate-900/10 backdrop-blur-md text-xs font-extrabold text-indigo-700 mb-4 shadow-sm">
-          <span>🚀</span> Complete English Journey
-        </div>
-
-        <h1 className="text-4xl md:text-6xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 via-slate-900 to-sky-700 drop-shadow-sm mb-2">
-          English Excellence Mission
-        </h1>
-
-        <p className="text-base md:text-lg text-slate-700/90 font-semibold">
-          Master reading, writing & speaking step by step
-        </p>
-
-        {/* Stage progress bar */}
-        <div className="mt-6 mx-auto max-w-2xl">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-700 mb-2">
-            <span>
-              Stage {currentStage.stageNumber}: {currentStage.stageTitle}
-            </span>
-            <span>
-              {stageStats.completed}/{stageStats.total} completed • {stageStats.playable} ready
-            </span>
-          </div>
-
-          <div className="h-3 rounded-full bg-white/70 border border-slate-900/10 overflow-hidden shadow-sm">
+      {/* LMS Workspace Layout */}
+      <div className="relative z-10 w-full max-w-[1320px] mx-auto px-4 pb-4 xl:h-[calc(100vh-124px)]">
+        <div className="grid grid-cols-1 xl:grid-cols-[240px_minmax(0,1fr)] gap-3 items-start xl:h-full">
+          {/* Left: Vertical training tracks panel */}
+          <aside className="rounded-2xl border border-violet-300/20 bg-slate-950/42 backdrop-blur-md shadow-sm p-2.5 xl:h-full xl:flex xl:flex-col">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-indigo-600 to-sky-600"
-              style={{ width: `${stageStats.pct}%` }}
-            />
-          </div>
-
-          <div className="mt-3 flex items-center justify-center gap-3 text-[11px] font-bold text-slate-700/70">
-            <span>Overall: {overallStats.completed}/{overallStats.total} completed</span>
-            <span className="opacity-40">•</span>
-            <span>{overallStats.pct}%</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto mb-5 overflow-hidden select-none">
-        <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-sky-50 via-indigo-50 to-transparent z-20 pointer-events-none" />
-        <div className="absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-cyan-50 via-indigo-50 to-transparent z-20 pointer-events-none" />
-
-        <div className="flex overflow-x-auto pb-4 pt-1 gap-3 px-8" style={{ scrollbarWidth: "none" }}>
-          {STAGES.map((stage, idx) => (
-            <button
-              key={idx}
-              ref={(el) => {
-                tabsRef.current[idx] = el;
-              }}
-              onClick={() => setSelectedStageIndex(idx)}
-              className={`
-                tab-pill relative flex-shrink-0 flex items-center gap-3 px-1.5 py-1.5 pr-6 rounded-full border
-                ${
-                  idx === selectedStageIndex
-                    ? "active bg-white/75 border-indigo-500/25 text-slate-900 shadow-sm"
-                    : "bg-white/55 border-slate-900/10 text-slate-700/70 hover:bg-white/75 hover:border-slate-900/15"
-                }
-              `}
-              type="button"
+              className="mb-2 bg-gradient-to-r from-fuchsia-300 via-cyan-300 to-lime-300 bg-clip-text text-[10px] font-extrabold uppercase tracking-[0.18em] text-transparent"
+              style={{ textShadow: "0 0 12px rgba(56, 189, 248, 0.55)" }}
             >
-              <div
-                className={`
-                  flex items-center justify-center w-8 h-8 rounded-full text-sm font-black shadow-inner
-                  ${idx === selectedStageIndex ? "bg-indigo-600 text-white" : "bg-white/60 border border-slate-900/10 text-slate-700"}
-                `}
-              >
-                {stage.stageNumber}
-              </div>
-              <span className="font-extrabold tracking-wide text-sm">{stage.stageTitle}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Compact Tiles */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-4 pb-20">
-        <div className="tiles-grid">
-          {currentStage.tiles.map((tile, idx) => {
-            // Patch 2: Use unlock rules based on explicit IDs
-            const isUnlocked = !tile.comingSoon && !!tile.route && isTileUnlocked(store, currentStage.stageId, tile.gameId);
-            const locked = !isUnlocked;
-            const displayTitle = tile.gameTitle ?? tile.title;
-            const tileId = getTileId(currentStage.stageNumber, displayTitle, tile.gameId);
-            const icon = getIcon(displayTitle);
-            const status = getTileStatus(tileId);
-
-            const badgeClass =
-              status === "completed"
-                ? "bg-emerald-600/10 border-emerald-600/20 text-emerald-700"
-                : status === "in_progress"
-                ? "bg-sky-600/10 border-sky-600/20 text-sky-700"
-                : "bg-slate-900/5 border-slate-900/10 text-slate-700/70";
-
-            const isPulse = pulseTileId === tileId;
-
-            return (
-              <div
-                key={tile.gameId}
-                onClick={() => handleTileClick(currentStage.stageNumber, tile)}
-                className={`tile rounded-2xl p-4 flex flex-col gap-3 ${locked ? "locked" : "cursor-pointer"} ${
-                  isPulse ? "pulse" : ""
-                }`}
-                style={{
-                  animationFillMode: "both",
-                  animationDuration: "0.35s",
-                  animationDelay: `${idx * 35}ms`,
-                  animationName: "fadeInUp",
-                }}
-                onAnimationEnd={() => {
-                  if (isPulse) setPulseTileId(null);
-                }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="w-10 h-10 rounded-xl bg-white/70 border border-slate-900/10 flex items-center justify-center text-xl shadow-inner">
-                    {icon}
+              Training Tracks
+            </div>
+            <div
+              className="grid gap-1.5 xl:flex-1 xl:min-h-0"
+              style={{ gridTemplateRows: `repeat(${trainingTracks.length}, minmax(0, 1fr))` }}
+            >
+              {trainingTracks.map((track, idx) => (
+                <button
+                  key={track.stageId}
+                  ref={(el) => {
+                    tabsRef.current[idx] = el;
+                  }}
+                  onClick={() => setSelectedStageIndex(idx)}
+                  type="button"
+                  className={`w-full h-full min-h-0 overflow-hidden text-left rounded-xl border px-2 py-1.5 transition-all ${
+                    idx === selectedStageIndex
+                      ? "border-violet-400/60 bg-violet-500/12 shadow-sm"
+                      : "border-violet-300/20 bg-slate-900/45 hover:bg-slate-900/60 hover:border-violet-300/35"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <span className="inline-flex h-5 min-w-5 px-1.5 items-center justify-center rounded-full bg-indigo-600 text-white text-[10px] font-black">
+                      {track.stageNumber}
+                    </span>
+                    <span className="text-[10px] font-bold text-violet-100/85">
+                      {track.completed}/{track.total}
+                    </span>
                   </div>
+                  <div className="text-[13px] font-extrabold text-slate-100 leading-tight">{track.title}</div>
+                  <div className="text-[10px] font-semibold text-slate-300 mt-0.5">{track.playable} ready</div>
+                  <div className="mt-1.5 h-1.5 rounded-full bg-slate-700/70 overflow-hidden">
+                    <span
+                      className="block h-full rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                      style={{ width: `${track.pct}%` }}
+                    />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </aside>
 
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`px-2.5 py-1 rounded-full text-[10px] uppercase font-extrabold tracking-wider border ${badgeClass}`}
-                      title={`Status: ${statusLabel(status)}`}
-                    >
-                      {statusLabel(status)}
-                    </div>
+          {/* Center: KPIs + modules (games area scrolls, layout stays fixed) */}
+          <main className="rounded-2xl border border-violet-300/20 bg-slate-950/52 backdrop-blur-md shadow-sm p-3 xl:h-full xl:flex xl:flex-col">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5">
+              <div className="lms-kpi">
+                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Tracks</div>
+                <div className="mt-1 text-xl font-black text-slate-100">{STAGES.length}</div>
+              </div>
+              <div className="lms-kpi">
+                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Games Ready</div>
+                <div className="mt-1 text-xl font-black text-slate-100">{totalReadyTracks}</div>
+              </div>
+              <div className="lms-kpi">
+                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Completed</div>
+                <div className="mt-1 text-xl font-black text-slate-100">{overallStats.completed}</div>
+              </div>
+              <div className="lms-kpi">
+                <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-violet-200/80">Overall</div>
+                <div className="mt-1 text-xl font-black text-slate-100">{overallStats.pct}%</div>
+              </div>
+            </div>
 
-                    {!locked && (
-                      <button
-                        type="button"
-                        onClick={(e) => toggleCompleted(e, currentStage.stageNumber, tile)}
-                        className={`
-                          w-8 h-8 rounded-full border flex items-center justify-center text-sm font-black
-                          ${
-                            status === "completed"
-                              ? "bg-emerald-600/10 border-emerald-600/20 text-emerald-700"
-                              : "bg-white/60 border-slate-900/10 text-slate-700/70 hover:bg-white/80 hover:text-slate-900"
+            <div className="mt-3 xl:flex-1 xl:min-h-0 xl:overflow-y-auto pr-1">
+              <MagicBento
+                textAutoHide
+                enableStars
+                enableSpotlight
+                enableBorderGlow
+                enableTilt={false}
+                enableMagnetism={false}
+                clickEffect
+                spotlightRadius={400}
+                particleCount={12}
+                glowColor="168, 85, 247"
+                disableAnimations={false}
+              >
+                <div className="tiles-grid">
+                {currentStage.tiles.map((tile, idx) => {
+                  const isGrammarFixTile =
+                    currentStage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g14-grammar-fix";
+                  const isCollocationTile =
+                    currentStage.stageId === "eem-stage-5-grammar-practice" && tile.gameId === "eem-g16-collocation-builder";
+                  const isUnlocked = isGrammarFixTile
+                    ? isBbsMasteredForGrammarUnlock
+                    : isCollocationTile
+                      ? isGrammarFixMasteredForCollocationUnlock
+                    : !tile.comingSoon && !!tile.route && isTileUnlocked(store, currentStage.stageId, tile.gameId);
+                  const grammarTrackUi = currentStage.stageId === "eem-stage-5-grammar-practice"
+                    ? (() => {
+                        if (tile.gameId === "eem-g15-better-sentences") {
+                          if (isBbsMasteredForGrammarUnlock) {
+                            return {
+                              locked: false,
+                              badge: "Complete",
+                              badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
+                              footer: "Replay anytime",
+                            };
                           }
-                        `}
-                        title={status === "completed" ? "Set to In progress" : "Mark as Completed"}
-                        aria-label={status === "completed" ? "Set to In progress" : "Mark as Completed"}
-                      >
-                        ✓
-                      </button>
-                    )}
-                  </div>
-                </div>
+                          if (isBbsInProgress) {
+                            return {
+                              locked: false,
+                              badge: "In Progress",
+                              badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
+                              footer: "Tap to continue",
+                            };
+                          }
+                          return {
+                            locked: false,
+                            badge: "Ready",
+                            badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
+                            footer: "Tap to open",
+                          };
+                        }
 
-                <div className="min-h-[56px]">
-                  <div className="text-base font-extrabold text-slate-900 leading-snug">{displayTitle}</div>
-                  <div className="text-xs text-slate-700/70 font-semibold mt-1">{tile.desc}</div>
-                </div>
+                        if (tile.gameId === "eem-g14-grammar-fix") {
+                          if (!isBbsMasteredForGrammarUnlock) {
+                            return {
+                              locked: true,
+                              badge: "Locked",
+                              badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
+                              footer: "Locked",
+                            };
+                          }
+                          if (isGrammarFixMasteredForCollocationUnlock) {
+                            return {
+                              locked: false,
+                              badge: "Complete",
+                              badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
+                              footer: "Replay anytime",
+                            };
+                          }
+                          if (isGrammarFixInProgress) {
+                            return {
+                              locked: false,
+                              badge: "In Progress",
+                              badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
+                              footer: "Tap to continue",
+                            };
+                          }
+                          return {
+                            locked: false,
+                            badge: "Ready",
+                            badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
+                            footer: "Tap to open",
+                          };
+                        }
 
-                <div className="mt-auto flex items-center justify-between">
-                  <div className="text-[11px] text-slate-700/60 font-bold">
-                    {locked ? "Locked" : status === "completed" ? "Replay anytime" : "Tap to open"}
-                  </div>
+                        if (tile.gameId === "eem-g16-collocation-builder") {
+                          if (!isGrammarFixMasteredForCollocationUnlock) {
+                            return {
+                              locked: true,
+                              badge: "Locked",
+                              badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
+                              footer: "Locked",
+                            };
+                          }
+                          if (isCollocationMastered) {
+                            return {
+                              locked: false,
+                              badge: "Complete",
+                              badgeClass: "bg-emerald-500/15 border-emerald-400/40 text-emerald-200",
+                              footer: "Replay anytime",
+                            };
+                          }
+                          if (isCollocationInProgress) {
+                            return {
+                              locked: false,
+                              badge: "In Progress",
+                              badgeClass: "bg-sky-500/15 border-sky-400/40 text-sky-200",
+                              footer: "Tap to continue",
+                            };
+                          }
+                          return {
+                            locked: false,
+                            badge: "Ready",
+                            badgeClass: "bg-violet-500/15 border-violet-400/40 text-violet-200",
+                            footer: "Tap to open",
+                          };
+                        }
 
-                  <div
-                    className={`
-                      text-xs font-extrabold px-3 py-1.5 rounded-xl border shadow-sm
-                      ${
-                        locked
-                          ? "bg-white/60 border-slate-900/10 text-slate-500"
-                          : "bg-gradient-to-r from-indigo-600 to-sky-600 border-white/40 text-white"
-                      }
-                    `}
-                  >
-                    {locked ? "Soon" : "Play"}
-                  </div>
+                        if (tile.gameId === "eem-g17-idiom-in-a-sentence") {
+                          return {
+                            locked: true,
+                            badge: "Locked",
+                            badgeClass: "bg-slate-700/30 border-slate-500/35 text-slate-200",
+                            footer: "Locked",
+                          };
+                        }
+
+                        return null;
+                      })()
+                    : null;
+
+                  const locked = grammarTrackUi ? grammarTrackUi.locked : !isUnlocked;
+                  const displayTitle = tile.gameTitle ?? tile.title;
+                  const tileId = getTileId(currentStage.stageNumber, displayTitle, tile.gameId);
+                  const icon = getIcon(displayTitle);
+                  const status = getTileStatus(tileId);
+
+                  const defaultBadgeClass =
+                    status === "completed"
+                      ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
+                    : status === "in_progress"
+                      ? "bg-sky-500/15 border-sky-400/40 text-sky-200"
+                      : "bg-slate-700/30 border-slate-500/35 text-slate-200";
+                  const badgeClass = grammarTrackUi?.badgeClass || defaultBadgeClass;
+                  const badgeText = grammarTrackUi?.badge || statusLabel(status);
+                  const footerText = grammarTrackUi?.footer || (locked ? "Locked" : status === "completed" ? "Replay anytime" : "Tap to open");
+
+                  const isPulse = pulseTileId === tileId;
+
+                  return (
+                    <div
+                      key={tile.gameId}
+                      onClick={() => handleTileClick(currentStage.stageNumber, tile)}
+                      className={`magic-bento-card tile rounded-2xl p-4 flex flex-col gap-3 ${locked ? "locked" : "cursor-pointer"} ${
+                        isPulse ? "pulse" : ""
+                      }`}
+                      style={{
+                        animationFillMode: "both",
+                        animationDuration: "0.35s",
+                        animationDelay: `${idx * 35}ms`,
+                        animationName: "fadeInUp",
+                      }}
+                      onAnimationEnd={() => {
+                        if (isPulse) setPulseTileId(null);
+                      }}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="w-10 h-10 rounded-xl bg-slate-900/60 border border-slate-300/20 flex items-center justify-center text-xl shadow-inner">
+                          {icon}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`px-2.5 py-1 rounded-full text-[10px] uppercase font-extrabold tracking-wider border ${badgeClass}`}
+                            title={`Status: ${badgeText}`}
+                          >
+                            {badgeText}
+                          </div>
+
+                          {!locked && (
+                            <button
+                              type="button"
+                              onClick={(e) => toggleCompleted(e, currentStage.stageNumber, tile)}
+                              className={`
+                                w-8 h-8 rounded-full border flex items-center justify-center text-sm font-black
+                                ${
+                                  status === "completed"
+                                    ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-200"
+                                    : "bg-slate-900/45 border-slate-300/25 text-slate-200 hover:bg-slate-800/70 hover:text-white"
+                                }
+                              `}
+                              title={status === "completed" ? "Set to In progress" : "Mark as Completed"}
+                              aria-label={status === "completed" ? "Set to In progress" : "Mark as Completed"}
+                            >
+                              ✓
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="min-h-[56px]">
+                        <div className="magic-bento-title text-base font-extrabold text-slate-100 leading-snug">{displayTitle}</div>
+                        <div className="magic-bento-description text-xs text-slate-300/85 font-semibold mt-1">{tile.desc}</div>
+                      </div>
+
+                      <div className="mt-auto flex items-center justify-between">
+                        <div className="text-[11px] text-slate-300/80 font-bold">
+                          {footerText}
+                        </div>
+
+                        <div
+                          className={`
+                            text-xs font-extrabold px-3 py-1.5 rounded-xl border shadow-sm
+                            ${
+                              locked
+                                ? "bg-slate-800/70 border-slate-400/20 text-slate-300"
+                                : "bg-gradient-to-r from-indigo-600 to-sky-600 border-white/40 text-white"
+                            }
+                          `}
+                        >
+                          {locked ? "Soon" : "Play"}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
                 </div>
-              </div>
-            );
-          })}
+              </MagicBento>
+            </div>
+          </main>
         </div>
-
       </div>
     </div>
   );

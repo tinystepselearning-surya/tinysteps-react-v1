@@ -39,3 +39,10 @@ TODO / next-agent suggestions:
 TODO / next-agent suggestions:
 - Browser-validation of the `/kids/games` hub card itself was not automated because the route sits behind auth; the code path is wired and build-verified, but a logged-in manual click-through would still be useful.
 - If this graduates from “new game” to a permanent feature, consider adding persisted high scores or a tiny progression reward so replay has more payoff.
+- 2026-03-14 Phase 16 (Grammar Practice): started Collocation Builder vertical slice by adding session progress helper (`collocationBuilderProgress.ts`) and playable Stage 3A route/page scaffold.
+- Wired `KidsEnglishExcellence` track logic so Collocation tile now becomes playable after Grammar Fix mastery and no longer remains hard-coded as coming soon.
+- Added guard bypass fix so Collocation tile is not blocked by generic mission `isTileUnlocked` dependency checks once grammar-fix mastery gate passes.
+- 2026-03-14 Phase 17 (Grammar Practice): added Collocation Builder Stage 3B (`choose-natural-pair`) with 3A->3B mastery gating, session-only progress updates, direct-entry lock handling, and stage summary metrics.
+- Updated collocation progress semantics so game completion is now tied to Stage 3B completion/mastery (instead of Stage 3A).
+- 2026-03-14 Phase 18 (Grammar Practice): added Collocation Builder Stage 3C (`fill-sentence`) with 3B->3C mastery gating, sentence-blank gameplay, and end-of-stage summary.
+- Updated collocation progression model: Stage 3B now unlocks Stage 3C; Collocation `gameCompleted` now records at Stage 3C completion.

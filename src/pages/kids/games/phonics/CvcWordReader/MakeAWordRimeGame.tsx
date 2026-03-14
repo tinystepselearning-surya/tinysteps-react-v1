@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { buildMissionReturnHref } from "../missionNavigation";
+import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
 
 type Item = {
   onset: string; // c
@@ -67,6 +68,9 @@ const VOWEL_GROUPS: Array<{ title: string; ids: string[] }> = [
   { title: "Short o", ids: ["og", "op", "ot"] },
   { title: "Short u", ids: ["ug", "un", "ut"] },
 ];
+
+const CANONICAL_GAME_ID = "cvc-word-builder";
+const CANONICAL_PROGRESS_DOC_ID = "phonics_cvc_word_builder";
 
 const FAMILIES: Record<string, FamilyConfig> = {
   at: {
@@ -507,6 +511,8 @@ export default function MakeAWordRimeGame() {
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
   const confettiClearRef = useRef<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const familyRunStartedAtRef = useRef<number>(Date.now());
+  const completionRecordedRef = useRef(false);
 
   // layout refs
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -871,6 +877,8 @@ export default function MakeAWordRimeGame() {
     setConfetti([]);
 
     cancelSpeech();
+    familyRunStartedAtRef.current = Date.now();
+    completionRecordedRef.current = false;
 
     setFamilyId(fam.id);
     setScreen("play");
@@ -970,6 +978,40 @@ export default function MakeAWordRimeGame() {
     if (screen !== "play") return;
     if (queue.length === 0) setScreen("complete");
   }, [queue.length, screen]);
+
+  useEffect(() => {
+    if (screen !== "complete") return;
+    if (completionRecordedRef.current) return;
+    completionRecordedRef.current = true;
+    if (!kidId) return;
+
+    const levelIndex = FAMILY_ORDER.indexOf(familyId as any);
+    const levelId = levelIndex >= 0 ? levelIndex + 1 : 1;
+    const timeSpentMs = Math.max(0, Date.now() - familyRunStartedAtRef.current);
+    const masteredItems = family.items
+      .map((item) => item.word)
+      .filter((word) => Boolean(word));
+
+    void recordLevelResult({
+      kidId,
+      gameId: CANONICAL_GAME_ID,
+      progressDocId: CANONICAL_PROGRESS_DOC_ID,
+      levelId,
+      completed: true,
+      timeSpentMs,
+      attempts: Math.max(1, masteredItems.length),
+      masteredItems,
+      skillTags: [
+        "area:phonics",
+        "subtopic:cvc_word_builder",
+        "mode:make_a_word_rime",
+        `family:${familyId}`,
+      ],
+      completedAt: Date.now(),
+    } as any).catch((err) => {
+      console.error("[MakeAWordRimeGame] recordLevelResult failed:", err);
+    });
+  }, [screen, kidId, familyId, family.items]);
 
   // ---------- Feedback handlers ----------
   const correctPlace = async (

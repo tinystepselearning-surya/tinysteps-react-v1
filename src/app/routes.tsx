@@ -78,6 +78,17 @@ const Blend2LettersGame = lazy(() => import('../pages/kids/games/phonics/MyFirst
 const CvcWordReaderGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/CvcWordReaderGame'));
 const MakeAWordRimeGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/MakeAWordRimeGame'));
 const SentenceStepperStage4 = lazy(() => import('../pages/kids/games/phonics/SentenceStepperStage4'));
+const BuildBetterSentencesReorder = lazy(() => import('../pages/kids/games/grammar/BuildBetterSentencesReorder'));
+const BuildBetterSentencesFillBlank = lazy(() => import('../pages/kids/games/grammar/BuildBetterSentencesFillBlank'));
+const BuildBetterSentencesChooseBetter = lazy(() => import('../pages/kids/games/grammar/BuildBetterSentencesChooseBetter'));
+const BuildBetterSentencesExpandSentence = lazy(() => import('../pages/kids/games/grammar/BuildBetterSentencesExpandSentence'));
+const GrammarFixSpotOneError = lazy(() => import('../pages/kids/games/grammar/GrammarFixSpotOneError'));
+const GrammarFixFixOneError = lazy(() => import('../pages/kids/games/grammar/GrammarFixFixOneError'));
+const GrammarFixFixFullSentence = lazy(() => import('../pages/kids/games/grammar/GrammarFixFixFullSentence'));
+const GrammarFixTimedCorrection = lazy(() => import('../pages/kids/games/grammar/GrammarFixTimedCorrection'));
+const CollocationBuilderMatchPairs = lazy(() => import('../pages/kids/games/grammar/CollocationBuilderMatchPairs'));
+const CollocationBuilderChooseNaturalPair = lazy(() => import('../pages/kids/games/grammar/CollocationBuilderChooseNaturalPair'));
+const CollocationBuilderFillSentence = lazy(() => import('../pages/kids/games/grammar/CollocationBuilderFillSentence'));
 const StoryReadingGame = lazy(() => import('../pages/kids/games/reading/StoryReading/StoryReadingGame'));
 const ComprehensionGame = lazy(() => import('../pages/kids/games/reading/ComprehensionGame/ComprehensionGame'));
 const NewWordsFromReading = lazy(() => import('../pages/kids/games/reading/NewWordsFromReading/NewWordsFromReading'));
@@ -404,8 +415,20 @@ const router = createBrowserRouter(
             { path: 'games/phonics/my-first-words', element: <Blend2LettersGame /> },
             { path: 'games/phonics/cvc-word-reader', element: <CvcWordReaderGame /> },
             { path: 'games/phonics/cvc-word-reader/make-a-word', element: <MakeAWordRimeGame /> },
-            { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
-            { path: 'games/reading/story-reading', element: <StoryReadingGame /> },
+            { path: 'games/phonics/spelling-practice', element: <MakeAWordRimeGame /> },
+        { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
+        { path: 'games/grammar/build-better-sentences', element: <BuildBetterSentencesReorder /> },
+        { path: 'games/grammar/build-better-sentences/fill-missing-word', element: <BuildBetterSentencesFillBlank /> },
+        { path: 'games/grammar/build-better-sentences/choose-better-sentence', element: <BuildBetterSentencesChooseBetter /> },
+        { path: 'games/grammar/build-better-sentences/expand-sentence', element: <BuildBetterSentencesExpandSentence /> },
+        { path: 'games/grammar/grammar-fix/spot-one-error', element: <GrammarFixSpotOneError /> },
+        { path: 'games/grammar/grammar-fix/fix-one-error', element: <GrammarFixFixOneError /> },
+        { path: 'games/grammar/grammar-fix/fix-full-sentence', element: <GrammarFixFixFullSentence /> },
+        { path: 'games/grammar/grammar-fix/timed-correction', element: <GrammarFixTimedCorrection /> },
+        { path: 'games/grammar/collocation-builder/match-pairs', element: <CollocationBuilderMatchPairs /> },
+        { path: 'games/grammar/collocation-builder/choose-natural-pair', element: <CollocationBuilderChooseNaturalPair /> },
+        { path: 'games/grammar/collocation-builder/fill-sentence', element: <CollocationBuilderFillSentence /> },
+        { path: 'games/reading/story-reading', element: <StoryReadingGame /> },
             { path: 'games/reading/comprehension', element: <ComprehensionGame /> },
             { path: 'games/reading/new-words', element: <NewWordsFromReading /> },
             { path: 'games/grammar', loader: missionShellRedirectLoader },

@@ -49,6 +49,7 @@ tinysteps-react-v1-firebase-adminsdk-*.json
 # Prevent compiled JS files from shadowing TS/TSX sources in src/
 src/**/*.js
 src/**/*.jsx
+!src/components/components/LiquidEther.jsx
 !src/**/*.config.js
 *.js.backup
 *.jsx.backup

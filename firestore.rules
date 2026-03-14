@@ -354,6 +354,32 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Parent-facing per-game summaries materialized from gameProgress
+    match /kids/{kidId}/gameSummaries/{docId} {
+      allow read: if isSignedIn() && canAccessKid(kidId);
+      // Written by backend triggers/admin SDK only
+      allow write: if false;
+    }
+
+    // Lightweight freshness head for parent Games refresh checks
+    match /kids/{kidId}/activity/{docId} {
+      allow read: if isSignedIn() && canAccessKid(kidId);
+      // Backend-maintained only
+      allow write: if false;
+    }
+
+    // Legacy summary subcollection compatibility surface.
+    // Canonical parent game reads are:
+    // - /kids/{kidId}/gameSummaries/{docId}
+    // - /kids/{kidId}/gameProgress/{docId}
+    // This path is retained as read-only compatibility; no active in-repo
+    // writer currently maintains /kids/{kidId}/summary/overall.
+    match /kids/{kidId}/summary/{docId} {
+      allow read: if isSignedIn() && canAccessKid(kidId);
+      // Backend/client writes blocked (legacy frozen surface).
+      allow write: if false;
+    }
+
     // Skill stats per tag (written by Cloud Functions, read by parents/admins)
     match /kids/{kidId}/skillStats/{tagId} {
       // Parents can read their kids' skill stats
@@ -366,6 +392,31 @@ service cloud.firestore {
       allow read: if isAdmin();
 
       // Only backend (Cloud Functions) can write - deny all client writes
+      allow write: if false;
+    }
+
+    // Active per-tag stats path written by onGameSessionCreate trigger
+    match /kids/{kidId}/skillTagStats/{tagId} {
+      allow read: if isSignedIn()
+        && kidExists(kidId)
+        && ('parentIds' in kidDoc(kidId))
+        && (request.auth.uid in kidDoc(kidId).parentIds);
+
+      allow read: if isAdmin();
+
+      // Only backend (Cloud Functions) can write - deny all client writes
+      allow write: if false;
+    }
+
+    // Internal idempotency markers for backend rollups
+    match /kids/{kidId}/rollupsApplied/{eventId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Internal level completion markers for backend rollups
+    match /kids/{kidId}/levelCompletions/{markerId} {
+      allow read: if isAdmin();
       allow write: if false;
     }
 

@@ -18,6 +18,10 @@ type ParentGamesProgressProps = {
   gameProgressDocs?: Record<string, any> | null;
   gameSummaries?: Record<string, any> | null;
   onPracticeClick: (gameId?: string) => void;
+  onRefreshClick?: () => void;
+  isRefreshing?: boolean;
+  refreshMessage?: string | null;
+  refreshTone?: "neutral" | "success" | "info" | "error";
 };
 
 type ParentGameMeta = {
@@ -165,6 +169,10 @@ function pickFirstObjectByKeys(source: Record<string, any>, keys: string[]): Rec
     if (value && typeof value === "object") return value;
   }
   return null;
+}
+
+function hasOwnData(value: Record<string, any> | null | undefined): boolean {
+  return Boolean(value && typeof value === "object" && Object.keys(value).length > 0);
 }
 
 function dedupeKeys(keys: string[]): string[] {
@@ -377,6 +385,10 @@ export function ParentGamesProgress({
   gameProgressDocs,
   gameSummaries,
   onPracticeClick,
+  onRefreshClick,
+  isRefreshing = false,
+  refreshMessage = null,
+  refreshTone = "neutral",
 }: ParentGamesProgressProps) {
   const summary = kidSummaryData?.summary || {};
   const progress = kidSummaryData?.progress || {};
@@ -386,6 +398,14 @@ export function ParentGamesProgress({
   const liveProgressByGame = gameProgressDocs || {};
 
   const lastUpdated = formatDateMaybe(summary?.lastUpdatedAt) || formatDateMaybe(summary?.updatedAt) || null;
+  const refreshMessageClass =
+    refreshTone === "success"
+      ? "text-green-600 dark:text-green-300"
+      : refreshTone === "error"
+        ? "text-rose-600 dark:text-rose-300"
+        : refreshTone === "info"
+          ? "text-indigo-600 dark:text-indigo-300"
+          : "text-gray-500 dark:text-gray-400";
 
   const games = useMemo(() => {
     const input = Array.isArray(gamesCatalog) ? [...gamesCatalog] : [];
@@ -429,9 +449,23 @@ export function ParentGamesProgress({
           Progress updates <span className="font-semibold">3 times/day</span> (scheduled).
           <span className="ml-2">• Recent play can take a little time to appear.</span>
           {lastUpdated ? <span className="ml-2">• Last updated: {lastUpdated}</span> : null}
+          {refreshMessage ? <span className={`ml-2 ${refreshMessageClass}`}>• {refreshMessage}</span> : null}
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          Tip: Tap <span className="font-semibold">Play</span> to open the kid-friendly games.
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Tip: Tap <span className="font-semibold">Play</span> to open the kid-friendly games.
+          </div>
+          {onRefreshClick ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onRefreshClick}
+              disabled={isRefreshing}
+              className="rounded-full h-8 px-3"
+            >
+              {isRefreshing ? "Checking..." : "Refresh"}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -444,14 +478,15 @@ export function ParentGamesProgress({
           const summaryKeys = withCompatibleKeys(meta?.summaryKeys || progressKeys, gameId);
 
           const summaryDoc = pickFirstObjectByKeys(summaries, summaryKeys) || {};
+          const liveProgressDoc = pickFirstObjectByKeys(liveProgressByGame, progressKeys) || {};
           const rootSummaryDoc = pickFirstObjectByKeys(summaryGames, progressKeys) || {};
           const rootProgressDoc = pickFirstObjectByKeys(byGame, progressKeys) || {};
-          const liveProgressDoc = pickFirstObjectByKeys(liveProgressByGame, progressKeys) || {};
+          const useLegacyRootFallback = !hasOwnData(summaryDoc) && !hasOwnData(liveProgressDoc);
 
           const snapshot = resolveGameSnapshot({
             summaryDoc,
-            rootSummaryDoc,
-            rootProgressDoc,
+            rootSummaryDoc: useLegacyRootFallback ? rootSummaryDoc : {},
+            rootProgressDoc: useLegacyRootFallback ? rootProgressDoc : {},
             liveProgressDoc,
             fallbackTotalLevels: Number(meta?.totalLevels ?? game.totalLevels ?? 0),
             fallbackArea: meta?.areaPractised || game.subtitle || "Practice",

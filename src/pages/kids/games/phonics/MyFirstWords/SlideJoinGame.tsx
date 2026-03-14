@@ -3,8 +3,6 @@ import { recordLevelResult } from "../../../../../games/engine/recordLevelResult
 import {
   type VowelGroup,
   type VowelGroupId,
-  GAME_ID,
-  PROGRESS_DOC_ID,
   SND_CONFETTI,
   clamp,
   splitVC,
@@ -14,6 +12,10 @@ import {
   dragSoundUrl,
   mergeSoundUrl,
 } from "./myFirstWordsData";
+
+const CANONICAL_GAME_ID = "my-first-words";
+const CANONICAL_PROGRESS_DOC_ID = "phonics_my_first_words";
+const SLIDE_JOIN_LEVEL_ID = 1;
 
 type SlideJoinGameProps = {
   kidId: string;
@@ -83,6 +85,10 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
 
   // Telemetry
   const startTsRef = useRef<number | null>(null);
+  const runStartTsRef = useRef<number | null>(null);
+  const runResultSentRef = useRef(false);
+  const runMasteredWordsRef = useRef<Set<string>>(new Set());
+  const runAttemptsRef = useRef(0);
   const [mergeAttempts, setMergeAttempts] = useState(0);
   const mergeAttemptsRef = useRef(0);
   const soundReplaysRef = useRef(0);
@@ -294,30 +300,48 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
     playConfetti();
   }
 
-  function recordProgress(masteredWord: string) {
+  function resetRunTracking() {
+    runStartTsRef.current = performance.now();
+    runResultSentRef.current = false;
+    runMasteredWordsRef.current = new Set();
+    runAttemptsRef.current = 0;
+  }
+
+  function incrementMergeAttempt() {
+    setMergeAttempts((a) => {
+      const na = a + 1;
+      mergeAttemptsRef.current = na;
+      return na;
+    });
+    runAttemptsRef.current += 1;
+  }
+
+  function recordRunCompletion() {
     if (!kidId) return;
+    if (runResultSentRef.current) return;
 
     try {
       const spentMs =
-        startTsRef.current != null ? Math.max(0, Math.round(performance.now() - startTsRef.current)) : 0;
+        runStartTsRef.current != null
+          ? Math.max(0, Math.round(performance.now() - runStartTsRef.current))
+          : 0;
+      const masteredItems = Array.from(runMasteredWordsRef.current);
+      const attemptsUsed = Math.max(1, runAttemptsRef.current);
 
       recordLevelResult({
-        gameId: GAME_ID,
-        progressDocId: PROGRESS_DOC_ID,
+        gameId: CANONICAL_GAME_ID,
+        progressDocId: CANONICAL_PROGRESS_DOC_ID,
         kidId,
-        levelId: idx + 1,
+        levelId: SLIDE_JOIN_LEVEL_ID,
+        completed: true,
         timeSpentMs: spentMs,
-
-        // ✅ Attempts now mean "merge attempts", not sound replays
-        attempts: Math.max(1, mergeAttemptsRef.current),
-
-        masteredItems: [masteredWord],
+        attempts: attemptsUsed,
+        masteredItems,
         skillTags: [
           "area:phonics",
           "subtopic:my_first_words",
           "mode:slide_join",
           `group:${groupId}`,
-          `word:${masteredWord}`,
         ],
         completedAt: Date.now(),
 
@@ -332,6 +356,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
           soundReplays: soundReplaysRef.current,
         },
       } as any);
+      runResultSentRef.current = true;
     } catch (err) {
       console.error("recordLevelResult failed:", err);
     }
@@ -424,11 +449,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
   }
 
   function registerFailedAttempt() {
-    setMergeAttempts((a) => {
-      const na = a + 1;
-      mergeAttemptsRef.current = na;
-      return na;
-    });
+    incrementMergeAttempt();
 
     setFails((f) => {
       const nf = f + 1;
@@ -543,11 +564,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
     assistUsedRef.current = true;
     if (hintLevelUsedRef.current < 2) hintLevelUsedRef.current = 2;
 
-    setMergeAttempts((a) => {
-      const na = a + 1;
-      mergeAttemptsRef.current = na;
-      return na;
-    });
+    incrementMergeAttempt();
 
     cancelAnimRef.current?.();
     cancelAnimRef.current = animateNumber(progressRef.current, 1, 220, (v) => {
@@ -645,11 +662,14 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
         fireSuccessFX();
         popMerged();
         playWord(item.word);
-        recordProgress(item.word);
+        runMasteredWordsRef.current.add(item.word);
+        if (isLast) {
+          recordRunCompletion();
+        }
       }, 260);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress]);
+  }, [progress, isLast, item.word]);
 
   // Cleanup
   useEffect(() => {
@@ -723,6 +743,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
               onClick={async () => {
                 await primeAudioOnGesture();
                 startTsRef.current = performance.now();
+                resetRunTracking();
                 lastActionTsRef.current = performance.now();
                 setStarted(true);
                 setHasDraggedOnce(false);
@@ -1019,6 +1040,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
                   onClick={() => {
                     setIdx(0);
                     resetForNewItemSync();
+                    resetRunTracking();
                   }}
                   className="mt-2 rounded-xl bg-slate-900 px-5 py-2 text-white font-bold"
                 >
@@ -1039,6 +1061,7 @@ export default function SlideJoinGame({ kidId, groupId, group, onBackToGroups }:
           onClick={() => {
             setIdx(0);
             resetForNewItemSync();
+            resetRunTracking();
           }}
           className="rounded-xl border bg-white px-4 py-2 font-semibold"
           disabled={!started}

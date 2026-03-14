@@ -1,6 +1,7 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
+import { normalizeGameIdentity } from "./games/helpers/normalizeGameIdentity";
 
 const TOTAL_ROUNDS = 8;
 const TOTAL_LEVELS = 7;
@@ -35,6 +36,7 @@ interface GameProgressData {
 
 interface GameSummaryData {
   gameId: string;
+  progressDocId: string;
   title: string;
   areaPractised: string;
   expertiseArea: string;
@@ -78,6 +80,16 @@ const GAME_SUMMARY_META: Record<string, { title: string; areaPractised: string; 
     areaPractised: "Listening and sound identification",
     expertiseArea: "phonics",
   },
+  "my-first-words": {
+    title: "My First Words",
+    areaPractised: "Word blending",
+    expertiseArea: "phonics",
+  },
+  "cvc-word-builder": {
+    title: "CVC Word Builder",
+    areaPractised: "CVC blending and spelling",
+    expertiseArea: "phonics",
+  },
 };
 
 export const onGameProgressWrite = onDocumentWritten(
@@ -100,7 +112,9 @@ export const onGameProgressWrite = onDocumentWritten(
 
     const progressData = snapshot.after.data() as GameProgressData;
     const now = admin.firestore.Timestamp.now();
-    const meta = GAME_SUMMARY_META[gameId];
+    const rawGameId = String(progressData.gameId || gameId || "").trim();
+    const { gameId: canonicalGameId, progressDocId } = normalizeGameIdentity(rawGameId, gameId);
+    const meta = GAME_SUMMARY_META[canonicalGameId] || GAME_SUMMARY_META[gameId];
 
     const bestStarsTotal = calculateBestStarsTotal(progressData.bestStarsByLevel);
     const levelsCompleted = getCompletedLevelsCount(
@@ -123,8 +137,9 @@ export const onGameProgressWrite = onDocumentWritten(
     const completionPercent = calculateCompletionPercent(bestStarsTotal, levelsCompleted, totalLevels);
 
     const summaryData: GameSummaryData = {
-      gameId,
-      title: String(progressData.title || meta?.title || gameId),
+      gameId: canonicalGameId,
+      progressDocId,
+      title: String(progressData.title || meta?.title || canonicalGameId || gameId),
       areaPractised: String(progressData.areaPractised || meta?.areaPractised || "Practice"),
       expertiseArea: String(progressData.expertiseArea || meta?.expertiseArea || "general_english"),
       started,

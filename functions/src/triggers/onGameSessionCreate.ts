@@ -1,13 +1,9 @@
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
+import { normalizeGameIdentity } from '../games/helpers/normalizeGameIdentity';
 
 const db = getFirestore();
-
-const LETTER_SOUNDS_GAME_ID = 'letter-sound-match';
-const LETTER_SOUNDS_PROGRESS_DOC_ID = 'phonics_letter_sound';
-const LEGACY_LETTER_SOUNDS_GAME_IDS = new Set(['phonics_letter_sound']);
-const LEGACY_LETTER_SOUNDS_PROGRESS_IDS = new Set(['phonics_letter_sound_match']);
 
 type LightweightGameMeta = {
   title: string;
@@ -47,6 +43,18 @@ const LIGHTWEIGHT_GAME_META: Record<string, LightweightGameMeta> = {
     expertiseArea: "phonics",
     totalLevels: 7,
   },
+  "my-first-words": {
+    title: "My First Words",
+    areaPractised: "Word blending",
+    expertiseArea: "phonics",
+    totalLevels: 2,
+  },
+  "cvc-word-builder": {
+    title: "CVC Word Builder",
+    areaPractised: "CVC blending and spelling",
+    expertiseArea: "phonics",
+    totalLevels: 5,
+  },
 };
 
 function getGameMeta(gameId: string): LightweightGameMeta {
@@ -57,26 +65,6 @@ function getGameMeta(gameId: string): LightweightGameMeta {
       expertiseArea: "general_english",
     }
   );
-}
-
-function normalizeGameIdentity(gameIdRaw: string, progressDocIdRaw: string): { gameId: string; progressDocId: string } {
-  const gameId = String(gameIdRaw || '').trim();
-  const progressDocId = String(progressDocIdRaw || '').trim();
-
-  const isLetterSoundsAlias =
-    gameId === LETTER_SOUNDS_GAME_ID ||
-    LEGACY_LETTER_SOUNDS_GAME_IDS.has(gameId) ||
-    progressDocId === LETTER_SOUNDS_PROGRESS_DOC_ID ||
-    LEGACY_LETTER_SOUNDS_PROGRESS_IDS.has(progressDocId);
-
-  if (!isLetterSoundsAlias) {
-    return { gameId, progressDocId };
-  }
-
-  return {
-    gameId: LETTER_SOUNDS_GAME_ID,
-    progressDocId: LETTER_SOUNDS_PROGRESS_DOC_ID,
-  };
 }
 
 /**
@@ -90,12 +78,6 @@ function normalizeGameIdentity(gameIdRaw: string, progressDocIdRaw: string): { g
  *    - completedLevels (only if first completion of this level)
  *    - totalLevels (from catalog)
  *    - lastPlayedAt
- * 
- * 2. Update kids/{kidId}/summary/overall
- *    - games.{gameId}.plays
- *    - games.{gameId}.lastPlayedAt
- *    - totalPoints
- *    - lastUpdatedAt
  */
 export const onGameSessionCreateTrigger = onDocumentCreated(
   {
@@ -115,8 +97,6 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
       gameId: rawGameId,
       progressDocId: rawProgressDocId,
       levelId,
-      pointsEarned,
-      accuracy,
       durationSec,
       timeSpentSec,
       timeSpentMs,
@@ -248,43 +228,24 @@ export const onGameSessionCreateTrigger = onDocumentCreated(
         totalLevels,
       });
 
-      // Update summary
-      const summaryRef = db.doc(`kids/${resolvedKidId}/summary/overall`);
-      const summaryUpdate: any = {
-        [`games.${gameId}.plays`]: FieldValue.increment(1),
-        [`games.${gameId}.lastPlayedAt`]: FieldValue.serverTimestamp(),
-        [`games.${gameId}.title`]: gameMeta.title,
-        [`games.${gameId}.areaPractised`]: gameMeta.areaPractised,
-        [`games.${gameId}.expertiseArea`]: gameMeta.expertiseArea,
-        [`games.${gameId}.progressStatus`]: "in_progress",
-        lastGamePlayedId: gameId,
-        lastGamePlayedTitle: gameMeta.title,
-        lastGamePlayedAt: FieldValue.serverTimestamp(),
-        lastUpdatedAt: FieldValue.serverTimestamp(),
-      };
-      if (normalizedTimeSpentMs > 0) {
-        summaryUpdate[`games.${gameId}.totalTimeSpentMs`] = FieldValue.increment(normalizedTimeSpentMs);
-        summaryUpdate.totalGameTimeSpentMs = FieldValue.increment(normalizedTimeSpentMs);
-      }
+      // Update lightweight activity freshness head for parent refresh checks.
+      const activityHeadRef = db.doc(`kids/${resolvedKidId}/activity/head`);
+      await activityHeadRef.set(
+        {
+          lastGameUpdateAt: FieldValue.serverTimestamp(),
+          lastPlayedAt: FieldValue.serverTimestamp(),
+          lastGameId: gameId,
+          lastProgressDocId: progressDocId,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
 
-      // Add points if present
-      if (typeof pointsEarned === 'number' && pointsEarned > 0) {
-        summaryUpdate.totalPoints = FieldValue.increment(pointsEarned);
-      }
-
-      // Add accuracy for average calculation
-      if (typeof accuracy === 'number') {
-        summaryUpdate[`games.${gameId}.totalAccuracy`] = FieldValue.increment(accuracy);
-        summaryUpdate[`games.${gameId}.avgAccuracy`] = FieldValue.increment(accuracy / (sessionData.attempts || 1));
-      }
-
-      await summaryRef.set(summaryUpdate, { merge: true });
-
-      logger.info(`[onGameSessionCreate] Updated summary`, {
+      logger.info(`[onGameSessionCreate] Updated activity head`, {
         eventId,
         kidId: resolvedKidId,
         gameId,
-        pointsEarned: pointsEarned || 0,
+        progressDocId,
       });
 
       // Update skill tag stats

@@ -185,6 +185,150 @@ const PHONICS_COURSE_IDS = [
   "advanced-phonics",
 ];
 
+const CANONICAL_GAME_ID_ALIASES: Record<string, string> = {
+  "letter-sound-match": "letter-sound-match",
+  phonics_letter_sound: "letter-sound-match",
+  phonics_letter_sound_match: "letter-sound-match",
+  "balloon-pop": "balloon-pop",
+  phonics_balloon_pop: "balloon-pop",
+  "sound-detective": "sound-detective",
+  phonics_sound_detective: "sound-detective",
+  "letter-tracing": "letter-tracing",
+  phonics_letter_tracing: "letter-tracing",
+  "letter-tracing-sounds": "letter-tracing-sounds",
+  phonics_letter_tracing_sounds: "letter-tracing-sounds",
+  "my-first-words": "my-first-words",
+  my_first_words_v1: "my-first-words",
+  my_first_words: "my-first-words",
+  phonics_my_first_words: "my-first-words",
+  "cvc-word-builder": "cvc-word-builder",
+  cvc_word_reader_v1: "cvc-word-builder",
+  cvc_word_reader: "cvc-word-builder",
+  "cvc-word-reader": "cvc-word-builder",
+  "spelling-practice": "cvc-word-builder",
+  "make-a-word-rime": "cvc-word-builder",
+  phonics_cvc_word_reader: "cvc-word-builder",
+  phonics_spelling_practice: "cvc-word-builder",
+  phonics_cvc_word_builder: "cvc-word-builder",
+};
+
+const canonicalizeParentGameId = (value?: string | null): string => {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  return CANONICAL_GAME_ID_ALIASES[raw] || raw;
+};
+
+function millisFromUnknownTimestamp(value: unknown): number {
+  if (!value) return 0;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof (value as any)?.toDate === "function") {
+    const dt = (value as any).toDate();
+    return dt instanceof Date && !Number.isNaN(dt.getTime()) ? dt.getTime() : 0;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.getTime();
+  if (typeof value === "string") {
+    const dt = new Date(value);
+    return Number.isNaN(dt.getTime()) ? 0 : dt.getTime();
+  }
+  return 0;
+}
+
+function latestTimestampFromMap(map: Record<string, any> | null | undefined): number {
+  if (!map || typeof map !== "object") return 0;
+  let latest = 0;
+  Object.values(map).forEach((doc: any) => {
+    if (!doc || typeof doc !== "object") return;
+    latest = Math.max(
+      latest,
+      millisFromUnknownTimestamp(doc.updatedAt),
+      millisFromUnknownTimestamp(doc.lastPlayedAt),
+      millisFromUnknownTimestamp(doc.completedAt),
+      millisFromUnknownTimestamp(doc.lastSeenAt),
+    );
+  });
+  return latest;
+}
+
+function latestTimestampFromKidSummary(kidSummary: any): number {
+  if (!kidSummary || typeof kidSummary !== "object") return 0;
+  const summary = kidSummary?.summary || {};
+  const progress = kidSummary?.progress || {};
+  const summaryGames = summary?.games || {};
+  const byGame = progress?.byGame || {};
+  return Math.max(
+    millisFromUnknownTimestamp(summary?.lastUpdatedAt),
+    millisFromUnknownTimestamp(summary?.updatedAt),
+    millisFromUnknownTimestamp(summary?.lastPlayedAt),
+    latestTimestampFromMap(summaryGames),
+    latestTimestampFromMap(byGame),
+  );
+}
+
+function latestTimestampFromActivityHead(activityHead: any): number {
+  if (!activityHead || typeof activityHead !== "object") return 0;
+  return Math.max(
+    millisFromUnknownTimestamp(activityHead.lastGameUpdateAt),
+    millisFromUnknownTimestamp(activityHead.lastPlayedAt),
+    millisFromUnknownTimestamp(activityHead.updatedAt),
+  );
+}
+
+function latestCanonicalGamesTimestamp(
+  gameSummaries: Record<string, any> | null | undefined,
+  gameProgress: Record<string, any> | null | undefined,
+): number {
+  return Math.max(
+    latestTimestampFromMap(gameSummaries),
+    latestTimestampFromMap(gameProgress),
+  );
+}
+
+function latestGamesFreshnessSignal({
+  gameSummaries,
+  gameProgress,
+  kidSummary,
+}: {
+  gameSummaries: Record<string, any> | null | undefined;
+  gameProgress: Record<string, any> | null | undefined;
+  kidSummary: any;
+}): number {
+  const canonicalTs = latestCanonicalGamesTimestamp(gameSummaries, gameProgress);
+  if (canonicalTs > 0) return canonicalTs;
+  return latestTimestampFromKidSummary(kidSummary);
+}
+
+function hasGamesSummaryCoverageGaps(
+  summaryMap: Record<string, any> | null | undefined,
+  catalogGames: any[] | null | undefined,
+): boolean {
+  const safeCatalog = Array.isArray(catalogGames) ? catalogGames : [];
+  if (safeCatalog.length === 0) return false;
+
+  const expectedGameIds = new Set(
+    safeCatalog
+      .map((game: any) => canonicalizeParentGameId(game?.id))
+      .filter(Boolean),
+  );
+  if (expectedGameIds.size === 0) return false;
+
+  const safeSummaryMap = summaryMap || {};
+  const coveredGameIds = new Set<string>();
+  Object.entries(safeSummaryMap).forEach(([docId, data]) => {
+    const row = (data || {}) as Record<string, any>;
+    const candidates = [
+      canonicalizeParentGameId(docId),
+      canonicalizeParentGameId(String(row.gameId || "")),
+      canonicalizeParentGameId(String(row.progressDocId || "")),
+    ].filter(Boolean);
+    candidates.forEach((id) => coveredGameIds.add(id));
+  });
+
+  for (const gameId of expectedGameIds) {
+    if (!coveredGameIds.has(gameId)) return true;
+  }
+  return false;
+}
+
 const PHONICS_COURSE_ID_ALIASES: Record<string, string> = {
   "phonics-foundation": "phonics-foundations",
   foundational: "phonics-foundations",
@@ -867,6 +1011,13 @@ export default function ParentDashboard() {
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [gamesRefreshStatus, setGamesRefreshStatus] = useState<{
+    tone: "neutral" | "success" | "info" | "error";
+    message: string | null;
+  }>({ tone: "neutral", message: null });
+  const [isRefreshingGames, setIsRefreshingGames] = useState(false);
+  const [lastGamesSeenSignalMs, setLastGamesSeenSignalMs] = useState(0);
+  const [lastGamesHeadSeenMs, setLastGamesHeadSeenMs] = useState(0);
 
   useEffect(() => {
     if (kids.length === 0) return;
@@ -1260,12 +1411,67 @@ export default function ParentDashboard() {
     },
   });
 
+  // ---- Lightweight game activity freshness head (kids/{kidId}/activity/head) ----
+  const gameActivityHeadQuery = useQuery({
+    queryKey: ["gameActivityHead", selectedKidId],
+    enabled: !!selectedKidId && activeTab === "games-progress",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      if (!selectedKidId) return null;
+      const snap = await getDoc(doc(db, "kids", selectedKidId, "activity", "head"));
+      return snap.exists() ? (snap.data() as any) : null;
+    },
+  });
+
+  // ---- Games catalog ----
+  const gamesCatalogQuery = useQuery({
+    queryKey: ["gamesCatalog"],
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async () => {
+      const snap = await getDoc(doc(db, "config", "gamesCatalog"));
+      const data = snap.exists() ? (snap.data() as any) : null;
+      const games = data?.games;
+      if (Array.isArray(games)) return games;
+      if (!games || typeof games !== "object") return [];
+
+      return Object.entries(games)
+        .map(([id, game]: [string, any]) => {
+          const canonicalId = canonicalizeParentGameId(id);
+          return {
+            id: canonicalId,
+            title: game?.title || id,
+            subtitle: game?.subtitle || game?.description || "",
+            area: game?.category || "",
+            totalLevels: typeof game?.totalLevels === "number" ? game.totalLevels : undefined,
+            order: typeof game?.order === "number" ? game.order : Number.MAX_SAFE_INTEGER,
+            active: game?.active !== false,
+          };
+        })
+        .filter((game: any) => game.active !== false)
+        .sort((a: any, b: any) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
+        .map(({ order, active, ...rest }: any) => rest);
+    },
+  });
+
   const hasAnyGameSummaries =
     !!gameSummariesQuery.data && Object.keys(gameSummariesQuery.data).length > 0;
+
+  const hasSummaryCoverageGaps = useMemo(() => {
+    if (!selectedKidId || activeTab !== "games-progress") return false;
+    return hasGamesSummaryCoverageGaps(gameSummariesQuery.data ?? null, gamesCatalogQuery.data ?? null);
+  }, [activeTab, gameSummariesQuery.data, gamesCatalogQuery.data, selectedKidId]);
+
   const shouldFetchLiveGameProgress =
     !!selectedKidId &&
     activeTab === "games-progress" &&
-    (gameSummariesQuery.isError || (gameSummariesQuery.isFetched && !hasAnyGameSummaries));
+    (
+      gameSummariesQuery.isError ||
+      (gameSummariesQuery.isFetched && (!hasAnyGameSummaries || hasSummaryCoverageGaps))
+    );
 
   // ---- Canonical live game progress (kids/{kidId}/gameProgress/*) ----
   // Fallback only: fetch live docs when per-game summaries are missing.
@@ -1286,48 +1492,124 @@ export default function ParentDashboard() {
     },
   });
 
-  // ---- Games catalog ----
-  const gamesCatalogQuery = useQuery({
-    queryKey: ["gamesCatalog"],
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    refetchOnMount: "always",
-    queryFn: async () => {
-      const snap = await getDoc(doc(db, "config", "gamesCatalog"));
-      const data = snap.exists() ? (snap.data() as any) : null;
-      const games = data?.games;
-      if (Array.isArray(games)) return games;
-      if (!games || typeof games !== "object") return [];
+  const currentGamesFreshnessMs = useMemo(() => {
+    const headTs = latestTimestampFromActivityHead(gameActivityHeadQuery.data ?? null);
+    if (headTs > 0) return headTs;
+    return latestGamesFreshnessSignal({
+      gameSummaries: gameSummariesQuery.data ?? null,
+      gameProgress: gameProgressQuery.data ?? null,
+      kidSummary: kidSummaryQuery.data ?? null,
+    });
+  }, [gameActivityHeadQuery.data, gameSummariesQuery.data, gameProgressQuery.data, kidSummaryQuery.data]);
 
-      return Object.entries(games)
-        .map(([id, game]: [string, any]) => {
-          const canonicalId =
-            id === "phonics_letter_sound" || id === "phonics_letter_sound_match"
-              ? "letter-sound-match"
-              : id === "phonics_balloon_pop"
-                ? "balloon-pop"
-                : id === "phonics_sound_detective"
-                  ? "sound-detective"
-                  : id === "phonics_letter_tracing"
-                    ? "letter-tracing"
-                    : id === "phonics_letter_tracing_sounds"
-                      ? "letter-tracing-sounds"
-                      : id;
-          return {
-            id: canonicalId,
-            title: game?.title || id,
-            subtitle: game?.subtitle || game?.description || "",
-            area: game?.category || "",
-            totalLevels: typeof game?.totalLevels === "number" ? game.totalLevels : undefined,
-            order: typeof game?.order === "number" ? game.order : Number.MAX_SAFE_INTEGER,
-            active: game?.active !== false,
-          };
-        })
-        .filter((game: any) => game.active !== false)
-        .sort((a: any, b: any) => (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER))
-        .map(({ order, active, ...rest }: any) => rest);
-    },
-  });
+  useEffect(() => {
+    setGamesRefreshStatus({ tone: "neutral", message: null });
+    setLastGamesSeenSignalMs(0);
+    setLastGamesHeadSeenMs(0);
+  }, [selectedKidId]);
+
+  useEffect(() => {
+    if (activeTab !== "games-progress") return;
+    if (currentGamesFreshnessMs <= 0) return;
+    if (lastGamesSeenSignalMs === 0) {
+      setLastGamesSeenSignalMs(currentGamesFreshnessMs);
+    }
+  }, [activeTab, currentGamesFreshnessMs, lastGamesSeenSignalMs]);
+
+  useEffect(() => {
+    if (activeTab !== "games-progress") return;
+    const currentHeadMs = latestTimestampFromActivityHead(gameActivityHeadQuery.data ?? null);
+    if (currentHeadMs <= 0) return;
+    if (lastGamesHeadSeenMs === 0) {
+      setLastGamesHeadSeenMs(currentHeadMs);
+    }
+  }, [activeTab, gameActivityHeadQuery.data, lastGamesHeadSeenMs]);
+
+  const handleGamesRefresh = async () => {
+    if (!selectedKidId || isRefreshingGames) return;
+
+    setIsRefreshingGames(true);
+    setGamesRefreshStatus({
+      tone: "info",
+      message: "Checking for new game activity...",
+    });
+
+    const beforeMs = Math.max(lastGamesSeenSignalMs, currentGamesFreshnessMs);
+    const beforeHeadMs = Math.max(
+      lastGamesHeadSeenMs,
+      latestTimestampFromActivityHead(gameActivityHeadQuery.data ?? null),
+    );
+    try {
+      const activityHeadRes = await gameActivityHeadQuery.refetch();
+      const headAfterMs = latestTimestampFromActivityHead((activityHeadRes as any)?.data ?? null);
+      if (headAfterMs > 0) {
+        setLastGamesHeadSeenMs(Math.max(beforeHeadMs, headAfterMs));
+        if (headAfterMs <= beforeHeadMs) {
+          setGamesRefreshStatus({
+            tone: "info",
+            message: "No new game activity since your last refresh.",
+          });
+          setLastGamesSeenSignalMs(Math.max(beforeMs, headAfterMs));
+          return;
+        }
+      }
+
+      const [summariesRes, progressRes] = await Promise.all([
+        gameSummariesQuery.refetch(),
+        shouldFetchLiveGameProgress
+          ? gameProgressQuery.refetch()
+          : Promise.resolve({ data: gameProgressQuery.data }),
+      ]);
+      const refreshedSummaryMap = ((summariesRes as any)?.data ?? null) as Record<string, any> | null;
+      const refreshedProgressMap = ((progressRes as any)?.data ?? null) as Record<string, any> | null;
+      const canonicalAfterMs = latestCanonicalGamesTimestamp(
+        refreshedSummaryMap,
+        refreshedProgressMap,
+      );
+      const refreshedHasSummaries = !!refreshedSummaryMap && Object.keys(refreshedSummaryMap).length > 0;
+      const refreshedSummaryCoverageGaps = hasGamesSummaryCoverageGaps(
+        refreshedSummaryMap,
+        gamesCatalogQuery.data ?? null,
+      );
+      const refreshedHasProgressFallback =
+        !!refreshedProgressMap && Object.keys(refreshedProgressMap).length > 0;
+      const canonicalCoverageReady =
+        (refreshedHasSummaries && !refreshedSummaryCoverageGaps) || refreshedHasProgressFallback;
+      const kidSummaryRes =
+        canonicalCoverageReady
+          ? null
+          : await kidSummaryQuery.refetch();
+
+      const afterMs = Math.max(
+        beforeMs,
+        headAfterMs,
+        canonicalAfterMs,
+        kidSummaryRes ? latestTimestampFromKidSummary((kidSummaryRes as any)?.data ?? null) : 0,
+      );
+
+      if (afterMs > beforeMs) {
+        setGamesRefreshStatus({
+          tone: "success",
+          message: "Updated with the latest game progress.",
+        });
+      } else {
+        setGamesRefreshStatus({
+          tone: "info",
+          message: "No new game activity since your last refresh.",
+        });
+      }
+
+      setLastGamesSeenSignalMs(afterMs);
+    } catch (error) {
+      console.error("Games refresh failed:", error);
+      setGamesRefreshStatus({
+        tone: "error",
+        message: "Refresh failed. Please try again.",
+      });
+    } finally {
+      setIsRefreshingGames(false);
+    }
+  };
 
   // ---- Payments config ----
   const paymentsConfigQuery = useQuery({
@@ -1378,18 +1660,7 @@ export default function ParentDashboard() {
   const handlePracticeClick = (gameId?: string) => {
     if (!selectedKidId) return;
 
-    const canonicalGameId =
-      gameId === "phonics_letter_sound" || gameId === "phonics_letter_sound_match"
-        ? "letter-sound-match"
-        : gameId === "phonics_balloon_pop"
-          ? "balloon-pop"
-          : gameId === "phonics_sound_detective"
-            ? "sound-detective"
-            : gameId === "phonics_letter_tracing"
-              ? "letter-tracing"
-              : gameId === "phonics_letter_tracing_sounds"
-                ? "letter-tracing-sounds"
-        : gameId;
+    const canonicalGameId = canonicalizeParentGameId(gameId);
 
     const kidParam = `?kidId=${encodeURIComponent(selectedKidId)}`;
     const routeByGame: Record<string, string> = {
@@ -3624,6 +3895,10 @@ export default function ParentDashboard() {
                 gameProgressDocs={shouldFetchLiveGameProgress ? gameProgressQuery.data ?? null : null}
                 gameSummaries={gameSummariesQuery.data ?? null}
                 onPracticeClick={(gameId) => handlePracticeClick(gameId)}
+                onRefreshClick={handleGamesRefresh}
+                isRefreshing={isRefreshingGames}
+                refreshMessage={gamesRefreshStatus.message}
+                refreshTone={gamesRefreshStatus.tone}
               />
             )}
           </div>

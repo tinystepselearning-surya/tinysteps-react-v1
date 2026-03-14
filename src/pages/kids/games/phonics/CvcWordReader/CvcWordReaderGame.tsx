@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { applyKidAndMissionContext, buildMissionReturnHref } from "../missionNavigation";
+import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
 
 /**
  * Tiny Steps — Game 3: CVC Word Reader
@@ -44,6 +45,8 @@ type CVCItem = {
 
 const GAME_ID = "cvc_word_reader_v1";
 const PROGRESS_DOC_ID = "phonics_cvc_word_reader";
+const CANONICAL_GAME_ID = "cvc-word-builder";
+const CANONICAL_PROGRESS_DOC_ID = "phonics_cvc_word_builder";
 
 // Tuning for ages 3–6
 const MAX_WORDS_PER_LEVEL = 12;
@@ -542,6 +545,7 @@ export default function CvcWordReaderGame() {
 
     setPlayOrder(trimmed);
     setPos(0);
+    levelRunStartedAtRef.current = Date.now();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inPlayMode, levelConfig?.key, LEVEL_ITEMS.length, kidId]);
 
@@ -568,6 +572,7 @@ export default function CvcWordReaderGame() {
   const [confetti, setConfetti] = useState(false);
   const [celebrate, setCelebrate] = useState(false);
   const [levelComplete, setLevelComplete] = useState(false);
+  const levelRunStartedAtRef = useRef<number>(Date.now());
 
   // Pedagogy supports
   const [hasListened, setHasListened] = useState(false);
@@ -1027,6 +1032,41 @@ export default function CvcWordReaderGame() {
     setLevelComplete(true);
     setPrompt("Level complete! 🎉");
     logEvent("level_complete", { level: levelKeyParam, wordsPlayed: playOrder.length });
+
+    if (!kidId) return;
+
+    const levelNumber = Math.max(
+      1,
+      VOWEL_GROUPS.findIndex((group) => group.key === levelKeyParam) + 1
+    );
+    const timeSpentMs = Math.max(0, Date.now() - levelRunStartedAtRef.current);
+    const masteredItems = Array.from(
+      new Set(
+        playOrder
+          .map((entryIndex) => LEVEL_ITEMS[entryIndex]?.word)
+          .filter((word): word is string => Boolean(word))
+      )
+    );
+
+    void recordLevelResult({
+      kidId,
+      gameId: CANONICAL_GAME_ID,
+      progressDocId: CANONICAL_PROGRESS_DOC_ID,
+      levelId: levelNumber,
+      completed: true,
+      timeSpentMs,
+      attempts: Math.max(1, playOrder.length),
+      masteredItems,
+      skillTags: [
+        "area:phonics",
+        "subtopic:cvc_word_builder",
+        "mode:cvc_word_reader",
+        levelKeyParam ? `level:${levelKeyParam}` : "level:unknown",
+      ],
+      completedAt: Date.now(),
+    } as any).catch((err) => {
+      console.error("[CvcWordReaderGame] recordLevelResult failed:", err);
+    });
   }
 
   function placeCorrectIntoSlot(slotKey: SlotKey) {
