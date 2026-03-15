@@ -80,26 +80,48 @@ const PricingSection = () => {
           ))}
         </div>
 
-        <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h4 className="font-heading text-xl font-bold text-gray-900">
-            Ultra Premium Program
-          </h4>
-          <p className="mt-1 text-sm text-gray-600">
-            Classes with native English-speaking teachers
-          </p>
-          <p className="mt-3 text-sm text-gray-700">
-            Premium option for international accent exposure, advanced speaking confidence, and global communication practice.
-          </p>
-          <div className="mt-4 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
-            {ULTRA_PREMIUM_PRICING.map((row) => (
-              <p key={row.ratio}>
-                {row.format}: {formatINR(row.perClass)} {row.unitLabel} • {formatINR(row.package12)} {row.packageLabel}
-              </p>
-            ))}
+        <div className="relative mt-10 overflow-hidden rounded-[32px] border border-amber-200/30 bg-gradient-to-br from-[#0a1224] via-[#111d38] to-[#1a2747] p-8 text-white shadow-[0_30px_90px_-45px_rgba(2,6,23,0.95)]">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-300/25 blur-3xl" />
+          <div className="pointer-events-none absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-sky-300/15 blur-3xl" />
+          <div className="relative">
+            <div className="flex flex-wrap items-center gap-2">
+              <h4 className="font-heading text-2xl font-bold text-white">
+                Ultra Premium Program
+              </h4>
+              <span className="inline-flex rounded-full bg-gradient-to-r from-amber-400 to-orange-400 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900">
+                International Mentor Experience
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-amber-100">
+              Classes with native English-speaking teachers
+            </p>
+            <p className="mt-3 text-sm text-slate-200">
+              Premium option for international accent exposure, advanced speaking confidence, and global communication practice.
+            </p>
+            <div className="mt-5 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+              {ULTRA_PREMIUM_PRICING.map((row) => (
+                <div
+                  key={row.ratio}
+                  className="rounded-2xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-sm"
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-200">
+                    {row.ratio}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">{row.format}</p>
+                  <p className="mt-2 text-lg font-bold text-white">
+                    {formatINR(row.perClass)}
+                    <span className="ml-1 text-xs font-medium text-slate-200">{row.unitLabel}</span>
+                  </p>
+                  <p className="text-xs text-slate-200">
+                    {formatINR(row.package12)} {row.packageLabel}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-4 text-xs text-slate-300">
+              Batch availability depends on age, level, and suitable peer matching.
+            </p>
           </div>
-          <p className="mt-3 text-xs text-gray-500">
-            Batch availability depends on age, level, and suitable peer matching.
-          </p>
         </div>
 
         <p className="mx-auto mt-6 max-w-3xl text-center text-sm text-gray-600">

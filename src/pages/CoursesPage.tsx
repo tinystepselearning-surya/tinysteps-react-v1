@@ -5,8 +5,9 @@ import type { FC } from "react";
 import { CourseCard } from "../components/courses/CourseCard";
 import { catalogs } from "../content/courses";
 import {
-  DEFAULT_ULTRA_PREMIUM_PER_CLASS_PRICE,
-  DEFAULT_PER_CLASS_PRICE,
+  DEFAULT_PREMIUM_MONTHLY_START_PRICE,
+  DEFAULT_ULTRA_PREMIUM_MONTHLY_MAX_PRICE,
+  DEFAULT_ULTRA_PREMIUM_MONTHLY_MIN_PRICE,
   formatINR,
 } from '../constants/pricing';
 import { organizationSchema } from '../lib/schemas';
@@ -87,10 +88,17 @@ const CoursesHero = () => (
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>
           <span className="rounded-full bg-white/20 px-4 py-1">Parent-rated ★★★★★</span>
-          {/* show per-class price from shared constant */}
           <span className="rounded-full bg-white/20 px-4 py-1">
-            Standard: {formatINR(DEFAULT_PER_CLASS_PRICE)} per live 1:1 session • Ultra Premium starts {formatINR(DEFAULT_ULTRA_PREMIUM_PER_CLASS_PRICE)}
+            Premium monthly plans from {formatINR(DEFAULT_PREMIUM_MONTHLY_START_PRICE)} • Ultra Premium monthly plans from {formatINR(DEFAULT_ULTRA_PREMIUM_MONTHLY_MIN_PRICE)} to {formatINR(DEFAULT_ULTRA_PREMIUM_MONTHLY_MAX_PRICE)}
           </span>
+        </div>
+        <div className="mt-4">
+          <Link
+            to="/pricing"
+            className="inline-flex items-center justify-center rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 shadow hover:bg-slate-100"
+          >
+            View Detailed Pricing
+          </Link>
         </div>
       </div>
     </div>

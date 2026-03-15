@@ -25,9 +25,11 @@ export type CourseCatalogItem = {
 
 const courseStartingPriceCopy = `Plans from ${formatINR(
   ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee
-)}/month (Tiny Steps Standard) • Ultra Premium from ${formatINR(
-  ULTRA_PREMIUM_PRICING[0].package12
-)} for 12 classes`;
+)}/month (Tiny Steps Premium Classes) • Ultra Premium monthly plans from ${formatINR(
+  Math.min(...ULTRA_PREMIUM_PRICING.map((row) => row.package12))
+)} to ${formatINR(
+  Math.max(...ULTRA_PREMIUM_PRICING.map((row) => row.package12))
+)} (12 classes)`;
 
 export const catalogs: CourseCatalogItem[] = [
   {
