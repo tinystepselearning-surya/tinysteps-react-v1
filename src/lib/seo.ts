@@ -141,7 +141,7 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });
   upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: cfg.description ?? undefined });
 
-  // Resolve OG image: prefer explicit cfg.ogImage, else provide a parents default for /parents routes, else fallback to og-default.png
+  // Resolve OG image: prefer explicit cfg.ogImage, else provide a parents default for /parents routes, else fallback to og-default.jpg
   const resolvedOgImage = (function () {
     if (cfg.ogImage) return cfg.ogImage.startsWith('http') ? cfg.ogImage : `${CANONICAL_ORIGIN}${cfg.ogImage}`;
     try {
@@ -150,12 +150,25 @@ export function applySeo(cfg: SeoConfig) {
       /* ignore */
     }
     // Fallback to default OG image for all public pages
-    return `${CANONICAL_ORIGIN}/og-default.png`;
+    return `${CANONICAL_ORIGIN}/og-default.jpg`;
   })();
+
+  const resolvedOgImageType =
+    resolvedOgImage.endsWith('.jpg') || resolvedOgImage.endsWith('.jpeg')
+      ? 'image/jpeg'
+      : resolvedOgImage.endsWith('.webp')
+        ? 'image/webp'
+        : 'image/png';
 
   // Always set OG image (we now always have a fallback)
   upsertMeta('meta[property="og:image"]', { property: 'og:image', content: resolvedOgImage });
+  upsertMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url', content: resolvedOgImage });
+  upsertMeta('meta[property="og:image:type"]', { property: 'og:image:type', content: resolvedOgImageType });
   upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: resolvedOgImage });
+  upsertMeta('meta[name="twitter:image:alt"]', {
+    name: 'twitter:image:alt',
+    content: 'Tiny Steps Learning - Online English classes for kids',
+  });
   upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
 
   // JSON-LD with merge + dedupe to handle multiple applySeo calls
@@ -247,7 +260,7 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     description: '1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.',
     canonicalPath: '/',
     ogType: 'website',
-    ogImage: '/og-default.png',
+    ogImage: '/og-default.jpg',
   },
   '/courses': {
     title: 'English Courses for Kids | Tiny Steps Learning',

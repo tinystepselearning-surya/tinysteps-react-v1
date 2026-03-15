@@ -362,6 +362,10 @@ function injectSeoMetadata(html, route) {
   const canonicalUrl = config.canonicalPath === '/' 
     ? 'https://tinystepslearning.com/' 
     : `https://tinystepslearning.com${config.canonicalPath}`;
+  const ogImageUrl = config.ogImage
+    ? (config.ogImage.startsWith('http') ? config.ogImage : `https://tinystepslearning.com${config.ogImage}`)
+    : 'https://tinystepslearning.com/og-default.jpg';
+  const ogType = config.ogType || 'website';
 
   let result = html;
 
@@ -380,6 +384,31 @@ function injectSeoMetadata(html, route) {
   // Inject/replace <meta name="robots">
   const robotsMeta = `<meta name="robots" content="${config.robots}">`;
   result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
+
+  // Inject/replace OpenGraph + Twitter share metadata for messaging previews
+  const ogTitleMeta = `<meta property="og:title" content="${escapeHtml(config.title)}">`;
+  const ogDescriptionMeta = `<meta property="og:description" content="${escapeHtml(config.description)}">`;
+  const ogUrlMeta = `<meta property="og:url" content="${canonicalUrl}">`;
+  const ogTypeMeta = `<meta property="og:type" content="${ogType}">`;
+  const ogImageMeta = `<meta property="og:image" content="${ogImageUrl}">`;
+  const ogImageSecureMeta = `<meta property="og:image:secure_url" content="${ogImageUrl}">`;
+  const twitterCardMeta = `<meta name="twitter:card" content="summary_large_image">`;
+  const twitterTitleMeta = `<meta name="twitter:title" content="${escapeHtml(config.title)}">`;
+  const twitterDescriptionMeta = `<meta name="twitter:description" content="${escapeHtml(config.description)}">`;
+  const twitterImageMeta = `<meta name="twitter:image" content="${ogImageUrl}">`;
+  const twitterImageAltMeta = `<meta name="twitter:image:alt" content="Tiny Steps Learning - Online English classes for kids">`;
+
+  result = result.replace(/<meta property="og:title"[^>]*>/i, ogTitleMeta) || result.replace('</head>', `${ogTitleMeta}</head>`);
+  result = result.replace(/<meta property="og:description"[^>]*>/i, ogDescriptionMeta) || result.replace('</head>', `${ogDescriptionMeta}</head>`);
+  result = result.replace(/<meta property="og:url"[^>]*>/i, ogUrlMeta) || result.replace('</head>', `${ogUrlMeta}</head>`);
+  result = result.replace(/<meta property="og:type"[^>]*>/i, ogTypeMeta) || result.replace('</head>', `${ogTypeMeta}</head>`);
+  result = result.replace(/<meta property="og:image"[^>]*>/i, ogImageMeta) || result.replace('</head>', `${ogImageMeta}</head>`);
+  result = result.replace(/<meta property="og:image:secure_url"[^>]*>/i, ogImageSecureMeta) || result.replace('</head>', `${ogImageSecureMeta}</head>`);
+  result = result.replace(/<meta name="twitter:card"[^>]*>/i, twitterCardMeta) || result.replace('</head>', `${twitterCardMeta}</head>`);
+  result = result.replace(/<meta name="twitter:title"[^>]*>/i, twitterTitleMeta) || result.replace('</head>', `${twitterTitleMeta}</head>`);
+  result = result.replace(/<meta name="twitter:description"[^>]*>/i, twitterDescriptionMeta) || result.replace('</head>', `${twitterDescriptionMeta}</head>`);
+  result = result.replace(/<meta name="twitter:image"[^>]*>/i, twitterImageMeta) || result.replace('</head>', `${twitterImageMeta}</head>`);
+  result = result.replace(/<meta name="twitter:image:alt"[^>]*>/i, twitterImageAltMeta) || result.replace('</head>', `${twitterImageAltMeta}</head>`);
 
   return result;
 }
