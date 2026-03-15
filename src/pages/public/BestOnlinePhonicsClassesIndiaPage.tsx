@@ -455,7 +455,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               <tbody>
                 {ULTRA_PREMIUM_PRICING.map((row, index) => (
                   <tr key={row.ratio} className={index % 2 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{row.label}</td>
+                    <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{row.format}</td>
                     <td className="border border-gray-200 px-3 py-2 text-gray-700">{formatINR(row.perClass)}{row.ratio === '1:1' ? '' : ' / child'}</td>
                     <td className="border border-gray-200 px-3 py-2 text-gray-700">{formatINR(row.package12)}{row.ratio === '1:1' ? '' : ' / child'}</td>
                   </tr>
