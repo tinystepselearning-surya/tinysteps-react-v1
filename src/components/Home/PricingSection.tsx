@@ -1,7 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import Button from '../Button/Button';
-import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from '../../config/pricing';
+import {
+  formatINR,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  PER_CLASS_PRICE,
+  ULTRA_PREMIUM_PRICING,
+} from '../../config/pricing';
 
 const planMeta: Record<string, { name: string; highlight: boolean; note: string }> = {
   starter: {
@@ -41,8 +46,9 @@ const PricingSection = () => {
       <div className="mx-auto max-w-6xl px-6">
         <div className="mb-10 text-center">
           <h3 className="font-heading text-2xl font-bold md:text-3xl">
-            Flexible Premium Plans for Indian Families
+            Tiny Steps Pricing
           </h3>
+          <p className="mt-2 text-sm text-gray-600">Standard Program • Classes with expert Indian teachers</p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -72,6 +78,28 @@ const PricingSection = () => {
               </div>
             </motion.div>
           ))}
+        </div>
+
+        <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
+          <h4 className="font-heading text-xl font-bold text-gray-900">
+            Ultra Premium Program
+          </h4>
+          <p className="mt-1 text-sm text-gray-600">
+            Classes with native English-speaking teachers
+          </p>
+          <p className="mt-3 text-sm text-gray-700">
+            Premium option for international accent exposure, advanced speaking confidence, and global communication practice.
+          </p>
+          <div className="mt-4 grid gap-2 text-sm text-gray-700 md:grid-cols-2">
+            {ULTRA_PREMIUM_PRICING.map((row) => (
+              <p key={row.ratio}>
+                {row.format}: {formatINR(row.perClass)} {row.unitLabel} • {formatINR(row.package12)} {row.packageLabel}
+              </p>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-gray-500">
+            Batch availability depends on age, level, and suitable peer matching.
+          </p>
         </div>
 
         <p className="mx-auto mt-6 max-w-3xl text-center text-sm text-gray-600">

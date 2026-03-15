@@ -3,6 +3,12 @@ import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import PageHero from '../../components/common/PageHero';
+import {
+  formatINR,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  PER_CLASS_PRICE,
+  ULTRA_PREMIUM_PRICING,
+} from '../../config/pricing';
 
 export default function BestOnlinePhonicsClassesIndiaPage() {
   useEffect(() => {
@@ -420,14 +426,48 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       <section id="pricing" className="mb-12 bg-blue-50 p-8 rounded-lg">
         <h2 className="text-3xl font-bold text-[#2d5016] mb-4">Pricing approach</h2>
         <p className="text-gray-700 mb-4">
-          Tiny Steps offers flexible packages to fit your schedule and budget:
+          Tiny Steps offers two clear program options:
         </p>
-        <ul className="space-y-2 text-gray-700 ml-4 mb-4">
-          <li>• Pay-as-you-go for trying out classes</li>
-          <li>• Monthly packages (4, 8, 12 classes) with better per-class rates</li>
-          <li>• Subscription plans for long-term commitment and best value</li>
-          <li>• All packages include progress reports, recordings, and digital materials</li>
-        </ul>
+        <div className="mb-6 rounded-xl bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-[#2d5016]">Standard Program</h3>
+          <p className="mt-1 text-sm text-gray-600">Classes with expert Indian teachers</p>
+          <ul className="mt-3 space-y-2 text-sm text-gray-700">
+            <li>• 1:1 starts at {formatINR(PER_CLASS_PRICE)} per class.</li>
+            <li>• Monthly plans: Starter ({ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}, Growth ({ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}, Intensive ({ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) {formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}.</li>
+          </ul>
+        </div>
+
+        <div className="mb-4 rounded-xl border border-[#4a7c2c]/25 bg-white p-5 shadow-sm">
+          <h3 className="text-lg font-semibold text-[#2d5016]">Ultra Premium Program</h3>
+          <p className="mt-1 text-sm text-gray-600">Classes with native English-speaking teachers</p>
+          <p className="mt-2 text-sm text-gray-700">
+            For parents looking for a premium international learning experience, Tiny Steps also offers classes with native English-speaking teachers.
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[520px] border-collapse text-sm">
+              <thead>
+                <tr className="bg-[#4a7c2c] text-white">
+                  <th className="px-3 py-2 text-left font-semibold">Format</th>
+                  <th className="px-3 py-2 text-left font-semibold">Per Class</th>
+                  <th className="px-3 py-2 text-left font-semibold">12-Class Package</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ULTRA_PREMIUM_PRICING.map((row, index) => (
+                  <tr key={row.ratio} className={index % 2 ? 'bg-gray-50' : 'bg-white'}>
+                    <td className="border border-gray-200 px-3 py-2 font-medium text-gray-900">{row.label}</td>
+                    <td className="border border-gray-200 px-3 py-2 text-gray-700">{formatINR(row.perClass)}{row.ratio === '1:1' ? '' : ' / child'}</td>
+                    <td className="border border-gray-200 px-3 py-2 text-gray-700">{formatINR(row.package12)}{row.ratio === '1:1' ? '' : ' / child'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-3 text-xs text-gray-600">
+            Batch availability depends on age, level, and suitable peer matching.
+          </p>
+        </div>
+
         <p className="text-gray-700">
           <Link to="/pricing" className="text-[#4a7c2c] font-semibold hover:underline">
             View detailed pricing and package options →

@@ -7,9 +7,9 @@ const WHATSAPP_NUMBER = '919618398383';
 const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hi! I want to know more about Summer English Camp 2026.')}`;
 const QUICK_ANSWERS = [
   { label: 'Dates', value: 'April 1–June 15, 2026 (10 weeks)' },
-  { label: 'Fees', value: 'Same as standard group and premium 1:1 pricing; shared after assessment' },
+  { label: 'Fees', value: 'Tiny Steps Standard and Tiny Steps Ultra Premium pricing; shared after assessment' },
   { label: 'Age group', value: 'Ages 3–12' },
-  { label: 'Format', value: 'Live online (group classes or premium 1:1)' },
+  { label: 'Format', value: 'Live online (group classes or 1:1)' },
   { label: 'Daily time', value: '45-minute live class + 10–15 minutes practice' },
   { label: 'Outcomes', value: 'Reading fluency, grammar confidence, clear speaking' },
 ];
@@ -76,7 +76,7 @@ const FAQS = [
   },
   {
     question: 'How much does the camp cost?',
-    answer: 'Fees follow our standard group and premium 1:1 pricing. They are shared after a short assessment to match the right level.'
+    answer: 'Fees follow Tiny Steps Standard (classes with expert Indian teachers) and Tiny Steps Ultra Premium (classes with native English-speaking teachers). Final recommendations are shared after a short assessment to match the right level.'
   },
   {
     question: 'Will my child get a certificate at the end?',
@@ -231,7 +231,7 @@ export default function SummerCamp2026Page() {
             Chat on WhatsApp - opens new window
           </a>
         </p>
-        <p className="text-sm text-gray-500">Limited seats • Ages 3–12 • Group classes + premium 1:1</p>
+        <p className="text-sm text-gray-500">Limited seats • Ages 3–12 • Group classes + 1:1 options</p>
       </section>
 
       <section className="mb-12">
@@ -249,7 +249,7 @@ export default function SummerCamp2026Page() {
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-2">What is Summer English Camp 2026?</h2>
         <p className="text-gray-700 leading-relaxed">
-          Summer English Camp 2026 is a 10-week online program for children ages 3–12 following our core curriculum in phonics, grammar, and public speaking. Children attend live mentor-led classes with guided practice and stage-based progress updates for parents. Group classes are the default, with a premium 1:1 option.
+          Summer English Camp 2026 is a 10-week online program for children ages 3–12 following our core curriculum in phonics, grammar, and public speaking. Children attend live mentor-led classes with guided practice and stage-based progress updates for parents. Group classes are the default, with Standard and Ultra Premium teaching options.
         </p>
       </section>
 
@@ -519,7 +519,7 @@ export default function SummerCamp2026Page() {
                 {faq.question === 'How much does the camp cost?' && (
                   <>
                     {' '}
-                    <Link to="/pricing" className="text-[#4a7c2c] underline font-semibold">View our standard pricing</Link> for reference.
+                    <Link to="/pricing" className="text-[#4a7c2c] underline font-semibold">View Standard and Ultra Premium pricing</Link> for reference.
                   </>
                 )}
                 {faq.question === 'What happens after the camp ends?' && (

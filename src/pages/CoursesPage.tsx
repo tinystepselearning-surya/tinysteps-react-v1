@@ -4,7 +4,11 @@ import { applySeo } from "../lib/seo";
 import type { FC } from "react";
 import { CourseCard } from "../components/courses/CourseCard";
 import { catalogs } from "../content/courses";
-import { DEFAULT_PER_CLASS_PRICE, formatINR } from '../constants/pricing';
+import {
+  DEFAULT_ULTRA_PREMIUM_PER_CLASS_PRICE,
+  DEFAULT_PER_CLASS_PRICE,
+  formatINR,
+} from '../constants/pricing';
 import { organizationSchema } from '../lib/schemas';
 import { Link } from "react-router-dom";
 
@@ -84,7 +88,9 @@ const CoursesHero = () => (
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>
           <span className="rounded-full bg-white/20 px-4 py-1">Parent-rated ★★★★★</span>
           {/* show per-class price from shared constant */}
-          <span className="rounded-full bg-white/20 px-4 py-1">{formatINR(DEFAULT_PER_CLASS_PRICE)} per live session</span>
+          <span className="rounded-full bg-white/20 px-4 py-1">
+            Standard: {formatINR(DEFAULT_PER_CLASS_PRICE)} per live 1:1 session • Ultra Premium starts {formatINR(DEFAULT_ULTRA_PREMIUM_PER_CLASS_PRICE)}
+          </span>
         </div>
       </div>
     </div>

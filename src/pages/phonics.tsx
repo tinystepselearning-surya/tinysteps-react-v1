@@ -11,6 +11,7 @@ import {
   GROUP_MONTHLY_FEES,
   ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
+  ULTRA_PREMIUM_PRICING,
 } from '../config/pricing';
 
 const levels = [
@@ -49,10 +50,16 @@ const stages = [
   { title: 'Stage 3 • Fluency & writing', duration: 'Lessons 25–36+', description: 'Reading passages with expression, spelling, and short paragraphs.' }
 ];
 
-const oneToOnePricingCopy = `1:1 live phonics classes at Tiny Steps: Starter (${ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month, Growth (${ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}/month, Intensive (${ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}/month. ${formatINR(PER_CLASS_PRICE)} per class. Most families choose a pace that fits their child’s lesson progress.`;
+const oneToOnePricingCopy = `Tiny Steps Pricing: Standard Program (classes with expert Indian teachers): Starter (${ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month, Growth (${ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}/month, Intensive (${ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}/month, ${formatINR(PER_CLASS_PRICE)} per class. Ultra Premium Program (classes with native English-speaking teachers): 1:1 Personal Class ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes.`;
 
 const groupPricingCopy = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1')
-  .map((row) => `${row.ratio} ${formatINR(row.monthlyFee)}`)
+  .map((row) => {
+    const ultraRow = ULTRA_PREMIUM_PRICING.find((item) => item.ratio === row.ratio);
+    const ultraCopy = ultraRow
+      ? `${formatINR(ultraRow.package12)} for 12 classes / child`
+      : 'Available on request';
+    return `${row.ratio} ${formatINR(row.monthlyFee)} (Standard) / ${ultraCopy} (Ultra Premium)`;
+  })
   .join(', ');
 
 type PhonicsSeoOverrides = {

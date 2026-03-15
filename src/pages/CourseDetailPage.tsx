@@ -72,7 +72,8 @@ const CourseDetailPage: FC = () => {
     );
   }
 
-  const priceNumber = (course.price || '').replace(/[^0-9]/g, '') || '0';
+  const priceNumber =
+    (course.price || '').match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '') || '0';
   const reviewCountMatch = (course.reviews || '').match(/\((\d+) reviews\)/i);
   // keep raw numeric count for structured data; we may display the original string
   // elsewhere if needed.  reviewCountMatch[1] is a string like "27" so convert

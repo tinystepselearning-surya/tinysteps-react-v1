@@ -8,7 +8,12 @@ import {
   serverTimestamp,
   setDoc,
 } from "firebase/firestore";
-import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from "../config/pricing";
+import {
+  formatINR,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  PER_CLASS_PRICE,
+  ULTRA_PREMIUM_PRICING,
+} from "../config/pricing";
 
 type ChatRole = "user" | "assistant";
 export type AskChatMessage = { role: ChatRole; content: string };
@@ -34,7 +39,7 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "pricing",
     title: "Pricing & Packages",
     text:
-      `1:1 classes (35 minutes). Free Assessment Class (Demo) is FREE (₹0). Plans: Starter (${CANONICAL_PRICING_PACKAGES[0].classes} classes) ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)}; Growth (${CANONICAL_PRICING_PACKAGES[1].classes} classes) ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)}; Intensive (${CANONICAL_PRICING_PACKAGES[2].classes} classes) ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)}. Optional single paid class: ${formatINR(PER_CLASS_PRICE)}.`,
+      `Tiny Steps Pricing has two options. Standard Program (classes with expert Indian teachers): ${formatINR(PER_CLASS_PRICE)}/class, Starter ${formatINR(CANONICAL_PRICING_PACKAGES[0].price)} for ${CANONICAL_PRICING_PACKAGES[0].classes} classes, Growth ${formatINR(CANONICAL_PRICING_PACKAGES[1].price)} for ${CANONICAL_PRICING_PACKAGES[1].classes} classes, Intensive ${formatINR(CANONICAL_PRICING_PACKAGES[2].price)} for ${CANONICAL_PRICING_PACKAGES[2].classes} classes. Ultra Premium Program (classes with native English-speaking teachers): 1:1 ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes; 1:2 ${formatINR(ULTRA_PREMIUM_PRICING[1].package12)} for 12 classes per child; 1:3 ${formatINR(ULTRA_PREMIUM_PRICING[2].package12)}; 1:4 ${formatINR(ULTRA_PREMIUM_PRICING[3].package12)}; 1:5 ${formatINR(ULTRA_PREMIUM_PRICING[4].package12)}; 1:6 ${formatINR(ULTRA_PREMIUM_PRICING[5].package12)}.`,
   },
   {
     id: "timings",
@@ -67,6 +72,7 @@ export const ASK_TINYSTEPS_FACTS = {
   paidSingleClassPrice: PER_CLASS_PRICE,
 
   pricingPackages: CANONICAL_PRICING_PACKAGES,
+  ultraPremiumPricing: ULTRA_PREMIUM_PRICING,
 
   ageRangeOverall: "3–12",
   tracks: [
@@ -183,13 +189,21 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
 
   if (intent === "pricing") {
     const lines = ASK_TINYSTEPS_FACTS.pricingPackages.map(
-      (p) => `• ${p.classes} classes — ₹${p.price} (₹${p.perClass}/class)`
+      (p) => `• Standard: ${p.classes} classes — ${formatINR(p.price)} (₹${p.perClass}/class)`
     );
 
     lines.unshift(
       `✅ Free Assessment Class (Demo): FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice})`
     );
-    lines.push(`• Optional single paid class — ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}`);
+    lines.push("• Ultra Premium (native English-speaking teachers):");
+    ASK_TINYSTEPS_FACTS.ultraPremiumPricing.forEach((row) => {
+      lines.push(
+        `  - ${row.format} — ${formatINR(row.perClass)} ${row.unitLabel} | ${formatINR(row.package12)} ${row.packageLabel}`
+      );
+    });
+    lines.push(
+      `• Standard single paid class: ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}`
+    );
     lines.push(`\n${wa}`);
 
     return { text: lines.join("\n"), sourcesUsed: ["pricing", "assessment"] };
@@ -198,7 +212,8 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
   if (intent === "single_class") {
     return {
       text:
-        `Optional single paid class: ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice} (35 minutes, 1:1).\n` +
+        `Standard single paid class (35 minutes, 1:1): ₹${ASK_TINYSTEPS_FACTS.paidSingleClassPrice}.\n` +
+        `Ultra Premium 1:1 class (native English-speaking teacher): ₹${ASK_TINYSTEPS_FACTS.ultraPremiumPricing[0].perClass}.\n` +
         `✅ Free Assessment Class (Demo) is FREE (₹${ASK_TINYSTEPS_FACTS.freeAssessmentPrice}) — recommended first to pick the right level.\n\n` +
         `${wa}`,
       sourcesUsed: ["pricing", "assessment"],

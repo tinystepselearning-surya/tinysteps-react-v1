@@ -1,4 +1,8 @@
-import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES } from '../config/pricing';
+import {
+  formatINR,
+  ONE_TO_ONE_MONTHLY_PACKAGES,
+  ULTRA_PREMIUM_PRICING,
+} from '../config/pricing';
 
 // Lightweight course catalog and deep curriculum samples
 export type CourseTrack = 'phonics' | 'grammar' | 'speaking';
@@ -19,6 +23,12 @@ export type CourseCatalogItem = {
   reviews?: string;
 };
 
+const courseStartingPriceCopy = `Plans from ${formatINR(
+  ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee
+)}/month (Tiny Steps Standard) • Ultra Premium from ${formatINR(
+  ULTRA_PREMIUM_PRICING[0].package12
+)} for 12 classes`;
+
 export const catalogs: CourseCatalogItem[] = [
   {
     slug: 'phonics-foundation',
@@ -31,7 +41,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Foundation',
     overview: ['Letter sounds', 'Short vowels', 'Sound practice', 'Early blending', 'Confidence building'],
     outcomes: ['Recognize core letter sounds', 'Blend simple CVC words', 'Read and spell short words'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Communication & Thinking (phonological awareness, reflection journals)',
       'PYP Language: Phonemic awareness, decoding, emergent writing',
@@ -50,7 +60,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Early',
     overview: ['Sound sets', 'Digraphs', 'Vowel teams', 'Magic E', 'Longer word rules'],
     outcomes: ['Read patterned words', 'Apply core phonics rules', 'Build decoding confidence'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Self-Management & Communication (goal tracking, oral reading logs)',
       'PYP Language: Differentiated decoding + encoding sequences',
@@ -68,7 +78,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Diphthongs', 'Bossy R', 'Alternate vowels', 'Endings', 'Fluency'],
     outcomes: ['Read longer words', 'Apply advanced patterns', 'Improve reading fluency'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Research & Self-Management (word inquiries, independent practice logs)',
       'PYP Language: Reading comprehension, spelling conventions, fluency',
@@ -86,7 +96,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Nouns & pronouns', 'Verbs & tenses', 'Adjectives', 'Prepositions', 'Punctuation'],
     outcomes: ['Write simple sentences', 'Use punctuation correctly', 'Build clear grammar basics'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Communication (sentence crafting, peer dialogue) & Research (language inquiry)',
       'PYP Language: Written conventions, grammar usage, short-form writing',
@@ -104,7 +114,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Tense control', 'Clauses & complex sentences', 'Voice & reported speech', 'Paragraph cohesion'],
     outcomes: ['Write structured paragraphs', 'Edit grammar mistakes', 'Use advanced grammar confidently'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Thinking & Research (essay planning, language analysis)',
       'MYP Language & Literature alignment: grammar accuracy, rationale writing',
@@ -122,7 +132,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Basic',
     overview: ['Confidence & posture', 'Clear speech', 'Show & tell', 'Mini talks + Q&A'],
     outcomes: ['30–60s short talks', 'Eye contact & voice control', 'Simple structure'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Communication & Social skills (spoken interactions, empathy building)',
       'PYP Oral Language scope: listening & speaking, presentation skills',
@@ -140,7 +150,7 @@ export const catalogs: CourseCatalogItem[] = [
     level: 'Advanced',
     overview: ['Presence & engagement', 'Structure + details', 'Impromptu + debate', 'Presentation mastery'],
     outcomes: ['1–2 minute speeches', 'Confident Q&A handling', 'Polished presentations'],
-    price: `Plans from ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month`,
+    price: courseStartingPriceCopy,
     ibLens: [
       'ATL: Communication & Self-management (speech planning, rehearsals, feedback journals)',
       'Approaches to Learning – Presentation & Media literacy strands',

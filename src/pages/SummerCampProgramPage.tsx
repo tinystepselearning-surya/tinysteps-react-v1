@@ -378,7 +378,7 @@ export default function SummerCampProgramPage() {
     const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
     const title = batchSlug ? `${baseTitle} ${batchTitle} | Tiny Steps` : `${baseTitle} | Tiny Steps`;
     const description = program
-      ? `${program.title} for ${program.ages}. ${program.focus}. Group classes or premium 1:1 with stage-based progress updates.`
+      ? `${program.title} for ${program.ages}. ${program.focus}. Group classes or 1:1 options with stage-based progress updates.`
       : 'Summer camp program details coming soon.';
 
     const breadcrumbSchema = {

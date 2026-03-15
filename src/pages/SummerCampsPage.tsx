@@ -102,7 +102,7 @@ const FAQS = [
   {
     question: 'What is this summer camp?',
     answer:
-      'Tiny Steps Summer Camps are 10-week online programs (April 1–June 15, 2026) following our core curriculum in phonics, grammar, and public speaking. Group classes are the default, with a premium 1:1 option for faster personalization.',
+      'Tiny Steps Summer Camps are 10-week online programs (April 1–June 15, 2026) following our core curriculum in phonics, grammar, and public speaking. Group classes are the default, with both Standard Program and Ultra Premium Program options based on teaching format.',
   },
   {
     question: 'Who is it for?',
@@ -112,7 +112,7 @@ const FAQS = [
   {
     question: 'How are group classes different from 1:1?',
     answer:
-      'Group classes (1:4–1:6) focus on motivation and peer learning at a lower fee per child, while premium 1:1 is faster and fully personalized. Fees follow our standard group and premium 1:1 pricing. Both include stage-based progress updates and teacher feedback, but 1:1 allows deeper customization.',
+      'Group classes (1:4–1:6) focus on motivation and peer learning at a lower fee per child, while 1:1 is faster and fully personalized. Fees follow Tiny Steps Standard (classes with expert Indian teachers) and Tiny Steps Ultra Premium (classes with native English-speaking teachers). Both include stage-based progress updates and teacher feedback, but 1:1 allows deeper customization.',
   },
   {
     question: 'What happens if we miss a class?',
@@ -214,7 +214,7 @@ export default function SummerCampsPage() {
     applySeo({
       title: 'Online Summer Camps for Kids (Ages 4–12) | 10-Week Reading, Phonics & Speaking',
       description:
-        'Online 10‑week summer camps for ages 4–12 with reading, phonics, and speaking tracks. Choose group batches or premium 1:1 for faster progress, with clear outcomes and mentor feedback.',
+        'Online 10‑week summer camps for ages 4–12 with reading, phonics, and speaking tracks. Choose group batches or 1:1 options for faster progress, with clear outcomes and mentor feedback.',
       canonicalPath: '/summer-camps',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, courseListSchema, faqSchema],
@@ -234,13 +234,13 @@ export default function SummerCampsPage() {
             </h1>
             <p className="mt-4 max-w-3xl text-lg text-gray-700">
               Online summer camps for ages 4–12. Choose group classes for motivation
-              and affordability, or premium 1:1 for faster, personalized progress.
+              and affordability, or 1:1 for faster, personalized progress.
             </p>
             <p className="mt-3 text-sm text-gray-600">
-              Summer camp runs April 1–June 15, 2026 (10 weeks). Group classes are the default, with a premium 1:1 option.
+              Summer camp runs April 1–June 15, 2026 (10 weeks). Group classes are the default, with Standard and Ultra Premium options.
             </p>
             <p className="mt-1 text-xs text-gray-600">
-              Fees follow our standard group and premium 1:1 pricing.
+              Fees follow Tiny Steps Standard and Tiny Steps Ultra Premium pricing.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3 text-sm">
@@ -270,7 +270,7 @@ export default function SummerCampsPage() {
                 </div>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">Premium 1:1</p>
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-600">1:1 Option</p>
                 <p className="mt-2 text-sm text-gray-700">
                   Best for faster progress + personalized attention. Includes a custom plan
                   and parent updates after every week.
@@ -337,7 +337,7 @@ export default function SummerCampsPage() {
               <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
               <p className="mt-2 text-sm text-gray-700">
                 A 10‑week online summer camp following our core curriculum in phonics, grammar, and public
-                speaking. Delivered primarily in group classes with a premium 1:1 option, plus mentor‑led
+                speaking. Delivered primarily in group classes with 1:1 options, plus mentor‑led
                 sessions, practice tasks, and parent‑friendly progress updates.
               </p>
             </div>

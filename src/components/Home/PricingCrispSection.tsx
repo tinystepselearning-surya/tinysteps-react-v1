@@ -5,6 +5,7 @@ import {
   formatINR,
   ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
+  ULTRA_PREMIUM_PRICING,
 } from '../../config/pricing';
 
 const PricingCrispSection: React.FC = () => {
@@ -22,7 +23,7 @@ const PricingCrispSection: React.FC = () => {
             Premium 1:1 classes, simple plans
           </h2>
           <p className="mt-3 text-center text-sm sm:text-base text-slate-600 max-w-2xl mx-auto">
-            Choose a flexible monthly pack. Every plan includes live 1:1 classes, AI-guided practice, and clear progress updates for parents.
+            <span className="font-semibold text-slate-900">Standard Program</span> • Classes with expert Indian teachers
           </p>
         </div>
 
@@ -89,6 +90,28 @@ const PricingCrispSection: React.FC = () => {
               <li>• Phonics, grammar, or public speaking</li>
             </ul>
           </div>
+        </div>
+
+        <div className="mt-8 rounded-3xl border border-slate-200 bg-white p-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">
+            Ultra Premium Program
+          </p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-900">
+            Classes with native English-speaking teachers
+          </h3>
+          <p className="mt-2 text-sm text-slate-600">
+            Optional premium format for parents seeking global accent exposure and advanced speaking confidence.
+          </p>
+          <div className="mt-4 grid gap-2 text-sm text-slate-700 md:grid-cols-2">
+            {ULTRA_PREMIUM_PRICING.map((row) => (
+              <p key={row.ratio}>
+                {row.format}: {formatINR(row.perClass)} {row.unitLabel} • {formatINR(row.package12)} {row.packageLabel}
+              </p>
+            ))}
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            Batch availability depends on age, level, and suitable peer matching.
+          </p>
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-2 text-xs sm:text-sm text-slate-600">
