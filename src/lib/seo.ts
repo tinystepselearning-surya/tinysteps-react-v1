@@ -356,12 +356,14 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     title: 'Terms and Conditions | Tiny Steps Learning',
     description: 'Review the Tiny Steps Learning terms covering enrolment, payments, scheduling, conduct, intellectual property, liability, and governing law.',
     canonicalPath: '/terms-and-conditions',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/refund-guarantee': {
     title: 'Refund and Guarantee Policy | Tiny Steps Learning',
     description: 'Read the Tiny Steps Learning refund and guarantee policy covering assessments, 7-day refunds, unused classes, mentor fit, and refund processing timelines.',
     canonicalPath: '/refund-guarantee',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/parents': {

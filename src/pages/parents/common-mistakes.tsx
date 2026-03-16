@@ -35,6 +35,22 @@ const CommonMistakes: React.FC = () => {
       <li>Turning practice into testing rather than play.</li>
     </ul>
 
+    <h2 className="mt-6 font-semibold">What to do instead (practical replacements)</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li>Replace "Read faster" with "Let us read this line clearly once more."</li>
+      <li>Replace long worksheets with a 10-minute sound -&gt; blend -&gt; sentence routine.</li>
+      <li>Replace daily new content with a 3 review + 2 new word rule.</li>
+      <li>Replace "wrong" with "good try, let us check the sounds together."</li>
+    </ul>
+
+    <h2 className="mt-6 font-semibold">Warning signs to act on early</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li>Child guesses most words from pictures without sounding out.</li>
+      <li>Child avoids reading sessions for more than two weeks.</li>
+      <li>The same 4-5 sound confusions continue despite regular practice.</li>
+      <li>Homework time is mostly conflict instead of guided support.</li>
+    </ul>
+
     <div className="mt-8 flex flex-col gap-3">
       <Link to="/parents/getting-started" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
         Get Started Correctly →
@@ -60,6 +76,15 @@ const CommonMistakes: React.FC = () => {
           <span><strong>Celebrate effort:</strong> "You focused so hard!" and "You tried a tricky word!" reinforce learning better than grades ever could.</span>
         </div>
       </div>
+    </div>
+
+    <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h3 className="text-base font-semibold text-gray-900">2-week reset plan (if learning feels stuck)</h3>
+      <ul className="mt-2 list-disc ml-6 text-sm text-gray-700">
+        <li>Week 1: reduce load and rebuild confidence with easy decodable words.</li>
+        <li>Week 2: reintroduce one new target while keeping daily review.</li>
+        <li>End each day with one sentence your child can read successfully.</li>
+      </ul>
     </div>
   </article>
 );

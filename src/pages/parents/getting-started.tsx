@@ -28,6 +28,23 @@ const GettingStarted: React.FC = () => {
         <li>Receive a recommended course and curriculum link.</li>
       </ul>
 
+      <h2 className="mt-6 font-semibold">What to prepare before the assessment (10 minutes)</h2>
+      <ul className="list-disc ml-6 mt-2">
+        <li>Keep 6-8 lowercase letter cards or a small alphabet chart ready.</li>
+        <li>Keep one short reading sample (or school notebook) nearby.</li>
+        <li>Choose a quiet place and test mic/camera 5 minutes early.</li>
+        <li>Tell your child: "This is a friendly check, not an exam."</li>
+      </ul>
+
+      <h2 className="mt-6 font-semibold">First 7 days after enrollment (parent action plan)</h2>
+      <ul className="list-disc ml-6 mt-2">
+        <li>Day 1: ask teacher for one exact home target (for example: blend 5 CVC words).</li>
+        <li>Day 2-3: run a 10-minute routine at the same time each day.</li>
+        <li>Day 4: send one short update to the teacher (what felt easy vs difficult).</li>
+        <li>Day 5-6: repeat only the same target; avoid introducing extra worksheets.</li>
+        <li>Day 7: do a mini review and celebrate one clear improvement.</li>
+      </ul>
+
       <h3 className="mt-4 font-semibold">Common mistakes</h3>
       <ul className="list-disc ml-6 mt-2">
         <li>Waiting too long to assess — early help is faster.</li>
@@ -59,6 +76,15 @@ const GettingStarted: React.FC = () => {
             <span><strong>Quick feedback:</strong> Receive recommendations and curriculum details within 12 hours.</span>
           </div>
         </div>
+      </div>
+
+      <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <h3 className="text-base font-semibold text-gray-900">Parent scripts that work</h3>
+        <ul className="mt-2 list-disc ml-6 text-sm text-gray-700">
+          <li>Before class: "Let us do a short warm-up and try our best."</li>
+          <li>During practice: "Show me how you sounded that word."</li>
+          <li>After class: "I liked how you stayed with the tricky part."</li>
+        </ul>
       </div>
     </article>
   );

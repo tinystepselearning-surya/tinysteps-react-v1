@@ -10,8 +10,6 @@ export const STATIC_MARKETING_ROUTES = [
   '/courses',
   '/curriculum',
   '/privacy-policy',
-  '/terms-and-conditions',
-  '/refund-guarantee',
   '/faq',
   '/summer-english-camp-2026',
   '/online-phonics-reading-classes',

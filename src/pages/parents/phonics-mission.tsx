@@ -28,6 +28,22 @@ const PhonicsMission: React.FC = () => {
       <li>Read a decodable sentence with that word.</li>
     </ul>
 
+    <h2 className="mt-6 font-semibold">Use this by level (exact examples)</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li><strong>SATPIN stage:</strong> /s/ /a/ /t/ -&gt; sat, /p/ /i/ /n/ -&gt; pin, /t/ /a/ /p/ -&gt; tap.</li>
+      <li><strong>CVC stage:</strong> cat, map, sit, pin, top. Read then spell 2 of these words.</li>
+      <li><strong>Bossy-R stage:</strong> car, star, fork, bird, turn. Read one AR, one OR, one ER/IR/UR word daily.</li>
+      <li><strong>Sentence stage:</strong> "Pat sat." "The car is red." "The bird can turn."</li>
+    </ul>
+
+    <h2 className="mt-6 font-semibold">10-minute parent mission plan</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li>Minute 1-2: review yesterday's 3 words.</li>
+      <li>Minute 3-6: teach 2 new words with tap-and-blend.</li>
+      <li>Minute 7-8: read one short sentence using those words.</li>
+      <li>Minute 9-10: quick dictation of one word + celebration.</li>
+    </ul>
+
     <h3 className="mt-4 font-semibold">Common mistakes</h3>
     <ul className="list-disc ml-6 mt-2">
       <li>Rushing through sounds — keep clear pronunciation.</li>
@@ -59,6 +75,15 @@ const PhonicsMission: React.FC = () => {
           <span><strong>Track progress:</strong> Note which sounds stick and which need extra reps. Share notes with your child's teacher.</span>
         </div>
       </div>
+    </div>
+
+    <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h3 className="text-base font-semibold text-gray-900">Parent script bank</h3>
+      <ul className="mt-2 list-disc ml-6 text-sm text-gray-700">
+        <li>"Show me each sound first, then blend it."</li>
+        <li>"Try it slowly, now say it fast."</li>
+        <li>"Great retry. You fixed that word yourself."</li>
+      </ul>
     </div>
   </article>
 );

@@ -9,6 +9,7 @@ type MetaProps = {
   description?: string;
   keywords?: string;
   canonical?: string; // absolute preferred; if missing we auto-generate from current URL
+  robots?: string;
   jsonLd?: Record<string, any> | Record<string, any>[];
 };
 
@@ -16,7 +17,7 @@ const DEFAULT_TITLE = 'Tiny Steps Learning | 1:1 Online English Classes for Kids
 const DEFAULT_DESCRIPTION =
   'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class.';
 
-const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }) => {
+const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, jsonLd }) => {
   useEffect(() => {
     const finalTitle = title?.trim() || DEFAULT_TITLE;
     const finalDescription = (description ?? DEFAULT_DESCRIPTION).trim();
@@ -78,7 +79,7 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }
       title: finalTitle,
       description: finalDescription,
       canonicalPath,
-      robots: 'index, follow',
+      robots: robots?.trim() || 'index, follow',
       ogType: 'website',
       jsonLd: mergedJsonLd,
     });
@@ -102,7 +103,7 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, jsonLd }
     } catch {
       // no-op
     }
-  }, [title, description, keywords, canonical, jsonLd]);
+  }, [title, description, keywords, canonical, robots, jsonLd]);
 
   return null;
 };

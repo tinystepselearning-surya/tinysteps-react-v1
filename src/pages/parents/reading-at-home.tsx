@@ -28,6 +28,21 @@ const ReadingAtHome: React.FC = () => {
       <li>Celebrate one thing they did well.</li>
     </ul>
 
+    <h2 className="mt-6 font-semibold">10-minute reading routine parents can follow daily</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li>2 minutes: revise 3 target words from yesterday.</li>
+      <li>4 minutes: child reads one short decodable passage.</li>
+      <li>2 minutes: ask two meaning questions (Who? What happened?).</li>
+      <li>2 minutes: read the same lines again for fluency and confidence.</li>
+    </ul>
+
+    <h2 className="mt-6 font-semibold">What to read at each stage</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li><strong>Beginner:</strong> CVC lines like "Pat sat."</li>
+      <li><strong>Early reader:</strong> short passages with one target pattern (for example magic-e or bossy-R).</li>
+      <li><strong>Growing reader:</strong> short stories with 3-question comprehension checks.</li>
+    </ul>
+
     <h3 className="mt-4 font-semibold">Common mistakes</h3>
     <ul className="list-disc ml-6 mt-2">
       <li>Stopping at every word — instead, prompt and keep flow.</li>
@@ -59,6 +74,16 @@ const ReadingAtHome: React.FC = () => {
           <span><strong>Celebrate small wins:</strong> Point out specific strengths: "You blended that word so smoothly!" builds intrinsic motivation.</span>
         </div>
       </div>
+    </div>
+
+    <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h3 className="text-base font-semibold text-gray-900">Question bank (copy and use)</h3>
+      <ul className="mt-2 list-disc ml-6 text-sm text-gray-700">
+        <li>"Who is this about?"</li>
+        <li>"What happened first?"</li>
+        <li>"Which word tells us where?"</li>
+        <li>"How do you think the character feels?"</li>
+      </ul>
     </div>
   </article>
 );

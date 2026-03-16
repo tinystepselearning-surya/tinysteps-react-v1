@@ -56,6 +56,7 @@ export default function RefundGuaranteePage() {
         title="Refund and Guarantee Policy | Tiny Steps Learning"
         description="Read the Tiny Steps Learning refund and guarantee policy covering assessments, 7-day refunds, unused classes, mentor fit, and refund processing timelines."
         canonical="https://tinystepslearning.com/refund-guarantee"
+        robots="noindex, follow"
       />
 
       <PageHero

@@ -69,6 +69,7 @@ export default function TermsAndConditionsPage() {
         title="Terms and Conditions | Tiny Steps Learning"
         description="Review the Tiny Steps Learning terms covering enrolment, payments, scheduling, conduct, intellectual property, liability, and governing law."
         canonical="https://tinystepslearning.com/terms-and-conditions"
+        robots="noindex, follow"
       />
 
       <PageHero

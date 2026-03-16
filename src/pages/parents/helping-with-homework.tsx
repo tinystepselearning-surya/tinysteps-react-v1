@@ -28,6 +28,15 @@ const HelpingWithHomework: React.FC = () => {
       <li>Praise effort and note one target for next time.</li>
     </ul>
 
+    <h2 className="mt-6 font-semibold">Weekly homework support template (Mon-Fri)</h2>
+    <ul className="list-disc ml-6 mt-2">
+      <li>Monday: review teacher goal and model one example.</li>
+      <li>Tuesday: child practices same skill with your support.</li>
+      <li>Wednesday: short mixed review (3 old + 2 new items).</li>
+      <li>Thursday: quick correction day using one focused script.</li>
+      <li>Friday: mini-check and celebration; message teacher with observations.</li>
+    </ul>
+
     <h3 className="mt-4 font-semibold">Common mistakes</h3>
     <ul className="list-disc ml-6 mt-2">
       <li>Turning practice into a test — avoid pressure.</li>
@@ -59,6 +68,15 @@ const HelpingWithHomework: React.FC = () => {
           <span><strong>Focus on one goal:</strong> Ask the teacher: "What's the one thing I should focus on this week?" Narrow scope builds confidence.</span>
         </div>
       </div>
+    </div>
+
+    <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
+      <h3 className="text-base font-semibold text-gray-900">Parent language that helps</h3>
+      <ul className="mt-2 list-disc ml-6 text-sm text-gray-700">
+        <li>"Let us try this together once."</li>
+        <li>"Show me how you sounded that word."</li>
+        <li>"Good retry. You fixed it with your own effort."</li>
+      </ul>
     </div>
   </article>
 );

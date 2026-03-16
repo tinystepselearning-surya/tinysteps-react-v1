@@ -18,71 +18,797 @@ type PhonicsSeoPost = {
   slug: string;
   title: string;
   focus: string;
+  quickAnswer: string;
+  homePlan: string[];
+  classChecklistFocus: string;
+  avoidFocus: string;
+  progress: string;
+  support: string;
+  faq: { question: string; answer: string }[];
   readTime?: string;
 };
 
-const PHONICS_SEO_FAQ = [
+type BlogBlock = { type: 'h2'|'h3'|'p'|'li'; content: string };
+
+const PHONICS_BASE_FAQ = [
   {
-    question: 'What age should kids start phonics?',
-    answer: 'Most children start between ages 3 and 5 once they can hear and repeat sounds. Keep lessons short, playful, and focused on sound recognition first.',
+    question: 'How often should parents do phonics at home?',
+    answer: 'Aim for 10 minutes a day, 5-6 days a week. Short daily practice gives better results than one long weekend session.',
   },
   {
-    question: 'How long does phonics take to learn?',
-    answer: 'Foundations typically take 30–40 lessons with steady practice, while blending often clicks in the first 4–6 lessons.',
+    question: 'What should I do if my child refuses phonics practice?',
+    answer: 'Shrink the task to 2-3 minutes, switch to a game, and end with one success. Consistency with low pressure works better than forcing long sessions.',
   },
   {
-    question: 'What are phonics classes?',
-    answer: 'Phonics classes teach children how letters map to sounds, then guide them to blend sounds into words and read simple decodable text.',
+    question: 'When should I seek extra support?',
+    answer: 'If your child has regular practice for 6-8 weeks but still cannot match basic sounds or blend simple CVC words, get an assessment from a phonics specialist.',
   },
+];
+
+const PHONICS_BASE_CLASS_CHECKLIST = [
+  'The program is systematic: sounds -> blending -> decodable reading -> spelling.',
+  'Children read decodable text based on taught sounds, not picture guessing.',
+  'Parents get weekly progress updates with clear home-practice goals.',
+];
+
+const PHONICS_BASE_MISTAKES = [
+  'Do not switch methods every week; children need repeated routines to build automaticity.',
+  'Do not rely only on worksheets; children need oral sound work and reading aloud.',
+  'Do not over-correct every error; model once, retry, and praise effort quickly.',
+];
+
+const BLOG_PUBLICATION_DATES: Record<string, string> = {
+  'week-1-phonics-satpin-launch': '2025-11-03',
+  'satpin-phonics-guide': '2025-11-06',
+  'what-age-to-start-phonics': '2025-11-08',
+  'what-is-phonics-for-kids': '2025-11-10',
+  'phonics-rules-for-beginners': '2025-11-12',
+  'week-2-phonics-blending-club': '2025-11-14',
+  'phonics-blending-activities': '2025-11-16',
+  'how-kids-learn-blending': '2025-11-18',
+  'cvc-words-explained-for-parents': '2025-11-20',
+  'phonics-games-for-letter-sounds': '2025-11-22',
+  'phonics-activities-for-kids-at-home': '2025-11-24',
+  'best-phonics-classes-for-kids': '2025-11-26',
+  'how-phonics-classes-help-kids-read': '2025-11-28',
+  'benefits-of-phonics-for-kids': '2025-11-30',
+  'best-online-phonics-classes-for-kids': '2025-12-02',
+  'how-to-choose-phonics-classes': '2025-12-04',
+  'online-phonics-classes-vs-school': '2025-12-06',
+  'synthetic-phonics-vs-traditional-reading': '2025-12-08',
+  'why-parents-choose-online-phonics': '2025-12-10',
+  'online-phonics-games': '2025-12-12',
+  'how-long-does-phonics-take': '2025-12-14',
+  'how-phonics-builds-reading-confidence': '2025-12-16',
+  'how-tiny-steps-builds-reading-confidence': '2025-12-18',
+  'how-phonics-improves-spelling': '2025-12-20',
+  'science-of-phonics-learning': '2025-12-22',
+  'week-3-phonics-tricky-words': '2025-12-24',
+  'digraphs-and-tricky-words': '2025-12-27',
+  'week-4-phonics-long-vowels': '2025-12-29',
+  'long-vowel-sounds-for-kids': '2025-12-31',
+  'week-5-phonics-r-controlled': '2026-01-03',
+  'r-controlled-vowels-explained': '2026-01-05',
+  'week-6-phonics-comprehension': '2026-01-08',
+  'online-english-classes-for-kids-india': '2026-01-10',
+  'spoken-english-classes-for-kids-confidence': '2026-01-13',
+  'week-7-grammar-nouns-to-paragraphs': '2026-01-15',
+  'week-8-grammar-tenses': '2026-01-20',
+  'week-9-grammar-conjunctions': '2026-01-25',
+  'week-10-grammar-subject-verb': '2026-01-29',
+  'week-11-grammar-creative-writing': '2026-02-03',
+  'week-12-speaking-confidence-seeds': '2026-02-07',
+  'week-13-speaking-structure': '2026-02-11',
+  'week-14-speaking-visual-aids': '2026-02-14',
+  'week-15-speaking-debate-starters': '2026-02-18',
+  'week-16-phonics-summer-plan': '2026-02-21',
+  'week-17-grammar-assessment': '2026-02-24',
+  'week-18-speaking-video-feedback': '2026-02-27',
+  'week-19-phonics-multisyllabic': '2026-03-01',
+  'week-20-grammar-editing-camp': '2026-03-04',
+  'week-21-speaking-competition-prep': '2026-03-07',
+  'week-22-phonics-diagnostics': '2026-03-10',
+  'week-23-grammar-speaking-bridge': '2026-03-12',
+  'week-24-speaking-family-showcase': '2026-03-14',
+  'week-25-back-to-school-plan': '2026-03-16',
+};
+
+const PHONICS_EXAMPLES_BY_SLUG: Record<string, string[]> = {
+  'satpin-phonics-guide': [
+    'SATPIN blending ladder: /s/ /a/ /t/ -> sat, /p/ /i/ /n/ -> pin, /t/ /a/ /p/ -> tap.',
+    'Day-wise mini list: Day 1 (sat, pat), Day 2 (tap, pin), Day 3 (tin, nip), Day 4 review all six.',
+    'Quick oral prompts: "What sound does s make?" "Can you tap /s/ /a/ /t/?" "Now say it fast."',
+    'Write-read loop: child writes sat, parent points and child reads sat in a sentence: "Pat sat."',
+    'Trouble-shoot pair: if child says letter name ("ess"), immediately model pure sound /s/ and repeat twice.',
+    'Two-minute game: place s/a/t cards on floor, child hops each sound then says sat.',
+  ],
+  'cvc-words-explained-for-parents': [
+    'Short-a examples: cat, mat, bat, jam, cap. Read each word, then ask child to spot the middle sound /a/.',
+    'Short-i examples: pin, tin, lip, sit, rim. Use finger taps for each sound before reading the full word.',
+    'Short-o examples: top, hop, log, pot, mop. Mix with one non-example to check if child is decoding or guessing.',
+    'Short-u examples: sun, cup, bug, mud, bus. Ask child to segment first, then blend back.',
+    'Sentence frames parents can reuse: "The cat is on the mat." "I can sit on top." "The bug is in a cup."',
+    'Dictation sample: say "pin", child taps /p/ /i/ /n/, writes pin, then reads back pin aloud.',
+  ],
+  'phonics-blending-activities': [
+    'Oral-only blending set: /c/ /a/ /t/, /m/ /a/ /p/, /s/ /i/ /t/. No print first, just listening and joining.',
+    'Print blending set: cat, map, sit, pin, top. Parent slides finger under each grapheme while child blends.',
+    'Contrast drill: sat vs sit, pin vs pan, hop vs hip to strengthen vowel hearing.',
+    'Phrase practice: "a red cat", "sit up", "top hat" so blending moves into connected reading.',
+    'Correction script: "Let us sound slowly: /s/ /a/ /t/. Now fast: sat."',
+    '3-step session: 3 oral blends + 3 printed words + 1 short decodable sentence.',
+  ],
+  'how-kids-learn-blending': [
+    'Stage 1 example (oral merge): parent says /m/ /a/ /n/, child says man.',
+    'Stage 2 example (sound cards): child arranges m-a-n cards and blends to man.',
+    'Stage 3 example (print): child reads man, fan, pan in one row without picture clues.',
+    'Stage 4 example (sentence): "The man can run." Child points word-by-word while reading.',
+    'Micro progression: 5 days oral + print CVC, next 5 days add mixed CVC review and one sentence daily.',
+    'If blending breaks, step back one stage for 2 days and rebuild speed with 1-minute drills.',
+  ],
+  'r-controlled-vowels-explained': [
+    'Bossy-R AR set: car, star, park, farm. Sentence: "The car is far."',
+    'Bossy-R OR set: fork, corn, storm, short. Sentence: "The fork is on the corn tray."',
+    'Bossy-R ER/IR/UR set: her, bird, turn, fur, shirt. Sentence: "The bird can turn."',
+    'Sort game: mix 12 words and ask child to place each under AR / OR / ER-IR-UR.',
+    'Sound cue: "R pulls the vowel." Model slowly: c-a-r -> car (not cah).',
+    'Review loop: 4 AR words Monday, 4 OR words Tuesday, mixed review Wednesday onward.',
+  ],
+};
+
+const DEFAULT_PHONICS_EXAMPLES = [
+  'Use a 10-minute loop: 2 minutes sound review, 4 minutes blending, 4 minutes decodable reading.',
+  'Keep a 3-old + 2-new word rule so review and new learning stay balanced.',
+  'Use parent script: "Try it slowly, then fast." Avoid giving the answer immediately.',
+  'End each session with one success sentence your child can read aloud independently.',
+];
+
+const PHONICS_PARENT_GUIDE_SCRIPTS = [
+  'Before practice: "We will do only 10 minutes, then stop."',
+  'During practice: "Show me the sounds first, then blend."',
+  'After effort: "I liked how you tried again when it felt tricky."',
+  'For correction: "Let us check it together slowly, then you try once more."',
 ];
 
 const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
-  { slug: 'best-online-phonics-classes-for-kids', title: 'Best Online Phonics Classes for Kids (Complete Parent Guide)', focus: 'best online phonics classes for kids' },
-  { slug: 'how-phonics-classes-help-kids-read', title: 'How Phonics Classes Help Kids Start Reading Early', focus: 'how phonics classes help kids read' },
-  { slug: 'benefits-of-phonics-for-kids', title: 'Top 7 Benefits of Phonics Classes for Kids', focus: 'benefits of phonics for kids' },
-  { slug: 'what-age-to-start-phonics', title: 'What Age Should Kids Start Phonics?', focus: 'what age to start phonics' },
-  { slug: 'how-to-choose-phonics-classes', title: 'How to Choose the Best Phonics Classes for Your Child', focus: 'how to choose phonics classes' },
-  { slug: 'synthetic-phonics-vs-traditional-reading', title: 'Synthetic Phonics vs Traditional Reading: Which Is Better?', focus: 'synthetic phonics vs traditional reading' },
-  { slug: 'online-phonics-classes-vs-school', title: 'Online Phonics Classes vs School Phonics: What Parents Should Know', focus: 'online phonics classes vs school' },
-  { slug: 'how-long-does-phonics-take', title: 'How Long Does It Take for a Child to Learn Phonics?', focus: 'how long does phonics take' },
-  { slug: 'what-is-phonics-for-kids', title: 'What Is Phonics? A Simple Guide for Parents', focus: 'what is phonics for kids' },
-  { slug: 'how-phonics-builds-reading-confidence', title: 'How Phonics Helps Children Become Confident Readers', focus: 'how phonics builds reading confidence' },
-  { slug: 'phonics-rules-for-beginners', title: 'Common Phonics Rules Every Child Should Learn', focus: 'phonics rules for beginners' },
-  { slug: 'how-phonics-improves-spelling', title: 'How Phonics Improves Spelling and Reading Skills', focus: 'how phonics improves spelling' },
-  { slug: 'science-of-phonics-learning', title: 'The Science Behind Phonics Learning for Kids', focus: 'science of phonics learning' },
-  { slug: 'phonics-activities-for-kids-at-home', title: '10 Fun Phonics Activities Parents Can Do at Home', focus: 'phonics activities for kids at home' },
-  { slug: 'phonics-games-for-letter-sounds', title: 'Phonics Games That Help Kids Learn Letter Sounds', focus: 'phonics games for letter sounds' },
-  { slug: 'phonics-blending-activities', title: 'Simple Blending Activities to Teach Kids Reading', focus: 'phonics blending activities' },
-  { slug: 'cvc-words-explained-for-parents', title: 'CVC Words Explained for Parents', focus: 'CVC words explained for parents' },
-  { slug: 'online-phonics-games', title: 'Fun Phonics Games for Online Learning', focus: 'online phonics games' },
-  { slug: 'satpin-phonics-guide', title: 'SATPIN Phonics Explained for Parents', focus: 'SATPIN phonics guide' },
-  { slug: 'how-kids-learn-blending', title: 'How Kids Learn to Blend Sounds in Phonics', focus: 'how kids learn blending' },
-  { slug: 'digraphs-and-tricky-words', title: 'Understanding Digraphs and Tricky Words', focus: 'digraphs and tricky words' },
-  { slug: 'long-vowel-sounds-for-kids', title: 'Long Vowel Sounds Explained for Kids', focus: 'long vowel sounds for kids' },
-  { slug: 'r-controlled-vowels-explained', title: 'R-Controlled Vowels Made Easy for Children', focus: 'r-controlled vowels explained' },
-  { slug: 'why-parents-choose-online-phonics', title: 'Why Parents Prefer Online Phonics Classes Today', focus: 'why parents choose online phonics' },
-  { slug: 'how-tiny-steps-builds-reading-confidence', title: 'How Tiny Steps Helps Kids Become Confident Readers', focus: 'how Tiny Steps builds reading confidence' },
+  {
+    slug: 'best-online-phonics-classes-for-kids',
+    title: 'Best Online Phonics Classes for Kids (Complete Parent Guide)',
+    focus: 'best online phonics classes for kids',
+    quickAnswer: 'The best phonics class is not the flashiest one. It is the one that teaches pure sounds clearly, gives guided blending practice, and proves progress with decodable reading samples.',
+    homePlan: [
+      'Run a 3-minute sound check: show 6 letters and ask for sounds, not letter names.',
+      'Practice 5 CVC words daily: 2 old words, 3 new words.',
+      'Read one short decodable line aloud together and celebrate one success.',
+    ],
+    classChecklistFocus: 'Ask for a trial with live correction and a written 4-week learning plan before enrollment.',
+    avoidFocus: 'Do not choose based on app graphics or discounts alone; teaching quality matters more than platform polish.',
+    progress: 'In 2-4 weeks, most children should decode familiar CVC words more independently and hesitate less while reading.',
+    support: 'If classes are regular but your child still guesses from pictures after a month, request a diagnostic lesson and slower sequencing.',
+    faq: [
+      {
+        question: 'Is 1:1 better than group phonics for beginners?',
+        answer: 'For shy or struggling readers, 1:1 usually gives faster correction and confidence. Small groups can work if children already know basic sounds.',
+      },
+      {
+        question: 'How many phonics classes per week are ideal?',
+        answer: 'Two to three guided classes with short daily home practice is a strong routine for most children aged 4-8.',
+      },
+    ],
+  },
+  {
+    slug: 'how-phonics-classes-help-kids-read',
+    title: 'How Phonics Classes Help Kids Start Reading Early',
+    focus: 'how phonics classes help kids read',
+    quickAnswer: 'Phonics classes help children read by teaching them to decode unknown words sound by sound instead of memorizing whole words.',
+    homePlan: [
+      'Match 5 letter cards to their sounds every day.',
+      'Blend 3 short words aloud with finger tracking.',
+      'Read one decodable sentence and ask your child to point to each word.',
+    ],
+    classChecklistFocus: 'Check whether each lesson includes explicit segmenting and blending practice, not only rhyme songs.',
+    avoidFocus: 'Do not depend only on sight-word memorization; decoding is what unlocks independent reading.',
+    progress: 'Many children start reading simple words in 2-3 weeks and short decodable sentences in 6-8 weeks.',
+    support: 'If your child avoids print entirely, ask for multisensory teaching with movement, tapping, and oral-only warmups first.',
+    faq: [
+      {
+        question: 'Can phonics help if my child knows ABC but cannot read?',
+        answer: 'Yes. ABC knowledge is letter naming. Phonics bridges the gap by teaching how those letters represent sounds in words.',
+      },
+      {
+        question: 'Will phonics improve school reading too?',
+        answer: 'Yes, because decoding skills transfer to textbook reading, dictation, and spelling tasks across subjects.',
+      },
+    ],
+  },
+  {
+    slug: 'benefits-of-phonics-for-kids',
+    title: 'Top 7 Benefits of Phonics Classes for Kids',
+    focus: 'benefits of phonics for kids',
+    quickAnswer: 'Good phonics instruction improves reading accuracy, spelling, fluency, and confidence because children finally understand how words are built.',
+    homePlan: [
+      'Track one weekly win: a new sound, word family, or sentence read independently.',
+      'Use a 10-minute daily loop: sounds, blending, reading, quick dictation.',
+      'End each session with verbal praise for effort, not just correct answers.',
+    ],
+    classChecklistFocus: 'Ask if the program tracks reading accuracy, blending speed, and spelling transfer as separate outcomes.',
+    avoidFocus: 'Do not expect fluent story reading immediately; fluency comes after accuracy and repeated decoding success.',
+    progress: 'Parents often see better word reading first, then spelling accuracy, then smoother sentence reading over 8-12 weeks.',
+    support: 'If confidence drops despite practice, reduce difficulty and rebuild with easier decodable words for one week.',
+    faq: [
+      {
+        question: 'Does phonics help only weak readers?',
+        answer: 'No. It helps all early readers because decoding and spelling are foundational skills for later comprehension.',
+      },
+      {
+        question: 'Can phonics support spoken English too?',
+        answer: 'Indirectly yes. Clear sound awareness improves pronunciation and helps children notice word patterns in speech.',
+      },
+    ],
+  },
+  {
+    slug: 'what-age-to-start-phonics',
+    title: 'What Age Should Kids Start Phonics?',
+    focus: 'what age to start phonics',
+    quickAnswer: 'Most children can begin playful phonics between ages 3.5 and 5, once they can hear sounds, repeat words, and attend for 5-10 minutes.',
+    homePlan: [
+      'Start with oral sound games before worksheets.',
+      'Introduce 2-3 new sounds per week using actions and picture cues.',
+      'Blend only after your child can recall 4-6 sounds comfortably.',
+    ],
+    classChecklistFocus: 'Choose age-appropriate sessions: shorter, playful, and multisensory for younger children.',
+    avoidFocus: 'Do not force writing-heavy tasks too early; first build listening and sound awareness.',
+    progress: 'By 4-6 weeks, children should identify several sounds quickly and begin blending simple words with support.',
+    support: 'If a child older than 6 still struggles with basic sounds, begin immediately but use an assessment-driven catch-up plan.',
+    faq: [
+      {
+        question: 'What readiness signs matter more than age?',
+        answer: 'Ability to listen, imitate sounds, follow short instructions, and enjoy rhymes are stronger indicators than age alone.',
+      },
+      {
+        question: 'Is it too late to start phonics at age 7 or 8?',
+        answer: 'No. Older children can catch up quickly with explicit teaching and consistent daily review.',
+      },
+    ],
+  },
+  {
+    slug: 'how-to-choose-phonics-classes',
+    title: 'How to Choose the Best Phonics Classes for Your Child',
+    focus: 'how to choose phonics classes',
+    quickAnswer: 'Choose a phonics class using evidence of teaching quality: lesson flow, correction style, progress tracking, and parent communication.',
+    homePlan: [
+      'Compare 2-3 programs using the same checklist, not marketing claims.',
+      'Attend trial classes and observe how errors are corrected.',
+      'Ask for a clear 4-week target and home-practice guidance.',
+    ],
+    classChecklistFocus: 'Confirm that the teacher can explain exactly what your child should read after the first month.',
+    avoidFocus: 'Do not enroll in programs that cannot show curriculum sequence or sample progress reports.',
+    progress: 'A good class should show measurable sound recall and blending growth within 3-4 weeks.',
+    support: 'If your child has hearing, speech, or attention concerns, prioritize programs that adapt pace and provide individual support.',
+    faq: [
+      {
+        question: 'What should I ask during a trial class?',
+        answer: 'Ask about sequence, correction approach, homework expectations, and what progress evidence parents receive weekly.',
+      },
+      {
+        question: 'Are certificates enough proof of progress?',
+        answer: 'No. Real evidence is in reading samples, blending performance, and spelling transfer to schoolwork.',
+      },
+    ],
+  },
+  {
+    slug: 'synthetic-phonics-vs-traditional-reading',
+    title: 'Synthetic Phonics vs Traditional Reading: Which Is Better?',
+    focus: 'synthetic phonics vs traditional reading',
+    quickAnswer: 'For early readers, synthetic phonics is usually stronger because it teaches children to build words from sounds instead of guessing from context.',
+    homePlan: [
+      'Practice sound-by-sound decoding with short CVC words.',
+      'Use picture support after decoding, not before.',
+      'Read one decodable text plus one storybook daily for balance.',
+    ],
+    classChecklistFocus: 'Look for explicit blending instruction and cumulative review if you want strong decoding outcomes.',
+    avoidFocus: 'Do not replace decoding with repeated guessing from pictures or first letters.',
+    progress: 'Children taught with structured synthetic phonics often decode unfamiliar words earlier and with fewer guessing errors.',
+    support: 'If comprehension is fine but decoding is weak, shift to explicit sound-first teaching for at least 8 weeks.',
+    faq: [
+      {
+        question: 'Can I combine synthetic phonics with story reading?',
+        answer: 'Yes. Use phonics for decoding lessons and storybooks for vocabulary and comprehension.',
+      },
+      {
+        question: 'Why does my child guess even after many books?',
+        answer: 'Many children memorize patterns visually. They need explicit training to map letters to sounds consistently.',
+      },
+    ],
+  },
+  {
+    slug: 'online-phonics-classes-vs-school',
+    title: 'Online Phonics Classes vs School Phonics: What Parents Should Know',
+    focus: 'online phonics classes vs school',
+    quickAnswer: 'School phonics often gives broad exposure, while focused online phonics can provide individualized correction and faster gap-closing.',
+    homePlan: [
+      'Review school sounds and words for 5 minutes daily.',
+      'Use online practice to target only the missed sounds.',
+      'Send school dictation errors to your tutor for focused correction.',
+    ],
+    classChecklistFocus: 'Choose classes that align with school pace but still personalize remedial work.',
+    avoidFocus: 'Do not assume workbook completion means mastery; many children still need explicit blending support.',
+    progress: 'When school and home plans align, parents often see cleaner dictation and smoother reading within one term.',
+    support: 'If school feedback says "reads below grade level," add structured phonics support immediately rather than waiting.',
+    faq: [
+      {
+        question: 'Should I stop school reading homework if I add online phonics?',
+        answer: 'No. Keep school work, but reduce overload by doing short targeted phonics sessions separately.',
+      },
+      {
+        question: 'How do I know if school phonics is enough?',
+        answer: 'If your child can decode new words independently and spell taught patterns, school support may be sufficient.',
+      },
+    ],
+  },
+  {
+    slug: 'how-long-does-phonics-take',
+    title: 'How Long Does It Take for a Child to Learn Phonics?',
+    focus: 'how long does phonics take',
+    quickAnswer: 'Most children need 6-12 months for solid phonics foundations, depending on attendance, practice consistency, and starting level.',
+    homePlan: [
+      'Set 6-week milestones: sound recall, blending, decodable reading, spelling.',
+      'Use a weekly tracker with three metrics: sounds known, words blended, sentences read.',
+      'Review weak sounds every weekend before adding new patterns.',
+    ],
+    classChecklistFocus: 'Pick programs with milestone-based progress reporting instead of vague "doing well" feedback.',
+    avoidFocus: 'Do not compare speed with other children; consistency matters more than pace.',
+    progress: 'Many children show first decoding gains in 3-6 weeks, but fluency and spelling transfer take longer and need cumulative revision.',
+    support: 'If there is no measurable growth after 8 weeks of regular sessions, reassess method, pacing, and practice quality.',
+    faq: [
+      {
+        question: 'Can phonics be completed in 1-2 months?',
+        answer: 'Basics may start in that time, but full foundation and fluent transfer usually require sustained multi-month practice.',
+      },
+      {
+        question: 'What slows phonics progress the most?',
+        answer: 'Irregular attendance, inconsistent home review, and jumping to advanced texts too early are common delays.',
+      },
+    ],
+  },
+  {
+    slug: 'what-is-phonics-for-kids',
+    title: 'What Is Phonics? A Simple Guide for Parents',
+    focus: 'what is phonics for kids',
+    quickAnswer: 'Phonics is a method that teaches children the relationship between letters and sounds so they can read and spell words independently.',
+    homePlan: [
+      'Teach one sound at a time with a letter card and action cue.',
+      'Blend three-sound words orally before reading from print.',
+      'Use short dictation: say a word, child taps sounds, then writes.',
+    ],
+    classChecklistFocus: 'Ensure teachers model pure sounds clearly and avoid adding extra vowel sounds.',
+    avoidFocus: 'Do not treat phonics as only alphabet recitation; children need sound manipulation, not just letter names.',
+    progress: 'Within a few weeks, children should begin sounding out words instead of guessing them from memory.',
+    support: 'If your child cannot hear beginning or ending sounds in words, begin with phonological awareness games first.',
+    faq: [
+      {
+        question: 'Is phonics the same as the alphabet?',
+        answer: 'No. Alphabet learning is letter names. Phonics teaches how letters represent sounds in real words.',
+      },
+      {
+        question: 'Does phonics reduce love for storybooks?',
+        answer: 'Not when balanced well. Phonics builds decoding while storybooks build vocabulary and imagination.',
+      },
+    ],
+  },
+  {
+    slug: 'how-phonics-builds-reading-confidence',
+    title: 'How Phonics Helps Children Become Confident Readers',
+    focus: 'how phonics builds reading confidence',
+    quickAnswer: 'Confidence grows when children can decode words by themselves; phonics creates that independence through predictable success.',
+    homePlan: [
+      'Choose texts where your child can read at least 80% of words.',
+      'Use "I do, we do, you do" for tricky words.',
+      'Track one confidence win daily: faster decoding, less hesitation, clearer reading voice.',
+    ],
+    classChecklistFocus: 'Look for teachers who use warm correction and visible success ladders instead of constant testing.',
+    avoidFocus: 'Do not hand children books far above decoding level; repeated failure harms confidence quickly.',
+    progress: 'Many parents notice fewer "I cannot read" statements after 2-3 weeks of consistent, successful decoding practice.',
+    support: 'If anxiety around reading is high, reduce demand, use very short texts, and add frequent praise for attempts.',
+    faq: [
+      {
+        question: 'My child reads but lacks confidence. Can phonics still help?',
+        answer: 'Yes. Confidence often improves when decoding becomes faster and more accurate, reducing fear of unknown words.',
+      },
+      {
+        question: 'How can I praise without overhelping?',
+        answer: 'Praise strategy: "You looked at each sound and blended it." Avoid giving the answer too quickly.',
+      },
+    ],
+  },
+  {
+    slug: 'phonics-rules-for-beginners',
+    title: 'Common Phonics Rules Every Child Should Learn',
+    focus: 'phonics rules for beginners',
+    quickAnswer: 'Beginner phonics works best when rules are introduced in sequence: short vowels, consonant blends, digraphs, and then long-vowel patterns.',
+    homePlan: [
+      'Teach one pattern family at a time for 3-5 days.',
+      'Read and spell words from that pattern before moving on.',
+      'Keep a "known patterns" wall so children revisit old learning.',
+    ],
+    classChecklistFocus: 'Check whether rule teaching includes reading, spelling, and sentence-level practice, not isolated drills only.',
+    avoidFocus: 'Do not teach too many rules in one week; overload leads to confusion and mixed recall.',
+    progress: 'Children usually retain patterns better when each rule is practiced across listening, reading, and writing in the same week.',
+    support: 'If rules are frequently mixed up, reduce scope and reteach with fewer words and more cumulative review.',
+    faq: [
+      {
+        question: 'Should children memorize phonics rules like grammar formulas?',
+        answer: 'No. They should apply patterns through repeated reading and spelling, not rote memorization alone.',
+      },
+      {
+        question: 'Which rule should I teach first?',
+        answer: 'Start with simple consonant-vowel-consonant decoding using short vowels before moving to complex spellings.',
+      },
+    ],
+  },
+  {
+    slug: 'how-phonics-improves-spelling',
+    title: 'How Phonics Improves Spelling and Reading Skills',
+    focus: 'how phonics improves spelling',
+    quickAnswer: 'Phonics improves spelling because children learn to segment words into sounds and map each sound to likely letter patterns.',
+    homePlan: [
+      'Use sound tapping before writing each word.',
+      'Do 5-word dictated spelling practice from taught patterns.',
+      'After dictation, ask your child to read the same words back.',
+    ],
+    classChecklistFocus: 'Choose programs that include dictation and spelling feedback every week, not reading-only sessions.',
+    avoidFocus: 'Do not rely on copying spellings repeatedly without sound analysis; transfer stays weak.',
+    progress: 'Spelling gains typically appear after decoding stabilizes, often within 4-8 weeks of consistent segmenting practice.',
+    support: 'If spelling errors are random and persistent, revisit sound segmentation before introducing new spelling rules.',
+    faq: [
+      {
+        question: 'Why can my child read a word but misspell it?',
+        answer: 'Reading recognition develops before spelling production. Extra segmentation and dictation practice closes that gap.',
+      },
+      {
+        question: 'Should I correct every spelling mistake?',
+        answer: 'Prioritize taught patterns first. Correcting everything at once can overload and discourage beginners.',
+      },
+    ],
+  },
+  {
+    slug: 'science-of-phonics-learning',
+    title: 'The Science Behind Phonics Learning for Kids',
+    focus: 'science of phonics learning',
+    quickAnswer: 'Reading science shows that explicit, systematic phonics instruction helps most children decode words more accurately than unsystematic methods.',
+    homePlan: [
+      'Build phonemic awareness with oral sound games for 3 minutes daily.',
+      'Teach grapheme-phoneme links explicitly using cumulative review.',
+      'Use decodable reading to apply only what has already been taught.',
+    ],
+    classChecklistFocus: 'Check that instruction is explicit and cumulative, with review built into every lesson.',
+    avoidFocus: 'Do not use random worksheet collections as a curriculum; sequence and repetition matter in reading development.',
+    progress: 'Evidence-based routines usually show stronger decoding accuracy and fewer guessing habits over a school term.',
+    support: 'If progress is inconsistent, audit lesson design: is there explicit instruction, guided practice, and cumulative revision?',
+    faq: [
+      {
+        question: 'Is phonics still recommended by modern reading research?',
+        answer: 'Yes. Research supports systematic phonics as a core early-reading component, especially for beginners and struggling readers.',
+      },
+      {
+        question: 'Does phonics alone teach comprehension?',
+        answer: 'No. Phonics teaches decoding. Comprehension also needs vocabulary, oral language, and knowledge-building.',
+      },
+    ],
+  },
+  {
+    slug: 'phonics-activities-for-kids-at-home',
+    title: '10 Fun Phonics Activities Parents Can Do at Home',
+    focus: 'phonics activities for kids at home',
+    quickAnswer: 'Home phonics works when activities are short, playful, and tied to one clear sound objective instead of random busywork.',
+    homePlan: [
+      'Rotate three activity types: sound hunt, blend game, quick dictation.',
+      'Use household objects for initial-sound sorting.',
+      'Repeat the same activity for 3 days before switching.',
+    ],
+    classChecklistFocus: 'Ask teachers to assign specific at-home activities linked to that week\'s taught sounds.',
+    avoidFocus: 'Do not run too many new games every day; repetition is what builds mastery.',
+    progress: 'In 2-3 weeks, children should identify target sounds faster and decode practiced words with less prompting.',
+    support: 'If attention span is low, split practice into two 5-minute blocks instead of one 10-minute block.',
+    faq: [
+      {
+        question: 'Do I need worksheets for home phonics?',
+        answer: 'No. Many strong activities are oral and game-based, especially for younger children.',
+      },
+      {
+        question: 'How many activities should I do each day?',
+        answer: 'One to three short activities are enough if they are focused and repeated consistently.',
+      },
+    ],
+  },
+  {
+    slug: 'phonics-games-for-letter-sounds',
+    title: 'Phonics Games That Help Kids Learn Letter Sounds',
+    focus: 'phonics games for letter sounds',
+    quickAnswer: 'Letter-sound games are effective when children must say and apply sounds, not just tap colorful buttons quickly.',
+    homePlan: [
+      'Play "sound detective": find objects that begin with a target sound.',
+      'Use a card flip game where each card requires saying the pure sound.',
+      'Finish with one blending word that uses today\'s sounds.',
+    ],
+    classChecklistFocus: 'Select classes where games are tied to measurable sound mastery, not entertainment alone.',
+    avoidFocus: 'Do not let games replace direct instruction; games should reinforce what was explicitly taught.',
+    progress: 'Children often improve sound recall first, then blending speed once games are paired with reading practice.',
+    support: 'If your child enjoys games but cannot read words, increase direct blending practice after each game round.',
+    faq: [
+      {
+        question: 'Are digital phonics games enough by themselves?',
+        answer: 'Usually not. Children still need guided teacher or parent feedback to transfer game skills to real reading.',
+      },
+      {
+        question: 'How long should a phonics game session be?',
+        answer: '5-8 focused minutes is enough before moving to blending or reading practice.',
+      },
+    ],
+  },
+  {
+    slug: 'phonics-blending-activities',
+    title: 'Simple Blending Activities to Teach Kids Reading',
+    focus: 'phonics blending activities',
+    quickAnswer: 'Blending improves when children move from oral sound merging to printed word decoding with frequent, short practice.',
+    homePlan: [
+      'Start with oral blending: you say sounds, child says the full word.',
+      'Use finger-slide blending on 3-letter printed words.',
+      'Read 3-5 blended words in short sentence frames.',
+    ],
+    classChecklistFocus: 'Look for lessons where teachers model slow, continuous, and snap blending methods.',
+    avoidFocus: 'Do not jump to long words before CVC blending is automatic.',
+    progress: 'Many children begin blending confidently within 3-4 weeks when practice is daily and scaffolded.',
+    support: 'If blending stalls, return to oral-only work for a few days and rebuild with easier sound sets.',
+    faq: [
+      {
+        question: 'Why does my child know sounds but still not blend?',
+        answer: 'Sound recall and blending are different skills. Blending needs separate guided practice with pacing support.',
+      },
+      {
+        question: 'Should I correct blending instantly?',
+        answer: 'Give a short pause first. If needed, model once and ask for a retry to build self-correction.',
+      },
+    ],
+  },
+  {
+    slug: 'cvc-words-explained-for-parents',
+    title: 'CVC Words Explained for Parents',
+    focus: 'CVC words explained for parents',
+    quickAnswer: 'CVC words are simple three-sound words (like cat, pin, sun) that build the first bridge from phonics sounds to real reading.',
+    homePlan: [
+      'Pick one CVC family daily and read 5 words.',
+      'Use Elkonin boxes or finger taps to segment each sound.',
+      'Write and read the same 3 words to connect reading and spelling.',
+    ],
+    classChecklistFocus: 'Ensure early lessons spend enough time on CVC automaticity before introducing complex spellings.',
+    avoidFocus: 'Do not mix too many irregular words while CVC decoding is still shaky.',
+    progress: 'When CVC mastery is solid, children decode new short words faster and show fewer guessing errors.',
+    support: 'If CVC reading remains difficult, reduce word count and reteach each sound with oral blending first.',
+    faq: [
+      {
+        question: 'How many CVC words should my child know before moving ahead?',
+        answer: 'There is no fixed number, but your child should blend and read most taught CVC patterns with minimal prompting.',
+      },
+      {
+        question: 'Are CVC words only for preschoolers?',
+        answer: 'No. They are useful for any beginner who needs decoding foundations, including older catch-up learners.',
+      },
+    ],
+  },
+  {
+    slug: 'online-phonics-games',
+    title: 'Fun Phonics Games for Online Learning',
+    focus: 'online phonics games',
+    quickAnswer: 'Online phonics games help when they are used as guided reinforcement, with parents or teachers linking game tasks to real reading.',
+    homePlan: [
+      'Choose one game objective per day: sound ID, blending, or spelling.',
+      'After each game round, read 3 matching words from print.',
+      'Use a simple scorecard focused on accuracy, not speed only.',
+    ],
+    classChecklistFocus: 'Pick classes that assign game practice with specific follow-up reading tasks.',
+    avoidFocus: 'Do not leave children in self-play mode for long periods without feedback.',
+    progress: 'With guided transfer, online game practice can improve engagement while still growing decoding accuracy over weeks.',
+    support: 'If screen-based practice causes distraction, shorten game time and move quickly to offline reading tasks.',
+    faq: [
+      {
+        question: 'What makes an online phonics game useful?',
+        answer: 'Clear sound targets, immediate feedback, and a direct link to printable or spoken reading tasks.',
+      },
+      {
+        question: 'How much screen time is appropriate for phonics games?',
+        answer: 'Usually 5-10 minutes per session is enough when followed by offline reading or writing.',
+      },
+    ],
+  },
+  {
+    slug: 'satpin-phonics-guide',
+    title: 'SATPIN Phonics Explained for Parents',
+    focus: 'SATPIN phonics guide',
+    quickAnswer: 'SATPIN introduces six high-utility sounds that quickly create many readable words, making it a practical starting set for beginners.',
+    homePlan: [
+      'Teach one to two SATPIN sounds at a time with actions.',
+      'Blend simple SATPIN words like sat, pin, tap, tin.',
+      'Review all taught sounds daily before adding a new one.',
+    ],
+    classChecklistFocus: 'Check that teachers model pure SATPIN sounds and quickly move into blending, not isolated drill only.',
+    avoidFocus: 'Do not teach all six letters in one day; gradual mastery is more effective than speed.',
+    progress: 'Most children can begin blending a few SATPIN words within the first 1-2 weeks with daily short practice.',
+    support: 'If sounds are mixed repeatedly, slow down and use multisensory cues before introducing new letters.',
+    faq: [
+      {
+        question: 'Why is SATPIN taught before full alphabet order?',
+        answer: 'Because those sounds combine quickly into useful words, giving children early decoding success.',
+      },
+      {
+        question: 'Can we teach letter names along with SATPIN sounds?',
+        answer: 'Yes, but prioritize sound production during reading practice and use names separately when needed.',
+      },
+    ],
+  },
+  {
+    slug: 'how-kids-learn-blending',
+    title: 'How Kids Learn to Blend Sounds in Phonics',
+    focus: 'how kids learn blending',
+    quickAnswer: 'Children learn blending in stages: sound awareness, sound recall, oral merging, then printed word blending with repeated support.',
+    homePlan: [
+      'Begin with oral-only sound merging games for 2-3 days.',
+      'Add printed CVC blending with finger tracking.',
+      'Use one-minute blend drills twice daily for automaticity.',
+    ],
+    classChecklistFocus: 'Prioritize classes where blending is taught explicitly every lesson, not assumed after sound teaching.',
+    avoidFocus: 'Do not rush to paragraph reading before single-word blending becomes reliable.',
+    progress: 'With steady practice, many children shift from slow sounding-out to smoother blending in about 4-6 weeks.',
+    support: 'If blending remains labored, reduce word complexity and increase oral blending reps before print.',
+    faq: [
+      {
+        question: 'What is the difference between segmenting and blending?',
+        answer: 'Segmenting breaks a word into sounds. Blending combines sounds to form a word. Children need both for reading and spelling.',
+      },
+      {
+        question: 'Can children blend without knowing every letter?',
+        answer: 'They can start with a small known set, but strong blending needs reliable recall of taught sound-letter pairs.',
+      },
+    ],
+  },
+  {
+    slug: 'digraphs-and-tricky-words',
+    title: 'Understanding Digraphs and Tricky Words',
+    focus: 'digraphs and tricky words',
+    quickAnswer: 'Digraphs are two letters making one sound (sh, ch, th), while tricky words contain parts that cannot be decoded fully using current phonics knowledge.',
+    homePlan: [
+      'Teach one digraph family at a time with picture cues.',
+      'Keep tricky-word practice short and visual, 3-5 words only.',
+      'Separate decodable words and tricky words in two lists.',
+    ],
+    classChecklistFocus: 'Look for programs that teach digraphs systematically and introduce tricky words in controlled sets.',
+    avoidFocus: 'Do not label all common words as tricky; children should still decode what is decodable.',
+    progress: 'Children typically improve word accuracy when they can identify digraph chunks quickly inside new words.',
+    support: 'If confusion rises, pause new tricky words and reinforce known digraph patterns for one week.',
+    faq: [
+      {
+        question: 'How many tricky words should we teach each week?',
+        answer: 'Usually 3-5 words with high review is better than large weekly lists.',
+      },
+      {
+        question: 'Should tricky words be spelled from memory?',
+        answer: 'Yes, but first highlight the regular and irregular parts so memory has structure.',
+      },
+    ],
+  },
+  {
+    slug: 'long-vowel-sounds-for-kids',
+    title: 'Long Vowel Sounds Explained for Kids',
+    focus: 'long vowel sounds for kids',
+    quickAnswer: 'Long vowels are easier after short-vowel decoding is stable; teach common spelling patterns one at a time with plenty of reading practice.',
+    homePlan: [
+      'Start with one long-vowel pattern (for example, a_e) for 3 days.',
+      'Read and sort words by pattern (cake, lake, make).',
+      'Contrast short vs long pairs (cap/cape) to build awareness.',
+    ],
+    classChecklistFocus: 'Choose classes that sequence long-vowel spellings clearly rather than mixing many patterns together.',
+    avoidFocus: 'Do not introduce all long-vowel spellings at once; children need focused pattern repetition.',
+    progress: 'Expect gradual gains: first recognition, then accurate reading, then correct spelling of long-vowel patterns.',
+    support: 'If short and long vowels are mixed up often, revisit short-vowel mastery before adding new long patterns.',
+    faq: [
+      {
+        question: 'When should long vowels be introduced?',
+        answer: 'Usually after children can decode short-vowel CVC words with confidence and low prompting.',
+      },
+      {
+        question: 'Which long-vowel pattern should come first?',
+        answer: 'Many programs start with silent-e patterns because children can compare them directly with CVC words.',
+      },
+    ],
+  },
+  {
+    slug: 'r-controlled-vowels-explained',
+    title: 'R-Controlled Vowels Made Easy for Children',
+    focus: 'r-controlled vowels explained',
+    quickAnswer: 'R-controlled vowels (ar, er, ir, or, ur) change vowel sounds and require targeted listening plus pattern practice.',
+    homePlan: [
+      'Teach one pattern group daily (for example: ar words).',
+      'Use minimal pairs to hear contrast (car/cat, bird/bid).',
+      'Read short phrases using only one r-controlled pattern first.',
+    ],
+    classChecklistFocus: 'Pick classes that provide auditory discrimination exercises along with printed practice for r-controlled vowels.',
+    avoidFocus: 'Do not teach ar/er/ir/or/ur as one large unit in the same lesson for beginners.',
+    progress: 'With focused practice, children usually recognize r-controlled chunks faster and decode related words with fewer pauses.',
+    support: 'If speech sound production is unclear, combine phonics practice with pronunciation modeling and slow repetition.',
+    faq: [
+      {
+        question: 'Why are er, ir, and ur confusing for children?',
+        answer: 'They often sound similar in speech. Children need repeated mapping from sound to spelling patterns.',
+      },
+      {
+        question: 'Should I teach spelling and reading together for r-controlled vowels?',
+        answer: 'Yes. Reading and spelling the same pattern set helps retention and transfer.',
+      },
+    ],
+  },
+  {
+    slug: 'why-parents-choose-online-phonics',
+    title: 'Why Parents Prefer Online Phonics Classes Today',
+    focus: 'why parents choose online phonics',
+    quickAnswer: 'Parents often choose online phonics for flexible scheduling, individualized pacing, and easier access to qualified teachers and progress tracking.',
+    homePlan: [
+      'Fix class time in your weekly routine to avoid missed sessions.',
+      'Sit in for the first 5 minutes to align home practice goals.',
+      'Review teacher notes and do 10 minutes of follow-up the same day.',
+    ],
+    classChecklistFocus: 'Choose online programs that offer frequent teacher feedback and clear parent dashboards, not just recorded videos.',
+    avoidFocus: 'Do not treat online class as passive screen time; outcomes depend on active follow-up.',
+    progress: 'When class consistency and home follow-up are strong, online formats can deliver fast gap-closing for early readers.',
+    support: 'If attention drops online, shorten sessions, increase interaction, and use 1:1 or smaller groups.',
+    faq: [
+      {
+        question: 'Is online phonics suitable for very young children?',
+        answer: 'Yes, if sessions are short, interactive, and supported by a parent during initial weeks.',
+      },
+      {
+        question: 'How do I keep my child engaged in online classes?',
+        answer: 'Use a fixed routine, remove distractions, and follow each class with a quick game or reading win.',
+      },
+    ],
+  },
+  {
+    slug: 'how-tiny-steps-builds-reading-confidence',
+    title: 'How Tiny Steps Helps Kids Become Confident Readers',
+    focus: 'how Tiny Steps builds reading confidence',
+    quickAnswer: 'Tiny Steps builds confidence through systematic phonics, warm correction, short decodable reading wins, and weekly parent guidance.',
+    homePlan: [
+      'Use weekly teacher goals to plan 10-minute home sessions.',
+      'Practice the exact sound set taught in class before adding extras.',
+      'Record one short read-aloud each week to track fluency growth.',
+    ],
+    classChecklistFocus: 'Check that your child gets clear feedback, not generic praise, after each session.',
+    avoidFocus: 'Do not skip revision weeks; confidence grows when old skills feel easy before new skills are added.',
+    progress: 'Parents typically report stronger reading willingness and fewer decoding breakdowns after consistent month-long routines.',
+    support: 'If confidence dips, ask for temporary level adjustment, simpler decodable texts, and targeted confidence goals.',
+    faq: [
+      {
+        question: 'How does Tiny Steps track progress for parents?',
+        answer: 'Parents receive stage-wise updates on sounds mastered, blending quality, reading behavior, and next practice priorities.',
+      },
+      {
+        question: 'Can Tiny Steps support children who already feel behind?',
+        answer: 'Yes. Individualized pacing and focused remediation help children rebuild foundation skills without shame.',
+      },
+    ],
+  },
 ];
 
 function makePhonicsExcerpt(focus: string) {
-  return `Parents searching ${focus} want clear answers and simple next steps. This guide explains phonics benefits, class options, and how Tiny Steps supports confident readers.`;
+  return `Parent guide to ${focus}: clear answers, a 10-minute home routine, class-selection checkpoints, and realistic milestones to help your child become a confident reader.`;
 }
 
-function makeParentsShouldKnow(focus: string) {
-  return `If you’re comparing ${focus}, prioritize a program that starts with sound-letter links, then moves into blending and short decodable reading with gentle, consistent feedback.`;
+function getPhonicsExamples(slug: string) {
+  return PHONICS_EXAMPLES_BY_SLUG[slug] ?? DEFAULT_PHONICS_EXAMPLES;
 }
 
-const WHY_PHONICS_IMPORTANT =
-  'Phonics connects letters to sounds, which is the key to decoding new words. When children can blend sounds, they read more independently and build confidence faster.';
-
-const HOW_TINY_STEPS_TEACHES =
-  'Tiny Steps uses systematic phonics, step-by-step blending practice, and decodable reading. Lessons are live and paced to the child, with weekly parent updates so progress is easy to track.';
-
-function buildFaqBody() {
-  const blocks: { type: 'h2'|'h3'|'p'|'li'; content: string }[] = [
-    { type: 'h2', content: 'FAQ' },
-  ];
-  PHONICS_SEO_FAQ.forEach((item) => {
+function buildFaqBody(faq: { question: string; answer: string }[]) {
+  const blocks: BlogBlock[] = [{ type: 'h2', content: 'Parent FAQ' }];
+  faq.forEach((item) => {
     blocks.push({ type: 'h3', content: item.question });
     blocks.push({ type: 'p', content: item.answer });
   });
@@ -91,24 +817,43 @@ function buildFaqBody() {
 
 function makePhonicsPost(post: PhonicsSeoPost): BlogPost {
   const excerpt = makePhonicsExcerpt(post.focus);
+  const faq = [...post.faq, ...PHONICS_BASE_FAQ];
+  const examples = getPhonicsExamples(post.slug);
   return {
     slug: post.slug,
     title: post.title,
     category: 'Phonics',
     author: 'Tiny Steps Learning',
-    date: '2026-03-05',
-    readTime: post.readTime ?? '6 min',
+    date: BLOG_PUBLICATION_DATES[post.slug] ?? '2026-03-05',
+    readTime: post.readTime ?? '9 min',
     excerpt,
     metaDescription: excerpt,
-    faq: PHONICS_SEO_FAQ,
+    faq,
     body: [
-      { type: 'h2', content: 'What parents should know' },
-      { type: 'p', content: makeParentsShouldKnow(post.focus) },
-      { type: 'h2', content: 'Why phonics is important' },
-      { type: 'p', content: WHY_PHONICS_IMPORTANT },
-      { type: 'h2', content: 'How Tiny Steps teaches phonics' },
-      { type: 'p', content: HOW_TINY_STEPS_TEACHES },
-      ...buildFaqBody(),
+      { type: 'h2', content: 'Quick answer for parents' },
+      { type: 'p', content: post.quickAnswer },
+      { type: 'h2', content: 'At-home plan: 10 minutes that actually works' },
+      {
+        type: 'p',
+        content: `If you are currently researching ${post.focus}, run this simple routine for 2-3 weeks before judging progress.`,
+      },
+      ...post.homePlan.map((step) => ({ type: 'li' as const, content: step })),
+      { type: 'h2', content: 'Checklist when choosing a phonics class' },
+      ...PHONICS_BASE_CLASS_CHECKLIST.map((item) => ({ type: 'li' as const, content: item })),
+      { type: 'li', content: post.classChecklistFocus },
+      { type: 'h2', content: 'Mistakes that slow progress' },
+      ...PHONICS_BASE_MISTAKES.map((item) => ({ type: 'li' as const, content: item })),
+      { type: 'li', content: post.avoidFocus },
+      { type: 'h2', content: 'Progress timeline parents can expect' },
+      { type: 'p', content: post.progress },
+      { type: 'h2', content: 'Useful examples parents can use tonight' },
+      { type: 'p', content: 'Use these examples directly during practice so your child sees the concept in real words and short sentences.' },
+      ...examples.map((item) => ({ type: 'li' as const, content: item })),
+      { type: 'h2', content: 'Parent-guide scripts to keep practice positive' },
+      ...PHONICS_PARENT_GUIDE_SCRIPTS.map((item) => ({ type: 'li' as const, content: item })),
+      { type: 'h2', content: 'When to ask for extra support' },
+      { type: 'p', content: post.support },
+      ...buildFaqBody(faq),
     ],
   };
 }
@@ -168,6 +913,15 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'li', content: 'Letter Trace Race — trace a letter in the air with a finger, add silly sound effects.' },
       { type: 'li', content: 'Sound Hop — place cards on the floor and let your child hop to the card after you say a sound.' },
       { type: 'li', content: 'Blend Basket — put letter cards in a basket and pull three to blend aloud.' },
+
+      { type: 'h2', content: 'SATPIN example bank (ready-to-use for busy parents)' },
+      { type: 'p', content: 'Use these examples as-is so practice is quick and predictable. Do one mini set per day and repeat it twice.' },
+      { type: 'li', content: 'Set A: sat, pat, tap. Sentence: "Pat sat." "Tap, tap."'},
+      { type: 'li', content: 'Set B: pin, tin, nip. Sentence: "Pin it." "Tin can."'},
+      { type: 'li', content: 'Set C: pan, tan, nap. Sentence: "Tan pan." "Nap in pan."'},
+      { type: 'li', content: 'Mixed review: sat, pin, tap, tan, nip. Ask child to sort by middle vowel /a/ vs /i/.'},
+      { type: 'li', content: 'Parent prompt: "Show me each sound first, then blend." If stuck, return to slow blend and retry once.'},
+      { type: 'p', content: 'If your child reads one full sentence independently from these sets, count that as a strong daily win.' },
 
       { type: 'h2', content: 'Blending: when to start (and how to do it without pressure)' },
       { type: 'p', content: 'Start blending once your child can hear and say 4–6 sounds reliably. Blending should be short and supported: you say the sounds, then say them faster to make the word.' },
@@ -256,6 +1010,15 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'h2', content: 'What words to practice (SATPIN CVC list + how to choose 5/day)' },
       { type: 'p', content: 'Use SATPIN CVC words: sat, sit, sip, sap, pat, pan, pin, pit, tap, tin, tan, nap, nip, sin.' },
       { type: 'p', content: 'Choose five words a day: three new + two review. Pick words that use sounds your child already knows and relate to familiar objects at home.' },
+
+      { type: 'h2', content: 'CVC blending ladder with concrete examples' },
+      { type: 'p', content: 'Move from easiest to hardest in one session: oral blend first, then printed words, then a short sentence.' },
+      { type: 'li', content: 'Step 1 (oral): /s/ /a/ /t/ -> sat, /p/ /i/ /n/ -> pin, /t/ /a/ /n/ -> tan.' },
+      { type: 'li', content: 'Step 2 (print): sat, pin, tan, sip, tap. Point and blend each word once.' },
+      { type: 'li', content: 'Step 3 (sentence): "Pat sat." "Pin is in." "Tan cap." Keep lines short and decodable.' },
+      { type: 'li', content: 'Contrast drill: sat vs sit, pin vs pan, tin vs tan to train vowel attention.' },
+      { type: 'li', content: 'Parent correction line: "Let us tap each sound, now slide and read it."'},
+      { type: 'p', content: 'This ladder helps children stop guessing and rely on decoding, which is the core of confident early reading.' },
 
       { type: 'h2', content: 'Troubleshooting' },
       { type: 'h3', content: 'If your child guesses words' },
@@ -567,6 +1330,15 @@ const rawBlogPosts: BlogPost[] = [
       { type: 'h2', content: 'Word list (kid‑friendly words + avoid rare ones)' },
       { type: 'p', content: 'Use common, familiar words: AR — car, star, park, barn, far. OR — for, horse, corn, fork, born. ER/IR/UR — her, bird, turn, surf (keep examples short and frequent).' },
       { type: 'p', content: 'Avoid rare or complex words with unusual spellings until the child has practice with common patterns.' },
+
+      { type: 'h2', content: 'Bossy-R example sets and sentence practice' },
+      { type: 'p', content: 'Parents often ask for exact examples. Use these mini sets during the week and rotate one set per day.' },
+      { type: 'li', content: 'AR set: car, star, farm, park. Sentence: "The car is far." "A star is in the dark."'},
+      { type: 'li', content: 'OR set: horn, fork, storm, corn. Sentence: "The horn is loud." "We eat corn."'},
+      { type: 'li', content: 'ER/IR/UR set: her, bird, shirt, turn, fur. Sentence: "The bird can turn." "Her shirt is purple."'},
+      { type: 'li', content: 'Sort-and-read task: mix 9 cards and ask child to sort into AR / OR / ER-IR-UR, then read each row.'},
+      { type: 'li', content: 'Parent script: "R changes the vowel sound. Let us read the chunk together: ar, or, er."'},
+      { type: 'p', content: 'When children read these sets smoothly, start adding one new bossy-R word per session while keeping at least three review words.' },
 
       { type: 'h2', content: 'Common confusions (er/ir/ur) and how to simplify' },
       { type: 'p', content: 'Many accents pronounce er/ir/ur similarly. Teach one neutral gesture for the trio and focus first on reading functional words (her, bird, turn) in context rather than perfect pronunciation.' },
@@ -1952,7 +2724,550 @@ const DEFAULT_HERO_BY_CATEGORY: Record<BlogPost['category'], string> = {
   Research: '/blog/hero-research.jpg',
 };
 
-export const blogPosts: BlogPost[] = [...rawBlogPosts]
+const WEEKLY_PARENT_GUIDE_BLOCKS: BlogBlock[] = [
+  { type: 'h2', content: 'Parent guide: how to use this weekly plan in real life' },
+  { type: 'p', content: 'Use this weekly post as a practical checklist, not a one-time read. Keep routines short, repeat the same target for 5-7 days, and track one visible win.' },
+  { type: 'li', content: 'Choose one daily slot and keep it fixed (same time, same place).' },
+  { type: 'li', content: 'Do 10-15 focused minutes only; stop while your child still feels successful.' },
+  { type: 'li', content: 'Use one correction script: "Let us try slowly, then fast."' },
+  { type: 'li', content: 'Send one weekly note to the teacher: what improved, what still needs support.' },
+];
+
+type WeeklyPlaybook = {
+  heading: string;
+  context: string;
+  routine: string[];
+  rescue: string;
+  outcomes: string[];
+  parentQuestions: string[];
+};
+
+const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
+  'week-1-phonics-satpin-launch': {
+    heading: 'Real-world action plan: SATPIN without overwhelm',
+    context: 'Do not start with heavy worksheets. Start with clear sound production, oral blending, and short decodable lines children can actually read.',
+    routine: [
+      'Day 1-2: Teach s, a, t with pure sounds. Ask for sound in under 2 seconds using flash cards.',
+      'Day 3-4: Add p, i, n and blend sat, pin, tap, tin with finger taps.',
+      'Day 5-7: Read 4 tiny lines like "Sam sat." and "Pat taps." Keep each session to 10 minutes.',
+    ],
+    rescue: 'If your child says letter names instead of sounds, model once, ask for echo twice, then return to one simple blend. If frustration rises, switch to oral-only blending for 2 minutes.',
+    outcomes: [
+      'Child recalls all six SATPIN sounds quickly.',
+      'Child blends at least five CVC words without picture guessing.',
+      'Child reads one short decodable sentence with support.',
+    ],
+    parentQuestions: [
+      'My child forgets sounds the next day. Start every session with a 90-second sound review before new words.',
+      'My child mixes b and d. Delay these letters for now and return after sound confidence is stable.',
+    ],
+  },
+  'week-2-phonics-blending-club': {
+    heading: 'Real-world action plan: blending that works on school nights',
+    context: 'Blending becomes automatic with short daily repetition. Use a fixed ladder from oral sounds to print to sentence.',
+    routine: [
+      'Start with 3 oral blends: /c/ /a/ /t/, /m/ /a/ /p/, /s/ /i/ /t/ before opening a book.',
+      'Read a CVC ladder: sat -> sit -> sip -> tip -> tap and discuss the changed middle sound.',
+      'Finish with one decodable line: "The cat sat." "I tap the map."',
+    ],
+    rescue: 'If your child guesses whole words, cover the word, reveal one sound at a time, and blend again slowly. Keep correction neutral and quick.',
+    outcomes: [
+      'Child blends 6-8 CVC words with less pausing.',
+      'Child notices vowel changes between similar words.',
+      'Child reads one short sentence by tracking each word left to right.',
+    ],
+    parentQuestions: [
+      'How long should blending practice be? Ten focused minutes daily beats one long weekend session.',
+      'Should I let my child skip hard words? No, help decode them once, then repeat for confidence.',
+    ],
+  },
+  'week-3-phonics-tricky-words': {
+    heading: 'Real-world action plan: teach tricky words without rote pressure',
+    context: 'Use a "sound part + heart part" method so children understand what is decodable and what must be remembered.',
+    routine: [
+      'Pick 3 words only for the week: said, was, the. Circle the unusual letter part.',
+      'Read each tricky word in a tiny sentence: "He said hi." "It was fun." "The dog ran."',
+      'Play snap game with word cards for 2 minutes before bed.',
+    ],
+    rescue: 'If a tricky word keeps failing, reduce to one word for two days. Use tracing in sand or air writing, then read it in a sentence.',
+    outcomes: [
+      'Child reads 2-3 target tricky words automatically.',
+      'Child can use at least one target word while reading a sentence.',
+      'Child can spell one target tricky word from memory.',
+    ],
+    parentQuestions: [
+      'How many tricky words per week? Usually 2-4 is enough for retention.',
+      'Should I test spelling daily? No, test lightly twice a week and prioritize reading use.',
+    ],
+  },
+  'week-4-phonics-long-vowels': {
+    heading: 'Real-world action plan: long vowels with clear contrasts',
+    context: 'Parents get faster results when children compare short and long vowel pairs directly instead of learning patterns in isolation.',
+    routine: [
+      'Use pair cards: cap/cape, pin/pine, tub/tube. Read short first, then long.',
+      'Teach one pattern per day: a_e Monday, i_e Tuesday, o_e Wednesday, mixed review Thursday-Friday.',
+      'Write one sentence per day using a long vowel word: "I ride the bike."',
+    ],
+    rescue: 'If child reads every vowel as short, exaggerate mouth shape and stretch the long sound once before blending the whole word.',
+    outcomes: [
+      'Child can read at least six long-vowel words with magic-e patterns.',
+      'Child can explain that final e is silent but changes the vowel.',
+      'Child can read mixed short and long vowel lines with fewer errors.',
+    ],
+    parentQuestions: [
+      'Do I teach all long vowel patterns in one week? No, one pattern at a time is more realistic.',
+      'My child says the final e. Remind: "Final e is quiet, vowel speaks."',
+    ],
+  },
+  'week-5-phonics-r-controlled': {
+    heading: 'Real-world action plan: bossy-r practice that sticks',
+    context: 'R-controlled vowels are easier when grouped by sound families and revisited through sentence reading and dictation.',
+    routine: [
+      'Day 1-2: AR family (car, star, farm, park) with a 2-minute picture sort.',
+      'Day 3-4: OR family (fork, corn, storm, short) in quick read-and-point games.',
+      'Day 5-7: ER/IR/UR mixed set (her, bird, turn, fur) plus one dictation sentence daily.',
+    ],
+    rescue: 'If your child collapses all r-vowels into one sound, split practice by family and avoid mixed lists for two days.',
+    outcomes: [
+      'Child correctly sorts words into AR, OR, and ER/IR/UR groups.',
+      'Child reads one sentence per r-controlled family.',
+      'Child spells at least four r-controlled words correctly in dictation.',
+    ],
+    parentQuestions: [
+      'Should I teach er/ir/ur separately first? Yes, but combine later because they sound similar.',
+      'My child reads car as cah. Model slowly: /c/ /ar/ and repeat in short phrases.',
+    ],
+  },
+  'week-6-phonics-comprehension': {
+    heading: 'Real-world action plan: connect decoding to understanding',
+    context: 'Children must decode and comprehend together. Keep text decodable but always ask one meaning question after each line.',
+    routine: [
+      'Read 4-6 decodable sentences and ask one who/what question after each.',
+      'Use "retell in 10 words" challenge to keep recall simple.',
+      'End with one sentence drawing: child draws and labels the key event.',
+    ],
+    rescue: 'If your child reads accurately but cannot answer, shorten text and ask questions immediately after each sentence, not at the end.',
+    outcomes: [
+      'Child answers who/what questions from short decodable text.',
+      'Child gives a simple beginning-middle-end retell for a tiny passage.',
+      'Child connects at least one decoded word to meaning in context.',
+    ],
+    parentQuestions: [
+      'Should comprehension wait until fluent reading? No, comprehension starts from first decodable texts.',
+      'What if my child answers in one word? Accept one word first, then model a full-sentence answer.',
+    ],
+  },
+  'week-7-grammar-nouns-to-paragraphs': {
+    heading: 'Real-world action plan: build grammar from word to paragraph',
+    context: 'Children need a visible ladder: noun -> sentence -> expanded sentence -> mini paragraph. Small steps prevent writing fear.',
+    routine: [
+      'Day 1-2: Noun sorting game (person/place/thing) with household examples.',
+      'Day 3-4: Make 5 simple noun-based sentences: "The boy runs." "The park is green."',
+      'Day 5-7: Expand 2 sentences with where/when details and combine into one mini paragraph.',
+    ],
+    rescue: 'If your child freezes when writing, let them speak first, scribe one line, then ask them to copy and change one word.',
+    outcomes: [
+      'Child identifies nouns in simple sentences consistently.',
+      'Child writes 3-4 linked sentences on one topic.',
+      'Child uses capitals and full stops in most lines.',
+    ],
+    parentQuestions: [
+      'Should grammar drills be separate from writing? Mix both so grammar transfers to real sentences.',
+      'My child writes only one line. Use sentence starters and ask one follow-up question per line.',
+    ],
+  },
+  'week-8-grammar-tenses': {
+    heading: 'Real-world action plan: tense control using daily life',
+    context: 'Tenses are easiest when anchored to yesterday, today, and tomorrow events from the childs routine.',
+    routine: [
+      'Use 3 sticky notes daily: Yesterday I played. Today I play. Tomorrow I will play.',
+      'Practice 5 verb triples: eat/ate/will eat, go/went/will go, read/read/will read.',
+      'Do a 60-second evening recap in all three time forms.',
+    ],
+    rescue: 'If your child mixes tense forms, reduce to one verb family at a time and repeat with gesture cues for past/present/future.',
+    outcomes: [
+      'Child chooses correct tense in short spoken and written lines.',
+      'Child writes one three-sentence timeline (past, present, future).',
+      'Child reduces random tense switching in paragraph tasks.',
+    ],
+    parentQuestions: [
+      'Do irregular verbs need separate practice? Yes, keep a small weekly list and recycle often.',
+      'Should I correct every tense error? Correct one pattern per day to avoid overload.',
+    ],
+  },
+  'week-9-grammar-conjunctions': {
+    heading: 'Real-world action plan: conjunctions for clearer ideas',
+    context: 'Children overuse "and" unless parents explicitly model different conjunction jobs: addition, contrast, reason.',
+    routine: [
+      'Teach one connector per day with a hand signal: and (add), but (contrast), because (reason).',
+      'Run "sentence combine" drills: merge two short lines into one better line.',
+      'Do a dinner-table challenge: each person says one because sentence.',
+    ],
+    rescue: 'If sentences become very long and confusing, go back to two short sentences and combine only once.',
+    outcomes: [
+      'Child uses and, but, because correctly in separate examples.',
+      'Child combines at least three sentence pairs without losing meaning.',
+      'Child starts explaining reasons in writing, not just listing facts.',
+    ],
+    parentQuestions: [
+      'Can I teach more connectors now? Add so and although only after and/but/because are stable.',
+      'My child forgets punctuation in long lines. Add comma practice only after idea clarity improves.',
+    ],
+  },
+  'week-10-grammar-subject-verb': {
+    heading: 'Real-world action plan: fix subject-verb agreement errors',
+    context: 'Agreement improves when children hear and compare pairs aloud: "He runs" versus "They run".',
+    routine: [
+      'Read pair cards daily: He runs/They run, She has/They have, It is/They are.',
+      'Use action game: parent says subject, child says correct verb form while acting it.',
+      'Write 5 short lines using mixed singular and plural subjects.',
+    ],
+    rescue: 'If errors persist, isolate one pattern per day (is/are or has/have) and postpone less common patterns.',
+    outcomes: [
+      'Child self-corrects common is/are and has/have mistakes.',
+      'Child writes mixed singular/plural sentence sets accurately.',
+      'Child reads own writing aloud and notices agreement issues.',
+    ],
+    parentQuestions: [
+      'Should I teach grammar terms first? No, pattern practice comes before terminology.',
+      'My child says correct form but writes wrong form. Add quick dictation after oral drills.',
+    ],
+  },
+  'week-11-grammar-creative-writing': {
+    heading: 'Real-world action plan: creative writing with support rails',
+    context: 'Creativity grows faster when structure is provided. Use prompt + planning frame + short drafting window.',
+    routine: [
+      'Use one prompt card daily: who, where, problem, ending.',
+      'Draft in 8 minutes with a four-sentence frame, then edit one target only.',
+      'Read the piece aloud and ask the child to improve one line with a stronger verb.',
+    ],
+    rescue: 'If your child says "I have no idea," offer two prompt choices and start with oral storytelling before writing.',
+    outcomes: [
+      'Child writes a coherent 4-6 sentence mini story.',
+      'Child adds at least one descriptive word and one dialogue or feeling line.',
+      'Child can edit one clear target (capital, punctuation, or verb choice).',
+    ],
+    parentQuestions: [
+      'Should spelling mistakes stop story flow? No, keep drafting and edit spelling later.',
+      'How do I avoid perfection pressure? Time-box writing and celebrate idea quality first.',
+    ],
+  },
+  'week-12-speaking-confidence-seeds': {
+    heading: 'Real-world action plan: confidence through tiny daily speaking wins',
+    context: 'Public speaking confidence is built in short repetitions, not in one long performance session.',
+    routine: [
+      'Use a 30-second spotlight each day: topic from school, toy, or daily event.',
+      'Practice posture, eye contact, and voice volume as separate micro-skills.',
+      'End with one specific praise line: "Your opening line was clear."',
+    ],
+    rescue: 'If your child is shy, start with audio-only recordings or speaking to one trusted person before larger audiences.',
+    outcomes: [
+      'Child speaks for 20-30 seconds with fewer filler pauses.',
+      'Child can introduce a topic with one clear opening line.',
+      'Child accepts feedback without shutting down.',
+    ],
+    parentQuestions: [
+      'Do memorized speeches help beginners? Not first. Bullet points are better for natural speech.',
+      'How many speaking sessions per week? Five short sessions work better than one long weekend practice.',
+    ],
+  },
+  'week-13-speaking-structure': {
+    heading: 'Real-world action plan: teach hook-body-close structure',
+    context: 'Children sound confident when they know where to start, what to say next, and how to end.',
+    routine: [
+      'Use 3-card format: hook, two body points, close.',
+      'Practice one-minute talks on familiar topics using this structure daily.',
+      'Record once, replay once, and ask child to self-rate clarity from 1 to 3.',
+    ],
+    rescue: 'If speech feels robotic, keep the structure but allow free wording instead of memorized sentences.',
+    outcomes: [
+      'Child uses opening, body, and closing in order.',
+      'Child includes two relevant supporting details.',
+      'Child ends with a complete closing line instead of trailing off.',
+    ],
+    parentQuestions: [
+      'Should I give full scripts? Give bullet points only, then let child phrase naturally.',
+      'My child rushes through the speech. Add pause marks between sections during rehearsal.',
+    ],
+  },
+  'week-14-speaking-visual-aids': {
+    heading: 'Real-world action plan: visual aids that support speech',
+    context: 'Visuals should clarify one key idea, not distract. One prop or one slide is enough for beginners.',
+    routine: [
+      'Pick one object per talk (book, toy, chart) and explain why it matters.',
+      'Use "show, explain, connect" pattern: show item, explain detail, connect to message.',
+      'Practice pointing and looking back at audience, not only at the visual.',
+    ],
+    rescue: 'If child depends on the prop too much, hide it for final 15 seconds and ask for verbal summary.',
+    outcomes: [
+      'Child uses one visual aid naturally during a short talk.',
+      'Child maintains audience eye contact between visual references.',
+      'Child explains the visual in clear, complete sentences.',
+    ],
+    parentQuestions: [
+      'Do slides help younger kids? Usually a physical object works better than slides for early speakers.',
+      'What if visual fails online? Teach a backup no-visual version of the same talk.',
+    ],
+  },
+  'week-15-speaking-debate-starters': {
+    heading: 'Real-world action plan: beginner debate without argument stress',
+    context: 'Debate skills start with respectful disagreement and simple evidence, not competitive pressure.',
+    routine: [
+      'Use one child-friendly motion daily: homework time, screen limits, uniforms.',
+      'Teach CER mini-frame: claim, reason, example in 45-60 seconds.',
+      'Run role-swap rounds where child argues both sides once.',
+    ],
+    rescue: 'If debates become emotional, pause and switch to sentence stems: "I think... because..." and "I understand... but..."',
+    outcomes: [
+      'Child states a clear position in one sentence.',
+      'Child supports opinion with at least one reason and example.',
+      'Child listens and responds politely to a different view.',
+    ],
+    parentQuestions: [
+      'Should I correct content opinions? Focus on reasoning quality and tone, not agreement.',
+      'My child repeats one point. Ask for one new reason before ending the round.',
+    ],
+  },
+  'week-16-phonics-summer-plan': {
+    heading: 'Real-world action plan: summer phonics without learning loss',
+    context: 'A light, repeatable summer routine protects reading accuracy and confidence better than irregular intensive sessions.',
+    routine: [
+      'Follow 4-day cycle: sound review, blending, decodable reading, spelling dictation.',
+      'Use travel-friendly materials: 20 word cards, one notebook, one timer.',
+      'Keep a weekly scorecard: words read correctly, words spelled correctly, confidence level.',
+    ],
+    rescue: 'If routine breaks during travel, run a 5-minute oral-only session in car or at bedtime and resume full practice next day.',
+    outcomes: [
+      'Child maintains reading level across holiday weeks.',
+      'Child retains core phonics patterns already taught.',
+      'Parent can identify exactly which pattern needs revision after breaks.',
+    ],
+    parentQuestions: [
+      'Can I skip practice on vacation? Skip occasionally, but keep at least 4 sessions per week.',
+      'What is minimum summer workload? Ten minutes daily or 40-50 minutes spread across the week.',
+    ],
+  },
+  'week-17-grammar-assessment': {
+    heading: 'Real-world action plan: low-stress grammar assessment at home',
+    context: 'Assessment should guide next teaching steps, not label the child. Keep checks short and skill-specific.',
+    routine: [
+      'Run three 5-minute checks: sentence correction, tense usage, and punctuation application.',
+      'Mark with a simple rubric: green (secure), amber (needs practice), red (reteach).',
+      'Choose only two amber/red targets for next week to avoid overload.',
+    ],
+    rescue: 'If child gets anxious, call it a "checkpoint game," allow oral answers first, then convert to writing.',
+    outcomes: [
+      'Parent gets a clear map of strengths and gaps.',
+      'Child understands one to two priority targets for next week.',
+      'Practice plan is based on evidence, not guesswork.',
+    ],
+    parentQuestions: [
+      'How often should I assess? Light weekly checks and a deeper check once every 4 weeks.',
+      'Should I compare siblings? No, compare each child to their own previous baseline.',
+    ],
+  },
+  'week-18-speaking-video-feedback': {
+    heading: 'Real-world action plan: use video feedback without pressure',
+    context: 'Short recordings help children notice posture, voice, and pacing quickly when feedback stays specific and kind.',
+    routine: [
+      'Record 30-60 second talks on phone using one topic and one retake max.',
+      'Review with a 3-point checklist: voice clear, eye contact, full ending line.',
+      'Set one improvement target per recording and re-record after 24 hours.',
+    ],
+    rescue: 'If child dislikes seeing themselves on video, play audio first, discuss positives, then show only first 10 seconds.',
+    outcomes: [
+      'Child identifies one personal speaking strength independently.',
+      'Child improves one measurable speaking behavior across two recordings.',
+      'Parent feedback becomes specific instead of general praise.',
+    ],
+    parentQuestions: [
+      'How many recordings per week? Two or three are enough for progress.',
+      'Should mistakes be edited out? No, raw recordings are useful for authentic self-review.',
+    ],
+  },
+  'week-19-phonics-multisyllabic': {
+    heading: 'Real-world action plan: multisyllabic decoding step by step',
+    context: 'Long-word reading improves when children learn syllable chunking and stress patterns before speed.',
+    routine: [
+      'Teach clap-and-chunk with words like sunset, rabbit, picnic, market.',
+      'Mark syllable splits visually and blend chunks: sun-set, pic-nic, mar-ket.',
+      'Add one 2-3 syllable word to each decodable reading session.',
+    ],
+    rescue: 'If child guesses long words, cover ending, decode first chunk, then reveal next chunk and blend.',
+    outcomes: [
+      'Child decodes familiar two-syllable words without panic.',
+      'Child uses chunking strategy independently on new words.',
+      'Child reads short passages with fewer breakdowns on longer words.',
+    ],
+    parentQuestions: [
+      'Should I teach syllable rules all at once? No, start with closed syllables and compound words first.',
+      'My child reads chunks but misses meaning. Ask for quick meaning check after decoding.',
+    ],
+  },
+  'week-20-grammar-editing-camp': {
+    heading: 'Real-world action plan: editing skills children can transfer to school writing',
+    context: 'Editing should be a routine skill. Use one clear checklist so children know what to scan first.',
+    routine: [
+      'Use COPS order daily: Capitals, Organization, Punctuation, Spelling.',
+      'Edit one short paragraph together with colored pens for each error type.',
+      'Have child do final read-aloud to catch missing words or awkward phrasing.',
+    ],
+    rescue: 'If editing feels overwhelming, cut paragraph length in half and fix only one category per pass.',
+    outcomes: [
+      'Child independently checks capitals and full stops first.',
+      'Child can find and fix at least three errors in a short paragraph.',
+      'Child begins submitting cleaner writing at school.',
+    ],
+    parentQuestions: [
+      'Is editing before drafting okay? No, draft first, edit second for smoother writing flow.',
+      'How do I stop over-correction? Limit parent corrections to one teachable pattern each day.',
+    ],
+  },
+  'week-21-speaking-competition-prep': {
+    heading: 'Real-world action plan: competition prep with calm confidence',
+    context: 'Competition success comes from stable routines: script clarity, timed rehearsal, and confidence management.',
+    routine: [
+      'Break speech into sections and rehearse with timer in 45-second chunks.',
+      'Practice stage entry, pause, and opening line separately every day.',
+      'Run two mock rounds with family judging on clarity, structure, and confidence.',
+    ],
+    rescue: 'If performance anxiety spikes, shorten speech by 20 percent, add breathing reset, and prioritize clean delivery over complexity.',
+    outcomes: [
+      'Child delivers full speech within time limit.',
+      'Child uses planned pauses and clear transitions.',
+      'Child handles one unexpected interruption and restarts calmly.',
+    ],
+    parentQuestions: [
+      'Should child memorize word for word? Use cue cards and section memory to reduce blanking risk.',
+      'How close to event should rehearsals stop? Do light rehearsal day before, no heavy drilling.',
+    ],
+  },
+  'week-22-phonics-diagnostics': {
+    heading: 'Real-world action plan: diagnostics that lead to targeted fixes',
+    context: 'Diagnostics are useful only when they produce a specific reteach plan with measurable goals.',
+    routine: [
+      'Check 5 domains: sound recall, blending, decoding, spelling, and connected reading.',
+      'Log error patterns by type, such as vowel confusion or skipped blends.',
+      'Create 7-day reteach plan focused on top two error patterns only.',
+    ],
+    rescue: 'If too many gaps appear, start with foundation errors first because advanced errors usually improve after base repair.',
+    outcomes: [
+      'Parent can name exact weak patterns, not just "reading is weak."',
+      'Child receives focused reteach tasks matched to real errors.',
+      'Progress can be rechecked after one week with clear metrics.',
+    ],
+    parentQuestions: [
+      'Should diagnostics be timed? Start untimed, then add light timing only after accuracy stabilizes.',
+      'Can I diagnose through homework only? No, include oral reading to catch hidden decoding issues.',
+    ],
+  },
+  'week-23-grammar-speaking-bridge': {
+    heading: 'Real-world action plan: turn grammar knowledge into spoken fluency',
+    context: 'Children often know grammar in notebooks but not in speech. Bridge tasks make grammar usable in conversation.',
+    routine: [
+      'Take one written sentence and ask child to say it three ways: simple, expanded, and with reason.',
+      'Use daily retell task where child must include target grammar pattern.',
+      'Record a 45-second explanation and check for grammar target usage.',
+    ],
+    rescue: 'If spoken grammar collapses under pressure, reduce speaking length and focus on one target form per talk.',
+    outcomes: [
+      'Child applies grammar targets during spontaneous speaking.',
+      'Child produces cleaner sentence forms in both speech and writing.',
+      'Parent sees transfer from worksheet accuracy to real communication.',
+    ],
+    parentQuestions: [
+      'Should spoken errors be corrected immediately? Correct after child finishes to preserve confidence.',
+      'How do I make transfer visible? Track one grammar target across writing and speaking samples weekly.',
+    ],
+  },
+  'week-24-speaking-family-showcase': {
+    heading: 'Real-world action plan: family showcase that feels safe and joyful',
+    context: 'A predictable showcase routine helps children practice speaking for real audiences without fear.',
+    routine: [
+      'Plan 2-minute performances with one fixed order and one timekeeper.',
+      'Rehearse opening and closing lines on two separate days before event night.',
+      'After each child, give one specific appreciation and one optional next step.',
+    ],
+    rescue: 'If a child refuses to perform, allow partner speaking with parent first, then invite solo attempt later.',
+    outcomes: [
+      'Child completes a short presentation for family audience.',
+      'Child experiences speaking as celebration, not correction.',
+      'Parent establishes monthly showcase rhythm with minimal setup.',
+    ],
+    parentQuestions: [
+      'Should guests give corrections? No, showcase night is for encouragement; coaching comes next day.',
+      'What if siblings compete for attention? Set clear turns and praise different strengths per child.',
+    ],
+  },
+  'week-25-back-to-school-plan': {
+    heading: 'Real-world action plan: back-to-school reset parents can sustain',
+    context: 'The goal is not cramming. The goal is predictable routines that rebuild confidence across phonics, grammar, and speaking.',
+    routine: [
+      'Run a 3-track week: phonics refresh Monday/Thursday, grammar Tuesday/Friday, speaking Wednesday/Saturday.',
+      'Keep each session 10-15 minutes with one clear target and one simple tracker entry.',
+      'Use Sunday review: what improved, what remains hard, what to focus next week.',
+    ],
+    rescue: 'If routines break due to school load, restart with 5-minute versions for three days, then return to full plan.',
+    outcomes: [
+      'Child restarts school with less hesitation in reading and speaking tasks.',
+      'Parent has a practical weekly plan that fits real schedules.',
+      'Progress conversation with teachers becomes specific and data-backed.',
+    ],
+    parentQuestions: [
+      'Should I push harder in first week of school? Keep support light and consistent to avoid burnout.',
+      'How do I know if plan is working? Track weekly reading ease, writing clarity, and speaking confidence ratings.',
+    ],
+  },
+};
+
+function buildWeeklyPlaybookBlocks(playbook: WeeklyPlaybook): BlogBlock[] {
+  const routineBlocks = playbook.routine.map((content): BlogBlock => ({ type: 'li', content }));
+  const outcomeBlocks = playbook.outcomes.map((content): BlogBlock => ({ type: 'li', content }));
+  const questionBlocks = playbook.parentQuestions.map((content): BlogBlock => ({ type: 'li', content }));
+  return [
+    { type: 'h2', content: playbook.heading },
+    { type: 'p', content: playbook.context },
+    { type: 'h3', content: '10-minute at-home routine (realistic for busy parents)' },
+    ...routineBlocks,
+    { type: 'h3', content: 'If your child gets stuck' },
+    { type: 'p', content: playbook.rescue },
+    { type: 'h3', content: 'End-of-week success signs' },
+    ...outcomeBlocks,
+    { type: 'h3', content: 'Parents also ask this week' },
+    ...questionBlocks,
+  ];
+}
+
+function enrichWeekPost(post: BlogPost): BlogPost {
+  if (!/^week-\d+-/.test(post.slug)) return post;
+  let body = post.body;
+  const hasGuide = body.some((b) => b.type === 'h2' && b.content === 'Parent guide: how to use this weekly plan in real life');
+  if (!hasGuide) {
+    body = [...body, ...WEEKLY_PARENT_GUIDE_BLOCKS];
+  }
+
+  const playbook = WEEKLY_REAL_WORLD_PLAYBOOKS[post.slug];
+  if (playbook) {
+    const playbookBlocks = buildWeeklyPlaybookBlocks(playbook);
+    const playbookHeading = playbookBlocks.find((b) => b.type === 'h2')?.content;
+    const hasPlaybook = !!playbookHeading && body.some((b) => b.type === 'h2' && b.content === playbookHeading);
+    if (!hasPlaybook) {
+      body = [...body, ...playbookBlocks];
+    }
+  }
+
+  return {
+    ...post,
+    body,
+  };
+}
+
+const normalizedBlogPosts: BlogPost[] = rawBlogPosts.map((p) => ({
+  ...enrichWeekPost(p),
+  date: BLOG_PUBLICATION_DATES[p.slug] ?? p.date,
+}));
+
+export const blogPosts: BlogPost[] = [...normalizedBlogPosts]
   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   .map((p) => ({
     ...p,
