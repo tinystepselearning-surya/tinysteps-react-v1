@@ -136,6 +136,7 @@ export type DemoHistoryAction =
   | 'claimed'
   | 'schedule_updated'
   | 'completed'
+  | 'reschedule_created'
   | 'reassigned'
   | 'cancelled'
   | 'released'
@@ -181,6 +182,8 @@ export interface DemoSession {
   recommendedNextStep?: DemoRecommendedNextStep | null;
   releasedAt?: Timestamp | null;
   reopenedAt?: Timestamp | null;
+  rescheduledFromDemoId?: string | null;
+  rescheduledToDemoId?: string | null;
   history?: DemoSessionHistoryEntry[] | null;
   conversionStatus?: DemoConversionStatus | null;
   recommendedCourse?: string | null;

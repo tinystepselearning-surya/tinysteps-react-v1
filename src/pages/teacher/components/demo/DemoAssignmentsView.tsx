@@ -430,7 +430,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
 
     setCompleting(true);
     try {
-      await completeDemoSession({
+      const result = await completeDemoSession({
         demoId: completeTarget.id,
         outcome,
         teacherRemarks: remarks,
@@ -445,7 +445,14 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
       });
       setCompleteTarget(null);
       setActiveTab('completed');
-      toast({ title: 'Demo marked complete' });
+      if (outcome === 'reschedule_requested' && result.rescheduledDemoId) {
+        toast({
+          title: 'Reschedule requested',
+          description: 'Current record is closed and a new open demo request has been created.',
+        });
+      } else {
+        toast({ title: 'Demo marked complete' });
+      }
     } catch (error: any) {
       toast({
         title: 'Unable to complete demo',
@@ -496,7 +503,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
           <TabsTrigger value="completed">Completed Demos</TabsTrigger>
         </TabsList>
         <p className="mt-2 text-xs text-muted-foreground">
-          In this MVP, choosing “Reschedule Requested” closes the current demo record and moves it to Completed Demos.
+          Choosing “Reschedule Requested” closes the current record and automatically creates a new open demo request.
         </p>
 
         <TabsContent value="available" className="mt-4 space-y-3">
@@ -710,7 +717,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
           </DialogHeader>
           <form className="space-y-3" onSubmit={handleCompleteSubmit}>
             <p className="text-xs text-muted-foreground">
-              Selecting “Reschedule Requested” will still close this record for now.
+              Selecting “Reschedule Requested” closes this record and creates a new open demo request automatically.
             </p>
             <div className="space-y-2">
               <Label>Outcome *</Label>

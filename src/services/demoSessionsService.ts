@@ -101,6 +101,8 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
     recommendedNextStep: null,
     releasedAt: null,
     reopenedAt: null,
+    rescheduledFromDemoId: null,
+    rescheduledToDemoId: null,
     history: [
       {
         action: 'created',
@@ -247,6 +249,7 @@ interface CompleteDemoSessionPayload {
 interface DemoSessionCallableResponse {
   ok: boolean;
   status: DemoSessionStatus;
+  rescheduledDemoId?: string;
 }
 
 export async function claimDemoSession(payload: ClaimDemoSessionPayload): Promise<DemoSessionCallableResponse> {

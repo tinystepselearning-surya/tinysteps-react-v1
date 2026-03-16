@@ -240,6 +240,7 @@ interface DemoSessionCallableResponse {
   ok: boolean;
   demoId: string;
   status: DemoStatus;
+  rescheduledDemoId?: string;
 }
 
 export const claimDemoSession = onCall<ClaimDemoSessionRequest>(
@@ -466,6 +467,8 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
 
     const db = admin.firestore();
     const demoRef = db.collection('demoSessions').doc(demoId);
+    const privateRef = db.collection('demoSessionsPrivate').doc(demoId);
+    let rescheduledDemoId: string | null = null;
 
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(demoRef);
@@ -477,6 +480,17 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         status?: string;
         assignedTeacherId?: string | null;
         history?: unknown;
+        parentName?: string | null;
+        childName?: string | null;
+        childGrade?: string | null;
+        childAge?: number | null;
+        courseInterested?: string | null;
+        source?: string | null;
+        demoMode?: string | null;
+        preferredDateTimeText?: string | null;
+        timezone?: string | null;
+        adminNotes?: string | null;
+        rescheduledFromDemoId?: string | null;
       };
 
       if (demo.status !== 'assigned') {
@@ -487,7 +501,12 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         throw new HttpsError('permission-denied', 'Only assigned teacher can complete this demo');
       }
 
-      tx.update(demoRef, {
+      const baseHistory = appendHistoryEntry(
+        demo.history,
+        makeHistoryEntry('completed', caller, `Outcome: ${outcome}`),
+      );
+
+      const updatePayload: Record<string, unknown> = {
         status: 'completed',
         outcome,
         teacherRemarks,
@@ -499,20 +518,109 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         attentionSpan,
         parentExpectation,
         recommendedNextStep,
-        history: appendHistoryEntry(
-          demo.history,
-          makeHistoryEntry('completed', caller, `Outcome: ${outcome}`),
-        ),
+        history: baseHistory,
         completedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUpdatedBy: caller.uid,
-      });
+      };
+
+      if (outcome === 'reschedule_requested') {
+        const followUpDemoRef = db.collection('demoSessions').doc();
+        const followUpPrivateRef = db.collection('demoSessionsPrivate').doc(followUpDemoRef.id);
+        const privateSnap = await tx.get(privateRef);
+
+        const followUpPreferredSlot =
+          pickOptionalText(demo.preferredDateTimeText, 500) || 'Reschedule requested by parent';
+        const followUpNote = `Auto-created from reschedule of demo ${demoId}.`;
+        const carryAdminNotes = pickOptionalText(demo.adminNotes, 2000);
+        const combinedAdminNotes = carryAdminNotes
+          ? `${carryAdminNotes}\n${followUpNote}`
+          : followUpNote;
+
+        tx.set(followUpDemoRef, {
+          parentName: pickOptionalText(demo.parentName, 120) || 'Parent',
+          childName: pickOptionalText(demo.childName, 120) || 'Child',
+          childGrade: pickOptionalText(demo.childGrade, 60) || 'N/A',
+          childAge: typeof demo.childAge === 'number' ? demo.childAge : null,
+          courseInterested: pickOptionalText(demo.courseInterested, 120) || 'General',
+          source: pickOptionalText(demo.source, 120),
+          demoMode: pickOptionalText(demo.demoMode, 120),
+          preferredDateTimeText: followUpPreferredSlot,
+          timezone: pickOptionalText(demo.timezone, 120),
+          adminNotes: combinedAdminNotes,
+          status: 'open',
+          assignedTeacherId: null,
+          assignedTeacherName: null,
+          assignedAt: null,
+          teacherConfirmedDate: null,
+          teacherConfirmedTime: null,
+          teacherPreDemoNote: null,
+          outcome: null,
+          teacherRemarks: null,
+          teacherRecommendation: null,
+          childLevelObserved: null,
+          readingLevel: null,
+          phonicsAwareness: null,
+          speakingConfidence: null,
+          attentionSpan: null,
+          parentExpectation: null,
+          recommendedNextStep: null,
+          releasedAt: null,
+          reopenedAt: null,
+          rescheduledFromDemoId: demoId,
+          rescheduledToDemoId: null,
+          history: [
+            makeHistoryEntry('created', caller, `Follow-up demo created from reschedule of ${demoId}`),
+          ],
+          conversionStatus: null,
+          recommendedCourse: null,
+          recommendedClassType: null,
+          recommendedFrequency: null,
+          feeDiscussed: null,
+          followUpDate: null,
+          completedAt: null,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdBy: caller.uid,
+          lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdatedBy: caller.uid,
+        });
+
+        if (privateSnap.exists) {
+          const privateData = privateSnap.data() as { parentPhone?: string };
+          const parentPhone = pickOptionalText(privateData.parentPhone, 60);
+          if (parentPhone) {
+            tx.set(followUpPrivateRef, {
+              parentPhone,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              createdBy: caller.uid,
+              lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              lastUpdatedBy: caller.uid,
+            });
+          }
+        }
+
+        updatePayload.rescheduledToDemoId = followUpDemoRef.id;
+        updatePayload.history = appendHistoryEntry(
+          baseHistory,
+          makeHistoryEntry(
+            'reschedule_created',
+            caller,
+            `Created follow-up demo ${followUpDemoRef.id}`,
+          ),
+        );
+        rescheduledDemoId = followUpDemoRef.id;
+      } else {
+        updatePayload.rescheduledToDemoId = null;
+      }
+
+      tx.update(demoRef, updatePayload);
     });
 
     return {
       ok: true,
       demoId,
       status: 'completed',
+      rescheduledDemoId: rescheduledDemoId || undefined,
     };
   },
 );
@@ -780,6 +888,7 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
         parentExpectation: null,
         recommendedNextStep: null,
         completedAt: null,
+        rescheduledToDemoId: null,
         reopenedAt: admin.firestore.FieldValue.serverTimestamp(),
         history: appendHistoryEntry(demo.history, makeHistoryEntry('reopened', caller, 'Demo reopened')),
         lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),

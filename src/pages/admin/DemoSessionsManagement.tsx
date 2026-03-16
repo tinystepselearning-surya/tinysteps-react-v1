@@ -93,6 +93,20 @@ const formatTs = (value: unknown): string => {
   }).format(date);
 };
 
+const toMs = (value: unknown): number => {
+  const date = asDate(value);
+  return date ? date.getTime() : 0;
+};
+
+const getWeekStartMs = (): number => {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
+  start.setHours(0, 0, 0, 0);
+  return start.getTime();
+};
+
 const statusBadgeVariant = (status: DemoSessionStatus): 'default' | 'secondary' | 'outline' => {
   if (status === 'open') return 'outline';
   if (status === 'assigned') return 'secondary';
@@ -117,6 +131,7 @@ const formatHistoryAction = (action?: string) => {
   if (action === 'claimed') return 'Claimed';
   if (action === 'schedule_updated') return 'Schedule Updated';
   if (action === 'completed') return 'Completed';
+  if (action === 'reschedule_created') return 'Reschedule Follow-up Created';
   if (action === 'reassigned') return 'Reassigned';
   if (action === 'cancelled') return 'Cancelled';
   if (action === 'released') return 'Released';
@@ -294,6 +309,62 @@ export default function DemoSessionsManagement() {
     () => sessions.filter((session) => session.status === 'completed' || session.status === 'cancelled'),
     [sessions],
   );
+
+  const weekStartMs = useMemo(() => getWeekStartMs(), []);
+
+  const createdThisWeekCount = useMemo(
+    () => sessions.filter((session) => toMs(session.createdAt) >= weekStartMs).length,
+    [sessions, weekStartMs],
+  );
+
+  const completedThisWeekCount = useMemo(
+    () => sessions.filter((session) => toMs(session.completedAt) >= weekStartMs).length,
+    [sessions, weekStartMs],
+  );
+
+  const convertedThisWeekCount = useMemo(
+    () =>
+      sessions.filter(
+        (session) =>
+          session.conversionStatus === 'enrolled' &&
+          toMs(session.lastUpdatedAt || session.createdAt) >= weekStartMs,
+      ).length,
+    [sessions, weekStartMs],
+  );
+
+  const lostThisWeekCount = useMemo(
+    () =>
+      sessions.filter(
+        (session) =>
+          (session.conversionStatus === 'not_interested' || session.conversionStatus === 'wrong_fit') &&
+          toMs(session.lastUpdatedAt || session.createdAt) >= weekStartMs,
+      ).length,
+    [sessions, weekStartMs],
+  );
+
+  const noShowThisWeekCount = useMemo(
+    () =>
+      sessions.filter(
+        (session) =>
+          (session.outcome === 'parent_no_show' || session.outcome === 'teacher_no_show') &&
+          toMs(session.completedAt) >= weekStartMs,
+      ).length,
+    [sessions, weekStartMs],
+  );
+
+  const teacherHandledThisWeek = useMemo(() => {
+    const counts = new Map<string, number>();
+    sessions.forEach((session) => {
+      if (toMs(session.completedAt) < weekStartMs) return;
+      const teacherName = (session.assignedTeacherName || '').trim();
+      if (!teacherName) return;
+      counts.set(teacherName, (counts.get(teacherName) || 0) + 1);
+    });
+
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, 8);
+  }, [sessions, weekStartMs]);
 
   const tabSessions = useMemo(() => {
     if (activeTab === 'open') return openSessions;
@@ -777,8 +848,50 @@ export default function DemoSessionsManagement() {
           <Badge variant="secondary">Assigned: {assignedSessions.length}</Badge>
           <Badge>Closed: {closedSessions.length}</Badge>
         </div>
+        <div className="mb-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <Card className="p-3">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Created This Week</div>
+            <div className="mt-1 text-xl font-semibold">{createdThisWeekCount}</div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Assigned Now</div>
+            <div className="mt-1 text-xl font-semibold">{assignedSessions.length}</div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed This Week</div>
+            <div className="mt-1 text-xl font-semibold">{completedThisWeekCount}</div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Converted This Week</div>
+            <div className="mt-1 text-xl font-semibold">{convertedThisWeekCount}</div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Lost This Week</div>
+            <div className="mt-1 text-xl font-semibold">{lostThisWeekCount}</div>
+          </Card>
+          <Card className="p-3">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">No-show This Week</div>
+            <div className="mt-1 text-xl font-semibold">{noShowThisWeekCount}</div>
+          </Card>
+        </div>
+        <div className="mb-4 rounded-lg border p-3">
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Teacher-wise Demos Handled (This Week)
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {teacherHandledThisWeek.length === 0 ? (
+              <span className="text-sm text-muted-foreground">No completed demos this week yet.</span>
+            ) : (
+              teacherHandledThisWeek.map(([teacherName, count]) => (
+                <Badge key={teacherName} variant="outline">
+                  {teacherName}: {count}
+                </Badge>
+              ))
+            )}
+          </div>
+        </div>
         <p className="mb-4 text-xs text-muted-foreground">
-          Completed includes closed outcomes like no-show, follow-up needed, and reschedule requested.
+          Completed includes closed outcomes like no-show and follow-up needed. Reschedule requested closes this record and auto-creates a new Open demo.
         </p>
         <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-1 md:col-span-2 xl:col-span-4">
@@ -913,6 +1026,8 @@ export default function DemoSessionsManagement() {
                           <div>Completed: {formatTs(session.completedAt)}</div>
                           <div>Released: {formatTs(session.releasedAt)}</div>
                           <div>Reopened: {formatTs(session.reopenedAt)}</div>
+                          {session.rescheduledFromDemoId && <div>Rescheduled From: {session.rescheduledFromDemoId}</div>}
+                          {session.rescheduledToDemoId && <div>Rescheduled To: {session.rescheduledToDemoId}</div>}
                           <div>Last Updated: {formatTs(session.lastUpdatedAt || session.createdAt)}</div>
                           {Array.isArray(session.history) && session.history.length > 0 && (
                             <div className="pt-1">
