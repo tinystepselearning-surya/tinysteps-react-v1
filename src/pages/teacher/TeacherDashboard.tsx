@@ -93,7 +93,7 @@ const AccessNotice = ({ children }: { children: React.ReactNode }) => (
 
 const TAB_ITEMS = [
   { id: 'today', label: "Today's Sessions" },
-  { id: 'demo-assignments', label: 'Demo Assignments' },
+  { id: 'demo-assignments', label: 'Demo Classes' },
   { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
@@ -259,7 +259,7 @@ export default function TeacherDashboard() {
               </React.Suspense>
             </TabsContent>
 
-            {/* Demo Assignments */}
+            {/* Demo Classes */}
             <TabsContent value="demo-assignments">
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading demo assignments…</div>}>
                 <DemoAssignmentsView teacherId={teacherId} />

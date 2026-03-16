@@ -28,6 +28,7 @@ import type {
   CreateDemoSessionInput,
   DemoClassType,
   DemoConversionStatus,
+  DemoFollowUpCallStatus,
   DemoSession,
   DemoSessionStatus,
 } from '../../types/models';
@@ -72,6 +73,62 @@ const INITIAL_FORM: DemoFormState = {
   timezone: '',
   adminNotes: '',
 };
+
+const COURSE_OPTIONS = [
+  'Phonics',
+  'Grammar',
+  'Public Speaking',
+  'Reading',
+  'Writing',
+  'Combo',
+  'Not Sure Yet',
+] as const;
+
+const SOURCE_OPTIONS = [
+  'WhatsApp',
+  'Website',
+  'Referral',
+  'Instagram',
+  'Facebook',
+  'Existing Parent',
+  'Other',
+] as const;
+
+const DEMO_MODE_OPTIONS = [
+  'Zoom',
+  'Google Meet',
+  'Microsoft Teams',
+  'Phone Call',
+  'WhatsApp Call',
+] as const;
+
+const TIMEZONE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'IST', label: 'IST (UTC+05:30) - India Standard Time' },
+  { value: 'PST', label: 'PST (UTC-08:00) - Pacific Standard Time' },
+  { value: 'CST', label: 'CST (UTC-06:00) - Central Standard Time' },
+  { value: 'EST', label: 'EST (UTC-05:00) - Eastern Standard Time' },
+  { value: 'UAE', label: 'UAE (UTC+04:00) - Gulf Standard Time' },
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (UTC+05:30)' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (UTC+04:00)' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (UTC+08:00)' },
+  { value: 'Asia/Hong_Kong', label: 'Asia/Hong_Kong (UTC+08:00)' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo (UTC+09:00)' },
+  { value: 'Asia/Shanghai', label: 'Asia/Shanghai (UTC+08:00)' },
+  { value: 'Europe/London', label: 'Europe/London (UTC+00:00)' },
+  { value: 'Europe/Amsterdam', label: 'Europe/Amsterdam (UTC+01:00)' },
+  { value: 'Europe/Paris', label: 'Europe/Paris (UTC+01:00)' },
+  { value: 'Europe/Berlin', label: 'Europe/Berlin (UTC+01:00)' },
+  { value: 'America/New_York', label: 'America/New_York (UTC-05:00)' },
+  { value: 'America/Chicago', label: 'America/Chicago (UTC-06:00)' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (UTC-08:00)' },
+  { value: 'America/Denver', label: 'America/Denver (UTC-07:00)' },
+  { value: 'America/Toronto', label: 'America/Toronto (UTC-05:00)' },
+  { value: 'America/Vancouver', label: 'America/Vancouver (UTC-08:00)' },
+  { value: 'America/Sao_Paulo', label: 'America/Sao_Paulo (UTC-03:00)' },
+  { value: 'Australia/Sydney', label: 'Australia/Sydney (UTC+10:00)' },
+  { value: 'Africa/Johannesburg', label: 'Africa/Johannesburg (UTC+02:00)' },
+  { value: 'Other', label: 'Other' },
+];
 
 const asDate = (value: unknown): Date | null => {
   if (!value) return null;
@@ -162,6 +219,13 @@ const formatConversionStatus = (status?: DemoConversionStatus | null) => {
     .join(' ');
 };
 
+const formatCallStatus = (status?: DemoFollowUpCallStatus | null) => {
+  if (!status) return '—';
+  if (status === 'not_reachable') return 'Not Reachable';
+  if (status === 'not_required') return 'Not Required';
+  return status[0].toUpperCase() + status.slice(1);
+};
+
 const sanitizePhoneForWhatsApp = (value: string) => value.replace(/[^\d]/g, '');
 
 const copyText = async (value: string): Promise<void> => {
@@ -215,6 +279,27 @@ const buildWhatsappMessage = (session: DemoSession) => {
     .join('\n');
 };
 
+const buildFollowUpMessage = (session: DemoSession) => {
+  return [
+    `Hi ${session.parentName},`,
+    `Following up on ${session.childName}'s demo class.`,
+    session.recommendedCourse ? `Recommended course: ${session.recommendedCourse}.` : '',
+    session.recommendedClassType
+      ? `Suggested format: ${session.recommendedClassType === 'one_to_one' ? '1:1' : 'Group'}.`
+      : '',
+    session.recommendedFrequency ? `Suggested frequency: ${session.recommendedFrequency}.` : '',
+    session.followUpDate ? `Next follow-up date: ${session.followUpDate}.` : '',
+    session.followUpCallStatus ? `Call status: ${formatCallStatus(session.followUpCallStatus)}.` : '',
+    session.admissionNotConfirmedReason
+      ? `If not confirmed yet, reason noted: ${session.admissionNotConfirmedReason}.`
+      : '',
+    'Please let us know your preferred next step.',
+    'Thank you.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+};
+
 export default function DemoSessionsManagement() {
   const { toast } = useToast();
   const { user } = useAuthStore();
@@ -239,7 +324,11 @@ export default function DemoSessionsManagement() {
   const [recommendedFrequency, setRecommendedFrequency] = useState('');
   const [feeDiscussed, setFeeDiscussed] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpCallStatus, setFollowUpCallStatus] = useState<string>('none');
+  const [followUpCallCompletedAt, setFollowUpCallCompletedAt] = useState('');
+  const [admissionNotConfirmedReason, setAdmissionNotConfirmedReason] = useState('');
   const [savingAction, setSavingAction] = useState<string | null>(null);
+  const [expandedTimelineRows, setExpandedTimelineRows] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const unsubSessions = listenAllDemoSessions(
@@ -452,6 +541,22 @@ export default function DemoSessionsManagement() {
       return;
     }
 
+    if (
+      !form.parentName.trim() ||
+      !form.parentPhone.trim() ||
+      !form.childName.trim() ||
+      !form.childGrade.trim() ||
+      !form.courseInterested.trim() ||
+      !form.preferredDateTimeText.trim()
+    ) {
+      toast({
+        title: 'Missing required fields',
+        description: 'Please fill all required fields before creating the demo request.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const payload: CreateDemoSessionInput = {
       parentName: form.parentName,
       parentPhone: form.parentPhone,
@@ -498,6 +603,9 @@ export default function DemoSessionsManagement() {
     setRecommendedFrequency(session.recommendedFrequency || '');
     setFeeDiscussed(session.feeDiscussed || '');
     setFollowUpDate(session.followUpDate || '');
+    setFollowUpCallStatus(session.followUpCallStatus || 'none');
+    setFollowUpCallCompletedAt(session.followUpCallCompletedAt || '');
+    setAdmissionNotConfirmedReason(session.admissionNotConfirmedReason || '');
   };
 
   const handleSaveConversion = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -516,6 +624,10 @@ export default function DemoSessionsManagement() {
         recommendedFrequency: recommendedFrequency.trim() || null,
         feeDiscussed: feeDiscussed.trim() || null,
         followUpDate: followUpDate || null,
+        followUpCallStatus:
+          followUpCallStatus === 'none' ? null : (followUpCallStatus as DemoFollowUpCallStatus),
+        followUpCallCompletedAt: followUpCallCompletedAt || null,
+        admissionNotConfirmedReason: admissionNotConfirmedReason.trim() || null,
         updatedBy: user.uid,
       });
       setConversionTarget(null);
@@ -683,6 +795,19 @@ export default function DemoSessionsManagement() {
     }
   };
 
+  const handleCopyFollowUpMessage = async (session: DemoSession) => {
+    try {
+      await copyText(buildFollowUpMessage(session));
+      toast({ title: 'Follow-up message copied' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to copy follow-up message',
+        description: error?.message || 'Please copy manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleOpenWhatsApp = (session: DemoSession) => {
     const parentPhone = (phoneMap[session.id] || '').trim();
     if (!parentPhone) {
@@ -709,9 +834,97 @@ export default function DemoSessionsManagement() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const renderSessionActions = (session: DemoSession, layout: 'desktop' | 'mobile' = 'desktop') => {
+    const isMobile = layout === 'mobile';
+    const buttonClass = isMobile ? 'w-full justify-center' : undefined;
+
+    return (
+      <div className={isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-wrap justify-end gap-2'}>
+        <Button
+          variant="outline"
+          size="sm"
+          className={buttonClass}
+          onClick={() => openConversionDialog(session)}
+          disabled={savingAction === `conversion:${session.id}`}
+        >
+          Follow-up
+        </Button>
+        <Button variant="outline" size="sm" className={buttonClass} onClick={() => handleCopyPhone(session)}>
+          Copy Phone
+        </Button>
+        <Button variant="outline" size="sm" className={buttonClass} onClick={() => handleCopySummary(session)}>
+          Copy Summary
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className={buttonClass}
+          onClick={() => handleCopyFollowUpMessage(session)}
+        >
+          Copy Follow-up
+        </Button>
+        <Button variant="outline" size="sm" className={buttonClass} onClick={() => handleOpenWhatsApp(session)}>
+          WhatsApp
+        </Button>
+        {session.status === 'assigned' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className={buttonClass}
+            onClick={() => openReassignDialog(session)}
+            disabled={savingAction === `reassign:${session.id}`}
+          >
+            Reassign
+          </Button>
+        )}
+        {session.status === 'assigned' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className={buttonClass}
+            onClick={() => handleRelease(session)}
+            disabled={savingAction === `release:${session.id}`}
+          >
+            Release
+          </Button>
+        )}
+        {session.status !== 'cancelled' && (
+          <Button
+            variant="outline"
+            size="sm"
+            className={buttonClass}
+            onClick={() => handleCancel(session)}
+            disabled={savingAction === `cancel:${session.id}`}
+          >
+            Cancel
+          </Button>
+        )}
+        {(session.status === 'cancelled' || session.status === 'completed') && (
+          <Button
+            size="sm"
+            className={buttonClass}
+            onClick={() => handleReopen(session)}
+            disabled={savingAction === `reopen:${session.id}`}
+          >
+            Reopen
+          </Button>
+        )}
+        <Button
+          variant="destructive"
+          size="sm"
+          className={buttonClass}
+          onClick={() => handleDelete(session)}
+          disabled={savingAction === `delete:${session.id}`}
+        >
+          Delete
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
-      <Card className="p-5">
+      <Card className="border-sky-100 bg-gradient-to-b from-sky-50/70 to-white p-5 shadow-sm">
         <h3 className="text-lg font-semibold">Create Demo Request</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Add a new demo request once. Teachers can claim from the shared assignment board.
@@ -773,42 +986,81 @@ export default function DemoSessionsManagement() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="demo-course">Course Interested *</Label>
-              <Input
-                id="demo-course"
-                value={form.courseInterested}
-                onChange={(e) => onFieldChange('courseInterested', e.target.value)}
-                required
-              />
+              <Select
+                value={form.courseInterested || undefined}
+                onValueChange={(value) => onFieldChange('courseInterested', value)}
+              >
+                <SelectTrigger id="demo-course">
+                  <SelectValue placeholder="Select course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COURSE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="demo-timezone">Timezone</Label>
-              <Input
-                id="demo-timezone"
-                value={form.timezone}
-                onChange={(e) => onFieldChange('timezone', e.target.value)}
-                placeholder="Asia/Kolkata"
-              />
+              <Select
+                value={form.timezone || 'not_set'}
+                onValueChange={(value) => onFieldChange('timezone', value === 'not_set' ? '' : value)}
+              >
+                <SelectTrigger id="demo-timezone">
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not_set">Not set</SelectItem>
+                  {TIMEZONE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="demo-source">Source</Label>
-              <Input
-                id="demo-source"
-                value={form.source}
-                onChange={(e) => onFieldChange('source', e.target.value)}
-                placeholder="WhatsApp / Website / Referral"
-              />
+              <Select
+                value={form.source || 'not_set'}
+                onValueChange={(value) => onFieldChange('source', value === 'not_set' ? '' : value)}
+              >
+                <SelectTrigger id="demo-source">
+                  <SelectValue placeholder="Select source" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not_set">Not set</SelectItem>
+                  {SOURCE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="demo-mode">Demo Mode</Label>
-              <Input
-                id="demo-mode"
-                value={form.demoMode}
-                onChange={(e) => onFieldChange('demoMode', e.target.value)}
-                placeholder="Zoom / Google Meet / Phone"
-              />
+              <Select
+                value={form.demoMode || 'not_set'}
+                onValueChange={(value) => onFieldChange('demoMode', value === 'not_set' ? '' : value)}
+              >
+                <SelectTrigger id="demo-mode">
+                  <SelectValue placeholder="Select demo mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not_set">Not set</SelectItem>
+                  {DEMO_MODE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -824,7 +1076,7 @@ export default function DemoSessionsManagement() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="demo-admin-notes">Teacher-visible Notes</Label>
+            <Label htmlFor="demo-admin-notes">Notes for Teacher</Label>
             <Textarea
               id="demo-admin-notes"
               value={form.adminNotes}
@@ -834,47 +1086,51 @@ export default function DemoSessionsManagement() {
           </div>
 
           <div>
-            <Button type="submit" disabled={creating}>
+            <Button
+              type="submit"
+              disabled={creating}
+              className="w-full transition-all duration-200 hover:-translate-y-0.5 sm:w-auto"
+            >
               {creating ? 'Creating...' : 'Create Demo Request'}
             </Button>
           </div>
         </form>
       </Card>
 
-      <Card className="p-5">
+      <Card className="border-violet-100 bg-gradient-to-b from-violet-50/50 to-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <h3 className="text-lg font-semibold">Demo Pipeline</h3>
+          <h3 className="text-lg font-semibold">Demo Tracking</h3>
           <Badge variant="outline">Open: {openSessions.length}</Badge>
           <Badge variant="secondary">Assigned: {assignedSessions.length}</Badge>
-          <Badge>Closed: {closedSessions.length}</Badge>
+          <Badge>Completed: {closedSessions.length}</Badge>
         </div>
-        <div className="mb-4 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
-          <Card className="p-3">
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Created This Week</div>
             <div className="mt-1 text-xl font-semibold">{createdThisWeekCount}</div>
           </Card>
-          <Card className="p-3">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Assigned Now</div>
             <div className="mt-1 text-xl font-semibold">{assignedSessions.length}</div>
           </Card>
-          <Card className="p-3">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed This Week</div>
             <div className="mt-1 text-xl font-semibold">{completedThisWeekCount}</div>
           </Card>
-          <Card className="p-3">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Converted This Week</div>
             <div className="mt-1 text-xl font-semibold">{convertedThisWeekCount}</div>
           </Card>
-          <Card className="p-3">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">Lost This Week</div>
             <div className="mt-1 text-xl font-semibold">{lostThisWeekCount}</div>
           </Card>
-          <Card className="p-3">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
             <div className="text-xs uppercase tracking-wide text-muted-foreground">No-show This Week</div>
             <div className="mt-1 text-xl font-semibold">{noShowThisWeekCount}</div>
           </Card>
         </div>
-        <div className="mb-4 rounded-lg border p-3">
+        <div className="mb-4 rounded-lg border border-slate-200 bg-white/80 p-3">
           <div className="text-xs uppercase tracking-wide text-muted-foreground">
             Teacher-wise Demos Handled (This Week)
           </div>
@@ -969,10 +1225,10 @@ export default function DemoSessionsManagement() {
         </div>
 
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'open' | 'assigned' | 'completed')}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="open">Open</TabsTrigger>
-            <TabsTrigger value="assigned">Assigned</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
+          <TabsList className="mb-4 grid h-auto w-full grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1 sm:inline-flex sm:w-auto">
+            <TabsTrigger value="open" className="px-2 text-xs sm:text-sm">Open</TabsTrigger>
+            <TabsTrigger value="assigned" className="px-2 text-xs sm:text-sm">Assigned</TabsTrigger>
+            <TabsTrigger value="completed" className="px-2 text-xs sm:text-sm">Completed</TabsTrigger>
           </TabsList>
 
           <TabsContent value={activeTab}>
@@ -981,6 +1237,96 @@ export default function DemoSessionsManagement() {
                 No demo sessions in this state.
               </div>
             ) : (
+              <>
+                <div className="space-y-3 md:hidden">
+                  {visibleSessions.map((session) => {
+                    const isTimelineExpanded = Boolean(expandedTimelineRows[session.id]);
+                    const timelineRows = [
+                      `Created: ${formatTs(session.createdAt)}`,
+                      `Assigned: ${formatTs(session.assignedAt)}`,
+                      `Confirmed For: ${formatConfirmedSlot(session)}`,
+                      `Completed: ${formatTs(session.completedAt)}`,
+                      `Released: ${formatTs(session.releasedAt)}`,
+                      `Reopened: ${formatTs(session.reopenedAt)}`,
+                      session.rescheduledFromDemoId ? `Rescheduled From: ${session.rescheduledFromDemoId}` : null,
+                      session.rescheduledToDemoId ? `Rescheduled To: ${session.rescheduledToDemoId}` : null,
+                      `Last Updated: ${formatTs(session.lastUpdatedAt || session.createdAt)}`,
+                    ].filter((value): value is string => Boolean(value));
+
+                    const visibleTimelineRows = isTimelineExpanded ? timelineRows : timelineRows.slice(0, 3);
+                    const historyRows = Array.isArray(session.history)
+                      ? isTimelineExpanded
+                        ? [...session.history].reverse()
+                        : session.history.slice(-2).reverse()
+                      : [];
+
+                    return (
+                      <Card key={`mobile-${session.id}`} className="border-slate-200 bg-white/90 p-4 shadow-sm">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-semibold">{session.childName}</div>
+                            <Badge variant={statusBadgeVariant(session.status)}>{formatStatusLabel(session.status)}</Badge>
+                          </div>
+                          <div className="text-xs text-muted-foreground">Parent: {session.parentName}</div>
+                          <div className="text-xs text-muted-foreground">Phone: {phoneMap[session.id] || '—'}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {session.courseInterested} {session.source ? `· ${session.source}` : ''}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Preferred Slot: {session.preferredDateTimeText}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Teacher: {session.assignedTeacherName || '—'}
+                          </div>
+                          <div className="text-xs">
+                            Conversion: <span className="font-medium">{formatConversionStatus(session.conversionStatus)}</span>
+                          </div>
+                          {(session.followUpCallStatus || session.followUpDate || session.admissionNotConfirmedReason) && (
+                            <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-muted-foreground">
+                              {session.followUpCallStatus && <div>Call: {formatCallStatus(session.followUpCallStatus)}</div>}
+                              {session.followUpDate && <div>Next follow-up: {session.followUpDate}</div>}
+                              {session.admissionNotConfirmedReason && (
+                                <div>Not confirmed: {session.admissionNotConfirmedReason}</div>
+                              )}
+                            </div>
+                          )}
+                          <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-muted-foreground">
+                            {visibleTimelineRows.map((line, index) => (
+                              <div key={`${session.id}-mobile-timeline-${index}`}>{line}</div>
+                            ))}
+                            {historyRows.length > 0 && (
+                              <div className="pt-1">
+                                <div className="font-medium text-foreground">Recent activity</div>
+                                {historyRows.map((entry, idx) => (
+                                  <div key={`${session.id}-mobile-history-${entry.atMs}-${idx}`}>
+                                    {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {timelineRows.length > 3 && (
+                              <button
+                                type="button"
+                                className="pt-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                                onClick={() =>
+                                  setExpandedTimelineRows((prev) => ({
+                                    ...prev,
+                                    [session.id]: !isTimelineExpanded,
+                                  }))
+                                }
+                              >
+                                {isTimelineExpanded ? 'Show less' : 'View details'}
+                              </button>
+                            )}
+                          </div>
+                          {renderSessionActions(session, 'mobile')}
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -998,8 +1344,29 @@ export default function DemoSessionsManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {visibleSessions.map((session) => (
-                    <TableRow key={session.id}>
+                  {visibleSessions.map((session) => {
+                    const isTimelineExpanded = Boolean(expandedTimelineRows[session.id]);
+                    const timelineRows = [
+                      `Created: ${formatTs(session.createdAt)}`,
+                      `Assigned: ${formatTs(session.assignedAt)}`,
+                      `Confirmed For: ${formatConfirmedSlot(session)}`,
+                      `Completed: ${formatTs(session.completedAt)}`,
+                      `Released: ${formatTs(session.releasedAt)}`,
+                      `Reopened: ${formatTs(session.reopenedAt)}`,
+                      session.rescheduledFromDemoId ? `Rescheduled From: ${session.rescheduledFromDemoId}` : null,
+                      session.rescheduledToDemoId ? `Rescheduled To: ${session.rescheduledToDemoId}` : null,
+                      `Last Updated: ${formatTs(session.lastUpdatedAt || session.createdAt)}`,
+                    ].filter((value): value is string => Boolean(value));
+
+                    const visibleTimelineRows = isTimelineExpanded ? timelineRows : timelineRows.slice(0, 3);
+                    const historyRows = Array.isArray(session.history)
+                      ? isTimelineExpanded
+                        ? [...session.history].reverse()
+                        : session.history.slice(-2).reverse()
+                      : [];
+
+                    return (
+                    <TableRow key={session.id} className="transition-colors hover:bg-slate-50/70">
                       <TableCell>
                         <div className="font-medium">{session.childName}</div>
                         <div className="text-xs text-muted-foreground">Grade {session.childGrade}</div>
@@ -1017,126 +1384,70 @@ export default function DemoSessionsManagement() {
                           {formatStatusLabel(session.status)}
                         </Badge>
                       </TableCell>
-                      <TableCell>{formatConversionStatus(session.conversionStatus)}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">{formatConversionStatus(session.conversionStatus)}</div>
+                        {(session.followUpCallStatus || session.followUpDate || session.admissionNotConfirmedReason) && (
+                          <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                            {session.followUpCallStatus && (
+                              <div>Call: {formatCallStatus(session.followUpCallStatus)}</div>
+                            )}
+                            {session.followUpDate && <div>Next follow-up: {session.followUpDate}</div>}
+                            {session.admissionNotConfirmedReason && (
+                              <div>Not confirmed: {session.admissionNotConfirmedReason}</div>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
                       <TableCell className="min-w-[230px]">
                         <div className="space-y-1 text-xs text-muted-foreground">
-                          <div>Created: {formatTs(session.createdAt)}</div>
-                          <div>Assigned: {formatTs(session.assignedAt)}</div>
-                          <div>Confirmed For: {formatConfirmedSlot(session)}</div>
-                          <div>Completed: {formatTs(session.completedAt)}</div>
-                          <div>Released: {formatTs(session.releasedAt)}</div>
-                          <div>Reopened: {formatTs(session.reopenedAt)}</div>
-                          {session.rescheduledFromDemoId && <div>Rescheduled From: {session.rescheduledFromDemoId}</div>}
-                          {session.rescheduledToDemoId && <div>Rescheduled To: {session.rescheduledToDemoId}</div>}
-                          <div>Last Updated: {formatTs(session.lastUpdatedAt || session.createdAt)}</div>
-                          {Array.isArray(session.history) && session.history.length > 0 && (
+                          {visibleTimelineRows.map((line, index) => (
+                            <div key={`${session.id}-timeline-${index}`}>{line}</div>
+                          ))}
+                          {historyRows.length > 0 && (
                             <div className="pt-1">
                               <div className="font-medium text-foreground">Recent activity</div>
-                              {session.history
-                                .slice(-3)
-                                .reverse()
-                                .map((entry, idx) => (
-                                  <div key={`${session.id}-history-${entry.atMs}-${idx}`}>
-                                    {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
-                                    {entry.actorName ? ` by ${entry.actorName}` : ''}
-                                    {entry.note ? ` (${entry.note})` : ''}
-                                  </div>
-                                ))}
+                              {historyRows.map((entry, idx) => (
+                                <div key={`${session.id}-history-${entry.atMs}-${idx}`}>
+                                  {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
+                                  {entry.actorName ? ` by ${entry.actorName}` : ''}
+                                  {entry.note ? ` (${entry.note})` : ''}
+                                </div>
+                              ))}
                             </div>
+                          )}
+                          {timelineRows.length > 3 && (
+                            <button
+                              type="button"
+                              className="pt-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                              onClick={() =>
+                                setExpandedTimelineRows((prev) => ({
+                                  ...prev,
+                                  [session.id]: !isTimelineExpanded,
+                                }))
+                              }
+                            >
+                              {isTimelineExpanded ? 'Show less' : 'View details'}
+                            </button>
                           )}
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => openConversionDialog(session)}
-                            disabled={savingAction === `conversion:${session.id}`}
-                          >
-                            Follow-up
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopyPhone(session)}
-                          >
-                            Copy Phone
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleCopySummary(session)}
-                          >
-                            Copy Summary
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenWhatsApp(session)}
-                          >
-                            WhatsApp
-                          </Button>
-                          {session.status === 'assigned' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => openReassignDialog(session)}
-                              disabled={savingAction === `reassign:${session.id}`}
-                            >
-                              Reassign
-                            </Button>
-                          )}
-                          {session.status === 'assigned' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleRelease(session)}
-                              disabled={savingAction === `release:${session.id}`}
-                            >
-                              Release
-                            </Button>
-                          )}
-                          {session.status !== 'cancelled' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleCancel(session)}
-                              disabled={savingAction === `cancel:${session.id}`}
-                            >
-                              Cancel
-                            </Button>
-                          )}
-                          {(session.status === 'cancelled' || session.status === 'completed') && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleReopen(session)}
-                              disabled={savingAction === `reopen:${session.id}`}
-                            >
-                              Reopen
-                            </Button>
-                          )}
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleDelete(session)}
-                            disabled={savingAction === `delete:${session.id}`}
-                          >
-                            Delete
-                          </Button>
-                        </div>
+                        {renderSessionActions(session)}
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
+                </div>
+              </>
             )}
           </TabsContent>
         </Tabs>
       </Card>
 
       <Dialog open={!!conversionTarget} onOpenChange={(open) => (!open ? setConversionTarget(null) : undefined)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Demo Follow-up</DialogTitle>
           </DialogHeader>
@@ -1215,8 +1526,46 @@ export default function DemoSessionsManagement() {
               />
             </div>
 
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Follow-up Call Status</Label>
+                <Select value={followUpCallStatus} onValueChange={setFollowUpCallStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select call status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Not set</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="not_reachable">Not Reachable</SelectItem>
+                    <SelectItem value="not_required">Not Required</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="conversion-call-completed-at">Call Completed Date</Label>
+                <Input
+                  id="conversion-call-completed-at"
+                  type="date"
+                  value={followUpCallCompletedAt}
+                  onChange={(e) => setFollowUpCallCompletedAt(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="conversion-not-confirmed-reason">If Not Confirmed, Reason</Label>
+              <Textarea
+                id="conversion-not-confirmed-reason"
+                value={admissionNotConfirmedReason}
+                onChange={(e) => setAdmissionNotConfirmedReason(e.target.value)}
+                rows={2}
+                placeholder="e.g. fee concern, timing issue, wants to decide later"
+              />
+            </div>
+
             <div className="flex justify-end">
-              <Button type="submit" disabled={!conversionTarget || !!savingAction}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={!conversionTarget || !!savingAction}>
                 {savingAction && savingAction.startsWith('conversion:') ? 'Saving...' : 'Save Follow-up'}
               </Button>
             </div>
@@ -1225,7 +1574,7 @@ export default function DemoSessionsManagement() {
       </Dialog>
 
       <Dialog open={!!reassignTarget} onOpenChange={(open) => (!open ? setReassignTarget(null) : undefined)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Reassign Demo</DialogTitle>
           </DialogHeader>
@@ -1249,7 +1598,7 @@ export default function DemoSessionsManagement() {
               </Select>
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={!reassignTeacherId || !!savingAction}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={!reassignTeacherId || !!savingAction}>
                 {savingAction && savingAction.startsWith('reassign:') ? 'Saving...' : 'Reassign Demo'}
               </Button>
             </div>

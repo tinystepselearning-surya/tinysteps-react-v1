@@ -17,8 +17,10 @@ import type {
   DemoChildLevelObserved,
   DemoClassType,
   DemoConversionStatus,
+  DemoFollowUpCallStatus,
   CreateDemoSessionInput,
   DemoOutcome,
+  DemoGrammarEvaluation,
   DemoParentExpectation,
   DemoPhonicsAwareness,
   DemoReadingLevel,
@@ -95,6 +97,7 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
     childLevelObserved: null,
     readingLevel: null,
     phonicsAwareness: null,
+    grammarEvaluation: null,
     speakingConfidence: null,
     attentionSpan: null,
     parentExpectation: null,
@@ -118,6 +121,9 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
     recommendedFrequency: null,
     feeDiscussed: null,
     followUpDate: null,
+    followUpCallStatus: null,
+    followUpCallCompletedAt: null,
+    admissionNotConfirmedReason: null,
     completedAt: null,
     createdAt: serverTimestamp(),
     createdBy,
@@ -240,6 +246,7 @@ interface CompleteDemoSessionPayload {
   childLevelObserved?: DemoChildLevelObserved;
   readingLevel?: DemoReadingLevel;
   phonicsAwareness?: DemoPhonicsAwareness;
+  grammarEvaluation?: DemoGrammarEvaluation;
   speakingConfidence?: DemoSpeakingConfidence;
   attentionSpan?: DemoAttentionSpan;
   parentExpectation?: DemoParentExpectation;
@@ -301,6 +308,9 @@ interface UpdateDemoConversionPayload {
   recommendedFrequency?: string | null;
   feeDiscussed?: string | null;
   followUpDate?: string | null;
+  followUpCallStatus?: DemoFollowUpCallStatus | null;
+  followUpCallCompletedAt?: string | null;
+  admissionNotConfirmedReason?: string | null;
   updatedBy: string;
 }
 
@@ -344,6 +354,9 @@ export async function updateDemoConversion(payload: UpdateDemoConversionPayload)
     recommendedFrequency: payload.recommendedFrequency ?? null,
     feeDiscussed: payload.feeDiscussed ?? null,
     followUpDate: payload.followUpDate ?? null,
+    followUpCallStatus: payload.followUpCallStatus ?? null,
+    followUpCallCompletedAt: payload.followUpCallCompletedAt ?? null,
+    admissionNotConfirmedReason: payload.admissionNotConfirmedReason ?? null,
     history: arrayUnion({
       action: 'follow_up_updated',
       actorId: payload.updatedBy,

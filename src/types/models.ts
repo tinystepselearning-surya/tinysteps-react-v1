@@ -113,16 +113,22 @@ export type DemoReadingLevel =
 
 export type DemoPhonicsAwareness = 'needs_support' | 'basic' | 'good' | 'strong';
 
+export type DemoGrammarEvaluation = 'needs_support' | 'basic' | 'good' | 'strong';
+
 export type DemoSpeakingConfidence = 'very_low' | 'low' | 'medium' | 'high';
 
 export type DemoAttentionSpan = 'short' | 'moderate' | 'good' | 'strong';
 
 export type DemoParentExpectation =
   | 'school_support'
+  | 'phonics_improvement'
+  | 'grammar_improvement'
   | 'reading_improvement'
   | 'speaking_confidence'
   | 'exam_preparation'
   | 'mixed_goals';
+
+export type DemoFollowUpCallStatus = 'pending' | 'completed' | 'not_reachable' | 'not_required';
 
 export type DemoRecommendedNextStep =
   | 'start_trial_classes'
@@ -176,6 +182,7 @@ export interface DemoSession {
   childLevelObserved?: DemoChildLevelObserved | null;
   readingLevel?: DemoReadingLevel | null;
   phonicsAwareness?: DemoPhonicsAwareness | null;
+  grammarEvaluation?: DemoGrammarEvaluation | null;
   speakingConfidence?: DemoSpeakingConfidence | null;
   attentionSpan?: DemoAttentionSpan | null;
   parentExpectation?: DemoParentExpectation | null;
@@ -191,6 +198,9 @@ export interface DemoSession {
   recommendedFrequency?: string | null;
   feeDiscussed?: string | null;
   followUpDate?: string | null;
+  followUpCallStatus?: DemoFollowUpCallStatus | null;
+  followUpCallCompletedAt?: string | null;
+  admissionNotConfirmedReason?: string | null;
   completedAt?: Timestamp | null;
   createdAt?: Timestamp | null;
   createdBy: string;

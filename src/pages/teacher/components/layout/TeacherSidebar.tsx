@@ -24,7 +24,7 @@ interface SidebarProps {
 
 const items = [
   { id: 'today', label: "Today's Sessions", icon: CalendarCheck },
-  { id: 'demo-assignments', label: 'Demo Assignments', icon: ClipboardList },
+  { id: 'demo-assignments', label: 'Demo Classes', icon: ClipboardList },
   { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
   { id: 'upcoming', label: 'Upcoming Sessions', icon: CalendarClock },
   { id: 'students', label: 'My Students', icon: Users },

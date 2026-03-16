@@ -27,10 +27,13 @@ const VALID_READING_LEVELS = new Set([
   'fluent_reader',
 ]);
 const VALID_PHONICS_AWARENESS = new Set(['needs_support', 'basic', 'good', 'strong']);
+const VALID_GRAMMAR_EVALUATION = new Set(['needs_support', 'basic', 'good', 'strong']);
 const VALID_SPEAKING_CONFIDENCE = new Set(['very_low', 'low', 'medium', 'high']);
 const VALID_ATTENTION_SPAN = new Set(['short', 'moderate', 'good', 'strong']);
 const VALID_PARENT_EXPECTATIONS = new Set([
   'school_support',
+  'phonics_improvement',
+  'grammar_improvement',
   'reading_improvement',
   'speaking_confidence',
   'exam_preparation',
@@ -407,6 +410,7 @@ interface CompleteDemoSessionRequest {
   childLevelObserved?: string;
   readingLevel?: string;
   phonicsAwareness?: string;
+  grammarEvaluation?: string;
   speakingConfidence?: string;
   attentionSpan?: string;
   parentExpectation?: string;
@@ -439,6 +443,11 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
       request.data?.phonicsAwareness,
       'phonicsAwareness',
       VALID_PHONICS_AWARENESS,
+    );
+    const grammarEvaluation = cleanOptionalEnum(
+      request.data?.grammarEvaluation,
+      'grammarEvaluation',
+      VALID_GRAMMAR_EVALUATION,
     );
     const speakingConfidence = cleanOptionalEnum(
       request.data?.speakingConfidence,
@@ -514,6 +523,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         childLevelObserved,
         readingLevel,
         phonicsAwareness,
+        grammarEvaluation,
         speakingConfidence,
         attentionSpan,
         parentExpectation,
@@ -561,6 +571,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           childLevelObserved: null,
           readingLevel: null,
           phonicsAwareness: null,
+          grammarEvaluation: null,
           speakingConfidence: null,
           attentionSpan: null,
           parentExpectation: null,
@@ -578,6 +589,9 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           recommendedFrequency: null,
           feeDiscussed: null,
           followUpDate: null,
+          followUpCallStatus: null,
+          followUpCallCompletedAt: null,
+          admissionNotConfirmedReason: null,
           completedAt: null,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           createdBy: caller.uid,
@@ -883,10 +897,20 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
         childLevelObserved: null,
         readingLevel: null,
         phonicsAwareness: null,
+        grammarEvaluation: null,
         speakingConfidence: null,
         attentionSpan: null,
         parentExpectation: null,
         recommendedNextStep: null,
+        conversionStatus: null,
+        recommendedCourse: null,
+        recommendedClassType: null,
+        recommendedFrequency: null,
+        feeDiscussed: null,
+        followUpDate: null,
+        followUpCallStatus: null,
+        followUpCallCompletedAt: null,
+        admissionNotConfirmedReason: null,
         completedAt: null,
         rescheduledToDemoId: null,
         reopenedAt: admin.firestore.FieldValue.serverTimestamp(),

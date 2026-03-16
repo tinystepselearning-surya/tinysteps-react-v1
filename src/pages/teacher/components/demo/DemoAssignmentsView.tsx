@@ -20,6 +20,7 @@ import type {
   DemoAttentionSpan,
   DemoChildLevelObserved,
   DemoOutcome,
+  DemoGrammarEvaluation,
   DemoParentExpectation,
   DemoPhonicsAwareness,
   DemoReadingLevel,
@@ -47,7 +48,7 @@ const OUTCOME_OPTIONS: Array<{ value: DemoOutcome; label: string }> = [
   { value: 'completed', label: 'Completed' },
   { value: 'parent_no_show', label: 'Parent No-show' },
   { value: 'teacher_no_show', label: 'Teacher No-show' },
-  { value: 'reschedule_requested', label: 'Reschedule Requested' },
+  { value: 'reschedule_requested', label: 'Reschedule Needed' },
   { value: 'not_interested', label: 'Not Interested' },
   { value: 'follow_up_needed', label: 'Follow Up Needed' },
 ];
@@ -73,6 +74,13 @@ const PHONICS_AWARENESS_OPTIONS: Array<{ value: DemoPhonicsAwareness; label: str
   { value: 'strong', label: 'Strong' },
 ];
 
+const GRAMMAR_EVALUATION_OPTIONS: Array<{ value: DemoGrammarEvaluation; label: string }> = [
+  { value: 'needs_support', label: 'Needs Support' },
+  { value: 'basic', label: 'Basic' },
+  { value: 'good', label: 'Good' },
+  { value: 'strong', label: 'Strong' },
+];
+
 const SPEAKING_CONFIDENCE_OPTIONS: Array<{ value: DemoSpeakingConfidence; label: string }> = [
   { value: 'very_low', label: 'Very Low' },
   { value: 'low', label: 'Low' },
@@ -89,8 +97,10 @@ const ATTENTION_SPAN_OPTIONS: Array<{ value: DemoAttentionSpan; label: string }>
 
 const PARENT_EXPECTATION_OPTIONS: Array<{ value: DemoParentExpectation; label: string }> = [
   { value: 'school_support', label: 'School Support' },
+  { value: 'phonics_improvement', label: 'Phonics Improvement' },
+  { value: 'grammar_improvement', label: 'Grammar Improvement' },
   { value: 'reading_improvement', label: 'Reading Improvement' },
-  { value: 'speaking_confidence', label: 'Speaking Confidence' },
+  { value: 'speaking_confidence', label: 'Speaking Improvement' },
   { value: 'exam_preparation', label: 'Exam Preparation' },
   { value: 'mixed_goals', label: 'Mixed Goals' },
 ];
@@ -191,6 +201,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
   const [childLevelObserved, setChildLevelObserved] = useState<DemoChildLevelObserved | ''>('');
   const [readingLevel, setReadingLevel] = useState<DemoReadingLevel | ''>('');
   const [phonicsAwareness, setPhonicsAwareness] = useState<DemoPhonicsAwareness | ''>('');
+  const [grammarEvaluation, setGrammarEvaluation] = useState<DemoGrammarEvaluation | ''>('');
   const [speakingConfidence, setSpeakingConfidence] = useState<DemoSpeakingConfidence | ''>('');
   const [attentionSpan, setAttentionSpan] = useState<DemoAttentionSpan | ''>('');
   const [parentExpectation, setParentExpectation] = useState<DemoParentExpectation | ''>('');
@@ -340,6 +351,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
     setChildLevelObserved('');
     setReadingLevel('');
     setPhonicsAwareness('');
+    setGrammarEvaluation('');
     setSpeakingConfidence('');
     setAttentionSpan('');
     setParentExpectation('');
@@ -438,6 +450,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
         childLevelObserved: childLevelObserved || undefined,
         readingLevel: readingLevel || undefined,
         phonicsAwareness: phonicsAwareness || undefined,
+        grammarEvaluation: grammarEvaluation || undefined,
         speakingConfidence: speakingConfidence || undefined,
         attentionSpan: attentionSpan || undefined,
         parentExpectation: parentExpectation || undefined,
@@ -473,55 +486,58 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-4">
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Available</div>
+    <div className="space-y-3 sm:space-y-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="border-sky-100 bg-gradient-to-br from-sky-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="text-xs uppercase tracking-wide text-sky-700/80">Open Demos</div>
           <div className="mt-1 text-2xl font-semibold">{filteredAvailableDemos.length}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">My Upcoming</div>
+        <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="text-xs uppercase tracking-wide text-emerald-700/80">My Demos</div>
           <div className="mt-1 text-2xl font-semibold">{upcomingDemos.length}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed</div>
+        <Card className="border-violet-100 bg-gradient-to-br from-violet-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="text-xs uppercase tracking-wide text-violet-700/80">Completed</div>
           <div className="mt-1 text-2xl font-semibold">{completedDemos.length}</div>
         </Card>
-        <Card className="p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Capacity Today</div>
+        <Card className="border-amber-100 bg-gradient-to-br from-amber-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+          <div className="text-xs uppercase tracking-wide text-amber-700/80">Today's Load</div>
           <div className="mt-1 text-2xl font-semibold">{todaysUpcomingCount}</div>
-          <div className="mt-1 text-xs text-muted-foreground">
-            Load: {loadLabel} ({upcomingDemos.length} upcoming) · {localTimezone}
+          <div className="mt-1 text-xs text-amber-700/80">
+            Today's demo load: {todaysUpcomingCount} today, {upcomingDemos.length} upcoming ({loadLabel}) · {localTimezone}
           </div>
         </Card>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TeacherDemoTab)}>
-        <TabsList>
-          <TabsTrigger value="available">Available Demos</TabsTrigger>
-          <TabsTrigger value="upcoming">My Upcoming Demos</TabsTrigger>
-          <TabsTrigger value="completed">Completed Demos</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
+          <TabsTrigger value="available" className="px-2 text-xs sm:text-sm">Open Demos</TabsTrigger>
+          <TabsTrigger value="upcoming" className="px-2 text-xs sm:text-sm">My Demos</TabsTrigger>
+          <TabsTrigger value="completed" className="px-2 text-xs sm:text-sm">Completed Demos</TabsTrigger>
         </TabsList>
         <p className="mt-2 text-xs text-muted-foreground">
-          Choosing “Reschedule Requested” closes the current record and automatically creates a new open demo request.
+          Choose Reschedule Needed if the demo needs a fresh new booking.
         </p>
 
         <TabsContent value="available" className="mt-4 space-y-3">
-          <Card className="p-3 text-xs text-muted-foreground">
-            Capacity check: {todaysUpcomingCount} demos confirmed for today, {upcomingDemos.length} upcoming total.
+          <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
+            You have {todaysUpcomingCount} demo classes today and {upcomingDemos.length} upcoming.
           </Card>
-          <Card className="p-3 text-xs text-muted-foreground">
+          <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
             {hasEligibilityConfig
-              ? `Eligibility filter active: ${eligibleTracks
+              ? `Showing demos matching your teaching tracks: ${eligibleTracks
                   .map((track) => track[0].toUpperCase() + track.slice(1))
                   .join(', ')}`
-              : 'Eligibility not configured on your profile. Showing all open demos.'}
+              : 'You can currently view all open demos.'}
           </Card>
           {filteredAvailableDemos.length === 0 ? (
             <Card className="p-6 text-sm text-muted-foreground">No open demos right now.</Card>
           ) : (
             filteredAvailableDemos.map((demo) => (
-              <Card key={demo.id} className="p-4">
+              <Card
+                key={demo.id}
+                className="border-slate-200 bg-white/90 p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+              >
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="space-y-1">
                     <div className="text-sm font-semibold">
@@ -536,9 +552,9 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                     <div className="text-xs text-muted-foreground">Requested: {formatTs(demo.createdAt)}</div>
                   </div>
 
-                  <div className="flex flex-col items-start gap-2 md:items-end">
+                  <div className="flex flex-col items-stretch gap-2 md:items-end">
                     {statusBadge(demo.status)}
-                    <Button size="sm" onClick={() => openClaimDialog(demo)}>
+                    <Button size="sm" className="w-full md:w-auto" onClick={() => openClaimDialog(demo)}>
                       Assign to me
                     </Button>
                   </div>
@@ -570,12 +586,12 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                     )}
                   </div>
 
-                  <div className="flex flex-col items-start gap-2 md:items-end">
+                  <div className="flex flex-col items-stretch gap-2 md:items-end">
                     {statusBadge(demo.status)}
-                    <Button size="sm" variant="outline" onClick={() => openUpdateDialog(demo)}>
+                    <Button size="sm" variant="outline" className="w-full md:w-auto" onClick={() => openUpdateDialog(demo)}>
                       Update timing
                     </Button>
-                    <Button size="sm" onClick={() => openCompleteDialog(demo)}>
+                    <Button size="sm" className="w-full md:w-auto" onClick={() => openCompleteDialog(demo)}>
                       Mark completed
                     </Button>
                   </div>
@@ -599,17 +615,25 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                     {statusBadge(demo.status)}
                   </div>
                   <div className="text-sm">Outcome: {formatOutcome(demo.outcome)}</div>
-                  <div className="text-sm text-muted-foreground">
-                    Child level: {formatEnum(demo.childLevelObserved)} | Reading: {formatEnum(demo.readingLevel)} |
-                    Phonics: {formatEnum(demo.phonicsAwareness)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Speaking: {formatEnum(demo.speakingConfidence)} | Attention: {formatEnum(demo.attentionSpan)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    Parent expectation: {formatEnum(demo.parentExpectation)} | Next step:{' '}
-                    {formatEnum(demo.recommendedNextStep)}
-                  </div>
+                  {(demo.childLevelObserved ||
+                    demo.readingLevel ||
+                    demo.phonicsAwareness ||
+                    demo.grammarEvaluation ||
+                    demo.speakingConfidence ||
+                    demo.attentionSpan ||
+                    demo.parentExpectation ||
+                    demo.recommendedNextStep) && (
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      {demo.childLevelObserved && <div>Overall level: {formatEnum(demo.childLevelObserved)}</div>}
+                      {demo.readingLevel && <div>Reading skill: {formatEnum(demo.readingLevel)}</div>}
+                      {demo.phonicsAwareness && <div>Phonics skill: {formatEnum(demo.phonicsAwareness)}</div>}
+                      {demo.grammarEvaluation && <div>Grammar skill: {formatEnum(demo.grammarEvaluation)}</div>}
+                      {demo.speakingConfidence && <div>Speaking confidence: {formatEnum(demo.speakingConfidence)}</div>}
+                      {demo.attentionSpan && <div>Attention: {formatEnum(demo.attentionSpan)}</div>}
+                      {demo.parentExpectation && <div>Parent goal: {formatEnum(demo.parentExpectation)}</div>}
+                      {demo.recommendedNextStep && <div>Next step: {formatEnum(demo.recommendedNextStep)}</div>}
+                    </div>
+                  )}
                   <div className="text-sm text-muted-foreground">Remarks: {demo.teacherRemarks || '—'}</div>
                   {demo.teacherRecommendation && (
                     <div className="text-sm text-muted-foreground">Recommendation: {demo.teacherRecommendation}</div>
@@ -623,7 +647,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
       </Tabs>
 
       <Dialog open={!!claimTarget} onOpenChange={(open) => (!open ? setClaimTarget(null) : undefined)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Assign Demo To Me</DialogTitle>
           </DialogHeader>
@@ -658,7 +682,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={claiming}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={claiming}>
                 {claiming ? 'Assigning...' : 'Confirm Assignment'}
               </Button>
             </div>
@@ -667,7 +691,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
       </Dialog>
 
       <Dialog open={!!updateTarget} onOpenChange={(open) => (!open ? setUpdateTarget(null) : undefined)}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Update Confirmed Timing</DialogTitle>
           </DialogHeader>
@@ -702,7 +726,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={updating}>
+              <Button type="submit" className="w-full sm:w-auto" disabled={updating}>
                 {updating ? 'Saving...' : 'Save Timing'}
               </Button>
             </div>
@@ -711,13 +735,14 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
       </Dialog>
 
       <Dialog open={!!completeTarget} onOpenChange={(open) => (!open ? setCompleteTarget(null) : undefined)}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] w-[calc(100vw-1rem)] overflow-hidden border-slate-200 bg-gradient-to-b from-white to-slate-50 p-0 shadow-xl sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Complete Demo</DialogTitle>
+            <DialogTitle className="px-4 pt-4 sm:px-6 sm:pt-6">Complete Demo</DialogTitle>
           </DialogHeader>
-          <form className="space-y-3" onSubmit={handleCompleteSubmit}>
+          <form className="flex max-h-[85vh] flex-col" onSubmit={handleCompleteSubmit}>
+            <div className="space-y-3 overflow-y-auto px-4 pb-4 sm:px-6">
             <p className="text-xs text-muted-foreground">
-              Selecting “Reschedule Requested” closes this record and creates a new open demo request automatically.
+              Choose Reschedule Needed if the demo needs a fresh new booking.
             </p>
             <div className="space-y-2">
               <Label>Outcome *</Label>
@@ -755,7 +780,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Child Level Observed</Label>
+                <Label>Overall Level</Label>
                 <Select
                   value={childLevelObserved || undefined}
                   onValueChange={(value) => setChildLevelObserved(value as DemoChildLevelObserved)}
@@ -773,7 +798,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Reading Level</Label>
+                <Label>Reading Skill</Label>
                 <Select
                   value={readingLevel || undefined}
                   onValueChange={(value) => setReadingLevel(value as DemoReadingLevel)}
@@ -791,7 +816,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Phonics Awareness</Label>
+                <Label>Phonics Skill</Label>
                 <Select
                   value={phonicsAwareness || undefined}
                   onValueChange={(value) => setPhonicsAwareness(value as DemoPhonicsAwareness)}
@@ -801,6 +826,24 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                   </SelectTrigger>
                   <SelectContent>
                     {PHONICS_AWARENESS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Grammar Skill</Label>
+                <Select
+                  value={grammarEvaluation || undefined}
+                  onValueChange={(value) => setGrammarEvaluation(value as DemoGrammarEvaluation)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select grammar level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {GRAMMAR_EVALUATION_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -827,7 +870,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Attention Span</Label>
+                <Label>Attention</Label>
                 <Select
                   value={attentionSpan || undefined}
                   onValueChange={(value) => setAttentionSpan(value as DemoAttentionSpan)}
@@ -845,7 +888,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Parent Expectation</Label>
+                <Label>Parent Goal</Label>
                 <Select
                   value={parentExpectation || undefined}
                   onValueChange={(value) => setParentExpectation(value as DemoParentExpectation)}
@@ -863,7 +906,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                 </Select>
               </div>
               <div className="space-y-2 md:col-span-2">
-                <Label>Recommended Next Step</Label>
+                <Label>Next Step</Label>
                 <Select
                   value={recommendedNextStep || undefined}
                   onValueChange={(value) => setRecommendedNextStep(value as DemoRecommendedNextStep)}
@@ -881,10 +924,16 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                 </Select>
               </div>
             </div>
-            <div className="flex justify-end">
-              <Button type="submit" disabled={completing}>
-                {completing ? 'Saving...' : 'Close Demo'}
-              </Button>
+            </div>
+            <div className="sticky bottom-0 border-t bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+              <div className="flex flex-col-reverse justify-end gap-2 sm:flex-row">
+                <Button type="button" variant="outline" onClick={() => setCompleteTarget(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="w-full sm:w-auto" disabled={completing}>
+                  {completing ? 'Saving...' : 'Save Demo Result'}
+                </Button>
+              </div>
             </div>
           </form>
         </DialogContent>
