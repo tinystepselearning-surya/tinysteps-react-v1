@@ -25,6 +25,12 @@ const UpcomingSessionsView = React.lazy(() =>
   ),
 );
 
+const DemoAssignmentsView = React.lazy(() =>
+  import('./components/demo/DemoAssignmentsView').then((module) => ({
+    default: module.DemoAssignmentsView,
+  })),
+);
+
 const TeacherMyStudentsV2 = React.lazy(() =>
   import('./components/students/TeacherMyStudentsV2').then((module) => ({
     default: module.TeacherMyStudentsV2,
@@ -87,6 +93,7 @@ const AccessNotice = ({ children }: { children: React.ReactNode }) => (
 
 const TAB_ITEMS = [
   { id: 'today', label: "Today's Sessions" },
+  { id: 'demo-assignments', label: 'Demo Assignments' },
   { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
@@ -99,6 +106,7 @@ const TAB_ITEMS = [
   { id: 'profile', label: 'Profile' },
   { id: 'notifications', label: 'Notifications' },
 ];
+const VALID_TEACHER_TAB_IDS = new Set(TAB_ITEMS.map((item) => item.id));
 
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
@@ -120,7 +128,7 @@ export default function TeacherDashboard() {
     try {
       const params = new URLSearchParams(location.search);
       const qTab = params.get('tab');
-      if (qTab && qTab !== tab) {
+      if (qTab && VALID_TEACHER_TAB_IDS.has(qTab) && qTab !== tab) {
         console.log('[TeacherDashboard] URL tab param:', qTab);
         setTab(qTab);
       }
@@ -149,6 +157,9 @@ export default function TeacherDashboard() {
 
   // Sync tab changes to URL
   const setTabAndUrl = React.useCallback((nextTab: string) => {
+    if (!VALID_TEACHER_TAB_IDS.has(nextTab)) {
+      return;
+    }
     console.log('[TeacherDashboard] setTabAndUrl:', nextTab);
     setTab(nextTab);
     navigate(`/teacher?tab=${nextTab}`, { replace: true });
@@ -245,6 +256,13 @@ export default function TeacherDashboard() {
             <TabsContent value="upcoming">
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
                 <UpcomingSessionsView teacherId={teacherId} />
+              </React.Suspense>
+            </TabsContent>
+
+            {/* Demo Assignments */}
+            <TabsContent value="demo-assignments">
+              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading demo assignments…</div>}>
+                <DemoAssignmentsView teacherId={teacherId} />
               </React.Suspense>
             </TabsContent>
 

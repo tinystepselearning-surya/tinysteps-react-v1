@@ -29,7 +29,7 @@ export default function TinyStepsBrand({
         className="h-11 w-11 shrink-0 rounded-full object-contain shadow-sm ring-1 ring-slate-200/80"
       />
       <div className="min-w-0">
-        <div className={cn('text-lg font-bold tracking-tight text-slate-900', titleClassName)}>
+        <div className={cn('text-xl font-bold tracking-tight text-orange-500', titleClassName)}>
           Tiny Steps
         </div>
         {subtitle ? (

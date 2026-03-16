@@ -16,7 +16,7 @@ const Footer: React.FC = () => {
 		>
 			<div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 md:grid-cols-4">
 				<div>
-					<h3 className="font-heading text-2xl text-white">Tiny Steps</h3>
+					<h3 className="font-heading text-2xl text-orange-500">Tiny Steps</h3>
 					<p className="mt-4 text-sm text-gray-400">
 						Empowering confident communicators through immersive phonics, grammar, and public speaking experiences.
 					</p>

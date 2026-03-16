@@ -187,7 +187,7 @@ export default function Header() {
             className="h-11 w-11 object-contain"
           />
           <div>
-            <div className="font-bold text-gray-900">Tiny Steps</div>
+            <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
             <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
           </div>
         </button>

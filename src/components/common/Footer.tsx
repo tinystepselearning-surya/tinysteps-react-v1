@@ -60,7 +60,10 @@ export default function Footer() {
                 className="h-11 w-11 rounded-2xl bg-white p-1.5 object-contain shadow-sm ring-1 ring-white/15"
               />
               <div>
-                <div className="font-semibold text-white">Tiny Steps Learning</div>
+                <div className="text-lg font-semibold text-white">
+                  <span className="text-orange-500">Tiny Steps</span>{" "}
+                  <span className="text-white">Learning</span>
+                </div>
                 <p className="text-sm text-gray-400">Live online English classes for children ages 3–12.</p>
               </div>
             </div>

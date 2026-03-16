@@ -71,6 +71,18 @@ export {
 
 // Admin-only purge (temporary)
 
+// Demo sessions assignment workflow
+export {
+  claimDemoSession,
+  updateDemoSessionSchedule,
+  completeDemoSession,
+  reassignDemoSession,
+  cancelDemoSession,
+  releaseDemoSession,
+  deleteDemoSession,
+  reopenDemoSession,
+} from "./demoSessions";
+
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
 export { refreshPublicKb } from "./ai/refreshPublicKb";

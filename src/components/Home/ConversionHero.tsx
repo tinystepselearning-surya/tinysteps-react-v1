@@ -160,7 +160,7 @@ const ConversionHero: React.FC = () => {
             <h1
               className="mt-6 max-w-4xl text-4xl font-black leading-[0.95] tracking-tight text-slate-900 md:text-6xl lg:text-7xl"
             >
-              Gentle, high-impact
+              Gentle, <span className="whitespace-nowrap">high-impact</span>
               <br />
               <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-amber-500 bg-clip-text text-transparent">
                 English foundations

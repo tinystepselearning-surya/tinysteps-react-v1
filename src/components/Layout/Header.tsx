@@ -44,7 +44,7 @@ const Header: React.FC = () => {
 			transition={{ duration: 0.6, ease: 'easeOut' }}
 		>
 			<div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 md:px-8">
-				<Link to="/" className="font-heading text-2xl font-bold text-primary-600">
+				<Link to="/" className="font-heading text-2xl font-bold text-orange-500">
 					Tiny Steps
 				</Link>
 

@@ -24,6 +24,7 @@ import RelationshipManagement from './RelationshipManagement/RelationshipManagem
 import CourseManagement from './CourseManagement/CourseManagement';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
+import DemoSessionsManagement from './DemoSessionsManagement';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
@@ -288,10 +289,31 @@ export default function AdminDashboard() {
   }, []);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabFromUrl = params.get('tab');
+    const validTabs = new Set([
+      'users',
+      'students',
+      'enrollments',
+      'relationships',
+      'courses',
+      'demo-sessions',
+      'lessons',
+      'analytics',
+      'teacher-payments',
+      'parent-payments',
+      'settings',
+    ]);
+
+    if (tabFromUrl && validTabs.has(tabFromUrl)) {
+      setSelectedTab(tabFromUrl);
+      return;
+    }
+
     if (location.pathname.includes('/surya/analytics')) {
       setSelectedTab('analytics');
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const {
     data: stats,
@@ -338,6 +360,7 @@ export default function AdminDashboard() {
               <TabsTrigger value="enrollments">Enrollment Management</TabsTrigger>
               <TabsTrigger value="relationships">Relationship Management</TabsTrigger>
               <TabsTrigger value="courses">Course Management</TabsTrigger>
+              <TabsTrigger value="demo-sessions">Demo Sessions</TabsTrigger>
               <TabsTrigger value="lessons">Lesson Library</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="teacher-payments">Teacher Payments</TabsTrigger>
@@ -364,6 +387,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="courses">
               <CourseManagement />
+            </TabsContent>
+
+            <TabsContent value="demo-sessions">
+              <DemoSessionsManagement />
             </TabsContent>
 
             <TabsContent value="lessons">

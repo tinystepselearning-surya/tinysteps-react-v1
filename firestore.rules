@@ -26,6 +26,16 @@ service cloud.firestore {
       return isSignedIn() && (
         request.auth.uid == 'cwEYiYRydtOeeNRoCO0j3VSI2vE3' ||
         (request.auth.token != null && request.auth.token.role.lower() == 'admin') ||
+        (
+          request.auth.token != null
+          && request.auth.token.email is string
+          && request.auth.token.email.lower() == 'suryaz@tinysteps.com'
+        ) ||
+        (
+          userDocExists(request.auth.uid)
+          && ('superUser' in get(userDocPath(request.auth.uid)).data)
+          && get(userDocPath(request.auth.uid)).data.superUser == true
+        ) ||
         (userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'admin')
       );
     }
@@ -572,6 +582,29 @@ service cloud.firestore {
     match /lessons/{lessonId} {
       allow read: if isAdmin() || isTeacher();
       allow create, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
+    // DEMO SESSIONS
+    // ----------------------------
+    match /demoSessions/{demoId} {
+      allow read: if isAdmin()
+        || (
+          isTeacher()
+          && (
+            resource.data.status == 'open'
+            || (
+              ('assignedTeacherId' in resource.data)
+              && resource.data.assignedTeacherId == request.auth.uid
+            )
+          )
+        );
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Sensitive admin-only companion docs (e.g. parent phone)
+    match /demoSessionsPrivate/{demoId} {
+      allow read, write: if isAdmin();
     }
 
     // ----------------------------

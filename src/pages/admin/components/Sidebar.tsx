@@ -15,6 +15,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
     { id: 'enrollments', label: 'Enrollment Management', icon: '📝' },
     { id: 'relationships', label: 'Relationship Management', icon: '🤝' },
     { id: 'courses', label: 'Course Management', icon: '📚' },
+    { id: 'demo-sessions', label: 'Demo Sessions', icon: '🎯' },
     { id: 'lessons', label: 'Lesson Library', icon: '📖' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
     { id: 'teacher-payments', label: 'Teacher Payments', icon: '💸' },

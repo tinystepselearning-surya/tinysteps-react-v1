@@ -323,6 +323,7 @@ const router = createBrowserRouter(
           children: [
             { index: true, element: <AdminDashboard /> },
             { path: 'analytics', element: <AdminDashboard /> },
+            { path: 'demo-sessions', element: <Navigate to="/surya?tab=demo-sessions" replace /> },
           ],
         },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },
@@ -341,6 +342,7 @@ const router = createBrowserRouter(
           ),
           children: [
             { index: true, element: <TeacherDashboard /> },
+            { path: 'demo-assignments', element: <Navigate to="/teacher?tab=demo-assignments" replace /> },
             // Redirect legacy direct lesson route into dashboard with tab param
             { path: 'lessons', element: <Navigate to="/teacher?tab=lessons" replace /> },
             {
@@ -362,6 +364,7 @@ const router = createBrowserRouter(
           ),
           children: [
             { index: true, element: <TeacherDashboard /> },
+            { path: 'demo-assignments', element: <Navigate to="/teacher?tab=demo-assignments" replace /> },
             // Redirect parametric teacher lesson URL into canonical dashboard view
             { path: 'lessons', element: <Navigate to="/teacher?tab=lessons" replace /> },
             {
