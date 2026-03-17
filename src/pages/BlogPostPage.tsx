@@ -318,7 +318,7 @@ function buildMetaDescription(src: any) {
 
         <div className="mt-8 flex justify-between text-sm">
           <Link className="text-primary-600" to="/courses">Learn more about our courses →</Link>
-          <Link className="text-primary-600" to="/">Book your free class →</Link>
+          <Link className="text-primary-600" to="/?book=1">Book your free class →</Link>
         </div>
       </div>
     </div>

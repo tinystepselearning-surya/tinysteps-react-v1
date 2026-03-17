@@ -491,7 +491,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <h3 className="font-bold text-[#4a7c2c] mb-2">Curriculum</h3>
             <p className="text-sm text-gray-700">Lesson-by-lesson breakdown of what children learn at each level</p>
           </Link>
-          <Link to="/contact" className="border border-gray-200 rounded-lg p-4 hover:border-[#4a7c2c] hover:shadow-md transition">
+          <Link to="/?book=1" className="border border-gray-200 rounded-lg p-4 hover:border-[#4a7c2c] hover:shadow-md transition">
             <h3 className="font-bold text-[#4a7c2c] mb-2">Book Free Assessment</h3>
             <p className="text-sm text-gray-700">Get personalized recommendations and trial class details</p>
           </Link>
@@ -580,7 +580,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           Book a free 20-minute assessment to see if Tiny Steps phonics classes are right for your child.
         </p>
         <Link
-          to="/contact"
+          to="/?book=1"
           className="inline-block bg-white text-[#2d5016] font-bold py-3 px-8 rounded-lg hover:bg-gray-100 transition"
         >
           Book Free Assessment

@@ -863,8 +863,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-1-phonics-satpin-launch',
     title: 'Week 1: SATPIN Launch Plan for Confident Readers',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2026-01-01',
+    author: 'Priya',
+    date: '2025-11-03',
     readTime: '9 min',
     excerpt: "Seven short SATPIN sessions for busy parents: 10‑minute daily activities to teach s/a/t/p/i/n, begin blending, read decodables and build steady early reading confidence.",
     body: [
@@ -954,8 +954,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-2-phonics-blending-club',
     title: 'Week 2: Build a Blending Club at Home',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2026-01-08',
+    author: 'Priya',
+    date: '2025-11-14',
     readTime: '9 min',
     excerpt: "Seven-day Blending Club for busy parents: two-minute setups, playful micro-games and ready scripts that build blending fluency, boost reading confidence, and create a simple daily habit.",
     body: [
@@ -1126,8 +1126,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-3-phonics-tricky-words',
     title: 'Week 3: Introduce Tricky Words the Smart Way',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2026-01-15',
+    author: 'Priya',
+    date: '2025-12-24',
     readTime: '9 min',
     excerpt: "A seven‑day tricky‑word plan: gentle memory hooks, short context practice and brief spaced reviews to help children recognise high‑frequency words without heavy drilling or pressure.",
     body: [
@@ -1202,8 +1202,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-4-phonics-long-vowels',
     title: 'Week 4: Long Vowel Patterns Without Tears',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2026-01-22',
+    author: 'Priya',
+    date: '2025-12-29',
     readTime: '9 min',
     excerpt: "Seven short lessons for long vowels: magic‑e and vowel teams taught with quick visuals, short games and decodable reading so patterns stick without stress.",
     body: [
@@ -1277,8 +1277,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-5-phonics-r-controlled',
     title: 'Week 5: R-Controlled Vowels Made Simple',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2026-01-29',
+    author: 'Priya',
+    date: '2026-01-03',
     readTime: '9 min',
     excerpt: "Seven quick sessions to teach R‑controlled vowels with clear action hooks and multisensory cues: short, playful practice that helps children remember bossy‑R patterns calmly.",
     body: [
@@ -1364,8 +1364,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-6-phonics-comprehension',
     title: 'Week 6: From Sounding Out to Understanding',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2026-02-05',
+    author: 'Priya',
+    date: '2026-01-08',
     readTime: '9 min',
     excerpt: "Move from decoding to understanding in seven days: adopt a 3‑question habit, stop‑and‑talk prompts and short review routines that make reading meaningful and motivating.",
     body: [
@@ -1445,8 +1445,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-7-grammar-nouns-to-paragraphs',
     title: 'Week 7: Grammar Week-by-Week – Nouns to Paragraphs',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2026-02-12',
+    author: 'Priya',
+    date: '2026-01-15',
     readTime: '9 min',
     excerpt: "One‑week paragraph scaffold: naming games and a simple 4‑sentence frame with guided practice to help Grades 1–2 write clear, confident paragraphs at home.",
     body: [
@@ -1519,8 +1519,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-8-grammar-tenses',
     title: 'Week 8: Tenses Without Tears',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2026-02-19',
+    author: 'Priya',
+    date: '2026-01-20',
     readTime: '9 min',
     excerpt: "Seven short 'tense talks' using a simple timeline and colour cues to make past, present and future visible and usable in everyday family sentences.",
     body: [
@@ -1591,8 +1591,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-9-grammar-conjunctions',
     title: 'Week 9: Conjunction Toolkits',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2026-02-26',
+    author: 'Priya',
+    date: '2026-01-25',
     readTime: '9 min',
     excerpt: "Seven days of connector practice (AND / BUT / BECAUSE / SO): DIY sentence strips, quick games and gentle writing tasks that help children join ideas and expand expression.",
     body: [
@@ -1664,8 +1664,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-10-grammar-subject-verb',
     title: 'Week 10: Subject-Verb Agreement Rescue Plan',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2026-03-05',
+    author: 'Priya',
+    date: '2026-01-29',
     readTime: '9 min',
     excerpt: "A short SVA rescue plan: stick‑figure anchors and quick daily drills with warm correction to fix subject‑verb slips and build clearer sentence habits.",
     body: [
@@ -1740,8 +1740,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-11-grammar-creative-writing',
     title: 'Week 11: Creative Writing Scaffolds for Ages 8–10',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2026-03-12',
+    author: 'Priya',
+    date: '2026-02-03',
     readTime: '9 min',
     excerpt: "Story Mountain scaffolds to help 8–10 year‑olds plan and write short stories: picture prompts, two brief writing sprints and a friendly two‑step edit to protect motivation.",
     body: [
@@ -1819,8 +1819,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-12-speaking-confidence-seeds',
     title: 'Week 12: Speaking Confidence Seeds for Shy Kids',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2026-03-19',
+    author: 'Priya',
+    date: '2026-02-07',
     readTime: '9 min',
     excerpt: "Short, safe daily routines and 15‑second spotlights to help shy children build calm speaking confidence: playful warmups, parent scripts and a small bravery ladder.",
     body: [
@@ -1891,8 +1891,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-13-speaking-structure',
     title: 'Week 13: Hook-Body-Close for Kids',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2026-03-26',
+    author: 'Priya',
+    date: '2026-02-11',
     readTime: '9 min',
     excerpt: "A Hook–Body–Close template to help children plan short talks: one‑line hooks, two clear points and a tidy close practised through daily 10‑minute rehearsals for steady confidence.",
     body: [
@@ -1962,8 +1962,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-14-speaking-visual-aids',
     title: 'Week 14: Visual Aids That Wow',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2026-04-02',
+    author: 'Priya',
+    date: '2026-02-14',
     readTime: '9 min',
     excerpt: "One‑prop visual aid week: simple props, chart templates and quick routines that reduce cognitive load and help young speakers present with clarity and calm.",
     body: [
@@ -2033,8 +2033,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-15-speaking-debate-starters',
     title: 'Week 15: Debate Starters for Tweens',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2026-04-09',
+    author: 'Priya',
+    date: '2026-02-18',
     readTime: '9 min',
     excerpt: "Gentle debate starters and short timed rounds for tweens: Claim→Reason→Example frames, calm moderation and simple timers to practise respectful reasoning and clear speaking.",
     body: [
@@ -2102,8 +2102,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-16-phonics-summer-plan',
     title: 'Week 16: Summer Phonics Booster Schedule',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2025-04-16',
+    author: 'Priya',
+    date: '2026-02-21',
     readTime: '9 min',
     excerpt: "A light 15‑minute summer phonics routine: short review beats, one new focus and a weekly reading party to keep decoding and fluency active without pressure.",
     body: [
@@ -2168,8 +2168,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-17-grammar-assessment',
     title: 'Week 17: DIY Grammar Assessment for Parents',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2025-04-23',
+    author: 'Priya',
+    date: '2026-02-24',
     readTime: '9 min',
     excerpt: "A calm 15‑minute grammar checklist for parents: quick, game‑like checks for nouns, verbs, tenses and paragraph structure that reveal two focused practice targets.",
     body: [
@@ -2225,8 +2225,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-18-speaking-video-feedback',
     title: 'Week 18: Use Video for Instant Speaking Feedback',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2025-04-30',
+    author: 'Priya',
+    date: '2026-02-27',
     readTime: '9 min',
     excerpt: "Short, kind video feedback to spot one small improvement: record brief takes, praise strengths and pick one clear target to practise with a simple Loved/Try‑Next review.",
     body: [
@@ -2289,8 +2289,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-19-phonics-multisyllabic',
     title: 'Week 19: Multisyllabic Word Play',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2025-05-07',
+    author: 'Priya',
+    date: '2026-03-01',
     readTime: '9 min',
     excerpt: "Playful multisyllable work: scoop‑and‑say, clapping and short reads across a week to break long words into parts and build fluency, rhythm and confidence.",
     body: [
@@ -2351,8 +2351,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-20-grammar-editing-camp',
     title: 'Week 20: Editing Camp at Home',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2025-05-14',
+    author: 'Priya',
+    date: '2026-03-04',
     readTime: '9 min',
     excerpt: "Make editing playful: two quick passes (basics then style), stations, scavenger hunts and immediate rewards so children polish writing without losing confidence.",
     body: [
@@ -2408,8 +2408,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-21-speaking-competition-prep',
     title: 'Week 21: Competition Prep Checklist',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2025-05-21',
+    author: 'Priya',
+    date: '2026-03-07',
     readTime: '9 min',
     excerpt: "A practical competition‑prep checklist for parents: brief daily rehearsals, timing drills, expression tools and stage habits to calmly polish a short performance at home.",
     body: [
@@ -2468,8 +2468,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-22-phonics-diagnostics',
     title: 'Week 22: Diagnostic Checklist Before a New Term',
     category: 'Phonics',
-    author: 'Surya',
-    date: '2025-05-28',
+    author: 'Priya',
+    date: '2026-03-10',
     readTime: '9 min',
     excerpt: "A friendly 20‑minute phonics diagnostic to identify two priority skills: quick checks for sounds, blends, digraphs and vowels to plan the coming term's practice.",
     body: [
@@ -2526,8 +2526,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-23-grammar-speaking-bridge',
     title: 'Week 23: Bridge Grammar & Speaking with Story Cards',
     category: 'Grammar',
-    author: 'Surya',
-    date: '2025-06-04',
+    author: 'Priya',
+    date: '2026-03-12',
     readTime: '9 min',
     excerpt: "Story cards that bridge speaking and writing: a week of talk→shape→write tasks with simple frames that turn oral ideas into short, confident sentences.",
     body: [
@@ -2598,8 +2598,8 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-24-speaking-family-showcase',
     title: 'Week 24: Host a Family Showcase Night',
     category: 'Public Speaking',
-    author: 'Surya',
-    date: '2025-06-11',
+    author: 'Priya',
+    date: '2026-03-14',
     readTime: '9 min',
     excerpt: "Host a family showcase with short rehearsals and clear audience rules: low‑pressure performances that celebrate progress and build speaking joy at home.",
     body: [
@@ -2666,53 +2666,89 @@ const rawBlogPosts: BlogPost[] = [
     slug: 'week-25-back-to-school-plan',
     title: 'Week 25: Back-to-School English Confidence Plan',
     category: 'Parent Tips',
-    author: 'Surya',
-    date: '2025-06-18',
-    readTime: '9 min',
-    excerpt: "A gentle back‑to‑school plan: short phonics refreshers, quick writing frames and tiny speaking routines to rebuild routine, fluency and calm confidence before term starts.",
+    author: 'Priya',
+    date: '2026-03-16',
+    readTime: '11 min',
+    excerpt: "A research-informed back‑to‑school protocol for parents: baseline checks, a 7-day micro-plan, and measurable targets in phonics, grammar, reading, and speaking.",
     body: [
-      { type: 'h2', content: 'Why kids lose confidence before school starts (and how to prevent it)' },
-      { type: 'p', content: 'Long holidays, routine changes, and new expectations can make children feel unsure. Confidence often dips because practice becomes irregular, not because ability disappears. Prevent this by keeping short daily beats, celebrating tiny wins, and focusing on familiarity rather than performance.' },
+      { type: 'h2', content: 'Research abstract: why confidence drops after holidays' },
+      { type: 'p', content: 'Back-to-school confidence usually drops because routines break and retrieval opportunities reduce, not because children suddenly "lose ability." A short, structured restart improves performance faster than intensive cramming. This Week 25 article uses a research-informed protocol designed for real family schedules.' },
 
-      { type: 'h2', content: 'The 3-part weekly routine (phonics, writing/grammar, speaking)' },
-      { type: 'p', content: 'Balance practice across three small areas each week: quick phonics refreshers to keep decoding sharp, short writing or grammar tasks to keep structure tidy, and tiny speaking sessions to retain fluency and confidence.' },
+      { type: 'h2', content: 'Evidence base used in this plan (plain-language summary)' },
+      { type: 'li', content: 'Systematic phonics improves early word reading and spelling accuracy when practice is explicit and cumulative (National Reading Panel; later reviews in reading science).' },
+      { type: 'li', content: 'Guided repeated oral reading improves fluency and supports comprehension when texts are matched to level.' },
+      { type: 'li', content: 'Retrieval + spacing improves retention better than one long session; short daily review is more durable than weekend-only practice.' },
+      { type: 'li', content: 'Child motivation improves with mastery experiences: small wins first, then gradual challenge (self-efficacy research).' },
 
-      { type: 'h2', content: 'The “10-10-10” plan (10 mins each) for busy parents' },
-      { type: 'p', content: 'If time is tight, do three 10-minute slots each day: 10 minutes phonics, 10 minutes writing/grammar, 10 minutes speaking. These short, focused bursts beat infrequent long sessions and slot easily into busy days.' },
+      { type: 'h2', content: 'Tiny Steps Back-to-School Diagnostic (Day 0, 15 minutes)' },
+      { type: 'p', content: 'Run a brief baseline before planning. This prevents random practice and ensures parents target the right skill gap.' },
+      { type: 'li', content: 'Phonics check (5 min): 10 sound cards + 5 blend words; note accuracy and hesitation.' },
+      { type: 'li', content: 'Reading fluency check (5 min): one short decodable passage; note error count and smoothness.' },
+      { type: 'li', content: 'Grammar/writing check (3 min): one sentence expansion task.' },
+      { type: 'li', content: 'Speaking check (2 min): 30-second prompt with beginning-middle-end.' },
 
-      { type: 'h2', content: 'Week 25 plan (7 days, 20–30 mins/day total) — day-by-day' },
-      { type: 'p', content: 'This seven-day plan mixes the 3-part routine into manageable daily steps. Aim for 20–30 minutes total per day; split into short chunks that suit your schedule.' },
-      { type: 'h3', content: 'Day-by-day (exact)' },
-      { type: 'li', content: 'Day 1 — Phonics focus (20–30 min): quick warm-up, 10-minute decodable reading, 10-minute sound game.' },
-      { type: 'li', content: 'Day 2 — Writing + grammar (20–30 min): a 10-minute sentence frame activity and a 10-minute gentle edit.' },
-      { type: 'li', content: 'Day 3 — Speaking (20–30 min): 10-minute spotlight routine and a 10-minute fun prompt or show-and-tell.' },
-      { type: 'li', content: 'Day 4 — Mix (20–30 min): 10 min phonics, 10 min writing practice, short read aloud.' },
-      { type: 'li', content: 'Day 5 — Practice with a friend/family (20–30 min): short sharing or mini-showcase.' },
-      { type: 'li', content: 'Day 6 — Quick diagnostic (20–30 min): short checks to spot anything needing a little more practice.' },
-      { type: 'li', content: 'Day 7 — Celebrate & plan (20–30 min): review wins and set two small goals for the next 4 weeks.' },
+      { type: 'h2', content: 'Seven-day intervention protocol (20-30 minutes/day)' },
+      { type: 'h3', content: 'Day-by-day implementation' },
+      { type: 'li', content: 'Day 1 (Reset): 10 min phonics refresh + 10 min guided reading + 5 min spoken recap.' },
+      { type: 'li', content: 'Day 2 (Accuracy): 12 min decoding ladder + 8 min sentence dictation + 5 min confidence close.' },
+      { type: 'li', content: 'Day 3 (Fluency): 5 min word review + 10 min repeated reading + 5 min comprehension questions.' },
+      { type: 'li', content: 'Day 4 (Grammar transfer): 10 min sentence building + 10 min edit-and-read + 5 min oral explanation.' },
+      { type: 'li', content: 'Day 5 (Speaking structure): 10 min topic planning + 10 min 45-second talk rehearsal.' },
+      { type: 'li', content: 'Day 6 (Mixed transfer): combine one phonics, one grammar, one speaking task in short rounds.' },
+      { type: 'li', content: 'Day 7 (Review): rerun mini-diagnostic, compare with Day 0, and set next 2 weekly targets.' },
 
-      { type: 'h2', content: 'What to prioritize by age (3–5 / 6–7 / 8–10) — simple' },
-      { type: 'p', content: 'Keep priorities age-appropriate: For 3–5 focus on letter sounds, listening games, and speaking in full sentences. For 6–7 prioritise phonics blends, simple sentence writing, and short talks. For 8–10 emphasise reading fluency, paragraph-level writing, and structured speaking (hook–body–close).' },
+      { type: 'h2', content: 'Age-band goals with measurable outcomes' },
+      { type: 'li', content: 'Ages 3-5: stronger sound recall and oral blending; target is faster response and clearer segmenting.' },
+      { type: 'li', content: 'Ages 6-7: improved decoding + sentence control; target is fewer reading errors and cleaner punctuation.' },
+      { type: 'li', content: 'Ages 8-10: improved fluency + structured speaking; target is smoother passage reading and coherent 45-second response.' },
 
-      { type: 'h2', content: 'Home environment tips (study corner, device rules, habit stacking)' },
-      { type: 'p', content: 'Create a predictable corner with minimal distractions, set simple device rules during practice, and use habit stacking: attach a short session to an existing routine (after breakfast or before evening play). Keep materials handy: a small box with story cards, word cards, and a timer.' },
+      { type: 'h2', content: 'Implementation standards for parents (to keep quality high)' },
+      { type: 'li', content: 'Keep one fixed daily slot to reduce negotiation and decision fatigue.' },
+      { type: 'li', content: 'Use 80/20 difficulty: mostly successful tasks, small stretch at the end.' },
+      { type: 'li', content: 'Correct quickly: model once, child retries once, then move forward.' },
+      { type: 'li', content: 'End every session with one specific praise line tied to effort or strategy.' },
 
-      { type: 'h2', content: 'Troubleshooting (resistance, tantrums, “I’m not good”, low attention)' },
-      { type: 'p', content: 'If a child resists, reduce the task and celebrate the attempt: “Two minutes and done.” For tantrums, pause and return later with a playful prompt. If they say “I’m not good,” respond with specific praise about effort and one tiny next step. For low attention, switch to a game or a different modality (audio, physical activity) to re-engage.' },
+      { type: 'h2', content: 'Progress tracker template (Notes app or notebook)' },
+      { type: 'p', content: 'Track daily with five fields: Date | Task | Accuracy | Confidence (1-5) | Next focus. This makes parent-teacher communication precise and useful.' },
+      { type: 'li', content: 'Example entry: "Mar 17 | CVC blending + retell | 8/10 | 4/5 | Review short-i contrasts tomorrow."' },
 
-      { type: 'h2', content: 'A simple progress tracker parents can use (Notes app checklist)' },
-      { type: 'p', content: 'Use a Notes app list with three columns: Date | Activity | Done. Track brief entries like “Phonics: 5 words” or “Speak: 15s spotlight.” Check daily boxes and add one short note on what improved.' },
+      { type: 'h2', content: 'Decision rules: continue, adapt, or escalate' },
+      { type: 'li', content: 'Continue current plan if accuracy and confidence rise for 3 consecutive sessions.' },
+      { type: 'li', content: 'Adapt task level if child resists or accuracy drops below about 60 percent for 2 sessions.' },
+      { type: 'li', content: 'Escalate for teacher support if no visible gain after 2 weeks of consistent practice.' },
 
-      { type: 'h2', content: 'Gentle CTA to Tiny Steps (book trial / explore courses)' },
-      { type: 'p', content: 'If you’d like guided support, Tiny Steps offers short trials and targeted courses that match each weekly focus. Consider a trial if you want a teacher-led plan to run alongside home practice.' },
+      { type: 'h2', content: 'Common back-to-school failure points and fixes' },
+      { type: 'li', content: 'Failure point: too many new tasks at once. Fix: reduce to one target skill per day.' },
+      { type: 'li', content: 'Failure point: reading-only practice without comprehension. Fix: add two meaning questions daily.' },
+      { type: 'li', content: 'Failure point: correction overload. Fix: prioritize one correction type each session.' },
 
-      { type: 'h3', content: 'Parent scripts' },
-      { type: 'p', content: 'Short scripts to keep tone warm: “Two minutes and done — let’s try one small thing.” “That was great — I liked how you sounded the word.” “Thank you for sharing — what part did you like best?”' },
+      { type: 'h2', content: 'Professional conclusion: what Week 25 should accomplish' },
+      { type: 'p', content: 'By the end of this protocol, parents should see measurable recovery in decoding confidence, cleaner sentence control, and more organized speaking responses. Tiny Steps recommends carrying the same measurement habit into the next four weeks to protect gains during the school transition.' },
 
-      { type: 'h3', content: 'End-of-week checklist and “next 4 weeks” suggestion' },
-      { type: 'li', content: 'End-of-week: 1) One short read aloud, 2) One edited sentence, 3) One 15–30s spotlight.' },
-      { type: 'p', content: 'Next 4 weeks: repeat the 3-part routine, focusing on two small targets identified this week. Keep sessions short and celebrate progress weekly.' }
-    ]
+      { type: 'h3', content: 'Parent scripts (high-impact, low-pressure)' },
+      { type: 'li', content: '"We are doing a short 10-minute reset, not a test."' },
+      { type: 'li', content: '"Try slowly first; speed can come later."' },
+      { type: 'li', content: '"You improved from yesterday on this exact skill."' },
+
+      { type: 'h3', content: 'End-of-week checklist for families' },
+      { type: 'li', content: 'Baseline and Day-7 recheck completed.' },
+      { type: 'li', content: 'At least one measurable gain recorded (accuracy, fluency, or confidence).' },
+      { type: 'li', content: 'Next two weekly targets documented and shared with teacher.' },
+    ],
+    faq: [
+      {
+        question: 'How long should we run this back-to-school reset before changing strategy?',
+        answer: 'Run the protocol for 7 days, then review data. If there is no improvement after 2 consistent weeks, reduce difficulty and seek teacher guidance.',
+      },
+      {
+        question: 'Should we prioritize fluency or comprehension first?',
+        answer: 'Build both together. Keep decoding and fluency tasks short, then add two immediate comprehension checks so meaning is never delayed.',
+      },
+      {
+        question: 'What is the minimum routine for very busy weekdays?',
+        answer: 'Use a 10-minute minimum: 3 minutes phonics review, 4 minutes reading, 2 minutes comprehension, 1 minute praise and next-step note.',
+      },
+    ],
   }
 ];
 
@@ -2732,6 +2768,41 @@ const WEEKLY_PARENT_GUIDE_BLOCKS: BlogBlock[] = [
   { type: 'li', content: 'Use one correction script: "Let us try slowly, then fast."' },
   { type: 'li', content: 'Send one weekly note to the teacher: what improved, what still needs support.' },
 ];
+
+const WEEKLY_RESEARCH_BASIS_BLOCKS: BlogBlock[] = [
+  { type: 'h2', content: 'Research basis: why this weekly plan works' },
+  { type: 'p', content: 'This weekly structure reflects evidence-aligned classroom practice used in early literacy and communication instruction: explicit teaching, short retrieval cycles, and repeated guided practice with feedback.' },
+  { type: 'li', content: 'Distributed practice beats cramming: short sessions across the week improve retention better than one long session.' },
+  { type: 'li', content: 'Retrieval and correction loops build fluency: recall first, then immediate gentle correction, then one successful retry.' },
+  { type: 'li', content: 'Clear success criteria improve motivation: children engage better when the goal is visible and achievable in one session.' },
+];
+
+const WEEKLY_TINY_STEPS_STANDARD_BLOCKS: BlogBlock[] = [
+  { type: 'h2', content: 'Tiny Steps quality standard for this week' },
+  { type: 'p', content: 'Every Tiny Steps weekly blog should give parents a usable routine, measurable progress signal, and practical fallback when the child gets stuck. Use this page as a field guide, not theory-only reading.' },
+  { type: 'li', content: 'One concrete routine parents can run in 10-15 minutes.' },
+  { type: 'li', content: 'One measurable checkpoint (accuracy, fluency, or confidence) by week-end.' },
+  { type: 'li', content: 'One rescue strategy for low-motivation days so consistency does not break.' },
+];
+
+const WEEKLY_DEFAULT_FAQ: { question: string; answer: string }[] = [
+  {
+    question: 'How long should this weekly plan take each day?',
+    answer: 'Keep it to 10-15 focused minutes. Consistency across 5-6 days is more effective than a single long session.',
+  },
+  {
+    question: 'What if my child resists practice on school days?',
+    answer: 'Use a 5-minute minimum routine and keep one easy success at the end. Resume the full 10-15 minute flow the next day.',
+  },
+  {
+    question: 'How do I know if this week worked?',
+    answer: 'Track one simple metric from Day 1 to Day 7: accuracy, fluency smoothness, or speaking confidence. Improvement on one metric is a valid week win.',
+  },
+];
+
+const BLOG_CATEGORY_OVERRIDES: Partial<Record<string, BlogPost['category']>> = {
+  'science-of-phonics-learning': 'Research',
+};
 
 type WeeklyPlaybook = {
   heading: string;
@@ -3200,22 +3271,22 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     ],
   },
   'week-25-back-to-school-plan': {
-    heading: 'Real-world action plan: back-to-school reset parents can sustain',
-    context: 'The goal is not cramming. The goal is predictable routines that rebuild confidence across phonics, grammar, and speaking.',
+    heading: 'Research-backed action plan: sustainable back-to-school reset',
+    context: 'The target is measurable recovery, not cramming. Use short, consistent routines with visible metrics across phonics, grammar, and speaking.',
     routine: [
-      'Run a 3-track week: phonics refresh Monday/Thursday, grammar Tuesday/Friday, speaking Wednesday/Saturday.',
-      'Keep each session 10-15 minutes with one clear target and one simple tracker entry.',
-      'Use Sunday review: what improved, what remains hard, what to focus next week.',
+      'Run a 3-track week: decoding/reading, grammar/writing, and speaking; rotate these predictably across days.',
+      'Keep each session to 10-15 minutes, and record one data point (accuracy or confidence) per session.',
+      'Use end-of-week comparison to Day 0 baseline before increasing difficulty.',
     ],
-    rescue: 'If routines break due to school load, restart with 5-minute versions for three days, then return to full plan.',
+    rescue: 'If routines break due to school load, use 5-minute minimum sessions for 3 days, then return to full routine with the same baseline target.',
     outcomes: [
-      'Child restarts school with less hesitation in reading and speaking tasks.',
-      'Parent has a practical weekly plan that fits real schedules.',
-      'Progress conversation with teachers becomes specific and data-backed.',
+      'Child restarts school with stronger decoding confidence and lower task resistance.',
+      'Parent has a repeatable, low-friction routine that fits weekday constraints.',
+      'Teacher communication becomes evidence-based with clear progress notes.',
     ],
     parentQuestions: [
-      'Should I push harder in first week of school? Keep support light and consistent to avoid burnout.',
-      'How do I know if plan is working? Track weekly reading ease, writing clarity, and speaking confidence ratings.',
+      'Should I push harder in Week 1? No. Keep challenge moderate and prioritize consistency.',
+      'How do I verify progress? Compare Day 0 and Day 7 data on accuracy, fluency smoothness, and speaking organization.',
     ],
   },
 };
@@ -3246,6 +3317,16 @@ function enrichWeekPost(post: BlogPost): BlogPost {
     body = [...body, ...WEEKLY_PARENT_GUIDE_BLOCKS];
   }
 
+  const hasResearchBasis = body.some((b) => b.type === 'h2' && b.content === 'Research basis: why this weekly plan works');
+  if (!hasResearchBasis) {
+    body = [...body, ...WEEKLY_RESEARCH_BASIS_BLOCKS];
+  }
+
+  const hasTinyStepsStandard = body.some((b) => b.type === 'h2' && b.content === 'Tiny Steps quality standard for this week');
+  if (!hasTinyStepsStandard) {
+    body = [...body, ...WEEKLY_TINY_STEPS_STANDARD_BLOCKS];
+  }
+
   const playbook = WEEKLY_REAL_WORLD_PLAYBOOKS[post.slug];
   if (playbook) {
     const playbookBlocks = buildWeeklyPlaybookBlocks(playbook);
@@ -3258,12 +3339,14 @@ function enrichWeekPost(post: BlogPost): BlogPost {
 
   return {
     ...post,
+    faq: post.faq?.length ? post.faq : WEEKLY_DEFAULT_FAQ,
     body,
   };
 }
 
 const normalizedBlogPosts: BlogPost[] = rawBlogPosts.map((p) => ({
   ...enrichWeekPost(p),
+  category: BLOG_CATEGORY_OVERRIDES[p.slug] ?? p.category,
   date: BLOG_PUBLICATION_DATES[p.slug] ?? p.date,
 }));
 

@@ -120,6 +120,9 @@ const APP_ROUTE_PREFIXES = [
   '/learningpartner/dashboard',
 ];
 
+const matchesRoutePrefix = (pathname: string, prefix: string) =>
+  pathname === prefix || pathname.startsWith(`${prefix}/`);
+
 const ENGLISH_EXCELLENCE_SHELL_PATH = '/kids/games/english-excellence';
 
 const resolveKidIdFromStorage = () => {
@@ -155,7 +158,7 @@ const legacyKidDashboardRedirectLoader = ({ request, params }: LoaderFunctionArg
 
 const Layout: FC = () => {
   const location = useLocation();
-  const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => location.pathname.startsWith(prefix));
+  const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(location.pathname, prefix));
   const [showFloatingTools, setShowFloatingTools] = useState(false);
 
   useEffect(() => {

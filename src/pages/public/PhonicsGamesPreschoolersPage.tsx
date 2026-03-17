@@ -140,7 +140,7 @@ export default function PhonicsGamesPreschoolersPage() {
           No-print, easy games for ages 3–6 to build letter sounds and blending at home.
         </p>
         <Link
-          to="/contact"
+          to="/?book=1"
           className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-6 rounded-lg transition"
         >
           Book Free Assessment
@@ -248,7 +248,7 @@ export default function PhonicsGamesPreschoolersPage() {
             See Pricing
           </Link>
           <Link
-            to="/contact"
+            to="/?book=1"
             className="inline-block bg-white border border-[#4a7c2c] text-[#2d5016] font-bold py-3 px-6 rounded-lg transition"
           >
             Book Free Assessment

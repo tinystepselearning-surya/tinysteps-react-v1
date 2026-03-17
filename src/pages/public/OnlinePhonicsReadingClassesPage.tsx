@@ -43,7 +43,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           Taught by experienced mentors using proven phonics methods, fun games, and stage-based progress updates for parents.
         </p>
         <Link
-          to="/contact"
+          to="/?book=1"
           className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
         >
           Book a Free Assessment
@@ -283,7 +283,7 @@ export default function OnlinePhonicsReadingClassesPage() {
         </p>
         <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
           <Link
-            to="/contact"
+            to="/?book=1"
             className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
           >
             Book Free Assessment

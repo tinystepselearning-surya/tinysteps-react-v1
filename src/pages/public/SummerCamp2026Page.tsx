@@ -213,7 +213,7 @@ export default function SummerCamp2026Page() {
         </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
             <Link
-              to="/contact"
+              to="/?book=1"
               className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-8 rounded-lg transition"
             >
               Book Free Assessment
@@ -294,7 +294,7 @@ export default function SummerCamp2026Page() {
           <strong>Duration:</strong> 10 weeks, daily live classes
         </p>
         <p className="text-sm text-gray-600 mt-4">
-          💡 <strong>Early bird reservations open now.</strong> <Link to="/contact" className="text-[#4a7c2c] underline font-semibold">Book your free assessment</Link> to secure your child's spot before seats fill up.
+          💡 <strong>Early bird reservations open now.</strong> <Link to="/?book=1" className="text-[#4a7c2c] underline font-semibold">Book your free assessment</Link> to secure your child's spot before seats fill up.
         </p>
       </section>
 
@@ -565,7 +565,7 @@ export default function SummerCamp2026Page() {
           </p>
           <div className="flex flex-col md:flex-row gap-4 justify-center mb-6">
             <Link
-              to="/contact"
+              to="/?book=1"
               className="bg-white text-[#2d5016] hover:bg-gray-100 font-bold py-4 px-8 rounded-lg transition text-lg"
             >
               Book Free Assessment

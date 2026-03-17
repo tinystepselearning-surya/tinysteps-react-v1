@@ -13,9 +13,9 @@ type AboutAuthorProps = {
 
 // Default Tiny Steps author bio
 const DEFAULT_AUTHOR: AuthorProfile = {
-  name: 'Surya',
+  name: 'Priya',
   role: 'Tiny Steps Founder',
-  bio: 'With 10+ years of experience in early childhood English education, Surya founded Tiny Steps Learning to help children ages 3–12 master phonics, grammar, and speaking with confidence. Every lesson is designed around proven learning science.',
+  bio: 'With 10+ years of experience in early childhood English education, Priya founded Tiny Steps Learning to help children ages 3–12 master phonics, grammar, and speaking with confidence. Every lesson is designed around proven learning science.',
 };
 
 export const AboutAuthor: React.FC<AboutAuthorProps> = ({ author = DEFAULT_AUTHOR }) => {

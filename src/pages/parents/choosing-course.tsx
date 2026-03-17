@@ -38,7 +38,7 @@ const ChoosingCourse: React.FC = () => {
       <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
         Browse Our Courses →
       </Link>
-      <Link to="/" className="text-primary-600 text-sm font-medium hover:underline">
+      <Link to="/?book=1" className="text-primary-600 text-sm font-medium hover:underline">
         Book your free assessment class
       </Link>
     </div>

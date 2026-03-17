@@ -159,14 +159,14 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/reading-at-home': {
-    title: 'Reading At Home: Daily Routines | Tiny Steps Parents',
-    description: 'Quick, daily reading routines and book-selection tips to build a reading habit with your child.',
+    title: 'Reading at Home: Science-Backed Daily Routines | Tiny Steps Parents',
+    description: 'Science-backed 10-minute reading routines, stage-based text selection, and parent scripts to improve decoding, fluency, and comprehension.',
     canonicalPath: '/parents/reading-at-home',
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "HowTo",
       "name": "Reading at home — simple routines",
-      "description": "Read together daily for 10–15 minutes using decodable texts and short questions.",
+      "description": "Use a 10-minute routine with decodable text, repeated reading, and quick comprehension checks.",
       "inLanguage": "en-IN",
       "step": [
         { "@type": "HowToStep", "text": "Choose a short decodable book or paragraph." },

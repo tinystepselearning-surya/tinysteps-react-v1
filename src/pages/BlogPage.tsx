@@ -2,23 +2,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { applySeo } from '../lib/seo';
 import type { FC } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { blogPosts } from '../content/blog';
 import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import { fetchMdxPosts } from '../content/blogMdx';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
-
-function requestFullscreenSafe() {
-  try {
-    const el: any = document.documentElement;
-    if (el?.requestFullscreen) return el.requestFullscreen();
-    if (el?.webkitRequestFullscreen) return el.webkitRequestFullscreen?.(); // Safari
-  } catch {
-    // ignore
-  }
-  return Promise.resolve();
-}
 
 const FAQS = [
   {
@@ -38,8 +27,8 @@ const FAQS = [
     answer: 'No. Each article is written in parent‑friendly language with step‑by‑step guidance. Start with the “Start here” links for simple routines you can use immediately.'
   },
   {
-    question: 'Are the tips aligned with school curricula in India?',
-    answer: 'Yes. We keep examples and progression compatible with CBSE, ICSE, and IB expectations. The focus is on sound‑to‑print skills and clear communication.'
+    question: 'Are the tips aligned with major school curricula?',
+    answer: 'Yes. We keep examples and progression compatible with major curriculum expectations, including CBSE, ICSE, IB, and Cambridge-aligned classrooms. The focus is on sound-to-print skills and clear communication.'
   },
   {
     question: 'What if my child struggles with reading confidence?',
@@ -56,11 +45,9 @@ const FAQS = [
 ];
 
 const BlogPage: FC = () => {
-  const navigate = useNavigate();
   const [topic, setTopic] = useState<'All'|'Phonics'|'Grammar'|'Public Speaking'|'Parent Tips'|'Research'>('All');
   const [sort, setSort] = useState<'Newest'|'Most Popular'|'Most Read'>('Newest');
   const [searchQuery, setSearchQuery] = useState('');
-  const goToChristmasTree = () => navigate('/seasonal/christmas-tree');
   const [mdxPosts, setMdxPosts] = useState<any[]>([]);
 
   useEffect(() => {
@@ -194,7 +181,7 @@ const BlogPage: FC = () => {
 
   useEffect(() => {
     applySeo({
-      title: 'Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Indian Parents',
+      title: 'Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Global Parents',
       description: 'Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning.',
       canonicalPath: '/blog',
       ogType: 'website',
@@ -204,41 +191,38 @@ const BlogPage: FC = () => {
 
   return (
     <div className="bg-white">
-      <Meta title="Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Indian Parents" description="Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
+      <Meta title="Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Global Parents" description="Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
       <div className="mx-auto max-w-6xl px-6 py-10">
         <div className="mb-6 text-center">
-          <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Indian Parents</h1>
+          <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Global Parents</h1>
           <p className="mt-2 text-base text-gray-700">Expert tips, research‑backed articles, success stories</p>
         </div>
 
         <section className="mb-6">
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-lg">
-            <div className="relative flex h-28 items-center justify-between md:h-32">
-              <img
-                src="/seasonal/christmas/homepagetile.jpg"
-                alt="Christmas banner"
-                className="absolute inset-0 h-full w-full object-cover"
-                draggable={false}
-                loading="lazy"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/30" />
-
-              <div className="relative z-10 flex w-full items-center justify-between px-6">
-                <div className="text-white">
-                  <div className="text-xl font-semibold">Merry Christmas</div>
-                  <div className="text-sm opacity-90">Festive fun: decorate the tree and celebrate!</div>
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 shadow-lg">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="text-white">
+                <div className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-100">
+                  Tiny Steps • Foundations Forever
                 </div>
-
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-white"
-                  onClick={async () => {
-                    await requestFullscreenSafe();
-                    goToChristmasTree();
-                  }}
+                <h2 className="mt-3 text-xl font-semibold md:text-2xl">Build confident readers with simple daily routines</h2>
+                <p className="mt-2 max-w-2xl text-sm text-slate-200">
+                  Explore parent-friendly guides for phonics, grammar, reading, and speaking with practical routines you can use in 10 minutes a day.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Link
+                  to="/parents"
+                  className="inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
                 >
-                  Open Game
-                </button>
+                  Parents Help Hub
+                </Link>
+                <Link
+                  to="/?book=1"
+                  className="inline-flex items-center rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Book Free Assessment
+                </Link>
               </div>
             </div>
           </div>
@@ -247,19 +231,19 @@ const BlogPage: FC = () => {
         <section className="mb-6 bg-blue-50 border-l-4 border-[#4a7c2c] p-5 rounded-lg">
           <h2 className="text-lg font-bold text-[#2d5016] mb-2">What will parents find on the Tiny Steps blog?</h2>
           <p className="text-gray-700 leading-relaxed">
-            The Tiny Steps blog offers practical, research‑backed guidance for parents of children ages 3–12. You will find phonics routines, reading tips, grammar support, and public‑speaking confidence builders—plus simple at‑home activities that fit busy schedules and align with Indian school expectations.
+            The Tiny Steps blog offers practical, research‑backed guidance for parents of children ages 3–12. You will find phonics routines, reading tips, grammar support, and public‑speaking confidence builders—plus simple at‑home activities that fit busy schedules and align with common school expectations globally.
           </p>
         </section>
 
         <div className="mb-6 mx-auto max-w-6xl px-6">
           <div className="rounded-2xl bg-white p-4 shadow-sm">
             <h2 className="text-xl font-semibold">Start here</h2>
-            <p className="mt-1 text-sm text-gray-700">Three quick guides to begin today.</p>
+            <p className="mt-1 text-sm text-gray-700">Three foundational reads by skill area.</p>
             <div className="mt-3 flex flex-wrap gap-3">
-              <Link to="/parents/getting-started" className="text-primary-600 font-medium">Getting started with phonics at home</Link>
-              <Link to="/parents/reading-at-home" className="text-primary-600">10-minute daily reading routine</Link>
-              <Link to="/parents/phonics-mission" className="text-primary-600">How to use Phonics Mission games</Link>
-              <Link to="/phonics-learning-games" className="text-primary-600">Phonics learning games with a 3-day free trial</Link>
+              <Link to="/blog/week-1-phonics-satpin-launch" className="text-primary-600 font-medium">Phonics foundations roadmap</Link>
+              <Link to="/blog/week-7-grammar-nouns-to-paragraphs" className="text-primary-600">Grammar basics roadmap</Link>
+              <Link to="/blog/week-12-speaking-confidence-seeds" className="text-primary-600">Speaking confidence roadmap</Link>
+              <Link to="/blog/week-25-back-to-school-plan" className="text-primary-600">Back-to-school parent plan</Link>
             </div>
           </div>
         </div>

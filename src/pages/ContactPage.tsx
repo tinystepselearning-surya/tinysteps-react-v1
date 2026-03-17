@@ -1,7 +1,6 @@
 // @ts-nocheck
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
-import AdvisorContactForm from '../components/common/AdvisorContactForm';
 import Meta from '../components/common/Meta';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
 import { trackEvent } from '../lib/analytics';
@@ -32,7 +31,7 @@ const ContactPage: FC = () => {
                 <li><span className="font-semibold">WhatsApp:</span> <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('cta_click', { location: 'contact', label: 'whatsapp_chat' })} className="text-tiny-green-600">Chat on WhatsApp - opens new window</a></li>
               )}
               {user && (
-                <li><span className="font-semibold">Support:</span> <a href="/contact" className="text-tiny-blue-600">Use the contact form to reach our team</a></li>
+                <li><span className="font-semibold">Support:</span> <a href={PUBLIC_CONTACT_MAILTO} className="text-tiny-blue-600">Email our support team</a></li>
               )}
               <li><span className="font-semibold">Email:</span> <a href={PUBLIC_CONTACT_MAILTO} className="text-tiny-blue-600">{PUBLIC_CONTACT_EMAIL}</a></li>
               <li>
@@ -66,11 +65,6 @@ const ContactPage: FC = () => {
             </Link>
           </div>
 
-          <AdvisorContactForm
-            topic="Contact page"
-            title="Need a reply by email?"
-            description="Use this fallback form if you do not want to use WhatsApp."
-          />
         </div>
       </section>
     </div>

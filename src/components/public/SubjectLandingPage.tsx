@@ -123,7 +123,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
         description={data.heroDescription}
         badges={data.heroBadges}
         actions={(
-          <Link to="/" className={`${ctaClass} ${data.palette.accentButton} ${data.palette.accentButtonHover}`}>
+          <Link to="/?book=1" className={`${ctaClass} ${data.palette.accentButton} ${data.palette.accentButtonHover}`}>
             Book Free Assessment
           </Link>
         )}
@@ -327,7 +327,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
           <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{data.ctaTitle}</h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">{data.ctaDescription}</p>
           <div className="mt-8">
-            <Link to="/" className={`${ctaClass} ${data.palette.accentButton} ${data.palette.accentButtonHover}`}>
+            <Link to="/?book=1" className={`${ctaClass} ${data.palette.accentButton} ${data.palette.accentButtonHover}`}>
               Book Free Assessment
             </Link>
           </div>
