@@ -27,7 +27,6 @@ const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
 const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForKidsPage'));
-const SummerCamp2026Page = lazy(() => import('../pages/public/SummerCamp2026Page'));
 const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
@@ -235,6 +234,7 @@ const router = createBrowserRouter(
         { path: 'privacy-policy', element: <PrivacyPolicyPage /> },
         { path: 'terms-and-conditions', element: <TermsAndConditionsPage /> },
         { path: 'refund-guarantee', element: <RefundGuaranteePage /> },
+        { path: 'how-it-works', element: <Navigate to="/curriculum" replace /> },
         // Legacy legal URL aliases -> canonical
         { path: 'privacy', element: <Navigate to="/privacy-policy" replace /> },
         { path: 'privacy.html', element: <Navigate to="/privacy-policy" replace /> },
@@ -266,7 +266,7 @@ const router = createBrowserRouter(
         { path: 'parents/common-mistakes', element: <ParentCommonMistakes /> },
         { path: 'why-us', element: <Navigate to="/why-tiny-steps" replace /> },
         { path: 'faq', element: <FAQPage /> },
-        { path: 'summer-english-camp-2026', element: <SummerCamp2026Page /> },
+        { path: 'summer-english-camp-2026', element: <Navigate to="/summer-camps" replace /> },
         { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },

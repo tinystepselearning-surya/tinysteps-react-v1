@@ -434,9 +434,9 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogType: 'article',
   },
   '/summer-english-camp-2026': {
-    title: 'Summer English Camp 2026 | Tiny Steps Learning',
-    description: 'Join our immersive Summer English Camp 2026. Dynamic group sessions, games, and creative projects for kids ages 6–12.',
-    canonicalPath: '/summer-english-camp-2026',
+    title: 'Summer Camps for Kids | Tiny Steps Learning',
+    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore group batches, 1:1 options, and program tracks in one place.',
+    canonicalPath: '/summer-camps',
     ogType: 'website',
   },
   '/online-phonics-reading-classes': {

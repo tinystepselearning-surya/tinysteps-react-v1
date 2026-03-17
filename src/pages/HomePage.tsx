@@ -200,7 +200,7 @@ export default function HomePage() {
             <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026</p>
-                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Online Summer English Camp for ages 3-12</h2>
+                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Online Summer English Camp for ages 4-12</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">Phonics, grammar, and confident speaking in a 10-week live format with clear routines, light homework, and progress parents can actually follow.</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["10-week program", "Live online", "Limited seats", "Daily practice support"].map((item) => (
@@ -212,16 +212,16 @@ export default function HomePage() {
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link
-                  to="/summer-english-camp-2026"
+                  to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700"
                 >
-                  View Camp
+                  Explore Summer Camps
                 </Link>
                 <Link
-                  to="/summer-camps"
+                  to="/summer-camps#batches"
                   className="inline-flex items-center justify-center rounded-full border border-emerald-600 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:-translate-y-0.5 hover:bg-emerald-50"
                 >
-                  See Camps
+                  View Group Batches
                 </Link>
               </div>
             </div>

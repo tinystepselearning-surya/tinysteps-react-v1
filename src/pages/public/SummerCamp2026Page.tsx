@@ -26,7 +26,7 @@ const STRETCH_CARDS = [
     title: 'Live Interactive Classes',
     desc: '35–40 min sessions with trained teachers.',
     cta: 'How classes work',
-    href: '/how-it-works',
+    href: '/curriculum',
   },
   {
     id: 'progress',
@@ -40,7 +40,7 @@ const STRETCH_CARDS = [
     title: 'Summer Camp Highlights',
     desc: 'Daily speaking prompts + reading + fun activities.',
     cta: 'View camp plan',
-    href: '/summer-english-camp-2026',
+    href: '/summer-camps#programs',
   },
 ];
 

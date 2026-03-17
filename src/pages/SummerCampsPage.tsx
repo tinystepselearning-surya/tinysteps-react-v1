@@ -80,7 +80,7 @@ const STRETCH_CARDS = [
     title: 'Live Interactive Classes',
     desc: '35–40 min sessions with trained teachers.',
     cta: 'How classes work',
-    href: '/how-it-works',
+    href: '/curriculum',
   },
   {
     id: 'progress',
@@ -94,7 +94,7 @@ const STRETCH_CARDS = [
     title: 'Summer Camp Highlights',
     desc: 'Daily speaking prompts + reading + fun activities.',
     cta: 'View camp plan',
-    href: '/summer-english-camp-2026',
+    href: '/summer-camps#programs',
   },
 ];
 
@@ -262,7 +262,7 @@ export default function SummerCampsPage() {
                 </p>
                 <div className="mt-4">
                   <Link
-                    to="#batches"
+                    to="/summer-camps#batches"
                     className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white"
                   >
                     View Group Batches
@@ -313,9 +313,17 @@ export default function SummerCampsPage() {
 
         <section className="mx-auto max-w-6xl px-6 pt-10">
           <div className="rounded-2xl border border-emerald-100 bg-white p-4 text-sm text-gray-700">
-            Prefer the full 10-week reading + grammar + speaking camp for ages 3–12?{' '}
-            <Link to="/summer-english-camp-2026" className="font-semibold text-emerald-700 hover:text-emerald-800">
-              View Summer English Camp 2026 →
+            Quick jumps:{' '}
+            <Link to="/summer-camps#programs" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              Choose a program
+            </Link>{' '}
+            •{' '}
+            <Link to="/summer-camps#batches" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              View group batches
+            </Link>{' '}
+            •{' '}
+            <Link to="/summer-camps#faqs" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              Read FAQs
             </Link>
           </div>
         </section>
@@ -351,7 +359,7 @@ export default function SummerCampsPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-6 pb-12">
+        <section id="programs" className="mx-auto max-w-6xl px-6 pb-12">
           <h2 className="text-2xl font-semibold text-gray-900">Choose a program</h2>
           <p className="mt-2 text-sm text-gray-600">
             Pick the focus track that matches your child’s current level and goal. All tracks follow the full curriculum.
@@ -402,7 +410,7 @@ export default function SummerCampsPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-6 pb-16">
+        <section id="faqs" className="mx-auto max-w-5xl px-6 pb-16">
           <h2 className="text-2xl font-semibold text-gray-900">FAQs</h2>
           <div className="mt-4 space-y-4">
             {FAQS.map((faq) => (
