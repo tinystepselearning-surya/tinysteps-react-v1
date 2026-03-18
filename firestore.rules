@@ -599,12 +599,19 @@ service cloud.firestore {
             )
           )
         );
-      allow create, update, delete: if isAdmin();
+      allow update: if isAdmin();
+      allow create, delete: if false;
     }
 
     // Sensitive admin-only companion docs (e.g. parent phone)
     match /demoSessionsPrivate/{demoId} {
-      allow read, write: if isAdmin();
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Server-only dedupe index for child + parent phone combinations
+    match /demoSessionUniqueKeys/{keyId} {
+      allow read, write: if false;
     }
 
     // ----------------------------

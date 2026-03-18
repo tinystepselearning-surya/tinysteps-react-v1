@@ -1,11 +1,18 @@
 import * as admin from 'firebase-admin';
+import { createHash } from 'crypto';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import * as logger from 'firebase-functions/logger';
 
 if (!admin.apps.length) {
   admin.initializeApp();
 }
 
 const REGION = 'asia-south1';
+const IST_OFFSET_MINUTES = 330;
+const DEMO_COMPLETION_PAYOUT_AMOUNT = 100;
+const DEMO_ENROLLMENT_BONUS_AMOUNT = 100;
+const DEMO_UNIQUE_KEYS_COLLECTION = 'demoSessionUniqueKeys';
 const VALID_DEMO_OUTCOMES = new Set([
   'completed',
   'parent_no_show',
@@ -115,12 +122,83 @@ const cleanOptionalEnum = (value: unknown, fieldName: string, allowedValues: Set
   return cleaned;
 };
 
+const cleanOptionalAge = (value: unknown): number | null => {
+  if (value == null || value === '') return null;
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new HttpsError('invalid-argument', 'childAge must be a valid number');
+  }
+  if (value < 0 || value > 25) {
+    throw new HttpsError('invalid-argument', 'childAge is out of valid range');
+  }
+  return Math.round(value);
+};
+
 const pickOptionalText = (value: unknown, maxLength = 2000): string | null => {
   if (typeof value !== 'string') return null;
   const cleaned = value.trim();
   if (!cleaned) return null;
   return cleaned.length > maxLength ? cleaned.slice(0, maxLength) : cleaned;
 };
+
+const toDate = (value: unknown): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date && !isNaN(value.getTime())) return value;
+  if (typeof value === 'object' && value !== null && typeof (value as any).toDate === 'function') {
+    const date = (value as any).toDate();
+    return date instanceof Date && !isNaN(date.getTime()) ? date : null;
+  }
+  if (typeof value === 'number') {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  if (typeof value === 'string') {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  return null;
+};
+
+const monthKeyFromTimestampIST = (value: unknown): string => {
+  const baseDate = toDate(value) || new Date();
+  const istMs = baseDate.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+  const istDate = new Date(istMs);
+  const year = istDate.getUTCFullYear();
+  const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+};
+
+const normalizeStatusValue = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().toLowerCase();
+};
+
+const normalizeTextForKey = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const normalizePhoneForKey = (value: string): string => value.replace(/[^\d]/g, '');
+
+const buildDemoDedupeKey = (childName: string, parentPhone: string): string => {
+  const normalizedChild = normalizeTextForKey(childName);
+  const normalizedPhone = normalizePhoneForKey(parentPhone);
+  if (!normalizedChild || !normalizedPhone) {
+    throw new HttpsError('invalid-argument', 'Child name and parent phone are required');
+  }
+
+  return createHash('sha256')
+    .update(`${normalizedChild}|${normalizedPhone}`)
+    .digest('hex');
+};
+
+const teacherEarningsMonthlyRef = (
+  db: FirebaseFirestore.Firestore,
+  teacherId: string,
+  monthKey: string,
+) => db.collection('teachers').doc(teacherId).collection('earnings').doc(monthKey);
 
 const normalizeTrack = (value: string): DemoTrack | null => {
   const normalized = value.trim().toLowerCase();
@@ -231,6 +309,438 @@ async function getCallerProfile(auth: any): Promise<CallerProfile> {
     eligibleTracks,
   };
 }
+
+interface DemoEarningWriteInput {
+  demoId: string;
+  teacherId: string;
+  teacherName: string;
+  amount: number;
+  monthKey: string;
+  earningId: string;
+  earningSource: string;
+  courseInterested: unknown;
+  parentName: unknown;
+  childName: unknown;
+  rollupCountField: 'demoCompletedCount' | 'demoEnrollmentBonusCount';
+}
+
+async function createDemoTeacherEarningIfMissing(input: DemoEarningWriteInput): Promise<boolean> {
+  const db = admin.firestore();
+  const earningRef = db.collection('teacherEarnings').doc(input.earningId);
+  const rollupRef = teacherEarningsMonthlyRef(db, input.teacherId, input.monthKey);
+  const courseInterested = pickOptionalText(input.courseInterested, 120);
+  const parentName = pickOptionalText(input.parentName, 120);
+  const childName = pickOptionalText(input.childName, 120);
+
+  return db.runTransaction(async (tx) => {
+    const earningSnap = await tx.get(earningRef);
+    if (earningSnap.exists) return false;
+
+    tx.set(earningRef, {
+      demoId: input.demoId,
+      teacherId: input.teacherId,
+      teacherName: input.teacherName,
+      amount: input.amount,
+      currency: 'INR',
+      status: 'unpaid',
+      monthKey: input.monthKey,
+      source: input.earningSource,
+      courseId: courseInterested || null,
+      enrollmentId: null,
+      kidId: null,
+      parentName: parentName || null,
+      childName: childName || null,
+      earnedAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    tx.set(
+      rollupRef,
+      {
+        month: input.monthKey,
+        totalEarnings: admin.firestore.FieldValue.increment(input.amount),
+        pendingEarnings: admin.firestore.FieldValue.increment(input.amount),
+        demoEarnings: admin.firestore.FieldValue.increment(input.amount),
+        [input.rollupCountField]: admin.firestore.FieldValue.increment(1),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return true;
+  });
+}
+
+export const onDemoSessionEarningsWrite = onDocumentWritten(
+  {
+    document: 'demoSessions/{demoId}',
+    region: REGION,
+  },
+  async (event) => {
+    const change = event.data;
+    if (!change || !change.after.exists) return;
+
+    const demoId = String(event.params.demoId || '').trim();
+    if (!demoId) return;
+    const before = change.before.exists ? change.before.data() || {} : {};
+    const after = change.after.data() || {};
+
+    const beforeStatus = normalizeStatusValue(before.status);
+    const afterStatus = normalizeStatusValue(after.status);
+    const beforeConversion = normalizeStatusValue(before.conversionStatus);
+    const afterConversion = normalizeStatusValue(after.conversionStatus);
+
+    const shouldCreditCompletion = beforeStatus !== 'completed' && afterStatus === 'completed';
+    const shouldCreditEnrollment = beforeConversion !== 'enrolled' && afterConversion === 'enrolled';
+    if (!shouldCreditCompletion && !shouldCreditEnrollment) return;
+
+    const teacherId = pickOptionalText(after.assignedTeacherId, 120);
+    const teacherName = pickOptionalText(after.assignedTeacherName, 120) || 'Teacher';
+
+    if (!teacherId) {
+      logger.warn('Skipping demo payout: assigned teacher missing', {
+        demoId,
+        shouldCreditCompletion,
+        shouldCreditEnrollment,
+      });
+      return;
+    }
+
+    if (shouldCreditCompletion) {
+      const completionMonthKey = monthKeyFromTimestampIST(
+        after.completedAt || after.lastUpdatedAt || new Date(),
+      );
+      const completionEarningId = `demo_${demoId}_completion`;
+      const createdCompletionEarning = await createDemoTeacherEarningIfMissing({
+        demoId,
+        teacherId,
+        teacherName,
+        amount: DEMO_COMPLETION_PAYOUT_AMOUNT,
+        monthKey: completionMonthKey,
+        earningId: completionEarningId,
+        earningSource: 'demo_completed',
+        courseInterested: after.courseInterested,
+        parentName: after.parentName,
+        childName: after.childName,
+        rollupCountField: 'demoCompletedCount',
+      });
+
+      if (createdCompletionEarning) {
+        logger.info('Demo completion earning credited', {
+          demoId,
+          teacherId,
+          earningId: completionEarningId,
+          amount: DEMO_COMPLETION_PAYOUT_AMOUNT,
+          monthKey: completionMonthKey,
+        });
+      }
+    }
+
+    if (shouldCreditEnrollment) {
+      const enrollmentMonthKey = monthKeyFromTimestampIST(after.lastUpdatedAt || new Date());
+      const enrollmentEarningId = `demo_${demoId}_enrollment_bonus`;
+      const createdEnrollmentEarning = await createDemoTeacherEarningIfMissing({
+        demoId,
+        teacherId,
+        teacherName,
+        amount: DEMO_ENROLLMENT_BONUS_AMOUNT,
+        monthKey: enrollmentMonthKey,
+        earningId: enrollmentEarningId,
+        earningSource: 'demo_enrolled_bonus',
+        courseInterested: after.courseInterested,
+        parentName: after.parentName,
+        childName: after.childName,
+        rollupCountField: 'demoEnrollmentBonusCount',
+      });
+
+      if (createdEnrollmentEarning) {
+        logger.info('Demo enrollment bonus credited', {
+          demoId,
+          teacherId,
+          earningId: enrollmentEarningId,
+          amount: DEMO_ENROLLMENT_BONUS_AMOUNT,
+          monthKey: enrollmentMonthKey,
+        });
+      }
+    }
+  },
+);
+
+interface AdminUpsertDemoSessionRequest {
+  demoId?: string;
+  parentName: string;
+  parentPhone: string;
+  childName: string;
+  childGrade: string;
+  childAge?: number | null;
+  courseInterested: string;
+  source?: string | null;
+  demoMode?: string | null;
+  preferredDateTimeText: string;
+  timezone?: string | null;
+  adminNotes?: string | null;
+}
+
+interface AdminUpsertDemoSessionResponse {
+  ok: boolean;
+  demoId: string;
+  status: DemoStatus;
+}
+
+const uniqueKeyRef = (db: FirebaseFirestore.Firestore, dedupeKey: string) =>
+  db.collection(DEMO_UNIQUE_KEYS_COLLECTION).doc(dedupeKey);
+
+const assertDemoUniqueAvailability = (
+  uniqueSnap: FirebaseFirestore.DocumentSnapshot,
+  dedupeKey: string,
+  requestedDemoId?: string,
+) => {
+  if (!uniqueSnap.exists) return;
+  const currentDemoId = pickOptionalText(uniqueSnap.data()?.demoId, 120);
+  if (currentDemoId && requestedDemoId && currentDemoId === requestedDemoId) return;
+
+  throw new HttpsError(
+    'already-exists',
+    currentDemoId
+      ? `A demo for this child and parent phone already exists (ID: ${currentDemoId}).`
+      : 'A demo for this child and parent phone already exists.',
+    { dedupeKey, demoId: currentDemoId || null },
+  );
+};
+
+export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
+  { region: REGION },
+  async (request): Promise<AdminUpsertDemoSessionResponse> => {
+    const caller = await getCallerProfile(request.auth);
+    if (!caller.isAdmin) {
+      throw new HttpsError('permission-denied', 'Only admin can create demo sessions');
+    }
+
+    const parentName = cleanRequiredText(request.data?.parentName, 'parentName', 120);
+    const parentPhone = cleanRequiredText(request.data?.parentPhone, 'parentPhone', 60);
+    const childName = cleanRequiredText(request.data?.childName, 'childName', 120);
+    const childGrade = cleanRequiredText(request.data?.childGrade, 'childGrade', 60);
+    const childAge = cleanOptionalAge(request.data?.childAge);
+    const courseInterested = cleanRequiredText(request.data?.courseInterested, 'courseInterested', 120);
+    const source = cleanOptionalText(request.data?.source, 120);
+    const demoMode = cleanOptionalText(request.data?.demoMode, 120);
+    const preferredDateTimeText = cleanRequiredText(
+      request.data?.preferredDateTimeText,
+      'preferredDateTimeText',
+      500,
+    );
+    const timezone = cleanOptionalText(request.data?.timezone, 120);
+    const adminNotes = cleanOptionalText(request.data?.adminNotes, 2000);
+    const dedupeKey = buildDemoDedupeKey(childName, parentPhone);
+
+    const db = admin.firestore();
+    const demoRef = db.collection('demoSessions').doc();
+    const privateRef = db.collection('demoSessionsPrivate').doc(demoRef.id);
+    const dedupeRef = uniqueKeyRef(db, dedupeKey);
+
+    await db.runTransaction(async (tx) => {
+      const dedupeSnap = await tx.get(dedupeRef);
+      assertDemoUniqueAvailability(dedupeSnap, dedupeKey);
+
+      tx.set(demoRef, {
+        parentName,
+        childName,
+        childGrade,
+        childAge,
+        courseInterested,
+        source,
+        demoMode,
+        preferredDateTimeText,
+        timezone,
+        adminNotes,
+        dedupeKey,
+        status: 'open',
+        assignedTeacherId: null,
+        assignedTeacherName: null,
+        assignedAt: null,
+        teacherConfirmedDate: null,
+        teacherConfirmedTime: null,
+        teacherPreDemoNote: null,
+        outcome: null,
+        teacherRemarks: null,
+        teacherRecommendation: null,
+        childLevelObserved: null,
+        readingLevel: null,
+        phonicsAwareness: null,
+        grammarEvaluation: null,
+        speakingConfidence: null,
+        attentionSpan: null,
+        parentExpectation: null,
+        recommendedNextStep: null,
+        releasedAt: null,
+        reopenedAt: null,
+        rescheduledFromDemoId: null,
+        rescheduledToDemoId: null,
+        history: [makeHistoryEntry('created', caller, 'Demo request created by admin')],
+        conversionStatus: null,
+        recommendedCourse: null,
+        recommendedClassType: null,
+        recommendedFrequency: null,
+        feeDiscussed: null,
+        followUpDate: null,
+        followUpCallStatus: null,
+        followUpCallCompletedAt: null,
+        admissionNotConfirmedReason: null,
+        completedAt: null,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: caller.uid,
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedBy: caller.uid,
+      });
+
+      tx.set(privateRef, {
+        parentPhone,
+        parentPhoneKey: normalizePhoneForKey(parentPhone),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: caller.uid,
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedBy: caller.uid,
+      });
+
+      tx.set(dedupeRef, {
+        demoId: demoRef.id,
+        dedupeKey,
+        childNameKey: normalizeTextForKey(childName),
+        parentPhoneKey: normalizePhoneForKey(parentPhone),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdBy: caller.uid,
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedBy: caller.uid,
+      });
+    });
+
+    return {
+      ok: true,
+      demoId: demoRef.id,
+      status: 'open',
+    };
+  },
+);
+
+export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionRequest>(
+  { region: REGION },
+  async (request): Promise<AdminUpsertDemoSessionResponse> => {
+    const caller = await getCallerProfile(request.auth);
+    if (!caller.isAdmin) {
+      throw new HttpsError('permission-denied', 'Only admin can edit demo sessions');
+    }
+
+    const demoId = cleanRequiredText(request.data?.demoId, 'demoId', 120);
+    const parentName = cleanRequiredText(request.data?.parentName, 'parentName', 120);
+    const parentPhone = cleanRequiredText(request.data?.parentPhone, 'parentPhone', 60);
+    const childName = cleanRequiredText(request.data?.childName, 'childName', 120);
+    const childGrade = cleanRequiredText(request.data?.childGrade, 'childGrade', 60);
+    const childAge = cleanOptionalAge(request.data?.childAge);
+    const courseInterested = cleanRequiredText(request.data?.courseInterested, 'courseInterested', 120);
+    const source = cleanOptionalText(request.data?.source, 120);
+    const demoMode = cleanOptionalText(request.data?.demoMode, 120);
+    const preferredDateTimeText = cleanRequiredText(
+      request.data?.preferredDateTimeText,
+      'preferredDateTimeText',
+      500,
+    );
+    const timezone = cleanOptionalText(request.data?.timezone, 120);
+    const adminNotes = cleanOptionalText(request.data?.adminNotes, 2000);
+    const newDedupeKey = buildDemoDedupeKey(childName, parentPhone);
+
+    const db = admin.firestore();
+    const demoRef = db.collection('demoSessions').doc(demoId);
+    const privateRef = db.collection('demoSessionsPrivate').doc(demoId);
+    let currentStatus: DemoStatus = 'open';
+
+    await db.runTransaction(async (tx) => {
+      const [demoSnap, privateSnap] = await Promise.all([tx.get(demoRef), tx.get(privateRef)]);
+      if (!demoSnap.exists) {
+        throw new HttpsError('not-found', 'Demo session not found');
+      }
+
+      const demo = demoSnap.data() as {
+        status?: DemoStatus;
+        childName?: string | null;
+        dedupeKey?: string | null;
+        history?: unknown;
+      };
+      currentStatus = demo.status || 'open';
+
+      const existingPhone = pickOptionalText(privateSnap.data()?.parentPhone, 60);
+      const existingChild = pickOptionalText(demo.childName, 120);
+      let previousDedupeKey = pickOptionalText(demo.dedupeKey, 128);
+      if (!previousDedupeKey && existingPhone && existingChild) {
+        previousDedupeKey = buildDemoDedupeKey(existingChild, existingPhone);
+      }
+
+      const nextDedupeRef = uniqueKeyRef(db, newDedupeKey);
+      const nextDedupeSnap = await tx.get(nextDedupeRef);
+      assertDemoUniqueAvailability(nextDedupeSnap, newDedupeKey, demoId);
+
+      tx.update(demoRef, {
+        parentName,
+        childName,
+        childGrade,
+        childAge,
+        courseInterested,
+        source,
+        demoMode,
+        preferredDateTimeText,
+        timezone,
+        adminNotes,
+        dedupeKey: newDedupeKey,
+        history: appendHistoryEntry(
+          demo.history,
+          makeHistoryEntry('admin_details_updated', caller, 'Admin updated demo details'),
+        ),
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedBy: caller.uid,
+      });
+
+      tx.set(
+        privateRef,
+        {
+          parentPhone,
+          parentPhoneKey: normalizePhoneForKey(parentPhone),
+          lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdatedBy: caller.uid,
+        },
+        { merge: true },
+      );
+
+      const dedupePayload: Record<string, unknown> = {
+        demoId,
+        dedupeKey: newDedupeKey,
+        childNameKey: normalizeTextForKey(childName),
+        parentPhoneKey: normalizePhoneForKey(parentPhone),
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedBy: caller.uid,
+      };
+      if (!nextDedupeSnap.exists) {
+        dedupePayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+        dedupePayload.createdBy = caller.uid;
+      }
+      tx.set(nextDedupeRef, dedupePayload, { merge: true });
+
+      if (previousDedupeKey && previousDedupeKey !== newDedupeKey) {
+        const previousDedupeRef = uniqueKeyRef(db, previousDedupeKey);
+        const previousDedupeSnap = await tx.get(previousDedupeRef);
+        const previousMappedDemoId = pickOptionalText(previousDedupeSnap.data()?.demoId, 120);
+        if (previousMappedDemoId === demoId) {
+          tx.delete(previousDedupeRef);
+        }
+      }
+    });
+
+    return {
+      ok: true,
+      demoId,
+      status: currentStatus,
+    };
+  },
+);
 
 interface ClaimDemoSessionRequest {
   demoId: string;
@@ -491,6 +1001,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         history?: unknown;
         parentName?: string | null;
         childName?: string | null;
+        dedupeKey?: string | null;
         childGrade?: string | null;
         childAge?: number | null;
         courseInterested?: string | null;
@@ -538,6 +1049,20 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         const followUpDemoRef = db.collection('demoSessions').doc();
         const followUpPrivateRef = db.collection('demoSessionsPrivate').doc(followUpDemoRef.id);
         const privateSnap = await tx.get(privateRef);
+        const privateData = privateSnap.data() as { parentPhone?: string } | undefined;
+        const parentPhone = pickOptionalText(privateData?.parentPhone, 60);
+        const childNameForKey = pickOptionalText(demo.childName, 120) || 'child';
+        let followUpDedupeKey = pickOptionalText(demo.dedupeKey, 128);
+        if (!followUpDedupeKey && parentPhone) {
+          try {
+            followUpDedupeKey = buildDemoDedupeKey(childNameForKey, parentPhone);
+          } catch (error) {
+            logger.warn('Failed to derive dedupe key for rescheduled demo', {
+              demoId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+          }
+        }
 
         const followUpPreferredSlot =
           pickOptionalText(demo.preferredDateTimeText, 500) || 'Reschedule requested by parent';
@@ -558,6 +1083,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           preferredDateTimeText: followUpPreferredSlot,
           timezone: pickOptionalText(demo.timezone, 120),
           adminNotes: combinedAdminNotes,
+          dedupeKey: followUpDedupeKey || null,
           status: 'open',
           assignedTeacherId: null,
           assignedTeacherName: null,
@@ -599,18 +1125,31 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           lastUpdatedBy: caller.uid,
         });
 
-        if (privateSnap.exists) {
-          const privateData = privateSnap.data() as { parentPhone?: string };
-          const parentPhone = pickOptionalText(privateData.parentPhone, 60);
-          if (parentPhone) {
-            tx.set(followUpPrivateRef, {
-              parentPhone,
-              createdAt: admin.firestore.FieldValue.serverTimestamp(),
-              createdBy: caller.uid,
+        if (parentPhone) {
+          tx.set(followUpPrivateRef, {
+            parentPhone,
+            parentPhoneKey: normalizePhoneForKey(parentPhone),
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdBy: caller.uid,
+            lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            lastUpdatedBy: caller.uid,
+          });
+        }
+
+        if (followUpDedupeKey) {
+          const followUpDedupeRef = uniqueKeyRef(db, followUpDedupeKey);
+          tx.set(
+            followUpDedupeRef,
+            {
+              demoId: followUpDemoRef.id,
+              dedupeKey: followUpDedupeKey,
+              childNameKey: normalizeTextForKey(childNameForKey),
+              parentPhoneKey: parentPhone ? normalizePhoneForKey(parentPhone) : null,
               lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
               lastUpdatedBy: caller.uid,
-            });
-          }
+            },
+            { merge: true },
+          );
         }
 
         updatePayload.rescheduledToDemoId = followUpDemoRef.id;
@@ -842,8 +1381,19 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
         throw new HttpsError('not-found', 'Demo session not found');
       }
 
+      const demoData = demoSnap.data() as { dedupeKey?: string | null };
+      const dedupeKey = pickOptionalText(demoData.dedupeKey, 128);
       tx.delete(demoRef);
       tx.delete(privateRef);
+
+      if (dedupeKey) {
+        const dedupeRef = uniqueKeyRef(db, dedupeKey);
+        const dedupeSnap = await tx.get(dedupeRef);
+        const mappedDemoId = pickOptionalText(dedupeSnap.data()?.demoId, 120);
+        if (mappedDemoId === demoId) {
+          tx.delete(dedupeRef);
+        }
+      }
     });
 
     return {

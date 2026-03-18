@@ -73,6 +73,9 @@ export {
 
 // Demo sessions assignment workflow
 export {
+  onDemoSessionEarningsWrite,
+  adminCreateDemoSession,
+  adminUpdateDemoSessionDetails,
   claimDemoSession,
   updateDemoSessionSchedule,
   completeDemoSession,

@@ -7,7 +7,6 @@ import {
   serverTimestamp,
   updateDoc,
   where,
-  writeBatch,
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
@@ -62,97 +61,24 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
     throw new Error('Please fill all required fields.');
   }
 
-  const demoRef = doc(collection(db, DEMO_SESSIONS_COLLECTION));
-  const privateRef = doc(db, DEMO_SESSIONS_PRIVATE_COLLECTION, demoRef.id);
-  const batch = writeBatch(db);
-
-  console.debug('[DemoSessions:create] preparing batch', {
-    demoId: demoRef.id,
-    createdBy,
-    hasSource: !!source,
-    hasDemoMode: !!demoMode,
-  });
-
-  batch.set(demoRef, {
-    parentName,
-    childName,
-    childGrade,
-    childAge: typeof input.childAge === 'number' ? input.childAge : null,
-    courseInterested,
-    source,
-    demoMode,
-    preferredDateTimeText,
-    timezone: input.timezone?.trim() || null,
-    adminNotes: input.adminNotes?.trim() || null,
-    status: 'open',
-    assignedTeacherId: null,
-    assignedTeacherName: null,
-    assignedAt: null,
-    teacherConfirmedDate: null,
-    teacherConfirmedTime: null,
-    teacherPreDemoNote: null,
-    outcome: null,
-    teacherRemarks: null,
-    teacherRecommendation: null,
-    childLevelObserved: null,
-    readingLevel: null,
-    phonicsAwareness: null,
-    grammarEvaluation: null,
-    speakingConfidence: null,
-    attentionSpan: null,
-    parentExpectation: null,
-    recommendedNextStep: null,
-    releasedAt: null,
-    reopenedAt: null,
-    rescheduledFromDemoId: null,
-    rescheduledToDemoId: null,
-    history: [
-      {
-        action: 'created',
-        actorId: createdBy,
-        actorName: null,
-        atMs: Date.now(),
-        note: 'Demo request created by admin',
-      },
-    ],
-    conversionStatus: null,
-    recommendedCourse: null,
-    recommendedClassType: null,
-    recommendedFrequency: null,
-    feeDiscussed: null,
-    followUpDate: null,
-    followUpCallStatus: null,
-    followUpCallCompletedAt: null,
-    admissionNotConfirmedReason: null,
-    completedAt: null,
-    createdAt: serverTimestamp(),
-    createdBy,
-    lastUpdatedAt: serverTimestamp(),
-    lastUpdatedBy: createdBy,
-  });
-
-  batch.set(privateRef, {
-    parentPhone,
-    createdAt: serverTimestamp(),
-    createdBy,
-    lastUpdatedAt: serverTimestamp(),
-    lastUpdatedBy: createdBy,
-  });
-
-  try {
-    console.debug('[DemoSessions:create] committing batch', {
-      demoPath: `${DEMO_SESSIONS_COLLECTION}/${demoRef.id}`,
-      privatePath: `${DEMO_SESSIONS_PRIVATE_COLLECTION}/${demoRef.id}`,
-    });
-    await batch.commit();
-  } catch (error: any) {
-    console.error('[DemoSessions:create] batch commit failed', {
-      code: error?.code,
-      message: error?.message,
-    });
-    throw error;
-  }
-  return demoRef.id;
+  void createdBy;
+  const result = await callFunction<DemoSessionCallableResponse & { demoId: string }, CreateDemoSessionInput>(
+    'adminCreateDemoSession',
+    {
+      parentName,
+      parentPhone,
+      childName,
+      childGrade,
+      childAge: typeof input.childAge === 'number' ? input.childAge : null,
+      courseInterested,
+      source,
+      demoMode,
+      preferredDateTimeText,
+      timezone: input.timezone?.trim() || null,
+      adminNotes: input.adminNotes?.trim() || null,
+    },
+  );
+  return result.demoId;
 }
 
 export function listenAllDemoSessions(
@@ -314,6 +240,21 @@ interface UpdateDemoConversionPayload {
   updatedBy: string;
 }
 
+interface UpdateDemoSessionAdminDetailsPayload {
+  demoId: string;
+  parentName: string;
+  parentPhone: string;
+  childName: string;
+  childGrade: string;
+  childAge?: number | null;
+  courseInterested: string;
+  source?: string | null;
+  demoMode?: string | null;
+  preferredDateTimeText: string;
+  timezone?: string | null;
+  adminNotes?: string | null;
+}
+
 export async function reassignDemoSession(
   payload: ReassignDemoSessionPayload,
 ): Promise<DemoSessionCallableResponse> {
@@ -343,6 +284,15 @@ export async function releaseDemoSession(
 
 export async function deleteDemoSession(payload: DeleteDemoSessionPayload): Promise<{ ok: boolean; demoId: string }> {
   return callFunction<{ ok: boolean; demoId: string }, DeleteDemoSessionPayload>('deleteDemoSession', payload);
+}
+
+export async function updateDemoSessionAdminDetails(
+  payload: UpdateDemoSessionAdminDetailsPayload,
+): Promise<DemoSessionCallableResponse> {
+  return callFunction<DemoSessionCallableResponse, UpdateDemoSessionAdminDetailsPayload>(
+    'adminUpdateDemoSessionDetails',
+    payload,
+  );
 }
 
 export async function updateDemoConversion(payload: UpdateDemoConversionPayload): Promise<void> {

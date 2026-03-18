@@ -21,6 +21,8 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   adminGenerateResetLink: 'asia-south1',
   assignLPToTeacher: 'asia-south1',
   adminProcessEnrollmentCSV: 'asia-south1',
+  adminCreateDemoSession: 'asia-south1',
+  adminUpdateDemoSessionDetails: 'asia-south1',
   claimDemoSession: 'asia-south1',
   updateDemoSessionSchedule: 'asia-south1',
   completeDemoSession: 'asia-south1',

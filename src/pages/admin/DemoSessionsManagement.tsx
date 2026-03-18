@@ -43,6 +43,7 @@ import {
   reassignDemoSession,
   releaseDemoSession,
   reopenDemoSession,
+  updateDemoSessionAdminDetails,
   updateDemoConversion,
 } from '../../services/demoSessionsService';
 
@@ -193,6 +194,7 @@ const formatHistoryAction = (action?: string) => {
   if (action === 'cancelled') return 'Cancelled';
   if (action === 'released') return 'Released';
   if (action === 'reopened') return 'Reopened';
+  if (action === 'admin_details_updated') return 'Details Updated';
   if (action === 'follow_up_updated') return 'Follow-up Updated';
   return action;
 };
@@ -315,6 +317,8 @@ export default function DemoSessionsManagement() {
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [assignedTeacherFilter, setAssignedTeacherFilter] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [editTarget, setEditTarget] = useState<DemoSession | null>(null);
+  const [editForm, setEditForm] = useState<DemoFormState>(INITIAL_FORM);
   const [reassignTarget, setReassignTarget] = useState<DemoSession | null>(null);
   const [reassignTeacherId, setReassignTeacherId] = useState<string>('');
   const [conversionTarget, setConversionTarget] = useState<DemoSession | null>(null);
@@ -512,6 +516,10 @@ export default function DemoSessionsManagement() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const onEditFieldChange = (key: keyof DemoFormState, value: string) => {
+    setEditForm((prev) => ({ ...prev, [key]: value }));
+  };
+
   const handleCreate = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.debug('[DemoSessions:create] submit clicked', {
@@ -581,9 +589,14 @@ export default function DemoSessionsManagement() {
         description: 'The demo request is now available in the assignment pool.',
       });
     } catch (error: any) {
+      const isDuplicate = error?.code === 'already-exists' || String(error?.message || '').includes('already exists');
       toast({
-        title: 'Failed to create demo session',
-        description: error?.message || 'Please try again.',
+        title: isDuplicate ? 'Duplicate demo detected' : 'Failed to create demo session',
+        description:
+          error?.message ||
+          (isDuplicate
+            ? 'A demo with the same child name and parent phone already exists.'
+            : 'Please try again.'),
         variant: 'destructive',
       });
       console.error('[DemoSessions:create] submit failed', {
@@ -592,6 +605,90 @@ export default function DemoSessionsManagement() {
       });
     } finally {
       setCreating(false);
+    }
+  };
+
+  const openEditDialog = (session: DemoSession) => {
+    setEditTarget(session);
+    setEditForm({
+      parentName: session.parentName || '',
+      parentPhone: phoneMap[session.id] || '',
+      childName: session.childName || '',
+      childGrade: session.childGrade || '',
+      childAge: typeof session.childAge === 'number' ? String(session.childAge) : '',
+      courseInterested: session.courseInterested || '',
+      source: session.source || '',
+      demoMode: session.demoMode || '',
+      preferredDateTimeText: session.preferredDateTimeText || '',
+      timezone: session.timezone || '',
+      adminNotes: session.adminNotes || '',
+    });
+  };
+
+  const handleSaveEdit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editTarget || !user?.uid) return;
+
+    const normalizedAge = editForm.childAge.trim();
+    const parsedAge = normalizedAge ? Number(normalizedAge) : null;
+    if (normalizedAge && Number.isNaN(parsedAge)) {
+      toast({
+        title: 'Invalid child age',
+        description: 'Child age must be a number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (
+      !editForm.parentName.trim() ||
+      !editForm.parentPhone.trim() ||
+      !editForm.childName.trim() ||
+      !editForm.childGrade.trim() ||
+      !editForm.courseInterested.trim() ||
+      !editForm.preferredDateTimeText.trim()
+    ) {
+      toast({
+        title: 'Missing required fields',
+        description: 'Please fill all required fields before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSavingAction(`edit:${editTarget.id}`);
+    try {
+      await updateDemoSessionAdminDetails({
+        demoId: editTarget.id,
+        parentName: editForm.parentName.trim(),
+        parentPhone: editForm.parentPhone.trim(),
+        childName: editForm.childName.trim(),
+        childGrade: editForm.childGrade.trim(),
+        childAge: parsedAge,
+        courseInterested: editForm.courseInterested.trim(),
+        source: editForm.source.trim() || null,
+        demoMode: editForm.demoMode.trim() || null,
+        preferredDateTimeText: editForm.preferredDateTimeText.trim(),
+        timezone: editForm.timezone.trim() || null,
+        adminNotes: editForm.adminNotes.trim() || null,
+      });
+
+      setEditTarget(null);
+      toast({ title: 'Demo details updated' });
+    } catch (error: any) {
+      const isDuplicate =
+        error?.code === 'already-exists' || String(error?.message || '').includes('already exists');
+      toast({
+        title: isDuplicate ? 'Duplicate demo detected' : 'Failed to update demo details',
+        description:
+          error?.message ||
+          (isDuplicate
+            ? 'A demo with the same child name and parent phone already exists.'
+            : 'Please try again.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingAction(null);
     }
   };
 
@@ -848,6 +945,15 @@ export default function DemoSessionsManagement() {
           disabled={savingAction === `conversion:${session.id}`}
         >
           Follow-up
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className={buttonClass}
+          onClick={() => openEditDialog(session)}
+          disabled={savingAction === `edit:${session.id}`}
+        >
+          Edit
         </Button>
         <Button variant="outline" size="sm" className={buttonClass} onClick={() => handleCopyPhone(session)}>
           Copy Phone
@@ -1445,6 +1551,179 @@ export default function DemoSessionsManagement() {
           </TabsContent>
         </Tabs>
       </Card>
+
+      <Dialog open={!!editTarget} onOpenChange={(open) => (!open ? setEditTarget(null) : undefined)}>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Demo Details</DialogTitle>
+          </DialogHeader>
+
+          <form className="grid gap-4" onSubmit={handleSaveEdit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-parent-name">Parent Name *</Label>
+                <Input
+                  id="edit-demo-parent-name"
+                  value={editForm.parentName}
+                  onChange={(e) => onEditFieldChange('parentName', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-parent-phone">Parent Phone *</Label>
+                <Input
+                  id="edit-demo-parent-phone"
+                  value={editForm.parentPhone}
+                  onChange={(e) => onEditFieldChange('parentPhone', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-child-name">Child Name *</Label>
+                <Input
+                  id="edit-demo-child-name"
+                  value={editForm.childName}
+                  onChange={(e) => onEditFieldChange('childName', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-child-grade">Child Grade *</Label>
+                <Input
+                  id="edit-demo-child-grade"
+                  value={editForm.childGrade}
+                  onChange={(e) => onEditFieldChange('childGrade', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-child-age">Child Age</Label>
+                <Input
+                  id="edit-demo-child-age"
+                  type="number"
+                  min={0}
+                  value={editForm.childAge}
+                  onChange={(e) => onEditFieldChange('childAge', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-course">Course Interested *</Label>
+                <Select
+                  value={editForm.courseInterested || undefined}
+                  onValueChange={(value) => onEditFieldChange('courseInterested', value)}
+                >
+                  <SelectTrigger id="edit-demo-course">
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COURSE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-timezone">Timezone</Label>
+                <Select
+                  value={editForm.timezone || 'not_set'}
+                  onValueChange={(value) => onEditFieldChange('timezone', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger id="edit-demo-timezone">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {TIMEZONE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-source">Source</Label>
+                <Select
+                  value={editForm.source || 'not_set'}
+                  onValueChange={(value) => onEditFieldChange('source', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger id="edit-demo-source">
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {SOURCE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-mode">Demo Mode</Label>
+                <Select
+                  value={editForm.demoMode || 'not_set'}
+                  onValueChange={(value) => onEditFieldChange('demoMode', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger id="edit-demo-mode">
+                    <SelectValue placeholder="Select demo mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {DEMO_MODE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-demo-preferred-slot">Parent Preferred Date/Time *</Label>
+              <Textarea
+                id="edit-demo-preferred-slot"
+                value={editForm.preferredDateTimeText}
+                onChange={(e) => onEditFieldChange('preferredDateTimeText', e.target.value)}
+                rows={2}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-demo-admin-notes">Notes for Teacher</Label>
+              <Textarea
+                id="edit-demo-admin-notes"
+                value={editForm.adminNotes}
+                onChange={(e) => onEditFieldChange('adminNotes', e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditTarget(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!editTarget || !!savingAction}>
+                {savingAction && savingAction.startsWith('edit:') ? 'Saving...' : 'Save Details'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!conversionTarget} onOpenChange={(open) => (!open ? setConversionTarget(null) : undefined)}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-2xl">
