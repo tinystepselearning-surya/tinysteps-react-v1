@@ -1,13 +1,16 @@
 // React default import removed
 import { Button } from '@components/ui/button';
+import { cn } from '@components/lib/utils';
 import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   selectedTab: string;
   onTabChange: (tab: string) => void;
+  className?: string;
+  onNavigate?: () => void;
 }
 
-export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
+export default function Sidebar({ selectedTab, onTabChange, className, onNavigate }: SidebarProps) {
   const navigate = useNavigate();
   const tabs = [
     { id: 'users', label: 'User Management', icon: '👥' },
@@ -23,7 +26,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
   ];
 
   return (
-    <aside className="w-64 bg-gray-800 text-white p-6">
+    <aside className={cn('w-64 bg-gray-800 text-white p-6', className)}>
       <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
       <nav className="space-y-2">
         {tabs.map((tab) => (
@@ -38,6 +41,7 @@ export default function Sidebar({ selectedTab, onTabChange }: SidebarProps) {
             onClick={() => {
               onTabChange(tab.id);
               navigate(`/surya?tab=${tab.id}`);
+              onNavigate?.();
             }}
           >
             <span className="mr-3">{tab.icon}</span>

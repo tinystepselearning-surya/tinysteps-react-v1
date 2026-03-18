@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
+import { ClipboardList, GraduationCap, LineChart, Users2, Wallet } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -31,6 +33,7 @@ import TeacherPayments from './TeacherPayments';
 import ParentPayments from './ParentPayments';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
+import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 
 // ---------- Admin stats fetcher ----------
 const fetchAdminStats = async (): Promise<AdminStats> => {
@@ -64,6 +67,14 @@ const ROLE_SHORTCUTS = [
   { id: 'parent', label: 'Parent', path: '/parent' },
   { id: 'learningPartner', label: 'Learning Partner', path: '/learning-partner/dashboard' },
   { id: 'kid', label: 'Kid', path: '/parent/kids' },
+];
+
+const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
+  { id: 'users', label: 'Users', icon: Users2 },
+  { id: 'students', label: 'Students', icon: GraduationCap },
+  { id: 'demo-sessions', label: 'Demos', icon: ClipboardList },
+  { id: 'analytics', label: 'Analytics', icon: LineChart },
+  { id: 'teacher-payments', label: 'Payments', icon: Wallet },
 ];
 
 const AccessMessage = ({ children }: { children: React.ReactNode }) => (
@@ -277,6 +288,7 @@ export default function AdminDashboard() {
   const location = useLocation();
 
   const [selectedTab, setSelectedTab] = useState('users');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ✅ FIX: local reload key for EnrollmentsList (required prop)
   const [enrollmentsReloadKey] = useState(0);
@@ -330,12 +342,29 @@ export default function AdminDashboard() {
   if (!canViewAdmin) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 overflow-x-hidden">
-      <Header user={user} />
-      <div className="flex flex-1 min-w-0">
-        <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} />
+    <div className="mobile-app-scroll min-h-screen flex flex-col overflow-x-hidden bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-gray-900 lg:bg-gray-50">
+      <div className="sticky top-0 z-30 bg-slate-50/80 px-2 pt-[env(safe-area-inset-top)] backdrop-blur lg:static lg:bg-transparent lg:px-0 lg:pt-0">
+        <Header user={user} onOpenMenu={() => setMobileMenuOpen(true)} />
+      </div>
 
-        <main className="flex-1 min-w-0 p-6 md:p-8 overflow-x-hidden">
+      <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[320px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-0 sm:rounded-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Admin menu</DialogTitle>
+          </DialogHeader>
+          <Sidebar
+            selectedTab={selectedTab}
+            onTabChange={setSelectedTab}
+            onNavigate={() => setMobileMenuOpen(false)}
+            className="w-full h-full overflow-y-auto"
+          />
+        </DialogContent>
+      </Dialog>
+
+      <div className="flex flex-1 min-w-0 pb-24 lg:pb-0">
+        <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} className="hidden lg:block" />
+
+        <main className="flex-1 min-w-0 p-4 sm:p-6 md:p-8 overflow-x-hidden">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
           <div className="mb-4 rounded bg-yellow-100 border p-3 text-sm font-semibold">
             🔧 ADMIN DASHBOARD – v2 CLEAN
@@ -354,7 +383,7 @@ export default function AdminDashboard() {
           )}
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="mb-6 flex flex-wrap h-auto gap-2">
+            <TabsList className="mb-6 hidden h-auto flex-wrap gap-2 lg:flex">
               <TabsTrigger value="users">User Management</TabsTrigger>
               <TabsTrigger value="students">Student Management</TabsTrigger>
               <TabsTrigger value="enrollments">Enrollment Management</TabsTrigger>
@@ -423,7 +452,7 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      <footer className="border-t p-4 text-sm">
+      <footer className="hidden border-t p-4 text-sm sm:block">
         {statsLoading ? (
           'Loading…'
         ) : statsError ? (
@@ -435,6 +464,15 @@ export default function AdminDashboard() {
           </>
         )}
       </footer>
+
+      <MobileTabBar
+        items={ADMIN_MOBILE_TABS}
+        activeId={selectedTab}
+        onSelect={(nextTab) => {
+          setSelectedTab(nextTab);
+          navigate(`/surya?tab=${nextTab}`, { replace: true });
+        }}
+      />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import {
   ChevronDown,
   CircleUser,
   LogOut,
+  Menu,
 } from 'lucide-react';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +20,7 @@ interface TeacherHeaderProps {
   activeSectionLabel?: string;
   onToggleNotifications?: () => void;
   onProfileClick?: () => void;
+  onOpenMenu?: () => void;
 }
 
 export const TeacherHeader: FC<TeacherHeaderProps> = ({
@@ -27,6 +29,7 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
   activeSectionLabel,
   onToggleNotifications,
   onProfileClick,
+  onOpenMenu,
 }) => {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
@@ -57,7 +60,19 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
       }
       actions={
         <>
-          <div className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600">
+          {onOpenMenu ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onOpenMenu}
+              className="lg:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          ) : null}
+          <div className="hidden rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-600 sm:block">
             <span className="mr-1 text-[10px] uppercase tracking-wide text-slate-400">
               Section
             </span>
@@ -69,7 +84,7 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
             className="flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-indigo-300 hover:text-indigo-700"
           >
             <CircleUser className="h-4 w-4" />
-            {name || 'Teacher'}
+            <span className="hidden sm:inline">{name || 'Teacher'}</span>
             <ChevronDown className="h-4 w-4 text-slate-400" />
           </button>
           <button
@@ -85,7 +100,7 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
           </button>
           <Button variant="outline" onClick={handleLogout} className="gap-2">
             <LogOut className="h-4 w-4" />
-            Logout
+            <span className="hidden sm:inline">Logout</span>
           </Button>
         </>
       }

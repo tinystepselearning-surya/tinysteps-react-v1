@@ -31,6 +31,7 @@ import {
   Home,
   ChevronDown,
   LogOut,
+  Menu,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
@@ -44,6 +45,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import AppShellHeader from "../../components/common/AppShellHeader";
+import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
@@ -88,6 +90,14 @@ const parentTabLabels: Record<TabKey, string> = {
   profile: "Profile",
   payments: "Payments",
 };
+
+const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
+  { id: "dashboard", label: "Home", icon: Home },
+  { id: "classes", label: "Classes", icon: CalendarDays },
+  { id: "payments", label: "Payments", icon: CreditCard },
+  { id: "insights", label: "Insights", icon: TrendingUp },
+  { id: "games-progress", label: "Games", icon: Gamepad2 },
+];
 
 function safeTab(value: string | null): TabKey {
   const validTabs: TabKey[] = [
@@ -1189,6 +1199,7 @@ export default function ParentDashboard() {
   const [collapsedStages, setCollapsedStages] = useState<Record<string, boolean>>({});
   const [insightsCourseId, setInsightsCourseId] = useState<string>("");
   const [profileOpen, setProfileOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [gamesRefreshStatus, setGamesRefreshStatus] = useState<{
     tone: "neutral" | "success" | "info" | "error";
     message: string | null;
@@ -3247,10 +3258,97 @@ export default function ParentDashboard() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          <aside className="w-full lg:w-72 lg:sticky lg:top-6 lg:self-start">
+    <div className="mobile-app-scroll min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:bg-slate-50">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+        <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+          <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[340px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-4 sm:rounded-none">
+            <DialogHeader>
+              <DialogTitle>Parent Menu</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Active Child
+                </label>
+                {kidsQuery.isLoading ? (
+                  <div className="mt-2 text-sm text-slate-600">Loading kids...</div>
+                ) : kids.length === 0 ? (
+                  <div className="mt-2 text-sm text-slate-600">No kids linked yet.</div>
+                ) : (
+                  <>
+                    <select
+                      value={selectedKidId}
+                      onChange={(e) => {
+                        const nextKidId = e.target.value;
+                        setSelectedKidId(nextKidId);
+                        setSearchParams((prev) => {
+                          const next = new URLSearchParams(prev);
+                          if (nextKidId) next.set("kidId", nextKidId);
+                          else next.delete("kidId");
+                          return next;
+                        });
+                      }}
+                      className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900"
+                    >
+                      {kids.map((k: any) => (
+                        <option key={k.id} value={k.id}>
+                          {k.fullName || "Unnamed"}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      onClick={() => {
+                        navigate(`/kids/games/english-excellence?kidId=${encodeURIComponent(selectedKidId)}`);
+                        setMobileMenuOpen(false);
+                      }}
+                      disabled={!selectedKidId}
+                      className="mt-3 w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
+                    >
+                      Open Games Portal
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <nav className="space-y-2">
+                {parentNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setTab(item.id);
+                        setMobileMenuOpen(false);
+                      }}
+                      aria-current={isActive ? "page" : undefined}
+                      className={`group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition ${
+                        isActive
+                          ? "bg-slate-900 text-white shadow-sm"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                      }`}
+                    >
+                      <span
+                        className={`flex h-9 w-9 items-center justify-center rounded-lg transition ${
+                          isActive
+                            ? "bg-white/15 text-white"
+                            : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <span className="flex-1">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <div className="flex flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
+          <aside className="hidden w-full lg:block lg:w-72 lg:sticky lg:top-6 lg:self-start">
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm overflow-hidden">
               <div className="px-4 pb-4 pt-3 space-y-4">
                 <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/40 p-3">
@@ -3346,52 +3444,64 @@ export default function ParentDashboard() {
           </aside>
 
           <main className="flex-1">
-            <AppShellHeader
-              roleLabel="Parent"
-              title={<>Hi, {user?.displayName || "Parent"}</>}
-              subtitle={
-                selectedKid
-                  ? `Viewing: ${selectedKid.fullName || "Child"}`
-                  : "Track your child’s classes, insights, and payments in one place."
-              }
-              className="dark:border-slate-800 dark:bg-slate-900"
-              actions={
-                <>
-                  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-3">
-                    <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                      Section
-                    </div>
-                    <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      {parentTabLabels[activeTab]}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
+            <div className="sticky top-2 z-30 bg-slate-50/80 backdrop-blur dark:bg-slate-950/70 lg:static lg:bg-transparent">
+              <AppShellHeader
+                roleLabel="Parent"
+                title={<>Hi, {user?.displayName || "Parent"}</>}
+                subtitle={
+                  selectedKid
+                    ? `Viewing: ${selectedKid.fullName || "Child"}`
+                    : "Track your child’s classes, insights, and payments in one place."
+                }
+                className="dark:border-slate-800 dark:bg-slate-900"
+                actions={
+                  <>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setProfileOpen(true)}
-                      title="View profile"
-                      className="h-10 px-4 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-900 dark:bg-slate-800/70 dark:text-slate-100 dark:hover:bg-slate-700 ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm"
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setMobileMenuOpen(true)}
+                      className="lg:hidden"
+                      aria-label="Open menu"
                     >
-                      <CircleUser className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                      <span className="text-base font-semibold underline-offset-4 hover:underline">
-                        {user?.displayName || "Parent"}
-                      </span>
-                      <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+                      <Menu className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleLogout}
-                      className="h-9 px-3 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span className="hidden sm:inline">Logout</span>
-                    </Button>
-                  </div>
-                </>
-              }
-            />
+                    <div className="hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 sm:block">
+                      <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Section
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {parentTabLabels[activeTab]}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setProfileOpen(true)}
+                        title="View profile"
+                        className="h-10 px-4 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-900 dark:bg-slate-800/70 dark:text-slate-100 dark:hover:bg-slate-700 ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm"
+                      >
+                        <CircleUser className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+                        <span className="hidden text-base font-semibold underline-offset-4 hover:underline sm:inline">
+                          {user?.displayName || "Parent"}
+                        </span>
+                        <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-300" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleLogout}
+                        className="h-9 px-3 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="hidden sm:inline">Logout</span>
+                      </Button>
+                    </div>
+                  </>
+                }
+              />
+            </div>
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
               <DialogContent className="max-w-3xl">
@@ -5299,6 +5409,11 @@ export default function ParentDashboard() {
           </main>
         </div>
       </div>
+      <MobileTabBar
+        items={PARENT_MOBILE_TABS}
+        activeId={activeTab}
+        onSelect={(nextTab) => setTab(nextTab as TabKey)}
+      />
     </div>
   );
 }

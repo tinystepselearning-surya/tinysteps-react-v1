@@ -258,6 +258,23 @@ body.custom-cursor-enabled .hover-highlight:hover {
   transition: transform 0.2s ease;
 }
 
+@media (max-width: 1023px) {
+  html,
+  body,
+  #root {
+    min-height: 100dvh;
+  }
+
+  body {
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+  }
+
+  .mobile-app-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 .age-slider::-webkit-slider-thumb:hover {
   transform: scale(1.1);
 }

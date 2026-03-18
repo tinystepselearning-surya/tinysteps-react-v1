@@ -1,11 +1,13 @@
 // src/pages/teacher/TeacherDashboard.tsx
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
+import { CalendarCheck, CalendarClock, ClipboardList, Users, Wallet } from 'lucide-react';
 
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
+import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -108,9 +110,18 @@ const TAB_ITEMS = [
 ];
 const VALID_TEACHER_TAB_IDS = new Set(TAB_ITEMS.map((item) => item.id));
 
+const TEACHER_MOBILE_TABS: MobileTabBarItem[] = [
+  { id: 'today', label: 'Today', icon: CalendarCheck },
+  { id: 'demo-assignments', label: 'Demos', icon: ClipboardList },
+  { id: 'upcoming', label: 'Upcoming', icon: CalendarClock },
+  { id: 'students', label: 'Students', icon: Users },
+  { id: 'earnings', label: 'Earnings', icon: Wallet },
+];
+
 export default function TeacherDashboard() {
   const { user, isLoading } = useAuthStore();
   const [tab, setTab] = useState<string>('today');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -216,33 +227,45 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/60 px-4 py-6 md:px-8">
-      <div className="flex gap-6">
+    <div className="mobile-app-scroll min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-8 lg:bg-slate-50/60">
+      <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[340px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-4 sm:rounded-none">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Teacher menu</DialogTitle>
+          </DialogHeader>
+          <TeacherSidebar
+            active={tab}
+            onSelect={(nextTab) => {
+              setTabAndUrl(nextTab);
+              setMobileMenuOpen(false);
+            }}
+            todayCount={sessions.length}
+            teacherId={teacherId}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <div className="flex flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
         <TeacherSidebar
           active={tab}
           onSelect={setTabAndUrl}
           todayCount={sessions.length}
           teacherId={teacherId}
+          className="hidden lg:block"
         />
 
         <main className="flex-1 space-y-6">
-          <TeacherHeader
-            name={user.displayName || user.email || 'Teacher'}
-            upcomingCount={sessions.length}
-            activeSectionLabel={activeSectionLabel}
-            onToggleNotifications={() => setShowNotifications(true)}
-            onProfileClick={() => setProfileOpen(true)}
-          />
+          <div className="sticky top-2 z-30 bg-slate-50/80 backdrop-blur lg:static lg:bg-transparent">
+            <TeacherHeader
+              name={user.displayName || user.email || 'Teacher'}
+              upcomingCount={sessions.length}
+              activeSectionLabel={activeSectionLabel}
+              onToggleNotifications={() => setShowNotifications(true)}
+              onProfileClick={() => setProfileOpen(true)}
+              onOpenMenu={() => setMobileMenuOpen(true)}
+            />
+          </div>
           <Tabs value={tab} onValueChange={setTabAndUrl} className="space-y-4">
-            {/* Mobile tabs for when sidebar is hidden */}
-            <TabsList className="lg:hidden">
-              {TAB_ITEMS.map((item) => (
-                <TabsTrigger key={item.id} value={item.id} data-testid={`teacher-tab-${item.id}`}>
-                  {item.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
             {/* Today */}
             <TabsContent value="today">
               {tab === 'today' && (
@@ -354,6 +377,12 @@ export default function TeacherDashboard() {
           </React.Suspense>
         </DialogContent>
       </Dialog>
+
+      <MobileTabBar
+        items={TEACHER_MOBILE_TABS}
+        activeId={tab}
+        onSelect={setTabAndUrl}
+      />
 
     </div>
   );

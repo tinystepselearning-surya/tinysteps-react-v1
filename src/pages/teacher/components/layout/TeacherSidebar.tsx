@@ -20,6 +20,7 @@ interface SidebarProps {
   onSelect?: (value: string) => void;
   todayCount?: number;
   teacherId?: string;
+  className?: string;
 }
 
 const items = [
@@ -37,9 +38,9 @@ const items = [
   { id: 'notifications', label: 'Notifications', icon: Bell },
 ];
 
-export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount }) => {
+export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount, className }) => {
   return (
-    <aside className="hidden lg:block w-72">
+    <aside className={cn('w-full lg:w-72', className)}>
       <div className="space-y-4">
         <div className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Teacher Portal</div>
