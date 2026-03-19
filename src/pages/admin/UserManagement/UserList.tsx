@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   collection,
   getDocs,
   query,
   orderBy,
-  where,
   limit,
   startAfter,
   deleteDoc,
@@ -20,9 +19,15 @@ import { httpsCallable } from 'firebase/functions';
 import { db, functions, auth } from '../../../lib/firebaseConfig';
 
 import { Button } from '@components/ui/button';
-import { Input } from '@components/ui/input';
 import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -31,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from '@components/ui/table';
+import { ChevronDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -54,6 +60,13 @@ interface UserTableProps {
   onDelete: (user: User) => void;
   onArchive: (user: User) => void;
   onSendResetLink: (user: User) => void;
+}
+
+interface UserRoleCounts {
+  admin: number;
+  teacher: number;
+  parent: number;
+  students: number;
 }
 
 function UserTable({
@@ -94,45 +107,45 @@ function UserTable({
   };
 
   return (
-    <Table className="w-full table-fixed text-sm">
+    <Table className="w-full min-w-[940px] text-sm">
       <TableHeader>
         <TableRow>
-          <TableHead className="px-3 py-2 text-xs font-semibold w-[200px]">Email</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold w-[160px]">Name</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Role</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Status</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold w-[110px]">Created</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold w-[140px]">Actions</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[250px]">Email</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[180px]">Name</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[110px]">Role</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[110px]">Status</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[120px]">Created</TableHead>
+          <TableHead className="px-3 py-2 text-xs font-semibold text-right min-w-[120px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
 
       <TableBody>
         {users.map((user) => (
-          <TableRow key={user.id}>
-            <TableCell className="px-3 py-2">
+          <TableRow key={user.id} className="hover:bg-slate-50/70">
+            <TableCell className="px-3 py-2 whitespace-nowrap">
               <div className="max-w-[200px] truncate" title={user.email || ''}>
                 {user.email || '—'}
               </div>
             </TableCell>
-            <TableCell className="px-3 py-2">
+            <TableCell className="px-3 py-2 whitespace-nowrap">
               <div className="max-w-[160px] truncate" title={user.name || ''}>
                 {user.name || '—'}
               </div>
             </TableCell>
 
-            <TableCell className="px-3 py-2">
+            <TableCell className="px-3 py-2 whitespace-nowrap">
               <Badge variant={getRoleBadgeVariant(user.role)}>
                 {user.role || 'unknown'}
               </Badge>
             </TableCell>
 
-            <TableCell className="px-3 py-2">
+            <TableCell className="px-3 py-2 whitespace-nowrap">
               <Badge variant={getStatusBadgeVariant(user.status)}>
                 {user.status || 'unknown'}
               </Badge>
             </TableCell>
 
-            <TableCell className="px-3 py-2">
+            <TableCell className="px-3 py-2 whitespace-nowrap">
               {(() => {
                 const createdAt =
                   user.createdAt instanceof Date
@@ -143,21 +156,29 @@ function UserTable({
               })()}
             </TableCell>
 
-            <TableCell className="px-3 py-2">
-              <div className="flex flex-col gap-1">
-                <Button size="sm" variant="outline" onClick={() => onEdit(user)}>
-                  Edit
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => onSendResetLink(user)}>
-                  Reset Link
-                </Button>
-                <Button size="sm" variant="secondary" onClick={() => onArchive(user)}>
-                  Archive
-                </Button>
-                <Button size="sm" variant="destructive" onClick={() => onDelete(user)}>
-                  Delete
-                </Button>
-              </div>
+            <TableCell className="px-3 py-2 text-right whitespace-nowrap">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="inline-flex items-center gap-1">
+                    Actions
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-44">
+                  <DropdownMenuItem onSelect={() => onEdit(user)}>Edit</DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => onSendResetLink(user)}>
+                    Reset Link
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => onArchive(user)}>Archive</DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-red-600 focus:text-red-600"
+                    onSelect={() => onDelete(user)}
+                  >
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </TableCell>
           </TableRow>
         ))}
@@ -179,6 +200,12 @@ export function UserList() {
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
 
   const [users, setUsers] = useState<User[]>([]);
+  const [roleCounts, setRoleCounts] = useState<UserRoleCounts>({
+    admin: 0,
+    teacher: 0,
+    parent: 0,
+    students: 0,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -202,23 +229,6 @@ export function UserList() {
         orderBy('createdAt', 'desc'),
         limit(PAGE_SIZE)
       );
-
-      // Search by email prefix
-      if (searchTerm) {
-        q = query(
-          q,
-          where('email', '>=', searchTerm),
-          where('email', '<=', searchTerm + '\uf8ff')
-        );
-      }
-
-      if (roleFilter !== 'all') {
-        q = query(q, where('role', '==', roleFilter));
-      }
-
-      if (statusFilter !== 'all') {
-        q = query(q, where('status', '==', statusFilter));
-      }
 
       if (!reset && lastVisible) {
         q = query(q, startAfter(lastVisible));
@@ -272,12 +282,63 @@ export function UserList() {
     }
   };
 
-  // Auto-refresh when filters change
+  const fetchRoleCounts = async () => {
+    try {
+      const [usersSnap, kidsSnap] = await Promise.all([
+        getDocs(collection(db, 'users')),
+        getDocs(collection(db, 'kids')),
+      ]);
+
+      let admin = 0;
+      let teacher = 0;
+      let parent = 0;
+
+      usersSnap.forEach((userDoc) => {
+        const role = userDoc.data()?.role;
+        if (role === 'admin') admin += 1;
+        if (role === 'teacher') teacher += 1;
+        if (role === 'parent') parent += 1;
+      });
+
+      setRoleCounts({
+        admin,
+        teacher,
+        parent,
+        students: kidsSnap.size,
+      });
+    } catch (error) {
+      console.error('Error fetching role counts:', error);
+    }
+  };
+
+  const filteredUsers = useMemo(() => {
+    const search = searchTerm.trim().toLowerCase();
+
+    return users.filter((user) => {
+      const normalizedRole = String(user.role || '').toLowerCase();
+      const normalizedStatus = String(user.status || '').toLowerCase();
+      const matchesRole =
+        roleFilter === 'all' || normalizedRole === String(roleFilter).toLowerCase();
+      const matchesStatus =
+        statusFilter === 'all' || normalizedStatus === String(statusFilter).toLowerCase();
+
+      const matchesSearch =
+        search.length === 0 ||
+        user.name?.toLowerCase().includes(search) ||
+        user.email?.toLowerCase().includes(search);
+
+      return matchesRole && matchesStatus && matchesSearch;
+    });
+  }, [users, roleFilter, statusFilter, searchTerm]);
+
+  // Initial fetch
   useEffect(() => {
     setLastVisible(null);
+    setUsers([]);
     fetchUsers(true);
+    fetchRoleCounts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm, roleFilter, statusFilter]);
+  }, []);
 
   // If redirected here with a createdUserId query param (e.g. /surya?createdUserId=...),
   // refresh the users list and clear the param. This avoids relying on any global
@@ -318,8 +379,9 @@ export function UserList() {
   };
 
   const handleFiltersChange = () => {
-    setLastVisible(null);
-    fetchUsers(true);
+    setSearchTerm('');
+    setRoleFilter('all');
+    setStatusFilter('all');
   };
 
   // After CreateUserForm success
@@ -327,6 +389,7 @@ export function UserList() {
     setIsCreateDialogOpen(false);
     setTimeout(async () => {
       await fetchUsers(true);
+      await fetchRoleCounts();
       toast({
         title: 'User created',
         description: `${user?.name || user?.email || 'User'} created successfully`,
@@ -336,6 +399,7 @@ export function UserList() {
 
   const handleUserUpdated = async () => {
     await fetchUsers(true);
+    await fetchRoleCounts();
     setEditingUser(null);
   };
 
@@ -354,6 +418,7 @@ export function UserList() {
 
       toast({ title: 'Archived', description: 'User archived successfully.' });
       await fetchUsers(true);
+      await fetchRoleCounts();
     } catch (error: any) {
       console.error('Archive failed:', error);
       toast({
@@ -392,6 +457,7 @@ export function UserList() {
 
       toast({ title: 'Deleted', description: 'User deleted successfully.' });
       await fetchUsers(true);
+      await fetchRoleCounts();
     } catch (error: any) {
       console.error('Delete failed:', error);
       toast({
@@ -432,28 +498,6 @@ export function UserList() {
       toast({
         title: 'Error',
         description: err.message || 'Failed to generate reset link.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // ---------------- Role Update ----------------
-  const [selectedRoles, setSelectedRoles] = useState<Record<string, string>>({});
-
-  const handleSetUserRole = async (user: User, role: string) => {
-    try {
-      const fn = httpsCallable(functions, 'adminSetUserRole');
-      await fn({ uid: user.uid, role });
-      toast({
-        title: 'Success',
-        description: `Saved role=${role} for uid=${user.uid}.`,
-      });
-      await fetchUsers(true); // Refresh user list
-    } catch (error: any) {
-      console.error('Role update failed:', error);
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to update role.',
         variant: 'destructive',
       });
     }
@@ -500,6 +544,21 @@ export function UserList() {
       </div>
 
       {/* Filters */}
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
+          Admin: {roleCounts.admin}
+        </Button>
+        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
+          Teacher: {roleCounts.teacher}
+        </Button>
+        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
+          Parent: {roleCounts.parent}
+        </Button>
+        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
+          Students: {roleCounts.students}
+        </Button>
+      </div>
+
       <UserFilters
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -511,9 +570,9 @@ export function UserList() {
       />
 
       {/* Table */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-x-auto">
         <UserTable
-          users={users}
+          users={filteredUsers}
           onEdit={(u) => setEditingUser(u)}
           onDelete={handleDeleteUser}
           onArchive={handleArchiveUser}
@@ -522,7 +581,7 @@ export function UserList() {
 
         {isLoading && <div className="text-center py-4">Loading…</div>}
 
-        {!isLoading && users.length === 0 && (
+        {!isLoading && filteredUsers.length === 0 && (
           <div className="text-center py-8 text-gray-500">No users found.</div>
         )}
 

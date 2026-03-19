@@ -1,6 +1,6 @@
 // src/pages/admin/AdminDashboard.tsx
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
@@ -344,7 +344,7 @@ export default function AdminDashboard() {
   return (
     <div className="mobile-app-scroll min-h-screen flex flex-col overflow-x-hidden bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-gray-900 lg:bg-gray-50">
       <div className="sticky top-0 z-30 bg-slate-50/80 px-2 pt-[env(safe-area-inset-top)] backdrop-blur lg:static lg:bg-transparent lg:px-0 lg:pt-0">
-        <Header user={user} onOpenMenu={() => setMobileMenuOpen(true)} />
+        <Header onOpenMenu={() => setMobileMenuOpen(true)} />
       </div>
 
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -366,10 +366,6 @@ export default function AdminDashboard() {
 
         <main className="flex-1 min-w-0 p-4 sm:p-6 md:p-8 overflow-x-hidden">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
-          <div className="mb-4 rounded bg-yellow-100 border p-3 text-sm font-semibold">
-            🔧 ADMIN DASHBOARD – v2 CLEAN
-          </div>
-
           {isSuperUser && (
             <Card className="p-4 mb-6">
               <div className="flex gap-2 flex-wrap">
@@ -383,20 +379,6 @@ export default function AdminDashboard() {
           )}
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList className="mb-6 hidden h-auto flex-wrap gap-2 lg:flex">
-              <TabsTrigger value="users">User Management</TabsTrigger>
-              <TabsTrigger value="students">Student Management</TabsTrigger>
-              <TabsTrigger value="enrollments">Enrollment Management</TabsTrigger>
-              <TabsTrigger value="relationships">Relationship Management</TabsTrigger>
-              <TabsTrigger value="courses">Course Management</TabsTrigger>
-              <TabsTrigger value="demo-sessions">Demo Sessions</TabsTrigger>
-              <TabsTrigger value="lessons">Lesson Library</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="teacher-payments">Teacher Payments</TabsTrigger>
-              <TabsTrigger value="parent-payments">Parent Payments</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-
             <TabsContent value="users">
               <UserManagement />
             </TabsContent>

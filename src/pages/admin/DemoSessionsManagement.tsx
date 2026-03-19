@@ -15,6 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { Badge } from '@components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
+import {
   Table,
   TableBody,
   TableCell,
@@ -22,6 +29,17 @@ import {
   TableHeader,
   TableRow,
 } from '@components/ui/table';
+import { ChevronDown } from 'lucide-react';
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { useToast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../store/useAuthStore';
 import type {
@@ -56,12 +74,68 @@ interface DemoFormState {
   courseInterested: string;
   source: string;
   demoMode: string;
+  requestReceivedDate: string;
   preferredDateTimeText: string;
   timezone: string;
   adminNotes: string;
 }
 
-const INITIAL_FORM: DemoFormState = {
+type DemoTrendRangePreset = 'week' | 'month' | 'till_date' | 'custom';
+
+interface DemoTrendPoint {
+  dateKey: string;
+  label: string;
+  received: number;
+  assigned: number;
+  completed: number;
+  enrolled: number;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const DEMO_TREND_ONBOARDING_START_KEY = '2026-03-18';
+
+const toDateInput = (date: Date): string => {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+};
+
+const getTodayDateInput = (): string => {
+  return toDateInput(new Date());
+};
+
+const getMonthStartDateInput = (): string => {
+  const now = new Date();
+  return toDateInput(new Date(now.getFullYear(), now.getMonth(), 1));
+};
+
+const parseDateInput = (value?: string | null): Date | null => {
+  if (!value) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return null;
+  return new Date(year, month - 1, day);
+};
+
+const normalizeDateInputKey = (value?: string | null): string | null => {
+  const date = parseDateInput(value);
+  if (!date) return null;
+  return toDateInput(date);
+};
+
+const formatDateKeyLabel = (dateKey: string): string => {
+  const date = parseDateInput(dateKey);
+  if (!date) return dateKey;
+  return new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short' }).format(date);
+};
+
+const clampTrendStartKey = (startKey: string): string =>
+  startKey < DEMO_TREND_ONBOARDING_START_KEY ? DEMO_TREND_ONBOARDING_START_KEY : startKey;
+
+const buildInitialForm = (): DemoFormState => ({
   parentName: '',
   parentPhone: '',
   childName: '',
@@ -70,10 +144,13 @@ const INITIAL_FORM: DemoFormState = {
   courseInterested: '',
   source: '',
   demoMode: '',
+  requestReceivedDate: getTodayDateInput(),
   preferredDateTimeText: '',
   timezone: '',
   adminNotes: '',
-};
+});
+
+const INITIAL_FORM: DemoFormState = buildInitialForm();
 
 const COURSE_OPTIONS = [
   'Phonics',
@@ -151,18 +228,22 @@ const formatTs = (value: unknown): string => {
   }).format(date);
 };
 
-const toMs = (value: unknown): number => {
+const toDateKeyFromTimestamp = (value: unknown): string | null => {
   const date = asDate(value);
-  return date ? date.getTime() : 0;
+  if (!date) return null;
+  return toDateInput(new Date(date.getFullYear(), date.getMonth(), date.getDate()));
 };
 
-const getWeekStartMs = (): number => {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday);
-  start.setHours(0, 0, 0, 0);
-  return start.getTime();
+const getTrendReceivedDateKey = (session: DemoSession): string | null => {
+  const requestReceivedKey = normalizeDateInputKey(session.requestReceivedDate);
+  const entryDateKey = toDateKeyFromTimestamp(session.createdAt);
+
+  if (requestReceivedKey && entryDateKey) {
+    // Guard against backfilled defaults later than actual entry date.
+    return requestReceivedKey <= entryDateKey ? requestReceivedKey : entryDateKey;
+  }
+
+  return requestReceivedKey || entryDateKey;
 };
 
 const statusBadgeVariant = (status: DemoSessionStatus): 'default' | 'secondary' | 'outline' => {
@@ -182,6 +263,20 @@ const formatConfirmedSlot = (session: DemoSession) => {
   if (!session.teacherConfirmedDate && !session.teacherConfirmedTime) return '—';
   return `${session.teacherConfirmedDate || '—'} ${session.teacherConfirmedTime || ''}`.trim();
 };
+
+const buildTimelineRows = (session: DemoSession): string[] =>
+  [
+    `Created: ${formatTs(session.createdAt)}`,
+    `Request Received Date: ${session.requestReceivedDate || '—'}`,
+    `Assigned: ${formatTs(session.assignedAt)}`,
+    `Confirmed For: ${formatConfirmedSlot(session)}`,
+    `Completed: ${formatTs(session.completedAt)}`,
+    `Released: ${formatTs(session.releasedAt)}`,
+    `Reopened: ${formatTs(session.reopenedAt)}`,
+    session.rescheduledFromDemoId ? `Rescheduled From: ${session.rescheduledFromDemoId}` : null,
+    session.rescheduledToDemoId ? `Rescheduled To: ${session.rescheduledToDemoId}` : null,
+    `Last Updated: ${formatTs(session.lastUpdatedAt || session.createdAt)}`,
+  ].filter((value): value is string => Boolean(value));
 
 const formatHistoryAction = (action?: string) => {
   if (!action) return 'Updated';
@@ -258,6 +353,7 @@ const buildDemoSummary = (session: DemoSession, parentPhone: string) => {
     `Phone: ${parentPhone || '—'}`,
     `Child: ${session.childName} (Grade ${session.childGrade}${typeof session.childAge === 'number' ? `, Age ${session.childAge}` : ''})`,
     `Course: ${session.courseInterested}`,
+    `Request received date: ${session.requestReceivedDate || '—'}`,
     `Preferred slot: ${session.preferredDateTimeText}`,
     `Timezone: ${session.timezone || '—'}`,
     `Status: ${formatStatusLabel(session.status)}`,
@@ -332,7 +428,11 @@ export default function DemoSessionsManagement() {
   const [followUpCallCompletedAt, setFollowUpCallCompletedAt] = useState('');
   const [admissionNotConfirmedReason, setAdmissionNotConfirmedReason] = useState('');
   const [savingAction, setSavingAction] = useState<string | null>(null);
-  const [expandedTimelineRows, setExpandedTimelineRows] = useState<Record<string, boolean>>({});
+  const [timelineViewTarget, setTimelineViewTarget] = useState<DemoSession | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [trendRangePreset, setTrendRangePreset] = useState<DemoTrendRangePreset>('month');
+  const [trendCustomStartDate, setTrendCustomStartDate] = useState<string>(DEMO_TREND_ONBOARDING_START_KEY);
+  const [trendCustomEndDate, setTrendCustomEndDate] = useState<string>(getTodayDateInput);
 
   useEffect(() => {
     const unsubSessions = listenAllDemoSessions(
@@ -403,52 +503,39 @@ export default function DemoSessionsManagement() {
     [sessions],
   );
 
-  const weekStartMs = useMemo(() => getWeekStartMs(), []);
+  const createdTillDateCount = useMemo(() => sessions.length, [sessions]);
 
-  const createdThisWeekCount = useMemo(
-    () => sessions.filter((session) => toMs(session.createdAt) >= weekStartMs).length,
-    [sessions, weekStartMs],
+  const completedTillDateCount = useMemo(
+    () => sessions.filter((session) => session.status === 'completed').length,
+    [sessions],
   );
 
-  const completedThisWeekCount = useMemo(
-    () => sessions.filter((session) => toMs(session.completedAt) >= weekStartMs).length,
-    [sessions, weekStartMs],
+  const convertedTillDateCount = useMemo(
+    () => sessions.filter((session) => session.conversionStatus === 'enrolled').length,
+    [sessions],
   );
 
-  const convertedThisWeekCount = useMemo(
+  const lostTillDateCount = useMemo(
     () =>
       sessions.filter(
         (session) =>
-          session.conversionStatus === 'enrolled' &&
-          toMs(session.lastUpdatedAt || session.createdAt) >= weekStartMs,
+          session.conversionStatus === 'not_interested' || session.conversionStatus === 'wrong_fit',
       ).length,
-    [sessions, weekStartMs],
+    [sessions],
   );
 
-  const lostThisWeekCount = useMemo(
+  const noShowTillDateCount = useMemo(
     () =>
       sessions.filter(
-        (session) =>
-          (session.conversionStatus === 'not_interested' || session.conversionStatus === 'wrong_fit') &&
-          toMs(session.lastUpdatedAt || session.createdAt) >= weekStartMs,
+        (session) => session.outcome === 'parent_no_show' || session.outcome === 'teacher_no_show',
       ).length,
-    [sessions, weekStartMs],
+    [sessions],
   );
 
-  const noShowThisWeekCount = useMemo(
-    () =>
-      sessions.filter(
-        (session) =>
-          (session.outcome === 'parent_no_show' || session.outcome === 'teacher_no_show') &&
-          toMs(session.completedAt) >= weekStartMs,
-      ).length,
-    [sessions, weekStartMs],
-  );
-
-  const teacherHandledThisWeek = useMemo(() => {
+  const teacherHandledTillDate = useMemo(() => {
     const counts = new Map<string, number>();
     sessions.forEach((session) => {
-      if (toMs(session.completedAt) < weekStartMs) return;
+      if (session.status !== 'completed') return;
       const teacherName = (session.assignedTeacherName || '').trim();
       if (!teacherName) return;
       counts.set(teacherName, (counts.get(teacherName) || 0) + 1);
@@ -457,7 +544,7 @@ export default function DemoSessionsManagement() {
     return Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .slice(0, 8);
-  }, [sessions, weekStartMs]);
+  }, [sessions]);
 
   const tabSessions = useMemo(() => {
     if (activeTab === 'open') return openSessions;
@@ -512,6 +599,112 @@ export default function DemoSessionsManagement() {
     [assignedTeacherFilter, courseFilter, phoneMap, searchQuery, sourceFilter, statusFilter, tabSessions],
   );
 
+  const earliestTrendDateKey = useMemo(() => {
+    let earliest: string | null = null;
+    const setEarliest = (dateKey: string | null) => {
+      if (!dateKey) return;
+      if (!earliest || dateKey < earliest) earliest = dateKey;
+    };
+
+    sessions.forEach((session) => {
+      setEarliest(normalizeDateInputKey(session.requestReceivedDate));
+      setEarliest(toDateKeyFromTimestamp(session.createdAt));
+      setEarliest(toDateKeyFromTimestamp(session.assignedAt));
+      setEarliest(toDateKeyFromTimestamp(session.completedAt));
+      if (session.conversionStatus === 'enrolled') {
+        setEarliest(toDateKeyFromTimestamp(session.lastUpdatedAt || session.completedAt || session.createdAt));
+      }
+    });
+
+    return earliest || getTodayDateInput();
+  }, [sessions]);
+
+  const trendRangeBounds = useMemo(() => {
+    const todayKey = getTodayDateInput();
+
+    if (trendRangePreset === 'week') {
+      const todayDate = parseDateInput(todayKey) || new Date();
+      const startDate = new Date(todayDate.getTime() - 6 * DAY_MS);
+      return { startKey: clampTrendStartKey(toDateInput(startDate)), endKey: todayKey };
+    }
+
+    if (trendRangePreset === 'month') {
+      return { startKey: clampTrendStartKey(getMonthStartDateInput()), endKey: todayKey };
+    }
+
+    if (trendRangePreset === 'till_date') {
+      return { startKey: clampTrendStartKey(earliestTrendDateKey), endKey: todayKey };
+    }
+
+    let startKey = clampTrendStartKey(normalizeDateInputKey(trendCustomStartDate) || todayKey);
+    let endKey = normalizeDateInputKey(trendCustomEndDate) || todayKey;
+    if (startKey > endKey) {
+      const swap = startKey;
+      startKey = endKey;
+      endKey = swap;
+    }
+    return { startKey, endKey };
+  }, [earliestTrendDateKey, trendCustomEndDate, trendCustomStartDate, trendRangePreset]);
+
+  const trendData = useMemo<DemoTrendPoint[]>(() => {
+    const startDate = parseDateInput(trendRangeBounds.startKey);
+    const endDate = parseDateInput(trendRangeBounds.endKey);
+    if (!startDate || !endDate || startDate.getTime() > endDate.getTime()) return [];
+
+    const points: DemoTrendPoint[] = [];
+    const pointByDate = new Map<string, DemoTrendPoint>();
+
+    for (let ms = startDate.getTime(); ms <= endDate.getTime(); ms += DAY_MS) {
+      const dateKey = toDateInput(new Date(ms));
+      const point: DemoTrendPoint = {
+        dateKey,
+        label: formatDateKeyLabel(dateKey),
+        received: 0,
+        assigned: 0,
+        completed: 0,
+        enrolled: 0,
+      };
+      points.push(point);
+      pointByDate.set(dateKey, point);
+    }
+
+    const increment = (dateKey: string | null, key: 'received' | 'assigned' | 'completed' | 'enrolled') => {
+      if (!dateKey) return;
+      const point = pointByDate.get(dateKey);
+      if (!point) return;
+      point[key] += 1;
+    };
+
+    sessions.forEach((session) => {
+      const receivedDateKey = getTrendReceivedDateKey(session);
+      increment(receivedDateKey, 'received');
+      increment(toDateKeyFromTimestamp(session.assignedAt), 'assigned');
+      increment(toDateKeyFromTimestamp(session.completedAt), 'completed');
+      if (session.conversionStatus === 'enrolled') {
+        increment(
+          toDateKeyFromTimestamp(session.lastUpdatedAt || session.completedAt || session.createdAt),
+          'enrolled',
+        );
+      }
+    });
+
+    return points;
+  }, [sessions, trendRangeBounds.endKey, trendRangeBounds.startKey]);
+
+  const trendTotals = useMemo(
+    () =>
+      trendData.reduce(
+        (acc, point) => ({
+          received: acc.received + point.received,
+          assigned: acc.assigned + point.assigned,
+          completed: acc.completed + point.completed,
+          enrolled: acc.enrolled + point.enrolled,
+        }),
+        { received: 0, assigned: 0, completed: 0, enrolled: 0 },
+      ),
+    [trendData],
+  );
+
   const onFieldChange = (key: keyof DemoFormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -555,6 +748,7 @@ export default function DemoSessionsManagement() {
       !form.childName.trim() ||
       !form.childGrade.trim() ||
       !form.courseInterested.trim() ||
+      !form.requestReceivedDate.trim() ||
       !form.preferredDateTimeText.trim()
     ) {
       toast({
@@ -574,6 +768,7 @@ export default function DemoSessionsManagement() {
       courseInterested: form.courseInterested,
       source: form.source || null,
       demoMode: form.demoMode || null,
+      requestReceivedDate: form.requestReceivedDate || null,
       preferredDateTimeText: form.preferredDateTimeText,
       timezone: form.timezone || null,
       adminNotes: form.adminNotes || null,
@@ -582,8 +777,9 @@ export default function DemoSessionsManagement() {
     setCreating(true);
     try {
       await createDemoSession(payload, user.uid);
-      setForm(INITIAL_FORM);
+      setForm(buildInitialForm());
       setActiveTab('open');
+      setCreateDialogOpen(false);
       toast({
         title: 'Demo session created',
         description: 'The demo request is now available in the assignment pool.',
@@ -619,6 +815,7 @@ export default function DemoSessionsManagement() {
       courseInterested: session.courseInterested || '',
       source: session.source || '',
       demoMode: session.demoMode || '',
+      requestReceivedDate: session.requestReceivedDate || getTodayDateInput(),
       preferredDateTimeText: session.preferredDateTimeText || '',
       timezone: session.timezone || '',
       adminNotes: session.adminNotes || '',
@@ -646,6 +843,7 @@ export default function DemoSessionsManagement() {
       !editForm.childName.trim() ||
       !editForm.childGrade.trim() ||
       !editForm.courseInterested.trim() ||
+      !editForm.requestReceivedDate.trim() ||
       !editForm.preferredDateTimeText.trim()
     ) {
       toast({
@@ -668,6 +866,7 @@ export default function DemoSessionsManagement() {
         courseInterested: editForm.courseInterested.trim(),
         source: editForm.source.trim() || null,
         demoMode: editForm.demoMode.trim() || null,
+        requestReceivedDate: editForm.requestReceivedDate.trim() || null,
         preferredDateTimeText: editForm.preferredDateTimeText.trim(),
         timezone: editForm.timezone.trim() || null,
         adminNotes: editForm.adminNotes.trim() || null,
@@ -836,14 +1035,14 @@ export default function DemoSessionsManagement() {
 
   const handleDelete = async (session: DemoSession) => {
     const shouldDelete = window.confirm(
-      `Delete demo for ${session.childName} (${session.parentName})? This cannot be undone.`,
+      `Delete demo for ${session.childName} (${session.parentName})? This permanently removes demo data and linked teacher demo earnings.`,
     );
     if (!shouldDelete) return;
 
     setSavingAction(`delete:${session.id}`);
     try {
       await deleteDemoSession({ demoId: session.id });
-      toast({ title: 'Demo deleted' });
+      toast({ title: 'Demo deleted with earnings cleanup' });
     } catch (error: any) {
       toast({
         title: 'Failed to delete demo',
@@ -934,6 +1133,63 @@ export default function DemoSessionsManagement() {
   const renderSessionActions = (session: DemoSession, layout: 'desktop' | 'mobile' = 'desktop') => {
     const isMobile = layout === 'mobile';
     const buttonClass = isMobile ? 'w-full justify-center' : undefined;
+    const isSavingFor = (prefix: string) => savingAction === `${prefix}:${session.id}`;
+
+    if (!isMobile) {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="inline-flex items-center gap-1">
+              Actions
+              <ChevronDown className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52">
+            <DropdownMenuItem onSelect={() => openConversionDialog(session)} disabled={isSavingFor('conversion')}>
+              Follow-up
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => openEditDialog(session)} disabled={isSavingFor('edit')}>
+              Edit details
+            </DropdownMenuItem>
+            {session.status === 'assigned' && (
+              <DropdownMenuItem onSelect={() => openReassignDialog(session)} disabled={isSavingFor('reassign')}>
+                Reassign
+              </DropdownMenuItem>
+            )}
+            {session.status === 'assigned' && (
+              <DropdownMenuItem onSelect={() => handleRelease(session)} disabled={isSavingFor('release')}>
+                Release to open
+              </DropdownMenuItem>
+            )}
+            {session.status !== 'cancelled' && (
+              <DropdownMenuItem onSelect={() => handleCancel(session)} disabled={isSavingFor('cancel')}>
+                Cancel
+              </DropdownMenuItem>
+            )}
+            {(session.status === 'cancelled' || session.status === 'completed') && (
+              <DropdownMenuItem onSelect={() => handleReopen(session)} disabled={isSavingFor('reopen')}>
+                Reopen
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => handleCopyPhone(session)}>Copy Phone</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handleCopySummary(session)}>Copy Summary</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handleCopyFollowUpMessage(session)}>
+              Copy Follow-up
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => handleOpenWhatsApp(session)}>Open WhatsApp</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600"
+              onSelect={() => handleDelete(session)}
+              disabled={isSavingFor('delete')}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      );
+    }
 
     return (
       <div className={isMobile ? 'grid grid-cols-2 gap-2' : 'flex flex-wrap justify-end gap-2'}>
@@ -942,7 +1198,7 @@ export default function DemoSessionsManagement() {
           size="sm"
           className={buttonClass}
           onClick={() => openConversionDialog(session)}
-          disabled={savingAction === `conversion:${session.id}`}
+          disabled={isSavingFor('conversion')}
         >
           Follow-up
         </Button>
@@ -951,7 +1207,7 @@ export default function DemoSessionsManagement() {
           size="sm"
           className={buttonClass}
           onClick={() => openEditDialog(session)}
-          disabled={savingAction === `edit:${session.id}`}
+          disabled={isSavingFor('edit')}
         >
           Edit
         </Button>
@@ -978,7 +1234,7 @@ export default function DemoSessionsManagement() {
             size="sm"
             className={buttonClass}
             onClick={() => openReassignDialog(session)}
-            disabled={savingAction === `reassign:${session.id}`}
+            disabled={isSavingFor('reassign')}
           >
             Reassign
           </Button>
@@ -989,7 +1245,7 @@ export default function DemoSessionsManagement() {
             size="sm"
             className={buttonClass}
             onClick={() => handleRelease(session)}
-            disabled={savingAction === `release:${session.id}`}
+            disabled={isSavingFor('release')}
           >
             Release
           </Button>
@@ -1000,7 +1256,7 @@ export default function DemoSessionsManagement() {
             size="sm"
             className={buttonClass}
             onClick={() => handleCancel(session)}
-            disabled={savingAction === `cancel:${session.id}`}
+            disabled={isSavingFor('cancel')}
           >
             Cancel
           </Button>
@@ -1010,7 +1266,7 @@ export default function DemoSessionsManagement() {
             size="sm"
             className={buttonClass}
             onClick={() => handleReopen(session)}
-            disabled={savingAction === `reopen:${session.id}`}
+            disabled={isSavingFor('reopen')}
           >
             Reopen
           </Button>
@@ -1020,7 +1276,7 @@ export default function DemoSessionsManagement() {
           size="sm"
           className={buttonClass}
           onClick={() => handleDelete(session)}
-          disabled={savingAction === `delete:${session.id}`}
+          disabled={isSavingFor('delete')}
         >
           Delete
         </Button>
@@ -1030,178 +1286,208 @@ export default function DemoSessionsManagement() {
 
   return (
     <div className="space-y-6">
-      <Card className="border-sky-100 bg-gradient-to-b from-sky-50/70 to-white p-5 shadow-sm">
-        <h3 className="text-lg font-semibold">Create Demo Request</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Add a new demo request once. Teachers can claim from the shared assignment board.
-        </p>
-
-        <form className="mt-4 grid gap-4" onSubmit={handleCreate}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="demo-parent-name">Parent Name *</Label>
-              <Input
-                id="demo-parent-name"
-                value={form.parentName}
-                onChange={(e) => onFieldChange('parentName', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="demo-parent-phone">Parent Phone *</Label>
-              <Input
-                id="demo-parent-phone"
-                value={form.parentPhone}
-                onChange={(e) => onFieldChange('parentPhone', e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="demo-child-name">Child Name *</Label>
-              <Input
-                id="demo-child-name"
-                value={form.childName}
-                onChange={(e) => onFieldChange('childName', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="demo-child-grade">Child Grade *</Label>
-              <Input
-                id="demo-child-grade"
-                value={form.childGrade}
-                onChange={(e) => onFieldChange('childGrade', e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="demo-child-age">Child Age</Label>
-              <Input
-                id="demo-child-age"
-                type="number"
-                min={0}
-                value={form.childAge}
-                onChange={(e) => onFieldChange('childAge', e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="demo-course">Course Interested *</Label>
-              <Select
-                value={form.courseInterested || undefined}
-                onValueChange={(value) => onFieldChange('courseInterested', value)}
-              >
-                <SelectTrigger id="demo-course">
-                  <SelectValue placeholder="Select course" />
-                </SelectTrigger>
-                <SelectContent>
-                  {COURSE_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="demo-timezone">Timezone</Label>
-              <Select
-                value={form.timezone || 'not_set'}
-                onValueChange={(value) => onFieldChange('timezone', value === 'not_set' ? '' : value)}
-              >
-                <SelectTrigger id="demo-timezone">
-                  <SelectValue placeholder="Select timezone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_set">Not set</SelectItem>
-                  {TIMEZONE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="demo-source">Source</Label>
-              <Select
-                value={form.source || 'not_set'}
-                onValueChange={(value) => onFieldChange('source', value === 'not_set' ? '' : value)}
-              >
-                <SelectTrigger id="demo-source">
-                  <SelectValue placeholder="Select source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_set">Not set</SelectItem>
-                  {SOURCE_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="demo-mode">Demo Mode</Label>
-              <Select
-                value={form.demoMode || 'not_set'}
-                onValueChange={(value) => onFieldChange('demoMode', value === 'not_set' ? '' : value)}
-              >
-                <SelectTrigger id="demo-mode">
-                  <SelectValue placeholder="Select demo mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="not_set">Not set</SelectItem>
-                  {DEMO_MODE_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="demo-preferred-slot">Parent Preferred Date/Time *</Label>
-            <Textarea
-              id="demo-preferred-slot"
-              value={form.preferredDateTimeText}
-              onChange={(e) => onFieldChange('preferredDateTimeText', e.target.value)}
-              required
-              rows={2}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="demo-admin-notes">Notes for Teacher</Label>
-            <Textarea
-              id="demo-admin-notes"
-              value={form.adminNotes}
-              onChange={(e) => onFieldChange('adminNotes', e.target.value)}
-              rows={2}
-            />
-          </div>
-
+      <Card className="border-sky-100 bg-gradient-to-b from-sky-50/70 to-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <Button
-              type="submit"
-              disabled={creating}
-              className="w-full transition-all duration-200 hover:-translate-y-0.5 sm:w-auto"
-            >
-              {creating ? 'Creating...' : 'Create Demo Request'}
-            </Button>
+            <h3 className="text-lg font-semibold">Demo Sessions</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Create new demo requests from one place.
+            </p>
           </div>
-        </form>
+          <Button
+            type="button"
+            onClick={() => {
+              setForm(buildInitialForm());
+              setCreateDialogOpen(true);
+            }}
+          >
+            Create Demo Request
+          </Button>
+        </div>
       </Card>
+
+      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Create Demo Request</DialogTitle>
+          </DialogHeader>
+
+          <form className="grid gap-4" onSubmit={handleCreate}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="demo-parent-name">Parent Name *</Label>
+                <Input
+                  id="demo-parent-name"
+                  value={form.parentName}
+                  onChange={(e) => onFieldChange('parentName', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demo-parent-phone">Parent Phone *</Label>
+                <Input
+                  id="demo-parent-phone"
+                  value={form.parentPhone}
+                  onChange={(e) => onFieldChange('parentPhone', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="demo-child-name">Child Name *</Label>
+                <Input
+                  id="demo-child-name"
+                  value={form.childName}
+                  onChange={(e) => onFieldChange('childName', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demo-child-grade">Child Grade *</Label>
+                <Input
+                  id="demo-child-grade"
+                  value={form.childGrade}
+                  onChange={(e) => onFieldChange('childGrade', e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demo-child-age">Child Age</Label>
+                <Input
+                  id="demo-child-age"
+                  type="number"
+                  min={0}
+                  value={form.childAge}
+                  onChange={(e) => onFieldChange('childAge', e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="demo-course">Course Interested *</Label>
+                <Select
+                  value={form.courseInterested || undefined}
+                  onValueChange={(value) => onFieldChange('courseInterested', value)}
+                >
+                  <SelectTrigger id="demo-course">
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COURSE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demo-timezone">Timezone</Label>
+                <Select
+                  value={form.timezone || 'not_set'}
+                  onValueChange={(value) => onFieldChange('timezone', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger id="demo-timezone">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {TIMEZONE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="demo-source">Source</Label>
+                <Select
+                  value={form.source || 'not_set'}
+                  onValueChange={(value) => onFieldChange('source', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger id="demo-source">
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {SOURCE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demo-mode">Demo Mode</Label>
+                <Select
+                  value={form.demoMode || 'not_set'}
+                  onValueChange={(value) => onFieldChange('demoMode', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger id="demo-mode">
+                    <SelectValue placeholder="Select demo mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {DEMO_MODE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="demo-request-received-date">Request Received Date *</Label>
+                <Input
+                  id="demo-request-received-date"
+                  type="date"
+                  value={form.requestReceivedDate}
+                  onChange={(e) => onFieldChange('requestReceivedDate', e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="demo-preferred-slot">Parent Preferred Date/Time *</Label>
+              <Textarea
+                id="demo-preferred-slot"
+                value={form.preferredDateTimeText}
+                onChange={(e) => onFieldChange('preferredDateTimeText', e.target.value)}
+                required
+                rows={2}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="demo-admin-notes">Notes for Teacher</Label>
+              <Textarea
+                id="demo-admin-notes"
+                value={form.adminNotes}
+                onChange={(e) => onFieldChange('adminNotes', e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setCreateDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={creating}>
+                {creating ? 'Creating...' : 'Create Demo Request'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Card className="border-violet-100 bg-gradient-to-b from-violet-50/50 to-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center gap-3">
@@ -1210,41 +1496,43 @@ export default function DemoSessionsManagement() {
           <Badge variant="secondary">Assigned: {assignedSessions.length}</Badge>
           <Badge>Completed: {closedSessions.length}</Badge>
         </div>
-        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-7">
           <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Created This Week</div>
-            <div className="mt-1 text-xl font-semibold">{createdThisWeekCount}</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Open Demos</div>
+            <div className="mt-1 text-xl font-semibold">{openSessions.length}</div>
           </Card>
           <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Assigned Now</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Assigned Total</div>
             <div className="mt-1 text-xl font-semibold">{assignedSessions.length}</div>
           </Card>
           <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed This Week</div>
-            <div className="mt-1 text-xl font-semibold">{completedThisWeekCount}</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Created Till Date</div>
+            <div className="mt-1 text-xl font-semibold">{createdTillDateCount}</div>
           </Card>
           <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Converted This Week</div>
-            <div className="mt-1 text-xl font-semibold">{convertedThisWeekCount}</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed Till Date</div>
+            <div className="mt-1 text-xl font-semibold">{completedTillDateCount}</div>
           </Card>
           <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Lost This Week</div>
-            <div className="mt-1 text-xl font-semibold">{lostThisWeekCount}</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Converted Till Date</div>
+            <div className="mt-1 text-xl font-semibold">{convertedTillDateCount}</div>
           </Card>
           <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">No-show This Week</div>
-            <div className="mt-1 text-xl font-semibold">{noShowThisWeekCount}</div>
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Lost Till Date</div>
+            <div className="mt-1 text-xl font-semibold">{lostTillDateCount}</div>
+          </Card>
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">No-show Till Date</div>
+            <div className="mt-1 text-xl font-semibold">{noShowTillDateCount}</div>
           </Card>
         </div>
         <div className="mb-4 rounded-lg border border-slate-200 bg-white/80 p-3">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">
-            Teacher-wise Demos Handled (This Week)
-          </div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Teacher-wise Demos Handled (Till Date)</div>
           <div className="mt-2 flex flex-wrap gap-2">
-            {teacherHandledThisWeek.length === 0 ? (
-              <span className="text-sm text-muted-foreground">No completed demos this week yet.</span>
+            {teacherHandledTillDate.length === 0 ? (
+              <span className="text-sm text-muted-foreground">No completed demos yet.</span>
             ) : (
-              teacherHandledThisWeek.map(([teacherName, count]) => (
+              teacherHandledTillDate.map(([teacherName, count]) => (
                 <Badge key={teacherName} variant="outline">
                   {teacherName}: {count}
                 </Badge>
@@ -1253,7 +1541,7 @@ export default function DemoSessionsManagement() {
           </div>
         </div>
         <p className="mb-4 text-xs text-muted-foreground">
-          Completed includes closed outcomes like no-show and follow-up needed. Reschedule requested closes this record and auto-creates a new Open demo.
+          Overall totals across all demo records. Reschedule requested closes this record and auto-creates a new Open demo.
         </p>
         <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           <div className="space-y-1 md:col-span-2 xl:col-span-4">
@@ -1346,25 +1634,12 @@ export default function DemoSessionsManagement() {
               <>
                 <div className="space-y-3 md:hidden">
                   {visibleSessions.map((session) => {
-                    const isTimelineExpanded = Boolean(expandedTimelineRows[session.id]);
-                    const timelineRows = [
-                      `Created: ${formatTs(session.createdAt)}`,
-                      `Assigned: ${formatTs(session.assignedAt)}`,
-                      `Confirmed For: ${formatConfirmedSlot(session)}`,
-                      `Completed: ${formatTs(session.completedAt)}`,
-                      `Released: ${formatTs(session.releasedAt)}`,
-                      `Reopened: ${formatTs(session.reopenedAt)}`,
-                      session.rescheduledFromDemoId ? `Rescheduled From: ${session.rescheduledFromDemoId}` : null,
-                      session.rescheduledToDemoId ? `Rescheduled To: ${session.rescheduledToDemoId}` : null,
-                      `Last Updated: ${formatTs(session.lastUpdatedAt || session.createdAt)}`,
-                    ].filter((value): value is string => Boolean(value));
-
-                    const visibleTimelineRows = isTimelineExpanded ? timelineRows : timelineRows.slice(0, 3);
-                    const historyRows = Array.isArray(session.history)
-                      ? isTimelineExpanded
-                        ? [...session.history].reverse()
-                        : session.history.slice(-2).reverse()
-                      : [];
+                    const timelineRows = buildTimelineRows(session);
+                    const historyRows = Array.isArray(session.history) ? [...session.history].reverse() : [];
+                    const latestHistory = historyRows[0];
+                    const timelinePreview = latestHistory
+                      ? `Latest: ${formatHistoryAction(latestHistory.action)} · ${formatTs(new Date(latestHistory.atMs))}`
+                      : timelineRows[0];
 
                     return (
                       <Card key={`mobile-${session.id}`} className="border-slate-200 bg-white/90 p-4 shadow-sm">
@@ -1397,33 +1672,16 @@ export default function DemoSessionsManagement() {
                             </div>
                           )}
                           <div className="space-y-1 rounded-lg border border-slate-200 bg-slate-50 p-2 text-xs text-muted-foreground">
-                            {visibleTimelineRows.map((line, index) => (
-                              <div key={`${session.id}-mobile-timeline-${index}`}>{line}</div>
-                            ))}
-                            {historyRows.length > 0 && (
-                              <div className="pt-1">
-                                <div className="font-medium text-foreground">Recent activity</div>
-                                {historyRows.map((entry, idx) => (
-                                  <div key={`${session.id}-mobile-history-${entry.atMs}-${idx}`}>
-                                    {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {timelineRows.length > 3 && (
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0 truncate">{timelinePreview}</div>
                               <button
                                 type="button"
-                                className="pt-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
-                                onClick={() =>
-                                  setExpandedTimelineRows((prev) => ({
-                                    ...prev,
-                                    [session.id]: !isTimelineExpanded,
-                                  }))
-                                }
+                                className="shrink-0 text-xs font-medium text-primary underline-offset-2 hover:underline"
+                                onClick={() => setTimelineViewTarget(session)}
                               >
-                                {isTimelineExpanded ? 'Show less' : 'View details'}
+                                View more
                               </button>
-                            )}
+                            </div>
                           </div>
                           {renderSessionActions(session, 'mobile')}
                         </div>
@@ -1432,15 +1690,15 @@ export default function DemoSessionsManagement() {
                   })}
                 </div>
 
-                <div className="hidden md:block">
-              <Table>
+                <div className="hidden overflow-x-auto md:block">
+              <Table className="min-w-[1180px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Child</TableHead>
+                    <TableHead>Grade</TableHead>
                     <TableHead>Parent</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Course</TableHead>
-                    <TableHead>Source</TableHead>
                     <TableHead>Preferred Slot</TableHead>
                     <TableHead>Assigned Teacher</TableHead>
                     <TableHead>Status</TableHead>
@@ -1451,40 +1709,22 @@ export default function DemoSessionsManagement() {
                 </TableHeader>
                 <TableBody>
                   {visibleSessions.map((session) => {
-                    const isTimelineExpanded = Boolean(expandedTimelineRows[session.id]);
-                    const timelineRows = [
-                      `Created: ${formatTs(session.createdAt)}`,
-                      `Assigned: ${formatTs(session.assignedAt)}`,
-                      `Confirmed For: ${formatConfirmedSlot(session)}`,
-                      `Completed: ${formatTs(session.completedAt)}`,
-                      `Released: ${formatTs(session.releasedAt)}`,
-                      `Reopened: ${formatTs(session.reopenedAt)}`,
-                      session.rescheduledFromDemoId ? `Rescheduled From: ${session.rescheduledFromDemoId}` : null,
-                      session.rescheduledToDemoId ? `Rescheduled To: ${session.rescheduledToDemoId}` : null,
-                      `Last Updated: ${formatTs(session.lastUpdatedAt || session.createdAt)}`,
-                    ].filter((value): value is string => Boolean(value));
-
-                    const visibleTimelineRows = isTimelineExpanded ? timelineRows : timelineRows.slice(0, 3);
-                    const historyRows = Array.isArray(session.history)
-                      ? isTimelineExpanded
-                        ? [...session.history].reverse()
-                        : session.history.slice(-2).reverse()
-                      : [];
-
                     return (
                     <TableRow key={session.id} className="transition-colors hover:bg-slate-50/70">
-                      <TableCell>
-                        <div className="font-medium">{session.childName}</div>
-                        <div className="text-xs text-muted-foreground">Grade {session.childGrade}</div>
+                      <TableCell className="whitespace-nowrap font-medium">{session.childName}</TableCell>
+                      <TableCell className="whitespace-nowrap text-sm text-muted-foreground">{session.childGrade || '—'}</TableCell>
+                      <TableCell className="max-w-[200px] whitespace-nowrap truncate" title={session.parentName}>
+                        {session.parentName}
                       </TableCell>
-                      <TableCell>{session.parentName}</TableCell>
-                      <TableCell>{phoneMap[session.id] || '—'}</TableCell>
-                      <TableCell>{session.courseInterested}</TableCell>
-                      <TableCell>{session.source || '—'}</TableCell>
-                      <TableCell className="max-w-[240px] whitespace-pre-wrap text-xs text-muted-foreground">
+                      <TableCell className="min-w-[150px] whitespace-nowrap">{phoneMap[session.id] || '—'}</TableCell>
+                      <TableCell className="whitespace-nowrap">{session.courseInterested}</TableCell>
+                      <TableCell
+                        className="min-w-[230px] max-w-[320px] whitespace-nowrap truncate text-xs text-muted-foreground"
+                        title={session.preferredDateTimeText}
+                      >
                         {session.preferredDateTimeText}
                       </TableCell>
-                      <TableCell>{session.assignedTeacherName || '—'}</TableCell>
+                      <TableCell className="whitespace-nowrap">{session.assignedTeacherName || '—'}</TableCell>
                       <TableCell>
                         <Badge variant={statusBadgeVariant(session.status)}>
                           {formatStatusLabel(session.status)}
@@ -1504,40 +1744,16 @@ export default function DemoSessionsManagement() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="min-w-[230px]">
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          {visibleTimelineRows.map((line, index) => (
-                            <div key={`${session.id}-timeline-${index}`}>{line}</div>
-                          ))}
-                          {historyRows.length > 0 && (
-                            <div className="pt-1">
-                              <div className="font-medium text-foreground">Recent activity</div>
-                              {historyRows.map((entry, idx) => (
-                                <div key={`${session.id}-history-${entry.atMs}-${idx}`}>
-                                  {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
-                                  {entry.actorName ? ` by ${entry.actorName}` : ''}
-                                  {entry.note ? ` (${entry.note})` : ''}
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                          {timelineRows.length > 3 && (
-                            <button
-                              type="button"
-                              className="pt-1 text-xs font-medium text-primary underline-offset-2 hover:underline"
-                              onClick={() =>
-                                setExpandedTimelineRows((prev) => ({
-                                  ...prev,
-                                  [session.id]: !isTimelineExpanded,
-                                }))
-                              }
-                            >
-                              {isTimelineExpanded ? 'Show less' : 'View details'}
-                            </button>
-                          )}
-                        </div>
+                      <TableCell className="whitespace-nowrap">
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-primary underline-offset-2 hover:underline"
+                          onClick={() => setTimelineViewTarget(session)}
+                        >
+                          View more
+                        </button>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right whitespace-nowrap">
                         {renderSessionActions(session)}
                       </TableCell>
                     </TableRow>
@@ -1551,6 +1767,200 @@ export default function DemoSessionsManagement() {
           </TabsContent>
         </Tabs>
       </Card>
+
+      <Card className="border-emerald-100 bg-gradient-to-b from-emerald-50/50 to-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-semibold">Demo Trend Analysis</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Day-wise trend of demos received, assigned, completed, and converted to enrollment.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={trendRangePreset === 'week' ? 'default' : 'outline'}
+              onClick={() => setTrendRangePreset('week')}
+            >
+              Week
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={trendRangePreset === 'month' ? 'default' : 'outline'}
+              onClick={() => setTrendRangePreset('month')}
+            >
+              Month
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={trendRangePreset === 'till_date' ? 'default' : 'outline'}
+              onClick={() => setTrendRangePreset('till_date')}
+            >
+              Till Date
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={trendRangePreset === 'custom' ? 'default' : 'outline'}
+              onClick={() => setTrendRangePreset('custom')}
+            >
+              Custom
+            </Button>
+          </div>
+        </div>
+
+        {trendRangePreset === 'custom' && (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="demo-trend-start-date">Start Date</Label>
+              <Input
+                id="demo-trend-start-date"
+                type="date"
+                value={trendCustomStartDate}
+                min={DEMO_TREND_ONBOARDING_START_KEY}
+                max={trendCustomEndDate || undefined}
+                onChange={(event) => setTrendCustomStartDate(event.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="demo-trend-end-date">End Date</Label>
+              <Input
+                id="demo-trend-end-date"
+                type="date"
+                value={trendCustomEndDate}
+                min={trendCustomStartDate || undefined}
+                max={getTodayDateInput()}
+                onChange={(event) => setTrendCustomEndDate(event.target.value)}
+              />
+            </div>
+          </div>
+        )}
+
+        <p className="mt-3 text-xs text-muted-foreground">
+          Showing: {trendRangeBounds.startKey} to {trendRangeBounds.endKey}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Received uses request received date; if missing, entry date is used.
+        </p>
+
+        <div className="mt-4 h-[320px] w-full rounded-lg border border-slate-200 bg-white p-3">
+          {trendData.length === 0 ? (
+            <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+              No trend data available for this range.
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData} margin={{ top: 10, right: 16, left: -8, bottom: 8 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                <XAxis dataKey="label" minTickGap={24} />
+                <YAxis allowDecimals={false} />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="linear"
+                  dataKey="received"
+                  name="Received"
+                  stroke="#2563eb"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Line
+                  type="linear"
+                  dataKey="assigned"
+                  name="Assigned"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Line
+                  type="linear"
+                  dataKey="completed"
+                  name="Completed"
+                  stroke="#16a34a"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Line
+                  type="linear"
+                  dataKey="enrolled"
+                  name="Enrolled"
+                  stroke="#db2777"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Received</div>
+            <div className="mt-1 text-xl font-semibold">{trendTotals.received}</div>
+          </Card>
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Assigned</div>
+            <div className="mt-1 text-xl font-semibold">{trendTotals.assigned}</div>
+          </Card>
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed</div>
+            <div className="mt-1 text-xl font-semibold">{trendTotals.completed}</div>
+          </Card>
+          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
+            <div className="text-xs uppercase tracking-wide text-muted-foreground">Enrolled</div>
+            <div className="mt-1 text-xl font-semibold">{trendTotals.enrolled}</div>
+          </Card>
+        </div>
+      </Card>
+
+      <Dialog open={!!timelineViewTarget} onOpenChange={(open) => (!open ? setTimelineViewTarget(null) : undefined)}>
+        <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Timeline Details</DialogTitle>
+          </DialogHeader>
+          {timelineViewTarget && (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="font-medium text-foreground">
+                  {timelineViewTarget.childName} · {timelineViewTarget.parentName}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Status: {formatStatusLabel(timelineViewTarget.status)} · Course: {timelineViewTarget.courseInterested}
+                </div>
+              </div>
+
+              <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-3 text-xs text-muted-foreground">
+                <div className="font-medium text-foreground">Timeline</div>
+                {buildTimelineRows(timelineViewTarget).map((line, index) => (
+                  <div key={`${timelineViewTarget.id}-full-timeline-${index}`}>{line}</div>
+                ))}
+              </div>
+
+              <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-3 text-xs text-muted-foreground">
+                <div className="font-medium text-foreground">Recent Activity</div>
+                {Array.isArray(timelineViewTarget.history) && timelineViewTarget.history.length > 0 ? (
+                  [...timelineViewTarget.history].reverse().map((entry, index) => (
+                    <div key={`${timelineViewTarget.id}-full-history-${entry.atMs}-${index}`}>
+                      {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
+                      {entry.actorName ? ` by ${entry.actorName}` : ''}
+                      {entry.note ? ` (${entry.note})` : ''}
+                    </div>
+                  ))
+                ) : (
+                  <div>—</div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!editTarget} onOpenChange={(open) => (!open ? setEditTarget(null) : undefined)}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-3xl">
@@ -1651,7 +2061,7 @@ export default function DemoSessionsManagement() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="edit-demo-source">Source</Label>
                 <Select
@@ -1689,6 +2099,16 @@ export default function DemoSessionsManagement() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-demo-request-received-date">Request Received Date *</Label>
+                <Input
+                  id="edit-demo-request-received-date"
+                  type="date"
+                  value={editForm.requestReceivedDate}
+                  onChange={(e) => onEditFieldChange('requestReceivedDate', e.target.value)}
+                  required
+                />
               </div>
             </div>
 

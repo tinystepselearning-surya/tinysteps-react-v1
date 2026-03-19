@@ -109,6 +109,43 @@ const cleanOptionalText = (value: unknown, maxLength = 2000): string | null => {
   return cleaned;
 };
 
+const DATE_INPUT_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+const formatDateInput = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const todayDateInput = (): string => formatDateInput(new Date());
+
+const cleanOptionalDateInput = (value: unknown, fieldName: string): string | null => {
+  if (value == null) return null;
+  if (typeof value !== 'string') {
+    throw new HttpsError('invalid-argument', `${fieldName} is invalid`);
+  }
+  const cleaned = value.trim();
+  if (!cleaned) return null;
+  if (!DATE_INPUT_REGEX.test(cleaned)) {
+    throw new HttpsError('invalid-argument', `${fieldName} must be in YYYY-MM-DD format`);
+  }
+
+  const [yearText, monthText, dayText] = cleaned.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (
+    parsed.getUTCFullYear() !== year ||
+    parsed.getUTCMonth() + 1 !== month ||
+    parsed.getUTCDate() !== day
+  ) {
+    throw new HttpsError('invalid-argument', `${fieldName} is not a valid date`);
+  }
+  return cleaned;
+};
+
 const cleanOptionalEnum = (value: unknown, fieldName: string, allowedValues: Set<string>): string | null => {
   if (value == null) return null;
   if (typeof value !== 'string') {
@@ -170,6 +207,16 @@ const monthKeyFromTimestampIST = (value: unknown): string => {
 const normalizeStatusValue = (value: unknown): string => {
   if (typeof value !== 'string') return '';
   return value.trim().toLowerCase();
+};
+
+const toFiniteNumber = (value: unknown): number => {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+      ? Number(value)
+      : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const normalizeTextForKey = (value: string): string =>
@@ -478,6 +525,7 @@ interface AdminUpsertDemoSessionRequest {
   source?: string | null;
   demoMode?: string | null;
   preferredDateTimeText: string;
+  requestReceivedDate?: string | null;
   timezone?: string | null;
   adminNotes?: string | null;
 }
@@ -530,6 +578,9 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
       'preferredDateTimeText',
       500,
     );
+    const requestReceivedDate =
+      cleanOptionalDateInput(request.data?.requestReceivedDate, 'requestReceivedDate') ||
+      todayDateInput();
     const timezone = cleanOptionalText(request.data?.timezone, 120);
     const adminNotes = cleanOptionalText(request.data?.adminNotes, 2000);
     const dedupeKey = buildDemoDedupeKey(childName, parentPhone);
@@ -552,6 +603,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
         source,
         demoMode,
         preferredDateTimeText,
+        requestReceivedDate,
         timezone,
         adminNotes,
         dedupeKey,
@@ -645,6 +697,10 @@ export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionReques
       'preferredDateTimeText',
       500,
     );
+    const requestReceivedDate = cleanOptionalDateInput(
+      request.data?.requestReceivedDate,
+      'requestReceivedDate',
+    );
     const timezone = cleanOptionalText(request.data?.timezone, 120);
     const adminNotes = cleanOptionalText(request.data?.adminNotes, 2000);
     const newDedupeKey = buildDemoDedupeKey(childName, parentPhone);
@@ -688,6 +744,7 @@ export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionReques
         source,
         demoMode,
         preferredDateTimeText,
+        requestReceivedDate,
         timezone,
         adminNotes,
         dedupeKey: newDedupeKey,
@@ -1081,6 +1138,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
           source: pickOptionalText(demo.source, 120),
           demoMode: pickOptionalText(demo.demoMode, 120),
           preferredDateTimeText: followUpPreferredSlot,
+          requestReceivedDate: todayDateInput(),
           timezone: pickOptionalText(demo.timezone, 120),
           adminNotes: combinedAdminNotes,
           dedupeKey: followUpDedupeKey || null,
@@ -1374,15 +1432,61 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
     const db = admin.firestore();
     const demoRef = db.collection('demoSessions').doc(demoId);
     const privateRef = db.collection('demoSessionsPrivate').doc(demoId);
+    const earningsQuery = db.collection('teacherEarnings').where('demoId', '==', demoId);
 
-    await db.runTransaction(async (tx) => {
+    const deletedEarningsCount = await db.runTransaction(async (tx) => {
       const demoSnap = await tx.get(demoRef);
       if (!demoSnap.exists) {
         throw new HttpsError('not-found', 'Demo session not found');
       }
 
+      let deletedCount = 0;
       const demoData = demoSnap.data() as { dedupeKey?: string | null };
       const dedupeKey = pickOptionalText(demoData.dedupeKey, 128);
+
+      const earningsSnap = await tx.get(earningsQuery);
+      for (const earningDoc of earningsSnap.docs) {
+        const earning = earningDoc.data() || {};
+        const teacherId = pickOptionalText(earning.teacherId, 120);
+        const amount = Math.max(toFiniteNumber(earning.amount), 0);
+        const monthKey =
+          pickOptionalText(earning.monthKey, 20) ||
+          monthKeyFromTimestampIST(earning.earnedAt || earning.createdAt || new Date());
+        const source = normalizeStatusValue(earning.source);
+        const status = normalizeStatusValue(earning.status);
+        const paidAmountRaw = Math.max(toFiniteNumber(earning.paidAmount), 0);
+        const paidAmount =
+          paidAmountRaw > 0
+            ? Math.min(amount, paidAmountRaw)
+            : status === 'paid'
+            ? amount
+            : 0;
+        const pendingAmount = Math.max(amount - paidAmount, 0);
+
+        if (teacherId && amount > 0) {
+          const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
+          const rollupPatch: Record<string, any> = {
+            month: monthKey,
+            totalEarnings: admin.firestore.FieldValue.increment(-amount),
+            demoEarnings: admin.firestore.FieldValue.increment(-amount),
+            pendingEarnings: admin.firestore.FieldValue.increment(-pendingAmount),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          };
+
+          if (source === 'demo_completed') {
+            rollupPatch.demoCompletedCount = admin.firestore.FieldValue.increment(-1);
+          }
+          if (source === 'demo_enrolled_bonus') {
+            rollupPatch.demoEnrollmentBonusCount = admin.firestore.FieldValue.increment(-1);
+          }
+
+          tx.set(rollupRef, rollupPatch, { merge: true });
+        }
+
+        tx.delete(earningDoc.ref);
+        deletedCount += 1;
+      }
+
       tx.delete(demoRef);
       tx.delete(privateRef);
 
@@ -1394,6 +1498,14 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
           tx.delete(dedupeRef);
         }
       }
+
+      return deletedCount;
+    });
+
+    logger.info('Demo session permanently deleted with linked earnings cleanup', {
+      demoId,
+      deletedEarningsCount,
+      deletedBy: caller.uid,
     });
 
     return {

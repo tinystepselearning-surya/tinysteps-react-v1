@@ -4,15 +4,13 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebaseConfig';
-import AppShellHeader from '../../../components/common/AppShellHeader';
 import { Menu } from 'lucide-react';
 
 interface HeaderProps {
-  user: any; // TODO: Define proper user type
   onOpenMenu?: () => void;
 }
 
-export default function Header({ user, onOpenMenu }: HeaderProps) {
+export default function Header({ onOpenMenu }: HeaderProps) {
   const { clearUser } = useAuthStore();
   const navigate = useNavigate();
   const handleLogout = async () => {
@@ -26,33 +24,27 @@ export default function Header({ user, onOpenMenu }: HeaderProps) {
   };
 
   return (
-    <AppShellHeader
-      roleLabel="Admin"
-      title="Tiny Steps Admin"
-      subtitle={
-        <>
-          Welcome, <span className="font-semibold text-slate-900">{user?.name || user?.email}</span>
-        </>
-      }
-      actions={
-        <>
+    <header className="rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm sm:px-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
           {onOpenMenu ? (
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="lg:hidden"
+              className="h-8 w-8 lg:hidden"
               onClick={onOpenMenu}
               aria-label="Open menu"
             >
               <Menu className="h-4 w-4" />
             </Button>
           ) : null}
-          <Button variant="outline" onClick={handleLogout}>
+          <p className="text-sm font-medium text-slate-700">Admin</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleLogout}>
             Logout
-          </Button>
-        </>
-      }
-    />
+        </Button>
+      </div>
+    </header>
   );
 }

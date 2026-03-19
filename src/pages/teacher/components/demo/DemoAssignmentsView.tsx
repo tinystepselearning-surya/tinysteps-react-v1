@@ -549,7 +549,10 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                     <div className="text-sm">Preferred Slot: {demo.preferredDateTimeText}</div>
                     {demo.timezone && <div className="text-sm text-muted-foreground">Timezone: {demo.timezone}</div>}
                     {demo.adminNotes && <div className="text-sm text-muted-foreground">Assignment notes: {demo.adminNotes}</div>}
-                    <div className="text-xs text-muted-foreground">Requested: {formatTs(demo.createdAt)}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Request received date: {demo.requestReceivedDate || '—'}
+                    </div>
+                    <div className="text-xs text-muted-foreground">Entered at: {formatTs(demo.createdAt)}</div>
                   </div>
 
                   <div className="flex flex-col items-stretch gap-2 md:items-end">
@@ -581,6 +584,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                       Confirmed: {demo.teacherConfirmedDate || '—'} {demo.teacherConfirmedTime || ''}
                     </div>
                     <div className="text-sm">Preferred Slot: {demo.preferredDateTimeText}</div>
+                    <div className="text-xs text-muted-foreground">Assigned at: {formatTs(demo.assignedAt)}</div>
                     {demo.teacherPreDemoNote && (
                       <div className="text-sm text-muted-foreground">Pre-demo note: {demo.teacherPreDemoNote}</div>
                     )}
@@ -638,6 +642,7 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                   {demo.teacherRecommendation && (
                     <div className="text-sm text-muted-foreground">Recommendation: {demo.teacherRecommendation}</div>
                   )}
+                  <div className="text-xs text-muted-foreground">Assigned at: {formatTs(demo.assignedAt)}</div>
                   <div className="text-xs text-muted-foreground">Completed: {formatTs(demo.completedAt)}</div>
                 </div>
               </Card>

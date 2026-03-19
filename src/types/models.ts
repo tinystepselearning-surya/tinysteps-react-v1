@@ -167,6 +167,7 @@ export interface DemoSession {
   source?: string | null;
   demoMode?: string | null;
   preferredDateTimeText: string;
+  requestReceivedDate?: string | null;
   timezone?: string | null;
   adminNotes?: string | null;
   status: DemoSessionStatus;
@@ -227,6 +228,7 @@ export interface CreateDemoSessionInput {
   source?: string | null;
   demoMode?: string | null;
   preferredDateTimeText: string;
+  requestReceivedDate?: string | null;
   timezone?: string | null;
   adminNotes?: string | null;
 }

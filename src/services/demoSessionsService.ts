@@ -56,6 +56,7 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
   const source = input.source?.trim() || null;
   const demoMode = input.demoMode?.trim() || null;
   const preferredDateTimeText = input.preferredDateTimeText.trim();
+  const requestReceivedDate = input.requestReceivedDate?.trim() || null;
 
   if (!parentName || !parentPhone || !childName || !childGrade || !courseInterested || !preferredDateTimeText) {
     throw new Error('Please fill all required fields.');
@@ -74,6 +75,7 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
       source,
       demoMode,
       preferredDateTimeText,
+      requestReceivedDate,
       timezone: input.timezone?.trim() || null,
       adminNotes: input.adminNotes?.trim() || null,
     },
@@ -251,6 +253,7 @@ interface UpdateDemoSessionAdminDetailsPayload {
   source?: string | null;
   demoMode?: string | null;
   preferredDateTimeText: string;
+  requestReceivedDate?: string | null;
   timezone?: string | null;
   adminNotes?: string | null;
 }
