@@ -177,7 +177,7 @@ export default function Footer() {
           </div>
 
           <div className="text-center text-xs text-white/70">
-            © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Priya. All rights reserved.
+            © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.
           </div>
         </div>
 
