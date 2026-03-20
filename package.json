@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "22.22.1"
+  },
   "scripts": {
     "dev": "vite",
     "build": "npm run gen:sitemaps && vite build && node scripts/prerender.mjs",
