@@ -507,7 +507,16 @@ service cloud.firestore {
     // TEACHER EARNINGS (LEGACY FALLBACK DOC)
     // ----------------------------
     match /teacherEarnings/{teacherId} {
-      allow read: if isAdmin() || (isTeacher() && request.auth.uid == teacherId);
+      allow read: if isAdmin() || (
+        isTeacher() && (
+          request.auth.uid == teacherId
+          || (
+            resource != null
+            && ('teacherId' in resource.data)
+            && resource.data.teacherId == request.auth.uid
+          )
+        )
+      );
       allow write: if false;
     }
 
