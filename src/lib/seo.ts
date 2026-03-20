@@ -104,6 +104,63 @@ function deduplicateSchemas(schemas: any[]): any[] {
 }
 
 /**
+ * Coerce loose numeric inputs used in schema values.
+ * Example: "250+" -> 250, "4.9" -> 4.9
+ */
+function toFiniteNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return undefined;
+
+  const normalized = value.trim().replace(/,/g, '');
+  if (!normalized) return undefined;
+  const match = normalized.match(/-?\d+(\.\d+)?/);
+  if (!match) return undefined;
+
+  const parsed = Number(match[0]);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function toInteger(value: unknown): number | undefined {
+  const parsed = toFiniteNumber(value);
+  if (parsed === undefined) return undefined;
+  return Math.trunc(parsed);
+}
+
+/**
+ * Normalize JSON-LD for stricter schema validators.
+ * In particular, AggregateRating.ratingCount must be an integer.
+ */
+function sanitizeSchemaNode(node: any): any {
+  if (Array.isArray(node)) {
+    return node.map((item) => sanitizeSchemaNode(item));
+  }
+
+  if (!node || typeof node !== 'object') {
+    return node;
+  }
+
+  const sanitized: Record<string, any> = {};
+  for (const [key, value] of Object.entries(node)) {
+    sanitized[key] = sanitizeSchemaNode(value);
+  }
+
+  if (sanitized['@type'] === 'AggregateRating') {
+    const ratingValue = toFiniteNumber(sanitized.ratingValue);
+    const ratingCount = toInteger(sanitized.ratingCount);
+    const bestRating = toFiniteNumber(sanitized.bestRating);
+    const worstRating = toFiniteNumber(sanitized.worstRating);
+
+    if (ratingValue !== undefined) sanitized.ratingValue = ratingValue;
+    if (ratingCount !== undefined) sanitized.ratingCount = ratingCount;
+    else delete sanitized.ratingCount;
+    if (bestRating !== undefined) sanitized.bestRating = bestRating;
+    if (worstRating !== undefined) sanitized.worstRating = worstRating;
+  }
+
+  return sanitized;
+}
+
+/**
  * Check if path is a private dashboard route
  */
 function isPrivatePath(path: string): boolean {
@@ -231,7 +288,7 @@ export function applySeo(cfg: SeoConfig) {
   
   // 4. Merge and deduplicate: [base org, ...existing, ...new]
   const mergedSchemas = [...baseSchemas, ...existingSchemas, ...newSchemas];
-  const finalSchemas = deduplicateSchemas(mergedSchemas);
+  const finalSchemas = deduplicateSchemas(mergedSchemas).map((schema) => sanitizeSchemaNode(schema));
   
   // 5. Write to single managed script element with path marker
   let scriptEl = document.getElementById(JSONLD_SCRIPT_ID) as HTMLScriptElement | null;
