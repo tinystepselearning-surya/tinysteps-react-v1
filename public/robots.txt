@@ -12,6 +12,8 @@ Allow: /contact
 Allow: /contact/
 Allow: /faq
 Allow: /faq/
+Allow: /summer-camps
+Allow: /summer-camps/
 Allow: /phonics
 Allow: /grammar
 Allow: /speaking

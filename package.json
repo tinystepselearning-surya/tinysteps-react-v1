@@ -10,6 +10,8 @@
     "check:shadowing": "node scripts/check-shadowing.mjs",
     "preview": "vite preview",
     "gen:sitemaps": "node scripts/generate-sitemaps.js",
+    "audit:firebase-upgrade": "bash scripts/audit-firebase-upgrade.sh",
+    "inventory:firebase-auth": "bash scripts/inventory-firebase-auth.sh",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest",

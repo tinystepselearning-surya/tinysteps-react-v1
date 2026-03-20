@@ -1,27 +1,13 @@
 // Import the Firebase Admin SDK
 import * as admin from "firebase-admin";
 
-// Initialize Firebase Admin SDK with the service account key
-const serviceAccount = require("../../tinysteps-react-v1-firebase-adminsdk-fbsvc-54979d3c19.json");
-
+// Initialize Firebase Admin SDK using Application Default Credentials.
+// Provide GOOGLE_APPLICATION_CREDENTIALS when running locally.
 if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
+  admin.initializeApp();
 }
 
 const db = admin.firestore();
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBZ5h2M3hataZjWM7480e76QAiFmEVK37Y",
-  authDomain: "tinysteps-react-v1.firebaseapp.com",
-  projectId: "tinysteps-react-v1",
-  storageBucket: "tinysteps-react-v1.firebasestorage.app",
-  messagingSenderId: "31484691215",
-  appId: "1:31484691215:web:2e8854696bc7e27b63347a",
-  measurementId: "G-5RMQVF1HGD"
-};
 
 /**
  * The `upsertUser` function is used to create or update a user document in Firestore.

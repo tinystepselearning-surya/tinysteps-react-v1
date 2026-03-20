@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, doc, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -27,6 +27,43 @@ const formatDate = (value: any) => {
     : '—';
 };
 
+const normalizeStatus = (value: any) => String(value || '').trim().toLowerCase();
+
+const isSettledStatus = (status: string) => status === 'paid' || status === 'settled';
+
+const resolvePaidAmount = (entry: any, amount: number) => {
+  const paidRaw = Number(entry?.paidAmount);
+  if (Number.isFinite(paidRaw) && paidRaw > 0) {
+    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+  }
+  return isSettledStatus(normalizeStatus(entry?.status)) ? Math.max(amount, 0) : 0;
+};
+
+const isSessionEarning = (entry: any) => {
+  const source = normalizeStatus(entry?.source);
+  if (source === 'session_present_completed') return true;
+  return Boolean(String(entry?.sessionId || '').trim());
+};
+
+const normalizeEnrollmentStatus = (enrollment: any): string => {
+  const raw = normalizeStatus(enrollment?.status);
+  if (!raw) {
+    const archivedLike =
+      Boolean(enrollment?.archivedAt) ||
+      enrollment?.isArchived === true ||
+      enrollment?.archived === true;
+    return archivedLike ? 'archived' : 'active';
+  }
+  if (raw === 'pending_teacher') return 'trial';
+  if (raw === 'pending_payment' || raw === 'pending_lp' || raw === 'pending_lp_assignment') {
+    return 'active';
+  }
+  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
+  if (raw === 'canceled') return 'cancelled';
+  if (raw === 'inactive') return 'archived';
+  return raw;
+};
+
 const MetricCard = ({
   label,
   value,
@@ -50,7 +87,7 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [courses, setCourses] = useState<any[]>([]);
   const [charges, setCharges] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
-  const [teacherEarningsRollups, setTeacherEarningsRollups] = useState<Record<string, any>>({});
+  const [teacherEarningsEntries, setTeacherEarningsEntries] = useState<any[]>([]);
   const [fsError, setFsError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
 
@@ -85,6 +122,7 @@ export default function AnalyticsDashboard(): JSX.Element {
     if (!selectedMonth) {
       setCharges([]);
       setPayments([]);
+      setTeacherEarningsEntries([]);
       return;
     }
     const chargesQuery = query(
@@ -93,6 +131,10 @@ export default function AnalyticsDashboard(): JSX.Element {
     );
     const paymentsQuery = query(
       collection(db, 'payments'),
+      where('monthKey', '==', selectedMonth)
+    );
+    const teacherEarningsQuery = query(
+      collection(db, 'teacherEarnings'),
       where('monthKey', '==', selectedMonth)
     );
     const unsubCharges = onSnapshot(
@@ -105,39 +147,18 @@ export default function AnalyticsDashboard(): JSX.Element {
       (snap) => setPayments(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
     );
+    const unsubTeacherEarnings = onSnapshot(
+      teacherEarningsQuery,
+      (snap) =>
+        setTeacherEarningsEntries(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (err) => setFsError(err?.message || 'Some analytics data could not be loaded.')
+    );
     return () => {
       unsubCharges();
       unsubPayments();
+      unsubTeacherEarnings();
     };
   }, [selectedMonth]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const loadTeacherRollups = async () => {
-      const teachers = users.filter(u => u.roles?.includes('teacher'));
-      if (!teachers.length || !selectedMonth) {
-        if (!cancelled) setTeacherEarningsRollups({});
-        return;
-      }
-      try {
-        const snaps = await Promise.all(
-          teachers.map(t => getDoc(doc(db, 'teachers', t.id, 'earnings', selectedMonth)))
-        );
-        const map: Record<string, any> = {};
-        teachers.forEach((t, idx) => {
-          const snap = snaps[idx];
-          map[t.id] = snap.exists() ? snap.data() : null;
-        });
-        if (!cancelled) setTeacherEarningsRollups(map);
-      } catch (err) {
-        if (!cancelled) setTeacherEarningsRollups({});
-      }
-    };
-    void loadTeacherRollups();
-    return () => {
-      cancelled = true;
-    };
-  }, [users, selectedMonth]);
 
   const revenueTotals = useMemo(() => {
     let chargesTotal = 0;
@@ -206,11 +227,18 @@ export default function AnalyticsDashboard(): JSX.Element {
       'current',
       'ongoing',
     ]);
-    const past = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled']);
+    const past = new Set([
+      'completed',
+      'discontinued',
+      'expired',
+      'cancelled',
+      'canceled',
+      'archived',
+    ]);
     const counts = { activeLike: 0, past: 0, other: 0 };
 
     enrollments.forEach((e) => {
-      const status = String(e.status || '').trim().toLowerCase();
+      const status = normalizeEnrollmentStatus(e);
       if (activeLike.has(status)) counts.activeLike += 1;
       else if (past.has(status)) counts.past += 1;
       else counts.other += 1;
@@ -232,24 +260,49 @@ export default function AnalyticsDashboard(): JSX.Element {
   const recentEnrollments: any[] = [];
 
   const teacherEarnings = useMemo(() => {
-    const teachers = users.filter(u => u.roles?.includes('teacher'));
-    return teachers
-      .map(t => {
-        const rollup = teacherEarningsRollups[t.id] || {};
-        const sessionsCount = Number(rollup.totalSessions ?? rollup.sessionsCompleted ?? 0) || 0;
-        const totalEarned = Number(rollup.totalEarnings ?? 0) || 0;
-        const pending = Number(rollup.pendingEarnings ?? 0) || 0;
-        return {
-          teacher: t.displayName || t.name || t.email || t.id,
-          teacherId: t.id,
-          sessions: sessionsCount,
-          totalEarned,
-          pending,
-        };
-      })
+    const byTeacher = new Map<
+      string,
+      { teacherId: string; sessions: number; totalEarned: number; pending: number }
+    >();
+
+    teacherEarningsEntries.forEach((entry) => {
+      const teacherId = String(entry.teacherId || '').trim();
+      if (!teacherId) return;
+      const status = normalizeStatus(entry.status);
+      if (status === 'void') return;
+
+      const amountRaw = Number(entry.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      const paidAmount = resolvePaidAmount(entry, amount);
+      const pending = Math.max(amount - paidAmount, 0);
+
+      if (!byTeacher.has(teacherId)) {
+        byTeacher.set(teacherId, {
+          teacherId,
+          sessions: 0,
+          totalEarned: 0,
+          pending: 0,
+        });
+      }
+      const bucket = byTeacher.get(teacherId)!;
+      bucket.totalEarned += amount;
+      bucket.pending += pending;
+      if (isSessionEarning(entry)) {
+        bucket.sessions += 1;
+      }
+    });
+
+    return Array.from(byTeacher.values())
+      .map((row) => ({
+        teacher: nameById[row.teacherId] || row.teacherId,
+        teacherId: row.teacherId,
+        sessions: row.sessions,
+        totalEarned: row.totalEarned,
+        pending: row.pending,
+      }))
       .sort((a, b) => b.pending - a.pending || b.totalEarned - a.totalEarned)
       .slice(0, 8);
-  }, [users, teacherEarningsRollups]);
+  }, [teacherEarningsEntries, nameById]);
 
   return (
     <div className="space-y-6">

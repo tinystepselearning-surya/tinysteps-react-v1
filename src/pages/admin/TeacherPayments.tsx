@@ -52,6 +52,24 @@ const formatMoney = (value: any) => {
   return `₹${Math.round(num).toLocaleString('en-IN')}`;
 };
 
+const normalizeStatus = (value: any) => String(value || '').trim().toLowerCase();
+
+const isSettledStatus = (status: string) => status === 'paid' || status === 'settled';
+
+const isSessionEarning = (earning: any) => {
+  const source = normalizeStatus(earning?.source);
+  if (source === 'session_present_completed') return true;
+  return Boolean(String(earning?.sessionId || '').trim());
+};
+
+const resolvePaidAmount = (earning: any, amount: number) => {
+  const paidRaw = Number(earning?.paidAmount);
+  if (Number.isFinite(paidRaw) && paidRaw > 0) {
+    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+  }
+  return isSettledStatus(normalizeStatus(earning?.status)) ? Math.max(amount, 0) : 0;
+};
+
 const isTeacherUser = (user: TeacherUser) => {
   if (Array.isArray(user.roles)) return user.roles.includes('teacher');
   return String(user.role || '').toLowerCase() === 'teacher';
@@ -73,6 +91,7 @@ export default function TeacherPayments(): JSX.Element {
   const [rollups, setRollups] = useState<Record<string, any>>({});
   const [loadingRollups, setLoadingRollups] = useState(false);
   const [payoutSaving, setPayoutSaving] = useState<string | null>(null);
+  const [correctionSaving, setCorrectionSaving] = useState<string | null>(null);
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [expandedTeachers, setExpandedTeachers] = useState<Set<string>>(new Set());
   const [kidMap, setKidMap] = useState<Record<string, string>>({});
@@ -240,13 +259,71 @@ export default function TeacherPayments(): JSX.Element {
     return map;
   }, [payouts]);
 
+  const earningsByTeacher = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        entriesCount: number;
+        sessions: number;
+        sessionEarnings: number;
+        earned: number;
+        pending: number;
+      }
+    >();
+
+    earnings.forEach((earning) => {
+      const teacherId = String(earning.teacherId || '').trim();
+      if (!teacherId) return;
+
+      const status = normalizeStatus(earning.status);
+      if (status === 'void') return;
+
+      const amountRaw = Number(earning.amount ?? 0);
+      const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
+      const paidAmount = resolvePaidAmount(earning, amount);
+      const pending = Math.max(amount - paidAmount, 0);
+      const isSession = isSessionEarning(earning);
+
+      if (!map.has(teacherId)) {
+        map.set(teacherId, {
+          entriesCount: 0,
+          sessions: 0,
+          sessionEarnings: 0,
+          earned: 0,
+          pending: 0,
+        });
+      }
+      const entry = map.get(teacherId)!;
+      entry.entriesCount += 1;
+      entry.earned += amount;
+      entry.pending += pending;
+      if (isSession) {
+        entry.sessions += 1;
+        entry.sessionEarnings += amount;
+      }
+    });
+
+    return map;
+  }, [earnings]);
+
   const rows = useMemo(() => {
     return teachers.map((t) => {
       const rollup = rollups[t.id] || {};
-      const earned = Number(rollup.totalEarnings ?? 0) || 0;
-      const pending = Number(rollup.pendingEarnings ?? 0) || 0;
-      const sessions = Number(rollup.totalSessions ?? rollup.sessionsCompleted ?? 0) || 0;
-      const rate = Number(rollup.ratePerSession ?? 0) || 0;
+      const live = earningsByTeacher.get(t.id);
+      const hasLiveData = Boolean(live?.entriesCount);
+      const earned = hasLiveData
+        ? Number(live?.earned ?? 0)
+        : Number(rollup.totalEarnings ?? 0) || 0;
+      const pending = hasLiveData
+        ? Number(live?.pending ?? 0)
+        : Number(rollup.pendingEarnings ?? 0) || 0;
+      const sessions = hasLiveData
+        ? Number(live?.sessions ?? 0)
+        : Number(rollup.totalSessions ?? rollup.sessionsCompleted ?? 0) || 0;
+      const rateFromRollup = Number(rollup.ratePerSession ?? 0) || 0;
+      const fallbackRate =
+        sessions > 0 ? Number(live?.sessionEarnings ?? 0) / Math.max(sessions, 1) : 0;
+      const rate = rateFromRollup > 0 ? rateFromRollup : fallbackRate;
       const paid = paidByTeacher.get(t.id) || 0;
       return {
         teacherId: t.id,
@@ -259,7 +336,7 @@ export default function TeacherPayments(): JSX.Element {
         balance: earned - paid,
       };
     });
-  }, [teachers, rollups, paidByTeacher]);
+  }, [teachers, rollups, paidByTeacher, earningsByTeacher]);
 
   const breakdownByTeacher = useMemo(() => {
     const byTeacher = new Map<
@@ -280,15 +357,15 @@ export default function TeacherPayments(): JSX.Element {
     earnings.forEach((earning) => {
       const teacherId = String(earning.teacherId || '');
       if (!teacherId) return;
+      const status = normalizeStatus(earning.status);
+      if (status === 'void') return;
       const enrollmentId = String(earning.enrollmentId || '');
       const kidId = String(earning.kidId || '');
       const courseId = String(earning.courseId || '');
       const key = enrollmentId || kidId || earning.id;
       const amountRaw = Number(earning.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
-      const paidRaw = Number(earning.paidAmount ?? NaN);
-      const status = String(earning.status || '').toLowerCase();
-      const paidAmount = Number.isFinite(paidRaw) ? paidRaw : status === 'paid' ? amount : 0;
+      const paidAmount = resolvePaidAmount(earning, amount);
 
       if (!byTeacher.has(teacherId)) byTeacher.set(teacherId, new Map());
       const bucket = byTeacher.get(teacherId)!;
@@ -414,13 +491,66 @@ export default function TeacherPayments(): JSX.Element {
     }
   };
 
+  const handleFixInvalidEarnings = async (row: { teacherId: string; teacherName: string }) => {
+    const confirmation = window.prompt(
+      `Type FIX to void orphan/deleted session earnings for ${row.teacherName} in ${selectedMonth}.`
+    );
+    if (confirmation !== 'FIX') return;
+
+    const noteRaw = window.prompt(
+      'Optional correction note (leave blank for default audit note):'
+    );
+    const note = typeof noteRaw === 'string' ? noteRaw.trim() : '';
+
+    try {
+      setCorrectionSaving(row.teacherId);
+      const fn = httpsCallable(functions, 'voidTeacherOrphanEarnings');
+      const response: any = await fn({
+        teacherId: row.teacherId,
+        monthKey: selectedMonth,
+        note: note || undefined,
+      });
+      const data = response?.data || {};
+      const voidedCount = Number(data.voidedCount ?? 0) || 0;
+      const skippedPaidCount = Number(data.skippedPaidCount ?? 0) || 0;
+      const orphanCount = Number(data.orphanCount ?? 0) || 0;
+
+      const snap = await getDoc(
+        doc(db, 'teachers', row.teacherId, 'earnings', selectedMonth)
+      );
+      setRollups((prev) => ({
+        ...prev,
+        [row.teacherId]: snap.exists() ? snap.data() : null,
+      }));
+
+      toast({
+        title: voidedCount > 0 ? 'Corrections applied' : 'No voidable entries',
+        description:
+          voidedCount > 0
+            ? `${row.teacherName}: voided ${voidedCount} invalid earning entries${skippedPaidCount > 0 ? `, skipped ${skippedPaidCount} paid entries` : ''}.`
+            : orphanCount > 0
+              ? `${row.teacherName}: ${orphanCount} orphan entries found but already paid/void.`
+              : `${row.teacherName}: no orphan session earnings found for ${selectedMonth}.`,
+      });
+    } catch (err: any) {
+      const message = err?.message || 'Failed to apply corrections';
+      toast({
+        title: 'Correction failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setCorrectionSaving(null);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">Teacher Payments</h2>
           <p className="text-sm text-muted-foreground">
-            Monthly earnings vs payouts for each teacher.
+            Monthly earnings vs payouts for each teacher, with correction tools for invalid session earnings.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -486,14 +616,29 @@ export default function TeacherPayments(): JSX.Element {
                         <td className="p-2">{formatMoney(row.balance)}</td>
                         <td className="p-2">{formatMoney(row.pending)}</td>
                         <td className="p-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={payoutSaving === row.teacherId}
-                            onClick={() => openPayoutModal(row)}
-                          >
-                            {payoutSaving === row.teacherId ? 'Saving…' : 'Record payout'}
-                          </Button>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={payoutSaving === row.teacherId}
+                              onClick={() => openPayoutModal(row)}
+                            >
+                              {payoutSaving === row.teacherId ? 'Saving…' : 'Record payout / adjust'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              disabled={correctionSaving === row.teacherId}
+                              onClick={() =>
+                                handleFixInvalidEarnings({
+                                  teacherId: row.teacherId,
+                                  teacherName: row.teacherName,
+                                })
+                              }
+                            >
+                              {correctionSaving === row.teacherId ? 'Fixing…' : 'Fix invalid'}
+                            </Button>
+                          </div>
                         </td>
                         <td className="p-2">
                           <Button
@@ -561,7 +706,7 @@ export default function TeacherPayments(): JSX.Element {
       <Dialog open={payoutOpen} onOpenChange={setPayoutOpen}>
         <DialogContent className="sm:max-w-[520px]">
           <DialogHeader>
-            <DialogTitle>Record Payout</DialogTitle>
+            <DialogTitle>Record Payout or Adjustment</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1">
@@ -622,7 +767,7 @@ export default function TeacherPayments(): JSX.Element {
               Cancel
             </Button>
             <Button onClick={handleRecordPayout} disabled={!!payoutSaving}>
-              {payoutSaving ? 'Saving…' : 'Record payout'}
+              {payoutSaving ? 'Saving…' : 'Record payout / adjustment'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,25 +1,18 @@
 import admin from 'firebase-admin';
-import fs from 'fs';
-import path from 'path';
-
-// Load service account JSON without using import assertions for compatibility
-const serviceAccountPath = path.resolve(process.cwd(), 'tinysteps-react-v1-firebase-adminsdk-fbsvc-54979d3c19.json');
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+import { credentialModeLabel, initializeAdminApp } from './adminInit.js';
 
 process.env.FIREBASE_AUTH_EMULATOR_HOST = 'localhost:9099';
 process.env.FIRESTORE_EMULATOR_HOST = 'localhost:8085';
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  projectId: 'tinysteps-react-v1',
-});
+initializeAdminApp({ projectId: 'tinysteps-react-v1' });
 
-const uid = 'cwEYiYRydtOeeNRoCO0j3VSI2vE3';
+const uid = process.argv[2] || 'cwEYiYRydtOeeNRoCO0j3VSI2vE3';
 console.log('Setting claims and document for UID:', uid);
+console.log(`Using ${credentialModeLabel()}`);
 
 // Create the user if it doesn't exist
 admin.auth().createUser({
-  uid: uid,
+  uid,
   email: 'admin@test.com',
   password: 'password123',
   displayName: 'Admin User',
@@ -46,7 +39,7 @@ admin.auth().createUser({
   // Also set the user document
   const db = admin.firestore();
   return db.collection('users').doc(uid).set({
-    uid: uid,
+    uid,
     email: 'admin@test.com',
     name: 'Admin User',
     role: 'admin',

@@ -1,21 +1,26 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
+import { credentialModeLabel, initializeAdminApp } from './adminInit.js';
 
-// Initialize Firebase Admin SDK
-admin.initializeApp({
-  credential: admin.credential.cert(require('./tinysteps-react-v1-firebase-adminsdk-fbsvc-75997bbcea.json')),
-});
+async function verifyUid(uid) {
+  initializeAdminApp({ projectId: 'tinysteps-react-v1' });
+  console.log(`Using ${credentialModeLabel()}`);
 
-const verifyUID = async (uid) => {
+  const userRecord = await admin.auth().getUser(uid);
+  console.log(`UID: ${uid}`);
+  console.log(`Email: ${userRecord.email || '<none>'}`);
+  console.log(`Display Name: ${userRecord.displayName || '<none>'}`);
+  console.log(`Custom Claims: ${JSON.stringify(userRecord.customClaims || {})}`);
+}
+
+async function main() {
+  const uid = process.argv[2] || 'cwEYiYRydtOeeNRoCO0j3VSI2vE3';
   try {
-    const userRecord = await admin.auth().getUser(uid);
-    console.log(`UID: ${uid}`);
-    console.log(`Email: ${userRecord.email}`);
-    console.log(`Display Name: ${userRecord.displayName}`);
-    console.log(`Custom Claims: ${JSON.stringify(userRecord.customClaims)}`);
+    await verifyUid(uid);
+    process.exit(0);
   } catch (error) {
     console.error('Error fetching user data:', error);
+    process.exit(1);
   }
-};
+}
 
-// Replace with the UID you want to verify
-verifyUID('cwEYiYRydtOeeNRoCO0j3VSI2vE3');
+main();

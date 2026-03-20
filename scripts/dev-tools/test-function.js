@@ -1,10 +1,10 @@
 import { initializeApp } from 'firebase/app';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { getFirestore, doc, getDoc, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, signInWithCustomToken, connectAuthEmulator } from 'firebase/auth';
 import fetch from 'node-fetch';
 import admin from 'firebase-admin';
-import fs from 'fs/promises';
+import { credentialModeLabel, initializeAdminApp } from './adminInit.js';
 
 // Initialize Firebase (using emulator)
 const app = initializeApp({
@@ -14,7 +14,7 @@ const app = initializeApp({
 
 // Use emulator
 const functions = getFunctions(app);
-functions.customDomain = 'http://localhost:5001'; // Emulator host
+connectFunctionsEmulator(functions, 'localhost', 5001);
 const db = getFirestore(app);
 const auth = getAuth(app);
 connectAuthEmulator(auth, 'http://localhost:9099'); // Auth emulator
@@ -27,19 +27,11 @@ if (!globalThis.fetch) {
 // Connect Firestore to emulator
 connectFirestoreEmulator(db, 'localhost', 8085);
 
-// Initialize Firebase Admin SDK with local service account for creating custom tokens.
-// This uses the local JSON service account file included in the repo for emulator testing only.
-try {
-  const svcPath = new URL('./tinysteps-react-v1-firebase-adminsdk-fbsvc-54979d3c19.json', import.meta.url);
-  const raw = await fs.readFile(svcPath, 'utf8');
-  const serviceAccount = JSON.parse(raw);
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-} catch (err) {
-  console.warn('Failed to init Admin SDK. Ensure service account JSON exists in repo root.');
-  throw err;
-}
+initializeAdminApp({
+  projectId: 'tinysteps-react-v1',
+  requireServiceAccount: true,
+});
+console.log(`Using ${credentialModeLabel()}`);
 
 async function generateAdminToken() {
   // Create a proper Firebase custom token (client will use signInWithCustomToken).

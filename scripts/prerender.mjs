@@ -320,10 +320,18 @@ const ROUTE_SEO_CONFIG = {
     robots: 'index, follow',
   },
   '/summer-english-camp-2026': {
-    title: 'Summer English Camp 2026 | Tiny Steps Learning',
-    description: 'Join our immersive Summer English Camp 2026. Dynamic group sessions, games, and creative projects for kids ages 6–12.',
-    canonicalPath: '/summer-english-camp-2026',
-    robots: 'index, follow',
+    title: 'Summer Camps for Kids | Tiny Steps Learning',
+    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore online group batches in India for phonics, grammar, and speaking fast-track tracks with enrollment at ₹2,400 (70% off).',
+    canonicalPath: '/summer-camps',
+    keywords: 'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online,grammar classes for kids online,public speaking classes for kids online india,summer camp fees india,small batch online classes for kids,weekly progress reports for parents',
+    robots: 'noindex, follow',
+  },
+  '/summer-camps': {
+    title: 'Online Summer Camp for Kids in India | Tiny Steps Learning',
+    description: 'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with weekly parent updates.',
+    canonicalPath: '/summer-camps',
+    keywords: 'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online india,grammar classes for kids online,public speaking classes for kids online india,summer camp fees for kids,summer camp fees india,small batch online classes for kids,weekly progress reports for parents,book free trial class for kids',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
   },
   '/online-phonics-reading-classes': {
     title: 'Online Phonics & Reading Classes for Kids | Tiny Steps Learning',
@@ -377,13 +385,31 @@ function injectSeoMetadata(html, route) {
   const descMeta = `<meta name="description" content="${escapeHtml(config.description)}">`;
   result = result.replace(/<meta name="description"[^>]*>/i, descMeta) || result.replace('</head>', `${descMeta}</head>`);
 
+  // Inject/replace optional <meta name="keywords">
+  if (config.keywords) {
+    const keywordsMeta = `<meta name="keywords" content="${escapeHtml(config.keywords)}">`;
+    result = result.replace(/<meta name="keywords"[^>]*>/i, keywordsMeta) || result.replace('</head>', `${keywordsMeta}</head>`);
+  } else {
+    result = result.replace(/<meta name="keywords"[^>]*>\s*/i, '');
+  }
+
   // Inject/replace <link rel="canonical">
   const canonicalLink = `<link rel="canonical" href="${canonicalUrl}">`;
   result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
+  const hreflangEnIn = `<link rel="alternate" hreflang="en-IN" href="${canonicalUrl}">`;
+  const hreflangEn = `<link rel="alternate" hreflang="en" href="${canonicalUrl}">`;
+  const hreflangDefault = `<link rel="alternate" hreflang="x-default" href="${canonicalUrl}">`;
+  result = result.replace(/<link rel="alternate"[^>]*hreflang="en-IN"[^>]*>/i, hreflangEnIn) || result.replace('</head>', `${hreflangEnIn}</head>`);
+  result = result.replace(/<link rel="alternate"[^>]*hreflang="en"[^>]*>/i, hreflangEn) || result.replace('</head>', `${hreflangEn}</head>`);
+  result = result.replace(/<link rel="alternate"[^>]*hreflang="x-default"[^>]*>/i, hreflangDefault) || result.replace('</head>', `${hreflangDefault}</head>`);
 
   // Inject/replace <meta name="robots">
   const robotsMeta = `<meta name="robots" content="${config.robots}">`;
   result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
+  const googlebotMeta = `<meta name="googlebot" content="${config.robots}">`;
+  const bingbotMeta = `<meta name="bingbot" content="${config.robots}">`;
+  result = result.replace(/<meta name="googlebot"[^>]*>/i, googlebotMeta) || result.replace('</head>', `${googlebotMeta}</head>`);
+  result = result.replace(/<meta name="bingbot"[^>]*>/i, bingbotMeta) || result.replace('</head>', `${bingbotMeta}</head>`);
 
   // Inject/replace OpenGraph + Twitter share metadata for messaging previews
   const ogTitleMeta = `<meta property="og:title" content="${escapeHtml(config.title)}">`;

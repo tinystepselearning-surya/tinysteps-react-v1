@@ -5,6 +5,7 @@ import { organizationSchema } from './schemas';
 type SeoConfig = {
   title: string;
   description?: string;
+  keywords?: string | string[];
   canonicalPath?: string; // e.g. "/courses" (defaults to current path)
   noIndex?: boolean; // set true ONLY for private/test pages
   robots?: string; // optional explicit robots value (e.g. "noindex, nofollow")
@@ -119,14 +120,26 @@ export function applySeo(cfg: SeoConfig) {
     content: cfg.description ?? undefined,
   });
 
+  // Keywords (optional, mainly for non-Google engines and internal SEO tooling)
+  const keywordsValue = Array.isArray(cfg.keywords) ? cfg.keywords.join(', ') : cfg.keywords;
+  upsertMeta('meta[name="keywords"]', {
+    name: 'keywords',
+    content: keywordsValue ?? undefined,
+  });
+
   // Canonical
   const path = cfg.canonicalPath ?? (typeof window !== 'undefined' ? window.location.pathname : '/');
   const canonicalUrl = path === '/' ? `${CANONICAL_ORIGIN}/` : `${CANONICAL_ORIGIN}${path}`;
   upsertLink('link[rel="canonical"]', { rel: 'canonical', href: canonicalUrl });
+  upsertLink('link[rel="alternate"][hreflang="en-IN"]', { rel: 'alternate', hreflang: 'en-IN', href: canonicalUrl });
+  upsertLink('link[rel="alternate"][hreflang="en"]', { rel: 'alternate', hreflang: 'en', href: canonicalUrl });
+  upsertLink('link[rel="alternate"][hreflang="x-default"]', { rel: 'alternate', hreflang: 'x-default', href: canonicalUrl });
 
   // Robots: allow explicit override via cfg.robots, else use noIndex flag
   const robotsContent = cfg.robots ?? (cfg.noIndex ? 'noindex, nofollow' : 'index, follow');
   upsertMeta('meta[name="robots"]', { name: 'robots', content: robotsContent });
+  upsertMeta('meta[name="googlebot"]', { name: 'googlebot', content: robotsContent });
+  upsertMeta('meta[name="bingbot"]', { name: 'bingbot', content: robotsContent });
 
   // Open Graph basics (keep in sync / remove when absent)
   upsertMeta('meta[property="og:title"]', { property: 'og:title', content: cfg.title });
@@ -435,8 +448,9 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
   },
   '/summer-english-camp-2026': {
     title: 'Summer Camps for Kids | Tiny Steps Learning',
-    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore group batches, 1:1 options, and program tracks in one place.',
+    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore online group batches in India for phonics, grammar, and speaking fast-track tracks with enrollment at ₹2,400 (70% off).',
     canonicalPath: '/summer-camps',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/online-phonics-reading-classes': {
@@ -470,9 +484,10 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogType: 'website',
   },
   '/summer-camps': {
-    title: 'Online Summer Camps for Kids | Tiny Steps Learning',
-    description: 'Explore Tiny Steps online summer camps with 10-week group and premium 1:1 options for reading, phonics, grammar, and speaking.',
+    title: 'Online Summer Camp for Kids in India | Tiny Steps Learning',
+    description: 'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with weekly parent updates.',
     canonicalPath: '/summer-camps',
+    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
   },
   ...SUBJECT_LANDING_ROUTE_META,

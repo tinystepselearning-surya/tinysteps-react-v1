@@ -553,6 +553,24 @@ function toPaidAtTimestamp(value: any): admin.firestore.Timestamp {
   return admin.firestore.Timestamp.fromDate(parsed || new Date());
 }
 
+function resolveTeacherEarningPaidAmount(data: any, amount: number): number {
+  const paidRaw = Number(data?.paidAmount);
+  if (Number.isFinite(paidRaw) && paidRaw > 0) {
+    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+  }
+  const status = normalizeChargeStatus(data?.status);
+  if (isSettledCharge(status)) {
+    return Math.max(amount, 0);
+  }
+  return 0;
+}
+
+function isSessionLinkedTeacherEarning(data: any): boolean {
+  const source = normalizeStatus(data?.source);
+  if (source === 'session_present_completed') return true;
+  return Boolean(String(data?.sessionId || '').trim());
+}
+
 export const recordPayment = onCall(
   {
     region: REGION,
@@ -773,7 +791,7 @@ export const recordTeacherPayout = onCall(
 
     const db = admin.firestore();
     const payoutRef = db.collection('teacherPayouts').doc();
-    const earningsQuery = db.collection('teacherEarnings').where('teacherId', '==', teacherId);
+    const earningsQuery = db.collection('teacherEarnings').where('monthKey', '==', monthKey);
     const payoutRollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
 
     const allocation = await db.runTransaction(async (tx) => {
@@ -973,5 +991,179 @@ export const recordTeacherPayout = onCall(
     });
 
     return { ok: true, payoutId: payoutRef.id, monthKey, ...allocation };
+  }
+);
+
+export const voidTeacherOrphanEarnings = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 120,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const teacherId = String(request.data?.teacherId || '').trim();
+    const monthKey = String(request.data?.monthKey || '').trim();
+    const note =
+      typeof request.data?.note === 'string'
+        ? request.data.note.trim().slice(0, 300)
+        : '';
+
+    if (!teacherId) {
+      throw new HttpsError('invalid-argument', 'teacherId is required');
+    }
+    if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+      throw new HttpsError('invalid-argument', 'monthKey must be in YYYY-MM format');
+    }
+
+    const db = admin.firestore();
+    const earningsQuery = db.collection('teacherEarnings').where('teacherId', '==', teacherId);
+    const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
+
+    const result = await db.runTransaction(async (tx) => {
+      const earningsSnap = await tx.get(earningsQuery);
+      const earnings = earningsSnap.docs
+        .map((docSnap) => ({
+          id: docSnap.id,
+          ref: docSnap.ref,
+          data: docSnap.data() || {},
+        }))
+        .filter((earning) => String(earning.data.teacherId || '').trim() === teacherId);
+
+      const sessionIds = Array.from(
+        new Set(
+          earnings
+            .map((earning) => String(earning.data.sessionId || '').trim())
+            .filter(Boolean)
+        )
+      );
+      const sessionSnaps = new Map<string, FirebaseFirestore.DocumentSnapshot>();
+      for (const sessionId of sessionIds) {
+        const snap = await tx.get(db.collection('classSessions').doc(sessionId));
+        sessionSnaps.set(sessionId, snap);
+      }
+
+      let orphanCount = 0;
+      let voidedCount = 0;
+      let skippedPaidCount = 0;
+      let skippedAlreadyVoidCount = 0;
+      let totalEarningsDelta = 0;
+      let pendingDelta = 0;
+      let sessionDelta = 0;
+
+      const voidedIds: string[] = [];
+      const skippedPaidIds: string[] = [];
+
+      for (const earning of earnings) {
+        const status = normalizeChargeStatus(earning.data.status);
+        if (status === 'void') {
+          skippedAlreadyVoidCount += 1;
+          continue;
+        }
+
+        const sessionId = String(earning.data.sessionId || '').trim();
+        if (!sessionId) {
+          continue;
+        }
+
+        const sessionSnap = sessionSnaps.get(sessionId);
+        const sessionData = sessionSnap?.exists ? sessionSnap.data() || {} : null;
+        const sessionStatus = normalizeStatus(sessionData?.status);
+        const earningKidId =
+          String(
+            earning.data.kidId || resolveKidId(sessionData) || ''
+          ).trim() || null;
+        const attendanceStatus = resolveAttendanceStatus(sessionData, earningKidId);
+        const isBillable =
+          Boolean(sessionSnap?.exists) &&
+          sessionStatus === 'completed' &&
+          isBillableAttendance(attendanceStatus);
+
+        if (isBillable) {
+          continue;
+        }
+
+        orphanCount += 1;
+
+        const amount = Math.max(normalizeNumber(earning.data.amount, 0), 0);
+        const paidAmount = resolveTeacherEarningPaidAmount(earning.data, amount);
+        if (paidAmount > 0 || status === 'paid') {
+          skippedPaidCount += 1;
+          skippedPaidIds.push(earning.id);
+          continue;
+        }
+
+        tx.set(
+          earning.ref,
+          {
+            status: 'void',
+            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidReason: note || 'Admin correction: orphan/invalid session earning',
+            correctedBy: request.auth?.uid || null,
+            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        voidedCount += 1;
+        voidedIds.push(earning.id);
+
+        totalEarningsDelta -= amount;
+        pendingDelta -= Math.max(amount - paidAmount, 0);
+        if (isSessionLinkedTeacherEarning(earning.data)) {
+          sessionDelta -= 1;
+        }
+      }
+
+      if (
+        voidedCount > 0 &&
+        (totalEarningsDelta !== 0 || pendingDelta !== 0 || sessionDelta !== 0)
+      ) {
+        const rollupUpdates: Record<string, any> = {
+          month: monthKey,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        };
+        if (totalEarningsDelta !== 0) {
+          rollupUpdates.totalEarnings = admin.firestore.FieldValue.increment(totalEarningsDelta);
+        }
+        if (pendingDelta !== 0) {
+          rollupUpdates.pendingEarnings = admin.firestore.FieldValue.increment(pendingDelta);
+        }
+        if (sessionDelta !== 0) {
+          rollupUpdates.totalSessions = admin.firestore.FieldValue.increment(sessionDelta);
+          rollupUpdates.sessionsCompleted = admin.firestore.FieldValue.increment(sessionDelta);
+        }
+        tx.set(rollupRef, rollupUpdates, { merge: true });
+      }
+
+      return {
+        checkedCount: earnings.length,
+        orphanCount,
+        voidedCount,
+        skippedPaidCount,
+        skippedAlreadyVoidCount,
+        voidedIds,
+        skippedPaidIds,
+      };
+    });
+
+    logger.info('Admin voided orphan teacher earnings', {
+      teacherId,
+      monthKey,
+      checkedCount: result.checkedCount,
+      orphanCount: result.orphanCount,
+      voidedCount: result.voidedCount,
+      skippedPaidCount: result.skippedPaidCount,
+      actorUid: request.auth?.uid || null,
+    });
+
+    return {
+      ok: true,
+      teacherId,
+      monthKey,
+      ...result,
+    };
   }
 );

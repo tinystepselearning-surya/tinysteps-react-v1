@@ -1,31 +1,26 @@
-const admin = require('firebase-admin');
+import admin from 'firebase-admin';
+import { credentialModeLabel, initializeAdminApp } from './adminInit.js';
 
-// Initialize Firebase Admin SDK
-admin.initializeApp({
-  credential: admin.credential.cert(require('./tinysteps-react-v1-firebase-adminsdk-fbsvc-75997bbcea.json')),
-});
+async function setRole(uid, role = 'admin') {
+  initializeAdminApp({ projectId: 'tinysteps-react-v1' });
+  console.log(`Using ${credentialModeLabel()}`);
+  console.log(`Setting role "${role}" for UID: ${uid}`);
 
-const setAdminRole = async (uid) => {
+  await admin.auth().setCustomUserClaims(uid, { role });
+  console.log(`Role "${role}" set successfully for user ${uid}`);
+}
+
+async function main() {
+  const uid = process.argv[2] || 'cwEYiYRydtOeeNRoCO0j3VSI2vE3';
+  const role = process.argv[3] || 'admin';
+
   try {
-    console.log('Initializing role assignment for UID:', uid);
-
-    // Set custom user claims for the user
-    await admin.auth().setCustomUserClaims(uid, { role: 'admin' });
-    console.log(`Admin role set successfully for user with UID: ${uid}`);
+    await setRole(uid, role);
+    process.exit(0);
   } catch (error) {
-    console.error('Error setting admin role:', error);
-
-    // Additional debugging information
-    if (error.code === 'auth/invalid-credential') {
-      console.error('Invalid service account credentials. Ensure tinysteps-react-v1-firebase-adminsdk-fbsvc-75997bbcea.json is correct.');
-    } else if (error.code === 'auth/user-not-found') {
-      console.error('User not found. Verify the UID exists in Firebase Authentication.');
-    } else {
-      console.error('Unexpected error:', error.message);
-    }
+    console.error('Error setting role:', error);
+    process.exit(1);
   }
-};
+}
 
-// Replace with the UID of the user you want to set as admin
-const userUID = 'cwEYiYRydtOeeNRoCO0j3VSI2vE3';
-setAdminRole(userUID);
+main();
