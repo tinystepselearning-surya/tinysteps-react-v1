@@ -10,22 +10,77 @@ interface UseTeacherSessionsResult {
   error: Error | null;
 }
 
-const toTeacherSession = (doc: any): TeacherSession => ({
-  id: doc.id,
-  teacherId: doc.teacherId,
-  courseId: doc.courseId,
-  courseName: doc.courseName,
-  date: doc.date,
-  startTime: doc.startTime,
-  endTime: doc.endTime,
-  kidIds: doc.kidIds || [],
-  status: doc.status || 'scheduled',
-  joinUrl: doc.joinUrl,
-  notes: doc.notes,
-  attendance: doc.attendance,
-  updatedAt: doc.updatedAt,
-  updatedBy: doc.updatedBy,
-});
+const toDateMaybe = (value: any): Date | null => {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value?.toDate === 'function') {
+    const date = value.toDate();
+    if (date instanceof Date && !Number.isNaN(date.getTime())) return date;
+  }
+  if (typeof value === 'string' || typeof value === 'number') {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+  return null;
+};
+
+const normalizeKidIds = (doc: any): string[] => {
+  const raw =
+    Array.isArray(doc.kidIds) ? doc.kidIds :
+    doc.kidId ? [doc.kidId] :
+    doc.studentId ? [doc.studentId] :
+    [];
+  return raw.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0);
+};
+
+const toTeacherSession = (doc: any): TeacherSession => {
+  const startAtDate = toDateMaybe(doc.startAt);
+  const endAtDate = toDateMaybe(doc.endAt);
+
+  const date =
+    typeof doc.date === 'string' && doc.date
+      ? doc.date
+      : startAtDate
+        ? format(startAtDate, 'yyyy-MM-dd')
+        : '';
+
+  const startTime =
+    typeof doc.startTime === 'string' && doc.startTime
+      ? doc.startTime
+      : startAtDate
+        ? format(startAtDate, 'HH:mm')
+        : '';
+
+  const endTime =
+    typeof doc.endTime === 'string' && doc.endTime
+      ? doc.endTime
+      : endAtDate
+        ? format(endAtDate, 'HH:mm')
+        : '';
+
+  return {
+    id: doc.id,
+    ...(doc.enrollmentId ? { enrollmentId: doc.enrollmentId } : {}),
+    teacherId: doc.teacherId || '',
+    courseId: doc.courseId || '',
+    courseName: doc.courseName || doc.courseTitle || '',
+    date,
+    startTime,
+    endTime,
+    kidIds: normalizeKidIds(doc),
+    status: doc.status || 'scheduled',
+    joinUrl: doc.joinUrl || doc.meetingLink,
+    ...(doc.meetingLink ? { meetingLink: doc.meetingLink } : {}),
+    notes: doc.notes,
+    attendance: doc.attendance,
+    updatedAt: doc.updatedAt,
+    updatedBy: doc.updatedBy,
+    ...(typeof doc.durationMins === 'number' ? { durationMins: doc.durationMins } : {}),
+    ...(typeof doc.durationMinutes === 'number' ? { durationMinutes: doc.durationMinutes } : {}),
+    ...(doc.startAt ? { startAt: doc.startAt } : {}),
+    ...(doc.endAt ? { endAt: doc.endAt } : {}),
+  } as TeacherSession;
+};
 
 export const useTeacherSessions = (
   teacherId?: string,

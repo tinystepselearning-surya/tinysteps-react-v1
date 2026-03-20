@@ -45,12 +45,6 @@ const EarningsSummary = React.lazy(() =>
   })),
 );
 
-const MessagesView = React.lazy(() =>
-  import('./components/messages/MessagesView').then((module) => ({
-    default: module.MessagesView,
-  })),
-);
-
 const ScheduleView = React.lazy(() =>
   import('./components/schedule/ScheduleView').then((module) => ({
     default: module.ScheduleView,
@@ -84,7 +78,6 @@ const TAB_ITEMS = [
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
   { id: 'earnings', label: 'Earnings' },
-  { id: 'messages', label: 'Messages' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'profile', label: 'Profile' },
 ];
@@ -271,15 +264,6 @@ export default function TeacherDashboard() {
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
                 <EarningsSummary teacherId={teacherId} />
               </React.Suspense>
-            </TabsContent>
-
-            {/* Messages */}
-            <TabsContent value="messages">
-              {tab === 'messages' && (
-                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading messages…</div>}>
-                  <MessagesView teacherId={teacherId} />
-                </React.Suspense>
-              )}
             </TabsContent>
 
             {/* Schedule */}

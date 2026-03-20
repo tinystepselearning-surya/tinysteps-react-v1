@@ -11,7 +11,7 @@ import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderB
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface AttendanceFormProps {
   open: boolean;
@@ -142,6 +142,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
   attendanceOnly = false,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState<Record<string, AttendanceEntryState>>({});
@@ -809,6 +810,26 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     return [mastery, remark].filter(Boolean).join(' • ');
   };
 
+  const buildTopicProgressUrl = (kidId: string) => {
+    const params = new URLSearchParams();
+    const tabParam = new URLSearchParams(location.search).get('tab');
+    const fromParam =
+      tabParam === 'today'
+        ? 'today'
+        : tabParam === 'schedule'
+          ? 'schedule'
+          : 'sessions';
+    const returnTo = `${location.pathname}${location.search}`;
+
+    params.set('from', fromParam);
+    params.set('tab', 'topic');
+    params.set('returnTo', returnTo);
+    if (effectiveCourseId) params.set('courseId', effectiveCourseId);
+    if (enrollmentId) params.set('enrollmentId', enrollmentId);
+
+    return `/teacher/students/${kidId}/topic-progress?${params.toString()}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={(value) => !value && onClose()}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -887,142 +908,18 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
                         </Select>
                       </div>
                       {!isRescheduleRequested ? (
-                        <div>
-                          <Label>Topics Covered</Label>
-                          {!effectiveCourseId ? (
-                            enrollmentCourseLoading ? (
-                              <p className="text-sm text-gray-500">Resolving course…</p>
-                            ) : (
-                              <p className="text-sm text-gray-500">
-                                This session has no course. Topics can’t be loaded. Ask Admin to re-generate sessions from schedule or fix the session courseId.
-                              </p>
-                            )
-                          ) : curriculumLoading ? (
-                            <p className="text-sm text-gray-500">Loading topics...</p>
-                          ) : curriculumError ? (
-                            <p className="text-sm text-red-500">Unable to load topics.</p>
-                          ) : topics.length === 0 ? (
-                            <div className="space-y-2">
-                              <p className="text-sm text-gray-500">
-                                Topics are updated from the Student Progress page.
-                              </p>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() =>
-                                  navigate(
-                                    `/teacher/students/${kidId}/topic-progress?from=schedule&tab=topic&courseId=${encodeURIComponent(
-                                      effectiveCourseId,
-                                    )}`,
-                                  )
-                                }
-                              >
-                                Open Student Progress
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-4 mt-2">
-                              {Object.entries(
-                                topics.reduce((acc, topic) => {
-                                  const lessonKey = topic.lesson || 'Other';
-                                  if (!acc[lessonKey]) acc[lessonKey] = [];
-                                  acc[lessonKey].push(topic);
-                                  return acc;
-                                }, {} as Record<string, CurriculumTopic[]>)
-                              )
-                                .sort(([a], [b]) => {
-                                  const aNum = Number(String(a).replace(/[^0-9]/g, '')) || 0;
-                                  const bNum = Number(String(b).replace(/[^0-9]/g, '')) || 0;
-                                  return aNum - bNum;
-                                })
-                                .map(([lesson, lessonTopics]) => (
-                                  <div key={lesson} className="border rounded-lg p-3 bg-white/60">
-                                    <div className="text-xs font-semibold text-gray-700 mb-2">{lesson}</div>
-                                    <div className="space-y-3">
-                                      {lessonTopics.map((topic) => {
-                                        const topicEntry = formState[kidId]?.topicUpdatesById?.[topic.id];
-                                        const isChecked = Boolean(topicEntry);
-                                        const isExpanded = Boolean(expandedTopics[kidId]?.[topic.id]);
-                                        return (
-                                          <div key={topic.id} className="text-sm">
-                                            <div className="flex items-center justify-between gap-2">
-                                              <label className="flex items-center gap-2">
-                                                <input
-                                                  type="checkbox"
-                                                  checked={isChecked}
-                                                  onChange={(e) => handleTopicToggle(kidId, topic, e.target.checked)}
-                                                />
-                                                <span>{formatTopicLabel(topic)}</span>
-                                              </label>
-                                              {!isChecked && !savedTopicProgressLoading && savedTopicProgressByKidId[kidId]?.[topic.id] && (
-                                                <span className="text-xs text-gray-500">
-                                                  Saved: {formatSavedSummary(savedTopicProgressByKidId[kidId]?.[topic.id])}
-                                                </span>
-                                              )}
-                                              {isChecked && (
-                                                <button
-                                                  type="button"
-                                                  className="text-xs text-primary-600 hover:underline"
-                                                  onClick={() => toggleTopicExpanded(kidId, topic.id)}
-                                                >
-                                                  {isExpanded ? 'Hide' : 'Details'}
-                                                </button>
-                                              )}
-                                            </div>
-                                            {isChecked && !isExpanded && savedTopicProgressByKidId[kidId]?.[topic.id] && (
-                                              <div className="pl-6 text-xs text-gray-500 mt-1">
-                                                Saved: {formatSavedSummary(savedTopicProgressByKidId[kidId]?.[topic.id])}
-                                              </div>
-                                            )}
-                                            {isChecked && isExpanded && (
-                                              <div className="mt-2 space-y-2 pl-6">
-                                                <div className="flex flex-wrap items-center gap-3">
-                                                  <div className="min-w-[160px]">
-                                                    <Label className="text-xs">Mastery</Label>
-                                                    <Select
-                                                      value={topicEntry?.mastery || 'developing'}
-                                                      onValueChange={(value) =>
-                                                        handleTopicMasteryChange(
-                                                          kidId,
-                                                          topic,
-                                                          value as TopicMastery
-                                                        )
-                                                      }
-                                                    >
-                                                      <SelectTrigger className="h-8 text-xs">
-                                                        <SelectValue />
-                                                      </SelectTrigger>
-                                                      <SelectContent>
-                                                        {TOPIC_MASTERY_OPTIONS.map((opt) => (
-                                                          <SelectItem key={opt} value={opt}>
-                                                            {opt.replace(/_/g, ' ')}
-                                                          </SelectItem>
-                                                        ))}
-                                                      </SelectContent>
-                                                    </Select>
-                                                  </div>
-                                                </div>
-                                                <div>
-                                                  <Label className="text-xs">Remark</Label>
-                                                  <Input
-                                                    value={topicEntry?.teacherRemark ?? ''}
-                                                    onChange={(e) =>
-                                                      handleTopicRemarkChange(kidId, topic, e.target.value)
-                                                    }
-                                                    placeholder="Quick remark"
-                                                    className="h-8 text-xs"
-                                                  />
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-                          )}
+                        <div className="space-y-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(buildTopicProgressUrl(kidId))}
+                          >
+                            Open Topics & Lesson Feedback
+                          </Button>
+                          <p className="text-xs text-muted-foreground">
+                            Update lesson-wise topic progress from the full topic feedback page.
+                          </p>
                         </div>
                       ) : (
                         <div className="text-xs text-muted-foreground">

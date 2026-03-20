@@ -5,18 +5,24 @@ export type AttendanceStatus = 'present' | 'absent' | 'late';
 
 export interface TeacherSession {
   id: string;
+  enrollmentId?: string;
   teacherId: string;
   courseId: string;
   courseName?: string;
   date: string; // YYYY-MM-DD
   startTime: string; // HH:MM
   endTime: string; // HH:MM
+  durationMins?: number;
+  durationMinutes?: number;
   kidIds: string[];
   status: SessionStatus;
   joinUrl?: string;
+  meetingLink?: string;
   lessonPlanUrl?: string; // Canva or other lesson plan embed URL
   notes?: string;
   attendance?: Record<string, AttendanceStatus>;
+  startAt?: Timestamp;
+  endAt?: Timestamp;
   updatedAt?: Timestamp;
   updatedBy?: string;
 }

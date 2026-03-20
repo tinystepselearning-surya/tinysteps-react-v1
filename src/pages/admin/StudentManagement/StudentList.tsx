@@ -1285,8 +1285,13 @@ type EnrollmentLite = {
     weekdays?: number[];
     timeHHmm?: string;
     durationMins?: number;
+    weeksAhead?: number;
+    endDateYmd?: string;
   };
   startDate?: any; // Timestamp
+  startDateYmd?: string;
+  classesStartDate?: any; // Timestamp
+  classesStartDateYmd?: string;
 };
 
 type SessionRequestRow = {
@@ -1364,6 +1369,22 @@ function parseISODateOnly(iso: string): Date | null {
   if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
   const dt = new Date(y, mo - 1, d, 0, 0, 0, 0);
   return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function dateLikeToYmd(value: any): string | null {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return toISODate(parsed);
+    return null;
+  }
+  if (typeof value?.toDate === 'function') {
+    const dt = value.toDate();
+    if (dt instanceof Date && !Number.isNaN(dt.getTime())) return toISODate(dt);
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return toISODate(value);
+  return null;
 }
 
 function formatYMDCompact(d: Date): string {
@@ -1463,6 +1484,36 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'admin';
+
+  const applyScheduleFormFromEnrollment = (enrollment: EnrollmentLite) => {
+    const todayISO = toISODate(new Date());
+    const enrollmentStartYmd =
+      dateLikeToYmd(enrollment.startDateYmd) ||
+      dateLikeToYmd(enrollment.startDate) ||
+      todayISO;
+    const classesStartYmd =
+      dateLikeToYmd(enrollment.classesStartDateYmd) ||
+      dateLikeToYmd(enrollment.classesStartDate) ||
+      enrollmentStartYmd;
+
+    setEnrollmentStartDate(enrollmentStartYmd);
+    setClassesStartDate(classesStartYmd);
+    setWeekdays(
+      Array.isArray(enrollment.schedule?.weekdays) && enrollment.schedule.weekdays.length > 0
+        ? enrollment.schedule.weekdays
+        : [1, 3, 5],
+    );
+    setTimeHHmm(enrollment.schedule?.timeHHmm || '18:00');
+    setDurationMins(safeNumber(enrollment.schedule?.durationMins, 35));
+    setGenerateWeeks(safeNumber(enrollment.schedule?.weeksAhead, 8));
+    setEndDate(
+      typeof enrollment.schedule?.endDateYmd === 'string'
+        ? enrollment.schedule.endDateYmd
+        : '',
+    );
+    setFeePerClass(safeNumber(enrollment.feePerClass, 0));
+    setMeetingLink(enrollment.joinUrl || '');
+  };
 
   const handleDeleteEnrollment = async (enrollmentId: string) => {
     if (!window.confirm('Discontinue this enrollment?')) return;
@@ -1640,22 +1691,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     setScheduleFor(student);
     setScheduleEnrollmentId(first.id);
-
-    const today = new Date();
-    const todayISO = toISODate(today);
-
-    // default dates
-    setEnrollmentStartDate(todayISO);
-    setClassesStartDate(todayISO);
-
-    // defaults from enrollment if already set
-    setWeekdays(first.schedule?.weekdays?.length ? first.schedule.weekdays : [1, 3, 5]);
-    setTimeHHmm(first.schedule?.timeHHmm || '18:00');
-    setDurationMins(safeNumber(first.schedule?.durationMins, 35));
-    setFeePerClass(safeNumber(first.feePerClass, 0));
     setGenerateWeeks(8);
     setEndDate('');
-    setMeetingLink(first.joinUrl || '');
+    applyScheduleFormFromEnrollment(first);
   }
 
   async function handleSaveSchedule() {
@@ -1671,8 +1709,17 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     const enrollStart = parseISODateOnly(enrollmentStartDate);
     const classStart = parseISODateOnly(classesStartDate);
+    const classEnd = endDate ? parseISODateOnly(endDate) : null;
     if (!enrollStart || !classStart) {
       toast({ title: 'Invalid start date', variant: 'destructive' });
+      return;
+    }
+    if (endDate && !classEnd) {
+      toast({ title: 'Invalid end date', variant: 'destructive' });
+      return;
+    }
+    if (classEnd && classEnd.getTime() < classStart.getTime()) {
+      toast({ title: 'End date must be after classes start date', variant: 'destructive' });
       return;
     }
 
@@ -1701,6 +1748,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       const enrollmentRef = doc(db, 'enrollments', scheduleEnrollmentId);
       await updateDoc(enrollmentRef, {
         startDate: Timestamp.fromDate(enrollStart),
+        startDateYmd: enrollmentStartDate,
+        classesStartDate: Timestamp.fromDate(classStart),
+        classesStartDateYmd: classesStartDate,
         feePerClass: fee,
         currency: 'INR',
         joinUrl: meetingLink ? meetingLink : null,
@@ -1709,6 +1759,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           weekdays,
           timeHHmm,
           durationMins: dur,
+          weeksAhead: weeks,
+          endDateYmd: endDate || null,
         },
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid || null,
@@ -1717,20 +1769,40 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       // 2) Call Cloud Function to generate sessions
       const functions = getFunctions(undefined, 'asia-south1');
       const createSessionsFromSchedule = httpsCallable<
-        { enrollmentId: string; weeksAhead?: number },
-        { created: number; skipped: number; rangeStart: string; rangeEnd: string }
+        {
+          enrollmentId: string;
+          weeksAhead?: number;
+          replaceFuture?: boolean;
+          startDate?: string;
+          endDate?: string;
+        },
+        {
+          created: number;
+          skipped: number;
+          replaced?: number;
+          rangeStart: string;
+          rangeEnd: string;
+          rangeStartYmd?: string;
+          rangeEndYmd?: string;
+        }
       >(functions, 'createSessionsFromSchedule');
 
       const result = await createSessionsFromSchedule({
         enrollmentId: scheduleEnrollmentId,
         weeksAhead: weeks,
+        replaceFuture: true,
+        startDate: classesStartDate,
+        ...(endDate ? { endDate } : {}),
       });
 
-      const { created, skipped } = result.data;
+      const { created, skipped, replaced } = result.data;
 
       toast({
         title: 'Schedule saved',
-        description: `✅ Created ${created} sessions (${skipped} already existed)`,
+        description:
+          typeof replaced === 'number'
+            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}`
+            : `✅ Created ${created} sessions (${skipped} already existed)`,
       });
 
       setScheduleFor(null);
@@ -2460,7 +2532,16 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <div className="text-sm font-medium mb-1">Enrollment (Course)</div>
-                  <Select value={scheduleEnrollmentId} onValueChange={setScheduleEnrollmentId}>
+                  <Select
+                    value={scheduleEnrollmentId}
+                    onValueChange={(value) => {
+                      setScheduleEnrollmentId(value);
+                      const selected = (enrollmentsByStudent[scheduleFor.id] || []).find((e) => e.id === value);
+                      if (selected) {
+                        applyScheduleFormFromEnrollment(selected);
+                      }
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select enrollment" />
                     </SelectTrigger>
@@ -2578,7 +2659,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                 </div>
 
                 <div className="md:col-span-2">
-                  <div className="text-sm font-medium mb-1">Zoom / Meet link (optional)</div>
+                  <div className="text-sm font-medium mb-1">Teams meeting link (optional)</div>
                   <Input
                     value={meetingLink}
                     onChange={(e) => setMeetingLink(e.target.value)}
@@ -2588,7 +2669,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               </div>
 
               <div className="text-xs text-gray-500">
-                Note: Sessions are created with deterministic IDs so re-saving won’t duplicate. Existing sessions are skipped.
+                Note: Re-saving schedule replaces upcoming sessions so updated date/time/duration/link are applied.
               </div>
             </div>
           ) : null}

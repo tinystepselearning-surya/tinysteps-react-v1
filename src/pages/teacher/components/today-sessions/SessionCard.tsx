@@ -1,12 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { TeacherSession } from '../../../../types/Teacher';
 import { format, differenceInMinutes, isAfter, isBefore } from 'date-fns';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../../../lib/firebaseConfig';
+import { toast } from '@components/hooks/use-toast';
 
 interface SessionCardProps {
   session: TeacherSession;
+  studentNames?: string[];
   onMarkAttendance: (session: TeacherSession) => void;
   onComplete: (sessionId: string) => Promise<void>;
 }
@@ -20,11 +24,53 @@ const statusMap: Record<
   completed: { label: 'Completed', variant: 'outline' },
 };
 
-export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttendance, onComplete }) => {
-  const now = new Date();
-  const sessionStart = new Date(`${session.date}T${session.startTime}`);
-  const sessionEnd = new Date(`${session.date}T${session.endTime}`);
+export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance, onComplete }) => {
+  const [isStartingClass, setIsStartingClass] = useState(false);
 
+  const toDateMaybe = (value: any): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+    if (typeof value?.toDate === 'function') {
+      const date = value.toDate();
+      if (date instanceof Date && !Number.isNaN(date.getTime())) return date;
+    }
+    if (typeof value === 'string' || typeof value === 'number') {
+      const date = new Date(value);
+      if (!Number.isNaN(date.getTime())) return date;
+    }
+    return null;
+  };
+
+  const fromFieldsStart =
+    session.date && session.startTime ? new Date(`${session.date}T${session.startTime}`) : null;
+  const fromFieldsEnd =
+    session.date && session.endTime ? new Date(`${session.date}T${session.endTime}`) : null;
+  const startAtFallback = toDateMaybe((session as any).startAt);
+  const endAtFallback = toDateMaybe((session as any).endAt);
+
+  const sessionStart =
+    fromFieldsStart && !Number.isNaN(fromFieldsStart.getTime())
+      ? fromFieldsStart
+      : startAtFallback || new Date();
+
+  const sessionEnd =
+    fromFieldsEnd && !Number.isNaN(fromFieldsEnd.getTime())
+      ? fromFieldsEnd
+      : endAtFallback || new Date(sessionStart.getTime() + 30 * 60 * 1000);
+
+  const durationMinutes = (() => {
+    const explicitCandidates = [
+      Number((session as any).durationMins),
+      Number((session as any).durationMinutes),
+      Number((session as any).duration),
+    ];
+    const explicit = explicitCandidates.find((value) => Number.isFinite(value) && value > 0);
+    if (typeof explicit === 'number') return Math.round(explicit);
+    const calculated = differenceInMinutes(sessionEnd, sessionStart);
+    return calculated > 0 ? calculated : 30;
+  })();
+
+  const now = new Date();
   const timeUntilStart = differenceInMinutes(sessionStart, now);
   const isInProgress = isAfter(now, sessionStart) && isBefore(now, sessionEnd);
   const isCompleted = isAfter(now, sessionEnd);
@@ -54,7 +100,87 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttenda
     );
   }, [session.attendance]);
 
-  const joinDisabled = !session.joinUrl;
+  const directJoinUrl =
+    (typeof session.joinUrl === 'string' && session.joinUrl.trim()) ||
+    (typeof session.meetingLink === 'string' && session.meetingLink.trim()) ||
+    '';
+  const enrollmentIdFromSession =
+    (typeof session.enrollmentId === 'string' && session.enrollmentId.trim()) ||
+    '';
+  const enrollmentIdFromSessionId =
+    typeof session.id === 'string' && session.id.includes('_')
+      ? session.id.split('_')[0].trim()
+      : '';
+  const enrollmentId = enrollmentIdFromSession || enrollmentIdFromSessionId;
+
+  const openMeetingLink = (url: string) => {
+    const trimmed = url.trim();
+    const isTeamsUrl = /^https?:\/\/([a-z0-9-]+\.)?teams\.microsoft\.com/i.test(trimmed);
+
+    if (isTeamsUrl) {
+      const teamsDeepLink = `msteams:${trimmed.replace(/^https?:/, '')}`;
+      window.location.assign(teamsDeepLink);
+      window.setTimeout(() => {
+        window.open(trimmed, '_blank', 'noopener,noreferrer');
+      }, 900);
+      return;
+    }
+
+    window.open(trimmed, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleStartClass = async () => {
+    if (isStartingClass) return;
+
+    if (directJoinUrl) {
+      openMeetingLink(directJoinUrl);
+      return;
+    }
+
+    if (!enrollmentId) {
+      toast({
+        title: 'Meeting link unavailable',
+        description: 'No Teams meeting link is configured for this class yet.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsStartingClass(true);
+    try {
+      const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+      const data = enrollmentSnap.data() as any;
+      const fallbackJoinUrl =
+        (typeof data?.joinUrl === 'string' && data.joinUrl.trim()) ||
+        (typeof data?.meetingLink === 'string' && data.meetingLink.trim()) ||
+        '';
+
+      if (!fallbackJoinUrl) {
+        toast({
+          title: 'Meeting link unavailable',
+          description: 'No Teams meeting link is configured for this enrollment.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      openMeetingLink(fallbackJoinUrl);
+    } catch (err) {
+      console.error('Failed to open meeting link', err);
+      toast({
+        title: 'Could not start class',
+        description: 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsStartingClass(false);
+    }
+  };
+
+  const resolvedStudentNames = useMemo(
+    () => (studentNames || []).filter((name) => Boolean(name && name.trim())),
+    [studentNames],
+  );
   const courseLabel =
     (session as any).courseLabel ||
     session.courseName ||
@@ -81,15 +207,27 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttenda
           )}
         </div>
         <p className="text-sm text-muted-foreground">
-          {format(sessionStart, 'PPPP')} · {session.startTime} - {session.endTime} (30 min)
+          {format(sessionStart, 'PPPP')} · {(session.startTime || format(sessionStart, 'HH:mm'))}
+          {(session.endTime || format(sessionEnd, 'HH:mm'))
+            ? ` - ${session.endTime || format(sessionEnd, 'HH:mm')}`
+            : ''}
+          {' '}({durationMinutes} min)
         </p>
         {courseLabel ? (
           <h3 className="text-lg font-semibold">{courseLabel}</h3>
         ) : (
           <h3 className="text-lg font-semibold">Course</h3>
         )}
+        <p className="text-sm">
+          <span className="text-muted-foreground">Student: </span>
+          <span className="inline-flex rounded-md bg-slate-100 px-2 py-0.5 font-semibold text-slate-900">
+            {resolvedStudentNames.length > 0
+              ? resolvedStudentNames.join(', ')
+              : `${attendanceSummary.total} assigned`}
+          </span>
+        </p>
         <p className="text-sm text-muted-foreground">
-          Students: {attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late} of {attendanceSummary.total} present
+          Attendance: {attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late} of {attendanceSummary.total} present
         </p>
         <div className="flex gap-2 mt-1">
           <span className="text-green-600">✅ {attendanceSummary.present}</span>
@@ -100,14 +238,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, onMarkAttenda
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
-          onClick={() => {
-            if (session.joinUrl) {
-              window.open(session.joinUrl, '_blank', 'noopener,noreferrer');
-            }
-          }}
-          disabled={joinDisabled}
+          onClick={handleStartClass}
+          disabled={isStartingClass}
         >
-          Join on Zoom
+          {isStartingClass ? 'Opening…' : 'Start Class'}
         </Button>
         <Button onClick={() => onMarkAttendance(session)} variant="secondary">
           Mark Attendance

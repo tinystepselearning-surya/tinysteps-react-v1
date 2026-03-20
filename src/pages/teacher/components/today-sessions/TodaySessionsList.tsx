@@ -8,6 +8,7 @@ import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
+import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -17,7 +18,26 @@ interface TodaySessionsListProps {
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
+  const { students } = useTeacherFilteredStudents();
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
+
+  const studentNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((student: any) => {
+      const name =
+        student.fullName ||
+        student.studentName ||
+        student.displayName ||
+        student.name ||
+        '';
+      if (!name) return;
+
+      if (student.uid) map.set(String(student.uid), String(name));
+      if (student.id) map.set(String(student.id), String(name));
+      if (student.userId) map.set(String(student.userId), String(name));
+    });
+    return map;
+  }, [students]);
 
   const handleComplete = async (sessionId: string) => {
     try {
@@ -150,6 +170,9 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         <SessionCard
           key={session.id}
           session={session}
+          studentNames={session.kidIds
+            .map((kidId) => studentNameById.get(String(kidId)))
+            .filter((name): name is string => Boolean(name))}
           onMarkAttendance={setSelectedSession}
           onComplete={handleComplete}
         />

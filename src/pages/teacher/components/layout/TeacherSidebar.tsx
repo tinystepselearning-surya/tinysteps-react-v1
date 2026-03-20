@@ -6,7 +6,6 @@ import {
   CalendarClock,
   CalendarDays,
   ClipboardList,
-  MessageSquare,
   Users,
   Wallet,
   UserCircle,
@@ -27,7 +26,6 @@ const items = [
   { id: 'upcoming', label: 'Upcoming Sessions', icon: CalendarClock },
   { id: 'students', label: 'My Students', icon: Users },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
-  { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'schedule', label: 'Schedule', icon: CalendarDays },
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ];
