@@ -4,7 +4,9 @@ This folder contains utility scripts to manage secrets and other environment-lev
 
 ## Updating Groq API Key
 
-The repository expects the Groq API key to be present in Google Secret Manager as a secret named `groq-api-key`.
+Canonical secret name: `groq-api-key`
+
+The repository expects the Groq API key to be present in Google Secret Manager as `groq-api-key`.
 
 You can update or create it using one of the following methods:
 
@@ -28,21 +30,11 @@ NEW_GROQ_KEY="sk-NEW_KEY" node scripts/setGroqSecret.js
 node scripts/setGroqSecret.js "sk-NEW_KEY"
 ```
 
-3) (Local/dev only) Use environment variable override for local emulation or dev:
-
-When running the Firebase emulator or testing locally, you can set env var `GROQ_API_KEY` and the functions will use that instead of Secret Manager.
-
-```bash
-# macOS / zsh
-export GROQ_API_KEY="sk-NEW_KEY"
-npm run emulators # or your function dev run
-```
-
 Note: After updating the secret, redeploy functions or restart the functions emulator if secrets are cached at init time.
 
 ## Prerequisites
 
-- For gcloud scripts: Install Google Cloud SDK and authenticate with `gcloud auth login` and set project with `gcloud config set project tinystepselearning-surya`.
+- For gcloud scripts: Install Google Cloud SDK and authenticate with `gcloud auth login` and set project with `gcloud config set project tinysteps-react-v1`.
 - For Node script: Ensure Application Default Credentials are set up (e.g., via `gcloud auth application-default login`).
 
 ## Security Notes

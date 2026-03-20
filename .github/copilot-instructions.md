@@ -293,9 +293,9 @@ Local-only chat state (messages/loading/error)
 
 Backend
 
-Callable function: groqAskTinySteps in functions/src/
+Callable function: askTinySteps in `functions/src/ai/askTinySteps.ts`
 
-Reads GROQ_API_KEY from Firebase secrets/config (never hard-coded)
+Reads `groq-api-key` from Firebase Secret Manager (never hard-coded)
 
 Validates input, basic rate limiting, safe error handling
 
@@ -336,7 +336,7 @@ Hook intention:
 
 ts
 Copy code
-// Hook wrapping httpsCallable('groqAskTinySteps').
+// Hook wrapping httpsCallable('askTinySteps').
 // Expose ask(message: string) plus loading/error state.
 // Keep types strict. No Groq calls from client.
 11.3 Backend rules (callable)
@@ -358,7 +358,7 @@ Security/config:
 
 Never commit API keys
 
-Use Firebase secrets/config for GROQ_API_KEY
+Use Firebase Secret Manager secret `groq-api-key`
 
 Don’t echo sensitive user content
 
@@ -396,15 +396,15 @@ Hook:
 
 ts
 Copy code
-// Create useAskTinySteps hook wrapping httpsCallable('groqAskTinySteps').
+// Create useAskTinySteps hook wrapping httpsCallable('askTinySteps').
 // Expose ask(message) and loading/error state. Strict types.
 Cloud Function:
 
 ts
 Copy code
-// Implement callable function groqAskTinySteps:
+// Implement callable function askTinySteps:
 // validate input, build strict Tiny Steps-only system prompt,
-// call Groq using GROQ_API_KEY from secrets/config, return short safe answer.
+// call Groq using secret `groq-api-key`, return short safe answer.
 // Add basic rate limiting and safe error handling.
 Logging helper:
 

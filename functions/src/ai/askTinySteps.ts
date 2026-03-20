@@ -6,8 +6,8 @@ import * as admin from "firebase-admin";
 
 if (!admin.apps.length) admin.initializeApp();
 
-// ✅ Secret Manager key name: "groq-api-key"
-const GROQ_API_KEY = defineSecret("groq-api-key");
+// Canonical Secret Manager secret name.
+const GROQ_SECRET = defineSecret("groq-api-key");
 
 type ChatMsg = { role: "user" | "assistant"; content: string };
 type Snippet = { url: string; title: string; text: string };
@@ -117,13 +117,13 @@ export const askTinySteps = onCall(
     region: "asia-south1",
     memory: "256MiB",
     timeoutSeconds: 60,
-    secrets: [GROQ_API_KEY],
+    secrets: [GROQ_SECRET],
   },
   async (request) => {
-    const apiKey = GROQ_API_KEY.value();
+    const apiKey = GROQ_SECRET.value();
     if (!apiKey) {
       logger.error("askTinySteps: groq-api-key missing");
-      throw new HttpsError("failed-precondition", "GROQ_API_KEY is not set.");
+      throw new HttpsError("failed-precondition", "Secret Manager secret 'groq-api-key' is not set.");
     }
 
     const { messages } = request.data || {};
