@@ -152,7 +152,7 @@ export default function Footer() {
                     Email: {PUBLIC_CONTACT_EMAIL}
                   </a>
                 </li>
-                <li className="text-xs text-white/60">Hours: Mon-Fri 9 AM-6 PM IST • Sat 10 AM-2 PM IST</li>
+                <li className="text-xs text-white/60">Hours: Mon-Sun 7 AM-12 AM IST</li>
               </ul>
             </div>
 

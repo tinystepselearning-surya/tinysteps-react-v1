@@ -37,7 +37,7 @@ const ContactPage: FC = () => {
               <li>
                 <span className="font-semibold">Location:</span> Hyderabad, Telangana (online-only; serving families across the globe)
               </li>
-              <li><span className="font-semibold">Hours:</span> Mon–Fri 9 AM – 6 PM IST • Sat 10 AM – 2 PM IST</li>
+              <li><span className="font-semibold">Hours:</span> Mon–Sun 7 AM – 12 AM IST</li>
             </ul>
           </div>
           <div className="glass-panel p-6">

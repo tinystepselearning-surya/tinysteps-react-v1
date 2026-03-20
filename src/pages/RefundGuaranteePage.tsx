@@ -43,7 +43,7 @@ const sections = [
   {
     title: 'Contact and changes',
     paragraphs: [
-      `For refund, guarantee, or billing questions, contact Tiny Steps Learning at ${PUBLIC_CONTACT_EMAIL} or call +91-96183-98383 during business hours: Monday to Friday, 9:00 AM to 6:00 PM IST, and Saturday, 10:00 AM to 2:00 PM IST.`,
+      `For refund, guarantee, or billing questions, contact Tiny Steps Learning at ${PUBLIC_CONTACT_EMAIL} or call +91-96183-98383 during business hours: Monday to Sunday, 7:00 AM to 12:00 AM IST.`,
       `This policy may be revised from time to time to reflect legal requirements, payment process changes, or service updates. Any revised version will be posted here with a new “Last updated” date. Last updated: ${lastUpdated}.`,
     ],
   },

@@ -45,7 +45,7 @@ const sections = [
   {
     title: 'Contact and updates',
     paragraphs: [
-      `For privacy questions or requests, please contact Tiny Steps Learning at ${PUBLIC_CONTACT_EMAIL} or call +91-96183-98383. Business hours are Monday to Friday, 9:00 AM to 6:00 PM IST, and Saturday, 10:00 AM to 2:00 PM IST.`,
+      `For privacy questions or requests, please contact Tiny Steps Learning at ${PUBLIC_CONTACT_EMAIL} or call +91-96183-98383. Business hours are Monday to Sunday, 7:00 AM to 12:00 AM IST.`,
       `We may update this Privacy Policy from time to time to reflect changes in our services, legal requirements, or operational practices. Any revised version will be posted on this page with an updated “Last updated” date. Last updated: ${lastUpdated}.`,
     ],
   },
