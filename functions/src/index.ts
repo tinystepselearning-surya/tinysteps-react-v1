@@ -57,6 +57,7 @@ export {
 export { ensureGamesCatalogNow } from "./games/ensureGamesCatalogNow";
 export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
+export { createLessonAccessSession } from "./createLessonAccessSession";
 
 // Public website contact form
 export { contactForm } from "./contactForm";

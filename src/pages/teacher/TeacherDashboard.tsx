@@ -39,20 +39,10 @@ const TeacherMyStudentsV2 = React.lazy(() =>
   })),
 );
 
-const StudentProgressChart = React.lazy(() =>
-  import('./components/progress/StudentProgressChart').then((module) => ({
-    default: module.StudentProgressChart,
-  })),
-);
-
 const EarningsSummary = React.lazy(() =>
   import('./components/earnings/EarningsSummary').then((module) => ({
     default: module.EarningsSummary,
   })),
-);
-
-const TeacherStats = React.lazy(() =>
-  import('./components/analytics/TeacherStats').then((m) => ({ default: m.TeacherStats })),
 );
 
 const MessagesView = React.lazy(() =>
@@ -70,12 +60,6 @@ const ScheduleView = React.lazy(() =>
 const TeacherProfile = React.lazy(() =>
   import('./components/profile/TeacherProfile').then((module) => ({
     default: module.TeacherProfile,
-  })),
-);
-
-const NotificationsPanel = React.lazy(() =>
-  import('./components/notifications/NotificationsPanel').then((module) => ({
-    default: module.NotificationsPanel,
   })),
 );
 
@@ -99,14 +83,10 @@ const TAB_ITEMS = [
   { id: 'lessons', label: 'Lesson Library' },
   { id: 'upcoming', label: 'Upcoming Sessions' },
   { id: 'students', label: 'Students' },
-  
-  { id: 'progress', label: 'Progress' },
   { id: 'earnings', label: 'Earnings' },
-  { id: 'analytics', label: 'Analytics' },
   { id: 'messages', label: 'Messages' },
   { id: 'schedule', label: 'Schedule' },
   { id: 'profile', label: 'Profile' },
-  { id: 'notifications', label: 'Notifications' },
 ];
 const VALID_TEACHER_TAB_IDS = new Set(TAB_ITEMS.map((item) => item.id));
 
@@ -127,10 +107,7 @@ export default function TeacherDashboard() {
 
   // Detect full-screen viewer params
   const [viewerState, setViewerState] = useState<{
-    lessonId: string;
-    lessonTitle: string;
-    canvaEmbedUrl: string;
-    sessionId: string;
+    accessId: string;
   } | null>(null);
 
   // Allow selecting a tab via `?tab=lessons` (or other tab ids)
@@ -145,18 +122,11 @@ export default function TeacherDashboard() {
       }
 
       // Check for full-screen viewer params
-      const viewLesson = params.get('viewLesson');
       const viewMode = params.get('viewMode');
-      const sessionId = params.get('session');
-      const lessonTitle = params.get('lessonTitle');
-      const canvaUrl = params.get('canvaUrl');
-
-      if (viewMode === 'full' && viewLesson && sessionId && lessonTitle && canvaUrl) {
+      const accessId = params.get('accessId');
+      if (viewMode === 'full' && accessId) {
         setViewerState({
-          lessonId: viewLesson,
-          lessonTitle: decodeURIComponent(lessonTitle),
-          canvaEmbedUrl: decodeURIComponent(canvaUrl),
-          sessionId,
+          accessId,
         });
       } else {
         setViewerState(null);
@@ -164,7 +134,7 @@ export default function TeacherDashboard() {
     } catch {
       // ignore malformed search
     }
-  }, [location.search]);
+  }, [location.search, tab]);
 
   // Sync tab changes to URL
   const setTabAndUrl = React.useCallback((nextTab: string) => {
@@ -182,7 +152,6 @@ export default function TeacherDashboard() {
     navigate('/teacher?tab=lessons', { replace: true });
   }, [navigate]);
 
-  const [showNotifications, setShowNotifications] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
   const teacherId = user?.uid;
@@ -214,10 +183,7 @@ export default function TeacherDashboard() {
     return (
       <React.Suspense fallback={<div className="flex items-center justify-center h-screen">Loading viewer...</div>}>
         <FullScreenCanvaViewer
-          lessonId={viewerState.lessonId}
-          lessonTitle={viewerState.lessonTitle}
-          canvaEmbedUrl={viewerState.canvaEmbedUrl}
-          sessionId={viewerState.sessionId}
+          accessId={viewerState.accessId}
           teacherId={user.uid}
           teacherName={user.displayName || user.email || 'Teacher'}
           onClose={handleCloseViewer}
@@ -260,7 +226,11 @@ export default function TeacherDashboard() {
               name={user.displayName || user.email || 'Teacher'}
               upcomingCount={sessions.length}
               activeSectionLabel={activeSectionLabel}
-              onToggleNotifications={() => setShowNotifications(true)}
+              footerContent={
+                tab === 'lessons' ? (
+                  <div id="teacher-lessons-controls-slot" className="w-full" />
+                ) : null
+              }
               onProfileClick={() => setProfileOpen(true)}
               onOpenMenu={() => setMobileMenuOpen(true)}
             />
@@ -296,29 +266,11 @@ export default function TeacherDashboard() {
               </React.Suspense>
             </TabsContent>
 
-            
-
-            {/* Progress */}
-            <TabsContent value="progress">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading progress…</div>}>
-                <StudentProgressChart teacherId={teacherId} />
-              </React.Suspense>
-            </TabsContent>
-
             {/* Earnings */}
             <TabsContent value="earnings">
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading earnings…</div>}>
                 <EarningsSummary teacherId={teacherId} />
               </React.Suspense>
-            </TabsContent>
-
-            {/* Analytics */}
-            <TabsContent value="analytics">
-              {tab === 'analytics' && (
-                <React.Suspense fallback={<div className="text-sm text-gray-600">Loading analytics…</div>}>
-                  <TeacherStats teacherId={teacherId} />
-                </React.Suspense>
-              )}
             </TabsContent>
 
             {/* Messages */}
@@ -343,13 +295,6 @@ export default function TeacherDashboard() {
                 <TeacherProfile teacherId={teacherId} />
               </React.Suspense>
             </TabsContent>
-
-            {/* Notifications */}
-            <TabsContent value="notifications">
-              <React.Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
-                <NotificationsPanel teacherId={teacherId} />
-              </React.Suspense>
-            </TabsContent>
             {/* Lesson Library (tab) */}
             <TabsContent value="lessons">
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading lessons…</div>}>
@@ -359,13 +304,6 @@ export default function TeacherDashboard() {
           </Tabs>
         </main>
       </div>
-
-      {/* Notifications Modal */}
-      {showNotifications && (
-        <React.Suspense fallback={<div className="text-sm text-gray-600">Loading notifications…</div>}>
-          <NotificationsPanel teacherId={teacherId} onClose={() => setShowNotifications(false)} />
-        </React.Suspense>
-      )}
 
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
         <DialogContent className="max-w-3xl">

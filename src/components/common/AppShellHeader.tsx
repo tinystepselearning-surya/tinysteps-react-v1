@@ -5,6 +5,7 @@ import TinyStepsBrand from './TinyStepsBrand';
 interface AppShellHeaderProps {
   actions?: ReactNode;
   className?: string;
+  footer?: ReactNode;
   roleLabel: string;
   subtitle?: ReactNode;
   title: ReactNode;
@@ -13,6 +14,7 @@ interface AppShellHeaderProps {
 export default function AppShellHeader({
   actions,
   className,
+  footer,
   roleLabel,
   subtitle,
   title,
@@ -44,6 +46,8 @@ export default function AppShellHeader({
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 xl:justify-end">{actions}</div>
         ) : null}
       </div>
+
+      {footer ? <div className="mt-4 border-t border-slate-100 pt-4">{footer}</div> : null}
     </header>
   );
 }

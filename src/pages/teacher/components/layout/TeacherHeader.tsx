@@ -4,7 +4,6 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import {
-  Bell,
   ChevronDown,
   CircleUser,
   LogOut,
@@ -18,7 +17,7 @@ interface TeacherHeaderProps {
   name?: string;
   upcomingCount?: number;
   activeSectionLabel?: string;
-  onToggleNotifications?: () => void;
+  footerContent?: React.ReactNode;
   onProfileClick?: () => void;
   onOpenMenu?: () => void;
 }
@@ -27,7 +26,7 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
   name,
   upcomingCount,
   activeSectionLabel,
-  onToggleNotifications,
+  footerContent,
   onProfileClick,
   onOpenMenu,
 }) => {
@@ -87,23 +86,13 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
             <span className="hidden sm:inline">{name || 'Teacher'}</span>
             <ChevronDown className="h-4 w-4 text-slate-400" />
           </button>
-          <button
-            type="button"
-            onClick={onToggleNotifications}
-            className="relative rounded-full border border-slate-200 bg-white p-2 text-slate-600 hover:border-indigo-300 hover:text-indigo-700"
-            aria-label="Notifications"
-          >
-            <Bell className="h-4 w-4" />
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-rose-500 text-[10px] font-semibold text-white flex items-center justify-center">
-              2
-            </span>
-          </button>
           <Button variant="outline" onClick={handleLogout} className="gap-2">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Logout</span>
           </Button>
         </>
       }
+      footer={footerContent}
     />
   );
 };

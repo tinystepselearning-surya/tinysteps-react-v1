@@ -1,94 +1,228 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Button } from '@components/ui/button';
 import { X, Maximize, Minimize } from 'lucide-react';
-import { doc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
 
-type Violation = {
-  type: 'RIGHT_CLICK' | 'PRINT' | 'SAVE' | 'VIEW_SOURCE' | 'DEVTOOLS' | 'CANVA_CONTROLS_BLOCKED';
-  ts: number;
-};
+type ViolationType =
+  | 'RIGHT_CLICK'
+  | 'PRINT'
+  | 'SAVE'
+  | 'VIEW_SOURCE'
+  | 'DEVTOOLS'
+  | 'CANVA_CONTROLS_BLOCKED'
+  | 'COPY'
+  | 'CUT'
+  | 'SELECT'
+  | 'DRAG'
+  | 'TAB_HIDDEN'
+  | 'WINDOW_BLUR';
 
 interface FullScreenCanvaViewerProps {
-  lessonId: string;
-  lessonTitle: string;
-  canvaEmbedUrl: string;
-  sessionId: string;
+  accessId: string;
   teacherId: string;
   teacherName: string;
   onClose: () => void;
+  initialLessonTitle?: string;
+}
+
+const MAX_VIOLATIONS = 75;
+const TOAST_THROTTLE_MS = 2000;
+
+function normalizeCanvaEmbedUrl(rawUrl: unknown): string {
+  if (typeof rawUrl !== 'string') return '';
+  const candidate = rawUrl.trim();
+  if (!candidate) return '';
+
+  try {
+    const parsed = new URL(candidate);
+    if (!parsed.hostname.endsWith('canva.com')) return '';
+    if (parsed.protocol !== 'https:') return '';
+
+    parsed.searchParams.set('embed', '1');
+    parsed.searchParams.set('ui', '0');
+    return parsed.toString();
+  } catch {
+    return '';
+  }
+}
+
+function timestampToMs(value: unknown): number {
+  if (typeof value === 'object' && value !== null && typeof (value as any).toMillis === 'function') {
+    const ms = Number((value as any).toMillis());
+    return Number.isFinite(ms) ? ms : 0;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  return 0;
 }
 
 export function FullScreenCanvaViewer({
-  lessonId,
-  lessonTitle,
-  canvaEmbedUrl,
-  sessionId,
+  accessId,
   teacherId,
   teacherName,
   onClose,
+  initialLessonTitle,
 }: FullScreenCanvaViewerProps) {
   const [showWarning, setShowWarning] = useState(true);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [violations, setViolations] = useState<Violation[]>([]);
+  const [blockedActionCount, setBlockedActionCount] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControlsMessage, setShowControlsMessage] = useState(false);
+  const [resolvedLessonTitle, setResolvedLessonTitle] = useState(initialLessonTitle || 'Lesson');
+  const [resolvedCanvaEmbedUrl, setResolvedCanvaEmbedUrl] = useState('');
+  const [expiresAtMs, setExpiresAtMs] = useState(0);
+  const [lessonLoading, setLessonLoading] = useState(true);
+  const [lessonLoadError, setLessonLoadError] = useState<string | null>(null);
+  const [sessionExpired, setSessionExpired] = useState(false);
+
   const openedAtRef = useRef<number>(Date.now());
   const hasWrittenOpenLog = useRef(false);
   const viewerRef = useRef<HTMLDivElement>(null);
   const lastToastTimeRef = useRef<number>(0);
+  const lastBlockedActionAtMsRef = useRef<number | null>(null);
+  const blockedActionTypeCountsRef = useRef<Record<ViolationType, number>>({
+    RIGHT_CLICK: 0,
+    PRINT: 0,
+    SAVE: 0,
+    VIEW_SOURCE: 0,
+    DEVTOOLS: 0,
+    CANVA_CONTROLS_BLOCKED: 0,
+    COPY: 0,
+    CUT: 0,
+    SELECT: 0,
+    DRAG: 0,
+    TAB_HIDDEN: 0,
+    WINDOW_BLUR: 0,
+  });
 
-  // Constants for hardening
-  const MAX_VIOLATIONS = 50;
-  const TOAST_THROTTLE_MS = 2000;
+  const pushViolation = useCallback((type: ViolationType) => {
+    lastBlockedActionAtMsRef.current = Date.now();
+    blockedActionTypeCountsRef.current[type] = (blockedActionTypeCountsRef.current[type] || 0) + 1;
+    setBlockedActionCount((prev) => Math.min(prev + 1, MAX_VIOLATIONS));
+  }, []);
 
-  // Format watermark timestamp
-  const watermarkTimestamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
-  const watermarkText = `Tiny Steps Private • ${teacherName} • ${watermarkTimestamp}`;
+  useEffect(() => {
+    let mounted = true;
 
-  // Write audit log on open
+    async function loadAccessSession() {
+      setLessonLoading(true);
+      setLessonLoadError(null);
+      setSessionExpired(false);
+
+      try {
+        const accessRef = doc(db, 'lessonAccessSessions', accessId);
+        const accessSnap = await getDoc(accessRef);
+
+        if (!accessSnap.exists()) {
+          throw new Error('Access session not found. Reopen the lesson from library.');
+        }
+
+        const data = accessSnap.data() as any;
+
+        if (String(data?.teacherUid || '') !== teacherId) {
+          throw new Error('This lesson access does not belong to your account.');
+        }
+
+        const status = String(data?.status || 'active');
+        if (status === 'revoked') {
+          throw new Error('This lesson access has been revoked by admin.');
+        }
+
+        const expiresMs = timestampToMs(data?.expiresAt);
+        if (!expiresMs) {
+          throw new Error('Lesson access is invalid. Reopen from library.');
+        }
+
+        const embedUrl = normalizeCanvaEmbedUrl(data?.canvaEmbedUrl || '');
+        if (!embedUrl) {
+          throw new Error('Lesson access has no valid Canva embed URL.');
+        }
+
+        const title = String(data?.lessonTitle || '').trim() || initialLessonTitle || 'Lesson';
+        const expired = Date.now() >= expiresMs;
+
+        if (!mounted) return;
+
+        setResolvedLessonTitle(title);
+        setResolvedCanvaEmbedUrl(embedUrl);
+        setExpiresAtMs(expiresMs);
+        setSessionExpired(expired || status === 'expired');
+      } catch (error: any) {
+        if (!mounted) return;
+        setLessonLoadError(error?.message || 'Failed to load lesson access session.');
+      } finally {
+        if (mounted) {
+          setLessonLoading(false);
+        }
+      }
+    }
+
+    loadAccessSession();
+    return () => {
+      mounted = false;
+    };
+  }, [accessId, initialLessonTitle, teacherId]);
+
+  useEffect(() => {
+    if (!expiresAtMs) return;
+
+    const timer = window.setInterval(() => {
+      if (Date.now() >= expiresAtMs) {
+        setSessionExpired(true);
+      }
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [expiresAtMs]);
+
   useEffect(() => {
     if (hasWrittenOpenLog.current) return;
     hasWrittenOpenLog.current = true;
 
     const writeOpenLog = async () => {
       try {
-        const auditRef = doc(db, 'lesson_view_audit', sessionId);
-        await setDoc(auditRef, {
-          lessonId,
-          teacherId,
-          teacherName,
-          mode: 'full',
-          openedAt: serverTimestamp(),
-          violations: [],
-        });
-        console.log('[FullScreenCanvaViewer] Audit log created:', sessionId);
+        const auditRef = doc(db, 'lesson_view_audit', accessId);
+        await setDoc(
+          auditRef,
+          {
+            accessId,
+            teacherId,
+            teacherName,
+            mode: 'full',
+            openedAt: serverTimestamp(),
+            blockedActionCount: 0,
+            blockedActionTypes: blockedActionTypeCountsRef.current,
+          },
+          { merge: true }
+        );
       } catch (error) {
         console.error('[FullScreenCanvaViewer] Failed to write open audit log:', error);
       }
     };
 
     writeOpenLog();
-  }, [lessonId, teacherId, teacherName, sessionId]);
+  }, [accessId, teacherId, teacherName]);
 
-  // Write policy acceptance when user clicks Continue
   const handleContinue = useCallback(async () => {
     if (!agreedToTerms) return;
 
     try {
-      const auditRef = doc(db, 'lesson_view_audit', sessionId);
-      await updateDoc(auditRef, {
-        policyAcceptedAt: serverTimestamp(),
-      });
-      console.log('[FullScreenCanvaViewer] Policy acceptance logged');
+      await setDoc(
+        doc(db, 'lesson_view_audit', accessId),
+        {
+          policyAcceptedAt: serverTimestamp(),
+        },
+        { merge: true }
+      );
     } catch (error) {
       console.error('[FullScreenCanvaViewer] Failed to log policy acceptance:', error);
     }
 
     setShowWarning(false);
 
-    // Enter fullscreen after policy acceptance
-    if (viewerRef.current) {
+    if (viewerRef.current && !sessionExpired && !lessonLoadError) {
       try {
         await viewerRef.current.requestFullscreen();
         setIsFullscreen(true);
@@ -96,81 +230,61 @@ export function FullScreenCanvaViewer({
         console.error('[FullScreenCanvaViewer] Failed to enter fullscreen:', error);
       }
     }
-  }, [agreedToTerms, sessionId]);
+  }, [accessId, agreedToTerms, lessonLoadError, sessionExpired]);
 
-  // Close handler: write audit log and call onClose
   const handleClose = useCallback(async () => {
-    // Exit fullscreen if active
     if (document.fullscreenElement) {
       try {
         await document.exitFullscreen();
-      } catch (error) {
-        console.error('[FullScreenCanvaViewer] Failed to exit fullscreen:', error);
+      } catch {
+        // no-op
       }
     }
 
-    const closedAt = Date.now();
-    const durationSec = Math.floor((closedAt - openedAtRef.current) / 1000);
+    const durationSec = Math.floor((Date.now() - openedAtRef.current) / 1000);
 
     try {
-      const auditRef = doc(db, 'lesson_view_audit', sessionId);
-      await updateDoc(auditRef, {
-        closedAt: serverTimestamp(),
-        durationSec,
-        violations,
-      });
-      console.log('[FullScreenCanvaViewer] Audit log closed:', sessionId, 'duration:', durationSec, 'violations:', violations.length);
+      await setDoc(
+        doc(db, 'lesson_view_audit', accessId),
+        {
+          closedAt: serverTimestamp(),
+          durationSec,
+          blockedActionCount,
+          blockedActionTypes: blockedActionTypeCountsRef.current,
+          lastBlockedActionAtMs: lastBlockedActionAtMsRef.current,
+        },
+        { merge: true }
+      );
     } catch (error) {
       console.error('[FullScreenCanvaViewer] Failed to write close audit log:', error);
     }
 
     onClose();
-  }, [sessionId, violations, onClose]);
+  }, [accessId, blockedActionCount, onClose]);
 
-  // Handle right-click on viewer wrapper
-  const handleContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const violation: Violation = { type: 'RIGHT_CLICK', ts: Date.now() };
-    setViolations((prev) => {
-      const updated = [...prev, violation];
-      // Cap violations at MAX_VIOLATIONS
-      return updated.slice(-MAX_VIOLATIONS);
-    });
-    console.log('[FullScreenCanvaViewer] Right-click blocked');
-  }, []);
+  const handleControlShieldClick = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      pushViolation('CANVA_CONTROLS_BLOCKED');
 
-  // Handle Canva control shield clicks
-  const handleControlShieldClick = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const now = Date.now();
-    const violation: Violation = { type: 'CANVA_CONTROLS_BLOCKED', ts: now };
-    
-    setViolations((prev) => {
-      const updated = [...prev, violation];
-      // Cap violations at MAX_VIOLATIONS
-      return updated.slice(-MAX_VIOLATIONS);
-    });
-    
-    console.log('[FullScreenCanvaViewer] Canva controls blocked');
+      const now = Date.now();
+      if (now - lastToastTimeRef.current >= TOAST_THROTTLE_MS) {
+        lastToastTimeRef.current = now;
+        setShowControlsMessage(true);
+        window.setTimeout(() => setShowControlsMessage(false), 2500);
+      }
+    },
+    [pushViolation]
+  );
 
-    // Throttle toast: show at most once per TOAST_THROTTLE_MS
-    if (now - lastToastTimeRef.current >= TOAST_THROTTLE_MS) {
-      lastToastTimeRef.current = now;
-      setShowControlsMessage(true);
-      setTimeout(() => setShowControlsMessage(false), 3000);
-    }
-  }, []);
-
-  // Fullscreen toggle handlers
   const handleEnterFullscreen = useCallback(async () => {
     if (viewerRef.current && !document.fullscreenElement) {
       try {
         await viewerRef.current.requestFullscreen();
         setIsFullscreen(true);
-      } catch (error) {
-        console.error('[FullScreenCanvaViewer] Failed to enter fullscreen:', error);
+      } catch {
+        // no-op
       }
     }
   }, []);
@@ -180,281 +294,249 @@ export function FullScreenCanvaViewer({
       try {
         await document.exitFullscreen();
         setIsFullscreen(false);
-      } catch (error) {
-        console.error('[FullScreenCanvaViewer] Failed to exit fullscreen:', error);
+      } catch {
+        // no-op
       }
     }
   }, []);
 
-  // Listen for fullscreen changes
   useEffect(() => {
-    const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
-
+    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFullscreenChange);
-
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
   }, []);
 
-  // Keyboard protection
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const ctrl = e.ctrlKey || e.metaKey;
-      let blocked = false;
-      let violationType: Violation['type'] | null = null;
+    const onContextMenu = (event: Event) => {
+      event.preventDefault();
+      pushViolation('RIGHT_CLICK');
+    };
+    const onCopy = (event: Event) => {
+      event.preventDefault();
+      pushViolation('COPY');
+    };
+    const onCut = (event: Event) => {
+      event.preventDefault();
+      pushViolation('CUT');
+    };
+    const onDragStart = (event: Event) => {
+      event.preventDefault();
+      pushViolation('DRAG');
+    };
+    const onSelectStart = (event: Event) => {
+      event.preventDefault();
+      pushViolation('SELECT');
+    };
 
-      // Ctrl/Cmd + P (Print)
-      if (ctrl && e.key === 'p') {
-        blocked = true;
-        violationType = 'PRINT';
-      }
-      // Ctrl/Cmd + S (Save)
-      else if (ctrl && e.key === 's') {
-        blocked = true;
-        violationType = 'SAVE';
-      }
-      // Ctrl/Cmd + U (View Source)
-      else if (ctrl && e.key === 'u') {
-        blocked = true;
-        violationType = 'VIEW_SOURCE';
-      }
-      // Ctrl/Cmd + Shift + I (DevTools)
-      else if (ctrl && e.shiftKey && e.key === 'I') {
-        blocked = true;
-        violationType = 'DEVTOOLS';
-      }
-      // F12 (DevTools)
-      else if (e.key === 'F12') {
-        blocked = true;
-        violationType = 'DEVTOOLS';
-      }
-
-      if (blocked && violationType) {
-        e.preventDefault();
-        e.stopPropagation();
-        const violation: Violation = { type: violationType, ts: Date.now() };
-        setViolations((prev) => {
-          const updated = [...prev, violation];
-          // Cap violations at MAX_VIOLATIONS
-          return updated.slice(-MAX_VIOLATIONS);
-        });
-        console.log('[FullScreenCanvaViewer] Keyboard shortcut blocked:', violationType);
+    const onBlur = () => {
+      pushViolation('WINDOW_BLUR');
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        pushViolation('TAB_HIDDEN');
       }
     };
 
-    // Attach to document for page-level blocking
-    document.addEventListener('keydown', handleKeyDown, true);
+    const onKeyDown = (event: KeyboardEvent) => {
+      const ctrl = event.ctrlKey || event.metaKey;
+      let violationType: ViolationType | null = null;
+
+      if (ctrl && event.key.toLowerCase() === 'p') violationType = 'PRINT';
+      else if (ctrl && event.key.toLowerCase() === 's') violationType = 'SAVE';
+      else if (ctrl && event.key.toLowerCase() === 'u') violationType = 'VIEW_SOURCE';
+      else if (ctrl && event.shiftKey && event.key.toLowerCase() === 'i') violationType = 'DEVTOOLS';
+      else if (event.key === 'F12') violationType = 'DEVTOOLS';
+
+      if (!violationType) return;
+      event.preventDefault();
+      event.stopPropagation();
+      pushViolation(violationType);
+    };
+
+    document.addEventListener('contextmenu', onContextMenu, true);
+    document.addEventListener('copy', onCopy, true);
+    document.addEventListener('cut', onCut, true);
+    document.addEventListener('dragstart', onDragStart, true);
+    document.addEventListener('selectstart', onSelectStart, true);
+    document.addEventListener('keydown', onKeyDown, true);
+    window.addEventListener('blur', onBlur);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('contextmenu', onContextMenu, true);
+      document.removeEventListener('copy', onCopy, true);
+      document.removeEventListener('cut', onCut, true);
+      document.removeEventListener('dragstart', onDragStart, true);
+      document.removeEventListener('selectstart', onSelectStart, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+      window.removeEventListener('blur', onBlur);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [pushViolation]);
 
-  // Beforeunload handler: write close log if user refreshes/closes tab
   useEffect(() => {
     const handleBeforeUnload = async () => {
-      const closedAt = Date.now();
-      const durationSec = Math.floor((closedAt - openedAtRef.current) / 1000);
-
+      const durationSec = Math.floor((Date.now() - openedAtRef.current) / 1000);
       try {
-        const auditRef = doc(db, 'lesson_view_audit', sessionId);
-        // Use setDoc with merge to avoid race condition
         await setDoc(
-          auditRef,
+          doc(db, 'lesson_view_audit', accessId),
           {
             closedAt: serverTimestamp(),
             durationSec,
-            violations,
+            blockedActionCount,
+            blockedActionTypes: blockedActionTypeCountsRef.current,
+            lastBlockedActionAtMs: lastBlockedActionAtMsRef.current,
           },
           { merge: true }
         );
-        console.log('[FullScreenCanvaViewer] Beforeunload: audit log updated');
-      } catch (error) {
-        console.error('[FullScreenCanvaViewer] Failed to update audit on unload:', error);
+      } catch {
+        // no-op
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [sessionId, violations]);
+  }, [accessId, blockedActionCount]);
+
+  const contentReady = !lessonLoading && !lessonLoadError && !sessionExpired && !!resolvedCanvaEmbedUrl;
+  const remainingSeconds = expiresAtMs ? Math.max(0, Math.floor((expiresAtMs - Date.now()) / 1000)) : 0;
+  const remainingMinutes = Math.floor(remainingSeconds / 60);
+  const remainingSecondsRemainder = remainingSeconds % 60;
 
   return (
-    <div
-      ref={viewerRef}
-      className="fixed inset-0 z-50 bg-white"
-      onContextMenu={handleContextMenu}
-      style={{ userSelect: 'none' }}
-    >
-      {/* Warning Modal */}
+    <div ref={viewerRef} className="fixed inset-0 z-50 bg-white" style={{ userSelect: 'none' }}>
       {showWarning && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
-            <h2 className="text-2xl font-bold mb-4 text-gray-900">⚠️ Copyright Notice</h2>
+            <h2 className="text-2xl font-bold mb-4 text-gray-900">Copyright Notice</h2>
             <p className="text-gray-700 mb-6">
-              This is private copyrighted content. Downloading, sharing, or screen recording is not
-              allowed.
+              This lesson is proprietary TinySteps content. Downloading, recording, sharing, or
+              redistributing this material is prohibited and audited.
+            </p>
+            <p className="text-sm font-semibold text-amber-700 mb-6">
+              Open only during active class time. Access expires in 50 minutes.
             </p>
             <label className="flex items-start gap-3 mb-6 cursor-pointer">
               <input
                 type="checkbox"
                 checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                onChange={(event) => setAgreedToTerms(event.target.checked)}
                 className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700">
-                I agree to these terms and will not download, share, or record this content.
+                I understand and agree to these terms.
               </span>
             </label>
-            <Button
-              onClick={handleContinue}
-              disabled={!agreedToTerms}
-              className="w-full"
-            >
+            <Button onClick={handleContinue} disabled={!agreedToTerms} className="w-full">
               Continue
             </Button>
           </div>
         </div>
       )}
 
-      {/* Header Bar */}
       <div className="h-16 bg-gray-900 text-white flex items-center justify-between px-6 relative z-50">
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold truncate max-w-md">{lessonTitle}</h1>
-          <span className="text-sm text-gray-400">Full-Screen Viewer</span>
+        <div className="flex items-center gap-4 min-w-0">
+          <h1 className="text-lg font-semibold truncate max-w-xl">{resolvedLessonTitle}</h1>
+          <span className="text-sm text-gray-400">Secure Viewer</span>
+          {!showWarning && !lessonLoadError && !sessionExpired && expiresAtMs ? (
+            <span className="text-xs text-amber-300">
+              Expires in {remainingMinutes}:{String(remainingSecondsRemainder).padStart(2, '0')}
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           {!isFullscreen ? (
-            <Button
-              onClick={handleEnterFullscreen}
-              variant="ghost"
-              className="text-white hover:bg-gray-800"
-            >
+            <Button onClick={handleEnterFullscreen} variant="ghost" className="text-white hover:bg-gray-800">
               <Maximize className="w-5 h-5 mr-2" />
-              Enter Fullscreen
+              Fullscreen
             </Button>
           ) : (
-            <Button
-              onClick={handleExitFullscreen}
-              variant="ghost"
-              className="text-white hover:bg-gray-800"
-            >
+            <Button onClick={handleExitFullscreen} variant="ghost" className="text-white hover:bg-gray-800">
               <Minimize className="w-5 h-5 mr-2" />
-              Exit Fullscreen
+              Exit
             </Button>
           )}
-          <Button
-            onClick={handleClose}
-            variant="ghost"
-            className="text-white hover:bg-gray-800"
-          >
+          <Button onClick={handleClose} variant="ghost" className="text-white hover:bg-gray-800">
             <X className="w-5 h-5 mr-2" />
             Close
           </Button>
         </div>
       </div>
 
-      {/* Main Content Area with Watermark and Control Shields */}
-      <div className="relative" style={{ height: 'calc(100vh - 4rem)' }}>
-        {/* Top Watermark Line */}
-        {!showWarning && (
-          <div
-            className="absolute left-1/2 transform -translate-x-1/2 z-40"
-            style={{
-              top: '72px',
-              pointerEvents: 'none',
-              opacity: 0.15,
-              maxWidth: '90vw',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <div
-              className="text-gray-900 font-bold text-xl transform rotate-[-10deg]"
-              style={{ pointerEvents: 'none' }}
-            >
-              {watermarkText}
-            </div>
-          </div>
-        )}
-
-        {/* Bottom Watermark Line */}
-        {!showWarning && (
-          <div
-            className="absolute left-1/2 transform -translate-x-1/2 z-40"
-            style={{
-              bottom: '170px',
-              pointerEvents: 'none',
-              opacity: 0.15,
-              maxWidth: '90vw',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            <div
-              className="text-gray-900 font-bold text-xl transform rotate-[-10deg]"
-              style={{ pointerEvents: 'none' }}
-            >
-              {watermarkText}
-            </div>
-          </div>
-        )}
-
-        {/* Control Shield Message */}
+      <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 4rem)' }}>
         {showControlsMessage && (
-          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold">
-            🚫 Controls are disabled. This is private content.
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold">
+            Restricted action blocked
           </div>
         )}
 
-        {/* Bottom Control Shield - Blocks entire Canva bottom control bar */}
-        {!showWarning && (
-          <div
-            className="absolute left-0 right-0 bottom-0 z-30"
-            style={{
-              height: '140px',
-              background: 'transparent',
-              pointerEvents: 'auto',
-              cursor: 'not-allowed',
-            }}
-            onClick={handleControlShieldClick}
-            onContextMenu={handleControlShieldClick}
-          />
+        {lessonLoadError && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white">
+            <div className="max-w-lg p-6 border rounded-lg bg-red-50 border-red-200">
+              <h3 className="text-lg font-semibold text-red-700">Unable to open lesson</h3>
+              <p className="text-sm text-red-600 mt-2">{lessonLoadError}</p>
+            </div>
+          </div>
         )}
 
-        {/* Top-Right Control Shield - Blocks Canva overlay buttons (if any) */}
-        {!showWarning && (
-          <div
-            className="absolute top-0 right-0 z-30"
-            style={{
-              width: '200px',
-              height: '80px',
-              background: 'transparent',
-              pointerEvents: 'auto',
-              cursor: 'not-allowed',
-            }}
-            onClick={handleControlShieldClick}
-            onContextMenu={handleControlShieldClick}
-          />
+        {sessionExpired && !lessonLoadError && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white">
+            <div className="max-w-lg p-6 border rounded-lg bg-amber-50 border-amber-200">
+              <h3 className="text-lg font-semibold text-amber-700">Access expired</h3>
+              <p className="text-sm text-amber-700 mt-2">
+                Your 50-minute access window has ended. Reopen this lesson from Lesson Library.
+              </p>
+              <div className="mt-4">
+                <Button onClick={handleClose}>Back to Lesson Library</Button>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* Canva Embed Iframe */}
-        {!showWarning && (
-          <iframe
-            src={canvaEmbedUrl}
-            title={lessonTitle}
-            className="w-full h-full border-0"
-            allow="fullscreen"
-            loading="eager"
-            style={{ position: 'relative', zIndex: 10 }}
-          />
+        {lessonLoading && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center bg-white">
+            <div className="text-sm text-gray-600">Loading secure lesson viewer...</div>
+          </div>
+        )}
+
+        {contentReady && !showWarning && (
+          <>
+            <iframe
+              src={resolvedCanvaEmbedUrl}
+              title={resolvedLessonTitle}
+              className="w-full h-full border-0"
+              allow="fullscreen"
+              loading="eager"
+              style={{ position: 'relative', zIndex: 10 }}
+            />
+
+            <div
+              className="absolute left-0 right-0 bottom-0 z-30"
+              style={{
+                height: '140px',
+                pointerEvents: 'auto',
+                cursor: 'not-allowed',
+              }}
+              onClick={handleControlShieldClick}
+              onContextMenu={handleControlShieldClick}
+            />
+
+            <div
+              className="absolute top-0 right-0 z-30"
+              style={{
+                width: '240px',
+                height: '96px',
+                pointerEvents: 'auto',
+                cursor: 'not-allowed',
+              }}
+              onClick={handleControlShieldClick}
+              onContextMenu={handleControlShieldClick}
+            />
+          </>
         )}
       </div>
     </div>

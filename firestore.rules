@@ -44,6 +44,10 @@ service cloud.firestore {
       return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'teacher';
     }
 
+    function isTeacherOrAdmin() {
+      return isTeacher() || isAdmin();
+    }
+
     function isParent() {
       return isSignedIn() && userDocExists(request.auth.uid) && userRole(request.auth.uid) == 'parent';
     }
@@ -575,13 +579,42 @@ service cloud.firestore {
     // LESSON LIBRARY
     // ----------------------------
     match /lessonFolders/{folderId} {
-      allow read: if isAdmin() || isTeacher();
+      allow read: if isTeacherOrAdmin();
       allow create, update, delete: if isAdmin();
     }
 
     match /lessons/{lessonId} {
-      allow read: if isAdmin() || isTeacher();
+      allow read: if isAdmin();
       allow create, update, delete: if isAdmin();
+    }
+
+    match /lessonCatalog/{lessonId} {
+      allow read: if isTeacherOrAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /lessonAccessSessions/{accessId} {
+      allow read: if isAdmin()
+        || (
+          isTeacher()
+          && resource.data.teacherUid == request.auth.uid
+          && resource.data.status == 'active'
+          && resource.data.expiresAt is timestamp
+          && request.time < resource.data.expiresAt
+        );
+      allow create, update, delete: if false;
+    }
+
+    match /lessonDailyAudit/{auditId} {
+      allow read: if isAdmin()
+        || (isTeacher() && resource.data.teacherUid == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
+    match /teacherDailyAccess/{dailyId} {
+      allow read: if isAdmin()
+        || (isTeacher() && resource.data.teacherUid == request.auth.uid);
+      allow create, update, delete: if false;
     }
 
     // ----------------------------

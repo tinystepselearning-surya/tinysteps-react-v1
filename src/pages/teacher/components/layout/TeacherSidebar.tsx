@@ -1,14 +1,11 @@
 import type { FC } from 'react';
 import { cn } from '@components/lib/utils';
 import {
-  BarChart3,
-  Bell,
   BookOpen,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
   ClipboardList,
-  LineChart,
   MessageSquare,
   Users,
   Wallet,
@@ -29,13 +26,10 @@ const items = [
   { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
   { id: 'upcoming', label: 'Upcoming Sessions', icon: CalendarClock },
   { id: 'students', label: 'My Students', icon: Users },
-  { id: 'progress', label: 'Progress', icon: LineChart },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'messages', label: 'Messages', icon: MessageSquare },
   { id: 'schedule', label: 'Schedule', icon: CalendarDays },
   { id: 'profile', label: 'Profile', icon: UserCircle },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
 ];
 
 export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount, className }) => {

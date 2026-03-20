@@ -23,6 +23,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   adminProcessEnrollmentCSV: 'asia-south1',
   adminCreateDemoSession: 'asia-south1',
   adminUpdateDemoSessionDetails: 'asia-south1',
+  createLessonAccessSession: 'asia-south1',
   claimDemoSession: 'asia-south1',
   updateDemoSessionSchedule: 'asia-south1',
   completeDemoSession: 'asia-south1',
