@@ -236,20 +236,22 @@ const formatTrendLabelValue = (value: unknown): string => {
 };
 
 interface TrendLabelRendererProps {
-  x?: number;
-  y?: number;
-  value?: number | string;
+  x?: number | string;
+  y?: number | string;
+  value?: unknown;
   stroke?: string;
 }
 
 const renderTrendLabel = ({ x, y, value, stroke }: TrendLabelRendererProps) => {
+  const numericX = typeof x === 'number' ? x : Number(x);
+  const numericY = typeof y === 'number' ? y : Number(y);
   const label = formatTrendLabelValue(value);
-  if (!label || typeof x !== 'number' || typeof y !== 'number') return null;
+  if (!label || !Number.isFinite(numericX) || !Number.isFinite(numericY)) return null;
 
   return (
     <text
-      x={x}
-      y={y}
+      x={numericX}
+      y={numericY}
       dy={-8}
       textAnchor="middle"
       fill={stroke || '#0f172a'}
