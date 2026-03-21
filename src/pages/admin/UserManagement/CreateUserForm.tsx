@@ -206,8 +206,12 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       let description = error?.message || 'Failed to create user. Try again.';
       if (code === 'permission-denied' || description.includes('Only admins')) {
         description = 'You do not have permission to create users. Ensure your account has the Admin role in Firestore or in Auth claims.';
-      } else if (code === 'already-exists' || description.includes('already exists')) {
-        description = 'A user with this email already exists. Try a different email.';
+      } else if (code === 'already-exists' || /already exists|already taken|not available/i.test(description)) {
+        if (/phone/i.test(description)) {
+          description = 'This phone number is already in use. Please use a different phone number.';
+        } else {
+          description = 'This user ID is already taken or not available. Please try another user ID.';
+        }
       }
       toast({
         title: 'Error',

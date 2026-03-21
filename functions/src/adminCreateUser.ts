@@ -39,6 +39,10 @@ type CanonicalRole = "admin" | "teacher" | "parent" | "learning-partner";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_REGEX = /^[\d\s\-\+\(\)]+$/;
+const USER_ID_UNAVAILABLE_MESSAGE =
+  "This user ID is already taken or not available. Please try another user ID.";
+const PHONE_ALREADY_IN_USE_MESSAGE =
+  "This phone number is already in use. Please use a different phone number.";
 
 const MAX_CUSTOM_CLAIMS_BYTES = 1000; // Firebase custom claims limit is ~1KB
 const DEFAULT_STATUS = "active" as const;
@@ -109,6 +113,51 @@ function normalizeRole(role: RawRole): CanonicalRole {
   throw new HttpsError("invalid-argument", `Unsupported role: ${role}`);
 }
 
+function normalizeEmailForUniqueness(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function normalizePhoneForUniqueness(phone?: string | null): string | null {
+  if (typeof phone !== "string") return null;
+  const trimmed = phone.trim();
+  if (!trimmed) return null;
+  const digits = trimmed.replace(/\D/g, "");
+  return digits || null;
+}
+
+async function assertFirestoreUniqueness(params: {
+  db: admin.firestore.Firestore;
+  email: string;
+  phone?: string | null;
+}) {
+  const { db, email, phone } = params;
+
+  const existingEmailSnap = await db
+    .collection("users")
+    .where("email", "==", email)
+    .limit(1)
+    .get();
+  if (!existingEmailSnap.empty) {
+    throw new HttpsError("already-exists", USER_ID_UNAVAILABLE_MESSAGE);
+  }
+
+  const phoneKey = normalizePhoneForUniqueness(phone);
+  if (!phoneKey) return;
+
+  // We intentionally scan the lightweight `phone` field to compare normalized values,
+  // so legacy formats like "+91 98765 43210" and "919876543210" are treated as duplicates.
+  const usersSnap = await db.collection("users").select("phone").get();
+  for (const userDoc of usersSnap.docs) {
+    const existingPhone = userDoc.data()?.phone;
+    const existingPhoneKey = normalizePhoneForUniqueness(
+      typeof existingPhone === "string" ? existingPhone : null
+    );
+    if (existingPhoneKey && existingPhoneKey === phoneKey) {
+      throw new HttpsError("already-exists", PHONE_ALREADY_IN_USE_MESSAGE);
+    }
+  }
+}
+
 function sanitizeForLogging(input: any) {
   const obj = { ...(input || {}) };
   const redact = ["password", "bankAccountNumber", "bankIfscCode"];
@@ -150,11 +199,22 @@ function validateInput(data: AdminCreateUserRequest) {
     );
   }
 
-  if (data.phone && (typeof data.phone !== "string" || !PHONE_REGEX.test(data.phone))) {
-    throw new HttpsError(
-      "invalid-argument",
-      "Invalid phone. Use digits/spaces/+/-/()"
-    );
+  if (data.phone != null) {
+    if (typeof data.phone !== "string") {
+      throw new HttpsError(
+        "invalid-argument",
+        "Invalid phone. Use digits/spaces/+/-/()"
+      );
+    }
+    const trimmedPhone = data.phone.trim();
+    if (trimmedPhone) {
+      if (!PHONE_REGEX.test(trimmedPhone) || !normalizePhoneForUniqueness(trimmedPhone)) {
+        throw new HttpsError(
+          "invalid-argument",
+          "Invalid phone. Use digits/spaces/+/-/()"
+        );
+      }
+    }
   }
 
   if (data.password && data.password.length < 6) {
@@ -234,11 +294,13 @@ export const adminCreateUser = onCall(
       const data = (request.data || {}) as AdminCreateUserRequest;
       validateInput(data);
 
-      const email = data.email.trim().toLowerCase();
+      const email = normalizeEmailForUniqueness(data.email);
       const displayName = data.displayName.trim();
+      const phone = typeof data.phone === "string" ? data.phone.trim() : "";
       const rawRole = data.role;
       const role = normalizeRole(rawRole);
       const status: UserStatus = data.status || DEFAULT_STATUS;
+      const db = admin.firestore();
 
       logger.info("adminCreateUser: request", sanitizeForLogging({
         callerUid: request.auth?.uid,
@@ -248,16 +310,25 @@ export const adminCreateUser = onCall(
         role,
       }));
 
+      await assertFirestoreUniqueness({
+        db,
+        email,
+        phone,
+      });
+
       // 1) Ensure email not already in Auth
       try {
-        const existing = await admin.auth().getUserByEmail(email);
+        await admin.auth().getUserByEmail(email);
         throw new HttpsError(
           "already-exists",
-          `User already exists for ${email} (uid: ${existing.uid})`
+          USER_ID_UNAVAILABLE_MESSAGE
         );
       } catch (e: any) {
         if (e?.code !== "auth/user-not-found") {
           if (e instanceof HttpsError) throw e;
+          if (e?.code === "auth/email-already-exists") {
+            throw new HttpsError("already-exists", USER_ID_UNAVAILABLE_MESSAGE);
+          }
           throw new HttpsError("internal", "Failed checking existing user");
         }
       }
@@ -269,14 +340,12 @@ export const adminCreateUser = onCall(
         emailVerified: false,
         disabled: false,
       };
-      if (data.phone) createReq.phoneNumber = undefined; // keep your decision: do NOT enforce phone uniqueness
       if (data.password) createReq.password = data.password;
 
       const user = await admin.auth().createUser(createReq);
       createdUid = user.uid;
 
       // 3) Firestore docs (batch)
-      const db = admin.firestore();
       const batch = db.batch();
       const ts = admin.firestore.FieldValue.serverTimestamp();
 
@@ -285,7 +354,7 @@ export const adminCreateUser = onCall(
         email,
         displayName,
         name: displayName,
-        phone: data.phone || null,
+        phone: phone || null,
         role,              // canonical
         rawRole,           // requested
         roles: [role],     // for easy rules / checks
@@ -307,7 +376,7 @@ export const adminCreateUser = onCall(
           userId: user.uid,
           email,
           displayName,
-          phone: data.phone || null,
+          phone: phone || null,
           status,
           qualification: data.qualification || null,
           specialization: data.specialization || [],
@@ -326,7 +395,7 @@ export const adminCreateUser = onCall(
           userId: user.uid,
           email,
           displayName,
-          phone: data.phone || null,
+          phone: phone || null,
           status,
           address: data.address || null,
           city: data.city || null,
@@ -364,7 +433,7 @@ export const adminCreateUser = onCall(
           userId: user.uid,
           email,
           displayName,
-          phone: data.phone || null,
+          phone: phone || null,
           status,
           region: data.region || null,
           qualification: data.qualification || null,
@@ -390,7 +459,7 @@ export const adminCreateUser = onCall(
           userId: user.uid,
           email,
           displayName,
-          phone: data.phone || null,
+          phone: phone || null,
           status,
           createdAt: ts,
           updatedAt: ts,
