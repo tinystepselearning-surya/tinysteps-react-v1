@@ -3,8 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { httpsCallable } from 'firebase/functions';
-import { doc, updateDoc } from 'firebase/firestore';
-import { functions, db } from '../../../lib/firebaseConfig';
+import { functions } from '../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
@@ -29,6 +28,14 @@ interface EditUserFormProps {
   onCancel: () => void;
 }
 
+const normalizeRoleForForm = (role: string): EditUserFormData['role'] => {
+  if (role === 'learning-partner') return 'learningPartner';
+  if (role === 'admin' || role === 'teacher' || role === 'parent' || role === 'learningPartner' || role === 'kid') {
+    return role;
+  }
+  return 'parent';
+};
+
 export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProps) {
   const form = useForm<EditUserFormData>({
     resolver: zodResolver(editUserSchema),
@@ -36,7 +43,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       name: user.name,
       email: user.email,
       phone: user.phone || '',
-      role: user.role,
+      role: normalizeRoleForForm(user.role),
       status: user.status,
     },
   });
@@ -48,31 +55,27 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       name: user.name,
       email: user.email,
       phone: user.phone || '',
-      role: user.role,
+      role: normalizeRoleForForm(user.role),
       status: user.status,
     });
   }, [user, reset]);
 
   const onSubmit = async (data: EditUserFormData) => {
     try {
-      // Update user document in Firestore
-      const userRef = doc(db, 'users', user.id);
-      await updateDoc(userRef, {
-        name: data.name,
+      const targetUid = user.uid || user.id;
+      const updateUserFn = httpsCallable(functions, 'adminUpdateUser');
+      const result = await updateUserFn({
+        uid: targetUid,
+        displayName: data.name,
         email: data.email,
         phone: data.phone || null,
         role: data.role,
         status: data.status,
-        updatedAt: new Date(),
       });
 
-      // If email changed, we need to update Firebase Auth
-      if (data.email !== user.email) {
-        const updateUserEmail = httpsCallable(functions, 'adminUpdateUserEmail');
-        await updateUserEmail({
-          uid: user.uid,
-          email: data.email,
-        });
+      const payload = result.data as { success?: boolean; error?: string } | undefined;
+      if (payload?.success === false) {
+        throw new Error(payload.error || 'Failed to update user');
       }
 
       toast({
@@ -83,9 +86,20 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
       onUserUpdated();
     } catch (error: any) {
       console.error('Error updating user:', error);
+      const code = error?.code || error?.status || null;
+      let description = error?.message || 'Failed to update user';
+      if (code === 'permission-denied' || /admin/i.test(description)) {
+        description = 'You do not have permission to update users.';
+      } else if (code === 'already-exists' || /already exists|already taken|not available/i.test(description)) {
+        if (/phone/i.test(description)) {
+          description = 'This phone number is already in use. Please use a different phone number.';
+        } else {
+          description = 'This user ID is already taken or not available. Please try another user ID.';
+        }
+      }
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update user',
+        description,
         variant: 'destructive',
       });
     }
@@ -120,7 +134,7 @@ export function EditUserForm({ user, onUserUpdated, onCancel }: EditUserFormProp
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>User ID / Email</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="email@example.com" {...field} />
                   </FormControl>
