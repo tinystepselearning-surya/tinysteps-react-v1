@@ -43,7 +43,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ages: 'Ages 4-8',
     outcome: '10-week phonics fast track for stronger reading confidence',
     focus: 'Fast-track brush-up in sounds, blends, and decoding for smooth early reading',
-    format: 'Live small-group classes (max 6 learners)',
+    format: 'Live small-group classes with active participation and mentor feedback',
     outcomes: [
       'Stronger sound recognition and recall',
       'Faster blending with better word accuracy',
@@ -57,7 +57,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
       'Attend live fast-track classes with guided practice',
-      'Receive weekly progress updates and home reinforcement tasks',
+      'Follow a clear 10-week learning path with effective worksheets and class recordings',
     ],
     faq: [
       {
@@ -78,7 +78,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with tighter weekly milestones.',
+          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with a clear 10-week outcome path.',
       },
     ],
   },
@@ -88,7 +88,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ages: 'Ages 6-12',
     outcome: '10-week grammar fast track for better writing quality',
     focus: 'Fast-track brush-up in sentence structure, punctuation, tense, and grammar accuracy',
-    format: 'Live small-group classes (max 6 learners)',
+    format: 'Live small-group classes with active participation and mentor feedback',
     outcomes: [
       'Fewer common grammar mistakes in school writing',
       'Better sentence structure and punctuation control',
@@ -102,7 +102,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
       'Attend live fast-track classes with guided practice',
-      'Receive weekly progress updates and home reinforcement tasks',
+      'Follow a clear 10-week learning path with effective worksheets and class recordings',
     ],
     faq: [
       {
@@ -123,7 +123,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with tighter weekly milestones.',
+          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with a clear 10-week outcome path.',
       },
     ],
   },
@@ -133,7 +133,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ages: 'Ages 6-12',
     outcome: '10-week speaking fast track for confident communication',
     focus: 'Fast-track brush-up in speech structure, clarity, pronunciation, and delivery confidence',
-    format: 'Live small-group classes (max 6 learners)',
+    format: 'Live small-group classes with active participation and mentor feedback',
     outcomes: [
       'More confidence in short structured talks',
       'Clearer voice, pace, and articulation',
@@ -147,7 +147,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
       'Attend live fast-track classes with guided practice',
-      'Receive weekly progress updates and home reinforcement tasks',
+      'Follow a clear 10-week learning path with effective worksheets and class recordings',
     ],
     faq: [
       {
@@ -168,7 +168,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with tighter weekly milestones.',
+          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with a clear 10-week outcome path.',
       },
     ],
   },
@@ -326,6 +326,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{program.ages}</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">10 weeks</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">50–60 min classes</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Online</span>
             <span className="rounded-full bg-emerald-100 px-4 py-1 font-semibold text-emerald-800">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} Enrollment</span>
           </div>
@@ -356,7 +357,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             <p className="mt-2 text-sm text-gray-700">
               {program.title} is a 10-week online summer camp that follows our core curriculum
               (phonics, grammar, and speaking) with extra focus on this track. Expect focused
-              group sessions, brush-up tasks, and weekly parent feedback.
+              group sessions, a clear detailed learning path, effective worksheets, and class recordings.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
@@ -369,7 +370,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
             <p className="mt-2 text-sm text-gray-700">
-              Children make measurable progress through clear milestones and teacher feedback.
+              Children make measurable progress through a clear 10-week learning path and teacher feedback.
               Expect stronger skills, more confidence, and a clear next-step plan after 10 weeks.
             </p>
           </div>
@@ -496,7 +497,7 @@ export default function SummerCampProgramPage() {
     const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
     const title = batchSlug ? `${baseTitle} ${batchTitle} | Tiny Steps` : `${baseTitle} | Tiny Steps`;
     const description = program
-      ? `${program.title} for ${program.ages}. ${program.focus}. Group summer camp with weekly progress updates and ₹2,400 enrollment (70% off).`
+      ? `${program.title} for ${program.ages}. ${program.focus}. Group summer camp with a clear 10-week learning path, 50–60 minute classes, effective worksheets, and class recordings at ₹2,400 enrollment (70% off).`
       : 'Summer camp program details coming soon.';
     const keywords = program
       ? [

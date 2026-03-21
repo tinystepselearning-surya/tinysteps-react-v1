@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@components/lib/utils';
@@ -39,15 +39,20 @@ const CATEGORIES = [
   { key: 'phonics', label: 'Phonics' },
   { key: 'grammar', label: 'Grammar' },
   { key: 'public_speaking', label: 'Public Speaking' },
-  { key: 'spoken_english', label: 'Spoken English' },
+  { key: 'trial_classes', label: 'Trial Classes' },
 ];
 
 const AREA_ALIASES: Record<string, string> = {
   speaking: 'public_speaking',
   'public speaking': 'public_speaking',
   'public-speaking': 'public_speaking',
-  spokenenglish: 'spoken_english',
-  'spoken-english': 'spoken_english',
+  spokenenglish: 'trial_classes',
+  'spoken-english': 'trial_classes',
+  spoken_english: 'trial_classes',
+  'spoken english': 'trial_classes',
+  trialclasses: 'trial_classes',
+  'trial classes': 'trial_classes',
+  'trial-class': 'trial_classes',
 };
 
 const IST_OFFSET_MINUTES = 330;
@@ -107,6 +112,8 @@ export default function LessonLibraryPage(): JSX.Element {
   const [reloadVersion, setReloadVersion] = useState(0);
   const [todayLessonOpens, setTodayLessonOpens] = useState<number>(0);
   const [openingLessonId, setOpeningLessonId] = useState<string | null>(null);
+  const [isSubfolderMenuOpen, setIsSubfolderMenuOpen] = useState(false);
+  const subfolderMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -204,6 +211,26 @@ export default function LessonLibraryPage(): JSX.Element {
     });
   }, [activeArea, folders]);
 
+  useEffect(() => {
+    if (!isSubfolderMenuOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!subfolderMenuRef.current) return;
+      if (subfolderMenuRef.current.contains(event.target as Node)) return;
+      setIsSubfolderMenuOpen(false);
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSubfolderMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('keydown', onEscape);
+    };
+  }, [isSubfolderMenuOpen]);
+
   const refreshLibrary = useCallback(() => {
     setReloadVersion((current) => current + 1);
   }, []);
@@ -229,15 +256,21 @@ export default function LessonLibraryPage(): JSX.Element {
   const normalizedLessonQuery = lessonQuery.trim().toLowerCase();
   const lessonsForFolder = useMemo(() => {
     return lessons
-      .filter((lesson) => lesson.folderId === selectedFolderId)
+      .filter((lesson) => {
+        if (activeArea === 'trial_classes') return lesson.area === 'trial_classes';
+        return lesson.folderId === selectedFolderId;
+      })
       .filter((lesson) => {
         if (!normalizedLessonQuery) return true;
         const searchableText = `${lesson.title} ${lesson.tags?.join(' ') ?? ''}`.toLowerCase();
         return searchableText.includes(normalizedLessonQuery);
       });
-  }, [lessons, normalizedLessonQuery, selectedFolderId]);
+  }, [activeArea, lessons, normalizedLessonQuery, selectedFolderId]);
 
-  const selectedFolderName = folders.find((folder) => folder.id === selectedFolderId)?.title ?? '';
+  const selectedFolderName = useMemo(() => {
+    if (activeArea === 'trial_classes') return 'All Trial Classes';
+    return folders.find((folder) => folder.id === selectedFolderId)?.title ?? '';
+  }, [activeArea, folders, selectedFolderId]);
 
   const startLessonAccess = useCallback(
     async (lesson: Lesson): Promise<LessonAccessSessionResponse | null> => {
@@ -281,53 +314,87 @@ export default function LessonLibraryPage(): JSX.Element {
     typeof document !== 'undefined' ? document.getElementById('teacher-lessons-controls-slot') : null;
   const headerControls = (
     <div className="flex items-center gap-2">
-      <div className="flex-1 flex items-center gap-2 overflow-x-auto pb-1">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => {
-              setActiveArea(cat.key);
-              setSelectedFolderId(null);
-            }}
-            className={cn(
-              'inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-1 text-[13px] font-medium transition-colors',
-              activeArea === cat.key
-                ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
-                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-            )}
-          >
-            <span>{cat.label}</span>
-            <span
-              className={cn(
-                'rounded-full px-2 py-0.5 text-[11px] font-semibold',
-                activeArea === cat.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-              )}
-            >
-              {areaLessonCounts[cat.key] ?? 0}
-            </span>
-          </button>
-        ))}
-
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-7 w-20 shrink-0 rounded-md bg-slate-100 animate-pulse" />
-            ))
-          : foldersForArea.map((folder) => (
+      <div className="flex-1 flex items-center gap-2 pb-1" ref={subfolderMenuRef}>
+        {CATEGORIES.map((cat) => {
+          const foldersForCategory = folders.filter((folder) => folder.area === cat.key);
+          const hasSubfolderPicker = cat.key !== 'trial_classes';
+          return (
+            <div key={cat.key} className="relative shrink-0">
               <button
-                key={folder.id}
-                onClick={() => setSelectedFolderId(folder.id)}
-                data-testid={`lesson-folder-${folder.id}`}
+                onClick={() => {
+                  if (!hasSubfolderPicker) {
+                    setActiveArea(cat.key);
+                    setSelectedFolderId(null);
+                    setIsSubfolderMenuOpen(false);
+                    return;
+                  }
+                  if (activeArea === cat.key) {
+                    setIsSubfolderMenuOpen((current) => !current);
+                    return;
+                  }
+                  setActiveArea(cat.key);
+                  setSelectedFolderId(null);
+                  setIsSubfolderMenuOpen(true);
+                }}
                 className={cn(
-                  'inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[13px] transition',
-                  selectedFolderId === folder.id
-                    ? 'border-blue-200 bg-blue-50 text-blue-700'
+                  'inline-flex items-center gap-1.5 whitespace-nowrap rounded-md border px-2.5 py-1 text-[13px] font-medium transition-colors',
+                  activeArea === cat.key
+                    ? 'border-blue-600 bg-blue-600 text-white shadow-sm'
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                 )}
+                aria-haspopup="menu"
+                aria-expanded={activeArea === cat.key && isSubfolderMenuOpen}
               >
-                <span className="font-medium">{folder.title}</span>
-                <span className="text-[11px] text-slate-500">{folderLessonCounts[folder.id] ?? 0}</span>
+                <span>{cat.label}</span>
+                <span
+                  className={cn(
+                    'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                    activeArea === cat.key ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  )}
+                >
+                  {areaLessonCounts[cat.key] ?? 0}
+                </span>
               </button>
-            ))}
+
+              {hasSubfolderPicker && activeArea === cat.key && isSubfolderMenuOpen && !loading ? (
+                <div className="absolute left-0 top-[calc(100%+6px)] z-30 w-64 rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+                  <p className="px-1 pb-1 text-[11px] font-semibold text-slate-600">{cat.label} subfolders</p>
+                  {foldersForCategory.length === 0 ? (
+                    <p className="px-2 py-2 text-[12px] text-slate-500">No subfolders available.</p>
+                  ) : (
+                    <div className="max-h-52 space-y-1 overflow-y-auto">
+                      {foldersForCategory.map((folder) => (
+                        <label
+                          key={folder.id}
+                          className={cn(
+                            'flex cursor-pointer items-center justify-between rounded px-2 py-1.5 text-[13px]',
+                            selectedFolderId === folder.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-slate-50'
+                          )}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <input
+                              type="radio"
+                              name={`lesson-subfolder-${cat.key}`}
+                              checked={selectedFolderId === folder.id}
+                              onChange={() => {
+                                setSelectedFolderId(folder.id);
+                                setIsSubfolderMenuOpen(false);
+                              }}
+                              data-testid={`lesson-folder-${folder.id}`}
+                              className="h-3.5 w-3.5 accent-blue-600"
+                            />
+                            <span className="truncate font-medium">{folder.title}</span>
+                          </span>
+                          <span className="text-[11px] text-slate-500">{folderLessonCounts[folder.id] ?? 0}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
 
         <span className="shrink-0 px-1 text-[10px] text-slate-500">Opens today: {todayLessonOpens}</span>
       </div>
@@ -399,7 +466,7 @@ export default function LessonLibraryPage(): JSX.Element {
                   <div key={i} className="h-12 bg-gray-100 animate-pulse rounded" />
                 ))}
               </div>
-            ) : !selectedFolderId ? (
+            ) : !selectedFolderId && activeArea !== 'trial_classes' ? (
               <div className="text-sm text-gray-600 p-4 bg-gray-50 rounded">
                 Select a folder to view lessons.
               </div>

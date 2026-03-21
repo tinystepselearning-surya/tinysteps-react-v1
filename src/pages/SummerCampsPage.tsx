@@ -115,10 +115,10 @@ const STRETCH_CARDS = [
   },
   {
     id: 'results',
-    title: 'Clear Parent Updates',
-    desc: 'Weekly progress snapshots and quick next-step practice.',
-    cta: 'See parent updates',
-    href: '/parents/phonics-mission',
+    title: 'Planned 10-Week Learning Path',
+    desc: 'Clear detailed learning path planned for 10 weeks with strong outcomes.',
+    cta: 'See learning path',
+    href: '/summer-camps#programs',
   },
   {
     id: 'price',
@@ -133,7 +133,7 @@ const FAQS = [
   {
     question: 'What is included in the ₹2,400 Fast Track Pack fee?',
     answer:
-      `The summer camp enrollment is ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child, currently ${SUMMER_CAMP_DISCOUNT_PERCENT}% off from ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. This includes entry into the 10-week group camp, live online classes, phonics + grammar + speaking brush-up, and weekly parent updates.`,
+      `The summer camp enrollment is ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child, currently ${SUMMER_CAMP_DISCOUNT_PERCENT}% off from ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. This includes entry into the 10-week group camp, 50–60 minute live online classes, phonics + grammar + speaking brush-up, effective worksheets, and class recordings.`,
   },
   {
     question: 'Is this summer camp group-only or 1:1?',
@@ -158,12 +158,12 @@ const FAQS = [
   {
     question: 'What is the batch size and class duration?',
     answer:
-      'Each batch is kept small (max 6 learners) so every child gets active participation. Session duration is typically 35–40 minutes live online.',
+      'Each batch is kept intentionally small so every child gets active participation and direct teacher feedback. Session duration is typically 50–60 minutes live online.',
   },
   {
     question: 'Will my child get personal attention in a group class?',
     answer:
-      'Yes. Small-batch design allows live correction, speaking turns, and targeted mentor feedback. Parents also receive weekly updates on mastered skills and next steps.',
+      'Yes. Small-group design allows live correction, speaking turns, and targeted mentor feedback in every class.',
   },
   {
     question: 'What outcomes should parents expect by the end of camp?',
@@ -183,12 +183,12 @@ const FAQS = [
   {
     question: 'How do parents track progress during the camp?',
     answer:
-      'Parents get weekly progress communication with what was covered, what improved, and what to practice next at home.',
+      'Since this is a group camp, we follow a clear detailed 10-week learning path with outcome goals instead of individual weekly dashboards for every child. Mentors guide families on how to use worksheets and recordings for steady progress.',
   },
   {
     question: 'Do you provide home practice or assignments?',
     answer:
-      'Yes. Children get practice prompts/tasks aligned to class goals so learning continues between sessions without overloading summer time.',
+      'Yes. Children get effective worksheets aligned to class goals, and class recordings are shared for revision and continuity.',
   },
   {
     question: 'How quickly can we enroll and confirm a seat?',
@@ -222,7 +222,8 @@ const SUMMER_CAMP_SEO_KEYWORDS = [
   'summer camp fees for kids',
   'summer camp fees india',
   'small batch online classes for kids',
-  'weekly progress reports for parents',
+  'class recordings for kids online classes',
+  'worksheets for kids summer camp',
   'book free trial class for kids',
   'english summer camp for kids india',
   'summer fast track course for kids',
@@ -232,7 +233,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
   {
     query: 'Online summer camp for kids in India',
     answer:
-      'Live online batches for ages 4-12 with structured weekly plans, mentor feedback, and parent progress updates.',
+      'Live online batches for ages 4-12 with a clear 10-week learning path, 50–60 minute classes, effective worksheets, and class recordings.',
     cta: 'View group batches',
     href: '/summer-camps#batches',
   },
@@ -286,24 +287,24 @@ const INDIA_CITY_COVERAGE = [
 
 const PARENT_ENROLLMENT_CHECKLIST = [
   {
-    title: 'Small Batch Size',
-    detail: 'Max 6 learners per group so each child gets speaking time and direct teacher feedback.',
+    title: 'Small Group Learning',
+    detail: 'Small-group classes so each child gets speaking time and direct teacher feedback.',
   },
   {
     title: 'Clear Weekly Schedule',
-    detail: '35–40 minute live sessions with new batches starting weekly for easier start dates.',
+    detail: '50–60 minute live sessions with new batches starting weekly for easier start dates.',
   },
   {
     title: 'Practical Curriculum',
     detail: 'Phonics, grammar, and speaking fast-track tracks aligned to the regular Tiny Steps curriculum.',
   },
   {
-    title: 'Parent Progress Visibility',
-    detail: 'Weekly progress updates with clear next-step practice recommendations.',
+    title: '10-Week Learning Path',
+    detail: 'Clear detailed learning path planned for 10 weeks with best-result outcomes.',
   },
   {
     title: 'Missed Class Support',
-    detail: 'Recap notes plus catch-up practice tasks so children can rejoin without losing flow.',
+    detail: 'Effective worksheets and class recordings support continuity if any class is missed.',
   },
   {
     title: 'Fast Admission Support',
@@ -354,7 +355,7 @@ function StretchCardsRow() {
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
-      'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with weekly parent updates.';
+      'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with 50–60 minute live classes, effective worksheets, and class recordings.';
 
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -543,8 +544,9 @@ export default function SummerCampsPage() {
                 </p>
                 <div className="mt-4 space-y-2 text-xs text-slate-600">
                   <p>Live online group batches across India</p>
+                  <p>50–60 minute live classes</p>
                   <p>Phonics + grammar + speaking brush-up</p>
-                  <p>Weekly parent updates</p>
+                  <p>Effective worksheets + class recordings</p>
                 </div>
                 <div id="whatsapp-enroll" className="mt-5 flex scroll-mt-24 flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <a
@@ -699,15 +701,15 @@ export default function SummerCampsPage() {
               <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
               <p className="mt-2 text-sm text-gray-700">
                 A 10‑week online summer brush-up camp following our core curriculum in phonics, grammar, and
-                public speaking. It is intentionally group-first, with clear weekly routines, guided
-                practice, and parent-friendly progress updates.
+                public speaking. It is intentionally group-first, with a clear detailed 10-week learning path,
+                50–60 minute classes, effective worksheets, and class recordings.
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
               <p className="mt-2 text-sm text-gray-700">
-                Children finish with measurable progress across phonics, grammar, and speaking. You’ll receive
-                stage-based progress updates and teacher feedback that show mastered skills and next steps.
+                Children finish with measurable progress across phonics, grammar, and speaking through a
+                structured 10-week learning path and outcome-focused teaching.
               </p>
             </div>
           </div>

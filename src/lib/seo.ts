@@ -542,7 +542,7 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
   },
   '/summer-camps': {
     title: 'Online Summer Camp for Kids in India | Tiny Steps Learning',
-    description: 'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with weekly parent updates.',
+    description: 'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with 50–60 minute live classes, effective worksheets, and class recordings.',
     canonicalPath: '/summer-camps',
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',

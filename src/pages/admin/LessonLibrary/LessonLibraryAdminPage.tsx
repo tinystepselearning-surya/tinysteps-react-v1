@@ -74,8 +74,26 @@ const AREA_OPTIONS = [
   { value: 'phonics', label: 'Phonics' },
   { value: 'grammar', label: 'Grammar' },
   { value: 'public_speaking', label: 'Public Speaking' },
-  { value: 'spoken_english', label: 'Spoken English' },
+  { value: 'trial_classes', label: 'Trial Classes' },
 ];
+
+const AREA_ALIASES: Record<string, string> = {
+  speaking: 'public_speaking',
+  'public speaking': 'public_speaking',
+  'public-speaking': 'public_speaking',
+  spokenenglish: 'trial_classes',
+  'spoken-english': 'trial_classes',
+  spoken_english: 'trial_classes',
+  'spoken english': 'trial_classes',
+  trialclasses: 'trial_classes',
+  'trial classes': 'trial_classes',
+  'trial-class': 'trial_classes',
+};
+
+function normalizeAreaValue(rawArea: unknown): string {
+  const base = String(rawArea ?? '').trim().toLowerCase();
+  return AREA_ALIASES[base] ?? base;
+}
 
 function isValidHttpsCanvaUrl(rawUrl: string): boolean {
   if (!rawUrl.trim()) return false;
@@ -129,7 +147,7 @@ function toLessonCatalogPayload(lesson: {
   active?: boolean;
 }) {
   return {
-    area: lesson.area,
+    area: normalizeAreaValue(lesson.area),
     folderId: lesson.folderId,
     title: lesson.title,
     tags: lesson.tags || [],
@@ -234,7 +252,14 @@ export default function LessonLibraryAdminPage() {
       const { db } = await import('../../../lib/firebaseConfig');
       const q = query(collection(db, 'lessonFolders'), orderBy('sortOrder', 'asc'));
       const snap = await getDocs(q);
-      const out: Folder[] = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      const out: Folder[] = snap.docs.map((d) => {
+        const data = d.data() as any;
+        return {
+          id: d.id,
+          ...data,
+          area: normalizeAreaValue(data?.area),
+        };
+      });
       setFolders(out);
       if (!lessonFolderId && out.length) setLessonFolderId(out[0].id);
     } catch (err) {
@@ -254,6 +279,7 @@ export default function LessonLibraryAdminPage() {
         return {
           id: d.id,
           ...data,
+          area: normalizeAreaValue(data?.area),
           tags: normalizeTags(data?.tags),
         };
       });
@@ -348,7 +374,7 @@ export default function LessonLibraryAdminPage() {
     setLoading(true);
     try {
       const payload = {
-        area,
+        area: normalizeAreaValue(area),
         title: folderTitle.trim(),
         sortOrder: Number(folderSort || 0),
         active: !!folderActive,
@@ -389,7 +415,7 @@ export default function LessonLibraryAdminPage() {
     try {
       const tags = parseTagsInput(lessonTagsInput);
       const payload = {
-        area: lessonArea,
+        area: normalizeAreaValue(lessonArea),
         folderId: lessonFolderId,
         title: lessonTitle.trim(),
         canvaViewUrl: canvaViewUrl.trim(),
@@ -466,7 +492,7 @@ export default function LessonLibraryAdminPage() {
       const { db } = await import('../../../lib/firebaseConfig');
       const existingFolder = folders.find((folder) => folder.id === editingFolderId);
       await updateDoc(doc(db, 'lessonFolders', editingFolderId), {
-        area: folderDraft.area,
+        area: normalizeAreaValue(folderDraft.area),
         title: folderDraft.title.trim(),
         sortOrder: Number(folderDraft.sortOrder || 0),
         active: !!folderDraft.active,
@@ -479,13 +505,13 @@ export default function LessonLibraryAdminPage() {
           const batch = writeBatch(db);
           linkedLessons.forEach((lesson) => {
             batch.update(doc(db, 'lessons', lesson.id), {
-              area: folderDraft.area,
+              area: normalizeAreaValue(folderDraft.area),
               updatedAt: serverTimestamp(),
             });
             batch.set(
               doc(db, 'lessonCatalog', lesson.id),
               {
-                area: folderDraft.area,
+                area: normalizeAreaValue(folderDraft.area),
                 updatedAt: serverTimestamp(),
               },
               { merge: true }
@@ -594,7 +620,7 @@ export default function LessonLibraryAdminPage() {
       const { doc, updateDoc, setDoc, serverTimestamp } = await import('firebase/firestore');
       const { db } = await import('../../../lib/firebaseConfig');
       const updatedLessonPayload = {
-        area: lessonDraft.area,
+        area: normalizeAreaValue(lessonDraft.area),
         folderId: lessonDraft.folderId,
         title: lessonDraft.title.trim(),
         canvaViewUrl: lessonDraft.canvaViewUrl.trim(),
