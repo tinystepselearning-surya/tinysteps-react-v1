@@ -1,10 +1,11 @@
 // src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
 import { applySeo } from '../lib/seo';
-import { useSearchParams, useLocation, Link } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { handleLogin } from '../lib/auth';
 import type { AuthRole } from '../store/useAuthStore';
-import AuthPageBrandHeader from '../components/common/AuthPageBrandHeader';
+import TinyStepsBrand from '../components/common/TinyStepsBrand';
+import { Mail, Lock } from 'lucide-react';
 
 const VALID_ROLES: AuthRole[] = [
   'admin',
@@ -77,12 +78,6 @@ export default function LoginPage() {
     }
   };
 
-  const getRoleMessage = () => {
-    if (!expectedRole) return null;
-    const label = ROLE_LABELS[expectedRole] || expectedRole;
-    return `Please log in with your ${label} credentials.`;
-  };
-
   const title =
     expectedRole && ROLE_LABELS[expectedRole]
       ? `${ROLE_LABELS[expectedRole]} Login`
@@ -96,98 +91,109 @@ export default function LoginPage() {
     });
   }, [title, location.pathname]);
 
-  const isParent = expectedRole === 'parent';
-  const emailPlaceholder = isParent ? 'parent@tinysteps.com' : 'Email';
+  const emailPlaceholder =
+    expectedRole === 'parent'
+      ? 'parent@tinysteps.com'
+      : expectedRole === 'teacher'
+        ? 'teacher@tinysteps.com'
+        : 'your@email.com';
+
+  const supportRole = expectedRole && ROLE_LABELS[expectedRole] ? ROLE_LABELS[expectedRole] : 'account';
+  const passwordResetWhatsAppUrl = `https://wa.me/919618398383?text=${encodeURIComponent(
+    `Hi Tiny Steps Admin, I need support with password reset for my ${supportRole.toLowerCase()} login.`
+  )}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 via-white to-orange-50">
-      <div className="mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:py-10">
-        {expectedRole ? <AuthPageBrandHeader label={title} /> : null}
+    <div className="relative h-[100svh] overflow-hidden bg-gradient-to-b from-[#8ecfff] via-[#bde6ff] to-[#eaf7ff]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_10%,rgba(255,255,255,0.55),rgba(255,255,255,0.16)_22%,rgba(255,255,255,0)_46%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(255,255,255,0.94),transparent_58%)]" />
+      <div className="pointer-events-none absolute left-1/2 top-[53%] h-[1180px] w-[1180px] -translate-x-1/2 rounded-full border border-white/95" />
+      <div className="pointer-events-none absolute left-1/2 top-[57%] h-[940px] w-[940px] -translate-x-1/2 rounded-full border border-white/80" />
+      <div className="pointer-events-none absolute left-1/2 top-[61%] h-[760px] w-[760px] -translate-x-1/2 rounded-full border border-white/66" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[48%] bg-[radial-gradient(ellipse_at_14%_102%,rgba(255,255,255,0.98),transparent_56%),radial-gradient(ellipse_at_50%_104%,rgba(255,255,255,0.98),transparent_60%),radial-gradient(ellipse_at_86%_102%,rgba(255,255,255,0.96),transparent_56%)]" />
+      <div className="pointer-events-none absolute bottom-[-120px] left-[-120px] h-[320px] w-[520px] rounded-full bg-white/90 blur-2xl" />
+      <div className="pointer-events-none absolute bottom-[-130px] left-[26%] h-[300px] w-[440px] rounded-full bg-white/85 blur-2xl" />
+      <div className="pointer-events-none absolute bottom-[-120px] right-[-120px] h-[320px] w-[520px] rounded-full bg-white/90 blur-2xl" />
 
-        <div className="flex flex-1 items-center justify-center py-6">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white/85 p-7 shadow-[0_18px_60px_rgba(2,6,23,0.12)] backdrop-blur sm:p-8">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900">
-              {title}
-            </h1>
-            <p className="mt-2 text-sm text-slate-600">
-              Use the login details shared by Tiny Steps.
+      <div className="relative mx-auto h-full w-full max-w-6xl px-4 sm:px-6">
+        <div className="absolute left-4 top-5 z-10 sm:left-6 sm:top-6">
+          <div className="relative inline-flex">
+            <div className="pointer-events-none absolute left-[10px] top-[10px] h-[108px] w-[108px] rounded-full bg-white" />
+            <TinyStepsBrand
+              className="relative z-10 hover:bg-transparent"
+              subtitle="Online School"
+              to="/"
+              logoClassName="h-32 w-32 ring-0"
+              titleClassName="text-xl leading-none text-[#ff6a00]"
+              subtitleClassName="text-[11px] font-semibold tracking-[0.28em] text-[#ff7d00]"
+            />
+          </div>
+        </div>
+
+        <div className="flex h-full items-center justify-center">
+          <div className="w-full max-w-[400px] rounded-[28px] border border-white/85 bg-gradient-to-b from-white/78 to-white/68 p-6 shadow-[0_24px_80px_rgba(15,23,42,0.16)] backdrop-blur-xl sm:p-7">
+            {error ? (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            ) : null}
+
+            <form className="space-y-3.5" onSubmit={onSubmit}>
+              <div className="group flex h-12 items-center gap-2 rounded-xl border border-white/75 bg-[#6fa8cd]/45 px-3 shadow-inner transition focus-within:border-white/90 focus-within:ring-4 focus-within:ring-white/25">
+                <Mail className="h-4 w-4 text-white/90" />
+                <input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  placeholder={emailPlaceholder}
+                  autoComplete="username"
+                  inputMode="email"
+                  className="h-full w-full bg-transparent text-white outline-none placeholder:text-white/95"
+                  required
+                  aria-label="email"
+                />
+              </div>
+
+              <div className="group flex h-12 items-center gap-2 rounded-xl border border-white/75 bg-[#6fa8cd]/45 px-3 shadow-inner transition focus-within:border-white/90 focus-within:ring-4 focus-within:ring-white/25">
+                <Lock className="h-4 w-4 text-white/90" />
+                <input
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Password"
+                  autoComplete="current-password"
+                  className="h-full w-full bg-transparent text-white outline-none placeholder:text-white/95"
+                  required
+                  aria-label="password"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className={`mt-1 h-12 w-full rounded-xl font-semibold text-white shadow-[0_14px_30px_rgba(15,23,42,0.25)] transition ${
+                  isSubmitting
+                    ? 'cursor-not-allowed bg-slate-400'
+                    : 'bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:brightness-110'
+                }`}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Signing in…' : 'Sign In'}
+              </button>
+            </form>
+
+            <p className="mt-4 text-center text-xs text-slate-600">
+              Need support?{' '}
+              <a
+                href={passwordResetWhatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900"
+              >
+                Chat on WhatsApp
+              </a>
+              .
             </p>
           </div>
-
-          {expectedRole && (
-            <div className="mt-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
-              {getRoleMessage()}
-            </div>
-          )}
-
-          {isParent && (
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-              Need extra at-home phonics practice? Try our{' '}
-              <Link to="/phonics-learning-games" className="font-semibold underline underline-offset-2">
-                learning games
-              </Link>{' '}
-              with a 3-day free trial, then continue at ₹199/month or ₹999 lifetime per child.
-            </div>
-          )}
-
-          {error && (
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <form className="mt-6 space-y-4" onSubmit={onSubmit}>
-            <div>
-              <label className="block text-sm font-medium text-slate-700">
-                Email
-              </label>
-              <input
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                type="email"
-                placeholder={emailPlaceholder}
-                autoComplete="username"
-                inputMode="email"
-                className="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-900 placeholder:text-slate-400 shadow-sm outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                required
-                aria-label="email"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700">
-                Password
-              </label>
-              <input
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                type="password"
-                placeholder="Password"
-                autoComplete="current-password"
-                className="mt-2 h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-slate-900 placeholder:text-slate-400 shadow-sm outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
-                required
-                aria-label="password"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className={`h-11 w-full rounded-xl font-semibold shadow-sm transition ${
-                isSubmitting
-                  ? 'cursor-not-allowed bg-slate-300 text-slate-600'
-                  : 'bg-sky-600 text-white hover:bg-sky-700 active:scale-[0.99]'
-              }`}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Signing in…' : 'Sign In'}
-            </button>
-          </form>
-
-          <p className="mt-5 text-center text-xs text-slate-500">
-            Trouble signing in? Message us on WhatsApp and we’ll help.
-          </p>
-        </div>
         </div>
       </div>
     </div>

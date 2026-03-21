@@ -4,6 +4,7 @@ import { cn } from '@components/lib/utils';
 
 interface TinyStepsBrandProps {
   className?: string;
+  logoClassName?: string;
   subtitle?: ReactNode;
   subtitleClassName?: string;
   titleClassName?: string;
@@ -12,6 +13,7 @@ interface TinyStepsBrandProps {
 
 export default function TinyStepsBrand({
   className,
+  logoClassName,
   subtitle = 'Online School',
   subtitleClassName,
   titleClassName,
@@ -26,7 +28,10 @@ export default function TinyStepsBrand({
         height={44}
         decoding="async"
         loading="lazy"
-        className="h-11 w-11 shrink-0 rounded-full object-contain shadow-sm ring-1 ring-slate-200/80"
+        className={cn(
+          'h-11 w-11 shrink-0 rounded-full object-contain shadow-sm ring-1 ring-slate-200/80',
+          logoClassName,
+        )}
       />
       <div className="min-w-0">
         <div className={cn('text-xl font-bold tracking-tight text-orange-500', titleClassName)}>

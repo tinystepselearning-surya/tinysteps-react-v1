@@ -92,7 +92,6 @@ export default function Header() {
   const loginLinks: LinkItem[] = [
     { label: 'Parent Login', href: '/parent/login' },
     { label: 'Teacher Login', href: '/teacher/login' },
-    { label: 'Kids Login', href: '/kid/login' },
     { label: 'Learning Partner Login', href: '/learning-partner/login' },
   ];
 
