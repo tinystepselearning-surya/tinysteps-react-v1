@@ -64,7 +64,7 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "summer_camps",
     title: "Summer Camp Programs",
     text:
-      "Tiny Steps Summer Camp is a 10-week online small-group program for ages 4–12. Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). Fast Track Pack enrollment is ₹2,400 per child (70% off from ₹8,000). Sessions are typically 50–60 minutes with worksheets and class recordings. Details: https://tinystepslearning.com/summer-camps",
+      "Tiny Steps Summer Camp is a 10-week online small-group program for ages 4–12. Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). Fast Track Pack list fee is ₹5,000 per child. Effective price: ₹2,400 per child. Sessions are typically 50–60 minutes with worksheets and class recordings. Details: https://tinystepslearning.com/summer-camps",
   },
 ];
 

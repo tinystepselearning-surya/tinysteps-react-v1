@@ -3,10 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
-const SUMMER_CAMP_DISCOUNT_PERCENT = 70;
-const SUMMER_CAMP_FULL_PRICE = Number(
-  (SUMMER_CAMP_ENROLLMENT_PRICE / (1 - SUMMER_CAMP_DISCOUNT_PERCENT / 100)).toFixed(2)
-);
+const SUMMER_CAMP_FULL_PRICE = 5000;
+const SUMMER_CAMP_BATCH_CAP = 8;
 
 function getWhatsAppUrl(message: string) {
   return `https://wa.me/919618398383?text=${encodeURIComponent(message)}`;
@@ -43,7 +41,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ages: 'Ages 4-8',
     outcome: '10-week phonics fast track for stronger reading confidence',
     focus: 'Fast-track brush-up in sounds, blends, and decoding for smooth early reading',
-    format: 'Live small-group classes with active participation and mentor feedback',
+    format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
       'Stronger sound recognition and recall',
       'Faster blending with better word accuracy',
@@ -56,7 +54,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ],
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
-      'Attend live fast-track classes with guided practice',
+      'Attend 50–60 minute live fast-track classes with guided practice',
       'Follow a clear 10-week learning path with effective worksheets and class recordings',
     ],
     faq: [
@@ -78,7 +76,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with a clear 10-week outcome path.',
+          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
     ],
   },
@@ -88,7 +86,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ages: 'Ages 6-12',
     outcome: '10-week grammar fast track for better writing quality',
     focus: 'Fast-track brush-up in sentence structure, punctuation, tense, and grammar accuracy',
-    format: 'Live small-group classes with active participation and mentor feedback',
+    format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
       'Fewer common grammar mistakes in school writing',
       'Better sentence structure and punctuation control',
@@ -101,7 +99,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ],
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
-      'Attend live fast-track classes with guided practice',
+      'Attend 50–60 minute live fast-track classes with guided practice',
       'Follow a clear 10-week learning path with effective worksheets and class recordings',
     ],
     faq: [
@@ -123,7 +121,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with a clear 10-week outcome path.',
+          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
     ],
   },
@@ -133,7 +131,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ages: 'Ages 6-12',
     outcome: '10-week speaking fast track for confident communication',
     focus: 'Fast-track brush-up in speech structure, clarity, pronunciation, and delivery confidence',
-    format: 'Live small-group classes with active participation and mentor feedback',
+    format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
       'More confidence in short structured talks',
       'Clearer voice, pace, and articulation',
@@ -146,7 +144,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     ],
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
-      'Attend live fast-track classes with guided practice',
+      'Attend 50–60 minute live fast-track classes with guided practice',
       'Follow a clear 10-week learning path with effective worksheets and class recordings',
     ],
     faq: [
@@ -168,7 +166,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          'Yes. It uses the same Tiny Steps core method, delivered in a summer fast-track format with a clear 10-week outcome path.',
+          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
     ],
   },
@@ -316,17 +314,18 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             {program.outcome}
           </h1>
           <p className="mt-4 max-w-3xl text-base text-gray-700 sm:text-lg">
-            {program.focus}. {program.format}. {program.ages}. Summer camp enrollment: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} ({SUMMER_CAMP_DISCOUNT_PERCENT}% off).
+            {program.focus}. {program.format}. {program.ages}. Summer camp list fee: ₹{formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.
           </p>
           <p className="mt-2 text-sm font-semibold text-emerald-700">
             <span className="text-slate-500 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</span>{' '}
-            <span>Now ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} • {SUMMER_CAMP_DISCOUNT_PERCENT}% OFF</span>
+            <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{program.ages}</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">10 weeks</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">50–60 min classes</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Capped at {SUMMER_CAMP_BATCH_CAP}</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Online</span>
             <span className="rounded-full bg-emerald-100 px-4 py-1 font-semibold text-emerald-800">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} Enrollment</span>
           </div>
@@ -357,7 +356,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             <p className="mt-2 text-sm text-gray-700">
               {program.title} is a 10-week online summer camp that follows our core curriculum
               (phonics, grammar, and speaking) with extra focus on this track. Expect focused
-              group sessions, a clear detailed learning path, effective worksheets, and class recordings.
+              group sessions capped at {SUMMER_CAMP_BATCH_CAP} students, a clear detailed learning path, effective worksheets, and class recordings.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
@@ -377,8 +376,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 className="text-lg font-semibold text-gray-900">Camp format</h2>
             <p className="mt-2 text-sm text-gray-700">
-              This is a group-focused summer camp with small live batches, active participation,
-              and clear teacher guidance in every class.
+              This is a group-focused premium summer camp, capped at {SUMMER_CAMP_BATCH_CAP} students per batch for active participation, live correction, and clear teacher guidance in every class.
             </p>
           </div>
         </div>
@@ -424,7 +422,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
               <p className="mt-2 text-3xl font-black text-gray-900">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</p>
               <p className="mt-1 text-xs font-semibold text-emerald-700">
                 <span className="text-slate-500 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</span>{' '}
-                <span>{SUMMER_CAMP_DISCOUNT_PERCENT}% OFF</span>
+                <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
               </p>
               <p className="mt-2 text-sm text-gray-700">
                 Straightforward enrollment for the summer group camp.
@@ -497,15 +495,17 @@ export default function SummerCampProgramPage() {
     const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
     const title = batchSlug ? `${baseTitle} ${batchTitle} | Tiny Steps` : `${baseTitle} | Tiny Steps`;
     const description = program
-      ? `${program.title} for ${program.ages}. ${program.focus}. Group summer camp with a clear 10-week learning path, 50–60 minute classes, effective worksheets, and class recordings at ₹2,400 enrollment (70% off).`
+      ? `${program.title} for ${program.ages}. ${program.focus}. Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students, with a clear 10-week learning path, 50–60 minute classes, effective worksheets, and class recordings. List fee ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
       : 'Summer camp program details coming soon.';
     const keywords = program
       ? [
           `${program.title.toLowerCase()} online`,
           `${program.title.toLowerCase()} for kids india`,
+          'premium summer camp for kids',
+          'small group summer camp for kids',
           'online summer camp for kids india',
           'phonics grammar speaking fast track',
-          'small batch online classes for kids',
+          'summer camp with limited batch size',
         ]
       : ['online summer camp for kids india'];
 
@@ -553,7 +553,9 @@ export default function SummerCampProgramPage() {
           '@context': 'https://schema.org',
           '@type': 'Course',
           name: program.title,
-          description: program.focus,
+          description: `${program.focus}. Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
+          courseMode: 'Online',
+          educationalLevel: program.ages,
           provider: {
             '@type': 'Organization',
             name: 'Tiny Steps Learning',

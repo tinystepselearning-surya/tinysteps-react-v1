@@ -505,7 +505,7 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
   },
   '/summer-english-camp-2026': {
     title: 'Summer Camps for Kids | Tiny Steps Learning',
-    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore online group batches in India for phonics, grammar, and speaking fast-track tracks with enrollment at ₹2,400 (70% off).',
+    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore online group batches in India for phonics, grammar, and speaking fast-track tracks. List fee ₹5,000. Effective price ₹2,400.',
     canonicalPath: '/summer-camps',
     robots: 'noindex, follow',
     ogType: 'website',
@@ -541,8 +541,8 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogType: 'website',
   },
   '/summer-camps': {
-    title: 'Online Summer Camp for Kids in India | Tiny Steps Learning',
-    description: 'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with 50–60 minute live classes, effective worksheets, and class recordings.',
+    title: 'Premium Online Summer Camp for Kids in India | Tiny Steps Learning',
+    description: 'Join Tiny Steps Premium Summer Camp for kids in India. Small-group online classes capped at 8 students for stronger participation, teacher attention, and real progress in phonics, grammar, reading, and public speaking.',
     canonicalPath: '/summer-camps',
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',

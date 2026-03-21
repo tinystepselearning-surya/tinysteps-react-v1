@@ -202,7 +202,10 @@ export default function HomePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026</p>
                 <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Online Summer English Camp for ages 4-12</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">Phonics, grammar, and confident speaking in a 10-week live format with clear routines, light homework, and progress parents can actually follow.</p>
-                <p className="mt-2 inline-flex rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">Summer Camp Fast Track Pack: ₹2,400 (70% OFF)</p>
+                <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
+                  <span className="line-through opacity-80">₹5,000</span>
+                  <span>Effective price: ₹2,400</span>
+                </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {["10-week program", "Live online", "Limited seats", "Daily practice support"].map((item) => (
                     <span key={item} className="rounded-full border border-white/80 bg-white/75 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur">
