@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
@@ -51,7 +51,7 @@ import type {
   DemoSession,
   DemoSessionStatus,
 } from '../../types/models';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import {
   cancelDemoSession,
@@ -512,28 +512,42 @@ export default function DemoSessionsManagement() {
   }, [toast]);
 
   useEffect(() => {
-    const loadTeachers = async () => {
-      try {
-        const teachersQuery = query(collection(db, 'users'), where('role', '==', 'teacher'));
-        const teachersSnap = await getDocs(teachersQuery);
+    const teachersQuery = query(collection(db, 'users'), where('role', '==', 'teacher'));
+    const unsubscribe = onSnapshot(
+      teachersQuery,
+      (teachersSnap) => {
         const options = teachersSnap.docs
           .map((docSnap) => {
-            const data = docSnap.data() as { name?: string; displayName?: string; email?: string };
+            const data = docSnap.data() as {
+              name?: string;
+              displayName?: string;
+              email?: string;
+              status?: string;
+              isDeleted?: boolean;
+              archivedAt?: unknown;
+              deletedAt?: unknown;
+            };
+            const status = String(data.status || '').toLowerCase();
+            const isArchived = status === 'archived' || Boolean(data.archivedAt);
+            const isDeleted = Boolean(data.isDeleted) || Boolean(data.deletedAt);
+            if (isArchived || isDeleted) return null;
             const name = data.name || data.displayName || data.email || 'Teacher';
             return { id: docSnap.id, name };
           })
+          .filter((option): option is TeacherOption => Boolean(option))
           .sort((a, b) => a.name.localeCompare(b.name));
         setTeachers(options);
-      } catch (error: any) {
+      },
+      (error: any) => {
         toast({
           title: 'Failed to load teachers',
           description: error?.message || 'Please refresh and try again.',
           variant: 'destructive',
         });
-      }
-    };
+      },
+    );
 
-    loadTeachers();
+    return unsubscribe;
   }, [toast]);
 
   const openSessions = useMemo(
@@ -549,6 +563,38 @@ export default function DemoSessionsManagement() {
   const closedSessions = useMemo(
     () => sessions.filter((session) => session.status === 'completed' || session.status === 'cancelled'),
     [sessions],
+  );
+
+  const liveTeacherNameById = useMemo(
+    () => new Map(teachers.map((teacher) => [teacher.id, teacher.name])),
+    [teachers],
+  );
+
+  const liveTeacherNames = useMemo(
+    () =>
+      new Set(
+        teachers
+          .map((teacher) => teacher.name.trim().toLowerCase())
+          .filter(Boolean),
+      ),
+    [teachers],
+  );
+
+  const resolveLiveTeacherName = useCallback(
+    (session: DemoSession): string => {
+      const teacherId = (session.assignedTeacherId || '').trim();
+      if (teacherId && liveTeacherNameById.has(teacherId)) {
+        return liveTeacherNameById.get(teacherId) || '';
+      }
+
+      const snapshotName = (session.assignedTeacherName || '').trim();
+      if (snapshotName && liveTeacherNames.has(snapshotName.toLowerCase())) {
+        return snapshotName;
+      }
+
+      return '';
+    },
+    [liveTeacherNameById, liveTeacherNames],
   );
 
   const createdTillDateCount = useMemo(() => sessions.length, [sessions]);
@@ -583,16 +629,14 @@ export default function DemoSessionsManagement() {
   const teacherHandledTillDate = useMemo(() => {
     const counts = new Map<string, number>();
     sessions.forEach((session) => {
-      if (session.status !== 'completed') return;
-      const teacherName = (session.assignedTeacherName || '').trim();
+      if (session.status !== 'assigned' && session.status !== 'completed') return;
+      const teacherName = resolveLiveTeacherName(session);
       if (!teacherName) return;
       counts.set(teacherName, (counts.get(teacherName) || 0) + 1);
     });
 
-    return Array.from(counts.entries())
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 8);
-  }, [sessions]);
+    return Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [sessions, resolveLiveTeacherName]);
 
   const tabSessions = useMemo(() => {
     if (activeTab === 'open') return openSessions;
@@ -617,9 +661,9 @@ export default function DemoSessionsManagement() {
   const assignedTeacherOptions = useMemo(
     () =>
       Array.from(
-        new Set(sessions.map((session) => (session.assignedTeacherName || '').trim()).filter(Boolean)),
+        new Set(sessions.map((session) => resolveLiveTeacherName(session)).filter(Boolean)),
       ).sort(),
-    [sessions],
+    [sessions, resolveLiveTeacherName],
   );
 
   const visibleSessions = useMemo(
@@ -628,7 +672,8 @@ export default function DemoSessionsManagement() {
         if (statusFilter !== 'all' && session.status !== statusFilter) return false;
         if (courseFilter !== 'all' && session.courseInterested !== courseFilter) return false;
         if (sourceFilter !== 'all' && (session.source || '') !== sourceFilter) return false;
-        if (assignedTeacherFilter !== 'all' && (session.assignedTeacherName || '') !== assignedTeacherFilter) {
+        const sessionTeacherName = resolveLiveTeacherName(session);
+        if (assignedTeacherFilter !== 'all' && sessionTeacherName !== assignedTeacherFilter) {
           return false;
         }
         const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -644,7 +689,16 @@ export default function DemoSessionsManagement() {
         }
         return true;
       }),
-    [assignedTeacherFilter, courseFilter, phoneMap, searchQuery, sourceFilter, statusFilter, tabSessions],
+    [
+      assignedTeacherFilter,
+      courseFilter,
+      phoneMap,
+      resolveLiveTeacherName,
+      searchQuery,
+      sourceFilter,
+      statusFilter,
+      tabSessions,
+    ],
   );
 
   const earliestTrendDateKey = useMemo(() => {
@@ -1589,10 +1643,10 @@ export default function DemoSessionsManagement() {
           </Card>
         </div>
         <div className="mb-4 rounded-lg border border-slate-200 bg-white/80 p-3">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Teacher-wise Demos Handled (Till Date)</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">Teacher-wise Demos (Assigned + Completed, Live Teachers)</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {teacherHandledTillDate.length === 0 ? (
-              <span className="text-sm text-muted-foreground">No completed demos yet.</span>
+              <span className="text-sm text-muted-foreground">No assigned or completed demos for live teachers yet.</span>
             ) : (
               teacherHandledTillDate.map(([teacherName, count]) => (
                 <Badge key={teacherName} variant="outline">
@@ -1718,9 +1772,7 @@ export default function DemoSessionsManagement() {
                           <div className="text-xs text-muted-foreground">
                             Preferred Slot: {session.preferredDateTimeText}
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            Teacher: {session.assignedTeacherName || '—'}
-                          </div>
+                          <div className="text-xs text-muted-foreground">Teacher: {resolveLiveTeacherName(session) || '—'}</div>
                           <div className="text-xs">
                             Conversion: <span className="font-medium">{formatConversionStatus(session.conversionStatus)}</span>
                           </div>
@@ -1786,7 +1838,7 @@ export default function DemoSessionsManagement() {
                       >
                         {session.preferredDateTimeText}
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{session.assignedTeacherName || '—'}</TableCell>
+                      <TableCell className="whitespace-nowrap">{resolveLiveTeacherName(session) || '—'}</TableCell>
                       <TableCell>
                         <Badge variant={statusBadgeVariant(session.status)}>
                           {formatStatusLabel(session.status)}
