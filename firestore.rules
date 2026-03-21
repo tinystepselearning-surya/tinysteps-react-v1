@@ -477,6 +477,15 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // PARENT CLASS RECORDINGS
+    // ----------------------------
+    match /parentClassRecordings/{recordingId} {
+      allow read: if isAdmin()
+        || (isParent() && resource.data.parentId == request.auth.uid);
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
     // BILLING CHARGES COLLECTION
     // ----------------------------
     match /billingCharges/{chargeId} {

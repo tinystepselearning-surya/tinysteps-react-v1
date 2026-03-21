@@ -185,6 +185,20 @@ type Enrollment = {
   [key: string]: any;
 };
 
+type ParentClassRecording = {
+  id: string;
+  parentId?: string;
+  parentName?: string;
+  parentEmail?: string;
+  recordingUrl?: string;
+  folderName?: string;
+  folderUrl?: string;
+  sourceType?: string;
+  createdAt?: any;
+  updatedAt?: any;
+  [key: string]: any;
+};
+
 const chunkIds = <T,>(items: T[], size = 10): T[][] => {
   if (!items.length) return [];
   const chunks: T[][] = [];
@@ -2038,9 +2052,43 @@ export default function ParentDashboard() {
     },
   });
 
+  const classRecordingsQuery = useQuery({
+    queryKey: ["parentClassRecordings", user?.uid],
+    enabled: !!user?.uid && activeTab === "classes",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<ParentClassRecording[]> => {
+      if (!user?.uid) return [];
+      const recordingsRef = query(
+        collection(db, "parentClassRecordings"),
+        where("parentId", "==", user.uid)
+      );
+      const snap = await getDocs(recordingsRef);
+      return snap.docs
+        .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as any) }))
+        .sort((a, b) => {
+          const aTime = toDateOrNull((a as any).updatedAt || (a as any).createdAt)?.getTime() ?? 0;
+          const bTime = toDateOrNull((b as any).updatedAt || (b as any).createdAt)?.getTime() ?? 0;
+          return bTime - aTime;
+        });
+    },
+  });
+
   const classesMonthLabel = useMemo(() => {
     return classesMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
   }, [classesMonth]);
+  const parentRecordingFolder = useMemo(() => {
+    const folders = classRecordingsQuery.data ?? [];
+    if (!folders.length) return null;
+    return folders[0] ?? null;
+  }, [classRecordingsQuery.data]);
+  const parentRecordingFolderUrl = String(
+    parentRecordingFolder?.folderUrl || parentRecordingFolder?.recordingUrl || ""
+  ).trim();
+  const parentRecordingFolderName = String(
+    parentRecordingFolder?.folderName || "Class Recordings"
+  ).trim();
 
   const monthStart = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth(), 1), [classesMonth]);
   const monthEnd = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth() + 1, 0, 23, 59, 59, 999), [classesMonth]);
@@ -4788,8 +4836,25 @@ export default function ParentDashboard() {
                   >
                     {kidSessionsQuery.isFetching ? "Refreshing..." : "Refresh"}
                   </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (!parentRecordingFolderUrl) return;
+                      window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
+                    }}
+                    disabled={!parentRecordingFolderUrl}
+                  >
+                    Class Recordings
+                  </Button>
                 </div>
               </div>
+
+              {parentRecordingFolderUrl && (
+                <p className="mt-2 text-xs text-slate-500">
+                  Folder: <span className="font-medium text-slate-700">{parentRecordingFolderName}</span>
+                </p>
+              )}
 
               <div className="mt-4 flex flex-wrap gap-2 text-xs">
                 {[

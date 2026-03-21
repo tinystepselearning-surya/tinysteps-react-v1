@@ -26,6 +26,7 @@ import RelationshipManagement from './RelationshipManagement/RelationshipManagem
 import CourseManagement from './CourseManagement/CourseManagement';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
+import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
 import DemoSessionsManagement from './DemoSessionsManagement';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -312,6 +313,7 @@ export default function AdminDashboard() {
       'courses',
       'demo-sessions',
       'lessons',
+      'class-recordings',
       'analytics',
       'holidays',
       'teacher-payments',
@@ -410,6 +412,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="lessons" className="mt-0">
               <LessonLibrary />
+            </TabsContent>
+
+            <TabsContent value="class-recordings" className="mt-0">
+              <ClassRecordingsManagement />
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-0">
