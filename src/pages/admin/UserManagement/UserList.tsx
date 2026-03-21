@@ -60,6 +60,9 @@ interface UserTableProps {
   onDelete: (user: User) => void;
   onArchive: (user: User) => void;
   onResetPassword: (user: User) => void;
+  sortField: UserSortField | null;
+  sortDirection: SortDirection;
+  onSort: (field: UserSortField) => void;
 }
 
 interface UserRoleCounts {
@@ -69,12 +72,18 @@ interface UserRoleCounts {
   students: number;
 }
 
+type UserSortField = 'email' | 'name' | 'role' | 'status' | 'createdAt';
+type SortDirection = 'asc' | 'desc';
+
 function UserTable({
   users,
   onEdit,
   onDelete,
   onArchive,
   onResetPassword,
+  sortField,
+  sortDirection,
+  onSort,
 }: UserTableProps) {
   const getRoleBadgeVariant = (role?: string) => {
     switch (role) {
@@ -111,11 +120,27 @@ function UserTable({
     <Table className="w-full min-w-[940px] text-sm">
       <TableHeader>
         <TableRow>
-          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[250px]">Email</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[180px]">Name</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[110px]">Role</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[110px]">Status</TableHead>
-          <TableHead className="px-3 py-2 text-xs font-semibold min-w-[120px]">Created</TableHead>
+          {([
+            { field: 'email', label: 'Email', className: 'px-3 py-2 text-xs font-semibold min-w-[250px]' },
+            { field: 'name', label: 'Name', className: 'px-3 py-2 text-xs font-semibold min-w-[180px]' },
+            { field: 'role', label: 'Role', className: 'px-3 py-2 text-xs font-semibold min-w-[110px]' },
+            { field: 'status', label: 'Status', className: 'px-3 py-2 text-xs font-semibold min-w-[110px]' },
+            { field: 'createdAt', label: 'Created', className: 'px-3 py-2 text-xs font-semibold min-w-[120px]' },
+          ] as Array<{ field: UserSortField; label: string; className: string }>).map((column) => (
+            <TableHead key={column.field} className={column.className}>
+              <button
+                type="button"
+                onClick={() => onSort(column.field)}
+                className="inline-flex items-center gap-1 rounded hover:text-blue-700"
+                title={`Sort by ${column.label}`}
+              >
+                <span>{column.label}</span>
+                <span className="text-[10px] leading-none">
+                  {sortField === column.field ? (sortDirection === 'asc' ? '▲' : '▼') : '↕'}
+                </span>
+              </button>
+            </TableHead>
+          ))}
           <TableHead className="px-3 py-2 text-xs font-semibold text-right min-w-[120px]">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -219,6 +244,8 @@ export function UserList() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isResetPasswordSaving, setIsResetPasswordSaving] = useState(false);
+  const [sortField, setSortField] = useState<UserSortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   // ---------------- Fetch Users ----------------
   const fetchUsers = async (reset = false) => {
@@ -335,6 +362,39 @@ export function UserList() {
       return matchesRole && matchesStatus && matchesSearch;
     });
   }, [users, roleFilter, statusFilter, searchTerm]);
+
+  const sortedUsers = useMemo(() => {
+    if (!sortField) return filteredUsers;
+    const list = [...filteredUsers];
+    const directionFactor = sortDirection === 'asc' ? 1 : -1;
+
+    list.sort((a, b) => {
+      if (sortField === 'createdAt') {
+        const aDate =
+          a.createdAt instanceof Date ? a.createdAt : ((a.createdAt as any)?.toDate?.() || null);
+        const bDate =
+          b.createdAt instanceof Date ? b.createdAt : ((b.createdAt as any)?.toDate?.() || null);
+        const aTime = aDate instanceof Date ? aDate.getTime() : 0;
+        const bTime = bDate instanceof Date ? bDate.getTime() : 0;
+        return (aTime - bTime) * directionFactor;
+      }
+
+      const aVal = String((a as any)[sortField] || '').toLowerCase();
+      const bVal = String((b as any)[sortField] || '').toLowerCase();
+      return aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' }) * directionFactor;
+    });
+
+    return list;
+  }, [filteredUsers, sortField, sortDirection]);
+
+  const handleSort = (field: UserSortField) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortField(field);
+    setSortDirection('asc');
+  };
 
   const roleTabs = useMemo(() => {
     const total = roleCounts.admin + roleCounts.teacher + roleCounts.parent + roleCounts.students;
@@ -649,16 +709,19 @@ export function UserList() {
       {/* Table */}
       <Card className="overflow-x-auto">
         <UserTable
-          users={filteredUsers}
+          users={sortedUsers}
           onEdit={(u) => setEditingUser(u)}
           onDelete={handleDeleteUser}
           onArchive={handleArchiveUser}
           onResetPassword={handleOpenResetPassword}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          onSort={handleSort}
         />
 
         {isLoading && <div className="text-center py-4">Loading…</div>}
 
-        {!isLoading && filteredUsers.length === 0 && (
+        {!isLoading && sortedUsers.length === 0 && (
           <div className="text-center py-8 text-gray-500">No users found.</div>
         )}
 

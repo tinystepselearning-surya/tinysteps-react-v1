@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   onSnapshot,
   collection,
@@ -35,6 +35,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 
 const DEFAULT_PAGE_SIZE = 25;
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
+type StudentSortField = 'student' | 'parents' | 'age' | 'grade' | 'status';
+type SortDirection = 'asc' | 'desc';
 
 const getClassSessionsCollection = () => collection(db, 'classSessions');
 
@@ -1441,6 +1443,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [parentFilter, setParentFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<StudentSortField | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [enrollmentStatusTab, setEnrollmentStatusTab] = useState<'active' | 'past'>('active');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(DEFAULT_PAGE_SIZE);
@@ -1603,6 +1607,34 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return () => unsub();
   }, [user?.role]);
 
+  const parentLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    parents.forEach((parent) => {
+      const id = String((parent as any).uid || parent.id || '');
+      if (!id) return;
+      const label = String(parent.email || parent.name || (parent as any).displayName || id);
+      map.set(id, label);
+    });
+    return map;
+  }, [parents]);
+
+  const getParentLabelsForStudent = useCallback((student: Student): string[] => {
+    return (student.parentIds || [])
+      .map((pid) => parentLabelById.get(pid) || pid)
+      .filter((value): value is string => Boolean(value));
+  }, [parentLabelById]);
+
+  const getParentSortValue = useCallback((student: Student): string => {
+    const labels = getParentLabelsForStudent(student);
+    return labels.length > 0 ? labels[0].toLowerCase() : '';
+  }, [getParentLabelsForStudent]);
+
+  const getAgeSortValue = (student: Student): number => {
+    const ageText = displayAgeYears(student);
+    const ageNumber = Number(ageText);
+    return Number.isFinite(ageNumber) ? ageNumber : -1;
+  };
+
   const filtered = useMemo(() => {
     let list = students.slice();
 
@@ -1621,8 +1653,52 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     if (statusFilter !== 'all') list = list.filter(s => (s as any).status === statusFilter);
     if (parentFilter !== 'all') list = list.filter(s => (s.parentIds || []).includes(parentFilter));
 
+    if (sortField) {
+      const directionFactor = sortDirection === 'asc' ? 1 : -1;
+
+      list.sort((a, b) => {
+        if (sortField === 'age') {
+          return (getAgeSortValue(a) - getAgeSortValue(b)) * directionFactor;
+        }
+
+        let aValue = '';
+        let bValue = '';
+
+        if (sortField === 'student') {
+          aValue = String(a.fullName || '').toLowerCase();
+          bValue = String(b.fullName || '').toLowerCase();
+        } else if (sortField === 'parents') {
+          aValue = getParentSortValue(a);
+          bValue = getParentSortValue(b);
+        } else if (sortField === 'grade') {
+          aValue = String(a.grade || '').toLowerCase();
+          bValue = String(b.grade || '').toLowerCase();
+        } else if (sortField === 'status') {
+          aValue = String((a as any).status || '').toLowerCase();
+          bValue = String((b as any).status || '').toLowerCase();
+        }
+
+        return (
+          aValue.localeCompare(bValue, undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          }) * directionFactor
+        );
+      });
+    }
+
     return list;
-  }, [students, search, gradeFilter, statusFilter, parentFilter, parents]);
+  }, [
+    students,
+    search,
+    gradeFilter,
+    statusFilter,
+    parentFilter,
+    parents,
+    sortField,
+    sortDirection,
+    getParentSortValue,
+  ]);
 
   const pageCount = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
   const paged = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -2102,12 +2178,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   };
 
   const formatParentSummary = (student: Student): string => {
-    const labels = (student.parentIds || [])
-      .map((pid) => {
-        const parent = parents.find((entry) => (entry as any).uid === pid || entry.id === pid);
-        return parent?.email || pid;
-      })
-      .filter(Boolean);
+    const labels = getParentLabelsForStudent(student);
 
     if (labels.length === 0) return '—';
     if (labels.length === 1) return labels[0];
@@ -2124,7 +2195,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
   useEffect(() => {
     setPage(0);
-  }, [search, gradeFilter, statusFilter, parentFilter, enrollmentStatusTab, rowsPerPage]);
+  }, [search, gradeFilter, statusFilter, parentFilter, enrollmentStatusTab, rowsPerPage, sortField, sortDirection]);
+
+  const handleSort = (field: StudentSortField) => {
+    if (sortField === field) {
+      setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+    setSortField(field);
+    setSortDirection('asc');
+  };
+
+  const sortIndicator = (field: StudentSortField): string => {
+    if (sortField !== field) return '↕';
+    return sortDirection === 'asc' ? '▲' : '▼';
+  };
 
   return (
     <div className="space-y-4">
@@ -2264,11 +2349,36 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           <Table className="w-full table-fixed text-sm">
             <TableHeader className="sticky top-0 z-30 bg-slate-50">
               <TableRow>
-                <TableHead className="sticky top-0 z-30 w-[180px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Student</TableHead>
-                <TableHead className="sticky top-0 z-30 w-[240px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Parents</TableHead>
-                <TableHead className="sticky top-0 z-30 w-[70px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Age</TableHead>
-                <TableHead className="sticky top-0 z-30 w-[90px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Grade</TableHead>
-                <TableHead className="sticky top-0 z-30 w-[90px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Status</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[180px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">
+                  <button type="button" className="inline-flex items-center gap-1 hover:text-blue-700" onClick={() => handleSort('student')}>
+                    <span>Student</span>
+                    <span className="text-[10px] leading-none">{sortIndicator('student')}</span>
+                  </button>
+                </TableHead>
+                <TableHead className="sticky top-0 z-30 w-[240px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">
+                  <button type="button" className="inline-flex items-center gap-1 hover:text-blue-700" onClick={() => handleSort('parents')}>
+                    <span>Parents</span>
+                    <span className="text-[10px] leading-none">{sortIndicator('parents')}</span>
+                  </button>
+                </TableHead>
+                <TableHead className="sticky top-0 z-30 w-[70px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">
+                  <button type="button" className="inline-flex items-center gap-1 hover:text-blue-700" onClick={() => handleSort('age')}>
+                    <span>Age</span>
+                    <span className="text-[10px] leading-none">{sortIndicator('age')}</span>
+                  </button>
+                </TableHead>
+                <TableHead className="sticky top-0 z-30 w-[90px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">
+                  <button type="button" className="inline-flex items-center gap-1 hover:text-blue-700" onClick={() => handleSort('grade')}>
+                    <span>Grade</span>
+                    <span className="text-[10px] leading-none">{sortIndicator('grade')}</span>
+                  </button>
+                </TableHead>
+                <TableHead className="sticky top-0 z-30 w-[90px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">
+                  <button type="button" className="inline-flex items-center gap-1 hover:text-blue-700" onClick={() => handleSort('status')}>
+                    <span>Status</span>
+                    <span className="text-[10px] leading-none">{sortIndicator('status')}</span>
+                  </button>
+                </TableHead>
                 <TableHead className="sticky top-0 z-30 w-[220px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Enrollments</TableHead>
                 <TableHead className="sticky top-0 z-30 w-[110px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Actions</TableHead>
               </TableRow>
