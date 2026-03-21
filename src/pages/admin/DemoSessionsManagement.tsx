@@ -32,6 +32,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import {
   CartesianGrid,
+  LabelList,
   Legend,
   Line,
   LineChart,
@@ -91,8 +92,17 @@ interface DemoTrendPoint {
   enrolled: number;
 }
 
+type TrendMetricKey = 'received' | 'assigned' | 'completed' | 'enrolled';
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DEMO_TREND_ONBOARDING_START_KEY = '2026-03-18';
+const TREND_METRIC_KEYS: TrendMetricKey[] = ['received', 'assigned', 'completed', 'enrolled'];
+const TREND_METRIC_CONFIG: Record<TrendMetricKey, { label: string; stroke: string }> = {
+  received: { label: 'Received', stroke: '#2563eb' },
+  assigned: { label: 'Assigned', stroke: '#f59e0b' },
+  completed: { label: 'Completed', stroke: '#16a34a' },
+  enrolled: { label: 'Enrolled', stroke: '#db2777' },
+};
 
 const toDateInput = (date: Date): string => {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -217,6 +227,41 @@ const asDate = (value: unknown): Date | null => {
     if (typeof maybe.seconds === 'number') return new Date(maybe.seconds * 1000);
   }
   return null;
+};
+
+const formatTrendLabelValue = (value: unknown): string => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return '';
+  return String(parsed);
+};
+
+interface TrendLabelRendererProps {
+  x?: number;
+  y?: number;
+  value?: number | string;
+  stroke?: string;
+}
+
+const renderTrendLabel = ({ x, y, value, stroke }: TrendLabelRendererProps) => {
+  const label = formatTrendLabelValue(value);
+  if (!label || typeof x !== 'number' || typeof y !== 'number') return null;
+
+  return (
+    <text
+      x={x}
+      y={y}
+      dy={-8}
+      textAnchor="middle"
+      fill={stroke || '#0f172a'}
+      fontSize={15}
+      fontWeight={700}
+      stroke="#ffffff"
+      strokeWidth={3}
+      paintOrder="stroke"
+    >
+      {label}
+    </text>
+  );
 };
 
 const formatTs = (value: unknown): string => {
@@ -433,6 +478,7 @@ export default function DemoSessionsManagement() {
   const [trendRangePreset, setTrendRangePreset] = useState<DemoTrendRangePreset>('month');
   const [trendCustomStartDate, setTrendCustomStartDate] = useState<string>(DEMO_TREND_ONBOARDING_START_KEY);
   const [trendCustomEndDate, setTrendCustomEndDate] = useState<string>(getTodayDateInput);
+  const [activeTrendMetrics, setActiveTrendMetrics] = useState<TrendMetricKey[]>(TREND_METRIC_KEYS);
 
   useEffect(() => {
     const unsubSessions = listenAllDemoSessions(
@@ -704,6 +750,20 @@ export default function DemoSessionsManagement() {
       ),
     [trendData],
   );
+
+  const visibleTrendMetrics = useMemo(
+    () => TREND_METRIC_KEYS.filter((metric) => activeTrendMetrics.includes(metric)),
+    [activeTrendMetrics],
+  );
+
+  const singleVisibleTrendMetric = visibleTrendMetrics.length === 1 ? visibleTrendMetrics[0] : null;
+
+  const handleTrendMetricToggle = (metric: TrendMetricKey) => {
+    setActiveTrendMetrics((prev) => {
+      if (prev.length === 1 && prev[0] === metric) return TREND_METRIC_KEYS;
+      return [metric];
+    });
+  };
 
   const onFieldChange = (key: keyof DemoFormState, value: string) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -1842,10 +1902,6 @@ export default function DemoSessionsManagement() {
         <p className="mt-3 text-xs text-muted-foreground">
           Showing: {trendRangeBounds.startKey} to {trendRangeBounds.endKey}
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Received uses request received date; if missing, entry date is used.
-        </p>
-
         <div className="mt-4 h-[320px] w-full rounded-lg border border-slate-200 bg-white p-3">
           {trendData.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
@@ -1859,64 +1915,65 @@ export default function DemoSessionsManagement() {
                 <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Line
-                  type="linear"
-                  dataKey="received"
-                  name="Received"
-                  stroke="#2563eb"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type="linear"
-                  dataKey="assigned"
-                  name="Assigned"
-                  stroke="#f59e0b"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type="linear"
-                  dataKey="completed"
-                  name="Completed"
-                  stroke="#16a34a"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-                <Line
-                  type="linear"
-                  dataKey="enrolled"
-                  name="Enrolled"
-                  stroke="#db2777"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
+                {visibleTrendMetrics.map((metric) => {
+                  const config = TREND_METRIC_CONFIG[metric];
+                  return (
+                    <Line
+                      key={metric}
+                      type="linear"
+                      dataKey={metric}
+                      name={config.label}
+                      stroke={config.stroke}
+                      strokeWidth={2}
+                      dot={false}
+                      activeDot={{ r: 4 }}
+                    >
+                      {singleVisibleTrendMetric === metric ? (
+                        <LabelList
+                          dataKey={metric}
+                          position="top"
+                          content={(props) =>
+                            renderTrendLabel({
+                              x: props.x,
+                              y: props.y,
+                              value: props.value,
+                              stroke: config.stroke,
+                            })
+                          }
+                        />
+                      ) : null}
+                    </Line>
+                  );
+                })}
               </LineChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Received</div>
-            <div className="mt-1 text-xl font-semibold">{trendTotals.received}</div>
-          </Card>
-          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Assigned</div>
-            <div className="mt-1 text-xl font-semibold">{trendTotals.assigned}</div>
-          </Card>
-          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Completed</div>
-            <div className="mt-1 text-xl font-semibold">{trendTotals.completed}</div>
-          </Card>
-          <Card className="border-slate-200 bg-white/90 p-3 shadow-sm">
-            <div className="text-xs uppercase tracking-wide text-muted-foreground">Enrolled</div>
-            <div className="mt-1 text-xl font-semibold">{trendTotals.enrolled}</div>
-          </Card>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Click a metric card to isolate a single trend with data labels. Click the same card again to show all trends.
+        </p>
+
+        <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {TREND_METRIC_KEYS.map((metric) => {
+            const config = TREND_METRIC_CONFIG[metric];
+            const isActive = visibleTrendMetrics.includes(metric);
+            const totalValue = trendTotals[metric];
+            return (
+              <button
+                key={metric}
+                type="button"
+                onClick={() => handleTrendMetricToggle(metric)}
+                className={`rounded-lg border bg-white/90 p-3 text-left shadow-sm transition ${
+                  isActive ? 'ring-1 ring-offset-0' : 'opacity-70'
+                }`}
+                style={isActive ? { borderColor: config.stroke, boxShadow: `inset 0 0 0 1px ${config.stroke}33` } : undefined}
+              >
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">{config.label}</div>
+                <div className="mt-1 text-xl font-semibold">{totalValue}</div>
+              </button>
+            );
+          })}
         </div>
       </Card>
 

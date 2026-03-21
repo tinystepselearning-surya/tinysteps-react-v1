@@ -1443,6 +1443,8 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
       let deletedCount = 0;
       const demoData = demoSnap.data() as { dedupeKey?: string | null };
       const dedupeKey = pickOptionalText(demoData.dedupeKey, 128);
+      const dedupeRef = dedupeKey ? uniqueKeyRef(db, dedupeKey) : null;
+      const dedupeSnap = dedupeRef ? await tx.get(dedupeRef) : null;
 
       const earningsSnap = await tx.get(earningsQuery);
       for (const earningDoc of earningsSnap.docs) {
@@ -1490,9 +1492,7 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
       tx.delete(demoRef);
       tx.delete(privateRef);
 
-      if (dedupeKey) {
-        const dedupeRef = uniqueKeyRef(db, dedupeKey);
-        const dedupeSnap = await tx.get(dedupeRef);
+      if (dedupeKey && dedupeRef && dedupeSnap) {
         const mappedDemoId = pickOptionalText(dedupeSnap.data()?.demoId, 120);
         if (mappedDemoId === demoId) {
           tx.delete(dedupeRef);

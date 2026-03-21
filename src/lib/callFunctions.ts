@@ -48,9 +48,7 @@ const FALLBACK_REGIONS = Array.from(
  */
 export async function callFunction<T = any, P = any>(name: string, payload?: P): Promise<T> {
   const preferredRegion = FUNCTION_REGION_OVERRIDES[name];
-  const regionsToTry = preferredRegion
-    ? [preferredRegion, ...FALLBACK_REGIONS.filter((r) => r !== preferredRegion)]
-    : FALLBACK_REGIONS;
+  const regionsToTry = preferredRegion ? [preferredRegion] : FALLBACK_REGIONS;
 
   let lastError: any = null;
 

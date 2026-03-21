@@ -3,6 +3,7 @@ import { collection, getDocs, onSnapshot, query, where } from 'firebase/firestor
 import { db } from '../../lib/firebaseConfig';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
+import { Button } from '@components/ui/button';
 
 const monthKeyFromDate = (date: Date) => {
   const year = date.getFullYear();
@@ -90,6 +91,7 @@ export default function AnalyticsDashboard(): JSX.Element {
   const [teacherEarningsEntries, setTeacherEarningsEntries] = useState<any[]>([]);
   const [fsError, setFsError] = useState<string | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKeyFromDate(new Date()));
+  const [teacherEarningsTab, setTeacherEarningsTab] = useState<'live' | 'archived'>('live');
 
   useEffect(() => {
     let active = true;
@@ -255,6 +257,25 @@ export default function AnalyticsDashboard(): JSX.Element {
     return map;
   }, [users]);
 
+  const teacherProfileById = useMemo(() => {
+    const map: Record<
+      string,
+      {
+        name: string;
+        role: string;
+        status: string;
+      }
+    > = {};
+    users.forEach((u) => {
+      map[u.id] = {
+        name: u.displayName || u.name || u.email || u.id,
+        role: normalizeStatus(u.role),
+        status: normalizeStatus(u.status || 'active'),
+      };
+    });
+    return map;
+  }, [users]);
+
   const kidNameById = useMemo(() => ({} as Record<string, string>), []);
   const courseNameById = useMemo(() => ({} as Record<string, string>), []);
   const recentEnrollments: any[] = [];
@@ -299,10 +320,31 @@ export default function AnalyticsDashboard(): JSX.Element {
         sessions: row.sessions,
         totalEarned: row.totalEarned,
         pending: row.pending,
+        profileTag: (() => {
+          const profile = teacherProfileById[row.teacherId];
+          if (!profile) return 'Deleted / Missing';
+          if (profile.role !== 'teacher') return 'Role changed';
+          if (profile.status === 'archived' || profile.status === 'suspended' || profile.status === 'inactive') {
+            return 'Archived / Inactive';
+          }
+          return 'Live';
+        })(),
       }))
       .sort((a, b) => b.pending - a.pending || b.totalEarned - a.totalEarned)
-      .slice(0, 8);
-  }, [teacherEarningsEntries, nameById]);
+      .slice(0, 40);
+  }, [teacherEarningsEntries, nameById, teacherProfileById]);
+
+  const liveTeacherEarnings = useMemo(
+    () => teacherEarnings.filter((row) => row.profileTag === 'Live'),
+    [teacherEarnings],
+  );
+
+  const archivedTeacherEarnings = useMemo(
+    () => teacherEarnings.filter((row) => row.profileTag !== 'Live'),
+    [teacherEarnings],
+  );
+
+  const visibleTeacherEarnings = teacherEarningsTab === 'live' ? liveTeacherEarnings : archivedTeacherEarnings;
 
   return (
     <div className="space-y-6">
@@ -353,29 +395,51 @@ export default function AnalyticsDashboard(): JSX.Element {
               <h3 className="text-sm font-semibold">Teacher earnings (month)</h3>
               <p className="text-xs text-muted-foreground">Based on attendance rollups.</p>
             </div>
-            <span className="text-xs text-muted-foreground">{teacherEarnings.length} teachers</span>
+            <span className="text-xs text-muted-foreground">{visibleTeacherEarnings.length} teachers</span>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant={teacherEarningsTab === 'live' ? 'default' : 'outline'}
+              onClick={() => setTeacherEarningsTab('live')}
+            >
+              Live ({liveTeacherEarnings.length})
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={teacherEarningsTab === 'archived' ? 'default' : 'outline'}
+              onClick={() => setTeacherEarningsTab('archived')}
+            >
+              Archived / Deleted ({archivedTeacherEarnings.length})
+            </Button>
           </div>
           <div className="mt-3 overflow-x-auto">
             <table className="w-full text-sm table-auto">
               <thead>
                 <tr className="text-left border-b">
                   <th className="p-2">Teacher</th>
+                  <th className="p-2">Profile</th>
                   <th className="p-2">Sessions</th>
                   <th className="p-2">Earned</th>
                   <th className="p-2">Pending</th>
                 </tr>
               </thead>
               <tbody>
-                {teacherEarnings.length === 0 ? (
+                {visibleTeacherEarnings.length === 0 ? (
                   <tr>
-                    <td className="p-3 text-muted-foreground" colSpan={4}>
-                      No teacher earnings for this month.
+                    <td className="p-3 text-muted-foreground" colSpan={5}>
+                      {teacherEarningsTab === 'live'
+                        ? 'No live teacher earnings for this month.'
+                        : 'No archived/deleted teacher earnings for this month.'}
                     </td>
                   </tr>
                 ) : (
-                  teacherEarnings.map((t) => (
+                  visibleTeacherEarnings.map((t) => (
                     <tr key={t.teacherId} className="border-b last:border-b-0">
                       <td className="p-2">{t.teacher}</td>
+                      <td className="p-2">{t.profileTag}</td>
                       <td className="p-2">{t.sessions}</td>
                       <td className="p-2">{formatMoney(t.totalEarned)}</td>
                       <td className="p-2">{formatMoney(t.pending)}</td>
