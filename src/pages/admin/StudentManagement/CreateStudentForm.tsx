@@ -3,10 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { httpsCallable } from 'firebase/functions';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
-import { db } from '../../../lib/firebaseConfig';
-import { createKid } from '../../../services/kidsService';
+import { db, functions } from '../../../lib/firebaseConfig';
 
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -130,24 +130,24 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
     try {
       const status = values.status ?? 'active';
 
-      // ✅ IMPORTANT: Do NOT send dob at all (no undefined either)
-      const payload: any = {
+      const payload = {
+        parentId: values.parentId,
         fullName: values.fullName,
         ageYears: values.ageYears,
         grade: values.grade,
-        parentIds: [values.parentId],
-        primaryParentId: values.parentId,
         status,
-        summary: {
-          phonicsMastery: 0,
-          grammarMastery: 0,
-          speakingMastery: 0,
-          attendanceRate30d: 0,
-          creditsRemaining: 0,
-        },
       };
 
-      const newKidId = await createKid(payload);
+      const createStudentFn = httpsCallable(functions, 'adminCreateStudent');
+      const result = await createStudentFn(payload);
+      const created = result.data as { success?: boolean; kidId?: string; error?: string } | undefined;
+
+      if (created?.success === false) {
+        throw new Error(created.error || 'Failed to create student');
+      }
+      if (!created?.kidId) {
+        throw new Error('Student created but ID was not returned');
+      }
 
       toast({
         title: 'Student created',
@@ -163,12 +163,19 @@ export function CreateStudentForm({ onStudentCreated, defaultParentId }: Props) 
         status: 'active',
       } as any);
 
-      onStudentCreated?.(newKidId);
+      onStudentCreated?.(created.kidId);
     } catch (err: any) {
       console.error(err);
+      const code = err?.code || err?.status || null;
+      let description = err?.message || 'Failed to create student';
+      if (code === 'already-exists' || /already exists|already taken|duplicate/i.test(description)) {
+        description = 'A student with the same name already exists under this parent. Use a different name.';
+      } else if (code === 'permission-denied') {
+        description = 'You do not have permission to create students.';
+      }
       toast({
         title: 'Error',
-        description: err.message || 'Failed to create student',
+        description,
         variant: 'destructive',
       });
     }
