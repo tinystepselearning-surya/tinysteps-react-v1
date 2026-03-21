@@ -58,12 +58,12 @@ const AdminOverviewCard: React.FC = () => {
 
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="px-4 pb-1 pt-4">
         <CardTitle className="text-lg">
           Admin Overview
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-4 pb-4 pt-2">
         {loading ? (
           <p className="text-sm text-muted-foreground">
             Loading overview…
@@ -71,7 +71,7 @@ const AdminOverviewCard: React.FC = () => {
         ) : error ? (
           <p className="text-sm text-red-500">{error}</p>
         ) : stats ? (
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <p className="text-xs uppercase text-muted-foreground">
                 Total Users

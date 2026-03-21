@@ -33,7 +33,8 @@ import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
 
-const PAGE_SIZE = 25;
+const DEFAULT_PAGE_SIZE = 25;
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
 
 const getClassSessionsCollection = () => collection(db, 'classSessions');
 
@@ -1306,16 +1307,6 @@ type SessionRequestRow = {
   status?: string;
 };
 
-const StatusPill = ({ ok, label }: { ok: boolean; label: string }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-      ok ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
-    }`}
-  >
-    {ok ? '✓' : '!'} {label}
-  </span>
-);
-
 function computeAgeYearsFromDob(dob?: string): number | null {
   try {
     if (!dob) return null;
@@ -1452,10 +1443,13 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [enrollmentStatusTab, setEnrollmentStatusTab] = useState<'active' | 'past'>('active');
   const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(DEFAULT_PAGE_SIZE);
 
   const [assignCourseFor, setAssignCourseFor] = useState<Student | null>(null);
   const [assignTeacherFor, setAssignTeacherFor] = useState<Student | null>(null);
   const [assignLPFor, setAssignLPFor] = useState<Student | null>(null);
+  const [enrollmentDetailsFor, setEnrollmentDetailsFor] = useState<Student | null>(null);
+  const [actionsFor, setActionsFor] = useState<Student | null>(null);
 
   // ✅ NEW: schedule modal state
   const [scheduleFor, setScheduleFor] = useState<Student | null>(null);
@@ -1473,6 +1467,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
   const [sessionRequests, setSessionRequests] = useState<SessionRequestRow[]>([]);
   const [requestActionId, setRequestActionId] = useState<string | null>(null);
+  const [sessionRequestsOpen, setSessionRequestsOpen] = useState(false);
   const [syncStatus, setSyncStatus] = useState({
     running: false,
   });
@@ -1629,8 +1624,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return list;
   }, [students, search, gradeFilter, statusFilter, parentFilter, parents]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paged = filtered.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+  const paged = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const pagedStudentIds = paged.map(s => s.id);
 
   const enrollmentsQuery = useEnrollmentsForStudents(pagedStudentIds);
@@ -2091,17 +2086,57 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     setWeekdays(prev => (prev.includes(day) ? prev.filter(x => x !== day) : [...prev, day].sort((a, b) => a - b)));
   }
 
+  const canManageStudent = (student: Student) =>
+    Boolean(
+      user?.role === 'admin' ||
+      (user?.role === 'learningPartner' && ((student as any).lpId === user.uid))
+    );
+
+  const getVisibleEnrollmentsForStudent = (studentId: string): EnrollmentLite[] => {
+    const allEnrollments = enrollmentsByStudent[studentId] || [];
+    return allEnrollments.filter((enrollment: EnrollmentLite) => {
+      const status = normalizeEnrollmentStatus(enrollment.status);
+      const isPast = isPastEnrollmentStatus(status);
+      return enrollmentStatusTab === 'active' ? !isPast : isPast;
+    });
+  };
+
+  const formatParentSummary = (student: Student): string => {
+    const labels = (student.parentIds || [])
+      .map((pid) => {
+        const parent = parents.find((entry) => (entry as any).uid === pid || entry.id === pid);
+        return parent?.email || pid;
+      })
+      .filter(Boolean);
+
+    if (labels.length === 0) return '—';
+    if (labels.length === 1) return labels[0];
+    return `${labels[0]} +${labels.length - 1} more`;
+  };
+
+  const enrollmentDetails = enrollmentDetailsFor
+    ? getVisibleEnrollmentsForStudent(enrollmentDetailsFor.id)
+    : [];
+  const canManageEnrollmentDetails = enrollmentDetailsFor
+    ? canManageStudent(enrollmentDetailsFor)
+    : false;
+  const canManageActionsFor = actionsFor ? canManageStudent(actionsFor) : false;
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, gradeFilter, statusFilter, parentFilter, enrollmentStatusTab, rowsPerPage]);
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Students</h2>
-        {isAdmin && (
-          <div className="flex items-center gap-2">
+      {isAdmin ? (
+        <div className="flex justify-end">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={handleSyncCourseCatalog}
               disabled={syncStatus.running}
+              className="h-8 text-xs"
             >
               {syncStatus.running ? 'Syncing Courses...' : 'Sync Course Catalog'}
             </Button>
@@ -2110,6 +2145,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               variant="outline"
               onClick={handleSyncCurriculumPhonics}
               disabled={isCurriculumSyncing}
+              className="h-8 text-xs"
             >
               {syncCurriculumStatus.phonics ? 'Syncing Curriculum...' : 'Sync Curriculum (Phonics)'}
             </Button>
@@ -2118,6 +2154,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               variant="outline"
               onClick={handleSyncCurriculumGrammar}
               disabled={isCurriculumSyncing}
+              className="h-8 text-xs"
             >
               {syncCurriculumStatus.grammar ? 'Syncing Grammar...' : 'Sync Curriculum (Grammar)'}
             </Button>
@@ -2126,14 +2163,15 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               variant="outline"
               onClick={handleSyncCurriculumSpeaking}
               disabled={isCurriculumSyncing}
+              className="h-8 text-xs"
             >
               {syncCurriculumStatus.speaking ? 'Syncing Speaking...' : 'Sync Curriculum (Speaking)'}
             </Button>
           </div>
-        )}
-      </div>
+        </div>
+      ) : null}
 
-      <Card className="p-4">
+      <Card className="p-3">
         <div className="flex flex-wrap gap-4">
           <div className="flex-1 min-w-[200px]">
             <Input
@@ -2175,89 +2213,27 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               ))}
             </SelectContent>
           </Select>
+
+          {user?.role === 'admin' ? (
+            <div className="ml-auto">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 text-xs"
+                onClick={() => setSessionRequestsOpen(true)}
+              >
+                Session Requests
+                <span className="ml-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-700">
+                  {sessionRequests.length}
+                </span>
+              </Button>
+            </div>
+          ) : null}
         </div>
       </Card>
 
-      {user?.role === 'admin' && (
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold">Session Requests</h3>
-              <p className="text-xs text-gray-500">
-                Teacher ad-hoc sessions awaiting approval.
-              </p>
-            </div>
-            <div className="text-xs text-gray-500">
-              {sessionRequests.length} pending
-            </div>
-          </div>
-
-          {sessionRequests.length === 0 ? (
-            <div className="text-sm text-gray-500 mt-3">No pending requests.</div>
-          ) : (
-            <div className="mt-3">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Teacher</TableHead>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Date & Time</TableHead>
-                    <TableHead>Duration</TableHead>
-                    <TableHead>Note</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sessionRequests.map((req) => {
-                    const student = studentById.get(req.kidId);
-                    return (
-                      <TableRow key={req.id}>
-                        <TableCell className="text-xs">
-                          {req.teacherId || '—'}
-                        </TableCell>
-                        <TableCell>
-                          {student?.fullName || req.kidId || '—'}
-                        </TableCell>
-                        <TableCell>{formatDateTime(req.startAt)}</TableCell>
-                        <TableCell>{req.durationMins} min</TableCell>
-                        <TableCell className="text-xs">
-                          {req.note || '—'}
-                        </TableCell>
-                        <TableCell className="text-xs">
-                          {req.status || 'requested'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2 flex-wrap">
-                            <Button
-                              size="sm"
-                              onClick={() => handleApproveRequest(req)}
-                              disabled={requestActionId === req.id}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleRejectRequest(req)}
-                              disabled={requestActionId === req.id}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </Card>
-      )}
-
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-4 pt-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
           <div className="text-sm font-medium text-gray-700">Enrollments</div>
           <div className="flex flex-wrap items-center gap-2">
             <button
@@ -2284,196 +2260,92 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             </button>
           </div>
         </div>
-        <Table className="w-full table-fixed text-sm">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="px-3 py-2 text-xs font-semibold w-[160px]">Student</TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold w-[180px]">Parents</TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold w-[70px]">Age</TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold w-[80px]">Grade</TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold w-[90px]">Status</TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold">Enrollments</TableHead>
-              <TableHead className="px-3 py-2 text-xs font-semibold w-[150px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
+        <div className="relative max-h-[62vh] overflow-auto">
+          <Table className="w-full table-fixed text-sm">
+            <TableHeader className="sticky top-0 z-30 bg-slate-50">
+              <TableRow>
+                <TableHead className="sticky top-0 z-30 w-[180px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Student</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[240px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Parents</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[70px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Age</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[90px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Grade</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[90px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Status</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[220px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Enrollments</TableHead>
+                <TableHead className="sticky top-0 z-30 w-[110px] bg-slate-50 px-3 py-2 text-xs font-semibold shadow-sm">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
 
-          <TableBody>
-            {paged.map(s => {
-              const allEnrollments = enrollmentsByStudent[s.id] || [];
-              const filteredEnrollments = allEnrollments.filter((e: any) => {
-                const status = normalizeEnrollmentStatus(e.status);
-                const isPast = isPastEnrollmentStatus(status);
-                return enrollmentStatusTab === 'active' ? !isPast : isPast;
-              });
-              const hasCourse = filteredEnrollments.length > 0;
-              const hasTeacher = filteredEnrollments.some(
-                (e: any) => Boolean(e.teacherId || e.teacher?.uid || e.teacher?.id)
-              );
-              const hasSchedule = filteredEnrollments.some(
-                (e: any) => (e.schedule?.weekdays?.length || 0) > 0
-              );
-              return (
-              <TableRow key={s.id}>
-                <TableCell className="px-3 py-2 align-top">
-                  <div className="font-medium max-w-[160px] truncate" title={s.fullName || ''}>
-                    {s.fullName}
-                  </div>
-                </TableCell>
+            <TableBody>
+              {paged.map(s => {
+                const filteredEnrollments = getVisibleEnrollmentsForStudent(s.id);
+                const enrollmentSummary =
+                  filteredEnrollments.length > 0
+                    ? `${filteredEnrollments.length} ${enrollmentStatusTab === 'active' ? 'active' : 'past'} enrollment${filteredEnrollments.length === 1 ? '' : 's'}`
+                    : enrollmentStatusTab === 'active'
+                      ? 'No active enrollments'
+                      : 'No past enrollments';
 
-                <TableCell className="px-3 py-2 align-top">
-                  {(s.parentIds || []).map(pid => {
-                    const p = parents.find(x => (x as any).uid === pid || x.id === pid);
-                    const label = p?.email || pid;
-                    return (
-                      <div key={pid} className="max-w-[180px] truncate" title={label}>
-                        {label}
+                return (
+                  <TableRow key={s.id}>
+                    <TableCell className="px-3 py-2 whitespace-nowrap">
+                      <span className="font-medium">{s.fullName || '—'}</span>
+                    </TableCell>
+                    <TableCell className="px-3 py-2 max-w-[240px]">
+                      <span className="block truncate whitespace-nowrap" title={formatParentSummary(s)}>
+                        {formatParentSummary(s)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="px-3 py-2 whitespace-nowrap">{displayAgeYears(s)}</TableCell>
+                    <TableCell className="px-3 py-2 whitespace-nowrap">{s.grade || '—'}</TableCell>
+                    <TableCell className="px-3 py-2 whitespace-nowrap">{(s as any).status || '—'}</TableCell>
+                    <TableCell className="px-3 py-2 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-600">{enrollmentSummary}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-xs"
+                          onClick={() => setEnrollmentDetailsFor(s)}
+                        >
+                          View
+                        </Button>
                       </div>
-                    );
-                  })}
-                </TableCell>
-
-                {/* ✅ Age instead of DOB */}
-                <TableCell className="px-3 py-2 align-top">
-                  <div className="flex flex-col items-start gap-1">
-                    <span>{displayAgeYears(s)}</span>
-                    {isAdmin && (
+                    </TableCell>
+                    <TableCell className="px-3 py-2 whitespace-nowrap">
                       <Button
                         size="sm"
-                        variant="ghost"
-                        className="h-6 px-0 text-xs font-medium text-primary hover:bg-transparent"
-                        onClick={() => onEdit(s)}
+                        variant="outline"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => setActionsFor(s)}
                       >
-                        Edit age
+                        Actions
                       </Button>
-                    )}
-                  </div>
-                </TableCell>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
 
-                <TableCell className="px-3 py-2 align-top">{s.grade}</TableCell>
-                <TableCell className="px-3 py-2 align-top">{(s as any).status}</TableCell>
-
-                {/* ✅ Enrollments in its own column */}
-                <TableCell className="px-3 py-2 align-top">
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    <StatusPill ok={hasCourse} label="Course" />
-                    <StatusPill ok={hasTeacher} label="Teacher" />
-                    <StatusPill ok={hasSchedule} label="Schedule" />
-                  </div>
-                  {filteredEnrollments.length > 0 ? (
-                    <div className="space-y-1 text-xs">
-                      {filteredEnrollments.map((e: any) => (
-                        <div key={e.id} className="flex items-center justify-between gap-2">
-                          <div className="min-w-0">
-                            <span className="font-semibold truncate block" title={e.course?.title || e.courseId}>
-                              {e.course?.title || e.courseId}
-                            </span>
-                            <span className="text-muted-foreground truncate block" title={e.teacher?.name || e.teacher?.email || ''}>
-                              {e.teacher ? e.teacher.name || e.teacher.email : 'Unassigned'}
-                            </span>
-                            <span className="text-muted-foreground truncate block">
-                              {normalizeEnrollmentStatus(e.status)}
-                              {safeNumber(e.feePerClass, 0) > 0 ? ` · ₹${e.feePerClass}/class` : ''}
-                            </span>
-                          </div>
-                          <div className="shrink-0">
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => handleDeleteEnrollment(e.id)}
-                              disabled={
-                                !(
-                                  user?.role === 'admin' ||
-                                  (user?.role === 'learningPartner' && ((s as any).lpId === user.uid))
-                                )
-                              }
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-sm text-gray-400">
-                      {enrollmentStatusTab === 'active' ? 'No active enrollments' : 'No past enrollments'}
-                    </div>
-                  )}
-                </TableCell>
-
-                <TableCell className="px-3 py-2 align-top">
-                  <div className="grid gap-1">
-                    <Button
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => onAssignCourse(s)}
-                      disabled={
-                        !(
-                          user?.role === 'admin' ||
-                          (user?.role === 'learningPartner' && ((s as any).lpId === user.uid))
-                        )
-                      }
-                    >
-                      Course
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => setAssignTeacherFor(s)}
-                      disabled={
-                        !(
-                          user?.role === 'admin' ||
-                          (user?.role === 'learningPartner' && ((s as any).lpId === user.uid))
-                        )
-                      }
-                    >
-                      Teacher
-                    </Button>
-
-                    <Button
-                      size="sm"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => setAssignLPFor(s)}
-                      disabled={!(user?.role === 'admin')}
-                    >
-                      {user?.role === 'admin' ? 'LP' : 'No Access'}
-                    </Button>
-
-                    {/* ✅ NEW: Schedule Classes */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => openScheduleModal(s)}
-                      disabled={
-                        !(
-                          user?.role === 'admin' ||
-                          (user?.role === 'learningPartner' && ((s as any).lpId === user.uid))
-                        )
-                      }
-                    >
-                      Schedule
-                    </Button>
-
-                    <Button size="sm" variant="destructive" className="h-7 px-2 text-xs" onClick={() => onDelete(s.id)}>
-                      Delete
-                    </Button>
-
-                    <Button size="sm" variant="secondary" className="h-7 px-2 text-xs" onClick={() => onEdit(s)}>
-                      Edit
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-
-        <div className="flex items-center justify-between p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div>Showing {filtered.length} students</div>
-          <div className="space-x-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-gray-500">Per page</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(value) => setRowsPerPage(Number(value))}
+            >
+              <SelectTrigger className="h-8 w-[84px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0}>
               Prev
             </Button>
@@ -2484,6 +2356,221 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           </div>
         </div>
       </Card>
+
+      <Dialog open={sessionRequestsOpen} onOpenChange={setSessionRequestsOpen}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Session Requests</DialogTitle>
+          </DialogHeader>
+
+          {sessionRequests.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+              No pending requests.
+            </div>
+          ) : (
+            <div className="max-h-[60vh] overflow-auto rounded-lg border border-slate-100">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky top-0 z-10 bg-white">Teacher</TableHead>
+                    <TableHead className="sticky top-0 z-10 bg-white">Student</TableHead>
+                    <TableHead className="sticky top-0 z-10 bg-white">Date & Time</TableHead>
+                    <TableHead className="sticky top-0 z-10 bg-white">Duration</TableHead>
+                    <TableHead className="sticky top-0 z-10 bg-white">Note</TableHead>
+                    <TableHead className="sticky top-0 z-10 bg-white">Status</TableHead>
+                    <TableHead className="sticky top-0 z-10 bg-white">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sessionRequests.map((req) => {
+                    const student = studentById.get(req.kidId);
+                    return (
+                      <TableRow key={req.id}>
+                        <TableCell className="text-xs">{req.teacherId || '—'}</TableCell>
+                        <TableCell>{student?.fullName || req.kidId || '—'}</TableCell>
+                        <TableCell>{formatDateTime(req.startAt)}</TableCell>
+                        <TableCell>{req.durationMins} min</TableCell>
+                        <TableCell className="max-w-[260px] text-xs" title={req.note || '—'}>
+                          <span className="block truncate">{req.note || '—'}</span>
+                        </TableCell>
+                        <TableCell className="text-xs">{req.status || 'requested'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => handleApproveRequest(req)}
+                              disabled={requestActionId === req.id}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-7 px-2 text-xs"
+                              onClick={() => handleRejectRequest(req)}
+                              disabled={requestActionId === req.id}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!enrollmentDetailsFor} onOpenChange={(open) => !open && setEnrollmentDetailsFor(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              Enrollments {enrollmentDetailsFor?.fullName ? `— ${enrollmentDetailsFor.fullName}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+
+          {enrollmentDetailsFor ? (
+            <div className="space-y-3">
+              <div className="text-xs text-gray-500">
+                Showing {enrollmentStatusTab === 'active' ? 'active' : 'past'} enrollments
+              </div>
+              {enrollmentDetails.length > 0 ? (
+                <div className="space-y-2">
+                  {enrollmentDetails.map((enrollment) => (
+                    <div
+                      key={enrollment.id}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2"
+                    >
+                      <div className="min-w-0 text-sm">
+                        <div className="truncate font-semibold" title={enrollment.course?.title || enrollment.courseId}>
+                          {enrollment.course?.title || enrollment.courseId || 'Course'}
+                        </div>
+                        <div className="truncate text-xs text-gray-500" title={enrollment.teacher?.name || enrollment.teacher?.email || ''}>
+                          {enrollment.teacher ? enrollment.teacher.name || enrollment.teacher.email : 'Teacher unassigned'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {normalizeEnrollmentStatus(enrollment.status)}
+                          {safeNumber(enrollment.feePerClass, 0) > 0 ? ` · ₹${enrollment.feePerClass}/class` : ''}
+                        </div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 px-2 text-xs"
+                        onClick={() => handleDeleteEnrollment(enrollment.id)}
+                        disabled={!canManageEnrollmentDetails}
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500">
+                  {enrollmentStatusTab === 'active' ? 'No active enrollments' : 'No past enrollments'}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!actionsFor} onOpenChange={(open) => !open && setActionsFor(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              Actions {actionsFor?.fullName ? `— ${actionsFor.fullName}` : ''}
+            </DialogTitle>
+          </DialogHeader>
+
+          {actionsFor ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-8 text-xs"
+                onClick={() => {
+                  onEdit(actionsFor);
+                  setActionsFor(null);
+                }}
+              >
+                Edit age
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-8 text-xs"
+                onClick={() => {
+                  onEdit(actionsFor);
+                  setActionsFor(null);
+                }}
+              >
+                Edit student
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => {
+                  onAssignCourse(actionsFor);
+                  setActionsFor(null);
+                }}
+                disabled={!canManageActionsFor}
+              >
+                Course
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => {
+                  setAssignTeacherFor(actionsFor);
+                  setActionsFor(null);
+                }}
+                disabled={!canManageActionsFor}
+              >
+                Teacher
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => {
+                  setAssignLPFor(actionsFor);
+                  setActionsFor(null);
+                }}
+                disabled={!isAdmin}
+              >
+                LP
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={() => {
+                  setActionsFor(null);
+                  openScheduleModal(actionsFor);
+                }}
+                disabled={!canManageActionsFor}
+              >
+                Schedule
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                className="col-span-2 h-8 text-xs"
+                onClick={() => {
+                  onDelete(actionsFor.id);
+                  setActionsFor(null);
+                }}
+              >
+                Delete student
+              </Button>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
       {assignCourseFor && (
         <AssignCourseModal

@@ -30,6 +30,7 @@ export { backfillTeacherDocs } from "./adminCreateUser";
 export { adminDeleteUser } from "./adminDeleteUser";
 export { adminArchiveUser } from "./adminArchiveUser";
 export { adminGenerateResetLink } from "./adminGenerateResetLink";
+export { adminResetPassword } from "./adminResetPassword";
 
 // Learning Partner assignment
 export { 

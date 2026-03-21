@@ -3,7 +3,7 @@ import { LPAssignmentMatrix } from './LPAssignmentMatrix';
 
 export default function RelationshipManagement() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <LPAssignmentMatrix />
     </div>
   );

@@ -380,8 +380,8 @@ export function LPAssignmentMatrix(): JSX.Element {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Learning Partner Assignments</h2>
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold leading-tight tracking-tight">Learning Partner Assignments</h2>
       <Tabs defaultValue="parents" className="w-full">
         <TabsList>
           <TabsTrigger value="parents">Parents ← LPs</TabsTrigger>

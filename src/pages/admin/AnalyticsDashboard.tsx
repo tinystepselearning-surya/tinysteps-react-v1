@@ -347,7 +347,7 @@ export default function AnalyticsDashboard(): JSX.Element {
   const visibleTeacherEarnings = teacherEarningsTab === 'live' ? liveTeacherEarnings : archivedTeacherEarnings;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold">Admin Analytics</h2>
@@ -388,7 +388,7 @@ export default function AnalyticsDashboard(): JSX.Element {
         <MetricCard label="Other / unknown" value={enrollmentBuckets.other} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div>

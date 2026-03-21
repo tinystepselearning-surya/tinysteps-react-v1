@@ -4,6 +4,7 @@ import { Card } from '@components/ui/card';
 import { useAuthStore } from '../../store/useAuthStore';
 import { LPHeader } from './components/layout/LPHeader';
 import { LPSidebar } from './components/layout/LPSidebar';
+import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 const LPStats = React.lazy(() => import('./components/overview/LPStats'));
 const ParentsList = React.lazy(() => import('./components/parents/ParentsList'));
 const TeachersList = React.lazy(() => import('./components/teachers/TeachersList'));
@@ -25,6 +26,7 @@ const TAB_ITEMS = [
   { id: 'tickets', label: 'Support Tickets' },
   { id: 'performance', label: 'Performance' },
   { id: 'region', label: 'Regional Data' },
+  { id: 'holidays', label: 'Holiday Calendar' },
 ];
 
 export default function LPDashboard() {
@@ -90,6 +92,9 @@ export default function LPDashboard() {
               <Suspense fallback={<div className="text-sm text-gray-600">Loading regional data…</div>}>
                 <RegionalData lpId={lpId} />
               </Suspense>
+            </TabsContent>
+            <TabsContent value="holidays">
+              <HolidayCalendar2026 />
             </TabsContent>
           </Tabs>
 

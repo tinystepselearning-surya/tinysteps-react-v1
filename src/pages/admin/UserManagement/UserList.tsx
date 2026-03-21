@@ -21,6 +21,7 @@ import { db, functions, auth } from '../../../lib/firebaseConfig';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
+import { Input } from '@components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,7 +48,6 @@ import {
 } from '@components/ui/dialog';
 
 import { CreateUserForm } from './CreateUserForm';
-import GmailParentsBucket from './GmailParentsBucket';
 import { EditUserForm } from './EditUserForm';
 import { toast } from '@components/hooks/use-toast';
 import { User } from '../../../types/User';
@@ -59,7 +59,7 @@ interface UserTableProps {
   onEdit: (user: User) => void;
   onDelete: (user: User) => void;
   onArchive: (user: User) => void;
-  onSendResetLink: (user: User) => void;
+  onResetPassword: (user: User) => void;
 }
 
 interface UserRoleCounts {
@@ -74,7 +74,7 @@ function UserTable({
   onEdit,
   onDelete,
   onArchive,
-  onSendResetLink,
+  onResetPassword,
 }: UserTableProps) {
   const getRoleBadgeVariant = (role?: string) => {
     switch (role) {
@@ -84,6 +84,7 @@ function UserTable({
         return 'default';
       case 'parent':
         return 'secondary';
+      case 'student':
       case 'learningPartner':
         return 'outline';
       case 'kid':
@@ -166,8 +167,8 @@ function UserTable({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-44">
                   <DropdownMenuItem onSelect={() => onEdit(user)}>Edit</DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => onSendResetLink(user)}>
-                    Reset Link
+                  <DropdownMenuItem onSelect={() => onResetPassword(user)}>
+                    Reset Password
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => onArchive(user)}>Archive</DropdownMenuItem>
@@ -213,12 +214,11 @@ export function UserList() {
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // Reset link dialog state
-  const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
-  const [resetLinkUser, setResetLinkUser] = useState<User | null>(null);
-  const [generatedResetLink, setGeneratedResetLink] = useState<string | null>(
-    null
-  );
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isResetPasswordSaving, setIsResetPasswordSaving] = useState(false);
 
   // ---------------- Fetch Users ----------------
   const fetchUsers = async (reset = false) => {
@@ -317,8 +317,13 @@ export function UserList() {
     return users.filter((user) => {
       const normalizedRole = String(user.role || '').toLowerCase();
       const normalizedStatus = String(user.status || '').toLowerCase();
+      const normalizedRoleFilter = String(roleFilter).toLowerCase();
       const matchesRole =
-        roleFilter === 'all' || normalizedRole === String(roleFilter).toLowerCase();
+        normalizedRoleFilter === 'all'
+          ? true
+          : normalizedRoleFilter === 'students'
+            ? normalizedRole === 'kid' || normalizedRole === 'student'
+            : normalizedRole === normalizedRoleFilter;
       const matchesStatus =
         statusFilter === 'all' || normalizedStatus === String(statusFilter).toLowerCase();
 
@@ -330,6 +335,42 @@ export function UserList() {
       return matchesRole && matchesStatus && matchesSearch;
     });
   }, [users, roleFilter, statusFilter, searchTerm]);
+
+  const roleTabs = useMemo(() => {
+    const total = roleCounts.admin + roleCounts.teacher + roleCounts.parent + roleCounts.students;
+    return [
+      {
+        key: 'all',
+        label: 'Overall List',
+        count: total,
+        activeClass: 'from-slate-700 to-slate-500',
+      },
+      {
+        key: 'admin',
+        label: 'Admin',
+        count: roleCounts.admin,
+        activeClass: 'from-rose-500 to-orange-400',
+      },
+      {
+        key: 'teacher',
+        label: 'Teacher',
+        count: roleCounts.teacher,
+        activeClass: 'from-blue-600 to-cyan-500',
+      },
+      {
+        key: 'parent',
+        label: 'Parent',
+        count: roleCounts.parent,
+        activeClass: 'from-fuchsia-500 to-pink-500',
+      },
+      {
+        key: 'students',
+        label: 'Student',
+        count: roleCounts.students,
+        activeClass: 'from-emerald-500 to-teal-500',
+      },
+    ] as const;
+  }, [roleCounts.admin, roleCounts.teacher, roleCounts.parent, roleCounts.students]);
 
   // Initial fetch
   useEffect(() => {
@@ -468,38 +509,71 @@ export function UserList() {
     }
   };
 
-  // ---------------- Reset Link ----------------
-  const handleSendResetLink = async (user: User) => {
-    if (!user.email) {
+  const closeResetPasswordDialog = () => {
+    setShowResetPasswordDialog(false);
+    setResetPasswordUser(null);
+    setNewPassword('');
+    setConfirmPassword('');
+    setIsResetPasswordSaving(false);
+  };
+
+  const handleOpenResetPassword = (user: User) => {
+    setResetPasswordUser(user);
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowResetPasswordDialog(true);
+  };
+
+  const handleResetPassword = async () => {
+    const targetUid = resetPasswordUser?.uid || resetPasswordUser?.id;
+    if (!targetUid) {
       toast({
-        title: 'No email',
-        description: 'Cannot generate reset link without an email.',
+        title: 'Missing user',
+        description: 'Could not identify this user for password reset.',
         variant: 'destructive',
       });
       return;
     }
 
-    setResetLinkUser(user);
-    setGeneratedResetLink(null);
-    setShowResetLinkDialog(true);
-
-    try {
-      const fn = httpsCallable(functions, 'adminGenerateResetLink');
-      const res = await fn({ email: user.email });
-      const data = res.data as { resetLink?: string };
-
-      setGeneratedResetLink(data?.resetLink || null);
+    if (!newPassword || newPassword.length < 8) {
       toast({
-        title: 'Reset link generated',
-        description: 'Copy and send this link to the user.',
-      });
-    } catch (err: any) {
-      console.error('Reset link failed:', err);
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to generate reset link.',
+        title: 'Invalid password',
+        description: 'Password must be at least 8 characters.',
         variant: 'destructive',
       });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Passwords do not match',
+        description: 'Please re-enter matching passwords.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsResetPasswordSaving(true);
+    try {
+      const fn = httpsCallable(functions, 'adminResetPassword');
+      await fn({
+        uid: targetUid,
+        newPassword,
+      });
+      toast({
+        title: 'Password updated',
+        description: `Password updated for ${resetPasswordUser?.email || 'user'}.`,
+      });
+      closeResetPasswordDialog();
+    } catch (err: any) {
+      console.error('Password reset failed:', err);
+      toast({
+        title: 'Reset failed',
+        description: err?.message || 'Failed to update password.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsResetPasswordSaving(false);
     }
   };
 
@@ -515,12 +589,8 @@ export function UserList() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Users</h2>
-
+      <div className="flex justify-end items-center">
         <div className="flex gap-2 items-center">
-          <GmailParentsBucket />
-
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button>Create New User</Button>
@@ -543,20 +613,27 @@ export function UserList() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Role Tabs */}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
-          Admin: {roleCounts.admin}
-        </Button>
-        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
-          Teacher: {roleCounts.teacher}
-        </Button>
-        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
-          Parent: {roleCounts.parent}
-        </Button>
-        <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-xs" disabled>
-          Students: {roleCounts.students}
-        </Button>
+        {roleTabs.map((tab) => {
+          const isActive = roleFilter === tab.key;
+          return (
+            <Button
+              key={tab.key}
+              type="button"
+              size="sm"
+              onClick={() => setRoleFilter(tab.key)}
+              className={`h-8 rounded-full px-3 text-xs font-semibold transition ${
+                isActive
+                  ? `bg-gradient-to-r ${tab.activeClass} text-white shadow-sm`
+                  : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+              variant={isActive ? 'default' : 'outline'}
+            >
+              {tab.label}: {tab.count}
+            </Button>
+          );
+        })}
       </div>
 
       <UserFilters
@@ -576,7 +653,7 @@ export function UserList() {
           onEdit={(u) => setEditingUser(u)}
           onDelete={handleDeleteUser}
           onArchive={handleArchiveUser}
-          onSendResetLink={handleSendResetLink}
+          onResetPassword={handleOpenResetPassword}
         />
 
         {isLoading && <div className="text-center py-4">Loading…</div>}
@@ -603,52 +680,64 @@ export function UserList() {
         />
       )}
 
-      {/* Reset Link Dialog */}
-      <Dialog open={showResetLinkDialog} onOpenChange={setShowResetLinkDialog}>
+      {/* Reset Password Dialog */}
+      <Dialog
+        open={showResetPasswordDialog}
+        onOpenChange={(open) => {
+          if (open) {
+            setShowResetPasswordDialog(true);
+            return;
+          }
+          closeResetPasswordDialog();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Reset Link</DialogTitle>
+            <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription>
-              Generated for {resetLinkUser?.name || 'User'} (
-              {resetLinkUser?.email || '—'}).
+              Set a new password for {resetPasswordUser?.name || 'User'} (
+              {resetPasswordUser?.email || '—'}).
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            {!generatedResetLink ? (
-              <div>Generating reset link…</div>
-            ) : (
-              <>
-                <p className="font-mono text-xs break-all">
-                  {generatedResetLink}
-                </p>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">New Password</label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                placeholder="Enter new password"
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-700">Confirm Password</label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Confirm new password"
+                autoComplete="new-password"
+              />
+            </div>
 
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowResetLinkDialog(false);
-                      setResetLinkUser(null);
-                      setGeneratedResetLink(null);
-                    }}
-                  >
-                    Close
-                  </Button>
+            <p className="text-xs text-slate-500">
+              Minimum 8 characters. Share the new password securely with the user.
+            </p>
 
-                  <Button
-                    onClick={() => {
-                      navigator.clipboard.writeText(generatedResetLink);
-                      toast({
-                        title: 'Copied',
-                        description: 'Reset link copied to clipboard.',
-                      });
-                    }}
-                  >
-                    Copy Link
-                  </Button>
-                </div>
-              </>
-            )}
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={closeResetPasswordDialog}
+                disabled={isResetPasswordSaving}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleResetPassword} disabled={isResetPasswordSaving}>
+                {isResetPasswordSaving ? 'Updating...' : 'Update Password'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

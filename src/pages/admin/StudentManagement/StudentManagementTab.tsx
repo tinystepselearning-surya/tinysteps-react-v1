@@ -48,9 +48,8 @@ export default function StudentManagementTab() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Student Management</h2>
+    <div className="space-y-4">
+      <div className="flex justify-end items-center">
         <CreateStudentForm onStudentCreated={handleStudentCreated} />
       </div>
 

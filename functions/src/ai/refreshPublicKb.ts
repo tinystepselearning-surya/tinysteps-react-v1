@@ -12,6 +12,7 @@ type KbEntry = {
 };
 
 type ChunkDoc = {
+  path: string;
   url: string;
   title: string;
   text: string;
@@ -26,10 +27,60 @@ type ChunkDoc = {
 // --------------------
 const SITE_ORIGIN = "https://tinystepslearning.com";
 const KB_JSON_URL = `${SITE_ORIGIN}/kb.json`;
+const STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "are",
+  "as",
+  "at",
+  "be",
+  "by",
+  "do",
+  "for",
+  "from",
+  "has",
+  "have",
+  "how",
+  "i",
+  "if",
+  "in",
+  "is",
+  "it",
+  "me",
+  "my",
+  "of",
+  "on",
+  "or",
+  "our",
+  "please",
+  "that",
+  "the",
+  "their",
+  "there",
+  "they",
+  "this",
+  "to",
+  "was",
+  "we",
+  "what",
+  "when",
+  "where",
+  "which",
+  "who",
+  "why",
+  "with",
+  "you",
+  "your",
+]);
 
 // Keep list small + high-signal pages first.
 const DEFAULT_PATHS = [
   "/",
+  "/summer-camps",
+  "/summer-camps/phonics-fast-track",
+  "/summer-camps/grammar-fast-track",
+  "/summer-camps/speaking-fast-track",
   "/pricing",
   "/courses",
   "/faq",
@@ -68,13 +119,25 @@ async function assertAdmin(request: any) {
 // --------------------
 // Chunking + tokenizing
 // --------------------
+function normalizeToken(raw: string): string {
+  const token = String(raw || "").trim().toLowerCase();
+  if (!token) return "";
+  if (token.endsWith("ies") && token.length > 4) return `${token.slice(0, -3)}y`;
+  if (token.endsWith("s") && token.length > 4 && !token.endsWith("ss")) {
+    return token.slice(0, -1);
+  }
+  return token;
+}
+
 function tokenize(text: string): string[] {
   return String(text || "")
     .toLowerCase()
     .replace(/[^\w\s]/g, " ")
     .split(/\s+/)
+    .map((t) => normalizeToken(t))
     .filter(Boolean)
     .filter((t) => t.length >= 2)
+    .filter((t) => !STOP_WORDS.has(t))
     .slice(0, 5000);
 }
 
@@ -262,10 +325,11 @@ export const refreshPublicKb = onCall(
           const ref = col.doc(chunkDocId(url, idx));
 
           const doc: ChunkDoc = {
+            path: normalizePath(entry.path),
             url,
             title,
             text: chunk,
-            tokens: uniqTokenCap(tokenize(chunk), 120),
+            tokens: uniqTokenCap(tokenize(chunk), 150),
             active: true,
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             runId,

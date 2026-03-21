@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { applySeo } from '../lib/seo';
 import { useSearchParams, useLocation, Link } from 'react-router-dom';
-import { handleLogin, handleLoginWithGoogle } from '../lib/auth';
+import { handleLogin } from '../lib/auth';
 import type { AuthRole } from '../store/useAuthStore';
 import AuthPageBrandHeader from '../components/common/AuthPageBrandHeader';
 
@@ -96,7 +96,6 @@ export default function LoginPage() {
     });
   }, [title, location.pathname]);
 
-  const showGoogleButton = expectedRole === 'parent';
   const isParent = expectedRole === 'parent';
   const emailPlaceholder = isParent ? 'parent@tinysteps.com' : 'Email';
 
@@ -183,31 +182,6 @@ export default function LoginPage() {
             >
               {isSubmitting ? 'Signing in…' : 'Sign In'}
             </button>
-
-            {/* Google Sign-in for parent role only */}
-            {showGoogleButton && (
-              <button
-                type="button"
-                onClick={async () => {
-                  setError(null);
-                  setIsSubmitting(true);
-                  try {
-                    await handleLoginWithGoogle('parent');
-                  } catch (err: any) {
-                    setError(err?.message || 'Google sign-in failed');
-                  } finally {
-                    setIsSubmitting(false);
-                  }
-                }}
-                className={`h-11 w-full rounded-xl border font-semibold transition ${
-                  isSubmitting
-                    ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
-                    : 'border-slate-300 bg-white text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Sign in with Google
-              </button>
-            )}
           </form>
 
           <p className="mt-5 text-center text-xs text-slate-500">

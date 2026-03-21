@@ -6,7 +6,7 @@ import { functions } from "../../lib/firebaseConfig";
 import { useToast } from "@components/hooks/use-toast";
 
 const DEFAULT_PATHS_TEXT =
-  "/\n/pricing\n/courses\n/faq\n/how-it-works\n/why-tiny-steps\n/curriculum";
+  "/\n/summer-camps\n/summer-camps/phonics-fast-track\n/summer-camps/grammar-fast-track\n/summer-camps/speaking-fast-track\n/pricing\n/courses\n/faq\n/how-it-works\n/why-tiny-steps\n/curriculum";
 
 const RefreshPublicKbTool: React.FC = () => {
   const { toast } = useToast();
@@ -34,9 +34,12 @@ const RefreshPublicKbTool: React.FC = () => {
 
       setResult(res.data ?? null);
 
+      const payload = (res.data as any) || {};
       toast({
         title: "KB refresh completed",
-        description: `Indexed ${(res.data as any)?.pages ?? 0} pages, ${(res.data as any)?.totalChunks ?? 0} chunks.`,
+        description: `Indexed ${payload.pagesOk ?? payload.pagesSelected ?? 0} pages, ${
+          payload.totalChunks ?? 0
+        } chunks.`,
         variant: "default",
       });
     } catch (err: any) {

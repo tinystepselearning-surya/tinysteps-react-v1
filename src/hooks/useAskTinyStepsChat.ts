@@ -1,5 +1,5 @@
 // src/hooks/useAskTinyStepsChat.ts
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { db } from "../lib/firebaseConfig";
 import {
   addDoc,
@@ -14,6 +14,7 @@ import {
   PER_CLASS_PRICE,
   ULTRA_PREMIUM_PRICING,
 } from "../config/pricing";
+import { callAskTinySteps } from "../services/askTinyStepsService";
 
 type ChatRole = "user" | "assistant";
 export type AskChatMessage = { role: ChatRole; content: string };
@@ -58,6 +59,12 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     title: "How it works",
     text:
       "Parents share the child’s age/level. We do a FREE assessment, recommend the best track + level, confirm slots, then start 1:1 sessions with stage-based progress updates.",
+  },
+  {
+    id: "summer_camps",
+    title: "Summer Camp Programs",
+    text:
+      "Tiny Steps Summer Camp is a 10-week online small-group program for ages 4–12. Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). Fast Track Pack enrollment is ₹2,400 per child (70% off from ₹8,000). Sessions are typically 50–60 minutes with worksheets and class recordings. Details: https://tinystepslearning.com/summer-camps",
   },
 ];
 
@@ -125,6 +132,7 @@ type Intent =
   | "single_class" // paid one class
   | "timings"
   | "courses"
+  | "summer_camp"
   | "general";
 
 function detectIntent(q: string): Intent {
@@ -162,6 +170,10 @@ function detectIntent(q: string): Intent {
   ) {
     return "single_class";
   }
+
+  // Summer camp related (keep above generic pricing/courses so "summer camp fees" maps correctly)
+  if (/(summer\s*camp|summer\s*camps|fast\s*track|vacation\s*course|holiday\s*course)/.test(s))
+    return "summer_camp";
 
   // Packages / pricing
   if (/(price|prices|cost|fee|fees|pricing|package|packages|plan|plans)/.test(s))
@@ -239,6 +251,18 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
     };
   }
 
+  if (intent === "summer_camp") {
+    return {
+      text:
+        "Summer Camp is a 10-week online small-group program for ages 4–12.\n" +
+        "Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12).\n" +
+        "Fast Track Pack enrollment: ₹2,400 per child (70% off).\n" +
+        "Details: https://tinystepslearning.com/summer-camps\n\n" +
+        `${wa}`,
+      sourcesUsed: ["summer_camps"],
+    };
+  }
+
   return { text: "", sourcesUsed: [] };
 }
 
@@ -306,6 +330,19 @@ function getOrCreateSessionId(): string {
   return newSessionId();
 }
 
+function historyForCloud(messages: AskChatMessage[], maxMessages = 10): AskChatMessage[] {
+  return messages.slice(-maxMessages).map((m) => ({
+    role: m.role,
+    content: String(m.content || "").slice(0, 2000),
+  }));
+}
+
+function extractSourcesFromReply(text: string): string[] {
+  const urls = String(text || "").match(/https?:\/\/[^\s,)]+/g) || [];
+  const uniq = Array.from(new Set(urls.map((u) => u.trim())));
+  return uniq.slice(0, 3);
+}
+
 // --------------------
 // Hook
 // --------------------
@@ -343,38 +380,57 @@ export function useAskTinyStepsChat() {
 
       let assistantText = "";
       let sourcesUsed: string[] = [];
+      let answeredBy = "local";
 
-      // ✅ Greeting first
+      // ✅ Greeting first (no model call needed)
       if (intent === "greeting") {
         const res = greetingReply();
         assistantText = res.text;
         sourcesUsed = res.sourcesUsed;
-      }
-      // ✅ Guardrails: structured facts for known intents
-      else if (
-        intent === "assessment" ||
-        intent === "pricing" ||
-        intent === "single_class" ||
-        intent === "timings" ||
-        intent === "courses"
-      ) {
-        const res = formatFactsForIntent(intent);
-        assistantText = res.text;
-        sourcesUsed = res.sourcesUsed;
       } else {
-        // General: retrieve from curated KB deterministically
-        const { results, sourcesUsed: s } = retrieve(trimmed, 2);
-        if (results.length > 0) {
-          assistantText = results
-            .map((r) => `• ${r.title}: ${r.text}`)
-            .join("\n\n");
-          assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-          sourcesUsed = s;
+        // Try cloud function first for richer page-grounded responses.
+        try {
+          const conversation = historyForCloud([...messages, userMsg], 10);
+          const cloudReply = await callAskTinySteps(conversation, {
+            useRetrieval: true,
+          });
+          if (cloudReply?.trim()) {
+            assistantText = cloudReply.trim();
+            sourcesUsed = extractSourcesFromReply(assistantText);
+            answeredBy = "cloud";
+          }
+        } catch (cloudErr) {
+          console.warn("AskTinySteps cloud fallback to local:", cloudErr);
+        }
+      }
+
+      // Local deterministic fallback when cloud is unavailable.
+      if (!assistantText) {
+        if (
+          intent === "assessment" ||
+          intent === "pricing" ||
+          intent === "single_class" ||
+          intent === "timings" ||
+          intent === "courses" ||
+          intent === "summer_camp"
+        ) {
+          const res = formatFactsForIntent(intent);
+          assistantText = res.text;
+          sourcesUsed = res.sourcesUsed;
         } else {
-          assistantText =
-            `I don’t have that confirmed in my notes yet.\n\n` +
-            `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
-          sourcesUsed = [];
+          const { results, sourcesUsed: s } = retrieve(trimmed, 2);
+          if (results.length > 0) {
+            assistantText = results
+              .map((r) => `• ${r.title}: ${r.text}`)
+              .join("\n\n");
+            assistantText += `\n\n${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
+            sourcesUsed = s;
+          } else {
+            assistantText =
+              `I don’t have that confirmed in my notes yet.\n\n` +
+              `${ASK_TINYSTEPS_FACTS.whatsappCtaText}: ${ASK_TINYSTEPS_FACTS.whatsappLink}`;
+            sourcesUsed = [];
+          }
         }
       }
 
@@ -414,6 +470,7 @@ export function useAskTinyStepsChat() {
           pagePath,
           sourcesUsed,
           intent,
+          answeredBy,
         });
       } catch (e) {
         // Do not break chat UX if logging fails
@@ -425,7 +482,7 @@ export function useAskTinyStepsChat() {
         setLoading(false);
       }
     },
-    [input, loading, sessionId]
+    [input, loading, sessionId, messages]
   );
 
   return { messages, input, setInput, loading, error, sendMessage, resetChat };

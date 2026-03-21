@@ -260,14 +260,14 @@ export default function CourseManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Course Management</h2>
+        <h2 className="text-2xl font-bold leading-tight tracking-tight">Course Management</h2>
 
         <Button type="button" onClick={() => setOpen(true)}>Create New Course</Button>
       </div>
 
-      <Card className="p-6">
+      <Card className="p-4">
         <CourseList
           onEditCourse={openEditCourse}
           onDeleteCourse={handleDeleteCourse}

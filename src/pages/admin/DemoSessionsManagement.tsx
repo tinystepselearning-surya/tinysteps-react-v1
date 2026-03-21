@@ -1401,7 +1401,7 @@ export default function DemoSessionsManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card className="border-sky-100 bg-gradient-to-b from-sky-50/70 to-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

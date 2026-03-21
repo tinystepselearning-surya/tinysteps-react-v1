@@ -723,15 +723,15 @@ export default function LessonLibraryAdminPage() {
   }, [auditTeacherQuery, teacherDailyAccess]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
-      <header className="mb-6">
-        <h1 className="text-2xl font-bold">Lesson Library Admin</h1>
+    <div className="space-y-4">
+      <header className="mb-4">
+        <h1 className="text-2xl font-bold leading-tight tracking-tight">Lesson Library Admin</h1>
         <p className="text-sm text-gray-600">
           Store Canva view/embed links for secure teacher playback. Links are shown only to logged-in teachers/admins.
         </p>
       </header>
 
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mb-6">
+      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Create Folder</h3>
           <form onSubmit={handleCreateFolder} className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -848,7 +848,7 @@ export default function LessonLibraryAdminPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">Existing Folders</h3>
@@ -1109,7 +1109,7 @@ export default function LessonLibraryAdminPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 md:grid-cols-2 mt-6">
+      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3 gap-3">
             <h3 className="font-semibold">Lesson Daily Audit</h3>

@@ -8,6 +8,7 @@ import { CalendarCheck, CalendarClock, ClipboardList, Users, Wallet } from 'luci
 import { TeacherHeader } from './components/layout/TeacherHeader';
 import { TeacherSidebar } from './components/layout/TeacherSidebar';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
+import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -79,6 +80,7 @@ const TAB_ITEMS = [
   { id: 'students', label: 'Students' },
   { id: 'earnings', label: 'Earnings' },
   { id: 'schedule', label: 'Schedule' },
+  { id: 'holidays', label: 'Holiday Calendar' },
   { id: 'profile', label: 'Profile' },
 ];
 const VALID_TEACHER_TAB_IDS = new Set(TAB_ITEMS.map((item) => item.id));
@@ -278,6 +280,9 @@ export default function TeacherDashboard() {
               <React.Suspense fallback={<div className="text-sm text-gray-600">Loading profile…</div>}>
                 <TeacherProfile teacherId={teacherId} />
               </React.Suspense>
+            </TabsContent>
+            <TabsContent value="holidays">
+              <HolidayCalendar2026 />
             </TabsContent>
             {/* Lesson Library (tab) */}
             <TabsContent value="lessons">

@@ -4,7 +4,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../lib/firebaseConfig';
-import { Menu } from 'lucide-react';
+import { LogOut, Menu } from 'lucide-react';
 
 interface HeaderProps {
   onOpenMenu?: () => void;
@@ -24,9 +24,9 @@ export default function Header({ onOpenMenu }: HeaderProps) {
   };
 
   return (
-    <header className="rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm sm:px-4">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 px-3 py-1.5 shadow-sm backdrop-blur">
+      <div className="mx-auto flex h-11 w-full max-w-[1280px] items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
           {onOpenMenu ? (
             <Button
               type="button"
@@ -39,10 +39,12 @@ export default function Header({ onOpenMenu }: HeaderProps) {
               <Menu className="h-4 w-4" />
             </Button>
           ) : null}
-          <p className="text-sm font-medium text-slate-700">Admin</p>
+          <span className="truncate">Tiny Steps Admin Workspace</span>
         </div>
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-            Logout
+
+        <Button variant="outline" onClick={handleLogout} className="h-8 gap-2 px-3">
+          <LogOut className="h-4 w-4" />
+          <span className="hidden sm:inline">Logout</span>
         </Button>
       </div>
     </header>

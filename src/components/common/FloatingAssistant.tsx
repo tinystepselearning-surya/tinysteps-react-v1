@@ -112,10 +112,12 @@ export default function FloatingAssistant() {
     >
       {promptVisible || askOpen ? (
         <motion.div
-          className="max-w-[260px] rounded-3xl border border-slate-200 bg-white/96 p-3 text-sm text-gray-800 shadow-[0_18px_50px_rgba(15,23,42,0.16)] backdrop-blur"
+          className="relative max-w-[285px] overflow-hidden rounded-3xl border border-cyan-100/70 bg-white/95 p-3 text-sm text-gray-800 shadow-[0_20px_60px_rgba(15,23,42,0.2)] backdrop-blur"
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
         >
+          <div className="pointer-events-none absolute -top-14 -right-10 h-28 w-28 rounded-full bg-cyan-200/50 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 h-28 w-28 rounded-full bg-orange-200/50 blur-2xl" />
           <div className="mb-2 flex items-center justify-end gap-1">
             <button
               type="button"
@@ -134,7 +136,8 @@ export default function FloatingAssistant() {
           </div>
 
           <div className="flex items-start gap-3">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff8f5c] to-[#59c3ff] text-base text-white shadow-sm">
+            <span className="relative inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ff8f5c] via-[#ffb36a] to-[#59c3ff] text-base text-white shadow-sm">
+              <span className="absolute inset-0 rounded-2xl border border-white/50" />
               AI
             </span>
             <div>
@@ -143,7 +146,7 @@ export default function FloatingAssistant() {
               <div className="mt-2 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white"
+                  className="rounded-full bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-3 py-1 text-xs font-semibold text-white shadow-sm"
                   onClick={openAskTinySteps}
                 >
                   Ask TinySteps AI
@@ -157,25 +160,36 @@ export default function FloatingAssistant() {
         </motion.div>
       ) : null}
 
-      <div className="rounded-[28px] border border-slate-200 bg-white/96 p-2 shadow-[0_20px_55px_rgba(15,23,42,0.18)] backdrop-blur">
+      <motion.div
+        className="relative overflow-hidden rounded-[28px] border border-cyan-100/70 bg-white/92 p-2 shadow-[0_22px_58px_rgba(15,23,42,0.22)] backdrop-blur"
+        animate={{ y: [0, -1.5, 0] }}
+        transition={{ duration: 4.4, repeat: Infinity, ease: 'easeInOut' }}
+      >
+        <div className="pointer-events-none absolute -left-10 -top-10 h-20 w-20 rounded-full bg-cyan-200/40 blur-2xl" />
+        <div className="pointer-events-none absolute -right-10 -bottom-8 h-20 w-20 rounded-full bg-orange-200/40 blur-2xl" />
         <div className="flex items-center gap-2">
           <motion.button
             type="button"
-            className="flex min-w-[148px] items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-gray-900 shadow ring-1 ring-slate-200 transition sm:text-sm"
-            whileHover={{ y: -1 }}
+            className="group flex min-w-[182px] items-center gap-2 rounded-full bg-gradient-to-r from-white via-cyan-50 to-orange-50 px-3 py-2 text-xs font-semibold text-gray-900 shadow ring-1 ring-cyan-200/70 transition sm:text-sm"
+            whileHover={{ y: -1, scale: 1.01 }}
             onClick={openAskTinySteps}
             aria-label="Ask TinySteps AI"
           >
-            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#ff8f5c] to-[#59c3ff] text-white">
+            <span className="relative inline-flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#ff8f5c] via-[#ffb36a] to-[#59c3ff] text-white shadow-sm">
+              <span className="absolute inset-0 animate-ping rounded-full bg-cyan-200/60 opacity-40" />
               AI
             </span>
-            <span>Ask TinySteps AI</span>
+            <span className="leading-tight">
+              <span className="block">Ask TinySteps AI</span>
+              <span className="hidden text-[10px] font-medium text-slate-500 sm:block">Live assistant</span>
+            </span>
+            <span className="ml-auto h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]" />
           </motion.button>
 
           <motion.button
             type="button"
             className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg"
-            whileHover={{ scale: 1.03 }}
+            whileHover={{ scale: 1.05 }}
             onClick={openWhatsApp}
             aria-label="Chat on WhatsApp"
             title="Chat on WhatsApp"
@@ -185,7 +199,7 @@ export default function FloatingAssistant() {
             </svg>
           </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       <AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />
     </div>

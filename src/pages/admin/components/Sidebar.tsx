@@ -21,19 +21,21 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
     { id: 'demo-sessions', label: 'Demo Sessions', icon: '🎯' },
     { id: 'lessons', label: 'Lesson Library', icon: '📖' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },
+    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'holidays', label: 'Holiday Calendar', icon: '🗓️' },
     { id: 'teacher-payments', label: 'Teacher Payments', icon: '💸' },
     { id: 'parent-payments', label: 'Parent Payments', icon: '💳' },
   ];
 
   return (
-    <aside className={cn('w-64 bg-gray-800 text-white p-6', className)}>
-      <h2 className="text-2xl font-bold mb-8">Admin Panel</h2>
-      <nav className="space-y-2">
+    <aside className={cn('w-60 border-r border-slate-700 bg-slate-900 text-white px-3 py-4', className)}>
+      <h2 className="mb-4 px-2 text-xl font-semibold tracking-tight">Admin Panel</h2>
+      <nav className="space-y-1">
         {tabs.map((tab) => (
           <Button
             key={tab.id}
             variant={selectedTab === tab.id ? 'default' : 'ghost'}
-            className={`w-full justify-start text-left ${
+            className={`h-9 w-full justify-start rounded-lg px-3 text-left text-sm font-medium ${
               selectedTab === tab.id
                 ? 'bg-blue-600 hover:bg-blue-700'
                 : 'text-gray-300 hover:text-white hover:bg-gray-700'

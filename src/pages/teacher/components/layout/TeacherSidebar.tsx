@@ -5,6 +5,7 @@ import {
   CalendarCheck,
   CalendarClock,
   CalendarDays,
+  CalendarRange,
   ClipboardList,
   Users,
   Wallet,
@@ -27,6 +28,7 @@ const items = [
   { id: 'students', label: 'My Students', icon: Users },
   { id: 'earnings', label: 'Earnings', icon: Wallet },
   { id: 'schedule', label: 'Schedule', icon: CalendarDays },
+  { id: 'holidays', label: 'Holiday Calendar', icon: CalendarRange },
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ];
 

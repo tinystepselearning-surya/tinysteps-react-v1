@@ -34,6 +34,7 @@ import ParentPayments from './ParentPayments';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
+import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
 
 // ---------- Admin stats fetcher ----------
 const fetchAdminStats = async (): Promise<AdminStats> => {
@@ -312,6 +313,7 @@ export default function AdminDashboard() {
       'demo-sessions',
       'lessons',
       'analytics',
+      'holidays',
       'teacher-payments',
       'parent-payments',
       'settings',
@@ -342,10 +344,8 @@ export default function AdminDashboard() {
   if (!canViewAdmin) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
-    <div className="mobile-app-scroll min-h-screen flex flex-col overflow-x-hidden bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-gray-900 lg:bg-gray-50">
-      <div className="sticky top-0 z-30 bg-slate-50/80 px-2 pt-[env(safe-area-inset-top)] backdrop-blur lg:static lg:bg-transparent lg:px-0 lg:pt-0">
-        <Header onOpenMenu={() => setMobileMenuOpen(true)} />
-      </div>
+    <div className="mobile-app-scroll min-h-screen flex flex-col overflow-x-hidden bg-slate-50 dark:bg-gray-900">
+      <Header onOpenMenu={() => setMobileMenuOpen(true)} />
 
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[320px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-0 sm:rounded-none">
@@ -362,15 +362,19 @@ export default function AdminDashboard() {
       </Dialog>
 
       <div className="flex flex-1 min-w-0 pb-24 lg:pb-0">
-        <Sidebar selectedTab={selectedTab} onTabChange={setSelectedTab} className="hidden lg:block" />
+        <Sidebar
+          selectedTab={selectedTab}
+          onTabChange={setSelectedTab}
+          className="hidden h-[calc(100vh-57px)] overflow-y-auto lg:sticky lg:top-[57px] lg:block"
+        />
 
-        <main className="flex-1 min-w-0 p-4 sm:p-6 md:p-8 overflow-x-hidden">
+        <main className="flex-1 min-w-0 overflow-x-hidden p-3 sm:p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
           {isSuperUser && (
-            <Card className="p-4 mb-6">
+            <Card className="mb-4 p-3">
               <div className="flex gap-2 flex-wrap">
                 {ROLE_SHORTCUTS.map((r) => (
-                  <Button key={r.id} onClick={() => navigate(r.path)}>
+                  <Button key={r.id} size="sm" onClick={() => navigate(r.path)}>
                     {r.label}
                   </Button>
                 ))}
@@ -379,51 +383,55 @@ export default function AdminDashboard() {
           )}
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsContent value="users">
+            <TabsContent value="users" className="mt-0">
               <UserManagement />
             </TabsContent>
 
-            <TabsContent value="students">
+            <TabsContent value="students" className="mt-0">
               <StudentManagementTab />
             </TabsContent>
 
             {/* ✅ FIXED: pass required prop */}
-            <TabsContent value="enrollments">
+            <TabsContent value="enrollments" className="mt-0">
               <EnrollmentsList reloadKey={enrollmentsReloadKey} />
             </TabsContent>
 
-            <TabsContent value="relationships">
+            <TabsContent value="relationships" className="mt-0">
               <RelationshipManagement />
             </TabsContent>
 
-            <TabsContent value="courses">
+            <TabsContent value="courses" className="mt-0">
               <CourseManagement />
             </TabsContent>
 
-            <TabsContent value="demo-sessions">
+            <TabsContent value="demo-sessions" className="mt-0">
               <DemoSessionsManagement />
             </TabsContent>
 
-            <TabsContent value="lessons">
+            <TabsContent value="lessons" className="mt-0">
               <LessonLibrary />
             </TabsContent>
 
-            <TabsContent value="analytics">
-              <div className="space-y-6">
+            <TabsContent value="analytics" className="mt-0">
+              <div className="space-y-4">
                 <AdminOverviewCard />
                 <AnalyticsDashboard />
               </div>
             </TabsContent>
 
-            <TabsContent value="teacher-payments">
+            <TabsContent value="holidays" className="mt-0">
+              <HolidayCalendar2026 />
+            </TabsContent>
+
+            <TabsContent value="teacher-payments" className="mt-0">
               <TeacherPayments />
             </TabsContent>
 
-            <TabsContent value="parent-payments">
+            <TabsContent value="parent-payments" className="mt-0">
               <ParentPayments />
             </TabsContent>
 
-            <TabsContent value="settings">
+            <TabsContent value="settings" className="mt-0">
               <div className="space-y-4">
                 <InsightsKillSwitch />
                 <RefreshPublicKbTool />

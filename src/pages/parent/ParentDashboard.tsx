@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import AppShellHeader from "../../components/common/AppShellHeader";
 import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
+import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
  
 import { masteryKeyFromValue, masteryLabel, masteryPctFromKey, type MasteryKey } from "../../lib/mastery";
 import {
@@ -63,6 +64,7 @@ type TabKey =
   | "games-progress"
   | "skills"
   | "classes"
+  | "holidays"
   | "profile"
   | "payments";
 
@@ -78,6 +80,7 @@ const parentNavItems: ParentNavItem[] = [
   { id: "games-progress", label: "Games Progress", icon: Gamepad2 },
   { id: "skills", label: "Skills", icon: Sparkles },
   { id: "classes", label: "Classes", icon: CalendarDays },
+  { id: "holidays", label: "Holiday Calendar", icon: CalendarDays },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
 
@@ -87,6 +90,7 @@ const parentTabLabels: Record<TabKey, string> = {
   "games-progress": "Games Progress",
   skills: "Skills",
   classes: "Classes",
+  holidays: "Holiday Calendar",
   profile: "Profile",
   payments: "Payments",
 };
@@ -106,6 +110,7 @@ function safeTab(value: string | null): TabKey {
     "games-progress",
     "skills",
     "classes",
+    "holidays",
     "profile",
     "payments",
   ];
@@ -4965,6 +4970,12 @@ export default function ParentDashboard() {
               </Dialog>
 
             </Card>
+          </div>
+        )}
+
+        {activeTab === "holidays" && (
+          <div className="space-y-4">
+            <HolidayCalendar2026 />
           </div>
         )}
 

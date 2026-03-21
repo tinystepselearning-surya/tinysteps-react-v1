@@ -14,6 +14,7 @@ const MENU_ITEMS = [
   { id: 'tickets', label: 'Support Tickets', icon: '🎫' },
   { id: 'performance', label: 'Performance', icon: '📈' },
   { id: 'region', label: 'Regional Data', icon: '🌍' },
+  { id: 'holidays', label: 'Holiday Calendar', icon: '🗓️' },
 ];
 
 export const LPSidebar: FC<LPSidebarProps> = ({ active, onSelect }) => {

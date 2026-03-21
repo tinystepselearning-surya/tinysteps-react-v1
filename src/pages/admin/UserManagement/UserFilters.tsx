@@ -39,12 +39,12 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
           <SelectValue placeholder="Filter by role" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Roles</SelectItem>
+          <SelectItem value="all">Overall List</SelectItem>
           <SelectItem value="admin">Admin</SelectItem>
           <SelectItem value="teacher">Teacher</SelectItem>
           <SelectItem value="parent">Parent</SelectItem>
+          <SelectItem value="students">Student</SelectItem>
           <SelectItem value="learningPartner">Learning Partner</SelectItem>
-          <SelectItem value="kid">Kid</SelectItem>
         </SelectContent>
       </Select>
       <Select value={statusFilter} onValueChange={(v: string) => setStatusFilter(v)}>
