@@ -5,6 +5,10 @@ import { applySeo } from '../lib/seo';
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
 const SUMMER_CAMP_BATCH_CAP = 8;
+const SUMMER_CAMP_PLANNED_CLASS_COUNT = 24;
+const SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE = Math.round(
+  SUMMER_CAMP_ENROLLMENT_PRICE / SUMMER_CAMP_PLANNED_CLASS_COUNT
+);
 const SUMMER_CAMP_FAST_TRACK_TEXT = "Hi, I'm looking for a summer camp program, fast track pack.";
 
 function getWhatsAppUrl(message: string) {
@@ -172,7 +176,7 @@ const FAQS = [
   {
     question: 'What is included in the ₹2,400 Fast Track Pack fee?',
     answer:
-      `The summer camp list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. This includes entry into the 10-week group camp, 50–60 minute live online classes, phonics + grammar + speaking brush-up, effective worksheets, and class recordings.`,
+      `The summer camp list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. This includes entry into the 10-week group camp, 50–60 minute live online classes, phonics + grammar + speaking brush-up, effective worksheets, and class recordings. At the planned ${SUMMER_CAMP_PLANNED_CLASS_COUNT}-session schedule, this works out to about ₹${formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)} per class.`,
   },
   {
     question: 'What is the class duration and support material?',
@@ -209,21 +213,55 @@ const FAQS = [
     answer:
       'Yes. Parents can choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track. All tracks follow Tiny Steps core curriculum with track-specific emphasis.',
   },
+  {
+    question: 'Is this summer camp suitable for beginners?',
+    answer:
+      'Yes. Beginners can join. We do a quick level check before placement and group children by readiness so they are not overwhelmed.',
+  },
+  {
+    question: 'How are phonics, grammar, and speaking levels decided?',
+    answer:
+      'Level placement happens through a quick pre-enrollment check. We review your child’s current ability and assign the right fast-track level for better participation and outcomes.',
+  },
+  {
+    question: 'Do you offer a trial class before enrollment?',
+    answer:
+      'We start with a quick level check and counselor guidance. If you want a preview of how classes run, message us on WhatsApp and we will share the current onboarding options.',
+  },
+  {
+    question: 'What is the teacher-to-student ratio in this camp?',
+    answer:
+      `Each batch is limited to ${SUMMER_CAMP_BATCH_CAP} students, which keeps the teacher-to-student ratio focused and allows active speaking, reading turns, and in-class correction.`,
+  },
+  {
+    question: 'Can parents outside India enroll in this summer camp?',
+    answer:
+      'Yes. Classes are online, so global families can join based on available batch windows and time-zone fit.',
+  },
+  {
+    question: 'Is there a completion certificate or final summary?',
+    answer:
+      'Parents receive a clear summary of track completion and next-step recommendations at the end of the camp. Ask the team during enrollment for the latest certificate policy.',
+  },
 ];
 
 const SUMMER_CAMP_SEO_KEYWORDS = [
   'premium summer camp for kids',
+  'best online summer camp for kids in india',
   'online summer camp for kids in india',
+  'small-group online summer camp',
   'small group summer camp for kids',
   'phonics summer camp online',
   'grammar summer camp for kids',
   'public speaking summer camp for kids',
+  'english summer program for children',
   'summer camp with limited batch size',
   'online english summer camp for children',
   'best summer camp for phonics and reading',
   'interactive summer camp for kids',
   'summer camp fees for kids',
   'summer camp fees india',
+  'summer camp near me online',
   'class recordings for kids online classes',
   'worksheets for kids summer camp',
 ];
@@ -268,7 +306,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
   {
     query: 'Summer camp fees for kids',
     answer:
-      `Fast Track Pack list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. Transparent fee. No confusing package math.`,
+      `Fast Track Pack list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. Planned ${SUMMER_CAMP_PLANNED_CLASS_COUNT} live sessions means about ₹${formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)} per class.`,
     cta: 'Check fee and enroll',
     href: '/summer-camps#enrollment',
     cardClass: 'from-[#eefcf2] via-[#f7fff9] to-[#e8fbff] border-emerald-200/70',
@@ -653,12 +691,6 @@ export default function SummerCampsPage() {
               >
                 Chat on WhatsApp
               </a>
-              <Link
-                to="/contact"
-                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-300 bg-white/90 px-5 py-2.5 text-sm font-semibold text-slate-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-slate-400 hover:bg-white sm:w-auto"
-              >
-                Ask for batch timing
-              </Link>
             </div>
           </div>
         </section>
@@ -676,6 +708,10 @@ export default function SummerCampsPage() {
             •{' '}
             <Link to="/summer-camps#batches" className="font-semibold text-emerald-700 hover:text-emerald-800">
               View group batches
+            </Link>{' '}
+            •{' '}
+            <Link to="/summer-camps#fee-breakdown" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              Fee breakdown
             </Link>{' '}
             •{' '}
             <Link to="/summer-camps#faqs" className="font-semibold text-emerald-700 hover:text-emerald-800">
@@ -836,6 +872,89 @@ export default function SummerCampsPage() {
                   <p className="mt-1 text-sm leading-relaxed text-slate-700">{item.detail}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="fee-breakdown" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-10 sm:px-6 sm:pb-12">
+          <div className="rounded-3xl border border-emerald-200/70 bg-gradient-to-br from-[#ebfff7] via-white to-[#edf8ff] p-5 shadow-sm sm:p-6 md:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
+              Transparent Pricing
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+              Clear fee breakdown for the summer fast-track pack
+            </h2>
+            <p className="mt-3 text-sm text-slate-700">
+              No confusing package math. We show the list fee and the effective fee clearly so parents can decide quickly.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">List fee</p>
+                <p className="mt-2 text-2xl font-black text-slate-900 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</p>
+              </div>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Effective price</p>
+                <p className="mt-2 text-2xl font-black text-emerald-800">₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Planned sessions</p>
+                <p className="mt-2 text-2xl font-black text-slate-900">{SUMMER_CAMP_PLANNED_CLASS_COUNT}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Effective per class</p>
+                <p className="mt-2 text-2xl font-black text-slate-900">₹{formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-xs text-slate-600">
+              Session count may vary slightly by holidays and batch calendar.
+            </p>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
+          <div className="rounded-3xl border border-slate-200/80 bg-gradient-to-br from-[#fff9ef] via-white to-[#eef8ff] p-5 shadow-sm sm:p-6 md:p-8">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
+              Parent Decision Guide
+            </p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+              How to choose the best online summer camp for kids in India
+            </h2>
+            <p className="mt-3 text-sm text-slate-700">
+              Before you enroll in any small-group online summer camp, compare class size, teaching quality, and outcome clarity.
+            </p>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">Check interaction, not just marketing</h3>
+                <p className="mt-2 text-sm text-slate-700">
+                  Ask how much real speaking and reading time each child gets during a live class.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">Check the learning path</h3>
+                <p className="mt-2 text-sm text-slate-700">
+                  Prefer camps with a structured week-by-week skill plan instead of random activities.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <h3 className="text-sm font-semibold text-slate-900">Check revision support</h3>
+                <p className="mt-2 text-sm text-slate-700">
+                  Worksheets and recordings help children revise after class and maintain continuity.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link
+                to="/best-online-phonics-classes-india"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-emerald-300 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+              >
+                Compare online phonics options
+              </Link>
+              <Link
+                to="/blog"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Read parent guides
+              </Link>
             </div>
           </div>
         </section>
