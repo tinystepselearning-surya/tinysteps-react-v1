@@ -776,15 +776,24 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
         </DialogContent>
       </Dialog>
 
-      {detailOpen && selectedEnrollmentId && (
-        <EnrollmentDetailView
-          enrollmentId={selectedEnrollmentId}
-          onClose={() => {
-            setDetailOpen(false);
-            setSelectedEnrollmentId(null);
-          }}
-        />
-      )}
+      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Enrollment Details & Financial Management</DialogTitle>
+          </DialogHeader>
+          {selectedEnrollmentId && (
+            <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
+              <EnrollmentDetailView
+                enrollmentId={selectedEnrollmentId}
+                onClose={() => {
+                  setDetailOpen(false);
+                  setSelectedEnrollmentId(null);
+                }}
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
