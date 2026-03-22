@@ -346,7 +346,7 @@ export default function AdminDashboard() {
   if (!canViewAdmin) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
-    <div className="mobile-app-scroll min-h-screen flex flex-col overflow-x-hidden bg-slate-50 dark:bg-gray-900">
+    <div className="mobile-app-scroll h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-gray-900">
       <Header onOpenMenu={() => setMobileMenuOpen(true)} />
 
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -363,14 +363,14 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-1 min-w-0 pb-24 lg:pb-0">
+      <div className="flex flex-1 min-w-0 min-h-0 pb-24 lg:pb-0">
         <Sidebar
           selectedTab={selectedTab}
           onTabChange={setSelectedTab}
           className="hidden h-[calc(100vh-57px)] overflow-y-auto lg:sticky lg:top-[57px] lg:block"
         />
 
-        <main className="flex-1 min-w-0 overflow-x-hidden p-3 sm:p-4 lg:p-5">
+        <main className="flex min-h-0 flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-3 sm:p-4 lg:p-5">
           <div className="mx-auto w-full max-w-[1280px] min-w-0">
           {isSuperUser && (
             <Card className="mb-4 p-3">

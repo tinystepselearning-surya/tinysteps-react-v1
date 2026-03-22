@@ -1,70 +1,49 @@
 // @ts-nocheck
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
 import Meta from '../components/common/Meta';
-import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../constants/publicContact';
-import { trackEvent } from '../lib/analytics';
-import { useAuthStore } from '../store/useAuthStore';
-
-const phone = '+91-96183-98383';
-const whatsappLink = 'https://wa.me/919618398383';
+import ElectricBorder from '../components/ui/ElectricBorder';
+import SoftAurora from '../components/ui/SoftAurora';
 
 const ContactPage: FC = () => {
-  const { user } = useAuthStore();
   return (
-    <div className="page-gradient min-h-screen">
-    <Meta title="Contact Tiny Steps Online School" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and stage-based parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/contact" />
-      <section className="relative px-6 pt-28 pb-12">
-        <div className="mx-auto max-w-4xl text-center glass-panel soft-grid px-8 py-10">
-          <div className="gradient-chip mx-auto w-max">We're here for parents worldwide</div>
-          <h1 className="mt-3 text-3xl font-bold text-gray-900 md:text-4xl">Contact Tiny Steps Online School</h1>
-          <p className="mt-3 text-gray-600">Call, WhatsApp, or send a message. We respond within 12 working hours.</p>
-        </div>
-      </section>
-      <section className="mx-auto max-w-6xl px-6 pb-20 grid gap-10 lg:grid-cols-2">
-        <div className="space-y-6">
-          <div className="glass-panel p-6">
-            <h2 className="text-xl font-semibold text-gray-900">Direct lines</h2>
-            <ul className="mt-4 space-y-3 text-gray-700">
-              <li><span className="font-semibold">Phone:</span> <a href="tel:+919618398383" className="text-tiny-blue-600">{phone}</a></li>
-              {!user && (
-                <li><span className="font-semibold">WhatsApp:</span> <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={() => trackEvent('cta_click', { location: 'contact', label: 'whatsapp_chat' })} className="text-tiny-green-600">Chat on WhatsApp - opens new window</a></li>
-              )}
-              {user && (
-                <li><span className="font-semibold">Support:</span> <a href={PUBLIC_CONTACT_MAILTO} className="text-tiny-blue-600">Email our support team</a></li>
-              )}
-              <li><span className="font-semibold">Email:</span> <a href={PUBLIC_CONTACT_MAILTO} className="text-tiny-blue-600">{PUBLIC_CONTACT_EMAIL}</a></li>
-              <li>
-                <span className="font-semibold">Location:</span> Hyderabad, Telangana (online-only; serving families across the globe)
-              </li>
-              <li><span className="font-semibold">Hours:</span> Mon–Sun 7 AM – 12 AM IST</li>
-            </ul>
-          </div>
-          <div className="glass-panel p-6">
-            <h3 className="text-lg font-semibold text-gray-900">Need help fast?</h3>
-            <p className="mt-3 text-sm text-gray-600">Book a free trial class, ask curriculum questions, or request pricing breakdowns. A mentor will guide you step by step.</p>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm">
-              <span className="rounded-full bg-white/70 px-3 py-1">Live 1:1 lessons</span>
-              <span className="rounded-full bg-white/70 px-3 py-1">Teacher match guarantee</span>
-              <span className="rounded-full bg-white/70 px-3 py-1">Secure payments</span>
-            </div>
-          </div>
-        </div>
-        <div className="space-y-6">
-          <div className="glass-panel p-6">
-            <h2 className="text-xl font-semibold text-gray-900">Book Free Assessment Class</h2>
-            <p className="mt-3 text-sm text-gray-600">
-              Tap below to book your free assessment on the home page.
-            </p>
-            <Link
-              to="/?book=1"
-              onClick={() => trackEvent('cta_click', { location: 'contact', label: 'book_assessment' })}
-              className="mt-6 block w-full rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 py-3 text-center text-white font-semibold hover:shadow-lg transition"
-            >
-              Book Free Assessment
-            </Link>
-          </div>
+    <div className="relative overflow-hidden bg-[#060a16]">
+      <Meta title="Contact Tiny Steps Online School" description="Premium 1:1 online English school for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice and stage-based parent progress insights. Free assessment class; flexible monthly plans." canonical="https://tinystepslearning.com/contact" />
+      <div className="pointer-events-none absolute inset-0">
+        <SoftAurora
+          speed={0.6}
+          scale={1.5}
+          brightness={0.95}
+          color1="#f7f7f7"
+          color2="#e100ff"
+          noiseFrequency={2.5}
+          noiseAmplitude={1}
+          bandHeight={0.5}
+          bandSpread={1.1}
+          octaveDecay={0.1}
+          layerOffset={0}
+          colorSpeed={1}
+          enableMouseInteraction={false}
+          mouseInfluence={0.25}
+        />
+      </div>
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#060a16]/85 via-[#060a16]/40 to-[#060a16]/90" />
 
+      <section className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-6">
+        <div className="mx-auto flex h-[280px] max-w-5xl flex-col items-center justify-start md:h-[320px]">
+          <ElectricBorder
+            color="#7df9ff"
+            speed={1}
+            chaos={0.12}
+            thickness={2}
+            borderRadius={999}
+            className="w-fit"
+          >
+            <div className="rounded-full bg-[#0a1230]/70 px-6 py-2.5 backdrop-blur-md">
+              <p className="text-center text-sm font-medium tracking-wide text-cyan-100">
+                We&apos;re here for parents worldwide
+              </p>
+            </div>
+          </ElectricBorder>
         </div>
       </section>
     </div>

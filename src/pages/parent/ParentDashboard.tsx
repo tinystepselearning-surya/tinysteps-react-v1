@@ -24,12 +24,15 @@ import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
 import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
 import {
+  CheckCircle2,
+  CalendarCheck,
+  CalendarClock,
   CalendarDays,
   CircleUser,
   CreditCard,
+  ExternalLink,
   Gamepad2,
   Home,
-  ChevronDown,
   LogOut,
   Menu,
   Sparkles,
@@ -44,7 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import AppShellHeader from "../../components/common/AppShellHeader";
+import TinyStepsBrand from "../../components/common/TinyStepsBrand";
 import MobileTabBar, { type MobileTabBarItem } from "../../components/common/MobileTabBar";
 import HolidayCalendar2026 from "../../components/common/HolidayCalendar2026";
  
@@ -83,17 +86,6 @@ const parentNavItems: ParentNavItem[] = [
   { id: "holidays", label: "Holiday Calendar", icon: CalendarDays },
   { id: "payments", label: "Payments", icon: CreditCard },
 ];
-
-const parentTabLabels: Record<TabKey, string> = {
-  dashboard: "Overview",
-  insights: "Insights",
-  "games-progress": "Games Progress",
-  skills: "Skills",
-  classes: "Classes",
-  holidays: "Holiday Calendar",
-  profile: "Profile",
-  payments: "Payments",
-};
 
 const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
   { id: "dashboard", label: "Home", icon: Home },
@@ -1117,6 +1109,30 @@ function sessionStartDate(s: KidSession): Date | null {
   return null;
 }
 
+function sessionEndDate(s: KidSession, start: Date | null): Date | null {
+  if (s?.endAt?.toDate) return s.endAt.toDate();
+  if (start && typeof s.endTime === "string") {
+    const t = parseHHMM(s.endTime);
+    if (t) return new Date(start.getFullYear(), start.getMonth(), start.getDate(), t.hh, t.mm, 0, 0);
+  }
+  return null;
+}
+
+function formatSessionTimeRange(s: KidSession): string {
+  const start = sessionStartDate(s);
+  if (!start) return s.startTime || "Time TBD";
+  const startLabel = typeof s.startTime === "string" && s.startTime.trim()
+    ? s.startTime.trim()
+    : `${pad2(start.getHours())}:${pad2(start.getMinutes())}`;
+  const end = sessionEndDate(s, start);
+  const endLabel = typeof s.endTime === "string" && s.endTime.trim()
+    ? s.endTime.trim()
+    : end
+      ? `${pad2(end.getHours())}:${pad2(end.getMinutes())}`
+      : "";
+  return endLabel ? `${startLabel} - ${endLabel}` : startLabel;
+}
+
 function normalizeStatus(raw?: string): string {
   const s = (raw || "").toLowerCase().trim();
   if (s === "scheduled" || s === "in_progress" || s === "completed" || s === "cancelled" || s === "canceled" || s === "no_show" || s === "noshow") {
@@ -1959,13 +1975,18 @@ export default function ParentDashboard() {
     navigate(`${base}${kidParam}`);
   };
 
-  // ---- Classes tab state (Calendar) ----
-  const [classesMonth, setClassesMonth] = useState<Date>(() => {
+  // ---- Classes tab state ----
+  const [classesMonth] = useState<Date>(() => {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [classesSelectedDayKey, setClassesSelectedDayKey] = useState<string | null>(null);
-  const [classesDayModalOpen, setClassesDayModalOpen] = useState(false);
+  const [classesView, setClassesView] = useState<"today" | "upcoming" | "completed" | "calendar">("today");
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
+  const [classesCalendarMonth, setClassesCalendarMonth] = useState<Date>(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
+  const [classesCalendarSelectedDayKey, setClassesCalendarSelectedDayKey] = useState<string | null>(null);
 
   // Fetch sessions for this kid (manual refresh model: loads when tab opens)
   const kidSessionsQuery = useQuery({
@@ -2086,14 +2107,185 @@ export default function ParentDashboard() {
   const parentRecordingFolderUrl = String(
     parentRecordingFolder?.folderUrl || parentRecordingFolder?.recordingUrl || ""
   ).trim();
-  const parentRecordingFolderName = String(
-    parentRecordingFolder?.folderName || "Class Recordings"
-  ).trim();
 
   const monthStart = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth(), 1), [classesMonth]);
   const monthEnd = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth() + 1, 0, 23, 59, 59, 999), [classesMonth]);
 
   const allKidSessions = useMemo(() => (kidSessionsQuery.data ?? []) as KidSession[], [kidSessionsQuery.data]);
+  const sortedClassSessions = useMemo(() => {
+    return allKidSessions
+      .map((session) => ({
+        session,
+        start: sessionStartDate(session),
+        status: normalizeStatus(session.status),
+      }))
+      .filter((row): row is { session: KidSession; start: Date; status: string } => Boolean(row.start))
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+  }, [allKidSessions]);
+
+  const todayDayKey = toYMD(new Date());
+
+  const todayClassSessions = useMemo(() => {
+    return sortedClassSessions.filter((row) => toYMD(row.start) === todayDayKey);
+  }, [sortedClassSessions, todayDayKey]);
+
+  const upcomingClassSessions = useMemo(() => {
+    return sortedClassSessions.filter((row) => {
+      if (toYMD(row.start) <= todayDayKey) return false;
+      return row.status === "scheduled" || row.status === "in_progress";
+    });
+  }, [sortedClassSessions, todayDayKey]);
+
+  const completedClassSessions = useMemo(() => {
+    return [...sortedClassSessions]
+      .filter((row) => row.status === "completed")
+      .sort((a, b) => b.start.getTime() - a.start.getTime());
+  }, [sortedClassSessions]);
+
+  const groupedUpcomingSessions = useMemo(() => {
+    const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
+    upcomingClassSessions.forEach((row) => {
+      const key = toYMD(row.start);
+      if (!grouped[key]) grouped[key] = { date: row.start, rows: [] };
+      grouped[key].rows.push(row);
+    });
+    return Object.entries(grouped)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, value]) => value);
+  }, [upcomingClassSessions]);
+
+  const groupedCompletedSessions = useMemo(() => {
+    const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
+    completedClassSessions.forEach((row) => {
+      const key = toYMD(row.start);
+      if (!grouped[key]) grouped[key] = { date: row.start, rows: [] };
+      grouped[key].rows.push(row);
+    });
+    return Object.entries(grouped)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([, value]) => value);
+  }, [completedClassSessions]);
+
+  const classesCalendarMonthLabel = useMemo(() => {
+    return classesCalendarMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  }, [classesCalendarMonth]);
+
+  const classesCalendarStart = useMemo(
+    () => new Date(classesCalendarMonth.getFullYear(), classesCalendarMonth.getMonth(), 1),
+    [classesCalendarMonth]
+  );
+  const classesCalendarEnd = useMemo(
+    () => new Date(classesCalendarMonth.getFullYear(), classesCalendarMonth.getMonth() + 1, 0, 23, 59, 59, 999),
+    [classesCalendarMonth]
+  );
+
+  const classesCalendarSessions = useMemo(() => {
+    const startMs = classesCalendarStart.getTime();
+    const endMs = classesCalendarEnd.getTime();
+    return sortedClassSessions.filter((row) => {
+      const ts = row.start.getTime();
+      return ts >= startMs && ts <= endMs;
+    });
+  }, [sortedClassSessions, classesCalendarStart, classesCalendarEnd]);
+
+  const classesCalendarSessionsByDay = useMemo(() => {
+    const map: Record<string, Array<{ session: KidSession; start: Date; status: string }>> = {};
+    classesCalendarSessions.forEach((row) => {
+      const key = toYMD(row.start);
+      if (!map[key]) map[key] = [];
+      map[key].push(row);
+    });
+    Object.keys(map).forEach((key) => {
+      map[key].sort((a, b) => a.start.getTime() - b.start.getTime());
+    });
+    return map;
+  }, [classesCalendarSessions]);
+
+  const classesCalendarDays = useMemo(() => {
+    const year = classesCalendarMonth.getFullYear();
+    const month = classesCalendarMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDow = new Date(year, month, 1).getDay();
+    const cells: Array<{ key: string; date: Date | null }> = [];
+    for (let i = 0; i < firstDow; i++) cells.push({ key: `blank-${i}`, date: null });
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(year, month, d);
+      cells.push({ key: toYMD(dt), date: dt });
+    }
+    while (cells.length % 7 !== 0) cells.push({ key: `tail-${cells.length}`, date: null });
+    return cells;
+  }, [classesCalendarMonth]);
+
+  const classesCalendarSelectedRows = useMemo(() => {
+    if (!classesCalendarSelectedDayKey) return [];
+    return classesCalendarSessionsByDay[classesCalendarSelectedDayKey] || [];
+  }, [classesCalendarSelectedDayKey, classesCalendarSessionsByDay]);
+
+  const resolveSessionChildName = (session: KidSession) => {
+    const directName = String((session as any).kidName || (session as any).childName || "").trim();
+    if (directName) return directName;
+
+    const namesMap = (session as any).kidNames;
+    if (namesMap && selectedKidId && typeof namesMap === "object") {
+      const mapped = String((namesMap as Record<string, string>)[selectedKidId] || "").trim();
+      if (mapped) return mapped;
+    }
+
+    return String(selectedKid?.fullName || selectedKid?.name || "Child");
+  };
+
+  const openMeetingLink = (url: string) => {
+    const trimmed = String(url || "").trim();
+    if (!trimmed) return;
+    const isTeamsUrl = /^https?:\/\/([a-z0-9-]+\.)?teams\.microsoft\.com/i.test(trimmed);
+    if (isTeamsUrl) {
+      const teamsDeepLink = `msteams:${trimmed.replace(/^https?:/, "")}`;
+      window.location.assign(teamsDeepLink);
+      window.setTimeout(() => {
+        window.open(trimmed, "_blank", "noopener,noreferrer");
+      }, 900);
+      return;
+    }
+    window.open(trimmed, "_blank", "noopener,noreferrer");
+  };
+
+  const openJoinClass = async (session: KidSession) => {
+    if (joiningSessionId === session.id) return;
+    setJoiningSessionId(session.id);
+    try {
+      const directJoinUrl =
+        (typeof session.joinUrl === "string" && session.joinUrl.trim()) ||
+        (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim()) ||
+        "";
+      if (directJoinUrl) {
+        openMeetingLink(directJoinUrl);
+        return;
+      }
+
+      const enrollmentIdFromSession =
+        (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim()) ||
+        "";
+      const enrollmentIdFromSessionId =
+        typeof session.id === "string" && session.id.includes("_")
+          ? session.id.split("_")[0].trim()
+          : "";
+      const enrollmentId = enrollmentIdFromSession || enrollmentIdFromSessionId;
+      if (!enrollmentId) return;
+
+      const enrollmentSnap = await getDoc(doc(db, "enrollments", enrollmentId));
+      const data = enrollmentSnap.data() as any;
+      const fallbackJoinUrl =
+        (typeof data?.joinUrl === "string" && data.joinUrl.trim()) ||
+        (typeof data?.meetingLink === "string" && data.meetingLink.trim()) ||
+        "";
+      if (!fallbackJoinUrl) return;
+      openMeetingLink(fallbackJoinUrl);
+    } catch (error) {
+      console.error("[ParentDashboard] Failed to open join class link", error);
+    } finally {
+      setJoiningSessionId((current) => (current === session.id ? null : current));
+    }
+  };
 
   const sessionsPhonicsCourseIds = useMemo(() => {
     return allKidSessions
@@ -3055,30 +3247,61 @@ export default function ParentDashboard() {
 
   const billingLoading = billingChargesQuery.isLoading || kidSessionsQuery.isLoading;
 
-  // Calendar grid helpers
-  const calendarDays = useMemo(() => {
-    const year = classesMonth.getFullYear();
-    const month = classesMonth.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDow = new Date(year, month, 1).getDay(); // 0..6 (Sun..Sat)
+  const renderParentSessionCard = (
+    row: { session: KidSession; start: Date; status: string },
+    includeDateLabel = false
+  ) => {
+    const { session, start, status } = row;
+    const canJoin =
+      status !== "completed" &&
+      status !== "cancelled" &&
+      status !== "no_show" &&
+      ((typeof session.joinUrl === "string" && session.joinUrl.trim().length > 0) ||
+        (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim().length > 0) ||
+        (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim().length > 0) ||
+        (typeof session.id === "string" && session.id.includes("_")));
 
-    const cells: Array<{ key: string; date: Date | null }> = [];
-    for (let i = 0; i < firstDow; i++) cells.push({ key: `blank-${i}`, date: null });
+    const dateLabel = start.toLocaleDateString("en-IN", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dt = new Date(year, month, d);
-      cells.push({ key: toYMD(dt), date: dt });
-    }
+    return (
+      <Card key={session.id} className="p-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {formatSessionTimeRange(session)}
+              </span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadgeClass(status)}`}>
+                {statusLabel(status)}
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+              {resolveSessionChildName(session)}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {includeDateLabel ? `${dateLabel} · ` : ""}
+              {session.courseName ? `Course: ${session.courseName}` : "Course: —"}
+              {session.teacherName ? ` • Teacher: ${session.teacherName}` : ""}
+            </p>
+          </div>
 
-    // pad to full weeks (multiple of 7)
-    while (cells.length % 7 !== 0) cells.push({ key: `tail-${cells.length}`, date: null });
-
-    return cells;
-  }, [classesMonth]);
-
-  const openDay = (dayKey: string) => {
-    setClassesSelectedDayKey(dayKey);
-    setClassesDayModalOpen(true);
+          <Button
+            type="button"
+            onClick={() => openJoinClass(session)}
+            disabled={!canJoin || joiningSessionId === session.id}
+            className="w-full md:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
+          >
+            {joiningSessionId === session.id ? "Opening…" : "Join Class"}
+            <ExternalLink className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </Card>
+    );
   };
 
   // ---- Payments tab state ----
@@ -3311,8 +3534,8 @@ export default function ParentDashboard() {
   if (!user) return null;
 
   return (
-    <div className="mobile-app-scroll min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:bg-slate-50">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
+    <div className="mobile-app-scroll h-screen overflow-hidden bg-gradient-to-b from-slate-100 to-slate-50 dark:bg-slate-950 lg:bg-slate-50">
+      <div className="mx-auto h-full max-w-7xl px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
         <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
           <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[340px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-4 sm:rounded-none">
             <DialogHeader>
@@ -3400,7 +3623,7 @@ export default function ParentDashboard() {
           </DialogContent>
         </Dialog>
 
-        <div className="flex flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
+        <div className="flex h-full min-h-0 flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
           <aside className="hidden w-full lg:block lg:w-72 lg:sticky lg:top-6 lg:self-start">
             <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900 shadow-sm overflow-hidden">
               <div className="px-4 pb-4 pt-3 space-y-4">
@@ -3496,19 +3719,18 @@ export default function ParentDashboard() {
             </div>
           </aside>
 
-          <main className="flex-1">
-            <div className="sticky top-2 z-30 bg-slate-50/80 backdrop-blur dark:bg-slate-950/70 lg:static lg:bg-transparent">
-              <AppShellHeader
-                roleLabel="Parent"
-                title={<>Hi, {user?.displayName || "Parent"}</>}
-                subtitle={
-                  selectedKid
-                    ? `Viewing: ${selectedKid.fullName || "Child"}`
-                    : "Track your child’s classes, insights, and payments in one place."
-                }
-                className="dark:border-slate-800 dark:bg-slate-900"
-                actions={
-                  <>
+          <main className="flex min-h-0 flex-1 flex-col">
+            <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80">
+              <header className="rounded-[24px] border border-slate-200 bg-white/92 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 dark:border-slate-800 dark:bg-slate-900">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <TinyStepsBrand subtitle="Parent Workspace" />
+                    <h1 className="truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-xl font-semibold tracking-tight text-transparent sm:text-2xl">
+                      Hi, {user?.displayName || "Parent"}
+                    </h1>
+                  </div>
+
+                  <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       variant="outline"
@@ -3519,41 +3741,29 @@ export default function ParentDashboard() {
                     >
                       <Menu className="h-4 w-4" />
                     </Button>
-                    <div className="hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 px-4 py-3 sm:block">
-                      <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Section
-                      </div>
-                      <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {parentTabLabels[activeTab]}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setProfileOpen(true)}
-                        title="View profile"
-                        className="h-10 px-4 rounded-full bg-slate-100/80 hover:bg-slate-200 text-slate-900 dark:bg-slate-800/70 dark:text-slate-100 dark:hover:bg-slate-700 ring-1 ring-slate-200 dark:ring-slate-700 shadow-sm"
-                      >
-                        <CircleUser className="h-4 w-4 text-slate-600 dark:text-slate-300" />
-                        <span className="hidden text-base font-semibold underline-offset-4 hover:underline sm:inline">
-                          {user?.displayName || "Parent"}
-                        </span>
-                        <ChevronDown className="h-4 w-4 text-slate-500 dark:text-slate-300" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleLogout}
-                        className="h-9 px-3 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span className="hidden sm:inline">Logout</span>
-                      </Button>
-                    </div>
-                  </>
-                }
-              />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setProfileOpen(true)}
+                      title="View profile"
+                      aria-label="View profile"
+                      className="h-10 w-10 rounded-full bg-slate-100/80 text-slate-900 ring-1 ring-slate-200 hover:bg-slate-200 dark:bg-slate-800/70 dark:text-slate-100 dark:ring-slate-700 dark:hover:bg-slate-700"
+                    >
+                      <CircleUser className="h-5 w-5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleLogout}
+                      title="Logout"
+                      aria-label="Logout"
+                      className="h-10 w-10 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    >
+                      <LogOut className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </header>
             </div>
 
             <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
@@ -3565,7 +3775,7 @@ export default function ParentDashboard() {
               </DialogContent>
             </Dialog>
 
-            <div className="mt-6 space-y-6">
+            <div className="mt-4 min-h-0 space-y-6 overflow-y-auto pb-6 pr-1">
               {/* Content */}
               {activeTab === "dashboard" && (
           <div className="space-y-6">
@@ -4789,53 +4999,73 @@ export default function ParentDashboard() {
           </div>
         )}
 
-        {/* ✅ NEW: CLASSES TAB (Calendar) */}
+        {/* Classes tab: Today's + Upcoming sessions */}
         {activeTab === "classes" && (
           <div className="space-y-4">
-            <Card className="p-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <Card className="sticky top-0 z-20 p-6">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    Classes Calendar
+                    My Classes
                   </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {selectedKid?.fullName
-                      ? `Viewing: ${selectedKid.fullName}`
-                      : "Select a child"}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    (Loads when you open this tab — click Refresh if needed.)
-                  </p>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setClassesMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-                    }}
-                  >
-                    ← Prev
-                  </Button>
-                  <div className="px-3 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-sm font-semibold text-gray-800 dark:text-gray-200">
-                    {classesMonthLabel}
+                <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
+                  <div className="inline-flex rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => setClassesView("today")}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                        classesView === "today"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <CalendarCheck className="h-4 w-4" />
+                      Today ({todayClassSessions.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setClassesView("upcoming")}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                        classesView === "upcoming"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <CalendarClock className="h-4 w-4" />
+                      Upcoming ({upcomingClassSessions.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setClassesView("completed")}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                        classesView === "completed"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <CheckCircle2 className="h-4 w-4" />
+                      Completed ({completedClassSessions.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const now = new Date();
+                        setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
+                        setClassesCalendarSelectedDayKey(toYMD(now));
+                        setClassesView("calendar");
+                      }}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                        classesView === "calendar"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <CalendarDays className="h-4 w-4" />
+                      Calendar
+                    </button>
                   </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setClassesMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-                    }}
-                  >
-                    Next →
-                  </Button>
-
-                  <Button
-                    onClick={() => kidSessionsQuery.refetch()}
-                    disabled={kidSessionsQuery.isFetching}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
-                  >
-                    {kidSessionsQuery.isFetching ? "Refreshing..." : "Refresh"}
-                  </Button>
 
                   <Button
                     variant="outline"
@@ -4849,192 +5079,208 @@ export default function ParentDashboard() {
                   </Button>
                 </div>
               </div>
-
-              {parentRecordingFolderUrl && (
-                <p className="mt-2 text-xs text-slate-500">
-                  Folder: <span className="font-medium text-slate-700">{parentRecordingFolderName}</span>
-                </p>
-              )}
-
-              <div className="mt-4 flex flex-wrap gap-2 text-xs">
-                {[
-                  { label: "Total", value: classesCounts.total, cls: "text-slate-800 dark:text-slate-100", bg: "bg-slate-50 dark:bg-slate-900/50", border: "border-slate-200 dark:border-slate-800" },
-                  { label: "Completed", value: classesCounts.completed, cls: "text-green-700 dark:text-green-300", bg: "bg-emerald-50 dark:bg-emerald-900/20", border: "border-emerald-200 dark:border-emerald-800/40" },
-                  { label: "Upcoming", value: classesCounts.upcoming, cls: "text-indigo-700 dark:text-indigo-300", bg: "bg-indigo-50 dark:bg-indigo-900/20", border: "border-indigo-200 dark:border-indigo-800/40" },
-                  { label: "In progress", value: classesCounts.in_progress, cls: "text-blue-700 dark:text-blue-300", bg: "bg-sky-50 dark:bg-sky-900/20", border: "border-sky-200 dark:border-sky-800/40" },
-                  { label: "Cancelled", value: classesCounts.cancelled, cls: "text-gray-600 dark:text-gray-300", bg: "bg-gray-50 dark:bg-gray-900/40", border: "border-gray-200 dark:border-gray-700" },
-                  { label: "No-show", value: classesCounts.no_show, cls: "text-orange-700 dark:text-orange-300", bg: "bg-orange-50 dark:bg-orange-900/20", border: "border-orange-200 dark:border-orange-800/40" },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className={`flex items-center gap-2 rounded-full border ${item.border} ${item.bg} px-3 py-1.5 shadow-sm`}
-                  >
-                    <span className="text-gray-500 dark:text-gray-400">{item.label}</span>
-                    <span className={`font-semibold ${item.cls}`}>{item.value}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 grid grid-cols-7 gap-2 text-xs font-semibold text-gray-600 dark:text-gray-400">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                  <div key={d} className="text-center">{d}</div>
-                ))}
-              </div>
-
-              <div className="mt-2 grid grid-cols-7 gap-1.5">
-                {calendarDays.map((cell) => {
-                  const dt = cell.date;
-                  if (!dt) {
-                    return (
-                      <div key={cell.key} className="h-14 md:h-16 rounded-lg bg-transparent" />
-                    );
-                  }
-
-                  const dayKey = toYMD(dt);
-                  const list = sessionsByDay[dayKey] || [];
-                  const isToday = dayKey === toYMD(new Date());
-                  const dominantStatus = (() => {
-                    if (list.length === 0) return null;
-                    const counts = list.reduce<Record<string, number>>((acc, s) => {
-                      const st = normalizeStatus(s.status);
-                      acc[st] = (acc[st] || 0) + 1;
-                      return acc;
-                    }, {});
-                    const priority = ["in_progress", "scheduled", "completed", "no_show", "cancelled"];
-                    return priority.find((p) => counts[p]) || Object.keys(counts)[0] || null;
-                  })();
-
-                  return (
-                    <button
-                      key={cell.key}
-                      onClick={() => openDay(dayKey)}
-                      className={`h-14 md:h-16 rounded-lg border text-left p-1.5 transition-all hover:shadow-md ${
-                        isToday
-                          ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-950/30"
-                          : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-                      }`}
-                      type="button"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                          {dt.getDate()}
-                        </div>
-                        {list.length > 0 && (
-                          <div className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                            {list.length}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-2">
-                        {dominantStatus ? (
-                          <div
-                            className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full ${statusBadgeClass(dominantStatus)}`}
-                          >
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-current/70" />
-                            {statusLabel(dominantStatus)}
-                          </div>
-                        ) : (
-                          <div className="text-[10px] text-gray-400 dark:text-gray-500">—</div>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <Dialog open={classesDayModalOpen} onOpenChange={setClassesDayModalOpen}>
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle>
-                      {classesSelectedDayKey
-                        ? new Date(
-                            Number(classesSelectedDayKey.slice(0, 4)),
-                            Number(classesSelectedDayKey.slice(5, 7)) - 1,
-                            Number(classesSelectedDayKey.slice(8, 10))
-                          ).toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "short", year: "numeric" })
-                        : "Day"}
-                    </DialogTitle>
-                  </DialogHeader>
-
-                  <div className="space-y-3">
-                    {(() => {
-                      const key = classesSelectedDayKey || "";
-                      const list = (sessionsByDay[key] || []) as KidSession[];
-
-                      if (kidSessionsQuery.isLoading) {
-                        return <div className="text-sm text-gray-600 dark:text-gray-400">Loading sessions…</div>;
-                      }
-
-                      if (!key || list.length === 0) {
-                        return (
-                          <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-400">
-                            No classes scheduled for this day.
-                          </div>
-                        );
-                      }
-
-                      return list.map((s) => {
-                        const start = sessionStartDate(s);
-                        const time =
-                          start ? `${pad2(start.getHours())}:${pad2(start.getMinutes())}` : (s.startTime || "—");
-                        const st = normalizeStatus(s.status);
-                        const canJoin =
-                          !!s.joinUrl &&
-                          st !== "completed" &&
-                          st !== "cancelled" &&
-                          st !== "no_show" &&
-                          key === toYMD(new Date());
-
-                        return (
-                          <div key={s.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                                  {time}{" "}
-                                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${statusBadgeClass(st)}`}>
-                                    {statusLabel(st)}
-                                  </span>
-                                </div>
-                                <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                  {s.courseName ? `Course: ${s.courseName}` : "Course: —"}
-                                  {s.teacherName ? ` • Teacher: ${s.teacherName}` : ""}
-                                </div>
-                                {s.notes && (
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                    Notes: {String(s.notes)}
-                                  </div>
-                                )}
-                              </div>
-
-                              <div className="flex flex-col gap-2">
-                                {canJoin ? (
-                                  <Button
-                                    onClick={() => window.open(String(s.joinUrl), "_blank")}
-                                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold"
-                                  >
-                                    Join Zoom
-                                  </Button>
-                                ) : (
-                                  <Button variant="outline" disabled className="opacity-70">
-                                    {s.joinUrl ? "Join (today only)" : "No Join link"}
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      });
-                    })()}
-                  </div>
-
-                  <Button variant="outline" onClick={() => setClassesDayModalOpen(false)} className="w-full mt-2">
-                    Close
-                  </Button>
-                </DialogContent>
-              </Dialog>
-
             </Card>
+
+            {kidSessionsQuery.isLoading ? (
+              <Card className="p-6 text-sm text-slate-600 dark:text-slate-300">
+                Loading sessions…
+              </Card>
+            ) : classesView === "today" ? (
+              <Card className="p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                    Today&apos;s Sessions
+                  </h3>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {todayClassSessions.length} session{todayClassSessions.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+                {todayClassSessions.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                    No sessions scheduled for today.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {todayClassSessions.map((row) => renderParentSessionCard(row, true))}
+                  </div>
+                )}
+              </Card>
+            ) : classesView === "upcoming" ? (
+              <div className="space-y-4">
+                {groupedUpcomingSessions.length === 0 ? (
+                  <Card className="p-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                    No upcoming sessions scheduled.
+                  </Card>
+                ) : (
+                  groupedUpcomingSessions.map((group) => (
+                    <Card key={toYMD(group.date)} className="p-6">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {group.date.toLocaleDateString("en-IN", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          })}
+                        </h3>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {group.rows.length} session{group.rows.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {group.rows.map((row) => renderParentSessionCard(row, true))}
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            ) : classesView === "completed" ? (
+              <div className="space-y-4">
+                {groupedCompletedSessions.length === 0 ? (
+                  <Card className="p-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                    No completed sessions yet.
+                  </Card>
+                ) : (
+                  groupedCompletedSessions.map((group) => (
+                    <Card key={toYMD(group.date)} className="p-6">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {group.date.toLocaleDateString("en-IN", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          })}
+                        </h3>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {group.rows.length} session{group.rows.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {group.rows.map((row) => renderParentSessionCard(row, true))}
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            ) : (
+              <Card className="p-6">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-100">
+                        {classesCalendarMonthLabel}
+                      </div>
+                      {classesCalendarSelectedDayKey ? (
+                        <div className="truncate text-sm text-slate-600 dark:text-slate-300">
+                          {(() => {
+                            const parsed = parseYMD(classesCalendarSelectedDayKey);
+                            if (!parsed) return null;
+                            const dayLabel = new Date(parsed.y, parsed.m - 1, parsed.d).toLocaleDateString(
+                              "en-IN",
+                              {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            );
+                            const count = classesCalendarSelectedRows.length;
+                            const statusLabelText =
+                              count === 0
+                                ? "No classes on this day."
+                                : `${count} class${count === 1 ? "" : "es"} on this day.`;
+                            return (
+                              <span>
+                                {dayLabel} · {statusLabelText}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      ) : null}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setClassesCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
+                        }
+                      >
+                        Prev
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setClassesCalendarMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
+                        }
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((label) => (
+                      <div key={label}>{label}</div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-2">
+                    {classesCalendarDays.map((cell) => {
+                      if (!cell.date) {
+                        return <div key={cell.key} className="h-16 rounded-lg bg-transparent" />;
+                      }
+
+                      const dayKey = toYMD(cell.date);
+                      const list = classesCalendarSessionsByDay[dayKey] || [];
+                      const dominantStatus = (() => {
+                        if (list.length === 0) return null;
+                        const counts = list.reduce<Record<string, number>>((acc, row) => {
+                          acc[row.status] = (acc[row.status] || 0) + 1;
+                          return acc;
+                        }, {});
+                        const priority = ["in_progress", "scheduled", "completed", "no_show", "cancelled"];
+                        return priority.find((status) => counts[status]) || Object.keys(counts)[0] || null;
+                      })();
+                      const isSelected = classesCalendarSelectedDayKey === dayKey;
+
+                      return (
+                        <button
+                          key={dayKey}
+                          type="button"
+                          onClick={() => setClassesCalendarSelectedDayKey(dayKey)}
+                          className={`h-16 rounded-lg border px-2 py-1 text-left transition ${
+                            isSelected
+                              ? "border-indigo-400 bg-indigo-50 dark:border-indigo-600 dark:bg-indigo-950/30"
+                              : "border-slate-200 bg-white hover:shadow-sm dark:border-slate-700 dark:bg-slate-900"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              {cell.date.getDate()}
+                            </span>
+                            {list.length > 0 ? (
+                              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-200">
+                                {list.length}
+                              </span>
+                            ) : null}
+                          </div>
+                          <div className="mt-1">
+                            {dominantStatus ? (
+                              <span className={`inline-flex rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${statusBadgeClass(dominantStatus)}`}>
+                                {statusLabel(dominantStatus)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">—</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Card>
+            )}
           </div>
         )}
 

@@ -158,6 +158,7 @@ const legacyKidDashboardRedirectLoader = ({ request, params }: LoaderFunctionArg
 const Layout: FC = () => {
   const location = useLocation();
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(location.pathname, prefix));
+  const isContactPage = location.pathname === '/contact';
   const [showFloatingTools, setShowFloatingTools] = useState(false);
 
   useEffect(() => {
@@ -189,11 +190,17 @@ const Layout: FC = () => {
   }, [hideMarketingChrome]);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]">
+    <div className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}>
       <AnalyticsTracker />
       <ScrollToTop />
       {!hideMarketingChrome ? <Header /> : null}
-      <main className={`min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`}>
+      <main
+        className={
+          isContactPage
+            ? `${hideMarketingChrome ? '' : 'pt-0'} pb-0 min-h-0`
+            : `min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
+        }
+      >
         <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
           <Outlet />
         </Suspense>

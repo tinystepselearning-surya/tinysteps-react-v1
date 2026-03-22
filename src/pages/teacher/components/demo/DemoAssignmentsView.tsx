@@ -3,7 +3,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Badge } from '@components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
+import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
@@ -41,7 +41,7 @@ interface DemoAssignmentsViewProps {
   teacherId?: string;
 }
 
-type TeacherDemoTab = 'available' | 'upcoming' | 'completed';
+type TeacherDemoTab = 'available' | 'upcoming' | 'completed' | 'today';
 type DemoTrack = 'phonics' | 'grammar' | 'speaking';
 
 const OUTCOME_OPTIONS: Array<{ value: DemoOutcome; label: string }> = [
@@ -322,6 +322,10 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
     () => upcomingDemos.filter((demo) => demo.teacherConfirmedDate === todayYmd).length,
     [todayYmd, upcomingDemos],
   );
+  const todaysDemos = useMemo(
+    () => upcomingDemos.filter((demo) => demo.teacherConfirmedDate === todayYmd),
+    [todayYmd, upcomingDemos],
+  );
 
   const loadLabel = useMemo(() => {
     if (upcomingDemos.length >= 6) return 'High';
@@ -487,38 +491,61 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-sky-100 bg-gradient-to-br from-sky-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-          <div className="text-xs uppercase tracking-wide text-sky-700/80">Open Demos</div>
-          <div className="mt-1 text-2xl font-semibold">{filteredAvailableDemos.length}</div>
-        </Card>
-        <Card className="border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-          <div className="text-xs uppercase tracking-wide text-emerald-700/80">My Demos</div>
-          <div className="mt-1 text-2xl font-semibold">{upcomingDemos.length}</div>
-        </Card>
-        <Card className="border-violet-100 bg-gradient-to-br from-violet-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-          <div className="text-xs uppercase tracking-wide text-violet-700/80">Completed</div>
-          <div className="mt-1 text-2xl font-semibold">{completedDemos.length}</div>
-        </Card>
-        <Card className="border-amber-100 bg-gradient-to-br from-amber-50/80 to-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-          <div className="text-xs uppercase tracking-wide text-amber-700/80">Today's Load</div>
-          <div className="mt-1 text-2xl font-semibold">{todaysUpcomingCount}</div>
-          <div className="mt-1 text-xs text-amber-700/80">
-            Today's demo load: {todaysUpcomingCount} today, {upcomingDemos.length} upcoming ({loadLabel}) · {localTimezone}
+      <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab('available')}
+          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+            activeTab === 'available'
+              ? 'border-sky-300 bg-gradient-to-br from-sky-100 to-white ring-1 ring-sky-200'
+              : 'border-sky-100 bg-gradient-to-br from-sky-50/80 to-white hover:border-sky-200'
+          }`}
+        >
+          <div className="text-[11px] uppercase tracking-wide text-sky-700/80">Open Demos</div>
+          <div className="mt-1 text-xl font-semibold">{filteredAvailableDemos.length}</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('upcoming')}
+          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+            activeTab === 'upcoming'
+              ? 'border-emerald-300 bg-gradient-to-br from-emerald-100 to-white ring-1 ring-emerald-200'
+              : 'border-emerald-100 bg-gradient-to-br from-emerald-50/80 to-white hover:border-emerald-200'
+          }`}
+        >
+          <div className="text-[11px] uppercase tracking-wide text-emerald-700/80">My Demos</div>
+          <div className="mt-1 text-xl font-semibold">{upcomingDemos.length}</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('completed')}
+          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+            activeTab === 'completed'
+              ? 'border-violet-300 bg-gradient-to-br from-violet-100 to-white ring-1 ring-violet-200'
+              : 'border-violet-100 bg-gradient-to-br from-violet-50/80 to-white hover:border-violet-200'
+          }`}
+        >
+          <div className="text-[11px] uppercase tracking-wide text-violet-700/80">Completed</div>
+          <div className="mt-1 text-xl font-semibold">{completedDemos.length}</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('today')}
+          className={`rounded-xl border p-3 text-left shadow-sm transition ${
+            activeTab === 'today'
+              ? 'border-amber-300 bg-gradient-to-br from-amber-100 to-white ring-1 ring-amber-200'
+              : 'border-amber-100 bg-gradient-to-br from-amber-50/80 to-white hover:border-amber-200'
+          }`}
+        >
+          <div className="text-[11px] uppercase tracking-wide text-amber-700/80">Today's Load</div>
+          <div className="mt-1 text-xl font-semibold">{todaysUpcomingCount}</div>
+          <div className="mt-1 text-[11px] text-amber-700/80">
+            {todaysUpcomingCount} today · {upcomingDemos.length} upcoming ({loadLabel})
           </div>
-        </Card>
+        </button>
       </div>
 
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TeacherDemoTab)}>
-        <TabsList className="grid h-auto w-full grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
-          <TabsTrigger value="available" className="px-2 text-xs sm:text-sm">Open Demos</TabsTrigger>
-          <TabsTrigger value="upcoming" className="px-2 text-xs sm:text-sm">My Demos</TabsTrigger>
-          <TabsTrigger value="completed" className="px-2 text-xs sm:text-sm">Completed Demos</TabsTrigger>
-        </TabsList>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Choose Reschedule Needed if the demo needs a fresh new booking.
-        </p>
-
         <TabsContent value="available" className="mt-4 space-y-3">
           <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
             You have {todaysUpcomingCount} demo classes today and {upcomingDemos.length} upcoming.
@@ -590,6 +617,46 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
                     )}
                   </div>
 
+                  <div className="flex flex-col items-stretch gap-2 md:items-end">
+                    {statusBadge(demo.status)}
+                    <Button size="sm" variant="outline" className="w-full md:w-auto" onClick={() => openUpdateDialog(demo)}>
+                      Update timing
+                    </Button>
+                    <Button size="sm" className="w-full md:w-auto" onClick={() => openCompleteDialog(demo)}>
+                      Mark completed
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="today" className="mt-4 space-y-3">
+          <Card className="border-slate-200 bg-slate-50/80 p-3 text-xs text-muted-foreground">
+            Today's demo load: {todaysUpcomingCount} today, {upcomingDemos.length} upcoming ({loadLabel}) · {localTimezone}
+          </Card>
+          {todaysDemos.length === 0 ? (
+            <Card className="p-6 text-sm text-muted-foreground">No demos scheduled for today.</Card>
+          ) : (
+            todaysDemos.map((demo) => (
+              <Card key={demo.id} className="p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div className="space-y-1">
+                    <div className="text-sm font-semibold">
+                      {demo.childName} <span className="font-normal text-muted-foreground">(Grade {demo.childGrade})</span>
+                    </div>
+                    <div className="text-sm text-muted-foreground">Parent: {demo.parentName}</div>
+                    <div className="text-sm">Course: {demo.courseInterested}</div>
+                    <div className="text-sm">
+                      Confirmed: {demo.teacherConfirmedDate || '—'} {demo.teacherConfirmedTime || ''}
+                    </div>
+                    <div className="text-sm">Preferred Slot: {demo.preferredDateTimeText}</div>
+                    <div className="text-xs text-muted-foreground">Assigned at: {formatTs(demo.assignedAt)}</div>
+                    {demo.teacherPreDemoNote && (
+                      <div className="text-sm text-muted-foreground">Pre-demo note: {demo.teacherPreDemoNote}</div>
+                    )}
+                  </div>
                   <div className="flex flex-col items-stretch gap-2 md:items-end">
                     {statusBadge(demo.status)}
                     <Button size="sm" variant="outline" className="w-full md:w-auto" onClick={() => openUpdateDialog(demo)}>

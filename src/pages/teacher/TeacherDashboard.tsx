@@ -150,8 +150,6 @@ export default function TeacherDashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const teacherId = user?.uid;
-  const activeSectionLabel =
-    TAB_ITEMS.find((item) => item.id === tab)?.label ?? 'Overview';
   // Defer subscribing to sessions until the "today" tab is active
   // so heavy listeners don't block other tabs like Lesson Library.
   // Provide a placeholder empty array for header counts when not active.
@@ -188,7 +186,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="mobile-app-scroll min-h-screen bg-gradient-to-b from-slate-100 to-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-8 lg:bg-slate-50/60">
+    <div className="mobile-app-scroll h-screen overflow-hidden bg-gradient-to-b from-slate-100 to-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-8 lg:bg-slate-50/60">
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[340px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-4 sm:rounded-none">
           <DialogHeader className="sr-only">
@@ -206,7 +204,7 @@ export default function TeacherDashboard() {
         </DialogContent>
       </Dialog>
 
-      <div className="flex flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
+      <div className="flex h-full min-h-0 flex-col gap-6 pb-24 lg:flex-row lg:pb-0">
         <TeacherSidebar
           active={tab}
           onSelect={setTabAndUrl}
@@ -215,22 +213,18 @@ export default function TeacherDashboard() {
           className="hidden lg:block"
         />
 
-        <main className="flex-1 space-y-6">
-          <div className="sticky top-2 z-30 bg-slate-50/80 backdrop-blur lg:static lg:bg-transparent">
+        <main className="flex min-h-0 flex-1 flex-col">
+          <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur">
             <TeacherHeader
               name={user.displayName || user.email || 'Teacher'}
-              upcomingCount={sessions.length}
-              activeSectionLabel={activeSectionLabel}
-              footerContent={
-                tab === 'lessons' ? (
-                  <div id="teacher-lessons-controls-slot" className="w-full" />
-                ) : null
-              }
               onProfileClick={() => setProfileOpen(true)}
               onOpenMenu={() => setMobileMenuOpen(true)}
             />
+            {tab === 'lessons' ? (
+              <div id="teacher-lessons-controls-slot" className="mt-3 w-full" />
+            ) : null}
           </div>
-          <Tabs value={tab} onValueChange={setTabAndUrl} className="space-y-4">
+          <Tabs value={tab} onValueChange={setTabAndUrl} className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pb-6 pr-1">
             {/* Today */}
             <TabsContent value="today">
               {tab === 'today' && (
