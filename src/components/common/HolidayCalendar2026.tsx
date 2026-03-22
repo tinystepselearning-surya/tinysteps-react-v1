@@ -128,7 +128,7 @@ export default function HolidayCalendar2026({
       </div>
 
       <div className="space-y-3 p-4 md:p-5">
-        <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
           <Table className="min-w-[760px]">
             <TableHeader className="bg-slate-50/90 dark:bg-slate-800/70">
               <TableRow className="hover:bg-transparent">

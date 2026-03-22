@@ -116,7 +116,7 @@ export default function LoginPage() {
       <div className="pointer-events-none absolute bottom-[-120px] right-[-120px] h-[320px] w-[520px] rounded-full bg-white/90 blur-2xl" />
 
       <div className="relative mx-auto h-full w-full max-w-6xl px-4 sm:px-6">
-        <div className="absolute left-4 top-5 z-10 sm:left-6 sm:top-6">
+        <div className="absolute left-4 top-[max(env(safe-area-inset-top),1rem)] z-10 sm:left-6">
           <div className="relative inline-flex">
             <div className="pointer-events-none absolute left-[10px] top-[10px] h-[108px] w-[108px] rounded-full bg-white" />
             <TinyStepsBrand

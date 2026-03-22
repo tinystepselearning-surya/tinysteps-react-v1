@@ -35,6 +35,7 @@ import {
   Home,
   LogOut,
   Menu,
+  RefreshCw,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
@@ -3749,8 +3750,8 @@ export default function ParentDashboard() {
           </aside>
 
           <main className="flex min-h-0 flex-1 flex-col">
-            <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80">
-              <header className="rounded-[24px] border border-slate-200 bg-white/92 px-4 py-3 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 dark:border-slate-800 dark:bg-slate-900">
+            <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur dark:bg-slate-950/80 pt-safe">
+              <header className="rounded-[24px] border border-slate-200 bg-white/92 px-3 py-2.5 sm:px-4 sm:py-3 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:px-6 dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-4">
                     <TinyStepsBrand subtitle="Parent Workspace" />
@@ -3818,7 +3819,19 @@ export default function ParentDashboard() {
                     Course-wise curriculum progress for {selectedKid?.fullName || "your child"}.
                   </p>
                 </div>
-                <div className="text-2xl">📚</div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => phonicsProgressQuery.refetch()}
+                    disabled={phonicsProgressQuery.isRefetching}
+                    className="flex items-center gap-1.5"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${phonicsProgressQuery.isRefetching ? 'animate-spin' : ''}`} />
+                    {phonicsProgressQuery.isRefetching ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                  <div className="text-2xl">📚</div>
+                </div>
               </div>
 
               {phonicsLoading && (
@@ -4029,7 +4042,7 @@ export default function ParentDashboard() {
                                   View Stage Insights
                                 </Button>
                               </div>
-                              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                              <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-3">
                                 <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 via-sky-50 to-indigo-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
                                   <div className="text-[10px] uppercase tracking-wide text-slate-500">
                                     Highest Stage Reached
@@ -4331,7 +4344,7 @@ export default function ParentDashboard() {
                 if (!open) setSelectedCurriculumTopic(null);
               }}
             >
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Lesson details</DialogTitle>
                 </DialogHeader>
@@ -4440,7 +4453,7 @@ export default function ParentDashboard() {
               )}
 
               {insightsCourseOptions.length > 0 && (
-                <div className="grid gap-3 md:grid-cols-2">
+                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                   <div>
                     <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Course
@@ -4952,7 +4965,7 @@ export default function ParentDashboard() {
                         {skillsData?.stageGroups.length || 0} stages
                       </span>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                       {skillsData?.stageGroups.map((stage, idx) => {
                         const displayOrder = stage.order > 0 ? stage.order : idx + 1;
                         return (
@@ -5039,48 +5052,48 @@ export default function ParentDashboard() {
                   </h2>
                 </div>
 
-                <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pb-1">
-                  <div className="inline-flex rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="inline-flex flex-wrap rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 gap-1">
                     <button
                       type="button"
                       onClick={() => setClassesView("today")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
                         classesView === "today"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
-                      <CalendarCheck className="h-4 w-4" />
-                      Today ({todayClassSessions.length})
+                      <CalendarCheck className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Today</span> ({todayClassSessions.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setClassesView("upcoming")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
                         classesView === "upcoming"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
-                      <CalendarClock className="h-4 w-4" />
-                      Upcoming ({upcomingClassSessions.length})
+                      <CalendarClock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Upcoming</span> ({upcomingClassSessions.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setClassesView("completed")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
                         classesView === "completed"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
                       }`}
                     >
-                      <CheckCircle2 className="h-4 w-4" />
-                      Completed ({completedClassSessions.length})
+                      <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Done</span> ({completedClassSessions.length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setClassesView("rescheduled")}
-                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
                         classesView === "rescheduled"
                           ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                           : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
@@ -5635,7 +5648,7 @@ export default function ParentDashboard() {
                           </div>
                         ) : (
                           <div className="space-y-3">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                               <div className="rounded border p-3">
                                 <div className="text-xs text-muted-foreground">
                                   Total paid
@@ -5662,7 +5675,8 @@ export default function ParentDashboard() {
                               </div>
                             </div>
 
-                            <div className="border rounded">
+                            <div className="border rounded overflow-x-auto">
+                              <div className="min-w-[600px]">
                               <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
                                 <div>Date</div>
                                 <div>Amount</div>
@@ -5725,6 +5739,7 @@ export default function ParentDashboard() {
                               })}
                             </div>
                           </div>
+                            </div>
                         )}
                       </div>
                     </div>

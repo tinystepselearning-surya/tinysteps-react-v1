@@ -141,6 +141,7 @@ const TeacherStudentTopicProgressPage: React.FC = () => {
       <StudentTopicProgressEditor
         kidId={kidId}
         kidName={kidName ?? undefined}
+        enrollmentId={enrollmentId ?? undefined}
         onSaveAndBack={handleBack}
       />
     </div>

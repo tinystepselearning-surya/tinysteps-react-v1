@@ -229,7 +229,7 @@ const KidsPhonicsLibrary: React.FC = () => {
 
       <Link
         to={withKid('/kids/games/english-excellence')}
-        className="absolute top-6 right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
+        className="absolute top-[max(env(safe-area-inset-top),1rem)] right-4 sm:right-6 px-5 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold rounded-full shadow-lg hover:bg-white/20 hover:scale-105 transition-all duration-200"
         style={{ zIndex: 40 }}
       >
         ← Back to Mission

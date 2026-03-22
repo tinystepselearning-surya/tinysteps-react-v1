@@ -224,7 +224,7 @@ export default function TeacherDashboard() {
               <div id="teacher-lessons-controls-slot" className="mt-3 w-full" />
             ) : null}
           </div>
-          <Tabs value={tab} onValueChange={setTabAndUrl} className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pb-6 pr-1">
+          <Tabs value={tab} onValueChange={setTabAndUrl} className="mt-4 min-h-0 flex-1 space-y-4 overflow-y-auto pb-24 lg:pb-6 pr-1">
             {/* Today */}
             <TabsContent value="today">
               {tab === 'today' && (

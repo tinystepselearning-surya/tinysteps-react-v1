@@ -5,6 +5,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { LPHeader } from './components/layout/LPHeader';
 import { LPSidebar } from './components/layout/LPSidebar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
+import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
+import { BarChart2, Users, GraduationCap, HeadphonesIcon, TrendingUp } from 'lucide-react';
 const LPStats = React.lazy(() => import('./components/overview/LPStats'));
 const ParentsList = React.lazy(() => import('./components/parents/ParentsList'));
 const TeachersList = React.lazy(() => import('./components/teachers/TeachersList'));
@@ -12,6 +14,14 @@ const TicketsList = React.lazy(() => import('./components/tickets/TicketsList'))
 const PerformanceMetrics = React.lazy(() => import('./components/performance/PerformanceMetrics'));
 const RegionalData = React.lazy(() => import('./components/region/RegionalData'));
 import { useLPFilteredTeachers, useLPFilteredParents } from '@/hooks/useLPFilteredData';
+
+const LP_MOBILE_TABS: MobileTabBarItem[] = [
+  { id: 'overview', label: 'Overview', icon: BarChart2 },
+  { id: 'parents', label: 'Parents', icon: Users },
+  { id: 'teachers', label: 'Teachers', icon: GraduationCap },
+  { id: 'tickets', label: 'Tickets', icon: HeadphonesIcon },
+  { id: 'performance', label: 'Stats', icon: TrendingUp },
+];
 
 const AccessNotice = ({ children }: { children: React.ReactNode }) => (
   <div className="flex items-center justify-center h-screen bg-muted/30">
@@ -50,11 +60,11 @@ export default function LPDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-4 md:p-8">
+    <div className="min-h-screen bg-muted/30 p-4 pb-28 md:p-8 lg:pb-8">
       <LPHeader name={user.displayName || user.email} />
-      <div className="flex gap-6">
+      <div className="flex flex-col gap-6 lg:flex-row">
         <LPSidebar active={tab} onSelect={setTab} />
-        <main className="flex-1 space-y-6">
+        <main className="flex-1 min-w-0 space-y-6">
           <Tabs value={tab} onValueChange={setTab} className="space-y-4">
             <TabsList className="lg:hidden">
               {TAB_ITEMS.map((item) => (
@@ -139,6 +149,12 @@ export default function LPDashboard() {
           </div>
         </main>
       </div>
+
+      <MobileTabBar
+        items={LP_MOBILE_TABS}
+        activeId={tab}
+        onSelect={setTab}
+      />
     </div>
   );
 }

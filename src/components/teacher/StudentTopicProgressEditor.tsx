@@ -20,6 +20,7 @@ import { getProgressSkillsForLesson } from '../../lib/progressSkills';
 interface StudentTopicProgressEditorProps {
   kidId: string;
   kidName?: string;
+  enrollmentId?: string;
   onSaveAndBack?: () => void;
 }
 
@@ -859,6 +860,7 @@ const ChipButton = ({
 const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   kidId,
   kidName,
+  enrollmentId,
   onSaveAndBack,
 }) => {
   const { loading: configLoading, error: configError } =
@@ -878,6 +880,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
   const [selectedCourseId, setSelectedCourseId] = useState<CourseId | ''>('phonics-foundations');
   const [courseOptions, setCourseOptions] = useState<CourseDefinition[]>(COURSE_DEFINITIONS);
   const [courseManuallySelected, setCourseManuallySelected] = useState(false);
+  const [enrollmentLockedCourse, setEnrollmentLockedCourse] = useState<CourseId | null>(null);
   const [progressRatings, setProgressRatings] = useState<ProgressRatings>({});
   const [strengthSubskills, setStrengthSubskills] = useState<string[]>([]);
   const [practiceSubskills, setPracticeSubskills] = useState<string[]>([]);
@@ -1035,8 +1038,39 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     });
   }, [courseTopics]);
 
-  // Load student courses
+  // Load enrollment and lock course
   useEffect(() => {
+    if (!enrollmentId) return;
+    let active = true;
+    const loadEnrollment = async () => {
+      try {
+        const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+        if (!active) return;
+        if (enrollmentSnap.exists()) {
+          const enrollmentData = enrollmentSnap.data() as any;
+          const enrollmentCourseId = normalizeCourseId(String(enrollmentData.courseId ?? ''));
+          if (enrollmentCourseId) {
+            setEnrollmentLockedCourse(enrollmentCourseId);
+            setSelectedCourseId(enrollmentCourseId);
+            const matchingCourse = COURSE_DEFINITIONS.find((c) => c.id === enrollmentCourseId);
+            if (matchingCourse) {
+              setCourseOptions([matchingCourse]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load enrollment:', err);
+      }
+    };
+    loadEnrollment();
+    return () => {
+      active = false;
+    };
+  }, [enrollmentId]);
+
+  // Load student courses (only if no enrollment lock)
+  useEffect(() => {
+    if (enrollmentLockedCourse) return;
     let active = true;
     const loadCourses = async () => {
       try {
@@ -1091,7 +1125,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
     return () => {
       active = false;
     };
-  }, [kidId, courseManuallySelected]);
+  }, [kidId, courseManuallySelected, enrollmentLockedCourse]);
 
   // When course changes, pick first topic by default
   useEffect(() => {
@@ -1335,15 +1369,15 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         <div className="text-xs font-semibold text-slate-700">Lesson</div>
         <div className="mt-1.5 grid gap-1.5 md:grid-cols-2">
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
-            Course
+            Course {enrollmentLockedCourse && <span className="text-[10px] text-emerald-600">(locked to enrollment)</span>}
             <select
-              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              className="h-10 sm:h-9 rounded border border-slate-300 bg-white px-2 text-sm"
               value={selectedCourseId}
               onChange={(e) => {
                 setCourseManuallySelected(true);
                 setSelectedCourseId(e.target.value as CourseId);
               }}
-              disabled={configLoading || topicsLoading || curriculumLoading}
+              disabled={configLoading || topicsLoading || curriculumLoading || !!enrollmentLockedCourse}
             >
               <option value="" disabled>
                 Select course
@@ -1358,7 +1392,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
           <label className="flex flex-col gap-1 text-xs font-medium text-slate-700">
             Topic
             <select
-              className="h-9 rounded border border-slate-300 bg-white px-2 text-sm"
+              className="h-10 sm:h-9 rounded border border-slate-300 bg-white px-2 text-sm"
               value={selectedTopicId}
               onChange={(e) => setSelectedTopicId(e.target.value)}
               disabled={disabled}
@@ -1458,8 +1492,8 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         <div className="space-y-1">
           <div className="text-xs font-semibold text-slate-700">Teacher note for parent</div>
           <textarea
-            rows={2}
-            className="min-h-[56px] w-full resize-none rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm leading-5"
+            rows={3}
+            className="min-h-[72px] sm:min-h-[56px] w-full resize-none rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm leading-5"
             placeholder="Write one short note for parents about today&apos;s progress."
             value={teacherRemark}
             onChange={(e) => setTeacherRemark(e.target.value)}
@@ -1468,18 +1502,18 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
         </div>
       </div>
 
-      <div className="sticky bottom-0 -mx-2 border-t border-slate-200 bg-white/90 px-2 py-1.5 backdrop-blur">
+      <div className="sticky bottom-0 -mx-2 border-t border-slate-200 bg-white/90 px-2 py-2 sm:py-1.5 backdrop-blur pb-safe">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-[11px] text-slate-600">
+          <div className="text-[11px] text-slate-600 w-full sm:w-auto">
             {isDirty ? 'Unsaved changes' : 'All changes saved'}
             <span className="ml-2 text-slate-400">• Last saved: {lastSavedAt ? new Date(lastSavedAt).toLocaleString() : '—'}</span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleSave}
               disabled={disabled || saving || !selectedTopicId || !isDirty}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 sm:px-2.5 sm:py-1 text-xs sm:text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 min-h-[44px] sm:min-h-0"
             >
               {saving ? 'Saving…' : 'Save'}
             </button>
@@ -1488,7 +1522,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
                 type="button"
                 onClick={handleSaveAndBack}
                 disabled={disabled || saving || !selectedTopicId || !isDirty}
-                className="inline-flex items-center rounded-md bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 sm:px-2.5 sm:py-1 text-xs sm:text-[11px] font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300 min-h-[44px] sm:min-h-0"
               >
                 {saving ? 'Saving…' : 'Save & Back'}
               </button>
@@ -1497,7 +1531,7 @@ const StudentTopicProgressEditor: React.FC<StudentTopicProgressEditorProps> = ({
               type="button"
               onClick={handleSaveAndNext}
               disabled={disabled || saving || !selectedTopicId || !isDirty}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100"
+              className="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 sm:px-2.5 sm:py-1 text-xs sm:text-[11px] font-semibold text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:bg-slate-100 min-h-[44px] sm:min-h-0"
             >
               {saving ? 'Saving…' : 'Save & Next Topic'}
             </button>
