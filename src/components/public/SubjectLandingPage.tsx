@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import PageHero from '../common/PageHero';
 import { getSubjectLandingData, type SubjectLandingId } from '../../content/publicSubjectLandings';
@@ -17,6 +17,7 @@ const ctaClass =
 export default function SubjectLandingPage({ subject }: SubjectLandingPageProps) {
   const data = useMemo(() => getSubjectLandingData(subject), [subject]);
   const isPhonicsLanding = subject === 'phonics';
+  const [openPhonicsFaqIndexes, setOpenPhonicsFaqIndexes] = useState<number[]>([0]);
 
   const phonicsFaq = useMemo(
     () =>
@@ -46,6 +47,20 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
         : [],
     [isPhonicsLanding],
   );
+  const allPhonicsFaqOpen = openPhonicsFaqIndexes.length === phonicsFaq.length;
+
+  const togglePhonicsFaq = (index: number) => {
+    setOpenPhonicsFaqIndexes((prev) =>
+      prev.includes(index) ? prev.filter((item) => item !== index) : [...prev, index],
+    );
+  };
+
+  const expandAllPhonicsFaq = () => setOpenPhonicsFaqIndexes(phonicsFaq.map((_, index) => index));
+  const collapseAllPhonicsFaq = () => setOpenPhonicsFaqIndexes([]);
+
+  const activeSectionShell = isPhonicsLanding
+    ? 'mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-6 py-8 shadow-sm sm:px-8 sm:py-10'
+    : sectionShell;
 
   const breadcrumbSchema = useMemo(
     () => ({
@@ -130,9 +145,9 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
       />
 
       <section className="px-6">
-        <div className={sectionShell}>
+        <div className={activeSectionShell}>
           {isPhonicsLanding ? (
-            <div className="max-w-4xl rounded-3xl border border-sky-200 bg-sky-50 p-5">
+            <div className="max-w-4xl rounded-3xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5">
               <h2 className="text-2xl font-bold text-slate-900">Systematic synthetic phonics for every stage</h2>
               <p className="mt-3 text-base leading-7 text-slate-700">
                 Tiny Steps supports parents searching for phonics, jolly phonics, synthetic phonics, and advanced phonics. Our pathway starts with SATPIN and extends to digraphs, long vowels, bossy-r, and multisyllabic decoding in live online classes.
@@ -174,27 +189,64 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
 
       {phonicsFaq.length ? (
         <section className="px-6">
-          <div className={sectionShell}>
+          <div className={activeSectionShell}>
             <div className="max-w-3xl">
               <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>Parent FAQs</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
                 Common questions on Jolly, synthetic, and advanced phonics
               </h2>
             </div>
-            <div className="mt-8 space-y-4">
-              {phonicsFaq.map((item) => (
-                <article key={item.question} className={cardShell}>
-                  <h3 className="text-lg font-semibold text-slate-900">{item.question}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.answer}</p>
-                </article>
-              ))}
+
+            <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={expandAllPhonicsFaq}
+                disabled={allPhonicsFaqOpen}
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Expand all
+              </button>
+              <button
+                type="button"
+                onClick={collapseAllPhonicsFaq}
+                disabled={!openPhonicsFaqIndexes.length}
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Collapse all
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {phonicsFaq.map((item, index) => {
+                const isOpen = openPhonicsFaqIndexes.includes(index);
+                return (
+                  <article key={item.question} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <button
+                      type="button"
+                      onClick={() => togglePhonicsFaq(index)}
+                      className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
+                      aria-expanded={isOpen}
+                    >
+                      <span className="text-base font-semibold text-slate-900">{item.question}</span>
+                      <span className={`text-xl font-bold text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-45' : 'rotate-0'}`}>
+                        +
+                      </span>
+                    </button>
+                    <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                      <div className="overflow-hidden px-5 pb-5 text-slate-700">
+                        {item.answer}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </section>
       ) : null}
 
       <section className="px-6">
-        <div className={sectionShell}>
+        <div className={activeSectionShell}>
           <div className="max-w-3xl">
             <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>
               What Your Child Will Learn
@@ -224,7 +276,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
       </section>
 
       <section className="px-6">
-        <div className={sectionShell}>
+        <div className={activeSectionShell}>
           <div className="max-w-3xl">
             <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>
               Curriculum Path
@@ -270,7 +322,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
       </section>
 
       <section className="px-6">
-        <div className={sectionShell}>
+        <div className={activeSectionShell}>
           <div className="max-w-3xl">
             <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>
               Outcomes Parents Can Expect
@@ -300,7 +352,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
       </section>
 
       <section className="px-6">
-        <div className={sectionShell}>
+        <div className={activeSectionShell}>
           <div className="max-w-3xl">
             <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>
               Why Tiny Steps
@@ -322,7 +374,7 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
       </section>
 
       <section className="px-6">
-        <div className={`${sectionShell} text-center`}>
+        <div className={`${activeSectionShell} text-center`}>
           <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>Next Step</p>
           <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{data.ctaTitle}</h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">{data.ctaDescription}</p>

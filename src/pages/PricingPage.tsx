@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { FC } from 'react';
 import Meta from '../components/common/Meta';
 import { useAuthStore } from '../store/useAuthStore';
@@ -650,9 +650,14 @@ const PricingPage: FC = () => {
             <h2 className="text-2xl font-semibold text-gray-900 text-center py-6">
               Optional Game Subscriptions
             </h2>
-            <p className="text-gray-700 text-center mb-6">
+            <p className="text-gray-700 text-center mb-3">
               Enhance your child’s learning with curated games. These subscriptions are designed to complement our core 1:1 classes.
             </p>
+            <div className="mb-6 text-center">
+              <Link to="/games/english-excellence" className="text-sm font-semibold text-tiny-blue-700 underline">
+                Explore English Excellence games preview and plans
+              </Link>
+            </div>
             <table className="w-full border-collapse text-sm text-gray-700">
               <thead>
                 <tr className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">

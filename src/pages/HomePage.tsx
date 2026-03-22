@@ -222,10 +222,10 @@ export default function HomePage() {
                   Enroll ₹2,400 Summer Camp
                 </Link>
                 <Link
-                  to="/summer-camps#batches"
+                  to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full border border-emerald-600 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:-translate-y-0.5 hover:bg-emerald-50"
                 >
-                  View Group Batches
+                  View Summer Camp Programs
                 </Link>
               </div>
             </div>

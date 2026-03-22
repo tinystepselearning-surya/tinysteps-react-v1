@@ -28,15 +28,15 @@ const ContactPage: FC = () => {
       </div>
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#060a16]/85 via-[#060a16]/40 to-[#060a16]/90" />
 
-      <section className="relative z-10 mx-auto max-w-6xl px-6 pt-24 pb-6">
-        <div className="mx-auto flex h-[280px] max-w-5xl flex-col items-center justify-start md:h-[320px]">
+      <section className="relative z-10 mx-auto max-w-6xl px-6 pt-20 pb-6">
+        <div className="mx-auto flex h-[280px] max-w-5xl flex-col items-center justify-end sm:h-[300px] md:h-[340px]">
           <ElectricBorder
             color="#7df9ff"
             speed={1}
             chaos={0.12}
             thickness={2}
             borderRadius={999}
-            className="w-fit"
+            className="mb-2 w-fit"
           >
             <div className="rounded-full bg-[#0a1230]/70 px-6 py-2.5 backdrop-blur-md">
               <p className="text-center text-sm font-medium tracking-wide text-cyan-100">

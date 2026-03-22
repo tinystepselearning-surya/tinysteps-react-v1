@@ -41,6 +41,12 @@ const BENEFITS = [
   'Designed for repetition, confidence, and skill growth',
 ];
 
+const MISSION_PREVIEW_TRACKS = [
+  { label: 'Letters & Sounds', count: '5 ready' },
+  { label: 'Build Words', count: '5 ready' },
+  { label: 'Make Sentences', count: '3 ready' },
+];
+
 const FAQS = [
   {
     question: 'Is the pricing per child?',
@@ -104,8 +110,8 @@ export default function LearningGamesMarketingPage() {
 
       <section className="relative overflow-hidden border-b border-slate-200 bg-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(251,191,36,0.18),_transparent_35%),radial-gradient(circle_at_left,_rgba(59,130,246,0.12),_transparent_35%)]" />
-        <div className="relative mx-auto max-w-7xl px-6 py-14 md:px-10 md:py-20">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="relative mx-auto max-w-7xl px-6 pt-0 pb-14 md:px-10 md:pt-0 md:pb-20">
+          <div className="grid items-start gap-10 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
               <div className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-700">
                 Tiny Steps Learning Games
@@ -154,41 +160,83 @@ export default function LearningGamesMarketingPage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70">
-              <div className="rounded-[24px] bg-gradient-to-br from-sky-50 via-amber-50 to-white p-6">
+            <div className="space-y-5">
+              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70">
+                <div className="rounded-[24px] bg-gradient-to-br from-sky-50 via-amber-50 to-white p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Simple pricing</div>
+                      <div className="mt-1 text-2xl font-bold text-slate-900">One child. One clear plan.</div>
+                    </div>
+                    <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      3-day free trial
+                    </div>
+                  </div>
+
+                  <div className="mt-6 grid gap-4">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                      <div className="text-sm font-medium text-slate-500">Monthly</div>
+                      <div className="mt-2 text-4xl font-bold text-slate-900">₹199</div>
+                      <div className="mt-1 text-sm text-slate-600">per month / per child</div>
+                      <p className="mt-4 text-sm leading-6 text-slate-600">
+                        Ideal for parents who want a low-risk way to begin daily skill practice after the 3-day free trial.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border-2 border-slate-900 bg-slate-900 p-5 text-white">
+                      <div className="text-sm font-medium text-slate-300">Lifetime</div>
+                      <div className="mt-2 text-4xl font-bold">₹999</div>
+                      <div className="mt-1 text-sm text-slate-300">one-time / per child</div>
+                      <p className="mt-4 text-sm leading-6 text-slate-200">
+                        Best for parents who want long-term access without worrying about monthly renewals.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                    Built as a smart practice companion for Tiny Steps learners: short, focused, repeatable, and child-friendly.
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">Simple pricing</div>
-                    <div className="mt-1 text-2xl font-bold text-slate-900">One child. One clear plan.</div>
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">Mission preview</div>
+                    <div className="mt-1 text-lg font-bold text-slate-900">English Excellence dashboard UI</div>
                   </div>
-                  <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    3-day free trial
-                  </div>
+                  <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700">Demo</span>
                 </div>
 
-                <div className="mt-6 grid gap-4">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                    <div className="text-sm font-medium text-slate-500">Monthly</div>
-                    <div className="mt-2 text-4xl font-bold text-slate-900">₹199</div>
-                    <div className="mt-1 text-sm text-slate-600">per month / per child</div>
-                    <p className="mt-4 text-sm leading-6 text-slate-600">
-                      Ideal for parents who want a low-risk way to begin daily skill practice after the 3-day free trial.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border-2 border-slate-900 bg-slate-900 p-5 text-white">
-                    <div className="text-sm font-medium text-slate-300">Lifetime</div>
-                    <div className="mt-2 text-4xl font-bold">₹999</div>
-                    <div className="mt-1 text-sm text-slate-300">one-time / per child</div>
-                    <p className="mt-4 text-sm leading-6 text-slate-200">
-                      Best for parents who want long-term access without worrying about monthly renewals.
-                    </p>
+                <div className="mt-4 rounded-2xl bg-[#0b1024] p-4 text-white">
+                  <div className="grid grid-cols-[0.9fr_1.1fr] gap-3">
+                    <div className="space-y-2">
+                      {MISSION_PREVIEW_TRACKS.map((track, idx) => (
+                        <div key={track.label} className="rounded-xl border border-white/15 bg-white/10 p-2.5">
+                          <div className="text-xs text-slate-200">{idx + 1}. {track.label}</div>
+                          <div className="mt-1 text-[11px] text-slate-300">{track.count}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="space-y-2">
+                      <div className="rounded-xl border border-cyan-400/40 bg-white/5 p-2.5">
+                        <div className="text-xs font-semibold text-white">Letter Tracing</div>
+                        <div className="mt-1 text-[11px] text-slate-300">Tap to open</div>
+                      </div>
+                      <div className="rounded-xl border border-violet-400/40 bg-white/5 p-2.5">
+                        <div className="text-xs font-semibold text-white">Sound Listening</div>
+                        <div className="mt-1 text-[11px] text-slate-300">Tap to open</div>
+                      </div>
+                      <div className="rounded-xl border border-fuchsia-400/40 bg-white/5 p-2.5">
+                        <div className="text-xs font-semibold text-white">Balloon Pop</div>
+                        <div className="mt-1 text-[11px] text-slate-300">Tap to open</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                  Built as a smart practice companion for Tiny Steps learners: short, focused, repeatable, and child-friendly.
-                </div>
+                <p className="mt-3 text-xs text-slate-500">
+                  This is a visual demo of the mission dashboard. Children access the live experience after enrolment.
+                </p>
               </div>
             </div>
           </div>

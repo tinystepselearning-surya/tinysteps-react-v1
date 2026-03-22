@@ -288,6 +288,9 @@ const router = createBrowserRouter(
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
+        { path: 'games', element: <Navigate to="/games/english-excellence" replace /> },
+        // Public marketing entry for English Excellence games + subscription plans
+        { path: 'games/english-excellence', element: <LearningGamesMarketingPage /> },
         { path: 'for-schools', element: <ForSchoolsPage /> },
         { path: 'book-demo', element: <BookDemoPage /> },
 

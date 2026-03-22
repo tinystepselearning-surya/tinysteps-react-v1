@@ -32,8 +32,8 @@ const STRETCH_CARDS = [
     id: 'progress',
     title: 'Parent Progress Updates',
     desc: 'Weekly insights + next steps for practice.',
-    cta: 'Open Mission shell',
-    href: '/kids/games/english-excellence',
+    cta: 'Explore English Excellence',
+    href: '/games/english-excellence',
   },
   {
     id: 'camp',

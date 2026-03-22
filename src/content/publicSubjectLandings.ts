@@ -78,9 +78,9 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
       'Parents can expect the learning outcomes already defined in the Tiny Steps phonics tracks.',
     approachIntro:
       'The phonics pathway stays clear because the same catalog and curriculum structure is used across the public site.',
-    ctaTitle: 'Book a free phonics assessment',
+    ctaTitle: 'Book a free 35-minute phonics assessment session',
     ctaDescription:
-      'We will help you choose the right starting point across Phonics Foundations, Early Phonics, and Advanced Phonics.',
+      'Book your free 35-minute session and we will help you choose the right starting point across Phonics Foundations, Early Phonics, and Advanced Phonics.',
     palette: {
       accentText: 'text-sky-700',
       accentSurface: 'bg-sky-50',
