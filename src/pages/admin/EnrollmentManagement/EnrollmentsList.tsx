@@ -15,7 +15,8 @@ import {
   where,
   documentId,
 } from 'firebase/firestore';
-import { db } from '../../../lib/firebaseConfig';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../../lib/firebaseConfig';
 
 import {
   Table,
@@ -426,18 +427,37 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
     }
     const teacherRate = Number(editTeacherRate);
     const teacherPayPerSession = Number.isFinite(teacherRate) ? teacherRate : 0;
+    const prevTeacherId = String(editEnrollment.teacherId || '').trim();
+    const nextTeacherId = String(editTeacherId || '').trim();
+    const teacherChanged = prevTeacherId !== nextTeacherId;
 
     try {
       setSaving(true);
-      await updateDoc(doc(db, 'enrollments', editEnrollment.id), {
+      const updates: Record<string, any> = {
         status: editStatus,
         ratePerSession: parentRate,
         feePerSession: parentRate,
         feePerClass: parentRate,
         teacherPayPerSession,
-        teacherId: editTeacherId || null,
         updatedAt: serverTimestamp(),
-      });
+      };
+
+      // When teacher changes to a concrete teacher, use backend reassignment flow
+      // so future sessions + kid mapping stay consistent with enrollment teacherId.
+      if (!teacherChanged || !nextTeacherId) {
+        updates.teacherId = nextTeacherId || null;
+      }
+
+      await updateDoc(doc(db, 'enrollments', editEnrollment.id), updates);
+
+      if (teacherChanged && nextTeacherId) {
+        const reassignEnrollmentTeacher = httpsCallable(functions, 'reassignEnrollmentTeacher');
+        await reassignEnrollmentTeacher({
+          enrollmentId: editEnrollment.id,
+          newTeacherId: nextTeacherId,
+        });
+      }
+
       toast({ title: 'Enrollment updated' });
       setEditOpen(false);
       await queryClient.invalidateQueries({ queryKey: ['adminEnrollments'], exact: false });

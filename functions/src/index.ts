@@ -19,6 +19,7 @@ export {
   recordPayment,
   recordTeacherPayout,
   voidTeacherOrphanEarnings,
+  adminVoidSessionCharge,
 } from "./revenue";
 
 // Bulk session generator from enrollment schedule config

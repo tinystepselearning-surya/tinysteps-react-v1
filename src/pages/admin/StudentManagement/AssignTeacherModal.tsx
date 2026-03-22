@@ -23,11 +23,9 @@ import {
   where,
   doc,
   getDoc,
-  updateDoc,
-  serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../../../lib/firebaseConfig';
-import { updateKid } from '../../../services/kidsService';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { Student } from '../../../types/Student';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -190,22 +188,16 @@ export default function AssignTeacherModal({
     try {
       setSaving(true);
 
-      // Update enrollment
-      const enrRef = doc(db, 'enrollments', selectedEnrollment);
-      await updateDoc(enrRef, {
-        teacherId: selectedTeacher,
-        status: 'active',
-        updatedAt: serverTimestamp(),
-      } as any);
-
-      // Update the kid's teacherId
-      await updateKid(student.id as string, {
-        teacherId: selectedTeacher,
-      } as any);
+      // Use backend reassignment so enrollment + kid + future sessions stay in sync.
+      const reassignEnrollmentTeacher = httpsCallable(functions, 'reassignEnrollmentTeacher');
+      await reassignEnrollmentTeacher({
+        enrollmentId: selectedEnrollment,
+        newTeacherId: selectedTeacher,
+      });
 
       toast({
         title: 'Assigned',
-        description: 'Teacher assigned successfully.',
+        description: 'Teacher assigned and upcoming sessions re-mapped successfully.',
       });
       onAssigned?.();
       onClose();

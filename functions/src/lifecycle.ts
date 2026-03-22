@@ -19,6 +19,13 @@ const ACTIVE_LIKE = new Set([
 ]);
 
 const TERMINAL = new Set(['completed', 'discontinued', 'expired', 'cancelled', 'canceled']);
+const NON_REASSIGNABLE_SESSION_STATUSES = new Set([
+  'completed',
+  'cancelled',
+  'canceled',
+  'no_show',
+  'noshow',
+]);
 
 function normalizeEnrollmentStatus(value: string): string {
   const raw = String(value || '').trim().toLowerCase();
@@ -84,20 +91,61 @@ async function cancelFutureSessionsByKidId(kidId: string, reason: string) {
   return count;
 }
 
-async function updateSessionsTeacherByEnrollmentId(enrollmentId: string, newTeacherId: string) {
+async function updateSessionsTeacherByEnrollmentId(
+  enrollmentId: string,
+  newTeacherId: string,
+  actorUid: string | null
+) {
   const db = admin.firestore();
-  const now = admin.firestore.Timestamp.now();
+  const nowMs = Date.now();
   const snap = await db
     .collection('classSessions')
     .where('enrollmentId', '==', enrollmentId)
-    .where('startAt', '>=', now)
     .get();
+
+  const isFutureSession = (data: any): boolean => {
+    const startAt = data?.startAt;
+    if (typeof startAt?.toMillis === 'function') {
+      return startAt.toMillis() >= nowMs;
+    }
+    if (startAt) {
+      const parsedStartAt = new Date(startAt);
+      if (!Number.isNaN(parsedStartAt.getTime())) {
+        return parsedStartAt.getTime() >= nowMs;
+      }
+    }
+
+    const dateYmd = String(data?.date || '').trim();
+    const startTime = String(data?.startTime || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateYmd)) {
+      const withTimeIso =
+        /^\d{2}:\d{2}$/.test(startTime)
+          ? `${dateYmd}T${startTime}:00+05:30`
+          : `${dateYmd}T00:00:00+05:30`;
+      const parsed = Date.parse(withTimeIso);
+      if (!Number.isNaN(parsed)) {
+        return parsed >= nowMs;
+      }
+    }
+    return false;
+  };
+
+  // Guardrail: never reassign already-finalized/billed sessions.
+  const eligibleDocs = snap.docs.filter((docSnap) => {
+    const data = docSnap.data() || {};
+    if (!isFutureSession(data)) return false;
+    const status = String(data.status || '').trim().toLowerCase();
+    if (NON_REASSIGNABLE_SESSION_STATUSES.has(status)) return false;
+    if (data.revenueAccrued === true) return false;
+    return true;
+  });
 
   const updates = {
     teacherId: newTeacherId,
+    updatedBy: actorUid,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   };
-  const count = await batchUpdate(snap.docs, updates);
+  const count = await batchUpdate(eligibleDocs, updates);
   return count;
 }
 
@@ -193,7 +241,11 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
       );
   }
 
-  const updatedSessions = await updateSessionsTeacherByEnrollmentId(enrollmentId, newTeacherId);
+  const updatedSessions = await updateSessionsTeacherByEnrollmentId(
+    enrollmentId,
+    newTeacherId,
+    request.auth?.uid || null
+  );
 
   return {
     ok: true,

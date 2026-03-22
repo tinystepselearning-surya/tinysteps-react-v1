@@ -85,6 +85,7 @@ export default function EnrollmentDetailView({
   const [charges, setCharges] = useState<Charge[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [financialsLoading, setFinancialsLoading] = useState(false);
+  const [voidingChargeId, setVoidingChargeId] = useState<string | null>(null);
   const [rateEditOpen, setRateEditOpen] = useState(false);
   const [parentRateInput, setParentRateInput] = useState('');
   const [teacherRateInput, setTeacherRateInput] = useState('');
@@ -125,6 +126,15 @@ export default function EnrollmentDetailView({
     if (safePaid > 0) return Math.min(safePaid, safeAmount);
     if (status === 'paid' || status === 'settled') return safeAmount;
     return 0;
+  };
+
+  const normalizeChargeEntryStatus = (value?: string) =>
+    String(value || '').trim().toLowerCase();
+
+  const isChargeVoidable = (charge: Charge) => {
+    const status = normalizeChargeEntryStatus(charge.status);
+    if (status === 'void' || status === 'paid' || status === 'settled') return false;
+    return chargePaidAmount(charge) <= 0;
   };
 
   const normalizeStatus = (value?: string) => {
@@ -353,12 +363,16 @@ export default function EnrollmentDetailView({
     return <div className="p-4 text-sm">Loading enrollment…</div>;
   }
 
-  const totalCharges = charges.reduce((sum, charge) => {
+  const activeCharges = charges.filter(
+    (charge) => normalizeChargeEntryStatus(charge.status) !== 'void'
+  );
+
+  const totalCharges = activeCharges.reduce((sum, charge) => {
     const raw = Number(charge?.amount ?? 0);
     const amount = Number.isFinite(raw) ? raw : 0;
     return sum + amount;
   }, 0);
-  const totalPaid = charges.reduce((sum, charge) => sum + chargePaidAmount(charge), 0);
+  const totalPaid = activeCharges.reduce((sum, charge) => sum + chargePaidAmount(charge), 0);
   const outstanding = Math.max(totalCharges - totalPaid, 0);
   const totalPayments = payments.reduce((sum, payment) => {
     const raw = Number(payment?.amount ?? 0);
@@ -496,6 +510,69 @@ export default function EnrollmentDetailView({
       });
     } finally {
       setPaymentSaving(false);
+    }
+  };
+
+  const handleVoidSessionCharge = async (charge: Charge) => {
+    const sessionId = String(charge.sessionId || '').trim();
+    if (!sessionId) {
+      toast({
+        title: 'Session mapping missing',
+        description: 'This charge is not linked to a session, so it cannot be voided here.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!isChargeVoidable(charge)) {
+      toast({
+        title: 'Charge cannot be voided',
+        description: 'Paid/settled charges must be adjusted via payment reversal first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const confirmation = window.prompt(
+      `Type VOID to reverse session financials for ${sessionId}.`
+    );
+    if (confirmation !== 'VOID') return;
+
+    const reasonRaw = window.prompt(
+      'Optional reason for audit log (leave blank for default):'
+    );
+    const reason = typeof reasonRaw === 'string' ? reasonRaw.trim() : '';
+
+    try {
+      setVoidingChargeId(charge.id);
+      const fn = httpsCallable(functions, 'adminVoidSessionCharge');
+      const response: any = await fn({
+        sessionId,
+        reason: reason || undefined,
+      });
+      const data = response?.data || {};
+      const changedParts = [
+        data?.chargeVoided ? 'parent charge' : null,
+        data?.earningVoided ? 'teacher earning' : null,
+        data?.revenueRollupReversed ? 'revenue rollup' : null,
+      ].filter(Boolean);
+
+      toast({
+        title: changedParts.length > 0 ? 'Session charge reversed' : 'No changes needed',
+        description:
+          changedParts.length > 0
+            ? `${sessionId}: reversed ${changedParts.join(', ')}.`
+            : `${sessionId}: entries were already void or unavailable.`,
+      });
+      await Promise.all([loadFinancials(), loadEnrollment()]);
+    } catch (err: any) {
+      toast({
+        title: 'Void failed',
+        description: err?.message || 'Failed to void this session charge',
+        variant: 'destructive',
+      });
+    } finally {
+      setVoidingChargeId(null);
     }
   };
 
@@ -749,30 +826,56 @@ export default function EnrollmentDetailView({
                 </div>
               </div>
               <div className="border rounded">
-                <div className="grid grid-cols-5 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
+                <div className="grid grid-cols-6 gap-2 px-3 py-2 text-xs uppercase text-muted-foreground border-b">
                   <div>Date</div>
                   <div>Amount</div>
                   <div>Paid</div>
                   <div>Status</div>
                   <div>Session</div>
+                  <div>Action</div>
                 </div>
                 {charges.length === 0 ? (
                   <div className="px-3 py-3 text-sm text-muted-foreground">No charges yet.</div>
                 ) : (
-                  charges.map((charge) => (
-                    <div
-                      key={charge.id}
-                      className="grid grid-cols-5 gap-2 px-3 py-2 text-sm border-b last:border-b-0"
-                    >
-                      <div>{formatDate(charge.createdAt || charge.updatedAt || charge.paidAt)}</div>
-                      <div>{formatMoney(charge.amount)}</div>
-                      <div>{formatMoney(chargePaidAmount(charge))}</div>
-                      <div className="capitalize">{String(charge.status || 'open')}</div>
-                      <div className="truncate" title={String(charge.sessionId || charge.id)}>
-                        {String(charge.sessionId || charge.id)}
+                  charges.map((charge) => {
+                    const status = normalizeChargeEntryStatus(charge.status) || 'open';
+                    const sessionId = String(charge.sessionId || '').trim();
+                    const hasSession = Boolean(sessionId);
+                    const canVoid = isChargeVoidable(charge) && hasSession;
+                    const isVoiding = voidingChargeId === charge.id;
+                    return (
+                      <div
+                        key={charge.id}
+                        className="grid grid-cols-6 gap-2 px-3 py-2 text-sm border-b last:border-b-0"
+                      >
+                        <div>{formatDate(charge.createdAt || charge.updatedAt || charge.paidAt)}</div>
+                        <div>{formatMoney(charge.amount)}</div>
+                        <div>{formatMoney(chargePaidAmount(charge))}</div>
+                        <div className="capitalize">{status}</div>
+                        <div className="truncate" title={String(charge.sessionId || charge.id)}>
+                          {String(charge.sessionId || charge.id)}
+                        </div>
+                        <div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleVoidSessionCharge(charge)}
+                            disabled={!canVoid || isVoiding}
+                          >
+                            {isVoiding
+                              ? 'Voiding…'
+                              : status === 'void'
+                                ? 'Voided'
+                                : !hasSession
+                                  ? 'No session'
+                                  : canVoid
+                                    ? 'Void'
+                                    : 'Settled'}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

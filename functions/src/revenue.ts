@@ -121,6 +121,11 @@ function resolveKidId(data: any): string | null {
   );
 }
 
+function normalizeTeacherId(value: any): string | null {
+  const raw = String(value || '').trim();
+  return raw ? raw : null;
+}
+
 function resolveFeeAmount(session: any, enrollment: any): number {
   const raw =
     session?.feeAmount ??
@@ -139,6 +144,28 @@ function resolveTeacherPay(enrollment: any): number {
     enrollment?.teacherPay ??
     0;
   return normalizeNumber(raw, 0);
+}
+
+function isSessionRevenueSuppressed(session: any): boolean {
+  return session?.revenueSuppressed === true;
+}
+
+function resolveChargePaidAmount(data: any, amount: number): number {
+  const paidRaw = Number(data?.paidAmount);
+  if (Number.isFinite(paidRaw) && paidRaw > 0) {
+    return Math.min(Math.max(paidRaw, 0), Math.max(amount, 0));
+  }
+  const status = normalizeChargeStatus(data?.status);
+  if (isSettledCharge(status)) {
+    return Math.max(amount, 0);
+  }
+  return 0;
+}
+
+function normalizeCorrectionReason(value: any, fallback: string): string {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return fallback;
+  return raw.slice(0, 300);
 }
 
 async function resolveEnrollmentId(
@@ -274,6 +301,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const currentKidId = resolveKidId(session);
         const attendanceStatus = resolveAttendanceStatus(session, currentKidId);
         if (!isBillableAttendance(attendanceStatus)) return;
+        if (isSessionRevenueSuppressed(session)) return;
 
         const enrollmentRef = db.collection('enrollments').doc(enrollmentId);
         const enrollmentSnap = await tx.get(enrollmentRef);
@@ -289,7 +317,12 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const ratePerSession = resolveFeeAmount(session, enrollment);
         const teacherPayPerSession = resolveTeacherPay(enrollment);
         const currency = session.currency || enrollment.currency || 'INR';
-        const resolvedTeacherId = session.teacherId || enrollment.teacherId || null;
+        // Keep teacher attribution anchored to the session itself.
+        // Do not fallback to mutable enrollment.teacherId, otherwise reassignments can
+        // retroactively shift earnings ownership.
+        const sessionTeacherId = normalizeTeacherId(session.teacherId);
+        const beforeSessionTeacherId = normalizeTeacherId(beforeData?.teacherId);
+        const resolvedTeacherId = sessionTeacherId || beforeSessionTeacherId || null;
 
         const monthKey = monthKeyFromTimestampIST(
           session.startAt || session.date || session.endAt || new Date()
@@ -319,7 +352,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           enrollmentId,
           kidId: currentKidId,
           parentId: session.parentId || enrollment.parentId || null,
-          teacherId: session.teacherId || enrollment.teacherId || null,
+          teacherId: resolvedTeacherId,
           courseId: session.courseId || enrollment.courseId || null,
           amount: ratePerSession,
           currency,
@@ -342,7 +375,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
           sessionId,
           enrollmentId,
           kidId: currentKidId,
-          teacherId: session.teacherId || enrollment.teacherId || null,
+          teacherId: resolvedTeacherId,
           parentId: session.parentId || enrollment.parentId || null,
           courseId: session.courseId || enrollment.courseId || null,
           amount: teacherPayPerSession,
@@ -1163,6 +1196,228 @@ export const voidTeacherOrphanEarnings = onCall(
       ok: true,
       teacherId,
       monthKey,
+      ...result,
+    };
+  }
+);
+
+export const adminVoidSessionCharge = onCall(
+  {
+    region: REGION,
+    memory: '256MiB',
+    timeoutSeconds: 60,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const sessionId = String(request.data?.sessionId || '').trim();
+    if (!sessionId) {
+      throw new HttpsError('invalid-argument', 'sessionId is required');
+    }
+
+    const note = normalizeCorrectionReason(
+      request.data?.reason,
+      'Admin correction: attendance/session charge voided'
+    );
+
+    const db = admin.firestore();
+    const sessionRef = db.collection('classSessions').doc(sessionId);
+    const chargeRef = db.collection('billingCharges').doc(sessionId);
+    const earningRef = db.collection('teacherEarnings').doc(sessionId);
+
+    const result = await db.runTransaction(async (tx) => {
+      const [sessionSnap, chargeSnap, earningSnap] = await Promise.all([
+        tx.get(sessionRef),
+        tx.get(chargeRef),
+        tx.get(earningRef),
+      ]);
+
+      if (!sessionSnap.exists) {
+        throw new HttpsError('not-found', 'Session not found');
+      }
+
+      const session = sessionSnap.data() || {};
+      const chargeExists = chargeSnap.exists;
+      const chargeData = chargeSnap.data() || {};
+      const chargeStatus = normalizeChargeStatus(chargeData.status);
+      const chargeAmount = Math.max(
+        normalizeNumber(chargeData.amount ?? session.accruedAmount, 0),
+        0
+      );
+      const chargePaidAmount = resolveChargePaidAmount(chargeData, chargeAmount);
+
+      const earningExists = earningSnap.exists;
+      const earningData = earningSnap.data() || {};
+      const earningStatus = normalizeChargeStatus(earningData.status);
+      const earningAmount = Math.max(normalizeNumber(earningData.amount, 0), 0);
+      const earningPaidAmount = resolveTeacherEarningPaidAmount(earningData, earningAmount);
+
+      if (!chargeExists && !earningExists && session.revenueAccrued !== true) {
+        throw new HttpsError('not-found', 'No session-linked charge or earning found');
+      }
+
+      if (chargeExists && chargeStatus !== 'void' && chargePaidAmount > 0) {
+        throw new HttpsError(
+          'failed-precondition',
+          'This charge already has payment applied. Reverse payment allocation first.'
+        );
+      }
+
+      if (earningExists && earningStatus !== 'void' && earningPaidAmount > 0) {
+        throw new HttpsError(
+          'failed-precondition',
+          'This teacher earning is already paid. Reverse payout allocation first.'
+        );
+      }
+
+      let chargeVoided = false;
+      if (chargeExists && chargeStatus !== 'void') {
+        tx.set(
+          chargeRef,
+          {
+            status: 'void',
+            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidReason: note,
+            correctedBy: request.auth?.uid || null,
+            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        chargeVoided = true;
+      }
+
+      let earningVoided = false;
+      if (earningExists && earningStatus !== 'void') {
+        tx.set(
+          earningRef,
+          {
+            status: 'void',
+            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidReason: note,
+            correctedBy: request.auth?.uid || null,
+            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        earningVoided = true;
+      }
+
+      const accruedAmount = Math.max(normalizeNumber(session.accruedAmount, chargeAmount), 0);
+      const accruedMonthKey = String(
+        session.accruedMonthKey ||
+          chargeData.monthKey ||
+          earningData.monthKey ||
+          monthKeyFromTimestampIST(session.startAt || session.date || session.endAt || new Date())
+      );
+
+      let revenueRollupReversed = false;
+      if (session.revenueAccrued === true) {
+        const revenueRollupRef = revenueMonthlyRef(db, accruedMonthKey);
+        tx.set(
+          revenueRollupRef,
+          {
+            expected: admin.firestore.FieldValue.increment(-accruedAmount),
+            completedSessions: admin.firestore.FieldValue.increment(-1),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        const enrollmentId = String(
+          session.enrollmentId || chargeData.enrollmentId || earningData.enrollmentId || ''
+        ).trim();
+        if (enrollmentId) {
+          const enrollmentRef = db.collection('enrollments').doc(enrollmentId);
+          tx.set(
+            enrollmentRef,
+            {
+              'metrics.completedSessionsCount': admin.firestore.FieldValue.increment(-1),
+              'metrics.expectedRevenueAccrued': admin.firestore.FieldValue.increment(-accruedAmount),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+        }
+
+        revenueRollupReversed = true;
+      }
+
+      let teacherRollupReversed = false;
+      if (earningVoided) {
+        const reverseAmount = Math.max(normalizeNumber(earningData.amount, 0), 0);
+        const reverseTeacherId = normalizeTeacherId(
+          earningData.teacherId || session.teacherId || chargeData.teacherId
+        );
+        const reverseMonthKey = String(
+          earningData.monthKey ||
+            chargeData.monthKey ||
+            session.accruedMonthKey ||
+            monthKeyFromTimestampIST(session.startAt || session.date || session.endAt || new Date())
+        );
+        if (reverseTeacherId && reverseAmount > 0) {
+          const teacherRollupRef = teacherEarningsMonthlyRef(db, reverseTeacherId, reverseMonthKey);
+          tx.set(
+            teacherRollupRef,
+            {
+              month: reverseMonthKey,
+              totalSessions: admin.firestore.FieldValue.increment(-1),
+              sessionsCompleted: admin.firestore.FieldValue.increment(-1),
+              totalEarnings: admin.firestore.FieldValue.increment(-reverseAmount),
+              pendingEarnings: admin.firestore.FieldValue.increment(-reverseAmount),
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          teacherRollupReversed = true;
+        }
+      }
+
+      const shouldSuppressRevenue = chargeVoided || earningVoided || revenueRollupReversed;
+      if (shouldSuppressRevenue) {
+        tx.set(
+          sessionRef,
+          {
+            revenueAccrued: false,
+            accruedAmount: admin.firestore.FieldValue.delete(),
+            accruedMonthKey: admin.firestore.FieldValue.delete(),
+            accruedAt: admin.firestore.FieldValue.delete(),
+            revenueSuppressed: true,
+            revenueSuppressedAt: admin.firestore.FieldValue.serverTimestamp(),
+            revenueSuppressedBy: request.auth?.uid || null,
+            revenueSuppressedReason: note,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      return {
+        sessionId,
+        chargeFound: chargeExists,
+        chargeVoided,
+        earningFound: earningExists,
+        earningVoided,
+        revenueRollupReversed,
+        teacherRollupReversed,
+        alreadyVoided:
+          !chargeVoided && !earningVoided && !revenueRollupReversed && !teacherRollupReversed,
+      };
+    });
+
+    logger.info('Admin voided session charge', {
+      sessionId,
+      actorUid: request.auth?.uid || null,
+      chargeVoided: result.chargeVoided,
+      earningVoided: result.earningVoided,
+      revenueRollupReversed: result.revenueRollupReversed,
+      teacherRollupReversed: result.teacherRollupReversed,
+      alreadyVoided: result.alreadyVoided,
+    });
+
+    return {
+      ok: true,
       ...result,
     };
   }
