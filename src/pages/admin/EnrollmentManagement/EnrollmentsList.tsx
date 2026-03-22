@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from '@components/ui/select';
 import { useToast } from '@components/hooks/use-toast';
+import EnrollmentDetailView from './EnrollmentDetailView';
 
 type Enrollment = {
   id: string;
@@ -289,6 +290,8 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
   const [statusTab, setStatusTab] = useState<'active' | 'past'>('active');
   const [editOpen, setEditOpen] = useState(false);
   const [editEnrollment, setEditEnrollment] = useState<Enrollment | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState<string | null>(null);
   const [editStatus, setEditStatus] = useState('active');
   const [editParentRate, setEditParentRate] = useState('');
   const [editTeacherRate, setEditTeacherRate] = useState('');
@@ -675,6 +678,12 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
 
                 <TableCell className="px-3 py-2">
                   <div className="flex flex-col gap-1">
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => {
+                      setSelectedEnrollmentId(e.id);
+                      setDetailOpen(true);
+                    }}>
+                      View Details
+                    </Button>
                     <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => openEdit(e)}>
                       Edit
                     </Button>
@@ -766,6 +775,16 @@ export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {detailOpen && selectedEnrollmentId && (
+        <EnrollmentDetailView
+          enrollmentId={selectedEnrollmentId}
+          onClose={() => {
+            setDetailOpen(false);
+            setSelectedEnrollmentId(null);
+          }}
+        />
+      )}
     </div>
   );
 }
