@@ -7,9 +7,8 @@ import { Textarea } from '@components/ui/textarea';
 import { Input } from '@components/ui/input';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
-import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderBy, query, serverTimestamp, startAt, updateDoc, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, documentId, endAt, getDoc, getDocs, onSnapshot, orderBy, query, startAt, where } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -143,7 +142,6 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuthStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState<Record<string, AttendanceEntryState>>({});
   const [sessionNotes, setSessionNotes] = useState('');
@@ -530,10 +528,6 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
     }
     setIsSubmitting(true);
     try {
-      const hasReschedule = Object.values(formState).some(
-        (entry) => entry?.status === 'reschedule_requested'
-      );
-
       if (attendanceOnly) {
         const sanitizedAttendance: Record<string, any> = {};
         kidIds.forEach((kidId) => {
@@ -544,20 +538,6 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             notes: entry.notes ?? '',
           };
         });
-
-        if (hasReschedule) {
-          const batch = writeBatch(db);
-          const updatePayload = {
-            attendance: sanitizedAttendance,
-            notes: sessionNotes,
-            updatedAt: serverTimestamp(),
-            updatedBy: user?.uid ?? null,
-          };
-          batch.set(doc(db, 'classSessions', session.id), updatePayload, { merge: true });
-          await batch.commit();
-          onClose();
-          return;
-        }
 
         await onSubmit({
           attendance: sanitizedAttendance as Record<
@@ -571,41 +551,6 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             attendanceOnly: true,
           },
         });
-        onClose();
-        return;
-      }
-
-      if (hasReschedule) {
-        const sanitizedAttendance: Record<string, any> = {};
-        kidIds.forEach((kidId) => {
-          const entry = formState[kidId];
-          if (!entry) return;
-          if (entry.status === 'reschedule_requested') {
-            sanitizedAttendance[kidId] = {
-              status: 'reschedule_requested',
-              notes: entry.notes ?? '',
-            };
-          } else {
-            const topicUpdates = Object.values(entry.topicUpdatesById || {});
-            const topicIds = topicUpdates.map((t) => t.topicId).filter(Boolean);
-            const { topicUpdatesById, ...rest } = entry;
-            sanitizedAttendance[kidId] = {
-              ...rest,
-              topics: topicIds,
-              topicUpdates,
-            };
-          }
-        });
-
-        const batch = writeBatch(db);
-        const updatePayload = {
-          attendance: sanitizedAttendance,
-          notes: sessionNotes,
-          updatedAt: serverTimestamp(),
-          updatedBy: user?.uid ?? null,
-        };
-        batch.set(doc(db, 'classSessions', session.id), updatePayload, { merge: true });
-        await batch.commit();
         onClose();
         return;
       }

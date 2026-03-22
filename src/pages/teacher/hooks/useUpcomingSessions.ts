@@ -13,6 +13,8 @@ interface UseUpcomingSessionsResult {
 const toTeacherSession = (doc: any): TeacherSession => ({
   id: doc.id,
   teacherId: doc.teacherId,
+  parentId: doc.parentId,
+  parentIds: doc.parentIds,
   courseId: doc.courseId,
   courseName: doc.courseName,
   date: doc.date,
@@ -22,9 +24,14 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   status: doc.status || 'scheduled',
   joinUrl: doc.joinUrl,
   notes: doc.notes,
+  feeAmount: doc.feeAmount,
+  currency: doc.currency,
+  source: doc.source,
   attendance: doc.attendance,
   updatedAt: doc.updatedAt,
   updatedBy: doc.updatedBy,
+  makeupCreditId: doc.makeupCreditId,
+  makeupForSessionId: doc.makeupForSessionId,
 });
 
 export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResult => {

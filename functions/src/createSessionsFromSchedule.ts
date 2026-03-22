@@ -17,6 +17,7 @@ interface ScheduleConfig {
   weekdays: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
   timeHHmm: string; // "HH:MM" in IST
   durationMins: number;
+  plannedSessions?: number; // optional exact class count target within selected range
 }
 
 interface EnrollmentDoc {
@@ -40,6 +41,7 @@ interface EnrollmentDoc {
 interface CreateSessionsRequest {
   enrollmentId: string;
   weeksAhead?: number;
+  plannedSessions?: number; // optional exact class count target within selected range
   replaceFuture?: boolean;
   startDate?: string; // YYYY-MM-DD; classes start date
   endDate?: string; // YYYY-MM-DD inclusive; optional override for weeksAhead
@@ -49,6 +51,9 @@ interface CreateSessionsResponse {
   created: number;
   skipped: number;
   replaced: number;
+  plannedSessionsTarget: number | null;
+  plannedSessionsGenerated: number;
+  plannedSessionsUnfilled: number;
   rangeStart: string;
   rangeEnd: string;
   rangeStartYmd: string;
@@ -127,6 +132,12 @@ function formatHHmmFromContextMs(contextMs: number): string {
   return `${hh}:${mm}`;
 }
 
+function toPlannedSessions(value: unknown): number | null {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.max(1, Math.min(365, Math.floor(n)));
+}
+
 /**
  * createSessionsFromSchedule
  *
@@ -135,6 +146,7 @@ function formatHHmmFromContextMs(contextMs: number): string {
  * Input: {
  *   enrollmentId: string,
  *   weeksAhead?: number,
+ *   plannedSessions?: number,
  *   replaceFuture?: boolean,
  *   startDate?: string,
  *   endDate?: string,
@@ -144,6 +156,9 @@ function formatHHmmFromContextMs(contextMs: number): string {
  *   created: number,
  *   skipped: number,
  *   replaced: number,
+ *   plannedSessionsTarget: number | null,
+ *   plannedSessionsGenerated: number,
+ *   plannedSessionsUnfilled: number,
  *   rangeStart: string,
  *   rangeEnd: string,
  *   rangeStartYmd: string,
@@ -191,6 +206,9 @@ export const createSessionsFromSchedule = onCall(
     }
 
     const {weekdays, timeHHmm, durationMins} = schedule;
+    const requestedPlannedSessions = toPlannedSessions(input.plannedSessions);
+    const enrollmentPlannedSessions = toPlannedSessions(schedule.plannedSessions);
+    const plannedSessionsTarget = requestedPlannedSessions || enrollmentPlannedSessions || null;
 
     const [hhStr, mmStr] = String(timeHHmm || "").split(":");
     const hh = Number(hhStr);
@@ -230,6 +248,24 @@ export const createSessionsFromSchedule = onCall(
     }
 
     const rangeEndYmd = toYmdFromContextDate(rangeEndDate);
+    const potentialSlotsInRange = (() => {
+      let count = 0;
+      for (
+        let d = new Date(rangeStartDate.getTime());
+        d.getTime() <= rangeEndDate.getTime();
+        d.setUTCDate(d.getUTCDate() + 1)
+      ) {
+        if (weekdays.includes(d.getUTCDay())) count += 1;
+      }
+      return count;
+    })();
+
+    if (plannedSessionsTarget && plannedSessionsTarget > potentialSlotsInRange) {
+      throw new HttpsError(
+        "invalid-argument",
+        `plannedSessions (${plannedSessionsTarget}) exceeds available schedule slots in selected range (${potentialSlotsInRange}). Increase weeks or extend end date.`,
+      );
+    }
 
     // Build session metadata
     const kidId = enrollment.kidId || (enrollment.kidIds && enrollment.kidIds[0]) || null;
@@ -281,6 +317,7 @@ export const createSessionsFromSchedule = onCall(
 
     let created = 0;
     let skipped = 0;
+    let plannedSessionsGenerated = 0;
     let writeBatch = db.batch();
     let writeOps = 0;
 
@@ -294,8 +331,13 @@ export const createSessionsFromSchedule = onCall(
       d.getTime() <= rangeEndDate.getTime();
       d.setUTCDate(d.getUTCDate() + 1)
     ) {
+      if (plannedSessionsTarget && plannedSessionsGenerated >= plannedSessionsTarget) {
+        break;
+      }
+
       const dayOfWeek = d.getUTCDay();
       if (!weekdays.includes(dayOfWeek)) continue;
+      plannedSessionsGenerated += 1;
 
       const year = d.getUTCFullYear();
       const month = d.getUTCMonth();
@@ -398,6 +440,11 @@ export const createSessionsFromSchedule = onCall(
       created,
       skipped,
       replaced,
+      plannedSessionsTarget,
+      plannedSessionsGenerated,
+      plannedSessionsUnfilled: plannedSessionsTarget ?
+        Math.max(plannedSessionsTarget - plannedSessionsGenerated, 0) :
+        0,
       rangeStartYmd,
       rangeEndYmd,
       weeksAhead,
@@ -408,6 +455,11 @@ export const createSessionsFromSchedule = onCall(
       created,
       skipped,
       replaced,
+      plannedSessionsTarget,
+      plannedSessionsGenerated,
+      plannedSessionsUnfilled: plannedSessionsTarget ?
+        Math.max(plannedSessionsTarget - plannedSessionsGenerated, 0) :
+        0,
       rangeStart: rangeStartIso,
       rangeEnd: rangeEndIso,
       rangeStartYmd,

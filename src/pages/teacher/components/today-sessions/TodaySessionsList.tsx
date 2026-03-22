@@ -9,6 +9,12 @@ import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
+import {
+  hasPresentOrLateAttendance,
+  hasRescheduleAttendance,
+  queueCreditConsumed,
+  queueRescheduleCreditsForAttendance,
+} from '../../../../services/rescheduleCredits';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -64,21 +70,44 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     if (!selectedSession) return;
     try {
       const batch = writeBatch(db);
+      const hasPresentOrLate = hasPresentOrLateAttendance(data.attendance as Record<string, any>);
+      const hasReschedule = hasRescheduleAttendance(data.attendance as Record<string, any>);
+      const nextStatus = hasReschedule && !hasPresentOrLate ? 'reschedule_requested' : 'completed';
       
       // Update session document
       const sessionUpdate = {
         attendance: data.attendance,
         notes: data.sessionNotes,
-        status: 'completed',
+        status: nextStatus,
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid ?? null,
       };
       batch.set(doc(db, 'classSessions', selectedSession.id), sessionUpdate, { merge: true });
 
+      if (hasReschedule) {
+        await queueRescheduleCreditsForAttendance({
+          batch,
+          session: selectedSession as Record<string, any>,
+          attendance: data.attendance as Record<string, any>,
+          actorUid: user?.uid ?? null,
+          sessionNotes: data.sessionNotes,
+        });
+      }
+
+      const makeupCreditId = String((selectedSession as any)?.makeupCreditId || '').trim();
+      if (makeupCreditId && hasPresentOrLate) {
+        queueCreditConsumed({
+          batch,
+          creditId: makeupCreditId,
+          consumedSessionId: selectedSession.id,
+          actorUid: user?.uid ?? null,
+        });
+      }
+
       // Write curriculum completion for each kid with topics (only if present/late)
       for (const [kidId, entry] of Object.entries(data.attendance)) {
         const status = entry?.status;
-        if (status === 'absent') continue;
+        if (status !== 'present' && status !== 'late') continue;
         
         const topics = entry?.topics ?? [];
         if (!Array.isArray(topics) || topics.length === 0) continue;
@@ -99,7 +128,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       // Write progress docs for each kid with topics (only if present/late)
       for (const [kidId, entry] of Object.entries(data.attendance)) {
         const status = entry?.status;
-        if (status === 'absent') continue;
+        if (status !== 'present' && status !== 'late') continue;
         
         const topics = entry?.topics ?? [];
         if (!Array.isArray(topics) || topics.length === 0) continue;

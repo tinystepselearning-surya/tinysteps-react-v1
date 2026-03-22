@@ -270,6 +270,10 @@ export const AskTinyStepsModal: React.FC<AskTinyStepsModalProps> = ({
 
             {/* Footer */}
             <div className="border-t border-slate-200/80 bg-white/90 px-4 py-3">
+              <div className="mb-2 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-900">
+                AI-generated responses are for informational purposes and may contain errors.
+              </div>
+
               <div className="rounded-2xl bg-gradient-to-r from-cyan-200 via-orange-200 to-cyan-200 p-[1px]">
                 <div className="flex items-center gap-2 rounded-2xl bg-white p-1">
                   <input

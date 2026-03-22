@@ -1,12 +1,14 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type SessionStatus = 'scheduled' | 'in_progress' | 'completed';
-export type AttendanceStatus = 'present' | 'absent' | 'late';
+export type SessionStatus = 'scheduled' | 'in_progress' | 'completed' | 'reschedule_requested';
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'reschedule_requested';
 
 export interface TeacherSession {
   id: string;
   enrollmentId?: string;
   teacherId: string;
+  parentId?: string;
+  parentIds?: string[];
   courseId: string;
   courseName?: string;
   date: string; // YYYY-MM-DD
@@ -20,11 +22,16 @@ export interface TeacherSession {
   meetingLink?: string;
   lessonPlanUrl?: string; // Canva or other lesson plan embed URL
   notes?: string;
-  attendance?: Record<string, AttendanceStatus>;
+  feeAmount?: number;
+  currency?: string;
+  source?: string;
+  attendance?: Record<string, AttendanceStatus | { status: AttendanceStatus; [key: string]: any }>;
   startAt?: Timestamp;
   endAt?: Timestamp;
   updatedAt?: Timestamp;
   updatedBy?: string;
+  makeupCreditId?: string;
+  makeupForSessionId?: string;
 }
 
 export interface TeacherStudent {

@@ -1135,9 +1135,10 @@ function formatSessionTimeRange(s: KidSession): string {
 
 function normalizeStatus(raw?: string): string {
   const s = (raw || "").toLowerCase().trim();
-  if (s === "scheduled" || s === "in_progress" || s === "completed" || s === "cancelled" || s === "canceled" || s === "no_show" || s === "noshow") {
+  if (s === "scheduled" || s === "in_progress" || s === "completed" || s === "cancelled" || s === "canceled" || s === "no_show" || s === "noshow" || s === "reschedule_requested" || s === "rescheduled") {
     if (s === "canceled") return "cancelled";
     if (s === "noshow") return "no_show";
+    if (s === "rescheduled") return "reschedule_requested";
     return s;
   }
   return s ? s : "scheduled";
@@ -1153,6 +1154,8 @@ function statusBadgeClass(status: string) {
       return "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200";
     case "no_show":
       return "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300";
+    case "reschedule_requested":
+      return "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300";
     default:
       return "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300";
   }
@@ -1168,6 +1171,8 @@ function statusLabel(status: string) {
       return "Cancelled";
     case "no_show":
       return "No-show";
+    case "reschedule_requested":
+      return "Rescheduled";
     default:
       return "Scheduled";
   }
@@ -1980,7 +1985,7 @@ export default function ParentDashboard() {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [classesView, setClassesView] = useState<"today" | "upcoming" | "completed" | "calendar">("today");
+  const [classesView, setClassesView] = useState<"today" | "upcoming" | "completed" | "rescheduled" | "calendar">("today");
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [classesCalendarMonth, setClassesCalendarMonth] = useState<Date>(() => {
     const d = new Date();
@@ -2142,6 +2147,12 @@ export default function ParentDashboard() {
       .sort((a, b) => b.start.getTime() - a.start.getTime());
   }, [sortedClassSessions]);
 
+  const rescheduledClassSessions = useMemo(() => {
+    return [...sortedClassSessions]
+      .filter((row) => row.status === "reschedule_requested")
+      .sort((a, b) => b.start.getTime() - a.start.getTime());
+  }, [sortedClassSessions]);
+
   const groupedUpcomingSessions = useMemo(() => {
     const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
     upcomingClassSessions.forEach((row) => {
@@ -2165,6 +2176,18 @@ export default function ParentDashboard() {
       .sort((a, b) => b[0].localeCompare(a[0]))
       .map(([, value]) => value);
   }, [completedClassSessions]);
+
+  const groupedRescheduledSessions = useMemo(() => {
+    const grouped: Record<string, { date: Date; rows: Array<{ session: KidSession; start: Date; status: string }> }> = {};
+    rescheduledClassSessions.forEach((row) => {
+      const key = toYMD(row.start);
+      if (!grouped[key]) grouped[key] = { date: row.start, rows: [] };
+      grouped[key].rows.push(row);
+    });
+    return Object.entries(grouped)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([, value]) => value);
+  }, [rescheduledClassSessions]);
 
   const classesCalendarMonthLabel = useMemo(() => {
     return classesCalendarMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
@@ -2974,6 +2997,7 @@ export default function ParentDashboard() {
       scheduled: 0,
       cancelled: 0,
       no_show: 0,
+      reschedule_requested: 0,
       other: 0,
       upcoming: 0,
     };
@@ -3226,7 +3250,7 @@ export default function ParentDashboard() {
 
         <Card className="p-4">
           <div className="text-xs uppercase tracking-wide text-slate-400">Class Insights</div>
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="mt-3 grid gap-3 sm:grid-cols-4">
             <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
               <div className="text-xs text-slate-500">Completed (this month)</div>
               <div className="text-lg font-semibold">{billingSummary.chargesThisMonth}</div>
@@ -3234,6 +3258,10 @@ export default function ParentDashboard() {
             <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
               <div className="text-xs text-slate-500">Upcoming</div>
               <div className="text-lg font-semibold">{classesCounts.upcoming}</div>
+            </div>
+            <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
+              <div className="text-xs text-slate-500">Rescheduled</div>
+              <div className="text-lg font-semibold">{classesCounts.reschedule_requested}</div>
             </div>
             <div className="rounded-lg border border-slate-200 px-3 py-3 text-sm text-slate-700 dark:border-slate-800 dark:text-slate-200">
               <div className="text-xs text-slate-500">Total this month</div>
@@ -3256,6 +3284,7 @@ export default function ParentDashboard() {
       status !== "completed" &&
       status !== "cancelled" &&
       status !== "no_show" &&
+      status !== "reschedule_requested" &&
       ((typeof session.joinUrl === "string" && session.joinUrl.trim().length > 0) ||
         (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim().length > 0) ||
         (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim().length > 0) ||
@@ -5050,6 +5079,18 @@ export default function ParentDashboard() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setClassesView("rescheduled")}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold transition ${
+                        classesView === "rescheduled"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <CalendarClock className="h-4 w-4" />
+                      Rescheduled ({rescheduledClassSessions.length})
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         const now = new Date();
                         setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -5141,6 +5182,34 @@ export default function ParentDashboard() {
                   </Card>
                 ) : (
                   groupedCompletedSessions.map((group) => (
+                    <Card key={toYMD(group.date)} className="p-6">
+                      <div className="mb-3 flex items-center justify-between">
+                        <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {group.date.toLocaleDateString("en-IN", {
+                            weekday: "long",
+                            day: "numeric",
+                            month: "long",
+                          })}
+                        </h3>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {group.rows.length} session{group.rows.length === 1 ? "" : "s"}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {group.rows.map((row) => renderParentSessionCard(row, true))}
+                      </div>
+                    </Card>
+                  ))
+                )}
+              </div>
+            ) : classesView === "rescheduled" ? (
+              <div className="space-y-4">
+                {groupedRescheduledSessions.length === 0 ? (
+                  <Card className="p-6 text-center text-sm text-slate-500 dark:text-slate-300">
+                    No rescheduled sessions.
+                  </Card>
+                ) : (
+                  groupedRescheduledSessions.map((group) => (
                     <Card key={toYMD(group.date)} className="p-6">
                       <div className="mb-3 flex items-center justify-between">
                         <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">

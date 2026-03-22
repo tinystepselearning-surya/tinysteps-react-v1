@@ -32,6 +32,7 @@ import { useEnrollmentsForStudents } from '../../../hooks/useData';
 import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
+import type { RescheduleCreditStatus } from '../../../services/rescheduleCredits';
 
 const DEFAULT_PAGE_SIZE = 25;
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const;
@@ -1289,6 +1290,7 @@ type EnrollmentLite = {
     timeHHmm?: string;
     durationMins?: number;
     weeksAhead?: number;
+    plannedSessions?: number;
     endDateYmd?: string;
   };
   startDate?: any; // Timestamp
@@ -1307,6 +1309,27 @@ type SessionRequestRow = {
   durationMins: number;
   note?: string;
   status?: string;
+};
+
+type RescheduleCreditMonitorEntry = {
+  id: string;
+  kidId: string;
+  teacherId: string;
+  status: RescheduleCreditStatus;
+  updatedAt: Date | null;
+};
+
+type RescheduleCreditsMonitorRow = {
+  key: string;
+  kidId: string;
+  teacherId: string;
+  studentName: string;
+  teacherName: string;
+  open: number;
+  scheduled: number;
+  consumed: number;
+  total: number;
+  lastUpdatedAt: Date | null;
 };
 
 function computeAgeYearsFromDob(dob?: string): number | null {
@@ -1362,6 +1385,20 @@ function parseISODateOnly(iso: string): Date | null {
   if (!Number.isFinite(y) || !Number.isFinite(mo) || !Number.isFinite(d)) return null;
   const dt = new Date(y, mo - 1, d, 0, 0, 0, 0);
   return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function dateLikeToDate(value: any): Date | null {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') {
+    const dt = value.toDate();
+    if (dt instanceof Date && !Number.isNaN(dt.getTime())) return dt;
+  }
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const dt = new Date(value);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+  return null;
 }
 
 function dateLikeToYmd(value: any): string | null {
@@ -1439,6 +1476,7 @@ function isPastEnrollmentStatus(status: string): boolean {
 export default function StudentList({ onEdit, onDelete, onAssignCourse }: StudentListProps) {
   const [students, setStudents] = useState<Student[]>([]);
   const [parents, setParents] = useState<User[]>([]);
+  const [teachers, setTeachers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [gradeFilter, setGradeFilter] = useState<string>('all');
   const [parentFilter, setParentFilter] = useState<string>('all');
@@ -1465,6 +1503,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [durationMins, setDurationMins] = useState<number>(35);
   const [feePerClass, setFeePerClass] = useState<number>(0);
   const [generateWeeks, setGenerateWeeks] = useState<number>(8);
+  const [plannedSessions, setPlannedSessions] = useState<number>(0);
   const [endDate, setEndDate] = useState<string>(''); // optional
   const [meetingLink, setMeetingLink] = useState<string>(''); // optional (Zoom/Meet)
   const [savingSchedule, setSavingSchedule] = useState<boolean>(false);
@@ -1472,6 +1511,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [sessionRequests, setSessionRequests] = useState<SessionRequestRow[]>([]);
   const [requestActionId, setRequestActionId] = useState<string | null>(null);
   const [sessionRequestsOpen, setSessionRequestsOpen] = useState(false);
+  const [rescheduleCreditsMonitorEntries, setRescheduleCreditsMonitorEntries] = useState<RescheduleCreditMonitorEntry[]>([]);
+  const [rescheduleCreditsMonitorLoading, setRescheduleCreditsMonitorLoading] = useState<boolean>(false);
   const [syncStatus, setSyncStatus] = useState({
     running: false,
   });
@@ -1505,6 +1546,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     setTimeHHmm(enrollment.schedule?.timeHHmm || '18:00');
     setDurationMins(safeNumber(enrollment.schedule?.durationMins, 35));
     setGenerateWeeks(safeNumber(enrollment.schedule?.weeksAhead, 8));
+    setPlannedSessions(safeNumber(enrollment.schedule?.plannedSessions, 0));
     setEndDate(
       typeof enrollment.schedule?.endDateYmd === 'string'
         ? enrollment.schedule.endDateYmd
@@ -1533,18 +1575,22 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   };
 
   useEffect(() => {
-    // load parents list for filters
-    const loadParents = async () => {
+    // load parent/teacher lists for filters and monitor labels
+    const loadUsers = async () => {
       try {
-        const q = query(collection(db, 'users'), where('role', '==', 'parent'));
-        const snap = await getDocs(q);
-        const allUsers = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
-        setParents(allUsers);
+        const [parentSnap, teacherSnap] = await Promise.all([
+          getDocs(query(collection(db, 'users'), where('role', '==', 'parent'))),
+          getDocs(query(collection(db, 'users'), where('role', '==', 'teacher'))),
+        ]);
+        const allParents = parentSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
+        const allTeachers = teacherSnap.docs.map(d => ({ id: d.id, ...(d.data() as any) })) as User[];
+        setParents(allParents);
+        setTeachers(allTeachers);
       } catch (err) {
-        console.error('parents load error', err);
+        console.error('users load error', err);
       }
     };
-    loadParents();
+    loadUsers();
   }, []);
 
   useEffect(() => {
@@ -1607,6 +1653,61 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     return () => unsub();
   }, [user?.role]);
 
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      setRescheduleCreditsMonitorEntries([]);
+      setRescheduleCreditsMonitorLoading(false);
+      return;
+    }
+
+    setRescheduleCreditsMonitorLoading(true);
+    const q = query(
+      collection(db, 'rescheduleCredits'),
+      orderBy('updatedAt', 'desc'),
+      limit(2000),
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const rows = snapshot.docs
+          .map((d) => {
+            const raw = d.data() as any;
+            const kidId = String(raw?.kidId || '').trim();
+            if (!kidId) return null;
+
+            const teacherId = String(raw?.teacherId || '').trim();
+            const statusRaw = String(raw?.status || '').trim().toLowerCase();
+            const status = (
+              ['open', 'scheduled', 'consumed', 'cancelled'].includes(statusRaw)
+                ? statusRaw
+                : 'open'
+            ) as RescheduleCreditStatus;
+            const updatedAt = dateLikeToDate(raw?.updatedAt) || dateLikeToDate(raw?.createdAt);
+
+            return {
+              id: d.id,
+              kidId,
+              teacherId,
+              status,
+              updatedAt,
+            } as RescheduleCreditMonitorEntry;
+          })
+          .filter(Boolean) as RescheduleCreditMonitorEntry[];
+
+        setRescheduleCreditsMonitorEntries(rows);
+        setRescheduleCreditsMonitorLoading(false);
+      },
+      (err) => {
+        console.error('rescheduleCredits monitor onSnapshot error', err);
+        setRescheduleCreditsMonitorEntries([]);
+        setRescheduleCreditsMonitorLoading(false);
+      },
+    );
+
+    return () => unsub();
+  }, [user?.role]);
+
   const parentLabelById = useMemo(() => {
     const map = new Map<string, string>();
     parents.forEach((parent) => {
@@ -1617,6 +1718,94 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     });
     return map;
   }, [parents]);
+
+  const teacherLabelById = useMemo(() => {
+    const map = new Map<string, string>();
+    teachers.forEach((teacher) => {
+      const docId = String(teacher.id || '').trim();
+      const uid = String((teacher as any).uid || '').trim();
+      const label = String(teacher.name || teacher.email || (teacher as any).displayName || docId || uid || '—');
+      if (docId) map.set(docId, label);
+      if (uid) map.set(uid, label);
+    });
+    return map;
+  }, [teachers]);
+
+  const studentNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((student) => {
+      if (!student?.id) return;
+      map.set(String(student.id), String(student.fullName || student.id));
+    });
+    return map;
+  }, [students]);
+
+  const rescheduleCreditsTotals = useMemo(() => {
+    return rescheduleCreditsMonitorEntries.reduce(
+      (acc, entry) => {
+        if (entry.status === 'open') acc.open += 1;
+        if (entry.status === 'scheduled') acc.scheduled += 1;
+        if (entry.status === 'consumed') acc.consumed += 1;
+        return acc;
+      },
+      { open: 0, scheduled: 0, consumed: 0 },
+    );
+  }, [rescheduleCreditsMonitorEntries]);
+
+  const rescheduleCreditsMonitorRows = useMemo(() => {
+    const grouped = new Map<string, RescheduleCreditsMonitorRow>();
+
+    rescheduleCreditsMonitorEntries.forEach((entry) => {
+      if (entry.status === 'cancelled') return;
+
+      const teacherKey = entry.teacherId || 'unassigned';
+      const key = `${entry.kidId}__${teacherKey}`;
+      const studentName = studentNameById.get(entry.kidId) || entry.kidId;
+      const teacherName = entry.teacherId
+        ? (teacherLabelById.get(entry.teacherId) || entry.teacherId)
+        : 'Unassigned';
+
+      const existing = grouped.get(key);
+      if (!existing) {
+        grouped.set(key, {
+          key,
+          kidId: entry.kidId,
+          teacherId: entry.teacherId,
+          studentName,
+          teacherName,
+          open: entry.status === 'open' ? 1 : 0,
+          scheduled: entry.status === 'scheduled' ? 1 : 0,
+          consumed: entry.status === 'consumed' ? 1 : 0,
+          total: 1,
+          lastUpdatedAt: entry.updatedAt,
+        });
+        return;
+      }
+
+      if (entry.status === 'open') existing.open += 1;
+      if (entry.status === 'scheduled') existing.scheduled += 1;
+      if (entry.status === 'consumed') existing.consumed += 1;
+      existing.total += 1;
+
+      if (
+        entry.updatedAt
+        && (!existing.lastUpdatedAt || entry.updatedAt.getTime() > existing.lastUpdatedAt.getTime())
+      ) {
+        existing.lastUpdatedAt = entry.updatedAt;
+      }
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+      if (b.open !== a.open) return b.open - a.open;
+      if (b.scheduled !== a.scheduled) return b.scheduled - a.scheduled;
+      const aTime = a.lastUpdatedAt?.getTime() || 0;
+      const bTime = b.lastUpdatedAt?.getTime() || 0;
+      if (bTime !== aTime) return bTime - aTime;
+      const studentCompare = a.studentName.localeCompare(b.studentName, undefined, { sensitivity: 'base' });
+      if (studentCompare !== 0) return studentCompare;
+      return a.teacherName.localeCompare(b.teacherName, undefined, { sensitivity: 'base' });
+    });
+  }, [rescheduleCreditsMonitorEntries, studentNameById, teacherLabelById]);
 
   const getParentLabelsForStudent = useCallback((student: Student): string[] => {
     return (student.parentIds || [])
@@ -1812,6 +2001,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     const dur = Math.max(10, Math.min(180, safeNumber(durationMins, 35)));
     const weeks = Math.max(1, Math.min(52, safeNumber(generateWeeks, 8)));
+    const planned = Math.max(0, Math.min(365, safeNumber(plannedSessions, 0)));
 
     setSavingSchedule(true);
     try {
@@ -1831,6 +2021,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           timeHHmm,
           durationMins: dur,
           weeksAhead: weeks,
+          plannedSessions: planned > 0 ? planned : null,
           endDateYmd: endDate || null,
         },
         updatedAt: serverTimestamp(),
@@ -1843,6 +2034,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         {
           enrollmentId: string;
           weeksAhead?: number;
+          plannedSessions?: number;
           replaceFuture?: boolean;
           startDate?: string;
           endDate?: string;
@@ -1851,6 +2043,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           created: number;
           skipped: number;
           replaced?: number;
+          plannedSessionsTarget?: number | null;
+          plannedSessionsGenerated?: number;
           rangeStart: string;
           rangeEnd: string;
           rangeStartYmd?: string;
@@ -1861,19 +2055,30 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       const result = await createSessionsFromSchedule({
         enrollmentId: scheduleEnrollmentId,
         weeksAhead: weeks,
+        ...(planned > 0 ? { plannedSessions: planned } : {}),
         replaceFuture: true,
         startDate: classesStartDate,
         ...(endDate ? { endDate } : {}),
       });
 
-      const { created, skipped, replaced } = result.data;
+      const {
+        created,
+        skipped,
+        replaced,
+        plannedSessionsTarget,
+        plannedSessionsGenerated,
+      } = result.data;
+      const plannedSummary =
+        plannedSessionsTarget && plannedSessionsGenerated !== undefined
+          ? ` · planned ${plannedSessionsGenerated}/${plannedSessionsTarget}`
+          : '';
 
       toast({
         title: 'Schedule saved',
         description:
           typeof replaced === 'number'
-            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}`
-            : `✅ Created ${created} sessions (${skipped} already existed)`,
+            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}`
+            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}`,
       });
 
       setScheduleFor(null);
@@ -2316,6 +2521,67 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           ) : null}
         </div>
       </Card>
+
+      {isAdmin ? (
+        <Card className="overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Reschedule Credits Monitor</div>
+              <div className="text-xs text-gray-500">Operational status by student and teacher</div>
+            </div>
+            <div className="text-xs text-gray-600">
+              Open: <span className="font-semibold">{rescheduleCreditsTotals.open}</span>
+              <span className="mx-2 text-gray-300">|</span>
+              Scheduled: <span className="font-semibold">{rescheduleCreditsTotals.scheduled}</span>
+              <span className="mx-2 text-gray-300">|</span>
+              Consumed: <span className="font-semibold">{rescheduleCreditsTotals.consumed}</span>
+            </div>
+          </div>
+
+          {rescheduleCreditsMonitorLoading ? (
+            <div className="p-4 text-sm text-gray-500">Loading reschedule credits...</div>
+          ) : rescheduleCreditsMonitorRows.length === 0 ? (
+            <div className="p-4 text-sm text-gray-500">No reschedule credits yet.</div>
+          ) : (
+            <div className="max-h-56 overflow-auto">
+              <Table className="w-full text-sm">
+                <TableHeader className="sticky top-0 z-20 bg-slate-50">
+                  <TableRow>
+                    <TableHead className="w-[220px]">Student</TableHead>
+                    <TableHead className="w-[220px]">Teacher</TableHead>
+                    <TableHead className="w-[90px] text-right">Open</TableHead>
+                    <TableHead className="w-[90px] text-right">Scheduled</TableHead>
+                    <TableHead className="w-[90px] text-right">Consumed</TableHead>
+                    <TableHead className="w-[90px] text-right">Total</TableHead>
+                    <TableHead className="w-[180px]">Last Update</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rescheduleCreditsMonitorRows.map((row) => (
+                    <TableRow key={row.key}>
+                      <TableCell className="font-medium">
+                        <div className="truncate" title={row.studentName}>{row.studentName}</div>
+                        <div className="text-[11px] text-gray-500">{row.kidId}</div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="truncate" title={row.teacherName}>{row.teacherName}</div>
+                        <div className="text-[11px] text-gray-500">{row.teacherId || 'unassigned'}</div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-amber-700">{row.open}</TableCell>
+                      <TableCell className="text-right font-semibold text-blue-700">{row.scheduled}</TableCell>
+                      <TableCell className="text-right font-semibold text-emerald-700">{row.consumed}</TableCell>
+                      <TableCell className="text-right">{row.total}</TableCell>
+                      <TableCell className="text-xs text-gray-600">
+                        {row.lastUpdatedAt ? formatDateTime(row.lastUpdatedAt) : '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </Card>
+      ) : null}
 
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-4 py-2">
@@ -2819,6 +3085,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                 </div>
 
                 <div>
+                  <div className="text-sm font-medium mb-1">Planned classes (optional)</div>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={365}
+                    value={plannedSessions}
+                    onChange={(e) => setPlannedSessions(safeNumber(e.target.value, 0))}
+                    placeholder="e.g., 28"
+                  />
+                  <div className="text-xs text-gray-500 mt-1">
+                    If set, schedule creation stops after this many class slots.
+                  </div>
+                </div>
+
+                <div>
                   <div className="text-sm font-medium mb-1">End date (optional)</div>
                   <Input
                     type="date"
@@ -2826,7 +3107,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                     onChange={(e) => setEndDate(e.target.value)}
                   />
                   <div className="text-xs text-gray-500 mt-1">
-                    If set, it overrides “weeks”.
+                    If set, it overrides “weeks” as the date boundary.
                   </div>
                 </div>
 

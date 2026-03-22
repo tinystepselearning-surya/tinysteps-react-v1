@@ -10,11 +10,19 @@ import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfDay, endOfDay } from 'date-fns';
+import {
+  hasPresentOrLateAttendance,
+  hasRescheduleAttendance,
+  queueCreditConsumed,
+  queueCreditScheduled,
+  queueRescheduleCreditsForAttendance,
+  type RescheduleCreditStatus,
+} from '../../../../services/rescheduleCredits';
 
 interface ScheduleViewProps {
   teacherId?: string;
@@ -37,6 +45,23 @@ interface SessionRequest {
   durationMins: number;
   note?: string;
   status?: string;
+}
+
+interface RescheduleCredit {
+  id: string;
+  teacherId: string;
+  kidId: string;
+  parentId?: string | null;
+  parentIds?: string[];
+  enrollmentId?: string | null;
+  courseId?: string | null;
+  sourceSessionId?: string | null;
+  sourceSessionDate?: string | null;
+  sourceStartAt?: Date | null;
+  reason?: string | null;
+  status: RescheduleCreditStatus;
+  replacementSessionId?: string | null;
+  updatedAt?: Date | null;
 }
 
 interface CurriculumTopic {
@@ -110,11 +135,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const [scheduleStartTime, setScheduleStartTime] = useState('09:00');
   const [scheduleDuration, setScheduleDuration] = useState(35);
   const [scheduleNote, setScheduleNote] = useState('');
+  const [scheduleCreditId, setScheduleCreditId] = useState('');
   const [isSavingRequest, setIsSavingRequest] = useState(false);
   const [curriculumTopics, setCurriculumTopics] = useState<CurriculumTopic[]>([]);
   const [isOverflowOpen, setIsOverflowOpen] = useState(false);
   const [overflowDay, setOverflowDay] = useState<Date | null>(null);
   const [overflowSessions, setOverflowSessions] = useState<TeacherSession[]>([]);
+  const [rescheduleCredits, setRescheduleCredits] = useState<RescheduleCredit[]>([]);
 
   const { monthStart, monthEnd } = useMemo(
     () => ({ monthStart: startOfMonth(currentDate), monthEnd: endOfMonth(currentDate) }),
@@ -297,6 +324,76 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     return () => unsub();
   }, [effectiveTeacherId, monthStart, monthEnd]);
 
+  useEffect(() => {
+    if (!effectiveTeacherId) {
+      setRescheduleCredits([]);
+      return;
+    }
+
+    const q = query(
+      collection(db, 'rescheduleCredits'),
+      where('teacherId', '==', effectiveTeacherId),
+    );
+
+    const unsub = onSnapshot(
+      q,
+      (snapshot) => {
+        const rows = snapshot.docs
+          .map((d) => {
+            const raw = d.data() as any;
+            const statusRaw = String(raw?.status || '').trim().toLowerCase();
+            const status = (['open', 'scheduled', 'consumed', 'cancelled'].includes(statusRaw)
+              ? statusRaw
+              : 'open') as RescheduleCreditStatus;
+            const sourceStartAt = raw?.sourceStartAt?.toDate
+              ? raw.sourceStartAt.toDate()
+              : raw?.sourceStartAt
+                ? new Date(raw.sourceStartAt)
+                : null;
+            const updatedAt = raw?.updatedAt?.toDate
+              ? raw.updatedAt.toDate()
+              : raw?.updatedAt
+                ? new Date(raw.updatedAt)
+                : null;
+
+            return {
+              id: d.id,
+              teacherId: String(raw?.teacherId || ''),
+              kidId: String(raw?.kidId || ''),
+              parentId: raw?.parentId ? String(raw.parentId) : null,
+              parentIds: Array.isArray(raw?.parentIds) ? raw.parentIds.map(String) : [],
+              enrollmentId: raw?.sourceEnrollmentId
+                ? String(raw.sourceEnrollmentId)
+                : raw?.enrollmentId
+                  ? String(raw.enrollmentId)
+                  : null,
+              courseId: raw?.courseId ? String(raw.courseId) : null,
+              sourceSessionId: raw?.sourceSessionId ? String(raw.sourceSessionId) : null,
+              sourceSessionDate: raw?.sourceSessionDate ? String(raw.sourceSessionDate) : null,
+              sourceStartAt,
+              reason: raw?.reason ? String(raw.reason) : null,
+              status,
+              replacementSessionId: raw?.replacementSessionId ? String(raw.replacementSessionId) : null,
+              updatedAt,
+            } as RescheduleCredit;
+          })
+          .filter((row) => Boolean(row.kidId))
+          .sort((a, b) => {
+            const aTime = a.updatedAt?.getTime() ?? 0;
+            const bTime = b.updatedAt?.getTime() ?? 0;
+            return bTime - aTime;
+          });
+
+        setRescheduleCredits(rows);
+      },
+      (err) => {
+        console.error('rescheduleCredits onSnapshot error', err);
+      },
+    );
+
+    return () => unsub();
+  }, [effectiveTeacherId]);
+
   // Fetch students for name lookup
   const { students } = useTeacherFilteredStudents();
 
@@ -351,6 +448,31 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     });
     return ids;
   }, [students]);
+
+  const openRescheduleCredits = useMemo(
+    () => rescheduleCredits.filter((credit) => credit.status === 'open'),
+    [rescheduleCredits],
+  );
+
+  const openCreditsByKidId = useMemo(() => {
+    const map = new Map<string, RescheduleCredit[]>();
+    openRescheduleCredits.forEach((credit) => {
+      const list = map.get(credit.kidId) || [];
+      list.push(credit);
+      map.set(credit.kidId, list);
+    });
+    return map;
+  }, [openRescheduleCredits]);
+
+  const scheduleKidOpenCredits = useMemo(
+    () => (scheduleKidId ? (openCreditsByKidId.get(scheduleKidId) || []) : []),
+    [openCreditsByKidId, scheduleKidId],
+  );
+
+  const selectedScheduleCredit = useMemo(
+    () => scheduleKidOpenCredits.find((credit) => credit.id === scheduleCreditId) || null,
+    [scheduleKidOpenCredits, scheduleCreditId],
+  );
 
   const resolveSessionKidId = (session: any): string | null => {
     if (!session) return null;
@@ -450,6 +572,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
     visibleMonthSessions.forEach((session) => {
       const attendance = session.attendance || {};
+      if (
+        session.status === 'reschedule_requested' &&
+        Object.keys(attendance).length === 0
+      ) {
+        rescheduleKids += Math.max(session.kidIds?.length || 0, 1);
+      }
       Object.values(attendance).forEach((entry: any) => {
         const status = entry?.status ?? entry;
         if (status === 'present') presentKids += 1;
@@ -468,8 +596,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       rescheduleKids,
       pendingRequests: monthRequests.length,
       blockedSlots: monthBlocked.length,
+      openMakeupCredits: openRescheduleCredits.length,
+      scheduledMakeups: rescheduleCredits.filter((credit) => credit.status === 'scheduled').length,
     };
-  }, [monthStart, monthEnd, monthSessions, sessionRequests, blockedSlots]);
+  }, [monthStart, monthEnd, visibleMonthSessions, sessionRequests, blockedSlots, openRescheduleCredits, rescheduleCredits]);
 
   const openBlockModal = () => {
     setBlockDate(format(currentDate, 'yyyy-MM-dd'));
@@ -484,9 +614,34 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     setScheduleStartTime('09:00');
     setScheduleDuration(35);
     setScheduleNote('');
-    setScheduleKidId(students[0]?.uid || '');
+    const firstKidWithCredit =
+      students.find((student: any) => {
+        const kidId = String(student?.uid || student?.id || '');
+        return kidId && (openCreditsByKidId.get(kidId)?.length || 0) > 0;
+      });
+    const fallbackKidId = String((students[0] as any)?.uid || (students[0] as any)?.id || '');
+    const firstKidId = String((firstKidWithCredit as any)?.uid || (firstKidWithCredit as any)?.id || fallbackKidId || '');
+    setScheduleKidId(firstKidId);
+    const initialCredits = openCreditsByKidId.get(firstKidId) || [];
+    setScheduleCreditId(initialCredits[0]?.id || '');
     setIsScheduleModalOpen(true);
   };
+
+  useEffect(() => {
+    if (!isScheduleModalOpen) return;
+    if (!scheduleKidId) {
+      setScheduleCreditId('');
+      return;
+    }
+    const credits = openCreditsByKidId.get(scheduleKidId) || [];
+    if (credits.length === 0) {
+      setScheduleCreditId('');
+      return;
+    }
+    if (!credits.some((credit) => credit.id === scheduleCreditId)) {
+      setScheduleCreditId(credits[0].id);
+    }
+  }, [isScheduleModalOpen, scheduleKidId, scheduleCreditId, openCreditsByKidId]);
 
   const handleCreateBlock = async () => {
     if (!effectiveTeacherId) {
@@ -534,6 +689,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
+  const findEnrollmentForKid = async (kidId: string) => {
+    const enrollmentsCollection = collection(db, 'enrollments');
+    const queryAttempts = [
+      query(enrollmentsCollection, where('kidId', '==', kidId)),
+      query(enrollmentsCollection, where('kidIds', 'array-contains', kidId)),
+    ];
+
+    for (const q of queryAttempts) {
+      const snap = await getDocs(q);
+      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Record<string, any>[];
+      if (!rows.length) continue;
+
+      const byTeacher = rows.find((row) => row.teacherId && row.teacherId === effectiveTeacherId);
+      if (byTeacher) return byTeacher;
+      return rows[0];
+    }
+
+    return null;
+  };
+
   const handleCreateSessionRequest = async () => {
     if (!effectiveTeacherId) {
       toast({ title: 'Missing teacher', description: 'Please sign in again.', variant: 'destructive' });
@@ -542,6 +717,32 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
     if (!scheduleKidId) {
       toast({ title: 'Select a student', description: 'Choose a student to schedule.', variant: 'destructive' });
+      return;
+    }
+    if (!scheduleCreditId) {
+      toast({
+        title: 'Select a reschedule credit',
+        description: 'Choose an open rescheduled class to create a linked makeup session.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedCredit = scheduleKidOpenCredits.find((credit) => credit.id === scheduleCreditId);
+    if (!selectedCredit) {
+      toast({
+        title: 'Credit unavailable',
+        description: 'The selected reschedule credit is no longer open. Refresh and retry.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (selectedCredit.kidId !== scheduleKidId) {
+      toast({
+        title: 'Credit mismatch',
+        description: 'Selected credit does not belong to this student.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -572,23 +773,101 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
     setIsSavingRequest(true);
     try {
-      await addDoc(collection(db, 'teachers', effectiveTeacherId, 'sessionRequests'), {
-        teacherId: effectiveTeacherId,
+      const enrollment = await findEnrollmentForKid(scheduleKidId);
+      const fallbackEnrollmentIdFromSource = selectedCredit.sourceSessionId?.split('_')?.[0] || null;
+      const enrollmentId =
+        selectedCredit.enrollmentId ||
+        enrollment?.id ||
+        fallbackEnrollmentIdFromSource;
+      const parentIdsFromEnrollment = Array.isArray(enrollment?.parentIds)
+        ? enrollment.parentIds.map(String)
+        : [];
+      const parentId =
+        selectedCredit.parentId ||
+        enrollment?.parentId ||
+        parentIdsFromEnrollment[0] ||
+        null;
+      const parentIds =
+        (Array.isArray(selectedCredit.parentIds) && selectedCredit.parentIds.length > 0
+          ? selectedCredit.parentIds
+          : parentIdsFromEnrollment.length > 0
+            ? parentIdsFromEnrollment
+            : parentId
+              ? [String(parentId)]
+              : []).map(String);
+      const courseId = selectedCredit.courseId || enrollment?.courseId || null;
+      const feeAmount = Number(
+        enrollment?.feePerClass ??
+        enrollment?.feePerSession ??
+        enrollment?.ratePerSession ??
+        0,
+      );
+      const currency = enrollment?.currency || 'INR';
+      const joinUrl = enrollment?.joinUrl || null;
+
+      if (!enrollmentId || !parentId || !courseId) {
+        toast({
+          title: 'Missing enrollment details',
+          description: 'Unable to resolve enrollment/parent/course for this makeup session.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const ymd = scheduleDate.replace(/-/g, '');
+      const hhmm = scheduleStartTime.replace(':', '');
+      const creditSuffix = scheduleCreditId.slice(-8);
+      const sessionId = `${enrollmentId}_${ymd}_${hhmm}_${creditSuffix}`;
+
+      const payload = {
+        enrollmentId: String(enrollmentId),
         kidId: scheduleKidId,
-        startAt,
-        endAt,
+        kidIds: [scheduleKidId],
+        parentId: String(parentId),
+        parentIds,
+        teacherId: effectiveTeacherId,
+        courseId: String(courseId),
+        startAt: Timestamp.fromDate(startAt),
+        endAt: Timestamp.fromDate(endAt),
+        date: scheduleDate,
+        startTime: scheduleStartTime,
+        endTime: format(endAt, 'HH:mm'),
         durationMins: durationMinutes,
-        note: scheduleNote.trim(),
-        status: 'requested',
+        durationMinutes,
+        status: 'scheduled',
+        attendance: null,
+        feeAmount: Number.isFinite(feeAmount) ? feeAmount : 0,
+        currency,
+        joinUrl,
+        notes: scheduleNote.trim() || null,
+        source: 'teacher_makeup_from_reschedule',
+        isMakeup: true,
+        makeupCreditId: scheduleCreditId,
+        makeupForSessionId: selectedCredit.sourceSessionId || null,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
         createdBy: user?.uid ?? effectiveTeacherId,
+        updatedBy: user?.uid ?? effectiveTeacherId,
+      };
+
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'classSessions', sessionId), payload, { merge: true });
+      queueCreditScheduled({
+        batch,
+        creditId: scheduleCreditId,
+        replacementSessionId: sessionId,
+        replacementDate: scheduleDate,
+        replacementStartAt: Timestamp.fromDate(startAt),
+        actorUid: user?.uid ?? effectiveTeacherId,
       });
-      toast({ title: 'Session requested', description: 'Admin will confirm this session.' });
+
+      await batch.commit();
+      toast({ title: 'Makeup session created', description: 'Linked to selected reschedule credit.' });
       setIsScheduleModalOpen(false);
     } catch (err) {
-      console.error('create session request error', err);
+      console.error('create makeup session error', err);
       toast({
-        title: 'Unable to schedule',
+        title: 'Unable to create makeup session',
         description: err instanceof Error ? err.message : 'Please try again later.',
         variant: 'destructive',
       });
@@ -643,10 +922,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           };
         });
 
-        const hasPresentOrLate = Object.values(mergedAttendance || {}).some((entry: any) => {
-          const status = entry?.status ?? entry;
-          return status === 'present' || status === 'late';
-        });
+        const hasPresentOrLate = hasPresentOrLateAttendance(mergedAttendance);
+        const hasReschedule = hasRescheduleAttendance(mergedAttendance);
 
         const sessionUpdate: Record<string, any> = {
           attendance: mergedAttendance,
@@ -657,10 +934,33 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
         if (hasPresentOrLate) {
           sessionUpdate.status = 'completed';
+        } else if (hasReschedule) {
+          sessionUpdate.status = 'reschedule_requested';
         }
 
         const classSessionRef = doc(db, 'classSessions', selectedSession.id);
         batch.set(classSessionRef, sessionUpdate, { merge: true });
+
+        if (hasReschedule) {
+          await queueRescheduleCreditsForAttendance({
+            batch,
+            session: selectedSession as Record<string, any>,
+            attendance: mergedAttendance,
+            actorUid: user?.uid ?? null,
+            sessionNotes: data.sessionNotes,
+          });
+        }
+
+        const makeupCreditId = String((selectedSession as any)?.makeupCreditId || '').trim();
+        if (makeupCreditId && hasPresentOrLate) {
+          queueCreditConsumed({
+            batch,
+            creditId: makeupCreditId,
+            consumedSessionId: selectedSession.id,
+            actorUid: user?.uid ?? null,
+          });
+        }
+
         await batch.commit();
         toast({ title: 'Attendance saved', description: 'Attendance updated.' });
         setSelectedSession(null);
@@ -668,10 +968,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       }
       
       // Update session document
-      const hasPresentOrLate = Object.values(data.attendance || {}).some((entry: any) => {
-        const status = entry?.status ?? entry;
-        return status === 'present' || status === 'late';
-      });
+      const hasPresentOrLate = hasPresentOrLateAttendance(data.attendance as Record<string, any>);
+      const hasReschedule = hasRescheduleAttendance(data.attendance as Record<string, any>);
 
       const sessionUpdate: Record<string, any> = {
         attendance: data.attendance,
@@ -682,10 +980,32 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
       if (hasPresentOrLate) {
         sessionUpdate.status = 'completed';
+      } else if (hasReschedule) {
+        sessionUpdate.status = 'reschedule_requested';
       }
 
       const classSessionRef = doc(db, 'classSessions', selectedSession.id);
       batch.set(classSessionRef, sessionUpdate, { merge: true });
+
+      if (hasReschedule) {
+        await queueRescheduleCreditsForAttendance({
+          batch,
+          session: selectedSession as Record<string, any>,
+          attendance: data.attendance as Record<string, any>,
+          actorUid: user?.uid ?? null,
+          sessionNotes: data.sessionNotes,
+        });
+      }
+
+      const makeupCreditId = String((selectedSession as any)?.makeupCreditId || '').trim();
+      if (makeupCreditId && hasPresentOrLate) {
+        queueCreditConsumed({
+          batch,
+          creditId: makeupCreditId,
+          consumedSessionId: selectedSession.id,
+          actorUid: user?.uid ?? null,
+        });
+      }
 
       const sessionCourseId =
         normalizeCourseId(data.meta?.courseId || (selectedSession as any)?.courseId) || '';
@@ -875,7 +1195,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <Button variant={view === 'month' ? 'default' : 'outline'} onClick={() => setView('month')}>Month</Button>
           <Button variant={view === 'week' ? 'default' : 'outline'} onClick={() => setView('week')}>Week</Button>
           <Button variant={view === 'day' ? 'default' : 'outline'} onClick={() => setView('day')}>Day</Button>
-          <Button variant="outline" onClick={openScheduleModal}>Schedule New Session</Button>
+          <Button variant="outline" onClick={openScheduleModal}>Create Makeup Session</Button>
           <Button onClick={openBlockModal}>Block Time</Button>
         </div>
       </div>
@@ -907,7 +1227,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
               {format(monthStart, 'MMM d')} - {format(monthEnd, 'MMM d, yyyy')}
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
             <div>
               <div className="text-xs text-muted-foreground">Sessions</div>
               <div className="font-semibold">{monthlySummary.sessionsInMonth}</div>
@@ -931,6 +1251,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
             <div>
               <div className="text-xs text-muted-foreground">Reschedule</div>
               <div className="font-semibold">{monthlySummary.rescheduleKids}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Open makeups</div>
+              <div className="font-semibold">{monthlySummary.openMakeupCredits}</div>
+            </div>
+            <div>
+              <div className="text-xs text-muted-foreground">Scheduled makeups</div>
+              <div className="font-semibold">{monthlySummary.scheduledMakeups}</div>
             </div>
             <div>
               <div className="text-xs text-muted-foreground">Pending requests</div>
@@ -1010,8 +1338,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         .map(id => studentCourseLabelById.get(id))
                         .find(Boolean) || '';
                       const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                      const isRescheduleRequested = Object.values(session.attendance || {})
-                        .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+                      const isRescheduleRequested =
+                        session.status === 'reschedule_requested' ||
+                        Object.values(session.attendance || {})
+                          .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
                       const isCompleted = session.status === 'completed';
                       
                       return (
@@ -1104,8 +1434,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         .map(id => studentCourseLabelById.get(id))
                         .find(Boolean) || '';
                       const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                      const isRescheduleRequested = Object.values(session.attendance || {})
-                        .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+                      const isRescheduleRequested =
+                        session.status === 'reschedule_requested' ||
+                        Object.values(session.attendance || {})
+                          .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
                       const isCompleted = session.status === 'completed';
                       
                       return (
@@ -1207,8 +1539,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   .map(id => studentCourseLabelById.get(id))
                   .find(Boolean) || '';
                 const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                const isRescheduleRequested = Object.values(session.attendance || {})
-                  .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+                const isRescheduleRequested =
+                  session.status === 'reschedule_requested' ||
+                  Object.values(session.attendance || {})
+                    .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
 
                 return (
                   <div 
@@ -1287,8 +1621,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 .map((id) => studentCourseLabelById.get(id))
                 .find(Boolean) || '';
               const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-              const isRescheduleRequested = Object.values(session.attendance || {})
-                .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+              const isRescheduleRequested =
+                session.status === 'reschedule_requested' ||
+                Object.values(session.attendance || {})
+                  .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
               const timeLabel = session.startTime && session.endTime
                 ? `${session.startTime} - ${session.endTime}`
                 : session.startTime || '';
@@ -1402,9 +1738,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       <Dialog open={isScheduleModalOpen} onOpenChange={setIsScheduleModalOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Schedule New Session</DialogTitle>
+            <DialogTitle>Create Makeup Session</DialogTitle>
             <DialogDescription>
-              Request an ad-hoc session. Admin will confirm it.
+              Select an open rescheduled class credit and create a linked makeup session.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1415,13 +1751,48 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   <SelectValue placeholder="Select student" />
                 </SelectTrigger>
                 <SelectContent>
-                  {students.map((student) => (
-                    <SelectItem key={student.uid} value={student.uid}>
-                      {student.fullName || 'Unnamed student'}
-                    </SelectItem>
-                  ))}
+                  {students
+                    .map((student: any) => ({
+                      id: String(student?.uid || student?.id || ''),
+                      label: student?.fullName || student?.studentName || student?.name || 'Unnamed student',
+                    }))
+                    .filter((row) => row.id)
+                    .map((row) => (
+                      <SelectItem key={row.id} value={row.id}>
+                        {row.label}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="schedule-credit">Rescheduled class to use</Label>
+              <Select value={scheduleCreditId} onValueChange={setScheduleCreditId}>
+                <SelectTrigger id="schedule-credit">
+                  <SelectValue placeholder="Select open reschedule credit" />
+                </SelectTrigger>
+                <SelectContent>
+                  {scheduleKidOpenCredits.map((credit) => {
+                    const sourceLabel = credit.sourceSessionDate || 'Unknown date';
+                    const reasonSuffix = credit.reason ? ` · ${credit.reason}` : '';
+                    return (
+                      <SelectItem key={credit.id} value={credit.id}>
+                        {sourceLabel}{reasonSuffix}
+                      </SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              {scheduleKidOpenCredits.length === 0 && (
+                <p className="text-xs text-amber-700">
+                  No open reschedule credits for this student.
+                </p>
+              )}
+              {selectedScheduleCredit?.sourceSessionId && (
+                <p className="text-xs text-muted-foreground">
+                  Source session: {selectedScheduleCredit.sourceSessionId}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="schedule-date">Date</Label>
@@ -1475,9 +1846,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
               <Button
                 type="button"
                 onClick={handleCreateSessionRequest}
-                disabled={isSavingRequest || students.length === 0}
+                disabled={isSavingRequest || students.length === 0 || !scheduleCreditId}
               >
-                {isSavingRequest ? 'Saving...' : 'Request Session'}
+                {isSavingRequest ? 'Saving...' : 'Create Makeup Session'}
               </Button>
             </div>
             {students.length === 0 && (

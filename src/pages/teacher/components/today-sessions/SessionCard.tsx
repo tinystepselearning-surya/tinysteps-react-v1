@@ -22,6 +22,7 @@ const statusMap: Record<
   scheduled: { label: 'Scheduled', variant: 'secondary' },
   in_progress: { label: 'In Progress', variant: 'default' },
   completed: { label: 'Completed', variant: 'outline' },
+  reschedule_requested: { label: 'Rescheduled', variant: 'destructive' },
 };
 
 export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance, onComplete }) => {
@@ -90,15 +91,19 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
     const present = statuses.filter(s => s === 'present').length;
     const absent = statuses.filter(s => s === 'absent').length;
     const late = statuses.filter(s => s === 'late').length;
-    return { present, absent, late, total: session.kidIds?.length || 0 };
+    const rescheduled = statuses.filter(s => s === 'reschedule_requested').length;
+    return { present, absent, late, rescheduled, total: session.kidIds?.length || 0 };
   }, [session.attendance, session.kidIds]);
 
   const hasRescheduleRequested = useMemo(() => {
     const attendance = session.attendance || {};
-    return Object.values(attendance).some(
-      (entry) => getAttendanceStatus(entry) === 'reschedule_requested'
+    return (
+      session.status === 'reschedule_requested' ||
+      Object.values(attendance).some(
+        (entry) => getAttendanceStatus(entry) === 'reschedule_requested'
+      )
     );
-  }, [session.attendance]);
+  }, [session.attendance, session.status]);
 
   const directJoinUrl =
     (typeof session.joinUrl === 'string' && session.joinUrl.trim()) ||
@@ -227,12 +232,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
           </span>
         </p>
         <p className="text-sm text-muted-foreground">
-          Attendance: {attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late} of {attendanceSummary.total} present
+          Attendance: {attendanceSummary.present + attendanceSummary.absent + attendanceSummary.late + attendanceSummary.rescheduled} of {attendanceSummary.total} marked
         </p>
         <div className="flex gap-2 mt-1">
           <span className="text-green-600">✅ {attendanceSummary.present}</span>
           <span className="text-red-600">❌ {attendanceSummary.absent}</span>
           <span className="text-yellow-600">⏰ {attendanceSummary.late}</span>
+          <span className="text-amber-700">Resched {attendanceSummary.rescheduled}</span>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
