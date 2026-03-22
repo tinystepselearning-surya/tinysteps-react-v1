@@ -1,6 +1,5 @@
 // @ts-nocheck
 import React from 'react';
-import ProgramLeadForm from './ProgramLeadForm';
 
 const ProgramHero = ({ title, subtitle, badges, highlights, program }: any) => (
   <section className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_#ffe3ba,_#ffd38d,_#a3d9ff)] px-6 py-16">
@@ -24,13 +23,16 @@ const ProgramHero = ({ title, subtitle, badges, highlights, program }: any) => (
           ))}
         </ul>
       </div>
-      <div className="glass-panel p-6">
-        <div className="text-sm uppercase tracking-widest text-gray-500">Talk to our team</div>
-        <h3 className="text-xl font-semibold text-gray-900">{program} inquiry form</h3>
-        <p className="text-sm text-gray-600">Share details here for an in-app confirmation, or use the WhatsApp option if you prefer.</p>
-        <div className="mt-4">
-          <ProgramLeadForm program={program} />
-        </div>
+      <div className="glass-panel p-6 flex flex-col items-center justify-center text-center">
+        <div className="text-2xl mb-3">📋</div>
+        <h3 className="text-xl font-semibold text-gray-900">Ready to get started?</h3>
+        <p className="text-sm text-gray-600 mt-2">Book a free personalized assessment to see how we can help your child thrive.</p>
+        <a 
+          href="/#book-assessment" 
+          className="mt-6 inline-block rounded-lg bg-gradient-to-r from-[#ff9f5f] to-[#7dccff] px-8 py-3 font-semibold text-white shadow-lg hover:shadow-xl transition-shadow"
+        >
+          Book Free Assessment
+        </a>
       </div>
     </div>
   </section>
