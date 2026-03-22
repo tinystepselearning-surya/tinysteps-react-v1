@@ -1,6 +1,6 @@
 // src/hooks/useKidTopicProgress.ts
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import {
   deriveLegacyProgressFromRatings,
@@ -105,89 +105,97 @@ export function useKidTopicProgress(
       return;
     }
 
-    let cancelled = false;
+    let unsubscribe: (() => void) | null = null;
 
-    const run = async () => {
+    const setupListener = () => {
       try {
-        setLoading(true);
-        setError(null);
-
         const progressCol = collection(db, 'students', kidId, 'progress');
-        const snap = await getDocs(progressCol);
-        if (cancelled) return;
+        
+        unsubscribe = onSnapshot(
+          progressCol,
+          (snap) => {
+            const arr: KidTopicProgress[] = snap.docs.map((d) => {
+              const data = d.data() as any;
+              const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
+              const resolvedArea =
+                data.area === 'phonics' || data.area === 'grammar' || data.area === 'speaking'
+                  ? data.area
+                  : 'general';
+              const resolvedSkills =
+                progressSkillsMeta.length > 0
+                  ? progressSkillsMeta
+                  : hasExplicitProgressRatings(data.progressRatings)
+                    ? progressSkillsFromRatingKeys(Object.keys(data.progressRatings), resolvedArea)
+                    : hasExplicitProgressRatings(data.skillRatings)
+                      ? LEGACY_PROGRESS_SKILLS
+                      : [];
+              const progressRatings = normalizeProgressRatings(
+                data.progressRatings,
+                resolvedSkills,
+                {
+                  legacyRatings: data.skillRatings,
+                  mastery: data.mastery,
+                  checks: data.checks,
+                },
+              );
+              const legacyFromRatings = deriveLegacyProgressFromRatings(
+                progressRatings,
+                resolvedSkills.length > 0 ? resolvedSkills : LEGACY_PROGRESS_SKILLS,
+              );
+              const masteryNorm =
+                hasExplicitProgressRatings(data.progressRatings) || hasExplicitProgressRatings(data.skillRatings)
+                ? {
+                    masteryKey: legacyFromRatings.masteryKey,
+                    masteryPct: legacyFromRatings.masteryPct,
+                  }
+                : normalizeMastery(data.mastery);
 
-        const arr: KidTopicProgress[] = snap.docs.map((d) => {
-          const data = d.data() as any;
-          const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
-          const resolvedArea =
-            data.area === 'phonics' || data.area === 'grammar' || data.area === 'speaking'
-              ? data.area
-              : 'general';
-          const resolvedSkills =
-            progressSkillsMeta.length > 0
-              ? progressSkillsMeta
-              : hasExplicitProgressRatings(data.progressRatings)
-                ? progressSkillsFromRatingKeys(Object.keys(data.progressRatings), resolvedArea)
-                : hasExplicitProgressRatings(data.skillRatings)
-                  ? LEGACY_PROGRESS_SKILLS
-                  : [];
-          const progressRatings = normalizeProgressRatings(
-            data.progressRatings,
-            resolvedSkills,
-            {
-              legacyRatings: data.skillRatings,
-              mastery: data.mastery,
-              checks: data.checks,
-            },
-          );
-          const legacyFromRatings = deriveLegacyProgressFromRatings(
-            progressRatings,
-            resolvedSkills.length > 0 ? resolvedSkills : LEGACY_PROGRESS_SKILLS,
-          );
-          const masteryNorm =
-            hasExplicitProgressRatings(data.progressRatings) || hasExplicitProgressRatings(data.skillRatings)
-            ? {
-                masteryKey: legacyFromRatings.masteryKey,
-                masteryPct: legacyFromRatings.masteryPct,
-              }
-            : normalizeMastery(data.mastery);
+              return {
+                // Spread raw Firestore data *first* so our computed fields win
+                ...data,
+                id: d.id,
+                topicName: data.topicName ?? data.name ?? d.id,
+                area: data.area,
+                subskill: data.subskill,
+                progressRatings,
+                progressSkillsMeta,
+                skillRatings: progressRatings,
+                mastery: masteryNorm.masteryPct,
+                masteryKey: masteryNorm.masteryKey,
+                masteryPct: masteryNorm.masteryPct,
+                scoreBand: data.scoreBand ?? null,
+                lastEvidence: data.lastEvidence ?? null,
+                nextAction: data.nextAction ?? null,
+                teacherRemark: data.teacherRemark ?? null,
+                updatedAt: data.updatedAt ?? null,
+              };
+            });
 
-          return {
-            // Spread raw Firestore data *first* so our computed fields win
-            ...data,
-            id: d.id,
-            topicName: data.topicName ?? data.name ?? d.id,
-            area: data.area,
-            subskill: data.subskill,
-            progressRatings,
-            progressSkillsMeta,
-            skillRatings: progressRatings,
-            mastery: masteryNorm.masteryPct,
-            masteryKey: masteryNorm.masteryKey,
-            masteryPct: masteryNorm.masteryPct,
-            scoreBand: data.scoreBand ?? null,
-            lastEvidence: data.lastEvidence ?? null,
-            nextAction: data.nextAction ?? null,
-            teacherRemark: data.teacherRemark ?? null,
-            updatedAt: data.updatedAt ?? null,
-          };
-        });
-
-        setTopics(arr);
+            setTopics(arr);
+            setLoading(false);
+            setError(null);
+          },
+          (err: any) => {
+            console.error('[useKidTopicProgress] Firestore error', err);
+            setTopics([]);
+            setError(err?.message ?? String(err));
+            setLoading(false);
+          },
+        );
       } catch (err: any) {
-        if (cancelled) return;
-        console.error('[useKidTopicProgress] Firestore error', err);
+        console.error('[useKidTopicProgress] Setup error', err);
         setTopics([]);
         setError(err?.message ?? String(err));
-      } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     };
 
-    void run();
+    setLoading(true);
+    setError(null);
+    setupListener();
 
     return () => {
-      cancelled = true;
+      if (unsubscribe) unsubscribe();
     };
   }, [kidId]);
 
