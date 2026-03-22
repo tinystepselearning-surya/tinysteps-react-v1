@@ -170,17 +170,6 @@ function buildMetaDescription(src: any) {
       return;
     }
 
-    if (isFutureDated) {
-      applySeo({
-        title: `${source.title} | Tiny Steps Blog`,
-        description: 'This article is scheduled and will be published soon.',
-        canonicalPath: canonical,
-        robots: 'noindex, follow',
-        ogType: 'article',
-      });
-      return;
-    }
-
     const title = `${source.title} | Tiny Steps Blog`;
     const description = buildMetaDescription(source) || 'Tiny Steps Learning blog post.';
 
