@@ -1,6 +1,5 @@
-// src/hooks/useKidTopicProgress.ts
-import { useEffect, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { useCallback, useEffect, useState } from 'react';
+import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import {
   deriveLegacyProgressFromRatings,
@@ -31,7 +30,6 @@ export interface KidTopicProgress {
   nextAction?: string | null;
   teacherRemark?: string | null;
   updatedAt?: any;
-  // keep any extra fields from Firestore
   [key: string]: any;
 }
 
@@ -39,6 +37,7 @@ interface UseKidTopicProgressResult {
   topics: KidTopicProgress[];
   loading: boolean;
   error: string | null;
+  refresh: () => Promise<void>;
 }
 
 const MASTERY_LEVELS: { key: string; pct: number }[] = [
@@ -53,10 +52,12 @@ const MASTERY_KEYS = new Set(MASTERY_LEVELS.map((l) => l.key));
 
 function normalizeMastery(value: any): { masteryKey: string; masteryPct: number } {
   const raw = String(value ?? '').toLowerCase().trim();
+
   if (MASTERY_KEYS.has(raw)) {
     const level = MASTERY_LEVELS.find((l) => l.key === raw)!;
     return { masteryKey: level.key, masteryPct: level.pct };
   }
+
   if (raw === 'not started') {
     return { masteryKey: 'not_started', masteryPct: 0 };
   }
@@ -67,12 +68,14 @@ function normalizeMastery(value: any): { masteryKey: string; masteryPct: number 
       : Number.isFinite(Number(raw))
         ? Number(raw)
         : null;
+
   if (num == null) {
     return { masteryKey: 'not_started', masteryPct: 0 };
   }
 
   let best = MASTERY_LEVELS[0];
   let bestDiff = Math.abs(num - best.pct);
+
   for (const level of MASTERY_LEVELS) {
     const diff = Math.abs(num - level.pct);
     if (diff < bestDiff) {
@@ -80,15 +83,68 @@ function normalizeMastery(value: any): { masteryKey: string; masteryPct: number 
       bestDiff = diff;
     }
   }
+
   return { masteryKey: best.key, masteryPct: best.pct };
 }
 
-/**
- * Hook: read /students/{kidId}/progress/{topicId} docs.
- *
- * IMPORTANT: this hook is always called, even if kidId is null.
- * When kidId is null, we simply clear topics and skip Firestore.
- */
+function mapProgressDoc(d: any): KidTopicProgress {
+  const data = d.data() as any;
+
+  const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
+
+  const resolvedArea =
+    data.area === 'phonics' || data.area === 'grammar' || data.area === 'speaking'
+      ? data.area
+      : 'general';
+
+  const resolvedSkills =
+    progressSkillsMeta.length > 0
+      ? progressSkillsMeta
+      : hasExplicitProgressRatings(data.progressRatings)
+        ? progressSkillsFromRatingKeys(Object.keys(data.progressRatings), resolvedArea)
+        : hasExplicitProgressRatings(data.skillRatings)
+          ? LEGACY_PROGRESS_SKILLS
+          : [];
+
+  const progressRatings = normalizeProgressRatings(data.progressRatings, resolvedSkills, {
+    legacyRatings: data.skillRatings,
+    mastery: data.mastery,
+    checks: data.checks,
+  });
+
+  const legacyFromRatings = deriveLegacyProgressFromRatings(
+    progressRatings,
+    resolvedSkills.length > 0 ? resolvedSkills : LEGACY_PROGRESS_SKILLS,
+  );
+
+  const masteryNorm =
+    hasExplicitProgressRatings(data.progressRatings) || hasExplicitProgressRatings(data.skillRatings)
+      ? {
+          masteryKey: legacyFromRatings.masteryKey,
+          masteryPct: legacyFromRatings.masteryPct,
+        }
+      : normalizeMastery(data.mastery);
+
+  return {
+    ...data,
+    id: d.id,
+    topicName: data.topicName ?? data.name ?? d.id,
+    area: data.area,
+    subskill: data.subskill,
+    progressRatings,
+    progressSkillsMeta,
+    skillRatings: progressRatings,
+    mastery: masteryNorm.masteryPct,
+    masteryKey: masteryNorm.masteryKey,
+    masteryPct: masteryNorm.masteryPct,
+    scoreBand: data.scoreBand ?? null,
+    lastEvidence: data.lastEvidence ?? null,
+    nextAction: data.nextAction ?? null,
+    teacherRemark: data.teacherRemark ?? null,
+    updatedAt: data.updatedAt ?? null,
+  };
+}
+
 export function useKidTopicProgress(
   kidId: string | null | undefined,
 ): UseKidTopicProgressResult {
@@ -96,8 +152,7 @@ export function useKidTopicProgress(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    // No kid selected → reset state, no request
+  const loadProgress = useCallback(async () => {
     if (!kidId) {
       setTopics([]);
       setLoading(false);
@@ -105,99 +160,33 @@ export function useKidTopicProgress(
       return;
     }
 
-    let unsubscribe: (() => void) | null = null;
-
-    const setupListener = () => {
-      try {
-        const progressCol = collection(db, 'students', kidId, 'progress');
-        
-        unsubscribe = onSnapshot(
-          progressCol,
-          (snap) => {
-            const arr: KidTopicProgress[] = snap.docs.map((d) => {
-              const data = d.data() as any;
-              const progressSkillsMeta = normalizeProgressSkillsMeta(data.progressRatingsMeta);
-              const resolvedArea =
-                data.area === 'phonics' || data.area === 'grammar' || data.area === 'speaking'
-                  ? data.area
-                  : 'general';
-              const resolvedSkills =
-                progressSkillsMeta.length > 0
-                  ? progressSkillsMeta
-                  : hasExplicitProgressRatings(data.progressRatings)
-                    ? progressSkillsFromRatingKeys(Object.keys(data.progressRatings), resolvedArea)
-                    : hasExplicitProgressRatings(data.skillRatings)
-                      ? LEGACY_PROGRESS_SKILLS
-                      : [];
-              const progressRatings = normalizeProgressRatings(
-                data.progressRatings,
-                resolvedSkills,
-                {
-                  legacyRatings: data.skillRatings,
-                  mastery: data.mastery,
-                  checks: data.checks,
-                },
-              );
-              const legacyFromRatings = deriveLegacyProgressFromRatings(
-                progressRatings,
-                resolvedSkills.length > 0 ? resolvedSkills : LEGACY_PROGRESS_SKILLS,
-              );
-              const masteryNorm =
-                hasExplicitProgressRatings(data.progressRatings) || hasExplicitProgressRatings(data.skillRatings)
-                ? {
-                    masteryKey: legacyFromRatings.masteryKey,
-                    masteryPct: legacyFromRatings.masteryPct,
-                  }
-                : normalizeMastery(data.mastery);
-
-              return {
-                // Spread raw Firestore data *first* so our computed fields win
-                ...data,
-                id: d.id,
-                topicName: data.topicName ?? data.name ?? d.id,
-                area: data.area,
-                subskill: data.subskill,
-                progressRatings,
-                progressSkillsMeta,
-                skillRatings: progressRatings,
-                mastery: masteryNorm.masteryPct,
-                masteryKey: masteryNorm.masteryKey,
-                masteryPct: masteryNorm.masteryPct,
-                scoreBand: data.scoreBand ?? null,
-                lastEvidence: data.lastEvidence ?? null,
-                nextAction: data.nextAction ?? null,
-                teacherRemark: data.teacherRemark ?? null,
-                updatedAt: data.updatedAt ?? null,
-              };
-            });
-
-            setTopics(arr);
-            setLoading(false);
-            setError(null);
-          },
-          (err: any) => {
-            console.error('[useKidTopicProgress] Firestore error', err);
-            setTopics([]);
-            setError(err?.message ?? String(err));
-            setLoading(false);
-          },
-        );
-      } catch (err: any) {
-        console.error('[useKidTopicProgress] Setup error', err);
-        setTopics([]);
-        setError(err?.message ?? String(err));
-        setLoading(false);
-      }
-    };
-
     setLoading(true);
     setError(null);
-    setupListener();
 
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    try {
+      const progressCol = collection(db, 'students', kidId, 'progress');
+      const snap = await getDocs(progressCol);
+
+      const arr: KidTopicProgress[] = snap.docs.map(mapProgressDoc);
+      setTopics(arr);
+      setError(null);
+    } catch (err: any) {
+      console.error('[useKidTopicProgress] Firestore error', err);
+      setTopics([]);
+      setError(err?.message ?? String(err));
+    } finally {
+      setLoading(false);
+    }
   }, [kidId]);
 
-  return { topics, loading, error };
+  useEffect(() => {
+    void loadProgress();
+  }, [loadProgress]);
+
+  return {
+    topics,
+    loading,
+    error,
+    refresh: loadProgress,
+  };
 }
