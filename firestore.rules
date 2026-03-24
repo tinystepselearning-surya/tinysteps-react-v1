@@ -659,6 +659,18 @@ service cloud.firestore {
     // ----------------------------
     // DEMO SESSIONS
     // ----------------------------
+    match /leads/{leadId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /leads/{leadId}/communications/{communicationId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /whatsappInboundUnmatched/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     match /demoSessions/{demoId} {
       allow read: if isAdmin()
         || (

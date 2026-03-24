@@ -28,6 +28,7 @@ import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
 import DemoSessionsManagement from './DemoSessionsManagement';
+import LeadsEnquiriesManagement from './LeadsEnquiriesManagement';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
@@ -74,6 +75,7 @@ const ROLE_SHORTCUTS = [
 const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'users', label: 'Users', icon: Users2 },
   { id: 'students', label: 'Students', icon: GraduationCap },
+  { id: 'leads', label: 'Leads', icon: ClipboardList },
   { id: 'demo-sessions', label: 'Demos', icon: ClipboardList },
   { id: 'analytics', label: 'Analytics', icon: LineChart },
   { id: 'teacher-payments', label: 'Payments', icon: Wallet },
@@ -308,6 +310,7 @@ export default function AdminDashboard() {
     const validTabs = new Set([
       'users',
       'students',
+      'leads',
       'enrollments',
       'relationships',
       'courses',
@@ -391,6 +394,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="students" className="mt-0">
               <StudentManagementTab />
+            </TabsContent>
+
+            <TabsContent value="leads" className="mt-0">
+              <LeadsEnquiriesManagement />
             </TabsContent>
 
             {/* ✅ FIXED: pass required prop */}

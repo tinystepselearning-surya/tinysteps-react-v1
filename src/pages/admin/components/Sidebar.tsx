@@ -15,6 +15,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
   const tabs = [
     { id: 'users', label: 'User Management', icon: '👥' },
     { id: 'students', label: 'Student Management', icon: '🎓' },
+    { id: 'leads', label: 'Leads & Enquiries', icon: '📥' },
     { id: 'enrollments', label: 'Enrollment Management', icon: '📝' },
     { id: 'relationships', label: 'Relationship Management', icon: '🤝' },
     { id: 'courses', label: 'Course Management', icon: '📚' },

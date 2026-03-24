@@ -96,6 +96,9 @@ export default function TeacherPayments(): JSX.Element {
   const [expandedTeachers, setExpandedTeachers] = useState<Set<string>>(new Set());
   const [kidMap, setKidMap] = useState<Record<string, string>>({});
   const [courseMap, setCourseMap] = useState<Record<string, string>>({});
+  const [enrollmentMap, setEnrollmentMap] = useState<
+    Record<string, { kidId?: string; courseId?: string; studentName?: string }>
+  >({});
   const [payoutOpen, setPayoutOpen] = useState(false);
   const [payoutTeacherId, setPayoutTeacherId] = useState('');
   const [payoutMonth, setPayoutMonth] = useState<string>(monthKeyFromDate(new Date()));
@@ -110,6 +113,7 @@ export default function TeacherPayments(): JSX.Element {
         const teacherIds = new Set<string>();
         const kidIds = new Set<string>();
         const courseIds = new Set<string>();
+        const enrollmentIds = new Set<string>();
 
         payouts.forEach((p) => {
           const tid = String(p.teacherId || '');
@@ -119,11 +123,61 @@ export default function TeacherPayments(): JSX.Element {
         earnings.forEach((e) => {
           const tid = String(e.teacherId || '');
           if (tid) teacherIds.add(tid);
-          const kidId = String(e.kidId || '');
+          const kidId = String(e.kidId || e.studentId || '');
           if (kidId) kidIds.add(kidId);
+          if (Array.isArray(e.kidIds)) {
+            e.kidIds
+              .map((value: any) => String(value || '').trim())
+              .filter(Boolean)
+              .forEach((value: string) => kidIds.add(value));
+          }
           const courseId = String(e.courseId || '');
           if (courseId) courseIds.add(courseId);
+          const enrollmentId = String(e.enrollmentId || '');
+          if (enrollmentId) enrollmentIds.add(enrollmentId);
         });
+
+        const nextEnrollmentMap: Record<
+          string,
+          { kidId?: string; courseId?: string; studentName?: string }
+        > = {};
+
+        if (enrollmentIds.size > 0) {
+          for (const chunk of chunkIds(Array.from(enrollmentIds))) {
+            const snap = await getDocs(
+              query(collection(db, 'enrollments'), where(documentId(), 'in', chunk))
+            );
+            snap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              const resolvedKidId =
+                String(
+                  data?.kidId || data?.studentId || data?.kidIds?.[0] || ''
+                ).trim() || undefined;
+              const resolvedCourseId = String(data?.courseId || '').trim() || undefined;
+              const studentName =
+                String(
+                  data?.studentName ||
+                    data?.kidName ||
+                    data?.childName ||
+                    data?.fullName ||
+                    data?.displayName ||
+                    data?.name ||
+                    ''
+                ).trim() || undefined;
+
+              nextEnrollmentMap[docSnap.id] = {
+                kidId: resolvedKidId,
+                courseId: resolvedCourseId,
+                studentName,
+              };
+
+              if (resolvedKidId) kidIds.add(resolvedKidId);
+              if (resolvedCourseId) courseIds.add(resolvedCourseId);
+            });
+          }
+        }
+
+        setEnrollmentMap(nextEnrollmentMap);
 
         if (teacherIds.size === 0) {
           setTeachers([]);
@@ -159,6 +213,22 @@ export default function TeacherPayments(): JSX.Element {
                 '';
               nextKidMap[docSnap.id] = name || docSnap.id;
               if (data?.studentId) nextKidMap[data.studentId] = name || docSnap.id;
+            });
+
+            const studentsSnap = await getDocs(
+              query(collection(db, 'students'), where(documentId(), 'in', chunk))
+            );
+            studentsSnap.docs.forEach((docSnap) => {
+              const data = docSnap.data() as any;
+              const name =
+                data?.fullName ||
+                data?.name ||
+                data?.displayName ||
+                data?.studentName ||
+                data?.firstName ||
+                '';
+              nextKidMap[docSnap.id] = name || nextKidMap[docSnap.id] || docSnap.id;
+              if (data?.kidId) nextKidMap[data.kidId] = name || data.kidId;
             });
           }
           setKidMap(nextKidMap);
@@ -347,6 +417,7 @@ export default function TeacherPayments(): JSX.Element {
           enrollmentId: string;
           kidId: string;
           courseId: string;
+          studentName: string;
           sessions: number;
           earned: number;
           paid: number;
@@ -360,9 +431,12 @@ export default function TeacherPayments(): JSX.Element {
       const status = normalizeStatus(earning.status);
       if (status === 'void') return;
       const enrollmentId = String(earning.enrollmentId || '');
-      const kidId = String(earning.kidId || '');
+      const kidId = String(earning.kidId || earning.studentId || earning.kidIds?.[0] || '');
       const courseId = String(earning.courseId || '');
-      const key = enrollmentId || kidId || earning.id;
+      const studentName = String(
+        earning.studentName || earning.kidName || earning.childName || ''
+      ).trim();
+      const key = enrollmentId || kidId || studentName || earning.id;
       const amountRaw = Number(earning.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
       const paidAmount = resolvePaidAmount(earning, amount);
@@ -374,12 +448,16 @@ export default function TeacherPayments(): JSX.Element {
           enrollmentId,
           kidId,
           courseId,
+          studentName,
           sessions: 0,
           earned: 0,
           paid: 0,
         });
       }
       const entry = bucket.get(key)!;
+      if (!entry.studentName && studentName) {
+        entry.studentName = studentName;
+      }
       entry.sessions += 1;
       entry.earned += amount;
       entry.paid += paidAmount;
@@ -389,6 +467,7 @@ export default function TeacherPayments(): JSX.Element {
       enrollmentId: string;
       kidId: string;
       courseId: string;
+      studentName: string;
       sessions: number;
       earned: number;
       paid: number;
@@ -672,10 +751,23 @@ export default function TeacherPayments(): JSX.Element {
                                   </thead>
                                   <tbody>
                                     {breakdown.map((entry, idx) => {
+                                      const enrollmentRef = entry.enrollmentId
+                                        ? enrollmentMap[entry.enrollmentId]
+                                        : undefined;
+                                      const resolvedKidId =
+                                        entry.kidId || enrollmentRef?.kidId || '';
                                       const studentLabel =
-                                        kidMap[entry.kidId] || entry.kidId || 'Unknown';
+                                        kidMap[resolvedKidId] ||
+                                        entry.studentName ||
+                                        enrollmentRef?.studentName ||
+                                        resolvedKidId ||
+                                        'Unknown';
+                                      const resolvedCourseId =
+                                        entry.courseId || enrollmentRef?.courseId || '';
                                       const courseLabel =
-                                        courseMap[entry.courseId] || entry.courseId || '—';
+                                        courseMap[resolvedCourseId] ||
+                                        resolvedCourseId ||
+                                        '—';
                                       return (
                                         <tr key={`${entry.enrollmentId || entry.kidId}-${idx}`}>
                                           <td className="p-2">{studentLabel}</td>

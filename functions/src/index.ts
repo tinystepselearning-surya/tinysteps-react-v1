@@ -99,3 +99,6 @@ export {
 // AI: Ask TinySteps chatbot and knowledge base
 export { askTinySteps } from "./ai/askTinySteps";
 export { refreshPublicKb } from "./ai/refreshPublicKb";
+
+// WhatsApp backend foundation (admin send + webhook callbacks)
+export { sendWhatsAppTemplateMessage, whatsAppWebhook } from './whatsapp';

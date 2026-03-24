@@ -337,6 +337,7 @@ const router = createBrowserRouter(
             { index: true, element: <AdminDashboard /> },
             { path: 'analytics', element: <AdminDashboard /> },
             { path: 'demo-sessions', element: <Navigate to="/surya?tab=demo-sessions" replace /> },
+            { path: 'leads', element: <Navigate to="/surya?tab=leads" replace /> },
           ],
         },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },
