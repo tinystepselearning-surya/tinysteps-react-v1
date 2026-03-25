@@ -119,6 +119,17 @@ function deriveEmbedUrl(canvaViewUrl: string, explicitEmbedUrl: string): string 
   }
 }
 
+function isCanvaViewOnlyPath(rawUrl: string): boolean {
+  if (!rawUrl.trim()) return false;
+  try {
+    const url = new URL(rawUrl.trim());
+    const path = url.pathname.toLowerCase();
+    return path.includes('/view') && !path.includes('/edit');
+  } catch {
+    return false;
+  }
+}
+
 function parseTagsInput(rawTags: string): string[] {
   const cleanTags = rawTags
     .split(',')
@@ -407,9 +418,23 @@ export default function LessonLibraryAdminPage() {
     if (!isValidHttpsCanvaUrl(canvaViewUrl)) {
       return toast({ title: 'Validation', description: 'Enter a valid Canva view URL (https).', variant: 'destructive' });
     }
+    if (!isCanvaViewOnlyPath(canvaViewUrl)) {
+      return toast({
+        title: 'Canva link hint',
+        description: 'Use a Canva view-only link containing /view (not /edit) before saving.',
+        variant: 'destructive',
+      });
+    }
     const finalEmbedUrl = deriveEmbedUrl(canvaViewUrl, canvaEmbedUrl);
     if (!isValidHttpsCanvaUrl(finalEmbedUrl)) {
       return toast({ title: 'Validation', description: 'Enter a valid Canva embed URL (https).', variant: 'destructive' });
+    }
+    if (!isCanvaViewOnlyPath(finalEmbedUrl)) {
+      return toast({
+        title: 'Canva link hint',
+        description: 'Embed URL must resolve to a Canva /view link (not /edit).',
+        variant: 'destructive',
+      });
     }
     setLoading(true);
     try {
@@ -610,9 +635,23 @@ export default function LessonLibraryAdminPage() {
     if (!isValidHttpsCanvaUrl(lessonDraft.canvaViewUrl)) {
       return toast({ title: 'Validation', description: 'Enter a valid Canva view URL (https).', variant: 'destructive' });
     }
+    if (!isCanvaViewOnlyPath(lessonDraft.canvaViewUrl)) {
+      return toast({
+        title: 'Canva link hint',
+        description: 'Use a Canva view-only link containing /view (not /edit) before saving.',
+        variant: 'destructive',
+      });
+    }
     const finalEmbedUrl = deriveEmbedUrl(lessonDraft.canvaViewUrl, lessonDraft.canvaEmbedUrl);
     if (!isValidHttpsCanvaUrl(finalEmbedUrl)) {
       return toast({ title: 'Validation', description: 'Enter a valid Canva embed URL (https).', variant: 'destructive' });
+    }
+    if (!isCanvaViewOnlyPath(finalEmbedUrl)) {
+      return toast({
+        title: 'Canva link hint',
+        description: 'Embed URL must resolve to a Canva /view link (not /edit).',
+        variant: 'destructive',
+      });
     }
 
     setLoading(true);

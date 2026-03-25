@@ -382,23 +382,703 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
   display: none !important;
 }
 
-/* Small confetti animation for celebrations */
+/* Teacher Effects Overlay — confetti, stars, hearts, drum */
+
+/* ─ Confetti ───────────────────────────────────────────────────────────────── */
 .confetti-container {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  overflow: visible;
+  overflow: hidden;
+  z-index: 40;
 }
 .confetti-piece {
   position: absolute;
-  width: 10px;
-  height: 16px;
-  opacity: 0.95;
+  opacity: 1;
   transform-origin: center;
   will-change: transform, opacity;
-  animation: confetti-fall 1200ms linear forwards;
+  border-radius: 3px; /* clean paper-strip edges by default */
 }
-@keyframes confetti-fall {
-  0% { transform: translateY(-20vh) rotate(0deg) scale(1); opacity: 1; }
-  100% { transform: translateY(120vh) rotate(720deg) scale(0.9); opacity: 0; }
+
+/*
+  Pattern 0 — BOTTOM BURST
+  Pieces launch upward from bottom-center, arc outward, then fall with gravity.
+  ease-out gives a natural deceleration at the top of arc; fall is continuous.
+*/
+.confetti-piece.pattern-bottom {
+  bottom: 2%;
+  top: auto !important;
+  animation: cf-bottom var(--cf-dur, 3000ms) ease-out var(--cf-delay, 0ms) forwards;
+}
+@keyframes cf-bottom {
+  0%   { transform: translate(0px,                               0px)   rotate(0deg);   opacity: 1; }
+  28%  { transform: translate(calc(var(--cf-dx, 0px) * 0.42), -36vh)   rotate(110deg); opacity: 1; }
+  60%  { transform: translate(calc(var(--cf-dx, 0px) * 0.80),   8vh)   rotate(220deg); opacity: 0.9; }
+  100% { transform: translate(calc(var(--cf-dx, 0px) * 1.08),  80vh)   rotate(320deg); opacity: 0; }
+}
+
+/*
+  Pattern 1 — SIDE BURST
+  Pieces enter from left/right, sweep inward, then fall. Lateral movement
+  eases out quickly; vertical drop accelerates naturally like gravity.
+*/
+.confetti-piece.pattern-side {
+  animation: cf-side var(--cf-dur, 2800ms) ease-out var(--cf-delay, 0ms) forwards;
+}
+@keyframes cf-side {
+  0%   { transform: translate(0px, 0px)                                                            rotate(0deg);   opacity: 1; }
+  28%  { transform: translate(calc(var(--cf-dx, 80px) * 0.52), calc(var(--cf-dy, 0px) * 0.18))   rotate(88deg);  opacity: 1; }
+  60%  { transform: translate(calc(var(--cf-dx, 80px) * 0.88), calc(var(--cf-dy, 0px) + 20vh))   rotate(188deg); opacity: 0.9; }
+  100% { transform: translate(calc(var(--cf-dx, 80px) * 1.04), calc(var(--cf-dy, 0px) + 85vh))   rotate(285deg); opacity: 0; }
+}
+
+/*
+  Pattern 2 — TOP SHOWER
+  Soft waterfall — pieces drift down from top with gentle lateral sway.
+  cubic-bezier(0.4, 0, 0.6, 1) = ease-in-out: starts calm, falls steadily.
+*/
+.confetti-piece.pattern-top {
+  animation: cf-top var(--cf-dur, 3200ms) cubic-bezier(0.4, 0, 0.6, 1) var(--cf-delay, 0ms) forwards;
+}
+@keyframes cf-top {
+  0%   { transform: translate(0px,                              0px)   rotate(0deg);   opacity: 1; }
+  30%  { transform: translate(calc(var(--cf-dx, 0px) * 0.34),  30vh)  rotate(72deg);  opacity: 1; }
+  62%  { transform: translate(calc(var(--cf-dx, 0px) * 0.70),  64vh)  rotate(152deg); opacity: 0.88; }
+  100% { transform: translate(calc(var(--cf-dx, 0px) * 1.0),  112vh)  rotate(235deg); opacity: 0; }
+}
+
+/* ─ Stars ────────────────────────────────────────────────────────────────── */
+.stars-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 42;
+  overflow: visible;
+}
+.star-big {
+  position: absolute;
+  display: inline-block;
+  will-change: transform, opacity, filter;
+  animation: star-big-pop var(--st-dur, 2800ms) cubic-bezier(0.22, 1, 0.36, 1) var(--st-delay, 0ms) forwards;
+  filter: drop-shadow(0 0 24px #FFD700) drop-shadow(0 0 56px #FFF176);
+  transform-origin: center;
+}
+@keyframes star-big-pop {
+  0%   { transform: scale(0.05) rotate(-20deg); opacity: 0; filter: drop-shadow(0 0 6px #FFD700); }
+  18%  { transform: scale(1.4)  rotate(8deg);  opacity: 1; filter: drop-shadow(0 0 40px #FFD700) drop-shadow(0 0 80px #fffde4); }
+  45%  { transform: scale(1.12) rotate(-4deg); opacity: 1; filter: drop-shadow(0 0 28px #FFD700) drop-shadow(0 0 60px #fffde4); }
+  70%  { transform: scale(1.2)  rotate(3deg);  opacity: 0.95; }
+  88%  { transform: scale(1.08) rotate(0deg);  opacity: 0.7; }
+  100% { transform: scale(0.7)  rotate(0deg);  opacity: 0; }
+}
+
+/* ─ Hearts ───────────────────────────────────────────────────────────────── */
+.hearts-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 43;
+  overflow: visible;
+}
+.heart-big {
+  position: absolute;
+  display: inline-block;
+  will-change: transform, opacity, filter;
+  animation: heart-big-boom var(--ht-dur, 3000ms) cubic-bezier(0.22, 1, 0.36, 1) var(--ht-delay, 0ms) forwards;
+  filter: drop-shadow(0 0 28px #FF2060) drop-shadow(0 0 64px #FF80AB);
+  transform-origin: center bottom;
+}
+@keyframes heart-big-boom {
+  0%   { transform: scale(0.05) translateY(0);     opacity: 0; }
+  14%  { transform: scale(1.6)  translateY(-12px);  opacity: 1; filter: drop-shadow(0 0 48px #FF2060) drop-shadow(0 0 100px #FF80AB); }
+  32%  { transform: scale(1.25) translateY(-22px);  opacity: 1; }
+  58%  { transform: scale(1.35) translateY(-36px);  opacity: 0.9; }
+  80%  { transform: scale(1.15) translateY(-52px);  opacity: 0.6; }
+  100% { transform: scale(0.9)  translateY(-88px);  opacity: 0; }
+}
+
+/* ─ Drum ─────────────────────────────────────────────────────────────────── */
+.drum-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 45;
+}
+.drum-pop {
+  animation: drum-pop 0.65s cubic-bezier(0.26, 1.45, 0.58, 1) forwards;
+  display: inline-block;
+  line-height: 1;
+  transform-origin: center;
+}
+@keyframes drum-pop {
+  0%   { transform: scale(0.08) rotate(-10deg);  opacity: 0; }
+  45%  { transform: scale(1.3)  rotate(5deg);    opacity: 1; }
+  68%  { transform: scale(0.95) rotate(-3deg);   opacity: 1; }
+  85%  { transform: scale(1.04) rotate(1deg);    opacity: 1; }
+  100% { transform: scale(1.0)  rotate(0deg);    opacity: 1; }
+}
+.drum-shake {
+  animation: drum-shake 0.2s ease-in-out;
+  display: inline-block;
+  line-height: 1;
+  transform-origin: center;
+}
+@keyframes drum-shake {
+  0%   { transform: scale(1.0)  translateX(0);    }
+  25%  { transform: scale(1.1)  translateX(-10px); }
+  50%  { transform: scale(1.0)  translateX(10px);  }
+  75%  { transform: scale(1.06) translateX(-6px); }
+  100% { transform: scale(1.0)  translateX(0);    }
+}
+.drum-fade-out {
+  animation: drum-fade 0.6s ease-in-out forwards;
+  display: inline-block;
+  line-height: 1;
+}
+@keyframes drum-fade {
+  0%   { opacity: 1; transform: scale(1.0); }
+  60%  { opacity: 0.4; transform: scale(0.95); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece,
+  .star-big,
+  .heart-big {
+    animation: none;
+    opacity: 0;
+  }
+  .drum-pop, .drum-shake, .drum-fade-out {
+    animation: none;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Annotation Toolbar — vertical right-side panel
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* Root: fixed to the right edge of its positioned ancestor (the viewer) */
+.annotation-toolbar-root {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  z-index: 52;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  pointer-events: auto;
+}
+
+/* ── Collapsed tab ────────────────────────────────────────────────────── */
+.annotation-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  /* tall enough to read the rotated text */
+  padding: 18px 0;
+  background: rgba(15, 15, 20, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  cursor: pointer;
+  transition: background 0.18s, width 0.18s;
+  outline: none;
+  user-select: none;
+  flex-shrink: 0;
+}
+.annotation-tab:hover {
+  background: rgba(30, 30, 40, 0.92);
+  width: 26px;
+}
+.annotation-tab--on {
+  background: rgba(37, 99, 235, 0.75);
+  border-color: rgba(147,197,253,0.25);
+}
+.annotation-tab--on:hover {
+  background: rgba(37, 99, 235, 0.90);
+}
+.annotation-tab-text {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.70);
+  line-height: 1;
+  user-select: none;
+}
+.annotation-tab--on .annotation-tab-text {
+  color: #fff;
+}
+/* Active indicator dot on tab */
+.annotation-tab-dot {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #60a5fa;
+  box-shadow: 0 0 6px #60a5fa;
+  animation: atb-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes atb-dot-pulse {
+  0%, 100% { opacity: 1; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 0.5; transform: translateX(-50%) scale(0.7); }
+}
+
+/* ── Expanded panel ───────────────────────────────────────────────────── */
+.annotation-panel {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  /* slide in from right */
+  transform: translateX(8px);
+  transition: width 0.22s cubic-bezier(0.4,0,0.2,1),
+              opacity 0.18s ease,
+              transform 0.22s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+}
+.annotation-panel--open {
+  width: 196px;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  overflow: visible;
+}
+
+/* Inner card */
+.annotation-panel--open {
+  background: rgba(12, 12, 18, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 14px 0 0 14px;
+  padding: 14px 12px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: -6px 0 32px rgba(0,0,0,0.45), inset 1px 0 0 rgba(255,255,255,0.04);
+}
+
+/* Section label */
+.atb-section-label {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.30);
+  margin: 0 0 6px 0;
+  user-select: none;
+}
+
+/* Divider */
+.atb-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 10px 0;
+  flex-shrink: 0;
+}
+
+/* ── A. Toggle ────────────────────────────────────────────────────────── */
+.atb-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  outline: none;
+  margin-bottom: 2px;
+}
+.atb-toggle:hover {
+  background: rgba(255,255,255,0.10);
+}
+.atb-toggle--on {
+  background: rgba(37,99,235,0.30);
+  border-color: rgba(96,165,250,0.40);
+}
+.atb-toggle--on:hover {
+  background: rgba(37,99,235,0.42);
+}
+.atb-toggle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  flex-shrink: 0;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+.atb-toggle--on .atb-toggle-dot {
+  background: #60a5fa;
+  box-shadow: 0 0 8px #3b82f6;
+}
+.atb-toggle-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.55);
+  transition: color 0.15s;
+  user-select: none;
+}
+.atb-toggle--on .atb-toggle-label {
+  color: #93c5fd;
+}
+
+/* ── B. Tools ─────────────────────────────────────────────────────────── */
+.atb-tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.atb-tool-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.13s, border-color 0.13s;
+  outline: none;
+}
+.atb-tool-btn:hover {
+  background: rgba(255,255,255,0.08);
+}
+.atb-tool-btn--active {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.22);
+}
+.atb-tool-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.atb-tool-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  transition: color 0.13s;
+  user-select: none;
+}
+.atb-tool-btn:hover .atb-tool-label,
+.atb-tool-btn--active .atb-tool-label {
+  color: rgba(255,255,255,0.95);
+}
+
+/* ── C. Colors ────────────────────────────────────────────────────────── */
+.atb-color-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.atb-color-swatch {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+  outline: none;
+  flex-shrink: 0;
+}
+.atb-color-swatch:hover {
+  transform: scale(1.18);
+}
+.atb-color-swatch--selected,
+.atb-color-swatch:has(.atb-color-check) {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.30);
+}
+.atb-color-check {
+  font-size: 11px;
+  color: #fff;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  user-select: none;
+}
+/* Glitter swatch */
+.atb-color-swatch--glitter {
+  background: linear-gradient(135deg, #FF2D55, #FF9500, #FFCC00, #34C759, #007AFF, #AF52DE);
+}
+/* Custom picker swatch */
+.atb-color-swatch--custom {
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.20);
+  overflow: hidden;
+}
+.atb-color-input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+.atb-custom-preview {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.35);
+  flex-shrink: 0;
+  transition: background 0.1s;
+}
+
+/* ── D. Size ──────────────────────────────────────────────────────────── */
+.atb-size-row {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+.atb-size-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  background: rgba(255,255,255,0.07);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, border-color 0.12s;
+  outline: none;
+  flex-shrink: 0;
+}
+.atb-size-btn:hover {
+  background: rgba(255,255,255,0.14);
+}
+.atb-size-btn--active {
+  background: rgba(255,255,255,0.18);
+  border-color: rgba(255,255,255,0.35);
+}
+.atb-size-dot {
+  border-radius: 50%;
+  background: rgba(255,255,255,0.80);
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.atb-size-btn--active .atb-size-dot {
+  background: #fff;
+}
+
+/* ── E. Actions ───────────────────────────────────────────────────────── */
+.atb-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+  transition: background 0.13s;
+  outline: none;
+  margin-bottom: 4px;
+}
+.atb-action-btn:last-child {
+  margin-bottom: 0;
+}
+.atb-action-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+.atb-action-btn--danger:hover {
+  background: rgba(239,68,68,0.28);
+}
+.atb-action-icon {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.atb-action-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.60);
+  user-select: none;
+  transition: color 0.13s;
+}
+.atb-action-btn:hover .atb-action-label {
+  color: rgba(255,255,255,0.95);
+}
+.atb-action-btn--danger:hover .atb-action-label {
+  color: #fca5a5;
+}
+
+/* Reduced motion: skip slide transition */
+@media (prefers-reduced-motion: reduce) {
+  .annotation-panel {
+    transition: none;
+  }
+  .annotation-tab-dot {
+    animation: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Effects Toolbar — vertical left-side tray
+   Mirrors the annotation toolbar but anchored to the left edge.
+   ═══════════════════════════════════════════════════════════════ */
+
+.effects-toolbar-root {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  z-index: 52;
+  display: flex;
+  flex-direction: row-reverse; /* panel expands rightward, tab stays on far left */
+  align-items: center;
+  pointer-events: auto;
+}
+
+/* ── Collapsed tab ─────────────────────────────────────────────── */
+.effects-tab {
+  flex-shrink: 0;
+  width: 24px;
+  padding: 18px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 15, 20, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-left: none;           /* flush against the screen edge */
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  color: rgba(255, 255, 255, 0.70);
+  outline: none;
+}
+
+.effects-tab:hover {
+  background: rgba(30, 30, 40, 0.92);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.effects-tab-text {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);   /* read bottom-to-top */
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ── Expanded panel ────────────────────────────────────────────── */
+.effects-panel {
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition:
+    width    0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity  0.18s ease,
+    transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.effects-panel--open {
+  width: 182px;
+  opacity: 1;
+  transform: translateX(0);
+  background: rgba(12, 12, 18, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-left: none;
+  border-radius: 0 14px 14px 0;
+  padding: 14px 12px;
+  box-shadow: 6px 0 32px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Effect row button ─────────────────────────────────────────── */
+.efx-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  text-align: left;
+  outline: none;
+}
+
+.efx-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.efx-btn:active {
+  background: rgba(255, 255, 255, 0.14);
+  transform: scale(0.97);
+}
+
+.efx-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.efx-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+}
+
+.efx-key {
+  font-size: 9px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
+}
+
+/* Sound toggle — subtle tint variant */
+.efx-btn--sound {
+  margin-top: 2px;
+}
+
+.efx-btn--sound .efx-label {
+  color: rgba(255, 255, 255, 0.50);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .effects-panel {
+    transition: none;
+  }
 }

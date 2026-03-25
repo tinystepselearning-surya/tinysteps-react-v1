@@ -1,5 +1,4 @@
 import * as admin from 'firebase-admin';
-import { defineSecret } from 'firebase-functions/params';
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
@@ -13,11 +12,6 @@ const PROVIDER = 'meta_whatsapp_cloud';
 const LEADS_COLLECTION = 'leads';
 const COMMUNICATIONS_SUBCOLLECTION = 'communications';
 const UNMATCHED_INBOUND_COLLECTION = 'whatsappInboundUnmatched';
-
-const WHATSAPP_PHONE_NUMBER_ID_SECRET = defineSecret('whatsapp-phone-number-id');
-const WHATSAPP_ACCESS_TOKEN_SECRET = defineSecret('whatsapp-access-token');
-const WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET = defineSecret('whatsapp-webhook-verify-token');
-const WHATSAPP_BUSINESS_ACCOUNT_ID_SECRET = defineSecret('whatsapp-business-account-id');
 
 type CommunicationType = 'message' | 'call' | 'follow_up' | 'note';
 type CommunicationDirection = 'inbound' | 'outbound' | 'internal';
@@ -101,34 +95,23 @@ const getDefaultTemplateLanguage = (): string => {
   return fromEnv || 'en';
 };
 
-const readWebhookVerifyToken = (): string => {
-  const verifyToken = trimText(WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET.value());
-  if (!verifyToken) {
-    throw new HttpsError(
-      'failed-precondition',
-      "Secret 'whatsapp-webhook-verify-token' is not configured.",
-    );
+const readRequiredEnv = (name: string): string => {
+  const value = trimText(process.env[name]);
+  if (!value) {
+    throw new HttpsError('failed-precondition', `Environment variable '${name}' is not configured.`);
   }
-  return verifyToken;
+  return value;
+};
+
+const readWebhookVerifyToken = (): string => {
+  return readRequiredEnv('WHATSAPP_WEBHOOK_VERIFY_TOKEN');
 };
 
 const readWhatsAppSendConfig = (): WhatsAppRuntimeConfig => {
-  const phoneNumberId = trimText(WHATSAPP_PHONE_NUMBER_ID_SECRET.value());
-  const accessToken = trimText(WHATSAPP_ACCESS_TOKEN_SECRET.value());
-  const businessAccountIdRaw = trimText(WHATSAPP_BUSINESS_ACCOUNT_ID_SECRET.value());
+  const phoneNumberId = readRequiredEnv('WHATSAPP_PHONE_NUMBER_ID');
+  const accessToken = readRequiredEnv('WHATSAPP_ACCESS_TOKEN');
+  const businessAccountIdRaw = trimText(process.env.WHATSAPP_BUSINESS_ACCOUNT_ID);
 
-  if (!phoneNumberId) {
-    throw new HttpsError(
-      'failed-precondition',
-      "Secret 'whatsapp-phone-number-id' is not configured.",
-    );
-  }
-  if (!accessToken) {
-    throw new HttpsError(
-      'failed-precondition',
-      "Secret 'whatsapp-access-token' is not configured.",
-    );
-  }
   return {
     phoneNumberId,
     accessToken,
@@ -268,12 +251,6 @@ export const sendWhatsAppTemplateMessage = onCall(
     region: REGION,
     timeoutSeconds: 60,
     memory: '256MiB',
-    secrets: [
-      WHATSAPP_PHONE_NUMBER_ID_SECRET,
-      WHATSAPP_ACCESS_TOKEN_SECRET,
-      WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET,
-      WHATSAPP_BUSINESS_ACCOUNT_ID_SECRET,
-    ],
   },
   async (request) => {
     await ensureAdmin(request.auth);
@@ -565,7 +542,6 @@ export const whatsAppWebhook = onRequest(
     region: REGION,
     timeoutSeconds: 60,
     memory: '256MiB',
-    secrets: [WHATSAPP_WEBHOOK_VERIFY_TOKEN_SECRET],
   },
   async (request, response) => {
     const method = request.method.toUpperCase();
