@@ -29,6 +29,7 @@ import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
 import DemoSessionsManagement from './DemoSessionsManagement';
 import LeadsEnquiriesManagement from './LeadsEnquiriesManagement';
+import TodaysNotifications from './TodaysNotifications';
 import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
@@ -315,6 +316,7 @@ export default function AdminDashboard() {
       'relationships',
       'courses',
       'demo-sessions',
+      'today-notifications',
       'lessons',
       'class-recordings',
       'analytics',
@@ -415,6 +417,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="demo-sessions" className="mt-0">
               <DemoSessionsManagement />
+            </TabsContent>
+
+            <TabsContent value="today-notifications" className="mt-0">
+              <TodaysNotifications />
             </TabsContent>
 
             <TabsContent value="lessons" className="mt-0">

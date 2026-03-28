@@ -20,6 +20,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
     { id: 'relationships', label: 'Relationship Management', icon: '🤝' },
     { id: 'courses', label: 'Course Management', icon: '📚' },
     { id: 'demo-sessions', label: 'Demo Sessions', icon: '🎯' },
+    { id: 'today-notifications', label: 'Sessions Management', icon: '💬' },
     { id: 'lessons', label: 'Lesson Library', icon: '📖' },
     { id: 'class-recordings', label: 'Class Recordings', icon: '🎬' },
     { id: 'analytics', label: 'Analytics', icon: '📊' },

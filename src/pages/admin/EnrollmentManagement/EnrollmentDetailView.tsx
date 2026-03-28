@@ -58,6 +58,14 @@ type Payment = {
   method?: string;
 };
 
+const createPaymentRequestKey = () => {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  return `payment_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export default function EnrollmentDetailView({
   enrollmentId,
   onClose,
@@ -81,6 +89,7 @@ export default function EnrollmentDetailView({
   });
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'bank_transfer' | 'online'>('UPI');
   const [paymentNote, setPaymentNote] = useState('');
+  const [paymentRequestKey, setPaymentRequestKey] = useState<string>(() => createPaymentRequestKey());
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [charges, setCharges] = useState<Charge[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -490,6 +499,8 @@ export default function EnrollmentDetailView({
 
     try {
       setPaymentSaving(true);
+      const requestKey = paymentRequestKey || createPaymentRequestKey();
+      if (!paymentRequestKey) setPaymentRequestKey(requestKey);
       const fn = httpsCallable(functions, 'recordPayment');
       await fn({
         enrollmentId: enrollment.id,
@@ -497,10 +508,12 @@ export default function EnrollmentDetailView({
         paidAt: paymentPaidAt,
         method: paymentMethod,
         note: paymentNote || undefined,
+        idempotencyKey: requestKey,
       });
       toast({ title: 'Payment recorded' });
       setPaymentAmount('');
       setPaymentNote('');
+      setPaymentRequestKey(createPaymentRequestKey());
       await loadFinancials();
     } catch (err: any) {
       toast({

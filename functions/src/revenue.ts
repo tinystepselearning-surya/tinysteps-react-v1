@@ -435,10 +435,32 @@ export const onSessionRevenueWrite = onDocumentWritten(
             if (shouldSetRate) rollupPayload.ratePerSession = teacherPayPerSession;
             tx.set(teacherRollupRef, rollupPayload, { merge: true });
           }
+          tx.set(chargeRef, chargePayload, { merge: true });
+          tx.set(earningRef, earningPayload, { merge: true });
+        } else if (!chargeSnap.exists || !earningSnap.exists) {
+          const repairReason =
+            !chargeSnap.exists && !earningSnap.exists
+              ? 'missing_charge_and_earning_docs'
+              : !chargeSnap.exists
+                ? 'missing_billing_charge_doc'
+                : 'missing_teacher_earning_doc';
+          tx.set(
+            sessionRef,
+            {
+              revenueRepairRequired: true,
+              revenueRepairDetectedAt: admin.firestore.FieldValue.serverTimestamp(),
+              revenueRepairReason: repairReason,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            },
+            { merge: true }
+          );
+          logger.warn('Revenue ledger immutable after accrual; missing ledger docs were not auto-recreated', {
+            sessionId,
+            chargeExists: chargeSnap.exists,
+            earningExists: earningSnap.exists,
+            repairReason,
+          });
         }
-
-        tx.set(chargeRef, chargePayload, { merge: true });
-        tx.set(earningRef, earningPayload, { merge: true });
       });
 
       return;
@@ -586,6 +608,12 @@ function toPaidAtTimestamp(value: any): admin.firestore.Timestamp {
   return admin.firestore.Timestamp.fromDate(parsed || new Date());
 }
 
+function normalizeIdempotencyKey(value: any): string {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return '';
+  return raw.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
+}
+
 function resolveTeacherEarningPaidAmount(data: any, amount: number): number {
   const paidRaw = Number(data?.paidAmount);
   if (Number.isFinite(paidRaw) && paidRaw > 0) {
@@ -625,15 +653,52 @@ export const recordPayment = onCall(
     const note = typeof request.data?.note === 'string' ? request.data.note.trim() : '';
     const paidAt = toPaidAtTimestamp(request.data?.paidAt);
     const monthKey = monthKeyFromTimestampIST(paidAt.toDate());
+    const idempotencyKey = normalizeIdempotencyKey(request.data?.idempotencyKey);
+    if (!idempotencyKey) {
+      throw new HttpsError('invalid-argument', 'idempotencyKey is required');
+    }
 
     const db = admin.firestore();
     const enrollmentRef = db.collection('enrollments').doc(enrollmentId);
-    const paymentRef = db.collection('payments').doc();
+    const paymentDocId = `payment_${enrollmentId}_${monthKey}_${idempotencyKey}`.replace(/\//g, '_');
+    const paymentRef = db.collection('payments').doc(paymentDocId);
     const rollupRef = revenueMonthlyRef(db, monthKey);
     const chargesQuery = db.collection('billingCharges').where('enrollmentId', '==', enrollmentId);
     const dateKey = dayKeyFromTimestampIST(paidAt.toDate());
 
     const allocation = await db.runTransaction(async (tx) => {
+      const existingPaymentSnap = await tx.get(paymentRef);
+      if (existingPaymentSnap.exists) {
+        const existing = existingPaymentSnap.data() || {};
+        const existingEnrollmentId = String(existing.enrollmentId || '').trim();
+        const existingMonthKey = String(existing.monthKey || '').trim();
+        const existingAmount = normalizeNumber(existing.amount, Number.NaN);
+        const existingMethod = String(existing.method || '').trim();
+        const existingDate = String(existing.date || '').trim();
+
+        if (
+          (existingEnrollmentId && existingEnrollmentId !== enrollmentId) ||
+          (existingMonthKey && existingMonthKey !== monthKey) ||
+          (existingMethod && existingMethod !== method) ||
+          (existingDate && existingDate !== dateKey) ||
+          (Number.isFinite(existingAmount) && Math.abs(existingAmount - amount) > 0.01)
+        ) {
+          throw new HttpsError(
+            'failed-precondition',
+            'idempotencyKey already used for a different payment request',
+          );
+        }
+
+        return {
+          paymentId: paymentRef.id,
+          monthKey: existingMonthKey || monthKey,
+          appliedChargeIds: Array.isArray(existing.appliedChargeIds) ? existing.appliedChargeIds : [],
+          appliedAmount: normalizeNumber(existing.appliedAmount, 0),
+          unappliedAmount: normalizeNumber(existing.unappliedAmount, 0),
+          idempotentReplay: true,
+        };
+      }
+
       const enrollmentSnap = await tx.get(enrollmentRef);
       if (!enrollmentSnap.exists) {
         throw new HttpsError('not-found', 'Enrollment not found');
@@ -654,6 +719,7 @@ export const recordPayment = onCall(
         method,
         status: amount < 0 ? 'refunded' : 'completed',
         note: note || null,
+        idempotencyKey,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
         createdBy: request.auth?.uid || null,
       };
@@ -792,10 +858,25 @@ export const recordPayment = onCall(
         { merge: true }
       );
 
-      return { appliedChargeIds, appliedAmount, unappliedAmount: remaining };
+      return {
+        paymentId: paymentRef.id,
+        monthKey,
+        appliedChargeIds,
+        appliedAmount,
+        unappliedAmount: remaining,
+        idempotentReplay: false,
+      };
     });
 
-    return { ok: true, paymentId: paymentRef.id, monthKey, ...allocation };
+    return {
+      ok: true,
+      paymentId: allocation.paymentId || paymentRef.id,
+      monthKey: allocation.monthKey || monthKey,
+      appliedChargeIds: allocation.appliedChargeIds,
+      appliedAmount: allocation.appliedAmount,
+      unappliedAmount: allocation.unappliedAmount,
+      idempotentReplay: allocation.idempotentReplay === true,
+    };
   }
 );
 
@@ -821,13 +902,51 @@ export const recordTeacherPayout = onCall(
     const paidAt = toPaidAtTimestamp(request.data?.paidAt);
     const monthKey = monthKeyFromTimestampIST(paidAt.toDate());
     const dateKey = dayKeyFromTimestampIST(paidAt.toDate());
+    const idempotencyKey = normalizeIdempotencyKey(request.data?.idempotencyKey);
+    if (!idempotencyKey) {
+      throw new HttpsError('invalid-argument', 'idempotencyKey is required');
+    }
 
     const db = admin.firestore();
-    const payoutRef = db.collection('teacherPayouts').doc();
-    const earningsQuery = db.collection('teacherEarnings').where('monthKey', '==', monthKey);
+    const payoutDocId = `payout_${teacherId}_${monthKey}_${idempotencyKey}`.replace(/\//g, '_');
+    const payoutRef = db.collection('teacherPayouts').doc(payoutDocId);
+    const earningsQuery = db
+      .collection('teacherEarnings')
+      .where('monthKey', '==', monthKey)
+      .where('teacherId', '==', teacherId);
     const payoutRollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
 
     const allocation = await db.runTransaction(async (tx) => {
+      const existingPayoutSnap = await tx.get(payoutRef);
+      if (existingPayoutSnap.exists) {
+        const existing = existingPayoutSnap.data() || {};
+        const existingTeacherId = String(existing.teacherId || '').trim();
+        const existingMonthKey = String(existing.monthKey || '').trim();
+        const existingAmount = normalizeNumber(existing.amount, Number.NaN);
+
+        if (
+          (existingTeacherId && existingTeacherId !== teacherId) ||
+          (existingMonthKey && existingMonthKey !== monthKey) ||
+          (Number.isFinite(existingAmount) && Math.abs(existingAmount - amount) > 0.01)
+        ) {
+          throw new HttpsError(
+            'failed-precondition',
+            'idempotencyKey already used for a different payout request',
+          );
+        }
+
+        return {
+          payoutId: payoutRef.id,
+          monthKey: existingMonthKey || monthKey,
+          appliedEarningIds: Array.isArray(existing.appliedEarningIds)
+            ? existing.appliedEarningIds
+            : [],
+          appliedAmount: normalizeNumber(existing.appliedAmount, 0),
+          unappliedAmount: normalizeNumber(existing.unappliedAmount, 0),
+          idempotentReplay: true,
+        };
+      }
+
       const earningsSnap = await tx.get(earningsQuery);
       const earnings = earningsSnap.docs.map((docSnap) => ({
         id: docSnap.id,
@@ -871,9 +990,25 @@ export const recordTeacherPayout = onCall(
 
           for (const earning of openEarnings) {
             if (remaining <= 0) break;
-            const amountValue = normalizeNumber(earning.data.amount, 0);
+
+            const latestSnap = await tx.get(earning.ref);
+            if (!latestSnap.exists) continue;
+            const latest = latestSnap.data() || {};
+            const latestTeacherId = String(latest.teacherId || '').trim();
+            if (latestTeacherId !== teacherId) {
+              logger.warn('recordTeacherPayout: skipped earning with mismatched teacherId', {
+                payoutTeacherId: teacherId,
+                earningId: earning.id,
+                earningTeacherId: latestTeacherId || null,
+              });
+              continue;
+            }
+
+            const latestStatus = normalizeChargeStatus(latest.status);
+            if (latestStatus === 'void') continue;
+            const amountValue = normalizeNumber(latest.amount, 0);
             if (amountValue <= 0) continue;
-            const paidValue = normalizeNumber(earning.data.paidAmount, 0);
+            const paidValue = normalizeNumber(latest.paidAmount, 0);
             const due = Math.max(amountValue - paidValue, 0);
             if (due <= 0) continue;
 
@@ -900,7 +1035,10 @@ export const recordTeacherPayout = onCall(
             appliedAllocations.push({ earningId: earning.id, amount: applyAmount });
 
             const earningMonth =
-              String(earning.data.monthKey || monthKeyFromTimestampIST(earning.data.earnedAt || earning.data.createdAt || new Date()));
+              String(
+                latest.monthKey ||
+                  monthKeyFromTimestampIST(latest.earnedAt || latest.createdAt || new Date())
+              );
             rollupUpdates[earningMonth] = (rollupUpdates[earningMonth] || 0) - applyAmount;
           }
         } else {
@@ -929,9 +1067,25 @@ export const recordTeacherPayout = onCall(
 
           for (const earning of paidEarnings) {
             if (remaining >= 0) break;
-            const amountValue = normalizeNumber(earning.data.amount, 0);
+
+            const latestSnap = await tx.get(earning.ref);
+            if (!latestSnap.exists) continue;
+            const latest = latestSnap.data() || {};
+            const latestTeacherId = String(latest.teacherId || '').trim();
+            if (latestTeacherId !== teacherId) {
+              logger.warn('recordTeacherPayout: skipped earning with mismatched teacherId', {
+                payoutTeacherId: teacherId,
+                earningId: earning.id,
+                earningTeacherId: latestTeacherId || null,
+              });
+              continue;
+            }
+
+            const latestStatus = normalizeChargeStatus(latest.status);
+            if (latestStatus === 'void') continue;
+            const amountValue = normalizeNumber(latest.amount, 0);
             if (amountValue <= 0) continue;
-            const paidValue = normalizeNumber(earning.data.paidAmount, 0);
+            const paidValue = normalizeNumber(latest.paidAmount, 0);
             const effectivePaid = paidValue > 0 ? paidValue : amountValue;
             if (effectivePaid <= 0) continue;
 
@@ -961,7 +1115,10 @@ export const recordTeacherPayout = onCall(
             appliedAllocations.push({ earningId: earning.id, amount: -applyAmount });
 
             const earningMonth =
-              String(earning.data.monthKey || monthKeyFromTimestampIST(earning.data.earnedAt || earning.data.createdAt || new Date()));
+              String(
+                latest.monthKey ||
+                  monthKeyFromTimestampIST(latest.earnedAt || latest.createdAt || new Date())
+              );
             rollupUpdates[earningMonth] = (rollupUpdates[earningMonth] || 0) + applyAmount;
           }
         }
@@ -980,6 +1137,7 @@ export const recordTeacherPayout = onCall(
           method,
           status: amount < 0 ? 'refunded' : 'completed',
           note: note || null,
+          idempotencyKey,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           createdBy: request.auth?.uid || null,
           appliedEarningIds,
@@ -1020,10 +1178,25 @@ export const recordTeacherPayout = onCall(
         { merge: true }
       );
 
-      return { appliedEarningIds, appliedAmount, unappliedAmount: remaining };
+      return {
+        payoutId: payoutRef.id,
+        monthKey,
+        appliedEarningIds,
+        appliedAmount,
+        unappliedAmount: remaining,
+        idempotentReplay: false,
+      };
     });
 
-    return { ok: true, payoutId: payoutRef.id, monthKey, ...allocation };
+    return {
+      ok: true,
+      payoutId: allocation.payoutId || payoutRef.id,
+      monthKey: allocation.monthKey || monthKey,
+      appliedEarningIds: allocation.appliedEarningIds,
+      appliedAmount: allocation.appliedAmount,
+      unappliedAmount: allocation.unappliedAmount,
+      idempotentReplay: allocation.idempotentReplay === true,
+    };
   }
 );
 

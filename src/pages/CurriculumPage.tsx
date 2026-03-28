@@ -313,13 +313,13 @@ function safeCourse(value: string | null): string | null {
 
         {tab === 'grammar' && (
           <div key="grammar" className="space-y-10">
-            <CollapsibleCard icon={<span>📝</span>} title="Grammar: Speaking & Writing Mastery" subtext="Parts of speech → Sentences → Tenses | Lesson-based" className="glass-panel">
+            <CollapsibleCard icon={<span>📝</span>} title="Grammar: Speaking & Writing Mastery" subtext="Beginner grammar foundations to advanced writing skills | Lesson-based" className="glass-panel">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
-                  <div className="font-semibold">BASIC GRAMMAR (36 lessons)</div>
+                  <div className="font-semibold">BEGINNER GRAMMAR (36 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
-                    <li>Nouns → Verbs → Adjectives → Tenses</li>
-                    <li>Foundation for clear communication</li>
+                    <li>Word foundations → Grammar basics → Sentence building → Tenses → Guided writing</li>
+                    <li>Child-friendly progression for clear, confident sentence writing</li>
                   </ul>
                 </div>
                 <div>
@@ -333,8 +333,23 @@ function safeCourse(value: string | null): string | null {
             </CollapsibleCard>
 
             <div id="course-basic-grammar" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'basic-grammar' ? 'ring-2 ring-primary-300' : ''}`}>
-              <h3 className="mb-3 font-heading text-2xl font-bold">Basic Grammar (36 lessons)</h3>
+              <h3 className="mb-3 font-heading text-2xl font-bold">Beginner Grammar Curriculum (36 lessons)</h3>
+              <p className="mb-4 text-sm text-gray-700 md:text-base">
+                Our Beginner Grammar program helps children build strong sentence foundations step by step. They learn word types, grammar basics, punctuation, sentence building, tenses, and guided writing in a simple and child-friendly way.
+              </p>
               <WeekAccordion key="basic-grammar" items={getWeeks('basic-grammar')} />
+              <div className="mt-6 rounded-2xl border border-gray-100 bg-gray-50/80 p-4 text-sm text-gray-700">
+                <p className="font-semibold text-gray-900">Classroom Flow</p>
+                <p className="mt-2">This is the Beginner Grammar curriculum outline only. Actual lesson delivery can follow the Tiny Steps classroom flow:</p>
+                <ul className="mt-2 list-disc pl-5">
+                  <li>Tuning In</li>
+                  <li>Inquiry</li>
+                  <li>Concept Building</li>
+                  <li>Guided Practice</li>
+                  <li>Application</li>
+                  <li>Reflection</li>
+                </ul>
+              </div>
             </div>
 
             <div id="course-advanced-grammar" className={`glass-panel p-6 scroll-mt-36 ${focusedCourse === 'advanced-grammar' ? 'ring-2 ring-primary-300' : ''}`}>
@@ -384,7 +399,7 @@ function safeCourse(value: string | null): string | null {
           <h2 id="curriculum-breakdown" className="text-2xl font-semibold">Curriculum Breakdown</h2>
           <ul className="mt-4 space-y-3 text-gray-700">
             <li><strong>Phonics (3–7):</strong> Letter recognition, phonemic awareness, blends & digraphs, early decoding.</li>
-            <li><strong>Grammar (6–12):</strong> Parts of speech, tenses, sentence structure, punctuation, creative writing.</li>
+            <li><strong>Grammar (6–12):</strong> Word types, grammar rules, sentence building, punctuation, tenses, and guided writing.</li>
             <li><strong>Public Speaking (8–12):</strong> Story structure, voice control, audience engagement, presentation skills.</li>
           </ul>
           <p className="mt-3 text-sm text-gray-500">Aligned to foundational literacy goals and supporting school curricula.</p>

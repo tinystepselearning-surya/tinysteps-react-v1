@@ -22,7 +22,10 @@ interface SessionData {
   courseId?: string;
   teacherId?: string;
   kidIds?: string[];
+  kidId?: string;
+  studentId?: string;
   status?: string;
+  notes?: string;
 
   // NEW: attendance stored directly in the session doc by Teacher UI
   attendance?: Record<string, AttendanceEntry>;
@@ -35,6 +38,9 @@ interface SessionData {
   creditsProcessingAt?: admin.firestore.Timestamp;
   creditsProcessingBy?: string;
   creditsProcessingError?: string;
+  revenueAccrued?: boolean;
+  locked?: boolean;
+  isLocked?: boolean;
 }
 
 interface CreditChange {
@@ -48,6 +54,18 @@ interface CreditChange {
 }
 
 const LOCK_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const COMPLETION_BLOCKED_STATUSES = new Set([
+  "cancelled",
+  "canceled",
+  "reschedule_requested",
+  "rescheduled",
+  "no_show",
+  "noshow",
+  "consumed",
+  "settled",
+  "paid",
+  "locked",
+]);
 
 function nowMs() {
   return Date.now();
@@ -59,6 +77,41 @@ function toNumber(x: any, fallback = 0) {
 
 function clampMin0(n: number) {
   return n < 0 ? 0 : n;
+}
+
+function normalizeStatus(value: unknown): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+function resolveSessionKidIds(session: SessionData): string[] {
+  const baseKidIds = Array.isArray(session.kidIds) ? session.kidIds : [];
+  const fallbackKidId = session.kidId || session.studentId || null;
+  const combined = fallbackKidId ? [...baseKidIds, fallbackKidId] : baseKidIds;
+  return Array.from(new Set(combined.map((id) => String(id || "").trim()).filter(Boolean)));
+}
+
+function resolveAttendanceEntryStatus(value: unknown): string {
+  if (typeof value === "string") return value.trim().toLowerCase();
+  if (value && typeof value === "object" && typeof (value as any).status === "string") {
+    return String((value as any).status).trim().toLowerCase();
+  }
+  return "";
+}
+
+function hasRequiredAttendanceForCompletion(
+  session: SessionData,
+  attendance: Record<string, AttendanceEntry> | null | undefined
+): boolean {
+  if (!attendance || typeof attendance !== "object") return false;
+  const keys = Object.keys(attendance);
+  if (keys.length === 0) return false;
+
+  const sessionKidIds = resolveSessionKidIds(session);
+  if (sessionKidIds.length === 0) {
+    return keys.some((kidId) => resolveAttendanceEntryStatus((attendance as any)[kidId]));
+  }
+
+  return sessionKidIds.every((kidId) => resolveAttendanceEntryStatus((attendance as any)[kidId]));
 }
 
 async function assertCanFinalizeSession(uid: string, session: SessionData) {
@@ -334,8 +387,9 @@ async function processSessionCompletion(
 }
 
 /**
- * Callable (v2): For manual retry/admin operations only.
- * Teacher UI must NOT auto-call to prevent double-processing.
+ * Callable (v2): Backend-controlled completion/finalization path.
+ * Teacher and admin clients should use this instead of direct client-side
+ * `status: "completed"` writes on classSessions.
  */
 export const onSessionComplete = onCall(
   {
@@ -350,8 +404,58 @@ export const onSessionComplete = onCall(
     const sessionId = (request.data?.sessionId || "").toString().trim();
     if (!sessionId) throw new HttpsError("invalid-argument", "sessionId is required.");
 
-    // We don't block here based on claims alone because your system often uses Firestore roles.
-    // Permission enforcement happens inside processSessionCompletion().
+    const incomingAttendance =
+      request.data?.attendance && typeof request.data.attendance === "object" && !Array.isArray(request.data.attendance) ?
+        (request.data.attendance as Record<string, AttendanceEntry>) :
+        null;
+    const sessionNotesRaw = typeof request.data?.sessionNotes === "string" ? request.data.sessionNotes : "";
+    const sessionNotes = sessionNotesRaw.trim();
+
+    const db = admin.firestore();
+    const sessionRef = db.collection("classSessions").doc(sessionId);
+    const sessionSnap = await sessionRef.get();
+    if (!sessionSnap.exists) throw new HttpsError("not-found", "Session not found.");
+
+    const session = sessionSnap.data() as SessionData;
+    await assertCanFinalizeSession(uid, session);
+
+    const currentStatus = normalizeStatus(session.status);
+    if (COMPLETION_BLOCKED_STATUSES.has(currentStatus)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Session cannot be completed from its current status."
+      );
+    }
+    if (session.creditsProcessing || session.locked || session.isLocked) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Session is currently locked for processing."
+      );
+    }
+
+    if (session.creditsProcessed === true || session.revenueAccrued === true) {
+      return { success: true, skipped: true, creditsEarnedForTeacher: 0 };
+    }
+
+    const attendanceForCompletion = incomingAttendance || session.attendance || null;
+    if (!hasRequiredAttendanceForCompletion(session, attendanceForCompletion)) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Attendance must be marked before completing a session."
+      );
+    }
+
+    const updates: Record<string, unknown> = {
+      status: "completed",
+      attendance: attendanceForCompletion,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedBy: uid,
+    };
+    if (sessionNotes) {
+      updates.notes = sessionNotes;
+    }
+
+    await sessionRef.set(updates, { merge: true });
 
     const result = await processSessionCompletion(sessionId, {
       callerUid: uid,

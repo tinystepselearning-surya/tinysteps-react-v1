@@ -94,11 +94,11 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
     breadcrumbName: 'English Grammar & Writing Classes',
     seoTitle: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
     seoDescription:
-      'Explore Tiny Steps grammar tracks: Basic Grammar (36 lessons) and Advanced Grammar (36 lessons) for sentence structure, grammar control, and writing clarity.',
+      'Explore Tiny Steps grammar tracks: Beginner Grammar (36 lessons) and Advanced Grammar (36 lessons) for sentence structure, grammar control, and writing clarity.',
     eyebrow: 'Tiny Steps Grammar',
     heroTitle: 'English Grammar & Writing Classes',
     heroDescription:
-      'A grammar and writing pathway built around Basic Grammar and Advanced Grammar. Children start with sentence foundations, punctuation, and tense basics, then move into clauses, voice, cohesion, and advanced writing control.',
+      'A grammar and writing pathway built around Beginner Grammar and Advanced Grammar. Children build word foundations, grammar basics, sentence building, conjunctions, adverbs, tenses, and guided writing before moving into advanced grammar control.',
     whoIntro:
       'These two grammar tracks cover the full Tiny Steps grammar pathway from foundations to advanced writing control.',
     learnIntro:
@@ -109,7 +109,7 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
       'The grammar pathway is designed to stay easy to follow: fixed lesson counts, named stages, and a clear move from foundations to advanced writing.',
     ctaTitle: 'Book a free grammar assessment',
     ctaDescription:
-      'We will help you choose the right starting point between Basic Grammar and Advanced Grammar.',
+      'We will help you choose the right starting point between Beginner Grammar and Advanced Grammar.',
     palette: {
       accentText: 'text-emerald-700',
       accentSurface: 'bg-emerald-50',

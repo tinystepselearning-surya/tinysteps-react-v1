@@ -357,118 +357,63 @@
     "basic-grammar": {
       "weeks": [
         {
-          "title": "Stage 1 — Sentence Foundations",
-          "focus": "Build simple sentences with nouns and verbs.",
+          "title": "Stage 1 — Word Foundations",
+          "focus": "Goal: Identify and understand the main basic word types.",
           "learns": [
-            "Identify nouns and verbs",
+            "Identify nouns, proper nouns, verbs, adjectives, and pronouns",
+            "Understand that different words do different jobs",
+            "Build a strong foundation in basic word types"
+          ]
+        },
+        {
+          "title": "Stage 2 — Grammar Basics",
+          "focus": "Goal: Learn core grammar rules and usage basics.",
+          "learns": [
+            "Understand one and many forms",
+            "Use singular and plural nouns correctly",
+            "Use a, an, and the correctly",
+            "Use simple prepositions such as in, on, under, and near"
+          ]
+        },
+        {
+          "title": "Stage 3 — Sentence Building",
+          "focus": "Goal: Build correct sentences with proper punctuation.",
+          "learns": [
+            "Understand how a sentence starts and ends",
+            "Use basic punctuation marks correctly",
             "Build simple sentences",
-            "Use capitals and full stops"
-          ],
-          "activities": [
-            "Sentence building",
-            "Word sorting",
-            "Editing basics"
-          ],
-          "homework": [
-            "Write 3 simple sentences",
-            "Capitals + full stop check"
-          ],
-          "mastery": "Writes correct simple sentences"
+            "Form clear and meaningful sentences"
+          ]
         },
         {
-          "title": "Stage 2 — Meaning Builders",
-          "focus": "Add meaning using adjectives, articles, and pronouns.",
+          "title": "Stage 4 — Conjunctions and Adverbs",
+          "focus": "Goal: Connect ideas and add detail to sentences.",
           "learns": [
-            "Use adjectives to add detail",
-            "Choose a/an/the correctly",
-            "Replace nouns with pronouns"
-          ],
-          "activities": [
-            "Add-detail sentences",
-            "Article choice practice",
-            "Pronoun swap"
-          ],
-          "homework": [
-            "Write 3 detailed sentences",
-            "Article check"
-          ],
-          "mastery": "Uses adjectives and articles correctly"
+            "Use conjunctions such as and, but, or, and because",
+            "Understand adverbs that tell how, when, and where",
+            "Make sentences longer, clearer, and more expressive"
+          ]
         },
         {
-          "title": "Stage 3 — Where/When/How",
-          "focus": "Use prepositions and adverbs to add detail.",
+          "title": "Stage 5 — Tenses Basics",
+          "focus": "Goal: Learn the three basic tenses in a simple and gradual way.",
           "learns": [
-            "Use prepositions for place",
-            "Use adverbs for how/when",
-            "Add phrases to sentences"
-          ],
-          "activities": [
-            "Preposition games",
-            "Adverb edits",
-            "Sentence expansion"
-          ],
-          "homework": [
-            "Add 2 phrases to a sentence",
-            "Preposition review"
-          ],
-          "mastery": "Adds prepositional/adverb detail"
+            "Understand simple present, simple past, and simple future",
+            "Use tense clues in sentences",
+            "Answer simple questions in sentence form",
+            "Practise tense usage in simple sentences"
+          ]
         },
         {
-          "title": "Stage 4 — Longer Sentences",
-          "focus": "Join ideas and use plurals correctly.",
+          "title": "Stage 6 — Sentence Writing and Final Revision",
+          "focus": "Goal: Apply learning to build and write meaningful sentences and short paragraphs.",
           "learns": [
-            "Use conjunctions to join ideas",
-            "Make plurals",
-            "Fix run-on sentences"
-          ],
-          "activities": [
-            "Join sentences practice",
-            "Plural sorting",
-            "Run-on fixes"
-          ],
-          "homework": [
-            "Write 2 joined sentences",
-            "Plural check"
-          ],
-          "mastery": "Joins ideas and uses plurals"
-        },
-        {
-          "title": "Stage 5 — Asking + Punctuation",
-          "focus": "Ask questions and punctuate sentences.",
-          "learns": [
-            "Use question words",
-            "Punctuate questions and statements",
-            "Use exclamations"
-          ],
-          "activities": [
-            "Question practice",
-            "Punctuation editing",
-            "Sentence sorting"
-          ],
-          "homework": [
-            "Write 3 questions",
-            "Punctuation check"
-          ],
-          "mastery": "Uses question marks and punctuation"
-        },
-        {
-          "title": "Stage 6 — Tenses Basics",
-          "focus": "Use past, present, and future in simple sentences.",
-          "learns": [
-            "Recognize simple tenses",
-            "Use time words",
-            "Fix tense mistakes"
-          ],
-          "activities": [
-            "Tense choice practice",
-            "Sentence editing",
-            "Time word sorting"
-          ],
-          "homework": [
-            "Write sentences in 3 tenses",
-            "Tense check"
-          ],
-          "mastery": "Uses simple tenses correctly"
+            "Arrange words in the correct order to make sentences",
+            "Improve short sentences by adding correct grammar and detail",
+            "Describe a picture using clear sentences",
+            "Write a short paragraph with support",
+            "Revise the full beginner grammar syllabus"
+          ]
         }
       ]
     },
@@ -829,118 +774,63 @@
     "grammar-essentials": {
       "weeks": [
         {
-          "title": "Stage 1 — Sentence Foundations",
-          "focus": "Build simple sentences with nouns and verbs.",
+          "title": "Stage 1 — Word Foundations",
+          "focus": "Goal: Identify and understand the main basic word types.",
           "learns": [
-            "Identify nouns and verbs",
+            "Identify nouns, proper nouns, verbs, adjectives, and pronouns",
+            "Understand that different words do different jobs",
+            "Build a strong foundation in basic word types"
+          ]
+        },
+        {
+          "title": "Stage 2 — Grammar Basics",
+          "focus": "Goal: Learn core grammar rules and usage basics.",
+          "learns": [
+            "Understand one and many forms",
+            "Use singular and plural nouns correctly",
+            "Use a, an, and the correctly",
+            "Use simple prepositions such as in, on, under, and near"
+          ]
+        },
+        {
+          "title": "Stage 3 — Sentence Building",
+          "focus": "Goal: Build correct sentences with proper punctuation.",
+          "learns": [
+            "Understand how a sentence starts and ends",
+            "Use basic punctuation marks correctly",
             "Build simple sentences",
-            "Use capitals and full stops"
-          ],
-          "activities": [
-            "Sentence building",
-            "Word sorting",
-            "Editing basics"
-          ],
-          "homework": [
-            "Write 3 simple sentences",
-            "Capitals + full stop check"
-          ],
-          "mastery": "Writes correct simple sentences"
+            "Form clear and meaningful sentences"
+          ]
         },
         {
-          "title": "Stage 2 — Meaning Builders",
-          "focus": "Add meaning using adjectives, articles, and pronouns.",
+          "title": "Stage 4 — Conjunctions and Adverbs",
+          "focus": "Goal: Connect ideas and add detail to sentences.",
           "learns": [
-            "Use adjectives to add detail",
-            "Choose a/an/the correctly",
-            "Replace nouns with pronouns"
-          ],
-          "activities": [
-            "Add-detail sentences",
-            "Article choice practice",
-            "Pronoun swap"
-          ],
-          "homework": [
-            "Write 3 detailed sentences",
-            "Article check"
-          ],
-          "mastery": "Uses adjectives and articles correctly"
+            "Use conjunctions such as and, but, or, and because",
+            "Understand adverbs that tell how, when, and where",
+            "Make sentences longer, clearer, and more expressive"
+          ]
         },
         {
-          "title": "Stage 3 — Where/When/How",
-          "focus": "Use prepositions and adverbs to add detail.",
+          "title": "Stage 5 — Tenses Basics",
+          "focus": "Goal: Learn the three basic tenses in a simple and gradual way.",
           "learns": [
-            "Use prepositions for place",
-            "Use adverbs for how/when",
-            "Add phrases to sentences"
-          ],
-          "activities": [
-            "Preposition games",
-            "Adverb edits",
-            "Sentence expansion"
-          ],
-          "homework": [
-            "Add 2 phrases to a sentence",
-            "Preposition review"
-          ],
-          "mastery": "Adds prepositional/adverb detail"
+            "Understand simple present, simple past, and simple future",
+            "Use tense clues in sentences",
+            "Answer simple questions in sentence form",
+            "Practise tense usage in simple sentences"
+          ]
         },
         {
-          "title": "Stage 4 — Longer Sentences",
-          "focus": "Join ideas and use plurals correctly.",
+          "title": "Stage 6 — Sentence Writing and Final Revision",
+          "focus": "Goal: Apply learning to build and write meaningful sentences and short paragraphs.",
           "learns": [
-            "Use conjunctions to join ideas",
-            "Make plurals",
-            "Fix run-on sentences"
-          ],
-          "activities": [
-            "Join sentences practice",
-            "Plural sorting",
-            "Run-on fixes"
-          ],
-          "homework": [
-            "Write 2 joined sentences",
-            "Plural check"
-          ],
-          "mastery": "Joins ideas and uses plurals"
-        },
-        {
-          "title": "Stage 5 — Asking + Punctuation",
-          "focus": "Ask questions and punctuate sentences.",
-          "learns": [
-            "Use question words",
-            "Punctuate questions and statements",
-            "Use exclamations"
-          ],
-          "activities": [
-            "Question practice",
-            "Punctuation editing",
-            "Sentence sorting"
-          ],
-          "homework": [
-            "Write 3 questions",
-            "Punctuation check"
-          ],
-          "mastery": "Uses question marks and punctuation"
-        },
-        {
-          "title": "Stage 6 — Tenses Basics",
-          "focus": "Use past, present, and future in simple sentences.",
-          "learns": [
-            "Recognize simple tenses",
-            "Use time words",
-            "Fix tense mistakes"
-          ],
-          "activities": [
-            "Tense choice practice",
-            "Sentence editing",
-            "Time word sorting"
-          ],
-          "homework": [
-            "Write sentences in 3 tenses",
-            "Tense check"
-          ],
-          "mastery": "Uses simple tenses correctly"
+            "Arrange words in the correct order to make sentences",
+            "Improve short sentences by adding correct grammar and detail",
+            "Describe a picture using clear sentences",
+            "Write a short paragraph with support",
+            "Revise the full beginner grammar syllabus"
+          ]
         }
       ]
     },

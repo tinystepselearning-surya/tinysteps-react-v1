@@ -190,6 +190,47 @@ service cloud.firestore {
         && data.endAt is timestamp;
     }
 
+    function teacherClassSessionOperationalUpdateOnly() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        "attendance",
+        "notes",
+        "updatedAt",
+        "updatedBy",
+        "status"
+      ]);
+    }
+
+    function teacherClassSessionStateMutableForTeacher() {
+      return !(resource.data.status in [
+        "completed",
+        "cancelled",
+        "canceled",
+        "reschedule_requested",
+        "rescheduled",
+        "consumed",
+        "settled",
+        "paid",
+        "locked"
+      ])
+        && !(("revenueAccrued" in resource.data) && resource.data.revenueAccrued == true)
+        && !(("creditsProcessed" in resource.data) && resource.data.creditsProcessed == true)
+        && !(("creditsProcessing" in resource.data) && resource.data.creditsProcessing == true)
+        && !(("locked" in resource.data) && resource.data.locked == true)
+        && !(("isLocked" in resource.data) && resource.data.isLocked == true);
+    }
+
+    function teacherClassSessionStatusAllowed() {
+      return request.resource.data.status == resource.data.status
+        || (
+          resource.data.status in ["scheduled", "upcoming", "planned", "open"]
+          && request.resource.data.status in ["in_progress", "reschedule_requested"]
+        )
+        || (
+          resource.data.status == "in_progress"
+          && request.resource.data.status == "reschedule_requested"
+        );
+    }
+
     // ----------------------------
     // Public game reference data
     // ----------------------------
@@ -465,13 +506,16 @@ service cloud.firestore {
         || (isKid() && ('kidIds' in resource.data) && (request.auth.uid in resource.data.kidIds));
 
       allow create: if isValidClassSession(request.resource.data)
-        && (isAdmin() || (isTeacher() && request.resource.data.teacherId == request.auth.uid));
+        && isAdmin();
 
       allow update: if isValidClassSession(request.resource.data)
         && (isAdmin()
           || (isTeacher()
             && resource.data.teacherId == request.auth.uid
-            && request.resource.data.teacherId == resource.data.teacherId));
+            && request.resource.data.teacherId == resource.data.teacherId
+            && teacherClassSessionStateMutableForTeacher()
+            && teacherClassSessionOperationalUpdateOnly()
+            && teacherClassSessionStatusAllowed()));
 
       allow delete: if isAdmin();
     }

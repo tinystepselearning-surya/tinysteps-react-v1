@@ -2,6 +2,7 @@
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {ensureAdmin} from "./helpers/adminGuard";
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -11,13 +12,55 @@ const REGION = "asia-south1";
 const IST_OFFSET_MINUTES = 330; // +05:30
 const MAX_BATCH = 400; // Firestore limit is 500
 const YMD_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_HHMM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+const REPLACEABLE_SESSION_STATUSES = new Set(["", "scheduled", "upcoming", "planned", "open"]);
+const NON_REPLACEABLE_SESSION_STATUSES = new Set([
+  "completed",
+  "in_progress",
+  "cancelled",
+  "canceled",
+  "no_show",
+  "noshow",
+  "reschedule_requested",
+  "rescheduled",
+  "consumed",
+  "settled",
+  "paid",
+  "locked",
+]);
+
+interface WeeklySlotConfigRaw {
+  weekday?: number;
+  time?: string;
+  durationMinutes?: number;
+  durationMins?: number;
+}
 
 interface ScheduleConfig {
   timezone?: string;
-  weekdays: number[]; // 0=Sun, 1=Mon, ..., 6=Sat
-  timeHHmm: string; // "HH:MM" in IST
-  durationMins: number;
+  // Weekday mapping follows JS Date.getDay(): 0=Sun, 1=Mon, ... 6=Sat.
+  weeklySlots?: WeeklySlotConfigRaw[];
+  weekdays?: number[];
+  timeHHmm?: string;
+  durationMins?: number;
   plannedSessions?: number; // optional exact class count target within selected range
+}
+
+interface NormalizedWeeklySlot {
+  weekday: number;
+  timeHHmm: string;
+  hour: number;
+  minute: number;
+  durationMinutes: number;
+}
+
+interface SessionFinancialLinkState {
+  chargeExists: boolean;
+  chargeStatus: string;
+  chargePaidAmount: number;
+  earningExists: boolean;
+  earningStatus: string;
+  earningPaidAmount: number;
 }
 
 interface EnrollmentDoc {
@@ -138,6 +181,231 @@ function toPlannedSessions(value: unknown): number | null {
   return Math.max(1, Math.min(365, Math.floor(n)));
 }
 
+function toDateMaybe(value: unknown): Date | null {
+  if (!value) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === "object" && value !== null) {
+    const maybeTimestamp = value as {toDate?: () => Date; seconds?: number};
+    if (typeof maybeTimestamp.toDate === "function") {
+      const dt = maybeTimestamp.toDate();
+      if (dt instanceof Date && !Number.isNaN(dt.getTime())) return dt;
+    }
+    if (typeof maybeTimestamp.seconds === "number") {
+      const dt = new Date(maybeTimestamp.seconds * 1000);
+      if (!Number.isNaN(dt.getTime())) return dt;
+    }
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const dt = new Date(value);
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+  return null;
+}
+
+function normalizeStatus(value: unknown): string {
+  return String(value || "").trim().toLowerCase();
+}
+
+function resolveSessionStartMs(raw: Record<string, unknown>): number | null {
+  const startAt = toDateMaybe(raw.startAt);
+  if (startAt) return startAt.getTime();
+
+  const dateYmd = typeof raw.date === "string" ? raw.date.trim() : "";
+  const startTime = typeof raw.startTime === "string" ? raw.startTime.trim() : "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateYmd)) {
+    const withTimeIso =
+      /^\d{2}:\d{2}$/.test(startTime) ?
+        `${dateYmd}T${startTime}:00+05:30` :
+        `${dateYmd}T00:00:00+05:30`;
+    const parsed = Date.parse(withTimeIso);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return null;
+}
+
+function hasAttendanceMarked(raw: Record<string, unknown>): boolean {
+  const attendance = raw.attendance;
+  if (!attendance) return false;
+  if (attendance === null) return false;
+  if (typeof attendance !== "object") return true;
+  if (Array.isArray(attendance)) return attendance.length > 0;
+  return Object.keys(attendance as Record<string, unknown>).length > 0;
+}
+
+function hasSessionFinanceOrLockMarkers(raw: Record<string, unknown>): boolean {
+  if (raw.revenueAccrued === true) return true;
+  if (Number(raw.accruedAmount || 0) > 0) return true;
+  if (typeof raw.accruedMonthKey === "string" && raw.accruedMonthKey.trim()) return true;
+  if (raw.creditsProcessed === true || raw.creditsProcessing === true) return true;
+  if (raw.locked === true || raw.isLocked === true) return true;
+
+  const markerFields = [
+    "lockedAt",
+    "consumedAt",
+    "settledAt",
+    "paidAt",
+    "billedAt",
+    "invoicedAt",
+  ] as const;
+  for (const field of markerFields) {
+    if (raw[field]) return true;
+  }
+
+  const statusLikeFields = [
+    "billingStatus",
+    "paymentStatus",
+    "earningStatus",
+  ] as const;
+  for (const field of statusLikeFields) {
+    const normalized = normalizeStatus(raw[field]);
+    if (normalized === "paid" || normalized === "settled" || normalized === "consumed" || normalized === "locked") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasFinancialLink(state: SessionFinancialLinkState | undefined): boolean {
+  if (!state) return false;
+  const hasChargeLink = state.chargeExists && state.chargeStatus !== "void";
+  const hasEarningLink = state.earningExists && state.earningStatus !== "void";
+  return hasChargeLink || hasEarningLink || state.chargePaidAmount > 0 || state.earningPaidAmount > 0;
+}
+
+function isSessionReplaceable(args: {
+  raw: Record<string, unknown>;
+  financial: SessionFinancialLinkState | undefined;
+  nowMs: number;
+}): boolean {
+  const {raw, financial, nowMs} = args;
+  const sessionStartMs = resolveSessionStartMs(raw);
+
+  // Forward-only rule: replace strictly future sessions (startAt > now).
+  if (sessionStartMs === null || sessionStartMs <= nowMs) return false;
+
+  const status = normalizeStatus(raw.status);
+  if (NON_REPLACEABLE_SESSION_STATUSES.has(status)) return false;
+  if (!REPLACEABLE_SESSION_STATUSES.has(status)) return false;
+  if (hasAttendanceMarked(raw)) return false;
+  if (hasSessionFinanceOrLockMarkers(raw)) return false;
+  if (hasFinancialLink(financial)) return false;
+
+  return true;
+}
+
+function defaultFinancialLinkState(): SessionFinancialLinkState {
+  return {
+    chargeExists: false,
+    chargeStatus: "",
+    chargePaidAmount: 0,
+    earningExists: false,
+    earningStatus: "",
+    earningPaidAmount: 0,
+  };
+}
+
+function isValidWeekday(value: unknown): value is number {
+  return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 6;
+}
+
+function parseTimeHHmm(value: unknown): {timeHHmm: string; hour: number; minute: number} | null {
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!TIME_HHMM_RE.test(raw)) return null;
+  const [hourStr, minuteStr] = raw.split(":");
+  const hour = Number(hourStr);
+  const minute = Number(minuteStr);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return null;
+  return {timeHHmm: raw, hour, minute};
+}
+
+function normalizeDurationMinutes(value: unknown, fallback = 35): number {
+  const n = Number(value);
+  const safe = Number.isFinite(n) && n > 0 ? n : fallback;
+  return Math.max(10, Math.min(180, Math.floor(safe)));
+}
+
+function sortNormalizedWeeklySlots(slots: NormalizedWeeklySlot[]): NormalizedWeeklySlot[] {
+  return [...slots].sort((a, b) => {
+    if (a.weekday !== b.weekday) return a.weekday - b.weekday;
+    return a.timeHHmm.localeCompare(b.timeHHmm, undefined, {numeric: true});
+  });
+}
+
+function normalizeScheduleSlotsOrThrow(schedule: ScheduleConfig | undefined): NormalizedWeeklySlot[] {
+  if (!schedule) return [];
+
+  if (Array.isArray(schedule.weeklySlots) && schedule.weeklySlots.length > 0) {
+    const normalizedFromWeeklySlots: NormalizedWeeklySlot[] = [];
+    const seenKeys = new Set<string>();
+
+    for (const rawSlot of schedule.weeklySlots) {
+      const weekday = Number(rawSlot?.weekday);
+      if (!isValidWeekday(weekday)) {
+        throw new HttpsError("invalid-argument", "Invalid schedule.weeklySlots weekday");
+      }
+
+      const parsedTime = parseTimeHHmm(rawSlot?.time);
+      if (!parsedTime) {
+        throw new HttpsError("invalid-argument", "Invalid schedule.weeklySlots time; expected HH:MM");
+      }
+
+      const durationRaw = Number(rawSlot?.durationMinutes ?? rawSlot?.durationMins);
+      if (!Number.isFinite(durationRaw) || durationRaw <= 0) {
+        throw new HttpsError("invalid-argument", "Invalid schedule.weeklySlots duration");
+      }
+
+      const dedupeKey = `${weekday}_${parsedTime.timeHHmm}`;
+      if (seenKeys.has(dedupeKey)) {
+        throw new HttpsError("invalid-argument", "Duplicate schedule.weeklySlots entries");
+      }
+      seenKeys.add(dedupeKey);
+
+      normalizedFromWeeklySlots.push({
+        weekday,
+        timeHHmm: parsedTime.timeHHmm,
+        hour: parsedTime.hour,
+        minute: parsedTime.minute,
+        durationMinutes: normalizeDurationMinutes(durationRaw, 35),
+      });
+    }
+
+    return sortNormalizedWeeklySlots(normalizedFromWeeklySlots);
+  }
+
+  if (!Array.isArray(schedule.weekdays) || schedule.weekdays.length === 0) {
+    return [];
+  }
+
+  const parsedLegacyTime = parseTimeHHmm(schedule.timeHHmm);
+  if (!parsedLegacyTime) {
+    throw new HttpsError("invalid-argument", "Invalid schedule.timeHHmm format");
+  }
+  const legacyDuration = normalizeDurationMinutes(schedule.durationMins, 35);
+
+  const legacySlots: NormalizedWeeklySlot[] = [];
+  const seenLegacyKeys = new Set<string>();
+  for (const rawDay of schedule.weekdays) {
+    const weekday = Number(rawDay);
+    if (!isValidWeekday(weekday)) {
+      throw new HttpsError("invalid-argument", "Invalid schedule.weekdays value");
+    }
+    const dedupeKey = `${weekday}_${parsedLegacyTime.timeHHmm}`;
+    if (seenLegacyKeys.has(dedupeKey)) continue;
+    seenLegacyKeys.add(dedupeKey);
+
+    legacySlots.push({
+      weekday,
+      timeHHmm: parsedLegacyTime.timeHHmm,
+      hour: parsedLegacyTime.hour,
+      minute: parsedLegacyTime.minute,
+      durationMinutes: legacyDuration,
+    });
+  }
+
+  return sortNormalizedWeeklySlots(legacySlots);
+}
+
 /**
  * createSessionsFromSchedule
  *
@@ -168,6 +436,8 @@ function toPlannedSessions(value: unknown): number | null {
 export const createSessionsFromSchedule = onCall(
   {region: REGION},
   async (request): Promise<CreateSessionsResponse> => {
+    await ensureAdmin(request.auth);
+
     const input = (request.data || {}) as Partial<CreateSessionsRequest>;
     const enrollmentId = typeof input.enrollmentId === "string" ? input.enrollmentId.trim() : "";
 
@@ -200,24 +470,19 @@ export const createSessionsFromSchedule = onCall(
 
     const enrollment = enrollmentSnap.data() as EnrollmentDoc;
     const schedule = enrollment.schedule;
-
-    if (!schedule || !Array.isArray(schedule.weekdays) || schedule.weekdays.length === 0) {
+    const weeklySlots = normalizeScheduleSlotsOrThrow(schedule);
+    if (weeklySlots.length === 0) {
       throw new HttpsError("failed-precondition", "Enrollment has no schedule configured");
     }
-
-    const {weekdays, timeHHmm, durationMins} = schedule;
     const requestedPlannedSessions = toPlannedSessions(input.plannedSessions);
-    const enrollmentPlannedSessions = toPlannedSessions(schedule.plannedSessions);
+    const enrollmentPlannedSessions = toPlannedSessions(schedule?.plannedSessions);
     const plannedSessionsTarget = requestedPlannedSessions || enrollmentPlannedSessions || null;
-
-    const [hhStr, mmStr] = String(timeHHmm || "").split(":");
-    const hh = Number(hhStr);
-    const mm = Number(mmStr);
-    if (!Number.isFinite(hh) || !Number.isFinite(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) {
-      throw new HttpsError("invalid-argument", "Invalid schedule.timeHHmm format");
-    }
-
-    const dur = Math.max(10, Math.min(180, Number(durationMins) || 35));
+    const slotsByWeekday = new Map<number, NormalizedWeeklySlot[]>();
+    weeklySlots.forEach((slot) => {
+      const existing = slotsByWeekday.get(slot.weekday) || [];
+      existing.push(slot);
+      slotsByWeekday.set(slot.weekday, existing);
+    });
 
     const rangeStartYmd =
       requestedStartYmd ||
@@ -248,24 +513,6 @@ export const createSessionsFromSchedule = onCall(
     }
 
     const rangeEndYmd = toYmdFromContextDate(rangeEndDate);
-    const potentialSlotsInRange = (() => {
-      let count = 0;
-      for (
-        let d = new Date(rangeStartDate.getTime());
-        d.getTime() <= rangeEndDate.getTime();
-        d.setUTCDate(d.getUTCDate() + 1)
-      ) {
-        if (weekdays.includes(d.getUTCDay())) count += 1;
-      }
-      return count;
-    })();
-
-    if (plannedSessionsTarget && plannedSessionsTarget > potentialSlotsInRange) {
-      throw new HttpsError(
-        "invalid-argument",
-        `plannedSessions (${plannedSessionsTarget}) exceeds available schedule slots in selected range (${potentialSlotsInRange}). Increase weeks or extend end date.`,
-      );
-    }
 
     // Build session metadata
     const kidId = enrollment.kidId || (enrollment.kidIds && enrollment.kidIds[0]) || null;
@@ -277,27 +524,64 @@ export const createSessionsFromSchedule = onCall(
     const feeAmount = Number(enrollment.feePerClass || 0);
     const currency = enrollment.currency || "INR";
     const joinUrl = enrollment.joinUrl || null;
-    const todayYmd = toIstTodayYmd();
 
     let replaced = 0;
     if (replaceFuture) {
       const existingSnap = await db.collection("classSessions")
         .where("enrollmentId", "==", enrollmentId)
         .get();
+      const nowMs = Date.now();
+      const financialBySessionId = new Map<string, SessionFinancialLinkState>();
+
+      const existingSessionIds = existingSnap.docs.map((docSnap) => docSnap.id);
+      for (let i = 0; i < existingSessionIds.length; i += MAX_BATCH) {
+        const idChunk = existingSessionIds.slice(i, i + MAX_BATCH);
+        const chargeRefs = idChunk.map((sessionId) => db.collection("billingCharges").doc(sessionId));
+        const earningRefs = idChunk.map((sessionId) => db.collection("teacherEarnings").doc(sessionId));
+        const [chargeSnaps, earningSnaps] = await Promise.all([
+          db.getAll(...chargeRefs),
+          db.getAll(...earningRefs),
+        ]);
+
+        chargeSnaps.forEach((chargeSnap, idx) => {
+          const sessionId = idChunk[idx];
+          const existing = financialBySessionId.get(sessionId) || defaultFinancialLinkState();
+          const chargeData = chargeSnap.data() || {};
+          const paidRaw = Number(chargeData.paidAmount);
+          financialBySessionId.set(sessionId, {
+            ...existing,
+            chargeExists: chargeSnap.exists,
+            chargeStatus: normalizeStatus(chargeData.status),
+            chargePaidAmount: Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0,
+          });
+        });
+
+        earningSnaps.forEach((earningSnap, idx) => {
+          const sessionId = idChunk[idx];
+          const existing = financialBySessionId.get(sessionId) || defaultFinancialLinkState();
+          const earningData = earningSnap.data() || {};
+          const paidRaw = Number(earningData.paidAmount);
+          financialBySessionId.set(sessionId, {
+            ...existing,
+            earningExists: earningSnap.exists,
+            earningStatus: normalizeStatus(earningData.status),
+            earningPaidAmount: Number.isFinite(paidRaw) && paidRaw > 0 ? paidRaw : 0,
+          });
+        });
+      }
 
       let deleteBatch = db.batch();
       let deleteOps = 0;
 
       for (const sessionDoc of existingSnap.docs) {
         const raw = sessionDoc.data() as Record<string, unknown>;
-        const sessionYmd = resolveSessionYmd(raw);
-        if (!sessionYmd) continue;
-        const status = String(raw.status || "").toLowerCase();
+        const financial = financialBySessionId.get(sessionDoc.id);
 
-        // Keep historical attendance intact; replace only upcoming sessions.
-        if (sessionYmd < todayYmd) continue;
-        if (status === "completed") continue;
-        if (requestedEndYmd && sessionYmd > rangeEndYmd) continue;
+        if (requestedEndYmd) {
+          const sessionYmd = resolveSessionYmd(raw);
+          if (!sessionYmd || sessionYmd > rangeEndYmd) continue;
+        }
+        if (!isSessionReplaceable({raw, financial, nowMs})) continue;
 
         deleteBatch.delete(sessionDoc.ref);
         deleteOps += 1;
@@ -326,40 +610,65 @@ export const createSessionsFromSchedule = onCall(
       if (id) uniqueKidIds.add(id);
     });
 
+    type SessionCandidate = {
+      sessionDate: Date;
+      sessionId: string;
+      startAtDate: Date;
+      endAtDate: Date;
+      startTime: string;
+      endTime: string;
+      durationMinutes: number;
+    };
+
+    const sessionCandidates: SessionCandidate[] = [];
     for (
       let d = new Date(rangeStartDate.getTime());
       d.getTime() <= rangeEndDate.getTime();
       d.setUTCDate(d.getUTCDate() + 1)
     ) {
-      if (plannedSessionsTarget && plannedSessionsGenerated >= plannedSessionsTarget) {
-        break;
-      }
-
       const dayOfWeek = d.getUTCDay();
-      if (!weekdays.includes(dayOfWeek)) continue;
-      plannedSessionsGenerated += 1;
+      const daySlots = slotsByWeekday.get(dayOfWeek);
+      if (!daySlots || daySlots.length === 0) continue;
 
       const year = d.getUTCFullYear();
       const month = d.getUTCMonth();
       const date = d.getUTCDate();
 
-      const istStartContextMs = Date.UTC(year, month, date, hh, mm, 0, 0);
-      const startAtUtcMs = istStartContextMs - IST_OFFSET_MINUTES * 60 * 1000;
-      const startAtDate = new Date(startAtUtcMs);
-      const endAtDate = new Date(startAtUtcMs + dur * 60 * 1000);
+      for (const slot of daySlots) {
+        const istStartContextMs = Date.UTC(year, month, date, slot.hour, slot.minute, 0, 0);
+        const startAtUtcMs = istStartContextMs - IST_OFFSET_MINUTES * 60 * 1000;
+        const startAtDate = new Date(startAtUtcMs);
+        const endAtDate = new Date(startAtUtcMs + slot.durationMinutes * 60 * 1000);
+        const ymd = `${year}${String(month + 1).padStart(2, "0")}${String(date).padStart(2, "0")}`;
+        const hhmmCompact = `${String(slot.hour).padStart(2, "0")}${String(slot.minute).padStart(2, "0")}`;
+        const sessionId = `${enrollmentId}_${ymd}_${hhmmCompact}`;
 
-      const ymd = `${year}${String(month + 1).padStart(2, "0")}${String(date).padStart(2, "0")}`;
-      const hhmmCompact = `${String(hh).padStart(2, "0")}${String(mm).padStart(2, "0")}`;
-      const sessionId = `${enrollmentId}_${ymd}_${hhmmCompact}`;
+        sessionCandidates.push({
+          sessionDate: new Date(d.getTime()),
+          sessionId,
+          startAtDate,
+          endAtDate,
+          startTime: slot.timeHHmm,
+          endTime: formatHHmmFromContextMs(istStartContextMs + slot.durationMinutes * 60 * 1000),
+          durationMinutes: slot.durationMinutes,
+        });
+      }
+    }
 
-      const classSessionRef = db.collection("classSessions").doc(sessionId);
+    sessionCandidates.sort((a, b) => a.startAtDate.getTime() - b.startAtDate.getTime());
+
+    for (const candidate of sessionCandidates) {
+      if (plannedSessionsTarget && plannedSessionsGenerated >= plannedSessionsTarget) {
+        break;
+      }
+      plannedSessionsGenerated += 1;
+
+      const classSessionRef = db.collection("classSessions").doc(candidate.sessionId);
       const existing = await classSessionRef.get();
       if (existing.exists) {
         skipped += 1;
         continue;
       }
-
-      const endTime = formatHHmmFromContextMs(istStartContextMs + dur * 60 * 1000);
 
       const payload = {
         enrollmentId,
@@ -370,14 +679,14 @@ export const createSessionsFromSchedule = onCall(
         teacherId,
         courseId,
 
-        startAt: admin.firestore.Timestamp.fromDate(startAtDate),
-        endAt: admin.firestore.Timestamp.fromDate(endAtDate),
+        startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
+        endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
 
-        date: toYmdFromContextDate(d),
-        startTime: timeHHmm,
-        endTime,
-        durationMins: dur,
-        durationMinutes: dur,
+        date: toYmdFromContextDate(candidate.sessionDate),
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+        durationMins: candidate.durationMinutes,
+        durationMinutes: candidate.durationMinutes,
 
         status: "scheduled",
         attendance: null,

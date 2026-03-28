@@ -21,9 +21,11 @@ export {
   voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";
+export { runFinanceReconciliationAudit } from "./financeReconciliationReport";
 
 // Bulk session generator from enrollment schedule config
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
+export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 
 // Admin user management
 export { adminCreateUser } from "./adminCreateUser";
@@ -102,3 +104,4 @@ export { refreshPublicKb } from "./ai/refreshPublicKb";
 
 // WhatsApp backend foundation (admin send + webhook callbacks)
 export { sendWhatsAppTemplateMessage, whatsAppWebhook } from './whatsapp';
+export { whatsappWebhookV2 } from './whatsappWebhook';

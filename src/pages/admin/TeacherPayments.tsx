@@ -81,6 +81,14 @@ const chunkIds = (ids: string[], size = 10) => {
   return out;
 };
 
+const createPayoutRequestKey = () => {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  return `payout_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export default function TeacherPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
@@ -105,6 +113,7 @@ export default function TeacherPayments(): JSX.Element {
   const [payoutAmount, setPayoutAmount] = useState('');
   const [payoutNote, setPayoutNote] = useState('');
   const [payoutError, setPayoutError] = useState<string | null>(null);
+  const [payoutRequestKey, setPayoutRequestKey] = useState<string>('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -510,6 +519,7 @@ export default function TeacherPayments(): JSX.Element {
     setPayoutAmount('');
     setPayoutNote('');
     setPayoutError(null);
+    setPayoutRequestKey(createPayoutRequestKey());
     setPayoutOpen(true);
   };
 
@@ -531,6 +541,8 @@ export default function TeacherPayments(): JSX.Element {
     const paidAt = `${payoutMonth}-01`;
     const method = 'bank_transfer';
     const note = payoutNote?.trim();
+    const requestKey = payoutRequestKey || createPayoutRequestKey();
+    if (!payoutRequestKey) setPayoutRequestKey(requestKey);
     const selectedTeacher =
       teachers.find((t) => t.id === payoutTeacherId) || null;
 
@@ -544,6 +556,7 @@ export default function TeacherPayments(): JSX.Element {
         paidAt,
         method,
         note: note || undefined,
+        idempotencyKey: requestKey,
       });
       const snap = await getDoc(
         doc(db, 'teachers', payoutTeacherId, 'earnings', payoutMonth)
@@ -556,6 +569,7 @@ export default function TeacherPayments(): JSX.Element {
         title: 'Payout recorded',
         description: `${selectedTeacher?.displayName || selectedTeacher?.name || selectedTeacher?.email || payoutTeacherId} · ₹${Math.round(amount).toLocaleString('en-IN')}`,
       });
+      setPayoutRequestKey('');
       setPayoutOpen(false);
     } catch (err: any) {
       const message = err?.message || 'Failed to record payout';

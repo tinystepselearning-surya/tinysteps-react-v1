@@ -61,6 +61,14 @@ const chunkIds = (ids: string[], size = 10) => {
   return out;
 };
 
+const createPaymentRequestKey = () => {
+  const cryptoApi = globalThis.crypto;
+  if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {
+    return cryptoApi.randomUUID();
+  }
+  return `payment_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
 export default function ParentPayments(): JSX.Element {
   const [selectedMonth, setSelectedMonth] = useState<string>(() =>
     monthKeyFromDate(new Date())
@@ -83,6 +91,7 @@ export default function ParentPayments(): JSX.Element {
   );
   const [paymentMethod, setPaymentMethod] = useState<'UPI' | 'bank_transfer' | 'online'>('UPI');
   const [paymentNote, setPaymentNote] = useState('');
+  const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
   const [deleteSavingId, setDeleteSavingId] = useState<string | null>(null);
 
@@ -444,6 +453,7 @@ export default function ParentPayments(): JSX.Element {
     setPaymentPaidAt(new Date().toISOString().slice(0, 10));
     setPaymentMethod('UPI');
     setPaymentNote('');
+    setPaymentRequestKey(createPaymentRequestKey());
     setParentEnrollments([]);
     setPaymentOpen(true);
     void loadEnrollmentsForParent(row.parentId);
@@ -470,6 +480,8 @@ export default function ParentPayments(): JSX.Element {
 
     try {
       setPaymentSaving(true);
+      const requestKey = paymentRequestKey || createPaymentRequestKey();
+      if (!paymentRequestKey) setPaymentRequestKey(requestKey);
       const fn = httpsCallable(functions, 'recordPayment');
       await fn({
         enrollmentId: paymentEnrollmentId,
@@ -477,8 +489,10 @@ export default function ParentPayments(): JSX.Element {
         paidAt: paymentPaidAt,
         method: paymentMethod,
         note: paymentNote || undefined,
+        idempotencyKey: requestKey,
       });
       window.alert('Payment recorded');
+      setPaymentRequestKey('');
       setPaymentOpen(false);
     } catch (err: any) {
       window.alert(err?.message || 'Failed to record payment');

@@ -5,6 +5,7 @@ import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
 import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
@@ -45,21 +46,30 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     return map;
   }, [students]);
 
+  const completeSessionViaBackend = async (
+    sessionId: string,
+    payload?: {
+      attendance?: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[] }>;
+      sessionNotes?: string;
+    },
+  ) => {
+    const functions = getFunctions(undefined, 'asia-south1');
+    const finalizeSession = httpsCallable(functions, 'onSessionComplete');
+    await finalizeSession({
+      sessionId,
+      ...(payload?.attendance ? { attendance: payload.attendance } : {}),
+      ...(typeof payload?.sessionNotes === 'string' ? { sessionNotes: payload.sessionNotes } : {}),
+    });
+  };
+
   const handleComplete = async (sessionId: string) => {
     try {
-      const batch = writeBatch(db);
-      const payload = {
-        status: 'completed',
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.uid,
-      };
-      batch.set(doc(db, 'classSessions', sessionId), payload, { merge: true });
-      await batch.commit();
-      toast({ title: 'Session updated', description: 'Session marked as completed.' });
+      await completeSessionViaBackend(sessionId);
+      toast({ title: 'Session completed', description: 'Session finalized successfully.' });
     } catch (err) {
       console.error(err);
       toast({
-        title: 'Unable to update session',
+        title: 'Unable to complete session',
         description: err instanceof Error ? err.message : 'Please try again later.',
         variant: 'destructive',
       });
@@ -72,16 +82,18 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       const batch = writeBatch(db);
       const hasPresentOrLate = hasPresentOrLateAttendance(data.attendance as Record<string, any>);
       const hasReschedule = hasRescheduleAttendance(data.attendance as Record<string, any>);
-      const nextStatus = hasReschedule && !hasPresentOrLate ? 'reschedule_requested' : 'completed';
+      const shouldRequestReschedule = hasReschedule && !hasPresentOrLate;
       
       // Update session document
-      const sessionUpdate = {
+      const sessionUpdate: Record<string, unknown> = {
         attendance: data.attendance,
         notes: data.sessionNotes,
-        status: nextStatus,
         updatedAt: serverTimestamp(),
         updatedBy: user?.uid ?? null,
       };
+      if (shouldRequestReschedule) {
+        sessionUpdate.status = 'reschedule_requested';
+      }
       batch.set(doc(db, 'classSessions', selectedSession.id), sessionUpdate, { merge: true });
 
       if (hasReschedule) {
@@ -152,10 +164,15 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
       }
 
       await batch.commit();
-      // Background post-processing (credits, alerts) is handled by the
-      // Firestore trigger `onSessionCompleteTrigger` in `functions/`.
-      // Avoid calling the callable here to prevent double-processing.
-      toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
+      if (hasPresentOrLate) {
+        await completeSessionViaBackend(selectedSession.id, {
+          attendance: data.attendance,
+          sessionNotes: data.sessionNotes,
+        });
+        toast({ title: 'Attendance saved', description: 'Attendance recorded and session completed.' });
+      } else {
+        toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
+      }
     } catch (err) {
       console.error(err);
       toast({

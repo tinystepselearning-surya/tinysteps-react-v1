@@ -10,7 +10,8 @@ import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
-import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
@@ -19,7 +20,6 @@ import {
   hasPresentOrLateAttendance,
   hasRescheduleAttendance,
   queueCreditConsumed,
-  queueCreditScheduled,
   queueRescheduleCreditsForAttendance,
   type RescheduleCreditStatus,
 } from '../../../../services/rescheduleCredits';
@@ -113,6 +113,22 @@ const normalizeCourseId = (value?: string | null): string | null => {
   if (!trimmed) return null;
   const key = trimmed.toLowerCase();
   return COURSE_ID_ALIASES[key] || trimmed;
+};
+
+const completeSessionViaBackend = async (
+  sessionId: string,
+  payload?: {
+    attendance?: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>;
+    sessionNotes?: string;
+  },
+) => {
+  const functions = getFunctions(undefined, 'asia-south1');
+  const finalizeSession = httpsCallable(functions, 'onSessionComplete');
+  await finalizeSession({
+    sessionId,
+    ...(payload?.attendance ? { attendance: payload.attendance } : {}),
+    ...(typeof payload?.sessionNotes === 'string' ? { sessionNotes: payload.sessionNotes } : {}),
+  });
 };
 
 
@@ -689,26 +705,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
-  const findEnrollmentForKid = async (kidId: string) => {
-    const enrollmentsCollection = collection(db, 'enrollments');
-    const queryAttempts = [
-      query(enrollmentsCollection, where('kidId', '==', kidId)),
-      query(enrollmentsCollection, where('kidIds', 'array-contains', kidId)),
-    ];
-
-    for (const q of queryAttempts) {
-      const snap = await getDocs(q);
-      const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) })) as Record<string, any>[];
-      if (!rows.length) continue;
-
-      const byTeacher = rows.find((row) => row.teacherId && row.teacherId === effectiveTeacherId);
-      if (byTeacher) return byTeacher;
-      return rows[0];
-    }
-
-    return null;
-  };
-
   const handleCreateSessionRequest = async () => {
     if (!effectiveTeacherId) {
       toast({ title: 'Missing teacher', description: 'Please sign in again.', variant: 'destructive' });
@@ -773,96 +769,21 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
     setIsSavingRequest(true);
     try {
-      const enrollment = await findEnrollmentForKid(scheduleKidId);
-      const fallbackEnrollmentIdFromSource = selectedCredit.sourceSessionId?.split('_')?.[0] || null;
-      const enrollmentId =
-        selectedCredit.enrollmentId ||
-        enrollment?.id ||
-        fallbackEnrollmentIdFromSource;
-      const parentIdsFromEnrollment = Array.isArray(enrollment?.parentIds)
-        ? enrollment.parentIds.map(String)
-        : [];
-      const parentId =
-        selectedCredit.parentId ||
-        enrollment?.parentId ||
-        parentIdsFromEnrollment[0] ||
-        null;
-      const parentIds =
-        (Array.isArray(selectedCredit.parentIds) && selectedCredit.parentIds.length > 0
-          ? selectedCredit.parentIds
-          : parentIdsFromEnrollment.length > 0
-            ? parentIdsFromEnrollment
-            : parentId
-              ? [String(parentId)]
-              : []).map(String);
-      const courseId = selectedCredit.courseId || enrollment?.courseId || null;
-      const feeAmount = Number(
-        enrollment?.feePerClass ??
-        enrollment?.feePerSession ??
-        enrollment?.ratePerSession ??
-        0,
-      );
-      const currency = enrollment?.currency || 'INR';
-      const joinUrl = enrollment?.joinUrl || null;
-
-      if (!enrollmentId || !parentId || !courseId) {
-        toast({
-          title: 'Missing enrollment details',
-          description: 'Unable to resolve enrollment/parent/course for this makeup session.',
-          variant: 'destructive',
-        });
-        return;
-      }
-
-      const ymd = scheduleDate.replace(/-/g, '');
-      const hhmm = scheduleStartTime.replace(':', '');
-      const creditSuffix = scheduleCreditId.slice(-8);
-      const sessionId = `${enrollmentId}_${ymd}_${hhmm}_${creditSuffix}`;
-
-      const payload = {
-        enrollmentId: String(enrollmentId),
+      const functions = getFunctions(undefined, 'asia-south1');
+      const createMakeupSession = httpsCallable(functions, 'createMakeupSessionFromCredit');
+      const result = await createMakeupSession({
+        creditId: scheduleCreditId,
         kidId: scheduleKidId,
-        kidIds: [scheduleKidId],
-        parentId: String(parentId),
-        parentIds,
-        teacherId: effectiveTeacherId,
-        courseId: String(courseId),
-        startAt: Timestamp.fromDate(startAt),
-        endAt: Timestamp.fromDate(endAt),
         date: scheduleDate,
         startTime: scheduleStartTime,
-        endTime: format(endAt, 'HH:mm'),
         durationMins: durationMinutes,
-        durationMinutes,
-        status: 'scheduled',
-        attendance: null,
-        feeAmount: Number.isFinite(feeAmount) ? feeAmount : 0,
-        currency,
-        joinUrl,
-        notes: scheduleNote.trim() || null,
-        source: 'teacher_makeup_from_reschedule',
-        isMakeup: true,
-        makeupCreditId: scheduleCreditId,
-        makeupForSessionId: selectedCredit.sourceSessionId || null,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        createdBy: user?.uid ?? effectiveTeacherId,
-        updatedBy: user?.uid ?? effectiveTeacherId,
-      };
-
-      const batch = writeBatch(db);
-      batch.set(doc(db, 'classSessions', sessionId), payload, { merge: true });
-      queueCreditScheduled({
-        batch,
-        creditId: scheduleCreditId,
-        replacementSessionId: sessionId,
-        replacementDate: scheduleDate,
-        replacementStartAt: Timestamp.fromDate(startAt),
-        actorUid: user?.uid ?? effectiveTeacherId,
+        note: scheduleNote.trim() || null,
       });
-
-      await batch.commit();
-      toast({ title: 'Makeup session created', description: 'Linked to selected reschedule credit.' });
+      const response = (result.data || {}) as { alreadyExisted?: boolean };
+      toast({
+        title: response.alreadyExisted ? 'Makeup already scheduled' : 'Makeup session created',
+        description: 'Linked to selected reschedule credit.',
+      });
       setIsScheduleModalOpen(false);
     } catch (err) {
       console.error('create makeup session error', err);
@@ -932,9 +853,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           updatedBy: user?.uid ?? null,
         };
 
-        if (hasPresentOrLate) {
-          sessionUpdate.status = 'completed';
-        } else if (hasReschedule) {
+        if (hasReschedule && !hasPresentOrLate) {
           sessionUpdate.status = 'reschedule_requested';
         }
 
@@ -962,7 +881,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         }
 
         await batch.commit();
-        toast({ title: 'Attendance saved', description: 'Attendance updated.' });
+        if (hasPresentOrLate) {
+          await completeSessionViaBackend(selectedSession.id, {
+            attendance: mergedAttendance,
+            sessionNotes: data.sessionNotes,
+          });
+          toast({ title: 'Attendance saved', description: 'Attendance updated and session completed.' });
+        } else {
+          toast({ title: 'Attendance saved', description: 'Attendance updated.' });
+        }
         setSelectedSession(null);
         return;
       }
@@ -978,9 +905,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         updatedBy: user?.uid ?? null,
       };
 
-      if (hasPresentOrLate) {
-        sessionUpdate.status = 'completed';
-      } else if (hasReschedule) {
+      if (hasReschedule && !hasPresentOrLate) {
         sessionUpdate.status = 'reschedule_requested';
       }
 
@@ -1111,7 +1036,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       }
 
       await batch.commit();
-      toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
+      if (hasPresentOrLate) {
+        await completeSessionViaBackend(selectedSession.id, {
+          attendance: data.attendance,
+          sessionNotes: data.sessionNotes,
+        });
+        toast({ title: 'Attendance saved', description: 'Attendance recorded and session completed.' });
+      } else {
+        toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
+      }
       setSelectedSession(null);
     } catch (err) {
       console.error(err);
