@@ -10,19 +10,13 @@ import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
-import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where, writeBatch } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, eachDayOfInterval, isSameMonth, isToday, isSameDay, startOfDay, endOfDay } from 'date-fns';
-import {
-  hasPresentOrLateAttendance,
-  hasRescheduleAttendance,
-  queueCreditConsumed,
-  queueRescheduleCreditsForAttendance,
-  type RescheduleCreditStatus,
-} from '../../../../services/rescheduleCredits';
+import { type RescheduleCreditStatus } from '../../../../services/rescheduleCredits';
 
 interface ScheduleViewProps {
   teacherId?: string;
@@ -89,30 +83,6 @@ const COURSE_LABEL_BY_ID: Record<string, string> = {
   foundational: 'Phonics Foundations',
   early: 'Early Phonics',
   advanced: 'Advanced Phonics',
-};
-
-const COURSE_ID_ALIASES: Record<string, string> = {
-  'phonics-foundation': 'phonics-foundations',
-  'phonics-foundations': 'phonics-foundations',
-  foundational: 'phonics-foundations',
-  'phonics-early': 'early-phonics',
-  early: 'early-phonics',
-  'phonics-advanced': 'advanced-phonics',
-  advanced: 'advanced-phonics',
-  'grammar-essentials': 'basic-grammar',
-  'grammar-mastery': 'advanced-grammar',
-  'intermediate-grammar': 'basic-grammar',
-  'public-speaking-foundations': 'basic-public-speaking',
-  'public-speaking-excellence': 'advanced-public-speaking',
-  'intermediate-public-speaking': 'basic-public-speaking',
-};
-
-const normalizeCourseId = (value?: string | null): string | null => {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  if (!trimmed) return null;
-  const key = trimmed.toLowerCase();
-  return COURSE_ID_ALIASES[key] || trimmed;
 };
 
 const completeSessionViaBackend = async (
@@ -193,31 +163,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
 
     return () => unsub();
   }, []);
-
-  // Build topic label lookup map
-  const topicLabelById = useMemo(() => {
-    const map = new Map<string, string>();
-    curriculumTopics.forEach((topic) => {
-      if (topic.id) {
-        const base = topic.label || topic.id;
-        const display = topic.lesson ? `${topic.lesson} — ${base}` : base;
-        map.set(topic.id, display);
-      }
-    });
-    return map;
-  }, [curriculumTopics]);
-
-  const topicCourseById = useMemo(() => {
-    const map = new Map<string, string>();
-    curriculumTopics.forEach((topic) => {
-      if (!topic.id || !topic.courseId) return;
-      const normalized = normalizeCourseId(topic.courseId);
-      if (normalized) {
-        map.set(topic.id, normalized);
-      }
-    });
-    return map;
-  }, [curriculumTopics]);
 
   // Calculate date range based on view
   const { rangeStart, rangeEnd } = useMemo(() => {
@@ -822,228 +767,40 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[]; topicUpdates?: TopicUpdatePayload[] }>; sessionNotes: string; meta?: { courseId?: string; courseLabel?: string; attendanceOnly?: boolean } }) => {
     if (!selectedSession) return;
     try {
-      const batch = writeBatch(db);
-
-      if (data.meta?.attendanceOnly) {
-        const existingAttendance = ((selectedSession as any)?.attendance || {}) as Record<string, any>;
-        const mergedAttendance: Record<string, any> = { ...existingAttendance };
-
-        Object.entries(data.attendance || {}).forEach(([kidId, entry]) => {
-          const prev = existingAttendance[kidId];
-          const prevObj =
-            typeof prev === 'object' && prev !== null
-              ? prev
-              : prev
-                ? { status: prev }
-                : {};
-          mergedAttendance[kidId] = {
-            ...prevObj,
-            status: entry.status,
-            notes: entry.notes ?? prevObj?.notes ?? '',
-          };
-        });
-
-        const hasPresentOrLate = hasPresentOrLateAttendance(mergedAttendance);
-        const hasReschedule = hasRescheduleAttendance(mergedAttendance);
-
-        const sessionUpdate: Record<string, any> = {
-          attendance: mergedAttendance,
-          notes: data.sessionNotes,
-          updatedAt: serverTimestamp(),
-          updatedBy: user?.uid ?? null,
-        };
-
-        if (hasReschedule && !hasPresentOrLate) {
-          sessionUpdate.status = 'reschedule_requested';
-        }
-
-        const classSessionRef = doc(db, 'classSessions', selectedSession.id);
-        batch.set(classSessionRef, sessionUpdate, { merge: true });
-
-        if (hasReschedule) {
-          await queueRescheduleCreditsForAttendance({
-            batch,
-            session: selectedSession as Record<string, any>,
-            attendance: mergedAttendance,
-            actorUid: user?.uid ?? null,
-            sessionNotes: data.sessionNotes,
-          });
-        }
-
-        const makeupCreditId = String((selectedSession as any)?.makeupCreditId || '').trim();
-        if (makeupCreditId && hasPresentOrLate) {
-          queueCreditConsumed({
-            batch,
-            creditId: makeupCreditId,
-            consumedSessionId: selectedSession.id,
-            actorUid: user?.uid ?? null,
-          });
-        }
-
-        await batch.commit();
-        if (hasPresentOrLate) {
-          await completeSessionViaBackend(selectedSession.id, {
-            attendance: mergedAttendance,
-            sessionNotes: data.sessionNotes,
-          });
-          toast({ title: 'Attendance saved', description: 'Attendance updated and session completed.' });
-        } else {
-          toast({ title: 'Attendance saved', description: 'Attendance updated.' });
-        }
-        setSelectedSession(null);
-        return;
-      }
-      
-      // Update session document
-      const hasPresentOrLate = hasPresentOrLateAttendance(data.attendance as Record<string, any>);
-      const hasReschedule = hasRescheduleAttendance(data.attendance as Record<string, any>);
-
-      const sessionUpdate: Record<string, any> = {
+      const functions = getFunctions(undefined, 'asia-south1');
+      const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
+      const response: any = await saveTeacherSessionProgress({
+        sessionId: selectedSession.id,
         attendance: data.attendance,
-        notes: data.sessionNotes,
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.uid ?? null,
-      };
+        sessionNotes: data.sessionNotes,
+        meta: {
+          courseId: data.meta?.courseId,
+          courseLabel: data.meta?.courseLabel,
+          attendanceOnly: data.meta?.attendanceOnly === true,
+        },
+      });
+      const hasPresentOrLate = response?.data?.hasPresentOrLate === true;
 
-      if (hasReschedule && !hasPresentOrLate) {
-        sessionUpdate.status = 'reschedule_requested';
-      }
-
-      const classSessionRef = doc(db, 'classSessions', selectedSession.id);
-      batch.set(classSessionRef, sessionUpdate, { merge: true });
-
-      if (hasReschedule) {
-        await queueRescheduleCreditsForAttendance({
-          batch,
-          session: selectedSession as Record<string, any>,
-          attendance: data.attendance as Record<string, any>,
-          actorUid: user?.uid ?? null,
-          sessionNotes: data.sessionNotes,
-        });
-      }
-
-      const makeupCreditId = String((selectedSession as any)?.makeupCreditId || '').trim();
-      if (makeupCreditId && hasPresentOrLate) {
-        queueCreditConsumed({
-          batch,
-          creditId: makeupCreditId,
-          consumedSessionId: selectedSession.id,
-          actorUid: user?.uid ?? null,
-        });
-      }
-
-      const sessionCourseId =
-        normalizeCourseId(data.meta?.courseId || (selectedSession as any)?.courseId) || '';
-      const sessionCourseLabel =
-        data.meta?.courseLabel ||
-        (selectedSession as any)?.courseLabel ||
-        selectedSession.courseName ||
-        (sessionCourseId ? COURSE_LABEL_BY_ID[sessionCourseId] : '') ||
-        sessionCourseId ||
-        '';
-
-      // Write curriculum completion for each kid with topics (only if present/late)
-      for (const [kidId, entry] of Object.entries(data.attendance)) {
-        const status = (entry as any)?.status ?? entry;
-        if (status !== 'present' && status !== 'late') continue;
-
-        const topicUpdates = Array.isArray((entry as any)?.topicUpdates) ? (entry as any).topicUpdates : [];
-        const topicIds = topicUpdates.length
-          ? topicUpdates.map((t: any) => t?.topicId).filter(Boolean)
-          : (Array.isArray(entry?.topics) ? entry.topics : []);
-        if (!Array.isArray(topicIds) || topicIds.length === 0) continue;
-
-        const updatesById = new Map<string, TopicUpdatePayload>(
-          topicUpdates.map((t: any) => [t?.topicId, t])
-        );
-
-        for (const topicId of topicIds) {
-          if (!topicId) continue;
-          const update = updatesById.get(topicId);
-          const mastery = typeof update?.mastery === 'string' ? update.mastery.trim() : '';
-          const isCompleted = mastery === 'proficient' || mastery === 'mastered';
-          const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
-          const resolvedCourseId = sessionCourseId || topicCourseById.get(topicId) || '';
-          const resolvedCourseLabel =
-            sessionCourseLabel ||
-            (resolvedCourseId ? COURSE_LABEL_BY_ID[resolvedCourseId] : '') ||
-            resolvedCourseId ||
-            '';
-          const payload: Record<string, any> = {
-            status: isCompleted ? 'completed' : 'in_progress',
-            updatedAt: serverTimestamp(),
-            updatedBy: user?.uid ?? null,
-            source: 'attendance',
-            lastSessionId: selectedSession.id,
-            topicName,
-          };
-          if (resolvedCourseId) payload.courseId = resolvedCourseId;
-          if (resolvedCourseLabel) {
-            payload.courseLabel = resolvedCourseLabel;
-            payload.courseName = resolvedCourseLabel;
-          }
-          const curRef = doc(db, 'students', kidId, 'curriculum', topicId);
-          batch.set(curRef, payload, { merge: true });
-        }
-      }
-
-      // Write progress docs for each kid with topics (only if present/late)
-      for (const [kidId, entry] of Object.entries(data.attendance)) {
-        const status = (entry as any)?.status ?? entry;
-        if (status !== 'present' && status !== 'late') continue;
-
-        const topicUpdates = Array.isArray((entry as any)?.topicUpdates) ? (entry as any).topicUpdates : [];
-        const topicIds = topicUpdates.length
-          ? topicUpdates.map((t: any) => t?.topicId).filter(Boolean)
-          : (Array.isArray(entry?.topics) ? entry.topics : []);
-        if (!Array.isArray(topicIds) || topicIds.length === 0) continue;
-
-        const updatesById = new Map<string, TopicUpdatePayload>(
-          topicUpdates.map((t: any) => [t?.topicId, t])
-        );
-
-        for (const topicId of topicIds) {
-          if (!topicId) continue;
-          const update = updatesById.get(topicId);
-          const mastery = typeof update?.mastery === 'string' ? update.mastery.trim() : '';
-          const teacherRemark = typeof update?.teacherRemark === 'string' ? update.teacherRemark.trim() : '';
-          const topicName = update?.topicName || topicLabelById.get(topicId) || topicId;
-          const resolvedCourseId = sessionCourseId || topicCourseById.get(topicId) || '';
-          const resolvedCourseLabel =
-            sessionCourseLabel ||
-            (resolvedCourseId ? COURSE_LABEL_BY_ID[resolvedCourseId] : '') ||
-            resolvedCourseId ||
-            '';
-          const payload: Record<string, any> = {
-            lastEvidence: 'session',
-            lastSessionId: selectedSession.id,
-            updatedAt: serverTimestamp(),
-            updatedBy: user?.uid ?? null,
-            source: 'attendance',
-            topicName,
-            topicId,
-          };
-          if (mastery) payload.mastery = mastery;
-          if (teacherRemark) payload.teacherRemark = teacherRemark;
-          if (resolvedCourseId) payload.courseId = resolvedCourseId;
-          if (resolvedCourseLabel) {
-            payload.courseLabel = resolvedCourseLabel;
-            payload.courseName = resolvedCourseLabel;
-          }
-          const progRef = doc(db, 'students', kidId, 'progress', topicId);
-          batch.set(progRef, payload, { merge: true });
-        }
-      }
-
-      await batch.commit();
       if (hasPresentOrLate) {
         await completeSessionViaBackend(selectedSession.id, {
-          attendance: data.attendance,
+          attendance: data.attendance as Record<string, any>,
           sessionNotes: data.sessionNotes,
         });
-        toast({ title: 'Attendance saved', description: 'Attendance recorded and session completed.' });
+        toast({
+          title: 'Attendance saved',
+          description:
+            data.meta?.attendanceOnly === true
+              ? 'Attendance updated and session completed.'
+              : 'Attendance recorded and session completed.',
+        });
       } else {
-        toast({ title: 'Attendance saved', description: 'Attendance and curriculum completion recorded.' });
+        toast({
+          title: 'Attendance saved',
+          description:
+            data.meta?.attendanceOnly === true
+              ? 'Attendance updated.'
+              : 'Attendance and curriculum completion recorded.',
+        });
       }
       setSelectedSession(null);
     } catch (err) {

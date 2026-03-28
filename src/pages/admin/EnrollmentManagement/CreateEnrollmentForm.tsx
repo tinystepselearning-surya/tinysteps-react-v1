@@ -178,12 +178,27 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
     try {
       setCreating(true);
 
-      // Prefer parentId already on the student doc; fallback to fetch doc to be safe.
-      let parentId: string | null = (selectedStudent as any)?.parentId ?? null;
+      // Prefer canonical parentId; fall back to parentIds[0] and then a fresh kid read.
+      let parentId: string | null =
+        (selectedStudent as any)?.parentId ??
+        (Array.isArray((selectedStudent as any)?.parentIds) ? (selectedStudent as any).parentIds[0] : null) ??
+        null;
+      let parentIds: string[] = Array.isArray((selectedStudent as any)?.parentIds)
+        ? (selectedStudent as any).parentIds.map(String).filter(Boolean)
+        : [];
 
       if (!parentId) {
         const studentSnap = await getDoc(doc(db, 'kids', selectedStudentId));
-        parentId = studentSnap.exists() ? ((studentSnap.data() as any)?.parentId ?? null) : null;
+        if (studentSnap.exists()) {
+          const studentData = studentSnap.data() as any;
+          parentId = studentData?.parentId ?? (Array.isArray(studentData?.parentIds) ? studentData.parentIds[0] : null);
+          if (Array.isArray(studentData?.parentIds)) {
+            parentIds = studentData.parentIds.map(String).filter(Boolean);
+          }
+        }
+      }
+      if (parentId && !parentIds.includes(parentId)) {
+        parentIds.push(parentId);
       }
 
       const enrollmentRef = doc(collection(db, 'enrollments'));
@@ -191,11 +206,15 @@ export default function CreateEnrollmentForm({ onCreated }: CreateEnrollmentForm
 
       await setDoc(enrollmentRef, {
         // IDs
+        enrollmentId: enrollmentRef.id,
         studentId: selectedStudentId,
+        kidId: selectedStudentId,
         kidIds: [selectedStudentId],
         courseId: selectedCourseId,
         parentId,
+        parentIds,
         teacherId: null,
+        teacherIds: [],
         lpId: null,
 
         // ✅ denormalized labels (THIS FIXES “showing IDs”)

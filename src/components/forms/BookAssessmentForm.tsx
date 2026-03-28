@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import Button from "../Button/Button";
 
 // Constants
@@ -246,52 +245,42 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
             {showOptional ? "Hide optional details" : "Add optional details"}
           </button>
 
-          <AnimatePresence initial={false}>
-            {showOptional && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.22 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-3 space-y-4">
-                  <div className="group space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
-                      Preferred Time (optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Weekdays 6–8 PM"
-                      value={form.preferredTime}
-                      onChange={(e) =>
-                        setForm((p) => ({
-                          ...p,
-                          preferredTime: e.target.value,
-                        }))
-                      }
-                      className="w-full border-b border-slate-200 bg-transparent py-2 text-sm outline-none transition-all focus:border-orange-500"
-                    />
-                  </div>
+          {showOptional ? (
+            <div className="mt-3 space-y-4">
+              <div className="group space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
+                  Preferred Time (optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Weekdays 6–8 PM"
+                  value={form.preferredTime}
+                  onChange={(e) =>
+                    setForm((p) => ({
+                      ...p,
+                      preferredTime: e.target.value,
+                    }))
+                  }
+                  className="w-full border-b border-slate-200 bg-transparent py-2 text-sm outline-none transition-all focus:border-orange-500"
+                />
+              </div>
 
-                  <div className="group space-y-1">
-                    <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
-                      Note (optional)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. shy speaker / reading help"
-                      value={form.note}
-                      onChange={(e) =>
-                        setForm((p) => ({ ...p, note: e.target.value }))
-                      }
-                      className="w-full border-b border-slate-200 bg-transparent py-2 text-sm outline-none transition-all focus:border-orange-500"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <div className="group space-y-1">
+                <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
+                  Note (optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. shy speaker / reading help"
+                  value={form.note}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, note: e.target.value }))
+                  }
+                  className="w-full border-b border-slate-200 bg-transparent py-2 text-sm outline-none transition-all focus:border-orange-500"
+                />
+              </div>
+            </div>
+          ) : null}
 
           <Button
             type="submit"

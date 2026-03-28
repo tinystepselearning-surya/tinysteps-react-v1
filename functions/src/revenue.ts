@@ -3,6 +3,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureAdmin } from './helpers/adminGuard';
+import { normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -71,7 +72,7 @@ function toMillis(value: any): number | null {
 }
 
 function normalizeChargeStatus(value: any): string {
-  return String(value || '').trim().toLowerCase();
+  return normalizeFinancialStatus(value);
 }
 
 function isSettledCharge(status: string): boolean {
@@ -79,7 +80,7 @@ function isSettledCharge(status: string): boolean {
 }
 
 function normalizeStatus(value: any): string {
-  return String(value || '').trim().toLowerCase();
+  return normalizeLowerStatus(value);
 }
 
 function resolveAttendanceStatus(session: any, kidId: string | null): string | null {
@@ -109,6 +110,8 @@ function teacherEarningsMonthlyRef(
   teacherId: string,
   monthKey: string
 ) {
+  // Derived monthly read model.
+  // Source-of-truth remains teacherEarnings event docs.
   return db.collection('teachers').doc(teacherId).collection('earnings').doc(monthKey);
 }
 
@@ -332,14 +335,6 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const alreadyAccrued = session.revenueAccrued === true;
         const sessionId = change.after.id;
 
-        const teacherRollupRef =
-          resolvedTeacherId && teacherPayPerSession > 0
-            ? teacherEarningsMonthlyRef(db, String(resolvedTeacherId), monthKey)
-            : null;
-        const teacherRollupSnap = teacherRollupRef ? await tx.get(teacherRollupRef) : null;
-        const existingRate = normalizeNumber(teacherRollupSnap?.data()?.ratePerSession, 0);
-        const shouldSetRate = teacherPayPerSession > 0 && existingRate <= 0;
-
         const chargeRef = db.collection('billingCharges').doc(sessionId);
         const chargeSnap = await tx.get(chargeRef);
         const chargeStatusRaw = chargeSnap.exists ? String(chargeSnap.data()?.status || '') : '';
@@ -423,18 +418,8 @@ export const onSessionRevenueWrite = onDocumentWritten(
             { merge: true }
           );
 
-          if (teacherRollupRef && teacherPayPerSession > 0) {
-            const rollupPayload: Record<string, any> = {
-              month: monthKey,
-              totalSessions: admin.firestore.FieldValue.increment(1),
-              sessionsCompleted: admin.firestore.FieldValue.increment(1),
-              totalEarnings: admin.firestore.FieldValue.increment(teacherPayPerSession),
-              pendingEarnings: admin.firestore.FieldValue.increment(teacherPayPerSession),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            };
-            if (shouldSetRate) rollupPayload.ratePerSession = teacherPayPerSession;
-            tx.set(teacherRollupRef, rollupPayload, { merge: true });
-          }
+          // Teacher rollups are recomputed from teacherEarnings docs by
+          // onTeacherEarningsRollupWrite to avoid multi-writer drift.
           tx.set(chargeRef, chargePayload, { merge: true });
           tx.set(earningRef, earningPayload, { merge: true });
         } else if (!chargeSnap.exists || !earningSnap.exists) {
@@ -564,30 +549,6 @@ export const onSessionRevenueWrite = onDocumentWritten(
               { merge: true }
             );
 
-            const reverseAmount = normalizeNumber(earningSnap.data()?.amount, 0);
-            const reverseTeacherId =
-              session.teacherId || beforeData?.teacherId || earningSnap.data()?.teacherId || null;
-            const reverseMonthKey =
-              earningSnap.data()?.monthKey || accruedMonthKey || monthKeyFromTimestampIST(new Date());
-
-            if (reverseTeacherId && reverseAmount > 0) {
-              const teacherRollupRef = teacherEarningsMonthlyRef(
-                db,
-                String(reverseTeacherId),
-                String(reverseMonthKey)
-              );
-              tx.set(
-                teacherRollupRef,
-                {
-                  totalSessions: admin.firestore.FieldValue.increment(-1),
-                  sessionsCompleted: admin.firestore.FieldValue.increment(-1),
-                  totalEarnings: admin.firestore.FieldValue.increment(-reverseAmount),
-                  pendingEarnings: admin.firestore.FieldValue.increment(-reverseAmount),
-                  updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                },
-                { merge: true }
-              );
-            }
           }
         }
       });
@@ -631,6 +592,150 @@ function isSessionLinkedTeacherEarning(data: any): boolean {
   if (source === 'session_present_completed') return true;
   return Boolean(String(data?.sessionId || '').trim());
 }
+
+function resolveTeacherEarningMonthKey(data: any): string | null {
+  const monthRaw = String(data?.monthKey || '').trim();
+  if (/^\d{4}-\d{2}$/.test(monthRaw)) return monthRaw;
+  const ts = data?.earnedAt || data?.createdAt || data?.updatedAt || null;
+  if (!ts) return null;
+  return monthKeyFromTimestampIST(ts);
+}
+
+function isDemoTeacherEarningSource(value: any): boolean {
+  const source = normalizeStatus(value);
+  return source === 'demo_completed' || source === 'demo_enrolled_bonus';
+}
+
+interface TeacherMonthRollupTarget {
+  teacherId: string;
+  monthKey: string;
+}
+
+function toTeacherMonthRollupTarget(data: any): TeacherMonthRollupTarget | null {
+  const teacherId = normalizeTeacherId(data?.teacherId);
+  const monthKey = resolveTeacherEarningMonthKey(data);
+  if (!teacherId || !monthKey) return null;
+  return { teacherId, monthKey };
+}
+
+async function recomputeTeacherMonthlyRollup(
+  db: admin.firestore.Firestore,
+  teacherId: string,
+  monthKey: string
+): Promise<void> {
+  // Authoritative ownership model:
+  // 1) teacherEarnings docs are source-of-truth earning events.
+  // 2) teachers/{teacherId}/earnings/{monthKey} is a derived monthly read model.
+  // 3) Only this recompute path writes rollup totals/pending/session counts.
+  const earningsSnap = await db
+    .collection('teacherEarnings')
+    .where('teacherId', '==', teacherId)
+    .where('monthKey', '==', monthKey)
+    .get();
+  const payoutsSnap = await db
+    .collection('teacherPayouts')
+    .where('teacherId', '==', teacherId)
+    .where('monthKey', '==', monthKey)
+    .get();
+
+  let totalEarnings = 0;
+  let pendingEarnings = 0;
+  let totalSessions = 0;
+  let sessionsCompleted = 0;
+  let demoEarnings = 0;
+  let demoCompletedCount = 0;
+  let demoEnrollmentBonusCount = 0;
+
+  for (const docSnap of earningsSnap.docs) {
+    const earning = docSnap.data() || {};
+    const status = normalizeChargeStatus(earning.status);
+    if (status === 'void') continue;
+
+    const amount = Math.max(normalizeNumber(earning.amount, 0), 0);
+    const paidAmount = resolveTeacherEarningPaidAmount(earning, amount);
+    const pendingAmount = Math.max(amount - paidAmount, 0);
+    const source = normalizeStatus(earning.source);
+
+    totalEarnings += amount;
+    pendingEarnings += pendingAmount;
+
+    if (isSessionLinkedTeacherEarning(earning)) {
+      totalSessions += 1;
+      sessionsCompleted += 1;
+    }
+
+    if (isDemoTeacherEarningSource(source)) {
+      demoEarnings += amount;
+      if (source === 'demo_completed') demoCompletedCount += 1;
+      if (source === 'demo_enrolled_bonus') demoEnrollmentBonusCount += 1;
+    }
+  }
+
+  const payments = payoutsSnap.docs
+    .map((docSnap) => {
+      const payout = docSnap.data() || {};
+      const paidAtMs =
+        toMillis(payout.paidAt) ||
+        toMillis(payout.updatedAt) ||
+        toMillis(payout.createdAt) ||
+        0;
+      return {
+        id: docSnap.id,
+        amount: Math.max(normalizeNumber(payout.amount, 0), 0),
+        date: String(payout.date || '').trim() || dayKeyFromTimestampIST(payout.paidAt || new Date()),
+        status: normalizeChargeStatus(payout.status) || 'completed',
+        paidAtMs,
+      };
+    })
+    .sort((a, b) => b.paidAtMs - a.paidAtMs)
+    .slice(0, 5)
+    .map(({ id, amount, date, status }) => ({ id, amount, date, status }));
+
+  const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
+  await rollupRef.set(
+    {
+      month: monthKey,
+      totalEarnings,
+      pendingEarnings,
+      totalSessions,
+      sessionsCompleted,
+      demoEarnings,
+      demoCompletedCount,
+      demoEnrollmentBonusCount,
+      payments,
+      rollupSource: 'teacherEarnings_events_v1',
+      rollupVersion: 1,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+export const onTeacherEarningsRollupWrite = onDocumentWritten(
+  {
+    document: 'teacherEarnings/{earningId}',
+    region: REGION,
+  },
+  async (event) => {
+    const change = event.data;
+    if (!change) return;
+
+    const beforeData = change.before.exists ? change.before.data() || {} : null;
+    const afterData = change.after.exists ? change.after.data() || {} : null;
+
+    const targets = new Map<string, TeacherMonthRollupTarget>();
+    const beforeTarget = toTeacherMonthRollupTarget(beforeData);
+    const afterTarget = toTeacherMonthRollupTarget(afterData);
+    if (beforeTarget) targets.set(`${beforeTarget.teacherId}__${beforeTarget.monthKey}`, beforeTarget);
+    if (afterTarget) targets.set(`${afterTarget.teacherId}__${afterTarget.monthKey}`, afterTarget);
+    if (targets.size === 0) return;
+
+    const db = admin.firestore();
+    for (const target of targets.values()) {
+      await recomputeTeacherMonthlyRollup(db, target.teacherId, target.monthKey);
+    }
+  }
+);
 
 export const recordPayment = onCall(
   {
@@ -914,7 +1019,6 @@ export const recordTeacherPayout = onCall(
       .collection('teacherEarnings')
       .where('monthKey', '==', monthKey)
       .where('teacherId', '==', teacherId);
-    const payoutRollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
 
     const allocation = await db.runTransaction(async (tx) => {
       const existingPayoutSnap = await tx.get(payoutRef);
@@ -953,16 +1057,10 @@ export const recordTeacherPayout = onCall(
         ref: docSnap.ref,
         data: docSnap.data() || {},
       }));
-      const payoutRollupSnap = await tx.get(payoutRollupRef);
-      const existingPayments = Array.isArray(payoutRollupSnap.data()?.payments)
-        ? payoutRollupSnap.data()?.payments
-        : [];
 
       let remaining = amount;
       const appliedEarningIds: string[] = [];
       const appliedAllocations: Array<{ earningId: string; amount: number }> = [];
-      const rollupUpdates: Record<string, number> = {};
-
       if (remaining !== 0) {
         if (remaining > 0) {
           const openEarnings = earnings
@@ -1034,12 +1132,6 @@ export const recordTeacherPayout = onCall(
             appliedEarningIds.push(earning.id);
             appliedAllocations.push({ earningId: earning.id, amount: applyAmount });
 
-            const earningMonth =
-              String(
-                latest.monthKey ||
-                  monthKeyFromTimestampIST(latest.earnedAt || latest.createdAt || new Date())
-              );
-            rollupUpdates[earningMonth] = (rollupUpdates[earningMonth] || 0) - applyAmount;
           }
         } else {
           const paidEarnings = earnings
@@ -1114,12 +1206,6 @@ export const recordTeacherPayout = onCall(
             appliedEarningIds.push(earning.id);
             appliedAllocations.push({ earningId: earning.id, amount: -applyAmount });
 
-            const earningMonth =
-              String(
-                latest.monthKey ||
-                  monthKeyFromTimestampIST(latest.earnedAt || latest.createdAt || new Date())
-              );
-            rollupUpdates[earningMonth] = (rollupUpdates[earningMonth] || 0) + applyAmount;
           }
         }
       }
@@ -1144,36 +1230,6 @@ export const recordTeacherPayout = onCall(
           appliedAllocations,
           appliedAmount,
           unappliedAmount: remaining,
-        },
-        { merge: true }
-      );
-
-      for (const [earningMonth, delta] of Object.entries(rollupUpdates)) {
-        const rollupRef = teacherEarningsMonthlyRef(db, teacherId, earningMonth);
-        tx.set(
-          rollupRef,
-          {
-            month: earningMonth,
-            pendingEarnings: admin.firestore.FieldValue.increment(delta),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-      }
-
-      const paymentEntry = {
-        id: payoutRef.id,
-        amount,
-        date: dateKey,
-        status: amount < 0 ? 'refunded' : 'completed',
-      };
-      const nextPayments = [paymentEntry, ...existingPayments].slice(0, 5);
-      tx.set(
-        payoutRollupRef,
-        {
-          month: monthKey,
-          payments: nextPayments,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
@@ -1225,8 +1281,6 @@ export const voidTeacherOrphanEarnings = onCall(
 
     const db = admin.firestore();
     const earningsQuery = db.collection('teacherEarnings').where('teacherId', '==', teacherId);
-    const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
-
     const result = await db.runTransaction(async (tx) => {
       const earningsSnap = await tx.get(earningsQuery);
       const earnings = earningsSnap.docs
@@ -1254,10 +1308,6 @@ export const voidTeacherOrphanEarnings = onCall(
       let voidedCount = 0;
       let skippedPaidCount = 0;
       let skippedAlreadyVoidCount = 0;
-      let totalEarningsDelta = 0;
-      let pendingDelta = 0;
-      let sessionDelta = 0;
-
       const voidedIds: string[] = [];
       const skippedPaidIds: string[] = [];
 
@@ -1316,32 +1366,6 @@ export const voidTeacherOrphanEarnings = onCall(
         voidedCount += 1;
         voidedIds.push(earning.id);
 
-        totalEarningsDelta -= amount;
-        pendingDelta -= Math.max(amount - paidAmount, 0);
-        if (isSessionLinkedTeacherEarning(earning.data)) {
-          sessionDelta -= 1;
-        }
-      }
-
-      if (
-        voidedCount > 0 &&
-        (totalEarningsDelta !== 0 || pendingDelta !== 0 || sessionDelta !== 0)
-      ) {
-        const rollupUpdates: Record<string, any> = {
-          month: monthKey,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        };
-        if (totalEarningsDelta !== 0) {
-          rollupUpdates.totalEarnings = admin.firestore.FieldValue.increment(totalEarningsDelta);
-        }
-        if (pendingDelta !== 0) {
-          rollupUpdates.pendingEarnings = admin.firestore.FieldValue.increment(pendingDelta);
-        }
-        if (sessionDelta !== 0) {
-          rollupUpdates.totalSessions = admin.firestore.FieldValue.increment(sessionDelta);
-          rollupUpdates.sessionsCompleted = admin.firestore.FieldValue.increment(sessionDelta);
-        }
-        tx.set(rollupRef, rollupUpdates, { merge: true });
       }
 
       return {
@@ -1517,35 +1541,7 @@ export const adminVoidSessionCharge = onCall(
         revenueRollupReversed = true;
       }
 
-      let teacherRollupReversed = false;
-      if (earningVoided) {
-        const reverseAmount = Math.max(normalizeNumber(earningData.amount, 0), 0);
-        const reverseTeacherId = normalizeTeacherId(
-          earningData.teacherId || session.teacherId || chargeData.teacherId
-        );
-        const reverseMonthKey = String(
-          earningData.monthKey ||
-            chargeData.monthKey ||
-            session.accruedMonthKey ||
-            monthKeyFromTimestampIST(session.startAt || session.date || session.endAt || new Date())
-        );
-        if (reverseTeacherId && reverseAmount > 0) {
-          const teacherRollupRef = teacherEarningsMonthlyRef(db, reverseTeacherId, reverseMonthKey);
-          tx.set(
-            teacherRollupRef,
-            {
-              month: reverseMonthKey,
-              totalSessions: admin.firestore.FieldValue.increment(-1),
-              sessionsCompleted: admin.firestore.FieldValue.increment(-1),
-              totalEarnings: admin.firestore.FieldValue.increment(-reverseAmount),
-              pendingEarnings: admin.firestore.FieldValue.increment(-reverseAmount),
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-            },
-            { merge: true }
-          );
-          teacherRollupReversed = true;
-        }
-      }
+      const teacherRollupReversed = false;
 
       const shouldSuppressRevenue = chargeVoided || earningVoided || revenueRollupReversed;
       if (shouldSuppressRevenue) {

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, doc, documentId, getDocs, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
+import { collection, documentId, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
+import { normalizeFinanceStatus } from '../../lib/statuses';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Button } from '@components/ui/button';
@@ -93,7 +94,7 @@ export default function ParentPayments(): JSX.Element {
   const [paymentNote, setPaymentNote] = useState('');
   const [paymentRequestKey, setPaymentRequestKey] = useState('');
   const [paymentSaving, setPaymentSaving] = useState(false);
-  const [deleteSavingId, setDeleteSavingId] = useState<string | null>(null);
+  const [correctionSavingId, setCorrectionSavingId] = useState<string | null>(null);
 
   useEffect(() => {
     const loadRefs = async () => {
@@ -246,7 +247,7 @@ export default function ParentPayments(): JSX.Element {
     charges.forEach((charge) => {
       const parentId = String(charge.parentId || '');
       if (!parentId) return;
-      const status = String(charge.status || '').toLowerCase();
+      const status = normalizeFinanceStatus(charge.status);
       if (status === 'void') return;
       const amountRaw = Number(charge.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
@@ -321,7 +322,7 @@ export default function ParentPayments(): JSX.Element {
     charges.forEach((charge) => {
       const parentId = String(charge.parentId || '');
       if (!parentId) return;
-      const status = String(charge.status || '').toLowerCase();
+      const status = normalizeFinanceStatus(charge.status);
       if (status === 'void') return;
       const amountRaw = Number(charge.amount ?? 0);
       const amount = Number.isFinite(amountRaw) ? amountRaw : 0;
@@ -513,39 +514,111 @@ export default function ParentPayments(): JSX.Element {
     });
   };
 
-  const handleDeleteParentRow = async (parentId: string, parentName: string) => {
-    const confirm = window.prompt(
-      `Type DELETE to remove all charges and payments for ${parentName || parentId} in ${selectedMonth}.`
+  const handleRunParentCorrection = async (parentId: string, parentName: string) => {
+    const reasonInput = window.prompt(
+      `Enter correction reason for ${parentName || parentId} in ${selectedMonth}.`
     );
-    if (confirm !== 'DELETE') return;
+    const reason = String(reasonInput || '').trim();
+    if (!reason) {
+      window.alert('Correction reason is required.');
+      return;
+    }
 
-    const chargeIds = charges.filter((c) => c.parentId === parentId).map((c) => c.id);
-    const paymentIds = payments.filter((p) => p.parentId === parentId).map((p) => p.id);
-    const total = chargeIds.length + paymentIds.length;
-    if (total === 0) {
-      window.alert('No charges or payments found to delete for this parent.');
+    const confirm = window.prompt(
+      `Type CORRECT to run non-destructive correction (reverse payments + void session charges) for ${parentName || parentId}.`
+    );
+    if (confirm !== 'CORRECT') return;
+
+    const parentPayments = payments.filter((p) => String(p.parentId || '') === parentId);
+    const parentCharges = charges.filter(
+      (c) =>
+        String(c.parentId || '') === parentId &&
+        normalizeFinanceStatus(c.status) !== 'void'
+    );
+
+    if (parentPayments.length === 0 && parentCharges.length === 0) {
+      window.alert('No payment/charge records found for correction.');
       return;
     }
 
     try {
-      setDeleteSavingId(parentId);
-      const allTargets = [
-        ...chargeIds.map((id) => ({ col: 'billingCharges', id })),
-        ...paymentIds.map((id) => ({ col: 'payments', id })),
-      ];
-      for (let i = 0; i < allTargets.length; i += 450) {
-        const batch = writeBatch(db);
-        const slice = allTargets.slice(i, i + 450);
-        slice.forEach((item) => {
-          batch.delete(doc(db, item.col, item.id));
-        });
-        await batch.commit();
+      setCorrectionSavingId(parentId);
+      const recordPaymentFn = httpsCallable(functions, 'recordPayment');
+      const adminVoidSessionChargeFn = httpsCallable(functions, 'adminVoidSessionCharge');
+
+      let reversedPayments = 0;
+      let voidedCharges = 0;
+      const errors: string[] = [];
+
+      for (const payment of parentPayments) {
+        const enrollmentId = String(payment.enrollmentId || '').trim();
+        const amount = Number(payment.amount);
+        if (!enrollmentId || !Number.isFinite(amount) || amount === 0) {
+          errors.push(`Skipped payment ${payment.id || 'unknown'} (missing enrollment/amount).`);
+          continue;
+        }
+
+        const paidAtMs = toMillis(payment.paidAt || payment.createdAt);
+        const paidAt = paidAtMs
+          ? new Date(paidAtMs).toISOString().slice(0, 10)
+          : new Date().toISOString().slice(0, 10);
+
+        const methodRaw = String(payment.method || '').trim();
+        const method =
+          methodRaw === 'UPI' || methodRaw === 'bank_transfer' || methodRaw === 'online' ?
+            methodRaw :
+            'online';
+
+        try {
+          await recordPaymentFn({
+            enrollmentId,
+            amount: -Math.abs(amount),
+            paidAt,
+            method,
+            note: `Admin correction reversal (${selectedMonth}) for payment ${payment.id || 'unknown'}: ${reason}`,
+            idempotencyKey: `corr_${selectedMonth}_${parentId}_${payment.id || Date.now()}`,
+          });
+          reversedPayments += 1;
+        } catch (err: any) {
+          errors.push(
+            `Payment reversal failed for ${payment.id || 'unknown'}: ${err?.message || 'Unknown error'}`
+          );
+        }
       }
-      window.alert('Removed charges and payments for this parent.');
+
+      for (const charge of parentCharges) {
+        const sessionId = String(charge.sessionId || charge.id || '').trim();
+        if (!sessionId) {
+          errors.push(`Skipped charge ${charge.id || 'unknown'} (missing session id).`);
+          continue;
+        }
+        try {
+          await adminVoidSessionChargeFn({
+            sessionId,
+            reason: `Admin correction (${selectedMonth}) for parent ${parentId}: ${reason}`,
+          });
+          voidedCharges += 1;
+        } catch (err: any) {
+          errors.push(
+            `Charge void failed for session ${sessionId}: ${err?.message || 'Unknown error'}`
+          );
+        }
+      }
+
+      const summary = [
+        `Correction complete for ${parentName || parentId}.`,
+        `Reversed payments: ${reversedPayments}`,
+        `Voided session charges: ${voidedCharges}`,
+      ];
+      if (errors.length > 0) {
+        summary.push(`Failures: ${errors.length}`);
+        summary.push(errors.slice(0, 4).join('\n'));
+      }
+      window.alert(summary.join('\n'));
     } catch (err: any) {
-      window.alert(err?.message || 'Failed to delete parent charges/payments');
+      window.alert(err?.message || 'Failed to run parent correction');
     } finally {
-      setDeleteSavingId(null);
+      setCorrectionSavingId(null);
     }
   };
 
@@ -635,10 +708,10 @@ export default function ParentPayments(): JSX.Element {
                             <Button
                               size="sm"
                               variant="destructive"
-                              disabled={deleteSavingId === row.parentId}
-                              onClick={() => handleDeleteParentRow(row.parentId, row.parentName)}
+                              disabled={correctionSavingId === row.parentId}
+                              onClick={() => handleRunParentCorrection(row.parentId, row.parentName)}
                             >
-                              {deleteSavingId === row.parentId ? 'Deleting…' : 'Delete row'}
+                              {correctionSavingId === row.parentId ? 'Correcting…' : 'Run correction'}
                             </Button>
                           </div>
                         </td>

@@ -569,6 +569,15 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // PARENT MONTHLY READ MODELS (projection docs)
+    // ----------------------------
+    match /parentMonthlyReadModels/{parentId}/months/{monthKey} {
+      allow read: if isAdmin()
+        || (isParent() && request.auth.uid == parentId);
+      allow write: if isAdmin();
+    }
+
+    // ----------------------------
     // TEACHER PAYOUTS COLLECTION
     // ----------------------------
     match /teacherPayouts/{payoutId} {
@@ -636,9 +645,42 @@ service cloud.firestore {
     // PROGRESS COLLECTION
     // ----------------------------
     match /progress/{progressId} {
-      allow read, write: if isAdmin();
-      allow read: if isTeacher() || isParent() || isLP();
-      allow write: if false;
+      allow read: if isAdmin();
+
+      allow read: if isTeacher()
+        && (
+          (('teacherId' in resource.data) && resource.data.teacherId == request.auth.uid)
+          || (('studentId' in resource.data) && resource.data.studentId is string && isTeacherOfKid(resource.data.studentId))
+          || (('kidId' in resource.data) && resource.data.kidId is string && isTeacherOfKid(resource.data.kidId))
+        );
+
+      allow read: if isParent()
+        && (
+          (('parentId' in resource.data) && resource.data.parentId == request.auth.uid)
+          || (('studentId' in resource.data) && resource.data.studentId is string && isParentOfKid(resource.data.studentId))
+          || (('kidId' in resource.data) && resource.data.kidId is string && isParentOfKid(resource.data.kidId))
+        );
+
+      allow read: if isLP()
+        && (
+          (('lpId' in resource.data) && resource.data.lpId == request.auth.uid)
+          || (
+            ('studentId' in resource.data)
+            && resource.data.studentId is string
+            && kidExists(resource.data.studentId)
+            && ('assignedLPs' in kidDoc(resource.data.studentId))
+            && (request.auth.uid in kidDoc(resource.data.studentId).assignedLPs)
+          )
+          || (
+            ('kidId' in resource.data)
+            && resource.data.kidId is string
+            && kidExists(resource.data.kidId)
+            && ('assignedLPs' in kidDoc(resource.data.kidId))
+            && (request.auth.uid in kidDoc(resource.data.kidId).assignedLPs)
+          )
+        );
+
+      allow write: if isAdmin();
     }
 
     // ----------------------------
@@ -780,12 +822,8 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    match /adminStats/{document=**} {
-      allow read, write: if isAdmin();
-    }
-
     match /debug/{doc=**} {
-      allow read, write: if isSignedIn();
+      allow read, write: if isAdmin();
     }
 
     // ----------------------------
@@ -804,6 +842,11 @@ service cloud.firestore {
 
     match /config/curriculumTopics {
       allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /config/payments {
+      allow read: if isAdmin() || isParent();
       allow write: if isAdmin();
     }
 

@@ -118,7 +118,7 @@ export const createMakeupSessionFromCredit = onCall(
     const callerUid = request.auth?.uid;
     if (!callerUid) throw new HttpsError('unauthenticated', 'Authentication required');
 
-    const callerRole = await resolveCallerRole(request.auth);
+    const callerRole = await resolveCallerRole(request.auth ?? null);
     const callerIsAdmin = callerRole === 'admin' || callerRole === 'rm';
     const callerIsTeacher = callerRole === 'teacher';
     if (!callerIsAdmin && !callerIsTeacher) {

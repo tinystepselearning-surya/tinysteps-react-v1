@@ -18,7 +18,8 @@ import {
 import { signOut } from "firebase/auth";
 
 import { useAuthStore } from "../../store/useAuthStore";
-import { db, auth } from "../../lib/firebaseConfig";
+import { db, auth, logCustomEvent } from "../../lib/firebaseConfig";
+import callFunction from "../../lib/callFunctions";
 
 import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
@@ -107,6 +108,36 @@ const debugParentDashboard = (...args: unknown[]) => {
   }
 };
 
+const parentLegacyFallbackTelemetrySeen = new Set<string>();
+
+function emitParentLegacyFallbackTelemetry(
+  fallbackType: string,
+  context: { kidId?: string | null; count?: number; canonicalHit?: boolean }
+) {
+  if (typeof window === "undefined") return;
+  const kidId = String(context.kidId || "").trim();
+  const count = Number.isFinite(Number(context.count)) ? Number(context.count) : 0;
+  const key = `${fallbackType}:${kidId || "unknown"}:${count}:${context.canonicalHit ? 1 : 0}`;
+  if (parentLegacyFallbackTelemetrySeen.has(key)) return;
+  parentLegacyFallbackTelemetrySeen.add(key);
+  logCustomEvent("parent_legacy_fallback_used", {
+    fallback_type: fallbackType,
+    kid_id: kidId || "unknown",
+    hit_count: count,
+    canonical_hit: context.canonicalHit ? 1 : 0,
+  });
+  void callFunction(
+    'recordLegacyFallbackUsage',
+    {
+      fallbackType,
+      reader: 'parent_dashboard',
+      kidId: kidId || null,
+      hitCount: Math.max(1, count),
+      inputCount: 1,
+    },
+  ).catch(() => undefined);
+}
+
 function safeTab(value: string | null): TabKey {
   const validTabs: TabKey[] = [
     "dashboard",
@@ -163,6 +194,47 @@ type ParentPaymentRecord = {
   kidId?: string;
   enrollmentId?: string;
   [key: string]: any;
+};
+
+type ParentMonthlyBillingReadModel = {
+  parentId?: string;
+  monthKey?: string;
+  schemaVersion?: number;
+  modelType?: string;
+  refreshedAt?: any;
+  generatedAtMs?: number;
+  totals?: {
+    chargesCount?: number;
+    billedAmount?: number;
+    paidAmountFromCharges?: number;
+    dueAmount?: number;
+    paymentsCount?: number;
+    paymentsTotal?: number;
+    paymentsApplied?: number;
+    paymentsUnapplied?: number;
+  };
+  byKid?: Record<
+    string,
+    {
+      kidId?: string;
+      chargesCount?: number;
+      billedAmount?: number;
+      paidAmountFromCharges?: number;
+      dueAmount?: number;
+      paymentsCount?: number;
+      paymentsTotal?: number;
+      paymentsApplied?: number;
+      paymentsUnapplied?: number;
+      lastPaymentAtMs?: number | null;
+    }
+  >;
+  attendance?: {
+    schemaVersion?: number;
+    modelType?: string;
+    refreshedAt?: any;
+    totals?: Record<string, number | undefined>;
+    byKid?: Record<string, Record<string, number | string | undefined>>;
+  };
 };
 
 type Enrollment = {
@@ -1073,6 +1145,10 @@ function toYMD(d: Date) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
+function toMonthKey(d: Date) {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
+}
+
 function parseYMD(ymd: string): { y: number; m: number; d: number } | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd);
   if (!m) return null;
@@ -1289,6 +1365,21 @@ export default function ParentDashboard() {
     return String(candidate || selectedKidId || "");
   }, [selectedKid, selectedKidId]);
 
+  const legacyStudentIdCandidates = useMemo(() => {
+    const set = new Set<string>();
+    const add = (value: unknown) => {
+      const normalized = String(value || "").trim();
+      if (normalized) set.add(normalized);
+    };
+    add(selectedKidId);
+    const kid = selectedKid as any;
+    add(kid?.studentId);
+    add(kid?.studentUid);
+    add(kid?.linkedStudentId);
+    add(kid?.studentRefId);
+    return Array.from(set);
+  }, [selectedKid, selectedKidId]);
+
   // ---- Kid summary doc (kids/{kidId}) ----
   const kidSummaryQuery = useQuery({
     queryKey: ["kidSummary", selectedKidId],
@@ -1307,7 +1398,12 @@ export default function ParentDashboard() {
 
   // ---- Enrollments for selected kid (used for phonics progress) ----
   const enrollmentsQuery = useQuery({
-    queryKey: ["kidEnrollments", user?.uid, selectedKidId],
+    queryKey: [
+      "kidEnrollments",
+      user?.uid,
+      selectedKidId,
+      legacyStudentIdCandidates.join("|"),
+    ],
     enabled: !!user?.uid && !!selectedKidId,
     staleTime: 0,
     refetchOnWindowFocus: false,
@@ -1316,30 +1412,57 @@ export default function ParentDashboard() {
       if (!user?.uid || !selectedKidId) return [];
       const enrollmentsCol = collection(db, "enrollments");
       const results = new Map<string, Enrollment>();
+      let canonicalHitCount = 0;
 
-      const queries = [
-        query(
-          enrollmentsCol,
-          where("parentId", "==", user.uid),
-          where("studentId", "==", selectedKidId)
+      const [kidIdSnap, kidIdsSnap] = await Promise.all([
+        getDocs(
+          query(
+            enrollmentsCol,
+            where("parentId", "==", user.uid),
+            where("kidId", "==", selectedKidId)
+          )
         ),
-        query(
-          enrollmentsCol,
-          where("parentId", "==", user.uid),
-          where("kidId", "==", selectedKidId)
+        getDocs(
+          query(
+            enrollmentsCol,
+            where("parentId", "==", user.uid),
+            where("kidIds", "array-contains", selectedKidId)
+          )
         ),
-        query(
-          enrollmentsCol,
-          where("parentId", "==", user.uid),
-          where("kidIds", "array-contains", selectedKidId)
-        ),
-      ];
+      ]);
 
-      for (const q of queries) {
-        const snap = await getDocs(q);
+      [kidIdSnap, kidIdsSnap].forEach((snap) => {
+        canonicalHitCount += snap.size;
         snap.docs.forEach((d) => {
           results.set(d.id, { id: d.id, ...(d.data() as any) });
         });
+      });
+
+      // Legacy fallback (studentId) is only used when canonical kidId/kidIds lookups return no rows.
+      if (results.size === 0 && legacyStudentIdCandidates.length > 0) {
+        let fallbackHitCount = 0;
+        const studentIdChunks = chunkIds(legacyStudentIdCandidates, 10);
+        for (const chunk of studentIdChunks) {
+          if (!chunk.length) continue;
+          const legacySnap = await getDocs(
+            query(
+              enrollmentsCol,
+              where("parentId", "==", user.uid),
+              where("studentId", "in", chunk)
+            )
+          );
+          fallbackHitCount += legacySnap.size;
+          legacySnap.docs.forEach((d) => {
+            results.set(d.id, { id: d.id, ...(d.data() as any) });
+          });
+        }
+        if (fallbackHitCount > 0) {
+          emitParentLegacyFallbackTelemetry("enrollments_studentId", {
+            kidId: selectedKidId,
+            count: fallbackHitCount,
+            canonicalHit: canonicalHitCount > 0,
+          });
+        }
       }
 
       return Array.from(results.values());
@@ -2050,6 +2173,13 @@ export default function ParentDashboard() {
           count: snapB.size,
           docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
         });
+        if (snapB.size > 0) {
+          emitParentLegacyFallbackTelemetry("classSessions_kidId", {
+            kidId: selectedKidId,
+            count: snapB.size,
+            canonicalHit: snapA.size > 0,
+          });
+        }
 
         const map = new Map<string, KidSession>();
         snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
@@ -2114,6 +2244,22 @@ export default function ParentDashboard() {
 
   const monthStart = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth(), 1), [classesMonth]);
   const monthEnd = useMemo(() => new Date(classesMonth.getFullYear(), classesMonth.getMonth() + 1, 0, 23, 59, 59, 999), [classesMonth]);
+  const classesMonthKey = useMemo(() => toMonthKey(classesMonth), [classesMonth]);
+
+  const parentMonthlyBillingReadModelQuery = useQuery({
+    queryKey: ["parentMonthlyBillingReadModel", user?.uid, classesMonthKey],
+    enabled: !!user?.uid,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<ParentMonthlyBillingReadModel | null> => {
+      if (!user?.uid) return null;
+      const snap = await getDoc(
+        doc(db, "parentMonthlyReadModels", user.uid, "months", classesMonthKey)
+      );
+      return snap.exists() ? (snap.data() as ParentMonthlyBillingReadModel) : null;
+    },
+  });
 
   const allKidSessions = useMemo(() => (kidSessionsQuery.data ?? []) as KidSession[], [kidSessionsQuery.data]);
   const sortedClassSessions = useMemo(() => {
@@ -2989,6 +3135,32 @@ export default function ParentDashboard() {
   }, [monthSessions]);
 
   const classesCounts = useMemo(() => {
+    const attendanceProjection = parentMonthlyBillingReadModelQuery.data?.attendance;
+    const projectionTotals = attendanceProjection?.totals;
+    const projectionKidRow =
+      selectedKidId && attendanceProjection?.byKid
+        ? attendanceProjection.byKid[selectedKidId]
+        : null;
+
+    const projectionSource = projectionKidRow || projectionTotals || null;
+    if (projectionSource) {
+      const readNumber = (field: string) => {
+        const raw = Number((projectionSource as any)?.[field] ?? 0);
+        return Number.isFinite(raw) ? raw : 0;
+      };
+      return {
+        total: readNumber("total"),
+        completed: readNumber("completed"),
+        in_progress: readNumber("in_progress"),
+        scheduled: readNumber("scheduled"),
+        cancelled: readNumber("cancelled"),
+        no_show: readNumber("no_show"),
+        reschedule_requested: readNumber("reschedule_requested"),
+        other: readNumber("other"),
+        upcoming: readNumber("upcoming"),
+      };
+    }
+
     const totals = {
       total: monthSessions.length,
       completed: 0,
@@ -3015,10 +3187,46 @@ export default function ParentDashboard() {
     });
 
     return totals;
-  }, [monthSessions]);
+  }, [monthSessions, parentMonthlyBillingReadModelQuery.data, selectedKidId]);
 
   const billingSummary = useMemo(() => {
     const kidId = selectedKidId ? String(selectedKidId) : null;
+    const billingProjection = parentMonthlyBillingReadModelQuery.data;
+    const projectionByKid = billingProjection?.byKid || {};
+    const projectionTotals = billingProjection?.totals || {};
+    const projectionRow = kidId ? projectionByKid[kidId] : null;
+
+    if (billingProjection && (projectionRow || (!kidId && projectionTotals))) {
+      const chargesCountRaw = Number(
+        projectionRow?.chargesCount ?? projectionTotals?.chargesCount ?? 0
+      );
+      const billedAmountRaw = Number(
+        projectionRow?.billedAmount ?? projectionTotals?.billedAmount ?? 0
+      );
+      const paidAmountRaw = Number(
+        projectionRow?.paidAmountFromCharges ?? projectionTotals?.paidAmountFromCharges ?? 0
+      );
+      const dueAmountRaw = Number(
+        projectionRow?.dueAmount ?? projectionTotals?.dueAmount ?? 0
+      );
+
+      const chargesCount = Number.isFinite(chargesCountRaw) ? chargesCountRaw : 0;
+      const billedAmount = Number.isFinite(billedAmountRaw) ? billedAmountRaw : 0;
+      const paidAmount = Number.isFinite(paidAmountRaw) ? paidAmountRaw : 0;
+      const dueAmount = Number.isFinite(dueAmountRaw) ? dueAmountRaw : Math.max(billedAmount - paidAmount, 0);
+
+      return {
+        dueNow: Math.max(dueAmount, 0),
+        billedThisMonth: Math.max(billedAmount, 0),
+        chargesThisMonth: Math.max(chargesCount, 0),
+        totalCharges: Math.max(chargesCount, 0),
+        avgRate: chargesCount > 0 ? Math.round(billedAmount / chargesCount) : 0,
+        paidThisMonth: Math.max(paidAmount, 0),
+        source: "read_model" as const,
+        refreshedAt: billingProjection.refreshedAt || null,
+      };
+    }
+
     const completedSessions = monthSessions.filter((s) => {
       if (!kidId) return false;
       if (normalizeStatus(s.status) !== "completed") return false;
@@ -3074,12 +3282,40 @@ export default function ParentDashboard() {
       totalCharges: completedSessions.length,
       avgRate,
       paidThisMonth,
+      source: "fallback_client" as const,
+      refreshedAt: null,
     };
-  }, [billingChargesQuery.data, monthSessions, selectedKidId]);
+  }, [billingChargesQuery.data, monthSessions, parentMonthlyBillingReadModelQuery.data, selectedKidId]);
 
   const profilePaymentsSummary = useMemo(() => {
-    const rows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
     const kidId = selectedKidId ? String(selectedKidId) : null;
+    const billingProjection = parentMonthlyBillingReadModelQuery.data;
+    const projectionByKid = billingProjection?.byKid || {};
+    const projectionTotals = billingProjection?.totals || {};
+    const projectionRow = kidId ? projectionByKid[kidId] : null;
+
+    if (billingProjection && (projectionRow || (!kidId && projectionTotals))) {
+      const count = Number(
+        projectionRow?.paymentsCount ?? projectionTotals?.paymentsCount ?? 0
+      );
+      const total = Number(
+        projectionRow?.paymentsTotal ?? projectionTotals?.paymentsTotal ?? 0
+      );
+      const applied = Number(
+        projectionRow?.paymentsApplied ?? projectionTotals?.paymentsApplied ?? 0
+      );
+      const unapplied = Number(
+        projectionRow?.paymentsUnapplied ?? projectionTotals?.paymentsUnapplied ?? 0
+      );
+      return {
+        total: Number.isFinite(total) ? total : 0,
+        applied: Number.isFinite(applied) ? applied : 0,
+        unapplied: Number.isFinite(unapplied) ? unapplied : 0,
+        count: Number.isFinite(count) ? count : 0,
+      };
+    }
+
+    const rows = (parentPaymentsQuery.data ?? []) as ParentPaymentRecord[];
     const filtered = kidId
       ? rows.filter((p) => String(p.kidId || "") === kidId)
       : rows;
@@ -3107,7 +3343,7 @@ export default function ParentDashboard() {
       },
       { total: 0, applied: 0, unapplied: 0, count: 0 }
     );
-  }, [parentPaymentsQuery.data, selectedKidId]);
+  }, [parentMonthlyBillingReadModelQuery.data, parentPaymentsQuery.data, selectedKidId]);
 
   const profileEnrollments = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
@@ -3115,8 +3351,8 @@ export default function ParentDashboard() {
     const filtered = enrollments.filter((enr) => {
       if (!kidId) return true;
       if (String(enr.kidId || "") === kidId) return true;
-      if (String(enr.studentId || "") === kidId) return true;
       if (Array.isArray(enr.kidIds) && enr.kidIds.some((id) => String(id) === kidId)) return true;
+      if (String(enr.studentId || "") === kidId) return true;
       return false;
     });
     return filtered.map((enr) => {
@@ -3272,7 +3508,10 @@ export default function ParentDashboard() {
     );
   };
 
-  const billingLoading = billingChargesQuery.isLoading || kidSessionsQuery.isLoading;
+  const billingLoading =
+    parentMonthlyBillingReadModelQuery.isLoading &&
+    !parentMonthlyBillingReadModelQuery.data &&
+    (billingChargesQuery.isLoading || kidSessionsQuery.isLoading);
 
   const renderParentSessionCard = (
     row: { session: KidSession; start: Date; status: string },
@@ -5615,7 +5854,15 @@ export default function ParentDashboard() {
                               Charges: {billingSummary.totalCharges}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-500">
-                              Calculated from {billingSummary.chargesThisMonth} completed classes (Present/Late) in {classesMonthLabel}.
+                              {billingSummary.source === "read_model"
+                                ? `Server summary for ${classesMonthLabel}${
+                                    toDateOrNull(billingSummary.refreshedAt)
+                                      ? ` • refreshed ${toDateOrNull(
+                                          billingSummary.refreshedAt
+                                        )?.toLocaleString("en-IN")}`
+                                      : ""
+                                  }.`
+                                : `Calculated from ${billingSummary.chargesThisMonth} completed classes (Present/Late) in ${classesMonthLabel}.`}
                             </div>
                           </div>
                         )}

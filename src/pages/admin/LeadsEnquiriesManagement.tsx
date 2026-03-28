@@ -348,7 +348,6 @@ const buildInitialForm = (): LeadFormState => ({
 });
 
 const LEADS_COLLECTION = 'leads';
-const DEMO_SESSIONS_COLLECTION = 'demoSessions';
 const LEAD_COMMUNICATIONS_COLLECTION = 'communications';
 const WHATSAPP_UNMATCHED_COLLECTION = 'whatsappInboundUnmatched';
 
@@ -1056,6 +1055,7 @@ export default function LeadsEnquiriesManagement() {
           requestReceivedDate: demoForm.requestReceivedDate.trim() || null,
           timezone: demoForm.timezone.trim() || null,
           adminNotes: demoForm.adminNotes.trim() || null,
+          leadId: demoTarget.id,
         },
         user.uid,
       );
@@ -1065,12 +1065,6 @@ export default function LeadsEnquiriesManagement() {
         status: mapLeadStatusAfterDemoCreated(demoTarget.status),
         updatedAt: serverTimestamp(),
         updatedBy: user.uid,
-      });
-
-      await updateDoc(doc(db, DEMO_SESSIONS_COLLECTION, demoId), {
-        leadId: demoTarget.id,
-        lastUpdatedAt: serverTimestamp(),
-        lastUpdatedBy: user.uid,
       });
 
       setDemoDialogOpen(false);

@@ -67,6 +67,28 @@ const COMPLETION_BLOCKED_STATUSES = new Set([
   "locked",
 ]);
 
+const ACTIVE_ENROLLMENT_STATUSES = new Set([
+  "trial",
+  "active",
+  "current",
+  "enrolled",
+  "ongoing",
+  "pending_teacher",
+  "pending_payment",
+  "paused",
+]);
+
+const ENROLLMENT_STATUS_PRIORITY: Record<string, number> = {
+  current: 100,
+  active: 95,
+  enrolled: 90,
+  ongoing: 88,
+  trial: 84,
+  pending_teacher: 80,
+  pending_payment: 78,
+  paused: 70,
+};
+
 function nowMs() {
   return Date.now();
 }
@@ -81,6 +103,190 @@ function clampMin0(n: number) {
 
 function normalizeStatus(value: unknown): string {
   return String(value || "").trim().toLowerCase();
+}
+
+function normalizeEnrollmentStatus(value: unknown): string {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return "active";
+  if (raw === "canceled") return "cancelled";
+  return raw;
+}
+
+function getTimestampMillis(value: unknown): number {
+  if (value && typeof (value as any).toMillis === "function") {
+    return Number((value as any).toMillis()) || 0;
+  }
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value).getTime();
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function resolveEnrollmentKidIds(enrollment: any): string[] {
+  const out: string[] = [];
+  const pushId = (raw: unknown) => {
+    const id = String(raw || "").trim();
+    if (id) out.push(id);
+  };
+
+  pushId(enrollment?.kidId);
+  pushId(enrollment?.studentId);
+  if (Array.isArray(enrollment?.kidIds)) {
+    enrollment.kidIds.forEach((id: unknown) => pushId(id));
+  }
+  return Array.from(new Set(out));
+}
+
+function scoreEnrollmentCandidate(
+  enrollmentSnap: admin.firestore.QueryDocumentSnapshot,
+  kidId: string
+): { score: number; recencyMs: number; status: string } {
+  const data = enrollmentSnap.data() as any;
+  const status = normalizeEnrollmentStatus(data?.status);
+  const statusScore = ENROLLMENT_STATUS_PRIORITY[status] ?? (ACTIVE_ENROLLMENT_STATUSES.has(status) ? 40 : 0);
+  const enrollmentKidIds = resolveEnrollmentKidIds(data);
+  const directKidMatch = String(data?.kidId || "").trim() === kidId ? 6 : 0;
+  const studentIdMatch = String(data?.studentId || "").trim() === kidId ? 4 : 0;
+  const kidArrayMatch = enrollmentKidIds.includes(kidId) ? 2 : 0;
+  const recencyMs =
+    getTimestampMillis(data?.updatedAt) ||
+    getTimestampMillis(data?.enrollmentDate) ||
+    getTimestampMillis(data?.createdAt);
+
+  return {
+    score: statusScore + directKidMatch + studentIdMatch + kidArrayMatch,
+    recencyMs,
+    status,
+  };
+}
+
+async function queryEnrollmentCandidates(
+  db: admin.firestore.Firestore,
+  kidId: string,
+  courseId: string,
+  withStatusFilter: boolean,
+  sessionId: string
+): Promise<admin.firestore.QueryDocumentSnapshot[]> {
+  const candidates = new Map<string, admin.firestore.QueryDocumentSnapshot>();
+  const statusList = Array.from(ACTIVE_ENROLLMENT_STATUSES);
+
+  const runQuery = async (
+    source: "kidId" | "studentId" | "kidIds",
+    baseQuery: admin.firestore.Query
+  ) => {
+    try {
+      const q = withStatusFilter ? baseQuery.where("status", "in", statusList) : baseQuery;
+      const snap = await q.limit(10).get();
+      snap.docs.forEach((docSnap) => candidates.set(docSnap.id, docSnap));
+    } catch (err) {
+      if (withStatusFilter) {
+        logger.warn("Enrollment candidate query with status filter failed; falling back", {
+          sessionId,
+          kidId,
+          courseId,
+          source,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      } else {
+        logger.error("Enrollment candidate query failed", {
+          sessionId,
+          kidId,
+          courseId,
+          source,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      throw err;
+    }
+  };
+
+  await runQuery(
+    "kidId",
+    db.collection("enrollments").where("kidId", "==", kidId).where("courseId", "==", courseId)
+  );
+  await runQuery(
+    "studentId",
+    db.collection("enrollments").where("studentId", "==", kidId).where("courseId", "==", courseId)
+  );
+  await runQuery(
+    "kidIds",
+    db.collection("enrollments").where("kidIds", "array-contains", kidId).where("courseId", "==", courseId)
+  );
+
+  return Array.from(candidates.values());
+}
+
+async function resolveEnrollmentForSessionKid(
+  db: admin.firestore.Firestore,
+  kidId: string,
+  courseId: string,
+  sessionId: string
+): Promise<admin.firestore.QueryDocumentSnapshot | null> {
+  let candidates: admin.firestore.QueryDocumentSnapshot[] = [];
+  let usedFallbackWithoutStatus = false;
+
+  try {
+    candidates = await queryEnrollmentCandidates(db, kidId, courseId, true, sessionId);
+  } catch {
+    usedFallbackWithoutStatus = true;
+  }
+
+  if (candidates.length === 0) {
+    usedFallbackWithoutStatus = true;
+    try {
+      candidates = await queryEnrollmentCandidates(db, kidId, courseId, false, sessionId);
+    } catch {
+      candidates = [];
+    }
+  }
+
+  if (candidates.length === 0) {
+    logger.warn("Enrollment resolution failed: no matching enrollment", {
+      sessionId,
+      kidId,
+      courseId,
+      tried: ["kidId", "studentId", "kidIds"],
+      usedFallbackWithoutStatus,
+    });
+    return null;
+  }
+
+  const ranked = candidates
+    .map((docSnap) => {
+      const rank = scoreEnrollmentCandidate(docSnap, kidId);
+      return {
+        doc: docSnap,
+        score: rank.score,
+        recencyMs: rank.recencyMs,
+        status: rank.status,
+      };
+    })
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return b.recencyMs - a.recencyMs;
+    });
+
+  const best = ranked[0];
+  if (ranked.length > 1) {
+    logger.warn("Enrollment resolution ambiguous: selected best-ranked candidate", {
+      sessionId,
+      kidId,
+      courseId,
+      selectedEnrollmentId: best.doc.id,
+      selectedStatus: best.status,
+      selectedScore: best.score,
+      candidates: ranked.slice(0, 5).map((item) => ({
+        enrollmentId: item.doc.id,
+        status: item.status,
+        score: item.score,
+      })),
+      usedFallbackWithoutStatus,
+    });
+  }
+
+  return best.doc;
 }
 
 function resolveSessionKidIds(session: SessionData): string[] {
@@ -268,20 +474,11 @@ async function processSessionCompletion(
       // Only decrement credits for present (optionally add "late" here if you want)
       if (status !== "present") continue;
 
-      // Find enrollment for this kid + course
-      const enrollmentQuery = await db
-        .collection("enrollments")
-        .where("kidId", "==", kidId)
-        .where("courseId", "==", courseId)
-        .limit(1)
-        .get();
-
-      if (enrollmentQuery.empty) {
-        logger.warn("Enrollment not found", { sessionId, kidId, courseId });
+      const enrollmentDoc = await resolveEnrollmentForSessionKid(db, kidId, courseId, sessionId);
+      if (!enrollmentDoc) {
         continue;
       }
 
-      const enrollmentDoc = enrollmentQuery.docs[0];
       const enrollmentRef = enrollmentDoc.ref;
 
       // Update enrollment safely in a transaction (avoids race conditions)
@@ -363,8 +560,6 @@ async function processSessionCompletion(
     await Promise.all(
       kidIds.map((kidId) => recomputeStudentSummary(kidId, courseId))
     );
-
-    await accrueTeacherEarnings(teacherId, sessionId, courseId, creditsEarnedForTeacher);
 
     logger.info("Session completed and processed", {
       sessionId,
@@ -469,43 +664,4 @@ export const onSessionComplete = onCall(
 // ---- Helper stubs (keep yours / replace later) ----
 async function recomputeStudentSummary(kidId: string, courseId: string) {
   logger.info("Recomputing summary (stub)", { kidId, courseId });
-}
-
-async function accrueTeacherEarnings(
-  teacherId: string,
-  sessionId: string,
-  courseId: string,
-  creditsEarned: number
-) {
-  if (!teacherId || creditsEarned <= 0) {
-    logger.info("accrueTeacherEarnings: nothing to do", { teacherId, creditsEarned });
-    return;
-  }
-
-  const db = admin.firestore();
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const monthId = `${year}-${month}`;
-
-  const earningsRef = db
-    .collection("teachers")
-    .doc(teacherId)
-    .collection("earnings")
-    .doc(monthId);
-
-  await earningsRef.set(
-    {
-      teacherId,
-      month: monthId,
-      sessionsCompleted: admin.firestore.FieldValue.increment(1),
-      creditsEarned: admin.firestore.FieldValue.increment(creditsEarned),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      lastSessionId: sessionId,
-      lastCourseId: courseId,
-    },
-    { merge: true }
-  );
-
-  logger.info("Teacher earnings updated", { teacherId, monthId, sessionId, creditsEarned });
 }

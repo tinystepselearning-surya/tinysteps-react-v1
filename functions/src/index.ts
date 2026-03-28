@@ -16,16 +16,21 @@ export { onSessionComplete } from "./onSessionComplete";
 // Revenue rollups (expected + earned)
 export {
   onSessionRevenueWrite,
+  onTeacherEarningsRollupWrite,
   recordPayment,
   recordTeacherPayout,
   voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";
-export { runFinanceReconciliationAudit } from "./financeReconciliationReport";
+export { runFinanceReconciliationAudit, runFinanceReconciliationAuditDaily } from "./financeReconciliationReport";
+export { recordLegacyFallbackUsage } from "./legacyFallbackMetrics";
 
 // Bulk session generator from enrollment schedule config
 export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
+export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
+export { saveTeacherSessionProgress } from "./saveTeacherSessionProgress";
+export { onBillingChargeReadModelWrite, onPaymentReadModelWrite, onClassSessionReadModelWrite } from "./parentMonthlyReadModels";
 
 // Admin user management
 export { adminCreateUser } from "./adminCreateUser";
@@ -80,6 +85,11 @@ export {
   reassignEnrollmentTeacher,
   archiveKid,
 } from "./lifecycle";
+export { adminBackfillEnrollmentCanonicalFields } from "./enrollmentCanonicalBackfill";
+export {
+  runEnrollmentCanonicalCoverage,
+  runEnrollmentCanonicalCoverageDaily,
+} from "./enrollmentCanonicalCoverage";
 
 // Admin-only purge (temporary)
 
@@ -88,6 +98,7 @@ export {
   onDemoSessionEarningsWrite,
   adminCreateDemoSession,
   adminUpdateDemoSessionDetails,
+  adminUpdateDemoConversion,
   claimDemoSession,
   updateDemoSessionSchedule,
   completeDemoSession,

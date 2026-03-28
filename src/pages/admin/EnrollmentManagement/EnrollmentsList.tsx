@@ -17,6 +17,7 @@ import {
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../../lib/firebaseConfig';
+import { normalizeEnrollmentStatus } from '../../../lib/statuses';
 
 import {
   Table,
@@ -274,16 +275,6 @@ function pickKidName(k?: KidDoc) {
 function pickCourseName(c?: CourseDoc) {
   if (!c) return '';
   return c.name || c.title || c.courseName || '';
-}
-
-function normalizeEnrollmentStatus(value: any): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return 'active';
-  if (raw === 'pending_teacher') return 'trial';
-  if (raw === 'pending_payment' || raw === 'pending_lp') return 'active';
-  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
 }
 
 export default function EnrollmentsList({ reloadKey }: { reloadKey: number }) {

@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { ensureAdmin } from './helpers/adminGuard';
+import { normalizeEnrollmentStatus } from './helpers/status';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -27,18 +28,53 @@ const NON_REASSIGNABLE_SESSION_STATUSES = new Set([
   'noshow',
 ]);
 
-function normalizeEnrollmentStatus(value: string): string {
-  const raw = String(value || '').trim().toLowerCase();
-  if (!raw) return 'active';
-  if (raw === 'pending_teacher') return 'trial';
-  if (raw === 'pending_payment') return 'active';
-  if (raw === 'enrolled' || raw === 'current' || raw === 'ongoing') return 'active';
-  if (raw === 'canceled') return 'cancelled';
-  return raw;
-}
-
 function resolveKidIdFromEnrollment(data: any): string | null {
   return data?.kidId || data?.studentId || (Array.isArray(data?.kidIds) ? data.kidIds[0] : null) || null;
+}
+
+function toStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const normalized: string[] = [];
+  value.forEach((item) => {
+    const text = typeof item === 'string' ? item.trim() : '';
+    if (!text || seen.has(text)) return;
+    seen.add(text);
+    normalized.push(text);
+  });
+  return normalized;
+}
+
+function toOptionalId(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized ? normalized : null;
+}
+
+function buildEnrollmentCanonicalPatch(enrollmentId: string, enrollment: Record<string, unknown>) {
+  const patch: Record<string, unknown> = {
+    enrollmentId,
+  };
+
+  const kidId = resolveKidIdFromEnrollment(enrollment);
+  const kidIds = toStringList(enrollment.kidIds);
+  if (kidId && !kidIds.includes(kidId)) kidIds.unshift(kidId);
+  if (kidId) patch.kidId = kidId;
+  if (kidIds.length > 0) patch.kidIds = kidIds;
+
+  const parentIds = toStringList(enrollment.parentIds);
+  const parentId = toOptionalId(enrollment.parentId) || parentIds[0] || null;
+  if (parentId && !parentIds.includes(parentId)) parentIds.unshift(parentId);
+  if (parentId) patch.parentId = parentId;
+  if (parentIds.length > 0) patch.parentIds = parentIds;
+
+  const teacherIds = toStringList(enrollment.teacherIds);
+  const teacherId = toOptionalId(enrollment.teacherId) || teacherIds[0] || null;
+  if (teacherId && !teacherIds.includes(teacherId)) teacherIds.unshift(teacherId);
+  if (teacherId) patch.teacherId = teacherId;
+  if (teacherIds.length > 0) patch.teacherIds = teacherIds;
+
+  return patch;
 }
 
 async function batchUpdate(docs: FirebaseFirestore.QueryDocumentSnapshot[], updates: Record<string, any>) {
@@ -170,7 +206,9 @@ export const setEnrollmentStatus = onCall({ region: REGION }, async (request) =>
 
   const canonicalStatus = normalizeEnrollmentStatus(rawStatus);
   const isTerminal = TERMINAL.has(canonicalStatus);
+  const enrollmentData = (enrSnap.data() || {}) as Record<string, unknown>;
   const updates: Record<string, any> = {
+    ...buildEnrollmentCanonicalPatch(enrollmentId, enrollmentData),
     status: canonicalStatus,
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedBy: request.auth?.uid || null,
@@ -214,12 +252,16 @@ export const reassignEnrollmentTeacher = onCall({ region: REGION }, async (reque
     throw new HttpsError('not-found', 'Enrollment not found');
   }
 
-  const enrollment = enrSnap.data() as any;
+  const enrollment = (enrSnap.data() || {}) as Record<string, unknown>;
   const kidId = resolveKidIdFromEnrollment(enrollment);
+  const teacherIds = toStringList(enrollment.teacherIds);
+  if (!teacherIds.includes(newTeacherId)) teacherIds.unshift(newTeacherId);
 
   await enrRef.set(
     {
+      ...buildEnrollmentCanonicalPatch(enrollmentId, enrollment),
       teacherId: newTeacherId,
+      teacherIds,
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedBy: request.auth?.uid || null,
     },

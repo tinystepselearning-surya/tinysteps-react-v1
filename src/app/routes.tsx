@@ -219,16 +219,29 @@ const Layout: FC = () => {
     };
 
     const activate = () => setShowFloatingTools(true);
+    const onFirstInteraction = () => {
+      activate();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+    };
+
     let idleId: number | undefined;
     let timeoutId: number | undefined;
 
     if (typeof win.requestIdleCallback === 'function') {
-      idleId = win.requestIdleCallback(activate, { timeout: 1500 });
+      idleId = win.requestIdleCallback(activate, { timeout: 4500 });
     } else {
-      timeoutId = window.setTimeout(activate, 1200);
+      timeoutId = window.setTimeout(activate, 4000);
     }
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
+    window.addEventListener('keydown', onFirstInteraction, { passive: true });
+    window.addEventListener('scroll', onFirstInteraction, { passive: true });
 
     return () => {
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
       if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
         win.cancelIdleCallback(idleId);
       }

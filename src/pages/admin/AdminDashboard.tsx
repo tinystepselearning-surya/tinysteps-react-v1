@@ -32,6 +32,8 @@ import TodaysNotifications from './TodaysNotifications';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
 import ParentPayments from './ParentPayments';
+import FinanceReconciliationRunsCard from './FinanceReconciliationRunsCard';
+import EnrollmentCanonicalMigrationCard from './EnrollmentCanonicalMigrationCard';
 import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
@@ -414,6 +416,8 @@ export default function AdminDashboard() {
             <TabsContent value="settings" className="mt-0">
               <div className="space-y-4">
                 <InsightsKillSwitch />
+                <FinanceReconciliationRunsCard />
+                <EnrollmentCanonicalMigrationCard />
                 <RefreshPublicKbTool />
               </div>
             </TabsContent>

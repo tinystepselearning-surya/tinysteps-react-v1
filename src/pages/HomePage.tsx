@@ -6,99 +6,16 @@ import { organizationSchema, localBusinessSchema } from "../lib/schemas";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
-import { LearningJourneyRoadmapPPT } from "./KidsEnglishExcellence";
-
-/**
- * Safe optional sections loader:
- * - prevents Vite 500 if a section component was deleted/renamed
- * - missing section renders nothing (no crash)
- */
-
-const modules = {
-  ...import.meta.glob("../components/Home/**/*.{tsx,ts,jsx,js}"),
-  ...import.meta.glob("../components/common/**/*.{tsx,ts,jsx,js}"),
-  ...import.meta.glob("../components/**/*.{tsx,ts,jsx,js}"),
-};
-
-const NullSection = () => null;
-
-function pick(candidates: string[]) {
-  for (const key of candidates) {
-    if (modules[key]) return modules[key];
-  }
-  return null;
-}
-
-function safeLazy(modFn: any) {
-  return lazy(async () => {
-    try {
-      if (!modFn) return { default: NullSection };
-      const mod = await modFn();
-      return { default: mod?.default || NullSection };
-    } catch (e) {
-      console.warn("[HomePage] Optional section failed to load:", e);
-      return { default: NullSection };
-    }
-  });
-}
-
-// ✅ Sections (restored) — loaded safely
-const GlobalImpactSection = safeLazy(
-  pick([
-    "../components/Home/GlobalImpactSection.tsx",
-    "../components/Home/GlobalImpactSection.jsx",
-    "../components/Home/GlobalImpactSection/index.tsx",
-    "../components/Home/GlobalImpactSection/index.jsx",
-  ])
-);
-
-const DemoShowcase = safeLazy(
-  pick([
-    "../components/Home/DemoShowcase.tsx",
-    "../components/Home/DemoShowcase.jsx",
-    "../components/Home/DemoShowcase/index.tsx",
-    "../components/Home/DemoShowcase/index.jsx",
-  ])
-);
-
-// WhyChooseCollapsibleSection removed from homepage (do not render)
-
-const StepTimeline = safeLazy(
-  pick([
-    "../components/Home/StepTimeline.tsx",
-    "../components/Home/StepTimeline.jsx",
-    "../components/Home/StepTimeline/index.tsx",
-    "../components/Home/StepTimeline/index.jsx",
-  ])
-);
-
-const SocialProofCrispSection = safeLazy(
-  pick([
-    "../components/Home/SocialProofCrispSection.tsx",
-    "../components/Home/SocialProofCrispSection.jsx",
-    "../components/Home/SocialProofCrispSection/index.tsx",
-    "../components/Home/SocialProofCrispSection/index.jsx",
-  ])
-);
-
-const PricingCrispSection = safeLazy(
-  pick([
-    "../components/Home/PricingCrispSection.tsx",
-    "../components/Home/PricingCrispSection.jsx",
-    "../components/Home/PricingCrispSection/index.tsx",
-    "../components/Home/PricingCrispSection/index.jsx",
-  ])
-);
-
-
-const FinalCTASection = safeLazy(
-  pick([
-    "../components/Home/FinalCTASection.tsx",
-    "../components/Home/FinalCTASection.jsx",
-    "../components/Home/FinalCTASection/index.tsx",
-    "../components/Home/FinalCTASection/index.jsx",
-  ])
-);
+const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
+const DemoShowcase = lazy(() => import("../components/Home/DemoShowcase"));
+const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
+const SocialProofCrispSection = lazy(() => import("../components/Home/SocialProofCrispSection"));
+const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
+const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
+const LearningJourneyRoadmapPPT = lazy(async () => {
+  const mod = await import("./KidsEnglishExcellence");
+  return { default: mod.LearningJourneyRoadmapPPT };
+});
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -202,8 +119,8 @@ export default function HomePage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026</p>
                 <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Online Summer English Camp for ages 4-12</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">Phonics, grammar, and confident speaking in a 10-week live format with clear routines, light homework, and progress parents can actually follow.</p>
-                <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-3 py-1 text-sm font-semibold text-white">
-                  <span className="line-through opacity-80">₹5,000</span>
+                <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-700 px-3 py-1 text-sm font-semibold text-white">
+                  <span className="line-through text-emerald-100">₹5,000</span>
                   <span>Effective price: ₹2,400</span>
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -217,13 +134,13 @@ export default function HomePage() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   to="/summer-camps"
-                  className="inline-flex items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                  className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800"
                 >
                   Enroll ₹2,400 Summer Camp
                 </Link>
                 <Link
                   to="/summer-camps"
-                  className="inline-flex items-center justify-center rounded-full border border-emerald-600 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition hover:-translate-y-0.5 hover:bg-emerald-50"
+                  className="inline-flex items-center justify-center rounded-full border border-emerald-700 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:-translate-y-0.5 hover:bg-emerald-50"
                 >
                   View Summer Camp Programs
                 </Link>
@@ -272,7 +189,9 @@ export default function HomePage() {
           {/* ✅ PPT-style Journey Roadmap (above Learning Stages) */}
           <section className="px-6 py-12">
             <div className="mx-auto max-w-6xl">
-              <LearningJourneyRoadmapPPT />
+              <Suspense fallback={null}>
+                <LearningJourneyRoadmapPPT />
+              </Suspense>
             </div>
           </section>
 

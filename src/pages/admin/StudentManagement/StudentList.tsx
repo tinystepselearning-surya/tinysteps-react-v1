@@ -11,7 +11,6 @@ import {
   doc,
   getDoc,
   setDoc,
-  updateDoc,
   serverTimestamp,
   Timestamp,
   where,
@@ -2143,51 +2142,33 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       time: slot.time,
       durationMinutes: clampDurationMinutes(slot.durationMinutes, durationMins),
     }));
-    const fallbackSlot = slotsToSave[0];
-    const legacyWeekdays = Array.from(new Set(slotsToSave.map((slot) => slot.weekday))).sort((a, b) => a - b);
-    const legacyTimeHHmm = fallbackSlot?.time || '18:00';
-    const legacyDurationMins = fallbackSlot?.durationMinutes || clampDurationMinutes(durationMins, 35);
 
     const weeks = Math.max(1, Math.min(52, safeNumber(generateWeeks, 8)));
     const planned = Math.max(0, Math.min(365, safeNumber(plannedSessions, 0)));
 
     setSavingSchedule(true);
     try {
-      // 1) Update enrollment with start date + fee + schedule
-      const enrollmentRef = doc(db, 'enrollments', scheduleEnrollmentId);
-      await updateDoc(enrollmentRef, {
-        startDate: Timestamp.fromDate(enrollStart),
-        startDateYmd: enrollmentStartDate,
-        classesStartDate: Timestamp.fromDate(classStart),
-        classesStartDateYmd: classesStartDate,
-        feePerClass: fee,
-        currency: 'INR',
-        joinUrl: meetingLink ? meetingLink : null,
-        schedule: {
-          timezone: 'Asia/Kolkata',
-          weeklySlots: slotsToSave,
-          // Keep legacy fields for backward compatibility with old readers.
-          weekdays: legacyWeekdays,
-          timeHHmm: legacyTimeHHmm,
-          durationMins: legacyDurationMins,
-          weeksAhead: weeks,
-          plannedSessions: planned > 0 ? planned : null,
-          endDateYmd: endDate || null,
-        },
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.uid || null,
-      });
-
-      // 2) Call Cloud Function to generate sessions
+      // Backend-authoritative orchestration:
+      // - updates enrollment schedule fields
+      // - generates sessions with deterministic IDs + duplicate prevention
       const functions = getFunctions(undefined, 'asia-south1');
-      const createSessionsFromSchedule = httpsCallable<
+      const saveEnrollmentScheduleAndGenerateSessions = httpsCallable<
         {
           enrollmentId: string;
+          enrollmentStartDate: string;
+          classesStartDate: string;
+          feePerClass: number;
+          joinUrl?: string | null;
+          currency?: string;
+          weeklySlots: Array<{
+            weekday: number;
+            time: string;
+            durationMinutes: number;
+          }>;
           weeksAhead?: number;
           plannedSessions?: number;
-          replaceFuture?: boolean;
-          startDate?: string;
           endDate?: string;
+          idempotencyKey: string;
         },
         {
           created: number;
@@ -2199,16 +2180,28 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           rangeEnd: string;
           rangeStartYmd?: string;
           rangeEndYmd?: string;
+          idempotentReplay?: boolean;
+          orchestrationState?: 'generated' | 'replayed';
         }
-      >(functions, 'createSessionsFromSchedule');
+      >(functions, 'saveEnrollmentScheduleAndGenerateSessions');
 
-      const result = await createSessionsFromSchedule({
+      const idempotencyKey =
+        typeof globalThis.crypto?.randomUUID === 'function'
+          ? globalThis.crypto.randomUUID()
+          : `schedule_${scheduleEnrollmentId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      const result = await saveEnrollmentScheduleAndGenerateSessions({
         enrollmentId: scheduleEnrollmentId,
+        enrollmentStartDate,
+        classesStartDate,
+        feePerClass: fee,
+        joinUrl: meetingLink ? meetingLink : null,
+        currency: 'INR',
+        weeklySlots: slotsToSave,
         weeksAhead: weeks,
         ...(planned > 0 ? { plannedSessions: planned } : {}),
-        replaceFuture: true,
-        startDate: classesStartDate,
         ...(endDate ? { endDate } : {}),
+        idempotencyKey,
       });
 
       const {
@@ -2217,18 +2210,20 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         replaced,
         plannedSessionsTarget,
         plannedSessionsGenerated,
+        idempotentReplay,
       } = result.data;
       const plannedSummary =
         plannedSessionsTarget && plannedSessionsGenerated !== undefined
           ? ` · planned ${plannedSessionsGenerated}/${plannedSessionsTarget}`
           : '';
+      const replaySummary = idempotentReplay ? ' · replayed prior success' : '';
 
       toast({
         title: 'Schedule saved',
         description:
           typeof replaced === 'number'
-            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}`
-            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}`,
+            ? `✅ Updated schedule: replaced ${replaced}, created ${created}, skipped ${skipped}${plannedSummary}${replaySummary}`
+            : `✅ Created ${created} sessions (${skipped} already existed)${plannedSummary}${replaySummary}`,
       });
 
       setScheduleFor(null);
@@ -2237,7 +2232,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       console.error('Error saving schedule:', err);
       toast({
         title: 'Error',
-        description: err.message || 'Failed to save schedule / create sessions.',
+        description: err?.message || 'Failed to save schedule / create sessions.',
         variant: 'destructive',
       });
     } finally {

@@ -3,6 +3,7 @@ import { createHash } from 'crypto';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import * as logger from 'firebase-functions/logger';
+import { normalizeDemoStatus, normalizeFinancialStatus, normalizeLowerStatus } from './helpers/status';
 
 if (!admin.apps.length) {
   admin.initializeApp();
@@ -52,6 +53,21 @@ const VALID_NEXT_STEPS = new Set([
   'one_to_one_plan',
   'group_batch_plan',
   'reassess_later',
+]);
+const VALID_CONVERSION_STATUSES = new Set([
+  'interested',
+  'enrolled',
+  'not_interested',
+  'follow_up_later',
+  'wrong_fit',
+  'no_response',
+]);
+const VALID_CLASS_TYPES = new Set(['one_to_one', 'group']);
+const VALID_FOLLOW_UP_CALL_STATUSES = new Set([
+  'pending',
+  'completed',
+  'not_reachable',
+  'not_required',
 ]);
 
 type DemoStatus = 'open' | 'assigned' | 'completed' | 'cancelled';
@@ -205,8 +221,7 @@ const monthKeyFromTimestampIST = (value: unknown): string => {
 };
 
 const normalizeStatusValue = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim().toLowerCase();
+  return normalizeLowerStatus(value);
 };
 
 const toFiniteNumber = (value: unknown): number => {
@@ -220,7 +235,7 @@ const toFiniteNumber = (value: unknown): number => {
 };
 
 const resolveEarningPaidAmount = (earning: Record<string, unknown>, amount: number): number => {
-  const status = normalizeStatusValue(earning.status);
+  const status = normalizeFinancialStatus(earning.status);
   const paidAmountRaw = Math.max(toFiniteNumber(earning.paidAmount), 0);
   if (paidAmountRaw > 0) {
     return Math.min(amount, paidAmountRaw);
@@ -257,12 +272,6 @@ const buildDemoDedupeKey = (childName: string, parentPhone: string): string => {
     .update(`${normalizedChild}|${normalizedPhone}`)
     .digest('hex');
 };
-
-const teacherEarningsMonthlyRef = (
-  db: FirebaseFirestore.Firestore,
-  teacherId: string,
-  monthKey: string,
-) => db.collection('teachers').doc(teacherId).collection('earnings').doc(monthKey);
 
 const normalizeTrack = (value: string): DemoTrack | null => {
   const normalized = value.trim().toLowerCase();
@@ -385,13 +394,13 @@ interface DemoEarningWriteInput {
   courseInterested: unknown;
   parentName: unknown;
   childName: unknown;
-  rollupCountField: 'demoCompletedCount' | 'demoEnrollmentBonusCount';
 }
 
 async function createDemoTeacherEarningIfMissing(input: DemoEarningWriteInput): Promise<boolean> {
   const db = admin.firestore();
+  // Canonical finance source: teacherEarnings event docs.
+  // Monthly teacher rollups are derived downstream by onTeacherEarningsRollupWrite.
   const earningRef = db.collection('teacherEarnings').doc(input.earningId);
-  const rollupRef = teacherEarningsMonthlyRef(db, input.teacherId, input.monthKey);
   const courseInterested = pickOptionalText(input.courseInterested, 120);
   const parentName = pickOptionalText(input.parentName, 120);
   const childName = pickOptionalText(input.childName, 120);
@@ -438,19 +447,6 @@ async function createDemoTeacherEarningIfMissing(input: DemoEarningWriteInput): 
 
     tx.set(earningRef, earningPayload, { merge: true });
 
-    tx.set(
-      rollupRef,
-      {
-        month: input.monthKey,
-        totalEarnings: admin.firestore.FieldValue.increment(input.amount),
-        pendingEarnings: admin.firestore.FieldValue.increment(input.amount),
-        demoEarnings: admin.firestore.FieldValue.increment(input.amount),
-        [input.rollupCountField]: admin.firestore.FieldValue.increment(1),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-
     return true;
   });
 }
@@ -469,8 +465,8 @@ export const onDemoSessionEarningsWrite = onDocumentWritten(
     const before = change.before.exists ? change.before.data() || {} : {};
     const after = change.after.data() || {};
 
-    const beforeStatus = normalizeStatusValue(before.status);
-    const afterStatus = normalizeStatusValue(after.status);
+    const beforeStatus = normalizeDemoStatus(before.status);
+    const afterStatus = normalizeDemoStatus(after.status);
     const beforeConversion = normalizeStatusValue(before.conversionStatus);
     const afterConversion = normalizeStatusValue(after.conversionStatus);
 
@@ -506,7 +502,6 @@ export const onDemoSessionEarningsWrite = onDocumentWritten(
         courseInterested: after.courseInterested,
         parentName: after.parentName,
         childName: after.childName,
-        rollupCountField: 'demoCompletedCount',
       });
 
       if (createdCompletionEarning) {
@@ -534,7 +529,6 @@ export const onDemoSessionEarningsWrite = onDocumentWritten(
         courseInterested: after.courseInterested,
         parentName: after.parentName,
         childName: after.childName,
-        rollupCountField: 'demoEnrollmentBonusCount',
       });
 
       if (createdEnrollmentEarning) {
@@ -552,6 +546,7 @@ export const onDemoSessionEarningsWrite = onDocumentWritten(
 
 interface AdminUpsertDemoSessionRequest {
   demoId?: string;
+  leadId?: string | null;
   parentName: string;
   parentPhone: string;
   childName: string;
@@ -571,6 +566,113 @@ interface AdminUpsertDemoSessionResponse {
   demoId: string;
   status: DemoStatus;
 }
+
+interface AdminUpdateDemoConversionRequest {
+  demoId: string;
+  conversionStatus?: string | null;
+  recommendedCourse?: string | null;
+  recommendedClassType?: string | null;
+  recommendedFrequency?: string | null;
+  feeDiscussed?: string | null;
+  followUpDate?: string | null;
+  followUpCallStatus?: string | null;
+  followUpCallCompletedAt?: string | null;
+  admissionNotConfirmedReason?: string | null;
+  idempotencyKey?: string | null;
+}
+
+export const adminUpdateDemoConversion = onCall<AdminUpdateDemoConversionRequest>(
+  { region: REGION },
+  async (request): Promise<AdminUpsertDemoSessionResponse> => {
+    const caller = await getCallerProfile(request.auth);
+    if (!caller.isAdmin) {
+      throw new HttpsError('permission-denied', 'Only admin can update conversion follow-up');
+    }
+
+    const demoId = cleanRequiredText(request.data?.demoId, 'demoId', 120);
+    const conversionStatus = cleanOptionalEnum(
+      request.data?.conversionStatus,
+      'conversionStatus',
+      VALID_CONVERSION_STATUSES,
+    );
+    const recommendedCourse = cleanOptionalText(request.data?.recommendedCourse, 120);
+    const recommendedClassType = cleanOptionalEnum(
+      request.data?.recommendedClassType,
+      'recommendedClassType',
+      VALID_CLASS_TYPES,
+    );
+    const recommendedFrequency = cleanOptionalText(request.data?.recommendedFrequency, 120);
+    const feeDiscussed = cleanOptionalText(request.data?.feeDiscussed, 200);
+    const followUpDate = cleanOptionalDateInput(request.data?.followUpDate, 'followUpDate');
+    const followUpCallStatus = cleanOptionalEnum(
+      request.data?.followUpCallStatus,
+      'followUpCallStatus',
+      VALID_FOLLOW_UP_CALL_STATUSES,
+    );
+    const followUpCallCompletedAt = cleanOptionalDateInput(
+      request.data?.followUpCallCompletedAt,
+      'followUpCallCompletedAt',
+    );
+    const admissionNotConfirmedReason = cleanOptionalText(
+      request.data?.admissionNotConfirmedReason,
+      500,
+    );
+    const idempotencyKey = cleanOptionalText(request.data?.idempotencyKey, 120);
+
+    const db = admin.firestore();
+    const demoRef = db.collection('demoSessions').doc(demoId);
+    let currentStatus: DemoStatus = 'open';
+
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(demoRef);
+      if (!snap.exists) {
+        throw new HttpsError('not-found', 'Demo session not found');
+      }
+
+      const demo = snap.data() as {
+        status?: DemoStatus;
+        history?: unknown;
+        lastConversionUpdateKey?: string | null;
+      };
+      currentStatus = normalizeDemoStatus(demo.status || 'open') as DemoStatus;
+
+      const previousUpdateKey = pickOptionalText(demo.lastConversionUpdateKey, 120);
+      if (idempotencyKey && previousUpdateKey === idempotencyKey) {
+        return;
+      }
+
+      const noteParts: string[] = ['Admin updated conversion follow-up'];
+      if (conversionStatus) noteParts.push(`Conversion: ${conversionStatus}`);
+      if (followUpCallStatus) noteParts.push(`Call: ${followUpCallStatus}`);
+      if (followUpDate) noteParts.push(`Follow-up date: ${followUpDate}`);
+
+      tx.update(demoRef, {
+        conversionStatus: conversionStatus || null,
+        recommendedCourse: recommendedCourse || null,
+        recommendedClassType: recommendedClassType || null,
+        recommendedFrequency: recommendedFrequency || null,
+        feeDiscussed: feeDiscussed || null,
+        followUpDate: followUpDate || null,
+        followUpCallStatus: followUpCallStatus || null,
+        followUpCallCompletedAt: followUpCallCompletedAt || null,
+        admissionNotConfirmedReason: admissionNotConfirmedReason || null,
+        history: appendHistoryEntry(
+          demo.history,
+          makeHistoryEntry('follow_up_updated', caller, noteParts.join(' | ')),
+        ),
+        ...(idempotencyKey ? { lastConversionUpdateKey: idempotencyKey } : {}),
+        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdatedBy: caller.uid,
+      });
+    });
+
+    return {
+      ok: true,
+      demoId,
+      status: currentStatus,
+    };
+  },
+);
 
 const uniqueKeyRef = (db: FirebaseFirestore.Firestore, dedupeKey: string) =>
   db.collection(DEMO_UNIQUE_KEYS_COLLECTION).doc(dedupeKey);
@@ -619,6 +721,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
       todayDateInput();
     const timezone = cleanOptionalText(request.data?.timezone, 120);
     const adminNotes = cleanOptionalText(request.data?.adminNotes, 2000);
+    const leadId = cleanOptionalText(request.data?.leadId, 120);
     const dedupeKey = buildDemoDedupeKey(childName, parentPhone);
 
     const db = admin.firestore();
@@ -642,6 +745,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
         requestReceivedDate,
         timezone,
         adminNotes,
+        leadId: leadId || null,
         dedupeKey,
         status: 'open',
         assignedTeacherId: null,
@@ -665,7 +769,13 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
         reopenedAt: null,
         rescheduledFromDemoId: null,
         rescheduledToDemoId: null,
-        history: [makeHistoryEntry('created', caller, 'Demo request created by admin')],
+        history: [
+          makeHistoryEntry(
+            'created',
+            caller,
+            leadId ? `Demo request created by admin (lead ${leadId})` : 'Demo request created by admin',
+          ),
+        ],
         conversionStatus: null,
         recommendedCourse: null,
         recommendedClassType: null,
@@ -758,7 +868,7 @@ export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionReques
         dedupeKey?: string | null;
         history?: unknown;
       };
-      currentStatus = demo.status || 'open';
+      currentStatus = normalizeDemoStatus(demo.status || 'open') as DemoStatus;
 
       const existingPhone = pickOptionalText(privateSnap.data()?.parentPhone, 60);
       const existingChild = pickOptionalText(demo.childName, 120);
@@ -885,7 +995,7 @@ export const claimDemoSession = onCall<ClaimDemoSessionRequest>(
         history?: unknown;
         courseInterested?: string | null;
       };
-      if (demo.status !== 'open') {
+      if (normalizeDemoStatus(demo.status) !== 'open') {
         throw new HttpsError('failed-precondition', 'Demo is no longer available');
       }
 
@@ -973,7 +1083,7 @@ export const updateDemoSessionSchedule = onCall<UpdateDemoSessionScheduleRequest
         history?: unknown;
       };
 
-      if (demo.status !== 'assigned') {
+      if (normalizeDemoStatus(demo.status) !== 'assigned') {
         throw new HttpsError('failed-precondition', 'Only assigned demos can be updated');
       }
 
@@ -1107,7 +1217,7 @@ export const completeDemoSession = onCall<CompleteDemoSessionRequest>(
         rescheduledFromDemoId?: string | null;
       };
 
-      if (demo.status !== 'assigned') {
+      if (normalizeDemoStatus(demo.status) !== 'assigned') {
         throw new HttpsError('failed-precondition', 'Only assigned demos can be completed');
       }
 
@@ -1335,7 +1445,7 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
       }
 
       const demo = snap.data() as { status?: string; history?: unknown };
-      if (demo.status !== 'assigned') {
+      if (normalizeDemoStatus(demo.status) !== 'assigned') {
         throw new HttpsError('failed-precondition', 'Only assigned demos can be reassigned');
       }
 
@@ -1423,7 +1533,7 @@ export const releaseDemoSession = onCall<ReleaseDemoSessionRequest>(
       }
 
       const demo = snap.data() as { status?: string; history?: unknown };
-      if (demo.status !== 'assigned') {
+      if (normalizeDemoStatus(demo.status) !== 'assigned') {
         throw new HttpsError('failed-precondition', 'Only assigned demos can be released');
       }
 
@@ -1485,44 +1595,6 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
 
       const earningsSnap = await tx.get(earningsQuery);
       for (const earningDoc of earningsSnap.docs) {
-        const earning = earningDoc.data() || {};
-        const teacherId = pickOptionalText(earning.teacherId, 120);
-        const amount = Math.max(toFiniteNumber(earning.amount), 0);
-        const monthKey =
-          pickOptionalText(earning.monthKey, 20) ||
-          monthKeyFromTimestampIST(earning.earnedAt || earning.createdAt || new Date());
-        const source = normalizeStatusValue(earning.source);
-        const status = normalizeStatusValue(earning.status);
-        const paidAmountRaw = Math.max(toFiniteNumber(earning.paidAmount), 0);
-        const paidAmount =
-          paidAmountRaw > 0
-            ? Math.min(amount, paidAmountRaw)
-            : status === 'paid'
-            ? amount
-            : 0;
-        const pendingAmount = Math.max(amount - paidAmount, 0);
-        const isVoid = status === 'void';
-
-        if (teacherId && amount > 0 && !isVoid) {
-          const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
-          const rollupPatch: Record<string, any> = {
-            month: monthKey,
-            totalEarnings: admin.firestore.FieldValue.increment(-amount),
-            demoEarnings: admin.firestore.FieldValue.increment(-amount),
-            pendingEarnings: admin.firestore.FieldValue.increment(-pendingAmount),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          };
-
-          if (source === 'demo_completed') {
-            rollupPatch.demoCompletedCount = admin.firestore.FieldValue.increment(-1);
-          }
-          if (source === 'demo_enrolled_bonus') {
-            rollupPatch.demoEnrollmentBonusCount = admin.firestore.FieldValue.increment(-1);
-          }
-
-          tx.set(rollupRef, rollupPatch, { merge: true });
-        }
-
         tx.delete(earningDoc.ref);
         deletedCount += 1;
       }
@@ -1577,7 +1649,8 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
       }
 
       const demo = snap.data() as { status?: string; history?: unknown };
-      if (demo.status !== 'completed' && demo.status !== 'cancelled') {
+      const normalizedDemoStatus = normalizeDemoStatus(demo.status);
+      if (normalizedDemoStatus !== 'completed' && normalizedDemoStatus !== 'cancelled') {
         throw new HttpsError(
           'failed-precondition',
           'Only completed or cancelled demos can be reopened',
@@ -1600,31 +1673,6 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
             'failed-precondition',
             'Demo payout already paid. Reverse teacher payout allocation before reopening.'
           );
-        }
-
-        const teacherId = pickOptionalText(earning.teacherId, 120);
-        const monthKey =
-          pickOptionalText(earning.monthKey, 20) ||
-          monthKeyFromTimestampIST(earning.earnedAt || earning.createdAt || new Date());
-        const source = normalizeStatusValue(earning.source);
-        const pendingAmount = Math.max(amount - paidAmount, 0);
-
-        if (teacherId && amount > 0) {
-          const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
-          const rollupPatch: Record<string, unknown> = {
-            month: monthKey,
-            totalEarnings: admin.firestore.FieldValue.increment(-amount),
-            demoEarnings: admin.firestore.FieldValue.increment(-amount),
-            pendingEarnings: admin.firestore.FieldValue.increment(-pendingAmount),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          };
-          if (source === 'demo_completed') {
-            rollupPatch.demoCompletedCount = admin.firestore.FieldValue.increment(-1);
-          }
-          if (source === 'demo_enrolled_bonus') {
-            rollupPatch.demoEnrollmentBonusCount = admin.firestore.FieldValue.increment(-1);
-          }
-          tx.set(rollupRef, rollupPatch, { merge: true });
         }
 
         tx.set(

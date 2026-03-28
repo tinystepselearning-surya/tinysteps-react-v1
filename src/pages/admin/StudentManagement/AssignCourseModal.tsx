@@ -272,14 +272,31 @@ export default function AssignCourseModal({
     try {
       setSaving(true);
 
-      // Prevent duplicate enrollment for same student + course
-      const existingQ = query(
-        collection(db, 'enrollments'),
-        where('studentId', '==', student.id),
-        where('courseId', '==', selected),
-      );
-      const existingSnap = await getDocs(existingQ);
-      if (!existingSnap.empty) {
+      // Prevent duplicate enrollment for same student + course across canonical + legacy fields.
+      const [existingByStudentId, existingByKidId, existingByKidIds] = await Promise.all([
+        getDocs(
+          query(
+            collection(db, 'enrollments'),
+            where('studentId', '==', student.id),
+            where('courseId', '==', selected),
+          ),
+        ),
+        getDocs(
+          query(
+            collection(db, 'enrollments'),
+            where('kidId', '==', student.id),
+            where('courseId', '==', selected),
+          ),
+        ),
+        getDocs(
+          query(
+            collection(db, 'enrollments'),
+            where('kidIds', 'array-contains', student.id),
+            where('courseId', '==', selected),
+          ),
+        ),
+      ]);
+      if (!existingByStudentId.empty || !existingByKidId.empty || !existingByKidIds.empty) {
         toast({
           title: 'Already assigned',
           description:
@@ -309,17 +326,26 @@ export default function AssignCourseModal({
         sessionsPerMonthForFrequency(sessionFrequency);
       const billingCycle: 'monthly' = 'monthly';
       const creditsTotal = sessionsPerMonth; // 1-month worth of sessions
+      const parentIds = Array.isArray(studentData.parentIds)
+        ? studentData.parentIds.map(String).filter(Boolean)
+        : [];
+      if (primaryParentId && !parentIds.includes(primaryParentId)) {
+        parentIds.push(primaryParentId);
+      }
 
       const enrollmentRef = doc(collection(db, 'enrollments'));
 
       await setDoc(enrollmentRef, {
+        enrollmentId: enrollmentRef.id,
         studentId: student.id,
         kidId: student.id,
         kidIds: [student.id],
         courseId: selected,
         teacherId: null,
+        teacherIds: [],
         lpId: null,
         parentId: primaryParentId,
+        parentIds,
         status: 'trial',
         feePerClass,
         ratePerSession: feePerClass,

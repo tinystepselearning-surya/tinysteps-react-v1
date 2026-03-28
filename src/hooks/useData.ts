@@ -10,6 +10,8 @@ import type {
   Course,
   Topic,
 } from '../types/models';
+import { logCustomEvent } from '../lib/firebaseConfig';
+import callFunction from '../lib/callFunctions';
 
 export interface KidRecord {
   id: string;
@@ -23,6 +25,37 @@ const chunk = <T,>(arr: T[], size = 10) => {
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
   return out;
 };
+
+const legacyFallbackTelemetrySeen = new Set<string>();
+
+function emitLegacyFallbackTelemetry(
+  reader: string,
+  fallbackField: string,
+  hitCount: number,
+  fallbackInputCount: number,
+) {
+  if (typeof window === 'undefined') return;
+  const normalizedHitCount = Number.isFinite(hitCount) ? hitCount : 0;
+  const normalizedInputCount = Number.isFinite(fallbackInputCount) ? fallbackInputCount : 0;
+  const key = `${reader}:${fallbackField}:${normalizedHitCount}:${normalizedInputCount}`;
+  if (legacyFallbackTelemetrySeen.has(key)) return;
+  legacyFallbackTelemetrySeen.add(key);
+  logCustomEvent('legacy_reader_fallback_used', {
+    reader,
+    fallback_field: fallbackField,
+    hit_count: normalizedHitCount,
+    input_count: normalizedInputCount,
+  });
+  void callFunction(
+    'recordLegacyFallbackUsage',
+    {
+      fallbackType: fallbackField,
+      reader,
+      hitCount: Math.max(1, normalizedHitCount),
+      inputCount: Math.max(1, normalizedInputCount),
+    },
+  ).catch(() => undefined);
+}
 
 // Hook 1: useKidProgress
 export function useKidProgress(kidId: string) {
@@ -164,7 +197,15 @@ export function useEnrollments(parentId: string) {
 
       snap.docs.forEach((d: any) => {
         const enrollment = d.data() as Enrollment;
-        (enrollment.kidIds || []).forEach((k) => allKidIds.add(k));
+        const enrollmentKidIds = Array.isArray((enrollment as any).kidIds)
+          ? (enrollment as any).kidIds
+          : [];
+        if (enrollmentKidIds.length > 0) {
+          enrollmentKidIds.forEach((k: string) => allKidIds.add(k));
+        } else {
+          const fallbackKidId = String((enrollment as any).kidId || (enrollment as any).studentId || '').trim();
+          if (fallbackKidId) allKidIds.add(fallbackKidId);
+        }
         if ((enrollment as any).courseId) courseIds.add((enrollment as any).courseId);
         if ((enrollment as any).teacherId) teacherIds.add((enrollment as any).teacherId);
       });
@@ -179,8 +220,11 @@ export function useEnrollments(parentId: string) {
       for (const docSnap of snap.docs) {
         const enrollment = docSnap.data() as Enrollment;
         const enrAny = enrollment as any;
-
-        const kids = (enrAny.kidIds || []).map((kidId: string) => ({
+        const resolvedKidIds =
+          Array.isArray(enrAny.kidIds) && enrAny.kidIds.length > 0
+            ? enrAny.kidIds
+            : [enrAny.kidId || enrAny.studentId].filter(Boolean);
+        const kids = resolvedKidIds.map((kidId: string) => ({
           id: kidId,
           ...(kidsMap.get(kidId) || {}),
         }));
@@ -254,15 +298,44 @@ export function useEnrollmentsForStudents(studentIds: string[]) {
 
       const allResults: any[] = [];
       for (const c of idChunks) {
-        // direct field
-        const q1 = query(collection(db, 'enrollments'), where('studentId', 'in', c));
-        const snap1 = await getDocs(q1);
-        snap1.docs.forEach((d: any) => allResults.push({ id: d.id, ...(d.data() as any) }));
+        const [byKidId, byKidIds] = await Promise.all([
+          getDocs(query(collection(db, 'enrollments'), where('kidId', 'in', c))),
+          getDocs(query(collection(db, 'enrollments'), where('kidIds', 'array-contains-any', c))),
+        ]);
+        [byKidId, byKidIds].forEach((snap) => {
+          snap.docs.forEach((d: any) => allResults.push({ id: d.id, ...(d.data() as any) }));
+        });
 
-        // array membership
-        const q2 = query(collection(db, 'enrollments'), where('kidIds', 'array-contains-any', c));
-        const snap2 = await getDocs(q2);
-        snap2.docs.forEach((d: any) => allResults.push({ id: d.id, ...(d.data() as any) }));
+        const canonicalMatchedIds = new Set<string>();
+        const collectCanonicalMatches = (enrollment: any) => {
+          const directKidId = String(enrollment?.kidId || '').trim();
+          if (directKidId && c.includes(directKidId)) canonicalMatchedIds.add(directKidId);
+          if (Array.isArray(enrollment?.kidIds)) {
+            enrollment.kidIds.forEach((rawId: any) => {
+              const normalized = String(rawId || '').trim();
+              if (normalized && c.includes(normalized)) canonicalMatchedIds.add(normalized);
+            });
+          }
+        };
+
+        byKidId.docs.forEach((docSnap: any) => collectCanonicalMatches(docSnap.data()));
+        byKidIds.docs.forEach((docSnap: any) => collectCanonicalMatches(docSnap.data()));
+
+        const legacyFallbackIds = c.filter((id) => !canonicalMatchedIds.has(id));
+        if (legacyFallbackIds.length > 0) {
+          const byStudentId = await getDocs(
+            query(collection(db, 'enrollments'), where('studentId', 'in', legacyFallbackIds)),
+          );
+          byStudentId.docs.forEach((d: any) => allResults.push({ id: d.id, ...(d.data() as any) }));
+          if (byStudentId.size > 0) {
+            emitLegacyFallbackTelemetry(
+              'useEnrollmentsForStudents',
+              'studentId',
+              byStudentId.size,
+              legacyFallbackIds.length,
+            );
+          }
+        }
       }
 
       // dedupe by id

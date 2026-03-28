@@ -31,12 +31,13 @@ function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
     setIsDismissed(window.localStorage.getItem(DISMISS_KEY) === '1');
   }, []);
 
-  if (isLoggedIn || isDismissed) return null;
+  const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
+  if (isLoggedIn || isDismissed || isMobileViewport) return null;
 
   const doubledItems = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
-    <div className="border-b border-slate-200 bg-white/80 text-slate-700 backdrop-blur">
+    <div className="hidden border-b border-slate-200 bg-white/80 text-slate-700 backdrop-blur sm:block">
       <style>{`
         @keyframes tsMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
         .ts-marquee { animation: tsMarquee 34s linear infinite; will-change: transform; }
@@ -117,15 +118,23 @@ export default function Header() {
   }, [showLoginMenu]);
 
   useEffect(() => {
+    let rafId = 0;
+    const updateSticky = () => {
+      const nextSticky = isHomePage ? window.scrollY > 50 : true;
+      setIsSticky((prev) => (prev === nextSticky ? prev : nextSticky));
+      rafId = 0;
+    };
     const handleScroll = () => {
-      const current = window.scrollY;
-      if (isHomePage) setIsSticky(current > 50);
-      else setIsSticky(true);
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(updateSticky);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
   }, [isHomePage]);
 
   const handleLogout = async () => {

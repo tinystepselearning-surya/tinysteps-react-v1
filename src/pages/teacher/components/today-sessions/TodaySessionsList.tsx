@@ -4,18 +4,9 @@ import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { SessionCard } from './SessionCard';
 import { AttendanceForm } from './AttendanceForm';
-import { doc, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
-import { db } from '../../../../lib/firebaseConfig';
-import { useAuthStore } from '../../../../store/useAuthStore';
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
-import {
-  hasPresentOrLateAttendance,
-  hasRescheduleAttendance,
-  queueCreditConsumed,
-  queueRescheduleCreditsForAttendance,
-} from '../../../../services/rescheduleCredits';
 
 interface TodaySessionsListProps {
   teacherId?: string;
@@ -23,7 +14,6 @@ interface TodaySessionsListProps {
 
 
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
-  const { user } = useAuthStore();
   const { sessions, isLoading, error } = useTeacherSessions(teacherId);
   const { students } = useTeacherFilteredStudents();
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
@@ -79,91 +69,15 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[] }>; sessionNotes: string }) => {
     if (!selectedSession) return;
     try {
-      const batch = writeBatch(db);
-      const hasPresentOrLate = hasPresentOrLateAttendance(data.attendance as Record<string, any>);
-      const hasReschedule = hasRescheduleAttendance(data.attendance as Record<string, any>);
-      const shouldRequestReschedule = hasReschedule && !hasPresentOrLate;
-      
-      // Update session document
-      const sessionUpdate: Record<string, unknown> = {
+      const functions = getFunctions(undefined, 'asia-south1');
+      const saveTeacherSessionProgress = httpsCallable(functions, 'saveTeacherSessionProgress');
+      const response: any = await saveTeacherSessionProgress({
+        sessionId: selectedSession.id,
         attendance: data.attendance,
-        notes: data.sessionNotes,
-        updatedAt: serverTimestamp(),
-        updatedBy: user?.uid ?? null,
-      };
-      if (shouldRequestReschedule) {
-        sessionUpdate.status = 'reschedule_requested';
-      }
-      batch.set(doc(db, 'classSessions', selectedSession.id), sessionUpdate, { merge: true });
-
-      if (hasReschedule) {
-        await queueRescheduleCreditsForAttendance({
-          batch,
-          session: selectedSession as Record<string, any>,
-          attendance: data.attendance as Record<string, any>,
-          actorUid: user?.uid ?? null,
-          sessionNotes: data.sessionNotes,
-        });
-      }
-
-      const makeupCreditId = String((selectedSession as any)?.makeupCreditId || '').trim();
-      if (makeupCreditId && hasPresentOrLate) {
-        queueCreditConsumed({
-          batch,
-          creditId: makeupCreditId,
-          consumedSessionId: selectedSession.id,
-          actorUid: user?.uid ?? null,
-        });
-      }
-
-      // Write curriculum completion for each kid with topics (only if present/late)
-      for (const [kidId, entry] of Object.entries(data.attendance)) {
-        const status = entry?.status;
-        if (status !== 'present' && status !== 'late') continue;
-        
-        const topics = entry?.topics ?? [];
-        if (!Array.isArray(topics) || topics.length === 0) continue;
-
-        for (const topicId of topics) {
-          if (!topicId) continue;
-          const curRef = doc(db, 'students', kidId, 'curriculum', topicId);
-          batch.set(curRef, {
-            status: 'completed',
-            updatedAt: serverTimestamp(),
-            updatedBy: user?.uid ?? null,
-            source: 'attendance',
-            lastSessionId: selectedSession.id,
-          }, { merge: true });
-        }
-      }
-
-      // Write progress docs for each kid with topics (only if present/late)
-      for (const [kidId, entry] of Object.entries(data.attendance)) {
-        const status = entry?.status;
-        if (status !== 'present' && status !== 'late') continue;
-        
-        const topics = entry?.topics ?? [];
-        if (!Array.isArray(topics) || topics.length === 0) continue;
-
-        for (const topicId of topics) {
-          if (!topicId) continue;
-          const progRef = doc(db, 'students', kidId, 'progress', topicId);
-          const payload: Record<string, any> = {
-            teacherRemark: entry.notes ?? '',
-            lastEvidence: 'attendance',
-            lastSessionId: selectedSession.id,
-            updatedAt: serverTimestamp(),
-            updatedBy: user?.uid ?? null,
-            source: 'attendance',
-          };
-          if (typeof entry.mastery === 'string' && entry.mastery) {
-            payload.mastery = entry.mastery;
-          }
-          batch.set(progRef, payload, { merge: true });
-        }
-      }
-
-      await batch.commit();
+        sessionNotes: data.sessionNotes,
+        meta: { attendanceOnly: false },
+      });
+      const hasPresentOrLate = response?.data?.hasPresentOrLate === true;
       if (hasPresentOrLate) {
         await completeSessionViaBackend(selectedSession.id, {
           attendance: data.attendance,

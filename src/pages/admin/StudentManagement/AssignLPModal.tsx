@@ -93,18 +93,37 @@ export default function AssignLPModal({
           })) as LPUser[],
         );
 
-        // Load enrollments for this student
-        const eQ = query(
-          collection(db, 'enrollments'),
-          where('studentId', '==', student.id),
-        );
-        const eSnap = await getDocs(eQ);
-        setEnrollments(
-          eSnap.docs.map((d) => ({
-            id: d.id,
-            ...(d.data() as any),
-          })) as Enrollment[],
-        );
+        // Load enrollments for this student (canonical + legacy identifiers)
+        const [studentSnap, kidSnap, kidIdsSnap] = await Promise.all([
+          getDocs(
+            query(
+              collection(db, 'enrollments'),
+              where('studentId', '==', student.id),
+            ),
+          ),
+          getDocs(
+            query(
+              collection(db, 'enrollments'),
+              where('kidId', '==', student.id),
+            ),
+          ),
+          getDocs(
+            query(
+              collection(db, 'enrollments'),
+              where('kidIds', 'array-contains', student.id),
+            ),
+          ),
+        ]);
+        const enrollmentMap = new Map<string, Enrollment>();
+        [studentSnap, kidSnap, kidIdsSnap].forEach((snap) => {
+          snap.docs.forEach((d) => {
+            enrollmentMap.set(d.id, {
+              id: d.id,
+              ...(d.data() as any),
+            } as Enrollment);
+          });
+        });
+        setEnrollments(Array.from(enrollmentMap.values()));
 
         // Load courses and build a lookup map
         const cSnap = await getDocs(collection(db, 'courses'));

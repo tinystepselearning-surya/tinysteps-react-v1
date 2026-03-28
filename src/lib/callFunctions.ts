@@ -33,6 +33,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   releaseDemoSession: 'asia-south1',
   deleteDemoSession: 'asia-south1',
   reopenDemoSession: 'asia-south1',
+  recordLegacyFallbackUsage: 'asia-south1',
   getUidByEmail: 'asia-south1',
   subscribeNewsletter: 'asia-south1',
 };

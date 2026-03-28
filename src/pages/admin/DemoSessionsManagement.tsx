@@ -65,6 +65,10 @@ import {
   updateDemoSessionAdminDetails,
   updateDemoConversion,
 } from '../../services/demoSessionsService';
+import {
+  formatStatusLabel as formatGenericStatusLabel,
+  normalizeDemoStatus,
+} from '../../lib/statuses';
 
 interface DemoFormState {
   parentName: string;
@@ -294,16 +298,14 @@ const getTrendReceivedDateKey = (session: DemoSession): string | null => {
 };
 
 const statusBadgeVariant = (status: DemoSessionStatus): 'default' | 'secondary' | 'outline' => {
-  if (status === 'open') return 'outline';
-  if (status === 'assigned') return 'secondary';
+  const normalized = normalizeDemoStatus(status);
+  if (normalized === 'open') return 'outline';
+  if (normalized === 'assigned') return 'secondary';
   return 'default';
 };
 
 const formatStatusLabel = (status: DemoSessionStatus) => {
-  if (status === 'open') return 'Open';
-  if (status === 'assigned') return 'Assigned';
-  if (status === 'completed') return 'Completed';
-  return 'Cancelled';
+  return formatGenericStatusLabel(normalizeDemoStatus(status));
 };
 
 const formatConfirmedSlot = (session: DemoSession) => {
@@ -527,7 +529,7 @@ export default function DemoSessionsManagement() {
               archivedAt?: unknown;
               deletedAt?: unknown;
             };
-            const status = String(data.status || '').toLowerCase();
+            const status = normalizeDemoStatus(data.status);
             const isArchived = status === 'archived' || Boolean(data.archivedAt);
             const isDeleted = Boolean(data.isDeleted) || Boolean(data.deletedAt);
             if (isArchived || isDeleted) return null;
@@ -1040,7 +1042,6 @@ export default function DemoSessionsManagement() {
           followUpCallStatus === 'none' ? null : (followUpCallStatus as DemoFollowUpCallStatus),
         followUpCallCompletedAt: followUpCallCompletedAt || null,
         admissionNotConfirmedReason: admissionNotConfirmedReason.trim() || null,
-        updatedBy: user.uid,
       });
       setConversionTarget(null);
       toast({ title: 'Follow-up updated' });

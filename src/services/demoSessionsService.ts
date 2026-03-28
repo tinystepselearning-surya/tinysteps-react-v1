@@ -1,11 +1,7 @@
 import {
-  arrayUnion,
   collection,
-  doc,
   onSnapshot,
   query,
-  serverTimestamp,
-  updateDoc,
   where,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -47,7 +43,10 @@ const toDemoSession = (id: string, data: Record<string, unknown>): DemoSession =
   ...(data as Omit<DemoSession, 'id'>),
 });
 
-export async function createDemoSession(input: CreateDemoSessionInput, createdBy: string): Promise<string> {
+export async function createDemoSession(
+  input: CreateDemoSessionInput & { leadId?: string | null },
+  createdBy: string,
+): Promise<string> {
   const parentName = input.parentName.trim();
   const parentPhone = input.parentPhone.trim();
   const childName = input.childName.trim();
@@ -63,7 +62,10 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
   }
 
   void createdBy;
-  const result = await callFunction<DemoSessionCallableResponse & { demoId: string }, CreateDemoSessionInput>(
+  const result = await callFunction<
+    DemoSessionCallableResponse & { demoId: string },
+    CreateDemoSessionInput & { leadId?: string | null }
+  >(
     'adminCreateDemoSession',
     {
       parentName,
@@ -78,6 +80,7 @@ export async function createDemoSession(input: CreateDemoSessionInput, createdBy
       requestReceivedDate,
       timezone: input.timezone?.trim() || null,
       adminNotes: input.adminNotes?.trim() || null,
+      leadId: input.leadId?.trim() || null,
     },
   );
   return result.demoId;
@@ -239,7 +242,7 @@ interface UpdateDemoConversionPayload {
   followUpCallStatus?: DemoFollowUpCallStatus | null;
   followUpCallCompletedAt?: string | null;
   admissionNotConfirmedReason?: string | null;
-  updatedBy: string;
+  idempotencyKey?: string;
 }
 
 interface UpdateDemoSessionAdminDetailsPayload {
@@ -299,25 +302,14 @@ export async function updateDemoSessionAdminDetails(
 }
 
 export async function updateDemoConversion(payload: UpdateDemoConversionPayload): Promise<void> {
-  const demoRef = doc(db, DEMO_SESSIONS_COLLECTION, payload.demoId);
-  await updateDoc(demoRef, {
-    conversionStatus: payload.conversionStatus ?? null,
-    recommendedCourse: payload.recommendedCourse ?? null,
-    recommendedClassType: payload.recommendedClassType ?? null,
-    recommendedFrequency: payload.recommendedFrequency ?? null,
-    feeDiscussed: payload.feeDiscussed ?? null,
-    followUpDate: payload.followUpDate ?? null,
-    followUpCallStatus: payload.followUpCallStatus ?? null,
-    followUpCallCompletedAt: payload.followUpCallCompletedAt ?? null,
-    admissionNotConfirmedReason: payload.admissionNotConfirmedReason ?? null,
-    history: arrayUnion({
-      action: 'follow_up_updated',
-      actorId: payload.updatedBy,
-      actorName: null,
-      atMs: Date.now(),
-      note: 'Admin updated conversion follow-up',
-    }),
-    lastUpdatedAt: serverTimestamp(),
-    lastUpdatedBy: payload.updatedBy,
-  });
+  const idempotencyKey =
+    payload.idempotencyKey ||
+    `conversion_${payload.demoId}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  await callFunction<DemoSessionCallableResponse, UpdateDemoConversionPayload>(
+    'adminUpdateDemoConversion',
+    {
+      ...payload,
+      idempotencyKey,
+    },
+  );
 }
