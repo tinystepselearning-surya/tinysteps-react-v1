@@ -1,10 +1,11 @@
 // src/components/common/RoleGate.tsx
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import useAuth from '../../hooks/useAuth';
 import { isSuperUserEmail } from '../../constants/accessControl';
+import { useQuery } from '@tanstack/react-query';
 
 export type Role = 'admin' | 'teacher' | 'parent' | 'learningPartner' | 'kid';
 
@@ -28,53 +29,39 @@ const RoleGate: React.FC<RoleGateProps> = ({
     [user?.email],
   );
 
-  const [latestRole, setLatestRole] = useState<Role | null>(null);
-  const [roleLoading, setRoleLoading] = useState(false);
+  const shouldResolveRoleFromDb = Boolean(user?.uid) && !superUser;
+  const {
+    data: latestRole,
+    isLoading: roleLoading,
+  } = useQuery<Role | null>({
+    queryKey: ['auth-role', user?.uid],
+    enabled: shouldResolveRoleFromDb,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+    retry: 1,
+    queryFn: async () => {
+      if (!user?.uid) return null;
+      const { getFirestore, doc, getDoc } = await import('firebase/firestore');
+      const db = getFirestore();
+      const userRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) return null;
+      const data = snap.data() as { role?: string };
+      const resolved = typeof data.role === 'string' ? data.role : null;
+      return resolved as Role | null;
+    },
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchLatestRole = async () => {
-      if (!user?.uid) return;
-
-      // Superusers don't need a Firestore read
-      if (superUser) return;
-
-      setRoleLoading(true);
-      try {
-        // ✅ Lazy-load Firestore only when RoleGate actually renders
-        const { getFirestore, doc, getDoc } = await import('firebase/firestore');
-
-        const db = getFirestore();
-        const userRef = doc(db, 'users', user.uid);
-        const snap = await getDoc(userRef);
-
-        if (cancelled) return;
-
-        if (snap.exists()) {
-          const data = snap.data() as any;
-          const newRole = (data?.role as Role) ?? null;
-          if (newRole !== latestRole) {
-            setLatestRole(newRole);
-          }
-        } else {
-          if (latestRole !== null) {
-            setLatestRole(null);
-          }
-        }
-      } catch {
-        if (!cancelled && latestRole !== null) setLatestRole(null);
-      } finally {
-        if (!cancelled) setRoleLoading(false);
-      }
-    };
-
-    fetchLatestRole();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.uid, superUser, latestRole]);
+  // While validating from Firestore, don't trust potentially stale token claims.
+  if (shouldResolveRoleFromDb && latestRole === undefined) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center">
+        <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 shadow-sm">
+          Verifying your access…
+        </div>
+      </div>
+    );
+  }
 
   const effectiveRole = latestRole ?? (user?.role as Role | null) ?? null;
   const isAllowed = superUser || (!!effectiveRole && allowedRoles.includes(effectiveRole));

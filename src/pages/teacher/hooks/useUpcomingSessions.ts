@@ -10,6 +10,15 @@ interface UseUpcomingSessionsResult {
   error: Error | null;
 }
 
+const normalizeKidIds = (doc: any): string[] => {
+  const raw =
+    Array.isArray(doc.kidIds) ? doc.kidIds :
+    doc.kidId ? [doc.kidId] :
+    doc.studentId ? [doc.studentId] :
+    [];
+  return raw.filter((id: unknown): id is string => typeof id === 'string' && id.trim().length > 0);
+};
+
 const toTeacherSession = (doc: any): TeacherSession => ({
   id: doc.id,
   teacherId: doc.teacherId,
@@ -20,7 +29,7 @@ const toTeacherSession = (doc: any): TeacherSession => ({
   date: doc.date,
   startTime: doc.startTime,
   endTime: doc.endTime,
-  kidIds: doc.kidIds || [],
+  kidIds: normalizeKidIds(doc),
   status: doc.status || 'scheduled',
   joinUrl: doc.joinUrl,
   notes: doc.notes,
@@ -60,9 +69,6 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
       orderBy('startTime', 'asc')
     );
 
-    const fallbackMessage =
-      'Loading sessions in fallback mode (index not ready). Admin can deploy indexes for faster results.';
-
     const runFallback = async () => {
       try {
         const fallbackSnap = await getDocs(
@@ -80,7 +86,12 @@ export const useUpcomingSessions = (teacherId?: string): UseUpcomingSessionsResu
         });
         setSessions(sorted.slice(0, 200));
         setIsLoading(false);
-        setError(new Error(fallbackMessage));
+        setError(null);
+        if (import.meta.env.DEV) {
+          console.warn(
+            'useUpcomingSessions: loaded fallback data because classSessions index is not ready'
+          );
+        }
       } catch (fallbackErr) {
         setError(fallbackErr as Error);
         setIsLoading(false);

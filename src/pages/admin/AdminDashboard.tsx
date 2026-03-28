@@ -6,8 +6,7 @@ import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import { ClipboardList, GraduationCap, LineChart, Users2, Wallet } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useQuery } from '@tanstack/react-query';
-import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { db, functions } from '../../lib/firebaseConfig';
 import { httpsCallable } from 'firebase/functions';
@@ -30,7 +29,6 @@ import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManageme
 import DemoSessionsManagement from './DemoSessionsManagement';
 import LeadsEnquiriesManagement from './LeadsEnquiriesManagement';
 import TodaysNotifications from './TodaysNotifications';
-import type { AdminStats } from './Analytics';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
 import ParentPayments from './ParentPayments';
@@ -38,32 +36,7 @@ import { isSuperUserEmail } from '../../constants/accessControl';
 import AdminOverviewCard from '../../components/admin/AdminOverviewCard';
 import MobileTabBar, { type MobileTabBarItem } from '../../components/common/MobileTabBar';
 import HolidayCalendar2026 from '../../components/common/HolidayCalendar2026';
-
-// ---------- Admin stats fetcher ----------
-const fetchAdminStats = async (): Promise<AdminStats> => {
-  try {
-    const [usersSnap, studentsSnap, coursesSnap] = await Promise.all([
-      getDocs(collection(db, 'users')),
-      getDocs(collection(db, 'kids')),
-      getDocs(collection(db, 'courses')),
-    ]);
-
-    return {
-      totalUsers: usersSnap.size,
-      totalStudents: studentsSnap.size,
-      totalCourses: coursesSnap.size,
-      activeSessionsToday: 0,
-    };
-  } catch (err: any) {
-    console.warn('Failed to fetch admin stats:', err);
-    return {
-      totalUsers: 0,
-      totalStudents: 0,
-      totalCourses: 0,
-      activeSessionsToday: 0,
-    };
-  }
-};
+import { useAdminStats } from '../../hooks/useAdminStats';
 
 const ROLE_SHORTCUTS = [
   { id: 'admin', label: 'Admin', path: '/surya' },
@@ -302,10 +275,6 @@ export default function AdminDashboard() {
   const canViewAdmin = isSuperUser || user?.role === 'admin';
 
   useEffect(() => {
-    console.log('✅ AdminDashboard mounted');
-  }, []);
-
-  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabFromUrl = params.get('tab');
     const validTabs = new Set([
@@ -336,15 +305,7 @@ export default function AdminDashboard() {
     }
   }, [location.pathname, location.search]);
 
-  const {
-    data: stats,
-    isLoading: statsLoading,
-    error: statsError,
-  } = useQuery<AdminStats>({
-    queryKey: ['adminStats'],
-    queryFn: fetchAdminStats,
-    enabled: canViewAdmin,
-  });
+  const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(canViewAdmin);
 
   if (authLoading) return <AccessMessage>Checking your permissions...</AccessMessage>;
   if (!user) return <AccessMessage>Login required.</AccessMessage>;

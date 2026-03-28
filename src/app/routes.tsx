@@ -1,6 +1,14 @@
 // src/app/routes.tsx
 import { lazy, Suspense, useEffect, useState, type FC } from 'react';
-import { createBrowserRouter, Outlet, Navigate, useLocation, redirect, type LoaderFunctionArgs } from 'react-router-dom';
+import {
+  createBrowserRouter,
+  Outlet,
+  Navigate,
+  useLocation,
+  redirect,
+  type LoaderFunctionArgs,
+  type RouteObject,
+} from 'react-router-dom';
 
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const Login = lazy(() => import('../pages/Login'));
@@ -104,11 +112,12 @@ import PhonePeCallback from '../pages/payments/PhonePeCallback';
 // Layout
 import Header from '../components/common/Header';
 import Footer from '../components/common/Footer';
-import RoleGate from '../components/common/RoleGate';
+import RoleGate, { type Role } from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
 import BackToTopButton from '../components/common/BackToTopButton';
 import ScrollToTop from '../components/common/ScrollToTop';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
+const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
 
 const APP_ROUTE_PREFIXES = [
   '/surya',
@@ -167,6 +176,33 @@ const legacyKidDashboardRedirectLoader = ({ request, params }: LoaderFunctionArg
   return redirect(buildMissionShellTarget(url.search, childId));
 };
 
+const withRoleGate = (allowedRoles: Role[], loginPath: string) => (
+  <Suspense fallback={routeLoaderFallback}>
+    <RoleGate
+      allowedRoles={allowedRoles}
+      loginPath={loginPath}
+    />
+  </Suspense>
+);
+
+const teacherRouteChildren: RouteObject[] = [
+  { index: true, element: <TeacherDashboard /> },
+  { path: 'demo-assignments', element: <Navigate to="/teacher?tab=demo-assignments" replace /> },
+  { path: 'lessons', element: <Navigate to="/teacher?tab=lessons" replace /> },
+  {
+    path: 'students/:kidId/topic-progress',
+    element: <TeacherStudentTopicProgressPage />,
+  },
+];
+
+const devOnlyRoutes: RouteObject[] = import.meta.env.DEV
+  ? [
+      { path: 'dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
+      { path: 'debug-lessons', element: <DebugLessonLibrary /> },
+      { path: 'teacher/lessons-test', element: <LessonLibraryPage /> },
+    ]
+  : [];
+
 const Layout: FC = () => {
   const location = useLocation();
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(location.pathname, prefix));
@@ -214,7 +250,7 @@ const Layout: FC = () => {
             : `min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
         }
       >
-        <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
+        <Suspense fallback={routeLoaderFallback}>
           <Outlet />
         </Suspense>
       </main>
@@ -321,16 +357,7 @@ const router = createBrowserRouter(
         { path: 'kid/login', element: <Navigate to="/parent/login" replace /> },
         { path: 'unauthorized', element: <UnauthorizedPage /> },
 
-        // Dev helper routes removed: in-app seeding pages have been deleted
-        // Temporary dev test route to validate client routing quickly
-        { path: 'dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
-        { path: '/dev/seed-test', element: <div style={{ padding: 20 }}>Dev route working — seed-test</div> },
-        // DEBUG: Direct lesson library test (bypasses all routing issues)
-        { path: 'debug-lessons', element: <DebugLessonLibrary /> },
-        // Temporary: public test route for Lesson Library (bypasses RoleGate)
-        { path: 'teacher/lessons-test', element: <LessonLibraryPage /> },
-        // Also accept absolute path variant to avoid any client-side route normalization issues
-        { path: '/teacher/lessons-test', element: <LessonLibraryPage /> },
+        ...devOnlyRoutes,
         // Canonicalize legacy child entry paths to English Excellence Mission
         { path: '/kids', loader: missionShellRedirectLoader },
         { path: '/kids/games', loader: missionShellRedirectLoader },
@@ -338,14 +365,7 @@ const router = createBrowserRouter(
         // ---------- Admin area – ONLY under /surya ----------
         {
           path: 'surya',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['admin']}
-                loginPath="/surya/login"
-              />
-            </Suspense>
-          ),
+          element: withRoleGate(['admin'], '/surya/login'),
           children: [
             { index: true, element: <AdminDashboard /> },
             { path: 'analytics', element: <AdminDashboard /> },
@@ -359,46 +379,14 @@ const router = createBrowserRouter(
         // ---------- Teacher dashboard ----------
         {
           path: 'teacher',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['teacher']}
-                loginPath="/teacher/login"
-              />
-            </Suspense>
-          ),
-          children: [
-            { index: true, element: <TeacherDashboard /> },
-            { path: 'demo-assignments', element: <Navigate to="/teacher?tab=demo-assignments" replace /> },
-            // Redirect legacy direct lesson route into dashboard with tab param
-            { path: 'lessons', element: <Navigate to="/teacher?tab=lessons" replace /> },
-            {
-              path: 'students/:kidId/topic-progress',
-              element: <TeacherStudentTopicProgressPage />,
-            },
-          ],
+          element: withRoleGate(['teacher'], '/teacher/login'),
+          children: teacherRouteChildren,
         },
         // Teacher routes with :teacherId param (supports sidebar links)
         {
           path: 'teacher/:teacherId',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['teacher']}
-                loginPath="/teacher/login"
-              />
-            </Suspense>
-          ),
-          children: [
-            { index: true, element: <TeacherDashboard /> },
-            { path: 'demo-assignments', element: <Navigate to="/teacher?tab=demo-assignments" replace /> },
-            // Redirect parametric teacher lesson URL into canonical dashboard view
-            { path: 'lessons', element: <Navigate to="/teacher?tab=lessons" replace /> },
-            {
-              path: 'students/:kidId/topic-progress',
-              element: <TeacherStudentTopicProgressPage />,
-            },
-          ],
+          element: withRoleGate(['teacher'], '/teacher/login'),
+          children: teacherRouteChildren,
         },
         // Legacy public /teachers URL should resolve to the canonical team page
         { path: 'teachers', element: <Navigate to="/team" replace /> },
@@ -406,14 +394,7 @@ const router = createBrowserRouter(
         // ---------- Parent dashboard + payments ----------
         {
           path: 'parent',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['parent']}
-                loginPath="/parent/login"
-              />
-            </Suspense>
-          ),
+          element: withRoleGate(['parent'], '/parent/login'),
           children: [
             { index: true, element: <ParentDashboard /> },
             { path: 'profile', element: <ParentProfile /> },
@@ -428,14 +409,7 @@ const router = createBrowserRouter(
         // ---------- Kids Portal (standalone, kid-friendly) ----------
         {
           path: 'kids',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['kid', 'parent']}
-                loginPath="/parent/login"
-              />
-            </Suspense>
-          ),
+          element: withRoleGate(['kid', 'parent'], '/parent/login'),
           children: [
             { index: true, loader: missionShellRedirectLoader },
             // Legacy kids shell paths retained as aliases only.
@@ -453,19 +427,19 @@ const router = createBrowserRouter(
             { path: 'games/phonics/cvc-word-reader', element: <CvcWordReaderGame /> },
             { path: 'games/phonics/cvc-word-reader/make-a-word', element: <MakeAWordRimeGame /> },
             { path: 'games/phonics/spelling-practice', element: <MakeAWordRimeGame /> },
-        { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
-        { path: 'games/grammar/build-better-sentences', element: <BuildBetterSentencesReorder /> },
-        { path: 'games/grammar/build-better-sentences/fill-missing-word', element: <BuildBetterSentencesFillBlank /> },
-        { path: 'games/grammar/build-better-sentences/choose-better-sentence', element: <BuildBetterSentencesChooseBetter /> },
-        { path: 'games/grammar/build-better-sentences/expand-sentence', element: <BuildBetterSentencesExpandSentence /> },
-        { path: 'games/grammar/grammar-fix/spot-one-error', element: <GrammarFixSpotOneError /> },
-        { path: 'games/grammar/grammar-fix/fix-one-error', element: <GrammarFixFixOneError /> },
-        { path: 'games/grammar/grammar-fix/fix-full-sentence', element: <GrammarFixFixFullSentence /> },
-        { path: 'games/grammar/grammar-fix/timed-correction', element: <GrammarFixTimedCorrection /> },
-        { path: 'games/grammar/collocation-builder/match-pairs', element: <CollocationBuilderMatchPairs /> },
-        { path: 'games/grammar/collocation-builder/choose-natural-pair', element: <CollocationBuilderChooseNaturalPair /> },
-        { path: 'games/grammar/collocation-builder/fill-sentence', element: <CollocationBuilderFillSentence /> },
-        { path: 'games/reading/story-reading', element: <StoryReadingGame /> },
+            { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
+            { path: 'games/grammar/build-better-sentences', element: <BuildBetterSentencesReorder /> },
+            { path: 'games/grammar/build-better-sentences/fill-missing-word', element: <BuildBetterSentencesFillBlank /> },
+            { path: 'games/grammar/build-better-sentences/choose-better-sentence', element: <BuildBetterSentencesChooseBetter /> },
+            { path: 'games/grammar/build-better-sentences/expand-sentence', element: <BuildBetterSentencesExpandSentence /> },
+            { path: 'games/grammar/grammar-fix/spot-one-error', element: <GrammarFixSpotOneError /> },
+            { path: 'games/grammar/grammar-fix/fix-one-error', element: <GrammarFixFixOneError /> },
+            { path: 'games/grammar/grammar-fix/fix-full-sentence', element: <GrammarFixFixFullSentence /> },
+            { path: 'games/grammar/grammar-fix/timed-correction', element: <GrammarFixTimedCorrection /> },
+            { path: 'games/grammar/collocation-builder/match-pairs', element: <CollocationBuilderMatchPairs /> },
+            { path: 'games/grammar/collocation-builder/choose-natural-pair', element: <CollocationBuilderChooseNaturalPair /> },
+            { path: 'games/grammar/collocation-builder/fill-sentence', element: <CollocationBuilderFillSentence /> },
+            { path: 'games/reading/story-reading', element: <StoryReadingGame /> },
             { path: 'games/reading/comprehension', element: <ComprehensionGame /> },
             { path: 'games/reading/new-words', element: <NewWordsFromReading /> },
             { path: 'games/grammar', loader: missionShellRedirectLoader },
@@ -477,14 +451,7 @@ const router = createBrowserRouter(
         // ---------- Learning Partner dashboard ----------
         {
           path: 'learning-partner/dashboard',
-          element: (
-            <Suspense fallback={<div className="px-6 py-10 text-sm text-gray-600">Loading…</div>}>
-              <RoleGate
-                allowedRoles={['learningPartner']}
-                loginPath="/learning-partner/login"
-              />
-            </Suspense>
-          ),
+          element: withRoleGate(['learningPartner'], '/learning-partner/login'),
           children: [{ index: true, element: <LPDashboard /> }],
         },
         { path: 'learningpartner', element: <Navigate to="/learning-partner" replace /> },

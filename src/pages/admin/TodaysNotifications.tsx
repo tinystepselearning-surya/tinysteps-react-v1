@@ -487,12 +487,19 @@ const applyTemplatePlaceholders = (
   },
 ): string => {
   const safeTemplate = String(template || '');
-  return safeTemplate
-    .replaceAll('[Parent Name]', context.parentName || 'Parent')
-    .replaceAll('[Teacher Name]', context.teacherName || 'Teacher')
-    .replaceAll('[Child Name]', context.childName || 'your child')
-    .replaceAll('[Time]', context.time || 'Time TBD')
-    .replaceAll('[Course]', context.course || 'Tiny Steps class');
+  const replaceToken = (source: string, token: string, value: string) =>
+    source.split(token).join(value);
+
+  return [
+    ['[Parent Name]', context.parentName || 'Parent'],
+    ['[Teacher Name]', context.teacherName || 'Teacher'],
+    ['[Child Name]', context.childName || 'your child'],
+    ['[Time]', context.time || 'Time TBD'],
+    ['[Course]', context.course || 'Tiny Steps class'],
+  ].reduce(
+    (message, [token, value]) => replaceToken(message, token, value),
+    safeTemplate,
+  );
 };
 
 const resolvePhoneInfo = (userLike: UserDoc | undefined): ResolvedPhoneInfo => {

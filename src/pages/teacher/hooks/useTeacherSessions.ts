@@ -120,9 +120,6 @@ export const useTeacherSessions = (
     );
 
     let cancelled = false;
-    const fallbackMessage =
-      'Loading sessions in fallback mode (index not ready). Admin can deploy indexes for faster results.';
-
     const runFallback = async () => {
       try {
         const fallbackSnap = await getDocs(
@@ -143,8 +140,13 @@ export const useTeacherSessions = (
         });
         if (!cancelled) {
           setSessions(sorted.slice(0, 200));
-          setError(new Error(fallbackMessage));
+          setError(null);
           setIsLoading(false);
+          if (import.meta.env.DEV) {
+            console.warn(
+              'useTeacherSessions: loaded fallback data because classSessions index is not ready'
+            );
+          }
         }
       } catch (fallbackErr) {
         if (!cancelled) {

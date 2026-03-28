@@ -1,7 +1,23 @@
 // React default import removed
-import { Button } from '@components/ui/button';
 import { cn } from '@components/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import {
+  BellDot,
+  BookCopy,
+  BookOpen,
+  ClipboardList,
+  ContactRound,
+  CreditCard,
+  GraduationCap,
+  Handshake,
+  LayoutDashboard,
+  LineChart,
+  Settings,
+  UserCog,
+  Users,
+  Wallet,
+  CalendarDays,
+} from 'lucide-react';
 
 interface SidebarProps {
   selectedTab: string;
@@ -13,45 +29,53 @@ interface SidebarProps {
 export default function Sidebar({ selectedTab, onTabChange, className, onNavigate }: SidebarProps) {
   const navigate = useNavigate();
   const tabs = [
-    { id: 'users', label: 'User Management', icon: '👥' },
-    { id: 'students', label: 'Student Management', icon: '🎓' },
-    { id: 'leads', label: 'Leads & Enquiries', icon: '📥' },
-    { id: 'enrollments', label: 'Enrollment Management', icon: '📝' },
-    { id: 'relationships', label: 'Relationship Management', icon: '🤝' },
-    { id: 'courses', label: 'Course Management', icon: '📚' },
-    { id: 'demo-sessions', label: 'Demo Sessions', icon: '🎯' },
-    { id: 'today-notifications', label: 'Sessions Management', icon: '💬' },
-    { id: 'lessons', label: 'Lesson Library', icon: '📖' },
-    { id: 'class-recordings', label: 'Class Recordings', icon: '🎬' },
-    { id: 'analytics', label: 'Analytics', icon: '📊' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'holidays', label: 'Holiday Calendar', icon: '🗓️' },
-    { id: 'teacher-payments', label: 'Teacher Payments', icon: '💸' },
-    { id: 'parent-payments', label: 'Parent Payments', icon: '💳' },
+    { id: 'users', label: 'User Management', icon: UserCog },
+    { id: 'students', label: 'Student Management', icon: GraduationCap },
+    { id: 'leads', label: 'Leads & Enquiries', icon: ContactRound },
+    { id: 'enrollments', label: 'Enrollment Management', icon: ClipboardList },
+    { id: 'relationships', label: 'Relationship Management', icon: Handshake },
+    { id: 'courses', label: 'Course Management', icon: BookCopy },
+    { id: 'demo-sessions', label: 'Demo Sessions', icon: LayoutDashboard },
+    { id: 'today-notifications', label: 'Sessions Management', icon: BellDot },
+    { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
+    { id: 'class-recordings', label: 'Class Recordings', icon: Users },
+    { id: 'analytics', label: 'Analytics', icon: LineChart },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'holidays', label: 'Holiday Calendar', icon: CalendarDays },
+    { id: 'teacher-payments', label: 'Teacher Payments', icon: Wallet },
+    { id: 'parent-payments', label: 'Parent Payments', icon: CreditCard },
   ];
 
   return (
-    <aside className={cn('w-60 border-r border-slate-700 bg-slate-900 text-white px-3 py-4', className)}>
-      <h2 className="mb-4 px-2 text-xl font-semibold tracking-tight">Admin Panel</h2>
+    <aside className={cn('w-64 border-r border-slate-700 bg-slate-950 text-white px-3 py-4', className)}>
+      <h2 className="mb-1 px-2 text-xl font-semibold tracking-tight">Admin Panel</h2>
+      <p className="mb-4 px-2 text-xs uppercase tracking-[0.2em] text-slate-400">Operations Console</p>
       <nav className="space-y-1">
         {tabs.map((tab) => (
-          <Button
+          <button
             key={tab.id}
-            variant={selectedTab === tab.id ? 'default' : 'ghost'}
-            className={`h-9 w-full justify-start rounded-lg px-3 text-left text-sm font-medium ${
+            type="button"
+            className={cn(
+              'flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition',
               selectedTab === tab.id
-                ? 'bg-blue-600 hover:bg-blue-700'
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            }`}
+                ? 'bg-blue-600/90 text-white shadow-sm hover:bg-blue-500'
+                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+            )}
             onClick={() => {
               onTabChange(tab.id);
               navigate(`/surya?tab=${tab.id}`);
               onNavigate?.();
             }}
           >
-            <span className="mr-3">{tab.icon}</span>
-            {tab.label}
-          </Button>
+            <tab.icon
+              className={cn(
+                'h-4 w-4',
+                selectedTab === tab.id ? 'text-white' : 'text-slate-400'
+              )}
+              aria-hidden="true"
+            />
+            <span className="truncate">{tab.label}</span>
+          </button>
         ))}
       </nav>
     </aside>

@@ -96,6 +96,17 @@ const PARENT_MOBILE_TABS: MobileTabBarItem[] = [
   { id: "games-progress", label: "Games", icon: Gamepad2 },
 ];
 
+const shouldDebugParentDashboard =
+  import.meta.env.DEV &&
+  typeof window !== "undefined" &&
+  (window as any).__TS_DEBUG_PARENT_DASHBOARD__ === true;
+
+const debugParentDashboard = (...args: unknown[]) => {
+  if (shouldDebugParentDashboard) {
+    console.debug(...args);
+  }
+};
+
 function safeTab(value: string | null): TabKey {
   const validTabs: TabKey[] = [
     "dashboard",
@@ -2007,18 +2018,11 @@ export default function ParentDashboard() {
     refetchOnMount: "always",
     queryFn: async (): Promise<KidSession[]> => {
       if (!selectedKidId || !user?.uid) return [];
-      const shouldDebugParentDashboard =
-        import.meta.env.DEV &&
-        typeof window !== "undefined" &&
-        (window as any).__TS_DEBUG_PARENT_DASHBOARD__ === true;
-
-      if (shouldDebugParentDashboard) {
-        console.debug("🔍 [ParentDashboard] Fetching sessions for:", {
-          selectedKidId,
-          parentUid: user.uid,
-          parentEmail: user.email,
-        });
-      }
+      debugParentDashboard("🔍 [ParentDashboard] Fetching sessions for:", {
+        selectedKidId,
+        parentUid: user.uid,
+        parentEmail: user.email,
+      });
 
       const classSessionsCol = collection(db, "classSessions");
 
@@ -2030,12 +2034,10 @@ export default function ParentDashboard() {
           where("parentId", "==", user.uid)
         );
         const snapA = await getDocs(qA);
-        if (shouldDebugParentDashboard) {
-          console.debug("✅ [Query A] classSessions kidIds array-contains + parentId:", {
-            count: snapA.size,
-            docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
-          });
-        }
+        debugParentDashboard("✅ [Query A] classSessions kidIds array-contains + parentId:", {
+          count: snapA.size,
+          docs: snapA.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidIds: d.data().kidIds }))
+        });
 
         // Fallback: sessions.kidId == kid (older schema) AND parentId matches
         const qB = query(
@@ -2044,21 +2046,17 @@ export default function ParentDashboard() {
           where("parentId", "==", user.uid)
         );
         const snapB = await getDocs(qB);
-        if (shouldDebugParentDashboard) {
-          console.debug("✅ [Query B] classSessions kidId equality + parentId:", {
-            count: snapB.size,
-            docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
-          });
-        }
+        debugParentDashboard("✅ [Query B] classSessions kidId equality + parentId:", {
+          count: snapB.size,
+          docs: snapB.docs.map(d => ({ id: d.id, parentId: d.data().parentId, kidId: d.data().kidId }))
+        });
 
         const map = new Map<string, KidSession>();
         snapA.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
         snapB.docs.forEach((d) => map.set(d.id, { id: d.id, ...(d.data() as any) }));
 
         const all = Array.from(map.values());
-        if (shouldDebugParentDashboard) {
-          console.debug("📊 [Final Result] Total unique sessions:", all.length);
-        }
+        debugParentDashboard("📊 [Final Result] Total unique sessions:", all.length);
 
         // Sort by start date (best effort)
         all.sort((a, b) => {
@@ -2937,7 +2935,7 @@ export default function ParentDashboard() {
       topicName: doc?.topicName ?? doc?.label ?? null,
     }));
     const courseDebug = phonicsProgressByCourse[0];
-    console.debug("[Curriculum Debug]", {
+    debugParentDashboard("[Curriculum Debug]", {
       displayCourseIdentifier: displayCourseId,
       enrolledCourseIdentifiers: enrolledCourseIds,
       sessionCourseIdentifiers: sessionsPhonicsCourseIds,

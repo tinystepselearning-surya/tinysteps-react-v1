@@ -10,57 +10,65 @@ import * as Sentry from '@sentry/react';
 import { ErrorFallback } from './components/ErrorFallback';
 import { initAnalytics } from './lib/analytics';
 
-// TEMP DEBUG: track last JS chunk loading for #426 diagnosis
-(() => {
-  if ((window as any).__ts_lazy_debug) return;
-  (window as any).__ts_lazy_debug = true;
-  (window as any).__ts_last_js_url = null;
+const shouldEnableLazyDebug =
+  import.meta.env.DEV &&
+  typeof window !== 'undefined' &&
+  (window as any).__TS_ENABLE_LAZY_DEBUG__ === true;
 
-  // Track fetch-based chunk loads
-  const origFetch = window.fetch;
-  window.fetch = async (...args: Parameters<typeof fetch>) => {
-    try {
-      const url = String(args?.[0] ?? '');
-      if (url.includes('.js')) {
-        (window as any).__ts_last_js_url = url;
-        console.log('[TS_DEBUG] Lazy chunk loading via fetch:', url);
+if (shouldEnableLazyDebug) {
+  if (!(window as any).__ts_lazy_debug) {
+    (window as any).__ts_lazy_debug = true;
+    (window as any).__ts_last_js_url = null;
+
+    // Track fetch-based chunk loads only when explicitly debugging.
+    const origFetch = window.fetch;
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      try {
+        const url = String(args?.[0] ?? '');
+        if (url.includes('.js')) {
+          (window as any).__ts_last_js_url = url;
+          console.log('[TS_DEBUG] Lazy chunk loading via fetch:', url);
+        }
+      } catch {
+        // Ignore instrumentation failures.
       }
-    } catch {}
-    return origFetch(...args);
-  };
+      return origFetch(...args);
+    };
 
-  // Track <script> tag chunk loads (Vite dynamic import)
-  const origCreate = document.createElement.bind(document);
-  document.createElement = ((tagName: any, options?: any) => {
-    const el = origCreate(tagName, options) as any;
-    if (String(tagName).toLowerCase() === 'script') {
-      const desc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
-      if (desc?.set) {
-        Object.defineProperty(el, 'src', {
-          set(v) {
-            try {
-              if (String(v).includes('.js')) {
-                (window as any).__ts_last_js_url = String(v);
-                console.log('[TS_DEBUG] Lazy chunk loading via script:', String(v));
+    // Track <script> chunk loads (Vite dynamic import).
+    const origCreate = document.createElement.bind(document);
+    document.createElement = ((tagName: any, options?: any) => {
+      const el = origCreate(tagName, options) as any;
+      if (String(tagName).toLowerCase() === 'script') {
+        const desc = Object.getOwnPropertyDescriptor(HTMLScriptElement.prototype, 'src');
+        if (desc?.set) {
+          Object.defineProperty(el, 'src', {
+            set(v) {
+              try {
+                if (String(v).includes('.js')) {
+                  (window as any).__ts_last_js_url = String(v);
+                  console.log('[TS_DEBUG] Lazy chunk loading via script:', String(v));
+                }
+              } catch {
+                // Ignore instrumentation failures.
               }
-            } catch {}
-            return desc.set!.call(this, v);
-          },
-          get() {
-            return desc.get!.call(this);
-          },
-        });
+              return desc.set!.call(this, v);
+            },
+            get() {
+              return desc.get!.call(this);
+            },
+          });
+        }
       }
-    }
-    return el;
-  }) as any;
+      return el;
+    }) as any;
 
-  // Log on any error
-  window.addEventListener('error', (e) => {
-    console.error('[TS_DEBUG] Error event - last JS:', (window as any).__ts_last_js_url);
-    console.error('[TS_DEBUG] Error message:', e.message);
-  });
-})();
+    window.addEventListener('error', (e) => {
+      console.error('[TS_DEBUG] Error event - last JS:', (window as any).__ts_last_js_url);
+      console.error('[TS_DEBUG] Error message:', e.message);
+    });
+  }
+}
 
 initSentry();
 initAnalytics();

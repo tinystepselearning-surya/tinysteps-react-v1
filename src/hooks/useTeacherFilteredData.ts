@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, type QueryDocumentSnapshot } from 'firebase/firestore';
 import { db } from '../lib/firebaseConfig';
 import { useAuthStore } from '../store/useAuthStore';
 
@@ -19,42 +19,68 @@ export function useTeacherFilteredStudents() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user || user.role !== 'teacher') {
+    if (!user) {
+      setStudents([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    if (user.role !== 'teacher') {
+      setStudents([]);
       setError('Unauthorized role');
       setLoading(false);
       return;
     }
 
-    // Query kids assigned to this teacher
-    const studentsQuery = query(
+    setLoading(true);
+    setError(null);
+
+    // Keep compatibility with both legacy teacherId and canonical teacherIds array.
+    const directTeacherQuery = query(
       collection(db, 'kids'),
       where('teacherId', '==', user.uid)
     );
+    const teacherIdsQuery = query(
+      collection(db, 'kids'),
+      where('teacherIds', 'array-contains', user.uid)
+    );
 
-    const unsubscribe = onSnapshot(
-      studentsQuery,
+    let latestDirectDocs: QueryDocumentSnapshot[] = [];
+    let latestTeacherIdsDocs: QueryDocumentSnapshot[] = [];
+
+    const toFilteredStudent = (docSnap: QueryDocumentSnapshot): FilteredStudent => {
+      const data = docSnap.data() as Record<string, any>;
+      const resolvedName =
+        data.fullName ||
+        data.studentName ||
+        data.displayName ||
+        data.name ||
+        '';
+      return {
+        uid: docSnap.id,
+        fullName: resolvedName,
+        studentName: resolvedName,
+        grade: data.grade,
+        progressStatus: data.progressStatus || 'on_track',
+        lastSessionDate: data.lastSessionDate,
+      };
+    };
+
+    const mergeAndPublish = () => {
+      const byId = new Map<string, FilteredStudent>();
+      [...latestDirectDocs, ...latestTeacherIdsDocs].forEach((docSnap) => {
+        byId.set(docSnap.id, toFilteredStudent(docSnap));
+      });
+      setStudents(Array.from(byId.values()));
+      setLoading(false);
+      setError(null);
+    };
+
+    const unsubscribeDirect = onSnapshot(
+      directTeacherQuery,
       (snapshot) => {
-        const studentsList: FilteredStudent[] = snapshot.docs.map(doc => ({
-          uid: doc.id,
-          fullName:
-            doc.data().fullName ||
-            doc.data().studentName ||
-            doc.data().displayName ||
-            doc.data().name ||
-            '',
-          studentName:
-            doc.data().fullName ||
-            doc.data().studentName ||
-            doc.data().displayName ||
-            doc.data().name ||
-            '',
-          grade: doc.data().grade,
-          progressStatus: doc.data().progressStatus || 'on_track',
-          lastSessionDate: doc.data().lastSessionDate,
-        }));
-        setStudents(studentsList);
-        setLoading(false);
-        setError(null);
+        latestDirectDocs = snapshot.docs;
+        mergeAndPublish();
       },
       (err) => {
         setError(err.message);
@@ -63,8 +89,24 @@ export function useTeacherFilteredStudents() {
       }
     );
 
-    return () => unsubscribe();
-  }, [user]);
+    const unsubscribeTeacherIds = onSnapshot(
+      teacherIdsQuery,
+      (snapshot) => {
+        latestTeacherIdsDocs = snapshot.docs;
+        mergeAndPublish();
+      },
+      (err) => {
+        setError(err.message);
+        setLoading(false);
+        console.error('Error fetching students:', err);
+      }
+    );
+
+    return () => {
+      unsubscribeDirect();
+      unsubscribeTeacherIds();
+    };
+  }, [user?.uid, user?.role]);
 
   return { students, loading, error };
 }
