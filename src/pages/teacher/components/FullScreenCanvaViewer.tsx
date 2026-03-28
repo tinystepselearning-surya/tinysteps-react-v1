@@ -56,6 +56,7 @@ type AnnotateSticker = {
   emoji: string;
   size: string;
 };
+type WhiteboardTool = 'pen' | 'eraser';
 const ANNOTATE_QUICK_COLORS = [
   { label: 'Blue',   value: '#2563EB' },
   { label: 'Red',    value: '#DC2626' },
@@ -170,6 +171,8 @@ export function FullScreenCanvaViewer({
   const [annotateSize, setAnnotateSize] = useState(6);
   const [glitterMode, setGlitterMode] = useState(false);
   const [annotateShowPanel, setAnnotateShowPanel] = useState(false);
+  const [annotatePaletteOpen, setAnnotatePaletteOpen] = useState(false);
+  const [annotateSizeOpen, setAnnotateSizeOpen] = useState(false);
   // strokes + stickers stored in refs so canvas redraw never triggers re-render
   const strokesRef = useRef<AnnotateStroke[]>([]);
   const stickersRef = useRef<AnnotateSticker[]>([]);
@@ -181,12 +184,24 @@ export function FullScreenCanvaViewer({
   const glitterIndexRef = useRef(0);
   // ─────────────────────────────────────────────────────────────────────────
 
+  // ── In-app whiteboard ────────────────────────────────────────────────────
+  const [whiteboardOpen, setWhiteboardOpen] = useState(false);
+  const [whiteboardTool, setWhiteboardTool] = useState<WhiteboardTool>('pen');
+  const [whiteboardColor, setWhiteboardColor] = useState('#0f172a');
+  const [whiteboardSize, setWhiteboardSize] = useState(6);
+  const whiteboardCanvasRef = useRef<HTMLCanvasElement>(null);
+  const whiteboardStrokesRef = useRef<AnnotateStroke[]>([]);
+  const whiteboardCurrentStrokeRef = useRef<AnnotateStroke | null>(null);
+  const whiteboardIsDrawingRef = useRef(false);
+  // ─────────────────────────────────────────────────────────────────────────
+
   const isLocalDebug =
     import.meta.env.DEV || (typeof window !== 'undefined' && window.location.hostname === 'localhost');
 
   const openedAtRef = useRef<number>(Date.now());
   const hasWrittenOpenLog = useRef(false);
   const viewerRef = useRef<HTMLDivElement>(null);
+  const canvaIframeRef = useRef<HTMLIFrameElement>(null);
   const lastToastTimeRef = useRef<number>(0);
   const lastBlockedActionAtMsRef = useRef<number | null>(null);
   const blockedActionTypeCountsRef = useRef<Record<ViolationType, number>>({
@@ -203,6 +218,17 @@ export function FullScreenCanvaViewer({
     TAB_HIDDEN: 0,
     WINDOW_BLUR: 0,
   });
+
+  const focusCanvaFrame = useCallback(() => {
+    const frame = canvaIframeRef.current;
+    if (!frame) return;
+    frame.focus();
+    try {
+      frame.contentWindow?.focus();
+    } catch {
+      // cross-origin focus can fail silently in some browsers
+    }
+  }, []);
 
   // Curated Canva-style palette: 8 bright, saturated, non-muddy colours
   const CONFETTI_COLORS = [
@@ -409,11 +435,11 @@ export function FullScreenCanvaViewer({
       let glitIdx = 0;
       for (let i = 1; i < stroke.points.length; i++) {
         const from = stroke.points[i - 1];
-        const to   = stroke.points[i];
+        const to = stroke.points[i];
         ctx2d.beginPath();
-        ctx2d.lineWidth  = stroke.size;
-        ctx2d.lineCap    = 'round';
-        ctx2d.lineJoin   = 'round';
+        ctx2d.lineWidth = stroke.size;
+        ctx2d.lineCap = 'round';
+        ctx2d.lineJoin = 'round';
         ctx2d.strokeStyle = stroke.glitter
           ? GLITTER_COLORS[glitIdx % GLITTER_COLORS.length]
           : stroke.color;
@@ -452,19 +478,18 @@ export function FullScreenCanvaViewer({
     const pt = canvasPos(e);
     const stroke = currentStrokeRef.current;
     const prev = stroke.points[stroke.points.length - 1];
-    // skip near-duplicate points for perf
-    const dx = pt.x - prev.x, dy = pt.y - prev.y;
+    const dx = pt.x - prev.x;
+    const dy = pt.y - prev.y;
     if (dx * dx + dy * dy < 4) return;
     stroke.points.push(pt);
-    // incremental draw of last segment only (fast path)
     const canvas = annotateCanvasRef.current;
     if (!canvas) return;
     const ctx2d = canvas.getContext('2d');
     if (!ctx2d) return;
     ctx2d.beginPath();
-    ctx2d.lineWidth  = stroke.size;
-    ctx2d.lineCap    = 'round';
-    ctx2d.lineJoin   = 'round';
+    ctx2d.lineWidth = stroke.size;
+    ctx2d.lineCap = 'round';
+    ctx2d.lineJoin = 'round';
     ctx2d.strokeStyle = stroke.glitter
       ? GLITTER_COLORS[glitterIndexRef.current % GLITTER_COLORS.length]
       : stroke.color;
@@ -482,7 +507,8 @@ export function FullScreenCanvaViewer({
       strokesRef.current = [...strokesRef.current, currentStrokeRef.current];
     }
     currentStrokeRef.current = null;
-  }, []);
+    focusCanvaFrame();
+  }, [focusCanvaFrame]);
 
   const onCanvasClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!annotateEnabled) return;
@@ -491,15 +517,14 @@ export function FullScreenCanvaViewer({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     const emoji = annotateTool === 'star' ? '⭐' : '❤️';
-    // size mapped from pen size: 1.5rem – 4rem
     const sizeMap: Record<number, string> = { 3: '2rem', 6: '2.8rem', 10: '3.5rem', 14: '4.5rem' };
     const size = sizeMap[annotateSize] ?? '3rem';
     stickersRef.current = [...stickersRef.current, { x, y, emoji, size }];
     setStickerRenderKey((k) => k + 1);
-  }, [annotateEnabled, annotateTool, annotateSize]);
+    focusCanvaFrame();
+  }, [annotateEnabled, annotateTool, annotateSize, focusCanvaFrame]);
 
   const annotateUndo = useCallback(() => {
-    // undo sticker first (most recent action), then stroke
     if (stickersRef.current.length > 0) {
       stickersRef.current = stickersRef.current.slice(0, -1);
       setStickerRenderKey((k) => k + 1);
@@ -514,7 +539,8 @@ export function FullScreenCanvaViewer({
     stickersRef.current = [];
     redrawCanvas();
     setStickerRenderKey((k) => k + 1);
-  }, [redrawCanvas]);
+    focusCanvaFrame();
+  }, [focusCanvaFrame, redrawCanvas]);
 
   // Resize canvas to match its CSS size when viewer dimensions change
   useEffect(() => {
@@ -524,7 +550,7 @@ export function FullScreenCanvaViewer({
       const w = canvas.offsetWidth;
       const h = canvas.offsetHeight;
       if (canvas.width !== w || canvas.height !== h) {
-        canvas.width  = w;
+        canvas.width = w;
         canvas.height = h;
         redrawCanvas();
       }
@@ -532,6 +558,114 @@ export function FullScreenCanvaViewer({
     observer.observe(canvas);
     return () => observer.disconnect();
   }, [redrawCanvas]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Whiteboard helpers ───────────────────────────────────────────────────
+  const redrawWhiteboard = useCallback(() => {
+    const canvas = whiteboardCanvasRef.current;
+    if (!canvas) return;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+    ctx2d.clearRect(0, 0, canvas.width, canvas.height);
+    ctx2d.fillStyle = '#ffffff';
+    ctx2d.fillRect(0, 0, canvas.width, canvas.height);
+    for (const stroke of whiteboardStrokesRef.current) {
+      if (stroke.points.length < 2) continue;
+      for (let i = 1; i < stroke.points.length; i++) {
+        const from = stroke.points[i - 1];
+        const to = stroke.points[i];
+        ctx2d.beginPath();
+        ctx2d.lineWidth = stroke.size;
+        ctx2d.lineCap = 'round';
+        ctx2d.lineJoin = 'round';
+        ctx2d.strokeStyle = stroke.color;
+        ctx2d.moveTo(from.x, from.y);
+        ctx2d.lineTo(to.x, to.y);
+        ctx2d.stroke();
+      }
+    }
+  }, []);
+
+  const whiteboardCanvasPos = useCallback((e: React.PointerEvent<HTMLCanvasElement>): AnnotatePoint => {
+    const rect = whiteboardCanvasRef.current!.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  }, []);
+
+  const onWhiteboardPointerDown = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+    whiteboardIsDrawingRef.current = true;
+    const point = whiteboardCanvasPos(e);
+    whiteboardCurrentStrokeRef.current = {
+      points: [point],
+      color: whiteboardTool === 'eraser' ? '#ffffff' : whiteboardColor,
+      size: whiteboardTool === 'eraser' ? Math.max(14, whiteboardSize * 2) : whiteboardSize,
+      glitter: false,
+    };
+  }, [whiteboardCanvasPos, whiteboardColor, whiteboardSize, whiteboardTool]);
+
+  const onWhiteboardPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!whiteboardIsDrawingRef.current || !whiteboardCurrentStrokeRef.current) return;
+    e.preventDefault();
+    const point = whiteboardCanvasPos(e);
+    const stroke = whiteboardCurrentStrokeRef.current;
+    const prev = stroke.points[stroke.points.length - 1];
+    const dx = point.x - prev.x;
+    const dy = point.y - prev.y;
+    if (dx * dx + dy * dy < 4) return;
+    stroke.points.push(point);
+    const canvas = whiteboardCanvasRef.current;
+    if (!canvas) return;
+    const ctx2d = canvas.getContext('2d');
+    if (!ctx2d) return;
+    ctx2d.beginPath();
+    ctx2d.lineWidth = stroke.size;
+    ctx2d.lineCap = 'round';
+    ctx2d.lineJoin = 'round';
+    ctx2d.strokeStyle = stroke.color;
+    ctx2d.moveTo(prev.x, prev.y);
+    ctx2d.lineTo(point.x, point.y);
+    ctx2d.stroke();
+  }, [whiteboardCanvasPos]);
+
+  const onWhiteboardPointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!whiteboardIsDrawingRef.current || !whiteboardCurrentStrokeRef.current) return;
+    e.preventDefault();
+    whiteboardIsDrawingRef.current = false;
+    whiteboardStrokesRef.current = [...whiteboardStrokesRef.current, whiteboardCurrentStrokeRef.current];
+    whiteboardCurrentStrokeRef.current = null;
+  }, []);
+
+  const whiteboardUndo = useCallback(() => {
+    if (whiteboardStrokesRef.current.length === 0) return;
+    whiteboardStrokesRef.current = whiteboardStrokesRef.current.slice(0, -1);
+    redrawWhiteboard();
+  }, [redrawWhiteboard]);
+
+  const whiteboardClear = useCallback(() => {
+    whiteboardStrokesRef.current = [];
+    redrawWhiteboard();
+  }, [redrawWhiteboard]);
+
+  useEffect(() => {
+    if (!whiteboardOpen) return;
+    const canvas = whiteboardCanvasRef.current;
+    if (!canvas) return;
+    const syncCanvasSize = () => {
+      const width = canvas.offsetWidth;
+      const height = canvas.offsetHeight;
+      if (canvas.width !== width || canvas.height !== height) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+      redrawWhiteboard();
+    };
+    syncCanvasSize();
+    const observer = new ResizeObserver(syncCanvasSize);
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, [redrawWhiteboard, whiteboardOpen]);
   // ─────────────────────────────────────────────────────────────────────────
 
   const pushViolation = useCallback((type: ViolationType) => {
@@ -573,7 +707,7 @@ export function FullScreenCanvaViewer({
         setResolvedLessonTitle(title);
         setResolvedCanvaEmbedUrl(embedUrl);
         setExpiresAtMs(expiresMs);
-        setSessionExpired(expired || status === 'expired');
+        setSessionExpired(expired);
       } catch (error: any) {
         if (!mounted) return;
         if (import.meta.env.DEV) {
@@ -821,7 +955,6 @@ export function FullScreenCanvaViewer({
   // Teacher effects keyboard shortcuts
   useEffect(() => {
     const onEffectsKey = (event: KeyboardEvent) => {
-      // Ignore when typing in inputs / contenteditable
       const target = event.target as HTMLElement | null;
       if (
         target &&
@@ -829,21 +962,32 @@ export function FullScreenCanvaViewer({
           target.tagName === 'TEXTAREA' ||
           target.isContentEditable)
       ) return;
-      // Ignore modifier combos (let Ctrl+C etc. pass through)
       if (event.ctrlKey || event.metaKey || event.altKey) return;
 
-      if (event.key === 'c' || event.key === 'C') {
+      if (event.key === 'c' || event.key === 'C' || event.key === '1') {
         event.stopPropagation();
         triggerConfetti();
-      } else if (event.key === 'd' || event.key === 'D') {
+      } else if (event.key === 'd' || event.key === 'D' || event.key === '2') {
         event.stopPropagation();
         triggerDrum();
-      } else if (event.key === 's' || event.key === 'S') {
+      } else if (event.key === 's' || event.key === 'S' || event.key === '3') {
         event.stopPropagation();
         triggerStars();
-      } else if (event.key === 'l' || event.key === 'L') {
+      } else if (event.key === 'l' || event.key === 'L' || event.key === '4') {
         event.stopPropagation();
         triggerHearts();
+      } else if (event.key === 'w' || event.key === 'W') {
+        event.stopPropagation();
+        setWhiteboardOpen((v) => !v);
+      } else if (event.key === 'a' || event.key === 'A') {
+        event.stopPropagation();
+        setAnnotateShowPanel((v) => {
+          const next = !v;
+          setAnnotateEnabled(next);
+          return next;
+        });
+        setAnnotatePaletteOpen(false);
+        setAnnotateSizeOpen(false);
       }
     };
 
@@ -858,6 +1002,26 @@ export function FullScreenCanvaViewer({
       if (heartsTimerRef.current) clearTimeout(heartsTimerRef.current);
     };
   }, [triggerConfetti, triggerDrum, triggerStars, triggerHearts]);
+
+  // Keep Canva slide keyboard navigation working while annotation is enabled.
+  useEffect(() => {
+    const onSlideNavKey = (event: KeyboardEvent) => {
+      if (!annotateEnabled) return;
+      if (event.ctrlKey || event.metaKey || event.altKey) return;
+      const isNavKey =
+        event.key === 'ArrowRight' ||
+        event.key === 'ArrowLeft' ||
+        event.key === 'PageDown' ||
+        event.key === 'PageUp' ||
+        event.key === ' ';
+      if (!isNavKey) return;
+      focusCanvaFrame();
+    };
+    document.addEventListener('keydown', onSlideNavKey, true);
+    return () => {
+      document.removeEventListener('keydown', onSlideNavKey, true);
+    };
+  }, [annotateEnabled, focusCanvaFrame]);
 
   const formattedDebugDetails = (() => {
     const details = lessonLoadDebugError?.details;
@@ -1087,95 +1251,139 @@ export function FullScreenCanvaViewer({
           ))}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            Annotation toolbar — vertical right-side panel
-            Collapsed: slim "Annotate" tab flush with right edge
-            Expanded:  glass panel slides in from right
-        ════════════════════════════════════════════════════════════════════ */}
-        <div
-          className="annotation-toolbar-root"
-          style={{ pointerEvents: 'auto' }}
-        >
-          {/* ── Collapsed tab (always visible, anchors the panel) ─────────── */}
+        {/* Minimal Zoom-like annotation rail */}
+        <div className="annotation-sidebar-root" style={{ pointerEvents: 'auto' }}>
           <button
-            onClick={() => setAnnotateShowPanel((v) => !v)}
-            className={`annotation-tab ${annotateEnabled ? 'annotation-tab--on' : ''}`}
-            aria-label={annotateShowPanel ? 'Collapse annotation toolbar' : 'Open annotation toolbar'}
+            onClick={() => {
+              setAnnotateShowPanel((v) => {
+                const next = !v;
+                setAnnotateEnabled(next);
+                if (!next) {
+                  setAnnotatePaletteOpen(false);
+                  setAnnotateSizeOpen(false);
+                }
+                return next;
+              });
+              focusCanvaFrame();
+            }}
+            className={`annotation-launcher ${annotateEnabled ? 'annotation-launcher--on' : ''}`}
+            aria-label={annotateShowPanel ? 'Hide annotation tools' : 'Show annotation tools'}
+            title="Annotation tools (A)"
+            onMouseDown={(event) => event.preventDefault()}
           >
-            <span className="annotation-tab-text">Annotate</span>
-            {annotateEnabled && <span className="annotation-tab-dot" />}
+            ✏️
           </button>
 
-          {/* ── Expanded panel ────────────────────────────────────────────── */}
-          <div className={`annotation-panel ${annotateShowPanel ? 'annotation-panel--open' : ''}`}>
+          <div className={`annotation-strip ${annotateShowPanel ? 'annotation-strip--open' : ''}`}>
+            {([
+              { tool: 'pen' as AnnotateTool, emoji: '✏️', label: 'Pen' },
+              { tool: 'star' as AnnotateTool, emoji: '⭐', label: 'Star' },
+              { tool: 'heart' as AnnotateTool, emoji: '❤️', label: 'Heart' },
+            ]).map(({ tool, emoji, label }) => (
+              <button
+                key={tool}
+                onClick={() => {
+                  setAnnotateTool(tool);
+                  setAnnotateEnabled(true);
+                  setAnnotateShowPanel(true);
+                  setAnnotatePaletteOpen(false);
+                  setAnnotateSizeOpen(false);
+                }}
+                className={`annotation-strip-btn ${annotateEnabled && annotateTool === tool ? 'annotation-strip-btn--active' : ''}`}
+                aria-label={label}
+                title={label}
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                {emoji}
+              </button>
+            ))}
 
-            {/* A. Toggle ───────────────────────────────────────── */}
             <button
-              onClick={() => setAnnotateEnabled((v) => !v)}
-              className={`atb-toggle ${annotateEnabled ? 'atb-toggle--on' : ''}`}
-              aria-label={annotateEnabled ? 'Turn annotation off' : 'Turn annotation on'}
+              onClick={() => {
+                setAnnotatePaletteOpen((v) => !v);
+                setAnnotateSizeOpen(false);
+              }}
+              className={`annotation-strip-btn ${annotatePaletteOpen ? 'annotation-strip-btn--active' : ''}`}
+              aria-label="Color palette"
+              title="Color palette"
+              onMouseDown={(event) => event.preventDefault()}
             >
-              <span className="atb-toggle-dot" />
-              <span className="atb-toggle-label">{annotateEnabled ? 'Annotating' : 'Annotate off'}</span>
+              🎨
             </button>
 
-            <div className="atb-divider" />
+            <button
+              onClick={() => {
+                setAnnotateSizeOpen((v) => !v);
+                setAnnotatePaletteOpen(false);
+              }}
+              className={`annotation-strip-btn ${annotateSizeOpen ? 'annotation-strip-btn--active' : ''}`}
+              aria-label="Pen size options"
+              title={`Pen size ${annotateSize}`}
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              {annotateSize}
+            </button>
 
-            {/* B. Tools ────────────────────────────────────────── */}
-            <p className="atb-section-label">Tool</p>
-            <div className="atb-tool-group">
-              {([
-                { tool: 'pen'  as AnnotateTool, emoji: '✏️', label: 'Pen'   },
-                { tool: 'star' as AnnotateTool, emoji: '⭐', label: 'Star'  },
-                { tool: 'heart'as AnnotateTool, emoji: '❤️', label: 'Heart' },
-              ]).map(({ tool, emoji, label }) => (
-                <button
-                  key={tool}
-                  onClick={() => { setAnnotateTool(tool); if (!annotateEnabled) setAnnotateEnabled(true); }}
-                  className={`atb-tool-btn ${annotateEnabled && annotateTool === tool ? 'atb-tool-btn--active' : ''}`}
-                  aria-label={label}
-                  title={label}
-                >
-                  <span className="atb-tool-emoji">{emoji}</span>
-                  <span className="atb-tool-label">{label}</span>
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={annotateUndo}
+              className="annotation-strip-btn"
+              aria-label="Undo annotation"
+              title="Undo"
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              ↩
+            </button>
 
-            <div className="atb-divider" />
+            <button
+              onClick={annotateClear}
+              className="annotation-strip-btn annotation-strip-btn--danger"
+              aria-label="Clear this slide annotations"
+              title="Clear this slide"
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              🗑
+            </button>
+          </div>
 
-            {/* C. Colors ───────────────────────────────────────── */}
-            <p className="atb-section-label">Color</p>
-            <div className="atb-color-grid">
+          {annotateShowPanel && annotatePaletteOpen && (
+            <div className="annotation-palette-popover">
+              <button
+                title="Glitter / multicolor"
+                onClick={() => {
+                  setGlitterMode((v) => !v);
+                  setAnnotateEnabled(true);
+                }}
+                className={`atb-color-swatch atb-color-swatch--glitter ${glitterMode ? 'atb-color-swatch--selected' : ''}`}
+                aria-label="Glitter pen"
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                {glitterMode && <span className="atb-color-check">✓</span>}
+              </button>
               {ANNOTATE_QUICK_COLORS.map(({ label, value }) => (
                 <button
                   key={value}
                   title={label}
-                  onClick={() => { setAnnotateColor(value); setGlitterMode(false); }}
+                  onClick={() => {
+                    setAnnotateColor(value);
+                    setGlitterMode(false);
+                    setAnnotateEnabled(true);
+                  }}
                   className="atb-color-swatch"
                   style={{ backgroundColor: value }}
                   aria-label={`Color ${label}`}
+                  onMouseDown={(event) => event.preventDefault()}
                 >
                   {!glitterMode && annotateColor === value && (
                     <span className="atb-color-check">✓</span>
                   )}
                 </button>
               ))}
-              {/* Glitter */}
-              <button
-                title="Glitter / multicolor"
-                onClick={() => setGlitterMode((v) => !v)}
-                className={`atb-color-swatch atb-color-swatch--glitter ${glitterMode ? 'atb-color-swatch--selected' : ''}`}
-                aria-label="Glitter pen"
-              >
-                {glitterMode && <span className="atb-color-check">✓</span>}
-              </button>
-              {/* Custom picker */}
               <label
                 title="Custom color"
-                className={`atb-color-swatch atb-color-swatch--custom ${!glitterMode && !ANNOTATE_QUICK_COLORS.some(c => c.value === annotateColor) ? 'atb-color-swatch--selected' : ''}`}
+                className={`atb-color-swatch atb-color-swatch--custom ${!glitterMode && !ANNOTATE_QUICK_COLORS.some((c) => c.value === annotateColor) ? 'atb-color-swatch--selected' : ''}`}
                 aria-label="Custom color"
                 style={{ position: 'relative', overflow: 'hidden' }}
+                onMouseDown={(event) => event.preventDefault()}
               >
                 <span
                   className="atb-custom-preview"
@@ -1184,100 +1392,163 @@ export function FullScreenCanvaViewer({
                 <input
                   type="color"
                   value={annotateColor}
-                  onChange={(e) => { setAnnotateColor(e.target.value); setGlitterMode(false); }}
+                  onChange={(e) => {
+                    setAnnotateColor(e.target.value);
+                    setGlitterMode(false);
+                    setAnnotateEnabled(true);
+                  }}
                   className="atb-color-input"
                   aria-label="Choose custom color"
                 />
               </label>
             </div>
-
-            <div className="atb-divider" />
-
-            {/* D. Size ─────────────────────────────────────────── */}
-            <p className="atb-section-label">Size</p>
-            <div className="atb-size-row">
-              {ANNOTATE_SIZES.map((sz) => (
+          )}
+          {annotateShowPanel && annotateSizeOpen && (
+            <div className="annotation-size-popover">
+              {ANNOTATE_SIZES.map((size) => (
                 <button
-                  key={sz}
-                  title={`Size ${sz}`}
-                  onClick={() => setAnnotateSize(sz)}
-                  className={`atb-size-btn ${annotateSize === sz ? 'atb-size-btn--active' : ''}`}
-                  aria-label={`Pen size ${sz}`}
+                  key={size}
+                  onClick={() => {
+                    setAnnotateSize(size);
+                    setAnnotateEnabled(true);
+                  }}
+                  className={`annotation-size-choice ${annotateSize === size ? 'annotation-size-choice--active' : ''}`}
+                  title={`Pen size ${size}`}
+                  aria-label={`Pen size ${size}`}
+                  onMouseDown={(event) => event.preventDefault()}
                 >
                   <span
-                    className="atb-size-dot"
-                    style={{ width: Math.min(sz * 1.6, 18), height: Math.min(sz * 1.6, 18) }}
+                    className="annotation-size-choice-dot"
+                    style={{ width: Math.max(4, size), height: Math.max(4, size) }}
                   />
                 </button>
               ))}
             </div>
-
-            <div className="atb-divider" />
-
-            {/* E. Actions ──────────────────────────────────────── */}
-            <button onClick={annotateUndo}  className="atb-action-btn" aria-label="Undo last stroke or sticker">
-              <span className="atb-action-icon">↩</span>
-              <span className="atb-action-label">Undo</span>
-            </button>
-            <button onClick={annotateClear} className="atb-action-btn atb-action-btn--danger" aria-label="Clear all annotations">
-              <span className="atb-action-icon">🗑</span>
-              <span className="atb-action-label">Clear all</span>
-            </button>
-          </div>
+          )}
         </div>
 
-        {/* ══════════════════════════════════════════════════════════════════
-            Teacher Effects — vertical left-side tray bar
-            Mirrors the annotation toolbar style on the right
-        ════════════════════════════════════════════════════════════════════ */}
-        <div className="effects-toolbar-root" style={{ pointerEvents: 'auto' }}>
-          {/* Collapsed tab — always visible on left edge */}
+        {/* Right-side reactions + whiteboard rail to keep bottom slide bar clear */}
+        <div className="effects-side-root" style={{ pointerEvents: 'auto' }}>
           <button
             onClick={() => setShowEffectsPanel((v) => !v)}
-            className="effects-tab"
-            aria-label={showEffectsPanel ? 'Collapse effects panel' : 'Open effects panel'}
+            className={`effects-side-trigger ${showEffectsPanel ? 'effects-side-trigger--active' : ''}`}
+            aria-label={showEffectsPanel ? 'Hide reactions' : 'Show reactions'}
+            title="Reactions"
+            onMouseDown={(event) => event.preventDefault()}
           >
-            <span className="effects-tab-text">Effects</span>
+            🙂
           </button>
-
-          {/* Expanded panel */}
-          <div className={`effects-panel ${showEffectsPanel ? 'effects-panel--open' : ''}`}>
-            <p className="atb-section-label" style={{ marginBottom: 8 }}>Teacher Effects</p>
-
-            {/* Effect buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {([
-                { fn: triggerConfetti, emoji: '🎉', label: 'Confetti',  key: 'C' },
-                { fn: triggerDrum,    emoji: '🥁', label: 'Drumroll',  key: 'D' },
-                { fn: triggerStars,   emoji: '⭐', label: 'Stars',     key: 'S' },
-                { fn: triggerHearts,  emoji: '❤️', label: 'Love',      key: 'L' },
-              ] as const).map(({ fn, emoji, label, key }) => (
-                <button
-                  key={key}
-                  onClick={fn}
-                  className="efx-btn"
-                  aria-label={`${label} effect`}
-                >
-                  <span className="efx-emoji">{emoji}</span>
-                  <span className="efx-label">{label}</span>
-                  <span className="efx-key">{key}</span>
-                </button>
-              ))}
-            </div>
-
-            <div className="atb-divider" />
-
-            {/* Sound toggle */}
+          <button
+            onClick={() => setWhiteboardOpen((v) => !v)}
+            className={`effects-side-trigger ${whiteboardOpen ? 'effects-side-trigger--active' : ''}`}
+            aria-label={whiteboardOpen ? 'Close whiteboard' : 'Open whiteboard'}
+            title="Whiteboard (W)"
+            onMouseDown={(event) => event.preventDefault()}
+          >
+            🧑‍🏫
+          </button>
+          <div className={`effects-side-popover ${showEffectsPanel ? 'effects-side-popover--open' : ''}`}>
+            {([
+              { fn: triggerConfetti, emoji: '🎉', label: 'Confetti', keys: 'C / 1' },
+              { fn: triggerDrum, emoji: '🥁', label: 'Drumroll', keys: 'D / 2' },
+              { fn: triggerStars, emoji: '⭐', label: 'Stars', keys: 'S / 3' },
+              { fn: triggerHearts, emoji: '❤️', label: 'Love', keys: 'L / 4' },
+            ] as const).map(({ fn, emoji, label, keys }) => (
+              <button
+                key={label}
+                onClick={fn}
+                className="effects-popover-btn"
+                aria-label={`${label} reaction`}
+                onMouseDown={(event) => event.preventDefault()}
+              >
+                <span className="effects-popover-emoji">{emoji}</span>
+                <span className="effects-popover-label">{label}</span>
+                <span className="effects-popover-keys">{keys}</span>
+              </button>
+            ))}
             <button
               onClick={() => setSoundEnabled((v) => !v)}
-              className="efx-btn efx-btn--sound"
-              aria-label={soundEnabled ? 'Mute effects' : 'Unmute effects'}
+              className="effects-popover-btn effects-popover-btn--sound"
+              aria-label={soundEnabled ? 'Mute reaction sounds' : 'Unmute reaction sounds'}
+              onMouseDown={(event) => event.preventDefault()}
             >
-              <span className="efx-emoji">{soundEnabled ? '🔊' : '🔇'}</span>
-              <span className="efx-label">{soundEnabled ? 'Sound on' : 'Muted'}</span>
+              <span className="effects-popover-emoji">{soundEnabled ? '🔊' : '🔇'}</span>
+              <span className="effects-popover-label">{soundEnabled ? 'Sound on' : 'Muted'}</span>
             </button>
           </div>
         </div>
+
+        {whiteboardOpen && (
+          <div className="whiteboard-overlay">
+            <div className="whiteboard-header">
+              <div className="whiteboard-title">Class Whiteboard</div>
+              <div className="whiteboard-header-actions">
+                <button
+                  onClick={() => setWhiteboardTool('pen')}
+                  className={`whiteboard-tool-btn ${whiteboardTool === 'pen' ? 'whiteboard-tool-btn--active' : ''}`}
+                  aria-label="Whiteboard pen"
+                >
+                  ✏️ Pen
+                </button>
+                <button
+                  onClick={() => setWhiteboardTool('eraser')}
+                  className={`whiteboard-tool-btn ${whiteboardTool === 'eraser' ? 'whiteboard-tool-btn--active' : ''}`}
+                  aria-label="Whiteboard eraser"
+                >
+                  🧽 Eraser
+                </button>
+                <button onClick={whiteboardUndo} className="whiteboard-utility-btn" aria-label="Undo whiteboard stroke">
+                  Undo
+                </button>
+                <button onClick={whiteboardClear} className="whiteboard-utility-btn whiteboard-utility-btn--danger" aria-label="Clear whiteboard">
+                  Clear
+                </button>
+                <button onClick={() => setWhiteboardOpen(false)} className="whiteboard-close-btn" aria-label="Close whiteboard">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="whiteboard-toolbar">
+              <div className="whiteboard-colors">
+                {['#0f172a', '#dc2626', '#2563eb', '#16a34a', '#d97706', '#7c3aed'].map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => {
+                      setWhiteboardColor(color);
+                      setWhiteboardTool('pen');
+                    }}
+                    className={`whiteboard-color-dot ${whiteboardColor === color && whiteboardTool === 'pen' ? 'whiteboard-color-dot--active' : ''}`}
+                    style={{ backgroundColor: color }}
+                    aria-label={`Whiteboard color ${color}`}
+                  />
+                ))}
+              </div>
+              <div className="whiteboard-size-row">
+                {ANNOTATE_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setWhiteboardSize(size)}
+                    className={`whiteboard-size-btn ${whiteboardSize === size ? 'whiteboard-size-btn--active' : ''}`}
+                    aria-label={`Whiteboard size ${size}`}
+                  >
+                    <span style={{ width: Math.max(4, size), height: Math.max(4, size) }} />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="whiteboard-canvas-wrap">
+              <canvas
+                ref={whiteboardCanvasRef}
+                className="whiteboard-canvas"
+                onPointerDown={onWhiteboardPointerDown}
+                onPointerMove={onWhiteboardPointerMove}
+                onPointerUp={onWhiteboardPointerUp}
+                onPointerLeave={onWhiteboardPointerUp}
+                style={{ touchAction: 'none' }}
+              />
+            </div>
+          </div>
+        )}
 
         {showControlsMessage && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg font-semibold">
@@ -1325,11 +1596,14 @@ export function FullScreenCanvaViewer({
 
         {contentReady && !showWarning && (
           <iframe
+            ref={canvaIframeRef}
             src={resolvedCanvaEmbedUrl}
             title={resolvedLessonTitle}
             className="w-full h-full border-0"
             allow="fullscreen"
             loading="eager"
+            tabIndex={-1}
+            onLoad={focusCanvaFrame}
             style={{ position: 'relative', zIndex: 10 }}
           />
         )}

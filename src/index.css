@@ -1082,3 +1082,604 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
     transition: none;
   }
 }
+
+/* Zoom-style annotation + reactions + whiteboard (secure lesson viewer) */
+.annotation-sidebar-root {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 53;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+}
+
+.annotation-launcher {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.annotation-launcher--on {
+  background: #2563eb;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.35), 0 12px 24px rgba(0, 0, 0, 0.35);
+}
+
+.annotation-strip {
+  width: 46px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(8px);
+  transition: max-height 0.2s ease, opacity 0.18s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.annotation-strip--open {
+  max-height: 360px;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  background: rgba(12, 12, 18, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 22px;
+  padding: 8px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+}
+
+.annotation-strip-btn {
+  width: 100%;
+  height: 30px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.annotation-strip-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.annotation-strip-btn--active {
+  border-color: rgba(147, 197, 253, 0.72);
+  background: rgba(37, 99, 235, 0.32);
+}
+
+.annotation-strip-btn--danger {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(220, 38, 38, 0.2);
+}
+
+.annotation-strip-btn--danger:hover {
+  background: rgba(220, 38, 38, 0.35);
+}
+
+.annotation-palette-popover {
+  position: absolute;
+  left: 58px;
+  top: 52px;
+  background: rgba(12, 12, 18, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+  padding: 8px;
+  z-index: 56;
+}
+
+.annotation-size-popover {
+  position: absolute;
+  left: 58px;
+  top: 96px;
+  background: rgba(12, 12, 18, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  z-index: 56;
+}
+
+.annotation-size-choice {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.annotation-size-choice-dot {
+  display: block;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.annotation-size-choice--active {
+  border-color: rgba(147, 197, 253, 0.72);
+  background: rgba(37, 99, 235, 0.34);
+}
+
+.effects-side-root {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 53;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.effects-side-trigger {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.effects-side-trigger--active {
+  border-color: rgba(147, 197, 253, 0.55);
+  background: rgba(37, 99, 235, 0.4);
+}
+
+.effects-side-popover {
+  position: absolute;
+  right: 52px;
+  top: 0;
+  width: 220px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: max-height 0.2s ease, opacity 0.16s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.effects-side-popover--open {
+  max-height: 280px;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  background: rgba(12, 12, 18, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.42);
+}
+
+.annotation-sidebar {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateX(-8px);
+  transition: width 0.2s ease, opacity 0.18s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.annotation-sidebar--open {
+  width: 218px;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  background: rgba(12, 12, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.annotation-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.annotation-sidebar-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.96);
+  letter-spacing: 0.01em;
+}
+
+.annotation-sidebar-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.annotation-slide-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.annotation-slide-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.88);
+  cursor: pointer;
+}
+
+.annotation-slide-label {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #bfdbfe;
+  background: rgba(37, 99, 235, 0.2);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: 999px;
+  padding: 5px 8px;
+}
+
+.annotation-clear-btn {
+  width: 100%;
+  margin-top: 2px;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  background: rgba(220, 38, 38, 0.2);
+  color: #fecaca;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.annotation-clear-btn:hover {
+  background: rgba(220, 38, 38, 0.35);
+}
+
+.annotation-hint {
+  margin: 7px 0 0;
+  font-size: 10px;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.46);
+}
+
+.effects-bottom-root {
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 53;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 8px;
+}
+
+.effects-bottom-bar {
+  display: flex;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 6px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.effects-bottom-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.effects-bottom-trigger:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.effects-bottom-trigger--active {
+  border-color: rgba(147, 197, 253, 0.55);
+  background: rgba(37, 99, 235, 0.3);
+}
+
+.effects-bottom-popover {
+  width: min(92vw, 520px);
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: max-height 0.2s ease, opacity 0.16s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.effects-bottom-popover--open {
+  max-height: 260px;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  background: rgba(12, 12, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.42);
+}
+
+.effects-popover-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.88);
+  padding: 8px 9px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.effects-popover-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.effects-popover-btn--sound {
+  grid-column: 1 / -1;
+}
+
+.effects-popover-emoji {
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.effects-popover-label {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.effects-popover-keys {
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: rgba(255, 255, 255, 0.54);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+
+.whiteboard-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 56;
+  background: rgba(2, 6, 23, 0.56);
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+.whiteboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.whiteboard-title {
+  color: #f8fafc;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.whiteboard-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.whiteboard-tool-btn,
+.whiteboard-utility-btn,
+.whiteboard-close-btn {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.whiteboard-tool-btn--active {
+  border-color: rgba(96, 165, 250, 0.7);
+  background: rgba(37, 99, 235, 0.28);
+}
+
+.whiteboard-utility-btn--danger {
+  border-color: rgba(248, 113, 113, 0.55);
+  color: #fecaca;
+}
+
+.whiteboard-close-btn {
+  background: rgba(220, 38, 38, 0.22);
+  border-color: rgba(248, 113, 113, 0.5);
+}
+
+.whiteboard-toolbar {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+
+.whiteboard-colors {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.whiteboard-color-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  cursor: pointer;
+}
+
+.whiteboard-color-dot--active {
+  border-color: #f8fafc;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+.whiteboard-size-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.whiteboard-size-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.whiteboard-size-btn span {
+  display: block;
+  border-radius: 999px;
+  background: #f8fafc;
+}
+
+.whiteboard-size-btn--active {
+  border-color: rgba(147, 197, 253, 0.75);
+  background: rgba(37, 99, 235, 0.28);
+}
+
+.whiteboard-canvas-wrap {
+  position: relative;
+  flex: 1;
+  margin-top: 10px;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+}
+
+.whiteboard-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .annotation-sidebar-root {
+    top: auto;
+    left: 12px;
+    bottom: 80px;
+    transform: none;
+  }
+
+  .annotation-sidebar--open {
+    width: min(84vw, 220px);
+  }
+
+  .annotation-palette-popover {
+    left: 56px;
+    top: auto;
+    bottom: 52px;
+  }
+
+  .annotation-size-popover {
+    left: 56px;
+    top: auto;
+    bottom: 12px;
+  }
+
+  .whiteboard-overlay {
+    padding: 10px;
+  }
+
+  .whiteboard-header,
+  .whiteboard-toolbar {
+    padding: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .annotation-sidebar,
+  .annotation-strip,
+  .effects-bottom-popover,
+  .effects-side-popover {
+    transition: none;
+  }
+}

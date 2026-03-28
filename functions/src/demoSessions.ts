@@ -219,6 +219,23 @@ const toFiniteNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const resolveEarningPaidAmount = (earning: Record<string, unknown>, amount: number): number => {
+  const status = normalizeStatusValue(earning.status);
+  const paidAmountRaw = Math.max(toFiniteNumber(earning.paidAmount), 0);
+  if (paidAmountRaw > 0) {
+    return Math.min(amount, paidAmountRaw);
+  }
+  if (status === 'paid' || status === 'settled') {
+    return amount;
+  }
+  return 0;
+};
+
+const isDemoTeacherEarningSource = (value: unknown): boolean => {
+  const source = normalizeStatusValue(value);
+  return source === 'demo_completed' || source === 'demo_enrolled_bonus';
+};
+
 const normalizeTextForKey = (value: string): string =>
   value
     .trim()
@@ -381,9 +398,15 @@ async function createDemoTeacherEarningIfMissing(input: DemoEarningWriteInput): 
 
   return db.runTransaction(async (tx) => {
     const earningSnap = await tx.get(earningRef);
-    if (earningSnap.exists) return false;
+    const existing = earningSnap.exists ? ((earningSnap.data() || {}) as Record<string, unknown>) : null;
+    const existingStatus = normalizeStatusValue(existing?.status);
+    const existingAmount = Math.max(toFiniteNumber(existing?.amount), 0);
+    const existingPaidAmount =
+      existing && existingAmount > 0 ? resolveEarningPaidAmount(existing, existingAmount) : 0;
 
-    tx.set(earningRef, {
+    if (earningSnap.exists && (existingStatus !== 'void' || existingPaidAmount > 0)) return false;
+
+    const earningPayload: Record<string, unknown> = {
       demoId: input.demoId,
       teacherId: input.teacherId,
       teacherName: input.teacherName,
@@ -398,9 +421,22 @@ async function createDemoTeacherEarningIfMissing(input: DemoEarningWriteInput): 
       parentName: parentName || null,
       childName: childName || null,
       earnedAt: admin.firestore.FieldValue.serverTimestamp(),
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+      // Ensure a previously voided payout can be re-issued after reopen + second completion.
+      paidAmount: admin.firestore.FieldValue.delete(),
+      paidAt: admin.firestore.FieldValue.delete(),
+      payoutIds: admin.firestore.FieldValue.delete(),
+      voidedAt: admin.firestore.FieldValue.delete(),
+      voidReason: admin.firestore.FieldValue.delete(),
+      correctedBy: admin.firestore.FieldValue.delete(),
+      correctedAt: admin.firestore.FieldValue.delete(),
+    };
+
+    if (!earningSnap.exists) {
+      earningPayload.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    }
+
+    tx.set(earningRef, earningPayload, { merge: true });
 
     tx.set(
       rollupRef,
@@ -811,6 +847,7 @@ interface DemoSessionCallableResponse {
   demoId: string;
   status: DemoStatus;
   rescheduledDemoId?: string;
+  reversedEarningsCount?: number;
 }
 
 export const claimDemoSession = onCall<ClaimDemoSessionRequest>(
@@ -1464,8 +1501,9 @@ export const deleteDemoSession = onCall<DeleteDemoSessionRequest>(
             ? amount
             : 0;
         const pendingAmount = Math.max(amount - paidAmount, 0);
+        const isVoid = status === 'void';
 
-        if (teacherId && amount > 0) {
+        if (teacherId && amount > 0 && !isVoid) {
           const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
           const rollupPatch: Record<string, any> = {
             month: monthKey,
@@ -1530,8 +1568,9 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
     const demoId = cleanRequiredText(request.data?.demoId, 'demoId', 120);
     const db = admin.firestore();
     const demoRef = db.collection('demoSessions').doc(demoId);
+    const earningsQuery = db.collection('teacherEarnings').where('demoId', '==', demoId);
 
-    await db.runTransaction(async (tx) => {
+    const result = await db.runTransaction(async (tx) => {
       const snap = await tx.get(demoRef);
       if (!snap.exists) {
         throw new HttpsError('not-found', 'Demo session not found');
@@ -1543,6 +1582,64 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
           'failed-precondition',
           'Only completed or cancelled demos can be reopened',
         );
+      }
+
+      let reversedEarningsCount = 0;
+      const earningsSnap = await tx.get(earningsQuery);
+      for (const earningDoc of earningsSnap.docs) {
+        const earning = (earningDoc.data() || {}) as Record<string, unknown>;
+        if (!isDemoTeacherEarningSource(earning.source)) continue;
+
+        const status = normalizeStatusValue(earning.status);
+        if (status === 'void') continue;
+
+        const amount = Math.max(toFiniteNumber(earning.amount), 0);
+        const paidAmount = resolveEarningPaidAmount(earning, amount);
+        if (paidAmount > 0 || status === 'paid') {
+          throw new HttpsError(
+            'failed-precondition',
+            'Demo payout already paid. Reverse teacher payout allocation before reopening.'
+          );
+        }
+
+        const teacherId = pickOptionalText(earning.teacherId, 120);
+        const monthKey =
+          pickOptionalText(earning.monthKey, 20) ||
+          monthKeyFromTimestampIST(earning.earnedAt || earning.createdAt || new Date());
+        const source = normalizeStatusValue(earning.source);
+        const pendingAmount = Math.max(amount - paidAmount, 0);
+
+        if (teacherId && amount > 0) {
+          const rollupRef = teacherEarningsMonthlyRef(db, teacherId, monthKey);
+          const rollupPatch: Record<string, unknown> = {
+            month: monthKey,
+            totalEarnings: admin.firestore.FieldValue.increment(-amount),
+            demoEarnings: admin.firestore.FieldValue.increment(-amount),
+            pendingEarnings: admin.firestore.FieldValue.increment(-pendingAmount),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          };
+          if (source === 'demo_completed') {
+            rollupPatch.demoCompletedCount = admin.firestore.FieldValue.increment(-1);
+          }
+          if (source === 'demo_enrolled_bonus') {
+            rollupPatch.demoEnrollmentBonusCount = admin.firestore.FieldValue.increment(-1);
+          }
+          tx.set(rollupRef, rollupPatch, { merge: true });
+        }
+
+        tx.set(
+          earningDoc.ref,
+          {
+            status: 'void',
+            voidedAt: admin.firestore.FieldValue.serverTimestamp(),
+            voidReason: 'Demo reopened to open pool',
+            correctedBy: caller.uid,
+            correctedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+        reversedEarningsCount += 1;
       }
 
       tx.update(demoRef, {
@@ -1580,12 +1677,21 @@ export const reopenDemoSession = onCall<ReopenDemoSessionRequest>(
         lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUpdatedBy: caller.uid,
       });
+
+      return { reversedEarningsCount };
+    });
+
+    logger.info('Demo reopened with earnings reversal', {
+      demoId,
+      reopenedBy: caller.uid,
+      reversedEarningsCount: result.reversedEarningsCount,
     });
 
     return {
       ok: true,
       demoId,
       status: 'open',
+      reversedEarningsCount: result.reversedEarningsCount,
     };
   },
 );

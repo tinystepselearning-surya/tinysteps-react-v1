@@ -119,6 +119,18 @@ const APP_ROUTE_PREFIXES = [
   '/learningpartner/dashboard',
 ];
 
+const AUTH_ENTRY_ROUTES = new Set([
+  '/login',
+  '/surya/login',
+  '/admin/login',
+  '/Surya/login',
+  '/teacher/login',
+  '/parent/login',
+  '/learning-partner/login',
+  '/learningpartner/login',
+  '/kid/login',
+]);
+
 const matchesRoutePrefix = (pathname: string, prefix: string) =>
   pathname === prefix || pathname.startsWith(`${prefix}/`);
 
@@ -158,11 +170,12 @@ const legacyKidDashboardRedirectLoader = ({ request, params }: LoaderFunctionArg
 const Layout: FC = () => {
   const location = useLocation();
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(location.pathname, prefix));
+  const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(location.pathname);
   const isContactPage = location.pathname === '/contact';
   const [showFloatingTools, setShowFloatingTools] = useState(false);
 
   useEffect(() => {
-    if (hideMarketingChrome) return;
+    if (hideSupportWidgets) return;
 
     const win = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
@@ -187,7 +200,7 @@ const Layout: FC = () => {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [hideMarketingChrome]);
+  }, [hideSupportWidgets]);
 
   return (
     <div className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}>
@@ -206,7 +219,7 @@ const Layout: FC = () => {
         </Suspense>
       </main>
       {!hideMarketingChrome ? <Footer /> : null}
-      {!hideMarketingChrome && showFloatingTools ? (
+      {!hideSupportWidgets && showFloatingTools ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />
