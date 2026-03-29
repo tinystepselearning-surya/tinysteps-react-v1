@@ -285,6 +285,11 @@ service cloud.firestore {
       allow read, create, update, delete: if isAdmin() || (isSignedIn() && request.auth.uid == teacherId);
     }
 
+    // Allow admins to query sessionRequests across all teachers (collection group query)
+    match /{path=**}/sessionRequests/{requestId} {
+      allow read: if isAdmin();
+    }
+
     // ----------------------------
     // KIDS COLLECTION
     // ----------------------------

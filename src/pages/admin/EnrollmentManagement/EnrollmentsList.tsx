@@ -245,6 +245,29 @@ async function fetchCoursesByIds(ids: string[]): Promise<Record<string, CourseDo
   missing = normalized.filter((id) => !byAnyKey[id]);
   if (!missing.length) return byAnyKey;
 
+  // 3b) slug normalization fallback: handle common variations like phonics-foundation → phonics-foundations
+  const slugVariations = missing.flatMap((id) => {
+    const variations = [id];
+    // Add plural form if missing 's'
+    if (!id.endsWith('s') && !id.endsWith('ies')) variations.push(id + 's');
+    // Remove plural 's' if present
+    if (id.endsWith('s')) variations.push(id.slice(0, -1));
+    // Handle foundation/foundations specifically
+    if (id.includes('-foundation') && !id.includes('-foundations')) {
+      variations.push(id.replace('-foundation', '-foundations'));
+    }
+    return variations;
+  }).filter((v, i, arr) => arr.indexOf(v) === i); // dedupe
+
+  for (const batch of chunk(slugVariations, 10)) {
+    const q3b = query(collection(db, 'courses'), where('slug', 'in', batch));
+    const snap = await getDocs(q3b);
+    snap.docs.forEach(addCourse);
+  }
+
+  missing = normalized.filter((id) => !byAnyKey[id]);
+  if (!missing.length) return byAnyKey;
+
   // 4) id field
   for (const batch of chunk(missing, 10)) {
     const q4 = query(collection(db, 'courses'), where('id', 'in', batch));

@@ -30,7 +30,7 @@ import { Student } from '../../../types/Student';
 import { useEnrollmentsForStudents } from '../../../hooks/useData';
 import { User } from '../../../types/User';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import type { RescheduleCreditStatus } from '../../../services/rescheduleCredits';
 
 const DEFAULT_PAGE_SIZE = 25;
@@ -2230,9 +2230,22 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       enrollmentsQuery.refetch();
     } catch (err: any) {
       console.error('Error saving schedule:', err);
+      
+      // Extract meaningful error message from Firebase error
+      let errorMessage = 'Failed to save schedule / create sessions.';
+      
+      if (err?.message) {
+        // Firebase functions errors come through as err.message
+        errorMessage = err.message;
+      } else if (err?.details) {
+        errorMessage = String(err.details);
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      }
+      
       toast({
         title: 'Error',
-        description: err?.message || 'Failed to save schedule / create sessions.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -2907,6 +2920,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         <DialogContent className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>Session Requests</DialogTitle>
+            <DialogDescription>
+              Review and manage pending session requests from teachers across all students.
+            </DialogDescription>
           </DialogHeader>
 
           {sessionRequests.length === 0 ? (
@@ -2977,6 +2993,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             <DialogTitle>
               Enrollments {enrollmentDetailsFor?.fullName ? `— ${enrollmentDetailsFor.fullName}` : ''}
             </DialogTitle>
+            <DialogDescription>
+              View and manage all course enrollments for this student.
+            </DialogDescription>
           </DialogHeader>
 
           {enrollmentDetailsFor ? (
@@ -3031,6 +3050,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             <DialogTitle>
               Actions {actionsFor?.fullName ? `— ${actionsFor.fullName}` : ''}
             </DialogTitle>
+            <DialogDescription>
+              Quick actions for managing this student's courses, teachers, and schedule.
+            </DialogDescription>
           </DialogHeader>
 
           {actionsFor ? (
@@ -3158,6 +3180,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             <DialogTitle>
               Schedule Classes {scheduleFor?.fullName ? `— ${scheduleFor.fullName}` : ''}
             </DialogTitle>
+            <DialogDescription>
+              Schedule new class sessions for this student's enrolled courses.
+            </DialogDescription>
           </DialogHeader>
 
           {scheduleFor ? (

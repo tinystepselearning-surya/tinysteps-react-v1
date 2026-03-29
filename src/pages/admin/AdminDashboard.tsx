@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog';
 import { ClipboardList, GraduationCap, LineChart, Users2, Wallet } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { doc, getDoc } from 'firebase/firestore';
@@ -346,6 +346,7 @@ export default function AdminDashboard() {
         <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[320px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-0 sm:rounded-none">
           <DialogHeader className="sr-only">
             <DialogTitle>Admin menu</DialogTitle>
+            <DialogDescription>Navigate between admin sections</DialogDescription>
           </DialogHeader>
           <Sidebar
             selectedTab={selectedTab}

@@ -1975,7 +1975,7 @@ export default function DemoSessionsManagement({
         <p className="mt-3 text-xs text-muted-foreground">
           Showing: {trendRangeBounds.startKey} to {trendRangeBounds.endKey}
         </p>
-        <div className="mt-4 h-[320px] w-full rounded-lg border border-slate-200 bg-white p-3">
+        <div className="mt-4 h-[320px] min-h-[320px] w-full rounded-lg border border-slate-200 bg-white p-3">
           {trendData.length === 0 ? (
             <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
               No trend data available for this range.

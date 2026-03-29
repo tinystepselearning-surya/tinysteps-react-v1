@@ -156,6 +156,31 @@ function toIstTodayYmd(): string {
   return toYmdFromContextDate(shifted);
 }
 
+/**
+ * Safely parse YYYY-MM-DD to a Firestore Timestamp at IST midnight.
+ * Throws HttpsError if invalid to provide clear feedback.
+ */
+function parseYmdToIstMidnightTimestamp(ymd: string, fieldName: string): admin.firestore.Timestamp {
+  if (!isValidYmd(ymd)) {
+    throw new HttpsError("invalid-argument", `${fieldName} must be YYYY-MM-DD format`);
+  }
+  const [yStr, mStr, dStr] = ymd.split("-");
+  const year = Number(yStr);
+  const month = Number(mStr) - 1; // JS months are 0-indexed
+  const day = Number(dStr);
+  
+  // Create date in UTC, then shift to IST context
+  const utcDate = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+  if (Number.isNaN(utcDate.getTime())) {
+    throw new HttpsError("invalid-argument", `${fieldName} "${ymd}" is invalid`);
+  }
+  
+  // Shift backward by IST offset to get IST midnight as UTC time
+  const istMidnightUtc = new Date(utcDate.getTime() - IST_OFFSET_MINUTES * 60 * 1000);
+  
+  return admin.firestore.Timestamp.fromDate(istMidnightUtc);
+}
+
 function toYmdFromDateLike(value: unknown): string | null {
   if (!value) return null;
 
@@ -834,20 +859,45 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
     const enrollmentRef = db.collection("enrollments").doc(enrollmentId);
     const actorUid = request.auth?.uid || null;
 
-    const replay = await db.runTransaction(async (tx) => {
-      const enrollmentSnap = await tx.get(enrollmentRef);
-      if (!enrollmentSnap.exists) {
-        throw new HttpsError("not-found", `Enrollment ${enrollmentId} not found`);
-      }
+    // DIAGNOSTIC: Log all inputs before transaction
+    logger.info("saveEnrollmentScheduleAndGenerateSessions - Starting", {
+      enrollmentId,
+      enrollmentStartDateYmd,
+      classesStartDateYmd,
+      feePerClass,
+      currency,
+      weeklySlots: normalizedSlots,
+      weeksAhead,
+      plannedSessions: plannedSessions ?? null,
+      endDateYmd: endDateYmd || null,
+      idempotencyKey: idempotencyKey || null,
+      actorUid,
+    });
 
-      const enrollment = enrollmentSnap.data() as Record<string, unknown>;
-      const previousGeneration =
-        enrollment.scheduleGeneration &&
-        typeof enrollment.scheduleGeneration === "object" ?
-          (enrollment.scheduleGeneration as Record<string, unknown>) :
-          {};
-      const previousKey = normalizeIdempotencyKey(previousGeneration.lastRequestKey);
-      const previousState = normalizeStatus(previousGeneration.state);
+    let replay: CreateSessionsResponse | null = null;
+    
+    try {
+      replay = await db.runTransaction(async (tx) => {
+        logger.info("Transaction started - fetching enrollment", {enrollmentId});
+        const enrollmentSnap = await tx.get(enrollmentRef);
+        if (!enrollmentSnap.exists) {
+          logger.error("Enrollment not found", {enrollmentId});
+          throw new HttpsError("not-found", `Enrollment ${enrollmentId} not found`);
+        }
+        logger.info("Enrollment fetched successfully", {enrollmentId});
+
+        const enrollment = enrollmentSnap.data() as Record<string, unknown>;
+        logger.info("Checking idempotency", {
+          enrollmentId,
+          hasScheduleGeneration: !!enrollment.scheduleGeneration,
+        });
+        const previousGeneration =
+          enrollment.scheduleGeneration &&
+          typeof enrollment.scheduleGeneration === "object" ?
+            (enrollment.scheduleGeneration as Record<string, unknown>) :
+            {};
+        const previousKey = normalizeIdempotencyKey(previousGeneration.lastRequestKey);
+        const previousState = normalizeStatus(previousGeneration.state);
       const previousResult =
         previousGeneration.lastResult &&
         typeof previousGeneration.lastResult === "object" ?
@@ -866,9 +916,14 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         typeof previousResult.rangeEnd === "string" &&
         typeof previousResult.rangeStartYmd === "string" &&
         typeof previousResult.rangeEndYmd === "string") {
+        logger.info("Idempotent replay - returning cached result", {
+          enrollmentId,
+          idempotencyKey,
+        });
         return previousResult as CreateSessionsResponse;
       }
 
+      logger.info("Building schedule payload", {enrollmentId});
       const schedulePayload: ScheduleConfig = {
         timezone: "Asia/Kolkata",
         weeklySlots: normalizedSlots.map((slot) => ({
@@ -884,12 +939,54 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         endDateYmd: endDateYmd || null,
       };
 
+      logger.info("Parsing dates for enrollment update", {
+        enrollmentId,
+        enrollmentStartDateYmd,
+        classesStartDateYmd,
+      });
+
+      let enrollmentStartTimestamp: admin.firestore.Timestamp;
+      let classesStartTimestamp: admin.firestore.Timestamp;
+      
+      try {
+        enrollmentStartTimestamp = parseYmdToIstMidnightTimestamp(enrollmentStartDateYmd, "enrollmentStartDate");
+        logger.info("Parsed enrollmentStartDate", {
+          enrollmentId,
+          ymd: enrollmentStartDateYmd,
+          timestamp: enrollmentStartTimestamp.toDate().toISOString(),
+        });
+      } catch (parseError) {
+        logger.error("Failed to parse enrollmentStartDate", {
+          enrollmentId,
+          ymd: enrollmentStartDateYmd,
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+        });
+        throw parseError;
+      }
+
+      try {
+        classesStartTimestamp = parseYmdToIstMidnightTimestamp(classesStartDateYmd, "classesStartDate");
+        logger.info("Parsed classesStartDate", {
+          enrollmentId,
+          ymd: classesStartDateYmd,
+          timestamp: classesStartTimestamp.toDate().toISOString(),
+        });
+      } catch (parseError) {
+        logger.error("Failed to parse classesStartDate", {
+          enrollmentId,
+          ymd: classesStartDateYmd,
+          error: parseError instanceof Error ? parseError.message : String(parseError),
+        });
+        throw parseError;
+      }
+
+      logger.info("Writing enrollment update", {enrollmentId});
       tx.set(
         enrollmentRef,
         {
-          startDate: admin.firestore.Timestamp.fromDate(new Date(`${enrollmentStartDateYmd}T00:00:00+05:30`)),
+          startDate: enrollmentStartTimestamp,
           startDateYmd: enrollmentStartDateYmd,
-          classesStartDate: admin.firestore.Timestamp.fromDate(new Date(`${classesStartDateYmd}T00:00:00+05:30`)),
+          classesStartDate: classesStartTimestamp,
           classesStartDateYmd,
           feePerClass,
           currency,
@@ -908,10 +1005,41 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         {merge: true},
       );
 
+      logger.info("Transaction complete - enrollment updated", {enrollmentId});
       return null;
     });
+    } catch (txError) {
+      // Transaction-level errors (enrollment not found, date parsing, etc.)
+      const message = txError instanceof Error ? txError.message : String(txError);
+      const stack = txError instanceof Error ? txError.stack : undefined;
+      const errorCode = txError instanceof HttpsError ? txError.code : "unknown";
+      
+      logger.error("Transaction failed in saveEnrollmentScheduleAndGenerateSessions", {
+        enrollmentId,
+        error: message,
+        errorCode,
+        stack,
+        enrollmentStartDateYmd,
+        classesStartDateYmd,
+        feePerClass,
+        currency,
+      });
+      
+      // Re-throw HttpsErrors as-is, wrap others
+      if (txError instanceof HttpsError) {
+        throw txError;
+      }
+      throw new HttpsError(
+        "internal",
+        `Schedule save transaction failed: ${message}`,
+      );
+    }
 
     if (replay) {
+      logger.info("Returning idempotent replay result", {
+        enrollmentId,
+        replay,
+      });
       return {
         ...replay,
         idempotentReplay: true,
@@ -920,6 +1048,15 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
     }
 
     try {
+      logger.info("Calling generateSessionsFromScheduleInternal", {
+        enrollmentId,
+        weeksAhead,
+        plannedSessions: plannedSessions ?? null,
+        replaceFuture: true,
+        startDate: classesStartDateYmd,
+        endDate: endDateYmd || null,
+      });
+      
       const result = await generateSessionsFromScheduleInternal({
         enrollmentId,
         weeksAhead,
@@ -927,6 +1064,11 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         replaceFuture: true,
         startDate: classesStartDateYmd,
         ...(endDateYmd ? {endDate: endDateYmd} : {}),
+      });
+
+      logger.info("generateSessionsFromScheduleInternal succeeded", {
+        enrollmentId,
+        result,
       });
 
       await enrollmentRef.set(
@@ -952,6 +1094,15 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      const errorCode = error instanceof HttpsError ? error.code : "internal";
+      
+      logger.error("Session generation failed", {
+        enrollmentId,
+        error: message,
+        errorCode,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      
       await enrollmentRef.set(
         {
           scheduleGeneration: {
@@ -966,7 +1117,17 @@ export const saveEnrollmentScheduleAndGenerateSessions = onCall(
         },
         {merge: true},
       );
-      throw error;
+      
+      // Re-throw with better error message if it's a generic error
+      if (error instanceof HttpsError) {
+        throw error;
+      }
+      
+      throw new HttpsError(
+        "internal",
+        `Failed to generate sessions: ${message}`,
+        {originalError: message},
+      );
     }
   },
 );

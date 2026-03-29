@@ -82,7 +82,7 @@ export default function AssignCourseModal({
 }: Props) {
   const [courses, setCourses] = useState<Course[]>([]);
   const [selected, setSelected] = useState<string>('');
-  const [canAssign, setCanAssign] = useState<boolean>(false);
+  const [lpCanAssign, setLpCanAssign] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [feePerClassInput, setFeePerClassInput] = useState<string>('');
   const [teacherPayPerSessionInput, setTeacherPayPerSessionInput] = useState<string>('');
@@ -96,8 +96,12 @@ export default function AssignCourseModal({
     (student as any).displayName ||
     student.id;
 
+  // Admin can always assign — no async needed. LP needs a Firestore check.
+  const isAdmin = user?.role === 'admin';
+  const canAssign = isAdmin || lpCanAssign === true;
+
   // Load courses from hook (only active by default); keep fallback if none
-  const { data: fetchedCourses = [] } = useCourses({ status: 'active' });
+  const { data: fetchedCourses = [], isLoading: coursesLoading } = useCourses({ status: 'active' });
 
   useEffect(() => {
     if (Array.isArray(fetchedCourses) && fetchedCourses.length > 0) {
@@ -146,6 +150,9 @@ export default function AssignCourseModal({
       speaking: ['basic', 'advanced'],
     };
 
+    // Filter out intermediate-level grammar and speaking courses.
+    // Business rule: Only basic → advanced progression is offered for these areas.
+    // Intermediate tier is not part of the active curriculum offering.
     const filteredCourses = courses.filter((course) => {
       const id = String(course.id || '').toLowerCase();
       if (id.includes('intermediate-grammar') || id.includes('intermediate-public-speaking')) return false;
@@ -179,34 +186,25 @@ export default function AssignCourseModal({
     });
   }, [courses]);
 
-  // Who can assign? Admin OR LP assigned to this student
+  // For LP role: check if this LP is assigned to the student (async Firestore check).
+  // Admin authorization is derived synchronously from user.role above.
   useEffect(() => {
     if (!user || !student) return;
+    if (user.role !== 'learningPartner') return;
 
     const check = async () => {
-      if (user.role === 'admin') {
-        setCanAssign(true);
-        return;
+      try {
+        const studentDoc = await getDoc(doc(db, 'kids', student.id));
+        const data = studentDoc.exists()
+          ? (studentDoc.data() as any)
+          : (student as any);
+
+        const lpId = data.lpId || data.primaryLpId || (student as any).lpId;
+        setLpCanAssign(lpId === user.uid);
+      } catch (err) {
+        console.error(err);
+        setLpCanAssign(false);
       }
-
-      if (user.role === 'learningPartner') {
-        try {
-          const studentDoc = await getDoc(doc(db, 'kids', student.id));
-          const data = studentDoc.exists()
-            ? (studentDoc.data() as any)
-            : (student as any);
-
-          const lpId = data.lpId || data.primaryLpId || (student as any).lpId;
-          setCanAssign(lpId === user.uid);
-          return;
-        } catch (err) {
-          console.error(err);
-          setCanAssign(false);
-          return;
-        }
-      }
-
-      setCanAssign(false);
     };
 
     void check();
@@ -408,71 +406,88 @@ export default function AssignCourseModal({
           </DialogDescription>
         </DialogHeader>
 
-          <div className="py-4 space-y-2">
-            {sortedCourses.length > 0 ? (
-              <Select value={selected} onValueChange={setSelected}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select course" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortedCourses.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {(c.name || c.title || 'Untitled Course')}
-                      {(c.area || c.level) ? ` — ${c.area || ''}${c.area && c.level ? ' / ' : ''}${c.level || ''}` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="py-4 space-y-4">
+            {coursesLoading ? (
+              <div className="p-4 text-sm text-muted-foreground text-center">Loading courses…</div>
+            ) : sortedCourses.length > 0 ? (
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Course</label>
+                <Select value={selected} onValueChange={setSelected}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortedCourses.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {(c.name || c.title || 'Untitled Course')}
+                        {(c.area || c.level) ? ` — ${c.area || ''}${c.area && c.level ? ' / ' : ''}${c.level || ''}` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             ) : (
               <div className="p-4 rounded border border-dashed border-gray-200 text-sm text-muted-foreground">
-                No courses found. Please add courses in Course Management.
+                No courses found. Please add courses in Course Management first.
               </div>
             )}
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Fee per class (₹)</label>
-            <Input
-              type="number"
-              min={1}
-              step={1}
-              placeholder="e.g., 599"
-              value={feePerClassInput}
-              onChange={(e) => setFeePerClassInput(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Teacher pay per session (₹)</label>
-            <Input
-              type="number"
-              min={0}
-              step={1}
-              placeholder="e.g., 300"
-              value={teacherPayPerSessionInput}
-              onChange={(e) => setTeacherPayPerSessionInput(e.target.value)}
-            />
-            {(!teacherPayPerSessionInput || Number(teacherPayPerSessionInput) <= 0) && (
-              <p className="text-xs text-amber-600">
-                Earnings will be ₹0 until set.
+
+            {selected && (
+              <>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Fee per class (₹) *</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    step={1}
+                    placeholder="e.g., 599"
+                    value={feePerClassInput}
+                    onChange={(e) => setFeePerClassInput(e.target.value)}
+                  />
+                  {feePerClassInput && Number(feePerClassInput) <= 0 && (
+                    <p className="text-xs text-red-500">Fee must be greater than 0.</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Teacher pay per session (₹)</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    placeholder="e.g., 300"
+                    value={teacherPayPerSessionInput}
+                    onChange={(e) => setTeacherPayPerSessionInput(e.target.value)}
+                  />
+                  {(!teacherPayPerSessionInput || Number(teacherPayPerSessionInput) <= 0) && (
+                    <p className="text-xs text-amber-600">
+                      Teacher earnings will be ₹0 until set.
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {!canAssign && user?.role !== 'learningPartner' && (
+              <p className="text-xs text-red-500">
+                You are not authorized to assign courses for this student.
+              </p>
+            )}
+            {!canAssign && user?.role === 'learningPartner' && lpCanAssign === false && (
+              <p className="text-xs text-red-500">
+                You are not the assigned Learning Partner for this student.
               </p>
             )}
           </div>
-          {!canAssign && (
-            <p className="text-xs text-red-500">
-              You are not authorized to assign courses for this
-              student.
-            </p>
-          )}
-        </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleAssign} disabled={!canAssign || saving}>
-            {saving
-              ? 'Assigning…'
-              : canAssign
-              ? 'Assign'
-              : 'Not Authorized'}
+          <Button
+            onClick={handleAssign}
+            disabled={!canAssign || saving || !selected || coursesLoading}
+          >
+            {saving ? 'Assigning…' : 'Assign Course'}
           </Button>
         </DialogFooter>
       </DialogContent>
