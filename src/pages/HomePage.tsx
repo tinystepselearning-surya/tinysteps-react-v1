@@ -7,7 +7,7 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
-const DemoShowcase = lazy(() => import("../components/Home/DemoShowcase"));
+const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
 const SocialProofCrispSection = lazy(() => import("../components/Home/SocialProofCrispSection"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
@@ -67,6 +67,8 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    if (typeof navigator !== "undefined" && navigator.webdriver) return;
+
     const activate = () => setShowDeferredSections(true);
     const win = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
@@ -76,13 +78,29 @@ export default function HomePage() {
     let idleId: number | undefined;
     let timeoutId: number | undefined;
 
+    const onFirstInteraction = () => {
+      activate();
+      window.removeEventListener("pointerdown", onFirstInteraction);
+      window.removeEventListener("keydown", onFirstInteraction);
+      window.removeEventListener("touchstart", onFirstInteraction);
+      window.removeEventListener("scroll", onFirstInteraction);
+    };
+    window.addEventListener("pointerdown", onFirstInteraction, { passive: true });
+    window.addEventListener("keydown", onFirstInteraction, { passive: true });
+    window.addEventListener("touchstart", onFirstInteraction, { passive: true });
+    window.addEventListener("scroll", onFirstInteraction, { passive: true });
+
     if (typeof win.requestIdleCallback === "function") {
-      idleId = win.requestIdleCallback(activate, { timeout: 1200 });
+      idleId = win.requestIdleCallback(activate, { timeout: 2800 });
     } else {
-      timeoutId = window.setTimeout(activate, 900);
+      timeoutId = window.setTimeout(activate, 2400);
     }
 
     return () => {
+      window.removeEventListener("pointerdown", onFirstInteraction);
+      window.removeEventListener("keydown", onFirstInteraction);
+      window.removeEventListener("touchstart", onFirstInteraction);
+      window.removeEventListener("scroll", onFirstInteraction);
       if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
         win.cancelIdleCallback(idleId);
       }

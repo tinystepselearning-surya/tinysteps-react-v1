@@ -466,6 +466,7 @@ async function processSessionCompletion(
 
     let creditsEarnedForTeacher = 0;
     const creditChanges: CreditChange[] = [];
+    const unresolvedEnrollmentKidIds: string[] = [];
 
     for (const kidId of kidIds) {
       const att = attendanceMap[kidId];
@@ -476,6 +477,7 @@ async function processSessionCompletion(
 
       const enrollmentDoc = await resolveEnrollmentForSessionKid(db, kidId, courseId, sessionId);
       if (!enrollmentDoc) {
+        unresolvedEnrollmentKidIds.push(kidId);
         continue;
       }
 
@@ -560,6 +562,16 @@ async function processSessionCompletion(
     await Promise.all(
       kidIds.map((kidId) => recomputeStudentSummary(kidId, courseId))
     );
+
+    if (unresolvedEnrollmentKidIds.length > 0) {
+      logger.warn("Session completion finished with present-attendance kids missing enrollment resolution", {
+        sessionId,
+        courseId,
+        teacherId,
+        unresolvedEnrollmentKidIds,
+        unresolvedCount: unresolvedEnrollmentKidIds.length,
+      });
+    }
 
     logger.info("Session completed and processed", {
       sessionId,

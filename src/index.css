@@ -1683,3 +1683,23 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
     transition: none;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-animate],
+  [data-animate].is-visible,
+  [data-animate="fade-left"],
+  [data-animate="fade-right"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .animated-gradient-text,
+  .button-ripple {
+    animation: none !important;
+  }
+}

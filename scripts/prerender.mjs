@@ -454,8 +454,13 @@ function escapeHtml(text) {
 }
 
 async function writeRouteHtml(route, html) {
+  // Strip browser-runtime preload/script artifacts that bloat critical head payload.
+  const sanitizedHtml = html
+    .replace(/<link rel="modulepreload"[^>]*>/gi, "")
+    .replace(/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^"]*"[^>]*><\/script>/gi, "");
+
   // Inject SEO metadata before writing
-  const seoInjectedHtml = injectSeoMetadata(html, route);
+  const seoInjectedHtml = injectSeoMetadata(sanitizedHtml, route);
 
   if (route === "/") {
     const outFile = path.join(DIST, "index.html");

@@ -72,6 +72,47 @@ function normalizeAttendanceStatus(value: unknown): string {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeCourseId(value: unknown): string {
+  return String(value || '').trim();
+}
+
+function normalizeMastery(value: unknown): string {
+  return String(value || '').trim().toLowerCase();
+}
+
+function hasProgressSignal(progress: Record<string, unknown>): boolean {
+  return Boolean(
+    normalizeMastery(progress.mastery) ||
+      String(progress.teacherRemark || '').trim() ||
+      String(progress.lastSessionId || '').trim() ||
+      String(progress.source || '').trim() ||
+      progress.updatedAt ||
+      progress.createdAt,
+  );
+}
+
+function isCompletedProgress(progress: Record<string, unknown>): boolean {
+  const mastery = normalizeMastery(progress.mastery);
+  if (mastery === 'mastered' || mastery === 'proficient') return true;
+  const status = normalizeSessionStatus(progress.status);
+  return status === 'completed';
+}
+
+function collectParentIds(record: Record<string, unknown> | null | undefined): string[] {
+  const parentIds = new Set<string>();
+  if (!record) return [];
+  const push = (value: unknown) => {
+    const normalized = normalizeParentId(value);
+    if (normalized) parentIds.add(normalized);
+  };
+  push(record.parentId);
+  push(record.primaryParentId);
+  if (Array.isArray(record.parentIds)) {
+    record.parentIds.forEach((value) => push(value));
+  }
+  return Array.from(parentIds);
+}
+
 function resolveSessionKidIds(session: Record<string, unknown>): string[] {
   const ids = new Set<string>();
   const directKidId = String(session.kidId || session.studentId || '').trim();
@@ -394,6 +435,185 @@ async function recomputeParentMonthBillingReadModel(
   );
 }
 
+async function resolveProgressProjectionTarget(
+  db: admin.firestore.Firestore,
+  studentRefId: string,
+): Promise<{ kidId: string; parentIds: string[] } | null> {
+  const fallbackKidId = sanitizeKidId(studentRefId);
+  const directKidSnap = await db.collection('kids').doc(studentRefId).get();
+  if (directKidSnap.exists) {
+    const directKidData = (directKidSnap.data() || {}) as Record<string, unknown>;
+    const parentIds = collectParentIds(directKidData);
+    if (parentIds.length > 0) {
+      return { kidId: fallbackKidId, parentIds };
+    }
+  }
+
+  const studentSnap = await db.collection('students').doc(studentRefId).get();
+  const studentData = studentSnap.exists ? ((studentSnap.data() || {}) as Record<string, unknown>) : null;
+  const canonicalKidId = sanitizeKidId(studentData?.kidId || studentRefId);
+  const fromStudent = collectParentIds(studentData);
+  if (fromStudent.length > 0) {
+    return { kidId: canonicalKidId, parentIds: fromStudent };
+  }
+
+  if (canonicalKidId !== fallbackKidId) {
+    const canonicalKidSnap = await db.collection('kids').doc(canonicalKidId).get();
+    if (canonicalKidSnap.exists) {
+      const canonicalKidData = (canonicalKidSnap.data() || {}) as Record<string, unknown>;
+      const parentIds = collectParentIds(canonicalKidData);
+      if (parentIds.length > 0) {
+        return { kidId: canonicalKidId, parentIds };
+      }
+    }
+  }
+
+  return null;
+}
+
+async function recomputeParentMonthProgressReadModelForKid(
+  db: admin.firestore.Firestore,
+  parentId: string,
+  monthKey: string,
+  studentRefId: string,
+  projectionKidId: string,
+): Promise<void> {
+  const [progressSnap, topicsSnap] = await Promise.all([
+    db.collection('students').doc(studentRefId).collection('progress').get(),
+    db.collection('config').doc('curriculumTopics').get(),
+  ]);
+
+  const topicCourseById = new Map<string, string>();
+  const totalTopicsByCourse = new Map<string, number>();
+  if (topicsSnap.exists) {
+    const topicData = (topicsSnap.data() || {}) as Record<string, unknown>;
+    const topics = Array.isArray(topicData.topics) ? topicData.topics : [];
+    topics.forEach((rawTopic) => {
+      if (!rawTopic || typeof rawTopic !== 'object') return;
+      const topic = rawTopic as Record<string, unknown>;
+      const topicId = String(topic.id || '').trim();
+      const courseId = normalizeCourseId(topic.courseId || topic.course);
+      if (!topicId || !courseId) return;
+      topicCourseById.set(topicId, courseId);
+      totalTopicsByCourse.set(courseId, (totalTopicsByCourse.get(courseId) || 0) + 1);
+    });
+  }
+
+  const byCourse = new Map<
+    string,
+    { courseId: string; totalTopics: number; completedTopics: number; inProgressTopics: number; lastUpdatedAtMs: number | null }
+  >();
+  const seenTopicsByCourse = new Map<string, Set<string>>();
+
+  const getCourseBucket = (courseId: string) => {
+    let bucket = byCourse.get(courseId);
+    if (!bucket) {
+      bucket = {
+        courseId,
+        totalTopics: totalTopicsByCourse.get(courseId) || 0,
+        completedTopics: 0,
+        inProgressTopics: 0,
+        lastUpdatedAtMs: null,
+      };
+      byCourse.set(courseId, bucket);
+    }
+    return bucket;
+  };
+
+  progressSnap.docs.forEach((docSnap) => {
+    const progress = (docSnap.data() || {}) as Record<string, unknown>;
+    const topicId = String(progress.topicId || docSnap.id || '').trim();
+    const courseId = normalizeCourseId(progress.courseId || topicCourseById.get(topicId));
+    if (!courseId) return;
+
+    const bucket = getCourseBucket(courseId);
+    const seen = seenTopicsByCourse.get(courseId) || new Set<string>();
+    const stableTopicId = topicId || docSnap.id;
+    if (stableTopicId) seen.add(stableTopicId);
+    seenTopicsByCourse.set(courseId, seen);
+
+    const completed = isCompletedProgress(progress);
+    const inProgress = !completed && hasProgressSignal(progress);
+    if (completed) bucket.completedTopics += 1;
+    if (inProgress) bucket.inProgressTopics += 1;
+
+    const updatedAtMs =
+      toDate(progress.updatedAt || progress.createdAt || progress.lastUpdatedAt || null)?.getTime() || null;
+    if (updatedAtMs && (!bucket.lastUpdatedAtMs || updatedAtMs > bucket.lastUpdatedAtMs)) {
+      bucket.lastUpdatedAtMs = updatedAtMs;
+    }
+  });
+
+  totalTopicsByCourse.forEach((total, courseId) => {
+    const bucket = getCourseBucket(courseId);
+    bucket.totalTopics = Math.max(bucket.totalTopics, total);
+  });
+  seenTopicsByCourse.forEach((topicIds, courseId) => {
+    const bucket = getCourseBucket(courseId);
+    bucket.totalTopics = Math.max(bucket.totalTopics, topicIds.size);
+  });
+
+  const byCourseObject: Record<string, Record<string, unknown>> = {};
+  let totalsCompleted = 0;
+  let totalsInProgress = 0;
+  let totalsTopics = 0;
+  let latestUpdatedAtMs: number | null = null;
+
+  Array.from(byCourse.values())
+    .sort((a, b) => a.courseId.localeCompare(b.courseId))
+    .forEach((bucket) => {
+      const totalTopics = Math.max(bucket.totalTopics, bucket.completedTopics, bucket.inProgressTopics, 0);
+      const completedTopics = Math.min(Math.max(bucket.completedTopics, 0), totalTopics);
+      const inProgressTopics = Math.max(Math.min(bucket.inProgressTopics, totalTopics - completedTopics), 0);
+      const overallPct = totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0;
+
+      byCourseObject[bucket.courseId] = {
+        courseId: bucket.courseId,
+        totalTopics,
+        completedTopics,
+        inProgressTopics,
+        overallPct,
+        lastUpdatedAtMs: bucket.lastUpdatedAtMs || null,
+      };
+
+      totalsTopics += totalTopics;
+      totalsCompleted += completedTopics;
+      totalsInProgress += inProgressTopics;
+      if (bucket.lastUpdatedAtMs && (!latestUpdatedAtMs || bucket.lastUpdatedAtMs > latestUpdatedAtMs)) {
+        latestUpdatedAtMs = bucket.lastUpdatedAtMs;
+      }
+    });
+
+  const totalsOverallPct = totalsTopics > 0 ? Math.round((totalsCompleted / totalsTopics) * 100) : 0;
+  const docRef = db.collection('parentMonthlyReadModels').doc(parentId).collection('months').doc(monthKey);
+  await docRef.set(
+    {
+      parentId,
+      monthKey,
+      progress: {
+        schemaVersion: 1,
+        modelType: 'progress_v1',
+        refreshedAt: admin.firestore.FieldValue.serverTimestamp(),
+        generatedAtMs: Date.now(),
+        byKid: {
+          [projectionKidId]: {
+            kidId: projectionKidId,
+            byCourse: byCourseObject,
+            totals: {
+              totalTopics: totalsTopics,
+              completedTopics: totalsCompleted,
+              inProgressTopics: totalsInProgress,
+              overallPct: totalsOverallPct,
+            },
+            lastUpdatedAtMs: latestUpdatedAtMs,
+          },
+        },
+      },
+    },
+    { merge: true },
+  );
+}
+
 async function handleParentMonthProjectionUpdate(
   beforeData: Record<string, unknown> | null,
   afterData: Record<string, unknown> | null,
@@ -488,4 +708,52 @@ export const onClassSessionReadModelWrite = onDocumentWritten(
     const afterData = change.after.exists ? (change.after.data() as Record<string, unknown>) : null;
     await handleParentMonthAttendanceProjectionUpdate(beforeData, afterData, 'classSessions');
   }
+);
+
+export const onStudentProgressReadModelWrite = onDocumentWritten(
+  {
+    document: 'students/{studentRefId}/progress/{topicId}',
+    region: REGION,
+  },
+  async (event) => {
+    const change = event.data;
+    if (!change) return;
+
+    const studentRefId = String(event.params.studentRefId || '').trim();
+    if (!studentRefId) return;
+
+    const beforeData = change.before.exists ? (change.before.data() as Record<string, unknown>) : null;
+    const afterData = change.after.exists ? (change.after.data() as Record<string, unknown>) : null;
+    const monthKey =
+      resolveMonthKey(afterData) ||
+      resolveMonthKey(beforeData) ||
+      monthKeyFromDateIST(new Date());
+    if (!monthKey) return;
+
+    const db = admin.firestore();
+    const projectionTarget = await resolveProgressProjectionTarget(db, studentRefId);
+    if (!projectionTarget || projectionTarget.parentIds.length === 0) {
+      logger.warn('Skipped parent progress read model refresh: parent linkage unresolved', {
+        studentRefId,
+        monthKey,
+      });
+      return;
+    }
+
+    for (const parentId of projectionTarget.parentIds) {
+      await recomputeParentMonthProgressReadModelForKid(
+        db,
+        parentId,
+        monthKey,
+        studentRefId,
+        projectionTarget.kidId,
+      );
+      logger.debug('Refreshed parent monthly progress read model', {
+        studentRefId,
+        projectionKidId: projectionTarget.kidId,
+        parentId,
+        monthKey,
+      });
+    }
+  },
 );

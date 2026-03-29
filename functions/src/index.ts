@@ -30,7 +30,12 @@ export { createSessionsFromSchedule } from "./createSessionsFromSchedule";
 export { saveEnrollmentScheduleAndGenerateSessions } from "./createSessionsFromSchedule";
 export { createMakeupSessionFromCredit } from "./createMakeupSessionFromCredit";
 export { saveTeacherSessionProgress } from "./saveTeacherSessionProgress";
-export { onBillingChargeReadModelWrite, onPaymentReadModelWrite, onClassSessionReadModelWrite } from "./parentMonthlyReadModels";
+export {
+  onBillingChargeReadModelWrite,
+  onPaymentReadModelWrite,
+  onClassSessionReadModelWrite,
+  onStudentProgressReadModelWrite,
+} from "./parentMonthlyReadModels";
 
 // Admin user management
 export { adminCreateUser } from "./adminCreateUser";

@@ -36,6 +36,9 @@ type BackfillRun = {
   createdAt?: unknown;
   startedAt?: unknown;
   completedAt?: unknown;
+  ambiguousSample?: Array<{ enrollmentId?: string; reasons?: string[] }> | null;
+  unresolvedSample?: Array<{ enrollmentId?: string; reasons?: string[] }> | null;
+  errorSample?: Array<{ enrollmentId?: string; reason?: string }> | null;
 };
 
 type LegacyFallbackDay = {
@@ -47,6 +50,23 @@ type LegacyFallbackDay = {
   byReader?: Record<string, { events?: number; hits?: number }>;
   updatedAt?: unknown;
 };
+
+type ReconciliationRun = {
+  id: string;
+  runStatus?: string | null;
+  warningState?: string | null;
+  warningCount?: number | null;
+  triggerType?: string | null;
+  createdAt?: unknown;
+  summaryCounts?: Record<string, unknown> | null;
+  counts?: Record<string, unknown> | null;
+};
+
+type ReadinessState = 'NOT READY' | 'PARTIALLY READY' | 'READY FOR PHASE A';
+
+const FALLBACK_HIT_THRESHOLD_14D = 0;
+const REQUIRED_FALLBACK_OBSERVATION_DAYS = 14;
+const REQUIRED_RECONCILIATION_SUCCESS_RUNS = 7;
 
 function toDate(value: unknown): Date | null {
   if (!value) return null;
@@ -96,6 +116,63 @@ function formatDurationMs(value: unknown): string {
   return `${seconds}s`;
 }
 
+function normalizeReason(value: unknown): string {
+  return String(value || '').trim();
+}
+
+function summarizeReasonBuckets(
+  items: Array<{ enrollmentId?: string; reasons?: string[] }> | null | undefined,
+): Array<{ category: string; count: number; sampleEnrollmentIds: string[] }> {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const buckets = new Map<string, { count: number; sampleEnrollmentIds: Set<string> }>();
+  const classifyReason = (reason: string): string => {
+    if (!reason) return 'unresolved_identity_source';
+    if (reason.includes('kidId')) return 'missing_or_conflicting_kid_linkage';
+    if (reason.includes('parentId')) return 'missing_or_conflicting_parent_linkage';
+    if (reason.includes('teacherId')) return 'missing_or_conflicting_teacher_linkage';
+    return 'unresolved_identity_source';
+  };
+
+  items.forEach((entry) => {
+    const enrollmentId = String(entry?.enrollmentId || '').trim();
+    const reasons = Array.isArray(entry?.reasons) ? entry!.reasons!.map(normalizeReason).filter(Boolean) : [];
+    if (reasons.length === 0) {
+      const key = 'unresolved_identity_source';
+      const existing = buckets.get(key) || { count: 0, sampleEnrollmentIds: new Set<string>() };
+      existing.count += 1;
+      if (enrollmentId && existing.sampleEnrollmentIds.size < 5) existing.sampleEnrollmentIds.add(enrollmentId);
+      buckets.set(key, existing);
+      return;
+    }
+
+    const uniqueCategories = Array.from(new Set(reasons.map(classifyReason)));
+    uniqueCategories.forEach((key) => {
+      const existing = buckets.get(key) || { count: 0, sampleEnrollmentIds: new Set<string>() };
+      existing.count += 1;
+      if (enrollmentId && existing.sampleEnrollmentIds.size < 5) existing.sampleEnrollmentIds.add(enrollmentId);
+      buckets.set(key, existing);
+    });
+  });
+
+  return Array.from(buckets.entries())
+    .map(([category, value]) => ({
+      category,
+      count: value.count,
+      sampleEnrollmentIds: Array.from(value.sampleEnrollmentIds),
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function getSummaryCount(
+  run: ReconciliationRun | null,
+  key: 'completedSessionsWithUnresolvedEnrollment' | 'teacherMonthlyRollupMismatches' | 'completedSessionsMissingFinancialWithoutValidSuppression' | 'staleTeacherMonthlyRollups',
+): number {
+  if (!run) return 0;
+  const fromSummary = toCount(run.summaryCounts?.[key]);
+  if (fromSummary > 0) return fromSummary;
+  return toCount(run.counts?.[key]);
+}
+
 export default function EnrollmentCanonicalMigrationCard() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -104,11 +181,12 @@ export default function EnrollmentCanonicalMigrationCard() {
   const [latestCoverage, setLatestCoverage] = useState<CoverageSnapshot | null>(null);
   const [runs, setRuns] = useState<BackfillRun[]>([]);
   const [fallbackDays, setFallbackDays] = useState<LegacyFallbackDay[]>([]);
+  const [reconciliationRuns, setReconciliationRuns] = useState<ReconciliationRun[]>([]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [coverageSnap, runsSnap, fallbackSnap] = await Promise.all([
+      const [coverageSnap, runsSnap, fallbackSnap, reconciliationSnap] = await Promise.all([
         getDoc(doc(db, 'adminStats', 'enrollmentCanonicalCoverage')),
         getDocs(
           query(
@@ -121,7 +199,14 @@ export default function EnrollmentCanonicalMigrationCard() {
           query(
             collection(db, 'adminStats', 'legacyFallbackUsage', 'days'),
             orderBy('dayKey', 'desc'),
-            limit(7),
+            limit(14),
+          ),
+        ),
+        getDocs(
+          query(
+            collection(db, 'adminStats', 'financeReconciliationReports', 'runs'),
+            orderBy('createdAt', 'desc'),
+            limit(14),
           ),
         ),
       ]);
@@ -137,6 +222,12 @@ export default function EnrollmentCanonicalMigrationCard() {
           id: docSnap.id,
           ...(docSnap.data() as Record<string, unknown>),
         })) as LegacyFallbackDay[],
+      );
+      setReconciliationRuns(
+        reconciliationSnap.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Record<string, unknown>),
+        })) as ReconciliationRun[],
       );
     } catch (error: any) {
       console.error('[EnrollmentCanonicalMigrationCard] failed to load', error);
@@ -239,6 +330,99 @@ export default function EnrollmentCanonicalMigrationCard() {
     );
   }, [fallbackDays]);
 
+  const latestBackfillRun = runs[0] || null;
+  const latestApplyBackfillRun = useMemo(
+    () => runs.find((run) => String(run.mode || '').toLowerCase() === 'apply') || null,
+    [runs],
+  );
+  const latestReconciliationRun = reconciliationRuns[0] || null;
+
+  const ambiguityBuckets = useMemo(
+    () => summarizeReasonBuckets(latestBackfillRun?.ambiguousSample),
+    [latestBackfillRun],
+  );
+  const unresolvedBuckets = useMemo(
+    () => summarizeReasonBuckets(latestBackfillRun?.unresolvedSample),
+    [latestBackfillRun],
+  );
+
+  const readinessGateRows = useMemo(() => {
+    const coverageReady = Boolean(latestCoverage?.readiness?.legacyRemovalReady);
+    const backfillReady =
+      Boolean(latestApplyBackfillRun) &&
+      toCount(latestApplyBackfillRun?.ambiguousCount) === 0 &&
+      toCount(latestApplyBackfillRun?.unresolvedCount) === 0 &&
+      toCount(latestApplyBackfillRun?.errorCount) === 0;
+    const fallbackObservedDays = fallbackDays.filter((row) => String(row.dayKey || '').trim()).length;
+    const fallbackReady =
+      fallbackTotals.hits <= FALLBACK_HIT_THRESHOLD_14D &&
+      fallbackObservedDays >= REQUIRED_FALLBACK_OBSERVATION_DAYS;
+
+    const reconciledRecentRuns = reconciliationRuns.filter(
+      (run) => String(run.runStatus || '').toLowerCase() === 'success',
+    );
+    const reconciliationCriticalCount = (run: ReconciliationRun | null) =>
+      getSummaryCount(run, 'completedSessionsWithUnresolvedEnrollment') +
+      getSummaryCount(run, 'teacherMonthlyRollupMismatches') +
+      getSummaryCount(run, 'completedSessionsMissingFinancialWithoutValidSuppression') +
+      getSummaryCount(run, 'staleTeacherMonthlyRollups');
+    const reconciliationReady =
+      reconciledRecentRuns.length >= REQUIRED_RECONCILIATION_SUCCESS_RUNS &&
+      reconciliationCriticalCount(reconciledRecentRuns[0] || null) === 0 &&
+      reconciledRecentRuns
+        .slice(0, REQUIRED_RECONCILIATION_SUCCESS_RUNS)
+        .every((run) => reconciliationCriticalCount(run) === 0);
+
+    return [
+      {
+        key: 'coverage',
+        label: 'Canonical coverage thresholds',
+        ready: coverageReady,
+        detail: coverageReady ? 'coverage readiness=true' : 'coverage readiness=false',
+      },
+      {
+        key: 'backfill',
+        label: 'Backfill ambiguity/unresolved gate',
+        ready: backfillReady,
+        detail: latestApplyBackfillRun
+          ? `latest apply: ambiguous ${toCount(latestApplyBackfillRun.ambiguousCount)}, unresolved ${toCount(
+              latestApplyBackfillRun.unresolvedCount,
+            )}, errors ${toCount(latestApplyBackfillRun.errorCount)}`
+          : 'no apply run found',
+      },
+      {
+        key: 'fallback',
+        label: '14-day legacy fallback near-zero',
+        ready: fallbackReady,
+        detail: `14-day hits ${fallbackTotals.hits} (threshold <= ${FALLBACK_HIT_THRESHOLD_14D}), observed days ${fallbackObservedDays}/${REQUIRED_FALLBACK_OBSERVATION_DAYS}`,
+      },
+      {
+        key: 'reconciliation',
+        label: 'Recent finance reconciliation drift',
+        ready: reconciliationReady,
+        detail: latestReconciliationRun
+          ? `latest critical mismatches ${reconciliationCriticalCount(
+              latestReconciliationRun,
+            )}, successful runs ${reconciledRecentRuns.length}/${REQUIRED_RECONCILIATION_SUCCESS_RUNS}`
+          : 'no reconciliation run found',
+      },
+    ];
+  }, [
+    fallbackDays,
+    fallbackTotals.hits,
+    latestApplyBackfillRun,
+    latestCoverage?.readiness,
+    latestReconciliationRun,
+    reconciliationRuns,
+  ]);
+
+  const readinessState: ReadinessState = useMemo(() => {
+    const readyCount = readinessGateRows.filter((row) => row.ready).length;
+    if (readyCount === readinessGateRows.length && readinessGateRows.length > 0) return 'READY FOR PHASE A';
+    if (readyCount > 0) return 'PARTIALLY READY';
+    return 'NOT READY';
+  }, [readinessGateRows]);
+
   return (
     <Card className="p-6">
       <div className="space-y-4">
@@ -307,7 +491,41 @@ export default function EnrollmentCanonicalMigrationCard() {
         </div>
 
         <div className="rounded-md border p-3">
-          <div className="mb-2 text-sm font-medium">Readiness Flags</div>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-sm font-medium">Phase A Readiness Decision</div>
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                readinessState === 'READY FOR PHASE A'
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
+                  : readinessState === 'PARTIALLY READY'
+                    ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                    : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200'
+              }`}
+            >
+              {readinessState}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {readinessGateRows.map((row) => (
+              <div
+                key={row.key}
+                className="flex flex-wrap items-start justify-between gap-2 rounded-md border px-2 py-1.5 text-xs"
+              >
+                <div className="font-medium text-slate-700 dark:text-slate-200">{row.label}</div>
+                <div className={row.ready ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300'}>
+                  {row.ready ? 'PASS' : 'BLOCKED'}
+                </div>
+                <div className="w-full text-[11px] text-slate-500">{row.detail}</div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500">
+            Decision is read-only. Legacy reader removal stays manual and gated.
+          </div>
+        </div>
+
+        <div className="rounded-md border p-3">
+          <div className="mb-2 text-sm font-medium">Coverage Flags (raw)</div>
           <div className="flex flex-wrap gap-2">
             {readinessRows.map((entry) => (
               <span
@@ -373,9 +591,79 @@ export default function EnrollmentCanonicalMigrationCard() {
           </table>
         </div>
 
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-md border p-3">
+            <div className="mb-2 text-sm font-medium">Ambiguous Buckets (latest run)</div>
+            {ambiguityBuckets.length === 0 ? (
+              <div className="text-xs text-slate-500">No ambiguous buckets in latest backfill run.</div>
+            ) : (
+              <div className="space-y-2">
+                {ambiguityBuckets.slice(0, 6).map((bucket) => (
+                  <div key={`amb_${bucket.category}`} className="rounded border px-2 py-1.5 text-xs">
+                    <div className="font-medium text-slate-700 dark:text-slate-200">
+                      {bucket.category}
+                    </div>
+                    <div className="text-slate-500">Count: {bucket.count}</div>
+                    <div className="text-slate-500">
+                      Sample: {bucket.sampleEnrollmentIds.length > 0 ? bucket.sampleEnrollmentIds.join(', ') : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-md border p-3">
+            <div className="mb-2 text-sm font-medium">Unresolved Buckets (latest run)</div>
+            {unresolvedBuckets.length === 0 ? (
+              <div className="text-xs text-slate-500">No unresolved buckets in latest backfill run.</div>
+            ) : (
+              <div className="space-y-2">
+                {unresolvedBuckets.slice(0, 6).map((bucket) => (
+                  <div key={`unres_${bucket.category}`} className="rounded border px-2 py-1.5 text-xs">
+                    <div className="font-medium text-slate-700 dark:text-slate-200">
+                      {bucket.category}
+                    </div>
+                    <div className="text-slate-500">Count: {bucket.count}</div>
+                    <div className="text-slate-500">
+                      Sample: {bucket.sampleEnrollmentIds.length > 0 ? bucket.sampleEnrollmentIds.join(', ') : '—'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-md border p-3">
+          <div className="mb-2 text-sm font-medium">Reconciliation (latest)</div>
+          {latestReconciliationRun ? (
+            <div className="grid gap-2 text-xs md:grid-cols-2">
+              <div>
+                <div className="text-slate-500">
+                  Run: {formatDateTime(latestReconciliationRun.createdAt)} · {latestReconciliationRun.triggerType || '—'} ·{' '}
+                  {latestReconciliationRun.runStatus || '—'}
+                </div>
+                <div className="text-slate-500">
+                  warningState: {latestReconciliationRun.warningState || '—'} · warnings:{' '}
+                  {toCount(latestReconciliationRun.warningCount)}
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div>Unresolved enrollment refs: {getSummaryCount(latestReconciliationRun, 'completedSessionsWithUnresolvedEnrollment')}</div>
+                <div>Teacher rollup mismatches: {getSummaryCount(latestReconciliationRun, 'teacherMonthlyRollupMismatches')}</div>
+                <div>Missing finance (bad suppression): {getSummaryCount(latestReconciliationRun, 'completedSessionsMissingFinancialWithoutValidSuppression')}</div>
+                <div>Stale teacher rollups: {getSummaryCount(latestReconciliationRun, 'staleTeacherMonthlyRollups')}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-slate-500">No reconciliation reports found yet.</div>
+          )}
+        </div>
+
         <div className="rounded-md border p-3">
           <div className="mb-2 flex items-center justify-between">
-            <div className="text-sm font-medium">Legacy Fallback Usage (last 7 days)</div>
+            <div className="text-sm font-medium">Legacy Fallback Usage (last 14 days)</div>
             <div className="text-xs text-gray-500">
               Events {fallbackTotals.events} · Hits {fallbackTotals.hits}
             </div>

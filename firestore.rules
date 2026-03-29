@@ -587,19 +587,16 @@ service cloud.firestore {
     }
 
     // ----------------------------
-    // TEACHER EARNINGS (LEGACY FALLBACK DOC)
+    // TEACHER EARNINGS (event docs)
     // ----------------------------
-    match /teacherEarnings/{teacherId} {
-      allow read: if isAdmin() || (
-        isTeacher() && (
-          request.auth.uid == teacherId
-          || (
-            resource != null
-            && ('teacherId' in resource.data)
-            && resource.data.teacherId == request.auth.uid
-          )
-        )
-      );
+    match /teacherEarnings/{earningId} {
+      allow read: if isAdmin()
+        || (
+          isTeacher()
+          && resource != null
+          && ('teacherId' in resource.data)
+          && resource.data.teacherId == request.auth.uid
+        );
       allow write: if false;
     }
 

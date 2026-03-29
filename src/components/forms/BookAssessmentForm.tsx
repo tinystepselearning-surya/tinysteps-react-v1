@@ -157,11 +157,14 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
 
         <form onSubmit={handleSubmit} className="relative space-y-4">
           <div className="group space-y-1">
-            <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
+            <label htmlFor="book-parent-name" className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
               Parent Name *
             </label>
             <input
+              id="book-parent-name"
+              name="parentName"
               type="text"
+              autoComplete="name"
               placeholder="e.g. Priya Sharma"
               value={form.parentName}
               onChange={(e) =>
@@ -173,11 +176,15 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           </div>
 
           <div className="group space-y-1">
-            <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
+            <label htmlFor="book-whatsapp" className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
               WhatsApp Number *
             </label>
             <input
+              id="book-whatsapp"
+              name="whatsapp"
               type="tel"
+              autoComplete="tel"
+              inputMode="tel"
               placeholder="+91 00000 00000"
               value={form.whatsapp}
               onChange={(e) =>
@@ -198,6 +205,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
               </span>
               <select
                 id="book-child-age"
+                name="childAgeGrade"
                 value={form.childAgeGrade}
                 onChange={(e) =>
                   setForm((p) => ({ ...p, childAgeGrade: e.target.value }))
@@ -219,6 +227,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
               </span>
               <select
                 id="book-interest"
+                name="interest"
                 value={form.interest}
                 onChange={(e) =>
                   setForm((p) => ({
@@ -248,10 +257,12 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           {showOptional ? (
             <div className="mt-3 space-y-4">
               <div className="group space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
+                <label htmlFor="book-preferred-time" className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
                   Preferred Time (optional)
                 </label>
                 <input
+                  id="book-preferred-time"
+                  name="preferredTime"
                   type="text"
                   placeholder="e.g. Weekdays 6–8 PM"
                   value={form.preferredTime}
@@ -266,10 +277,12 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
               </div>
 
               <div className="group space-y-1">
-                <label className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
+                <label htmlFor="book-note" className="text-[10px] font-bold uppercase text-slate-600 transition-colors group-focus-within:text-orange-600">
                   Note (optional)
                 </label>
                 <input
+                  id="book-note"
+                  name="note"
                   type="text"
                   placeholder="e.g. shy speaker / reading help"
                   value={form.note}

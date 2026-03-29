@@ -115,3 +115,34 @@ Actions:
 2. Deploy with short observation windows and rollback path.
 3. Keep reconciliation schedules active and monitored before/after each phase.
 4. Do not remove finance/lifecycle compatibility in the same release as unrelated product changes.
+
+## Current Phase A Candidate Inventory (2026-03-29 Pass)
+
+### Low-risk UI readers (Phase A candidate once gates are green)
+1. `/Users/tinysteps/Documents/Tinysteps-react-v1/src/pages/parent/ParentDashboard.tsx`
+- `enrollmentsQuery` fallback branch `where("studentId","in",...)` inside selected-kid enrollment lookup.
+- Removal blocker: requires sustained low fallback usage in `adminStats/legacyFallbackUsage/days/*` plus clean coverage/readiness panel.
+
+2. `/Users/tinysteps/Documents/Tinysteps-react-v1/src/hooks/useData.ts`
+- `useEnrollmentsForStudents` fallback branch `where('studentId','in', legacyFallbackIds)`.
+- Removal blocker: same as above; admin/student list views still rely on this compatibility path for unresolved historical docs.
+
+### Medium-risk shared readers (defer beyond Phase A)
+1. `/Users/tinysteps/Documents/Tinysteps-react-v1/src/hooks/useData.ts`
+- `useEnrollments` fallback in `resolvedKidIds` currently accepts `studentId` when `kidIds` and `kidId` are absent.
+- Blocker: used across parent/admin shared UIs and can affect list completeness.
+
+2. `/Users/tinysteps/Documents/Tinysteps-react-v1/src/pages/admin/TeacherPayments.tsx`
+- Display-only fallback `kidId || studentId || kidIds[0]` for event rendering.
+- Blocker: admin finance visibility path; removal should wait for full backfill and post-Phase A observation.
+
+### High-risk readers (not Phase A)
+1. `/Users/tinysteps/Documents/Tinysteps-react-v1/functions/src/onSessionComplete.ts`
+2. `/Users/tinysteps/Documents/Tinysteps-react-v1/functions/src/revenue.ts`
+3. `/Users/tinysteps/Documents/Tinysteps-react-v1/functions/src/lifecycle.ts`
+4. `/Users/tinysteps/Documents/Tinysteps-react-v1/functions/src/createSessionsFromSchedule.ts`
+
+These remain blocked until coverage + reconciliation + fallback gates are clean through at least one stable window.
+
+### Dead-reader check
+- No compatibility reader has been proven dead from static inspection in this pass.

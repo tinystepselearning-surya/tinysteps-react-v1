@@ -235,6 +235,36 @@ type ParentMonthlyBillingReadModel = {
     totals?: Record<string, number | undefined>;
     byKid?: Record<string, Record<string, number | string | undefined>>;
   };
+  progress?: {
+    schemaVersion?: number;
+    modelType?: string;
+    refreshedAt?: any;
+    generatedAtMs?: number;
+    byKid?: Record<
+      string,
+      {
+        kidId?: string;
+        totals?: {
+          totalTopics?: number;
+          completedTopics?: number;
+          inProgressTopics?: number;
+          overallPct?: number;
+        };
+        byCourse?: Record<
+          string,
+          {
+            courseId?: string;
+            totalTopics?: number;
+            completedTopics?: number;
+            inProgressTopics?: number;
+            overallPct?: number;
+            lastUpdatedAtMs?: number | null;
+          }
+        >;
+        lastUpdatedAtMs?: number | null;
+      }
+    >;
+  };
 };
 
 type Enrollment = {
@@ -3345,6 +3375,52 @@ export default function ParentDashboard() {
     );
   }, [parentMonthlyBillingReadModelQuery.data, parentPaymentsQuery.data, selectedKidId]);
 
+  const curriculumCompletionSummary = useMemo(() => {
+    const kidId = selectedKidId ? String(selectedKidId) : '';
+    const courseId = String(displayCourseId || '').trim();
+    if (!kidId || !courseId) {
+      return null;
+    }
+
+    const progressProjection = parentMonthlyBillingReadModelQuery.data?.progress;
+    const projectionKid = progressProjection?.byKid?.[kidId];
+    const projectionCourse = projectionKid?.byCourse?.[courseId];
+    if (progressProjection && projectionKid && projectionCourse) {
+      const totalTopics = Number(projectionCourse.totalTopics ?? 0);
+      const completedTopics = Number(projectionCourse.completedTopics ?? 0);
+      const inProgressTopics = Number(projectionCourse.inProgressTopics ?? 0);
+      const overallPct = Number(
+        projectionCourse.overallPct ??
+          (totalTopics > 0 ? Math.round((completedTopics / totalTopics) * 100) : 0),
+      );
+      return {
+        source: 'read_model' as const,
+        totalTopics: Number.isFinite(totalTopics) ? totalTopics : 0,
+        completedTopics: Number.isFinite(completedTopics) ? completedTopics : 0,
+        inProgressTopics: Number.isFinite(inProgressTopics) ? inProgressTopics : 0,
+        overallPct: Number.isFinite(overallPct) ? overallPct : 0,
+        refreshedAt: progressProjection.refreshedAt || null,
+        lastUpdatedAtMs:
+          Number(projectionCourse.lastUpdatedAtMs ?? projectionKid.lastUpdatedAtMs ?? 0) || null,
+      };
+    }
+
+    const fallbackCourse = phonicsProgressByCourse[0];
+    if (!fallbackCourse || String(fallbackCourse.courseId || '').trim() !== courseId) {
+      return null;
+    }
+    const inProgressTopics = fallbackCourse.rows.filter((row: any) => row.status === 'in_progress').length;
+    return {
+      source: 'fallback_client' as const,
+      totalTopics: Number(fallbackCourse.totalTopics ?? 0) || 0,
+      completedTopics: Number(fallbackCourse.completedCount ?? 0) || 0,
+      inProgressTopics,
+      overallPct: Number(fallbackCourse.overallPct ?? 0) || 0,
+      refreshedAt: null,
+      lastUpdatedAtMs: Number(fallbackCourse.lastUpdatedAtMs ?? 0) || null,
+    };
+  }, [displayCourseId, parentMonthlyBillingReadModelQuery.data, phonicsProgressByCourse, selectedKidId]);
+
   const profileEnrollments = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
     const kidId = selectedKidId ? String(selectedKidId) : "";
@@ -4071,6 +4147,33 @@ export default function ParentDashboard() {
                 </div>
               </div>
 
+              {curriculumCompletionSummary && (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="font-semibold">
+                      Curriculum completion: {curriculumCompletionSummary.completedTopics}/
+                      {curriculumCompletionSummary.totalTopics} topics
+                    </div>
+                    <div className="text-[11px] text-slate-500">
+                      {curriculumCompletionSummary.source === 'read_model'
+                        ? `Projection refreshed ${toDateOrNull(curriculumCompletionSummary.refreshedAt)?.toLocaleString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            hour12: true,
+                          }) || '—'}`
+                        : 'Fallback from live progress docs'}
+                    </div>
+                  </div>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                    <div>Completed: {curriculumCompletionSummary.completedTopics}</div>
+                    <div>In progress: {curriculumCompletionSummary.inProgressTopics}</div>
+                    <div>Completion: {Math.max(0, Math.min(100, curriculumCompletionSummary.overallPct))}%</div>
+                  </div>
+                </div>
+              )}
+
               {phonicsLoading && (
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Loading curriculum…
@@ -4179,6 +4282,16 @@ export default function ParentDashboard() {
                       const inProgressCount = selectedCourse.rows.filter(
                         (row: any) => row.status === "in_progress"
                       ).length;
+                      const summaryTotalTopics =
+                        curriculumCompletionSummary?.totalTopics ?? selectedCourse.totalTopics;
+                      const summaryCompletedCount =
+                        curriculumCompletionSummary?.completedTopics ?? selectedCourse.completedCount;
+                      const summaryInProgressCount =
+                        curriculumCompletionSummary?.inProgressTopics ?? inProgressCount;
+                      const summaryOverallPct =
+                        curriculumCompletionSummary?.overallPct ?? selectedCourse.overallPct;
+                      const summaryLastUpdatedAtMs =
+                        curriculumCompletionSummary?.lastUpdatedAtMs ?? selectedCourse.lastUpdatedAtMs;
                       const filteredRows =
                         curriculumFilter === "completed"
                           ? selectedCourse.rows.filter(
@@ -4248,12 +4361,12 @@ export default function ParentDashboard() {
                               </div>
                               <div className="text-xs text-gray-600 text-right">
                                 <div className="font-semibold text-gray-700">
-                                  Completed {selectedCourse.completedCount}/{selectedCourse.totalTopics}
+                                  Completed {summaryCompletedCount}/{summaryTotalTopics}
                                 </div>
                                 <div>
                                   Last updated{" "}
-                                  {selectedCourse.lastUpdatedAtMs
-                                    ? formatTimestamp(selectedCourse.lastUpdatedAtMs)
+                                  {summaryLastUpdatedAtMs
+                                    ? formatTimestamp(summaryLastUpdatedAtMs)
                                     : "—"}
                                 </div>
                               </div>
@@ -4404,16 +4517,16 @@ export default function ParentDashboard() {
                               <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700">
                                 <div
                                   className="h-2 rounded-full bg-indigo-500"
-                                  style={{ width: `${selectedCourse.overallPct}%` }}
+                                  style={{ width: `${summaryOverallPct}%` }}
                                 />
                               </div>
                             </div>
 
                             <div className="flex flex-wrap items-center gap-2 text-xs">
                               {[
-                                { key: "all", label: `All (${selectedCourse.totalTopics})` },
-                                { key: "in_progress", label: `In progress (${inProgressCount})` },
-                                { key: "completed", label: `Completed (${selectedCourse.completedCount})` },
+                                { key: "all", label: `All (${summaryTotalTopics})` },
+                                { key: "in_progress", label: `In progress (${summaryInProgressCount})` },
+                                { key: "completed", label: `Completed (${summaryCompletedCount})` },
                               ].map((opt) => (
                                 <button
                                   key={opt.key}

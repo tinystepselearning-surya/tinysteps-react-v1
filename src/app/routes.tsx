@@ -68,9 +68,9 @@ const TeacherStudentTopicProgressPage = lazy(() => import('../pages/teacher/Teac
 const TeacherDashboard = lazy(() => import('../pages/teacher/TeacherDashboard'));
 const LessonLibraryPage = lazy(() => import('../pages/teacher/LessonLibraryPage'));
 const DebugLessonLibrary = lazy(() => import('../pages/DebugLessonLibrary'));
-import ParentDashboard from '../pages/parent/ParentDashboard';
-import ParentProfile from '../pages/parent/Profile';
-import ParentPayments from '../pages/parent/Payments';
+const ParentDashboard = lazy(() => import('../pages/parent/ParentDashboard'));
+const ParentProfile = lazy(() => import('../pages/parent/Profile'));
+const ParentPayments = lazy(() => import('../pages/parent/Payments'));
 const KidsPortal = lazy(() => import('../pages/KidsPortal'));
 const LPDashboard = lazy(() => import('../pages/lp/LPDashboard'));
 const KidsGamesHub = lazy(() => import('../pages/KidsGamesHub'));
@@ -111,10 +111,10 @@ import PhonePeCallback from '../pages/payments/PhonePeCallback';
 
 // Layout
 import Header from '../components/common/Header';
-import Footer from '../components/common/Footer';
+const Footer = lazy(() => import('../components/common/Footer'));
 import RoleGate, { type Role } from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
-import BackToTopButton from '../components/common/BackToTopButton';
+const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
 import ScrollToTop from '../components/common/ScrollToTop';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
@@ -267,7 +267,11 @@ const Layout: FC = () => {
           <Outlet />
         </Suspense>
       </main>
-      {!hideMarketingChrome ? <Footer /> : null}
+      {!hideMarketingChrome ? (
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      ) : null}
       {!hideSupportWidgets && showFloatingTools ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
