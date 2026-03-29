@@ -244,6 +244,26 @@ const FAQS = [
     answer:
       'Parents receive a clear summary of track completion and next-step recommendations at the end of the camp. Ask the team during enrollment for the latest certificate policy.',
   },
+  {
+    question: 'What is the free level assessment?',
+    answer:
+      'Before enrollment, children complete a brief 10-15 minute assessment to check current phonics, grammar, or speaking ability. This helps place them in the right level group for better participation and learning outcomes. No cost, no obligation.',
+  },
+  {
+    question: 'How does this summer camp help with school readiness?',
+    answer:
+      'These camps act as summer bridge programs—strengthening foundational skills (reading, grammar, speaking) before the new school term. Children return more confident and better prepared for classroom participation.',
+  },
+  {
+    question: 'Is this good for summer catch-up or skill gaps?',
+    answer:
+      'Yes. The 10-week focused format is designed specifically for catch-up support. Whether your child needs stronger phonics, clearer grammar, or speaking confidence, the structured path addresses gaps systematically.',
+  },
+  {
+    question: 'How is this different from regular Tiny Steps classes?',
+    answer:
+      'Same premium curriculum and teaching quality, but condensed into a 10-week summer format with group batches instead of individualized pacing. Perfect for families wanting structured summer learning with clear outcomes.',
+  },
 ];
 
 const SUMMER_CAMP_SEO_KEYWORDS = [
@@ -265,6 +285,9 @@ const SUMMER_CAMP_SEO_KEYWORDS = [
   'summer camp near me online',
   'class recordings for kids online classes',
   'worksheets for kids summer camp',
+  'summer catch-up program for kids',
+  'summer bridge program english',
+  'school readiness summer camp',
 ];
 
 const INDIA_PARENT_SEARCH_INTENTS = [
@@ -456,7 +479,7 @@ function StretchCardsRow() {
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
-      `Premium online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track courses. Small-group batches capped at ${SUMMER_CAMP_BATCH_CAP} students with 50–60 minute live classes, effective worksheets, and class recordings.`;
+      `Premium online summer camp for kids ages 4-12 in India. 10-week phonics, grammar, and speaking fast-track courses for summer catch-up and bridge support. Small-group batches capped at ${SUMMER_CAMP_BATCH_CAP} students with 50–60 minute live classes, free level assessment, worksheets, and class recordings.`;
 
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -581,7 +604,7 @@ export default function SummerCampsPage() {
       description: 'Fast-track course to refresh letter sounds, blending, and reading confidence. 10-week intensive program capped at 8 students.',
       startDate: '2026-04-01',
       endDate: '2026-06-15',
-      url: 'https://tinystepslearning.com/summer-camps',
+      url: 'https://tinystepslearning.com/summer-camps/phonics-fast-track',
       price: SUMMER_CAMP_ENROLLMENT_PRICE,
       eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
@@ -591,7 +614,7 @@ export default function SummerCampsPage() {
       description: 'Fast-track course to strengthen sentence structure, punctuation, and writing clarity. 10-week intensive program capped at 8 students.',
       startDate: '2026-04-01',
       endDate: '2026-06-15',
-      url: 'https://tinystepslearning.com/summer-camps',
+      url: 'https://tinystepslearning.com/summer-camps/grammar-fast-track',
       price: SUMMER_CAMP_ENROLLMENT_PRICE,
       eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
@@ -601,7 +624,7 @@ export default function SummerCampsPage() {
       description: 'Fast-track course for confident speaking, presentation flow, and better pronunciation. 10-week intensive program capped at 8 students.',
       startDate: '2026-04-01',
       endDate: '2026-06-15',
-      url: 'https://tinystepslearning.com/summer-camps',
+      url: 'https://tinystepslearning.com/summer-camps/speaking-fast-track',
       price: SUMMER_CAMP_ENROLLMENT_PRICE,
       eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
@@ -650,7 +673,7 @@ export default function SummerCampsPage() {
                   Summer Fast Track 2026
                 </p>
                 <h1 className="mt-3 text-3xl font-black leading-tight text-slate-900 sm:text-4xl md:text-5xl">
-                  Premium Online Summer Camp for Kids
+                  Premium Online Summer Camp for Kids Ages 4-12
                 </h1>
                 <p className="mt-4 max-w-3xl text-base text-slate-700 sm:text-lg">
                   Unlike large-volume summer camps, Tiny Steps is intentionally capped at {SUMMER_CAMP_BATCH_CAP} students per batch.
@@ -692,7 +715,7 @@ export default function SummerCampsPage() {
                   <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
                 </p>
                 <p className="mt-2 text-sm text-slate-700">
-                  Fast Track Pack fee per child for the summer group camp.
+                  Fast Track Pack fee per child. Includes free level assessment for proper placement.
                 </p>
                 <div className="mt-4 space-y-2 text-xs text-slate-600">
                   <p>Capped at {SUMMER_CAMP_BATCH_CAP} students per batch</p>

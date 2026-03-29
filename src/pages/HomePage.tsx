@@ -200,33 +200,35 @@ export default function HomePage() {
 
             <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026</p>
-                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Online Summer English Camp for ages 4-12</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">Phonics, grammar, and confident speaking in a 10-week live format with clear routines, light homework, and progress parents can actually follow.</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026 • April-June</p>
+                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Summer Catch-Up & Bridge Camp for ages 4–12</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">
+                  Choose from 3 fast-track programs: <strong>Phonics</strong>, <strong>Grammar</strong>, or <strong>Speaking</strong>. 10-week live online format with free placement assessment, clear routines, and progress tracking.
+                </p>
                 <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-700 px-3 py-1 text-sm font-semibold text-white">
                   <span className="line-through text-emerald-100">₹5,000</span>
                   <span>Effective price: ₹2,400</span>
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {["10-week program", "Live online", "Limited seats", "Daily practice support"].map((item) => (
+                  {["Live small-group online", "Free assessment", "Capped batches", "April 1–June 15"].map((item) => (
                     <span key={item} className="rounded-full border border-white/80 bg-white/75 px-3 py-1 text-xs font-semibold text-gray-700 shadow-sm backdrop-blur">
                       {item}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col gap-3">
                 <Link
                   to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800"
                 >
-                  Enroll ₹2,400 Summer Camp
+                  Start Free Assessment
                 </Link>
                 <Link
                   to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full border border-emerald-700 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:-translate-y-0.5 hover:bg-emerald-50"
                 >
-                  View Summer Camp Programs
+                  View All 3 Programs
                 </Link>
               </div>
             </div>

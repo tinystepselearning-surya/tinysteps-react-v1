@@ -39,7 +39,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     slug: 'phonics-fast-track',
     title: 'Phonics Fast Track',
     ages: 'Ages 4-8',
-    outcome: '10-week phonics fast track for stronger reading confidence',
+    outcome: 'Summer Camp: 10-week phonics fast track for stronger reading confidence',
     focus: 'Fast-track brush-up in sounds, blends, and decoding for smooth early reading',
     format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
@@ -78,13 +78,33 @@ const PROGRAMS: Record<string, ProgramConfig> = {
         answer:
           `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
+      {
+        question: 'Is there a free assessment before enrollment?',
+        answer:
+          'Yes. All children complete a brief 10-15 minute level check (no cost) to ensure proper placement in the right phonics group.',
+      },
+      {
+        question: 'How is this helpful for summer catch-up?',
+        answer:
+          'Perfect for summer bridge support. Strengthens letter sounds, blending, and reading fluency before the new school year—ideal for children who need a phonics refresh.',
+      },
+      {
+        question: 'What materials do children receive?',
+        answer:
+          'Each child receives phonics-focused worksheets for practice and access to class recordings for review at home.',
+      },
+      {
+        question: 'Can we join mid-program or do we need to start from week 1?',
+        answer:
+          'New batches start weekly. We recommend starting from week 1 for full benefit, but message us if you want to join a running batch—we can assess fit.',
+      },
     ],
   },
   'grammar-fast-track': {
     slug: 'grammar-fast-track',
     title: 'Grammar Fast Track',
     ages: 'Ages 6-12',
-    outcome: '10-week grammar fast track for better writing quality',
+    outcome: 'Summer Camp: 10-week grammar fast track for better writing quality',
     focus: 'Fast-track brush-up in sentence structure, punctuation, tense, and grammar accuracy',
     format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
@@ -123,13 +143,28 @@ const PROGRAMS: Record<string, ProgramConfig> = {
         answer:
           `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
+      {
+        question: 'How does the summer camp format differ from regular classes?',
+        answer:
+          'The summer camp format is more intensive, with a clear 10-week outcome path and smaller batch sizes for focused learning.',
+      },
+      {
+        question: 'What materials are provided during the camp?',
+        answer:
+          'Students receive worksheets, class recordings, and practice drills tailored to the summer curriculum.',
+      },
+      {
+        question: 'Can my child catch up if they miss a class?',
+        answer:
+          'Yes, class recordings and worksheets are provided to help students catch up on missed lessons.',
+      },
     ],
   },
   'speaking-fast-track': {
     slug: 'speaking-fast-track',
     title: 'Speaking Fast Track',
     ages: 'Ages 6-12',
-    outcome: '10-week speaking fast track for confident communication',
+    outcome: 'Summer Camp: 10-week speaking fast track for confident communication',
     focus: 'Fast-track brush-up in speech structure, clarity, pronunciation, and delivery confidence',
     format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
@@ -167,6 +202,21 @@ const PROGRAMS: Record<string, ProgramConfig> = {
         question: 'Is this the same curriculum as regular classes?',
         answer:
           `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
+      },
+      {
+        question: 'How does the summer camp format differ from regular classes?',
+        answer:
+          'The summer camp format is more intensive, with a clear 10-week outcome path and smaller batch sizes for focused learning.',
+      },
+      {
+        question: 'What materials are provided during the camp?',
+        answer:
+          'Students receive worksheets, class recordings, and practice drills tailored to the summer curriculum.',
+      },
+      {
+        question: 'Can my child catch up if they miss a class?',
+        answer:
+          'Yes, class recordings and worksheets are provided to help students catch up on missed lessons.',
       },
     ],
   },
@@ -599,7 +649,7 @@ export default function SummerCampProgramPage() {
     const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
     const title = batchSlug ? `${baseTitle} ${batchTitle} | Tiny Steps` : `${baseTitle} | Tiny Steps`;
     const description = program
-      ? `${program.title} for ${program.ages}. ${program.focus}. Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students, with a clear 10-week learning path, 50–60 minute classes, effective worksheets, and class recordings. List fee ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
+      ? `${program.title} summer camp for ${program.ages}. ${program.focus}. Premium small-group online summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students for summer catch-up and school readiness. 10-week structured path with free level assessment, 50–60 minute live classes, worksheets, and recordings. List fee ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
       : 'Summer camp program details coming soon.';
     const keywords = program
       ? [
