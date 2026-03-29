@@ -31,6 +31,7 @@ import TodaysNotifications from './TodaysNotifications';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
 import ParentPayments from './ParentPayments';
+import ParentWorksheetLibraryManagement from './ParentWorksheetLibraryManagement';
 import FinanceReconciliationRunsCard from './FinanceReconciliationRunsCard';
 import EnrollmentCanonicalMigrationCard from './EnrollmentCanonicalMigrationCard';
 import { isSuperUserEmail } from '../../constants/accessControl';
@@ -434,6 +435,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="parent-payments" className="mt-0">
               <ParentPayments />
+            </TabsContent>
+
+            <TabsContent value="parent-worksheets" className="mt-0">
+              <ParentWorksheetLibraryManagement />
             </TabsContent>
 
             <TabsContent value="settings" className="mt-0">
