@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
@@ -69,6 +69,10 @@ type EditableLessonDraft = {
   sortOrder: number;
   active: boolean;
 };
+
+type LibrarySection = 'create' | 'review' | 'audit';
+type ReviewSection = 'folders' | 'lessons';
+type AuditPreset = 'today' | 'yesterday' | 'last7' | 'custom';
 
 const AREA_OPTIONS = [
   { value: 'phonics', label: 'Phonics' },
@@ -180,6 +184,19 @@ function formatDateTime(value: unknown): string {
   return '-';
 }
 
+function toDateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getDateInputOffset(days: number): string {
+  const now = new Date();
+  now.setDate(now.getDate() + days);
+  return toDateInputValue(now);
+}
+
 export default function LessonLibraryAdminPage() {
   const [area, setArea] = useState('phonics');
   const [folderTitle, setFolderTitle] = useState('');
@@ -201,7 +218,11 @@ export default function LessonLibraryAdminPage() {
   const [lessonDailyAudit, setLessonDailyAudit] = useState<LessonDailyAuditRow[]>([]);
   const [teacherDailyAccess, setTeacherDailyAccess] = useState<TeacherDailyAccessRow[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState('');
+  const [auditHasQueried, setAuditHasQueried] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState<LibrarySection>('create');
+  const [reviewSection, setReviewSection] = useState<ReviewSection>('folders');
   const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
   const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
   const [folderDraft, setFolderDraft] = useState<EditableFolderDraft>({
@@ -220,13 +241,16 @@ export default function LessonLibraryAdminPage() {
     sortOrder: 0,
     active: true,
   });
-  const [auditLessonQuery, setAuditLessonQuery] = useState('');
-  const [auditTeacherQuery, setAuditTeacherQuery] = useState('');
+  const [auditPreset, setAuditPreset] = useState<AuditPreset>('last7');
+  const [auditStartDate, setAuditStartDate] = useState(() => getDateInputOffset(-6));
+  const [auditEndDate, setAuditEndDate] = useState(() => getDateInputOffset(0));
+  const [auditTeacherFilter, setAuditTeacherFilter] = useState('');
+  const [auditLessonFilter, setAuditLessonFilter] = useState('');
+  const [auditAreaFilter, setAuditAreaFilter] = useState('all');
 
   useEffect(() => {
     fetchFolders();
     fetchLessons();
-    fetchAuditTables();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -325,12 +349,42 @@ export default function LessonLibraryAdminPage() {
   }
 
   async function fetchAuditTables() {
+    if (!auditStartDate || !auditEndDate) {
+      toast({
+        title: 'Select date range',
+        description: 'Choose a valid start and end date before loading audit data.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const rangeStart = auditStartDate <= auditEndDate ? auditStartDate : auditEndDate;
+    const rangeEnd = auditStartDate <= auditEndDate ? auditEndDate : auditStartDate;
+    const teacherNeedle = auditTeacherFilter.trim().toLowerCase();
+    const lessonNeedle = auditLessonFilter.trim().toLowerCase();
+    const normalizedArea = auditAreaFilter === 'all' ? 'all' : normalizeAreaValue(auditAreaFilter);
+    const lessonAreaById = new Map(lessons.map((lesson) => [lesson.id, normalizeAreaValue(lesson.area)]));
+
+    setAuditHasQueried(true);
+    setAuditError('');
     setAuditLoading(true);
     try {
-      const { collection, getDocs, query, orderBy } = await import('firebase/firestore');
+      const { collection, getDocs, limit, orderBy, query, where } = await import('firebase/firestore');
       const { db } = await import('../../../lib/firebaseConfig');
-      const lessonDailyQuery = query(collection(db, 'lessonDailyAudit'), orderBy('lastOpenedAt', 'desc'));
-      const teacherDailyQuery = query(collection(db, 'teacherDailyAccess'), orderBy('lastAccessedAt', 'desc'));
+      const lessonDailyQuery = query(
+        collection(db, 'lessonDailyAudit'),
+        where('dateKey', '>=', rangeStart),
+        where('dateKey', '<=', rangeEnd),
+        orderBy('dateKey', 'desc'),
+        limit(500)
+      );
+      const teacherDailyQuery = query(
+        collection(db, 'teacherDailyAccess'),
+        where('dateKey', '>=', rangeStart),
+        where('dateKey', '<=', rangeEnd),
+        orderBy('dateKey', 'desc'),
+        limit(500)
+      );
 
       const [lessonDailySnap, teacherDailySnap] = await Promise.all([
         getDocs(lessonDailyQuery),
@@ -365,10 +419,41 @@ export default function LessonLibraryAdminPage() {
         };
       });
 
-      setLessonDailyAudit(lessonDailyRows);
-      setTeacherDailyAccess(teacherDailyRows);
+      const lessonRowsFiltered = lessonDailyRows.filter((row) => {
+        if (teacherNeedle) {
+          const teacherMatch =
+            row.teacherName.toLowerCase().includes(teacherNeedle) ||
+            row.teacherUid.toLowerCase().includes(teacherNeedle);
+          if (!teacherMatch) return false;
+        }
+        if (lessonNeedle) {
+          const lessonMatch =
+            row.lessonTitle.toLowerCase().includes(lessonNeedle) ||
+            row.lessonId.toLowerCase().includes(lessonNeedle);
+          if (!lessonMatch) return false;
+        }
+        if (normalizedArea !== 'all') {
+          const lessonArea = lessonAreaById.get(row.lessonId);
+          if (lessonArea !== normalizedArea) return false;
+        }
+        return true;
+      });
+
+      const teacherRowsFiltered = teacherDailyRows.filter((row) => {
+        if (!teacherNeedle) return true;
+        return (
+          row.teacherName.toLowerCase().includes(teacherNeedle) ||
+          row.teacherUid.toLowerCase().includes(teacherNeedle)
+        );
+      });
+
+      setLessonDailyAudit(lessonRowsFiltered);
+      setTeacherDailyAccess(teacherRowsFiltered);
     } catch (err) {
       console.error('[lesson-audit] fetch failed', err);
+      setLessonDailyAudit([]);
+      setTeacherDailyAccess([]);
+      setAuditError('Could not load lesson usage audit tables for the selected filters.');
       toast({
         title: 'Audit unavailable',
         description: 'Could not load lesson usage audit tables.',
@@ -377,6 +462,36 @@ export default function LessonLibraryAdminPage() {
     } finally {
       setAuditLoading(false);
     }
+  }
+
+  function applyAuditPreset(preset: AuditPreset) {
+    setAuditPreset(preset);
+    if (preset === 'custom') return;
+    if (preset === 'today') {
+      const today = getDateInputOffset(0);
+      setAuditStartDate(today);
+      setAuditEndDate(today);
+      return;
+    }
+    if (preset === 'yesterday') {
+      const yesterday = getDateInputOffset(-1);
+      setAuditStartDate(yesterday);
+      setAuditEndDate(yesterday);
+      return;
+    }
+    setAuditStartDate(getDateInputOffset(-6));
+    setAuditEndDate(getDateInputOffset(0));
+  }
+
+  function resetAuditFilters() {
+    applyAuditPreset('last7');
+    setAuditTeacherFilter('');
+    setAuditLessonFilter('');
+    setAuditAreaFilter('all');
+    setAuditHasQueried(false);
+    setAuditError('');
+    setLessonDailyAudit([]);
+    setTeacherDailyAccess([]);
   }
 
   async function handleCreateFolder(e?: React.FormEvent) {
@@ -737,30 +852,6 @@ export default function LessonLibraryAdminPage() {
     );
   });
 
-  const filteredLessonDailyAudit = useMemo(() => {
-    const queryText = auditLessonQuery.trim().toLowerCase();
-    if (!queryText) return lessonDailyAudit;
-    return lessonDailyAudit.filter((row) => {
-      return (
-        row.teacherName.toLowerCase().includes(queryText) ||
-        row.lessonTitle.toLowerCase().includes(queryText) ||
-        row.dateKey.toLowerCase().includes(queryText)
-      );
-    });
-  }, [auditLessonQuery, lessonDailyAudit]);
-
-  const filteredTeacherDailyAccess = useMemo(() => {
-    const queryText = auditTeacherQuery.trim().toLowerCase();
-    if (!queryText) return teacherDailyAccess;
-    return teacherDailyAccess.filter((row) => {
-      return (
-        row.teacherName.toLowerCase().includes(queryText) ||
-        row.dateKey.toLowerCase().includes(queryText) ||
-        row.teacherUid.toLowerCase().includes(queryText)
-      );
-    });
-  }, [auditTeacherQuery, teacherDailyAccess]);
-
   return (
     <div className="space-y-4">
       <header className="mb-4">
@@ -770,7 +861,37 @@ export default function LessonLibraryAdminPage() {
         </p>
       </header>
 
-      <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <Card className="p-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={activeSection === 'create' ? 'default' : 'outline'}
+            onClick={() => setActiveSection('create')}
+          >
+            Create
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={activeSection === 'review' ? 'default' : 'outline'}
+            onClick={() => setActiveSection('review')}
+          >
+            Review
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={activeSection === 'audit' ? 'default' : 'outline'}
+            onClick={() => setActiveSection('audit')}
+          >
+            Audit
+          </Button>
+        </div>
+      </Card>
+
+      {activeSection === 'create' && (
+      <div className="mb-4 grid grid-cols-1 gap-3">
         <Card className="p-4">
           <h3 className="font-semibold mb-3">Create Folder</h3>
           <form onSubmit={handleCreateFolder} className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -886,8 +1007,31 @@ export default function LessonLibraryAdminPage() {
           </form>
         </Card>
       </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {activeSection === 'review' && (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant={reviewSection === 'folders' ? 'default' : 'outline'}
+            onClick={() => setReviewSection('folders')}
+          >
+            Folders
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={reviewSection === 'lessons' ? 'default' : 'outline'}
+            onClick={() => setReviewSection('lessons')}
+          >
+            Lessons
+          </Button>
+        </div>
+
+      <div className="grid grid-cols-1 gap-4">
+        {reviewSection === 'folders' && (
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">Existing Folders</h3>
@@ -995,7 +1139,9 @@ export default function LessonLibraryAdminPage() {
             </table>
           </div>
         </Card>
+        )}
 
+        {reviewSection === 'lessons' && (
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h3 className="font-semibold">Existing Lessons</h3>
@@ -1146,102 +1292,206 @@ export default function LessonLibraryAdminPage() {
             </table>
           </div>
         </Card>
+        )}
       </div>
+      </div>
+      )}
 
-      <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+      {activeSection === 'audit' && (
+      <div className="space-y-4">
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3 gap-3">
-            <h3 className="font-semibold">Lesson Daily Audit</h3>
-            <div className="flex items-center gap-2">
+          <div className="mb-3">
+            <h3 className="font-semibold">Audit Filters</h3>
+            <p className="text-xs text-gray-600 mt-1">Set filters first, then click View to load audit data.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div>
+              <div className="text-sm mb-1">Preset</div>
+              <select
+                value={auditPreset}
+                onChange={(e) => applyAuditPreset(e.target.value as AuditPreset)}
+                className="w-full border rounded px-2 py-1"
+              >
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="last7">Last 7 days</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <div className="text-sm mb-1">Start Date</div>
               <Input
-                placeholder="Search teacher/lesson/date..."
-                value={auditLessonQuery}
-                onChange={(e) => setAuditLessonQuery(e.target.value)}
-                className="w-56"
+                type="date"
+                value={auditStartDate}
+                onChange={(e) => {
+                  setAuditPreset('custom');
+                  setAuditStartDate(e.target.value);
+                }}
               />
-              <Button type="button" size="sm" variant="outline" onClick={fetchAuditTables} disabled={auditLoading}>
-                {auditLoading ? 'Refreshing...' : 'Refresh'}
+            </div>
+            <div>
+              <div className="text-sm mb-1">End Date</div>
+              <Input
+                type="date"
+                value={auditEndDate}
+                onChange={(e) => {
+                  setAuditPreset('custom');
+                  setAuditEndDate(e.target.value);
+                }}
+              />
+            </div>
+            <div>
+              <div className="text-sm mb-1">Teacher (name or UID)</div>
+              <Input
+                value={auditTeacherFilter}
+                onChange={(e) => setAuditTeacherFilter(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div>
+              <div className="text-sm mb-1">Lesson (title or ID)</div>
+              <Input
+                value={auditLessonFilter}
+                onChange={(e) => setAuditLessonFilter(e.target.value)}
+                placeholder="Optional"
+              />
+            </div>
+            <div>
+              <div className="text-sm mb-1">Area</div>
+              <select
+                value={auditAreaFilter}
+                onChange={(e) => setAuditAreaFilter(e.target.value)}
+                className="w-full border rounded px-2 py-1"
+              >
+                <option value="all">All Areas</option>
+                {AREA_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-gray-600">
+              {auditHasQueried
+                ? `Loaded ${lessonDailyAudit.length} lesson rows and ${teacherDailyAccess.length} teacher rows.`
+                : 'No audit data loaded yet.'}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button type="button" size="sm" onClick={fetchAuditTables} disabled={auditLoading}>
+                {auditLoading ? 'Loading...' : 'View'}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={resetAuditFilters} disabled={auditLoading}>
+                Reset
               </Button>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-auto border-collapse">
-              <thead>
-                <tr className="text-left">
-                  <th className="pb-2">Teacher</th>
-                  <th className="pb-2">Lesson</th>
-                  <th className="pb-2">Date</th>
-                  <th className="pb-2">Opens</th>
-                  <th className="pb-2">First Open</th>
-                  <th className="pb-2">Last Open</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredLessonDailyAudit.map((row) => (
-                  <tr key={row.id} className="border-t hover:bg-gray-50">
-                    <td className="py-2 align-top">{row.teacherName}</td>
-                    <td className="py-2 align-top">{row.lessonTitle}</td>
-                    <td className="py-2 align-top">{row.dateKey || '-'}</td>
-                    <td className="py-2 align-top">{row.openCount}</td>
-                    <td className="py-2 align-top">{formatDateTime(row.firstOpenedAt)}</td>
-                    <td className="py-2 align-top">{formatDateTime(row.lastOpenedAt)}</td>
-                  </tr>
-                ))}
-                {!auditLoading && filteredLessonDailyAudit.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-6 text-center text-gray-500">
-                      No audit rows found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
         </Card>
 
-        <Card className="p-4">
-          <div className="flex items-center justify-between mb-3 gap-3">
-            <h3 className="font-semibold">Teacher Daily Access</h3>
-            <Input
-              placeholder="Search teacher/date/uid..."
-              value={auditTeacherQuery}
-              onChange={(e) => setAuditTeacherQuery(e.target.value)}
-              className="w-56"
-            />
+        {auditError ? (
+          <Card className="p-4 border-red-200">
+            <p className="text-sm text-red-700">{auditError}</p>
+          </Card>
+        ) : null}
+
+        {auditHasQueried && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3 gap-3">
+                <h3 className="font-semibold">Lesson Daily Audit</h3>
+                <span className="text-xs text-gray-500">{lessonDailyAudit.length} rows</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm table-auto border-collapse">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="pb-2">Teacher</th>
+                      <th className="pb-2">Lesson</th>
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Opens</th>
+                      <th className="pb-2">First Open</th>
+                      <th className="pb-2">Last Open</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {lessonDailyAudit.map((row) => (
+                      <tr key={row.id} className="border-t hover:bg-gray-50">
+                        <td className="py-2 align-top">{row.teacherName}</td>
+                        <td className="py-2 align-top">{row.lessonTitle}</td>
+                        <td className="py-2 align-top">{row.dateKey || '-'}</td>
+                        <td className="py-2 align-top">{row.openCount}</td>
+                        <td className="py-2 align-top">{formatDateTime(row.firstOpenedAt)}</td>
+                        <td className="py-2 align-top">{formatDateTime(row.lastOpenedAt)}</td>
+                      </tr>
+                    ))}
+                    {auditLoading && (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-gray-500">
+                          Loading audit rows...
+                        </td>
+                      </tr>
+                    )}
+                    {!auditLoading && lessonDailyAudit.length === 0 && (
+                      <tr>
+                        <td colSpan={6} className="py-6 text-center text-gray-500">
+                          No audit rows found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3 gap-3">
+                <h3 className="font-semibold">Teacher Daily Access</h3>
+                <span className="text-xs text-gray-500">{teacherDailyAccess.length} rows</span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm table-auto border-collapse">
+                  <thead>
+                    <tr className="text-left">
+                      <th className="pb-2">Teacher</th>
+                      <th className="pb-2">Date</th>
+                      <th className="pb-2">Total Opens</th>
+                      <th className="pb-2">Distinct Lessons</th>
+                      <th className="pb-2">Last Access</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teacherDailyAccess.map((row) => (
+                      <tr key={row.id} className="border-t hover:bg-gray-50">
+                        <td className="py-2 align-top">{row.teacherName}</td>
+                        <td className="py-2 align-top">{row.dateKey || '-'}</td>
+                        <td className="py-2 align-top">{row.totalLessonOpens}</td>
+                        <td className="py-2 align-top">{row.distinctLessonCount}</td>
+                        <td className="py-2 align-top">{formatDateTime(row.lastAccessedAt)}</td>
+                      </tr>
+                    ))}
+                    {auditLoading && (
+                      <tr>
+                        <td colSpan={5} className="py-6 text-center text-gray-500">
+                          Loading teacher rows...
+                        </td>
+                      </tr>
+                    )}
+                    {!auditLoading && teacherDailyAccess.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-6 text-center text-gray-500">
+                          No teacher daily rows found.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm table-auto border-collapse">
-              <thead>
-                <tr className="text-left">
-                  <th className="pb-2">Teacher</th>
-                  <th className="pb-2">Date</th>
-                  <th className="pb-2">Total Opens</th>
-                  <th className="pb-2">Distinct Lessons</th>
-                  <th className="pb-2">Last Access</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTeacherDailyAccess.map((row) => (
-                  <tr key={row.id} className="border-t hover:bg-gray-50">
-                    <td className="py-2 align-top">{row.teacherName}</td>
-                    <td className="py-2 align-top">{row.dateKey || '-'}</td>
-                    <td className="py-2 align-top">{row.totalLessonOpens}</td>
-                    <td className="py-2 align-top">{row.distinctLessonCount}</td>
-                    <td className="py-2 align-top">{formatDateTime(row.lastAccessedAt)}</td>
-                  </tr>
-                ))}
-                {!auditLoading && filteredTeacherDailyAccess.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-gray-500">
-                      No teacher daily rows found.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        )}
       </div>
+      )}
     </div>
   );
 }

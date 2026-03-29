@@ -551,6 +551,21 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // PARENT WORKSHEET LIBRARY
+    // ----------------------------
+    match /parentWorksheetLibrary/{worksheetId} {
+      allow read: if isAdmin();
+      allow read: if isParent()
+        && ('targetParentIds' in resource.data)
+        && (resource.data.targetParentIds is list)
+        && (
+          request.auth.uid in resource.data.targetParentIds
+          || 'all_parents' in resource.data.targetParentIds
+        );
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ----------------------------
     // BILLING CHARGES COLLECTION
     // ----------------------------
     match /billingCharges/{chargeId} {

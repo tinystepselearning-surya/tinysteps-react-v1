@@ -26,8 +26,7 @@ import CourseManagement from './CourseManagement/CourseManagement';
 import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
-import DemoSessionsManagement from './DemoSessionsManagement';
-import LeadsEnquiriesManagement from './LeadsEnquiriesManagement';
+import LeadsInquiriesWorkspace, { type LeadsWorkspaceView } from './LeadsInquiriesWorkspace';
 import TodaysNotifications from './TodaysNotifications';
 import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
@@ -52,7 +51,6 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'users', label: 'Users', icon: Users2 },
   { id: 'students', label: 'Students', icon: GraduationCap },
   { id: 'leads', label: 'Leads', icon: ClipboardList },
-  { id: 'demo-sessions', label: 'Demos', icon: ClipboardList },
   { id: 'analytics', label: 'Analytics', icon: LineChart },
   { id: 'teacher-payments', label: 'Payments', icon: Wallet },
 ];
@@ -268,6 +266,7 @@ export default function AdminDashboard() {
   const location = useLocation();
 
   const [selectedTab, setSelectedTab] = useState('users');
+  const [leadsWorkspaceView, setLeadsWorkspaceView] = useState<LeadsWorkspaceView>('leads');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ✅ FIX: local reload key for EnrollmentsList (required prop)
@@ -297,6 +296,22 @@ export default function AdminDashboard() {
       'settings',
     ]);
 
+    if (tabFromUrl === 'demo-sessions') {
+      setSelectedTab('leads');
+      setLeadsWorkspaceView('demos');
+      const nextParams = new URLSearchParams(location.search);
+      nextParams.set('tab', 'leads');
+      nextParams.set('leadView', 'demos');
+      navigate(`/surya?${nextParams.toString()}`, { replace: true });
+      return;
+    }
+
+    if (tabFromUrl === 'leads') {
+      setLeadsWorkspaceView(params.get('leadView') === 'demos' ? 'demos' : 'leads');
+    } else {
+      setLeadsWorkspaceView('leads');
+    }
+
     if (tabFromUrl && validTabs.has(tabFromUrl)) {
       setSelectedTab(tabFromUrl);
       return;
@@ -305,7 +320,16 @@ export default function AdminDashboard() {
     if (location.pathname.includes('/surya/analytics')) {
       setSelectedTab('analytics');
     }
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, navigate]);
+
+  const handleLeadsWorkspaceViewChange = (nextView: LeadsWorkspaceView) => {
+    setLeadsWorkspaceView(nextView);
+    const params = new URLSearchParams(location.search);
+    params.set('tab', 'leads');
+    if (nextView === 'demos') params.set('leadView', 'demos');
+    else params.delete('leadView');
+    navigate(`/surya?${params.toString()}`, { replace: true });
+  };
 
   const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(canViewAdmin);
 
@@ -362,7 +386,10 @@ export default function AdminDashboard() {
             </TabsContent>
 
             <TabsContent value="leads" className="mt-0">
-              <LeadsEnquiriesManagement />
+              <LeadsInquiriesWorkspace
+                view={leadsWorkspaceView}
+                onViewChange={handleLeadsWorkspaceViewChange}
+              />
             </TabsContent>
 
             {/* ✅ FIXED: pass required prop */}
@@ -376,10 +403,6 @@ export default function AdminDashboard() {
 
             <TabsContent value="courses" className="mt-0">
               <CourseManagement />
-            </TabsContent>
-
-            <TabsContent value="demo-sessions" className="mt-0">
-              <DemoSessionsManagement />
             </TabsContent>
 
             <TabsContent value="today-notifications" className="mt-0">

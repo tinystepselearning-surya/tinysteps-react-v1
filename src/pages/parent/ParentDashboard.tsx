@@ -1,5 +1,5 @@
 // src/pages/parent/ParentDashboard.tsx
-import React, { useEffect, useMemo, useState, type ComponentType } from "react";
+import React, { useCallback, useEffect, useMemo, useState, type ComponentType } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -23,12 +23,23 @@ import callFunction from "../../lib/callFunctions";
 
 import { ParentGamesProgress } from "./components/progress/ParentGamesProgress";
 import { ParentOverviewCards } from "./components/overview/ParentOverviewCards";
+import ParentAttendanceSummary from "./components/ParentAttendanceSummary";
+import ParentBillingSummary from "./components/ParentBillingSummary";
+import ParentDashboardHero from "./components/ParentDashboardHero";
+import ParentDashboardKpis from "./components/ParentDashboardKpis";
+import ParentLearningInsights from "./components/ParentLearningInsights";
+import ParentLessonTracker from "./components/ParentLessonTracker";
+import ParentProgressOverview from "./components/ParentProgressOverview";
+import ParentRecommendations from "./components/ParentRecommendations";
 import ChildSkillRatingCard from "../../components/progress/ChildSkillRatingCard";
 import {
+  ArrowRight,
+  BookOpen,
   CheckCircle2,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
+  Clock3,
   CircleUser,
   CreditCard,
   ExternalLink,
@@ -38,6 +49,7 @@ import {
   Menu,
   RefreshCw,
   Sparkles,
+  Target,
   TrendingUp,
 } from "lucide-react";
 
@@ -62,6 +74,21 @@ import {
   summarizeProgressRatings,
 } from "../../lib/skillRatings";
 import { getProgressSkillsForLesson } from "../../lib/progressSkills";
+import {
+  getSafeWorksheetUrl,
+  toParentWorksheetItem,
+  worksheetMatchesContext,
+  type ParentWorksheetItem,
+} from "../../lib/parentWorksheets";
+import {
+  buildDashboardHeroMessage,
+  buildDashboardRecommendedNext,
+  formatCurrencyINR,
+  formatSkillChipLabel,
+  labelFromGameId,
+  pickDashboardPracticeChips,
+  pickDashboardStrengthChips,
+} from "./parentDashboardViewModel";
 
 type TabKey =
   | "dashboard"
@@ -303,6 +330,12 @@ type ParentClassRecording = {
   createdAt?: any;
   updatedAt?: any;
   [key: string]: any;
+};
+
+type ParentWorksheetGroup = {
+  key: string;
+  label: string;
+  items: ParentWorksheetItem[];
 };
 
 const chunkIds = <T,>(items: T[], size = 10): T[][] => {
@@ -1742,13 +1775,13 @@ export default function ParentDashboard() {
     },
   });
 
-  const formatCourseLabel = (courseId: string, fallback?: string) => {
+  const formatCourseLabel = useCallback((courseId: string, fallback?: string) => {
     const trimmed = String(fallback || "").trim();
     if (trimmed && trimmed !== courseId) return trimmed;
     const fromLookup = coursesLookupQuery.data?.[courseId];
     if (fromLookup) return fromLookup;
     return titleCaseFromId(courseId);
-  };
+  }, [coursesLookupQuery.data]);
 
   const insightsCourseOptions = useMemo(() => {
     const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
@@ -1769,7 +1802,7 @@ export default function ParentDashboard() {
       courseId,
       label,
     }));
-  }, [enrollmentsQuery.data, coursesLookupQuery.data]);
+  }, [enrollmentsQuery.data, formatCourseLabel]);
 
   useEffect(() => {
     if (!insightsCourseOptions.length) {
@@ -2150,7 +2183,9 @@ export default function ParentDashboard() {
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
-  const [classesView, setClassesView] = useState<"today" | "upcoming" | "completed" | "rescheduled" | "calendar">("today");
+  const [classesView, setClassesView] = useState<
+    "today" | "upcoming" | "completed" | "rescheduled" | "calendar" | "worksheets"
+  >("today");
   const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [classesCalendarMonth, setClassesCalendarMonth] = useState<Date>(() => {
     const d = new Date();
@@ -2257,6 +2292,24 @@ export default function ParentDashboard() {
           const bTime = toDateOrNull((b as any).updatedAt || (b as any).createdAt)?.getTime() ?? 0;
           return bTime - aTime;
         });
+    },
+  });
+
+  const parentWorksheetsQuery = useQuery({
+    queryKey: ["parentWorksheets", user?.uid],
+    enabled: !!user?.uid && activeTab === "classes",
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnMount: "always",
+    queryFn: async (): Promise<ParentWorksheetItem[]> => {
+      if (!user?.uid) return [];
+      const worksheetRef = query(
+        collection(db, "parentWorksheetLibrary"),
+        where("targetParentIds", "array-contains-any", [user.uid, "all_parents"]),
+        limit(200),
+      );
+      const snap = await getDocs(worksheetRef);
+      return snap.docs.map((entry) => toParentWorksheetItem(entry.id, entry.data()));
     },
   });
 
@@ -2445,6 +2498,12 @@ export default function ParentDashboard() {
       return;
     }
     window.open(trimmed, "_blank", "noopener,noreferrer");
+  };
+
+  const openWorksheetLink = (url?: string | null) => {
+    const safeUrl = getSafeWorksheetUrl(url);
+    if (!safeUrl) return;
+    window.open(safeUrl, "_blank", "noopener,noreferrer");
   };
 
   const openJoinClass = async (session: KidSession) => {
@@ -3461,7 +3520,48 @@ export default function ParentDashboard() {
         teacherName,
       };
     });
-  }, [enrollmentsQuery.data, selectedKidId, coursesLookupQuery.data, teacherLookupQuery.data]);
+  }, [enrollmentsQuery.data, selectedKidId, teacherLookupQuery.data, formatCourseLabel]);
+
+  const currentEnrollmentIds = useMemo(() => {
+    return profileEnrollments
+      .map((enrollment) => String(enrollment.id || "").trim())
+      .filter(Boolean);
+  }, [profileEnrollments]);
+
+  const visibleParentWorksheets = useMemo(() => {
+    const worksheets = parentWorksheetsQuery.data ?? [];
+    const courseId = String(displayCourseId || "").trim() || null;
+    return worksheets
+      .filter((worksheet) => worksheet.isActive && !worksheet.isArchived)
+      .filter((worksheet) =>
+        worksheetMatchesContext(worksheet, {
+          kidId: selectedKidId || null,
+          courseId,
+          enrollmentIds: currentEnrollmentIds,
+        }),
+      )
+      .sort((a, b) => {
+        if (a.sortOrder !== b.sortOrder) return a.sortOrder - b.sortOrder;
+        const aUpdated = toDateOrNull(a.updatedAt)?.getTime() ?? 0;
+        const bUpdated = toDateOrNull(b.updatedAt)?.getTime() ?? 0;
+        return bUpdated - aUpdated;
+      });
+  }, [parentWorksheetsQuery.data, displayCourseId, selectedKidId, currentEnrollmentIds]);
+
+  const groupedParentWorksheets = useMemo(() => {
+    const groups = new Map<string, ParentWorksheetGroup>();
+    visibleParentWorksheets.forEach((worksheet) => {
+      const category = String(worksheet.category || "").trim() || "Worksheets";
+      const key = category.toLowerCase();
+      const existing = groups.get(key);
+      if (existing) {
+        existing.items.push(worksheet);
+      } else {
+        groups.set(key, { key, label: category, items: [worksheet] });
+      }
+    });
+    return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
+  }, [visibleParentWorksheets]);
 
   const renderProfileContent = () => {
     const kidName = selectedKid?.fullName || "Child";
@@ -3743,6 +3843,164 @@ export default function ParentDashboard() {
     canonicalJourneyStageProgressPct,
   ]);
 
+  const dashboardCurriculumData = useMemo(() => {
+    const selectedCourse = phonicsProgressByCourse[0];
+    if (!selectedCourse || selectedCourse.totalTopics === 0) return null;
+
+    const stageGroups = new Map<string, { label: string; order: number; rows: any[] }>();
+    const stageOrderMap = buildStageOrderMap(
+      selectedCourse.rows.map((row: any) => ({
+        stageLabel: row.stageLabel,
+        stageOrder: row.stageOrder,
+        order: null,
+      })),
+    );
+
+    selectedCourse.rows.forEach((row: any) => {
+      const label = row.stageLabel || "Lessons";
+      const order =
+        typeof row.stageOrder === "number" && row.stageOrder > 0
+          ? row.stageOrder
+          : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
+      const key = `${order}__${label}`;
+      const existing = stageGroups.get(key);
+      if (existing) {
+        existing.rows.push(row);
+      } else {
+        stageGroups.set(key, { label, order, rows: [row] });
+      }
+    });
+
+    const stageSummaries = Array.from(stageGroups.values())
+      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
+      .map((group) => {
+        const masteryKey = aggregateStageMastery(group.rows.map((row) => row.mastery));
+        const progressPct = calcStageProgressPct(group.rows);
+        const completedCount = group.rows.filter(
+          (row: any) => row.status === "completed" || masteryKeyFromValue(row.mastery) === "mastered",
+        ).length;
+        const totalCount = group.rows.length;
+        const expectations =
+          STAGE_EXPECTATIONS_BY_COURSE[selectedCourse.courseId]?.[group.order] ?? [];
+        return {
+          label: group.label,
+          order: group.order,
+          masteryKey,
+          focusChips: pickStageFocus(group.rows),
+          progressPct,
+          completedCount,
+          totalCount,
+          expectations,
+        };
+      });
+
+    const completedStages = stageSummaries.filter((stage) => (stage.progressPct ?? 0) >= 100).length;
+    const stagesWithProgress = stageSummaries.filter((stage) => (stage.progressPct ?? 0) > 0);
+    const activeStage =
+      stagesWithProgress.length > 0
+        ? stagesWithProgress[stagesWithProgress.length - 1]
+        : stageSummaries.find((stage) => (stage.progressPct ?? 0) === 0) ?? null;
+    const nextStage = activeStage
+      ? stageSummaries.find((stage) => stage.order > (activeStage.order ?? 0)) ?? null
+      : null;
+
+    const inProgressCount = selectedCourse.rows.filter((row: any) => row.status === "in_progress").length;
+    const summaryTotalTopics = curriculumCompletionSummary?.totalTopics ?? selectedCourse.totalTopics;
+    const summaryCompletedCount = curriculumCompletionSummary?.completedTopics ?? selectedCourse.completedCount;
+    const summaryInProgressCount = curriculumCompletionSummary?.inProgressTopics ?? inProgressCount;
+    const summaryOverallPct = curriculumCompletionSummary?.overallPct ?? selectedCourse.overallPct;
+    const summaryLastUpdatedAtMs =
+      curriculumCompletionSummary?.lastUpdatedAtMs ?? selectedCourse.lastUpdatedAtMs;
+
+    const filteredRows =
+      curriculumFilter === "completed"
+        ? selectedCourse.rows.filter((row: any) => row.status === "completed")
+        : curriculumFilter === "in_progress"
+          ? selectedCourse.rows.filter((row: any) => row.status === "in_progress")
+          : selectedCourse.rows;
+
+    const lessonStageGroups = new Map<string, { key: string; label: string; order: number; rows: any[] }>();
+    filteredRows.forEach((row: any) => {
+      const label = row.stageLabel || "Lessons";
+      const order =
+        typeof row.stageOrder === "number" && row.stageOrder > 0
+          ? row.stageOrder
+          : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
+      const key = `${order}__${label}`;
+      const existing = lessonStageGroups.get(key);
+      if (existing) {
+        existing.rows.push(row);
+      } else {
+        lessonStageGroups.set(key, { key, label, order, rows: [row] });
+      }
+    });
+
+    const stageSummaryByKey = new Map(
+      stageSummaries.map((stage) => [`${stage.order ?? 0}__${stage.label}`, stage]),
+    );
+
+    const groupedLessons = Array.from(lessonStageGroups.values())
+      .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
+      .map((group) => ({
+        ...group,
+        summary: stageSummaryByKey.get(group.key) ?? null,
+      }));
+
+    return {
+      selectedCourse,
+      stageSummaries,
+      completedStages,
+      activeStage,
+      nextStage,
+      summaryTotalTopics,
+      summaryCompletedCount,
+      summaryInProgressCount,
+      summaryOverallPct,
+      summaryLastUpdatedAtMs,
+      filteredRows,
+      groupedLessons,
+    };
+  }, [phonicsProgressByCourse, curriculumCompletionSummary, curriculumFilter]);
+
+  const dashboardRecommendedNext = useMemo(() => {
+    return buildDashboardRecommendedNext(
+      canonicalRecommendedNext || kidSummaryQuery.data?.summary?.recommendedNext,
+    );
+  }, [canonicalRecommendedNext, kidSummaryQuery.data]);
+
+  const dashboardStrengthChips = useMemo(() => {
+    return pickDashboardStrengthChips({
+      recentTeacherRatingsSummary,
+      skillsInsightData,
+    });
+  }, [recentTeacherRatingsSummary, skillsInsightData]);
+
+  const dashboardPracticeChips = useMemo(() => {
+    return pickDashboardPracticeChips({
+      recentTeacherRatingsSummary,
+      skillsInsightData,
+      getLessonNeedsPracticeChips,
+    });
+  }, [recentTeacherRatingsSummary, skillsInsightData]);
+
+  const dashboardHeroMessage = useMemo(() => {
+    return buildDashboardHeroMessage({
+      childName: String(selectedKid?.fullName || selectedKid?.name || "Your child"),
+      phonicsLoading,
+      completion: dashboardCurriculumData?.summaryOverallPct ?? null,
+      dueNow: billingSummary.dueNow,
+      rescheduled: classesCounts.reschedule_requested,
+      upcoming: classesCounts.upcoming,
+    });
+  }, [
+    billingSummary.dueNow,
+    classesCounts.reschedule_requested,
+    classesCounts.upcoming,
+    dashboardCurriculumData,
+    phonicsLoading,
+    selectedKid,
+  ]);
+
   const renderStageGrid = (
     stageSummaries: Array<any>,
     courseId: string | null,
@@ -3863,6 +4121,193 @@ export default function ParentDashboard() {
             </div>
           );
         })}
+      </div>
+    );
+  };
+
+  const renderDashboardHome = () => {
+    const childName = selectedKid?.fullName || selectedKid?.name || "your child";
+    const curriculumData = dashboardCurriculumData;
+    const selectedCourse = curriculumData?.selectedCourse ?? null;
+    const programLabel = selectedCourse?.courseLabel
+      || profileEnrollments[0]?.courseLabel
+      || (displayCourseId ? formatCourseLabel(displayCourseId) : "Program assignment in progress");
+    const completionPct = Math.max(
+      0,
+      Math.min(100, curriculumData?.summaryOverallPct ?? curriculumCompletionSummary?.overallPct ?? 0),
+    );
+    const activeStageLabel = curriculumData?.activeStage
+      ? stripStagePrefix(curriculumData.activeStage.label, curriculumData.activeStage.order ?? 0)
+      : overviewMetrics?.stageMessage || "Getting started";
+    const programIcon = selectedCourse
+      ? phonicsIconsByCourseId[selectedCourse.courseId] || "📘"
+      : "📘";
+    const heroGradientClass = selectedCourse
+      ? phonicsGradientsByCourseId[selectedCourse.courseId] || "from-slate-50 to-emerald-50"
+      : "from-slate-50 to-emerald-50";
+    const latestTeacherLesson = recentTeacherRatingsSummary?.latestLesson ?? null;
+    const upcomingPreviewRows = upcomingClassSessions.slice(0, 2);
+    const dashboardAlerts: string[] = [];
+    if (billingSummary.dueNow > 0) {
+      dashboardAlerts.push(`${formatCurrencyINR(billingSummary.dueNow)} due this month`);
+    }
+    if (classesCounts.reschedule_requested > 0) {
+      dashboardAlerts.push(`${classesCounts.reschedule_requested} class update needs attention`);
+    }
+
+    const canJoinFromOverview = (row: { session: KidSession; status: string }) => {
+      const { session, status } = row;
+      if (
+        status === "completed" ||
+        status === "cancelled" ||
+        status === "no_show" ||
+        status === "reschedule_requested"
+      ) {
+        return false;
+      }
+      if (typeof session.joinUrl === "string" && session.joinUrl.trim().length > 0) {
+        return true;
+      }
+      if (typeof (session as any).meetingLink === "string" && String((session as any).meetingLink).trim().length > 0) {
+        return true;
+      }
+      if (typeof (session as any).enrollmentId === "string" && String((session as any).enrollmentId).trim().length > 0) {
+        return true;
+      }
+      return typeof session.id === "string" && session.id.includes("_");
+    };
+
+    const selectedCourseLabel = selectedCourse?.courseLabel || "";
+    const lessonsSummaryText = curriculumData
+      ? `${curriculumData.summaryCompletedCount}/${curriculumData.summaryTotalTopics} lessons`
+      : "Waiting for curriculum data";
+    const confidenceLabel =
+      overviewMetrics?.confidenceNow !== null && overviewMetrics?.confidenceNow !== undefined
+        ? masteryLabel(overviewMetrics.confidenceNow)
+        : "Building";
+    const confidenceMetaText =
+      overviewMetrics?.lastUpdatedAt
+        ? `Updated ${formatTimestamp(overviewMetrics.lastUpdatedAt)}`
+        : "Based on recent sessions";
+    const attendanceLabel = `${classesCounts.completed}/${classesCounts.total || 0}`;
+    const attendanceMetaText = `${todayClassSessions.length} today · ${classesCounts.reschedule_requested} rescheduled`;
+    const billingLabel = formatCurrencyINR(billingSummary.dueNow);
+    const billingMetaText = `Due now · ${formatCurrencyINR(billingSummary.billedThisMonth)} billed`;
+    const billingDetailText =
+      billingSummary.source === "read_model"
+        ? `Server projection for ${classesMonthLabel}${toDateOrNull(billingSummary.refreshedAt) ? ` · refreshed ${toDateOrNull(billingSummary.refreshedAt)?.toLocaleString("en-IN")}` : ""}.`
+        : `Calculated from completed classes in ${classesMonthLabel}.`;
+
+    return (
+      <div className="space-y-6">
+        <ParentDashboardHero
+          childName={childName}
+          heroMessage={dashboardHeroMessage}
+          heroGradientClass={heroGradientClass}
+          programIcon={programIcon}
+          programLabel={programLabel}
+          activeStageLabel={activeStageLabel}
+          classesCompleted={classesCounts.completed}
+          classesUpcoming={classesCounts.upcoming}
+          alertText={dashboardAlerts.length > 0 ? dashboardAlerts[0] : "No urgent alerts right now"}
+          onViewInsights={() => setTab("insights")}
+          onViewClasses={() => setTab("classes")}
+        />
+
+        <ParentDashboardKpis
+          completionPct={completionPct}
+          lessonsSummaryText={lessonsSummaryText}
+          confidenceLabel={confidenceLabel}
+          confidenceMetaText={confidenceMetaText}
+          attendanceLabel={attendanceLabel}
+          attendanceMetaText={attendanceMetaText}
+          billingLabel={billingLabel}
+          billingMetaText={billingMetaText}
+        />
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
+          <ParentProgressOverview
+            childName={childName}
+            isRefetching={phonicsProgressQuery.isRefetching}
+            onRefresh={() => phonicsProgressQuery.refetch()}
+            showsFallbackBanner={curriculumCompletionSummary?.source === "fallback_client"}
+            phonicsLoading={phonicsLoading}
+            phonicsError={phonicsError}
+            phonicsErrorMessage={phonicsErrorMessage}
+            curriculumData={curriculumData}
+            completionPct={completionPct}
+            stripStagePrefix={stripStagePrefix}
+          />
+
+          <ParentLearningInsights
+            latestTeacherLesson={latestTeacherLesson}
+            selectedCourseLabel={selectedCourseLabel}
+            formatTimestamp={formatTimestamp}
+            dashboardStrengthChips={dashboardStrengthChips}
+            dashboardPracticeChips={dashboardPracticeChips}
+            onOpenAllRatings={() => setTab("skills")}
+          />
+        </div>
+
+        <div className="grid gap-6 xl:grid-cols-2">
+          <ParentAttendanceSummary
+            classesCounts={classesCounts}
+            upcomingPreviewRows={upcomingPreviewRows}
+            joiningSessionId={joiningSessionId}
+            onOpenClasses={() => setTab("classes")}
+            onJoinSession={(session) => openJoinClass(session)}
+            canJoinFromOverview={canJoinFromOverview}
+            formatSessionTimeRange={formatSessionTimeRange}
+          />
+
+          <ParentBillingSummary
+            billingLoading={billingLoading}
+            dueNowText={formatCurrencyINR(billingSummary.dueNow)}
+            billedText={formatCurrencyINR(billingSummary.billedThisMonth)}
+            paidText={formatCurrencyINR(billingSummary.paidThisMonth)}
+            billingDetailText={billingDetailText}
+            onOpenPayments={() => setTab("payments")}
+          />
+        </div>
+
+        <ParentRecommendations
+          dashboardRecommendedNext={dashboardRecommendedNext}
+          dashboardStrengthChips={dashboardStrengthChips}
+          dashboardPracticeChips={dashboardPracticeChips}
+          labelFromGameId={labelFromGameId}
+          onStartPractice={handlePracticeClick}
+          onOpenGamesProgress={() => setTab("games-progress")}
+        />
+
+        <ParentLessonTracker
+          phonicsLoading={phonicsLoading}
+          phonicsError={phonicsError}
+          phonicsErrorMessage={phonicsErrorMessage}
+          displayCourseId={displayCourseId}
+          curriculumData={curriculumData}
+          curriculumFilter={curriculumFilter}
+          setCurriculumFilter={setCurriculumFilter}
+          collapsedStages={collapsedStages}
+          setCollapsedStages={setCollapsedStages}
+          onRefresh={() => phonicsProgressQuery.refetch()}
+          isRefetching={phonicsProgressQuery.isRefetching}
+          formatTimestamp={formatTimestamp}
+          stripStagePrefix={stripStagePrefix}
+          teacherStarGuide={TEACHER_STAR_GUIDE}
+          starString={starString}
+          selectedCourseLabel={selectedCourseLabel}
+          onSelectTopic={(topic) => {
+            setSelectedCurriculumTopic(topic);
+            setCurriculumTopicModalOpen(true);
+          }}
+          curriculumTopicModalOpen={curriculumTopicModalOpen}
+          selectedCurriculumTopic={selectedCurriculumTopic}
+          onModalOpenChange={(open) => {
+            setCurriculumTopicModalOpen(open);
+            if (!open) setSelectedCurriculumTopic(null);
+          }}
+          getLessonNeedsPracticeChips={getLessonNeedsPracticeChips}
+        />
       </div>
     );
   };
@@ -4068,7 +4513,7 @@ export default function ParentDashboard() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-4">
                     <TinyStepsBrand subtitle="Parent Workspace" />
-                    <h1 className="truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-xl font-semibold tracking-tight text-transparent sm:text-2xl">
+                    <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-100">
                       Hi, {user?.displayName || "Parent"}
                     </h1>
                   </div>
@@ -4120,666 +4565,7 @@ export default function ParentDashboard() {
 
             <div className="mt-4 min-h-0 space-y-6 overflow-y-auto pb-6 pr-1">
               {/* Content */}
-              {activeTab === "dashboard" && (
-          <div className="space-y-6">
-            <Card className="p-6 space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Curriculum Progress
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Course-wise curriculum progress for {selectedKid?.fullName || "your child"}.
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => phonicsProgressQuery.refetch()}
-                    disabled={phonicsProgressQuery.isRefetching}
-                    className="flex items-center gap-1.5"
-                  >
-                    <RefreshCw className={`h-4 w-4 ${phonicsProgressQuery.isRefetching ? 'animate-spin' : ''}`} />
-                    {phonicsProgressQuery.isRefetching ? 'Refreshing...' : 'Refresh'}
-                  </Button>
-                  <div className="text-2xl">📚</div>
-                </div>
-              </div>
-
-              {curriculumCompletionSummary && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/70 dark:text-slate-200">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-semibold">
-                      Curriculum completion: {curriculumCompletionSummary.completedTopics}/
-                      {curriculumCompletionSummary.totalTopics} topics
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      {curriculumCompletionSummary.source === 'read_model'
-                        ? `Projection refreshed ${toDateOrNull(curriculumCompletionSummary.refreshedAt)?.toLocaleString('en-IN', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            hour12: true,
-                          }) || '—'}`
-                        : 'Fallback from live progress docs'}
-                    </div>
-                  </div>
-                  <div className="mt-2 grid gap-2 sm:grid-cols-3">
-                    <div>Completed: {curriculumCompletionSummary.completedTopics}</div>
-                    <div>In progress: {curriculumCompletionSummary.inProgressTopics}</div>
-                    <div>Completion: {Math.max(0, Math.min(100, curriculumCompletionSummary.overallPct))}%</div>
-                  </div>
-                </div>
-              )}
-
-              {phonicsLoading && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Loading curriculum…
-                </p>
-              )}
-
-              {phonicsError && (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {phonicsErrorMessage}
-                </p>
-              )}
-
-              {!phonicsLoading &&
-                !phonicsError &&
-                !displayCourseId && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    No enrolled curriculum found. Please contact admin.
-                  </p>
-                )}
-
-              {!phonicsLoading &&
-                !phonicsError &&
-                phonicsProgressByCourse.length > 0 && (
-                  <div className="space-y-5">
-                    {(() => {
-                      const selectedCourse = phonicsProgressByCourse[0];
-
-                      if (!selectedCourse) {
-                        return (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Curriculum lessons are not available yet.
-                          </div>
-                        );
-                      }
-
-                      if (selectedCourse.totalTopics === 0) {
-                        return (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            Curriculum lessons are not available yet.
-                          </div>
-                        );
-                      }
-
-                      const stageGroups = new Map<
-                        string,
-                        { label: string; order: number; rows: any[] }
-                      >();
-                      const stageOrderMap = buildStageOrderMap(
-                        selectedCourse.rows.map((row: any) => ({
-                          stageLabel: row.stageLabel,
-                          stageOrder: row.stageOrder,
-                          order: null,
-                        }))
-                      );
-                      selectedCourse.rows.forEach((row: any) => {
-                        const label = row.stageLabel || "Lessons";
-                        const order =
-                          typeof row.stageOrder === "number" && row.stageOrder > 0
-                            ? row.stageOrder
-                            : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
-                        const key = `${order}__${label}`;
-                        const existing = stageGroups.get(key);
-                        if (existing) {
-                          existing.rows.push(row);
-                        } else {
-                          stageGroups.set(key, { label, order, rows: [row] });
-                        }
-                      });
-                      const stageSummaries = Array.from(stageGroups.values())
-                        .sort((a, b) => (a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)))
-                        .map((group) => {
-                          const masteryKey = aggregateStageMastery(group.rows.map((r) => r.mastery));
-                          const progressPct = calcStageProgressPct(group.rows);
-                          const completedCount = group.rows.filter(
-                            (row: any) =>
-                              row.status === "completed" || masteryKeyFromValue(row.mastery) === "mastered"
-                          ).length;
-                          const totalCount = group.rows.length;
-                          const expectations =
-                            STAGE_EXPECTATIONS_BY_COURSE[selectedCourse.courseId]?.[group.order] ?? [];
-                          return {
-                            label: group.label,
-                            order: group.order,
-                            masteryKey,
-                            focusChips: pickStageFocus(group.rows),
-                            progressPct,
-                            completedCount,
-                            totalCount,
-                            expectations,
-                          };
-                        });
-                      const completedStages = stageSummaries.filter(
-                        (stage) => (stage.progressPct ?? 0) >= 100
-                      ).length;
-                      const stagesWithProgress = stageSummaries.filter(
-                        (stage) => (stage.progressPct ?? 0) > 0
-                      );
-                      const activeStage =
-                        stagesWithProgress.length > 0
-                          ? stagesWithProgress[stagesWithProgress.length - 1]
-                          : stageSummaries.find((stage) => (stage.progressPct ?? 0) === 0) ?? null;
-                      const nextStage = activeStage
-                        ? stageSummaries.find((stage) => stage.order > (activeStage.order ?? 0)) ?? null
-                        : null;
-
-                      const inProgressCount = selectedCourse.rows.filter(
-                        (row: any) => row.status === "in_progress"
-                      ).length;
-                      const summaryTotalTopics =
-                        curriculumCompletionSummary?.totalTopics ?? selectedCourse.totalTopics;
-                      const summaryCompletedCount =
-                        curriculumCompletionSummary?.completedTopics ?? selectedCourse.completedCount;
-                      const summaryInProgressCount =
-                        curriculumCompletionSummary?.inProgressTopics ?? inProgressCount;
-                      const summaryOverallPct =
-                        curriculumCompletionSummary?.overallPct ?? selectedCourse.overallPct;
-                      const summaryLastUpdatedAtMs =
-                        curriculumCompletionSummary?.lastUpdatedAtMs ?? selectedCourse.lastUpdatedAtMs;
-                      const filteredRows =
-                        curriculumFilter === "completed"
-                          ? selectedCourse.rows.filter(
-                              (row: any) => row.status === "completed"
-                            )
-                          : curriculumFilter === "in_progress"
-                            ? selectedCourse.rows.filter(
-                                (row: any) => row.status === "in_progress"
-                              )
-                            : selectedCourse.rows;
-                      const lessonStageGroups = new Map<
-                        string,
-                        { label: string; order: number; rows: any[] }
-                      >();
-                      filteredRows.forEach((row: any) => {
-                        const label = row.stageLabel || "Lessons";
-                        const order =
-                          typeof row.stageOrder === "number" && row.stageOrder > 0
-                            ? row.stageOrder
-                            : parseStageOrderFromLabel(label) ?? stageOrderMap.get(label) ?? 0;
-                        const key = `${order}__${label}`;
-                        const existing = lessonStageGroups.get(key);
-                        if (existing) {
-                          existing.rows.push(row);
-                        } else {
-                          lessonStageGroups.set(key, { label, order, rows: [row] });
-                        }
-                      });
-                      const stageSummaryByKey = new Map(
-                        stageSummaries.map((stage) => [
-                          `${stage.order ?? 0}__${stage.label}`,
-                          stage,
-                        ])
-                      );
-                      const lessonStageKeys = Array.from(lessonStageGroups.keys());
-                      const collapseAllStages = () => {
-                        const next: Record<string, boolean> = {};
-                        lessonStageKeys.forEach((key) => {
-                          next[key] = true;
-                        });
-                        setCollapsedStages(next);
-                      };
-                      const expandAllStages = () => {
-                        const next: Record<string, boolean> = {};
-                        lessonStageKeys.forEach((key) => {
-                          next[key] = false;
-                        });
-                        setCollapsedStages(next);
-                      };
-
-                      return (
-                        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-                          <div
-                            className={`px-4 py-3 bg-gradient-to-r ${
-                              phonicsGradientsByCourseId[selectedCourse.courseId] ||
-                              "from-slate-50 to-gray-50"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-lg">
-                                  {phonicsIconsByCourseId[selectedCourse.courseId] || "📘"}
-                                </span>
-                                <span className="text-sm font-semibold text-gray-900">
-                                  {selectedCourse.courseLabel}
-                                </span>
-                              </div>
-                              <div className="text-xs text-gray-600 text-right">
-                                <div className="font-semibold text-gray-700">
-                                  Completed {summaryCompletedCount}/{summaryTotalTopics}
-                                </div>
-                                <div>
-                                  Last updated{" "}
-                                  {summaryLastUpdatedAtMs
-                                    ? formatTimestamp(summaryLastUpdatedAtMs)
-                                    : "—"}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="p-4 space-y-4">
-                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                              <div className="flex items-center justify-between gap-3">
-                                <div>
-                                  <div className="text-xs uppercase tracking-wide text-slate-500">
-                                    Stage Snapshot
-                                  </div>
-                                  <div className="text-sm font-semibold text-slate-900">
-                                    Quick overview before you dive into details.
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => setTab("insights")}
-                                  className="text-xs"
-                                >
-                                  View Stage Insights
-                                </Button>
-                              </div>
-                              <div className="mt-3 grid gap-3 grid-cols-1 sm:grid-cols-3">
-                                <div className="rounded-lg border border-emerald-100 bg-gradient-to-br from-emerald-50 via-sky-50 to-indigo-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
-                                  <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                                    Highest Stage Reached
-                                  </div>
-                                  <div className="mt-1 text-sm font-semibold text-slate-900">
-                                    {activeStage
-                                      ? stripStagePrefix(activeStage.label, activeStage.order ?? 0)
-                                      : "—"}
-                                  </div>
-                                </div>
-                                <div className="rounded-lg border border-amber-100 bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
-                                  <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                                    Stages Completed
-                                  </div>
-                                  <div className="mt-1 text-sm font-semibold text-slate-900">
-                                    {completedStages}/{stageSummaries.length}
-                                  </div>
-                                </div>
-                                <div className="rounded-lg border border-violet-100 bg-gradient-to-br from-violet-50 via-indigo-50 to-sky-50 px-3 py-3 text-xs text-slate-700 shadow-sm">
-                                  <div className="text-[10px] uppercase tracking-wide text-slate-500">
-                                    Next Stage
-                                  </div>
-                                  <div className="mt-1 text-sm font-semibold text-slate-900">
-                                    {nextStage
-                                      ? stripStagePrefix(nextStage.label, nextStage.order ?? 0)
-                                      : completedStages === stageSummaries.length && stageSummaries.length > 0
-                                        ? "All stages completed"
-                                        : "—"}
-                                  </div>
-                                </div>
-                            </div>
-                          </div>
-                          {recentTeacherRatingsSummary?.latestLesson && (
-                            <div className="rounded-xl border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-indigo-50 px-4 py-3 shadow-sm">
-                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="space-y-1">
-                                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                                    Latest Teacher-Rated Progress
-                                  </div>
-                                  <div className="text-sm font-semibold text-slate-900">
-                                    {recentTeacherRatingsSummary.latestLesson.label}
-                                  </div>
-                                  <div className="text-xs text-slate-500">
-                                    {recentTeacherRatingsSummary.latestLesson.stageLabel || selectedCourse.courseLabel}
-                                    {recentTeacherRatingsSummary.latestLesson.updatedAtMs
-                                      ? ` · ${formatTimestamp(recentTeacherRatingsSummary.latestLesson.updatedAtMs)}`
-                                      : ""}
-                                  </div>
-                                  {recentTeacherRatingsSummary.latestLesson.remark ? (
-                                    <div className="max-w-2xl text-xs text-slate-600">
-                                      {recentTeacherRatingsSummary.latestLesson.remark}
-                                    </div>
-                                  ) : null}
-                                  {((Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
-                                    recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0) ||
-                                    getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0) && (
-                                    <div className="flex flex-wrap gap-2 pt-1">
-                                      {Array.isArray(recentTeacherRatingsSummary.latestLesson.strengthChips) &&
-                                      recentTeacherRatingsSummary.latestLesson.strengthChips.length > 0 ? (
-                                        <div className="flex flex-wrap gap-2">
-                                          {recentTeacherRatingsSummary.latestLesson.strengthChips.map((chip: string) => (
-                                            <span
-                                              key={`dashboard-strength-${chip}`}
-                                              className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700"
-                                            >
-                                              {chip}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      ) : null}
-                                      {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).length > 0 ? (
-                                        <div className="flex flex-wrap gap-2">
-                                          {getLessonNeedsPracticeChips(recentTeacherRatingsSummary.latestLesson).map((chip: string) => (
-                                            <span
-                                              key={`dashboard-practice-${chip}`}
-                                              className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700"
-                                            >
-                                              {chip}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      ) : null}
-                                    </div>
-                                  )}
-                                </div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 shadow-sm">
-                                    {recentTeacherRatingsSummary.latestLesson.ratedSkillCount}/
-                                    {recentTeacherRatingsSummary.latestLesson.totalSkillCount} skills rated
-                                  </span>
-                                  <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm">
-                                    {recentTeacherRatingsSummary.latestLesson.roundedAverageRating}/4 ·{" "}
-                                    {skillRatingLegendLabel(
-                                      recentTeacherRatingsSummary.latestLesson.roundedAverageRating,
-                                    )}
-                                  </span>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setSelectedCurriculumTopic({
-                                        ...recentTeacherRatingsSummary.latestLesson,
-                                        courseLabel: selectedCourse.courseLabel,
-                                      });
-                                      setCurriculumTopicModalOpen(true);
-                                    }}
-                                    className="h-8 rounded-full border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-indigo-300 hover:text-indigo-600"
-                                  >
-                                    View lesson
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                          <div>
-                            <div className="flex items-center justify-between text-xs text-gray-500">
-                              <span>Lessons completed</span>
-                                <span>
-                                  {selectedCourse.completedCount} of {selectedCourse.totalTopics} lessons completed
-                                </span>
-                              </div>
-                              <div className="mt-2 h-2 rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div
-                                  className="h-2 rounded-full bg-indigo-500"
-                                  style={{ width: `${summaryOverallPct}%` }}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex flex-wrap items-center gap-2 text-xs">
-                              {[
-                                { key: "all", label: `All (${summaryTotalTopics})` },
-                                { key: "in_progress", label: `In progress (${summaryInProgressCount})` },
-                                { key: "completed", label: `Completed (${summaryCompletedCount})` },
-                              ].map((opt) => (
-                                <button
-                                  key={opt.key}
-                                  type="button"
-                                  onClick={() => setCurriculumFilter(opt.key as any)}
-                                  className={`px-2 py-1 rounded-full border text-xs font-semibold ${
-                                    curriculumFilter === opt.key
-                                      ? "border-indigo-600 bg-indigo-600 text-white"
-                                      : "border-gray-200 bg-white text-gray-700"
-                                  }`}
-                                >
-                                  {opt.label}
-                                </button>
-                              ))}
-                              <button
-                                type="button"
-                                onClick={expandAllStages}
-                                className="px-2 py-1 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
-                              >
-                                Expand all
-                              </button>
-                              <button
-                                type="button"
-                                onClick={collapseAllStages}
-                                className="px-2 py-1 rounded-full border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:border-indigo-300 hover:text-indigo-600"
-                              >
-                                Collapse all
-                              </button>
-                            </div>
-
-                            {filteredRows.length === 0 ? (
-                              <div className="text-sm text-gray-600 dark:text-gray-400">
-                                No lessons match this filter yet.
-                              </div>
-                            ) : (
-                              <div className="space-y-4">
-                                {Array.from(lessonStageGroups.values())
-                                  .sort((a, b) =>
-                                    a.order !== b.order ? a.order - b.order : a.label.localeCompare(b.label)
-                                  )
-                                  .map((group) => {
-                                    const key = `${group.order}__${group.label}`;
-                                    const summary = stageSummaryByKey.get(key);
-                                    const isCollapsed = collapsedStages[key] ?? true;
-                                    return (
-                                      <div key={key} className="space-y-2">
-                                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-                                          <div className="text-sm font-semibold text-slate-800">
-                                            {stripStagePrefix(group.label, group.order)}
-                                          </div>
-                                          <div className="flex flex-wrap items-center gap-2">
-                                            {summary ? (
-                                              <>
-                                                <span>
-                                                  {summary.completedCount}/{summary.totalCount} lessons
-                                                </span>
-                                                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                                                  {Math.round(summary.progressPct ?? 0)}%
-                                                </span>
-                                              </>
-                                            ) : (
-                                              <span>{group.rows.length} lessons</span>
-                                            )}
-                                            <button
-                                              type="button"
-                                              onClick={() =>
-                                                setCollapsedStages((prev) => {
-                                                  const current = prev[key] ?? true;
-                                                  return {
-                                                    ...prev,
-                                                    [key]: !current,
-                                                  };
-                                                })
-                                              }
-                                              className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:border-indigo-300 hover:text-indigo-600"
-                                            >
-                                              {isCollapsed ? "Expand" : "Collapse"}
-                                            </button>
-                                          </div>
-                                        </div>
-                                        {!isCollapsed && (
-                                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                            <div className="col-span-full rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2 text-[11px] text-slate-600">
-                                              <div className="font-semibold text-slate-700">How to read this</div>
-                                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                                                {TEACHER_STAR_GUIDE.map((item) => (
-                                                  <span key={item.stars}>
-                                                    {item.stars} = {item.label}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </div>
-                                            {group.rows.map((row: any) => {
-                                            const ratingSummary = summarizeProgressRatings(
-                                              row.progressRatings ?? {},
-                                              Array.isArray(row.progressSkills) ? row.progressSkills : [],
-                                            );
-                                            const starLevel = ratingSummary.roundedAverageRating;
-                                            const starRating = starString(starLevel);
-                                            const ratingLabel = skillRatingLegendLabel(starLevel);
-                                            const masteryLower = String(row.mastery ?? "").toLowerCase().trim();
-                                            const accentDot =
-                                              masteryLower === "mastered"
-                                                ? "bg-emerald-500"
-                                                : masteryLower && masteryLower !== "not_started"
-                                                  ? "bg-blue-500"
-                                                  : "bg-slate-300";
-                                            return (
-                                              <button
-                                                key={row.id}
-                                                type="button"
-                                                onClick={() => {
-                                                  setSelectedCurriculumTopic({
-                                                    ...row,
-                                                    courseLabel: selectedCourse.courseLabel,
-                                                  });
-                                                  setCurriculumTopicModalOpen(true);
-                                                }}
-                                                className="group relative text-left rounded-xl border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50 p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
-                                              >
-                                                <div className="flex items-start justify-between gap-2">
-                                                  <div className="flex min-w-0 flex-1 items-start gap-2">
-                                                    <span className={`mt-1 h-2 w-2 rounded-full ${accentDot}`} />
-                                                    <div className="text-xs font-semibold leading-5 text-slate-900 whitespace-normal break-words">
-                                                      {row.label}
-                                                    </div>
-                                                  </div>
-                                                  <span className="text-[10px] text-slate-400 group-hover:text-indigo-500">
-                                                    View
-                                                  </span>
-                                                </div>
-                                                <div className="mt-2 flex items-center justify-between">
-                                                  <div
-                                                    className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-sm font-semibold tracking-[0.08em] text-amber-700"
-                                                    aria-label={`Lesson progress ${starRating}`}
-                                                  >
-                                                    {starRating}
-                                                  </div>
-                                                  <span className="text-[10px] font-semibold text-slate-500">
-                                                    {ratingLabel}
-                                                  </span>
-                                                </div>
-                                              </button>
-                                            );
-                                          })}
-                                        </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
-            </Card>
-
-            <Dialog
-              open={curriculumTopicModalOpen}
-              onOpenChange={(open) => {
-                setCurriculumTopicModalOpen(open);
-                if (!open) setSelectedCurriculumTopic(null);
-              }}
-            >
-              <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Lesson details</DialogTitle>
-                </DialogHeader>
-                {selectedCurriculumTopic ? (
-                  <div className="space-y-3 text-sm">
-                    {(() => {
-                      const lessonStrengths =
-                        Array.isArray(selectedCurriculumTopic.strengthChips)
-                          ? selectedCurriculumTopic.strengthChips
-                          : [];
-                      const lessonNeedsPractice = getLessonNeedsPracticeChips(selectedCurriculumTopic);
-                      return (
-                        <>
-                    <div className="font-semibold text-gray-900">
-                      {selectedCurriculumTopic.label}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {selectedCurriculumTopic.courseLabel}
-                    </div>
-                    {selectedCurriculumTopic.stageLabel && (
-                      <div className="text-xs text-gray-500">
-                        <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-semibold text-gray-700">
-                          {selectedCurriculumTopic.stageLabel}
-                        </span>
-                      </div>
-                    )}
-                    <ChildSkillRatingCard
-                      title="Child Progress"
-                      subtitle="Teacher ratings for this lesson."
-                      skills={
-                        Array.isArray(selectedCurriculumTopic.progressSkills)
-                          ? selectedCurriculumTopic.progressSkills
-                          : normalizeProgressSkillsMeta(selectedCurriculumTopic.progressRatingsMeta)
-                      }
-                      values={selectedCurriculumTopic.progressRatings ?? {}}
-                      readOnly
-                      className="p-3"
-                    />
-                    {lessonStrengths.length > 0 && (
-                      <div>
-                        <div className="text-xs text-gray-500">Strengths</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {lessonStrengths.map((chip: string) => (
-                            <span
-                              key={chip}
-                              className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700"
-                            >
-                              {chip}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {lessonNeedsPractice.length > 0 && (
-                      <div>
-                        <div className="text-xs text-gray-500">Needs practice</div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {lessonNeedsPractice.map((chip: string) => (
-                            <span
-                              key={chip}
-                              className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700"
-                            >
-                              {chip}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <div className="text-xs text-gray-500">Teacher note</div>
-                      <div className="text-sm text-gray-800">
-                        {selectedCurriculumTopic.remark || "—"}
-                      </div>
-                    </div>
-                        </>
-                      );
-                    })()}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-600">No lesson selected.</div>
-                )}
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
+              {activeTab === "dashboard" && renderDashboardHome()}
 
         {activeTab === "insights" && (
           <div className="space-y-6">
@@ -5394,16 +5180,9 @@ export default function ParentDashboard() {
         {/* Classes tab: Today's + Upcoming sessions */}
         {activeTab === "classes" && (
           <div className="space-y-4">
-            <Card className="sticky top-0 z-20 p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                    My Classes
-                  </h2>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="inline-flex flex-wrap rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 gap-1">
+            <Card className="sticky top-0 z-20 p-4 sm:p-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex flex-wrap rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 gap-1">
                     <button
                       type="button"
                       onClick={() => setClassesView("today")}
@@ -5454,6 +5233,18 @@ export default function ParentDashboard() {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setClassesView("worksheets")}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                        classesView === "worksheets"
+                          ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                          : "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                      }`}
+                    >
+                      <BookOpen className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Worksheets</span> ({visibleParentWorksheets.length})
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         const now = new Date();
                         setClassesCalendarMonth(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -5469,23 +5260,27 @@ export default function ParentDashboard() {
                       <CalendarDays className="h-4 w-4" />
                       Calendar
                     </button>
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      if (!parentRecordingFolderUrl) return;
-                      window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
-                    }}
-                    disabled={!parentRecordingFolderUrl}
-                  >
-                    Class Recordings
-                  </Button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!parentRecordingFolderUrl) return;
+                        window.open(parentRecordingFolderUrl, "_blank", "noopener,noreferrer");
+                      }}
+                      disabled={!parentRecordingFolderUrl}
+                      className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-semibold transition ${
+                        parentRecordingFolderUrl
+                          ? "text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white"
+                          : "cursor-not-allowed text-slate-400 dark:text-slate-500"
+                      }`}
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                      <span className="hidden xs:inline">Class Recordings</span>
+                    </button>
                 </div>
               </div>
             </Card>
 
-            {kidSessionsQuery.isLoading ? (
+            {kidSessionsQuery.isLoading && classesView !== "worksheets" ? (
               <Card className="p-6 text-sm text-slate-600 dark:text-slate-300">
                 Loading sessions…
               </Card>
@@ -5593,6 +5388,95 @@ export default function ParentDashboard() {
                   ))
                 )}
               </div>
+            ) : classesView === "worksheets" ? (
+              <Card className="p-6">
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                      Worksheet Library
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                      Practice resources shared by Tiny Steps.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => parentWorksheetsQuery.refetch()}
+                    disabled={parentWorksheetsQuery.isFetching}
+                  >
+                    {parentWorksheetsQuery.isFetching ? "Refreshing..." : "Refresh"}
+                  </Button>
+                </div>
+
+                {parentWorksheetsQuery.isLoading ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                    Loading worksheets...
+                  </div>
+                ) : groupedParentWorksheets.length === 0 ? (
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
+                    No worksheets have been shared yet.
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    {groupedParentWorksheets.map((group) => (
+                      <div key={group.key} className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                            {group.label}
+                          </h4>
+                          <span className="text-xs text-slate-500">
+                            {group.items.length} worksheet{group.items.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {group.items.map((worksheet) => {
+                            const safeUrl = getSafeWorksheetUrl(worksheet.url);
+                            return (
+                              <div
+                                key={worksheet.id}
+                                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
+                              >
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                      {worksheet.title || "Worksheet"}
+                                    </p>
+                                    {worksheet.description ? (
+                                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                        {worksheet.description}
+                                      </p>
+                                    ) : null}
+                                  </div>
+                                  {worksheet.category ? (
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                                      {worksheet.category}
+                                    </span>
+                                  ) : null}
+                                </div>
+                                <div className="mt-3 flex items-center justify-between">
+                                  <div className="text-[11px] text-slate-500">
+                                    {worksheet.targetStageTags[0] || "Worksheet resource"}
+                                  </div>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => openWorksheetLink(worksheet.url)}
+                                    disabled={!safeUrl}
+                                  >
+                                    Open Worksheet
+                                    <ExternalLink className="ml-1 h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Card>
             ) : (
               <Card className="p-6">
                 <div className="space-y-4">

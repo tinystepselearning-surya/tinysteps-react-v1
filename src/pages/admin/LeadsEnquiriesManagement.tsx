@@ -830,12 +830,6 @@ export default function LeadsEnquiriesManagement() {
       .slice(0, 50);
   }, [leads, linkLeadSearch]);
 
-  const openCreateDialog = () => {
-    setForm(buildInitialForm());
-    setEditTarget(null);
-    setCreateOpen(true);
-  };
-
   const openEditDialog = (lead: LeadRecord) => {
     setEditTarget(lead);
     setForm({
@@ -1599,16 +1593,13 @@ export default function LeadsEnquiriesManagement() {
   return (
     <div className="space-y-4">
       <Card className="p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
           <div>
             <h3 className="text-lg font-semibold">Leads &amp; Enquiries</h3>
             <p className="text-sm text-muted-foreground">
               Canonical enquiry inbox before demo scheduling.
             </p>
           </div>
-          <Button type="button" onClick={openCreateDialog}>
-            Add Lead
-          </Button>
         </div>
       </Card>
 

@@ -70,6 +70,11 @@ import {
   normalizeDemoStatus,
 } from '../../lib/statuses';
 
+interface DemoSessionsManagementProps {
+  openCreateRequestSignal?: number;
+  mode?: 'full' | 'trend_only';
+}
+
 interface DemoFormState {
   parentName: string;
   parentPhone: string;
@@ -447,7 +452,10 @@ const buildFollowUpMessage = (session: DemoSession) => {
     .join('\n');
 };
 
-export default function DemoSessionsManagement() {
+export default function DemoSessionsManagement({
+  openCreateRequestSignal = 0,
+  mode = 'full',
+}: DemoSessionsManagementProps) {
   const { toast } = useToast();
   const { user } = useAuthStore();
 
@@ -483,6 +491,12 @@ export default function DemoSessionsManagement() {
   const [trendCustomStartDate, setTrendCustomStartDate] = useState<string>(DEMO_TREND_ONBOARDING_START_KEY);
   const [trendCustomEndDate, setTrendCustomEndDate] = useState<string>(getTodayDateInput);
   const [activeTrendMetrics, setActiveTrendMetrics] = useState<TrendMetricKey[]>(TREND_METRIC_KEYS);
+
+  useEffect(() => {
+    if (!openCreateRequestSignal) return;
+    setForm(buildInitialForm());
+    setCreateDialogOpen(true);
+  }, [openCreateRequestSignal]);
 
   useEffect(() => {
     const unsubSessions = listenAllDemoSessions(
@@ -1403,25 +1417,27 @@ export default function DemoSessionsManagement() {
 
   return (
     <div className="space-y-4">
-      <Card className="border-sky-100 bg-gradient-to-b from-sky-50/70 to-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="text-lg font-semibold">Demo Sessions</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Create new demo requests from one place.
-            </p>
+      {mode === 'full' ? (
+        <Card className="border-sky-100 bg-gradient-to-b from-sky-50/70 to-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">Demo Sessions</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create new demo requests from one place.
+              </p>
+            </div>
+            <Button
+              type="button"
+              onClick={() => {
+                setForm(buildInitialForm());
+                setCreateDialogOpen(true);
+              }}
+            >
+              Create Demo Request
+            </Button>
           </div>
-          <Button
-            type="button"
-            onClick={() => {
-              setForm(buildInitialForm());
-              setCreateDialogOpen(true);
-            }}
-          >
-            Create Demo Request
-          </Button>
-        </div>
-      </Card>
+        </Card>
+      ) : null}
 
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="max-h-[90vh] w-[calc(100vw-1rem)] overflow-y-auto border-slate-200 bg-gradient-to-b from-white to-slate-50 shadow-xl sm:max-w-3xl">
@@ -1606,6 +1622,7 @@ export default function DemoSessionsManagement() {
         </DialogContent>
       </Dialog>
 
+      {mode === 'full' ? (
       <Card className="border-violet-100 bg-gradient-to-b from-violet-50/50 to-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center gap-3">
           <h3 className="text-lg font-semibold">Demo Tracking</h3>
@@ -1882,6 +1899,7 @@ export default function DemoSessionsManagement() {
           </TabsContent>
         </Tabs>
       </Card>
+      ) : null}
 
       <Card className="border-emerald-100 bg-gradient-to-b from-emerald-50/50 to-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
