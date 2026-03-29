@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
+import { createCourseSchema } from '../lib/schemas';
 import PageHero from '../components/common/PageHero';
 import LevelTabs from '../components/programs/LevelTabs';
 import LearningJourney from '../components/programs/LearningJourney';
+import ProgramFacts from '../components/programs/ProgramFacts';
+import ProgramProof from '../components/programs/ProgramProof';
+import ParentReassurance from '../components/programs/ParentReassurance';
+import NextStepsLinks from '../components/programs/NextStepsLinks';
 import {
   formatINR,
   GROUP_MONTHLY_FEES,
@@ -64,7 +69,7 @@ const faqItems = [
   {
     question: 'What age is best to start phonics?',
     answer:
-      "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 lessons to blend first words like 'sat' or 'pin'.",
+      "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Typically, children blend first words like 'sat' or 'pin' within 4-6 lessons.",
   },
   {
     question: 'How long does it take to learn phonics?',
@@ -131,12 +136,12 @@ export default function PhonicsPage({
 }: PhonicsPageProps) {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
   const title = seoOverrides?.title ?? "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps";
-  const description = seoOverrides?.description ?? "Systematic 1:1 online phonics classes for ages 3-12. SATPIN method, blending practice, decodable reading with live mentors. Stage-based parent insights. Book a free 35-minute assessment session.";
+  const description = seoOverrides?.description ?? "Live 1:1 and small-group online phonics classes for ages 3-12. Free assessment, SATPIN method, blending practice, decodable reading with trained teachers.";
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Phonics Classes for Kids";
-  const heroSubtitle = heroSubtitleOverride ?? "Systematic, multi-sensory phonics taught live with stage-based parent insights, 35-minute classes, and a free 35-minute assessment session.";
+  const heroSubtitle = heroSubtitleOverride ?? "Multi-sensory phonics taught live with stage-based parent updates. Most children blend their first words within 4-6 lessons.";
   const aeoCopy = introCopy ?? "Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 across India. We teach systematic phonics (SATPIN method) with multisensory activities, blending practice, and decodable reading. Most children read their first words within 4-6 lessons.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
@@ -151,21 +156,14 @@ export default function PhonicsPage({
 
   useEffect(() => {
     const baseJsonLd = [
-      {
-        "@context": "https://schema.org",
-        "@type": "Course",
-        "name": "Online Phonics Classes for Kids",
-        "description": "Systematic, multi-sensory phonics taught live with stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
-        "provider": {
-          "@type": "Organization",
-          "name": "Tiny Steps Learning",
-          "url": "https://tinystepslearning.com"
-        },
-        "hasCourseInstance": {
-          "@type": "CourseInstance",
-          "courseMode": "OnlineCoursePlatform"
-        }
-      },
+      createCourseSchema({
+        name: "Online Phonics Classes for Kids",
+        description: "Systematic, multi-sensory phonics taught live with stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
+        url: canonicalUrl,
+        courseMode: 'online',
+        ageRange: 'Ages 3-12',
+        educationalLevel: 'Beginner to Advanced'
+      }),
       {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -282,9 +280,33 @@ export default function PhonicsPage({
         </p>
       </div>
 
+      {/* Program Facts */}
+      <ProgramFacts
+        ageRange="Ages 3-12"
+        format="Live 1:1 or small group online"
+        duration="35-minute classes, 2-3x per week"
+        structure="3 levels, 36+ lessons with stage-based progression"
+        outcomes={[
+          'Master letter sounds and blending—typically within 4-6 lessons',
+          'Read CVC words and simple sentences with confidence',
+          'Build fluency with digraphs, vowel teams, and tricky words',
+          'Progress from individual sounds to reading full passages with comprehension',
+        ]}
+      />
+
       {afterHeroContent}
       <LevelTabs levels={levels} />
       <LearningJourney stages={stages} />
+
+      {/* Program Proof */}
+      <ProgramProof
+        metrics={[
+          { value: '4-6', label: 'Lessons to blend first words' },
+          { value: '30-40', label: 'Lessons to master basic phonics' },
+          { value: 'Stage-based', label: 'Clear progress reports every 12 lessons' },
+          { value: 'Live 1:1 or group', label: 'Personalized pace and feedback' },
+        ]}
+      />
 
       {/* Buyer Guide Section */}
       <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-6 py-12 shadow-sm">
@@ -305,6 +327,55 @@ export default function PhonicsPage({
       </section>
 
       {afterContent}
+
+      {/* Next Steps Links */}
+      <NextStepsLinks
+        title="Explore Tiny Steps Phonics"
+        links={[
+          { 
+            label: 'Full Curriculum', 
+            href: '/curriculum', 
+            description: 'See all lesson topics across 3 levels',
+            icon: '📚'
+          },
+          { 
+            label: 'Pricing Options', 
+            href: '/pricing', 
+            description: '1:1 and small group packages',
+            icon: '💰'
+          },
+          { 
+            label: 'Why Tiny Steps', 
+            href: '/why-tiny-steps', 
+            description: 'Our approach and teaching philosophy',
+            icon: '⭐'
+          },
+          { 
+            label: 'Phonics Buyer Guide', 
+            href: '/best-online-phonics-classes-india', 
+            description: 'Compare programs and make an informed choice',
+            icon: '🔍'
+          },
+          { 
+            label: 'Getting Started Guide', 
+            href: '/parents/getting-started', 
+            description: 'How to prepare for your first assessment',
+            icon: '🎓'
+          },
+          { 
+            label: 'Daily Phonics Practice', 
+            href: '/parents/phonics-mission', 
+            description: '5-minute home practice routine',
+            icon: '📝'
+          },
+          { 
+            label: 'Reading at Home Tips', 
+            href: '/parents/reading-at-home', 
+            description: '10-minute guided reading routine',
+            icon: '📖'
+          },
+        ]}
+      />
 
       {/* FAQ Section */}
       <section className="max-w-4xl mx-auto px-6 py-12">
@@ -366,6 +437,9 @@ export default function PhonicsPage({
           })}
         </div>
       </section>
+
+      {/* Parent Reassurance */}
+      <ParentReassurance programName="our phonics program" />
 
       {/* Book Assessment CTA Section */}
       <section className="max-w-4xl mx-auto px-6 py-12">

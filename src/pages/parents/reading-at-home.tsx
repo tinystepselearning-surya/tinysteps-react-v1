@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 
 const trustPoints = [
@@ -119,7 +120,35 @@ const progressChecklist = [
 
 const ReadingAtHome: React.FC = () => {
   useEffect(() => {
-    applySeo(parentsMeta['/parents/reading-at-home']);
+    const howToSchema = createHowToSchema(
+      'How to Build a Daily Reading Routine at Home',
+      [
+        'Minute 1-2: Warm-up words - Review 3 target words from yesterday using sound-by-sound decoding',
+        'Minute 3-6: Guided reading - Child reads one short decodable passage while you support with prompts',
+        'Minute 7-8: Meaning check - Ask two quick comprehension questions about who, what, and where',
+        'Choose texts that use sounds your child has already learned in class',
+        'Re-read one short passage at the end of each session for 1-2 minutes',
+        'Ask two short questions after reading: Who and What happened',
+        'Keep one fixed reading slot daily and stop while your child still feels successful'
+      ]
+    );
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Reading at Home', item: 'https://tinystepslearning.com/parents/reading-at-home' }
+      ]
+    };
+
+    const metaWithSchema = {
+      ...parentsMeta['/parents/reading-at-home'],
+      jsonLd: [howToSchema, breadcrumbSchema]
+    };
+
+    applySeo(metaWithSchema);
   }, []);
 
   return (
@@ -262,8 +291,8 @@ const ReadingAtHome: React.FC = () => {
         <Link to="/?book=1" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
           Book Free Assessment
         </Link>
-        <Link to="/parents/phonics-mission" className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-          Combine with Phonics Mission
+        <Link to="/phonics" className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+          Explore Phonics Classes
         </Link>
       </div>
     </section>

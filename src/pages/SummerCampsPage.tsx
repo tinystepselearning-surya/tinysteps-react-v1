@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
+import { createEventSchema } from '../lib/schemas';
 
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
@@ -574,6 +575,37 @@ export default function SummerCampsPage() {
       ],
     };
 
+    // Event schemas for summer camp programs
+    const phonicsEventSchema = createEventSchema({
+      name: 'Phonics Fast Track Summer Camp 2026',
+      description: 'Fast-track course to refresh letter sounds, blending, and reading confidence. 10-week intensive program capped at 8 students.',
+      startDate: '2026-04-01',
+      endDate: '2026-06-15',
+      url: 'https://tinystepslearning.com/summer-camps',
+      price: SUMMER_CAMP_ENROLLMENT_PRICE,
+      eventAttendanceMode: 'OnlineEventAttendanceMode'
+    });
+
+    const grammarEventSchema = createEventSchema({
+      name: 'Grammar Fast Track Summer Camp 2026',
+      description: 'Fast-track course to strengthen sentence structure, punctuation, and writing clarity. 10-week intensive program capped at 8 students.',
+      startDate: '2026-04-01',
+      endDate: '2026-06-15',
+      url: 'https://tinystepslearning.com/summer-camps',
+      price: SUMMER_CAMP_ENROLLMENT_PRICE,
+      eventAttendanceMode: 'OnlineEventAttendanceMode'
+    });
+
+    const speakingEventSchema = createEventSchema({
+      name: 'Speaking Fast Track Summer Camp 2026',
+      description: 'Fast-track course for confident speaking, presentation flow, and better pronunciation. 10-week intensive program capped at 8 students.',
+      startDate: '2026-04-01',
+      endDate: '2026-06-15',
+      url: 'https://tinystepslearning.com/summer-camps',
+      price: SUMMER_CAMP_ENROLLMENT_PRICE,
+      eventAttendanceMode: 'OnlineEventAttendanceMode'
+    });
+
     applySeo({
       title: 'Premium Online Summer Camp for Kids in India | Tiny Steps Learning',
       description: pageDescription,
@@ -581,7 +613,16 @@ export default function SummerCampsPage() {
       canonicalPath: '/summer-camps',
       robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
       ogType: 'website',
-      jsonLd: [breadcrumbSchema, webPageSchema, serviceSchema, courseListSchema, faqSchema],
+      jsonLd: [
+        breadcrumbSchema, 
+        webPageSchema, 
+        serviceSchema, 
+        courseListSchema, 
+        faqSchema,
+        phonicsEventSchema,
+        grammarEventSchema,
+        speakingEventSchema
+      ],
     });
   }, []);
 
@@ -615,8 +656,15 @@ export default function SummerCampsPage() {
                   Unlike large-volume summer camps, Tiny Steps is intentionally capped at {SUMMER_CAMP_BATCH_CAP} students per batch.
                   Children get more chances to speak, read, respond, and improve with live teacher attention.
                 </p>
+                
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm shadow-sm">
+                  <span className="text-lg">⏰</span>
+                  <span className="font-semibold text-amber-900">Starting April 1, 2026</span>
+                  <span className="text-amber-700">• New batches start weekly</span>
+                </div>
+                
                 <p className="mt-3 text-sm text-slate-600">
-                  Camp window: April 1–June 15, 2026 • 10 weeks • New batches start weekly.
+                  Camp window: April 1–June 15, 2026 • 10 weeks • Limited batches, capped at {SUMMER_CAMP_BATCH_CAP}.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3 text-sm">
                   <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Ages 4–5</span>
@@ -690,6 +738,91 @@ export default function SummerCampsPage() {
                 className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-emerald-500 bg-white/90 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50 sm:w-auto"
               >
                 Chat on WhatsApp
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Camp Facts - Fast-Scan Info Block */}
+        <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+          <div className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-sky-50/30 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+            <div className="border-b border-slate-200/60 bg-white/60 px-6 py-4 backdrop-blur-sm">
+              <h2 className="text-xl font-bold text-slate-900">Summer Camp at a Glance</h2>
+              <p className="mt-1 text-sm text-slate-600">Everything parents need to know</p>
+            </div>
+
+            <div className="grid gap-px bg-slate-200/40 sm:grid-cols-2">
+              <div className="bg-white px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">👶</div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Age Range</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">Ages 4–12 (grouped by level)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">💻</div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Format</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">Live small-group online (capped at {SUMMER_CAMP_BATCH_CAP})</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg">📅</div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Duration</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">10 weeks (April 1–June 15, 2026)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-lg">⏱️</div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Class Length</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">50–60 minute live classes</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white px-6 py-5">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Best For</p>
+              <ul className="mt-3 space-y-2">
+                <li className="flex items-start gap-2 text-sm text-slate-700">
+                  <span className="mt-0.5 text-emerald-600">✓</span>
+                  <span>Summer bridge to strengthen phonics, grammar, or speaking skills</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-slate-700">
+                  <span className="mt-0.5 text-emerald-600">✓</span>
+                  <span>Catch-up or confidence boost before new school term</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-slate-700">
+                  <span className="mt-0.5 text-emerald-600">✓</span>
+                  <span>Structured summer learning with clear outcomes (not just entertainment)</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-slate-700">
+                  <span className="mt-0.5 text-emerald-600">✓</span>
+                  <span>Small-group environment with live teacher attention and correction</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="border-t border-slate-200/60 bg-white px-6 py-5 text-center">
+              <a
+                href={SUMMER_CAMP_WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Enroll for ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}
               </a>
             </div>
           </div>
@@ -1043,6 +1176,92 @@ export default function SummerCampsPage() {
                 <div className="mt-3 text-sm font-semibold text-emerald-700">Enroll on WhatsApp →</div>
               </a>
             ))}
+          </div>
+        </section>
+
+        {/* Parent Reassurance */}
+        <section className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
+          <div className="overflow-hidden rounded-3xl border border-emerald-200/60 bg-gradient-to-br from-emerald-50 via-white to-sky-50/40 shadow-[0_8px_30px_rgba(0,0,0,0.04)]">
+            <div className="px-6 py-5 sm:px-8">
+              <div className="text-center">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Quick & Easy Enrollment</p>
+                <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">How Summer Camp Enrollment Works</h2>
+                <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600">
+                  Simple process—no complicated forms or long waits
+                </p>
+              </div>
+
+              <div className="mt-8 grid gap-6 sm:grid-cols-3">
+                <div className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                    <span className="text-2xl">📱</span>
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-slate-900">1. Message on WhatsApp</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    Click "Enroll" or WhatsApp us with your child's age and track preference (Phonics, Grammar, or Speaking)
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                    <span className="text-2xl">📋</span>
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-slate-900">2. Quick Level Check</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    We conduct a brief 10–15 minute assessment to place your child in the right level group (ensures better participation)
+                  </p>
+                </div>
+
+                <div className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+                    <span className="text-2xl">🎉</span>
+                  </div>
+                  <h3 className="mt-4 text-base font-semibold text-slate-900">3. Seat Confirmed</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                    After payment (₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}), we confirm your child's batch and share joining details
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 rounded-2xl border border-sky-200/60 bg-sky-50/50 px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 text-lg">💡</div>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-slate-900">What Happens Next?</p>
+                    <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-emerald-600">•</span>
+                        <span>Batch confirmation with schedule details</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-emerald-600">•</span>
+                        <span>Access to class recordings and worksheets</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-emerald-600">•</span>
+                        <span>10-week learning path with clear milestones</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="mt-0.5 text-emerald-600">•</span>
+                        <span>Completion summary and next-step recommendations</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <a
+                  href={SUMMER_CAMP_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-full bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                >
+                  Start Enrollment on WhatsApp
+                </a>
+                <p className="mt-3 text-xs text-slate-500">Quick response • Batches start weekly • Limited to {SUMMER_CAMP_BATCH_CAP} students per batch</p>
+              </div>
+            </div>
           </div>
         </section>
 

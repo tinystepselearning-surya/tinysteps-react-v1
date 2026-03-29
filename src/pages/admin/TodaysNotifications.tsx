@@ -1654,6 +1654,11 @@ export default function TodaysNotifications() {
               onClick={() => setMode('today')}
             >
               Today
+              {mode === 'today' && (
+                <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
+                  {sortedRows.length}
+                </span>
+              )}
             </Button>
             <Button
               size="sm"
@@ -1662,6 +1667,11 @@ export default function TodaysNotifications() {
               onClick={() => setMode('upcoming')}
             >
               Upcoming
+              {mode === 'upcoming' && (
+                <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
+                  {sortedRows.length}
+                </span>
+              )}
             </Button>
             <Button
               size="sm"
@@ -1670,6 +1680,11 @@ export default function TodaysNotifications() {
               onClick={() => setMode('overall-admissions')}
             >
               Overall Admissions
+              {mode === 'overall-admissions' && (
+                <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums">
+                  {sortedAdmissionsRows.length}
+                </span>
+              )}
             </Button>
           </div>
           <div className="flex items-center gap-1">

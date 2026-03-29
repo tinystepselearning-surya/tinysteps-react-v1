@@ -1,11 +1,39 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 
 const TrackingProgress: React.FC = () => {
   useEffect(() => {
-    applySeo(parentsMeta['/parents/tracking-progress']);
+    const howToSchema = createHowToSchema(
+      'How to Track Your Child\'s Learning Progress',
+      [
+        'Ask for session notes and current goals after each milestone check',
+        'Ask for a short milestone summary after 8-12 lessons',
+        'Use small lesson targets at home to reinforce learning',
+        'Review lesson notes: what was learned, what went well, and one focus area',
+        'Request milestone summaries showing mastered skills and next learning goals',
+        'Track phonics fluency, letter-sound mastery, and comprehension at natural intervals'
+      ]
+    );
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Tracking Progress', item: 'https://tinystepslearning.com/parents/tracking-progress' }
+      ]
+    };
+
+    const metaWithSchema = {
+      ...parentsMeta['/parents/tracking-progress'],
+      jsonLd: [howToSchema, breadcrumbSchema]
+    };
+
+    applySeo(metaWithSchema);
   }, []);
 
   return (
@@ -35,12 +63,18 @@ const TrackingProgress: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/contact" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Ask for a progress update →
+      <Link to="/phonics" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Explore Phonics Classes →
       </Link>
-      <Link to="/parents/helping-with-homework" className="text-primary-600 text-sm font-medium hover:underline">
-        Learn how to support progress at home
-      </Link>
+      <div className="flex flex-wrap gap-2">
+        <Link to="/grammar" className="text-primary-600 text-sm font-medium hover:underline">
+          Grammar & Writing Classes
+        </Link>
+        <span className="text-slate-400">•</span>
+        <Link to="/speaking" className="text-primary-600 text-sm font-medium hover:underline">
+          Public Speaking Classes
+        </Link>
+      </div>
     </div>
 
     <div className="mt-10 border-t pt-8">

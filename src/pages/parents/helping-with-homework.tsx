@@ -1,11 +1,41 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 
 const HelpingWithHomework: React.FC = () => {
   useEffect(() => {
-    applySeo(parentsMeta['/parents/helping-with-homework']);
+    const howToSchema = createHowToSchema(
+      'How to Help Your Child with Homework Effectively',
+      [
+        'Review the teacher\'s short goal for the week',
+        'Do a 5-minute practice together using prompts from the lesson',
+        'Praise effort and note one target for next time',
+        'Monday: review teacher goal and model one example',
+        'Tuesday: child practices same skill with your support',
+        'Wednesday: short mixed review (3 old + 2 new items)',
+        'Thursday: quick correction day using one focused script',
+        'Friday: mini-check and celebration; message teacher with observations'
+      ]
+    );
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Helping with Homework', item: 'https://tinystepslearning.com/parents/helping-with-homework' }
+      ]
+    };
+
+    const metaWithSchema = {
+      ...parentsMeta['/parents/helping-with-homework'],
+      jsonLd: [howToSchema, breadcrumbSchema]
+    };
+
+    applySeo(metaWithSchema);
   }, []);
 
   return (
@@ -44,8 +74,8 @@ const HelpingWithHomework: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Enroll in a Tiny Steps Course →
+      <Link to="/grammar" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Explore Grammar & Writing Classes →
       </Link>
       <Link to="/parents/phonics-mission" className="text-primary-600 text-sm font-medium hover:underline">
         See our 5-minute daily practice routine

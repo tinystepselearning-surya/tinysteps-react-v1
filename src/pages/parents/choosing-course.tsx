@@ -35,12 +35,22 @@ const ChoosingCourse: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Browse Our Courses →
+      <Link to="/?book=1" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Book Your Free Assessment →
       </Link>
-      <Link to="/?book=1" className="text-primary-600 text-sm font-medium hover:underline">
-        Book your free assessment class
-      </Link>
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link to="/phonics" className="text-primary-600 font-medium hover:underline">
+          Phonics Classes
+        </Link>
+        <span className="text-slate-400">•</span>
+        <Link to="/grammar" className="text-primary-600 font-medium hover:underline">
+          Grammar Classes
+        </Link>
+        <span className="text-slate-400">•</span>
+        <Link to="/speaking" className="text-primary-600 font-medium hover:underline">
+          Speaking Classes
+        </Link>
+      </div>
     </div>
 
     <div className="mt-10 border-t pt-8">

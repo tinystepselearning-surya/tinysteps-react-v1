@@ -213,6 +213,14 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
       jsonLd: [
         {
           "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Best Online Phonics Classes India", "item": "https://tinystepslearning.com/best-online-phonics-classes-india" }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
           "@type": "Article",
           "headline": "Best Online Phonics Classes in India (2026) — Parent Checklist",
           "description": "A comprehensive guide for Indian parents to evaluate and choose the best online phonics classes for their children ages 3–12.",

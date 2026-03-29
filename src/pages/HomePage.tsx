@@ -6,6 +6,7 @@ import { organizationSchema, localBusinessSchema } from "../lib/schemas";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
+import ParentReassurance from "../components/programs/ParentReassurance";
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
@@ -42,7 +43,7 @@ export default function HomePage() {
     applySeo({
       title: "Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning",
       description:
-        "1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.",
+        "Live 1:1 and small-group online phonics, grammar, and speaking classes for kids ages 3–12. Free assessment, structured curriculum, trained teachers, weekly parent updates.",
       canonicalPath: "/",
       ogType: "website",
       jsonLd: [
@@ -124,6 +125,71 @@ export default function HomePage() {
 
       {/* HERO */}
       <ConversionHero />
+
+      {/* Program Navigation Cards */}
+      <section className="px-6 py-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Choose Your Focus</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Explore Our Core Programs</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Link
+              to="/phonics"
+              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-emerald-50/30 to-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-2xl">
+                📚
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Phonics Classes</h3>
+              <p className="mt-1 text-sm text-slate-600">Ages 3–12</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                Letter sounds, blending, reading fluency. Structured path from sounds to confident reading.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-emerald-700 transition group-hover:gap-2">
+                Explore Phonics
+                <span className="text-lg">→</span>
+              </div>
+            </Link>
+
+            <Link
+              to="/grammar"
+              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-sky-50/30 to-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-2xl">
+                ✏️
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Grammar Classes</h3>
+              <p className="mt-1 text-sm text-slate-600">Ages 5–15</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                Sentence structure, tenses, writing clarity. Build correct, confident writing skills.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-sky-700 transition group-hover:gap-2">
+                Explore Grammar
+                <span className="text-lg">→</span>
+              </div>
+            </Link>
+
+            <Link
+              to="/speaking"
+              className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-amber-50/30 to-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-2xl">
+                🎤
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Speaking Classes</h3>
+              <p className="mt-1 text-sm text-slate-600">Ages 4–15</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                Presentation skills, confidence, clarity. Structured talks, Q&A handling, public speaking.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-amber-700 transition group-hover:gap-2">
+                Explore Speaking
+                <span className="text-lg">→</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Summer Camp CTA */}
       <section className="px-6 py-6">
@@ -287,6 +353,8 @@ export default function HomePage() {
               </div>
             </div>
           </section>
+
+          <ParentReassurance />
 
           <Suspense fallback={null}>
             <FinalCTASection />

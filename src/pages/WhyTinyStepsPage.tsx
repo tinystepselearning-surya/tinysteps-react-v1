@@ -17,9 +17,17 @@ type ComparisonRow = {
 const WHATSAPP_URL = "https://wa.me/919618398383";
 
 const valuePills = [
-  "Phonics + Grammar + Speaking together",
-  "Confidence-first teaching",
-  "Clear progress & parent updates",
+  "Ages 4–12",
+  "Live classes, real teachers",
+  "Structured curriculum",
+  "Parent-visible progress",
+];
+
+const trustStrip = [
+  { label: "Phonics & Reading", icon: <IconBook /> },
+  { label: "Grammar & Writing", icon: <IconEdit /> },
+  { label: "Communication", icon: <IconMic /> },
+  { label: "Practice Support", icon: <IconHand /> },
 ];
 
 type Outcome = {
@@ -38,13 +46,13 @@ type Outcome = {
 
 const outcomes: Outcome[] = [
   {
-    tag: "Reading",
-    title: "Reads with confidence",
-    desc: "Stronger decoding, blending, and fluency—without fear of mistakes.",
+    tag: "Phonics & Reading",
+    title: "Strong reading foundations",
+    desc: "Master letter sounds, blending, and fluency through structured phonics instruction.",
     bullets: [
-      "Systematic phonics + blending practice (step-by-step).",
-      "Guided reading + instant feedback to build fluency.",
-      "High-frequency words introduced in context (not rote).",
+      "Clear phonics progression from sounds to fluent reading",
+      "Daily blending and decoding practice with immediate feedback",
+      "High-frequency words taught in meaningful reading context",
     ],
     accent: {
       bg: "from-emerald-50 to-white",
@@ -55,30 +63,13 @@ const outcomes: Outcome[] = [
     },
   },
   {
-    tag: "Speaking",
-    title: "Speaks clearly",
-    desc: "Daily speaking practice and gentle correction builds clarity and courage.",
+    tag: "Grammar & Sentence Building",
+    title: "Clear grammar understanding",
+    desc: "Learn grammar through engaging activities that build sentence clarity and writing confidence.",
     bullets: [
-      "Every class includes speaking prompts + guided models.",
-      "Pronunciation practice in small, safe steps.",
-      "Confidence grows through encouragement—not pressure.",
-    ],
-    accent: {
-      bg: "from-sky-50 to-white",
-      glow: "bg-sky-400/20",
-      icon: "bg-sky-600",
-      pill: "bg-sky-50 text-sky-800 border-sky-200",
-      ring: "ring-sky-500/20",
-    },
-  },
-  {
-    tag: "Writing",
-    title: "Writes better sentences",
-    desc: "Children learn structure naturally through activities—no rote rules.",
-    bullets: [
-      "Grammar taught through activities and sentence building.",
-      "Vocabulary + sentence frames for confident writing.",
-      "Correctness improves through guided practice, not drilling.",
+      "Interactive grammar games and activities—never rote memorization",
+      "Sentence frames and vocabulary expansion in every lesson",
+      "Guided practice that makes grammar feel natural and intuitive",
     ],
     accent: {
       bg: "from-violet-50 to-white",
@@ -89,51 +80,51 @@ const outcomes: Outcome[] = [
     },
   },
   {
-    tag: "Independence",
-    title: "Learns independently",
-    desc: "Designed to reduce parent pressure—kids can practice with minimal help.",
+    tag: "Communication & Confidence",
+    title: "Speaking with confidence",
+    desc: "Build speaking confidence through daily practice and encouragement-based coaching.",
     bullets: [
-      "Clear routines so kids know what to do next.",
-      "Small goals + frequent wins keep motivation high.",
-      "Parents get updates without needing to teach at home.",
+      "Structured speaking prompts with live mentor modeling",
+      "Pronunciation coaching delivered in small, comfortable steps",
+      "Confidence-building approach—encouragement, not pressure",
     ],
     accent: {
-      bg: "from-orange-50 to-white",
-      glow: "bg-orange-400/20",
-      icon: "bg-orange-600",
-      pill: "bg-orange-50 text-orange-800 border-orange-200",
-      ring: "ring-orange-500/20",
+      bg: "from-sky-50 to-white",
+      glow: "bg-sky-400/20",
+      icon: "bg-sky-600",
+      pill: "bg-sky-50 text-sky-800 border-sky-200",
+      ring: "ring-sky-500/20",
     },
   },
 ];
 
 const trustPillars: Item[] = [
   {
-    title: "Live classes (not passive videos)",
-    desc: "Real teacher interaction, real attention, real improvement.",
+    title: "Clear curriculum pathway",
+    desc: "Know exactly what your child will learn and when—no surprises, no confusion.",
+    icon: <IconChart />,
+  },
+  {
+    title: "Consistent teacher guidance",
+    desc: "The same thoughtful teacher approach in every class, building familiarity and trust.",
     icon: <IconUsers />,
   },
   {
-    title: "Age-right, brain-friendly steps",
-    desc: "Tiny, guided activities—never overloaded, never bored.",
-    icon: <IconSpark />,
-  },
-  {
-    title: "Multisensory practice",
-    desc: "See • say • move • use—so children remember through experience.",
+    title: "Practice support beyond class",
+    desc: "Digital worksheets and activities that reinforce learning without overwhelming parents.",
     icon: <IconHand />,
   },
   {
-    title: "Parent-friendly communication",
-    desc: "You always know what was covered and what comes next.",
+    title: "Progress you can understand",
+    desc: "Clear updates on what's working and what needs focus—transparent, never vague.",
     icon: <IconMessage />,
   },
 ];
 
 const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
   {
-    title: "Build the foundation",
-    desc: "Sounds → words → sentences → confident speaking.",
+    title: "Systematic teaching",
+    desc: "Sequence phonics, grammar, reading, and speaking in an order that supports natural learning.",
     icon: <IconBlocks />,
     accent: {
       bg: "from-slate-50 to-white",
@@ -144,8 +135,8 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
     },
   },
   {
-    title: "Practice in tiny steps",
-    desc: "Short, guided activities that keep children engaged.",
+    title: "Engaging practice",
+    desc: "Match activities to children's attention spans and learning styles with multisensory practice.",
     icon: <IconSpark />,
     accent: {
       bg: "from-indigo-50 to-white",
@@ -156,8 +147,8 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
     },
   },
   {
-    title: "Use it in real life",
-    desc: "Stories and speaking tasks turn learning into real English.",
+    title: "Real application",
+    desc: "Children use what they learn in stories, conversations, and writing tasks.",
     icon: <IconMic />,
     accent: {
       bg: "from-sky-50 to-white",
@@ -168,8 +159,8 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
     },
   },
   {
-    title: "Strengthen gaps early",
-    desc: "We notice patterns and fix weak areas before they become habits.",
+    title: "Steady mastery",
+    desc: "Build each skill fully before advancing—steady progress, always supported.",
     icon: <IconChart />,
     accent: {
       bg: "from-emerald-50 to-white",
@@ -182,11 +173,10 @@ const methodSteps: Array<Item & { accent: Outcome["accent"] }> = [
 ];
 
 const comparison: ComparisonRow[] = [
-  { left: "Finish portions & worksheets fast", right: "Build a strong foundation before speed" },
-  { left: "Lecture + slides, little practice", right: "See–say–move–use (multisensory practice)" },
-  { left: "Phonics/grammar/speaking taught separately", right: "Integrated English — real-life usage" },
-  { left: "Success = marks + homework", right: "Success = confidence, fluency, understanding" },
-  { left: "Parents fill gaps at home", right: "Designed for independence with minimal parent pressure" },
+  { left: "Rush through content to cover more", right: "Systematic skill-building—never rushed, always supported" },
+  { left: "Only conversation practice or only phonics", right: "All four skills—phonics, grammar, reading, speaking" },
+  { left: "Ad-hoc lesson plans, no clear pathway", right: "Structured curriculum designed for steady mastery" },
+  { left: "Limited parent visibility", right: "Transparent progress tracking, clear next steps" },
 ];
 
 const WhyTinyStepsPage: FC = () => {
@@ -194,12 +184,22 @@ const WhyTinyStepsPage: FC = () => {
 
   const active = useMemo(() => outcomes[activeOutcome], [activeOutcome]);
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+      { '@type': 'ListItem', position: 2, name: 'Why Tiny Steps', item: 'https://tinystepslearning.com/why-tiny-steps' }
+    ]
+  };
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <Meta
-        title="Why Tiny Steps | English Foundations That Build Real Confidence"
-        description="See why parents choose Tiny Steps for calm, structured phonics, grammar, reading, and speaking support with clear progress and child-friendly routines."
+        title="Why Tiny Steps | Premium Online English Learning School for Children"
+        description="Tiny Steps is a premium online English learning school building strong phonics, reading, grammar, and communication through structured teaching and parent-visible progress."
         canonical="https://tinystepslearning.com/why-tiny-steps"
+        jsonLd={[breadcrumbSchema]}
       />
 
       {/* HERO */}
@@ -210,19 +210,18 @@ const WhyTinyStepsPage: FC = () => {
           <div className="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-indigo-200/40 blur-3xl" />
         </div>
 
-        <div className="relative mx-auto max-w-6xl px-4 pt-12 pb-10 md:pt-16 md:pb-12">
+        <div className="relative mx-auto max-w-6xl px-4 pt-10 pb-8 md:pt-14 md:pb-10">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center rounded-full border bg-white/70 px-4 py-2 text-xs font-bold tracking-[0.2em] text-slate-600 shadow-sm backdrop-blur">
-              WHY TINY STEPS • FOUNDATIONS FOREVER
+              PREMIUM ONLINE ENGLISH LEARNING
             </span>
 
             <h1 className="mt-5 text-4xl md:text-6xl font-extrabold tracking-tight">
-              English foundations your child can actually use
+              Premium English learning built on phonics, grammar, and confidence
             </h1>
 
             <p className="mt-4 text-lg md:text-xl text-slate-600">
-              Tiny Steps builds strong phonics, grammar, reading, and speaking through joyful, structured teaching—so
-              children become confident and independent learners.
+              Live 1:1 and small-group classes with trained mentors, structured curriculum you can understand, and transparent progress tracking parents trust.
             </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -239,16 +238,18 @@ const WhyTinyStepsPage: FC = () => {
               ))}
             </div>
 
-            <div className="mt-8 flex justify-center">
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-3">
               <Link to="/?book=1" className="w-full sm:w-auto">
                 <PrimaryButton>Book Free Assessment Class</PrimaryButton>
               </Link>
+              <Link to="/courses" className="w-full sm:w-auto">
+                <SecondaryButton>View Courses</SecondaryButton>
+              </Link>
             </div>
 
-            <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm font-semibold text-slate-700">
-              <Link to="/courses" className="hover:text-slate-900">View courses</Link>
+            <div className="mt-4 flex flex-wrap justify-center gap-4 text-sm text-slate-600">
               <Link to="/curriculum" className="hover:text-slate-900">See curriculum</Link>
-              <Link to="/contact" className="hover:text-slate-900">Contact the team</Link>
+              <Link to="/contact" className="hover:text-slate-900">Contact team</Link>
               <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="hover:text-slate-900">
                 Chat on WhatsApp - opens new window
               </a>
@@ -257,30 +258,42 @@ const WhyTinyStepsPage: FC = () => {
         </div>
       </section>
 
-      {/* METHOD (premium tiles) */}
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <div className="rounded-3xl border bg-gradient-to-br from-slate-50 to-white p-6 md:p-10 shadow-sm">
-          <SectionHeading
-            kicker="How learning happens"
-            title="The Tiny Steps Method"
-            desc="Simple, structured, and child-friendly — designed for steady progress."
-            center
-          />
-
-          <div className="mt-10 grid gap-4 md:grid-cols-4">
-            {methodSteps.map((it, idx) => (
-              <PremiumTile key={it.title} {...it} step={idx + 1} />
+      {/* TRUST STRIP */}
+      <section className="border-y bg-gradient-to-br from-slate-50 via-white to-slate-50">
+        <div className="mx-auto max-w-6xl px-4 py-6">
+          <div className="flex flex-wrap justify-center items-center gap-6 md:gap-10">
+            {trustStrip.map((item) => (
+              <div key={item.label} className="flex items-center gap-2 text-slate-700">
+                <span className="text-slate-500">{item.icon}</span>
+                <span className="text-sm font-semibold">{item.label}</span>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* OUTCOMES (professional + interactive) */}
-      <section className="mx-auto max-w-6xl px-4 py-12">
+      {/* HOW WE TEACH */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
         <SectionHeading
-          kicker="What your child gains"
-          title="Results parents can see (and children feel)"
-          desc="Select an outcome to see what we do in class to build it."
+          kicker="Our approach"
+          title="How children learn best"
+          desc="Systematic teaching, engaging practice, real application, and steady mastery."
+          center
+        />
+
+        <div className="mt-8 grid gap-3 md:grid-cols-4">
+          {methodSteps.map((it, idx) => (
+            <PremiumTile key={it.title} {...it} step={idx + 1} />
+          ))}
+        </div>
+      </section>
+
+      {/* WHAT WE TEACH */}
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <SectionHeading
+          kicker="What we teach"
+          title="Three core pillars of English learning"
+          desc="Select a pillar to see how we build it in class."
         />
 
         <div className="mt-8 grid gap-4 lg:grid-cols-12">
@@ -345,12 +358,12 @@ const WhyTinyStepsPage: FC = () => {
         </div>
       </section>
 
-      {/* DIFFERENCE (Comparison) */}
-      <section className="mx-auto max-w-6xl px-4 py-12">
+      {/* WHAT MAKES US DIFFERENT */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
         <SectionHeading
           kicker="What makes us different"
-          title="Typical online tuition vs Tiny Steps"
-          desc="Same time spent — very different outcomes."
+          title="Premium, structured English learning"
+          desc="Not random lessons—a complete learning pathway."
         />
 
         <div className="mt-8 grid gap-4 lg:grid-cols-2">
@@ -365,20 +378,14 @@ const WhyTinyStepsPage: FC = () => {
             rows={comparison.map((r) => ({ text: r.right, ok: true }))}
           />
         </div>
-
-        <div className="mt-6 flex justify-center">
-          <div className="rounded-full border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm">
-            Specialised English foundation education — not “just tuition”.
-          </div>
-        </div>
       </section>
 
-      {/* TRUST */}
-      <section className="mx-auto max-w-6xl px-4 py-12">
+      {/* WHAT PARENTS GET */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
         <SectionHeading
-          kicker="Why parents trust Tiny Steps"
-          title="Trust is built into the system"
-          desc="Clear plan, strong teaching, and child confidence — all together."
+          kicker="What parents actually get"
+          title="Clarity, support, and visible progress"
+          desc="A structured pathway where you understand what's being taught, how it's taught, and how your child is progressing."
         />
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
@@ -388,8 +395,223 @@ const WhyTinyStepsPage: FC = () => {
         </div>
       </section>
 
+      {/* SAFETY & QUALITY */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <SectionHeading
+          kicker="Safety & Quality"
+          title="Teaching with care and structure"
+          desc="Trained educators, transparent communication, and careful placement."
+        />
+
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm">
+              <IconUsers />
+            </div>
+            <div className="mt-4 text-lg font-extrabold">Experienced educators</div>
+            <div className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Mentors trained in phonics instruction, child development, and confidence-building correction techniques.
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-600 text-white shadow-sm">
+              <IconChart />
+            </div>
+            <div className="mt-4 text-lg font-extrabold">Assessment-first placement</div>
+            <div className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Free assessment to identify the right starting level—so your child's progress feels steady and motivating, never frustrating.
+            </div>
+          </div>
+
+          <div className="rounded-2xl border bg-white p-5 shadow-sm">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+              <IconMessage />
+            </div>
+            <div className="mt-4 text-lg font-extrabold">Transparent updates</div>
+            <div className="mt-2 text-sm text-slate-600 leading-relaxed">
+              Clear progress notes after each session: what was practiced, what improved, and simple next steps—no jargon, just clarity.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* TRANSPARENCY COMMITMENT */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <div className="rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-50 via-white to-sky-50/30 p-6 md:p-8 shadow-sm">
+          <div className="mx-auto max-w-3xl">
+            <div className="text-center">
+              <div className="inline-flex items-center rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-bold tracking-[0.2em] text-emerald-700">
+                NO HIDDEN SURPRISES
+              </div>
+              <h2 className="mt-3 text-2xl md:text-3xl font-extrabold">
+                Clear process, transparent pricing, zero pressure
+              </h2>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <IconCheck />
+                </span>
+                <div className="text-slate-700">
+                  <span className="font-semibold">Free assessment before enrollment</span> — understand your child's level with no obligation to continue
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <IconCheck />
+                </span>
+                <div className="text-slate-700">
+                  <span className="font-semibold">Visible pricing page</span> — all course packages and pricing clearly listed at <Link to="/pricing" className="text-blue-700 hover:underline">/pricing</Link>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <IconCheck />
+                </span>
+                <div className="text-slate-700">
+                  <span className="font-semibold">Clear program pathways</span> — see the full curriculum structure at <Link to="/curriculum" className="text-blue-700 hover:underline">/curriculum</Link> before starting
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <IconCheck />
+                </span>
+                <div className="text-slate-700">
+                  <span className="font-semibold">Flexible scheduling</span> — reschedule classes easily when needed, no complex policies
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-white">
+                  <IconCheck />
+                </span>
+                <div className="text-slate-700">
+                  <span className="font-semibold">Support when you need it</span> — reach the team via <a href={WHATSAPP_URL} target="_blank" rel="noreferrer" className="text-blue-700 hover:underline">WhatsApp</a>, email, or parent dashboard
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-xl border border-sky-200 bg-sky-50/50 px-4 py-3 text-sm text-slate-700">
+              <strong>Our commitment:</strong> You'll always know what your child is learning, how they're progressing, and what comes next. No confusing tracks, no surprise charges, no pressure to upgrade.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOUNDER STORY SNIPPET */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <div className="rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="md:col-span-1">
+              <div className="inline-flex items-center rounded-full border bg-slate-100 px-3 py-1 text-xs font-bold tracking-[0.2em] text-slate-700">
+                OUR STORY
+              </div>
+              <h2 className="mt-3 text-2xl font-extrabold">Why Tiny Steps exists</h2>
+            </div>
+
+            <div className="md:col-span-2 space-y-4 text-slate-700 leading-relaxed">
+              <p>
+                Tiny Steps Learning was founded by educators who saw firsthand how structured, kind instruction transforms struggling readers into confident communicators—often in just 12–16 weeks.
+              </p>
+              <p>
+                Working with international schools implementing phonics-first curriculum, the founding team realized that many children weren't getting the systematic, age-appropriate support they needed. Generic tuition rushed through content. Apps lacked live guidance. Parents felt lost.
+              </p>
+              <p>
+                Tiny Steps was built to solve this: <strong>live 1:1 or small-group classes</strong> with trained mentors, <strong>structured curriculum</strong> parents can understand, and <strong>transparent progress tracking</strong> so families see real improvement—not vague promises.
+              </p>
+              <p className="text-sm text-slate-600">
+                Since 2020, Tiny Steps has supported 3500+ families across 15+ countries including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, and Australia.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* APPROACH EXPLAINER */}
+      <section className="mx-auto max-w-6xl px-4 py-8">
+        <SectionHeading
+          kicker="How it works"
+          title="The Tiny Steps teaching process"
+          desc="Assessment → Placement → Live Teaching → Practice → Progress Tracking → Next Steps"
+          center
+        />
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="rounded-2xl border bg-gradient-to-br from-blue-50 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white">1</span>
+              <div className="text-lg font-extrabold">Free Assessment</div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              Understand your child's current reading level, letter-sound knowledge, and speaking confidence. No sales pitch—just honest placement guidance.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border bg-gradient-to-br from-violet-50 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-600 text-lg font-bold text-white">2</span>
+              <div className="text-lg font-extrabold">Custom Learning Plan</div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              Receive a clear recommendation: which program (Phonics, Grammar, or Speaking), which level, and a 12–16 week roadmap showing exactly what will be covered.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border bg-gradient-to-br from-emerald-50 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-lg font-bold text-white">3</span>
+              <div className="text-lg font-extrabold">Live Guided Teaching</div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              35-minute live classes (1:1 or small group) with trained mentors using multisensory practice, gentle correction, and age-appropriate pacing.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border bg-gradient-to-br from-orange-50 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-600 text-lg font-bold text-white">4</span>
+              <div className="text-lg font-extrabold">Practice & Reinforcement</div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              Digital worksheets, practice games, and optional 5-minute home activities that reinforce class learning without overwhelming parents.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border bg-gradient-to-br from-sky-50 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-600 text-lg font-bold text-white">5</span>
+              <div className="text-lg font-extrabold">Progress Tracking</div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              After every session, parents receive a short update: what was practiced today, one improvement observed, and one focus area for next class. Stage-based milestone reports every 12 lessons.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border bg-gradient-to-br from-indigo-50 to-white p-5 shadow-sm">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white">6</span>
+              <div className="text-lg font-extrabold">Next Step Guidance</div>
+            </div>
+            <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+              At level completion, receive clear guidance: continue to advanced phonics, transition to grammar, add public speaking, or graduate with confidence.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            <strong>No rushing, no gaps, no confusion.</strong> Just systematic skill-building with visible progress.
+          </p>
+        </div>
+      </section>
+
       {/* FINAL CTA */}
-      <section id="book-trial" className="mx-auto max-w-6xl px-4 pb-16 scroll-mt-28">
+      <section id="book-trial" className="mx-auto max-w-6xl px-4 py-10 scroll-mt-28">
         <div className="rounded-3xl bg-gradient-to-r from-slate-900 via-blue-700 to-violet-700 p-[1px] shadow-xl">
           <div className="rounded-3xl bg-white/95 p-8 md:p-10">
             <div className="grid gap-8 lg:grid-cols-2 items-center">
@@ -398,18 +620,21 @@ const WhyTinyStepsPage: FC = () => {
                   Book free assessment class
                 </div>
                 <h3 className="mt-2 text-3xl md:text-4xl font-extrabold tracking-tight">
-                  Let’s find the right starting point for your child
+                  Find the right starting point through a free assessment
                 </h3>
                 <p className="mt-4 text-slate-600 leading-relaxed">
-                  We’ll understand your child’s current level and recommend the best path—so progress feels easy and
-                  motivating.
+                  Understand your child's current level and receive a clear recommendation—so progress feels natural and motivating from day one.
                 </p>
 
                 <ul className="mt-6 space-y-3 text-slate-700">
                   <CheckItem>Quick level check</CheckItem>
                   <CheckItem>Clear course recommendation</CheckItem>
-                  <CheckItem>Simple next steps for parents</CheckItem>
+                  <CheckItem>Simple next steps</CheckItem>
                 </ul>
+
+                <div className="mt-6 text-sm font-semibold text-slate-600">
+                  Foundations that last. Confidence that grows.
+                </div>
               </div>
 
               <div className="rounded-2xl border bg-gradient-to-br from-slate-50 to-white p-6">
@@ -418,21 +643,17 @@ const WhyTinyStepsPage: FC = () => {
                     <PrimaryButton>Book Free Assessment Class</PrimaryButton>
                   </Link>
 
-                  <div className="flex flex-wrap gap-4 text-sm font-semibold text-slate-700">
+                  <div className="flex flex-wrap gap-4 text-sm text-slate-600">
                     <Link to="/courses" className="hover:text-slate-900">
-                      Explore courses
+                      View courses
                     </Link>
                     <Link to="/curriculum" className="hover:text-slate-900">
-                      View curriculum
+                      See curriculum
                     </Link>
                     <Link to="/contact" className="hover:text-slate-900">
-                      Email our team
+                      Contact team
                     </Link>
                   </div>
-                </div>
-
-                <div className="mt-4 text-xs text-slate-500">
-                  Your nav item “Book Free Assessment Class” can link to <b>#book-trial</b>.
                 </div>
               </div>
             </div>
@@ -781,6 +1002,48 @@ function IconChart() {
       <path d="M4 20h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
       <path
         d="M7 15l3-3 3 2 5-6"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconBook() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function IconEdit() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"

@@ -320,6 +320,12 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
             <span className="text-slate-500 line-through">₹{formatINR(SUMMER_CAMP_FULL_PRICE)}</span>{' '}
             <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
           </p>
+          
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
+            <span className="text-lg">⏰</span>
+            <span className="font-semibold text-amber-900">Starting April 1, 2026</span>
+            <span className="text-amber-700">• Limited batches, capped at {SUMMER_CAMP_BATCH_CAP} students</span>
+          </div>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{program.ages}</span>
@@ -443,6 +449,104 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
                   Choose Group Batch
                 </Link>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Next Steps Internal Linking */}
+      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6 sm:pb-12">
+        <div className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-violet-50 via-white to-sky-50 shadow-sm">
+          <div className="px-6 py-5 sm:px-8">
+            <div className="text-center">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-700">Explore More Options</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Next Steps & Related Programs</h2>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {program.slug !== 'phonics-fast-track' && (
+                <Link
+                  to="/summer-camps/phonics-fast-track"
+                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">📚</div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-slate-900">Phonics Fast Track</h3>
+                      <p className="mt-1 text-xs text-slate-600">Ages 4–8 • Reading foundation</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {program.slug !== 'grammar-fast-track' && (
+                <Link
+                  to="/summer-camps/grammar-fast-track"
+                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">✏️</div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-slate-900">Grammar Fast Track</h3>
+                      <p className="mt-1 text-xs text-slate-600">Ages 6–12 • Writing quality</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {program.slug !== 'speaking-fast-track' && (
+                <Link
+                  to="/summer-camps/speaking-fast-track"
+                  className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg">🗣️</div>
+                    <div className="flex-1">
+                      <h3 className="text-sm font-semibold text-slate-900">Speaking Fast Track</h3>
+                      <p className="mt-1 text-xs text-slate-600">Ages 6–12 • Confident communication</p>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              <Link
+                to="/summer-camps"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-lg">🏕️</div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-slate-900">All Summer Camps</h3>
+                    <p className="mt-1 text-xs text-slate-600">Compare all tracks</p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link
+                to="/why-tiny-steps"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">💚</div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-slate-900">Why Tiny Steps</h3>
+                    <p className="mt-1 text-xs text-slate-600">Our teaching approach</p>
+                  </div>
+                </div>
+              </Link>
+
+              <Link
+                to="/pricing"
+                className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">💰</div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-slate-900">Pricing Options</h3>
+                    <p className="mt-1 text-xs text-slate-600">All program fees</p>
+                  </div>
+                </div>
+              </Link>
             </div>
           </div>
         </div>

@@ -35,8 +35,8 @@ const SpeechConfidence: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/courses" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Explore Public Speaking Courses →
+      <Link to="/speaking" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Explore Public Speaking Classes →
       </Link>
       <Link to="/?book=1" className="text-primary-600 text-sm font-medium hover:underline">
         Book a free speaking assessment

@@ -1,11 +1,40 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 
 const PhonicsMission: React.FC = () => {
   useEffect(() => {
-    applySeo(parentsMeta['/parents/phonics-mission']);
+    const howToSchema = createHowToSchema(
+      'Daily Phonics Practice Mission for Parents',
+      [
+        'Say the target sound together (2 times)',
+        'Blend the sounds into one short word (3 times)',
+        'Read a decodable sentence with that word',
+        'Review yesterday\'s 3 words (Minute 1-2)',
+        'Teach 2 new words with tap-and-blend (Minute 3-6)',
+        'Read one short sentence using those words (Minute 7-8)',
+        'Quick dictation of one word + celebration (Minute 9-10)'
+      ]
+    );
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Phonics Mission', item: 'https://tinystepslearning.com/parents/phonics-mission' }
+      ]
+    };
+
+    const metaWithSchema = {
+      ...parentsMeta['/parents/phonics-mission'],
+      jsonLd: [howToSchema, breadcrumbSchema]
+    };
+
+    applySeo(metaWithSchema);
   }, []);
 
   return (
@@ -51,11 +80,11 @@ const PhonicsMission: React.FC = () => {
     </ul>
 
     <div className="mt-8 flex flex-col gap-3">
-      <Link to="/phonics-classes-for-kids" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
-        Explore phonics classes →
+      <Link to="/phonics" className="inline-block rounded bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition">
+        Explore Phonics Classes →
       </Link>
       <Link to="/?book=1" className="text-primary-600 text-sm font-medium hover:underline">
-        Ready to take a phonics course? Book your free assessment
+        Book a free phonics assessment
       </Link>
     </div>
 

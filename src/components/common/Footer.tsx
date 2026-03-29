@@ -19,9 +19,9 @@ const socialLinks = [
 
 const courseLinks = [
   { label: 'Courses overview', href: '/courses' },
-  { label: 'Phonics classes', href: '/phonics-classes-for-kids' },
-  { label: 'Grammar classes', href: '/english-grammar-writing-classes' },
-  { label: 'Public speaking', href: '/public-speaking-communication-kids' },
+  { label: 'Phonics classes', href: '/phonics' },
+  { label: 'Grammar classes', href: '/grammar' },
+  { label: 'Public speaking', href: '/speaking' },
 ];
 
 const exploreLinks = [

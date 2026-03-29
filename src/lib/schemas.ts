@@ -13,7 +13,7 @@ export const organizationSchema = {
   url: 'https://tinystepslearning.com',
   logo: 'https://tinystepslearning.com/logo.png',
   description: 'Online phonics, grammar, and public speaking classes for children ages 3–12',
-  foundingDate: '2023',
+  foundingDate: '2020',
   foundingLocation: {
     '@type': 'Place',
     name: 'India'
@@ -174,10 +174,130 @@ export function createFAQPageSchema(items: Array<{ question: string; answer: str
   };
 }
 
+/**
+ * Create Course schema for program pages (Phonics, Grammar, Speaking)
+ * @param name - Course name (e.g., "Phonics Reading Program")
+ * @param description - Course description
+ * @param provider - Provider name (default: "Tiny Steps Learning")
+ * @param url - Course landing page URL
+ * @param price - Course price in INR (optional)
+ * @returns Course schema object with speakable markup
+ */
+export function createCourseSchema(params: {
+  name: string;
+  description: string;
+  provider?: string;
+  url: string;
+  price?: number;
+  courseMode?: 'online' | 'offline' | 'blended';
+  educationalLevel?: string;
+  ageRange?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Course',
+    name: params.name,
+    description: params.description,
+    provider: {
+      '@type': 'Organization',
+      name: params.provider || 'Tiny Steps Learning',
+      sameAs: 'https://tinystepslearning.com'
+    },
+    url: params.url,
+    ...(params.price && {
+      offers: {
+        '@type': 'Offer',
+        price: params.price,
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock',
+        url: params.url
+      }
+    }),
+    ...(params.courseMode && {
+      courseMode: params.courseMode
+    }),
+    ...(params.educationalLevel && {
+      educationalLevel: params.educationalLevel
+    }),
+    ...(params.ageRange && {
+      audience: {
+        '@type': 'EducationalAudience',
+        educationalRole: 'student',
+        audienceType: params.ageRange
+      }
+    }),
+    // Speakable for voice search
+    speakable: {
+      '@type': 'SpeakableSpecification',
+      cssSelector: ['h1', '.course-description', '.course-outcomes'],
+      xpath: ['/html/body//h1', '/html/body//p[@class="course-description"]']
+    }
+  };
+}
+
+/**
+ * Create Event schema for summer camp batches
+ * @param name - Event name (e.g., "Phonics Fast Track Summer Camp 2026")
+ * @param description - Event description
+ * @param startDate - ISO date string
+ * @param endDate - ISO date string
+ * @param location - Event location (default: "Online")
+ * @param price - Event price in INR (optional)
+ * @param url - Event landing page URL
+ * @returns Event schema object
+ */
+export function createEventSchema(params: {
+  name: string;
+  description: string;
+  startDate: string;
+  endDate: string;
+  location?: string;
+  price?: number;
+  url: string;
+  eventAttendanceMode?: 'OfflineEventAttendanceMode' | 'OnlineEventAttendanceMode' | 'MixedEventAttendanceMode';
+  organizer?: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: params.name,
+    description: params.description,
+    startDate: params.startDate,
+    endDate: params.endDate,
+    eventAttendanceMode: `https://schema.org/${params.eventAttendanceMode || 'OnlineEventAttendanceMode'}`,
+    location: params.location
+      ? {
+          '@type': 'VirtualLocation',
+          url: params.url
+        }
+      : {
+          '@type': 'VirtualLocation',
+          url: 'https://tinystepslearning.com/summer-camps'
+        },
+    organizer: {
+      '@type': 'Organization',
+      name: params.organizer || 'Tiny Steps Learning',
+      url: 'https://tinystepslearning.com'
+    },
+    ...(params.price && {
+      offers: {
+        '@type': 'Offer',
+        price: params.price,
+        priceCurrency: 'INR',
+        availability: 'https://schema.org/InStock',
+        url: params.url,
+        validFrom: new Date().toISOString()
+      }
+    })
+  };
+}
+
 export default {
   organizationSchema,
   localBusinessSchema,
   createHowToSchema,
   createBlogPostingSchema,
-  createFAQPageSchema
+  createFAQPageSchema,
+  createCourseSchema,
+  createEventSchema
 };

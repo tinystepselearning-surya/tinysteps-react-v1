@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
 
 const stepFlow = [
@@ -103,7 +104,27 @@ const parentScripts = [
 
 const GettingStarted: React.FC = () => {
   useEffect(() => {
-    applySeo(parentsMeta['/parents/getting-started']);
+    const howToSchema = createHowToSchema(
+      'Getting Started with Tiny Steps Learning',
+      stepFlow.map(step => `${step.step}: ${step.title} - ${step.detail}`)
+    );
+
+    const breadcrumbSchema = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Parents Hub', item: 'https://tinystepslearning.com/parents' },
+        { '@type': 'ListItem', position: 3, name: 'Getting Started', item: 'https://tinystepslearning.com/parents/getting-started' }
+      ]
+    };
+
+    const metaWithSchema = {
+      ...parentsMeta['/parents/getting-started'],
+      jsonLd: [howToSchema, breadcrumbSchema]
+    };
+
+    applySeo(metaWithSchema);
   }, []);
 
   return (
@@ -241,8 +262,8 @@ const GettingStarted: React.FC = () => {
           <Link to="/?book=1" className="inline-flex items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100">
             Book Your Free Assessment
           </Link>
-          <Link to="/courses" className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
-            See Course Comparison
+          <Link to="/phonics" className="inline-flex items-center justify-center rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10">
+            Explore Phonics Classes
           </Link>
         </div>
       </section>

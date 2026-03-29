@@ -170,27 +170,19 @@ const ConversionHero: React.FC = () => {
             <p
               className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
-              A structured, low-stress journey for ages 3-12. Tiny Steps blends
-              phonics, grammar, and speaking into one calm weekly rhythm so kids
-              read better, write better, and speak with more confidence.
-            </p>
-
-            <p
-              className="mt-3 max-w-2xl text-sm font-semibold text-slate-700 md:text-base"
-            >
-              Personalised English learning for children ages 3–12.
+              Live 1:1 and small-group online classes blending phonics, grammar, and speaking into one structured journey for ages 3–12. Free assessment, trained teachers, weekly parent updates.
             </p>
 
             <div
               className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-700"
             >
-              <a href="/phonics-classes-for-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
+              <a href="/phonics" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
                 phonics classes for kids
               </a>
-              <a href="/english-grammar-writing-classes" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
+              <a href="/grammar" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
                 grammar classes for kids
               </a>
-              <a href="/public-speaking-communication-kids" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
+              <a href="/speaking" className="underline decoration-slate-300 underline-offset-4 transition hover:text-slate-900">
                 public speaking classes for kids
               </a>
             </div>
@@ -222,21 +214,18 @@ const ConversionHero: React.FC = () => {
             <div
               className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600"
             >
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
-                <span className="inline-flex items-center gap-1 text-amber-500">
-                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
-                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
-                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
-                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
-                  <Star className="h-4 w-4 fill-current" aria-hidden="true" />
-                </span>
-                <span className="font-semibold text-slate-700">
-                  Parent-loved live classes
-                </span>
-              </div>
+              <a
+                href="https://wa.me/919618398383?text=Hi!%20I%27d%20like%20to%20learn%20more%20about%20Tiny%20Steps%20classes%20for%20my%20child."
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2.5 font-semibold text-emerald-800 shadow-sm backdrop-blur transition hover:-translate-y-0.5 hover:bg-emerald-100"
+              >
+                <span className="text-lg">💬</span>
+                Quick questions? WhatsApp us
+              </a>
               <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 shadow-sm backdrop-blur">
                 <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-                Weekly parent updates and clear next steps
+                Free assessment • Weekly parent updates
               </span>
             </div>
           </div>
