@@ -46,6 +46,11 @@ const isSessionEarning = (entry: any) => {
   return Boolean(String(entry?.sessionId || '').trim());
 };
 
+const isDemoEarning = (entry: any) => {
+  const source = normalizeStatus(entry?.source);
+  return source === 'demo_completed' || source === 'demo_enrolled_bonus';
+};
+
 const normalizeEnrollmentStatus = (enrollment: any): string => {
   const raw = normalizeStatus(enrollment?.status);
   if (!raw) {
@@ -283,7 +288,15 @@ export default function AnalyticsDashboard(): JSX.Element {
   const teacherEarnings = useMemo(() => {
     const byTeacher = new Map<
       string,
-      { teacherId: string; sessions: number; totalEarned: number; pending: number }
+      { 
+        teacherId: string; 
+        demoCount: number;
+        demoEarned: number;
+        sessionCount: number;
+        sessionEarned: number;
+        totalEarned: number; 
+        pending: number;
+      }
     >();
 
     teacherEarningsEntries.forEach((entry) => {
@@ -300,7 +313,10 @@ export default function AnalyticsDashboard(): JSX.Element {
       if (!byTeacher.has(teacherId)) {
         byTeacher.set(teacherId, {
           teacherId,
-          sessions: 0,
+          demoCount: 0,
+          demoEarned: 0,
+          sessionCount: 0,
+          sessionEarned: 0,
           totalEarned: 0,
           pending: 0,
         });
@@ -308,8 +324,13 @@ export default function AnalyticsDashboard(): JSX.Element {
       const bucket = byTeacher.get(teacherId)!;
       bucket.totalEarned += amount;
       bucket.pending += pending;
-      if (isSessionEarning(entry)) {
-        bucket.sessions += 1;
+      
+      if (isDemoEarning(entry)) {
+        bucket.demoCount += 1;
+        bucket.demoEarned += amount;
+      } else if (isSessionEarning(entry)) {
+        bucket.sessionCount += 1;
+        bucket.sessionEarned += amount;
       }
     });
 
@@ -317,7 +338,10 @@ export default function AnalyticsDashboard(): JSX.Element {
       .map((row) => ({
         teacher: nameById[row.teacherId] || row.teacherId,
         teacherId: row.teacherId,
-        sessions: row.sessions,
+        demoCount: row.demoCount,
+        demoEarned: row.demoEarned,
+        sessionCount: row.sessionCount,
+        sessionEarned: row.sessionEarned,
         totalEarned: row.totalEarned,
         pending: row.pending,
         profileTag: (() => {
@@ -345,6 +369,28 @@ export default function AnalyticsDashboard(): JSX.Element {
   );
 
   const visibleTeacherEarnings = teacherEarningsTab === 'live' ? liveTeacherEarnings : archivedTeacherEarnings;
+
+  const teacherEarningsSummary = useMemo(() => {
+    let totalDemoEarned = 0;
+    let totalSessionEarned = 0;
+    let totalDemoCount = 0;
+    let totalSessionCount = 0;
+
+    teacherEarnings.forEach((t) => {
+      totalDemoEarned += t.demoEarned;
+      totalSessionEarned += t.sessionEarned;
+      totalDemoCount += t.demoCount;
+      totalSessionCount += t.sessionCount;
+    });
+
+    return {
+      totalDemoEarned,
+      totalSessionEarned,
+      totalDemoCount,
+      totalSessionCount,
+      totalCombinedEarned: totalDemoEarned + totalSessionEarned,
+    };
+  }, [teacherEarnings]);
 
   return (
     <div className="space-y-4">
@@ -388,6 +434,24 @@ export default function AnalyticsDashboard(): JSX.Element {
         <MetricCard label="Other / unknown" value={enrollmentBuckets.other} />
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <MetricCard 
+          label="Demo earnings (month)" 
+          value={formatMoney(teacherEarningsSummary.totalDemoEarned)}
+          sub={`${teacherEarningsSummary.totalDemoCount} demos completed/enrolled`}
+        />
+        <MetricCard 
+          label="Session earnings (month)" 
+          value={formatMoney(teacherEarningsSummary.totalSessionEarned)}
+          sub={`${teacherEarningsSummary.totalSessionCount} sessions delivered`}
+        />
+        <MetricCard 
+          label="Total teacher payout" 
+          value={formatMoney(teacherEarningsSummary.totalCombinedEarned)}
+          sub="Combined exposure"
+        />
+      </div>
+
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
@@ -421,15 +485,18 @@ export default function AnalyticsDashboard(): JSX.Element {
                 <tr className="text-left border-b">
                   <th className="p-2">Teacher</th>
                   <th className="p-2">Profile</th>
-                  <th className="p-2">Sessions</th>
-                  <th className="p-2">Earned</th>
-                  <th className="p-2">Pending</th>
+                  <th className="p-2 text-right">Demo #</th>
+                  <th className="p-2 text-right">Demo ₹</th>
+                  <th className="p-2 text-right">Session #</th>
+                  <th className="p-2 text-right">Session ₹</th>
+                  <th className="p-2 text-right">Total ₹</th>
+                  <th className="p-2 text-right">Pending</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleTeacherEarnings.length === 0 ? (
                   <tr>
-                    <td className="p-3 text-muted-foreground" colSpan={5}>
+                    <td className="p-3 text-muted-foreground" colSpan={8}>
                       {teacherEarningsTab === 'live'
                         ? 'No live teacher earnings for this month.'
                         : 'No archived/deleted teacher earnings for this month.'}
@@ -440,9 +507,12 @@ export default function AnalyticsDashboard(): JSX.Element {
                     <tr key={t.teacherId} className="border-b last:border-b-0">
                       <td className="p-2">{t.teacher}</td>
                       <td className="p-2">{t.profileTag}</td>
-                      <td className="p-2">{t.sessions}</td>
-                      <td className="p-2">{formatMoney(t.totalEarned)}</td>
-                      <td className="p-2">{formatMoney(t.pending)}</td>
+                      <td className="p-2 text-right">{t.demoCount || '—'}</td>
+                      <td className="p-2 text-right">{t.demoEarned > 0 ? formatMoney(t.demoEarned) : '—'}</td>
+                      <td className="p-2 text-right">{t.sessionCount || '—'}</td>
+                      <td className="p-2 text-right">{t.sessionEarned > 0 ? formatMoney(t.sessionEarned) : '—'}</td>
+                      <td className="p-2 text-right font-medium">{formatMoney(t.totalEarned)}</td>
+                      <td className="p-2 text-right">{formatMoney(t.pending)}</td>
                     </tr>
                   ))
                 )}

@@ -3,7 +3,7 @@ import { Card } from '@components/ui/card';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
 import { TeacherSession } from '../../../../types/Teacher';
-import { format, differenceInMinutes, isAfter, isBefore } from 'date-fns';
+import { format, differenceInMinutes } from 'date-fns';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
@@ -12,7 +12,6 @@ interface SessionCardProps {
   session: TeacherSession;
   studentNames?: string[];
   onMarkAttendance: (session: TeacherSession) => void;
-  onComplete: (sessionId: string) => Promise<void>;
 }
 
 const statusMap: Record<
@@ -25,7 +24,7 @@ const statusMap: Record<
   reschedule_requested: { label: 'Rescheduled', variant: 'destructive' },
 };
 
-export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance, onComplete }) => {
+export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance }) => {
   const [isStartingClass, setIsStartingClass] = useState(false);
 
   const toDateMaybe = (value: any): Date | null => {
@@ -73,8 +72,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
 
   const now = new Date();
   const timeUntilStart = differenceInMinutes(sessionStart, now);
-  const isInProgress = isAfter(now, sessionStart) && isBefore(now, sessionEnd);
-  const isCompleted = isAfter(now, sessionEnd);
 
   const getAttendanceStatus = (value: any): string | undefined => {
     if (!value) return undefined;
@@ -104,6 +101,19 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
       )
     );
   }, [session.attendance, session.status]);
+
+  const attendanceState = useMemo(() => {
+    const attendance = session.attendance || {};
+    const hasAttendance = Object.keys(attendance).length > 0;
+    if (!hasAttendance) return { marked: false, allAbsent: false };
+    
+    const statuses = Object.values(attendance)
+      .map(getAttendanceStatus)
+      .filter(Boolean);
+    
+    const allAbsent = statuses.length > 0 && statuses.every(s => s === 'absent');
+    return { marked: hasAttendance, allAbsent };
+  }, [session.attendance]);
 
   const directJoinUrl =
     (typeof session.joinUrl === 'string' && session.joinUrl.trim()) ||
@@ -200,6 +210,11 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
           <Badge variant={statusMap[session.status]?.variant || 'secondary'}>
             {statusMap[session.status]?.label || 'Scheduled'}
           </Badge>
+          {attendanceState.allAbsent && session.status === 'scheduled' && (
+            <Badge variant="outline" className="border-slate-300 bg-slate-50 text-slate-700">
+              Attendance Marked
+            </Badge>
+          )}
           {hasRescheduleRequested && (
             <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
               Reschedule requested
@@ -252,16 +267,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
         <Button onClick={() => onMarkAttendance(session)} variant="secondary">
           Mark Attendance
         </Button>
-        {isInProgress && (
-          <Button variant="default">
-            Start Session
-          </Button>
-        )}
-        {(isCompleted || session.status === 'in_progress') && (
-          <Button variant="ghost" onClick={() => onComplete(session.id)}>
-            Complete Session
-          </Button>
-        )}
         <Button variant="outline">
           Add Notes
         </Button>

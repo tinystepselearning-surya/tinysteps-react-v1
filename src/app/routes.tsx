@@ -132,7 +132,6 @@ const AUTH_ENTRY_ROUTES = new Set([
   '/login',
   '/surya/login',
   '/admin/login',
-  '/Surya/login',
   '/teacher/login',
   '/parent/login',
   '/learning-partner/login',
@@ -142,6 +141,12 @@ const AUTH_ENTRY_ROUTES = new Set([
 
 const matchesRoutePrefix = (pathname: string, prefix: string) =>
   pathname === prefix || pathname.startsWith(`${prefix}/`);
+
+const normalizePathname = (pathname: string): string => {
+  const lower = pathname.toLowerCase();
+  if (lower !== '/' && lower.endsWith('/')) return lower.replace(/\/+$/, '');
+  return lower;
+};
 
 const ENGLISH_EXCELLENCE_SHELL_PATH = '/kids/games/english-excellence';
 
@@ -205,9 +210,10 @@ const devOnlyRoutes: RouteObject[] = import.meta.env.DEV
 
 const Layout: FC = () => {
   const location = useLocation();
-  const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(location.pathname, prefix));
-  const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(location.pathname);
-  const isContactPage = location.pathname === '/contact';
+  const normalizedPath = normalizePathname(location.pathname);
+  const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(normalizedPath, prefix));
+  const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(normalizedPath);
+  const isContactPage = normalizedPath === '/contact';
   const [showFloatingTools, setShowFloatingTools] = useState(false);
 
   useEffect(() => {

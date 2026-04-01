@@ -52,20 +52,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     });
   };
 
-  const handleComplete = async (sessionId: string) => {
-    try {
-      await completeSessionViaBackend(sessionId);
-      toast({ title: 'Session completed', description: 'Session finalized successfully.' });
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: 'Unable to complete session',
-        description: err instanceof Error ? err.message : 'Please try again later.',
-        variant: 'destructive',
-      });
-    }
-  };
-
   const handleAttendanceSubmit = async (data: { attendance: Record<string, { status: AttendanceStatus; notes?: string; mastery?: string; topics?: string[] }>; sessionNotes: string }) => {
     if (!selectedSession) return;
     try {
@@ -134,7 +120,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
             .map((kidId) => studentNameById.get(String(kidId)))
             .filter((name): name is string => Boolean(name))}
           onMarkAttendance={setSelectedSession}
-          onComplete={handleComplete}
         />
       ))}
       <AttendanceForm
