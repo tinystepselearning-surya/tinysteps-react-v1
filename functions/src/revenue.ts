@@ -47,8 +47,9 @@ function toDate(value: any): Date | null {
   return null;
 }
 
-function monthKeyFromTimestampIST(value: any): string {
-  const baseDate = toDate(value) || new Date();
+function monthKeyFromTimestampIST(value: any): string | null {
+  const baseDate = toDate(value);
+  if (!baseDate) return null;
   const istMs = baseDate.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
   const istDate = new Date(istMs);
   const year = istDate.getUTCFullYear();
@@ -56,8 +57,9 @@ function monthKeyFromTimestampIST(value: any): string {
   return `${year}-${month}`;
 }
 
-function dayKeyFromTimestampIST(value: any): string {
-  const baseDate = toDate(value) || new Date();
+function dayKeyFromTimestampIST(value: any): string | null {
+  const baseDate = toDate(value);
+  if (!baseDate) return null;
   const istMs = baseDate.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
   const istDate = new Date(istMs);
   const year = istDate.getUTCFullYear();
@@ -328,8 +330,18 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const resolvedTeacherId = sessionTeacherId || beforeSessionTeacherId || null;
 
         const monthKey = monthKeyFromTimestampIST(
-          session.startAt || session.date || session.endAt || new Date()
+          session.date || session.startAt || session.endAt
         );
+
+        if (!monthKey) {
+          logger.error('Revenue accrual skipped: session missing valid date fields', {
+            sessionId: change.after.id,
+            startAt: session.startAt,
+            date: session.date,
+            endAt: session.endAt,
+          });
+          return;
+        }
 
         const rollupRef = revenueMonthlyRef(db, monthKey);
         const alreadyAccrued = session.revenueAccrued === true;
@@ -470,7 +482,17 @@ export const onSessionRevenueWrite = onDocumentWritten(
         );
         const accruedMonthKey =
           (session.accruedMonthKey || beforeData?.accruedMonthKey) ??
-          monthKeyFromTimestampIST(session.startAt || session.date || session.endAt || new Date());
+          monthKeyFromTimestampIST(session.date || session.startAt || session.endAt);
+
+        if (!accruedMonthKey) {
+          logger.warn('Revenue reversal skipped: cannot determine month key', {
+            sessionId: change.after.id,
+            startAt: session.startAt,
+            date: session.date,
+            endAt: session.endAt,
+          });
+          return;
+        }
 
         const rollupRef = revenueMonthlyRef(db, accruedMonthKey);
         const sessionId = change.after.id;
@@ -682,7 +704,7 @@ async function recomputeTeacherMonthlyRollup(
       return {
         id: docSnap.id,
         amount: Math.max(normalizeNumber(payout.amount, 0), 0),
-        date: String(payout.date || '').trim() || dayKeyFromTimestampIST(payout.paidAt || new Date()),
+        date: String(payout.date || '').trim() || dayKeyFromTimestampIST(payout.paidAt) || 'unknown',
         status: normalizeChargeStatus(payout.status) || 'completed',
         paidAtMs,
       };
@@ -758,6 +780,13 @@ export const recordPayment = onCall(
     const note = typeof request.data?.note === 'string' ? request.data.note.trim() : '';
     const paidAt = toPaidAtTimestamp(request.data?.paidAt);
     const monthKey = monthKeyFromTimestampIST(paidAt.toDate());
+    if (!monthKey) {
+      throw new HttpsError('internal', 'Failed to determine payment month');
+    }
+    const dateKey = dayKeyFromTimestampIST(paidAt.toDate());
+    if (!dateKey) {
+      throw new HttpsError('internal', 'Failed to determine payment date');
+    }
     const idempotencyKey = normalizeIdempotencyKey(request.data?.idempotencyKey);
     if (!idempotencyKey) {
       throw new HttpsError('invalid-argument', 'idempotencyKey is required');
@@ -769,7 +798,6 @@ export const recordPayment = onCall(
     const paymentRef = db.collection('payments').doc(paymentDocId);
     const rollupRef = revenueMonthlyRef(db, monthKey);
     const chargesQuery = db.collection('billingCharges').where('enrollmentId', '==', enrollmentId);
-    const dateKey = dayKeyFromTimestampIST(paidAt.toDate());
 
     const allocation = await db.runTransaction(async (tx) => {
       const existingPaymentSnap = await tx.get(paymentRef);
@@ -1006,7 +1034,13 @@ export const recordTeacherPayout = onCall(
     const note = typeof request.data?.note === 'string' ? request.data.note.trim() : '';
     const paidAt = toPaidAtTimestamp(request.data?.paidAt);
     const monthKey = monthKeyFromTimestampIST(paidAt.toDate());
+    if (!monthKey) {
+      throw new HttpsError('internal', 'Failed to determine payout month');
+    }
     const dateKey = dayKeyFromTimestampIST(paidAt.toDate());
+    if (!dateKey) {
+      throw new HttpsError('internal', 'Failed to determine payout date');
+    }
     const idempotencyKey = normalizeIdempotencyKey(request.data?.idempotencyKey);
     if (!idempotencyKey) {
       throw new HttpsError('invalid-argument', 'idempotencyKey is required');
@@ -1502,12 +1536,23 @@ export const adminVoidSessionCharge = onCall(
       }
 
       const accruedAmount = Math.max(normalizeNumber(session.accruedAmount, chargeAmount), 0);
-      const accruedMonthKey = String(
+      const accruedMonthKey = (
         session.accruedMonthKey ||
-          chargeData.monthKey ||
-          earningData.monthKey ||
-          monthKeyFromTimestampIST(session.startAt || session.date || session.endAt || new Date())
+        chargeData.monthKey ||
+        earningData.monthKey ||
+        monthKeyFromTimestampIST(session.date || session.startAt || session.endAt) ||
+        ''
       );
+
+      if (!accruedMonthKey) {
+        logger.error('Void session revenue: cannot determine month key', {
+          sessionId,
+          startAt: session.startAt,
+          date: session.date,
+          endAt: session.endAt,
+        });
+        throw new HttpsError('internal', 'Cannot determine session month for revenue void');
+      }
 
       let revenueRollupReversed = false;
       if (session.revenueAccrued === true) {
@@ -1588,6 +1633,352 @@ export const adminVoidSessionCharge = onCall(
     return {
       ok: true,
       ...result,
+    };
+  }
+);
+
+function normalizeMonthKeyOrThrow(value: any): string {
+  const raw = String(value || '').trim();
+  if (!/^\d{4}-\d{2}$/.test(raw)) {
+    throw new HttpsError('invalid-argument', 'monthKey must be in YYYY-MM format');
+  }
+  return raw;
+}
+
+function monthDateRange(monthKey: string): { fromDate: string; toDate: string } {
+  const [yearText, monthText] = monthKey.split('-');
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const lastDay = new Date(year, month, 0).getDate();
+  return {
+    fromDate: `${monthKey}-01`,
+    toDate: `${monthKey}-${String(lastDay).padStart(2, '0')}`,
+  };
+}
+
+function normalizeStoredMonthKey(value: any): string | null {
+  const raw = String(value || '').trim();
+  return /^\d{4}-\d{2}$/.test(raw) ? raw : null;
+}
+
+export const reconcileSessionRevenueMonthKeys = onCall(
+  {
+    region: REGION,
+    memory: '512MiB',
+    timeoutSeconds: 300,
+  },
+  async (request) => {
+    await ensureAdmin(request.auth);
+
+    const monthKey = normalizeMonthKeyOrThrow(request.data?.monthKey);
+    const apply = request.data?.apply === true;
+    const maxSessionsRaw = Number(request.data?.maxSessions);
+    const maxSessions = Number.isFinite(maxSessionsRaw)
+      ? Math.max(1, Math.min(Math.floor(maxSessionsRaw), 1500))
+      : 500;
+    const sampleLimitRaw = Number(request.data?.sampleLimit);
+    const sampleLimit = Number.isFinite(sampleLimitRaw)
+      ? Math.max(1, Math.min(Math.floor(sampleLimitRaw), 50))
+      : 20;
+
+    const { fromDate, toDate } = monthDateRange(monthKey);
+    const db = admin.firestore();
+    const sessionsSnap = await db
+      .collection('classSessions')
+      .where('date', '>=', fromDate)
+      .where('date', '<=', toDate)
+      .limit(maxSessions)
+      .get();
+
+    let scannedSessions = 0;
+    let accruedSessions = 0;
+    let mismatchedSessions = 0;
+    let missingCanonicalMonth = 0;
+    let updatedSessions = 0;
+    let updatedCharges = 0;
+    let updatedEarnings = 0;
+    let movedRevenueRollups = 0;
+    let rollupMoveSkippedUnknownSource = 0;
+    let applyErrors = 0;
+    const samples: Array<{
+      sessionId: string;
+      canonicalMonthKey: string | null;
+      accruedMonthKey: string | null;
+      chargeMonthKey: string | null;
+      earningMonthKey: string | null;
+      revenueAccrued: boolean;
+      needsSessionUpdate: boolean;
+      needsChargeUpdate: boolean;
+      needsEarningUpdate: boolean;
+    }> = [];
+
+    for (const sessionDoc of sessionsSnap.docs) {
+      scannedSessions += 1;
+      const sessionRef = sessionDoc.ref;
+      const sessionData = sessionDoc.data() || {};
+      const revenueAccrued = sessionData.revenueAccrued === true;
+      if (!revenueAccrued) continue;
+      accruedSessions += 1;
+
+      const sessionId = sessionDoc.id;
+      const canonicalMonthKey = monthKeyFromTimestampIST(
+        sessionData.date || sessionData.startAt || sessionData.endAt
+      );
+      if (!canonicalMonthKey) {
+        missingCanonicalMonth += 1;
+        if (samples.length < sampleLimit) {
+          samples.push({
+            sessionId,
+            canonicalMonthKey: null,
+            accruedMonthKey: normalizeStoredMonthKey(sessionData.accruedMonthKey),
+            chargeMonthKey: null,
+            earningMonthKey: null,
+            revenueAccrued,
+            needsSessionUpdate: false,
+            needsChargeUpdate: false,
+            needsEarningUpdate: false,
+          });
+        }
+        continue;
+      }
+
+      const chargeRef = db.collection('billingCharges').doc(sessionId);
+      const earningRef = db.collection('teacherEarnings').doc(sessionId);
+      const [chargeSnap, earningSnap] = await db.getAll(chargeRef, earningRef);
+
+      const accruedMonthKey = normalizeStoredMonthKey(sessionData.accruedMonthKey);
+      const chargeMonthKey = chargeSnap.exists
+        ? normalizeStoredMonthKey((chargeSnap.data() || {}).monthKey)
+        : null;
+      const earningMonthKey = earningSnap.exists
+        ? normalizeStoredMonthKey((earningSnap.data() || {}).monthKey)
+        : null;
+
+      const needsSessionUpdate = accruedMonthKey !== canonicalMonthKey;
+      const needsChargeUpdate = chargeSnap.exists && chargeMonthKey !== canonicalMonthKey;
+      const needsEarningUpdate = earningSnap.exists && earningMonthKey !== canonicalMonthKey;
+      const hasMismatch = needsSessionUpdate || needsChargeUpdate || needsEarningUpdate;
+      if (!hasMismatch) continue;
+
+      mismatchedSessions += 1;
+
+      if (samples.length < sampleLimit) {
+        samples.push({
+          sessionId,
+          canonicalMonthKey,
+          accruedMonthKey,
+          chargeMonthKey,
+          earningMonthKey,
+          revenueAccrued,
+          needsSessionUpdate,
+          needsChargeUpdate,
+          needsEarningUpdate,
+        });
+      }
+
+      if (!apply) continue;
+
+      try {
+        const applied = await db.runTransaction(async (tx) => {
+          const [sessionLiveSnap, chargeLiveSnap, earningLiveSnap] = await Promise.all([
+            tx.get(sessionRef),
+            tx.get(chargeRef),
+            tx.get(earningRef),
+          ]);
+          if (!sessionLiveSnap.exists) {
+            return {
+              sessionUpdated: false,
+              chargeUpdated: false,
+              earningUpdated: false,
+              rollupMoved: false,
+              rollupSkippedUnknown: false,
+            };
+          }
+
+          const liveSession = sessionLiveSnap.data() || {};
+          if (liveSession.revenueAccrued !== true) {
+            return {
+              sessionUpdated: false,
+              chargeUpdated: false,
+              earningUpdated: false,
+              rollupMoved: false,
+              rollupSkippedUnknown: false,
+            };
+          }
+
+          const liveCanonicalMonthKey = monthKeyFromTimestampIST(
+            liveSession.date || liveSession.startAt || liveSession.endAt
+          );
+          if (!liveCanonicalMonthKey) {
+            return {
+              sessionUpdated: false,
+              chargeUpdated: false,
+              earningUpdated: false,
+              rollupMoved: false,
+              rollupSkippedUnknown: false,
+            };
+          }
+
+          const liveAccruedMonthKey = normalizeStoredMonthKey(liveSession.accruedMonthKey);
+          const liveChargeMonthKey = chargeLiveSnap.exists
+            ? normalizeStoredMonthKey((chargeLiveSnap.data() || {}).monthKey)
+            : null;
+          const liveEarningMonthKey = earningLiveSnap.exists
+            ? normalizeStoredMonthKey((earningLiveSnap.data() || {}).monthKey)
+            : null;
+
+          const liveNeedsSessionUpdate = liveAccruedMonthKey !== liveCanonicalMonthKey;
+          const liveNeedsChargeUpdate = chargeLiveSnap.exists && liveChargeMonthKey !== liveCanonicalMonthKey;
+          const liveNeedsEarningUpdate =
+            earningLiveSnap.exists && liveEarningMonthKey !== liveCanonicalMonthKey;
+
+          if (!liveNeedsSessionUpdate && !liveNeedsChargeUpdate && !liveNeedsEarningUpdate) {
+            return {
+              sessionUpdated: false,
+              chargeUpdated: false,
+              earningUpdated: false,
+              rollupMoved: false,
+              rollupSkippedUnknown: false,
+            };
+          }
+
+          const now = admin.firestore.FieldValue.serverTimestamp();
+          const actorUid = request.auth?.uid || null;
+
+          if (liveNeedsSessionUpdate) {
+            tx.set(
+              sessionRef,
+              {
+                accruedMonthKey: liveCanonicalMonthKey,
+                revenueMonthReconciledAt: now,
+                revenueMonthReconciledBy: actorUid,
+                updatedAt: now,
+              },
+              { merge: true },
+            );
+          }
+
+          if (liveNeedsChargeUpdate && chargeLiveSnap.exists) {
+            tx.set(
+              chargeRef,
+              {
+                monthKey: liveCanonicalMonthKey,
+                updatedAt: now,
+                reconciledAt: now,
+                reconciledBy: actorUid,
+              },
+              { merge: true },
+            );
+          }
+
+          if (liveNeedsEarningUpdate && earningLiveSnap.exists) {
+            tx.set(
+              earningRef,
+              {
+                monthKey: liveCanonicalMonthKey,
+                updatedAt: now,
+                reconciledAt: now,
+                reconciledBy: actorUid,
+              },
+              { merge: true },
+            );
+          }
+
+          let rollupMoved = false;
+          let rollupSkippedUnknown = false;
+          if (liveNeedsSessionUpdate) {
+            if (liveAccruedMonthKey) {
+              const liveAccruedAmount = Math.max(
+                normalizeNumber(
+                  liveSession.accruedAmount ?? (chargeLiveSnap.exists ? (chargeLiveSnap.data() || {}).amount : 0),
+                  0,
+                ),
+                0,
+              );
+              const oldRollupRef = revenueMonthlyRef(db, liveAccruedMonthKey);
+              const newRollupRef = revenueMonthlyRef(db, liveCanonicalMonthKey);
+              tx.set(
+                oldRollupRef,
+                {
+                  expected: admin.firestore.FieldValue.increment(-liveAccruedAmount),
+                  completedSessions: admin.firestore.FieldValue.increment(-1),
+                  updatedAt: now,
+                },
+                { merge: true },
+              );
+              tx.set(
+                newRollupRef,
+                {
+                  expected: admin.firestore.FieldValue.increment(liveAccruedAmount),
+                  completedSessions: admin.firestore.FieldValue.increment(1),
+                  updatedAt: now,
+                },
+                { merge: true },
+              );
+              rollupMoved = true;
+            } else {
+              rollupSkippedUnknown = true;
+            }
+          }
+
+          return {
+            sessionUpdated: liveNeedsSessionUpdate,
+            chargeUpdated: liveNeedsChargeUpdate,
+            earningUpdated: liveNeedsEarningUpdate,
+            rollupMoved,
+            rollupSkippedUnknown,
+          };
+        });
+
+        if (applied.sessionUpdated) updatedSessions += 1;
+        if (applied.chargeUpdated) updatedCharges += 1;
+        if (applied.earningUpdated) updatedEarnings += 1;
+        if (applied.rollupMoved) movedRevenueRollups += 1;
+        if (applied.rollupSkippedUnknown) rollupMoveSkippedUnknownSource += 1;
+      } catch (error) {
+        applyErrors += 1;
+        logger.error('reconcileSessionRevenueMonthKeys: failed to apply session fix', {
+          sessionId,
+          monthKey,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    logger.info('reconcileSessionRevenueMonthKeys completed', {
+      monthKey,
+      apply,
+      scannedSessions,
+      accruedSessions,
+      mismatchedSessions,
+      missingCanonicalMonth,
+      updatedSessions,
+      updatedCharges,
+      updatedEarnings,
+      movedRevenueRollups,
+      rollupMoveSkippedUnknownSource,
+      applyErrors,
+      maxSessions,
+      actorUid: request.auth?.uid || null,
+    });
+
+    return {
+      ok: true,
+      monthKey,
+      apply,
+      scannedSessions,
+      accruedSessions,
+      mismatchedSessions,
+      missingCanonicalMonth,
+      updatedSessions,
+      updatedCharges,
+      updatedEarnings,
+      movedRevenueRollups,
+      rollupMoveSkippedUnknownSource,
+      applyErrors,
+      maxSessions,
+      scannedLimitHit: sessionsSnap.size >= maxSessions,
+      samples,
     };
   }
 );

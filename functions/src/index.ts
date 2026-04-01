@@ -19,6 +19,7 @@ export {
   onTeacherEarningsRollupWrite,
   recordPayment,
   recordTeacherPayout,
+  reconcileSessionRevenueMonthKeys,
   voidTeacherOrphanEarnings,
   adminVoidSessionCharge,
 } from "./revenue";

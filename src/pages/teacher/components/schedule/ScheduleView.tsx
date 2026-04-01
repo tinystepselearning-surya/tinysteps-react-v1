@@ -191,6 +191,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   );
 
   const days = eachDayOfInterval({ start: rangeStart, end: rangeEnd });
+  const monthLeadingEmptyCells = useMemo(
+    () => Array.from({ length: monthStart.getDay() }),
+    [monthStart],
+  );
+  const monthTrailingEmptyCells = useMemo(
+    () => Array.from({ length: Math.max(0, 6 - monthEnd.getDay()) }),
+    [monthEnd],
+  );
 
   const effectiveTeacherId = teacherId || user?.uid;
 
@@ -970,6 +978,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 {day}
               </div>
             ))}
+            {monthLeadingEmptyCells.map((_, idx) => (
+              <div
+                key={`month-leading-empty-${idx}`}
+                className="p-2 border min-h-[100px] border-gray-100 bg-gray-50/30"
+                aria-hidden="true"
+              />
+            ))}
             {days.map(day => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const daySessions = sessionsByDate[dateStr] || [];
@@ -1070,6 +1085,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 </div>
               );
             })}
+            {monthTrailingEmptyCells.map((_, idx) => (
+              <div
+                key={`month-trailing-empty-${idx}`}
+                className="p-2 border min-h-[100px] border-gray-100 bg-gray-50/30"
+                aria-hidden="true"
+              />
+            ))}
           </div>
         </Card>
       )}

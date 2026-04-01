@@ -30,6 +30,7 @@ interface TeacherEarningLedgerRow {
   sessionId: string;
   courseId: string;
   paidAmount: number;
+  monthKey: string;
   earnedAt: Date | null;
 }
 
@@ -69,6 +70,11 @@ const toDate = (value: unknown): Date | null => {
 const pad2 = (value: number): string => String(value).padStart(2, '0');
 
 const monthKeyFromDate = (date: Date): string => `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`;
+
+const normalizeMonthKey = (value: unknown): string => {
+  const raw = String(value || '').trim();
+  return /^\d{4}-\d{2}$/.test(raw) ? raw : '';
+};
 
 const formatCurrency = (value: number): string => `₹${Math.round(value).toLocaleString('en-IN')}`;
 
@@ -170,6 +176,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
           const data = docSnap.data() as Record<string, unknown>;
           const earnedAt =
             toDate(data.earnedAt) || toDate(data.createdAt) || toDate(data.updatedAt) || null;
+          const monthKey = normalizeMonthKey(data.monthKey) || (earnedAt ? monthKeyFromDate(earnedAt) : '');
 
           return {
             id: docSnap.id,
@@ -180,6 +187,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             sessionId: String(data.sessionId || ''),
             courseId: String(data.courseId || ''),
             paidAmount: toNumber(data.paidAmount, 0),
+            monthKey,
             earnedAt,
           };
         });
@@ -244,10 +252,15 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     () =>
       ledgerRows.filter((row) => {
         if (row.status === 'void') return false;
+        if (filterPreset === 'month') {
+          if (row.monthKey) return row.monthKey === selectedMonth;
+          if (!row.earnedAt) return false;
+          return row.earnedAt >= range.start && row.earnedAt <= range.end;
+        }
         if (!row.earnedAt) return false;
         return row.earnedAt >= range.start && row.earnedAt <= range.end;
       }),
-    [ledgerRows, range.end, range.start],
+    [filterPreset, ledgerRows, range.end, range.start, selectedMonth],
   );
 
   const metrics = useMemo(() => {
