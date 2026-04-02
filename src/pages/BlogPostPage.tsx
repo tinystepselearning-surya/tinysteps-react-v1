@@ -261,9 +261,9 @@ function buildMetaDescription(src: any) {
               <h2 className="text-xl font-semibold">Explore Tiny Steps classes</h2>
               <p className="mt-1 text-sm text-gray-700">Choose a program aligned to your child’s goals and level.</p>
               <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold">
-                <Link to="/phonics-classes-for-kids" className="text-primary-600">phonics classes for kids</Link>
-                <Link to="/english-grammar-writing-classes" className="text-primary-600">grammar classes for kids</Link>
-                <Link to="/public-speaking-communication-kids" className="text-primary-600">public speaking classes for kids</Link>
+                <Link to="/phonics" className="text-primary-600">phonics classes for kids</Link>
+                <Link to="/grammar" className="text-primary-600">grammar classes for kids</Link>
+                <Link to="/speaking" className="text-primary-600">public speaking classes for kids</Link>
               </div>
             </div>
           </div>

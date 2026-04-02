@@ -47,6 +47,14 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   return `\n  <url>\n    <loc>${loc}</loc>\n    <lastmod>${lastmod || fmt(new Date())}</lastmod>\n    <changefreq>${changefreq}</changefreq>\n    <priority>${priority}</priority>\n  </url>`;
 }
 
+const MONEY_PAGES = new Set(['/phonics', '/grammar', '/speaking', '/summer-camps']);
+const SUPPORTING_LONG_TAIL = new Set([
+  '/best-online-phonics-classes-india',
+  '/phonics-apps-for-preschoolers-india',
+  '/phonics-games-for-preschoolers',
+  '/phonics-learning-games',
+]);
+
 (function main(){
   const root = path.resolve(__dirname, '..');
   const publicDir = path.join(root, 'public');
@@ -76,8 +84,22 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
   const staticXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`+
     staticRoutesForSitemap.map((route) => {
       const loc = route === '/' ? 'https://tinystepslearning.com/' : `https://tinystepslearning.com${route}`;
-      const priority = route === '/' ? '1.0' : route === '/summer-camps' ? '0.95' : route === '/blog' ? '0.8' : route === '/courses' ? '0.9' : '0.8';
-      const changefreq = route === '/blog' ? 'daily' : route === '/' || route === '/courses' || route === '/summer-camps' ? 'weekly' : 'monthly';
+      const priority = route === '/'
+        ? '1.0'
+        : route === '/courses'
+          ? '0.9'
+          : MONEY_PAGES.has(route)
+            ? '0.95'
+            : SUPPORTING_LONG_TAIL.has(route)
+              ? '0.7'
+              : route === '/blog'
+                ? '0.8'
+                : '0.8';
+      const changefreq = route === '/blog'
+        ? 'daily'
+        : route === '/' || route === '/courses' || MONEY_PAGES.has(route)
+          ? 'weekly'
+          : 'monthly';
       return toUrl(loc, staticLastmod, priority, changefreq);
     }).join('')+
   `\n</urlset>`;

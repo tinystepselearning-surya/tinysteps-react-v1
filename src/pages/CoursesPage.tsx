@@ -77,9 +77,9 @@ const CoursesHero = () => (
           Phonics, grammar, public speaking, and brush-up paths—mapped lesson-by-lesson with transparent pricing.
         </p>
         <p className="mt-3 text-sm text-white/80">
-          Looking for <Link to="/phonics-classes-for-kids" className="underline">phonics classes for kids</Link>,{' '}
-          <Link to="/english-grammar-writing-classes" className="underline">grammar classes for kids</Link>, or{' '}
-          <Link to="/public-speaking-communication-kids" className="underline">public speaking classes for kids</Link>?
+          Looking for <Link to="/phonics" className="underline">phonics classes for kids</Link>,{' '}
+          <Link to="/grammar" className="underline">grammar classes for kids</Link>, or{' '}
+          <Link to="/speaking" className="underline">public speaking classes for kids</Link>?
         </p>
         <p className="mt-2 text-sm text-white/80">
           Need guided daily practice too? Explore <Link to="/phonics-learning-games" className="underline">phonics learning games</Link> with a 3-day free trial and parent-friendly plans.

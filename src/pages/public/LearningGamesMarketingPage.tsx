@@ -446,7 +446,7 @@ export default function LearningGamesMarketingPage() {
                 Contact Tiny Steps
               </a>
               <Link
-                to="/phonics-classes-for-kids"
+                to="/phonics"
                 className="rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800"
               >
                 See phonics classes

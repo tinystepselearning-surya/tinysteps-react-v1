@@ -111,6 +111,8 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'week-23-grammar-speaking-bridge': '2026-03-12',
   'week-24-speaking-family-showcase': '2026-03-14',
   'week-25-back-to-school-plan': '2026-03-16',
+  'week-26-screen-smart-summer-routine': '2026-03-23',
+  'week-27-prevent-summer-slide-reading': '2026-03-30',
 };
 
 const PHONICS_EXAMPLES_BY_SLUG: Record<string, string[]> = {
@@ -2749,6 +2751,154 @@ const rawBlogPosts: BlogPost[] = [
         answer: 'Use a 10-minute minimum: 3 minutes phonics review, 4 minutes reading, 2 minutes comprehension, 1 minute praise and next-step note.',
       },
     ],
+  },
+  {
+    slug: 'week-26-screen-smart-summer-routine',
+    title: 'Week 26: Screen-Smart Summer Routine for Kids (Ages 3-12)',
+    category: 'Parent Tips',
+    author: 'Priya',
+    date: '2026-03-23',
+    readTime: '10 min',
+    excerpt: 'A practical screen-smart summer routine for ages 3-12: reduce passive screen time, keep learning active in 10-minute blocks, and build reading, grammar, and speaking confidence without daily battles.',
+    metaDescription: 'Screen-smart summer routine for kids ages 3-12: reduce passive screen time and use a 10-minute daily plan for phonics, reading, grammar, and speaking confidence.',
+    body: [
+      { type: 'h2', content: 'Quick answer for busy parents' },
+      { type: 'p', content: 'If you want to reduce screen time for kids without daily arguments, do not ban screens suddenly. Replace one passive block with one short, repeatable learning block. A 10-minute routine works better than a long weekend reset.' },
+
+      { type: 'h2', content: 'Why screen time rises in summer' },
+      { type: 'p', content: 'Summer schedules are loose, parents are juggling work, and children need fast entertainment. Screens fill the gap quickly. The problem is not every screen minute, but long passive stretches that replace conversation, reading, and movement.' },
+
+      { type: 'h2', content: 'The screen-smart rule that actually works' },
+      { type: 'p', content: 'Use this sequence: Connect first, then a short learning block, then screen choice. Children cooperate more when they know what comes next and when the task is short.' },
+      { type: 'li', content: 'Predictable timing: same 10-minute learning slot each day.' },
+      { type: 'li', content: 'Clear trade: one short offline task before passive screen time.' },
+      { type: 'li', content: 'Low pressure: stop on success, not after a struggle.' },
+
+      { type: 'h2', content: 'Age-wise screen-smart guidance (3-12 years)' },
+      { type: 'h3', content: 'Ages 3-5' },
+      { type: 'li', content: 'Focus on sound play, picture talk, and movement-based phonics for 5-10 minutes.' },
+      { type: 'li', content: 'Use short, supervised screen sessions and avoid background autoplay.' },
+      { type: 'h3', content: 'Ages 6-8' },
+      { type: 'li', content: 'Add simple reading plus one grammar sentence task before leisure screen time.' },
+      { type: 'li', content: 'Use timers and one clear stop rule to avoid repeated negotiation.' },
+      { type: 'h3', content: 'Ages 9-12' },
+      { type: 'li', content: 'Use a daily reading and speaking checkpoint before social/video content.' },
+      { type: 'li', content: 'Let children choose from 2-3 offline learning activities to increase ownership.' },
+
+      { type: 'h2', content: 'The 10-minute summer routine (daily)' },
+      { type: 'li', content: 'Minute 1-2: Quick phonics or vocabulary warm-up (sound cards or word family drill).' },
+      { type: 'li', content: 'Minute 3-6: Read one short passage aloud and ask one meaning question.' },
+      { type: 'li', content: 'Minute 7-8: One grammar-in-use task (fix one sentence or combine two lines).' },
+      { type: 'li', content: 'Minute 9-10: 30-second speaking recap: "What did I learn today?"' },
+      { type: 'p', content: 'This routine supports offline learning activities for kids while keeping the load realistic for working families.' },
+
+      { type: 'h2', content: 'Six practical replacements for passive screen time' },
+      { type: 'li', content: 'Phonics sound hunt: find 5 objects starting with a target sound.' },
+      { type: 'li', content: 'Reading relay: parent reads one line, child reads one line.' },
+      { type: 'li', content: 'Grammar fix card: spot and fix one sentence error.' },
+      { type: 'li', content: 'Picture speaking challenge: describe one image in 3 clear lines.' },
+      { type: 'li', content: 'Word-building game: make new words by swapping one sound.' },
+      { type: 'li', content: 'Family mini show: 45-second talk at dinner on one topic.' },
+
+      { type: 'h2', content: 'Mistakes parents should avoid' },
+      { type: 'li', content: 'Do not remove all screens overnight; sudden restriction usually creates resistance.' },
+      { type: 'li', content: 'Do not run 45-minute study blocks in summer; short consistency beats long sessions.' },
+      { type: 'li', content: 'Do not use learning only as punishment for screen use; present it as routine, not penalty.' },
+      { type: 'li', content: 'Do not change rules daily; consistency lowers conflict and decision fatigue.' },
+
+      { type: 'h2', content: 'When to seek extra support' },
+      { type: 'p', content: 'If your child avoids reading, melts down during short tasks, or shows no progress after 3-4 weeks of consistent routine, get guided support. A targeted plan often fixes the bottleneck faster than trying random worksheets.' },
+
+      { type: 'h2', content: 'Tiny Steps summer support (next best step)' },
+      { type: 'p', content: 'If you want a structured summer routine for kids with mentor guidance, start with /summer-camps. For focused skill support, use /phonics, /grammar, and /speaking. For parent-friendly home plans, use /parents.' },
+    ],
+    faq: [
+      {
+        question: 'How much screen time is okay in summer for children aged 3-12?',
+        answer: 'The key is quality and structure. Keep passive screen blocks limited, supervise younger children closely, and protect at least one daily offline learning block.',
+      },
+      {
+        question: 'How can I reduce screen time for children without arguments?',
+        answer: 'Use a predictable sequence: short offline routine first, then screen choice. Keep the routine brief and consistent so children know what to expect.',
+      },
+      {
+        question: 'What is the minimum routine on busy weekdays?',
+        answer: 'Run a 10-minute flow: 2 minutes phonics or vocabulary, 4 minutes reading, 2 minutes grammar, 2 minutes speaking recap.',
+      },
+    ],
+  },
+  {
+    slug: 'week-27-prevent-summer-slide-reading',
+    title: 'Week 27: How to Prevent the Summer Slide in Reading (10-Minute Daily Plan)',
+    category: 'Phonics',
+    author: 'Priya',
+    date: '2026-03-30',
+    readTime: '10 min',
+    excerpt: 'Prevent summer slide reading loss with a 10-minute daily routine for ages 3-12: phonics review, short reading, grammar transfer, and speaking recap that parents can run consistently.',
+    metaDescription: 'How to prevent summer slide in reading: a 10-minute daily plan for ages 3-12 with phonics practice at home, short reading routines, and clear progress checkpoints.',
+    body: [
+      { type: 'h2', content: 'Quick answer for parents' },
+      { type: 'p', content: 'Summer slide in reading is preventable when children read a little every day. A short 10-minute reading routine with phonics review is usually enough to maintain or improve reading confidence during April-June.' },
+
+      { type: 'h2', content: 'What is the summer slide in reading?' },
+      { type: 'p', content: 'Summer slide means children lose reading fluency, decoding accuracy, or writing confidence when practice drops for several weeks. The loss is usually in routine and retrieval, not intelligence.' },
+
+      { type: 'h2', content: 'Why learning loss happens in summer' },
+      { type: 'li', content: 'Reading becomes optional instead of daily.' },
+      { type: 'li', content: 'Children do passive content instead of active decoding and speaking.' },
+      { type: 'li', content: 'Parents use random worksheets instead of a consistent sequence.' },
+      { type: 'li', content: 'There is no simple progress check, so gaps stay hidden.' },
+
+      { type: 'h2', content: '10-minute daily reading plan (ages 3-12)' },
+      { type: 'li', content: 'Minute 1-2: Phonics practice at home (sound review or blending pairs).' },
+      { type: 'li', content: 'Minute 3-6: Read one short passage aloud (child first, parent support only when needed).' },
+      { type: 'li', content: 'Minute 7-8: Meaning check (who/what/why question) plus one vocabulary word.' },
+      { type: 'li', content: 'Minute 9-10: One sentence writing or speaking recap to lock in learning.' },
+      { type: 'p', content: 'This summer reading plan for kids keeps decoding, comprehension, and expression connected in one compact routine.' },
+
+      { type: 'h2', content: 'Age-wise targets parents can track' },
+      { type: 'h3', content: 'Ages 3-5' },
+      { type: 'li', content: 'Target: stronger sound awareness and oral blending of simple words.' },
+      { type: 'h3', content: 'Ages 6-8' },
+      { type: 'li', content: 'Target: smoother sentence reading with fewer decoding pauses.' },
+      { type: 'h3', content: 'Ages 9-12' },
+      { type: 'li', content: 'Target: better fluency plus clear summary speaking and cleaner sentence writing.' },
+
+      { type: 'h2', content: 'Simple weekly rhythm for April-June' },
+      { type: 'li', content: 'Monday: phonics refresh + short reading.' },
+      { type: 'li', content: 'Tuesday: fluency reread + comprehension question.' },
+      { type: 'li', content: 'Wednesday: grammar transfer inside one short paragraph.' },
+      { type: 'li', content: 'Thursday: speaking recap (45-60 seconds) from reading topic.' },
+      { type: 'li', content: 'Friday: mixed review and mini progress check.' },
+      { type: 'li', content: 'Saturday: game-based revision (word sort, story card, or read-and-retell).' },
+      { type: 'li', content: 'Sunday: light rest or one short read-aloud for continuity.' },
+
+      { type: 'h2', content: 'Mistakes that make summer learning loss worse' },
+      { type: 'li', content: 'Weekend-only study with no weekday reading touchpoint.' },
+      { type: 'li', content: 'Books that are too hard, causing guessing and frustration.' },
+      { type: 'li', content: 'Skipping phonics review and expecting fluency to hold automatically.' },
+      { type: 'li', content: 'Tracking nothing, so parents cannot adjust in time.' },
+
+      { type: 'h2', content: 'When to seek extra support' },
+      { type: 'p', content: 'If your child avoids reading for two weeks, guesses many words, or cannot explain what they read despite daily practice, move to guided support. Early correction prevents a larger reset before school reopens.' },
+
+      { type: 'h2', content: 'Tiny Steps CTA: get summer support early' },
+      { type: 'p', content: 'For a structured summer plan, start at /summer-camps. If your child needs focused help, use /phonics for decoding, /grammar for writing accuracy, and /speaking for confidence. Parents can also follow step-by-step home guides at /parents.' },
+    ],
+    faq: [
+      {
+        question: 'How do I prevent learning loss in summer if my schedule is busy?',
+        answer: 'Use one fixed 10-minute slot daily. Consistent short practice in phonics, reading, and recap is more effective than occasional long sessions.',
+      },
+      {
+        question: 'What is a realistic summer reading routine for kids?',
+        answer: 'A practical routine is 2 minutes phonics, 4 minutes reading aloud, 2 minutes comprehension, and 2 minutes recap through speaking or writing.',
+      },
+      {
+        question: 'Should I focus on phonics or comprehension first during summer?',
+        answer: 'Keep both connected. Start with short decoding review, then immediately check meaning so reading accuracy and understanding improve together.',
+      },
+    ],
   }
 ];
 
@@ -3287,6 +3437,44 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     parentQuestions: [
       'Should I push harder in Week 1? No. Keep challenge moderate and prioritize consistency.',
       'How do I verify progress? Compare Day 0 and Day 7 data on accuracy, fluency smoothness, and speaking organization.',
+    ],
+  },
+  'week-26-screen-smart-summer-routine': {
+    heading: 'Real-world action plan: reduce passive screens with a predictable summer rhythm',
+    context: 'Parents get better cooperation when learning comes in short fixed blocks, followed by planned leisure screen time.',
+    routine: [
+      'Set one fixed 10-minute slot daily before passive screen use.',
+      'Run a simple flow: phonics warm-up, short reading, one grammar task, one speaking recap.',
+      'Use a visible tracker for 5 days each week and celebrate consistency, not perfection.',
+    ],
+    rescue: 'If resistance is high, cut to a 5-minute minimum for two days, then return to the full 10-minute flow once cooperation improves.',
+    outcomes: [
+      'Child transitions to screen time with fewer daily arguments.',
+      'Child maintains reading and language practice during summer break.',
+      'Parent follows a repeatable routine without decision fatigue.',
+    ],
+    parentQuestions: [
+      'Should I ban all screens to reset habits? No, replace passive time gradually with structured active blocks.',
+      'What if both parents are busy? Keep one non-negotiable 10-minute learning touchpoint and protect it daily.',
+    ],
+  },
+  'week-27-prevent-summer-slide-reading': {
+    heading: 'Real-world action plan: stop summer slide with a 10-minute reading loop',
+    context: 'Children hold reading gains when decoding and comprehension are revisited in short, consistent daily sessions.',
+    routine: [
+      'Do 2 minutes of phonics or word-pattern review before reading.',
+      'Read one short passage aloud and ask one meaning question immediately.',
+      'Close with a one-sentence write or 30-second spoken summary to reinforce transfer.',
+    ],
+    rescue: 'If reading breaks down, reduce text level, reread easier lines for success, and rebuild difficulty gradually over 3-4 days.',
+    outcomes: [
+      'Child maintains reading fluency through April-June.',
+      'Child shows stronger decoding confidence on unfamiliar words.',
+      'Parent can spot progress early with a simple weekly check.',
+    ],
+    parentQuestions: [
+      'Is 10 minutes really enough? Yes, when done daily with a clear structure.',
+      'Should we do only reading in summer? No, include brief grammar and speaking transfer for stronger retention.',
     ],
   },
 };

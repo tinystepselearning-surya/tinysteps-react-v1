@@ -74,13 +74,8 @@ const CourseDetailPage: FC = () => {
 
   const priceNumber =
     (course.price || '').match(/₹\s*([\d,]+)/)?.[1]?.replace(/,/g, '') || '0';
-  const reviewCountMatch = (course.reviews || '').match(/\((\d+) reviews\)/i);
-  // keep raw numeric count for structured data; we may display the original string
-  // elsewhere if needed.  reviewCountMatch[1] is a string like "27" so convert
-  // to a number here to satisfy Schema.org Integer requirement.
-  const ratingCount = reviewCountMatch ? parseInt(reviewCountMatch[1], 10) : undefined;
   const jsonLd: any = {
-    '@context': 'https://schema.org/',
+    '@context': 'https://schema.org',
     '@type': 'Course',
     name: course.name,
     description: `${course.name} — ${course.overview.join(', ')}`,
@@ -95,17 +90,10 @@ const CourseDetailPage: FC = () => {
         '@type': 'Offer',
         price: priceNumber,
         priceCurrency: 'INR',
-        availability: 'http://schema.org/InStock'
+        availability: 'https://schema.org/InStock'
       }
     }
   };
-  if (ratingCount) {
-    jsonLd.aggregateRating = {
-      '@type': 'AggregateRating',
-      ratingValue: 5.0, // numeric as required
-      ratingCount
-    };
-  }
 
   return (
     <div className="bg-white">

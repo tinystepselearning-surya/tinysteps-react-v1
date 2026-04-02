@@ -276,7 +276,7 @@ export default function PhonicsPage({
           {aeoCopy}
         </p>
         <p className="mt-3 text-sm text-gray-700">
-          Looking for <Link to="/phonics-classes-for-kids" className="text-slate-900 underline hover:text-sky-700">phonics classes for kids</Link>? Start here.
+          Looking for <Link to="/phonics" className="text-slate-900 underline hover:text-sky-700">phonics classes for kids</Link>? Start here.
         </p>
       </div>
 

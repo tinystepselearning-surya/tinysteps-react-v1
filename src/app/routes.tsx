@@ -34,10 +34,6 @@ const SummerCampProgramPage = lazy(() => import('../pages/SummerCampProgramPage'
 const PhonicsPage = lazy(() => import('../pages/phonics'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
-const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForKidsPage'));
-const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
-const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
-const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
 const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
 const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
@@ -346,9 +342,9 @@ const router = createBrowserRouter(
         { path: 'why-us', element: <Navigate to="/why-tiny-steps" replace /> },
         { path: 'faq', element: <FAQPage /> },
         { path: 'summer-english-camp-2026', element: <Navigate to="/summer-camps" replace /> },
-        { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
-        { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
-        { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
+        { path: 'online-phonics-reading-classes', element: <Navigate to="/phonics" replace /> },
+        { path: 'english-grammar-writing-classes', element: <Navigate to="/grammar" replace /> },
+        { path: 'public-speaking-communication-kids', element: <Navigate to="/speaking" replace /> },
         { path: 'best-online-phonics-classes-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
@@ -356,7 +352,7 @@ const router = createBrowserRouter(
         { path: 'summer-camps', element: <SummerCampsPage /> },
         { path: 'summer-camps/:programSlug/:batchSlug', element: <SummerCampProgramPage /> },
         { path: 'summer-camps/:programSlug', element: <SummerCampProgramPage /> },
-        { path: 'phonics-classes-for-kids', element: <PhonicsClassesForKidsPage /> },
+        { path: 'phonics-classes-for-kids', element: <Navigate to="/phonics" replace /> },
         { path: 'phonics', element: <PhonicsPage /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },

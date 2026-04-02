@@ -126,13 +126,26 @@ function toInteger(value: unknown): number | undefined {
   return Math.trunc(parsed);
 }
 
+function getSchemaTypes(node: Record<string, any>): string[] {
+  const type = node['@type'];
+  if (typeof type === 'string') return [type];
+  if (Array.isArray(type)) return type.filter((item): item is string => typeof item === 'string');
+  return [];
+}
+
+function isValidCount(value: number | undefined): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
 /**
  * Normalize JSON-LD for stricter schema validators.
  * In particular, AggregateRating.ratingCount must be an integer.
  */
-function sanitizeSchemaNode(node: any): any {
+function sanitizeSchemaNode(node: any): any | undefined {
   if (Array.isArray(node)) {
-    return node.map((item) => sanitizeSchemaNode(item));
+    return node
+      .map((item) => sanitizeSchemaNode(item))
+      .filter((item) => item !== undefined);
   }
 
   if (!node || typeof node !== 'object') {
@@ -141,23 +154,63 @@ function sanitizeSchemaNode(node: any): any {
 
   const sanitized: Record<string, any> = {};
   for (const [key, value] of Object.entries(node)) {
-    sanitized[key] = sanitizeSchemaNode(value);
+    const next = sanitizeSchemaNode(value);
+    if (next !== undefined) sanitized[key] = next;
   }
 
-  if (sanitized['@type'] === 'AggregateRating') {
+  const types = getSchemaTypes(sanitized);
+
+  if (types.includes('AggregateRating')) {
     const ratingValue = toFiniteNumber(sanitized.ratingValue);
     const ratingCount = toInteger(sanitized.ratingCount);
+    const reviewCount = toInteger(sanitized.reviewCount);
     const bestRating = toFiniteNumber(sanitized.bestRating);
     const worstRating = toFiniteNumber(sanitized.worstRating);
 
-    if (ratingValue !== undefined) sanitized.ratingValue = ratingValue;
-    if (ratingCount !== undefined) sanitized.ratingCount = ratingCount;
+    const normalizedRatingCount = isValidCount(ratingCount) ? ratingCount : undefined;
+    const normalizedReviewCount = isValidCount(reviewCount) ? reviewCount : undefined;
+
+    // AggregateRating is ineligible if ratingValue is missing/invalid
+    // or if both counts are missing/invalid.
+    if (ratingValue === undefined || (!normalizedRatingCount && !normalizedReviewCount)) {
+      return undefined;
+    }
+
+    sanitized.ratingValue = ratingValue;
+    if (normalizedRatingCount !== undefined) sanitized.ratingCount = normalizedRatingCount;
     else delete sanitized.ratingCount;
+    if (normalizedReviewCount !== undefined) sanitized.reviewCount = normalizedReviewCount;
+    else delete sanitized.reviewCount;
+
     if (bestRating !== undefined) sanitized.bestRating = bestRating;
+    else delete sanitized.bestRating;
     if (worstRating !== undefined) sanitized.worstRating = worstRating;
+    else delete sanitized.worstRating;
+
+    if (
+      typeof sanitized.bestRating === 'number' &&
+      typeof sanitized.worstRating === 'number' &&
+      sanitized.bestRating <= sanitized.worstRating
+    ) {
+      delete sanitized.bestRating;
+      delete sanitized.worstRating;
+    }
   }
 
-  return sanitized;
+  if (types.includes('Rating')) {
+    const ratingValue = toFiniteNumber(sanitized.ratingValue);
+    if (ratingValue === undefined) return undefined;
+    sanitized.ratingValue = ratingValue;
+
+    const bestRating = toFiniteNumber(sanitized.bestRating);
+    const worstRating = toFiniteNumber(sanitized.worstRating);
+    if (bestRating !== undefined) sanitized.bestRating = bestRating;
+    else delete sanitized.bestRating;
+    if (worstRating !== undefined) sanitized.worstRating = worstRating;
+    else delete sanitized.worstRating;
+  }
+
+  return Object.keys(sanitized).length ? sanitized : undefined;
 }
 
 /**
@@ -288,7 +341,9 @@ export function applySeo(cfg: SeoConfig) {
   
   // 4. Merge and deduplicate: [base org, ...existing, ...new]
   const mergedSchemas = [...baseSchemas, ...existingSchemas, ...newSchemas];
-  const finalSchemas = deduplicateSchemas(mergedSchemas).map((schema) => sanitizeSchemaNode(schema));
+  const finalSchemas = deduplicateSchemas(mergedSchemas)
+    .map((schema) => sanitizeSchemaNode(schema))
+    .filter((schema): schema is Record<string, any> => schema !== undefined);
   
   // 5. Write to single managed script element with path marker
   let scriptEl = document.getElementById(JSONLD_SCRIPT_ID) as HTMLScriptElement | null;

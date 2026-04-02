@@ -657,13 +657,13 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <h3 className="mb-2 font-bold text-slate-900">Phonics Program</h3>
             <p className="text-sm text-gray-700">Full curriculum details, learning outcomes, and sample lessons</p>
           </Link>
-          <Link to="/courses" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
-            <h3 className="mb-2 font-bold text-slate-900">All Courses</h3>
-            <p className="text-sm text-gray-700">Phonics, grammar, and public speaking programs for ages 3–12</p>
+          <Link to="/grammar" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Grammar Program</h3>
+            <p className="text-sm text-gray-700">Structured grammar and writing classes for ages 5–15</p>
           </Link>
-          <Link to="/curriculum" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
-            <h3 className="mb-2 font-bold text-slate-900">Curriculum</h3>
-            <p className="text-sm text-gray-700">Lesson-by-lesson breakdown of what children learn at each level</p>
+          <Link to="/speaking" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Speaking Program</h3>
+            <p className="text-sm text-gray-700">Public speaking and communication classes for ages 4–15</p>
           </Link>
           <Link to="/?book=1" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
             <h3 className="mb-2 font-bold text-slate-900">Book Free Assessment</h3>

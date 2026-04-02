@@ -133,8 +133,8 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
         </Link>
         <p className="mt-4 text-sm text-gray-600">
           Need the full roadmap first?{' '}
-          <Link to="/courses" className="font-semibold text-[#4a7c2c] underline">
-            Explore courses
+          <Link to="/phonics" className="font-semibold text-[#4a7c2c] underline">
+            Explore phonics classes
           </Link>
           .
         </p>
@@ -209,10 +209,10 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
-            to="/courses"
+            to="/phonics"
             className="inline-block bg-[#4a7c2c] hover:bg-[#2d5016] text-white font-bold py-3 px-6 rounded-lg transition"
           >
-            View Courses
+            View Phonics Classes
           </Link>
           <Link
             to="/pricing"
