@@ -326,6 +326,10 @@ const router = createBrowserRouter(
         { path: 'blog/week8.html', element: <Navigate to="/blog/week-8-grammar-tenses" replace /> },
         // Legacy /main shell URLs -> canonical hubs
         { path: 'main/courses', element: <Navigate to="/courses" replace /> },
+        { path: 'main/courses/grammar', element: <Navigate to="/grammar" replace /> },
+        { path: 'main/courses/grammar/', element: <Navigate to="/grammar" replace /> },
+        { path: 'main/courses/public-speaking', element: <Navigate to="/speaking" replace /> },
+        { path: 'main/courses/public-speaking/', element: <Navigate to="/speaking" replace /> },
         { path: 'main/parents', element: <Navigate to="/parents" replace /> },
         // Parents / Help hub
         { path: 'parents', element: <ParentsHubPage /> },
@@ -344,7 +348,9 @@ const router = createBrowserRouter(
         { path: 'summer-english-camp-2026', element: <Navigate to="/summer-camps" replace /> },
         { path: 'online-phonics-reading-classes', element: <Navigate to="/phonics" replace /> },
         { path: 'english-grammar-writing-classes', element: <Navigate to="/grammar" replace /> },
+        { path: 'english-grammar-writing-classes/', element: <Navigate to="/grammar" replace /> },
         { path: 'public-speaking-communication-kids', element: <Navigate to="/speaking" replace /> },
+        { path: 'public-speaking-communication-kids/', element: <Navigate to="/speaking" replace /> },
         { path: 'best-online-phonics-classes-india', element: <BestOnlinePhonicsClassesIndiaPage /> },
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },

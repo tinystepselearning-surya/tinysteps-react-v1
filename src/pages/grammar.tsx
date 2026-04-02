@@ -110,13 +110,13 @@ export default function GrammarPage() {
     <div>
       <Meta
         title="Online Grammar and Writing Classes for Kids | Tiny Steps Learning"
-        description="Live 1:1 and small-group online grammar classes for ages 5-15. Free assessment, sentence building, punctuation, paragraph writing with trained teachers."
+        description="Online grammar classes for kids ages 5-15 with live 1:1 and small-group sessions. Free assessment, sentence building, punctuation, and paragraph writing with trained teachers."
         canonical="https://tinystepslearning.com/grammar"
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Grammar"
-        title="Grammar & Writing Lab"
+        title="Online Grammar Classes for Kids"
         subtitle="Playful grammar drills + AI writing coach help kids write clearly and confidently."
         badges={['Ages 5–15', 'Live feedback', 'Lesson-based writing samples']}
         highlights={[

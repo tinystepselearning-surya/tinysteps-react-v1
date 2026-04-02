@@ -561,11 +561,20 @@ service cloud.firestore {
     match /parentWorksheetLibrary/{worksheetId} {
       allow read: if isAdmin();
       allow read: if isParent()
-        && ('targetParentIds' in resource.data)
-        && (resource.data.targetParentIds is list)
         && (
-          request.auth.uid in resource.data.targetParentIds
-          || 'all_parents' in resource.data.targetParentIds
+          (
+            ('targetCourseIds' in resource.data)
+            && (resource.data.targetCourseIds is list)
+            && (resource.data.targetCourseIds.size() > 0)
+          )
+          || (
+            ('targetParentIds' in resource.data)
+            && (resource.data.targetParentIds is list)
+            && (
+              request.auth.uid in resource.data.targetParentIds
+              || 'all_parents' in resource.data.targetParentIds
+            )
+          )
         );
       allow create, update, delete: if isAdmin();
     }

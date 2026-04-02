@@ -46,10 +46,8 @@ type WorksheetFormState = {
   courseId: string;
   enrollmentId: string;
   stageTag: string;
-  manualParentIds: string;
   sortOrder: string;
   isActive: boolean;
-  isGlobal: boolean;
 };
 
 const INITIAL_FORM: WorksheetFormState = {
@@ -62,21 +60,8 @@ const INITIAL_FORM: WorksheetFormState = {
   courseId: '',
   enrollmentId: '',
   stageTag: '',
-  manualParentIds: '',
   sortOrder: '0',
   isActive: true,
-  isGlobal: false,
-};
-
-const parseCsv = (value: string): string[] => {
-  return Array.from(
-    new Set(
-      String(value || '')
-        .split(',')
-        .map((entry) => entry.trim())
-        .filter(Boolean),
-    ),
-  );
 };
 
 const toMillis = (value: any): number => {
@@ -154,10 +139,6 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
   const kids = useMemo(() => kidsQuery.data ?? [], [kidsQuery.data]);
   const courses = useMemo(() => coursesQuery.data ?? [], [coursesQuery.data]);
   const enrollments = useMemo(() => enrollmentsQuery.data ?? [], [enrollmentsQuery.data]);
-  const selectedKid = useMemo(
-    () => kids.find((kid) => String(kid.id) === String(form.kidId)) ?? null,
-    [kids, form.kidId],
-  );
   const selectedEnrollment = useMemo(
     () => enrollments.find((enrollment) => String(enrollment.id) === String(form.enrollmentId)) ?? null,
     [enrollments, form.enrollmentId],
@@ -181,34 +162,12 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const deriveTargetParentIds = (): string[] => {
-    if (form.isGlobal) return ['all_parents'];
-
-    const ids = new Set<string>();
-    parseCsv(form.manualParentIds).forEach((id) => ids.add(id));
-
-    const parentIdsFromKid = Array.isArray(selectedKid?.parentIds)
-      ? selectedKid.parentIds
-      : [];
-    parentIdsFromKid
-      .map((id: unknown) => String(id || '').trim())
-      .filter(Boolean)
-      .forEach((id: string) => ids.add(id));
-
-    const parentIdFromKid = String(
-      selectedKid?.primaryParentId || selectedKid?.parentId || '',
-    ).trim();
-    if (parentIdFromKid) ids.add(parentIdFromKid);
-
-    const parentIdFromEnrollment = String(selectedEnrollment?.parentId || '').trim();
-    if (parentIdFromEnrollment) ids.add(parentIdFromEnrollment);
-
-    return Array.from(ids);
-  };
-
   const handleSave = async () => {
     const title = String(form.title || '').trim();
     const url = normalizeWorksheetUrl(form.url);
+    const directCourseId = String(form.courseId || '').trim();
+    const inferredCourseId = String(selectedEnrollment?.courseId || '').trim();
+    const resolvedCourseId = directCourseId || inferredCourseId;
     if (!title) {
       toast({ title: 'Title required', description: 'Please add a worksheet title.', variant: 'destructive' });
       return;
@@ -217,12 +176,10 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
       toast({ title: 'Valid URL required', description: 'Please paste a valid worksheet link.', variant: 'destructive' });
       return;
     }
-
-    const targetParentIds = deriveTargetParentIds();
-    if (!form.isGlobal && targetParentIds.length === 0) {
+    if (!resolvedCourseId) {
       toast({
-        title: 'Parent scope required',
-        description: 'Select a child/enrollment or provide parent UID(s).',
+        title: 'Course required',
+        description: 'Please select the course this worksheet belongs to.',
         variant: 'destructive',
       });
       return;
@@ -232,21 +189,20 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
     const payload = {
       title,
       url,
+      worksheetUrl: url,
       description: String(form.description || '').trim(),
       category: String(form.category || '').trim(),
       thumbnailUrl: normalizeWorksheetUrl(form.thumbnailUrl),
-      targetParentIds,
+      targetCourseIds: [resolvedCourseId],
       targetKidIds: form.kidId ? [form.kidId] : [],
-      targetCourseIds: (() => {
-        const direct = String(form.courseId || '').trim();
-        if (direct) return [direct];
-        const inferred = String(selectedEnrollment?.courseId || '').trim();
-        return inferred ? [inferred] : [];
-      })(),
+      targetChildIds: form.kidId ? [form.kidId] : [],
       targetEnrollmentIds: form.enrollmentId ? [form.enrollmentId] : [],
       targetStageTags: form.stageTag ? [String(form.stageTag).trim()] : [],
+      stageTags: form.stageTag ? [String(form.stageTag).trim()] : [],
       isActive: form.isActive,
+      active: form.isActive,
       isArchived: false,
+      archived: false,
       sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
       updatedAt: serverTimestamp(),
       updatedBy: user?.uid || null,
@@ -293,10 +249,8 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
       courseId: item.targetCourseIds[0] || '',
       enrollmentId: item.targetEnrollmentIds[0] || '',
       stageTag: item.targetStageTags[0] || '',
-      manualParentIds: item.targetParentIds.filter((id) => id !== 'all_parents').join(', '),
       sortOrder: String(item.sortOrder ?? 0),
       isActive: item.isActive,
-      isGlobal: item.targetParentIds.includes('all_parents'),
     });
   };
 
@@ -390,29 +344,13 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
             />
           </div>
           <div className="space-y-2">
-            <Label>Child Scope (optional)</Label>
-            <Select value={form.kidId || '__none__'} onValueChange={(value) => updateForm('kidId', value === '__none__' ? '' : value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select child" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__none__">No child scope</SelectItem>
-                {kids.map((kid) => (
-                  <SelectItem key={kid.id} value={kid.id}>
-                    {kid.fullName || kid.name || kid.id}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label>Course Scope (optional)</Label>
+            <Label>Course Scope *</Label>
             <Select value={form.courseId || '__none__'} onValueChange={(value) => updateForm('courseId', value === '__none__' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select course" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="__none__">No course scope</SelectItem>
+                <SelectItem value="__none__">Select course</SelectItem>
                 {courses.map((course) => (
                   <SelectItem key={course.id} value={course.id}>
                     {course.name || course.title || course.label || course.id}
@@ -421,6 +359,47 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-2">
+            <Label>Sort Order</Label>
+            <Input
+              type="number"
+              value={form.sortOrder}
+              onChange={(event) => updateForm('sortOrder', event.target.value)}
+              placeholder="0"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label>Description (optional)</Label>
+            <Textarea
+              value={form.description}
+              onChange={(event) => updateForm('description', event.target.value)}
+              placeholder="Short parent-facing worksheet guidance"
+              rows={3}
+            />
+          </div>
+        </div>
+
+        <details className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-900/40">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-700 dark:text-slate-100">
+            Advanced targeting (optional)
+          </summary>
+          <div className="mt-3 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Child Scope (optional)</Label>
+              <Select value={form.kidId || '__none__'} onValueChange={(value) => updateForm('kidId', value === '__none__' ? '' : value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select child" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">No child scope</SelectItem>
+                  {kids.map((kid) => (
+                    <SelectItem key={kid.id} value={kid.id}>
+                      {kid.fullName || kid.name || kid.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           <div className="space-y-2">
             <Label>Enrollment Scope (optional)</Label>
             <Select
@@ -449,33 +428,12 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
               placeholder="Stage 2 / Short vowels"
             />
           </div>
-          <div className="space-y-2">
-            <Label>Manual Parent UID(s) (optional)</Label>
-            <Input
-              value={form.manualParentIds}
-              onChange={(event) => updateForm('manualParentIds', event.target.value)}
-              placeholder="uid1, uid2"
-            />
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-xs text-slate-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-slate-300 md:col-span-2">
+              Legacy parent targeting fields are intentionally hidden from normal workflow.
+              Course targeting drives parent visibility by default.
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>Sort Order</Label>
-            <Input
-              type="number"
-              value={form.sortOrder}
-              onChange={(event) => updateForm('sortOrder', event.target.value)}
-              placeholder="0"
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label>Description (optional)</Label>
-            <Textarea
-              value={form.description}
-              onChange={(event) => updateForm('description', event.target.value)}
-              placeholder="Short parent-facing worksheet guidance"
-              rows={3}
-            />
-          </div>
-        </div>
+        </details>
 
         <div className="flex flex-wrap items-center gap-4">
           <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
@@ -485,14 +443,6 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
               onChange={(event) => updateForm('isActive', event.target.checked)}
             />
             Active (visible in parent library)
-          </label>
-          <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-            <input
-              type="checkbox"
-              checked={form.isGlobal}
-              onChange={(event) => updateForm('isGlobal', event.target.checked)}
-            />
-            Global for all parents
           </label>
         </div>
 
@@ -548,7 +498,7 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
                         {item.targetKidIds.length ? <span>Kid: {item.targetKidIds.join(', ')}</span> : null}
                         {item.targetCourseIds.length ? <span>Course: {item.targetCourseIds.join(', ')}</span> : null}
                         {item.targetEnrollmentIds.length ? <span>Enrollment: {item.targetEnrollmentIds.join(', ')}</span> : null}
-                        {item.targetParentIds.includes('all_parents') ? <span>Global: all parents</span> : null}
+                        {!item.targetCourseIds.length && item.targetParentIds.length ? <span>Legacy parent scope</span> : null}
                       </div>
                     </div>
 
@@ -610,8 +560,9 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
           Scope behavior
         </div>
         <ul className="mt-2 space-y-1 list-disc pl-5">
-          <li>Parent visibility is controlled by `targetParentIds` (or global `all_parents`).</li>
-          <li>Child/course/enrollment scope is used for parent-side filtering inside the Classes → Worksheets view.</li>
+          <li>Parent visibility is primarily controlled by `targetCourseIds` via child active enrollments.</li>
+          <li>Optional `targetKidIds` and `targetEnrollmentIds` apply additional filtering.</li>
+          <li>Legacy `targetParentIds` docs are still readable as fallback during transition.</li>
           <li>This feature stores worksheet links only. Files remain in Google Drive.</li>
         </ul>
       </Card>

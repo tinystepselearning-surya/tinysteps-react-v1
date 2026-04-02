@@ -2295,21 +2295,74 @@ export default function ParentDashboard() {
     },
   });
 
+  const worksheetEnrollmentContext = useMemo(() => {
+    const enrollments = (enrollmentsQuery.data ?? []) as Enrollment[];
+    const activeEnrollmentIds: string[] = [];
+    const activeCourseIds = new Set<string>();
+
+    enrollments.forEach((enrollment) => {
+      const status = String((enrollment as any)?.status || "active").trim().toLowerCase();
+      const isInactive =
+        status === "inactive"
+        || status === "cancelled"
+        || status === "canceled"
+        || status === "withdrawn"
+        || status === "closed"
+        || status === "completed"
+        || status === "archived";
+      if (isInactive) return;
+
+      const enrollmentId = String((enrollment as any)?.id || "").trim();
+      if (enrollmentId) activeEnrollmentIds.push(enrollmentId);
+
+      const courseId = String((enrollment as any)?.courseId || "").trim();
+      if (courseId) activeCourseIds.add(courseId);
+    });
+
+    return {
+      activeEnrollmentIds: Array.from(new Set(activeEnrollmentIds)).sort(),
+      activeCourseIds: Array.from(activeCourseIds).sort(),
+    };
+  }, [enrollmentsQuery.data]);
+
   const parentWorksheetsQuery = useQuery({
-    queryKey: ["parentWorksheets", user?.uid],
+    queryKey: ["parentWorksheets", user?.uid, worksheetEnrollmentContext.activeCourseIds.join("|")],
     enabled: !!user?.uid && activeTab === "classes",
     staleTime: 0,
     refetchOnWindowFocus: false,
     refetchOnMount: "always",
     queryFn: async (): Promise<ParentWorksheetItem[]> => {
       if (!user?.uid) return [];
-      const worksheetRef = query(
-        collection(db, "parentWorksheetLibrary"),
-        where("targetParentIds", "array-contains-any", [user.uid, "all_parents"]),
-        limit(200),
+      const worksheetCollection = collection(db, "parentWorksheetLibrary");
+      const worksheetMap = new Map<string, ParentWorksheetItem>();
+
+      const courseIdChunks = chunkIds(worksheetEnrollmentContext.activeCourseIds, 10);
+      for (const chunk of courseIdChunks) {
+        if (!chunk.length) continue;
+        const byCourseSnap = await getDocs(
+          query(
+            worksheetCollection,
+            where("targetCourseIds", "array-contains-any", chunk),
+            limit(200),
+          ),
+        );
+        byCourseSnap.docs.forEach((entry) => {
+          worksheetMap.set(entry.id, toParentWorksheetItem(entry.id, entry.data()));
+        });
+      }
+
+      const legacySnap = await getDocs(
+        query(
+          worksheetCollection,
+          where("targetParentIds", "array-contains-any", [user.uid, "all_parents"]),
+          limit(200),
+        ),
       );
-      const snap = await getDocs(worksheetRef);
-      return snap.docs.map((entry) => toParentWorksheetItem(entry.id, entry.data()));
+      legacySnap.docs.forEach((entry) => {
+        worksheetMap.set(entry.id, toParentWorksheetItem(entry.id, entry.data()));
+      });
+
+      return Array.from(worksheetMap.values());
     },
   });
 
@@ -3522,22 +3575,16 @@ export default function ParentDashboard() {
     });
   }, [enrollmentsQuery.data, selectedKidId, teacherLookupQuery.data, formatCourseLabel]);
 
-  const currentEnrollmentIds = useMemo(() => {
-    return profileEnrollments
-      .map((enrollment) => String(enrollment.id || "").trim())
-      .filter(Boolean);
-  }, [profileEnrollments]);
-
   const visibleParentWorksheets = useMemo(() => {
     const worksheets = parentWorksheetsQuery.data ?? [];
-    const courseId = String(displayCourseId || "").trim() || null;
     return worksheets
       .filter((worksheet) => worksheet.isActive && !worksheet.isArchived)
       .filter((worksheet) =>
         worksheetMatchesContext(worksheet, {
+          parentUid: user?.uid || null,
           kidId: selectedKidId || null,
-          courseId,
-          enrollmentIds: currentEnrollmentIds,
+          courseIds: worksheetEnrollmentContext.activeCourseIds,
+          enrollmentIds: worksheetEnrollmentContext.activeEnrollmentIds,
         }),
       )
       .sort((a, b) => {
@@ -3546,7 +3593,7 @@ export default function ParentDashboard() {
         const bUpdated = toDateOrNull(b.updatedAt)?.getTime() ?? 0;
         return bUpdated - aUpdated;
       });
-  }, [parentWorksheetsQuery.data, displayCourseId, selectedKidId, currentEnrollmentIds]);
+  }, [parentWorksheetsQuery.data, selectedKidId, user?.uid, worksheetEnrollmentContext]);
 
   const groupedParentWorksheets = useMemo(() => {
     const groups = new Map<string, ParentWorksheetGroup>();

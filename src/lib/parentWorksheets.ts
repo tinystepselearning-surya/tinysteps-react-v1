@@ -49,20 +49,32 @@ export const getSafeWorksheetUrl = (value?: string | null): string | null => {
 };
 
 export const toParentWorksheetItem = (id: string, data: any): ParentWorksheetItem => {
+  const targetKidIds = normalizeStringArray(data?.targetKidIds);
+  const targetChildIds = normalizeStringArray(data?.targetChildIds);
+  const targetStageTags = normalizeStringArray(data?.targetStageTags);
+  const stageTags = normalizeStringArray(data?.stageTags);
+  const worksheetUrl = String(data?.worksheetUrl || "").trim();
+  const legacyUrl = String(data?.url || "").trim();
+
+  const hasActive = typeof data?.active === "boolean";
+  const hasIsActive = typeof data?.isActive === "boolean";
+  const hasArchived = typeof data?.archived === "boolean";
+  const hasIsArchived = typeof data?.isArchived === "boolean";
+
   return {
     id,
     title: String(data?.title || "").trim(),
-    url: String(data?.url || "").trim(),
+    url: worksheetUrl || legacyUrl,
     description: String(data?.description || "").trim(),
     category: String(data?.category || "").trim(),
     thumbnailUrl: String(data?.thumbnailUrl || "").trim(),
     targetParentIds: normalizeStringArray(data?.targetParentIds),
-    targetKidIds: normalizeStringArray(data?.targetKidIds),
+    targetKidIds: Array.from(new Set([...targetKidIds, ...targetChildIds])),
     targetCourseIds: normalizeStringArray(data?.targetCourseIds),
     targetEnrollmentIds: normalizeStringArray(data?.targetEnrollmentIds),
-    targetStageTags: normalizeStringArray(data?.targetStageTags),
-    isActive: data?.isActive !== false,
-    isArchived: data?.isArchived === true,
+    targetStageTags: Array.from(new Set([...targetStageTags, ...stageTags])),
+    isActive: hasActive ? data.active === true : hasIsActive ? data.isActive !== false : true,
+    isArchived: hasArchived ? data.archived === true : hasIsArchived ? data.isArchived === true : false,
     sortOrder: Number.isFinite(Number(data?.sortOrder)) ? Number(data.sortOrder) : 0,
     createdAt: data?.createdAt ?? null,
     updatedAt: data?.updatedAt ?? null,
@@ -75,12 +87,14 @@ export const worksheetMatchesContext = (
   worksheet: ParentWorksheetItem,
   context: {
     kidId?: string | null;
-    courseId?: string | null;
+    parentUid?: string | null;
+    courseIds?: string[];
     enrollmentIds?: string[];
   },
 ): boolean => {
   const kidId = String(context.kidId || "").trim();
-  const courseId = String(context.courseId || "").trim();
+  const parentUid = String(context.parentUid || "").trim();
+  const courseIds = new Set((context.courseIds || []).map((id) => String(id || "").trim()).filter(Boolean));
   const enrollmentIds = new Set((context.enrollmentIds || []).map((id) => String(id || "").trim()).filter(Boolean));
 
   if (worksheet.targetKidIds.length > 0) {
@@ -88,7 +102,13 @@ export const worksheetMatchesContext = (
   }
 
   if (worksheet.targetCourseIds.length > 0) {
-    if (!courseId || !worksheet.targetCourseIds.includes(courseId)) return false;
+    const hasCourseMatch = worksheet.targetCourseIds.some((id) => courseIds.has(id));
+    if (!hasCourseMatch) return false;
+  } else if (worksheet.targetParentIds.length > 0) {
+    const hasLegacyParentMatch =
+      worksheet.targetParentIds.includes("all_parents")
+      || (!!parentUid && worksheet.targetParentIds.includes(parentUid));
+    if (!hasLegacyParentMatch) return false;
   }
 
   if (worksheet.targetEnrollmentIds.length > 0) {

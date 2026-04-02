@@ -263,10 +263,10 @@ export default function OnlinePhonicsReadingClassesPage() {
           Once your child masters phonics and reading, continue their learning journey with:
         </p>
         <div className="grid md:grid-cols-3 gap-4">
-          <Link to="/english-grammar-writing-classes" className="text-[#4a7c2c] hover:underline font-semibold block">
+          <Link to="/grammar" className="text-[#4a7c2c] hover:underline font-semibold block">
             → Grammar & Writing Classes →
           </Link>
-          <Link to="/public-speaking-communication-kids" className="text-[#4a7c2c] hover:underline font-semibold block">
+          <Link to="/speaking" className="text-[#4a7c2c] hover:underline font-semibold block">
             → Public Speaking Classes →
           </Link>
           <Link to="/courses" className="text-[#4a7c2c] hover:underline font-semibold block">
@@ -304,11 +304,11 @@ export default function OnlinePhonicsReadingClassesPage() {
             Full Curriculum
           </Link>
           <span className="text-gray-400">•</span>
-          <Link to="/english-grammar-writing-classes" className="text-white hover:text-gray-200 underline">
+          <Link to="/grammar" className="text-white hover:text-gray-200 underline">
             Grammar Classes
           </Link>
           <span className="text-gray-400">•</span>
-          <Link to="/public-speaking-communication-kids" className="text-white hover:text-gray-200 underline">
+          <Link to="/speaking" className="text-white hover:text-gray-200 underline">
             Speaking Classes
           </Link>
         </div>

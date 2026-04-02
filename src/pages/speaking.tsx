@@ -111,13 +111,13 @@ export default function SpeakingPage() {
     <div>
       <Meta
         title="Online Public Speaking Classes for Kids | Tiny Steps Learning"
-        description="Live 1:1 and small-group public speaking classes for kids ages 4-15. Free assessment, confidence building, presentation skills, storytelling with trained coaches."
+        description="Online public speaking classes for kids ages 4-15 with live 1:1 and small-group coaching. Free assessment, confidence building, presentation skills, and storytelling."
         canonical="https://tinystepslearning.com/speaking"
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Public Speaking"
-        title="Super Speakers Studio"
+        title="Online Public Speaking Classes for Kids"
         subtitle="From shy to spotlight-ready with live coaches, AI observation notes, and stage-based showcases."
         badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[

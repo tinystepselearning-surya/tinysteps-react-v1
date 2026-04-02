@@ -340,16 +340,16 @@ const ROUTE_SEO_CONFIG = {
     robots: 'index, follow',
   },
   '/english-grammar-writing-classes': {
-    title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
-    description: 'Explore Tiny Steps grammar tracks: Basic Grammar (36 lessons) and Advanced Grammar (36 lessons) for sentence structure, grammar control, and writing clarity.',
-    canonicalPath: '/english-grammar-writing-classes',
-    robots: 'index, follow',
+    title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
+    description: 'This legacy URL has moved to Tiny Steps online grammar classes for kids. Visit the canonical grammar page for current details.',
+    canonicalPath: '/grammar',
+    robots: 'noindex, follow',
   },
   '/public-speaking-communication-kids': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
-    description: 'Explore Tiny Steps public speaking tracks: Public Speaking (Basic) and Public Speaking (Advanced), each with 36 lessons for confidence, structure, and presentation skills.',
-    canonicalPath: '/public-speaking-communication-kids',
-    robots: 'index, follow',
+    title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
+    description: 'This legacy URL has moved to Tiny Steps online public speaking classes for kids. Visit the canonical speaking page for current details.',
+    canonicalPath: '/speaking',
+    robots: 'noindex, follow',
   },
 };
 

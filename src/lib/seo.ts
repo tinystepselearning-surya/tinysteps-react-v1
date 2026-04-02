@@ -603,6 +603,20 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogType: 'website',
   },
   ...SUBJECT_LANDING_ROUTE_META,
+  '/english-grammar-writing-classes': {
+    title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
+    description: 'This legacy URL has moved to Tiny Steps online grammar classes for kids. Visit the canonical grammar page for current details.',
+    canonicalPath: '/grammar',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
+  '/public-speaking-communication-kids': {
+    title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
+    description: 'This legacy URL has moved to Tiny Steps online public speaking classes for kids. Visit the canonical speaking page for current details.',
+    canonicalPath: '/speaking',
+    robots: 'noindex, follow',
+    ogType: 'website',
+  },
   // Protected / Portal Routes — NOINDEX
   '/login': {
     title: 'Sign In | Tiny Steps Learning',
