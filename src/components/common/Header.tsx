@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -21,6 +21,21 @@ const TICKER_ITEMS = [
   'Ages 4–10 • 35–40 min live classes',
   'Phonics + Reading + Speaking • Daily practice',
   'Parents get weekly progress updates',
+];
+
+const PRIMARY_LINKS: LinkItem[] = [
+  { label: 'Courses', href: '/courses' },
+  { label: 'Curriculum', href: '/curriculum' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Summer Camp', href: '/summer-camps' },
+  { label: 'Contact', href: '/contact' },
+];
+
+const LOGIN_LINKS: LinkItem[] = [
+  { label: 'Parent Login', href: '/parent/login' },
+  { label: 'Teacher Login', href: '/teacher/login' },
+  { label: 'Learning Partner Login', href: '/learning-partner/login' },
 ];
 
 function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
@@ -81,21 +96,6 @@ export default function Header() {
   const [showLoginMenu, setShowLoginMenu] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
 
-  const primaryLinks: LinkItem[] = [
-    { label: 'Courses', href: '/courses' },
-    { label: 'Curriculum', href: '/curriculum' },
-    { label: 'Blog', href: '/blog' },
-    { label: 'Pricing', href: '/pricing' },
-    { label: 'Summer Camp', href: '/summer-camps' },
-    { label: 'Contact', href: '/contact' },
-  ];
-
-  const loginLinks: LinkItem[] = [
-    { label: 'Parent Login', href: '/parent/login' },
-    { label: 'Teacher Login', href: '/teacher/login' },
-    { label: 'Learning Partner Login', href: '/learning-partner/login' },
-  ];
-
   const isHomePage = location.pathname === '/';
 
   useEffect(() => {
@@ -137,7 +137,7 @@ export default function Header() {
     };
   }, [isHomePage]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       const [{ signOut }, { auth }] = await Promise.all([
         import('firebase/auth'),
@@ -160,48 +160,21 @@ export default function Header() {
     };
 
     navigate(currentRole ? loginMap[currentRole] || '/login' : '/login');
-  };
+  }, [clearUser, navigate, user?.role]);
 
-  const handleBookAssessment = () => {
+  const handleBookAssessment = useCallback(() => {
     if (location.pathname === '/') {
       document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
     navigate('/?book=1');
-  };
+  }, [location.pathname, navigate]);
 
-  return (
-    <nav
-      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
-        isSticky ? 'bg-white/88 shadow-[0_15px_35px_rgba(8,15,40,0.12)] backdrop-blur-lg' : 'bg-transparent'
-      }`}
-    >
-      <PublicAnnouncementTicker isLoggedIn={!!user} />
-
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-        <button
-          type="button"
-          className="flex items-center gap-2 text-left"
-          onClick={() => navigate('/')}
-          aria-label="Go to Tiny Steps home page"
-        >
-          <img
-            src="/apple-touch-icon.png"
-            alt="Tiny Steps Logo"
-            width={44}
-            height={44}
-            decoding="async"
-            fetchPriority="high"
-            className="h-11 w-11 object-contain"
-          />
-          <div>
-            <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
-            <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
-          </div>
-        </button>
-
+  const desktopHeaderContent = useMemo(
+    () => (
+      <>
         <div className="hidden items-center gap-6 text-sm font-semibold text-gray-700 lg:flex">
-          {primaryLinks.map((link) => (
+          {PRIMARY_LINKS.map((link) => (
             <Link key={link.href} to={link.href} className="transition-colors hover:text-tiny-blue-600">
               {link.label}
             </Link>
@@ -221,7 +194,7 @@ export default function Header() {
             {showLoginMenu ? (
               <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-2xl backdrop-blur" role="menu">
                 <div className="flex flex-col gap-1 text-sm text-slate-700">
-                  {loginLinks.map((link) => (
+                  {LOGIN_LINKS.map((link) => (
                     <Link
                       key={link.href}
                       to={link.href}
@@ -266,6 +239,42 @@ export default function Header() {
             Book Free Assessment
           </button>
         </div>
+      </>
+    ),
+    [handleBookAssessment, handleLogout, showLoginMenu, user]
+  );
+
+  return (
+    <nav
+      className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
+        isSticky ? 'bg-white/88 shadow-[0_15px_35px_rgba(8,15,40,0.12)] backdrop-blur-lg' : 'bg-transparent'
+      }`}
+    >
+      <PublicAnnouncementTicker isLoggedIn={!!user} />
+
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+        <button
+          type="button"
+          className="flex items-center gap-2 text-left"
+          onClick={() => navigate('/')}
+          aria-label="Go to Tiny Steps home page"
+        >
+          <img
+            src="/apple-touch-icon.png"
+            alt="Tiny Steps Logo"
+            width={44}
+            height={44}
+            decoding="async"
+            fetchPriority="high"
+            className="h-11 w-11 object-contain"
+          />
+          <div>
+            <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
+            <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
+          </div>
+        </button>
+
+        {desktopHeaderContent}
 
         <div className="flex items-center gap-3 lg:hidden">
           <button
@@ -309,7 +318,7 @@ export default function Header() {
       >
         <div className="space-y-5 px-5 py-6 text-sm font-semibold text-slate-700">
           <div className="space-y-3">
-            {primaryLinks.map((link) => (
+            {PRIMARY_LINKS.map((link) => (
               <Link key={link.href} to={link.href} onClick={() => setIsOpen(false)} className="block">
                 {link.label}
               </Link>
@@ -319,7 +328,7 @@ export default function Header() {
           <div className="border-t border-slate-200 pt-4">
             <p className="text-[11px] uppercase tracking-[0.24em] text-slate-500">Login</p>
             <div className="mt-3 space-y-3">
-              {loginLinks.map((link) => (
+              {LOGIN_LINKS.map((link) => (
                 <Link key={link.href} to={link.href} onClick={() => setIsOpen(false)} className="block">
                   {link.label}
                 </Link>

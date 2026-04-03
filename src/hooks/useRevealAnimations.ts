@@ -15,21 +15,37 @@ const useRevealAnimations = () => {
       { threshold: 0.15 }
     );
 
-    const trackElements = () => {
-      const elements = document.querySelectorAll<HTMLElement>('[data-animate]');
-      elements.forEach((el) => {
-        const delay = el.dataset.animateDelay;
-        if (delay) {
-          el.style.transitionDelay = delay;
-        }
-        observer.observe(el);
-      });
+    const observedElements = new WeakSet<HTMLElement>();
+
+    const registerElement = (element: HTMLElement) => {
+      if (observedElements.has(element)) return;
+
+      const delay = element.dataset.animateDelay;
+      if (delay) {
+        element.style.transitionDelay = delay;
+      }
+
+      observer.observe(element);
+      observedElements.add(element);
     };
 
-    trackElements();
+    const registerTree = (root: Element | Document | DocumentFragment) => {
+      if (root instanceof HTMLElement && root.matches('[data-animate]')) {
+        registerElement(root);
+      }
 
-    const mutationObserver = new MutationObserver(() => {
-      trackElements();
+      root.querySelectorAll<HTMLElement>('[data-animate]').forEach(registerElement);
+    };
+
+    registerTree(document);
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof Element)) return;
+          registerTree(node);
+        });
+      });
     });
     mutationObserver.observe(document.body, { childList: true, subtree: true });
 

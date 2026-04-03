@@ -220,16 +220,19 @@ const Layout: FC = () => {
       cancelIdleCallback?: (id: number) => void;
     };
 
-    const activate = () => setShowFloatingTools(true);
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+    let interactionTimeoutId: number | undefined;
+
+    const activate = () => setShowFloatingTools((current) => (current ? current : true));
     const onFirstInteraction = () => {
-      activate();
+      if (interactionTimeoutId !== undefined) return;
+
+      interactionTimeoutId = window.setTimeout(activate, 1200);
       window.removeEventListener('pointerdown', onFirstInteraction);
       window.removeEventListener('keydown', onFirstInteraction);
       window.removeEventListener('scroll', onFirstInteraction);
     };
-
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
 
     if (typeof win.requestIdleCallback === 'function') {
       idleId = win.requestIdleCallback(activate, { timeout: 4500 });
@@ -249,6 +252,9 @@ const Layout: FC = () => {
       }
       if (timeoutId !== undefined) {
         window.clearTimeout(timeoutId);
+      }
+      if (interactionTimeoutId !== undefined) {
+        window.clearTimeout(interactionTimeoutId);
       }
     };
   }, [hideSupportWidgets]);
