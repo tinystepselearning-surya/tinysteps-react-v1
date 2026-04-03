@@ -19,6 +19,7 @@ describe('FloatingAssistant', () => {
 
   afterEach(() => {
     useAuthStore.setState({ user: null })
+    window.history.replaceState({}, '', '/')
     vi.useRealTimers()
 
     // @ts-ignore
@@ -93,5 +94,21 @@ describe('FloatingAssistant', () => {
     })
 
     expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+  })
+
+  it('does not render on protected app routes even if auth store user is null', async () => {
+    window.history.pushState({}, '', '/surya')
+    await renderAnonymousWidget()
+
+    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
+  })
+
+  it('does not render on login routes', async () => {
+    window.history.pushState({}, '', '/teacher/login')
+    await renderAnonymousWidget()
+
+    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
   })
 })

@@ -11,6 +11,31 @@ const LEGACY_HIDDEN_KEY = 'ts_floating_assistant_hidden';
 const PANEL_DISMISSED_KEY = 'ts_floating_assistant_panel_dismissed';
 const WHATSAPP_URL =
   'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20have%20a%20question%20about%20your%20programs.';
+const APP_ROUTE_PREFIXES = [
+  '/surya',
+  '/teacher',
+  '/parent',
+  '/kids',
+  '/learning-partner/dashboard',
+  '/learningpartner/dashboard',
+  '/admin',
+];
+const AUTH_ENTRY_ROUTES = new Set([
+  '/login',
+  '/surya/login',
+  '/admin/login',
+  '/teacher/login',
+  '/parent/login',
+  '/learning-partner/login',
+  '/learningpartner/login',
+  '/kid/login',
+]);
+
+const normalizePathname = (pathname: string): string => {
+  const lower = pathname.toLowerCase();
+  if (lower !== '/' && lower.endsWith('/')) return lower.replace(/\/+$/, '');
+  return lower;
+};
 
 const readPanelDismissedState = () => {
   if (typeof window === 'undefined') return false;
@@ -50,26 +75,12 @@ export default function FloatingAssistant() {
     return () => clearTimeout(timer);
   }, [askOpen, panelDismissed]);
 
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-  const DASHBOARD_PREFIXES = [
-    '/surya',
-    '/teacher',
-    '/parent',
-    '/kids',
-    '/learning-partner/dashboard',
-    '/learningpartner/dashboard',
-    '/admin',
-  ];
+  const pathname = typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '';
+  const isAppRoute = APP_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  const isAuthEntryRoute = AUTH_ENTRY_ROUTES.has(pathname);
 
-  const isDashboardRoute = DASHBOARD_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-
-  if (user) {
-    if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') {
-      return null;
-    }
-
-    if (isDashboardRoute) return null;
-  }
+  if (isAppRoute || isAuthEntryRoute) return null;
+  if (user) return null;
 
   const collapsePanel = () => {
     setPromptVisible(false);
