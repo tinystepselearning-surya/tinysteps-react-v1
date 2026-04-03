@@ -31,6 +31,7 @@ export const parentsMeta: Record<string, ParentMeta> = {
         { "@type": "WebPage", "name": "Helping with homework", "url": "https://tinystepslearning.com/parents/helping-with-homework" },
         { "@type": "WebPage", "name": "Phonics mission — quick daily practice", "url": "https://tinystepslearning.com/parents/phonics-mission" },
         { "@type": "WebPage", "name": "Reading at home — simple routines", "url": "https://tinystepslearning.com/parents/reading-at-home" },
+        { "@type": "WebPage", "name": "Phonics for Parents — deep research guide", "url": "https://tinystepslearning.com/blog/phonics-for-parents-guide" },
         { "@type": "WebPage", "name": "Building speaking confidence", "url": "https://tinystepslearning.com/parents/speech-confidence" },
         { "@type": "WebPage", "name": "Common mistakes parents make", "url": "https://tinystepslearning.com/parents/common-mistakes" }
       ]

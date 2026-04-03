@@ -107,6 +107,17 @@ const faqItems = [
       'Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success.',
   },
 ];
+const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
+const PHONICS_SEO_KEYWORDS = [
+  'phonics for kids',
+  'phonics for parents',
+  'what is phonics',
+  'why phonics is important',
+  'how to teach phonics at home',
+  'online phonics classes for kids',
+  'phonics classes in India',
+  'SATPIN phonics',
+];
 
 type PhonicsSeoOverrides = {
   title?: string;
@@ -253,6 +264,7 @@ export default function PhonicsPage({
     applySeo({
       title,
       description,
+      keywords: PHONICS_SEO_KEYWORDS,
       canonicalPath,
       ogType: "website",
       jsonLd: extraJsonLd?.length ? [...baseJsonLd, ...extraJsonLd] : baseJsonLd,
@@ -332,6 +344,26 @@ export default function PhonicsPage({
         </Link>
       </section>
 
+      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8ed_0%,#ffffff_48%,#eef7ff_100%)] px-6 py-12 shadow-sm">
+        <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents doing their research</p>
+        <h2 className="mt-3 text-2xl font-bold text-slate-900">What phonics is, why it matters, and how to teach it at home</h2>
+        <p className="mt-4 text-gray-700">
+          If you are still figuring out what phonics actually means, why some children struggle to blend,
+          or how to support reading without pressure, start with our research guide written for parents.
+        </p>
+        <p className="mt-3 text-gray-700">
+          It covers what phonics is, why it is important, how multilingual homes can approach it, and a
+          simple 10-minute routine you can use at home.
+        </p>
+        <Link
+          to={PHONICS_RESEARCH_GUIDE_PATH}
+          className="mt-6 inline-flex items-center gap-2 rounded-full border border-slate-900 px-6 py-3 font-semibold text-slate-900 transition hover:bg-slate-900 hover:text-white"
+        >
+          Read the phonics research guide
+          <span className="text-lg">→</span>
+        </Link>
+      </section>
+
       {afterContent}
 
       {/* Next Steps Links */}
@@ -361,6 +393,12 @@ export default function PhonicsPage({
             href: '/best-online-phonics-classes-india', 
             description: 'Compare programs and make an informed choice',
             icon: '🔍'
+          },
+          { 
+            label: 'Phonics Research Guide', 
+            href: PHONICS_RESEARCH_GUIDE_PATH, 
+            description: 'What phonics is, why it matters, and how to teach it at home',
+            icon: '🧠'
           },
           { 
             label: 'Getting Started Guide', 

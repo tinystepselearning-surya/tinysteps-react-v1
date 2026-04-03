@@ -305,7 +305,7 @@ export default function HomePage() {
                   <div className="max-w-2xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents</p>
                     <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Parents Help Hub</h2>
-                    <p className="mt-3 text-gray-700 sm:text-base">Clear, step-by-step phonics and home practice guides for ages 3-12, written to reduce guesswork and make daily support feel manageable.</p>
+                    <p className="mt-3 text-gray-700 sm:text-base">Clear, step-by-step guides for parents asking what phonics is, why it matters, how to teach it at home, and how to make daily reading support feel manageable.</p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3 lg:w-[360px] lg:grid-cols-1">
                     {[
@@ -336,6 +336,12 @@ export default function HomePage() {
                   <li>
                     <Link to="/parents/reading-at-home" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
                       <span>10-minute daily reading routine</span>
+                      <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/blog/phonics-for-parents-guide" className="group flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-slate-700 transition hover:border-primary-200 hover:bg-primary-50/60 hover:text-primary-700">
+                      <span>What phonics is and how to teach it at home</span>
                       <span className="text-slate-400 transition group-hover:translate-x-0.5">→</span>
                     </Link>
                   </li>

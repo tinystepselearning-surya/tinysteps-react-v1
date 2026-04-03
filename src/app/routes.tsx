@@ -20,6 +20,7 @@ const CoursesPage = lazy(() => import('../pages/CoursesPage'));
 const CourseDetailPage = lazy(() => import('../pages/CourseDetailPage'));
 const BlogPage = lazy(() => import('../pages/BlogPage'));
 const BlogPostPage = lazy(() => import('../pages/BlogPostPage'));
+const PhonicsForParentsResearchPage = lazy(() => import('../pages/blog/PhonicsForParentsResearchPage'));
 const PricingPage = lazy(() => import('../pages/PricingPage'));
 const ChristmasTreeDecoratePublic = lazy(() => import('../pages/public/seasonal/ChristmasTreeDecoratePublic'));
 const FAQPage = lazy(() => import('../pages/FAQPage'));
@@ -305,6 +306,7 @@ const router = createBrowserRouter(
         // ---------- Public marketing site ----------
         { index: true, element: <HomePage /> },
         { path: 'blog', element: <BlogPage /> },
+        { path: 'blog/phonics-for-parents-guide', element: <PhonicsForParentsResearchPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },

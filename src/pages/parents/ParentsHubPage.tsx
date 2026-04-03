@@ -14,6 +14,24 @@ const ParentsHubPage: React.FC = () => {
         Practical parent playbooks for ages 3–12: what to do this week, how long to practise each day, what to say when your child gets stuck, and how to track real progress at home.
       </p>
 
+      <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#0f172a,#17315f)] p-6 text-white shadow-xl">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">New research guide</p>
+            <h2 className="mt-3 text-2xl font-bold">Phonics for Parents: a calm, evidence-backed reading guide</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-200">
+              A premium TinySteps article for families who want to understand phonics, build a low-pressure home routine, and support multilingual children with confidence.
+            </p>
+          </div>
+          <Link
+            to="/blog/phonics-for-parents-guide"
+            className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+          >
+            Read the research guide
+          </Link>
+        </div>
+      </div>
+
       <div className="mt-6 rounded-lg border border-primary-100 bg-primary-50/40 p-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-primary-700">Start Here First</h2>
         <ul className="mt-3 list-disc pl-5 text-sm text-gray-700">
@@ -43,6 +61,7 @@ const ParentsHubPage: React.FC = () => {
         <Link to="/parents/helping-with-homework" className="text-primary-600">Helping with homework</Link>
         <Link to="/parents/phonics-mission" className="text-primary-600">Phonics mission (quick practice)</Link>
         <Link to="/parents/reading-at-home" className="text-primary-600">Reading at home</Link>
+        <Link to="/blog/phonics-for-parents-guide" className="text-primary-600">Phonics for Parents - deep research guide</Link>
         <Link to="/parents/speech-confidence" className="text-primary-600">Speaking & confidence</Link>
         <Link to="/parents/common-mistakes" className="text-primary-600">Common mistakes parents make</Link>
       </div>
