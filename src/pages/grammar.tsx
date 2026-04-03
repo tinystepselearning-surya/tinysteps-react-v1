@@ -8,6 +8,7 @@ import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
+import { getRouteConfig } from '../lib/seo';
 
 const levels = [
   {
@@ -63,6 +64,8 @@ const faqItems = [
   }
 ];
 
+const grammarSeo = getRouteConfig('/grammar');
+
 export default function GrammarPage() {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
@@ -109,15 +112,15 @@ export default function GrammarPage() {
   return (
     <div>
       <Meta
-        title="Online Grammar and Writing Classes for Kids | Tiny Steps Learning"
-        description="Online grammar classes for kids ages 5-15 with live 1:1 and small-group sessions. Free assessment, sentence building, punctuation, and paragraph writing with trained teachers."
-        canonical="https://tinystepslearning.com/grammar"
+        title={grammarSeo?.title ?? 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning'}
+        description={grammarSeo?.description ?? 'Live online grammar and writing classes for kids with sentence structure, punctuation, and guided writing.'}
+        canonical={`https://tinystepslearning.com${grammarSeo?.canonicalPath ?? '/grammar'}`}
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Grammar"
-        title="Online Grammar Classes for Kids"
-        subtitle="Playful grammar drills + AI writing coach help kids write clearly and confidently."
+        title="Online Grammar and Writing Classes for Kids"
+        subtitle="Playful grammar drills, sentence-structure practice, and AI writing coach help kids write clearly and confidently."
         badges={['Ages 5–15', 'Live feedback', 'Lesson-based writing samples']}
         highlights={[
           'Sentence dice, grammar bingo, editing relays',
@@ -125,6 +128,17 @@ export default function GrammarPage() {
           'Parent dashboard with writing samples & next steps'
         ]}
       />
+
+      <section className="mx-auto max-w-4xl px-6 pt-8">
+        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-slate-50 to-emerald-50 p-6 shadow-sm">
+          <p className="text-lg font-semibold text-slate-900">
+            Tiny Steps runs live online grammar and writing classes for kids that build sentence structure, punctuation, grammar accuracy, and clear written expression.
+          </p>
+          <p className="mt-3 text-sm text-slate-700">
+            Parent intent: grammar classes for kids • grammar and writing classes • sentence structure and paragraph writing support.
+          </p>
+        </div>
+      </section>
 
       {/* Program at a Glance */}
       <ProgramFacts

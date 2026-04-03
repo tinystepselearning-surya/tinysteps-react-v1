@@ -17,6 +17,17 @@ const DEFAULT_TITLE = 'Tiny Steps Learning | 1:1 Online English Classes for Kids
 const DEFAULT_DESCRIPTION =
   'Premium 1:1 online English classes for ages 3–12. IB-aligned phonics, grammar and public speaking with kind live mentors, AI-guided practice, and simple stage-based progress updates for parents. Book a free assessment class.';
 
+function hasOrganizationType(schema: Record<string, any> | undefined) {
+  const type = schema?.['@type'];
+  if (typeof type === 'string') {
+    return type === 'Organization' || type === 'EducationalOrganization';
+  }
+  if (Array.isArray(type)) {
+    return type.includes('Organization') || type.includes('EducationalOrganization');
+  }
+  return false;
+}
+
 const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, jsonLd }) => {
   useEffect(() => {
     const finalTitle = title?.trim() || DEFAULT_TITLE;
@@ -59,9 +70,7 @@ const Meta: FC<MetaProps> = ({ title, description, keywords, canonical, robots, 
     if (!isPrivateDashboard) {
       // Check if page-specific jsonLd already includes Organization schema
       const pageJsonLdArray = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
-      const hasOrgSchema = pageJsonLdArray.some(
-        (schema) => schema?.['@type'] === 'Organization' || schema?.['@type'] === 'EducationalOrganization'
-      );
+      const hasOrgSchema = pageJsonLdArray.some((schema) => hasOrganizationType(schema));
 
       if (hasOrgSchema) {
         // Page already includes org schema; use as-is

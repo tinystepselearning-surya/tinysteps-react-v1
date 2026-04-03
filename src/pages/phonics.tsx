@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { applySeo } from '../lib/seo';
+import { applySeo, getRouteConfig } from '../lib/seo';
 import { createCourseSchema } from '../lib/schemas';
 import PageHero from '../components/common/PageHero';
 import LevelTabs from '../components/programs/LevelTabs';
@@ -135,14 +135,20 @@ export default function PhonicsPage({
   extraJsonLd,
 }: PhonicsPageProps) {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
-  const title = seoOverrides?.title ?? "Online Phonics Classes for Kids (Ages 3-12) | Tiny Steps";
-  const description = seoOverrides?.description ?? "Live 1:1 and small-group online phonics classes for ages 3-12. Free assessment, SATPIN method, blending practice, decodable reading with trained teachers.";
   const canonicalPath = seoOverrides?.canonicalPath ?? "/phonics";
+  const registry = getRouteConfig(canonicalPath);
+  const title = seoOverrides?.title ?? registry?.title ?? "Online Phonics Classes for Kids | Tiny Steps Learning";
+  const description =
+    seoOverrides?.description ??
+    registry?.description ??
+    "Live online phonics classes for kids with SATPIN blending, decodable reading, and stage-based parent updates.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Phonics Classes for Kids";
   const heroSubtitle = heroSubtitleOverride ?? "Multi-sensory phonics taught live with stage-based parent updates. Most children blend their first words within 4-6 lessons.";
-  const aeoCopy = introCopy ?? "Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 across India. We teach systematic phonics (SATPIN method) with multisensory activities, blending practice, and decodable reading. Most children read their first words within 4-6 lessons.";
+  const aeoCopy =
+    introCopy ??
+    "Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 with systematic phonics, SATPIN routines, blending practice, decodable reading, and stage-based parent updates. Most children read their first words within 4-6 lessons.";
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {

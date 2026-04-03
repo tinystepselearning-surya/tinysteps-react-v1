@@ -7,7 +7,7 @@ import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 
 export const organizationSchema = {
   '@context': 'https://schema.org',
-  '@type': 'Organization',
+  '@type': ['EducationalOrganization', 'Organization'],
   name: 'Tiny Steps Learning',
   alternateName: 'Tiny Steps',
   url: 'https://tinystepslearning.com',
@@ -18,6 +18,14 @@ export const organizationSchema = {
     '@type': 'Place',
     name: 'India'
   },
+  address: {
+    '@type': 'PostalAddress',
+    addressLocality: 'Hyderabad',
+    addressRegion: 'Telangana',
+    addressCountry: 'IN'
+  },
+  areaServed: 'IN',
+  serviceType: 'Online English classes for kids',
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
@@ -236,6 +244,64 @@ export function createCourseSchema(params: {
 }
 
 /**
+ * Create an ItemList-based course list schema for course hub pages.
+ * This complements per-course Course nodes with a host-carousel-friendly list.
+ */
+export function createCourseListSchema(params: {
+  name: string;
+  url: string;
+  description?: string;
+  courses: Array<{
+    id?: string;
+    name: string;
+    description: string;
+    url: string;
+    provider?: string;
+    educationalLevel?: string;
+    audienceType?: string;
+    inLanguage?: string;
+  }>;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: params.name,
+    ...(params.description ? { description: params.description } : {}),
+    url: params.url,
+    numberOfItems: params.courses.length,
+    itemListOrder: 'https://schema.org/ItemListOrderAscending',
+    itemListElement: params.courses.map((course, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      url: course.url,
+      item: {
+        '@type': 'Course',
+        ...(course.id ? { '@id': course.id } : {}),
+        name: course.name,
+        description: course.description,
+        provider: {
+          '@type': 'Organization',
+          name: course.provider || 'Tiny Steps Learning',
+          sameAs: 'https://tinystepslearning.com',
+        },
+        ...(course.educationalLevel ? { educationalLevel: course.educationalLevel } : {}),
+        ...(course.audienceType
+          ? {
+              audience: {
+                '@type': 'EducationalAudience',
+                educationalRole: 'student',
+                audienceType: course.audienceType,
+              },
+            }
+          : {}),
+        ...(course.inLanguage ? { inLanguage: course.inLanguage } : {}),
+        url: course.url,
+      },
+    })),
+  };
+}
+
+/**
  * Create Event schema for summer camp batches
  * @param name - Event name (e.g., "Phonics Fast Track Summer Camp 2026")
  * @param description - Event description
@@ -299,5 +365,6 @@ export default {
   createBlogPostingSchema,
   createFAQPageSchema,
   createCourseSchema,
+  createCourseListSchema,
   createEventSchema
 };

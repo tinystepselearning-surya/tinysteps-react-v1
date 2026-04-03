@@ -1,6 +1,6 @@
 // @ts-nocheck
 import { useEffect, useMemo, useState } from "react";
-import { applySeo } from "../lib/seo";
+import { applySeo, getRouteConfig } from "../lib/seo";
 import type { FC } from "react";
 import { CourseCard } from "../components/courses/CourseCard";
 import { catalogs } from "../content/courses";
@@ -10,7 +10,7 @@ import {
   DEFAULT_ULTRA_PREMIUM_MONTHLY_MIN_PRICE,
   formatINR,
 } from '../constants/pricing';
-import { organizationSchema } from '../lib/schemas';
+import { createCourseListSchema } from '../lib/schemas';
 import { Link } from "react-router-dom";
 
 const DASH_RE = /[\u2010\u2011\u2012\u2013\u2014\u2212]/g; // hyphen variants
@@ -106,6 +106,8 @@ const CoursesHero = () => (
 );
 
 const allCourses = catalogs;
+const coursesSeo = getRouteConfig('/courses');
+const coursesCanonicalUrl = `https://tinystepslearning.com${coursesSeo?.canonicalPath ?? '/courses'}`;
 
 const CoursesPage: FC = () => {
   const [track, setTrack] = useState<TrackOrAll>("all");
@@ -118,15 +120,16 @@ const CoursesPage: FC = () => {
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Courses', item: 'https://tinystepslearning.com/courses' },
+        { '@type': 'ListItem', position: 2, name: 'Courses', item: coursesCanonicalUrl },
       ],
     };
 
-    // Build Course schemas for AEO (Answer Engine Optimization)
+    // Individual Course nodes plus an ItemList improve machine-readable understanding
+    // of the hub page and support host-carousel style interpretation.
     const courseSchemas = catalogs.map((c) => ({
       '@context': 'https://schema.org',
       '@type': 'Course',
-      '@id': `https://tinystepslearning.com/#course-${c.slug}`,
+      '@id': `https://tinystepslearning.com/courses/${c.slug}`,
       name: c.name,
       description: `${c.duration} live 1:1 ${c.track} program for ${c.age.toLowerCase()}. ${c.overview.join(', ')}.`,
       provider: {
@@ -134,7 +137,7 @@ const CoursesPage: FC = () => {
         '@id': 'https://tinystepslearning.com/#organization',
         name: 'Tiny Steps Learning'
       },
-      url: `https://tinystepslearning.com/courses#${c.slug}`,
+      url: `https://tinystepslearning.com/courses/${c.slug}`,
       audience: {
         '@type': 'EducationalAudience',
         educationalRole: 'student',
@@ -145,13 +148,32 @@ const CoursesPage: FC = () => {
       areaServed: 'IN'
     }));
 
-    applySeo({
-      title: "Online English Courses for Kids: Phonics, Grammar & Public Speaking | Tiny Steps",
+    const courseListSchema = createCourseListSchema({
+      name: 'Tiny Steps English courses for kids',
       description:
-        "1:1 live English classes in India for ages 3–12 — Phonics, Grammar and Public Speaking. Structured lesson-by-lesson courses with clear progress and parent updates.",
-      canonicalPath: "/courses",
+        'Browse Tiny Steps online phonics, grammar, writing, and public speaking courses for kids with clear lesson paths and parent-visible outcomes.',
+      url: coursesCanonicalUrl,
+      courses: catalogs.map((c) => ({
+        id: `https://tinystepslearning.com/courses/${c.slug}`,
+        name: c.name,
+        description: `${c.duration} live ${c.track} program for ${c.age.toLowerCase()}. ${c.overview.join(', ')}.`,
+        url: `https://tinystepslearning.com/courses/${c.slug}`,
+        educationalLevel: c.level,
+        audienceType: c.age,
+        inLanguage: 'en-IN',
+      })),
+    });
+
+    applySeo({
+      title:
+        coursesSeo?.title ??
+        "Online English Courses for Kids | Phonics, Grammar & Speaking | Tiny Steps Learning",
+      description:
+        coursesSeo?.description ??
+        "Browse Tiny Steps online English courses for kids across phonics, grammar, writing, and public speaking.",
+      canonicalPath: coursesSeo?.canonicalPath ?? "/courses",
       ogType: "website",
-      jsonLd: [organizationSchema, breadcrumb, ...courseSchemas],
+      jsonLd: [breadcrumb, courseListSchema, ...courseSchemas],
     });
   }, []);
 

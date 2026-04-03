@@ -56,6 +56,9 @@ jobs:
       - name: Build app
         run: npm run build
 
+      - name: Run SEO smoke test
+        run: npm run seo:smoke
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -202,11 +205,19 @@ jobs:
 
       - name: Deploy to Firebase Production
         uses: FirebaseExtended/action-hosting-deploy@v0
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
           projectId: ${{ env.FIREBASE_PROJECT_ID }}
           channelId: live
+
+      - name: Submit IndexNow URLs
+        if: ${{ secrets.INDEXNOW_KEY != '' }}
+        run: npm run indexnow:submit
+        env:
+          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
 
       - name: Verify Deployment
         run: |

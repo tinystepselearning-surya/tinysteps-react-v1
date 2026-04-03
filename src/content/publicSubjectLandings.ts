@@ -94,11 +94,11 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
     breadcrumbName: 'English Grammar & Writing Classes',
     seoTitle: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
     seoDescription:
-      'Explore Tiny Steps grammar tracks: Beginner Grammar (36 lessons) and Advanced Grammar (36 lessons) for sentence structure, grammar control, and writing clarity.',
+      'Explore Tiny Steps English grammar and writing classes for kids with live online support for sentence structure, punctuation, grammar control, and writing clarity.',
     eyebrow: 'Tiny Steps Grammar',
     heroTitle: 'English Grammar & Writing Classes',
     heroDescription:
-      'A grammar and writing pathway built around Beginner Grammar and Advanced Grammar. Children build word foundations, grammar basics, sentence building, conjunctions, adverbs, tenses, and guided writing before moving into advanced grammar control.',
+      'A grammar and writing pathway built around Beginner Grammar and Advanced Grammar. Children build sentence structure, punctuation, grammar control, and guided writing before moving into advanced editing and writing clarity.',
     whoIntro:
       'These two grammar tracks cover the full Tiny Steps grammar pathway from foundations to advanced writing control.',
     learnIntro:
@@ -123,11 +123,11 @@ const SUBJECT_CONFIGS: Record<SubjectLandingId, SubjectLandingConfig> = {
     breadcrumbName: 'Public Speaking & Communication Classes',
     seoTitle: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
     seoDescription:
-      'Explore Tiny Steps public speaking tracks: Public Speaking (Basic) and Public Speaking (Advanced), each with 36 lessons for confidence, structure, and presentation skills.',
+      'Explore Tiny Steps public speaking, spoken English, and communication classes for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
     eyebrow: 'Tiny Steps Speaking',
     heroTitle: 'Public Speaking & Communication Classes',
     heroDescription:
-      'A speaking pathway built around Public Speaking (Basic) and Public Speaking (Advanced). Children begin with confidence and clear speaking, then progress to structure, storytelling, Q&A, persuasion, and presentations.',
+      'A speaking pathway built around Public Speaking (Basic) and Public Speaking (Advanced). Children begin with spoken English confidence and clear communication, then progress to structure, storytelling, Q&A, persuasion, and presentations.',
     whoIntro:
       'These tracks cover the Tiny Steps speaking pathway from confidence-building routines to polished presentations.',
     learnIntro:

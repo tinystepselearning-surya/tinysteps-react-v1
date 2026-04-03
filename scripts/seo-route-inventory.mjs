@@ -18,8 +18,11 @@ export const STATIC_MARKETING_ROUTES = [
   '/phonics-learning-games',
   '/summer-camps',
   '/phonics',
+  '/phonics-classes-for-kids',
   '/grammar',
+  '/english-grammar-writing-classes',
   '/speaking',
+  '/public-speaking-communication-kids',
   '/for-schools',
   '/book-demo',
 ];

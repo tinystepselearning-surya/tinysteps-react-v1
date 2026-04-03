@@ -18,6 +18,35 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
   const data = useMemo(() => getSubjectLandingData(subject), [subject]);
   const isPhonicsLanding = subject === 'phonics';
   const [openPhonicsFaqIndexes, setOpenPhonicsFaqIndexes] = useState<number[]>([0]);
+  const answerBlock = useMemo(() => {
+    if (subject === 'phonics') {
+      return {
+        title: 'Systematic synthetic phonics for every stage',
+        body:
+          'Tiny Steps supports parents searching for phonics, Jolly-style phonics, synthetic phonics, and advanced phonics. Our pathway starts with SATPIN and extends to digraphs, long vowels, bossy-r, and multisyllabic decoding in live online classes.',
+        intent:
+          'Parent intent: phonics classes for kids • synthetic phonics • SATPIN • Jolly-style phonics support • advanced phonics online.',
+      };
+    }
+
+    if (subject === 'grammar') {
+      return {
+        title: 'Grammar and writing support that matches real parent questions',
+        body:
+          'Tiny Steps supports parents searching for grammar classes, writing classes, sentence structure help, punctuation practice, and paragraph writing support for kids. The pathway moves from grammar basics to clearer, more confident writing.',
+        intent:
+          'Parent intent: grammar classes for kids • grammar and writing classes • sentence structure • punctuation • paragraph writing support.',
+      };
+    }
+
+    return {
+      title: 'Public speaking, spoken English, and communication confidence in one pathway',
+      body:
+        'Tiny Steps supports parents searching for public speaking classes, spoken English classes, communication skills, storytelling, and presentation confidence for kids. The pathway moves from clear speaking habits to structured talks and confident delivery.',
+      intent:
+        'Parent intent: public speaking classes for kids • spoken English classes • communication confidence • storytelling • presentation skills.',
+    };
+  }, [subject]);
 
   const phonicsFaq = useMemo(
     () =>
@@ -146,14 +175,11 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
 
       <section className="px-6">
         <div className={activeSectionShell}>
-          {isPhonicsLanding ? (
-            <div className="max-w-4xl rounded-3xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5">
-              <h2 className="text-2xl font-bold text-slate-900">Systematic synthetic phonics for every stage</h2>
-              <p className="mt-3 text-base leading-7 text-slate-700">
-                Tiny Steps supports parents searching for phonics, jolly phonics, synthetic phonics, and advanced phonics. Our pathway starts with SATPIN and extends to digraphs, long vowels, bossy-r, and multisyllabic decoding in live online classes.
-              </p>
-            </div>
-          ) : null}
+          <div className={`max-w-4xl rounded-3xl border p-5 ${data.palette.accentBorder} ${data.palette.accentSurface}`}>
+            <h2 className="text-2xl font-bold text-slate-900">{answerBlock.title}</h2>
+            <p className="mt-3 text-base leading-7 text-slate-700">{answerBlock.body}</p>
+            <p className="mt-3 text-sm font-medium text-slate-600">{answerBlock.intent}</p>
+          </div>
 
           <div className="max-w-3xl">
             <p className={`text-sm font-semibold uppercase tracking-[0.24em] ${data.palette.accentText}`}>

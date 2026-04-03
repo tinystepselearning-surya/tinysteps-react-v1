@@ -9,6 +9,7 @@ import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
 import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
+import { getRouteConfig } from '../lib/seo';
 
 const levels = [
   {
@@ -64,6 +65,8 @@ const faqItems = [
   }
 ];
 
+const speakingSeo = getRouteConfig('/speaking');
+
 export default function SpeakingPage() {
   const [openFaqIndexes, setOpenFaqIndexes] = useState<number[]>([0]);
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
@@ -110,15 +113,15 @@ export default function SpeakingPage() {
   return (
     <div>
       <Meta
-        title="Online Public Speaking Classes for Kids | Tiny Steps Learning"
-        description="Online public speaking classes for kids ages 4-15 with live 1:1 and small-group coaching. Free assessment, confidence building, presentation skills, and storytelling."
-        canonical="https://tinystepslearning.com/speaking"
+        title={speakingSeo?.title ?? 'Online Public Speaking Classes for Kids | Tiny Steps Learning'}
+        description={speakingSeo?.description ?? 'Live online public speaking and communication classes for kids with storytelling, structure, and coach feedback.'}
+        canonical={`https://tinystepslearning.com${speakingSeo?.canonicalPath ?? '/speaking'}`}
         jsonLd={jsonLd}
       />
       <ProgramHero
         program="Public Speaking"
         title="Online Public Speaking Classes for Kids"
-        subtitle="From shy to spotlight-ready with live coaches, AI observation notes, and stage-based showcases."
+        subtitle="From shy to spotlight-ready with spoken English practice, communication coaching, and stage-based showcases."
         badges={['Ages 4–15', 'S.P.E.A.K habit', 'Parent video notes']}
         highlights={[
           'Show & tell, storytelling, debates, persuasive speeches',
@@ -126,6 +129,17 @@ export default function SpeakingPage() {
           'Capstone performances recorded and certified'
         ]}
       />
+
+      <section className="mx-auto max-w-4xl px-6 pt-8">
+        <div className="rounded-2xl border border-amber-100 bg-gradient-to-r from-slate-50 to-amber-50 p-6 shadow-sm">
+          <p className="text-lg font-semibold text-slate-900">
+            Tiny Steps runs live online public speaking classes for kids that build spoken English confidence, communication clarity, storytelling, and presentation structure.
+          </p>
+          <p className="mt-3 text-sm text-slate-700">
+            Parent intent: public speaking classes for kids • spoken English classes • communication confidence and presentation skills.
+          </p>
+        </div>
+      </section>
 
       {/* Program at a Glance */}
       <ProgramFacts

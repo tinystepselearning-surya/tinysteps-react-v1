@@ -331,7 +331,7 @@ export function applySeo(cfg: SeoConfig) {
     // Check if org schema already exists in existing or new schemas
     const allSchemas = [...existingSchemas, ...newSchemas];
     const hasOrgSchema = allSchemas.some(
-      s => s?.['@type'] === 'Organization' || s?.['@type'] === 'EducationalOrganization'
+      (schema) => getSchemaTypes(schema).some((type) => type === 'Organization' || type === 'EducationalOrganization')
     );
     
     if (!hasOrgSchema) {
@@ -388,8 +388,8 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogImage: '/og-default.jpg',
   },
   '/courses': {
-    title: 'English Courses for Kids | Tiny Steps Learning',
-    description: 'Browse our range of 1:1 online English courses for kids ages 3–12. Phonics, grammar, public speaking, and more. Customized to each child\'s pace and learning style.',
+    title: 'Online English Courses for Kids | Phonics, Grammar & Speaking | Tiny Steps Learning',
+    description: 'Browse Tiny Steps 1:1 online English courses for kids ages 3–12 across phonics, grammar, writing, and public speaking with clear learning paths and parent updates.',
     canonicalPath: '/courses',
     ogType: 'website',
   },
@@ -406,14 +406,14 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogType: 'website',
   },
   '/grammar': {
-    title: 'English Grammar Classes for Kids | Tiny Steps Learning',
-    description: 'Transform your child\'s grammar confidence. 1:1 online grammar classes for kids ages 6–12, covering parts of speech, sentence structure, and more.',
+    title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
+    description: 'Live online grammar and writing classes for kids ages 5–15 with sentence structure, punctuation, guided writing, and coach feedback that builds confident writing habits.',
     canonicalPath: '/grammar',
     ogType: 'website',
   },
   '/speaking': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
-    description: 'Build communication confidence. 1:1 online public speaking classes for kids ages 6–12. Presentation skills, fluency, and confident self-expression.',
+    title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
+    description: 'Live online public speaking, spoken English, and communication classes for kids ages 4–15 with storytelling, structure, confidence routines, and presentation coaching.',
     canonicalPath: '/speaking',
     ogType: 'website',
   },
@@ -603,20 +603,6 @@ export const ROUTE_SEO_REGISTRY: Record<string, RouteConfig> = {
     ogType: 'website',
   },
   ...SUBJECT_LANDING_ROUTE_META,
-  '/english-grammar-writing-classes': {
-    title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
-    description: 'This legacy URL has moved to Tiny Steps online grammar classes for kids. Visit the canonical grammar page for current details.',
-    canonicalPath: '/grammar',
-    robots: 'noindex, follow',
-    ogType: 'website',
-  },
-  '/public-speaking-communication-kids': {
-    title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
-    description: 'This legacy URL has moved to Tiny Steps online public speaking classes for kids. Visit the canonical speaking page for current details.',
-    canonicalPath: '/speaking',
-    robots: 'noindex, follow',
-    ogType: 'website',
-  },
   // Protected / Portal Routes — NOINDEX
   '/login': {
     title: 'Sign In | Tiny Steps Learning',
