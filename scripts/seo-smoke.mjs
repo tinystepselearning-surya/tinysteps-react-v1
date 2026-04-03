@@ -95,6 +95,10 @@ async function validateHtml(url) {
     throw new Error(`Canonical mismatch in ${routePath}: expected ${url}, got ${canonicalMatch[1]}`);
   }
 
+  if (/<link\s+rel=["']alternate["'][^>]*hreflang=/i.test(html)) {
+    throw new Error(`Unexpected hreflang alternate in ${routePath}`);
+  }
+
   const robotsMatch = html.match(/<meta\s+name=["']robots["'][^>]*content=["']([^"']+)["'][^>]*>/i);
   if (!robotsMatch) {
     throw new Error(`Missing robots meta in ${routePath}`);

@@ -3,6 +3,7 @@ import { spawn } from "child_process";
 import fs from "fs/promises";
 import path from "path";
 import { chromium } from "playwright";
+import { ROUTE_SEO_REGISTRY as ROUTE_SEO_CONFIG } from "../src/lib/routeSeoRegistry.js";
 import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo-route-inventory.mjs";
 
 const DIST = path.resolve(process.cwd(), "dist");
@@ -141,219 +142,6 @@ async function discoverBlogRoutes(page) {
 }
 
 /**
- * SEO Registry matching src/lib/seo.ts ROUTE_SEO_REGISTRY
- * Maps route pathname to SEO metadata for build-time injection into HTML <head>
- */
-const ROUTE_SEO_CONFIG = {
-  '/': {
-    title: 'Online Phonics, Grammar & Public Speaking Classes for Kids | Tiny Steps Learning',
-    description: '1:1 online phonics, grammar, and public speaking classes for kids ages 3–12. Structured curriculum, trained teachers, weekly parent updates, and free assessment.',
-    canonicalPath: '/',
-    robots: 'index, follow',
-  },
-  '/courses': {
-    title: 'Online English Courses for Kids | Phonics, Grammar & Speaking | Tiny Steps Learning',
-    description: 'Browse Tiny Steps 1:1 online English courses for kids ages 3–12 across phonics, grammar, writing, and public speaking with clear learning paths and parent updates.',
-    canonicalPath: '/courses',
-    robots: 'index, follow',
-  },
-  '/curriculum': {
-    title: 'IB-Aligned English Curriculum | Tiny Steps Learning',
-    description: 'Explore our comprehensive, IB-aligned English curriculum for young learners. Phonics mastery, grammar fundamentals, and communication skills—all designed by education experts.',
-    canonicalPath: '/curriculum',
-    robots: 'index, follow',
-  },
-  '/phonics': {
-    title: 'Online Phonics Classes for Kids | Tiny Steps Learning',
-    description: 'Personalized 1:1 online phonics classes for kids ages 3–6. Master letter sounds, blending, and early reading with expert live mentors and AI practice games.',
-    canonicalPath: '/phonics',
-    robots: 'index, follow',
-  },
-  '/grammar': {
-    title: 'Online Grammar and Writing Classes for Kids | Tiny Steps Learning',
-    description: 'Live online grammar and writing classes for kids ages 5–15 with sentence structure, punctuation, guided writing, and coach feedback that builds confident writing habits.',
-    canonicalPath: '/grammar',
-    robots: 'index, follow',
-  },
-  '/speaking': {
-    title: 'Online Public Speaking Classes for Kids | Tiny Steps Learning',
-    description: 'Live online public speaking, spoken English, and communication classes for kids ages 4–15 with storytelling, structure, confidence routines, and presentation coaching.',
-    canonicalPath: '/speaking',
-    robots: 'index, follow',
-  },
-  '/book-demo': {
-    title: 'Book Free Assessment Class | Tiny Steps Learning',
-    description: 'Book a free 1:1 assessment class for your child (ages 3-12). Discover their English level and get a personalized learning plan. Live online classes with expert mentors. No credit card required.',
-    canonicalPath: '/book-demo',
-    robots: 'index, follow',
-  },
-  '/blog': {
-    title: 'Blog | Tiny Steps Learning',
-    description: 'Read expert articles on English language learning, teaching strategies, and child development. Tips for parents and educators.',
-    canonicalPath: '/blog',
-    robots: 'index, follow',
-  },
-  '/pricing': {
-    title: 'Pricing & Plans | Tiny Steps Learning',
-    description: 'Affordable, transparent pricing for 1:1 online English classes. Choose the plan that fits your family. No hidden fees.',
-    canonicalPath: '/pricing',
-    robots: 'index, follow',
-  },
-  '/phonics-apps-for-preschoolers-india': {
-    title: 'Phonics Apps for Preschoolers in India | Tiny Steps Learning',
-    description: 'Parent-friendly guide to phonics apps for preschoolers in India (ages 3–6): what to look for, 10-minute routine, and common mistakes to avoid.',
-    canonicalPath: '/phonics-apps-for-preschoolers-india',
-    robots: 'index, follow',
-  },
-  '/phonics-classes-for-kids': {
-    title: 'Online Phonics Classes for Kids | Synthetic & Jolly-Style Support | Tiny Steps Learning',
-    description: 'Explore online phonics classes for kids ages 3-12 with systematic synthetic phonics, SATPIN progression, Jolly Phonics style actions, and advanced decoding support.',
-    canonicalPath: '/phonics-classes-for-kids',
-    robots: 'index, follow',
-  },
-  '/phonics-learning-games': {
-    title: 'Phonics Practice Games for Kids | Tiny Steps Learning',
-    description: 'Interactive phonics practice games for kids with tracing, sound work, and reading readiness. ₹199/month or ₹999 lifetime per child, with a 3-day free trial.',
-    canonicalPath: '/phonics-learning-games',
-    robots: 'index, follow',
-  },
-  '/contact': {
-    title: 'Contact Us | Tiny Steps Learning',
-    description: 'Have questions? Get in touch with our team. We\'re here to help you find the perfect English class for your child.',
-    canonicalPath: '/contact',
-    robots: 'index, follow',
-  },
-  '/why-tiny-steps': {
-    title: 'Why Choose Tiny Steps Learning | Online English Classes for Kids',
-    description: 'Discover why thousands of families trust Tiny Steps Learning. Expert mentors, personalized learning, proven results.',
-    canonicalPath: '/why-tiny-steps',
-    robots: 'index, follow',
-  },
-  '/faq': {
-    title: 'Frequently Asked Questions | Tiny Steps Learning',
-    description: 'Find answers to common questions about our 1:1 online English classes, curriculum, scheduling, pricing, and more.',
-    canonicalPath: '/faq',
-    robots: 'index, follow',
-  },
-  '/team': {
-    title: 'Meet the Team | Tiny Steps Learning',
-    description: 'Meet the experienced educators behind Tiny Steps Learning. Based in Hyderabad, serving families worldwide with expert 1:1 online English classes for kids ages 3–12.',
-    canonicalPath: '/team',
-    robots: 'index, follow',
-  },
-  '/careers': {
-    title: 'Careers | Join the Tiny Steps Team',
-    description: 'We’re hiring remote part-time Online Teachers, Learning Partners, and Curriculum Administrators. Work with children aged 3–12. Apply on WhatsApp.',
-    canonicalPath: '/careers',
-    robots: 'index, follow',
-  },
-  '/for-schools': {
-    title: 'English Program for Schools | Tiny Steps Learning',
-    description: 'Tiny Steps Learning partners with schools to deliver high-quality, personalized English instruction for groups or individuals.',
-    canonicalPath: '/for-schools',
-    robots: 'index, follow',
-  },
-  '/parents': {
-    title: 'Parents Hub | Tiny Steps Learning',
-    description: 'Resources and guides for parents. Learn how to support your child\'s English learning journey at home.',
-    canonicalPath: '/parents',
-    robots: 'index, follow',
-  },
-  '/parents/getting-started': {
-    title: 'Getting Started Guide | Parents Hub | Tiny Steps Learning',
-    description: 'A step-by-step guide for parents to get started with Tiny Steps Learning. Enrollment, first class, and what to expect.',
-    canonicalPath: '/parents/getting-started',
-    robots: 'index, follow',
-  },
-  '/parents/choosing-course': {
-    title: 'Choosing the Right Course for Your Child | Parents Hub | Tiny Steps Learning',
-    description: 'How to choose the best English course for your child\'s age, level, and learning goals.',
-    canonicalPath: '/parents/choosing-course',
-    robots: 'index, follow',
-  },
-  '/parents/scheduling': {
-    title: 'Scheduling Classes | Parents Hub | Tiny Steps Learning',
-    description: 'Tips for scheduling and managing your child\'s online English classes with flexibility and consistency.',
-    canonicalPath: '/parents/scheduling',
-    robots: 'index, follow',
-  },
-  '/parents/payments': {
-    title: 'Payments & Invoicing | Parents Hub | Tiny Steps Learning',
-    description: 'Learn about our flexible payment options, billing cycles, and invoicing for English classes.',
-    canonicalPath: '/parents/payments',
-    robots: 'index, follow',
-  },
-  '/parents/tracking-progress': {
-    title: 'Tracking Your Child\'s Progress | Parents Hub | Tiny Steps Learning',
-    description: 'Understand how Tiny Steps Learning helps you track your child\'s English learning progress and celebrate milestones.',
-    canonicalPath: '/parents/tracking-progress',
-    robots: 'index, follow',
-  },
-  '/parents/helping-with-homework': {
-    title: 'Helping with Homework | Parents Hub | Tiny Steps Learning',
-    description: 'Tips and strategies for parents to support their child\'s English practice and homework between classes.',
-    canonicalPath: '/parents/helping-with-homework',
-    robots: 'index, follow',
-  },
-  '/parents/phonics-mission': {
-    title: 'Phonics Mission Guide | Parents Hub | Tiny Steps Learning',
-    description: 'A parent\'s guide to the Phonics Mission program. How to help your child master phonics through engaging practice.',
-    canonicalPath: '/parents/phonics-mission',
-    robots: 'index, follow',
-  },
-  '/parents/reading-at-home': {
-    title: 'Reading at Home | Parents Hub | Tiny Steps Learning',
-    description: 'Strategies for parents to encourage reading at home and support your child\'s literacy development.',
-    canonicalPath: '/parents/reading-at-home',
-    robots: 'index, follow',
-  },
-  '/parents/speech-confidence': {
-    title: 'Building Speech Confidence | Parents Hub | Tiny Steps Learning',
-    description: 'How to help your shy child build confidence in speaking English. Tips from our expert mentors.',
-    canonicalPath: '/parents/speech-confidence',
-    robots: 'index, follow',
-  },
-  '/parents/common-mistakes': {
-    title: 'Common Learning Mistakes | Parents Hub | Tiny Steps Learning',
-    description: 'Avoid common pitfalls in English learning. Expert advice from Tiny Steps Learning mentors.',
-    canonicalPath: '/parents/common-mistakes',
-    robots: 'index, follow',
-  },
-  '/summer-english-camp-2026': {
-    title: 'Summer Camps for Kids | Tiny Steps Learning',
-    description: 'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore online group batches in India for phonics, grammar, and speaking fast-track tracks with enrollment at ₹2,400 (70% off).',
-    canonicalPath: '/summer-camps',
-    keywords: 'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online,grammar classes for kids online,public speaking classes for kids online india,summer camp fees india,small batch online classes for kids,weekly progress reports for parents',
-    robots: 'noindex, follow',
-  },
-  '/summer-camps': {
-    title: 'Online Summer Camp for Kids in India | Tiny Steps Learning',
-    description: 'Online summer camp for kids in India with 10-week phonics, grammar, and speaking fast-track group courses. Fast Track Pack enrollment at ₹2,400 (70% off) with weekly parent updates.',
-    canonicalPath: '/summer-camps',
-    keywords: 'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online india,grammar classes for kids online,public speaking classes for kids online india,summer camp fees for kids,summer camp fees india,small batch online classes for kids,weekly progress reports for parents,book free trial class for kids',
-    robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
-  },
-  '/online-phonics-reading-classes': {
-    title: 'Online Phonics & Reading Classes for Kids | Tiny Steps Learning',
-    description: 'Specialized 1:1 online phonics and reading classes. Master early literacy with expert guidance and interactive practice.',
-    canonicalPath: '/online-phonics-reading-classes',
-    robots: 'index, follow',
-  },
-  '/english-grammar-writing-classes': {
-    title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
-    description: 'Explore Tiny Steps English grammar and writing classes for kids with live online support for sentence structure, punctuation, grammar control, and writing clarity.',
-    canonicalPath: '/english-grammar-writing-classes',
-    robots: 'index, follow',
-  },
-  '/public-speaking-communication-kids': {
-    title: 'Public Speaking & Communication Classes for Kids | Tiny Steps Learning',
-    description: 'Explore Tiny Steps public speaking, spoken English, and communication classes for kids with live online coaching for confidence, storytelling, structure, and presentation skills.',
-    canonicalPath: '/public-speaking-communication-kids',
-    robots: 'index, follow',
-  },
-};
-
-/**
  * Inject SEO metadata into HTML <head> for the given route.
  * Modifies <title>, <meta name="description">, <link rel="canonical">, and <meta name="robots">.
  * @param html The full HTML string
@@ -393,21 +181,19 @@ function injectSeoMetadata(html, route) {
     result = result.replace(/<meta name="keywords"[^>]*>\s*/i, '');
   }
 
+  // Remove invalid locale alternates until the site has real locale-variant URLs.
+  result = result.replace(/\s*<link rel="alternate"[^>]*hreflang="[^"]+"[^>]*>/gi, '');
+
   // Inject/replace <link rel="canonical">
   const canonicalLink = `<link rel="canonical" href="${canonicalUrl}">`;
   result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
-  const hreflangEnIn = `<link rel="alternate" hreflang="en-IN" href="${canonicalUrl}">`;
-  const hreflangEn = `<link rel="alternate" hreflang="en" href="${canonicalUrl}">`;
-  const hreflangDefault = `<link rel="alternate" hreflang="x-default" href="${canonicalUrl}">`;
-  result = result.replace(/<link rel="alternate"[^>]*hreflang="en-IN"[^>]*>/i, hreflangEnIn) || result.replace('</head>', `${hreflangEnIn}</head>`);
-  result = result.replace(/<link rel="alternate"[^>]*hreflang="en"[^>]*>/i, hreflangEn) || result.replace('</head>', `${hreflangEn}</head>`);
-  result = result.replace(/<link rel="alternate"[^>]*hreflang="x-default"[^>]*>/i, hreflangDefault) || result.replace('</head>', `${hreflangDefault}</head>`);
 
   // Inject/replace <meta name="robots">
-  const robotsMeta = `<meta name="robots" content="${config.robots}">`;
+  const robotsContent = config.robots || 'index, follow';
+  const robotsMeta = `<meta name="robots" content="${robotsContent}">`;
   result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
-  const googlebotMeta = `<meta name="googlebot" content="${config.robots}">`;
-  const bingbotMeta = `<meta name="bingbot" content="${config.robots}">`;
+  const googlebotMeta = `<meta name="googlebot" content="${robotsContent}">`;
+  const bingbotMeta = `<meta name="bingbot" content="${robotsContent}">`;
   result = result.replace(/<meta name="googlebot"[^>]*>/i, googlebotMeta) || result.replace('</head>', `${googlebotMeta}</head>`);
   result = result.replace(/<meta name="bingbot"[^>]*>/i, bingbotMeta) || result.replace('</head>', `${bingbotMeta}</head>`);
 
@@ -491,21 +277,37 @@ async function renderRouteWithRetry(page, route, maxRetries = 2) {
       console.log(`Prerendering ${url}${attempt > 1 ? ` (attempt ${attempt}/${maxRetries})` : ''}`);
       
       await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
-      
-      // Wait for React content to be meaningful (not just meta tags)
-      // Check that #root has substantial text content (>200 chars) or main heading exists
-      await page.waitForFunction(
-        () => {
-          const root = document.getElementById('root');
-          if (!root) return false;
-          const textLength = root.innerText?.length || 0;
-          const hasHeading = root.querySelector('h1, h2') !== null;
-          return textLength > 200 || hasHeading;
-        },
-        { timeout: 30000 }
-      );
-      
+
+      // Prefer a hydrated root, but fall back to meaningful markup for long-form routes that
+      // occasionally miss the innerText threshold before Playwright's readiness timeout.
+      let readinessError = null;
+      try {
+        await page.waitForFunction(
+          () => {
+            const root = document.getElementById('root');
+            if (!root) return false;
+            const textLength = root.innerText?.length || 0;
+            const hasHeading = root.querySelector('h1, h2') !== null;
+            return textLength > 200 || hasHeading;
+          },
+          { timeout: 10000 }
+        );
+      } catch (error) {
+        readinessError = error;
+      }
+
       const html = await page.content();
+
+      if (readinessError) {
+        const hasMeaningfulMarkup =
+          html.length > 1500 && /<(main|article|h1|h2)\b/i.test(html);
+        if (!hasMeaningfulMarkup) {
+          throw readinessError;
+        }
+        console.warn(
+          `[prerender] Falling back to HTML-structure readiness for ${route}: ${readinessError.message}`
+        );
+      }
       
       // Validate HTML has meaningful content
       if (html.length < 1000) {

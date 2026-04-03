@@ -21,6 +21,8 @@ const CourseDetailPage = lazy(() => import('../pages/CourseDetailPage'));
 const BlogPage = lazy(() => import('../pages/BlogPage'));
 const BlogPostPage = lazy(() => import('../pages/BlogPostPage'));
 const PhonicsForParentsResearchPage = lazy(() => import('../pages/blog/PhonicsForParentsResearchPage'));
+const Week1SatpinLaunchPage = lazy(() => import('../pages/blog/Week1SatpinLaunchPage'));
+const Week7GrammarNounsToParagraphsPage = lazy(() => import('../pages/blog/Week7GrammarNounsToParagraphsPage'));
 const PricingPage = lazy(() => import('../pages/PricingPage'));
 const ChristmasTreeDecoratePublic = lazy(() => import('../pages/public/seasonal/ChristmasTreeDecoratePublic'));
 const FAQPage = lazy(() => import('../pages/FAQPage'));
@@ -307,6 +309,8 @@ const router = createBrowserRouter(
         { index: true, element: <HomePage /> },
         { path: 'blog', element: <BlogPage /> },
         { path: 'blog/phonics-for-parents-guide', element: <PhonicsForParentsResearchPage /> },
+        { path: 'blog/week-1-phonics-satpin-launch', element: <Week1SatpinLaunchPage /> },
+        { path: 'blog/week-7-grammar-nouns-to-paragraphs', element: <Week7GrammarNounsToParagraphsPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },

@@ -58,7 +58,7 @@ const PHONICS_BASE_MISTAKES = [
 ];
 
 const BLOG_PUBLICATION_DATES: Record<string, string> = {
-  'week-1-phonics-satpin-launch': '2025-11-03',
+  'week-1-phonics-satpin-launch': '2026-04-03',
   'satpin-phonics-guide': '2025-11-06',
   'what-age-to-start-phonics': '2025-11-08',
   'what-is-phonics-for-kids': '2025-11-10',
@@ -92,7 +92,7 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'week-6-phonics-comprehension': '2026-01-08',
   'online-english-classes-for-kids-india': '2026-01-10',
   'spoken-english-classes-for-kids-confidence': '2026-01-13',
-  'week-7-grammar-nouns-to-paragraphs': '2026-01-15',
+  'week-7-grammar-nouns-to-paragraphs': '2026-04-03',
   'week-8-grammar-tenses': '2026-01-20',
   'week-9-grammar-conjunctions': '2026-01-25',
   'week-10-grammar-subject-verb': '2026-01-29',
@@ -863,12 +863,15 @@ function makePhonicsPost(post: PhonicsSeoPost): BlogPost {
 const rawBlogPosts: BlogPost[] = [
   {
     slug: 'week-1-phonics-satpin-launch',
-    title: 'Week 1: SATPIN Launch Plan for Confident Readers',
+    title: 'SATPIN for Parents: A Research-Backed Week 1 Launch Plan for Confident Readers',
     category: 'Phonics',
-    author: 'Priya',
-    date: '2025-11-03',
-    readTime: '9 min',
-    excerpt: "Seven short SATPIN sessions for busy parents: 10‑minute daily activities to teach s/a/t/p/i/n, begin blending, read decodables and build steady early reading confidence.",
+    author: 'Tiny Steps Research Desk',
+    date: '2026-04-03',
+    readTime: '11 min read',
+    hero: '/blog/hero-research.jpg',
+    metaDescription:
+      'A research-backed SATPIN phonics guide for parents: what to teach first, how to model pure sounds, how to blend in week 1, and how multilingual homes can support early reading calmly.',
+    excerpt: 'A premium SATPIN week 1 roadmap for parents who want a calm, research-backed plan to teach s, a, t, p, i, and n at home.',
     body: [
       { type: 'h2', content: 'What “SATPIN” means (and why it’s a smart first set)' },
       { type: 'p', content: 'SATPIN is six simple sounds: s, a, t, p, i, n. These letters combine to make dozens of simple three-letter (CVC) words like sat, pin, tap, and tin.' },
@@ -1445,12 +1448,15 @@ const rawBlogPosts: BlogPost[] = [
   },
   {
     slug: 'week-7-grammar-nouns-to-paragraphs',
-    title: 'Week 7: Grammar Week-by-Week – Nouns to Paragraphs',
+    title: 'Grammar Basics Roadmap: Nouns to Paragraphs in 7 Days (Ages 3-10)',
     category: 'Grammar',
-    author: 'Priya',
-    date: '2026-01-15',
-    readTime: '9 min',
-    excerpt: "One‑week paragraph scaffold: naming games and a simple 4‑sentence frame with guided practice to help Grades 1–2 write clear, confident paragraphs at home.",
+    author: 'Tiny Steps Research Desk',
+    date: '2026-04-03',
+    readTime: '12 min read',
+    hero: '/blog/hero-research.jpg',
+    metaDescription:
+      'A research-backed grammar roadmap for ages 3-10: nouns, verbs, sentence boundaries, sentence combining, and short paragraph writing in 10 calm minutes a day.',
+    excerpt: 'A premium week 7 grammar guide for parents who want to move children from naming words to clear sentences and short paragraphs without rule-heavy worksheets.',
     body: [
       { type: 'h2', content: 'Why grammar should feel like “meaning”, not memorizing rules' },
       { type: 'p', content: 'Grammar is easiest when it helps children say what they mean. Instead of drills, focus on choosing words that tell a story: who, what happened, and one detail.' },
@@ -3079,22 +3085,22 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     ],
   },
   'week-7-grammar-nouns-to-paragraphs': {
-    heading: 'Real-world action plan: build grammar from word to paragraph',
-    context: 'Children need a visible ladder: noun -> sentence -> expanded sentence -> mini paragraph. Small steps prevent writing fear.',
+    heading: 'Real-world action plan: build grammar through sentence construction',
+    context: 'Children need a visible ladder: naming word -> who + did what sentence -> one added detail -> sentence combining -> short paragraph. The routine works best when children say ideas first and write second.',
     routine: [
-      'Day 1-2: Noun sorting game (person/place/thing) with household examples.',
-      'Day 3-4: Make 5 simple noun-based sentences: "The boy runs." "The park is green."',
-      'Day 5-7: Expand 2 sentences with where/when details and combine into one mini paragraph.',
+      'Day 1-2: Noun hunt plus verb charades, then build one who + did what sentence from a picture or daily-life scene.',
+      'Day 3-4: Add where/when details and combine two short sentences with and, because, or so.',
+      'Day 5-7: Use a 4-sentence frame: topic sentence, two details, closer. Draw first if writing still feels heavy.',
     ],
-    rescue: 'If your child freezes when writing, let them speak first, scribe one line, then ask them to copy and change one word.',
+    rescue: 'If your child freezes when writing, switch to oral storytelling, scribe one sentence, and ask for one gentle fix only: capital, full stop, or a stronger verb.',
     outcomes: [
-      'Child identifies nouns in simple sentences consistently.',
-      'Child writes 3-4 linked sentences on one topic.',
-      'Child uses capitals and full stops in most lines.',
+      'Child builds a clear who + did what sentence with less prompting.',
+      'Child adds one useful detail without creating a run-on.',
+      'Child writes 3-4 linked sentences on one topic and reads them aloud with confidence.',
     ],
     parentQuestions: [
-      'Should grammar drills be separate from writing? Mix both so grammar transfers to real sentences.',
-      'My child writes only one line. Use sentence starters and ask one follow-up question per line.',
+      'Should grammar drills be separate from writing? No. Grammar transfers better when it is taught inside sentence building and short writing tasks.',
+      'My child can speak but cannot write. What should I do? Start with oral rehearsal, scribe one line, then move into copying or writing the next sentence.',
     ],
   },
   'week-8-grammar-tenses': {
