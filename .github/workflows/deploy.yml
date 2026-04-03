@@ -110,6 +110,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: deploy-to-staging
     runs-on: ubuntu-latest
+    env:
+      INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
 
     steps:
       - name: Checkout repository
@@ -205,8 +207,6 @@ jobs:
 
       - name: Deploy to Firebase Production
         uses: FirebaseExtended/action-hosting-deploy@v0
-        env:
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_TINYSTEPS_REACT_V1 }}
@@ -214,10 +214,8 @@ jobs:
           channelId: live
 
       - name: Submit IndexNow URLs
-        if: ${{ secrets.INDEXNOW_KEY != '' }}
+        if: ${{ env.INDEXNOW_KEY != '' }}
         run: npm run indexnow:submit
-        env:
-          INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
 
       - name: Verify Deployment
         run: |
