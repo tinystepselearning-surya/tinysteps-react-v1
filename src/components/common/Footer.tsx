@@ -13,7 +13,7 @@ import {
 
 const socialLinks = [
   { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
-  { label: 'YouTube', href: 'https://www.youtube.com/tinystepslearning', icon: '▶️' },
+  { label: 'YouTube', href: 'https://www.youtube.com/@TinyStepsLearning-1157', icon: '▶️' },
   { label: 'LinkedIn', href: 'https://linkedin.com', icon: '💼' },
 ];
 
@@ -26,6 +26,7 @@ const courseLinks = [
 
 const exploreLinks = [
   { label: 'Why Tiny Steps', href: '/why-tiny-steps' },
+  { label: 'Class Samples', href: '/class-samples' },
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Pricing', href: '/pricing' },
   { label: 'Blog', href: '/blog' },

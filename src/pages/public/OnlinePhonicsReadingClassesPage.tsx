@@ -2,6 +2,29 @@ import { useEffect } from 'react';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 
+const FAQ_ITEMS = [
+  {
+    question: 'What if my child has never read before?',
+    answer:
+      'We start from the beginning with letter recognition, sounds, blending, and short reading practice. No prior reading ability is required.',
+  },
+  {
+    question: 'How quickly will my child start reading?',
+    answer:
+      'Many children begin blending simple CVC words within 4 to 6 lessons with consistent weekly classes and short home practice.',
+  },
+  {
+    question: 'What is the SATPIN method?',
+    answer:
+      'SATPIN introduces a practical sequence of early sounds so children can start blending real words quickly and build early reading confidence.',
+  },
+  {
+    question: 'How often should my child take classes?',
+    answer:
+      'Two to three classes per week with 5 to 10 minutes of home practice is a strong routine for most beginners.',
+  },
+];
+
 export default function OnlinePhonicsReadingClassesPage() {
   useEffect(() => {
     applySeo({
@@ -13,17 +36,47 @@ export default function OnlinePhonicsReadingClassesPage() {
         {
           "@context": "https://schema.org",
           "@type": "Course",
+          "@id": "https://tinystepslearning.com/online-phonics-reading-classes#course",
           "name": "Online Phonics & Reading Classes",
           "description": "1:1 online phonics and reading instruction for ages 3–8. Master letter sounds, blending, CVC words, and tricky words with live mentors and AI-guided practice.",
           "provider": {
             "@type": "Organization",
+            "@id": "https://tinystepslearning.com/#organization",
             "name": "Tiny Steps Learning",
-            "sameAs": "https://tinystepslearning.com"
+            "url": "https://tinystepslearning.com"
           },
+          "url": "https://tinystepslearning.com/online-phonics-reading-classes",
           "hasCourseInstance": {
             "@type": "CourseInstance",
             "courseMode": "OnlineCoursePlatform"
           }
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://tinystepslearning.com/" },
+            { "@type": "ListItem", "position": 2, "name": "Phonics", "item": "https://tinystepslearning.com/phonics" },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Online Phonics & Reading Classes",
+              "item": "https://tinystepslearning.com/online-phonics-reading-classes"
+            }
+          ]
+        },
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "@id": "https://tinystepslearning.com/online-phonics-reading-classes#faq",
+          "mainEntity": FAQ_ITEMS.map((item) => ({
+            "@type": "Question",
+            "name": item.question,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": item.answer
+            }
+          }))
         }
       ]
     });

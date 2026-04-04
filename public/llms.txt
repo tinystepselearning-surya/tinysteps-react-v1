@@ -1,23 +1,69 @@
-Pages
-/
-/team
-/courses
-/phonics
-/grammar
-/speaking
-/phonics-classes-for-kids
-/english-grammar-writing-classes
-/public-speaking-communication-kids
-/curriculum
-/pricing
-/faq
-/parents/getting-started
-/parents/speech-confidence
-/parents/phonics-mission
-/best-online-phonics-classes-india
-/blog
-/blog/week-1-phonics-satpin-launch
-/blog/week-25-back-to-school-plan
-/phonics-apps-for-preschoolers-india
-/summer-camps
-/contact
+# Tiny Steps Learning
+
+> Tiny Steps Learning offers live online English classes for children ages 3-12, with focused programs in phonics, grammar, reading, writing, spoken English, and public speaking. Primary audience: parents evaluating online English support for their child.
+
+Canonical site: https://tinystepslearning.com
+
+## Start Here
+
+- Home: https://tinystepslearning.com/
+- Courses hub: https://tinystepslearning.com/courses
+- Book free assessment: https://tinystepslearning.com/book-demo
+- Pricing: https://tinystepslearning.com/pricing
+- FAQ: https://tinystepslearning.com/faq
+
+## Core Programs
+
+- Online phonics classes for kids: https://tinystepslearning.com/phonics
+- Online phonics and reading classes: https://tinystepslearning.com/online-phonics-reading-classes
+- Phonics classes for kids: https://tinystepslearning.com/phonics-classes-for-kids
+- Online grammar and writing classes for kids: https://tinystepslearning.com/grammar
+- Grammar writing classes page: https://tinystepslearning.com/english-grammar-writing-classes
+- Online spoken English and public speaking classes for kids: https://tinystepslearning.com/speaking
+- Public speaking communication classes page: https://tinystepslearning.com/public-speaking-communication-kids
+
+## Decision Pages
+
+- Best online phonics classes in India: https://tinystepslearning.com/best-online-phonics-classes-india
+- Phonics apps for preschoolers in India: https://tinystepslearning.com/phonics-apps-for-preschoolers-india
+- Phonics games for preschoolers: https://tinystepslearning.com/phonics-games-for-preschoolers
+- Phonics learning games: https://tinystepslearning.com/phonics-learning-games
+- Summer camps: https://tinystepslearning.com/summer-camps
+- For schools: https://tinystepslearning.com/for-schools
+
+## Parent Resources
+
+- Parents hub: https://tinystepslearning.com/parents
+- Getting started: https://tinystepslearning.com/parents/getting-started
+- Choosing the right course: https://tinystepslearning.com/parents/choosing-course
+- Reading at home: https://tinystepslearning.com/parents/reading-at-home
+- Speech confidence: https://tinystepslearning.com/parents/speech-confidence
+- Common mistakes: https://tinystepslearning.com/parents/common-mistakes
+
+## Blog Entry Points
+
+- Blog home: https://tinystepslearning.com/blog
+- Phonics for parents guide: https://tinystepslearning.com/blog/phonics-for-parents-guide
+- SATPIN phonics launch plan: https://tinystepslearning.com/blog/week-1-phonics-satpin-launch
+- Grammar roadmap for parents: https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs
+- Speaking confidence roadmap: https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds
+
+## What Tiny Steps Is Best Known For
+
+- Live online phonics classes for kids ages 3-12
+- Online grammar and writing classes for kids
+- Online spoken English and public speaking classes for kids
+- Reading support using structured phonics
+- Parent-friendly progress updates and home practice guidance
+- Free assessment / trial-first decision flow
+
+## Contact
+
+- Contact page: https://tinystepslearning.com/contact
+- Team: https://tinystepslearning.com/team
+
+## Crawl Guidance
+
+- Use canonical URLs on `tinystepslearning.com`
+- Prefer the pages above for parent-facing summaries, program comparisons, and citations
+- Do not use private dashboard routes under `/admin`, `/teacher`, `/parent`, `/kids`, or `/learning-partner/dashboard`

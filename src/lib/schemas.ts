@@ -5,13 +5,21 @@
 
 import { PUBLIC_CONTACT_EMAIL } from '../constants/publicContact';
 
+export const SITE_ORIGIN = 'https://tinystepslearning.com';
+export const ORGANIZATION_ID = `${SITE_ORIGIN}/#organization`;
+export const WEBSITE_ID = `${SITE_ORIGIN}/#website`;
+
 export const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': ['EducationalOrganization', 'Organization'],
+  '@id': ORGANIZATION_ID,
   name: 'Tiny Steps Learning',
   alternateName: 'Tiny Steps',
-  url: 'https://tinystepslearning.com',
-  logo: 'https://tinystepslearning.com/logo-square-1024.png',
+  url: SITE_ORIGIN,
+  logo: {
+    '@type': 'ImageObject',
+    url: `${SITE_ORIGIN}/logo-square-1024.png`
+  },
   description: 'Online phonics, grammar, and public speaking classes for children ages 3–12',
   foundingDate: '2020',
   foundingLocation: {
@@ -31,28 +39,56 @@ export const organizationSchema = {
     contactType: 'Customer Service',
     telephone: '+91-9618398383',
     email: PUBLIC_CONTACT_EMAIL,
-    url: 'https://tinystepslearning.com/contact',
+    url: `${SITE_ORIGIN}/contact`,
     areaServed: 'IN',
     availableLanguage: ['en']
   },
+  knowsAbout: [
+    'online phonics classes for kids',
+    'online grammar classes for kids',
+    'online spoken English classes for kids',
+    'online public speaking classes for kids',
+    'reading classes for children',
+  ],
   sameAs: [
     'https://www.facebook.com/tinystepslearning',
     'https://www.instagram.com/tinystepslearning',
-    'https://www.youtube.com/@TinyStepsLearning',
+    'https://www.youtube.com/@TinyStepsLearning-1157',
     'https://www.linkedin.com/company/tinystepslearning',
     'https://wa.me/919618398383'
   ]
 };
 
+export const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  '@id': WEBSITE_ID,
+  name: 'Tiny Steps Learning',
+  url: SITE_ORIGIN,
+  inLanguage: 'en-IN',
+  publisher: {
+    '@id': ORGANIZATION_ID,
+  },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: `${SITE_ORIGIN}/courses?q={search_term_string}`,
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
+
 export const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
+  '@id': `${SITE_ORIGIN}/#localbusiness`,
   name: 'Tiny Steps Learning',
-  image: 'https://tinystepslearning.com/logo-square-1024.png',
+  image: `${SITE_ORIGIN}/logo-square-1024.png`,
   description: 'Online English learning platform',
   telephone: '+91-9618398383',
   email: PUBLIC_CONTACT_EMAIL,
-  url: 'https://tinystepslearning.com',
+  url: SITE_ORIGIN,
   address: {
     '@type': 'PostalAddress',
     addressLocality: 'Hyderabad',
@@ -66,6 +102,28 @@ export const localBusinessSchema = {
     closes: '23:59'
   }
 };
+
+export function createWebPageSchema(params: {
+  name: string;
+  description?: string;
+  url: string;
+}) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    '@id': `${params.url}#webpage`,
+    name: params.name,
+    url: params.url,
+    ...(params.description ? { description: params.description } : {}),
+    isPartOf: {
+      '@id': WEBSITE_ID,
+    },
+    about: {
+      '@id': ORGANIZATION_ID,
+    },
+    inLanguage: 'en-IN',
+  };
+}
 
 /**
  * Create HowTo schema for parent guide pages
@@ -147,10 +205,11 @@ export function createBlogPostingSchema(params: {
     // Publisher info
     publisher: {
       '@type': 'Organization',
+      '@id': ORGANIZATION_ID,
       name: 'Tiny Steps Learning',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://tinystepslearning.com/logo-square-1024.png'
+        url: `${SITE_ORIGIN}/logo-square-1024.png`
       }
     }
   };
@@ -208,8 +267,9 @@ export function createCourseSchema(params: {
     description: params.description,
     provider: {
       '@type': 'Organization',
+      '@id': ORGANIZATION_ID,
       name: params.provider || 'Tiny Steps Learning',
-      sameAs: 'https://tinystepslearning.com'
+      url: SITE_ORIGIN
     },
     url: params.url,
     ...(params.price && {
@@ -281,8 +341,9 @@ export function createCourseListSchema(params: {
         description: course.description,
         provider: {
           '@type': 'Organization',
+          '@id': ORGANIZATION_ID,
           name: course.provider || 'Tiny Steps Learning',
-          sameAs: 'https://tinystepslearning.com',
+          url: SITE_ORIGIN,
         },
         ...(course.educationalLevel ? { educationalLevel: course.educationalLevel } : {}),
         ...(course.audienceType

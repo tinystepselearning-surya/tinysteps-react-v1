@@ -3,7 +3,7 @@ import {
   ROUTE_SEO_REGISTRY as SHARED_ROUTE_SEO_REGISTRY,
   getRouteConfig as getSharedRouteConfig,
 } from './routeSeoRegistry.js';
-import { organizationSchema } from './schemas';
+import { createWebPageSchema, organizationSchema, websiteSchema } from './schemas';
 
 type SeoConfig = {
   title: string;
@@ -19,6 +19,8 @@ type SeoConfig = {
 
 const CANONICAL_ORIGIN = "https://tinystepslearning.com";
 const JSONLD_SCRIPT_ID = "ts-jsonld";
+const DEFAULT_INDEXABLE_ROBOTS =
+  'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 
 // Private dashboard paths that should NOT get organization schema
 const PRIVATE_PATH_PREFIXES = [
@@ -247,10 +249,11 @@ export function applySeo(cfg: SeoConfig) {
   document.head.querySelectorAll('link[rel="alternate"][hreflang]').forEach((node) => node.remove());
 
   // Robots: allow explicit override via cfg.robots, else use noIndex flag
-  const robotsContent = cfg.robots ?? (cfg.noIndex ? 'noindex, nofollow' : 'index, follow');
+  const robotsContent = cfg.robots ?? (cfg.noIndex ? 'noindex, nofollow' : DEFAULT_INDEXABLE_ROBOTS);
   upsertMeta('meta[name="robots"]', { name: 'robots', content: robotsContent });
   upsertMeta('meta[name="googlebot"]', { name: 'googlebot', content: robotsContent });
   upsertMeta('meta[name="bingbot"]', { name: 'bingbot', content: robotsContent });
+  upsertMeta('meta[name="author"]', { name: 'author', content: 'Tiny Steps Learning' });
 
   // Open Graph basics (keep in sync / remove when absent)
   upsertMeta('meta[property="og:title"]', { property: 'og:title', content: cfg.title });
@@ -260,10 +263,13 @@ export function applySeo(cfg: SeoConfig) {
   });
   upsertMeta('meta[property="og:url"]', { property: 'og:url', content: canonicalUrl });
   upsertMeta('meta[property="og:type"]', { property: 'og:type', content: cfg.ogType ?? 'website' });
+  upsertMeta('meta[property="og:site_name"]', { property: 'og:site_name', content: 'Tiny Steps Learning' });
+  upsertMeta('meta[property="og:locale"]', { property: 'og:locale', content: 'en_IN' });
 
   // Twitter metadata: keep in sync with OG but allow pages to override via cfg
   upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: cfg.title });
   upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: cfg.description ?? undefined });
+  upsertMeta('meta[name="twitter:url"]', { name: 'twitter:url', content: canonicalUrl });
 
   // Resolve OG image: prefer explicit cfg.ogImage, else provide a parents default for /parents routes, else fallback to og-default.jpg
   const resolvedOgImage = (function () {
@@ -288,6 +294,10 @@ export function applySeo(cfg: SeoConfig) {
   upsertMeta('meta[property="og:image"]', { property: 'og:image', content: resolvedOgImage });
   upsertMeta('meta[property="og:image:secure_url"]', { property: 'og:image:secure_url', content: resolvedOgImage });
   upsertMeta('meta[property="og:image:type"]', { property: 'og:image:type', content: resolvedOgImageType });
+  upsertMeta('meta[property="og:image:alt"]', {
+    property: 'og:image:alt',
+    content: 'Tiny Steps Learning - Online English classes for kids',
+  });
   upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: resolvedOgImage });
   upsertMeta('meta[name="twitter:image:alt"]', {
     name: 'twitter:image:alt',
@@ -329,15 +339,15 @@ export function applySeo(cfg: SeoConfig) {
   const baseSchemas: any[] = [];
   
   if (!isPrivate) {
-    // Check if org schema already exists in existing or new schemas
-    const allSchemas = [...existingSchemas, ...newSchemas];
-    const hasOrgSchema = allSchemas.some(
-      (schema) => getSchemaTypes(schema).some((type) => type === 'Organization' || type === 'EducationalOrganization')
+    baseSchemas.push(
+      organizationSchema,
+      websiteSchema,
+      createWebPageSchema({
+        name: cfg.title,
+        description: cfg.description,
+        url: canonicalUrl,
+      }),
     );
-    
-    if (!hasOrgSchema) {
-      baseSchemas.push(organizationSchema);
-    }
   }
   
   // 4. Merge and deduplicate: [base org, ...existing, ...new]

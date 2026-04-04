@@ -9,6 +9,8 @@ import { PARENT_HELP_ROUTES, STATIC_MARKETING_ROUTES, uniqueRoutes } from "./seo
 const DIST = path.resolve(process.cwd(), "dist");
 const PORT = process.env.PRERENDER_PORT ? Number(process.env.PRERENDER_PORT) : 4173;
 const HOST = `http://127.0.0.1:${PORT}`;
+const DEFAULT_INDEXABLE_ROBOTS =
+  'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1';
 
 const COURSE_SOURCE = path.resolve(process.cwd(), "src", "content", "courses.ts");
 const BLOG_SOURCE = path.resolve(process.cwd(), "src", "content", "blog.ts");
@@ -189,24 +191,30 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
 
   // Inject/replace <meta name="robots">
-  const robotsContent = config.robots || 'index, follow';
+  const robotsContent = config.robots || DEFAULT_INDEXABLE_ROBOTS;
   const robotsMeta = `<meta name="robots" content="${robotsContent}">`;
   result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
   const googlebotMeta = `<meta name="googlebot" content="${robotsContent}">`;
   const bingbotMeta = `<meta name="bingbot" content="${robotsContent}">`;
   result = result.replace(/<meta name="googlebot"[^>]*>/i, googlebotMeta) || result.replace('</head>', `${googlebotMeta}</head>`);
   result = result.replace(/<meta name="bingbot"[^>]*>/i, bingbotMeta) || result.replace('</head>', `${bingbotMeta}</head>`);
+  const authorMeta = `<meta name="author" content="Tiny Steps Learning">`;
+  result = result.replace(/<meta name="author"[^>]*>/i, authorMeta) || result.replace('</head>', `${authorMeta}</head>`);
 
   // Inject/replace OpenGraph + Twitter share metadata for messaging previews
   const ogTitleMeta = `<meta property="og:title" content="${escapeHtml(config.title)}">`;
   const ogDescriptionMeta = `<meta property="og:description" content="${escapeHtml(config.description)}">`;
   const ogUrlMeta = `<meta property="og:url" content="${canonicalUrl}">`;
   const ogTypeMeta = `<meta property="og:type" content="${ogType}">`;
+  const ogSiteNameMeta = `<meta property="og:site_name" content="Tiny Steps Learning">`;
+  const ogLocaleMeta = `<meta property="og:locale" content="en_IN">`;
   const ogImageMeta = `<meta property="og:image" content="${ogImageUrl}">`;
   const ogImageSecureMeta = `<meta property="og:image:secure_url" content="${ogImageUrl}">`;
+  const ogImageAltMeta = `<meta property="og:image:alt" content="Tiny Steps Learning - Online English classes for kids">`;
   const twitterCardMeta = `<meta name="twitter:card" content="summary_large_image">`;
   const twitterTitleMeta = `<meta name="twitter:title" content="${escapeHtml(config.title)}">`;
   const twitterDescriptionMeta = `<meta name="twitter:description" content="${escapeHtml(config.description)}">`;
+  const twitterUrlMeta = `<meta name="twitter:url" content="${canonicalUrl}">`;
   const twitterImageMeta = `<meta name="twitter:image" content="${ogImageUrl}">`;
   const twitterImageAltMeta = `<meta name="twitter:image:alt" content="Tiny Steps Learning - Online English classes for kids">`;
 
@@ -214,11 +222,15 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<meta property="og:description"[^>]*>/i, ogDescriptionMeta) || result.replace('</head>', `${ogDescriptionMeta}</head>`);
   result = result.replace(/<meta property="og:url"[^>]*>/i, ogUrlMeta) || result.replace('</head>', `${ogUrlMeta}</head>`);
   result = result.replace(/<meta property="og:type"[^>]*>/i, ogTypeMeta) || result.replace('</head>', `${ogTypeMeta}</head>`);
+  result = result.replace(/<meta property="og:site_name"[^>]*>/i, ogSiteNameMeta) || result.replace('</head>', `${ogSiteNameMeta}</head>`);
+  result = result.replace(/<meta property="og:locale"[^>]*>/i, ogLocaleMeta) || result.replace('</head>', `${ogLocaleMeta}</head>`);
   result = result.replace(/<meta property="og:image"[^>]*>/i, ogImageMeta) || result.replace('</head>', `${ogImageMeta}</head>`);
   result = result.replace(/<meta property="og:image:secure_url"[^>]*>/i, ogImageSecureMeta) || result.replace('</head>', `${ogImageSecureMeta}</head>`);
+  result = result.replace(/<meta property="og:image:alt"[^>]*>/i, ogImageAltMeta) || result.replace('</head>', `${ogImageAltMeta}</head>`);
   result = result.replace(/<meta name="twitter:card"[^>]*>/i, twitterCardMeta) || result.replace('</head>', `${twitterCardMeta}</head>`);
   result = result.replace(/<meta name="twitter:title"[^>]*>/i, twitterTitleMeta) || result.replace('</head>', `${twitterTitleMeta}</head>`);
   result = result.replace(/<meta name="twitter:description"[^>]*>/i, twitterDescriptionMeta) || result.replace('</head>', `${twitterDescriptionMeta}</head>`);
+  result = result.replace(/<meta name="twitter:url"[^>]*>/i, twitterUrlMeta) || result.replace('</head>', `${twitterUrlMeta}</head>`);
   result = result.replace(/<meta name="twitter:image"[^>]*>/i, twitterImageMeta) || result.replace('</head>', `${twitterImageMeta}</head>`);
   result = result.replace(/<meta name="twitter:image:alt"[^>]*>/i, twitterImageAltMeta) || result.replace('</head>', `${twitterImageAltMeta}</head>`);
 
@@ -271,12 +283,16 @@ async function writeRouteHtml(route, html) {
  */
 async function renderRouteWithRetry(page, route, maxRetries = 2) {
   const url = `${HOST}${route}`;
+  const navigationStrategy =
+    route === "/class-samples"
+      ? { waitUntil: "domcontentloaded", timeout: 60000 }
+      : { waitUntil: "networkidle", timeout: 60000 };
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`Prerendering ${url}${attempt > 1 ? ` (attempt ${attempt}/${maxRetries})` : ''}`);
       
-      await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
+      await page.goto(url, navigationStrategy);
 
       // Prefer a hydrated root, but fall back to meaningful markup for long-form routes that
       // occasionally miss the innerText threshold before Playwright's readiness timeout.

@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { createEventSchema } from '../lib/schemas';
 
+type SummerCampLeadFormState = {
+  name: string;
+  email: string;
+  phone: string;
+  childAge: string;
+  track: string;
+  note: string;
+  honeypot: string;
+};
+
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
 const SUMMER_CAMP_BATCH_CAP = 8;
@@ -11,6 +21,22 @@ const SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE = Math.round(
   SUMMER_CAMP_ENROLLMENT_PRICE / SUMMER_CAMP_PLANNED_CLASS_COUNT
 );
 const SUMMER_CAMP_FAST_TRACK_TEXT = "Hi, I'm looking for a summer camp program, fast track pack.";
+const SUMMER_CAMP_CHILD_AGE_OPTIONS = ['4-5 years', '6-7 years', '8-10 years', '10-12 years', 'Not sure yet'];
+const SUMMER_CAMP_TRACK_OPTIONS = [
+  'Phonics Fast Track',
+  'Grammar Fast Track',
+  'Speaking Fast Track',
+  'Not sure yet',
+];
+const SUMMER_CAMP_LEAD_INITIAL_STATE: SummerCampLeadFormState = {
+  name: '',
+  email: '',
+  phone: '',
+  childAge: SUMMER_CAMP_CHILD_AGE_OPTIONS[0],
+  track: SUMMER_CAMP_TRACK_OPTIONS[SUMMER_CAMP_TRACK_OPTIONS.length - 1],
+  note: '',
+  honeypot: '',
+};
 
 function getWhatsAppUrl(message: string) {
   return `https://wa.me/919618398383?text=${encodeURIComponent(message)}`;
@@ -180,9 +206,19 @@ const FAQS = [
       `The summer camp list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. This includes entry into the 10-week group camp, 50–60 minute live online classes, phonics + grammar + speaking brush-up, effective worksheets, and class recordings. At the planned ${SUMMER_CAMP_PLANNED_CLASS_COUNT}-session schedule, this works out to about ₹${formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)} per class.`,
   },
   {
+    question: 'Are the classes live or recorded?',
+    answer:
+      'Classes are live teacher-led sessions with active participation, correction, and guided practice. Recordings are shared for revision support, but this is not a self-paced recorded course.',
+  },
+  {
     question: 'What is the class duration and support material?',
     answer:
       'Each session is typically 50–60 minutes. Children also receive effective worksheets and class recordings to revise and continue learning at home.',
+  },
+  {
+    question: 'What device or materials are needed for the online summer camp?',
+    answer:
+      'A laptop or tablet with stable internet is ideal. Keep a notebook, pencil, and basic printed worksheet support ready. Headphones are optional but can help children focus better during live sessions.',
   },
   {
     question: 'How do parents track progress during this group camp?',
@@ -208,6 +244,11 @@ const FAQS = [
     question: 'How quickly can we enroll and confirm a seat?',
     answer:
       'Enrollment is quick. Click Enroll or WhatsApp on this page and send your request; our team will share suitable batch options and help reserve your child’s seat.',
+  },
+  {
+    question: 'Do you offer morning, evening, or weekend batch options?',
+    answer:
+      'Batch timing depends on current demand and seat availability. Share your preferred schedule on WhatsApp or through the inquiry form on this page and we will guide you to the closest fit.',
   },
   {
     question: 'Can we choose a specific focus track?',
@@ -288,11 +329,19 @@ const SUMMER_CAMP_SEO_KEYWORDS = [
   'summer catch-up program for kids',
   'summer bridge program english',
   'school readiness summer camp',
+  'online phonics summer camp mumbai',
+  'grammar summer classes for kids delhi ncr',
+  'public speaking summer camp bengaluru',
+  'summer english classes hyderabad for kids',
+  'best online summer camp for 8 year olds',
+  'how do online summer camps work',
+  'live online summer camp with recordings',
+  'free level assessment for kids summer camp',
 ];
 
 const INDIA_PARENT_SEARCH_INTENTS = [
   {
-    query: 'Online summer camp for kids in India',
+    query: 'Best online summer camp for kids in India',
     answer:
       `If you want a serious summer program without crowd-style teaching, this is it. We keep each batch capped at ${SUMMER_CAMP_BATCH_CAP} students with a clear 10-week plan, 50–60 minute classes, worksheets, and recordings.`,
     cta: 'View group batches',
@@ -301,7 +350,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
     buttonClass: 'from-sky-600 to-cyan-500 hover:from-sky-700 hover:to-cyan-600',
   },
   {
-    query: 'Phonics classes for kids online',
+    query: 'Online phonics summer camp in Mumbai',
     answer:
       'Phonics Fast Track refreshes sounds, blends, and reading confidence so your child returns to school with stronger fluency and fewer reading pauses.',
     cta: 'See phonics fast track',
@@ -310,7 +359,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
     buttonClass: 'from-amber-600 to-orange-500 hover:from-amber-700 hover:to-orange-600',
   },
   {
-    query: 'Grammar classes for kids online',
+    query: 'Grammar summer classes for kids in Delhi NCR',
     answer:
       'Grammar Fast Track helps children clean up sentence structure, punctuation, and tense with live guidance and practical writing correction.',
     cta: 'See grammar fast track',
@@ -319,7 +368,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
     buttonClass: 'from-violet-600 to-indigo-500 hover:from-violet-700 hover:to-indigo-600',
   },
   {
-    query: 'Public speaking classes for kids online',
+    query: 'Public speaking summer camp in Bengaluru',
     answer:
       'Speaking Fast Track builds clarity, confidence, and structured speaking so children can respond, present, and communicate with ease.',
     cta: 'See speaking fast track',
@@ -328,7 +377,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
     buttonClass: 'from-rose-600 to-pink-500 hover:from-rose-700 hover:to-pink-600',
   },
   {
-    query: 'Summer camp fees for kids',
+    query: 'Summer camp fees for kids in India',
     answer:
       `Fast Track Pack list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. Planned ${SUMMER_CAMP_PLANNED_CLASS_COUNT} live sessions means about ₹${formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)} per class.`,
     cta: 'Check fee and enroll',
@@ -337,9 +386,9 @@ const INDIA_PARENT_SEARCH_INTENTS = [
     buttonClass: 'from-emerald-600 to-teal-500 hover:from-emerald-700 hover:to-teal-600',
   },
   {
-    query: 'Online summer camp near me',
+    query: 'Online summer camp near me for kids',
     answer:
-      'Completely online. Families across India can join from home and still get live teacher-led sessions with real interaction and correction.',
+      'Completely online. Families across Hyderabad, Mumbai, Delhi NCR, Bengaluru, Pune, Kolkata, and other Indian cities can join from home and still get live teacher-led sessions with real interaction and correction.',
     cta: 'Chat on WhatsApp',
     href: '/summer-camps#whatsapp-enroll',
     cardClass: 'from-[#edf3ff] via-[#f6f9ff] to-[#eaf0ff] border-indigo-200/70',
@@ -356,6 +405,19 @@ const INDIA_CITY_COVERAGE = [
   'Pune',
   'Kolkata',
   'Ahmedabad',
+  'Gurugram',
+  'Noida',
+  'Jaipur',
+  'Coimbatore',
+];
+
+const SUMMER_CAMP_VOICE_SEARCH_QUERIES = [
+  'best online summer camp for 7 year olds',
+  'online phonics summer camp near me',
+  'summer grammar classes for kids in delhi',
+  'public speaking classes for kids this summer',
+  'online summer camp with live classes and recordings',
+  'small group summer camp for kids india',
 ];
 
 const PARENT_ENROLLMENT_CHECKLIST = [
@@ -476,6 +538,168 @@ function StretchCardsRow() {
   );
 }
 
+function SummerCampLeadForm() {
+  const [form, setForm] = useState<SummerCampLeadFormState>(SUMMER_CAMP_LEAD_INITIAL_STATE);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+
+  const updateField = <K extends keyof SummerCampLeadFormState>(field: K, value: SummerCampLeadFormState[K]) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError('');
+    setSubmitted(false);
+
+    if (form.honeypot.trim()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const message = [
+        `Child age: ${form.childAge}`,
+        `Track interest: ${form.track}`,
+        form.note.trim() ? `Parent note: ${form.note.trim()}` : '',
+        'Requested from: Summer Camp page',
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          phone: form.phone,
+          message,
+          topic: 'Summer camp inquiry',
+          pagePath: typeof window !== 'undefined' ? window.location.pathname : '/summer-camps',
+          submittedAt: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Unable to submit inquiry');
+      }
+
+      setSubmitted(true);
+      setForm(SUMMER_CAMP_LEAD_INITIAL_STATE);
+    } catch {
+      setError('We could not send your request right now. Please use WhatsApp and we will share the next batch options.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input
+          type="text"
+          value={form.name}
+          onChange={(event) => updateField('name', event.target.value)}
+          placeholder="Parent name"
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500"
+          required
+        />
+        <input
+          type="email"
+          value={form.email}
+          onChange={(event) => updateField('email', event.target.value)}
+          placeholder="Email address"
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500"
+          required
+        />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <input
+          type="tel"
+          value={form.phone}
+          onChange={(event) => updateField('phone', event.target.value)}
+          placeholder="Phone or WhatsApp number"
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500"
+          required
+        />
+        <select
+          value={form.childAge}
+          onChange={(event) => updateField('childAge', event.target.value)}
+          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500"
+        >
+          {SUMMER_CAMP_CHILD_AGE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <select
+        value={form.track}
+        onChange={(event) => updateField('track', event.target.value)}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500"
+      >
+        {SUMMER_CAMP_TRACK_OPTIONS.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+
+      <textarea
+        value={form.note}
+        onChange={(event) => updateField('note', event.target.value)}
+        placeholder="Anything we should know? For example: weekday evenings only, confidence issues, reading catch-up, or want brochure first."
+        rows={4}
+        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-500"
+      />
+
+      <div className="hidden" aria-hidden="true">
+        <label htmlFor="summer-camp-company">Company</label>
+        <input
+          id="summer-camp-company"
+          type="text"
+          value={form.honeypot}
+          onChange={(event) => updateField('honeypot', event.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70"
+      >
+        {isSubmitting ? 'Sending inquiry...' : 'Request batch recommendation'}
+      </button>
+
+      <p className="text-xs text-slate-500">
+        Use this if you want the brochure, best-fit track, or the next available batch before paying.
+      </p>
+
+      {submitted ? (
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+          Thank you. We received your inquiry and will follow up with the next batch options.
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+          {error}
+        </div>
+      ) : null}
+    </form>
+  );
+}
+
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
@@ -554,14 +778,27 @@ export default function SummerCampsPage() {
       name: 'Tiny Steps Summer Camp Fast Track Pack',
       serviceType: 'Online summer camp for kids',
       description: `Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students with a clear 10-week learning path.`,
-      areaServed: {
-        '@type': 'Country',
-        name: 'India',
-      },
+      areaServed: [
+        {
+          '@type': 'Country',
+          name: 'India',
+        },
+        ...INDIA_CITY_COVERAGE.map((city) => ({
+          '@type': city === 'Delhi NCR' ? 'AdministrativeArea' : 'City',
+          name: city,
+        })),
+      ],
       provider: {
         '@type': 'EducationalOrganization',
         name: 'Tiny Steps Learning',
         url: 'https://tinystepslearning.com',
+        contactPoint: {
+          '@type': 'ContactPoint',
+          contactType: 'customer support',
+          telephone: '+91-9618398383',
+          url: 'https://tinystepslearning.com/contact',
+          availableLanguage: ['en-IN', 'en'],
+        },
       },
       offers: {
         '@type': 'Offer',
@@ -866,6 +1103,10 @@ export default function SummerCampsPage() {
               View group batches
             </Link>{' '}
             •{' '}
+            <Link to="/summer-camps#quick-inquiry" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              Ask for a callback
+            </Link>{' '}
+            •{' '}
             <Link to="/summer-camps#fee-breakdown" className="font-semibold text-emerald-700 hover:text-emerald-800">
               Fee breakdown
             </Link>{' '}
@@ -999,6 +1240,37 @@ export default function SummerCampsPage() {
                     {city}
                   </span>
                 ))}
+              </div>
+              <p className="mt-3 max-w-3xl text-sm text-slate-600">
+                Many parents still search with a city name or even &quot;near me&quot; before choosing an online camp. We keep the program online-first, but write this page to answer the same city-led questions families use across India.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4 border-t border-amber-100 pt-5 lg:grid-cols-[0.95fr_1.05fr]">
+              <div className="rounded-2xl border border-slate-200/80 bg-white/85 p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Voice-Style Parent Searches
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {SUMMER_CAMP_VOICE_SEARCH_QUERIES.map((query) => (
+                    <span
+                      key={query}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700"
+                    >
+                      {query}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-[#ecfff5] via-white to-[#edf8ff] p-4 shadow-sm">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">
+                  Why this matters
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                  <li>Parents often search by age, city, and exact skill gap instead of browsing generic camp listings.</li>
+                  <li>Direct answers on the page help families compare faster on mobile, especially when they are shortlisting after work hours.</li>
+                  <li>Live classes, capped batches, recordings, and the free level assessment are the details that usually move parents from search to inquiry.</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1199,6 +1471,53 @@ export default function SummerCampsPage() {
                 <div className="mt-3 text-sm font-semibold text-emerald-700">Enroll on WhatsApp →</div>
               </a>
             ))}
+          </div>
+        </section>
+
+        <section id="quick-inquiry" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-10 sm:px-6 sm:pb-12">
+          <div className="grid gap-6 rounded-3xl border border-slate-200/80 bg-gradient-to-br from-[#fffaf0] via-white to-[#eef9ff] p-5 shadow-sm sm:p-6 md:grid-cols-[0.95fr_1.05fr] md:p-8">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-700">
+                Quick Inquiry
+              </p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-900 md:text-3xl">
+                Need the right batch, brochure, or a parent callback first?
+              </h2>
+              <p className="mt-3 text-sm text-slate-700">
+                Some parents want a recommendation before they enroll. Share your child&apos;s age, preferred track, and timing needs. We&apos;ll guide you to the closest-fit summer batch.
+              </p>
+
+              <div className="mt-5 rounded-2xl border border-emerald-200/70 bg-white/90 p-4 shadow-sm">
+                <p className="text-sm font-semibold text-slate-900">What we usually reply with</p>
+                <ul className="mt-3 space-y-2 text-sm text-slate-700">
+                  <li>Best-fit track: phonics, grammar, or speaking</li>
+                  <li>Next available batch based on your timing preference</li>
+                  <li>Free level assessment guidance before seat confirmation</li>
+                  <li>Fee clarity and what is included in the camp pack</li>
+                </ul>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                <a
+                  href={SUMMER_CAMP_WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  Prefer WhatsApp instead
+                </a>
+                <Link
+                  to="/contact"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Open full contact page
+                </Link>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200/80 bg-white/85 p-4 shadow-sm sm:p-5">
+              <SummerCampLeadForm />
+            </div>
           </div>
         </section>
 

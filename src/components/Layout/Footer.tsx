@@ -27,7 +27,7 @@ const Footer: React.FC = () => {
 						<a href="https://instagram.com" aria-label="Tiny Steps on Instagram" className="interactive-link hover:text-primary-500">
 							Ig
 						</a>
-						<a href="https://www.youtube.com" aria-label="Tiny Steps on YouTube" className="interactive-link hover:text-primary-500">
+						<a href="https://www.youtube.com/@TinyStepsLearning-1157" aria-label="Tiny Steps on YouTube" className="interactive-link hover:text-primary-500">
 							YT
 						</a>
 					</div>

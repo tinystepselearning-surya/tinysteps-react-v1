@@ -27,11 +27,10 @@ Sitemap: https://tinystepslearning.com/sitemap.xml
 
 # Block training crawlers by default. This preserves search/discovery access
 # through the global group while keeping training policy explicit.
+# Google-Extended is intentionally left unblocked so Gemini grounding can use
+# publicly indexable pages.
 User-agent: GPTBot
 Disallow: /
 
 User-agent: ClaudeBot
-Disallow: /
-
-User-agent: Google-Extended
 Disallow: /

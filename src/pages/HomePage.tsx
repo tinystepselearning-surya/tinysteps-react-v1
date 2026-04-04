@@ -2,7 +2,7 @@
 // @ts-nocheck
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { applySeo } from "../lib/seo";
-import { organizationSchema, localBusinessSchema } from "../lib/schemas";
+import { localBusinessSchema, websiteSchema } from "../lib/schemas";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
@@ -47,22 +47,8 @@ export default function HomePage() {
       canonicalPath: "/",
       ogType: "website",
       jsonLd: [
-        organizationSchema,
         localBusinessSchema,
-        {
-          '@context': 'https://schema.org',
-          '@type': 'WebSite',
-          name: 'Tiny Steps Learning',
-          url: 'https://tinystepslearning.com',
-          potentialAction: {
-            '@type': 'SearchAction',
-            target: {
-              '@type': 'EntryPoint',
-              urlTemplate: 'https://tinystepslearning.com/courses?q={search_term_string}'
-            },
-            'query-input': 'required name=search_term_string'
-          }
-        },
+        websiteSchema,
       ],
     });
   }, []);

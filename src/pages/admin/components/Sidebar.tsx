@@ -38,6 +38,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
     { id: 'today-notifications', label: 'Sessions Management', icon: BellDot },
     { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
     { id: 'class-recordings', label: 'Class Recordings', icon: Users },
+    { id: 'class-samples', label: 'Class Samples', icon: Users },
     { id: 'parent-worksheets', label: 'Parent Worksheets', icon: FileText },
     { id: 'analytics', label: 'Analytics', icon: LineChart },
     { id: 'settings', label: 'Settings', icon: Settings },

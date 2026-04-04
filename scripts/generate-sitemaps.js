@@ -50,6 +50,10 @@ function toUrl(loc, lastmod, priority='0.8', changefreq='weekly') {
 const MONEY_PAGES = new Set(['/phonics', '/grammar', '/speaking', '/summer-camps']);
 const SUPPORTING_LONG_TAIL = new Set([
   '/best-online-phonics-classes-india',
+  '/online-phonics-reading-classes',
+  '/phonics-classes-for-kids',
+  '/english-grammar-writing-classes',
+  '/public-speaking-communication-kids',
   '/phonics-apps-for-preschoolers-india',
   '/phonics-games-for-preschoolers',
   '/phonics-learning-games',
@@ -91,13 +95,13 @@ const SUPPORTING_LONG_TAIL = new Set([
           : MONEY_PAGES.has(route)
             ? '0.95'
             : SUPPORTING_LONG_TAIL.has(route)
-              ? '0.7'
+              ? '0.85'
               : route === '/blog'
                 ? '0.8'
                 : '0.8';
       const changefreq = route === '/blog'
         ? 'daily'
-        : route === '/' || route === '/courses' || MONEY_PAGES.has(route)
+        : route === '/' || route === '/courses' || MONEY_PAGES.has(route) || SUPPORTING_LONG_TAIL.has(route)
           ? 'weekly'
           : 'monthly';
       return toUrl(loc, staticLastmod, priority, changefreq);

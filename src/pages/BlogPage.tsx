@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { blogPosts } from '../content/blog';
 import { fetchMdxPosts } from '../content/blogMdx';
@@ -125,9 +125,10 @@ function buildSearchableText(post: any) {
 }
 
 const BlogPage: FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [topic, setTopic] = useState<(typeof TOPIC_OPTIONS)[number]>('All');
   const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>('Newest');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('search') || '');
   const [visibleCount, setVisibleCount] = useState(9);
   const [mdxPosts, setMdxPosts] = useState<any[]>([]);
   const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
@@ -139,6 +140,23 @@ const BlogPage: FC = () => {
   useEffect(() => {
     setVisibleCount(9);
   }, [topic, sort, deferredQuery]);
+
+  useEffect(() => {
+    const nextSearch = searchParams.get('search') || '';
+    if (nextSearch === searchQuery) return;
+    setSearchQuery(nextSearch);
+  }, [searchParams, searchQuery]);
+
+  useEffect(() => {
+    const nextSearch = searchQuery.trim();
+    const currentSearch = searchParams.get('search') || '';
+    if (currentSearch === nextSearch) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextSearch) nextParams.set('search', nextSearch);
+    else nextParams.delete('search');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, searchQuery, setSearchParams]);
 
   const mdxConverted = useMemo(
     () =>
@@ -303,21 +321,6 @@ const BlogPage: FC = () => {
     [publishedPosts],
   );
 
-  const websiteSchema = useMemo(
-    () => ({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Tiny Steps Learning',
-      url: 'https://tinystepslearning.com',
-      potentialAction: {
-        '@type': 'SearchAction',
-        target: 'https://tinystepslearning.com/blog?search={search_term_string}',
-        'query-input': 'required name=search_term_string',
-      },
-    }),
-    [],
-  );
-
   const faqSchema = useMemo(
     () => ({
       '@context': 'https://schema.org',
@@ -368,9 +371,9 @@ const BlogPage: FC = () => {
       keywords: metaKeywords,
       canonicalPath: '/blog',
       ogType: 'website',
-      jsonLd: [websiteSchema, breadcrumbSchema, blogSchema, collectionSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, blogSchema, collectionSchema, faqSchema],
     });
-  }, [blogSchema, breadcrumbSchema, collectionSchema, faqSchema, websiteSchema]);
+  }, [blogSchema, breadcrumbSchema, collectionSchema, faqSchema]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_20%,#ffffff_46%,#f4f8fc_100%)] text-slate-900">
@@ -379,7 +382,7 @@ const BlogPage: FC = () => {
         description={metaDescription}
         keywords={metaKeywords.join(', ')}
         canonical="https://tinystepslearning.com/blog"
-        jsonLd={[websiteSchema, breadcrumbSchema, blogSchema, collectionSchema, faqSchema]}
+        jsonLd={[breadcrumbSchema, blogSchema, collectionSchema, faqSchema]}
       />
 
       <section className="relative overflow-hidden border-b border-slate-800 bg-[linear-gradient(135deg,#0f172a_0%,#16233c_48%,#1d2942_100%)] text-white">

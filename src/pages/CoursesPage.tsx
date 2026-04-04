@@ -11,7 +11,7 @@ import {
   formatINR,
 } from '../constants/pricing';
 import { createCourseListSchema } from '../lib/schemas';
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const DASH_RE = /[\u2010\u2011\u2012\u2013\u2014\u2212]/g; // hyphen variants
 const norm = (v: any) =>
@@ -110,9 +110,27 @@ const coursesSeo = getRouteConfig('/courses');
 const coursesCanonicalUrl = `https://tinystepslearning.com${coursesSeo?.canonicalPath ?? '/courses'}`;
 
 const CoursesPage: FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [track, setTrack] = useState<TrackOrAll>("all");
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(() => searchParams.get('q') || "");
   const [level, setLevel] = useState<(typeof LEVEL_OPTIONS)[number]>("all");
+
+  useEffect(() => {
+    const nextQuery = searchParams.get('q') || '';
+    if (nextQuery === query) return;
+    setQuery(nextQuery);
+  }, [query, searchParams]);
+
+  useEffect(() => {
+    const nextQuery = query.trim();
+    const currentQuery = searchParams.get('q') || '';
+    if (currentQuery === nextQuery) return;
+
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextQuery) nextParams.set('q', nextQuery);
+    else nextParams.delete('q');
+    setSearchParams(nextParams, { replace: true });
+  }, [query, searchParams, setSearchParams]);
 
   useEffect(() => {
     const breadcrumb = {

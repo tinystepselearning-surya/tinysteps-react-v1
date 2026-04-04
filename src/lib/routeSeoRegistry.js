@@ -91,6 +91,15 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/team',
     ogType: 'website',
   },
+  '/class-samples': {
+    title: 'Real Class Sample Videos for Parents | Tiny Steps Learning',
+    description:
+      'Watch real Tiny Steps phonics, reading, grammar, and communication class moments so parents can see what our online English classes for kids actually look like before booking a demo.',
+    canonicalPath: '/class-samples',
+    ogType: 'website',
+    keywords:
+      'online phonics classes,english classes for kids,real class samples,what Tiny Steps classes look like,online reading classes for kids,grammar classes for children',
+  },
   '/for-schools': {
     title: 'English Program for Schools | Tiny Steps Learning',
     description:
@@ -221,12 +230,12 @@ export const ROUTE_SEO_REGISTRY = {
   '/summer-camps': {
     title: 'Premium Online Summer Camp for Kids in India | Tiny Steps Learning',
     description:
-      'Join Tiny Steps Premium Summer Camp for kids in India. Small-group online classes capped at 8 students for stronger participation, teacher attention, and real progress in phonics, grammar, reading, and public speaking.',
+      'Join Tiny Steps Premium Summer Camp for kids in India. Small-group online classes capped at 8 students for stronger participation, teacher attention, and real progress in phonics, grammar, reading, and public speaking, with a free level assessment before placement.',
     canonicalPath: '/summer-camps',
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
     keywords:
-      'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online india,grammar classes for kids online,public speaking classes for kids online india,summer camp fees for kids,summer camp fees india,small batch online classes for kids,weekly progress reports for parents,book free trial class for kids',
+      'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online india,grammar classes for kids online,public speaking classes for kids online india,summer camp fees for kids,summer camp fees india,small batch online classes for kids,weekly progress reports for parents,book free trial class for kids,online phonics summer camp mumbai,grammar summer classes for kids delhi ncr,public speaking summer camp bengaluru,best online summer camp for 8 year olds,how do online summer camps work,live online summer camp with recordings,free level assessment for kids summer camp',
   },
   '/online-phonics-reading-classes': {
     title: 'Online Phonics & Reading Classes for Kids | Tiny Steps Learning',

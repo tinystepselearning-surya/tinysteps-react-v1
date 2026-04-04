@@ -43,6 +43,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://tinystepslearning.com/class-samples</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://tinystepslearning.com/careers</loc>
     <lastmod>2026-04-04</lastmod>
     <changefreq>monthly</changefreq>
@@ -75,26 +81,32 @@
   <url>
     <loc>https://tinystepslearning.com/best-online-phonics-classes-india</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://tinystepslearning.com/online-phonics-reading-classes</loc>
+    <lastmod>2026-04-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/phonics-apps-for-preschoolers-india</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/phonics-games-for-preschoolers</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/phonics-learning-games</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/summer-camps</loc>
@@ -111,8 +123,8 @@
   <url>
     <loc>https://tinystepslearning.com/phonics-classes-for-kids</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/grammar</loc>
@@ -123,8 +135,8 @@
   <url>
     <loc>https://tinystepslearning.com/english-grammar-writing-classes</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/speaking</loc>
@@ -135,8 +147,8 @@
   <url>
     <loc>https://tinystepslearning.com/public-speaking-communication-kids</loc>
     <lastmod>2026-04-04</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://tinystepslearning.com/for-schools</loc>

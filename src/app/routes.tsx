@@ -33,6 +33,7 @@ const ForSchoolsPage = lazy(() => import('../pages/ForSchoolsPage'));
 const TeamPage = lazy(() => import('../pages/TeamPage'));
 const SummerCampsPage = lazy(() => import('../pages/SummerCampsPage'));
 const SummerCampProgramPage = lazy(() => import('../pages/SummerCampProgramPage'));
+const ClassSamplesPage = lazy(() => import('../pages/ClassSamplesPage'));
 
 // Course Pages
 const PhonicsPage = lazy(() => import('../pages/phonics'));
@@ -42,6 +43,7 @@ const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForK
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
 const PhonicsAppsPreschoolersIndiaPage = lazy(() => import('../pages/public/PhonicsAppsPreschoolersIndiaPage'));
 const PhonicsGamesPreschoolersPage = lazy(() => import('../pages/public/PhonicsGamesPreschoolersPage'));
+const OnlinePhonicsReadingClassesPage = lazy(() => import('../pages/public/OnlinePhonicsReadingClassesPage'));
 const EnglishGrammarWritingClassesPage = lazy(() => import('../pages/public/EnglishGrammarWritingClassesPage'));
 const LearningGamesMarketingPage = lazy(() => import('../pages/public/LearningGamesMarketingPage'));
 const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/PublicSpeakingCommunicationKidsPage'));
@@ -271,6 +273,7 @@ const router = createBrowserRouter(
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
         { path: 'learning-partner', element: <LearningPartnerPage /> },
         { path: 'team', element: <TeamPage /> },
+        { path: 'class-samples', element: <ClassSamplesPage /> },
         { path: 'careers', element: <CareersPage /> },
         { path: 'courses', element: <CoursesPage /> },
         { path: 'courses/:slug', element: <CourseDetailPage /> },
@@ -315,7 +318,7 @@ const router = createBrowserRouter(
         { path: 'why-us', element: <Navigate to="/why-tiny-steps" replace /> },
         { path: 'faq', element: <FAQPage /> },
         { path: 'summer-english-camp-2026', element: <Navigate to="/summer-camps" replace /> },
-        { path: 'online-phonics-reading-classes', element: <Navigate to="/phonics" replace /> },
+        { path: 'online-phonics-reading-classes', element: <OnlinePhonicsReadingClassesPage /> },
         { path: 'english-grammar-writing-classes', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'english-grammar-writing-classes/', element: <EnglishGrammarWritingClassesPage /> },
         { path: 'public-speaking-communication-kids', element: <PublicSpeakingCommunicationKidsPage /> },
@@ -366,6 +369,7 @@ const router = createBrowserRouter(
             { path: 'analytics', element: <AdminDashboard /> },
             { path: 'demo-sessions', element: <Navigate to="/surya?tab=leads&leadView=demos" replace /> },
             { path: 'leads', element: <Navigate to="/surya?tab=leads" replace /> },
+            { path: 'class-samples', element: <Navigate to="/surya?tab=class-samples" replace /> },
           ],
         },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },
