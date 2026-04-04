@@ -14,6 +14,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@components/ui/table';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { db } from '../../../../lib/firebaseConfig';
+import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 
 type FilterPreset = 'week' | 'month' | 'custom';
 
@@ -28,6 +29,7 @@ interface TeacherEarningLedgerRow {
   source: string;
   demoId: string;
   sessionId: string;
+  kidId: string;
   courseId: string;
   paidAmount: number;
   monthKey: string;
@@ -142,6 +144,7 @@ const endOfDay = (date: Date): Date => {
 
 export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
+  const { students } = useTeacherFilteredStudents();
   const resolvedTeacherId = teacherId || user?.uid;
 
   const monthOptions = useMemo(() => buildMonthOptions(18), []);
@@ -153,6 +156,20 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
   const [ledgerRows, setLedgerRows] = useState<TeacherEarningLedgerRow[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showSessionDetails, setShowSessionDetails] = useState(false);
+  const [showDemoDetails, setShowDemoDetails] = useState(false);
+
+  const studentNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    students.forEach((student: any) => {
+      const name = student.fullName || student.studentName || student.displayName || student.name || '';
+      if (!name) return;
+      if (student.uid) map.set(String(student.uid), String(name));
+      if (student.id) map.set(String(student.id), String(name));
+      if (student.userId) map.set(String(student.userId), String(name));
+    });
+    return map;
+  }, [students]);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,6 +202,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
             source: String(data.source || '').toLowerCase(),
             demoId: String(data.demoId || ''),
             sessionId: String(data.sessionId || ''),
+            kidId: String(data.kidId || ''),
             courseId: String(data.courseId || ''),
             paidAmount: toNumber(data.paidAmount, 0),
             monthKey,
@@ -263,9 +281,19 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     [filterPreset, ledgerRows, range.end, range.start, selectedMonth],
   );
 
-  const metrics = useMemo(() => {
+  const categorizedRows = useMemo(() => {
     const demoCompletedRows = filteredRows.filter((row) => row.source === 'demo_completed');
     const demoConvertedRows = filteredRows.filter((row) => row.source === 'demo_enrolled_bonus');
+    const sessionRows = filteredRows.filter((row) => {
+      const hasDemoMarker = row.demoId.length > 0;
+      const isDemoSource = row.source === 'demo_completed' || row.source === 'demo_enrolled_bonus';
+      return !hasDemoMarker && !isDemoSource;
+    });
+    return { demoCompletedRows, demoConvertedRows, sessionRows };
+  }, [filteredRows]);
+
+  const metrics = useMemo(() => {
+    const { demoCompletedRows, demoConvertedRows, sessionRows } = categorizedRows;
 
     const demoCompletedIds = new Set(
       demoCompletedRows.map((row) => row.demoId).filter((value) => value.length > 0),
@@ -273,12 +301,6 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
     const demoConvertedIds = new Set(
       demoConvertedRows.map((row) => row.demoId).filter((value) => value.length > 0),
     );
-
-    const sessionRows = filteredRows.filter((row) => {
-      const hasDemoMarker = row.demoId.length > 0;
-      const isDemoSource = row.source === 'demo_completed' || row.source === 'demo_enrolled_bonus';
-      return !hasDemoMarker && !isDemoSource;
-    });
 
     const sumAmount = (rows: TeacherEarningLedgerRow[]) =>
       rows.reduce((acc, row) => acc + toNumber(row.amount, 0), 0);
@@ -308,7 +330,37 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
       paymentsReceived,
       pendingEarnings,
     };
-  }, [filteredRows]);
+  }, [categorizedRows, filteredRows]);
+
+  const sessionDetails = useMemo(() => {
+    const bucket = new Map<string, { name: string; count: number; amount: number }>();
+    categorizedRows.sessionRows.forEach((row) => {
+      const kidId = String(row.kidId || '').trim();
+      const fallbackName = kidId ? `Student (${kidId.slice(0, 6)})` : 'Unknown student';
+      const studentName = kidId ? studentNameById.get(kidId) || fallbackName : fallbackName;
+      const key = kidId || fallbackName;
+      const existing = bucket.get(key) || { name: studentName, count: 0, amount: 0 };
+      existing.count += 1;
+      existing.amount += toNumber(row.amount, 0);
+      bucket.set(key, existing);
+    });
+    return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
+  }, [categorizedRows.sessionRows, studentNameById]);
+
+  const demoDetails = useMemo(() => {
+    const bucket = new Map<string, { name: string; count: number; amount: number }>();
+    categorizedRows.demoCompletedRows.forEach((row) => {
+      const kidId = String(row.kidId || '').trim();
+      const fallbackName = kidId ? `Student (${kidId.slice(0, 6)})` : 'Unknown demo student';
+      const studentName = kidId ? studentNameById.get(kidId) || fallbackName : fallbackName;
+      const key = kidId || `${row.demoId || 'demo'}_${studentName}`;
+      const existing = bucket.get(key) || { name: studentName, count: 0, amount: 0 };
+      existing.count += 1;
+      existing.amount += toNumber(row.amount, 0);
+      bucket.set(key, existing);
+    });
+    return Array.from(bucket.values()).sort((a, b) => b.count - a.count || b.amount - a.amount);
+  }, [categorizedRows.demoCompletedRows, studentNameById]);
 
   if (!resolvedTeacherId) {
     return (
@@ -436,6 +488,7 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
               <TableHead>Category</TableHead>
               <TableHead>Count</TableHead>
               <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="text-right">Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -443,16 +496,35 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
               <TableCell>Sessions Conducted</TableCell>
               <TableCell>{metrics.sessionCount}</TableCell>
               <TableCell className="text-right">{formatCurrency(metrics.sessionEarnings)}</TableCell>
+              <TableCell className="text-right">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowSessionDetails((prev) => !prev)}
+                >
+                  {showSessionDetails ? 'Hide' : 'View details'}
+                </Button>
+              </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Demos Conducted</TableCell>
               <TableCell>{metrics.demoConductedCount}</TableCell>
               <TableCell className="text-right">{formatCurrency(metrics.demoCompletedEarnings)}</TableCell>
+              <TableCell className="text-right">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowDemoDetails((prev) => !prev)}
+                >
+                  {showDemoDetails ? 'Hide' : 'View details'}
+                </Button>
+              </TableCell>
             </TableRow>
             <TableRow>
               <TableCell>Demos Converted to Enrollment</TableCell>
               <TableCell>{metrics.demoConvertedCount}</TableCell>
               <TableCell className="text-right">{formatCurrency(metrics.demoConvertedEarnings)}</TableCell>
+              <TableCell className="text-right">—</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Total</TableCell>
@@ -460,9 +532,50 @@ export const EarningsSummary: FC<EarningsSummaryProps> = ({ teacherId }) => {
                 {metrics.sessionCount + metrics.demoConductedCount + metrics.demoConvertedCount}
               </TableCell>
               <TableCell className="text-right font-medium">{formatCurrency(metrics.totalEarnings)}</TableCell>
+              <TableCell className="text-right">—</TableCell>
             </TableRow>
           </TableBody>
         </Table>
+
+        {showSessionDetails && (
+          <div className="mt-4 rounded-md border p-3">
+            <h4 className="text-sm font-semibold mb-2">Sessions Conducted: Student-wise</h4>
+            {sessionDetails.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No session details in this range.</p>
+            ) : (
+              <div className="space-y-1">
+                {sessionDetails.map((row, index) => (
+                  <div key={`session-detail-${row.name}-${index}`} className="flex items-center justify-between text-sm">
+                    <span>{row.name}</span>
+                    <span className="text-muted-foreground">
+                      {row.count} classes · {formatCurrency(row.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {showDemoDetails && (
+          <div className="mt-4 rounded-md border p-3">
+            <h4 className="text-sm font-semibold mb-2">Demos Conducted: Student-wise</h4>
+            {demoDetails.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No demo details in this range.</p>
+            ) : (
+              <div className="space-y-1">
+                {demoDetails.map((row, index) => (
+                  <div key={`demo-detail-${row.name}-${index}`} className="flex items-center justify-between text-sm">
+                    <span>{row.name}</span>
+                    <span className="text-muted-foreground">
+                      {row.count} demos · {formatCurrency(row.amount)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );

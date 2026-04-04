@@ -99,6 +99,26 @@ function isBillableAttendance(status: string | null): boolean {
   return status === 'present' || status === 'late';
 }
 
+function hasAnyBillableAttendance(session: any): boolean {
+  const attendance = session?.attendance;
+  if (!attendance || typeof attendance !== 'object') return false;
+  return Object.values(attendance).some((entry: any) => {
+    if (typeof entry === 'string') {
+      return isBillableAttendance(entry.trim().toLowerCase());
+    }
+    if (typeof entry?.status === 'string') {
+      return isBillableAttendance(entry.status.trim().toLowerCase());
+    }
+    return false;
+  });
+}
+
+function isSessionBillableByAttendance(session: any, kidId: string | null): boolean {
+  const directStatus = resolveAttendanceStatus(session, kidId);
+  if (directStatus) return isBillableAttendance(directStatus);
+  return hasAnyBillableAttendance(session);
+}
+
 function revenueMonthlyRef(db: admin.firestore.Firestore, monthKey: string) {
   return db
     .collection('adminStats')
@@ -274,12 +294,10 @@ export const onSessionRevenueWrite = onDocumentWritten(
     const beforeCompleted = beforeStatus === 'completed';
     const afterCompleted = afterStatus === 'completed';
     const kidIdForCheck = resolveKidId(afterData || beforeData);
-    const beforeBillable =
-      beforeCompleted &&
-      isBillableAttendance(resolveAttendanceStatus(beforeData, kidIdForCheck));
-    const afterBillable =
-      afterCompleted &&
-      isBillableAttendance(resolveAttendanceStatus(afterData, kidIdForCheck));
+    const beforeBillable = beforeCompleted && isSessionBillableByAttendance(beforeData, kidIdForCheck);
+    const afterBillable = afterCompleted && isSessionBillableByAttendance(afterData, kidIdForCheck);
+    const beforeAccrued = beforeData?.revenueAccrued === true;
+    const afterAccrued = afterData?.revenueAccrued === true;
 
     if (!beforeCompleted && !afterCompleted) return;
 
@@ -463,7 +481,7 @@ export const onSessionRevenueWrite = onDocumentWritten(
       return;
     }
 
-    if (beforeBillable && !afterBillable) {
+    if ((beforeBillable || beforeAccrued || afterAccrued) && !afterBillable) {
       await db.runTransaction(async (tx) => {
         const sessionSnap = await tx.get(sessionRef);
         if (!sessionSnap.exists) return;
@@ -471,9 +489,9 @@ export const onSessionRevenueWrite = onDocumentWritten(
         const session = sessionSnap.data() || {};
         const currentStatus = normalizeStatus(session.status);
         const currentKidId = resolveKidId(session);
-        const attendanceStatus = resolveAttendanceStatus(session, currentKidId);
         const stillBillable =
-          currentStatus === 'completed' && isBillableAttendance(attendanceStatus);
+          currentStatus === 'completed' &&
+          isSessionBillableByAttendance(session, currentKidId);
         if (stillBillable) return;
 
         const accruedAmount = normalizeNumber(
