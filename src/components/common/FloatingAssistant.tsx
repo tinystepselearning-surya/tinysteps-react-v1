@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { trackEvent } from '../../lib/analytics';
 import { AskTinyStepsModal } from './AskTinyStepsModal';
 
@@ -67,39 +67,74 @@ export default function FloatingAssistant() {
       data-floating-assistant="1"
       className="pointer-events-auto fixed bottom-3 right-3 z-[99999] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4"
     >
-      <motion.button
-        type="button"
-        className="relative flex h-12 items-center gap-2 overflow-hidden rounded-full border border-indigo-200/70 bg-white/90 pl-2 pr-3 text-left text-white shadow-[0_0_0_0_rgba(99,102,241,0.45)] backdrop-blur"
-        animate={{
-          width: isExpanded ? 220 : 52,
-          boxShadow: [
-            '0 0 0 0 rgba(99,102,241,0.36)',
-            '0 0 0 8px rgba(99,102,241,0.12)',
-            '0 0 0 0 rgba(99,102,241,0.36)',
-          ],
-        }}
-        transition={{
-          width: { duration: 0.45, ease: 'easeInOut' },
-          boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
-        }}
-        whileTap={{ scale: 0.98 }}
-        onClick={openAskTinySteps}
-        aria-label="Ask TinySteps AI"
-      >
-        <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3b82f6] via-[#6366f1] to-[#a855f7] text-xs font-bold">
-          <span className="absolute inset-0 animate-ping rounded-full bg-indigo-300/40 opacity-55" />
-          AI
-        </span>
+      <AnimatePresence mode="wait" initial={false}>
         {isExpanded ? (
-          <>
+          <motion.button
+            key="ask-expanded"
+            type="button"
+            className="relative flex h-12 w-[220px] items-center gap-2 overflow-hidden rounded-full border border-indigo-200/70 bg-white/90 pl-2 pr-3 text-left text-white backdrop-blur"
+            initial={{ opacity: 0.9, scale: 0.97 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              boxShadow: [
+                '0 0 0 0 rgba(99,102,241,0.36)',
+                '0 0 0 8px rgba(99,102,241,0.12)',
+                '0 0 0 0 rgba(99,102,241,0.36)',
+              ],
+            }}
+            exit={{ opacity: 0.92, scale: 0.97 }}
+            transition={{
+              opacity: { duration: 0.22, ease: 'easeInOut' },
+              scale: { duration: 0.22, ease: 'easeInOut' },
+              boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
+            }}
+            whileTap={{ scale: 0.98 }}
+            onClick={openAskTinySteps}
+            aria-label="Ask TinySteps AI"
+          >
+            <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3b82f6] via-[#6366f1] to-[#a855f7] text-xs font-bold">
+              <span className="absolute inset-0 animate-ping rounded-full bg-indigo-300/40 opacity-55" />
+              AI
+            </span>
             <span className="min-w-0 leading-tight text-slate-900">
               <span className="block truncate text-sm font-semibold">Ask TinySteps AI</span>
               <span className="block truncate text-[11px] font-medium text-slate-500">Live assistant</span>
             </span>
             <span className="ml-auto h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.18)]" />
-          </>
-        ) : null}
-      </motion.button>
+          </motion.button>
+        ) : (
+          <motion.button
+            key="ask-collapsed"
+            type="button"
+            className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-indigo-200/70 bg-white/90 text-white backdrop-blur"
+            initial={{ opacity: 0.88, scale: 0.95 }}
+            animate={{
+              opacity: 1,
+              scale: 1,
+              boxShadow: [
+                '0 0 0 0 rgba(99,102,241,0.36)',
+                '0 0 0 8px rgba(99,102,241,0.12)',
+                '0 0 0 0 rgba(99,102,241,0.36)',
+              ],
+            }}
+            exit={{ opacity: 0.88, scale: 0.95 }}
+            transition={{
+              opacity: { duration: 0.2, ease: 'easeInOut' },
+              scale: { duration: 0.2, ease: 'easeInOut' },
+              boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
+            }}
+            whileTap={{ scale: 0.98 }}
+            onClick={openAskTinySteps}
+            aria-label="Ask TinySteps AI"
+          >
+            <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#3b82f6] via-[#6366f1] to-[#a855f7] text-xs font-bold">
+              <span className="absolute inset-0 animate-ping rounded-full bg-indigo-300/40 opacity-55" />
+              AI
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <motion.button
         type="button"

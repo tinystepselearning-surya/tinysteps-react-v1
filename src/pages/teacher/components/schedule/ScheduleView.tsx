@@ -72,6 +72,8 @@ type TopicUpdatePayload = {
   topicName?: string;
 };
 
+type SessionBadgeTone = 'scheduled' | 'completed' | 'absent' | 'reschedule_requested';
+
 const COURSE_LABEL_BY_ID: Record<string, string> = {
   'phonics-foundations': 'Phonics Foundations',
   'early-phonics': 'Early Phonics',
@@ -83,6 +85,67 @@ const COURSE_LABEL_BY_ID: Record<string, string> = {
   foundational: 'Phonics Foundations',
   early: 'Early Phonics',
   advanced: 'Advanced Phonics',
+};
+
+const getAttendanceStatus = (entry: unknown): AttendanceStatus | null => {
+  if (!entry) return null;
+  if (typeof entry === 'string') {
+    const normalized = entry.trim().toLowerCase();
+    if (
+      normalized === 'present' ||
+      normalized === 'absent' ||
+      normalized === 'late' ||
+      normalized === 'reschedule_requested'
+    ) {
+      return normalized;
+    }
+    return null;
+  }
+  if (typeof entry === 'object' && typeof (entry as any).status === 'string') {
+    const normalized = String((entry as any).status).trim().toLowerCase();
+    if (
+      normalized === 'present' ||
+      normalized === 'absent' ||
+      normalized === 'late' ||
+      normalized === 'reschedule_requested'
+    ) {
+      return normalized;
+    }
+  }
+  return null;
+};
+
+const resolveSessionBadgeTone = (session: TeacherSession): SessionBadgeTone => {
+  const attendanceValues = Object.values(session.attendance || {})
+    .map(getAttendanceStatus)
+    .filter(Boolean) as AttendanceStatus[];
+  const hasRescheduleRequested =
+    session.status === 'reschedule_requested' ||
+    attendanceValues.includes('reschedule_requested');
+  if (hasRescheduleRequested) return 'reschedule_requested';
+
+  const hasPresentOrLate = attendanceValues.some((value) => value === 'present' || value === 'late');
+  const hasAbsent = attendanceValues.includes('absent');
+  if (session.status === 'completed') {
+    if (hasAbsent && !hasPresentOrLate) return 'absent';
+    return 'completed';
+  }
+  if (hasAbsent && !hasPresentOrLate) return 'absent';
+  return 'scheduled';
+};
+
+const sessionBadgeToneClass: Record<SessionBadgeTone, string> = {
+  scheduled: 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100',
+  completed: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100',
+  absent: 'bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200',
+  reschedule_requested: 'bg-amber-100 text-amber-900 border-amber-200 hover:bg-amber-200',
+};
+
+const sessionBadgeToneLabel: Record<SessionBadgeTone, string> = {
+  scheduled: 'Scheduled',
+  completed: 'Completed',
+  absent: 'Absent',
+  reschedule_requested: 'Reschedule',
 };
 
 const completeSessionViaBackend = async (
@@ -1043,26 +1106,19 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         .map(id => studentCourseLabelById.get(id))
                         .find(Boolean) || '';
                       const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                      const isRescheduleRequested =
-                        session.status === 'reschedule_requested' ||
-                        Object.values(session.attendance || {})
-                          .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
-                      const isCompleted = session.status === 'completed';
+                      const badgeTone = resolveSessionBadgeTone(session);
                       
                       return (
                         <Badge 
                           key={idx} 
-                          variant="secondary" 
-                          className={`text-xs cursor-pointer hover:bg-secondary/80 ${
-                            isCompleted ? 'opacity-70' : ''
-                          } ${isRescheduleRequested ? 'bg-amber-100 text-amber-900 border border-amber-200' : ''}`}
+                          variant="outline"
+                          className={`text-xs cursor-pointer border ${sessionBadgeToneClass[badgeTone]}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedSession(session);
                           }}
                         >
-                          {isRescheduleRequested ? 'Reschedule · ' : ''}
-                          {isCompleted ? '✓ ' : ''}{session.startTime} · {kidNames}
+                          {sessionBadgeToneLabel[badgeTone]} · {session.startTime} · {kidNames}
                           {courseLabel ? ` · ${truncateLabel(courseLabel, 14)}` : ''}
                         </Badge>
                       );
@@ -1146,27 +1202,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         .map(id => studentCourseLabelById.get(id))
                         .find(Boolean) || '';
                       const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                      const isRescheduleRequested =
-                        session.status === 'reschedule_requested' ||
-                        Object.values(session.attendance || {})
-                          .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
-                      const isCompleted = session.status === 'completed';
+                      const badgeTone = resolveSessionBadgeTone(session);
                       
                       return (
                         <Badge 
                           key={idx} 
-                          variant="secondary" 
-                          className={`text-xs cursor-pointer hover:bg-secondary/80 w-full justify-start ${
-                            isCompleted ? 'opacity-70' : ''
-                          } ${isRescheduleRequested ? 'bg-amber-100 text-amber-900 border border-amber-200' : ''}`}
+                          variant="outline"
+                          className={`text-xs cursor-pointer border w-full justify-start ${sessionBadgeToneClass[badgeTone]}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedSession(session);
                           }}
                         >
                           <div className="truncate">
-                            {isRescheduleRequested ? 'Reschedule · ' : ''}
-                            {isCompleted ? '✓ ' : ''}{session.startTime} · {kidNames}
+                            {sessionBadgeToneLabel[badgeTone]} · {session.startTime} · {kidNames}
                             {courseLabel ? ` · ${truncateLabel(courseLabel, 16)}` : ''}
                           </div>
                         </Badge>
@@ -1251,10 +1300,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   .map(id => studentCourseLabelById.get(id))
                   .find(Boolean) || '';
                 const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-                const isRescheduleRequested =
-                  session.status === 'reschedule_requested' ||
-                  Object.values(session.attendance || {})
-                    .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+                const badgeTone = resolveSessionBadgeTone(session);
 
                 return (
                   <div 
@@ -1272,15 +1318,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                           </div>
                         )}
                       </div>
-                      {isRescheduleRequested ? (
-                        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
-                          Reschedule requested
-                        </Badge>
-                      ) : (
-                        <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                          {session.status}
-                        </Badge>
-                      )}
+                      <Badge
+                        variant="outline"
+                        className={`border ${sessionBadgeToneClass[badgeTone]}`}
+                      >
+                        {sessionBadgeToneLabel[badgeTone]}
+                      </Badge>
                     </div>
                   </div>
                 );
@@ -1333,10 +1376,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 .map((id) => studentCourseLabelById.get(id))
                 .find(Boolean) || '';
               const courseLabel = getCourseLabel(session) || fallbackCourseLabel;
-              const isRescheduleRequested =
-                session.status === 'reschedule_requested' ||
-                Object.values(session.attendance || {})
-                  .some((entry: any) => (entry?.status ?? entry) === 'reschedule_requested');
+              const badgeTone = resolveSessionBadgeTone(session);
               const timeLabel = session.startTime && session.endTime
                 ? `${session.startTime} - ${session.endTime}`
                 : session.startTime || '';
@@ -1360,15 +1400,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                         </div>
                       )}
                     </div>
-                    {isRescheduleRequested ? (
-                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-900">
-                        Reschedule
-                      </Badge>
-                    ) : (
-                      <Badge variant={session.status === 'completed' ? 'default' : 'secondary'}>
-                        {session.status}
-                      </Badge>
-                    )}
+                    <Badge
+                      variant="outline"
+                      className={`border ${sessionBadgeToneClass[badgeTone]}`}
+                    >
+                      {sessionBadgeToneLabel[badgeTone]}
+                    </Badge>
                   </div>
                 </button>
               );

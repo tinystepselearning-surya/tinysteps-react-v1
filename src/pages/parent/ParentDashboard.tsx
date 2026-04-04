@@ -4560,7 +4560,7 @@ export default function ParentDashboard() {
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-4">
                     <TinyStepsBrand subtitle="Parent Workspace" />
-                    <h1 className="truncate text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl dark:text-slate-100">
+                    <h1 className="truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-xl font-semibold tracking-tight text-transparent sm:text-2xl">
                       Hi, {user?.displayName || "Parent"}
                     </h1>
                   </div>

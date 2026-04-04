@@ -221,6 +221,13 @@ export const saveTeacherSessionProgress = onCall(
     const attendanceOnly = payload.meta?.attendanceOnly === true;
     const incomingAttendance = payload.attendance as Record<string, unknown>;
     const nextAttendance: Record<string, Record<string, unknown>> = {};
+    const sessionKidIds = Array.isArray(session.kidIds)
+      ? (session.kidIds as unknown[]).map((kidId) => String(kidId || '').trim()).filter(Boolean)
+      : [];
+    const allowedAttendanceKidIds = new Set<string>([
+      ...sessionKidIds,
+      ...Object.keys(incomingAttendance).map((kidId) => String(kidId || '').trim()).filter(Boolean),
+    ]);
 
     if (attendanceOnly) {
       const existingAttendanceRaw = session.attendance;
@@ -230,9 +237,16 @@ export const saveTeacherSessionProgress = onCall(
           : {};
 
       for (const [kidId, rawEntry] of Object.entries(existingAttendance)) {
+        const normalizedKidId = String(kidId || '').trim();
+        if (
+          allowedAttendanceKidIds.size > 0 &&
+          (!normalizedKidId || !allowedAttendanceKidIds.has(normalizedKidId))
+        ) {
+          continue;
+        }
         const entry = toAttendanceEntry(rawEntry);
         if (!entry.status) continue;
-        nextAttendance[kidId] = {
+        nextAttendance[normalizedKidId] = {
           status: entry.status,
           ...(entry.notes ? { notes: entry.notes } : {}),
           ...(entry.mastery ? { mastery: entry.mastery } : {}),
@@ -242,15 +256,19 @@ export const saveTeacherSessionProgress = onCall(
       }
 
       for (const [kidId, rawEntry] of Object.entries(incomingAttendance)) {
+        const normalizedKidId = String(kidId || '').trim();
+        if (!normalizedKidId) {
+          throw new HttpsError('invalid-argument', 'Invalid attendance kidId');
+        }
         const entry = toAttendanceEntry(rawEntry);
         if (!entry.status) {
-          throw new HttpsError('invalid-argument', `Invalid attendance status for kid ${kidId}`);
+          throw new HttpsError('invalid-argument', `Invalid attendance status for kid ${normalizedKidId}`);
         }
         const previous =
-          nextAttendance[kidId] && typeof nextAttendance[kidId] === 'object'
-            ? nextAttendance[kidId]
+          nextAttendance[normalizedKidId] && typeof nextAttendance[normalizedKidId] === 'object'
+            ? nextAttendance[normalizedKidId]
             : {};
-        nextAttendance[kidId] = {
+        nextAttendance[normalizedKidId] = {
           ...previous,
           status: entry.status,
           notes: entry.notes || String(previous.notes || ''),

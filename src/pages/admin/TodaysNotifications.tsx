@@ -3,6 +3,7 @@ import {
   collection,
   doc,
   documentId,
+  getDoc,
   getDocs,
   onSnapshot,
   query,
@@ -44,6 +45,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 interface ClassSessionDoc {
   id: string;
   enrollmentId?: string;
+  joinUrl?: string;
+  meetingLink?: string;
   date?: string;
   startTime?: string;
   endTime?: string;
@@ -72,6 +75,8 @@ interface ClassSessionDoc {
 interface EnrollmentDoc {
   id: string;
   status?: string;
+  joinUrl?: string;
+  meetingLink?: string;
   courseId?: string;
   courseName?: string;
   subject?: string;
@@ -844,6 +849,7 @@ export default function TodaysNotifications() {
     phone: string;
   } | null>(null);
   const [savingPhoneKey, setSavingPhoneKey] = useState<string | null>(null);
+  const [joiningSessionId, setJoiningSessionId] = useState<string | null>(null);
   const [mode, setMode] = useState<NotificationMode>('today');
   const [upcomingDays, setUpcomingDays] = useState<number>(7);
   const [upcomingFilterMode, setUpcomingFilterMode] = useState<UpcomingFilterMode>('range');
@@ -1470,6 +1476,88 @@ export default function TodaysNotifications() {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const openMeetingLink = (url: string) => {
+    const trimmed = String(url || '').trim();
+    if (!trimmed) return;
+    const isTeamsUrl = /^https?:\/\/([a-z0-9-]+\.)?teams\.microsoft\.com/i.test(trimmed);
+
+    if (isTeamsUrl) {
+      const teamsDeepLink = `msteams:${trimmed.replace(/^https?:/, '')}`;
+      window.location.assign(teamsDeepLink);
+      window.setTimeout(() => {
+        window.open(trimmed, '_blank', 'noopener,noreferrer');
+      }, 900);
+      return;
+    }
+
+    window.open(trimmed, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleJoinClass = async (row: any) => {
+    if (joiningSessionId === row.id) return;
+
+    setJoiningSessionId(row.id);
+    try {
+      const directJoinUrl =
+        (typeof row.joinUrl === 'string' && row.joinUrl.trim()) ||
+        (typeof row.meetingLink === 'string' && row.meetingLink.trim()) ||
+        '';
+      if (directJoinUrl) {
+        openMeetingLink(directJoinUrl);
+        return;
+      }
+
+      const enrollmentId =
+        (typeof row.enrollmentId === 'string' && row.enrollmentId.trim()) ||
+        (typeof row.id === 'string' && row.id.includes('_') ? row.id.split('_')[0].trim() : '');
+      if (!enrollmentId) {
+        toast({
+          title: 'Meeting link unavailable',
+          description: 'No enrollment is linked to this session.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const cachedEnrollment = enrollmentMap[enrollmentId];
+      const cachedJoinUrl =
+        (typeof cachedEnrollment?.joinUrl === 'string' && cachedEnrollment.joinUrl.trim()) ||
+        (typeof cachedEnrollment?.meetingLink === 'string' && cachedEnrollment.meetingLink.trim()) ||
+        '';
+      if (cachedJoinUrl) {
+        openMeetingLink(cachedJoinUrl);
+        return;
+      }
+
+      const enrollmentSnap = await getDoc(doc(db, 'enrollments', enrollmentId));
+      const enrollmentData = enrollmentSnap.data() as EnrollmentDoc | undefined;
+      const fallbackJoinUrl =
+        (typeof enrollmentData?.joinUrl === 'string' && enrollmentData.joinUrl.trim()) ||
+        (typeof enrollmentData?.meetingLink === 'string' && enrollmentData.meetingLink.trim()) ||
+        '';
+
+      if (!fallbackJoinUrl) {
+        toast({
+          title: 'Meeting link unavailable',
+          description: 'No meeting link is configured for this class yet.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      openMeetingLink(fallbackJoinUrl);
+    } catch (error: any) {
+      console.error('[TodaysNotifications] Failed to open class link', error);
+      toast({
+        title: 'Could not open class link',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setJoiningSessionId((current) => (current === row.id ? null : current));
+    }
+  };
+
   const handleNotifiedToggle = async (
     sessionId: string,
     target: 'parent' | 'teacher',
@@ -1886,7 +1974,7 @@ export default function TodaysNotifications() {
                   <TableHead className="w-[102px] whitespace-nowrap">Session Status</TableHead>
                   {mode === 'today' ? (
                     <>
-                      <TableHead className="w-[196px] whitespace-nowrap">Actions</TableHead>
+                      <TableHead className="w-[280px] whitespace-nowrap">Actions</TableHead>
                       <TableHead className="w-[88px] whitespace-nowrap">Notified</TableHead>
                     </>
                   ) : null}
@@ -1916,6 +2004,18 @@ export default function TodaysNotifications() {
                   const teacherCompactLabel = `${row.teacherName || 'Teacher'} • ${teacherCompactPhone}${
                     row.teacherUserMissing ? ' • User record not found' : ''
                   }`;
+                  const hasDirectJoinUrl =
+                    (typeof row.joinUrl === 'string' && row.joinUrl.trim().length > 0) ||
+                    (typeof row.meetingLink === 'string' && row.meetingLink.trim().length > 0);
+                  const enrollmentJoinSource = row.enrollmentId
+                    ? enrollmentMap[String(row.enrollmentId).trim()]
+                    : undefined;
+                  const hasEnrollmentJoinUrl =
+                    (typeof enrollmentJoinSource?.joinUrl === 'string' &&
+                      enrollmentJoinSource.joinUrl.trim().length > 0) ||
+                    (typeof enrollmentJoinSource?.meetingLink === 'string' &&
+                      enrollmentJoinSource.meetingLink.trim().length > 0);
+                  const canJoinClass = hasDirectJoinUrl || hasEnrollmentJoinUrl || Boolean(row.enrollmentId);
 
                   return (
                     <TableRow key={row.id}>
@@ -2146,7 +2246,16 @@ export default function TodaysNotifications() {
                       {mode === 'today' ? (
                         <>
                           <TableCell className="align-top whitespace-nowrap">
-                            <div className="space-y-2">
+                            <div className="flex items-start gap-2">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                className="h-8 px-3 text-xs"
+                                onClick={() => void handleJoinClass(row)}
+                                disabled={!canJoinClass || joiningSessionId === row.id}
+                              >
+                                {joiningSessionId === row.id ? 'Opening…' : 'Join Class'}
+                              </Button>
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button size="sm" variant="outline" className="h-8 px-2 text-xs">
