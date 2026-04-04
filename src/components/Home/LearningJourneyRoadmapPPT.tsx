@@ -1,9 +1,16 @@
 import { useMemo, useState } from "react";
 
 type JourneyCategory = "phonics" | "grammar" | "speaking" | "breakthrough";
+type JourneyKey = "S1" | "S2" | "S3" | "S4" | "S5" | "S6" | "S7" | "S8";
+type JourneyDetail = {
+  childCanDo: readonly string[];
+  nextMilestone: string;
+  teacherFocus: readonly string[];
+  homePractice: string;
+};
 
 type JourneyStop = {
-  key: string;
+  key: JourneyKey;
   title: string;
   category: JourneyCategory;
 };
@@ -42,7 +49,7 @@ const CATEGORY_META: Record<JourneyCategory, { badge: string; dot: string; panel
   },
 };
 
-const JOURNEY_DETAILS = {
+const JOURNEY_DETAILS: Record<JourneyKey, JourneyDetail> = {
   S1: {
     childCanDo: ["Hold pencil like a pro", "Trace big curves", "Keep lines neat"],
     nextMilestone: "Write first letters with correct formation",
@@ -172,7 +179,7 @@ export default function LearningJourneyRoadmapPPT() {
               <article className="rounded-[18px] border border-slate-200/80 bg-white/90 p-4 shadow-sm">
                 <div className="text-sm font-black text-slate-900">Child Can Do</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                  {active.childCanDo.map((item) => (
+                  {active.childCanDo.map((item: string) => (
                     <li key={item} className="flex gap-2">
                       <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" />
                       <span>{item}</span>
@@ -189,7 +196,7 @@ export default function LearningJourneyRoadmapPPT() {
               <article className="rounded-[18px] border border-slate-200/80 bg-white/90 p-4 shadow-sm">
                 <div className="text-sm font-black text-slate-900">Teacher Focus</div>
                 <ul className="mt-3 space-y-2 text-sm text-slate-700">
-                  {active.teacherFocus.map((item) => (
+                  {active.teacherFocus.map((item: string) => (
                     <li key={item} className="flex gap-2">
                       <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-sky-500" />
                       <span>{item}</span>
