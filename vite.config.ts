@@ -103,13 +103,25 @@ export default defineConfig({
             if (id.includes('@tanstack/react-query')) return 'vendor-query';
             if (id.includes('@sentry')) return 'vendor-sentry';
             if (id.includes('lucide-react')) return 'vendor-icons';
-            if (id.includes('firebase')) return 'vendor-firebase';
-            if (id.includes('framer-motion')) return 'vendor-framer-motion';
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('framer-motion')) return 'motion';
             if (id.includes('react') && id.includes('node_modules')) return 'vendor-react';
             if (id.match(/(chart|d3|recharts|chartjs|vega)/i)) return 'vendor-charts';
             if (id.includes('@mdx-js') || id.includes('rehype') || id.includes('remark')) return 'vendor-mdx';
             return 'vendor';
           }
+
+          if (id.includes('/src/components/common/FloatingAssistant')) return 'marketing-assistant';
+          if (id.includes('/src/components/common/Footer')) return 'marketing-footer';
+          if (id.includes('/src/components/programs/ParentReassurance')) return 'home-parent-reassurance';
+          if (id.includes('/src/components/Home/PricingCrispSection')) return 'home-pricing';
+          if (id.includes('/src/components/Home/SocialProofCrispSection')) return 'home-social-proof';
+          if (id.includes('/src/components/Home/StepTimeline')) return 'home-timeline';
+          if (id.includes('/src/components/Home/FinalCTASection')) return 'home-final-cta';
+          if (id.includes('/src/components/Home/GlobalImpactSection')) return 'home-impact';
+          if (id.includes('/src/components/Home/StatsProofSection')) return 'home-demo-showcase';
+          if (id.includes('/src/components/Home/LearningJourneyRoadmapPPT')) return 'home-journey-roadmap';
+          if (id.includes('/src/pages/KidsEnglishExcellence')) return 'kids-english';
 
           // Large app areas -> separate per-portal bundles
           if (id.includes('/src/pages/admin/')) return 'admin';

@@ -10,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
+import BrandLogo from './BrandLogo';
 
 const socialLinks = [
   { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
@@ -51,12 +52,11 @@ export default function Footer() {
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.82fr_0.92fr_1fr] lg:items-start lg:gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <img
-                src="/logo-main.png"
+              <BrandLogo
                 alt="Tiny Steps logo"
+                variant="main"
                 width={44}
                 height={44}
-                decoding="async"
                 loading="lazy"
                 className="h-11 w-11 rounded-2xl bg-white p-1.5 object-contain shadow-sm ring-1 ring-white/15"
               />

@@ -1,27 +1,25 @@
 // src/pages/HomePage.tsx
 // @ts-nocheck
-import React, { lazy, Suspense, useEffect, useState } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { applySeo } from "../lib/seo";
 import { localBusinessSchema, websiteSchema } from "../lib/schemas";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
-import ParentReassurance from "../components/programs/ParentReassurance";
+import useDeferredActivation from "../hooks/useDeferredActivation";
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
 const SocialProofCrispSection = lazy(() => import("../components/Home/SocialProofCrispSection"));
 const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
 const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
-const LearningJourneyRoadmapPPT = lazy(async () => {
-  const mod = await import("./KidsEnglishExcellence");
-  return { default: mod.LearningJourneyRoadmapPPT };
-});
+const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
+const LearningJourneyRoadmapPPT = lazy(() => import("../components/Home/LearningJourneyRoadmapPPT"));
 
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [showDeferredSections, setShowDeferredSections] = useState(false);
+  const showDeferredSections = useDeferredActivation({ idleTimeout: 2400 });
 
   useEffect(() => {
     if (location.search && location.search.includes("book=1")) {
@@ -51,50 +49,6 @@ export default function HomePage() {
         websiteSchema,
       ],
     });
-  }, []);
-
-  useEffect(() => {
-    if (typeof navigator !== "undefined" && navigator.webdriver) return;
-
-    const activate = () => setShowDeferredSections(true);
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
-
-    const onFirstInteraction = () => {
-      activate();
-      window.removeEventListener("pointerdown", onFirstInteraction);
-      window.removeEventListener("keydown", onFirstInteraction);
-      window.removeEventListener("touchstart", onFirstInteraction);
-      window.removeEventListener("scroll", onFirstInteraction);
-    };
-    window.addEventListener("pointerdown", onFirstInteraction, { passive: true });
-    window.addEventListener("keydown", onFirstInteraction, { passive: true });
-    window.addEventListener("touchstart", onFirstInteraction, { passive: true });
-    window.addEventListener("scroll", onFirstInteraction, { passive: true });
-
-    if (typeof win.requestIdleCallback === "function") {
-      idleId = win.requestIdleCallback(activate, { timeout: 2800 });
-    } else {
-      timeoutId = window.setTimeout(activate, 2400);
-    }
-
-    return () => {
-      window.removeEventListener("pointerdown", onFirstInteraction);
-      window.removeEventListener("keydown", onFirstInteraction);
-      window.removeEventListener("touchstart", onFirstInteraction);
-      window.removeEventListener("scroll", onFirstInteraction);
-      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-      }
-    };
   }, []);
 
   return (
@@ -348,7 +302,9 @@ export default function HomePage() {
             </div>
           </section>
 
-          <ParentReassurance />
+          <Suspense fallback={null}>
+            <ParentReassurance />
+          </Suspense>
 
           <Suspense fallback={null}>
             <FinalCTASection />

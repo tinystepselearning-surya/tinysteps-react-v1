@@ -1,5 +1,6 @@
 // @ts-nocheck
 let initialized = false;
+let interactionArmed = false;
 let scriptQueued = false;
 
 const DISABLED_PREFIXES = ['/admin', '/teacher', '/parent', '/kid', '/lp', '/dev'];
@@ -46,18 +47,27 @@ const primeGtagQueue = (id: string) => {
 const queueScriptLoad = (id: string) => {
   if (scriptQueued) return;
   scriptQueued = true;
+  loadScript(id);
+};
 
-  const win = window as Window & {
-    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+const armInteractionLoader = (id: string) => {
+  if (interactionArmed) return;
+  interactionArmed = true;
+
+  const loadOnInteraction = () => {
+    queueScriptLoad(id);
+    window.removeEventListener('scroll', loadOnInteraction);
+    window.removeEventListener('click', loadOnInteraction);
+    window.removeEventListener('mousemove', loadOnInteraction);
+    window.removeEventListener('touchstart', loadOnInteraction);
+    window.removeEventListener('keydown', loadOnInteraction);
   };
-  const load = () => loadScript(id);
 
-  if (typeof win.requestIdleCallback === 'function') {
-    win.requestIdleCallback(load, { timeout: 2800 });
-    return;
-  }
-
-  window.setTimeout(load, 2200);
+  window.addEventListener('scroll', loadOnInteraction, { once: true, passive: true });
+  window.addEventListener('click', loadOnInteraction, { once: true, passive: true });
+  window.addEventListener('mousemove', loadOnInteraction, { once: true, passive: true });
+  window.addEventListener('touchstart', loadOnInteraction, { once: true, passive: true });
+  window.addEventListener('keydown', loadOnInteraction, { once: true, passive: true });
 };
 
 export const initAnalytics = () => {
@@ -69,8 +79,13 @@ export const initAnalytics = () => {
   const measurementId = import.meta.env.VITE_GA_MEASUREMENT_ID;
   if (!measurementId) return;
 
-  primeGtagQueue(measurementId);
-  queueScriptLoad(measurementId);
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function () {
+    window.dataLayer.push(arguments);
+  };
+  window.gtag('js', new Date());
+  window.gtag('config', measurementId, { send_page_view: false });
+  armInteractionLoader(measurementId);
   initialized = true;
 };
 

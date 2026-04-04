@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
+import BrandLogo from './BrandLogo';
 
 type LinkItem = { label: string; href: string };
 
@@ -232,6 +233,7 @@ export default function Header() {
 
         <div className="hidden items-center gap-4 md:flex">
           <button
+            data-home-primary-cta
             type="button"
             onClick={handleBookAssessment}
             className="inline-flex h-11 items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
@@ -246,6 +248,7 @@ export default function Header() {
 
   return (
     <nav
+      data-site-header
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         isSticky ? 'bg-white/88 shadow-[0_15px_35px_rgba(8,15,40,0.12)] backdrop-blur-lg' : 'bg-transparent'
       }`}
@@ -259,14 +262,13 @@ export default function Header() {
           onClick={() => navigate('/')}
           aria-label="Go to Tiny Steps home page"
         >
-          <img
-            src="/logo-header.png"
+          <BrandLogo
             alt="Tiny Steps Logo"
+            variant="header"
             width={44}
             height={44}
-            decoding="async"
-            fetchPriority="high"
-            className="h-11 w-11 object-contain"
+            priority
+            className="h-11 w-11"
           />
           <div>
             <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
@@ -278,6 +280,7 @@ export default function Header() {
 
         <div className="flex items-center gap-3 lg:hidden">
           <button
+            data-home-primary-cta
             type="button"
             onClick={handleBookAssessment}
             className="rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-xs font-semibold text-white"

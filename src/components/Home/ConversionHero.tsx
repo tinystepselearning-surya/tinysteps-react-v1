@@ -89,7 +89,7 @@ const SunTile = ({ eyebrow, title, desc, icon, size = "small" }: any) => (
 
 const ConversionHero: React.FC = () => {
   return (
-    <section className="relative min-h-[82vh] overflow-hidden px-4 pb-10 pt-6 md:min-h-screen md:px-8 md:pb-12 md:pt-8">
+    <section data-home-hero className="relative min-h-[82vh] overflow-hidden px-4 pb-10 pt-6 md:min-h-screen md:px-8 md:pb-12 md:pt-8">
       {/* ✅ Classy Sunrise Background (more depth, less wash) */}
       <div className="pointer-events-none absolute inset-0">
         {/* base */}
@@ -143,7 +143,7 @@ const ConversionHero: React.FC = () => {
         />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-7xl">
+      <div data-home-hero-grid className="relative z-10 mx-auto max-w-7xl">
         <div className="grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           {/* LEFT CONTENT */}
           <div className="flex flex-col justify-center">
@@ -158,6 +158,7 @@ const ConversionHero: React.FC = () => {
             </div>
 
             <h1
+              data-home-hero-title
               className="mt-6 max-w-4xl text-4xl font-black leading-[0.95] tracking-tight text-slate-900 md:text-6xl lg:text-7xl"
             >
               Gentle, <span className="whitespace-nowrap">high-impact</span>
@@ -168,6 +169,7 @@ const ConversionHero: React.FC = () => {
             </h1>
 
             <p
+              data-home-hero-copy
               className="mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg"
             >
               Live 1:1 and small-group online classes blending phonics, grammar, and speaking into one structured journey for ages 3–12. Free assessment, trained teachers, weekly parent updates.
@@ -231,7 +233,7 @@ const ConversionHero: React.FC = () => {
           </div>
 
           {/* RIGHT FORM CARD */}
-          <div className="relative lg:pl-6">
+          <div data-home-hero-form className="relative lg:pl-6">
             <div className="pointer-events-none absolute -right-3 top-6 hidden rounded-[28px] border border-white/70 bg-white/70 px-4 py-3 shadow-[0_16px_45px_rgba(255,106,0,0.12)] backdrop-blur md:block">
               <div className="flex items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">

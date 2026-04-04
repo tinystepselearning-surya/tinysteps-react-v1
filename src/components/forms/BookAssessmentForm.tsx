@@ -296,6 +296,7 @@ export const BookAssessmentForm: React.FC<BookAssessmentFormProps> = ({
           ) : null}
 
           <Button
+            data-home-primary-cta
             type="submit"
             className="mt-6 w-full rounded-2xl py-6 text-base font-bold shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80"
             style={{
