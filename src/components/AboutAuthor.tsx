@@ -35,6 +35,7 @@ const DEFAULT_AUTHOR: AuthorProfile = {
   name: 'Priya',
   role: 'Tiny Steps Founder',
   bio: 'With 10+ years of experience in early childhood English education, Priya founded Tiny Steps Learning to help children ages 3-12 build phonics, grammar, writing, and speaking confidence through calm, research-informed teaching.',
+  imageUrl: '/priya-founder-tiny-steps-learning.webp',
 };
 
 const STANDARD_HIGHLIGHTS: AuthorHighlight[] = [
@@ -119,11 +120,25 @@ export const AboutAuthor: React.FC<AboutAuthorProps> = ({
           <div>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
               {author.imageUrl ? (
-                <img
-                  src={author.imageUrl}
-                  alt={author.name}
-                  className="h-20 w-20 rounded-[1.5rem] object-cover shadow-lg"
-                />
+                <figure className="m-0 h-20 w-20 shrink-0 overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-lg">
+                  <img
+                    src={author.imageUrl}
+                    alt={
+                      author.name === 'Priya'
+                        ? 'Priya, Founder of Tiny Steps Learning, early childhood English educator'
+                        : author.name
+                    }
+                    width={160}
+                    height={160}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover object-center"
+                  />
+                  <figcaption className="sr-only">
+                    {author.name}
+                    {author.role ? `, ${author.role}` : ''}
+                  </figcaption>
+                </figure>
               ) : (
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,#0f172a,#17315f)] text-xl font-black text-white shadow-lg">
                   {initials}

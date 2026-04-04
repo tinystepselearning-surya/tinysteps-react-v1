@@ -184,10 +184,30 @@ const faqSchema = {
   })),
 };
 
+const founderSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  '@id': 'https://tinystepslearning.com/#priya-founder',
+  name: 'Priya',
+  jobTitle: 'Founder',
+  image: 'https://tinystepslearning.com/priya-founder-tiny-steps-learning.webp',
+  worksFor: {
+    '@type': 'Organization',
+    name: 'Tiny Steps Learning',
+    url: 'https://tinystepslearning.com/',
+  },
+};
+
 const ParentsHubPage: React.FC = () => {
   const metaTitle = 'Parents Help Hub | Phonics, Reading, Grammar & Speaking Support for Families';
   const metaDescription =
     'Premium parent help hub for phonics, reading routines, grammar, speaking confidence, progress tracking, homework support, and class decisions for ages 3-12.';
+  const pageSchema = {
+    ...(parentsMeta['/parents'].jsonLd as Record<string, unknown>),
+    about: {
+      '@id': 'https://tinystepslearning.com/#priya-founder',
+    },
+  };
 
   useEffect(() => {
     applySeo({
@@ -201,9 +221,9 @@ const ParentsHubPage: React.FC = () => {
         'english classes for kids parents guide',
         'grammar and speaking support for children',
       ],
-      jsonLd: [parentsMeta['/parents'].jsonLd as object, breadcrumbSchema, faqSchema],
+      jsonLd: [pageSchema, breadcrumbSchema, faqSchema, founderSchema],
     });
-  }, []);
+  }, [pageSchema]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7efe4_0%,#fcfaf7_18%,#ffffff_48%,#f3f7fc_100%)] text-slate-900">
@@ -211,7 +231,7 @@ const ParentsHubPage: React.FC = () => {
         title={metaTitle}
         description={metaDescription}
         canonical="https://tinystepslearning.com/parents"
-        jsonLd={[parentsMeta['/parents'].jsonLd as object, breadcrumbSchema, faqSchema]}
+        jsonLd={[pageSchema, breadcrumbSchema, faqSchema, founderSchema]}
       />
 
       <section className="relative overflow-hidden border-b border-slate-900 bg-slate-950 text-white">

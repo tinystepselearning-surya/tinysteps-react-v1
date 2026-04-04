@@ -8,6 +8,7 @@ import { fetchMdxPosts } from '../content/blogMdx';
 import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
+import AboutAuthor from '../components/AboutAuthor';
 
 const TOPIC_OPTIONS = ['All', 'Phonics', 'Grammar', 'Public Speaking', 'Parent Tips', 'Research'] as const;
 const SORT_OPTIONS = ['Newest', 'Most Popular', 'Most Read'] as const;
@@ -874,6 +875,19 @@ const BlogPage: FC = () => {
             </div>
           </details>
         </section>
+
+        <AboutAuthor
+          className="mt-12"
+          title="About Tiny Steps Blog & Founder"
+          intro="The Tiny Steps blog is written to help parents move quickly from search queries to practical next steps in phonics, grammar, speaking, and home routines."
+          note="Every Tiny Steps blog is shaped to answer real parent questions clearly, then connect those answers to practical routines, classes, and support paths."
+          badges={['Foundations Forever', 'Tiny Steps Blog', 'Parent-first teaching']}
+          highlights={[
+            { label: 'Primary purpose', value: 'Help parents choose the right next move faster' },
+            { label: 'Topics covered', value: 'Phonics, grammar, speaking, routines, and research guides' },
+            { label: 'Editorial approach', value: 'Search-intent clarity with practical home-use guidance' },
+          ]}
+        />
 
         <section className="mt-12 overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] sm:px-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
