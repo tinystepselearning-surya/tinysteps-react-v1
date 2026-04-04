@@ -2,6 +2,7 @@ export const STATIC_MARKETING_ROUTES = [
   '/',
   '/blog',
   '/pricing',
+  '/sitemap',
   '/contact',
   '/why-tiny-steps',
   '/learning-partner',

@@ -25,6 +25,89 @@ Sitemap: https://tinystepslearning.com/sitemap.xml
 # Avoid allow-only bot groups here because crawler-specific groups do not merge
 # with the wildcard group and can unintentionally bypass private-route disallows.
 
+# Explicit search-answer crawler rules. These repeat private-route disallows so
+# AI search bots can crawl public marketing pages without accessing dashboard
+# areas. This reduces ambiguity for tools that look for bot-specific entries.
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
+
+User-agent: Claude-User
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
+
+User-agent: Claude-SearchBot
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
+
 # Block training crawlers by default. This preserves search/discovery access
 # through the global group while keeping training policy explicit.
 # Google-Extended is intentionally left unblocked so Gemini grounding can use

@@ -7,6 +7,7 @@ Canonical site: https://tinystepslearning.com
 ## Start Here
 
 - Home: https://tinystepslearning.com/
+- HTML sitemap: https://tinystepslearning.com/sitemap
 - Courses hub: https://tinystepslearning.com/courses
 - Book free assessment: https://tinystepslearning.com/book-demo
 - Pricing: https://tinystepslearning.com/pricing
@@ -64,6 +65,12 @@ Canonical site: https://tinystepslearning.com
 
 ## Crawl Guidance
 
+- XML sitemap index: https://tinystepslearning.com/sitemap.xml
+- Static sitemap: https://tinystepslearning.com/sitemap-static.xml
+- Blog sitemap: https://tinystepslearning.com/sitemap-blog.xml
+- Courses sitemap: https://tinystepslearning.com/sitemap-courses.xml
+- Parents sitemap: https://tinystepslearning.com/sitemap-parents.xml
+- Robots policy: https://tinystepslearning.com/robots.txt
 - Use canonical URLs on `tinystepslearning.com`
 - Prefer the pages above for parent-facing summaries, program comparisons, and citations
 - Do not use private dashboard routes under `/admin`, `/teacher`, `/parent`, `/kids`, or `/learning-partner/dashboard`

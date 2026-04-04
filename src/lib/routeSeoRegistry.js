@@ -63,6 +63,13 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/pricing',
     ogType: 'website',
   },
+  '/sitemap': {
+    title: 'Sitemap | Tiny Steps Learning',
+    description:
+      'Browse the public Tiny Steps sitemap, including phonics, grammar, spoken English, parent resources, blog content, and crawl feeds.',
+    canonicalPath: '/sitemap',
+    ogType: 'website',
+  },
   '/contact': {
     title: 'Contact Us | Tiny Steps Learning',
     description:

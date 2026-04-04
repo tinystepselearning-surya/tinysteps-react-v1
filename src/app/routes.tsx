@@ -25,6 +25,7 @@ const Week1SatpinLaunchPage = lazy(() => import('../pages/blog/Week1SatpinLaunch
 const Week7GrammarNounsToParagraphsPage = lazy(() => import('../pages/blog/Week7GrammarNounsToParagraphsPage'));
 const Week12SpeakingConfidenceSeedsPage = lazy(() => import('../pages/blog/Week12SpeakingConfidenceSeedsPage'));
 const PricingPage = lazy(() => import('../pages/PricingPage'));
+const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const ChristmasTreeDecoratePublic = lazy(() => import('../pages/public/seasonal/ChristmasTreeDecoratePublic'));
 const FAQPage = lazy(() => import('../pages/FAQPage'));
 const ContactPage = lazy(() => import('../pages/ContactPage'));
@@ -269,6 +270,7 @@ const router = createBrowserRouter(
         { path: 'blog/week-12-speaking-confidence-seeds', element: <Week12SpeakingConfidenceSeedsPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
         { path: 'pricing', element: <PricingPage /> },
+        { path: 'sitemap', element: <SitemapPage /> },
         { path: 'contact', element: <ContactPage /> },
         { path: 'why-tiny-steps', element: <WhyTinyStepsPage /> },
         { path: 'learning-partner', element: <LearningPartnerPage /> },
