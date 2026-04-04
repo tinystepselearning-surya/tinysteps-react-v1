@@ -143,19 +143,19 @@ export const parentsMeta: Record<string, ParentMeta> = {
     }
   },
   '/parents/phonics-mission': {
-    title: 'Phonics Mission: Building Letter-Sound Confidence | Tiny Steps Parents',
-    description: 'Activities and games to build letter-sound knowledge and blending confidence at home.',
+    title: 'Phonics Mission for Parents: 7-Day Daily Practice Plan | Tiny Steps Parents',
+    description: 'Research-backed phonics routine for ages 3-10: a 7-day starter plan, 10-minute daily decoding practice, blending examples, and parent scripts for multilingual homes.',
     canonicalPath: '/parents/phonics-mission',
     jsonLd: {
       "@context": "https://schema.org",
       "@type": "HowTo",
-      "name": "Phonics mission — quick daily practice",
-      "description": "A 5‑minute phonics mission: sound → blend → read a short word.",
+      "name": "Phonics mission for parents",
+      "description": "A research-backed 7-day phonics starter plan with a 5-10 minute daily routine for sound-letter links, blending, and short reading.",
       "inLanguage": "en-IN",
       "step": [
-        { "@type": "HowToStep", "text": "Say the target sound together (2 times)." },
-        { "@type": "HowToStep", "text": "Blend the sounds into one short word (3 times)." },
-        { "@type": "HowToStep", "text": "Read a decodable sentence with that word." }
+        { "@type": "HowToStep", "text": "Choose one target sound or short word pattern and review it briefly." },
+        { "@type": "HowToStep", "text": "Match the sound to the written letter and practise blending." },
+        { "@type": "HowToStep", "text": "Read one short decodable word or sentence and close with praise." }
       ]
     }
   },

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
+import AboutAuthor from '../../components/AboutAuthor';
 
 const TrackingProgress: React.FC = () => {
   useEffect(() => {
@@ -94,6 +95,8 @@ const TrackingProgress: React.FC = () => {
         </div>
       </div>
     </div>
+
+    <AboutAuthor className="mt-10" />
   </article>
 );
 

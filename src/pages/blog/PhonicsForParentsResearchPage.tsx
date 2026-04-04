@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { formatBlogDate } from '../../lib/date';
 import useRevealAnimations from '../../hooks/useRevealAnimations';
+import AboutAuthor from '../../components/AboutAuthor';
+import ResearchArticleHero from '../../components/blog/ResearchArticleHero';
 
 const ARTICLE_SLUG = 'phonics-for-parents-guide';
 const ARTICLE_PATH = `/blog/${ARTICLE_SLUG}`;
@@ -482,92 +484,20 @@ export default function PhonicsForParentsResearchPage() {
 
   return (
     <article className="bg-[linear-gradient(180deg,#fff9f1_0%,#f8fbff_28%,#ffffff_52%,#f8fbff_100%)]">
-      <section className="relative isolate overflow-hidden bg-slate-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,186,119,0.34),_transparent_33%),radial-gradient(circle_at_82%_18%,_rgba(94,170,255,0.34),_transparent_26%),linear-gradient(160deg,_rgba(15,23,42,0.98)_0%,_rgba(15,23,42,0.94)_42%,_rgba(10,37,79,0.96)_100%)]" />
-        <div className="absolute inset-y-0 right-0 hidden w-[48%] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0))] lg:block" />
-        <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" />
-        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-28 sm:pb-20 sm:pt-32">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">
-                Research Guide
-                <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a3d]" />
-                Parents Blog
-              </div>
-
-              <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-                {ARTICLE_TITLE}
-              </h1>
-
-              <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
-                A premium TinySteps research article for parents asking what phonics is, why phonics matters,
-                how to teach phonics at home, and what to do when a child knows letters but still cannot read.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-200">
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">Tiny Steps Research Desk</span>
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{formatBlogDate(ARTICLE_DATE)}</span>
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{ARTICLE_READ_TIME}</span>
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  to="/?book=1"
-                  className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                >
-                  Book a free reading assessment
-                </Link>
-                <Link
-                  to="/parents"
-                  className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Explore the Parents Hub
-                </Link>
-              </div>
-
-              <div className="mt-10 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {['Systematic phonics', '10-minute routine', 'Multilingual support', 'No-pressure coaching'].map((chip) => (
-                  <span
-                    key={chip}
-                    className="rounded-full border border-white/10 bg-white/6 px-4 py-2 text-sm font-medium text-slate-100"
-                  >
-                    {chip}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-white/10 bg-white/8 p-6 shadow-2xl shadow-sky-950/25 backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">Research snapshot</p>
-              <div className="mt-5 space-y-4">
-                {HERO_POINTS.map((point) => (
-                  <div key={point.label} className="rounded-2xl border border-white/10 bg-slate-950/20 p-4">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-300">{point.label}</p>
-                    <p className="mt-2 text-lg font-semibold text-white">{point.value}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-200">{point.detail}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 rounded-2xl border border-white/10 bg-black/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  Parents usually land here because
-                </p>
-                <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-100">
-                  {SEARCH_PAIN_POINTS.map((item) => (
-                    <li key={item} className="flex gap-3">
-                      <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[#ff8a3d]" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ResearchArticleHero
+        eyebrowPrimary="Research Guide"
+        eyebrowSecondary="Parents Blog"
+        title={ARTICLE_TITLE}
+        description="A premium Tiny Steps phonics guide for parents who want clear answers on what phonics is, why phonics matters, how to teach it at home, and what to do when a child knows letters but still cannot read."
+        dateLabel={formatBlogDate(ARTICLE_DATE)}
+        readTimeLabel={ARTICLE_READ_TIME}
+        actions={[
+          { label: 'Book a free reading assessment', to: '/?book=1' },
+          { label: 'Explore the Parents Hub', to: '/parents', variant: 'secondary' },
+        ]}
+        searchPainPoints={SEARCH_PAIN_POINTS}
+        heroPoints={HERO_POINTS}
+      />
 
       <div className="mx-auto max-w-7xl px-6 py-10 lg:grid lg:grid-cols-[260px_minmax(0,1fr)] lg:gap-14 lg:py-14">
         <aside className="hidden lg:block">
@@ -973,31 +903,33 @@ export default function PhonicsForParentsResearchPage() {
                   </a>
                 ))}
               </div>
-
-              <div className="mt-8 rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#0f172a,#17315f)] p-8 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">Closing note</p>
-                <h3 className="mt-3 text-3xl font-black tracking-tight">Start small. Stay kind. Stay consistent.</h3>
-                <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-200">
-                  Phonics is not magic, but it is powerful when taught clearly: small steps, explicit links,
-                  repeated practice, and reading materials that let children succeed. If your child is
-                  struggling, you do not need to panic, and you do not need to carry this alone.
-                </p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link
-                    to="/?book=1"
-                    className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                  >
-                    Book a TinySteps assessment
-                  </Link>
-                  <Link
-                    to="/parents"
-                    className="inline-flex items-center rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                  >
-                    Return to the Parents Hub
-                  </Link>
-                </div>
-              </div>
             </SectionShell>
+
+            <AboutAuthor variant="research" />
+
+            <section className="rounded-[32px] border border-slate-200/80 bg-slate-950 px-7 py-8 text-white shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">Closing note</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">Start small. Stay kind. Stay consistent.</h2>
+              <p className="mt-4 max-w-3xl text-base leading-8 text-slate-200">
+                Phonics is not magic, but it is powerful when taught clearly: small steps, explicit links,
+                repeated practice, and reading materials that let children succeed. If your child is
+                struggling, you do not need to panic, and you do not need to carry this alone.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link
+                  to="/?book=1"
+                  className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
+                >
+                  Book a TinySteps assessment
+                </Link>
+                <Link
+                  to="/parents"
+                  className="inline-flex items-center rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Return to the Parents Hub
+                </Link>
+              </div>
+            </section>
           </div>
         </div>
       </div>

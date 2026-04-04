@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { formatBlogDate } from '../../lib/date';
 import useRevealAnimations from '../../hooks/useRevealAnimations';
+import AboutAuthor from '../../components/AboutAuthor';
+import ResearchArticleHero from '../../components/blog/ResearchArticleHero';
 
 const ARTICLE_SLUG = 'week-1-phonics-satpin-launch';
 const ARTICLE_PATH = `/blog/${ARTICLE_SLUG}`;
@@ -395,78 +397,20 @@ export default function Week1SatpinLaunchPage() {
 
   return (
     <article className="bg-[linear-gradient(180deg,#fffaf3_0%,#f7fbff_28%,#ffffff_52%,#f8fbff_100%)]">
-      <section className="relative isolate overflow-hidden bg-slate-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,186,119,0.34),_transparent_34%),radial-gradient(circle_at_82%_18%,_rgba(94,170,255,0.3),_transparent_28%),linear-gradient(160deg,_rgba(15,23,42,0.98)_0%,_rgba(15,23,42,0.94)_42%,_rgba(10,37,79,0.96)_100%)]" />
-        <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" />
-        <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
-
-        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-28 sm:pb-20 sm:pt-32">
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">
-                Week 1 Roadmap
-                <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a3d]" />
-                SATPIN Launch
-              </div>
-
-              <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
-                {ARTICLE_TITLE}
-              </h1>
-
-              <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
-                A premium Tiny Steps SATPIN guide for parents whose child knows the alphabet song but still
-                cannot read simple words. This page shows what to teach first, how to keep sounds clean,
-                how to blend without pressure, and how to run a realistic week 1 plan at home.
-              </p>
-
-              <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-200">
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">Tiny Steps Research Desk</span>
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{formatBlogDate(ARTICLE_DATE)}</span>
-                <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{ARTICLE_READ_TIME}</span>
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  to="/?book=1"
-                  className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
-                >
-                  Book a free reading assessment
-                </Link>
-                <Link
-                  to="/blog/phonics-for-parents-guide"
-                  className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Read the full phonics parent guide
-                </Link>
-              </div>
-            </div>
-
-            <div className="rounded-[32px] border border-white/12 bg-white/8 p-6 backdrop-blur">
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">Parents often search</p>
-              <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
-                {SEARCH_PAIN_POINTS.map((item) => (
-                  <li key={item} className="border-b border-white/10 pb-3 last:border-b-0 last:pb-0">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            {HERO_POINTS.map((point) => (
-              <div
-                key={point.label}
-                className="rounded-[28px] border border-white/12 bg-white/8 p-5 backdrop-blur"
-              >
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-300">{point.label}</p>
-                <p className="mt-3 text-xl font-bold text-white">{point.value}</p>
-                <p className="mt-3 text-sm leading-6 text-slate-200">{point.detail}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ResearchArticleHero
+        eyebrowPrimary="Week 1 Roadmap"
+        eyebrowSecondary="SATPIN Launch"
+        title={ARTICLE_TITLE}
+        description="A premium Tiny Steps SATPIN guide for parents whose child knows the alphabet song but still cannot read simple words. This page shows what to teach first, how to keep sounds clean, how to blend without pressure, and how to run a realistic week 1 plan at home."
+        dateLabel={formatBlogDate(ARTICLE_DATE)}
+        readTimeLabel={ARTICLE_READ_TIME}
+        actions={[
+          { label: 'Book a free reading assessment', to: '/?book=1' },
+          { label: 'Read the full phonics parent guide', to: '/blog/phonics-for-parents-guide', variant: 'secondary' },
+        ]}
+        searchPainPoints={SEARCH_PAIN_POINTS}
+        heroPoints={HERO_POINTS}
+      />
 
       <section className="mx-auto grid max-w-7xl gap-12 px-6 py-12 lg:grid-cols-[minmax(0,1fr)_280px]">
         <div className="space-y-12">
@@ -720,6 +664,8 @@ export default function Week1SatpinLaunchPage() {
               ))}
             </div>
           </SectionShell>
+
+          <AboutAuthor variant="research" />
 
           <section
             data-animate="fade-up"

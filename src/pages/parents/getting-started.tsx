@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
+import AboutAuthor from '../../components/AboutAuthor';
 
 const stepFlow = [
   {
@@ -251,6 +252,8 @@ const GettingStarted: React.FC = () => {
           </ul>
         </div>
       </section>
+
+      <AboutAuthor className="mt-12" />
 
       <section className="mt-12 rounded-3xl border border-slate-200 bg-slate-900 px-6 py-8 text-white md:px-8">
         <h2 className="text-2xl font-bold">Ready to begin with clarity?</h2>

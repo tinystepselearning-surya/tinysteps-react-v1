@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import parentsMeta from '../../content/parentsMeta';
+import AboutAuthor from '../../components/AboutAuthor';
 
 const CommonMistakes: React.FC = () => {
   useEffect(() => {
@@ -86,6 +87,8 @@ const CommonMistakes: React.FC = () => {
         <li>End each day with one sentence your child can read successfully.</li>
       </ul>
     </div>
+
+    <AboutAuthor className="mt-10" />
   </article>
 );
 

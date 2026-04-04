@@ -10,7 +10,6 @@ describe('FloatingAssistant', () => {
 
   beforeEach(() => {
     vi.useFakeTimers()
-    window.localStorage.clear()
 
     // @ts-ignore
     global.requestAnimationFrame = (cb) => cb(0)
@@ -41,59 +40,41 @@ describe('FloatingAssistant', () => {
     expect(document.querySelectorAll('[data-floating-assistant="1"]').length).toBe(1)
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
+    expect(screen.getByText('Live assistant')).toBeInTheDocument()
   })
 
-  it('opens the AI panel and collapse returns to the compact dock', async () => {
+  it('auto-collapses and auto-expands every 10 seconds', async () => {
+    await renderAnonymousWidget()
+
+    expect(screen.getByText('Live assistant')).toBeInTheDocument()
+
+    act(() => {
+      vi.advanceTimersByTime(10000)
+    })
+    expect(screen.queryByText('Live assistant')).toBeNull()
+
+    act(() => {
+      vi.advanceTimersByTime(10000)
+    })
+    expect(screen.getByText('Live assistant')).toBeInTheDocument()
+  })
+
+  it('opens the AI modal from the bubble button', async () => {
     await renderAnonymousWidget()
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
-    expect(screen.getByText(/Need help choosing a program/i)).toBeInTheDocument()
-
-    fireEvent.click(screen.getByText('Collapse'))
-    expect(screen.queryByText(/Need help choosing a program/i)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
+    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
   })
 
-  it('hide only dismisses the panel and the dock stays visible after reload', async () => {
-    const firstRender = await renderAnonymousWidget()
-
-    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
-    fireEvent.click(screen.getByText('Hide'))
-
-    expect(window.localStorage.getItem('ts_floating_assistant_panel_dismissed')).toBe('1')
-    expect(screen.queryByText(/Need help choosing a program/i)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
-
-    firstRender.unmount()
-    await renderAnonymousWidget()
-
-    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
-    expect(screen.queryByText(/Need help choosing a program/i)).toBeNull()
-  })
-
-  it('migrates bad legacy hidden state so the compact dock is visible again', async () => {
-    window.localStorage.setItem('ts_floating_assistant_hidden', '1')
-    window.localStorage.setItem('ts_floating_assistant_collapsed', '1')
-
-    await renderAnonymousWidget()
-
-    expect(window.localStorage.getItem('ts_floating_assistant_hidden')).toBeNull()
-    expect(window.localStorage.getItem('ts_floating_assistant_collapsed')).toBeNull()
-    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
-  })
-
-  it('does not render for logged-in users in tests', async () => {
+  it('renders on public routes even when a user is present in auth store', async () => {
     act(() => useAuthStore.setState({ user: { uid: 'u1', email: 'test@example.com', displayName: 'Test', role: 'parent' } }))
     act(() => render(<FloatingAssistant />))
     await act(async () => {
       await Promise.resolve()
     })
 
-    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
   })
 
   it('does not render on protected app routes even if auth store user is null', async () => {

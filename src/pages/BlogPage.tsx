@@ -1,385 +1,894 @@
 // @ts-nocheck
-import { useEffect, useMemo, useState } from 'react';
-import { applySeo } from '../lib/seo';
+import { startTransition, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
+import { applySeo } from '../lib/seo';
 import { blogPosts } from '../content/blog';
-import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import { fetchMdxPosts } from '../content/blogMdx';
+import { formatBlogDate, isoDateFromYMD } from '../lib/date';
 import Meta from '../components/common/Meta';
 import NewsletterForm from '../components/common/NewsletterForm';
 
-const FAQS = [
+const TOPIC_OPTIONS = ['All', 'Phonics', 'Grammar', 'Public Speaking', 'Parent Tips', 'Research'] as const;
+const SORT_OPTIONS = ['Newest', 'Most Popular', 'Most Read'] as const;
+
+const SEARCH_INTENT_LANES = [
   {
-    question: 'Who is the Tiny Steps blog for?',
-    answer: 'The blog is written for parents of children ages 3–12 who want practical, research‑backed English learning tips. You will find phonics, grammar, speaking, and home‑practice guidance that fits busy routines.'
+    label: 'What is phonics and how do I teach it at home?',
+    helper: 'Evidence-backed parent guide for decoding, blending, and calm daily practice.',
+    to: '/blog/phonics-for-parents-guide',
+    accent: 'from-[#fff0df] to-[#eef6ff]',
   },
   {
-    question: 'How often are new articles published?',
-    answer: 'We publish new articles regularly across phonics, grammar, speaking, and parent tips. Check back often for fresh routines, games, and classroom‑aligned strategies.'
+    label: 'My child knows letters but still cannot read words',
+    helper: 'Start with the SATPIN launch plan and a realistic first-week phonics routine.',
+    to: '/blog/week-1-phonics-satpin-launch',
+    accent: 'from-[#eef6ff] to-[#fff7eb]',
   },
   {
-    question: 'Are the tips suitable for preschoolers?',
-    answer: 'Yes. Many posts focus on ages 3–6 with short activities, sound practice, and simple routines. We also include guidance for older kids who need reading or writing support.'
+    label: 'My child speaks well but struggles to write clearly',
+    helper: 'Use the grammar roadmap to move from nouns to short paragraphs without pressure.',
+    to: '/blog/week-7-grammar-nouns-to-paragraphs',
+    accent: 'from-[#f4f9f0] to-[#eef6ff]',
   },
   {
-    question: 'Do I need prior teaching experience to use these tips?',
-    answer: 'No. Each article is written in parent‑friendly language with step‑by‑step guidance. Start with the “Start here” links for simple routines you can use immediately.'
+    label: 'My child is shy or hesitant to speak in class',
+    helper: 'Use the speaking-confidence roadmap with safe repetition and parent scripts.',
+    to: '/blog/week-12-speaking-confidence-seeds',
+    accent: 'from-[#fff3eb] to-[#f2f6ff]',
   },
-  {
-    question: 'Are the tips aligned with major school curricula?',
-    answer: 'Yes. We keep examples and progression compatible with major curriculum expectations, including CBSE, ICSE, IB, and Cambridge-aligned classrooms. The focus is on sound-to-print skills and clear communication.'
-  },
-  {
-    question: 'What if my child struggles with reading confidence?',
-    answer: 'Look for posts on blending, tricky words, and confidence‑building. We also share small‑win routines that help children read without pressure.'
-  },
-  {
-    question: 'Can these tips replace live classes?',
-    answer: 'They are best used to support learning at home. Live classes add feedback, correction, and pacing, while the blog provides practice ideas and parent guidance.'
-  },
-  {
-    question: 'How do I choose the right topic for my child?',
-    answer: 'Use the topic filters (Phonics, Grammar, Public Speaking, Parent Tips, Research) to match your child’s current need. If you are unsure, start with phonics and daily routine posts.'
-  }
 ];
 
+const START_HERE_LINKS = [
+  { label: 'Phonics foundations roadmap', to: '/blog/week-1-phonics-satpin-launch' },
+  { label: 'Phonics for parents guide', to: '/blog/phonics-for-parents-guide' },
+  { label: 'Grammar basics roadmap', to: '/blog/week-7-grammar-nouns-to-paragraphs' },
+  { label: 'Speaking confidence roadmap', to: '/blog/week-12-speaking-confidence-seeds' },
+  { label: 'Back-to-school parent plan', to: '/blog/week-25-back-to-school-plan' },
+  { label: 'Parents Help Hub', to: '/parents' },
+];
+
+const HERO_PROOF_POINTS = [
+  '56+ curated parent articles',
+  'Phonics, grammar, speaking, and routines',
+  'Built for ages 3-12 and multilingual homes',
+];
+
+const BLOG_FAQS = [
+  {
+    question: 'Which Tiny Steps blog should I start with if my child is struggling with reading?',
+    answer: 'Start with the phonics parent guide for the big picture, then use the SATPIN week 1 roadmap if your child knows letters but still cannot blend simple words.',
+  },
+  {
+    question: 'Does the blog help parents searching for grammar or speaking support too?',
+    answer: 'Yes. The index is organized around phonics, grammar, public speaking, parent routines, and research-backed guides so families can move quickly to the right topic.',
+  },
+  {
+    question: 'Are these blog posts written for Indian parents only?',
+    answer: 'No. Tiny Steps writes for global parents, while keeping examples practical for multilingual families and school systems such as CBSE, ICSE, Cambridge, IB, and other English-medium settings.',
+  },
+  {
+    question: 'Can AI search tools or voice assistants surface these blog answers?',
+    answer: 'That is the goal. We structure posts around real parent questions, concise answer-first summaries, FAQs, and clear topic pages so search engines and AI assistants can cite the right article more easily.',
+  },
+];
+
+const FEATURED_GUIDE_SLUGS = [
+  'phonics-for-parents-guide',
+  'week-1-phonics-satpin-launch',
+  'week-7-grammar-nouns-to-paragraphs',
+  'week-12-speaking-confidence-seeds',
+];
+
+const CATEGORY_THEME = {
+  Phonics: {
+    text: 'text-sky-700',
+    chip: 'bg-sky-100 text-sky-700',
+    panel: 'from-[#eef6ff] to-[#fff9f1]',
+    helper: 'Decoding, blending, tricky words, and reading foundations.',
+  },
+  Grammar: {
+    text: 'text-emerald-700',
+    chip: 'bg-emerald-100 text-emerald-700',
+    panel: 'from-[#f2fbf4] to-[#eef6ff]',
+    helper: 'Sentence building, writing structure, editing, and clarity.',
+  },
+  'Public Speaking': {
+    text: 'text-amber-700',
+    chip: 'bg-amber-100 text-amber-700',
+    panel: 'from-[#fff5ea] to-[#eef6ff]',
+    helper: 'Confidence, fluency, presentation habits, and speaking practice.',
+  },
+  'Parent Tips': {
+    text: 'text-rose-700',
+    chip: 'bg-rose-100 text-rose-700',
+    panel: 'from-[#fff3f1] to-[#fffaf5]',
+    helper: 'Daily routines, planning, behavior support, and school transitions.',
+  },
+  Research: {
+    text: 'text-violet-700',
+    chip: 'bg-violet-100 text-violet-700',
+    panel: 'from-[#f4f0ff] to-[#eef6ff]',
+    helper: 'Deep research guides, roadmaps, and evidence summaries.',
+  },
+};
+
+function getCategoryTheme(category: string) {
+  return CATEGORY_THEME[category] || CATEGORY_THEME['Parent Tips'];
+}
+
+function buildSearchableText(post: any) {
+  const keywordText = Array.isArray(post.body) ? post.body.map((block) => block.content).join(' ') : '';
+  const faqText = Array.isArray(post.faq) ? post.faq.map((item) => `${item.question} ${item.answer}`).join(' ') : '';
+  return `${post.title} ${post.excerpt} ${post.category} ${post.author} ${post.metaDescription || ''} ${keywordText} ${faqText}`.toLowerCase();
+}
+
 const BlogPage: FC = () => {
-  const [topic, setTopic] = useState<'All'|'Phonics'|'Grammar'|'Public Speaking'|'Parent Tips'|'Research'>('All');
-  const [sort, setSort] = useState<'Newest'|'Most Popular'|'Most Read'>('Newest');
+  const [topic, setTopic] = useState<(typeof TOPIC_OPTIONS)[number]>('All');
+  const [sort, setSort] = useState<(typeof SORT_OPTIONS)[number]>('Newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [visibleCount, setVisibleCount] = useState(9);
   const [mdxPosts, setMdxPosts] = useState<any[]>([]);
+  const deferredQuery = useDeferredValue(searchQuery.trim().toLowerCase());
 
   useEffect(() => {
-    fetchMdxPosts().then(setMdxPosts).catch(()=>setMdxPosts([]));
+    fetchMdxPosts().then(setMdxPosts).catch(() => setMdxPosts([]));
   }, []);
 
-  const mdxConverted = mdxPosts.map((m) => ({
-    slug: m.slug,
-    title: m.title || m.slug,
-    category: m.category || 'Parent Tips',
-    author: m.author || 'Tiny Steps',
-    date: m.date || new Date().toISOString().slice(0,10),
-    readTime: m.readTime || '5 min',
-    hero: m.hero,
-    excerpt: m.excerpt || ''
-  }));
+  useEffect(() => {
+    setVisibleCount(9);
+  }, [topic, sort, deferredQuery]);
 
-  const combined = useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
+  const mdxConverted = useMemo(
+    () =>
+      mdxPosts.map((post) => ({
+        slug: post.slug,
+        title: post.title || post.slug,
+        category: post.category || 'Parent Tips',
+        author: post.author || 'Tiny Steps',
+        date: post.date || new Date().toISOString().slice(0, 10),
+        readTime: post.readTime || '5 min read',
+        hero: post.hero,
+        excerpt: post.excerpt || '',
+      })),
+    [mdxPosts],
+  );
+
+  const combinedPosts = useMemo(() => [...mdxConverted, ...blogPosts], [mdxConverted]);
   const todayIso = new Date().toISOString().slice(0, 10);
   const publishedPosts = useMemo(
-    () => combined.filter((post) => !post.date || String(post.date) <= todayIso),
-    [combined, todayIso],
+    () => combinedPosts.filter((post) => !post.date || String(post.date) <= todayIso),
+    [combinedPosts, todayIso],
   );
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  const combinedFiltered = useMemo(() => {
-    return publishedPosts.filter((p) => {
-      if (topic !== 'All' && p.category !== topic) return false;
-      if (!normalizedQuery) return true;
-      const keywordText = Array.isArray(p.body)
-        ? p.body.map((block) => block.content).join(' ')
-        : '';
-      const faqText = Array.isArray(p.faq)
-        ? p.faq.map((item) => `${item.question} ${item.answer}`).join(' ')
-        : '';
-      const searchable = `${p.title} ${p.excerpt} ${p.category} ${p.author} ${p.metaDescription || ''} ${keywordText} ${faqText}`.toLowerCase();
-      return searchable.includes(normalizedQuery);
-    });
-  }, [publishedPosts, topic, normalizedQuery]);
 
-  // Ensure the rendered list respects the selected `sort` option.
+  const topicCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const post of publishedPosts) {
+      counts.set(post.category, (counts.get(post.category) || 0) + 1);
+    }
+    return counts;
+  }, [publishedPosts]);
+
+  const filteredPosts = useMemo(
+    () =>
+      publishedPosts.filter((post) => {
+        if (topic !== 'All' && post.category !== topic) return false;
+        if (!deferredQuery) return true;
+        return buildSearchableText(post).includes(deferredQuery);
+      }),
+    [publishedPosts, topic, deferredQuery],
+  );
+
   const sortedPosts = useMemo(() => {
-    const list = [...combinedFiltered];
+    const list = [...filteredPosts];
     if (sort === 'Newest') {
       list.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     } else if (sort === 'Most Popular') {
       list.sort((a, b) => (b.popularScore || 0) - (a.popularScore || 0));
-    } else if (sort === 'Most Read') {
+    } else {
       list.sort((a, b) => (b.viewsCount || 0) - (a.viewsCount || 0));
     }
     return list;
-  }, [combinedFiltered, sort]);
-  const blogSchema = useMemo(() => ({
-    '@context': 'https://schema.org',
-    '@type': 'Blog',
-    name: 'Tiny Steps Blog',
-    blogPost: publishedPosts.map((post) => ({
-      '@type': 'BlogPosting',
-      headline: post.title,
-      datePublished: isoDateFromYMD(post.date),
-      dateModified: isoDateFromYMD(post.date),
-      image: post.hero
-        ? (String(post.hero).startsWith('http') ? post.hero : `https://tinystepslearning.com${post.hero}`)
-        : 'https://tinystepslearning.com/logo.png',
-      author: {
-        '@type': 'Organization',
-        name: 'Tiny Steps Learning',
-        url: 'https://tinystepslearning.com',
-      },
-      url: `https://tinystepslearning.com/blog/${post.slug}`
-    }))
-  }), [publishedPosts]);
+  }, [filteredPosts, sort]);
 
-  const collectionSchema = useMemo(() => ({
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'Tiny Steps Blog',
-    description: 'Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building.',
-    url: 'https://tinystepslearning.com/blog',
-    mainEntity: {
-      '@type': 'ItemList',
-      itemListElement: publishedPosts.slice(0, 20).map((post, idx) => ({
-        '@type': 'ListItem',
-        position: idx + 1,
-        url: `https://tinystepslearning.com/blog/${post.slug}`,
-        name: post.title
-      }))
+  const spotlightPosts = useMemo(() => {
+    const fromCurated = FEATURED_GUIDE_SLUGS
+      .map((slug) => publishedPosts.find((post) => post.slug === slug))
+      .filter(Boolean);
+
+    if (topic === 'All' && !deferredQuery) {
+      return fromCurated;
     }
-  }), [publishedPosts]);
 
-  const organizationSchema = useMemo(() => ({
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    '@id': 'https://tinystepslearning.com/#organization',
-    name: 'Tiny Steps Learning',
-    url: 'https://tinystepslearning.com',
-    logo: 'https://tinystepslearning.com/logo.png',
-    sameAs: [
-      'https://www.facebook.com/tinystepslearning',
-      'https://www.instagram.com/tinystepslearning'
-    ]
-  }), []);
+    return sortedPosts.slice(0, 3);
+  }, [publishedPosts, sortedPosts, topic, deferredQuery]);
 
-  const faqSchema = useMemo(() => ({
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    '@id': 'https://tinystepslearning.com/blog#faqpage',
-    mainEntity: FAQS.map((faq) => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer
-      }
-    }))
-  }), []);
+  const leadPost = spotlightPosts[0] || sortedPosts[0];
+  const remainingPosts = useMemo(
+    () => sortedPosts.filter((post) => post.slug !== leadPost?.slug),
+    [sortedPosts, leadPost],
+  );
+  const visiblePosts = remainingPosts.slice(0, visibleCount);
+  const canLoadMore = visiblePosts.length < remainingPosts.length;
 
-  const featured = useMemo(() => sortedPosts[0], [sortedPosts]);
-  const visiblePosts = useMemo(() => {
-    if (!featured) return sortedPosts;
-    return sortedPosts.filter((post) => post.slug !== featured.slug);
-  }, [featured, sortedPosts]);
+  const quickTopicCards = useMemo(() => {
+    const topicToSlug = {
+      Phonics: 'phonics-for-parents-guide',
+      Grammar: 'week-7-grammar-nouns-to-paragraphs',
+      'Public Speaking': 'week-12-speaking-confidence-seeds',
+      'Parent Tips': 'week-25-back-to-school-plan',
+      Research: 'week-1-phonics-satpin-launch',
+    };
 
-  const breadcrumb = useMemo(() => ({
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
-    itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-      { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
-    ],
-  }), []);
+    return Object.entries(topicToSlug)
+      .map(([category, slug]) => publishedPosts.find((post) => post.slug === slug))
+      .filter(Boolean);
+  }, [publishedPosts]);
+
+  const archiveByTopic = useMemo(() => {
+    const grouped = new Map<string, any[]>();
+
+    for (const post of publishedPosts) {
+      if (!grouped.has(post.category)) grouped.set(post.category, []);
+      grouped.get(post.category).push(post);
+    }
+
+    for (const [category, posts] of grouped.entries()) {
+      posts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      grouped.set(category, posts);
+    }
+
+    return grouped;
+  }, [publishedPosts]);
+
+  const blogSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'Blog',
+      name: 'Tiny Steps Parent Desk',
+      description:
+        'Parent-friendly blog for phonics, grammar, public speaking, and home English routines for children ages 3-12.',
+      blogPost: publishedPosts.map((post) => ({
+        '@type': 'BlogPosting',
+        headline: post.title,
+        datePublished: isoDateFromYMD(post.date),
+        dateModified: isoDateFromYMD(post.date),
+        articleSection: post.category,
+        image: post.hero
+          ? String(post.hero).startsWith('http')
+            ? post.hero
+            : `https://tinystepslearning.com${post.hero}`
+          : 'https://tinystepslearning.com/logo.png',
+        author: {
+          '@type': 'Organization',
+          name: 'Tiny Steps Learning',
+          url: 'https://tinystepslearning.com',
+        },
+        url: `https://tinystepslearning.com/blog/${post.slug}`,
+      })),
+    }),
+    [publishedPosts],
+  );
+
+  const collectionSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Tiny Steps Blog',
+      description:
+        'Search and browse phonics, grammar, speaking, and parent routine articles for children ages 3-12.',
+      url: 'https://tinystepslearning.com/blog',
+      audience: {
+        '@type': 'Audience',
+        audienceType: 'Parents of children ages 3-12',
+      },
+      about: [
+        'phonics for kids',
+        'grammar for kids',
+        'public speaking for kids',
+        'online english classes for kids',
+        'parent routines for reading at home',
+      ],
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: publishedPosts.slice(0, 24).map((post, index) => ({
+          '@type': 'ListItem',
+          position: index + 1,
+          url: `https://tinystepslearning.com/blog/${post.slug}`,
+          name: post.title,
+        })),
+      },
+    }),
+    [publishedPosts],
+  );
+
+  const websiteSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Tiny Steps Learning',
+      url: 'https://tinystepslearning.com',
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: 'https://tinystepslearning.com/blog?search={search_term_string}',
+        'query-input': 'required name=search_term_string',
+      },
+    }),
+    [],
+  );
+
+  const faqSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      '@id': 'https://tinystepslearning.com/blog#faqpage',
+      mainEntity: BLOG_FAQS.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer,
+        },
+      })),
+    }),
+    [],
+  );
+
+  const breadcrumbSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
+        { '@type': 'ListItem', position: 2, name: 'Blog', item: 'https://tinystepslearning.com/blog' },
+      ],
+    }),
+    [],
+  );
+
+  const metaTitle = 'Tiny Steps Blog | Phonics, Grammar, Speaking & English Help for Parents';
+  const metaDescription =
+    'Browse parent-friendly phonics, grammar, speaking, and English-learning blogs for kids ages 3-12. Find SATPIN guides, reading routines, grammar roadmaps, and confidence-building support.';
+  const metaKeywords = [
+    'phonics for parents',
+    'phonics blog for kids',
+    'grammar help for children',
+    'public speaking for kids blog',
+    'english classes for kids parent guide',
+    'SATPIN phonics guide',
+    'reading help at home for kids',
+    'online english learning blog for parents',
+  ];
 
   useEffect(() => {
     applySeo({
-      title: 'Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Global Parents',
-      description: 'Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning.',
+      title: metaTitle,
+      description: metaDescription,
+      keywords: metaKeywords,
       canonicalPath: '/blog',
       ogType: 'website',
-      jsonLd: [organizationSchema, breadcrumb, blogSchema, collectionSchema, faqSchema],
+      jsonLd: [websiteSchema, breadcrumbSchema, blogSchema, collectionSchema, faqSchema],
     });
-  }, [breadcrumb, blogSchema, collectionSchema, faqSchema, organizationSchema]);
+  }, [blogSchema, breadcrumbSchema, collectionSchema, faqSchema, websiteSchema]);
 
   return (
-    <div className="bg-white">
-      <Meta title="Tiny Steps Blog | Phonics, Grammar & Speaking Tips for Global Parents" description="Practical phonics, grammar & speaking tips for parents: SATPIN, blending, tricky words, routines, and confidence-building—by Tiny Steps Learning." canonical="https://tinystepslearning.com/blog" jsonLd={blogSchema} />
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <div className="mb-6 text-center">
-          <h1 className="font-heading text-3xl font-bold md:text-4xl">Insights for Global Parents</h1>
-          <p className="mt-2 text-base text-gray-700">Expert tips, research‑backed articles, success stories</p>
-        </div>
+    <div className="min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_20%,#ffffff_46%,#f4f8fc_100%)] text-slate-900">
+      <Meta
+        title={metaTitle}
+        description={metaDescription}
+        keywords={metaKeywords.join(', ')}
+        canonical="https://tinystepslearning.com/blog"
+        jsonLd={[websiteSchema, breadcrumbSchema, blogSchema, collectionSchema, faqSchema]}
+      />
 
-        <section className="mb-6">
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 shadow-lg">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="text-white">
-                <div className="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-sky-100">
-                  Tiny Steps • Foundations Forever
-                </div>
-                <h2 className="mt-3 text-xl font-semibold md:text-2xl">Build confident readers with simple daily routines</h2>
-                <p className="mt-2 max-w-2xl text-sm text-slate-200">
-                  Explore parent-friendly guides for phonics, grammar, reading, and speaking with practical routines you can use in 10 minutes a day.
-                </p>
+      <section className="relative overflow-hidden border-b border-slate-800 bg-[linear-gradient(135deg,#0f172a_0%,#16233c_48%,#1d2942_100%)] text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(242,187,104,0.16),transparent_26%),radial-gradient(circle_at_82%_18%,rgba(103,152,224,0.2),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]" />
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,0.44))]" />
+        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 sm:pt-20">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_390px] lg:items-end">
+            <div className="max-w-4xl">
+              <div className="inline-flex items-center rounded-full border border-white/14 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-100 backdrop-blur">
+                Tiny Steps Parent Desk
               </div>
-              <div className="flex flex-wrap gap-2">
+              <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-[4rem] lg:leading-[1.02]">
+                Find the right phonics, grammar, and speaking help in minutes
+              </h1>
+              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-200">
+                Research-backed guidance for parents searching what phonics is, why reading is stuck, how to
+                improve grammar and writing, or how to build speaking confidence without turning home practice
+                into pressure.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3 text-sm text-slate-200">
+                {HERO_PROOF_POINTS.map((item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-white/12 bg-white/8 px-4 py-2 backdrop-blur"
+                  >
+                    {item}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
                 <Link
                   to="/parents"
-                  className="inline-flex items-center rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                  className="inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100"
                 >
-                  Parents Help Hub
+                  Explore the Parents Hub
                 </Link>
                 <Link
                   to="/?book=1"
-                  className="inline-flex items-center rounded-full border border-white/40 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex items-center rounded-full border border-white/18 bg-white/8 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/12"
                 >
                   Book Free Assessment
                 </Link>
               </div>
-            </div>
-          </div>
-        </section>
 
-        <section className="mb-6 bg-blue-50 border-l-4 border-[#4a7c2c] p-5 rounded-lg">
-          <h2 className="text-lg font-bold text-[#2d5016] mb-2">What will parents find on the Tiny Steps blog?</h2>
-          <p className="text-gray-700 leading-relaxed">
-            The Tiny Steps blog offers practical, research‑backed guidance for parents of children ages 3–12. You will find phonics routines, reading tips, grammar support, and public‑speaking confidence builders—plus simple at‑home activities that fit busy schedules and align with common school expectations globally.
-          </p>
-        </section>
-
-        <div className="mb-6 mx-auto max-w-6xl px-6">
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="text-xl font-semibold">Start here</h2>
-            <p className="mt-1 text-sm text-gray-700">Three foundational reads by skill area.</p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <Link to="/blog/week-1-phonics-satpin-launch" className="text-primary-600 font-medium">Phonics foundations roadmap</Link>
-              <Link to="/blog/week-7-grammar-nouns-to-paragraphs" className="text-primary-600">Grammar basics roadmap</Link>
-              <Link to="/blog/week-12-speaking-confidence-seeds" className="text-primary-600">Speaking confidence roadmap</Link>
-              <Link to="/blog/week-25-back-to-school-plan" className="text-primary-600">Back-to-school parent plan</Link>
-            </div>
-          </div>
-        </div>
-
-        {/* Slim Parents Help Hub CTA — above blog list to surface parents guides */}
-        <div className="mb-6 mx-auto max-w-6xl px-6">
-          <div className="rounded-2xl bg-white p-4 shadow-sm">
-            <h2 className="text-xl font-semibold">Parents Help Hub</h2>
-            <p className="mt-1 text-sm text-gray-700">Step-by-step phonics and home practice guides for ages 3–12.</p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <Link to="/parents" className="text-primary-600 font-medium">View all guides</Link>
-              <Link to="/parents/getting-started" className="text-primary-600">Getting started with phonics at home</Link>
-              <Link to="/parents/reading-at-home" className="text-primary-600">10-minute daily reading routine</Link>
-              <Link to="/parents/phonics-mission" className="text-primary-600">How to use Phonics Mission games</Link>
-              <Link to="/parents/common-mistakes" className="text-primary-600">Common phonics mistakes to avoid</Link>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            {['All','Phonics','Grammar','Public Speaking','Parent Tips','Research'].map((t) => (
-              <button key={t} onClick={() => setTopic(t as any)} className={`rounded-full px-3 py-1 text-sm ${topic===t?'bg-primary-500 text-white':'bg-slate-100'}`}>{t}</button>
-            ))}
-          </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            <label htmlFor="blog-search" className="sr-only">Search blog posts</label>
-            <input
-              id="blog-search"
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search topics, authors, or keywords"
-              className="w-full min-w-[220px] rounded-full border px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-            />
-            <div className="text-sm">
-              <label className="mr-2 text-gray-700">Sort:</label>
-              <select value={sort} onChange={(e)=>setSort(e.target.value as any)} className="rounded-full border px-3 py-1 text-sm">
-                {['Newest','Most Popular','Most Read'].map((s) => <option key={s}>{s}</option>)}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6 text-sm text-gray-600">
-          Showing <span className="font-semibold text-gray-900">{sortedPosts.length}</span> blog post{sortedPosts.length === 1 ? '' : 's'}
-          {searchQuery.trim() ? <> for <span className="font-semibold text-gray-900">"{searchQuery.trim()}"</span></> : null}
-        </div>
-
-        {featured && (
-          <Link to={`/blog/${featured.slug}`} className="block rounded-3xl bg-white p-6 shadow-xl ring-1 ring-slate-200">
-            <div className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
-              <div>
-                <h2 className="text-2xl font-bold">{featured.title}</h2>
-                <div className="mt-1 text-sm text-gray-600">by {featured.author} • {featured.readTime} • {formatBlogDate(featured.date)}</div>
-                <p className="mt-3 text-gray-700">{featured.excerpt}</p>
+              <div className="mt-8 max-w-3xl rounded-[1.75rem] border border-white/10 bg-white/6 p-5 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Search examples</p>
+                <div className="mt-4 flex flex-wrap gap-3 text-sm leading-6 text-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopic('All');
+                      startTransition(() => setSearchQuery('phonics for parents'));
+                    }}
+                    className="rounded-full border border-white/14 px-4 py-2 transition hover:bg-white/10"
+                  >
+                    What is phonics and how do I teach it at home?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopic('All');
+                      startTransition(() => setSearchQuery('SATPIN week 1'));
+                    }}
+                    className="rounded-full border border-white/14 px-4 py-2 transition hover:bg-white/10"
+                  >
+                    My child knows letters but still cannot read words
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTopic('All');
+                      startTransition(() => setSearchQuery('grammar writing help'));
+                    }}
+                    className="rounded-full border border-white/14 px-4 py-2 transition hover:bg-white/10"
+                  >
+                    My child speaks well but struggles to write clearly
+                  </button>
+                </div>
               </div>
-              {featured.hero ? (
-                <div className="aspect-video w-full rounded-xl bg-slate-100" style={{backgroundImage: `url(${featured.hero})`, backgroundSize: 'cover'}} />
-              ) : (
-                <div className="aspect-video w-full rounded-xl bg-gradient-to-r from-sky-50 to-orange-50" />
-              )}
             </div>
-          </Link>
-        )}
 
-        {visiblePosts.length === 0 ? (
-          <div className="mt-10 rounded-2xl bg-white p-6 text-center shadow ring-1 ring-slate-200">
-            <h2 className="text-xl font-semibold text-[#2d5016]">No articles found</h2>
-            <p className="mt-2 text-sm text-gray-700">Try a different keyword, clear filters, or choose a topic.</p>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="rounded-full border px-4 py-2 text-sm text-[#2d5016]"
-              >
-                Clear search
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setTopic('All');
-                  setSort('Newest');
-                }}
-                className="rounded-full border px-4 py-2 text-sm text-[#2d5016]"
-              >
-                Reset filters
-              </button>
+            <div className="rounded-[2.25rem] border border-white/10 bg-white/8 p-6 shadow-[0_30px_80px_rgba(2,6,23,0.32)] backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">
+                Popular parent routes
+              </p>
+              <div className="mt-5 divide-y divide-white/10">
+                {SEARCH_INTENT_LANES.map((lane) => (
+                  <Link
+                    key={lane.label}
+                    to={lane.to}
+                    className="group block py-4 first:pt-0 last:pb-0"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-base font-semibold leading-7 text-white transition group-hover:text-[#ffd8a8]">
+                          {lane.label}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">{lane.helper}</p>
+                      </div>
+                      <span className="mt-1 text-lg text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-white">
+                        →
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              {['Phonics', 'SATPIN', 'Reading', 'Shy child'].map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => setSearchQuery(chip)}
-                  className="rounded-full bg-slate-100 px-3 py-1 text-sm"
+          </div>
+        </div>
+      </section>
+
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <section className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+          <div className="rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(135deg,#121a2d,#1a2946)] p-6 text-white shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Start here</p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight">Use the blog like a parent help library, not a long scroll</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
+              Start with the roadmap or guide that matches your child&apos;s main blocker, then move deeper into
+              topic-specific posts only if you need more examples, routines, or class-selection help.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {START_HERE_LINKS.map((item) => (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/16"
                 >
-                  {chip}
-                </button>
+                  {item.label}
+                </Link>
               ))}
             </div>
           </div>
-        ) : (
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {visiblePosts.map((p) => (
-              <Link key={p.slug} to={`/blog/${p.slug}`} className="rounded-2xl bg-white p-5 shadow ring-1 ring-slate-200 transition-transform hover:-translate-y-1">
-                {p.hero ? (
-                  <div className="aspect-video w-full rounded-xl bg-slate-100 mb-4" style={{backgroundImage: `url(${p.hero})`, backgroundSize: 'cover'}} />
-                ) : (
-                  <div className="aspect-video w-full rounded-xl mb-4 bg-gradient-to-r from-sky-50 to-orange-50" />
-                )}
-                <div className="text-xs text-primary-600">{p.category}</div>
-                <div className="mt-1 font-semibold text-gray-900">{p.title}</div>
-                <div className="text-xs text-gray-600">{p.readTime} • {formatBlogDate(p.date)}</div>
-                <p className="mt-2 text-sm text-gray-700 line-clamp-3">{p.excerpt}</p>
-              </Link>
-            ))}
-          </div>
-        )}
 
-        <section className="mt-12">
-          <h2 className="text-3xl font-bold text-[#2d5016] mb-6">FAQs</h2>
-          <div className="space-y-6">
-            {FAQS.map((faq) => (
-              <div key={faq.question} className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-                <h3 className="text-lg font-bold text-[#2d5016] mb-2">{faq.question}</h3>
-                <p className="text-gray-700">{faq.answer}</p>
-              </div>
-            ))}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {quickTopicCards.slice(0, 4).map((post) => {
+              const theme = getCategoryTheme(post.category);
+              return (
+                <Link
+                  key={post.slug}
+                  to={`/blog/${post.slug}`}
+                  className={`rounded-[1.75rem] border border-slate-200 bg-gradient-to-br ${theme.panel} p-5 transition hover:-translate-y-0.5 hover:shadow-md`}
+                >
+                  <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${theme.chip}`}>
+                    {post.category}
+                  </div>
+                  <h3 className="mt-3 text-lg font-semibold leading-7 text-slate-900">{post.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{theme.helper}</p>
+                  <p className="mt-3 text-xs text-slate-500">
+                    {topicCounts.get(post.category) || 0} articles in this topic
+                  </p>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
-        <div className="mt-12 mx-auto max-w-xl rounded-2xl bg-gradient-to-r from-primary-50 to-secondary-50 p-6 text-center ring-1 ring-slate-200">
-          <div className="font-semibold">Get practical tips for your child\'s English journey</div>
-          <div className="mt-3"><NewsletterForm /></div>
-        </div>
+        <section className="mt-8 rounded-[2rem] border border-slate-200/80 bg-white/86 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.06)] backdrop-blur lg:sticky lg:top-20 lg:z-20">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {TOPIC_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setTopic(option)}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    topic === option
+                      ? 'bg-slate-950 text-white'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <label htmlFor="blog-search" className="sr-only">
+                Search blog topics
+              </label>
+              <input
+                id="blog-search"
+                type="search"
+                value={searchQuery}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  startTransition(() => setSearchQuery(value));
+                }}
+                placeholder="Search phonics, grammar, speaking, SATPIN, writing..."
+                className="w-full min-w-[260px] rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-primary-400"
+              />
+              <select
+                value={sort}
+                onChange={(event) => setSort(event.target.value as (typeof SORT_OPTIONS)[number])}
+                className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary-400"
+              >
+                {SORT_OPTIONS.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            <span>
+              Showing <span className="font-semibold text-slate-900">{sortedPosts.length}</span> article
+              {sortedPosts.length === 1 ? '' : 's'}
+            </span>
+            {deferredQuery ? (
+              <span>
+                for <span className="font-semibold text-slate-900">"{searchQuery.trim()}"</span>
+              </span>
+            ) : null}
+            <span className="hidden h-1 w-1 rounded-full bg-slate-300 sm:inline-flex" />
+            <span>Built for parents searching phonics, grammar, speaking, and English-learning help.</span>
+          </div>
+        </section>
+
+        {leadPost ? (
+          <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1.05fr)_340px]">
+            <Link
+              to={`/blog/${leadPost.slug}`}
+              className="grid overflow-hidden rounded-[2.2rem] border border-slate-200 bg-white shadow-[0_30px_70px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_36px_90px_rgba(15,23,42,0.1)] md:grid-cols-[minmax(0,1fr)_420px]"
+            >
+              <div className="p-6 sm:p-8">
+                <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getCategoryTheme(leadPost.category).chip}`}>
+                  {leadPost.category}
+                </div>
+                <h2 className="mt-4 max-w-2xl text-3xl font-black tracking-tight text-slate-950">
+                  {leadPost.title}
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  by {leadPost.author} • {leadPost.readTime} • {formatBlogDate(leadPost.date)}
+                </p>
+                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-700">
+                  {leadPost.metaDescription || leadPost.excerpt}
+                </p>
+                <div className="mt-6 inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
+                  Read article
+                </div>
+              </div>
+
+              {leadPost.hero ? (
+                <div
+                  className="min-h-[280px] bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
+                  style={{ backgroundImage: `url(${leadPost.hero})` }}
+                />
+              ) : (
+                <div className="min-h-[280px] bg-[linear-gradient(135deg,#eef6ff,#fff5ea)]" />
+              )}
+            </Link>
+
+            <div className="space-y-4">
+              <div className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Why this page is easier to use</p>
+                <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                  <li className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                    <span>Use topic chips to narrow by phonics, grammar, speaking, parent routines, or research.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                    <span>Search like a parent would: “phonics for parents”, “SATPIN”, “shy child”, or “grammar writing”.</span>
+                  </li>
+                  <li className="flex gap-3">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                    <span>Load only what you need instead of scrolling through the entire archive in one pass.</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="rounded-[1.8rem] border border-slate-200 bg-[linear-gradient(135deg,#fff4df,#eef6ff)] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Top topic lanes</p>
+                <div className="mt-4 space-y-3">
+                  {TOPIC_OPTIONS.filter((item) => item !== 'All').map((category) => (
+                    <button
+                      key={category}
+                      type="button"
+                      onClick={() => setTopic(category)}
+                      className="flex w-full items-center justify-between rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-left transition hover:border-slate-300"
+                    >
+                      <span className="text-sm font-semibold text-slate-900">{category}</span>
+                      <span className="text-xs text-slate-500">{topicCounts.get(category) || 0} posts</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {spotlightPosts.length > 1 ? (
+          <section className="mt-10">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Spotlight</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Useful routes for high-intent parent searches</h2>
+              </div>
+              <Link to="/faq" className="text-sm font-semibold text-primary-700">
+                See all parent FAQs
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-5 md:grid-cols-3">
+              {spotlightPosts.slice(1, 4).map((post) => {
+                const theme = getCategoryTheme(post.category);
+                return (
+                  <Link
+                    key={post.slug}
+                    to={`/blog/${post.slug}`}
+                    className="overflow-hidden rounded-[1.9rem] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.08)]"
+                  >
+                    {post.hero ? (
+                      <div
+                        className="aspect-[1.55/1] bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
+                        style={{ backgroundImage: `url(${post.hero})` }}
+                      />
+                    ) : (
+                      <div className={`aspect-[1.55/1] bg-gradient-to-br ${theme.panel}`} />
+                    )}
+                    <div className="p-5">
+                      <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${theme.chip}`}>
+                        {post.category}
+                      </div>
+                      <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-900">{post.title}</h3>
+                      <p className="mt-2 text-sm leading-7 text-slate-600 line-clamp-3">
+                        {post.metaDescription || post.excerpt}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
+
+        <section className="mt-10">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Library</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Browse by topic without the endless feed feel</h2>
+            </div>
+            {remainingPosts.length > 0 ? (
+              <p className="text-sm text-slate-500">Showing {Math.min(visiblePosts.length, remainingPosts.length)} of {remainingPosts.length} additional articles</p>
+            ) : null}
+          </div>
+
+          {remainingPosts.length === 0 ? (
+            <div className="mt-5 rounded-[2rem] border border-slate-200 bg-white p-8 text-center shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
+              <h3 className="text-xl font-semibold text-slate-900">No articles match that search yet</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Try a different parent-style query, clear the search, or switch back to all topics.
+              </p>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => startTransition(() => setSearchQuery(''))}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Clear search
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTopic('All');
+                    setSort('Newest');
+                  }}
+                  className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900"
+                >
+                  Reset filters
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                {visiblePosts.map((post) => {
+                  const theme = getCategoryTheme(post.category);
+                  return (
+                    <Link
+                      key={post.slug}
+                      to={`/blog/${post.slug}`}
+                      className="group overflow-hidden rounded-[1.8rem] border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(15,23,42,0.08)]"
+                    >
+                      {post.hero ? (
+                        <div
+                          className="aspect-[1.55/1] bg-slate-100 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]"
+                          style={{ backgroundImage: `url(${post.hero})` }}
+                        />
+                      ) : (
+                        <div className={`aspect-[1.55/1] bg-gradient-to-br ${theme.panel}`} />
+                      )}
+                      <div className="p-5">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${theme.chip}`}>
+                            {post.category}
+                          </span>
+                          <span className="text-xs text-slate-500">{post.readTime}</span>
+                        </div>
+                        <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-900">{post.title}</h3>
+                        <p className="mt-2 text-sm text-slate-500">{formatBlogDate(post.date)}</p>
+                        <p className="mt-3 text-sm leading-7 text-slate-600 line-clamp-3">
+                          {post.metaDescription || post.excerpt}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {canLoadMore ? (
+                <div className="mt-8 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((count) => count + 9)}
+                    className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    Load more articles
+                  </button>
+                </div>
+              ) : null}
+            </>
+          )}
+        </section>
+
+        <section className="mt-12 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parents also ask</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Parents also ask before they choose the next step</h2>
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {BLOG_FAQS.map((faq) => (
+                <details key={faq.question} className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <summary className="cursor-pointer list-none text-base font-semibold leading-6 text-slate-900">
+                    {faq.question}
+                  </summary>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{faq.answer}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Need a direct answer?</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Need a clearer route for your question?</h2>
+            <div className="mt-5 space-y-3">
+              <Link to="/faq" className="block rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300">
+                Explore the full FAQ page
+              </Link>
+              <Link to="/blog/phonics-for-parents-guide" className="block rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300">
+                Read the full phonics parent guide
+              </Link>
+              <Link to="/blog/week-12-speaking-confidence-seeds" className="block rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-300">
+                Read the speaking confidence roadmap
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <details className="group rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Archive directory</p>
+                <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Browse the full archive by topic</h2>
+              </div>
+              <span className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-500 transition group-open:rotate-45">
+                +
+              </span>
+            </summary>
+
+            <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+              {TOPIC_OPTIONS.filter((topicName) => topicName !== 'All').map((topicName) => {
+                const posts = archiveByTopic.get(topicName) || [];
+
+                return (
+                  <div key={topicName}>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{topicName}</h3>
+                    <div className="mt-3 space-y-2">
+                      {posts.map((post) => (
+                        <Link
+                          key={post.slug}
+                          to={`/blog/${post.slug}`}
+                          className="block text-sm leading-6 text-slate-700 transition hover:text-primary-700"
+                        >
+                          {post.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        </section>
+
+        <section className="mt-12 overflow-hidden rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#101828,#1b2a46)] px-6 py-8 text-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] sm:px-8">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Inbox-worthy guidance</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight">Get practical tips for your child&apos;s English journey</h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-200">
+                Weekly parent-friendly notes on phonics, grammar, speaking, home routines, and new Tiny Steps research articles.
+              </p>
+            </div>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-4 backdrop-blur">
+              <NewsletterForm />
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   );

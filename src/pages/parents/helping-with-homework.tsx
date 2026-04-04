@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createHowToSchema } from '../../lib/schemas';
 import parentsMeta from '../../content/parentsMeta';
+import AboutAuthor from '../../components/AboutAuthor';
 
 const HelpingWithHomework: React.FC = () => {
   useEffect(() => {
@@ -108,6 +109,8 @@ const HelpingWithHomework: React.FC = () => {
         <li>"Good retry. You fixed it with your own effort."</li>
       </ul>
     </div>
+
+    <AboutAuthor className="mt-10" />
   </article>
 );
 

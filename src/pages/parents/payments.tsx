@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import parentsMeta from '../../content/parentsMeta';
+import AboutAuthor from '../../components/AboutAuthor';
 
 const Payments: React.FC = () => {
   useEffect(() => {
@@ -63,6 +64,8 @@ const Payments: React.FC = () => {
         </div>
       </div>
     </div>
+
+    <AboutAuthor className="mt-10" />
   </article>
 );
 

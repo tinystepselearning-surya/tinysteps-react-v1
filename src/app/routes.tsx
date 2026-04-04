@@ -1,5 +1,5 @@
 // src/app/routes.tsx
-import { lazy, Suspense, useEffect, useState, type FC } from 'react';
+import { lazy, Suspense, type FC } from 'react';
 import {
   createBrowserRouter,
   Outlet,
@@ -23,6 +23,7 @@ const BlogPostPage = lazy(() => import('../pages/BlogPostPage'));
 const PhonicsForParentsResearchPage = lazy(() => import('../pages/blog/PhonicsForParentsResearchPage'));
 const Week1SatpinLaunchPage = lazy(() => import('../pages/blog/Week1SatpinLaunchPage'));
 const Week7GrammarNounsToParagraphsPage = lazy(() => import('../pages/blog/Week7GrammarNounsToParagraphsPage'));
+const Week12SpeakingConfidenceSeedsPage = lazy(() => import('../pages/blog/Week12SpeakingConfidenceSeedsPage'));
 const PricingPage = lazy(() => import('../pages/PricingPage'));
 const ChristmasTreeDecoratePublic = lazy(() => import('../pages/public/seasonal/ChristmasTreeDecoratePublic'));
 const FAQPage = lazy(() => import('../pages/FAQPage'));
@@ -216,54 +217,6 @@ const Layout: FC = () => {
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(normalizedPath, prefix));
   const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(normalizedPath);
   const isContactPage = normalizedPath === '/contact';
-  const [showFloatingTools, setShowFloatingTools] = useState(false);
-
-  useEffect(() => {
-    if (hideSupportWidgets) return;
-
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
-    let interactionTimeoutId: number | undefined;
-
-    const activate = () => setShowFloatingTools((current) => (current ? current : true));
-    const onFirstInteraction = () => {
-      if (interactionTimeoutId !== undefined) return;
-
-      interactionTimeoutId = window.setTimeout(activate, 1200);
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-    };
-
-    if (typeof win.requestIdleCallback === 'function') {
-      idleId = win.requestIdleCallback(activate, { timeout: 4500 });
-    } else {
-      timeoutId = window.setTimeout(activate, 4000);
-    }
-    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
-    window.addEventListener('keydown', onFirstInteraction, { passive: true });
-    window.addEventListener('scroll', onFirstInteraction, { passive: true });
-
-    return () => {
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-      if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
-        win.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-      }
-      if (interactionTimeoutId !== undefined) {
-        window.clearTimeout(interactionTimeoutId);
-      }
-    };
-  }, [hideSupportWidgets]);
 
   return (
     <div className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}>
@@ -286,7 +239,7 @@ const Layout: FC = () => {
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showFloatingTools ? (
+      {!hideSupportWidgets ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />
@@ -311,6 +264,7 @@ const router = createBrowserRouter(
         { path: 'blog/phonics-for-parents-guide', element: <PhonicsForParentsResearchPage /> },
         { path: 'blog/week-1-phonics-satpin-launch', element: <Week1SatpinLaunchPage /> },
         { path: 'blog/week-7-grammar-nouns-to-paragraphs', element: <Week7GrammarNounsToParagraphsPage /> },
+        { path: 'blog/week-12-speaking-confidence-seeds', element: <Week12SpeakingConfidenceSeedsPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
         { path: 'pricing', element: <PricingPage /> },
         { path: 'contact', element: <ContactPage /> },
