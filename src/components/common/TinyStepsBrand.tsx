@@ -22,7 +22,7 @@ export default function TinyStepsBrand({
   const content = (
     <>
       <img
-        src="/apple-touch-icon.png"
+        src="/logo-header.png"
         alt="Tiny Steps logo"
         width={44}
         height={44}

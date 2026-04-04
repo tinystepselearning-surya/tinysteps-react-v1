@@ -55,7 +55,7 @@ const organizationSchema = {
   '@id': 'https://tinystepslearning.com/#organization',
   name: 'Tiny Steps Learning',
   url: 'https://tinystepslearning.com',
-  logo: 'https://tinystepslearning.com/logo.png',
+  logo: 'https://tinystepslearning.com/logo-square-1024.png',
   sameAs: [
     'https://www.facebook.com/tinystepslearning',
     'https://www.instagram.com/tinystepslearning'

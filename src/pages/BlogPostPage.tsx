@@ -314,7 +314,7 @@ function buildMetaDescription(src: any) {
       name: 'Tiny Steps Learning',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://tinystepslearning.com/logo.png',
+        url: 'https://tinystepslearning.com/logo-square-1024.png',
       },
     };
 

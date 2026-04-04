@@ -1,9 +1,9 @@
 // Basic service worker for offline support (without “stuck on old UI” issues).
 
 // ✅ Bump version so old caches are cleared on user devices
-const CACHE_NAME = "tinysteps-cache-v2";
+const CACHE_NAME = "tinysteps-cache-v3";
 
-const PRECACHE_URLS = ["/manifest.json", "/offline.html"];
+const PRECACHE_URLS = ["/site.webmanifest", "/offline.html"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

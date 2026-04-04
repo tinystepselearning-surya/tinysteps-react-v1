@@ -233,7 +233,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             "name": "Tiny Steps Learning",
             "logo": {
               "@type": "ImageObject",
-              "url": "https://tinystepslearning.com/logo.png"
+              "url": "https://tinystepslearning.com/logo-square-1024.png"
             }
           },
           "datePublished": "2026-02-14",

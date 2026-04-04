@@ -259,7 +259,7 @@ const BlogPage: FC = () => {
           ? String(post.hero).startsWith('http')
             ? post.hero
             : `https://tinystepslearning.com${post.hero}`
-          : 'https://tinystepslearning.com/logo.png',
+          : 'https://tinystepslearning.com/logo-square-1024.png',
         author: {
           '@type': 'Organization',
           name: 'Tiny Steps Learning',

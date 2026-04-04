@@ -260,7 +260,7 @@ export default function Header() {
           aria-label="Go to Tiny Steps home page"
         >
           <img
-            src="/apple-touch-icon.png"
+            src="/logo-header.png"
             alt="Tiny Steps Logo"
             width={44}
             height={44}

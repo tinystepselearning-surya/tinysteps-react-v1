@@ -11,7 +11,7 @@ export const organizationSchema = {
   name: 'Tiny Steps Learning',
   alternateName: 'Tiny Steps',
   url: 'https://tinystepslearning.com',
-  logo: 'https://tinystepslearning.com/logo.png',
+  logo: 'https://tinystepslearning.com/logo-square-1024.png',
   description: 'Online phonics, grammar, and public speaking classes for children ages 3–12',
   foundingDate: '2020',
   foundingLocation: {
@@ -48,7 +48,7 @@ export const localBusinessSchema = {
   '@context': 'https://schema.org',
   '@type': 'LocalBusiness',
   name: 'Tiny Steps Learning',
-  image: 'https://tinystepslearning.com/logo.png',
+  image: 'https://tinystepslearning.com/logo-square-1024.png',
   description: 'Online English learning platform',
   telephone: '+91-9618398383',
   email: PUBLIC_CONTACT_EMAIL,
@@ -130,7 +130,7 @@ export function createBlogPostingSchema(params: {
     },
     datePublished: params.datePublished,
     dateModified: params.dateModified || params.datePublished,
-    image: params.image || 'https://tinystepslearning.com/logo.png',
+    image: params.image || 'https://tinystepslearning.com/logo-square-1024.png',
     articleBody: params.articleBody,
     articleSection: params.category || 'Education',
     wordCount: params.wordCount || 1500,
@@ -150,7 +150,7 @@ export function createBlogPostingSchema(params: {
       name: 'Tiny Steps Learning',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://tinystepslearning.com/logo.png'
+        url: 'https://tinystepslearning.com/logo-square-1024.png'
       }
     }
   };

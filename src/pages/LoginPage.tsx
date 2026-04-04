@@ -118,12 +118,11 @@ export default function LoginPage() {
       <div className="relative mx-auto h-full w-full max-w-6xl px-4 sm:px-6">
         <div className="absolute left-4 top-[max(env(safe-area-inset-top),1rem)] z-10 sm:left-6">
           <div className="relative inline-flex">
-            <div className="pointer-events-none absolute left-[10px] top-[10px] h-[108px] w-[108px] rounded-full bg-white" />
             <TinyStepsBrand
               className="relative z-10 hover:bg-transparent"
               subtitle="Online School"
               to="/"
-              logoClassName="h-32 w-32 ring-0"
+              logoClassName="h-32 w-32 rounded-[2rem] object-cover object-center shadow-none ring-0 [clip-path:inset(7%_7%_7%_7%_round_2rem)]"
               titleClassName="text-xl leading-none text-[#ff6a00]"
               subtitleClassName="text-[11px] font-semibold tracking-[0.28em] text-[#ff7d00]"
             />
