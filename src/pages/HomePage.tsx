@@ -6,7 +6,7 @@ import { localBusinessSchema, websiteSchema } from "../lib/schemas";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
-import ParentReassurance from "../components/programs/ParentReassurance";
+const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
 const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
@@ -62,10 +62,10 @@ export default function HomePage() {
       window.removeEventListener("touchstart", onFirstInteraction);
       window.removeEventListener("scroll", onFirstInteraction);
     };
-    window.addEventListener("pointerdown", onFirstInteraction, { passive: true });
-    window.addEventListener("keydown", onFirstInteraction, { passive: true });
-    window.addEventListener("touchstart", onFirstInteraction, { passive: true });
-    window.addEventListener("scroll", onFirstInteraction, { passive: true });
+    window.addEventListener("pointerdown", onFirstInteraction, { passive: true, once: true });
+    window.addEventListener("keydown", onFirstInteraction, { once: true });
+    window.addEventListener("touchstart", onFirstInteraction, { passive: true, once: true });
+    window.addEventListener("scroll", onFirstInteraction, { passive: true, once: true });
 
     if (typeof win.requestIdleCallback === "function") {
       idleId = win.requestIdleCallback(activate, { timeout: 2800 });
@@ -342,7 +342,9 @@ export default function HomePage() {
             </div>
           </section>
 
-          <ParentReassurance />
+          <Suspense fallback={null}>
+            <ParentReassurance />
+          </Suspense>
 
           <Suspense fallback={null}>
             <FinalCTASection />

@@ -131,19 +131,20 @@ const NewWordsFromReading = lazy(() => import('../pages/kids/games/reading/NewWo
 // );
 
 // Payment Components (all used in /parent routes - made eager to eliminate #426)
-import PaymentCallback from '../pages/parent/Payments/PaymentCallback';
-import PhonePeCheckout from '../pages/payments/PhonePeCheckout';
-import PhonePeCallback from '../pages/payments/PhonePeCallback';
+const PaymentCallback = lazy(() => import('../pages/parent/Payments/PaymentCallback'));
+const PhonePeCheckout = lazy(() => import('../pages/payments/PhonePeCheckout'));
+const PhonePeCallback = lazy(() => import('../pages/payments/PhonePeCallback'));
 
 // Layout
 import Header from '../components/common/Header';
 const Footer = lazy(() => import('../components/common/Footer'));
-import RoleGate, { type Role } from '../components/common/RoleGate';
-import AnalyticsTracker from '../components/common/AnalyticsTracker';
+const RoleGate = lazy(() => import('../components/common/RoleGate'));
+import type { Role } from '../components/common/RoleGate';
+const AnalyticsTracker = lazy(() => import('../components/common/AnalyticsTracker'));
 const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
-import ConversionTracker from '../components/common/ConversionTracker';
+const ConversionTracker = lazy(() => import('../components/common/ConversionTracker'));
 import ScrollToTop from '../components/common/ScrollToTop';
-import AssessmentRequestModal from '../components/common/AssessmentRequestModal';
+const AssessmentRequestModal = lazy(() => import('../components/common/AssessmentRequestModal'));
 import {
   buildBaseConversionParams,
   isHighIntentCtaLabel,
@@ -251,6 +252,7 @@ const Layout: FC = () => {
   const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(normalizedPath);
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  const [showDeferredChrome, setShowDeferredChrome] = useState(false);
 
   useEffect(() => {
     if (hideMarketingChrome || normalizedPath === '/book-demo') {
@@ -263,6 +265,56 @@ const Layout: FC = () => {
       setIsAssessmentModalOpen(true);
     }
   }, [hideMarketingChrome, location.search, normalizedPath]);
+
+  useEffect(() => {
+    if (hideMarketingChrome) {
+      setShowDeferredChrome(false);
+      return;
+    }
+
+    const activate = () => setShowDeferredChrome(true);
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    const onFirstInteraction = () => {
+      activate();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+    };
+
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
+    window.addEventListener('keydown', onFirstInteraction);
+    window.addEventListener('touchstart', onFirstInteraction, { passive: true });
+    window.addEventListener('scroll', onFirstInteraction, { passive: true });
+
+    if (typeof win.requestIdleCallback === 'function') {
+      idleId = win.requestIdleCallback(activate, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(activate, 1400);
+    }
+
+    return () => {
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+
+      if (idleId !== undefined && typeof win.cancelIdleCallback === 'function') {
+        win.cancelIdleCallback(idleId);
+      }
+
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [hideMarketingChrome]);
 
   const closeAssessmentModal = useCallback(() => {
     setIsAssessmentModalOpen(false);
@@ -346,8 +398,12 @@ const Layout: FC = () => {
       onClickCapture={handlePublicBookingIntercept}
       className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}
     >
-      <AnalyticsTracker />
-      <ConversionTracker />
+      {!hideMarketingChrome ? (
+        <Suspense fallback={null}>
+          <AnalyticsTracker />
+          <ConversionTracker />
+        </Suspense>
+      ) : null}
       <ScrollToTop />
       {!hideMarketingChrome ? <Header /> : null}
       <main
@@ -361,19 +417,21 @@ const Layout: FC = () => {
           <Outlet />
         </Suspense>
       </main>
-      {!hideMarketingChrome ? (
+      {!hideMarketingChrome && showDeferredChrome ? (
         <Suspense fallback={null}>
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets ? (
+      {!hideSupportWidgets && showDeferredChrome ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />
         </Suspense>
       ) : null}
-      {!hideMarketingChrome && normalizedPath !== '/book-demo' ? (
-        <AssessmentRequestModal isOpen={isAssessmentModalOpen} onClose={closeAssessmentModal} />
+      {!hideMarketingChrome && normalizedPath !== '/book-demo' && isAssessmentModalOpen ? (
+        <Suspense fallback={null}>
+          <AssessmentRequestModal isOpen={isAssessmentModalOpen} onClose={closeAssessmentModal} />
+        </Suspense>
       ) : null}
     </div>
   );

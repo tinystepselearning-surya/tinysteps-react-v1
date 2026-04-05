@@ -147,7 +147,7 @@ const ConversionHero: React.FC = () => {
               className="inline-flex w-fit items-center gap-3 rounded-full border border-orange-200/60 bg-white/80 px-4 py-2 text-[12px] font-bold text-orange-800 shadow-sm backdrop-blur-md"
             >
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                <span className="motion-safe:animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500"></span>
               </span>
               TRUSTED BY FAMILIES ACROSS 15+ COUNTRIES
@@ -247,13 +247,13 @@ const ConversionHero: React.FC = () => {
             <BookAssessmentForm defaultInterest="Phonics" />
 
             {/* Floating Decorative Element */}
-            <div className="absolute -bottom-4 -left-2 h-20 w-20 animate-bounce rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">
+            <div className="absolute -bottom-4 -left-2 h-20 w-20 motion-safe:animate-bounce motion-reduce:animate-none rounded-3xl bg-white p-4 shadow-xl [animation-duration:3.5s] md:-left-6">
               <div className="flex h-full w-full items-center justify-center rounded-xl bg-orange-50 text-2xl">
                 🎓
               </div>
             </div>
 
-            <div className="absolute -bottom-6 right-4 hidden animate-bounce rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur [animation-duration:4s] [animation-delay:0.4s] sm:inline-flex">
+            <div className="absolute -bottom-6 right-4 hidden motion-safe:animate-bounce motion-reduce:animate-none rounded-full border border-emerald-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg backdrop-blur [animation-duration:4s] [animation-delay:0.4s] sm:inline-flex">
               <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" aria-hidden="true" />
               Reply via WhatsApp
             </div>
