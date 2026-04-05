@@ -525,7 +525,7 @@ const WhyTinyStepsPage: FC = () => {
                 Tiny Steps was built to solve this: <strong>live 1:1 or small-group classes</strong> with trained mentors, <strong>structured curriculum</strong> parents can understand, and <strong>transparent progress tracking</strong> so families see real improvement—not vague promises.
               </p>
               <p className="text-sm text-slate-600">
-                Since 2020, Tiny Steps has supported 3500+ families across 15+ countries including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, and Australia.
+                Since 2020, Tiny Steps has supported 5000+ families across 15+ countries including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, and Australia.
               </p>
             </div>
           </div>

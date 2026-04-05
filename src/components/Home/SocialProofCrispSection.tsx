@@ -1,6 +1,6 @@
 import React from 'react';
 const items = [
-  { value: '3500+', label: 'Learners guided since 2020' },
+  { value: '5000+', label: 'Learners guided since 2020' },
   { value: '15+ countries', label: 'Admissions across India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more' },
   { value: '95%', label: (
     <>

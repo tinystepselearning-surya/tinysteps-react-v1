@@ -264,6 +264,8 @@ type ProgressState = {
 
 // Quick dots (shown in the top bar)
 const STROKE_COLORS = ["#2563EB", "#EC4899", "#22C55E", "#F59E0B", "#8B5CF6"] as const;
+const RAINBOW_COLORS = ["#EF4444", "#F59E0B", "#EAB308", "#22C55E", "#3B82F6", "#8B5CF6"] as const;
+const RAINBOW_MODE = "__rainbow__";
 
 // Big child-friendly palette (shown in the "More" sheet)
 const PALETTE_COLORS: string[] = [
@@ -376,6 +378,14 @@ function ColorPickerSheet(props: {
       </div>
     </div>
   );
+}
+
+function resolveStrokeColor(selected: string, strokeIdx: number): string {
+  if (selected === RAINBOW_MODE) {
+    const safeIndex = Number.isFinite(strokeIdx) ? Math.max(0, Math.floor(strokeIdx)) : 0;
+    return RAINBOW_COLORS[safeIndex % RAINBOW_COLORS.length];
+  }
+  return selected;
 }
 
 function ConfettiBurst({ fire }: { fire: boolean }) {
@@ -969,7 +979,7 @@ export default function LetterTracingGame() {
 
   const toSvg = useSvgPoint(svgRef);
 
-  const currentColor = inkColor;
+  const currentColor = resolveStrokeColor(inkColor, strokeIndex);
   const colorInk = (hex: string) => hexToRgba(hex, 0.72);
   const colorGuide = (hex: string) => hexToRgba(hex, 0.22);
 
@@ -1449,7 +1459,7 @@ const futureTapTargets = useMemo(() => {
     stopTraceAudio();
 
     // lock this stroke's color so it stays the same after completion
-    setStrokeColorByIndex((prev) => ({ ...prev, [strokeIndex]: inkColor }));
+    setStrokeColorByIndex((prev) => ({ ...prev, [strokeIndex]: resolveStrokeColor(inkColor, strokeIndex) }));
 
     ignoreMovesRef.current = true;
 
@@ -2129,6 +2139,25 @@ const futureTapTargets = useMemo(() => {
                   />
                 );
               })}
+
+              {(() => {
+                const active = inkColor === RAINBOW_MODE;
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setInkColor(RAINBOW_MODE)}
+                    className={[
+                      "h-5 w-5 rounded-full",
+                      active ? "ring-2 ring-slate-900 ring-offset-2 ring-offset-white" : "ring-1 ring-slate-200",
+                    ].join(" ")}
+                    style={{
+                      background: "linear-gradient(135deg,#ef4444,#f59e0b,#eab308,#22c55e,#3b82f6,#8b5cf6)",
+                    }}
+                    aria-label="Choose rainbow color"
+                    title="Pick rainbow"
+                  />
+                );
+              })()}
 
               <button
                 type="button"

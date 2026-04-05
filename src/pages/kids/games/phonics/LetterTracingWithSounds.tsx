@@ -79,6 +79,8 @@ const QUICK_COLORS = [
   "#F59E0B", // orange
   "#8B5CF6", // purple
 ] as const;
+const RAINBOW_COLORS = ["#EF4444", "#F59E0B", "#EAB308", "#22C55E", "#3B82F6", "#8B5CF6"] as const;
+const RAINBOW_MODE = "__rainbow__";
 
 // ⭐ sizes
 const STAR_START_SIZE = 18;
@@ -214,6 +216,14 @@ type ColorPickerModalProps = {
   onClose: () => void;             // dismiss without applying
   onDone: (color: string) => void; // apply chosen color
 };
+
+function resolveTraceColor(selected: string, strokeIdx: number): string {
+  if (selected === RAINBOW_MODE) {
+    const safeIndex = Number.isFinite(strokeIdx) ? Math.max(0, Math.floor(strokeIdx)) : 0;
+    return RAINBOW_COLORS[safeIndex % RAINBOW_COLORS.length];
+  }
+  return selected;
+}
 
 function ColorPickerModal({ open, initialValue, onClose, onDone }: ColorPickerModalProps) {
   const [tab, setTab] = useState<"palette" | "advanced">("palette");
@@ -1348,7 +1358,7 @@ export default function LetterTracingWithSounds() {
   const [colorModalOpen, setColorModalOpen] = useState(false);
   const [showLevel1Preview, setShowLevel1Preview] = useState(true);
 
-  const effectiveColor = selectedColor; // always available
+  const effectiveColor = resolveTraceColor(selectedColor, strokeIndex); // always available
   const canTrace = true; // kept for minimal diffs; always true now
 
   const [samples, setSamples] = useState<Pt[]>([]);
@@ -2970,6 +2980,27 @@ export default function LetterTracingWithSounds() {
                     />
                   );
                 })}
+
+                {(() => {
+                  const active = selectedColor === RAINBOW_MODE;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedColor(RAINBOW_MODE)}
+                      className={[
+                        "h-7 w-7 rounded-full border",
+                        "shadow-sm transition active:scale-95",
+                        active ? "ring-2 ring-slate-900/20" : "hover:scale-[1.04]",
+                      ].join(" ")}
+                      style={{
+                        background: "linear-gradient(135deg,#ef4444,#f59e0b,#eab308,#22c55e,#3b82f6,#8b5cf6)",
+                        borderColor: active ? "rgba(0,0,0,0.25)" : "rgba(0,0,0,0.12)",
+                      }}
+                      aria-label="Select rainbow color"
+                      title="Rainbow"
+                    />
+                  );
+                })()}
 
                 {/* More (opens center modal) */}
                 <button

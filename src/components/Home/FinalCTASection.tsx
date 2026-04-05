@@ -30,7 +30,7 @@ const FinalCTASection: React.FC = () => {
           </Link>
           <p className="text-sm text-gray-600">Takes less than 1 minute to book.</p>
           <div className="mt-4 text-sm text-gray-700">
-            <p>Join 3500+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
+            <p>Join 5000+ families across 15+ countries, including India, UAE, Vietnam, Singapore, Malaysia, UK, Canada, USA, Sweden, Germany, Australia, Sri Lanka, and Pakistan.</p>
             <p>⭐⭐⭐⭐⭐ 4.9/5 - Parent Reviews • 95% see improvement • 89% more confidence • 92% enjoy English</p>
           </div>
         </div>
