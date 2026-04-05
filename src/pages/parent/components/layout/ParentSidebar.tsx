@@ -1,4 +1,4 @@
-import type { FC, ReactNode } from 'react';
+import { memo, type FC, type ReactNode } from 'react';
 import { Button } from '../../../../components/ui/button';
 import { Home, TrendingUp, Lightbulb, FileText, User, CreditCard } from 'lucide-react';
 
@@ -22,7 +22,7 @@ interface ParentSidebarProps {
   onTabChange?: (tab: string) => void;
 }
 
-const ParentSidebar: FC<ParentSidebarProps> = ({ activeTab, onTabChange }) => {
+const ParentSidebarComponent: FC<ParentSidebarProps> = ({ activeTab, onTabChange }) => {
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-6 border-b border-gray-200">
@@ -53,5 +53,7 @@ const ParentSidebar: FC<ParentSidebarProps> = ({ activeTab, onTabChange }) => {
     </div>
   );
 };
+
+const ParentSidebar = memo(ParentSidebarComponent);
 
 export default ParentSidebar;

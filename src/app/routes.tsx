@@ -123,7 +123,6 @@ import AnalyticsTracker from '../components/common/AnalyticsTracker';
 const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
 import ScrollToTop from '../components/common/ScrollToTop';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
-import useDeferredActivation from '../hooks/useDeferredActivation';
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
 
 const APP_ROUTE_PREFIXES = [
@@ -221,10 +220,6 @@ const Layout: FC = () => {
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(normalizedPath, prefix));
   const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(normalizedPath);
   const isContactPage = normalizedPath === '/contact';
-  const showDeferredChrome = useDeferredActivation({
-    disabled: hideMarketingChrome,
-    idleTimeout: 1800,
-  });
 
   return (
     <div className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}>
@@ -242,12 +237,12 @@ const Layout: FC = () => {
           <Outlet />
         </Suspense>
       </main>
-      {!hideMarketingChrome && showDeferredChrome ? (
+      {!hideMarketingChrome ? (
         <Suspense fallback={null}>
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showDeferredChrome ? (
+      {!hideSupportWidgets ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />

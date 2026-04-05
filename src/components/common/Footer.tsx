@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import BrandLogo from './BrandLogo';
 
 const socialLinks = [
   { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
@@ -42,7 +41,7 @@ const legalLinks = [
   { label: 'Refund & Guarantee', href: '/refund-guarantee' },
 ];
 
-export default function Footer() {
+function Footer() {
   const { user } = useAuthStore();
   const [contactOpen, setContactOpen] = useState(false);
 
@@ -52,11 +51,12 @@ export default function Footer() {
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.82fr_0.92fr_1fr] lg:items-start lg:gap-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <BrandLogo
+              <img
+                src="/logo-main.png"
                 alt="Tiny Steps logo"
-                variant="main"
                 width={44}
                 height={44}
+                decoding="async"
                 loading="lazy"
                 className="h-11 w-11 rounded-2xl bg-white p-1.5 object-contain shadow-sm ring-1 ring-white/15"
               />
@@ -207,3 +207,5 @@ export default function Footer() {
     </footer>
   );
 }
+
+export default memo(Footer);

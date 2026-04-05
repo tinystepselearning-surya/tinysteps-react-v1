@@ -28,13 +28,6 @@ interface OptimizedImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, 
   /** WebP support (optional) */
   webpSrc?: string;
   webpSrcSet?: string;
-
-  /** Generic alternate formats (AVIF/WebP/etc) */
-  sources?: Array<{
-    type: string;
-    srcSet: string;
-    sizes?: string;
-  }>;
 }
 
 export const OptimizedImage: React.FC<OptimizedImageProps> = ({
@@ -47,21 +40,10 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
   srcSet,
   webpSrc,
   webpSrcSet,
-  sources,
   className = "",
   ...rest
 }) => {
-  const normalizedSources = useMemo(
-    () =>
-      (sources ?? []).filter(
-        (source): source is { type: string; srcSet: string; sizes?: string } =>
-          Boolean(source?.type && source?.srcSet),
-      ),
-    [sources],
-  );
-
-  const primarySource = normalizedSources[0];
-  const preloadHref = primarySource?.srcSet ?? webpSrc ?? src;
+  const preloadHref = webpSrc ?? src;
 
   const preloadKey = useMemo(() => {
     // stable key to avoid duplicate <link> tags in <head>
@@ -89,19 +71,12 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     link.setAttribute("data-optimized-preload", preloadKey);
 
     // Hint browser which format is likely used
-    if (primarySource?.type) {
-      link.setAttribute("type", primarySource.type);
-    } else if (webpSrc) {
-      link.setAttribute("type", "image/webp");
-    }
+    if (webpSrc) link.setAttribute("type", "image/webp");
 
     // NOTE: these must be lowercase attribute names in HTML
-    const effectiveSrcSet =
-      (primarySource?.srcSet ?? "").trim() ||
-      (webpSrcSet ?? "").trim() ||
-      (srcSet ?? "").trim();
+    const effectiveSrcSet = (webpSrcSet ?? "").trim() || (srcSet ?? "").trim();
     if (effectiveSrcSet) link.setAttribute("imagesrcset", effectiveSrcSet);
-    if (primarySource?.sizes ?? sizes) link.setAttribute("imagesizes", primarySource?.sizes ?? sizes ?? "");
+    if (sizes) link.setAttribute("imagesizes", sizes);
 
     // fetchpriority is supported in Chromium-based browsers
     link.setAttribute("fetchpriority", "high");
@@ -116,7 +91,7 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
         // ignore
       }
     };
-  }, [priority, preloadHref, preloadKey, primarySource, webpSrc, webpSrcSet, srcSet, sizes]);
+  }, [priority, preloadHref, preloadKey, webpSrc, webpSrcSet, srcSet, sizes]);
 
   const loading: "eager" | "lazy" = priority ? "eager" : "lazy";
   const fetchPriority: FetchPriority = priority ? "high" : "auto";
@@ -136,17 +111,9 @@ export const OptimizedImage: React.FC<OptimizedImageProps> = ({
     ...( { fetchPriority } as any ),
   };
 
-  if (normalizedSources.length > 0 || webpSrc || webpSrcSet) {
+  if (webpSrc || webpSrcSet) {
     return (
       <picture>
-        {normalizedSources.map((source) => (
-          <source
-            key={`${source.type}:${source.srcSet}`}
-            type={source.type}
-            sizes={source.sizes ?? sizes}
-            srcSet={source.srcSet}
-          />
-        ))}
         <source
           type="image/webp"
           sizes={sizes}

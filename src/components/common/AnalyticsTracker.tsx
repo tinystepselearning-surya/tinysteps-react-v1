@@ -5,9 +5,12 @@ import { trackPageView } from '../../lib/analytics';
 
 export default function AnalyticsTracker() {
   const location = useLocation();
+  const pagePath = `${location.pathname}${location.search}`;
+
   useEffect(() => {
-    trackPageView(location.pathname + location.search);
-  }, [location]);
+    trackPageView(pagePath);
+  }, [pagePath]);
+
   return null;
 }
 

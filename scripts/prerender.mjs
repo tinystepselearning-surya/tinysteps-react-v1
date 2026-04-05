@@ -237,20 +237,6 @@ function injectSeoMetadata(html, route) {
   return result;
 }
 
-function rewriteStylesheetDelivery(html) {
-  return html.replace(
-    /<link([^>]*?)rel="stylesheet"([^>]*?)href="([^"]*\/assets\/[^"]+\.css)"([^>]*)>/gi,
-    (_match, beforeRel, betweenRelAndHref, href, afterHref) => {
-      const preservedAttrs = `${beforeRel}${betweenRelAndHref}${afterHref}`
-        .replace(/\smedia="[^"]*"/gi, '')
-        .replace(/\sonload="[^"]*"/gi, '')
-        .trim();
-      const attrs = preservedAttrs ? ` ${preservedAttrs}` : '';
-      return `<link rel="stylesheet" href="${href}" media="print" onload="this.media='all'"${attrs}><noscript><link rel="stylesheet" href="${href}"${attrs}></noscript>`;
-    },
-  );
-}
-
 /**
  * Escape HTML special characters for safe injection into HTML attributes.
  */
@@ -272,7 +258,7 @@ async function writeRouteHtml(route, html) {
     .replace(/<script[^>]*src="https:\/\/www\.googletagmanager\.com\/gtag\/js[^"]*"[^>]*><\/script>/gi, "");
 
   // Inject SEO metadata before writing
-  const seoInjectedHtml = rewriteStylesheetDelivery(injectSeoMetadata(sanitizedHtml, route));
+  const seoInjectedHtml = injectSeoMetadata(sanitizedHtml, route);
 
   if (route === "/") {
     const outFile = path.join(DIST, "index.html");

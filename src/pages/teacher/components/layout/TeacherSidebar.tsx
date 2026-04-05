@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 import { cn } from '@components/lib/utils';
 import {
   BookOpen,
@@ -32,7 +32,7 @@ const items = [
   { id: 'profile', label: 'Profile', icon: UserCircle },
 ];
 
-export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount, className }) => {
+const TeacherSidebarComponent: FC<SidebarProps> = ({ active, onSelect, todayCount, className }) => {
   return (
     <aside className={cn('w-full lg:w-72', className)}>
       <div className="space-y-4">
@@ -93,3 +93,5 @@ export const TeacherSidebar: FC<SidebarProps> = ({ active, onSelect, todayCount,
     </aside>
   );
 };
+
+export const TeacherSidebar = memo(TeacherSidebarComponent);

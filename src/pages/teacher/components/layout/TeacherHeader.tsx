@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { FC } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../../../lib/firebaseConfig';
@@ -18,7 +18,7 @@ interface TeacherHeaderProps {
   onOpenMenu?: () => void;
 }
 
-export const TeacherHeader: FC<TeacherHeaderProps> = ({
+const TeacherHeaderComponent: FC<TeacherHeaderProps> = ({
   name,
   onProfileClick,
   onOpenMenu,
@@ -86,3 +86,5 @@ export const TeacherHeader: FC<TeacherHeaderProps> = ({
     </header>
   );
 };
+
+export const TeacherHeader = memo(TeacherHeaderComponent);

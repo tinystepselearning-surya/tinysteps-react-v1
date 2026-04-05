@@ -1,8 +1,7 @@
 // @ts-nocheck
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
-import BrandLogo from './BrandLogo';
 
 type LinkItem = { label: string; href: string };
 
@@ -23,6 +22,7 @@ const TICKER_ITEMS = [
   'Phonics + Reading + Speaking • Daily practice',
   'Parents get weekly progress updates',
 ];
+const TICKER_MARQUEE_ITEMS = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
 const PRIMARY_LINKS: LinkItem[] = [
   { label: 'Courses', href: '/courses' },
@@ -39,7 +39,7 @@ const LOGIN_LINKS: LinkItem[] = [
   { label: 'Learning Partner Login', href: '/learning-partner/login' },
 ];
 
-function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
+const PublicAnnouncementTicker = memo(function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
@@ -49,8 +49,6 @@ function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
   if (isLoggedIn || isDismissed || isMobileViewport) return null;
-
-  const doubledItems = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
   return (
     <div className="hidden border-b border-slate-200 bg-white/80 text-slate-700 backdrop-blur sm:block">
@@ -62,7 +60,7 @@ function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
       `}</style>
       <div className="group relative overflow-hidden px-4 py-1.5">
         <div className="ts-marquee flex w-max items-center gap-8 whitespace-nowrap pr-10 text-xs font-medium">
-          {doubledItems.map((item, index) => (
+          {TICKER_MARQUEE_ITEMS.map((item, index) => (
             <span key={`${item}-${index}`} className="inline-flex items-center gap-2">
               <span className="h-1 w-1 rounded-full bg-slate-400" />
               {item}
@@ -85,7 +83,7 @@ function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
       </div>
     </div>
   );
-}
+});
 
 export default function Header() {
   const { user, clearUser } = useAuthStore();
@@ -233,7 +231,6 @@ export default function Header() {
 
         <div className="hidden items-center gap-4 md:flex">
           <button
-            data-home-primary-cta
             type="button"
             onClick={handleBookAssessment}
             className="inline-flex h-11 items-center justify-center rounded-full border border-slate-900 bg-slate-900 px-5 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.16)] transition hover:bg-slate-800"
@@ -248,7 +245,6 @@ export default function Header() {
 
   return (
     <nav
-      data-site-header
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         isSticky ? 'bg-white/88 shadow-[0_15px_35px_rgba(8,15,40,0.12)] backdrop-blur-lg' : 'bg-transparent'
       }`}
@@ -262,13 +258,14 @@ export default function Header() {
           onClick={() => navigate('/')}
           aria-label="Go to Tiny Steps home page"
         >
-          <BrandLogo
+          <img
+            src="/logo-header.png"
             alt="Tiny Steps Logo"
-            variant="header"
             width={44}
             height={44}
-            priority
-            className="h-11 w-11"
+            decoding="async"
+            fetchPriority="high"
+            className="h-11 w-11 object-contain"
           />
           <div>
             <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
@@ -280,7 +277,6 @@ export default function Header() {
 
         <div className="flex items-center gap-3 lg:hidden">
           <button
-            data-home-primary-cta
             type="button"
             onClick={handleBookAssessment}
             className="rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-xs font-semibold text-white"

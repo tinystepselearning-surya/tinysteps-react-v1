@@ -1,7 +1,6 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@components/lib/utils';
-import BrandLogo from './BrandLogo';
 
 interface TinyStepsBrandProps {
   className?: string;
@@ -12,7 +11,7 @@ interface TinyStepsBrandProps {
   to?: string;
 }
 
-export default function TinyStepsBrand({
+function TinyStepsBrand({
   className,
   logoClassName,
   subtitle = 'Online School',
@@ -22,11 +21,12 @@ export default function TinyStepsBrand({
 }: TinyStepsBrandProps) {
   const content = (
     <>
-      <BrandLogo
+      <img
+        src="/logo-header.png"
         alt="Tiny Steps logo"
-        variant="header"
         width={44}
         height={44}
+        decoding="async"
         loading="lazy"
         className={cn(
           'h-11 w-11 shrink-0 rounded-full object-contain shadow-sm ring-1 ring-slate-200/80',
@@ -68,3 +68,5 @@ export default function TinyStepsBrand({
     </Link>
   );
 }
+
+export default memo(TinyStepsBrand);

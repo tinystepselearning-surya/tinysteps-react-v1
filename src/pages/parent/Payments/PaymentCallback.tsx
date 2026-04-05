@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { httpsCallable } from 'firebase/functions';
 import { functions } from '../../../lib/firebaseConfig';
@@ -8,20 +8,19 @@ import { Button } from '@components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import TinyStepsBrand from '../../../components/common/TinyStepsBrand';
 
-const PaymentCallback: React.FC = () => {
+const PaymentCallbackComponent: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'failed'>('loading');
   const [message, setMessage] = useState('Verifying payment...');
+  const transactionId = useMemo(() => searchParams.get('transactionId'), [searchParams]);
+  const merchantId = useMemo(() => searchParams.get('merchantId'), [searchParams]);
+  const responseCode = useMemo(() => searchParams.get('responseCode'), [searchParams]);
 
   useEffect(() => {
     const verifyPayment = async () => {
       try {
         // Get payment parameters from URL
-        const transactionId = searchParams.get('transactionId');
-        const merchantId = searchParams.get('merchantId');
-        const responseCode = searchParams.get('responseCode');
-
         if (!transactionId) {
           setStatus('failed');
           setMessage('Invalid payment response - missing transaction ID');
@@ -70,7 +69,7 @@ const PaymentCallback: React.FC = () => {
     };
 
     verifyPayment();
-  }, [searchParams]);
+  }, [merchantId, responseCode, transactionId]);
 
   const handleReturnToDashboard = () => {
     navigate('/parent/dashboard');
@@ -133,5 +132,7 @@ const PaymentCallback: React.FC = () => {
     </div>
   );
 };
+
+const PaymentCallback = memo(PaymentCallbackComponent);
 
 export default PaymentCallback;
