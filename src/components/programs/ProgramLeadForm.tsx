@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { trackEvent } from '../../lib/analytics';
+import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const ProgramLeadForm = ({ program }: { program: string }) => {
@@ -11,10 +12,17 @@ const ProgramLeadForm = ({ program }: { program: string }) => {
   const [status, setStatus] = useState<'idle'|'success'>('idle');
 
   const { user } = useAuthStore();
+  const whatsappHref = `https://wa.me/919618398383?text=${encodeURIComponent(`Hi Tiny Steps! I am ${name || 'a parent'}. I'd like details about ${program}. Child age: ${age || '-'}. Email: ${email || '-'}. Phone: ${phone || '-'}.`)}`;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     trackEvent('program_lead', { program, childAge: age });
+    const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
+    trackConversionEvent('lead_form_submit', {
+      ...buildBaseConversionParams(pagePath),
+      form_type: 'program_lead_form',
+      topic: program,
+    });
     setName('');
     setAge('');
     setEmail('');
@@ -33,7 +41,7 @@ const ProgramLeadForm = ({ program }: { program: string }) => {
       </button>
       {!user && (
         <a
-          href={`https://wa.me/919618398383?text=${encodeURIComponent(`Hi Tiny Steps! I am ${name || 'a parent'}. I'd like details about ${program}. Child age: ${age || '-'}. Email: ${email || '-'}. Phone: ${phone || '-'}.`)}`}
+          href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
           className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800"

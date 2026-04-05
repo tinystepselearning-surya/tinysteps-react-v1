@@ -923,6 +923,24 @@ export default function PhonicsForParentsResearchPage() {
                   Book a TinySteps assessment
                 </Link>
                 <Link
+                  to="/reading-classes-for-kids"
+                  className="inline-flex items-center rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Explore reading classes for kids
+                </Link>
+                <Link
+                  to="/reading-fluency-program"
+                  className="inline-flex items-center rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Explore reading fluency program
+                </Link>
+                <Link
+                  to="/slow-reader-child-help"
+                  className="inline-flex items-center rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Get slow reader child help
+                </Link>
+                <Link
                   to="/parents"
                   className="inline-flex items-center rounded-full border border-white/15 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
                 >

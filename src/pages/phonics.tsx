@@ -67,44 +67,24 @@ const groupPricingCopy = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1')
 
 const faqItems = [
   {
-    question: 'What age is best to start phonics?',
+    question: 'What age should a child start phonics?',
     answer:
-      "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Typically, children blend first words like 'sat' or 'pin' within 4-6 lessons.",
+      'Most children can begin phonics at ages 3-4 with playful, guided sound work. In live classes, many children start blending first words within 4-6 lessons when practice is consistent.',
   },
   {
-    question: 'How long does it take to learn phonics?',
+    question: 'Are online phonics classes effective for kids?',
     answer:
-      'Most children master basic phonics in 30-40 lessons with consistent practice. Blending typically clicks in the first 4-6 lessons. Progress depends on age, pace, and teaching method.',
+      'Yes. Live online phonics classes are effective when lessons are structured, interactive, and matched to the child’s level. Tiny Steps uses guided blending, decodable reading, and parent updates to keep progress visible.',
   },
   {
-    question: 'What is the SATPIN method?',
+    question: 'My child knows letters but cannot read words. Will phonics help?',
     answer:
-      "SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within a few lessons.",
-  },
-  {
-    question: 'Is online phonics effective for kids?',
-    answer:
-      'Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Stage-based parent feedback ensures accountability.',
+      'Yes. This usually means the child needs stronger sound-to-word blending, not more alphabet memorization. A systematic phonics pathway helps children move from letter knowledge to accurate reading.',
   },
   {
     question: 'How much do phonics classes cost in India?',
     answer:
-      `${oneToOnePricingCopy} For detailed pricing comparisons and what to look for when evaluating value, see our buyer guide for choosing online phonics classes in India.`,
-  },
-  {
-    question: "What's the difference between 1:1 and group phonics classes?",
-    answer:
-      `1:1 classes adapt to your child's pace, give instant feedback, and move through lessons faster. Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`,
-  },
-  {
-    question: 'Do you teach Jolly Phonics or synthetic phonics?',
-    answer:
-      'We use systematic synthetic phonics with SATPIN order, multisensory actions, and blending drills. We customize based on IB or CBSE school needs.',
-  },
-  {
-    question: 'Can my 7-year-old who struggles with reading catch up?',
-    answer:
-      'Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success.',
+      `${oneToOnePricingCopy} Group options are also available: ${groupPricingCopy}. Choose the plan based on your child’s support needs and learning pace, not only price.`,
   },
 ];
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
@@ -159,7 +139,7 @@ export default function PhonicsPage({
   const heroSubtitle = heroSubtitleOverride ?? "Multi-sensory phonics taught live with stage-based parent updates. Most children blend their first words within 4-6 lessons.";
   const aeoCopy =
     introCopy ??
-    "Tiny Steps offers live 1:1 online phonics classes for kids ages 3-12 with systematic phonics, SATPIN routines, blending practice, decodable reading, and stage-based parent updates. Most children read their first words within 4-6 lessons.";
+    'Online phonics classes for kids at Tiny Steps help ages 3-12 build sound awareness, blending, and accurate early reading through live guided teaching. Most children begin blending first words within 4-6 lessons and then progress to fluent decodable reading with stage-based parent updates.';
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -192,72 +172,14 @@ export default function PhonicsPage({
       {
         "@context": "https://schema.org",
         "@type": "FAQPage",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "What age is best to start phonics?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Ages 3-4 are ideal. Children can recognize sounds before reading. Start with SATPIN (6 sounds) using playful games, not worksheets. Expect 4-6 lessons to blend first words like 'sat' or 'pin'."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How long does it take to learn phonics?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Most children master basic phonics in 30-40 lessons with consistent practice. Blending typically clicks in the first 4-6 lessons. Progress depends on age, pace, and teaching method."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What is the SATPIN method?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "SATPIN teaches six sounds first: s, a, t, p, i, n. These combine into many words like sat, pin, tap. It's faster than teaching all 26 letters. Children read words within a few lessons."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Is online phonics effective for kids?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. 1:1 online classes with trained teachers match in-person results. Screen-share, games, and recording tools help. Stage-based parent feedback ensures accountability."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "How much do phonics classes cost in India?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": oneToOnePricingCopy
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "What's the difference between 1:1 and group phonics classes?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": `1:1 classes adapt to your child's pace, give instant feedback, and move through lessons faster. Group classes cost less; current monthly fees per child (12 classes): ${groupPricingCopy}.`
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Do you teach Jolly Phonics or synthetic phonics?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "We use systematic synthetic phonics with SATPIN order, multisensory actions, and blending drills. We customize based on IB or CBSE school needs."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can my 7-year-old who struggles with reading catch up?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. Intensive phonics (3x/week) closes gaps within 20-30 focused lessons. We assess specific needs like sounds, blending, or digraphs and focus there. Consistency drives success."
-            }
+        "mainEntity": faqItems.map((item) => ({
+          "@type": "Question",
+          "name": item.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": item.answer
           }
-        ]
+        }))
       }
     ];
 
@@ -335,11 +257,42 @@ export default function PhonicsPage({
         <p className="text-gray-700 mb-6">
           Whether you're looking for your first phonics program or switching from another provider, this guide includes FAQs from Indian parents and practical tips for making an informed decision.
         </p>
+        <p className="text-gray-700 mb-6">
+          For focused discovery, parents also explore{' '}
+          <Link to="/reading-classes-for-kids" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            reading classes for kids
+          </Link>
+          ,{' '}
+          <Link to="/reading-fluency-program" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            reading fluency program
+          </Link>
+          , and{' '}
+          <Link to="/phonics-fees-india" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            phonics fees in India
+          </Link>
+          . For preschool readiness, some families also review{' '}
+          <Link to="/english-classes-for-4-year-old" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            English classes for 4 year old
+          </Link>{' '}
+          options, while school-age families can compare{' '}
+          <Link to="/english-classes-for-6-year-old" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            English classes for 6 year old
+          </Link>{' '}
+          and{' '}
+          <Link to="/english-classes-for-7-10-year-old" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            English classes for 7 to 10 year old
+          </Link>{' '}
+          pathways, and if decoding is still inconsistent, they use our{' '}
+          <Link to="/child-not-reading-properly" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+            child not reading properly
+          </Link>{' '}
+          guide.
+        </p>
         <Link 
           to="/best-online-phonics-classes-india"
           className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
         >
-          Read the buyer guide: Best Online Phonics Classes in India
+          Read the buyer guide: Best Online Phonics Programs in India
           <span className="text-lg">→</span>
         </Link>
       </section>
@@ -418,6 +371,18 @@ export default function PhonicsPage({
             description: '10-minute guided reading routine',
             icon: '📖'
           },
+          {
+            label: 'Reading Fluency Program',
+            href: '/reading-fluency-program',
+            description: 'Move from slow decoding to smoother reading flow',
+            icon: '🚀'
+          },
+          {
+            label: 'Phonics Fees in India',
+            href: '/phonics-fees-india',
+            description: 'Compare fee-to-outcome fit before enrollment',
+            icon: '₹'
+          },
         ]}
       />
 
@@ -468,7 +433,7 @@ export default function PhonicsPage({
                       <>
                         {oneToOnePricingCopy} For detailed pricing comparisons and what to look for when evaluating value, see our{' '}
                         <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
-                          buyer guide for choosing online phonics classes in India
+                          buyer guide for choosing online phonics programs in India
                         </Link>.
                       </>
                     ) : (

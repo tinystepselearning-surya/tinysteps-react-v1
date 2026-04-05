@@ -905,6 +905,18 @@ export default function Week12SpeakingConfidenceSeedsPage() {
                 Explore Tiny Steps speaking classes
               </Link>
               <Link
+                to="/spoken-english-classes-for-kids"
+                className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Spoken English classes for kids
+              </Link>
+              <Link
+                to="/shy-child-speaking-confidence"
+                className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Shy child speaking confidence help
+              </Link>
+              <Link
                 to="/blog/week-7-grammar-nouns-to-paragraphs"
                 className="inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
               >

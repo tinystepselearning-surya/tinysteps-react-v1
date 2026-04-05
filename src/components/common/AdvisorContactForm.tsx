@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
+import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
 
 type AdvisorContactFormProps = {
   topic?: string;
@@ -54,6 +55,13 @@ export default function AdvisorContactForm({
       if (!response.ok) {
         throw new Error('Unable to submit contact form');
       }
+
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
+      trackConversionEvent('lead_form_submit', {
+        ...buildBaseConversionParams(pagePath),
+        form_type: 'advisor_contact_form',
+        topic,
+      });
 
       setSubmitted(true);
       setValues(initialValues);

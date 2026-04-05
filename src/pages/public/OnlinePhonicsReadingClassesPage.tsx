@@ -4,32 +4,32 @@ import { Link } from 'react-router-dom';
 
 const FAQ_ITEMS = [
   {
-    question: 'What if my child has never read before?',
+    question: 'My child knows letters but cannot read words. Will this help?',
     answer:
-      'We start from the beginning with letter recognition, sounds, blending, and short reading practice. No prior reading ability is required.',
+      'Yes. This usually means blending is not yet stable. Tiny Steps uses live guided phonics and decoding practice to help children move from letter knowledge to accurate word reading.',
   },
   {
-    question: 'How quickly will my child start reading?',
+    question: 'Are online phonics and reading classes effective for ages 3-8?',
     answer:
-      'Many children begin blending simple CVC words within 4 to 6 lessons with consistent weekly classes and short home practice.',
+      'Yes. Live online classes are effective when sessions are structured, interactive, and level-based. With regular practice, many children show early gains in blending and reading confidence.',
   },
   {
-    question: 'What is the SATPIN method?',
+    question: 'What age is best to start phonics and early reading support?',
     answer:
-      'SATPIN introduces a practical sequence of early sounds so children can start blending real words quickly and build early reading confidence.',
+      'Most children can begin from ages 3-4 with sound awareness and blending support. Early starters and struggling readers both benefit when classes match their current level.',
   },
   {
-    question: 'How often should my child take classes?',
+    question: 'How many live classes per week are ideal?',
     answer:
-      'Two to three classes per week with 5 to 10 minutes of home practice is a strong routine for most beginners.',
+      'Two to three live classes per week plus short home practice is a strong routine for most beginners. Consistency matters more than long study hours.',
   },
 ];
 
 export default function OnlinePhonicsReadingClassesPage() {
   useEffect(() => {
     applySeo({
-      title: "Online Phonics & Reading Classes for Kids (Ages 3–8) | Tiny Steps",
-      description: "1:1 online phonics & reading classes for kids (Ages 3–8). Letter sounds, blending, CVC reading, and confidence—taught with fun games and stage-based progress updates. Book a free assessment.",
+      title: "Early Reading & Phonics Support Classes (Ages 3–8) | Tiny Steps",
+      description: "Early-reader support for ages 3–8 with letter sounds, blending, and CVC reading practice. For broad reading classes for older children, see Tiny Steps Reading Classes.",
       canonicalPath: "/online-phonics-reading-classes",
       ogType: "website",
       jsonLd: [
@@ -87,13 +87,19 @@ export default function OnlinePhonicsReadingClassesPage() {
       {/* Header Section */}
       <section className="mb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold text-[#2d5016] mb-4">
-          Online Phonics & Reading Classes
+          Early Reading + Phonics Support Classes (Ages 3–8)
         </h1>
         <p className="text-xl text-gray-700 mb-6">
           1:1 personalized instruction for ages 3–8. Build confidence in letter sounds, blending, and reading.
         </p>
         <p className="text-gray-600 mb-8">
-          Taught by experienced mentors using proven phonics methods, fun games, and stage-based progress updates for parents.
+          Taught by experienced mentors using proven phonics methods, fun games, and stage-based parent updates for early readers.
+        </p>
+        <p className="text-sm text-gray-700 mb-6">
+          Looking for the core program?{' '}
+          <Link to="/phonics" className="font-semibold text-[#2d5016] underline underline-offset-2 hover:text-[#4a7c2c]">
+            phonics classes for kids
+          </Link>
         </p>
         <Link
           to="/?book=1"
@@ -105,9 +111,9 @@ export default function OnlinePhonicsReadingClassesPage() {
 
       {/* AEO Direct Answer Block */}
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
-        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are online phonics and reading classes?</h2>
+        <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are online reading and phonics support classes?</h2>
         <p className="text-gray-700 leading-relaxed">
-          Online phonics and reading classes teach children ages 3–8 letter sounds, blending, and reading through live 1:1 sessions with expert mentors. Each class uses proven methods like SATPIN, interactive games, and guided practice tailored to your child's pace—with stage-based progress updates so parents see exactly what skills are improving and what to practice at home.
+          Tiny Steps early reading and phonics support classes for ages 3-8 use live 1:1 teaching to build letter sounds, blending, and CVC reading accuracy. This page focuses on beginner readers; parents seeking broader reading support can also explore our general reading classes page.
         </p>
       </section>
 
@@ -311,19 +317,22 @@ export default function OnlinePhonicsReadingClassesPage() {
 
       {/* Cross-links to other programs */}
       <section className="mb-12 bg-gray-50 p-8 rounded-lg">
-        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Build complete English skills beyond phonics</h2>
+        <h2 className="text-2xl font-bold text-[#2d5016] mb-4">Build complete reading and English skills</h2>
         <p className="text-gray-700 mb-6">
-          Once your child masters phonics and reading, continue their learning journey with:
+          For stronger reading discovery paths, parents also explore:
         </p>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <Link to="/reading-classes-for-kids" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → Online Reading Classes for Kids →
+          </Link>
+          <Link to="/reading-fluency-program" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → Reading Fluency Program for Kids →
+          </Link>
+          <Link to="/phonics-fees-india" className="text-[#4a7c2c] hover:underline font-semibold block">
+            → Phonics Fees in India Guide →
+          </Link>
           <Link to="/grammar" className="text-[#4a7c2c] hover:underline font-semibold block">
             → Grammar & Writing Classes →
-          </Link>
-          <Link to="/speaking" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → Public Speaking Classes →
-          </Link>
-          <Link to="/courses" className="text-[#4a7c2c] hover:underline font-semibold block">
-            → All Courses & Curriculum →
           </Link>
         </div>
       </section>

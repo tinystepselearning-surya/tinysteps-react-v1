@@ -126,6 +126,17 @@ export default function HomePage() {
           <div className="mb-6 text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-500">Choose Your Focus</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Explore Our Core Programs</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              For age-based pathways, parents can start with{' '}
+              <Link to="/english-classes-for-4-year-old" className="font-medium underline underline-offset-2 hover:text-slate-900">
+                English classes for 4-year-old children
+              </Link>{' '}
+              or{' '}
+              <Link to="/english-classes-for-5-year-old" className="font-medium underline underline-offset-2 hover:text-slate-900">
+                support for 5-year-old children
+              </Link>
+              .
+            </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
             <Link

@@ -9,6 +9,7 @@ import NextStepsLinks from '../components/programs/NextStepsLinks';
 import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
+import { Link } from 'react-router-dom';
 
 const levels = [
   {
@@ -39,28 +40,20 @@ const stages = [
 
 const faqItems = [
   {
-    question: 'What age should my child start grammar classes?',
-    answer: 'Ages 5-7 are ideal for basic grammar (parts of speech, simple sentences). Ages 8-12+ benefit from advanced grammar with paragraph writing and editing. We assess during the free session to recommend the right level.'
+    question: 'What age should a child start grammar and writing classes?',
+    answer: 'Most children benefit from guided grammar and writing support from ages 5 and above. Tiny Steps places each child by current sentence and writing level, not only age.'
   },
   {
-    question: 'How is this different from school English or general tuition?',
-    answer: 'We focus specifically on sentence structure, punctuation, and writing mechanics—not comprehension or literature. Lessons use grammar games, editing drills, and AI writing coach support, not just worksheets.'
+    question: 'Are online grammar classes effective for school writing?',
+    answer: 'Yes. Live grammar classes improve sentence accuracy, punctuation, and paragraph clarity when practice is consistent. Children get real-time correction and guided writing tasks in every session.'
   },
   {
-    question: 'Will my child actually write during class?',
-    answer: 'Yes. Every lesson includes writing practice—from simple sentence edits to paragraph writing. Teachers give live feedback, and AI tools help children improve between sessions.'
+    question: 'My child knows rules but still makes writing mistakes. Can this help?',
+    answer: 'Yes. This usually needs guided application, not more rule memorization. Tiny Steps uses editing drills and structured writing practice to convert rules into correct usage.'
   },
   {
-    question: 'What if my child finds grammar boring?',
-    answer: 'We use sentence dice, grammar bingo, and editing relays to make it playful. Children see their writing improve lesson-by-lesson, which builds intrinsic motivation.'
-  },
-  {
-    question: 'How do you track progress in grammar?',
-    answer: 'Parents receive stage-based reports every 12 lessons with writing samples, strengths, and next steps. Children see their own writing evolve, which is the clearest measure of progress.'
-  },
-  {
-    question: 'Do I need to book a free assessment first?',
-    answer: 'Recommended. The 35-minute assessment helps us place your child in the right level (Basic or Advanced) and show you exactly how our lessons work.'
+    question: 'How do you track grammar and writing progress?',
+    answer: 'Parents get stage-based updates with writing samples, strengths, and next-step goals. This makes improvement in sentence quality and paragraph structure easy to track.'
   }
 ];
 
@@ -132,10 +125,17 @@ export default function GrammarPage() {
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-slate-50 to-emerald-50 p-6 shadow-sm">
           <p className="text-lg font-semibold text-slate-900">
-            Tiny Steps runs live online grammar and writing classes for kids that build sentence structure, punctuation, grammar accuracy, and clear written expression.
+            Online grammar and writing classes for kids at Tiny Steps help ages 5-15 build sentence structure, punctuation accuracy, and clear paragraph writing through live guided teaching.
           </p>
           <p className="mt-3 text-sm text-slate-700">
-            Parent intent: grammar classes for kids • grammar and writing classes • sentence structure and paragraph writing support.
+            These classes are most useful for children who understand topics in school but still make frequent writing errors or struggle to express ideas clearly in complete sentences.
+          </p>
+          <p className="mt-3 text-sm text-slate-700">
+            If your child is still struggling to read smoothly, start with our{' '}
+            <Link to="/child-not-reading-properly" className="font-semibold underline underline-offset-2 hover:text-slate-900">
+              child reading support guide
+            </Link>
+            .
           </p>
         </div>
       </section>
@@ -208,6 +208,30 @@ export default function GrammarPage() {
             href: '/parents/tracking-progress', 
             description: 'How to see visible improvement',
             icon: '📊'
+          },
+          {
+            label: 'Writing Classes for Kids',
+            href: '/writing-classes-for-kids',
+            description: 'Focused sentence and paragraph writing support',
+            icon: '🧾'
+          },
+          {
+            label: 'English Foundation Program',
+            href: '/english-foundation-program',
+            description: 'Integrated reading, grammar, and speaking growth',
+            icon: '🏗️'
+          },
+          {
+            label: 'English Classes for 6 Year Old',
+            href: '/english-classes-for-6-year-old',
+            description: 'Reading fluency plus grammar basics for Class 1 readiness',
+            icon: '6️⃣'
+          },
+          {
+            label: 'English Classes for 7 to 10 Year Old',
+            href: '/english-classes-for-7-10-year-old',
+            description: 'Grammar usage, writing clarity, and communication support',
+            icon: '🔟'
           },
         ]}
       />

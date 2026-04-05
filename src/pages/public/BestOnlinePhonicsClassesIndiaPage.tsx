@@ -669,6 +669,18 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <h3 className="mb-2 font-bold text-slate-900">Book Free Assessment</h3>
             <p className="text-sm text-gray-700">Get personalized recommendations and trial class details</p>
           </Link>
+          <Link to="/reading-classes-for-kids" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Reading Classes for Kids</h3>
+            <p className="text-sm text-gray-700">Support-focused path from decoding to confident reading</p>
+          </Link>
+          <Link to="/reading-fluency-program" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Reading Fluency Program</h3>
+            <p className="text-sm text-gray-700">Improve pace, flow, and reading confidence</p>
+          </Link>
+          <Link to="/phonics-fees-india" className="rounded-lg border border-gray-200 p-4 transition hover:border-sky-300 hover:shadow-md">
+            <h3 className="mb-2 font-bold text-slate-900">Phonics Fees in India</h3>
+            <p className="text-sm text-gray-700">Understand fee-to-outcome fit before enrolling</p>
+          </Link>
         </div>
       </section>
 

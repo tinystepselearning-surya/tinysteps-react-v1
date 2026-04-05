@@ -17,6 +17,14 @@ const ctaClass =
 export default function SubjectLandingPage({ subject }: SubjectLandingPageProps) {
   const data = useMemo(() => getSubjectLandingData(subject), [subject]);
   const isPhonicsLanding = subject === 'phonics';
+  const effectiveTitle = isPhonicsLanding
+    ? 'Synthetic Phonics & Jolly-Style Support Guide for Parents | Tiny Steps Learning'
+    : data.seoTitle;
+  const effectiveDescription = isPhonicsLanding
+    ? 'Support guide for parents comparing synthetic phonics, Jolly-style support, SATPIN progression, and advanced decoding pathways. For core phonics classes for kids, visit the primary Tiny Steps phonics page.'
+    : data.seoDescription;
+  const effectiveCanonicalPath = isPhonicsLanding ? '/phonics' : data.route;
+  const effectiveHeroTitle = isPhonicsLanding ? 'Synthetic Phonics & Jolly-Style Support Guide' : data.heroTitle;
   const [openPhonicsFaqIndexes, setOpenPhonicsFaqIndexes] = useState<number[]>([0]);
   const answerBlock = useMemo(() => {
     if (subject === 'phonics') {
@@ -102,11 +110,11 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
           '@type': 'ListItem',
           position: 2,
           name: data.breadcrumbName,
-          item: `https://tinystepslearning.com${data.route}`,
+          item: `https://tinystepslearning.com${effectiveCanonicalPath}`,
         },
       ],
     }),
-    [data.breadcrumbName, data.route],
+    [data.breadcrumbName, effectiveCanonicalPath],
   );
 
   const courseListSchema = useMemo(
@@ -151,19 +159,26 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
     }
 
     applySeo({
-      title: data.seoTitle,
-      description: data.seoDescription,
-      canonicalPath: data.route,
+      title: effectiveTitle,
+      description: effectiveDescription,
+      canonicalPath: effectiveCanonicalPath,
       ogType: 'website',
       jsonLd: jsonLdBlocks,
     });
-  }, [breadcrumbSchema, courseListSchema, data.route, data.seoDescription, data.seoTitle, phonicsFaq]);
+  }, [
+    breadcrumbSchema,
+    courseListSchema,
+    effectiveCanonicalPath,
+    effectiveDescription,
+    effectiveTitle,
+    phonicsFaq,
+  ]);
 
   return (
     <div className="space-y-6 pb-16">
       <PageHero
         eyebrow={data.eyebrow}
-        title={data.heroTitle}
+        title={effectiveHeroTitle}
         description={data.heroDescription}
         badges={data.heroBadges}
         actions={(
@@ -179,6 +194,14 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
             <h2 className="text-2xl font-bold text-slate-900">{answerBlock.title}</h2>
             <p className="mt-3 text-base leading-7 text-slate-700">{answerBlock.body}</p>
             <p className="mt-3 text-sm font-medium text-slate-600">{answerBlock.intent}</p>
+            {isPhonicsLanding ? (
+              <p className="mt-4 text-sm font-semibold text-slate-700">
+                Core authority page:{' '}
+                <Link to="/phonics" className="text-slate-900 underline decoration-sky-400 underline-offset-2 hover:text-sky-700">
+                  phonics classes for kids
+                </Link>
+              </p>
+            ) : null}
           </div>
 
           <div className="max-w-3xl">

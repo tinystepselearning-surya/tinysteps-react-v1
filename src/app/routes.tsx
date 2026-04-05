@@ -51,6 +51,24 @@ const PublicSpeakingCommunicationKidsPage = lazy(() => import('../pages/public/P
 const BookDemoPage = lazy(() => import('../pages/public/BookDemoPage'));
 const CareersPage = lazy(() => import('../pages/public/CareersPage'));
 const LearningPartnerPage = lazy(() => import('../pages/public/LearningPartnerPage'));
+const ReadingClassesForKidsPage = lazy(() => import('../pages/public/ReadingClassesForKidsPage'));
+const SpokenEnglishClassesForKidsPage = lazy(() => import('../pages/public/SpokenEnglishClassesForKidsPage'));
+const WritingClassesForKidsPage = lazy(() => import('../pages/public/WritingClassesForKidsPage'));
+const PhonicsFeesIndiaPage = lazy(() => import('../pages/public/PhonicsFeesIndiaPage'));
+const OnlineEnglishClassesForKidsIndiaPage = lazy(() => import('../pages/public/OnlineEnglishClassesForKidsIndiaPage'));
+const EnglishClassesFor4YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor4YearOldPage'));
+const EnglishClassesFor5YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor5YearOldPage'));
+const EnglishClassesFor6YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor6YearOldPage'));
+const EnglishClassesFor7To10YearOldPage = lazy(() => import('../pages/public/EnglishClassesFor7To10YearOldPage'));
+const ChildNotReadingProperlyPage = lazy(() => import('../pages/public/ChildNotReadingProperlyPage'));
+const SlowReaderChildHelpPage = lazy(() => import('../pages/public/SlowReaderChildHelpPage'));
+const ShyChildSpeakingConfidencePage = lazy(() => import('../pages/public/ShyChildSpeakingConfidencePage'));
+const ReadingFluencyProgramPage = lazy(() => import('../pages/public/ReadingFluencyProgramPage'));
+const ConfidenceBuildingProgramKidsPage = lazy(() => import('../pages/public/ConfidenceBuildingProgramKidsPage'));
+const EnglishFoundationProgramPage = lazy(() => import('../pages/public/EnglishFoundationProgramPage'));
+const SummerCampForKidsIndiaPage = lazy(() => import('../pages/public/SummerCampForKidsIndiaPage'));
+const SummerReadingProgramKidsPage = lazy(() => import('../pages/public/SummerReadingProgramKidsPage'));
+const SummerSpeakingCampKidsPage = lazy(() => import('../pages/public/SummerSpeakingCampKidsPage'));
 const PrivacyPolicyPage = lazy(() => import('../pages/PrivacyPolicyPage'));
 const TermsAndConditionsPage = lazy(() => import('../pages/TermsAndConditionsPage'));
 const RefundGuaranteePage = lazy(() => import('../pages/RefundGuaranteePage'));
@@ -121,6 +139,7 @@ const Footer = lazy(() => import('../components/common/Footer'));
 import RoleGate, { type Role } from '../components/common/RoleGate';
 import AnalyticsTracker from '../components/common/AnalyticsTracker';
 const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
+import ConversionTracker from '../components/common/ConversionTracker';
 import ScrollToTop from '../components/common/ScrollToTop';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
@@ -224,6 +243,7 @@ const Layout: FC = () => {
   return (
     <div className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}>
       <AnalyticsTracker />
+      <ConversionTracker />
       <ScrollToTop />
       {!hideMarketingChrome ? <Header /> : null}
       <main
@@ -329,6 +349,24 @@ const router = createBrowserRouter(
         { path: 'phonics-apps-for-preschoolers-india', element: <PhonicsAppsPreschoolersIndiaPage /> },
         { path: 'phonics-games-for-preschoolers', element: <PhonicsGamesPreschoolersPage /> },
         { path: 'phonics-learning-games', element: <LearningGamesMarketingPage /> },
+        { path: 'reading-classes-for-kids', element: <ReadingClassesForKidsPage /> },
+        { path: 'spoken-english-classes-for-kids', element: <SpokenEnglishClassesForKidsPage /> },
+        { path: 'writing-classes-for-kids', element: <WritingClassesForKidsPage /> },
+        { path: 'phonics-fees-india', element: <PhonicsFeesIndiaPage /> },
+        { path: 'online-english-classes-for-kids-india', element: <OnlineEnglishClassesForKidsIndiaPage /> },
+        { path: 'english-classes-for-4-year-old', element: <EnglishClassesFor4YearOldPage /> },
+        { path: 'english-classes-for-5-year-old', element: <EnglishClassesFor5YearOldPage /> },
+        { path: 'english-classes-for-6-year-old', element: <EnglishClassesFor6YearOldPage /> },
+        { path: 'english-classes-for-7-10-year-old', element: <EnglishClassesFor7To10YearOldPage /> },
+        { path: 'child-not-reading-properly', element: <ChildNotReadingProperlyPage /> },
+        { path: 'slow-reader-child-help', element: <SlowReaderChildHelpPage /> },
+        { path: 'shy-child-speaking-confidence', element: <ShyChildSpeakingConfidencePage /> },
+        { path: 'reading-fluency-program', element: <ReadingFluencyProgramPage /> },
+        { path: 'confidence-building-program-kids', element: <ConfidenceBuildingProgramKidsPage /> },
+        { path: 'english-foundation-program', element: <EnglishFoundationProgramPage /> },
+        { path: 'summer-camp-for-kids-india', element: <SummerCampForKidsIndiaPage /> },
+        { path: 'summer-reading-program-kids', element: <SummerReadingProgramKidsPage /> },
+        { path: 'summer-speaking-camp-kids', element: <SummerSpeakingCampKidsPage /> },
         { path: 'summer-camps', element: <SummerCampsPage /> },
         { path: 'summer-camps/:programSlug/:batchSlug', element: <SummerCampProgramPage /> },
         { path: 'summer-camps/:programSlug', element: <SummerCampProgramPage /> },

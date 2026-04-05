@@ -1383,6 +1383,24 @@ export default function SummerCampsPage() {
               >
                 Read parent guides
               </Link>
+              <Link
+                to="/summer-reading-program-kids"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Explore summer reading program
+              </Link>
+              <Link
+                to="/summer-speaking-camp-kids"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Explore summer speaking camp
+              </Link>
+              <Link
+                to="/summer-camp-for-kids-india"
+                className="inline-flex min-h-[42px] items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Parent planning guide for India
+              </Link>
             </div>
           </div>
         </section>

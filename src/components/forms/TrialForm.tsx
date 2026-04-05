@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { trackEvent } from '../../lib/analytics';
+import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const schema = z.object({
@@ -34,6 +35,11 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
       const submitLead = httpsCallable(functions as any, 'subscribeNewsletter');
       await submitLead({ email: data.email, parentName: data.parentName, phone: data.phone, childAge: data.childAge, source: 'trial' });
       trackEvent('trial_form_submit', { context, childAge: data.childAge });
+      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
+      trackConversionEvent('lead_form_submit', {
+        ...buildBaseConversionParams(pagePath),
+        form_type: context || 'trial_form',
+      });
       reset();
     } catch (e) {
       // swallow for now; UI shows generic state

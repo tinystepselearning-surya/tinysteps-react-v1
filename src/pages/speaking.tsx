@@ -40,28 +40,20 @@ const stages = [
 
 const faqItems = [
   {
-    question: 'What age is best to start public speaking classes?',
-    answer: 'Ages 4-6 are great for building basic confidence and clarity. Ages 7-15 benefit from structured presentations, storytelling, and debate foundations. We tailor lessons to each child’s comfort level.'
+    question: 'What age should a child start speaking confidence classes?',
+    answer: 'Most children can begin from age 4 with short, guided speaking tasks. Older children benefit from more structured communication, storytelling, and presentation practice.'
   },
   {
-    question: 'Will this help my shy child?',
-    answer: 'Yes. We start with safe, scaffolded activities (show & tell, describing pictures) and build confidence step-by-step. Many shy children surprise their parents once they find their voice in a supportive 1:1 or small-group environment.'
+    question: 'Will this help a shy child speak in class?',
+    answer: 'Yes. Tiny Steps uses low-pressure, step-by-step speaking routines so shy children build comfort first and confidence next. Over time, children usually speak with longer, clearer responses.'
   },
   {
-    question: 'What’s the difference between this and debate or drama classes?',
-    answer: 'We focus on presentation skills—structure, clarity, body language, and audience connection. It’s not performance or competitive debate. Think: confidence to speak at school assemblies, family events, or future interviews.'
+    question: 'Are online speaking classes effective for kids?',
+    answer: 'Yes. Live online speaking classes are effective when children get repeated speaking turns and direct feedback. Consistent practice improves sentence flow, clarity, and participation confidence.'
   },
   {
-    question: 'How much speaking does my child do in each class?',
-    answer: 'Multiple short talks per session. Children give several presentations with live coach feedback. Lessons are interactive, not lecture-based. The goal is practice, not passive listening.'
-  },
-  {
-    question: 'How is progress measured?',
-    answer: 'Parents receive stage-based reports every 12 lessons with video recordings of talks, strengths, and next steps. Watching your child’s journey from hesitant to confident is the best measure.'
-  },
-  {
-    question: 'Is a free assessment required?',
-    answer: 'Recommended. The 35-minute session helps us understand your child’s current comfort level, set goals, and show you how our coaching works.'
+    question: 'How do you measure speaking progress?',
+    answer: 'Parents receive stage-based progress updates with strengths, targets, and recorded speaking evidence. This makes confidence and communication growth measurable over time.'
   }
 ];
 
@@ -133,10 +125,10 @@ export default function SpeakingPage() {
       <section className="mx-auto max-w-4xl px-6 pt-8">
         <div className="rounded-2xl border border-amber-100 bg-gradient-to-r from-slate-50 to-amber-50 p-6 shadow-sm">
           <p className="text-lg font-semibold text-slate-900">
-            Tiny Steps runs live online public speaking classes for kids that build spoken English confidence, communication clarity, storytelling, and presentation structure.
+            Online speaking classes for kids at Tiny Steps help ages 4-15 build spoken English confidence, clearer communication, and structured presentation skills through live guided practice.
           </p>
           <p className="mt-3 text-sm text-slate-700">
-            Parent intent: public speaking classes for kids • spoken English classes • communication confidence and presentation skills.
+            They are especially useful for children who hesitate to speak, use short answers, or need stronger classroom and stage communication confidence.
           </p>
         </div>
       </section>
@@ -209,6 +201,36 @@ export default function SpeakingPage() {
             href: '/parents/tracking-progress', 
             description: 'How to see visible improvement',
             icon: '📊'
+          },
+          {
+            label: 'Spoken English Classes for Kids',
+            href: '/spoken-english-classes-for-kids',
+            description: 'Communication confidence with sentence support',
+            icon: '🗣️'
+          },
+          {
+            label: 'Confidence Building Program',
+            href: '/confidence-building-program-kids',
+            description: 'Step-by-step support for hesitant speakers',
+            icon: '💪'
+          },
+          {
+            label: 'Summer Speaking Camp',
+            href: '/summer-speaking-camp-kids',
+            description: 'Seasonal speaking confidence track for kids',
+            icon: '☀️'
+          },
+          {
+            label: 'English Classes for 5 Year Old',
+            href: '/english-classes-for-5-year-old',
+            description: 'Early sentence speaking confidence for younger learners',
+            icon: '5️⃣'
+          },
+          {
+            label: 'Shy Child Speaking Confidence Help',
+            href: '/shy-child-speaking-confidence',
+            description: 'Low-pressure support for children who hesitate to speak',
+            icon: '🌱'
           },
         ]}
       />

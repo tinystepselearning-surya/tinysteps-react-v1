@@ -84,6 +84,12 @@ const CoursesHero = () => (
         <p className="mt-2 text-sm text-white/80">
           Need guided daily practice too? Explore <Link to="/phonics-learning-games" className="underline">phonics learning games</Link> with a 3-day free trial and parent-friendly plans.
         </p>
+        <p className="mt-2 text-sm text-white/80">
+          Need targeted help? See{' '}
+          <Link to="/writing-classes-for-kids" className="underline">writing classes for kids</Link>{' '}
+          or a step-by-step path{' '}
+          <Link to="/confidence-building-program-kids" className="underline">to build confidence</Link>.
+        </p>
 
         <div className="mt-6 flex flex-wrap gap-3 text-sm">
           <span className="rounded-full bg-white/20 px-4 py-1">Ages 3–12</span>

@@ -244,10 +244,31 @@ export const ROUTE_SEO_REGISTRY = {
     keywords:
       'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online india,grammar classes for kids online,public speaking classes for kids online india,summer camp fees for kids,summer camp fees india,small batch online classes for kids,weekly progress reports for parents,book free trial class for kids,online phonics summer camp mumbai,grammar summer classes for kids delhi ncr,public speaking summer camp bengaluru,best online summer camp for 8 year olds,how do online summer camps work,live online summer camp with recordings,free level assessment for kids summer camp',
   },
-  '/online-phonics-reading-classes': {
-    title: 'Online Phonics & Reading Classes for Kids | Tiny Steps Learning',
+  '/summer-camp-for-kids-india': {
+    title: 'Summer Camp for Kids India (Parent Planning Guide) | Tiny Steps Learning',
     description:
-      'Specialized 1:1 online phonics and reading classes. Master early literacy with expert guidance and interactive practice.',
+      'Parent planning guide to choose the right online summer camp for kids in India by age, track, and learning outcome across reading, grammar, and speaking.',
+    canonicalPath: '/summer-camp-for-kids-india',
+    ogType: 'website',
+  },
+  '/summer-reading-program-kids': {
+    title: 'Summer Reading Program for Kids | Tiny Steps Learning',
+    description:
+      'Summer reading program for kids focused on phonics-backed reading fluency, confidence, and comprehension readiness through live guided sessions.',
+    canonicalPath: '/summer-reading-program-kids',
+    ogType: 'website',
+  },
+  '/summer-speaking-camp-kids': {
+    title: 'Summer Speaking Camp for Kids | Tiny Steps Learning',
+    description:
+      'Summer speaking camp for kids focused on spoken English confidence, expressive communication, vocabulary growth, and presentation readiness through live sessions.',
+    canonicalPath: '/summer-speaking-camp-kids',
+    ogType: 'website',
+  },
+  '/online-phonics-reading-classes': {
+    title: 'Early Reading & Phonics Support Classes (Ages 3-8) | Tiny Steps Learning',
+    description:
+      'Early-reader support for ages 3-8 with letter sounds, blending, and CVC reading practice. For broad reading classes, use Tiny Steps reading classes page.',
     canonicalPath: '/online-phonics-reading-classes',
     ogType: 'website',
   },
@@ -279,13 +300,123 @@ export const ROUTE_SEO_REGISTRY = {
     canonicalPath: '/phonics-learning-games',
     ogType: 'website',
   },
-  '/phonics-classes-for-kids': {
-    title: 'Online Phonics Classes for Kids | Synthetic & Jolly-Style Support | Tiny Steps Learning',
+  '/reading-classes-for-kids': {
+    title: 'Online Reading Classes for Kids | Tiny Steps Learning',
     description:
-      'Explore online phonics classes for kids ages 3-12 with systematic synthetic phonics, SATPIN progression, Jolly Phonics style actions, and advanced decoding support.',
-    canonicalPath: '/phonics-classes-for-kids',
+      'Online reading classes for kids focused on blending, reading fluency, confidence, and early comprehension support through live guided practice.',
+    canonicalPath: '/reading-classes-for-kids',
     ogType: 'website',
   },
+  '/spoken-english-classes-for-kids': {
+    title: 'Spoken English Classes for Kids India | Tiny Steps Learning',
+    description:
+      'Spoken English classes for kids in India focused on communication confidence, vocabulary growth, sentence formation, and stage speaking readiness.',
+    canonicalPath: '/spoken-english-classes-for-kids',
+    ogType: 'website',
+  },
+  '/writing-classes-for-kids': {
+    title: 'English Writing Classes for Kids | Tiny Steps Learning',
+    description:
+      'English writing classes for kids focused on sentence writing, paragraph writing, grammar in use, and clearer idea expression with live guidance.',
+    canonicalPath: '/writing-classes-for-kids',
+    ogType: 'website',
+  },
+  '/phonics-fees-india': {
+    title: 'Phonics Class Fees in India | Tiny Steps Learning',
+    description:
+      'Understand phonics class fees in India, what affects pricing, and how to choose the right live support format based on your child’s learning needs.',
+    canonicalPath: '/phonics-fees-india',
+    ogType: 'website',
+  },
+  '/online-english-classes-for-kids-india': {
+    title: 'Online English Classes for Kids India | Tiny Steps Learning',
+    description:
+      'Online English classes for kids in India covering phonics-based reading, grammar and writing, and speaking confidence through live guided learning.',
+    canonicalPath: '/online-english-classes-for-kids-india',
+    ogType: 'website',
+  },
+  '/english-classes-for-4-year-old': {
+    title: 'English Classes for 4 Year Old | Tiny Steps Learning',
+    description:
+      'English classes for 4 year old children focused on listening, letter sounds, early vocabulary, playful speaking confidence, and gentle online learning routines.',
+    canonicalPath: '/english-classes-for-4-year-old',
+    ogType: 'website',
+  },
+  '/english-classes-for-5-year-old': {
+    title: 'English Classes for 5 Year Old | Tiny Steps Learning',
+    description:
+      'English classes for 5 year old children focused on phonics blending, reading readiness, sentence speaking, and confidence in class participation.',
+    canonicalPath: '/english-classes-for-5-year-old',
+    ogType: 'website',
+  },
+  '/english-classes-for-6-year-old': {
+    title: 'English Classes for 6 Year Old | Tiny Steps Learning',
+    description:
+      'English classes for 6 year old children focused on reading fluency, grammar foundations, sentence formation, and stronger expression confidence.',
+    canonicalPath: '/english-classes-for-6-year-old',
+    ogType: 'website',
+  },
+  '/english-classes-for-7-10-year-old': {
+    title: 'English Classes for 7 to 10 Year Old | Tiny Steps Learning',
+    description:
+      'English classes for 7 to 10 year old children focused on reading comprehension, grammar usage, writing clarity, speaking confidence, and communication skills.',
+    canonicalPath: '/english-classes-for-7-10-year-old',
+    ogType: 'website',
+  },
+  '/child-not-reading-properly': {
+    title: 'Child Not Reading Properly? Parent Support Guide | Tiny Steps Learning',
+    description:
+      'If your child is not reading properly, learn common causes like phonics and blending gaps, slow decoding, and low confidence—plus practical guided support.',
+    canonicalPath: '/child-not-reading-properly',
+    ogType: 'website',
+  },
+  '/slow-reader-child-help': {
+    title: 'Slow Reader Child Help | Reading Fluency Support | Tiny Steps Learning',
+    description:
+      'Slow reader child help for parents focused on reading pace, fluency flow, and comprehension stamina through structured guided practice.',
+    canonicalPath: '/slow-reader-child-help',
+    ogType: 'website',
+  },
+  '/shy-child-speaking-confidence': {
+    title: 'Shy Child Speaking Confidence Help | Tiny Steps Learning',
+    description:
+      'Support for shy child speaking confidence with guided communication practice, sentence support, vocabulary building, and public speaking readiness.',
+    canonicalPath: '/shy-child-speaking-confidence',
+    ogType: 'website',
+  },
+  '/reading-fluency-program': {
+    title: 'Reading Fluency Program for Kids | Tiny Steps Learning',
+    description:
+      'Reading fluency program for kids focused on decoding-to-fluency progression, smoother reading pace, stronger accuracy, confidence, and comprehension support.',
+    canonicalPath: '/reading-fluency-program',
+    ogType: 'website',
+  },
+  '/confidence-building-program-kids': {
+    title: 'Confidence Building Program for Kids | Tiny Steps Learning',
+    description:
+      'Confidence building program for kids focused on expressive speaking, communication confidence, reduced hesitation, vocabulary growth, and public speaking readiness.',
+    canonicalPath: '/confidence-building-program-kids',
+    ogType: 'website',
+  },
+  '/english-foundation-program': {
+    title: 'English Foundation Program for Kids | Tiny Steps Learning',
+    description:
+      'English foundation program for kids covering reading, grammar, and speaking basics through age-appropriate progression and live guided support.',
+    canonicalPath: '/english-foundation-program',
+    ogType: 'website',
+  },
+  '/phonics-classes-for-kids': {
+    title: 'Synthetic Phonics & Jolly-Style Support Guide for Parents | Tiny Steps Learning',
+    description:
+      'Support guide for parents comparing synthetic phonics, SATPIN progression, and Jolly-style support. Primary authority page for phonics classes for kids is /phonics.',
+    canonicalPath: '/phonics',
+    ogType: 'website',
+  },
+  // TODO: Add high-intent pages:
+  // /reading-classes-for-kids
+  // /spoken-english-classes-for-kids
+  // /writing-classes-for-kids
+  // /phonics-fees-india
   '/english-grammar-writing-classes': {
     title: 'English Grammar & Writing Classes for Kids | Tiny Steps Learning',
     description:
