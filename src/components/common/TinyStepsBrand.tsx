@@ -22,7 +22,7 @@ function TinyStepsBrand({
   const content = (
     <>
       <img
-        src="/logo-header.png"
+        src="/logo-header.webp"
         alt="Tiny Steps logo"
         width={44}
         height={44}

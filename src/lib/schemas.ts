@@ -18,7 +18,7 @@ export const organizationSchema = {
   url: SITE_ORIGIN,
   logo: {
     '@type': 'ImageObject',
-    url: `${SITE_ORIGIN}/logo-square-1024.png`
+    url: `${SITE_ORIGIN}/logo-square.webp`
   },
   description: 'Online phonics, grammar, and public speaking classes for children ages 3–12',
   foundingDate: '2020',
@@ -84,7 +84,7 @@ export const localBusinessSchema = {
   '@type': 'LocalBusiness',
   '@id': `${SITE_ORIGIN}/#localbusiness`,
   name: 'Tiny Steps Learning',
-  image: `${SITE_ORIGIN}/logo-square-1024.png`,
+  image: `${SITE_ORIGIN}/logo-square.webp`,
   description: 'Online English learning platform',
   telephone: '+91-9618398383',
   email: PUBLIC_CONTACT_EMAIL,
@@ -188,7 +188,7 @@ export function createBlogPostingSchema(params: {
     },
     datePublished: params.datePublished,
     dateModified: params.dateModified || params.datePublished,
-    image: params.image || 'https://tinystepslearning.com/logo-square-1024.png',
+    image: params.image || 'https://tinystepslearning.com/logo-square.webp',
     articleBody: params.articleBody,
     articleSection: params.category || 'Education',
     wordCount: params.wordCount || 1500,
@@ -209,7 +209,7 @@ export function createBlogPostingSchema(params: {
       name: 'Tiny Steps Learning',
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_ORIGIN}/logo-square-1024.png`
+        url: `${SITE_ORIGIN}/logo-square.webp`
       }
     }
   };

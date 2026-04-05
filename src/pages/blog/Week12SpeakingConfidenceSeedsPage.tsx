@@ -501,7 +501,7 @@ export default function Week12SpeakingConfidenceSeedsPage() {
           name: 'Tiny Steps Learning',
           logo: {
             '@type': 'ImageObject',
-            url: 'https://tinystepslearning.com/logo-square-1024.png',
+            url: 'https://tinystepslearning.com/logo-square.webp',
           },
         },
         mainEntityOfPage: {
