@@ -3,7 +3,7 @@
 import React, { lazy, Suspense, useEffect, useState } from "react";
 import { applySeo } from "../lib/seo";
 import { localBusinessSchema, websiteSchema } from "../lib/schemas";
-import { useNavigate, useLocation, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 import ParentReassurance from "../components/programs/ParentReassurance";
@@ -27,25 +27,7 @@ const PARENT_HELP_POINTS = [
 const WORLDWIDE_COUNTRIES = ['India','UAE','Vietnam','Singapore','Malaysia','UK','Canada','USA','Sweden','Germany','Australia','Sri Lanka','Pakistan'];
 
 export default function HomePage() {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [showDeferredSections, setShowDeferredSections] = useState(false);
-
-  useEffect(() => {
-    if (location.search && location.search.includes("book=1")) {
-      // wait one tick so the page can render, then scroll and remove the query
-      setTimeout(() => {
-        document.getElementById("book-trial")?.scrollIntoView({ behavior: "smooth", block: "start" });
-        // replace the URL to remove the query param without adding history
-        try {
-          navigate("/", { replace: true });
-        } catch {
-          // ignore navigation errors in SSR/test envs
-        }
-      }, 0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.search]);
 
   useEffect(() => {
     applySeo({
@@ -113,9 +95,6 @@ export default function HomePage() {
         keywords="phonics classes online India, grammar classes for kids, public speaking courses children, English learning kids ages 3-12, online English tuition India"
         canonical="https://tinystepslearning.com/"
       />
-
-      {/* Anchor used by Header CTA */}
-      <div id="book-trial" style={{ position: "relative", top: "-90px" }} aria-hidden="true" />
 
       {/* HERO */}
       <ConversionHero />

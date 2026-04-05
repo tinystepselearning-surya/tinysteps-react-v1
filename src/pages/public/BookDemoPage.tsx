@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { organizationSchema } from '../../lib/schemas';
+import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
 
 export default function BookDemoPage() {
   useEffect(() => {
@@ -44,47 +44,8 @@ export default function BookDemoPage() {
           fun, pressure-free 1:1 session.
         </p>
 
-        {/* CTA Card */}
-        <div className="mx-auto mt-12 max-w-md rounded-3xl border border-gray-200 bg-white p-8 shadow-lg">
-          <div className="mb-6">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600">
-              <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold">Start Your Journey</h2>
-            <p className="mt-2 text-gray-600">
-              Book your free assessment on our home page
-            </p>
-          </div>
-
-          <Link
-            to="/?book=1"
-            className="block w-full rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 py-4 text-center text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
-          >
-            Book Free Assessment Now
-          </Link>
-
-          <div className="mt-6 space-y-2 text-sm text-gray-600">
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>No credit card required</span>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>1:1 with expert mentor</span>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-              <span>Personalized learning plan</span>
-            </div>
-          </div>
+        <div id="assessment-form" className="mx-auto mt-12 max-w-2xl">
+          <PublicAssessmentForm source="book_demo_page" autoFocusFirstField />
         </div>
       </section>
 
@@ -210,12 +171,12 @@ export default function BookDemoPage() {
         <p className="mx-auto mb-8 max-w-2xl text-gray-700">
           Book your free assessment class today. No commitment required.
         </p>
-        <Link
-          to="/?book=1"
+        <a
+          href="#assessment-form"
           className="inline-block rounded-2xl bg-gradient-to-r from-tiny-blue-600 to-tiny-purple-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition hover:shadow-xl"
         >
           Book Free Assessment Now
-        </Link>
+        </a>
       </section>
     </div>
   );

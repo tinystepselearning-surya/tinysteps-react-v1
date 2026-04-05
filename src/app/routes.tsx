@@ -1,10 +1,11 @@
 // src/app/routes.tsx
-import { lazy, Suspense, type FC } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState, type FC, type MouseEvent } from 'react';
 import {
   createBrowserRouter,
   Outlet,
   Navigate,
   useLocation,
+  useNavigate,
   redirect,
   type LoaderFunctionArgs,
   type RouteObject,
@@ -141,6 +142,14 @@ import AnalyticsTracker from '../components/common/AnalyticsTracker';
 const BackToTopButton = lazy(() => import('../components/common/BackToTopButton'));
 import ConversionTracker from '../components/common/ConversionTracker';
 import ScrollToTop from '../components/common/ScrollToTop';
+import AssessmentRequestModal from '../components/common/AssessmentRequestModal';
+import {
+  buildBaseConversionParams,
+  isHighIntentCtaLabel,
+  isHighIntentPath,
+  sanitizeLabel,
+  trackConversionEvent,
+} from '../lib/conversionTracking';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
 
@@ -235,13 +244,107 @@ const devOnlyRoutes: RouteObject[] = import.meta.env.DEV
 
 const Layout: FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const normalizedPath = normalizePathname(location.pathname);
   const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(normalizedPath, prefix));
   const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(normalizedPath);
   const isContactPage = normalizedPath === '/contact';
+  const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (hideMarketingChrome || normalizedPath === '/book-demo') {
+      setIsAssessmentModalOpen(false);
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    if (params.get('book') === '1') {
+      setIsAssessmentModalOpen(true);
+    }
+  }, [hideMarketingChrome, location.search, normalizedPath]);
+
+  const closeAssessmentModal = useCallback(() => {
+    setIsAssessmentModalOpen(false);
+    const params = new URLSearchParams(location.search);
+    if (params.get('book') === '1') {
+      params.delete('book');
+      navigate(
+        {
+          pathname: location.pathname,
+          search: params.toString() ? `?${params.toString()}` : '',
+        },
+        { replace: true }
+      );
+    }
+  }, [location.pathname, location.search, navigate]);
+
+  const handlePublicBookingIntercept = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (hideMarketingChrome || normalizedPath === '/book-demo') return;
+
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+
+      const node = target.closest('a,button') as HTMLElement | null;
+      if (!node) return;
+      if (node.getAttribute('data-no-booking-intercept') === '1') return;
+      if (node.closest('form')) return;
+
+      const label = sanitizeLabel(node.getAttribute('data-cta-label') || node.getAttribute('aria-label') || node.textContent || '');
+      const href = node instanceof HTMLAnchorElement ? (node.getAttribute('href') || '') : '';
+      const normalizedHref = href.toLowerCase();
+
+      const bookingByHref =
+        normalizedHref.includes('/book-demo') ||
+        normalizedHref.includes('book=1') ||
+        normalizedHref.includes('#book-assessment');
+      const bookingByLabel = /book\s*(free\s*)?(assessment|demo)|book assessment|book demo|get in touch/i.test(label);
+
+      if (!bookingByHref && !bookingByLabel) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!href && bookingByLabel) {
+        const baseParams = buildBaseConversionParams(location.pathname);
+
+        trackConversionEvent('book_demo_click', {
+          ...baseParams,
+          cta_label: label || 'Book assessment',
+          destination_path: '/book-demo',
+        });
+
+        if (isHighIntentPath(location.pathname) && isHighIntentCtaLabel(label || '')) {
+          trackConversionEvent('high_intent_page_cta_click', {
+            ...baseParams,
+            cta_label: label || 'Book assessment',
+            destination_path: '/book-demo',
+          });
+        }
+      }
+
+      setIsAssessmentModalOpen(true);
+
+      const params = new URLSearchParams(location.search);
+      if (params.get('book') !== '1') {
+        params.set('book', '1');
+        navigate(
+          {
+            pathname: location.pathname,
+            search: `?${params.toString()}`,
+          },
+          { replace: true }
+        );
+      }
+    },
+    [hideMarketingChrome, location.pathname, location.search, navigate, normalizedPath]
+  );
 
   return (
-    <div className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}>
+    <div
+      onClickCapture={handlePublicBookingIntercept}
+      className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}
+    >
       <AnalyticsTracker />
       <ConversionTracker />
       <ScrollToTop />
@@ -267,6 +370,9 @@ const Layout: FC = () => {
           <FloatingAssistant />
           <BackToTopButton />
         </Suspense>
+      ) : null}
+      {!hideMarketingChrome && normalizedPath !== '/book-demo' ? (
+        <AssessmentRequestModal isOpen={isAssessmentModalOpen} onClose={closeAssessmentModal} />
       ) : null}
     </div>
   );

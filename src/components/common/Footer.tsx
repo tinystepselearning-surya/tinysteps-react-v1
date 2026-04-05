@@ -1,15 +1,7 @@
-import { memo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { memo } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/useAuthStore';
 import { PUBLIC_CONTACT_EMAIL, PUBLIC_CONTACT_MAILTO } from '../../constants/publicContact';
-import AdvisorContactForm from './AdvisorContactForm';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '../ui/dialog';
 
 const socialLinks = [
   { label: 'Instagram', href: 'https://www.instagram.com/tiny_steps_oel?igsh=d2p6Ym9odGlidnZ1', icon: '📸' },
@@ -43,7 +35,20 @@ const legalLinks = [
 
 function Footer() {
   const { user } = useAuthStore();
-  const [contactOpen, setContactOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleGetInTouch = () => {
+    const params = new URLSearchParams(location.search);
+    params.set('book', '1');
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${params.toString()}`,
+      },
+      { replace: false }
+    );
+  };
 
   return (
     <footer className="bg-[#060a16] text-gray-200">
@@ -160,7 +165,7 @@ function Footer() {
             <div className="border-t border-white/10 pt-4">
               <button
                 type="button"
-                onClick={() => setContactOpen(true)}
+                onClick={handleGetInTouch}
                 className="inline-flex h-11 items-center justify-center rounded-full bg-white px-5 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
               >
                 Get in Touch
@@ -181,28 +186,6 @@ function Footer() {
             © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.
           </div>
         </div>
-
-        <Dialog open={contactOpen} onOpenChange={setContactOpen}>
-          <DialogContent className="max-w-lg border-slate-200 bg-white p-0 sm:rounded-[28px]">
-            <DialogHeader className="border-b border-slate-100 px-6 pb-4 pt-6">
-              <DialogTitle className="text-left text-xl font-semibold text-slate-900">
-                Get in Touch
-              </DialogTitle>
-              <DialogDescription className="text-left text-sm text-slate-600">
-                Share a few details and the Tiny Steps team will follow up by email.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="p-6 pt-5">
-              <AdvisorContactForm
-                compact
-                topic="Footer contact"
-                title="Prefer email or a callback?"
-                description="Use the form and our team will reply by email."
-                surface="plain"
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </footer>
   );

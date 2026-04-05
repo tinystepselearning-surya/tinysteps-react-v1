@@ -162,12 +162,16 @@ export default function Header() {
   }, [clearUser, navigate, user?.role]);
 
   const handleBookAssessment = useCallback(() => {
-    if (location.pathname === '/') {
-      document.getElementById('book-trial')?.scrollIntoView({ behavior: 'smooth' });
-      return;
-    }
-    navigate('/?book=1');
-  }, [location.pathname, navigate]);
+    const params = new URLSearchParams(location.search);
+    params.set('book', '1');
+    navigate(
+      {
+        pathname: location.pathname,
+        search: `?${params.toString()}`,
+      },
+      { replace: false }
+    );
+  }, [location.pathname, location.search, navigate]);
 
   const desktopHeaderContent = useMemo(
     () => (
