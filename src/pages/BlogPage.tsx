@@ -438,41 +438,6 @@ const BlogPage: FC = () => {
                 </Link>
               </div>
 
-              <div className="mt-8 max-w-3xl rounded-[1.75rem] border border-white/10 bg-white/6 p-5 shadow-[0_24px_60px_rgba(2,6,23,0.24)] backdrop-blur">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Search examples</p>
-                <div className="mt-4 flex flex-wrap gap-3 text-sm leading-6 text-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTopic('All');
-                      startTransition(() => setSearchQuery('phonics for parents'));
-                    }}
-                    className="rounded-full border border-white/14 px-4 py-2 transition hover:bg-white/10"
-                  >
-                    What is phonics and how do I teach it at home?
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTopic('All');
-                      startTransition(() => setSearchQuery('SATPIN week 1'));
-                    }}
-                    className="rounded-full border border-white/14 px-4 py-2 transition hover:bg-white/10"
-                  >
-                    My child knows letters but still cannot read words
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTopic('All');
-                      startTransition(() => setSearchQuery('grammar writing help'));
-                    }}
-                    className="rounded-full border border-white/14 px-4 py-2 transition hover:bg-white/10"
-                  >
-                    My child speaks well but struggles to write clearly
-                  </button>
-                </div>
-              </div>
             </div>
 
             <div className="rounded-[2.25rem] border border-white/10 bg-white/8 p-6 shadow-[0_30px_80px_rgba(2,6,23,0.32)] backdrop-blur">
