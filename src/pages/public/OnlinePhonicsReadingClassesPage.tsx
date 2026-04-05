@@ -6,7 +6,7 @@ const FAQ_ITEMS = [
   {
     question: 'My child knows letters but cannot read words. Will this help?',
     answer:
-      'Yes. This usually means blending is not yet stable. Tiny Steps uses live guided phonics and decoding practice to help children move from letter knowledge to accurate word reading.',
+      'Yes. This usually means blending is not yet stable. Tiny Steps uses live guided structured synthetic phonics and decoding practice to help children move from letter knowledge to accurate word reading.',
   },
   {
     question: 'Are online phonics and reading classes effective for ages 3-8?',
@@ -23,13 +23,18 @@ const FAQ_ITEMS = [
     answer:
       'Two to three live classes per week plus short home practice is a strong routine for most beginners. Consistency matters more than long study hours.',
   },
+  {
+    question: 'Does Tiny Steps use Jolly Phonics?',
+    answer:
+      'Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics. We focus on sound-to-letter mapping, blending sounds into words, and phonics-based reading confidence.',
+  },
 ];
 
 export default function OnlinePhonicsReadingClassesPage() {
   useEffect(() => {
     applySeo({
       title: "Early Reading & Phonics Support Classes (Ages 3–8) | Tiny Steps",
-      description: "Early-reader support for ages 3–8 with letter sounds, blending, and CVC reading practice. For broad reading classes for older children, see Tiny Steps Reading Classes.",
+      description: "Early-reader support for ages 3–8 with a structured synthetic phonics approach, blending, and CVC reading practice inspired by methods such as Jolly Phonics.",
       canonicalPath: "/online-phonics-reading-classes",
       ogType: "website",
       jsonLd: [
@@ -38,7 +43,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           "@type": "Course",
           "@id": "https://tinystepslearning.com/online-phonics-reading-classes#course",
           "name": "Online Phonics & Reading Classes",
-          "description": "1:1 online phonics and reading instruction for ages 3–8. Master letter sounds, blending, CVC words, and tricky words with live mentors and AI-guided practice.",
+          "description": "1:1 online structured synthetic phonics and reading instruction for ages 3–8, inspired by methods such as Jolly Phonics. Master letter sounds, blending, CVC words, and tricky words with live mentors and guided practice.",
           "provider": {
             "@type": "Organization",
             "@id": "https://tinystepslearning.com/#organization",
@@ -93,7 +98,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           1:1 personalized instruction for ages 3–8. Build confidence in letter sounds, blending, and reading.
         </p>
         <p className="text-gray-600 mb-8">
-          Taught by experienced mentors using proven phonics methods, fun games, and stage-based parent updates for early readers.
+          Taught by experienced mentors using a structured synthetic phonics approach inspired by methods such as Jolly Phonics, plus fun games and stage-based parent updates for early readers.
         </p>
         <p className="text-sm text-gray-700 mb-6">
           Looking for the core program?{' '}
@@ -113,7 +118,7 @@ export default function OnlinePhonicsReadingClassesPage() {
       <section className="mb-12 bg-blue-50 border-l-4 border-[#4a7c2c] p-6 rounded-lg">
         <h2 className="text-lg font-bold text-[#2d5016] mb-2">What are online reading and phonics support classes?</h2>
         <p className="text-gray-700 leading-relaxed">
-          Tiny Steps early reading and phonics support classes for ages 3-8 use live 1:1 teaching to build letter sounds, blending, and CVC reading accuracy. This page focuses on beginner readers; parents seeking broader reading support can also explore our general reading classes page.
+          Tiny Steps early reading and phonics support classes for ages 3-8 use live 1:1 teaching to build letter sounds, blending sounds into words, and CVC reading accuracy through structured synthetic phonics. This page focuses on beginner readers; parents seeking broader reading support can also explore our general reading classes page.
         </p>
       </section>
 

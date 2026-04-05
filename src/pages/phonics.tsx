@@ -9,19 +9,12 @@ import ProgramFacts from '../components/programs/ProgramFacts';
 import ProgramProof from '../components/programs/ProgramProof';
 import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
-import {
-  formatINR,
-  GROUP_MONTHLY_FEES,
-  ONE_TO_ONE_MONTHLY_PACKAGES,
-  PER_CLASS_PRICE,
-  ULTRA_PREMIUM_PRICING,
-} from '../config/pricing';
 
 const levels = [
   {
     name: 'Foundations',
     outcomes: [
-      'Letter sounds + SATPIN blending routines',
+      'Letter sounds + structured synthetic phonics SATPIN blending routines',
       'Short vowels + early CVC words',
       'Lesson-by-lesson practice prompts',
     ],
@@ -53,44 +46,57 @@ const stages = [
   { title: 'Stage 3 • Fluency & writing', duration: 'Lessons 25–36+', description: 'Reading passages with expression, spelling, and short paragraphs.' }
 ];
 
-const oneToOnePricingCopy = `Tiny Steps Pricing: Standard Program (classes with expert Indian teachers): Starter (${ONE_TO_ONE_MONTHLY_PACKAGES[0].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}/month, Growth (${ONE_TO_ONE_MONTHLY_PACKAGES[1].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[1].monthlyFee)}/month, Intensive (${ONE_TO_ONE_MONTHLY_PACKAGES[2].classes} classes) ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[2].monthlyFee)}/month, ${formatINR(PER_CLASS_PRICE)} per class. Ultra Premium Program (classes with native English-speaking teachers): 1:1 Personal Class ${formatINR(ULTRA_PREMIUM_PRICING[0].perClass)} per class or ${formatINR(ULTRA_PREMIUM_PRICING[0].package12)} for 12 classes.`;
-
-const groupPricingCopy = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1')
-  .map((row) => {
-    const ultraRow = ULTRA_PREMIUM_PRICING.find((item) => item.ratio === row.ratio);
-    const ultraCopy = ultraRow
-      ? `${formatINR(ultraRow.package12)} for 12 classes / child`
-      : 'Available on request';
-    return `${row.ratio} ${formatINR(row.monthlyFee)} (Standard) / ${ultraCopy} (Ultra Premium)`;
-  })
-  .join(', ');
-
 const faqItems = [
   {
-    question: 'What age should a child start phonics?',
+    question: 'What is synthetic phonics?',
     answer:
-      'Most children can begin phonics at ages 3-4 with playful, guided sound work. In live classes, many children start blending first words within 4-6 lessons when practice is consistent.',
+      'Synthetic phonics teaches children to read by connecting sounds (phonemes) with letters and blending them into words. It builds a clear path from sound awareness to phonics reading confidence.',
   },
   {
-    question: 'Are online phonics classes effective for kids?',
+    question: 'What is Jolly Phonics?',
     answer:
-      'Yes. Live online phonics classes are effective when lessons are structured, interactive, and matched to the child’s level. Tiny Steps uses guided blending, decodable reading, and parent updates to keep progress visible.',
+      'Jolly Phonics is a popular synthetic phonics method that teaches sound-to-letter links and blending routines. Many families use it as an early reading foundation.',
   },
   {
-    question: 'My child knows letters but cannot read words. Will phonics help?',
+    question: 'Do you follow Jolly Phonics?',
     answer:
-      'Yes. This usually means the child needs stronger sound-to-word blending, not more alphabet memorization. A systematic phonics pathway helps children move from letter knowledge to accurate reading.',
+      'Our program is based on structured synthetic phonics principles and includes techniques used in methods such as Jolly Phonics. We focus on understanding sounds, blending words, and confident reading development.',
   },
   {
-    question: 'How much do phonics classes cost in India?',
+    question: 'My child knows letters but cannot read — what should I do?',
     answer:
-      `${oneToOnePricingCopy} Group options are also available: ${groupPricingCopy}. Choose the plan based on your child’s support needs and learning pace, not only price.`,
+      'This usually means blending is not stable yet. Start with guided sound-to-letter practice, blending sounds, and decodable reading so letter knowledge turns into real reading.',
+  },
+  {
+    question: 'How long does it take for a child to start reading?',
+    answer:
+      'With consistent structured practice, many children begin blending first words within 4–6 lessons. Reading progress depends on starting level, class consistency, and home reinforcement.',
+  },
+  {
+    question: 'Is phonics enough for learning English?',
+    answer:
+      'Phonics is the reading foundation, but children also need vocabulary, comprehension, grammar, and speaking practice. Strong English grows when decoding and language development progress together.',
+  },
+  {
+    question: 'How is this different from school teaching?',
+    answer:
+      'School teaching often moves by class pace. Tiny Steps uses level-based structured phonics progression with live correction, so each child gets clearer support and measurable milestones.',
+  },
+  {
+    question: 'What age should phonics start?',
+    answer:
+      'Most children can begin around ages 3–4 with playful sound work. Older children can also catch up effectively when gaps are addressed with structured synthetic phonics.',
   },
 ];
 const PHONICS_RESEARCH_GUIDE_PATH = '/blog/phonics-for-parents-guide';
 const PHONICS_SEO_KEYWORDS = [
   'phonics for kids',
   'phonics for parents',
+  'synthetic phonics',
+  'structured phonics',
+  'Jolly Phonics',
+  'phonics-based reading',
+  'blending sounds into words',
   'what is phonics',
   'why phonics is important',
   'how to teach phonics at home',
@@ -132,14 +138,16 @@ export default function PhonicsPage({
   const description =
     seoOverrides?.description ??
     registry?.description ??
-    "Live online phonics classes for kids with SATPIN blending, decodable reading, and stage-based parent updates.";
+    "Live online phonics classes for kids using a structured synthetic phonics approach inspired by methods such as Jolly Phonics, with SATPIN blending sounds into words, phonics reading development, and stage-based parent updates.";
   const breadcrumbName = seoOverrides?.breadcrumbName ?? "Phonics";
   const canonicalUrl = `https://tinystepslearning.com${canonicalPath}`;
   const heroTitle = heroTitleOverride ?? "Phonics Classes for Kids";
-  const heroSubtitle = heroSubtitleOverride ?? "Multi-sensory phonics taught live with stage-based parent updates. Most children blend their first words within 4-6 lessons.";
-  const aeoCopy =
+  const heroSubtitle = heroSubtitleOverride ?? "Structured phonics taught live through a synthetic phonics approach inspired by methods such as Jolly Phonics. Most children blend their first words within 4-6 lessons.";
+  const syntheticPhonicsDefinition =
+    'Synthetic phonics is a method of teaching children to read by connecting sounds (phonemes) with letters and blending them into words.';
+  const methodologyCopy =
     introCopy ??
-    'Online phonics classes for kids at Tiny Steps help ages 3-12 build sound awareness, blending, and accurate early reading through live guided teaching. Most children begin blending first words within 4-6 lessons and then progress to fluent decodable reading with stage-based parent updates.';
+    'Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics to help children read accurately and confidently.';
   const allFaqOpen = openFaqIndexes.length === faqItems.length;
 
   const toggleFaq = (index: number) => {
@@ -155,7 +163,7 @@ export default function PhonicsPage({
     const baseJsonLd = [
       createCourseSchema({
         name: "Online Phonics Classes for Kids",
-        description: "Systematic, multi-sensory phonics taught live with stage-based parent insights. SATPIN to advanced decoding in a lesson-by-lesson path.",
+        description: "Structured synthetic phonics taught live, inspired by methods such as Jolly Phonics, with stage-based parent insights from SATPIN to advanced decoding.",
         url: canonicalUrl,
         courseMode: 'online',
         ageRange: 'Ages 3-12',
@@ -212,13 +220,54 @@ export default function PhonicsPage({
 
       {/* Answer Block for AEO */}
       <div className="max-w-4xl mx-auto my-8 rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-6 shadow-sm">
-        <p className="text-lg font-semibold text-gray-900">
-          {aeoCopy}
+        <h2 className="text-lg font-semibold text-gray-900">What is synthetic phonics?</h2>
+        <p className="mt-2 text-base text-gray-800">{syntheticPhonicsDefinition}</p>
+        <p className="mt-2 text-base text-gray-800">
+          {methodologyCopy} Children learn how sounds connect to letters, how to blend them into words, and how to decode new words confidently.
         </p>
         <p className="mt-3 text-sm text-gray-700">
-          Looking for <Link to="/phonics" className="text-slate-900 underline hover:text-sky-700">phonics classes for kids</Link>? Start here.
+          Looking for <Link to="/phonics" className="text-slate-900 underline hover:text-sky-700">phonics classes for kids</Link>? See our <Link to="/curriculum" className="text-slate-900 underline hover:text-sky-700">full curriculum</Link>, compare all tracks on <Link to="/courses" className="text-slate-900 underline hover:text-sky-700">courses</Link>, or read our <Link to={PHONICS_RESEARCH_GUIDE_PATH} className="text-slate-900 underline hover:text-sky-700">phonics parent guide</Link>.
         </p>
       </div>
+
+      <section className="max-w-4xl mx-auto my-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">How children learn to read</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            '🔤 Sounds',
+            '🧩 Blending',
+            '📖 Words',
+            '📚 Reading',
+          ].map((step) => (
+            <div key={step} className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-center text-sm font-semibold text-slate-800">
+              {step}
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-sm text-slate-700">
+          Children move step by step from recognizing sounds to reading full sentences with confidence.
+        </p>
+      </section>
+
+      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">Do you use Jolly Phonics methods?</h2>
+        <p className="mt-3 text-slate-700">
+          Our phonics program is based on structured synthetic phonics principles and includes techniques used in methods such as Jolly Phonics.
+        </p>
+        <p className="mt-2 text-slate-700">
+          We focus on helping children understand sounds, blend words, and read confidently — not just memorize.
+        </p>
+      </section>
+
+      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">Why structured phonics works</h2>
+        <ul className="mt-4 space-y-2 text-sm text-slate-700">
+          <li>• Builds strong reading foundation</li>
+          <li>• Helps children decode new words independently</li>
+          <li>• Improves spelling naturally</li>
+          <li>• Increases reading confidence</li>
+        </ul>
+      </section>
 
       {/* Program Facts */}
       <ProgramFacts
@@ -228,7 +277,7 @@ export default function PhonicsPage({
         structure="3 levels, 36+ lessons with stage-based progression"
         outcomes={[
           'Master letter sounds and blending—typically within 4-6 lessons',
-          'Read CVC words and simple sentences with confidence',
+          'Read CVC words and simple sentences with phonics-based reading confidence',
           'Build fluency with digraphs, vowel teams, and tricky words',
           'Progress from individual sounds to reading full passages with comprehension',
         ]}
@@ -386,6 +435,42 @@ export default function PhonicsPage({
         ]}
       />
 
+      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 className="text-xl font-bold text-slate-900">Related reading for parents</h2>
+        <p className="mt-2 text-sm text-slate-700">Simple guides to help you understand how children learn to read</p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {[
+            {
+              to: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading',
+              title: 'What is Jolly Phonics?',
+              helper: 'Understand the method parents often ask about',
+            },
+            {
+              to: '/blog/synthetic-phonics-vs-traditional-reading',
+              title: 'What is Synthetic Phonics?',
+              helper: 'Learn how reading actually develops',
+            },
+            {
+              to: '/blog/child-knows-abc-but-cannot-read',
+              title: 'My Child Knows ABC but Cannot Read',
+              helper: 'Why children get stuck at ABC stage',
+            },
+            {
+              to: '/blog/what-age-to-start-phonics',
+              title: 'What is the Right Age to Start Phonics?',
+              helper: 'Know when to start phonics',
+            },
+          ].map((item) => (
+            <article key={item.to} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <Link to={item.to} className="text-base font-semibold text-slate-900 hover:text-sky-700 hover:underline">
+                {item.title}
+              </Link>
+              <p className="mt-1 text-sm text-slate-700">{item.helper}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -413,7 +498,6 @@ export default function PhonicsPage({
         <div className="space-y-3">
           {faqItems.map((item, index) => {
             const isOpen = openFaqIndexes.includes(index);
-            const isCostItem = item.question === 'How much do phonics classes cost in India?';
             return (
               <article key={item.question} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <button
@@ -429,16 +513,7 @@ export default function PhonicsPage({
                 </button>
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden px-5 pb-5 text-slate-700">
-                    {isCostItem ? (
-                      <>
-                        {oneToOnePricingCopy} For detailed pricing comparisons and what to look for when evaluating value, see our{' '}
-                        <Link to="/best-online-phonics-classes-india" className="font-semibold text-slate-900 hover:text-sky-700 hover:underline">
-                          buyer guide for choosing online phonics programs in India
-                        </Link>.
-                      </>
-                    ) : (
-                      item.answer
-                    )}
+                    {item.answer}
                   </div>
                 </div>
               </article>

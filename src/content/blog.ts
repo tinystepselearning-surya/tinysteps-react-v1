@@ -25,6 +25,7 @@ type PhonicsSeoPost = {
   progress: string;
   support: string;
   faq: { question: string; answer: string }[];
+  relatedReads?: { label: string; to: string }[];
   readTime?: string;
 };
 
@@ -71,6 +72,7 @@ const BLOG_PUBLICATION_DATES: Record<string, string> = {
   'phonics-activities-for-kids-at-home': '2025-11-24',
   'best-phonics-classes-for-kids': '2025-11-26',
   'how-phonics-classes-help-kids-read': '2025-11-28',
+  'child-knows-abc-but-cannot-read': '2025-11-29',
   'benefits-of-phonics-for-kids': '2025-11-30',
   'best-online-phonics-classes-for-kids': '2025-12-02',
   'how-to-choose-phonics-classes': '2025-12-04',
@@ -148,6 +150,14 @@ const PHONICS_EXAMPLES_BY_SLUG: Record<string, string[]> = {
     'Micro progression: 5 days oral + print CVC, next 5 days add mixed CVC review and one sentence daily.',
     'If blending breaks, step back one stage for 2 days and rebuild speed with 1-minute drills.',
   ],
+  'child-knows-abc-but-cannot-read': [
+    'Contrast the two skills: letter naming = "This is B"; decoding = /b/ /a/ /t/ → bat. Practice both separately for clarity.',
+    'Start with 5 decodable CVC words daily: mat, sat, pin, top, sun. Avoid picture clues initially.',
+    'Use the parent prompt: "Show me sounds first, then blend." This reduces random guessing.',
+    'Try an oral-only warmup: say /c/ /a/ /t/, child says cat. Then move to print for transfer.',
+    'If child guesses from first letter, cover the word, reveal one sound at a time, then blend fully.',
+    'Close with one confidence sentence your child can decode: "The cat sat."',
+  ],
   'r-controlled-vowels-explained': [
     'Bossy-R AR set: car, star, park, farm. Sentence: "The car is far."',
     'Bossy-R OR set: fork, corn, storm, short. Sentence: "The fork is on the corn tray."',
@@ -175,7 +185,7 @@ const PHONICS_PARENT_GUIDE_SCRIPTS = [
 const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
   {
     slug: 'best-online-phonics-classes-for-kids',
-    title: 'Best Online Phonics Classes for Kids (Complete Parent Guide)',
+    title: 'Best Online Phonics Classes for Kids: What Parents Should Check First',
     focus: 'best online phonics classes for kids',
     quickAnswer: 'The best phonics class is not the flashiest one. It is the one that teaches pure sounds clearly, gives guided blending practice, and proves progress with decodable reading samples.',
     homePlan: [
@@ -197,12 +207,17 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         answer: 'Two to three guided classes with short daily home practice is a strong routine for most children aged 4-8.',
       },
     ],
+    relatedReads: [
+      { label: 'Online phonics classes vs school support', to: '/blog/online-phonics-classes-vs-school' },
+      { label: 'How to choose phonics classes', to: '/blog/how-to-choose-phonics-classes' },
+      { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
+    ],
   },
   {
     slug: 'how-phonics-classes-help-kids-read',
-    title: 'How Phonics Classes Help Kids Start Reading Early',
+    title: 'Why Kids Struggle With Reading—and How Phonics Helps',
     focus: 'how phonics classes help kids read',
-    quickAnswer: 'Phonics classes help children read by teaching them to decode unknown words sound by sound instead of memorizing whole words.',
+    quickAnswer: 'Many children struggle because they are asked to recognize whole words before they can decode them. Systematic phonics teaches a calmer path: connect sounds to letters, then blend into words with confidence.',
     homePlan: [
       'Match 5 letter cards to their sounds every day.',
       'Blend 3 short words aloud with finger tracking.',
@@ -221,6 +236,41 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         question: 'Will phonics improve school reading too?',
         answer: 'Yes, because decoding skills transfer to textbook reading, dictation, and spelling tasks across subjects.',
       },
+    ],
+    relatedReads: [
+      { label: 'Child knows ABC but cannot read', to: '/blog/child-knows-abc-but-cannot-read' },
+      { label: 'How kids learn blending in stages', to: '/blog/how-kids-learn-blending' },
+      { label: 'Phonics blending activities', to: '/blog/phonics-blending-activities' },
+    ],
+  },
+  {
+    slug: 'child-knows-abc-but-cannot-read',
+    title: 'My Child Knows ABC but Cannot Read: What Parents Should Do Next',
+    focus: 'child knows ABC but cannot read',
+    quickAnswer: 'Knowing ABC means your child can name letters, not yet read words. The missing step is decoding—matching sounds to letters and blending in order—which improves quickly with consistent, low-pressure phonics practice.',
+    homePlan: [
+      'Run a 2-minute sound check daily using lowercase letters and pure sounds, not letter names.',
+      'Blend 5 CVC words daily with finger tracking: 3 familiar words + 2 new words.',
+      'Read one short decodable sentence and ask your child to point word-by-word while reading.',
+    ],
+    classChecklistFocus: 'Ask whether the class explicitly teaches the path from letter naming to decoding and blending, with real-time correction.',
+    avoidFocus: 'Do not jump to sight-word memorization as the main method when decoding is still weak.',
+    progress: 'In 2-4 weeks of consistent support, many children reduce guessing and begin decoding simple unfamiliar words more confidently.',
+    support: 'If your child still cannot blend basic CVC words after 6-8 weeks of regular guided practice, request a structured phonics assessment.',
+    faq: [
+      {
+        question: 'Why does my child read the alphabet but freeze on words?',
+        answer: 'Letter naming and decoding are different skills. Children need explicit practice connecting sounds in sequence inside words.',
+      },
+      {
+        question: 'Should I teach sight words first if blending is hard?',
+        answer: 'Teach a small sight-word set, but keep decoding as the core. Sight words alone do not build independent reading of new words.',
+      },
+    ],
+    relatedReads: [
+      { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
+      { label: 'How phonics classes help kids read', to: '/blog/how-phonics-classes-help-kids-read' },
+      { label: 'What is Jolly Phonics and is it best?', to: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading' },
     ],
   },
   {
@@ -250,9 +300,9 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
   },
   {
     slug: 'what-age-to-start-phonics',
-    title: 'What Age Should Kids Start Phonics?',
+    title: 'What Is the Right Age to Start Phonics? A Parent Readiness Guide',
     focus: 'what age to start phonics',
-    quickAnswer: 'Most children can begin playful phonics between ages 3.5 and 5, once they can hear sounds, repeat words, and attend for 5-10 minutes.',
+    quickAnswer: 'For most families, a playful start between ages 3.5 and 5 works well. Readiness matters more than age alone: listening, sound imitation, and 5-10 minutes of steady attention are strong signs.',
     homePlan: [
       'Start with oral sound games before worksheets.',
       'Introduce 2-3 new sounds per week using actions and picture cues.',
@@ -271,6 +321,11 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         question: 'Is it too late to start phonics at age 7 or 8?',
         answer: 'No. Older children can catch up quickly with explicit teaching and consistent daily review.',
       },
+    ],
+    relatedReads: [
+      { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
+      { label: 'How long does phonics usually take?', to: '/blog/how-long-does-phonics-take' },
+      { label: 'Phonics activities at home', to: '/blog/phonics-activities-for-kids-at-home' },
     ],
   },
   {
@@ -300,9 +355,9 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
   },
   {
     slug: 'synthetic-phonics-vs-traditional-reading',
-    title: 'Synthetic Phonics vs Traditional Reading: Which Is Better?',
+    title: 'What Is Synthetic Phonics? A Parent Guide With Clear Method Comparison',
     focus: 'synthetic phonics vs traditional reading',
-    quickAnswer: 'For early readers, synthetic phonics is usually stronger because it teaches children to build words from sounds instead of guessing from context.',
+    quickAnswer: 'Synthetic phonics teaches children to build words from sounds in sequence, rather than guessing from pictures or context. For most beginners, this creates stronger decoding accuracy and more independent reading.',
     homePlan: [
       'Practice sound-by-sound decoding with short CVC words.',
       'Use picture support after decoding, not before.',
@@ -322,12 +377,17 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         answer: 'Many children memorize patterns visually. They need explicit training to map letters to sounds consistently.',
       },
     ],
+    relatedReads: [
+      { label: 'What is Jolly Phonics and is it best?', to: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading' },
+      { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
+      { label: 'Child knows ABC but cannot read', to: '/blog/child-knows-abc-but-cannot-read' },
+    ],
   },
   {
     slug: 'online-phonics-classes-vs-school',
-    title: 'Online Phonics Classes vs School Phonics: What Parents Should Know',
+    title: 'Online vs Offline (School) Phonics Classes: What Works Better for Your Child?',
     focus: 'online phonics classes vs school',
-    quickAnswer: 'School phonics often gives broad exposure, while focused online phonics can provide individualized correction and faster gap-closing.',
+    quickAnswer: 'School phonics often provides broad exposure, while focused online support offers tighter correction and pacing. The best choice depends on your child’s current gaps, confidence, and consistency at home.',
     homePlan: [
       'Review school sounds and words for 5 minutes daily.',
       'Use online practice to target only the missed sounds.',
@@ -346,6 +406,11 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         question: 'How do I know if school phonics is enough?',
         answer: 'If your child can decode new words independently and spell taught patterns, school support may be sufficient.',
       },
+    ],
+    relatedReads: [
+      { label: 'Best online phonics classes for kids', to: '/blog/best-online-phonics-classes-for-kids' },
+      { label: 'How to choose phonics classes', to: '/blog/how-to-choose-phonics-classes' },
+      { label: 'How phonics classes help kids read', to: '/blog/how-phonics-classes-help-kids-read' },
     ],
   },
   {
@@ -375,7 +440,7 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
   },
   {
     slug: 'what-is-phonics-for-kids',
-    title: 'What Is Phonics? A Simple Guide for Parents',
+    title: 'What Is Phonics for Kids? A Simple Parent Guide',
     focus: 'what is phonics for kids',
     quickAnswer: 'Phonics is a method that teaches children the relationship between letters and sounds so they can read and spell words independently.',
     homePlan: [
@@ -396,6 +461,11 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         question: 'Does phonics reduce love for storybooks?',
         answer: 'Not when balanced well. Phonics builds decoding while storybooks build vocabulary and imagination.',
       },
+    ],
+    relatedReads: [
+      { label: 'Right age to start phonics', to: '/blog/what-age-to-start-phonics' },
+      { label: 'Synthetic phonics vs traditional reading', to: '/blog/synthetic-phonics-vs-traditional-reading' },
+      { label: 'My child knows ABC but cannot read', to: '/blog/child-knows-abc-but-cannot-read' },
     ],
   },
   {
@@ -475,34 +545,39 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
   },
   {
     slug: 'science-of-phonics-learning',
-    title: 'The Science Behind Phonics Learning for Kids',
-    focus: 'science of phonics learning',
-    quickAnswer: 'Reading science shows that explicit, systematic phonics instruction helps most children decode words more accurately than unsystematic methods.',
+    title: 'Phonics vs Sight Words and Traditional Reading: A Calm Parent Decision Guide',
+    focus: 'phonics vs sight words traditional reading',
+    quickAnswer: 'For beginners, phonics should lead because it teaches children how to decode unfamiliar words. Sight words still matter, but in small controlled sets that support—never replace—sound-based reading instruction.',
     homePlan: [
       'Build phonemic awareness with oral sound games for 3 minutes daily.',
       'Teach grapheme-phoneme links explicitly using cumulative review.',
       'Use decodable reading to apply only what has already been taught.',
     ],
-    classChecklistFocus: 'Check that instruction is explicit and cumulative, with review built into every lesson.',
-    avoidFocus: 'Do not use random worksheet collections as a curriculum; sequence and repetition matter in reading development.',
-    progress: 'Evidence-based routines usually show stronger decoding accuracy and fewer guessing habits over a school term.',
-    support: 'If progress is inconsistent, audit lesson design: is there explicit instruction, guided practice, and cumulative revision?',
+    classChecklistFocus: 'Check that instruction teaches decoding first, introduces sight words gradually, and reviews patterns cumulatively.',
+    avoidFocus: 'Do not run a sight-word-only approach for beginners with weak decoding foundations.',
+    progress: 'Children usually show fewer guessing errors and better unfamiliar-word reading when phonics leads and sight words are added strategically.',
+    support: 'If your child memorizes words but struggles on new text, shift to a decoding-first plan for 6-8 weeks with daily blending practice.',
     faq: [
       {
-        question: 'Is phonics still recommended by modern reading research?',
-        answer: 'Yes. Research supports systematic phonics as a core early-reading component, especially for beginners and struggling readers.',
+        question: 'Should I teach sight words before phonics?',
+        answer: 'Usually no. Start with phonics for decoding, then add high-frequency sight words in small sets as support.',
       },
       {
-        question: 'Does phonics alone teach comprehension?',
-        answer: 'No. Phonics teaches decoding. Comprehension also needs vocabulary, oral language, and knowledge-building.',
+        question: 'Can phonics and sight words be taught together?',
+        answer: 'Yes. Keep phonics as the core and use sight words as a controlled supplement so children still learn to decode unfamiliar words.',
       },
+    ],
+    relatedReads: [
+      { label: 'What is synthetic phonics?', to: '/blog/synthetic-phonics-vs-traditional-reading' },
+      { label: 'My child knows ABC but cannot read', to: '/blog/child-knows-abc-but-cannot-read' },
+      { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
     ],
   },
   {
     slug: 'phonics-activities-for-kids-at-home',
-    title: '10 Fun Phonics Activities Parents Can Do at Home',
+    title: 'How to Teach Phonics at Home: 10 Activities That Build Reading',
     focus: 'phonics activities for kids at home',
-    quickAnswer: 'Home phonics works when activities are short, playful, and tied to one clear sound objective instead of random busywork.',
+    quickAnswer: 'Home phonics works best when routines are short, playful, and focused on one clear sound goal at a time. Repetition and clarity matter more than doing many new activities every day.',
     homePlan: [
       'Rotate three activity types: sound hunt, blend game, quick dictation.',
       'Use household objects for initial-sound sorting.',
@@ -521,6 +596,11 @@ const PHONICS_SEO_POSTS: PhonicsSeoPost[] = [
         question: 'How many activities should I do each day?',
         answer: 'One to three short activities are enough if they are focused and repeated consistently.',
       },
+    ],
+    relatedReads: [
+      { label: 'What is phonics for kids?', to: '/blog/what-is-phonics-for-kids' },
+      { label: 'How kids learn blending', to: '/blog/how-kids-learn-blending' },
+      { label: 'Child knows ABC but cannot read', to: '/blog/child-knows-abc-but-cannot-read' },
     ],
   },
   {
@@ -817,10 +897,98 @@ function buildFaqBody(faq: { question: string; answer: string }[]) {
   return blocks;
 }
 
+function buildRelatedReadsBody(relatedReads?: { label: string; to: string }[]) {
+  if (!relatedReads?.length) return [];
+  return [
+    { type: 'h2' as const, content: 'Related reading in this phonics cluster' },
+    ...relatedReads.map((item) => ({ type: 'li' as const, content: `${item.label}: ${item.to}` })),
+  ];
+}
+
+const PHONICS_CLUSTER_INTENT_SLUGS = new Set([
+  'synthetic-phonics-vs-traditional-reading',
+  'child-knows-abc-but-cannot-read',
+  'what-age-to-start-phonics',
+  'science-of-phonics-learning',
+  'how-phonics-classes-help-kids-read',
+  'phonics-activities-for-kids-at-home',
+  'online-phonics-classes-vs-school',
+]);
+
+const PHONICS_CLUSTER_SIBLING_LINKS: Record<string, { label: string; to: string }> = {
+  'synthetic-phonics-vs-traditional-reading': {
+    label: 'Phonics vs sight words and traditional reading',
+    to: '/blog/science-of-phonics-learning',
+  },
+  'child-knows-abc-but-cannot-read': {
+    label: 'Why kids struggle with reading',
+    to: '/blog/how-phonics-classes-help-kids-read',
+  },
+  'what-age-to-start-phonics': {
+    label: 'What is phonics for kids?',
+    to: '/blog/what-is-phonics-for-kids',
+  },
+  'science-of-phonics-learning': {
+    label: 'What is synthetic phonics?',
+    to: '/blog/synthetic-phonics-vs-traditional-reading',
+  },
+  'how-phonics-classes-help-kids-read': {
+    label: 'My child knows ABC but cannot read',
+    to: '/blog/child-knows-abc-but-cannot-read',
+  },
+  'phonics-activities-for-kids-at-home': {
+    label: 'What is phonics for kids?',
+    to: '/blog/what-is-phonics-for-kids',
+  },
+  'online-phonics-classes-vs-school': {
+    label: 'Best online phonics classes for kids',
+    to: '/blog/best-online-phonics-classes-for-kids',
+  },
+};
+
+function normalizeClusterRelatedReads(post: PhonicsSeoPost) {
+  if (!PHONICS_CLUSTER_INTENT_SLUGS.has(post.slug)) return post.relatedReads ?? [];
+
+  const related = [...(post.relatedReads ?? [])];
+
+  if (!related.some((item) => item.to === '/phonics')) {
+    related.unshift({ label: 'Explore phonics classes', to: '/phonics' });
+  }
+
+  const hasCommercialSupport = related.some((item) => item.to === '/curriculum' || item.to === '/courses');
+  if (!hasCommercialSupport) {
+    related.push({ label: 'See curriculum progression', to: '/curriculum' });
+  }
+
+  const hasSiblingBlog = related.some((item) => item.to.startsWith('/blog/') && item.to !== `/blog/${post.slug}`);
+  if (!hasSiblingBlog && PHONICS_CLUSTER_SIBLING_LINKS[post.slug]) {
+    related.push(PHONICS_CLUSTER_SIBLING_LINKS[post.slug]);
+  }
+
+  const deduped = related.filter((item, index, arr) => arr.findIndex((i) => i.to === item.to) === index);
+  return deduped;
+}
+
+function buildClusterSoftCtaBody(slug: string) {
+  if (!PHONICS_CLUSTER_INTENT_SLUGS.has(slug)) return [];
+  return [
+    { type: 'h2' as const, content: 'Next calm step for parents' },
+    {
+      type: 'p' as const,
+      content:
+        'Pick one steady next step: keep practice short, use one consistent method, and review your child’s level before increasing difficulty.',
+    },
+    { type: 'li' as const, content: 'Explore phonics support: /phonics' },
+    { type: 'li' as const, content: 'See your level pathway: /curriculum' },
+    { type: 'li' as const, content: 'Compare class options: /courses' },
+  ];
+}
+
 function makePhonicsPost(post: PhonicsSeoPost): BlogPost {
   const excerpt = makePhonicsExcerpt(post.focus);
   const faq = [...post.faq, ...PHONICS_BASE_FAQ];
   const examples = getPhonicsExamples(post.slug);
+  const relatedReads = normalizeClusterRelatedReads(post);
   return {
     slug: post.slug,
     title: post.title,
@@ -855,6 +1023,8 @@ function makePhonicsPost(post: PhonicsSeoPost): BlogPost {
       ...PHONICS_PARENT_GUIDE_SCRIPTS.map((item) => ({ type: 'li' as const, content: item })),
       { type: 'h2', content: 'When to ask for extra support' },
       { type: 'p', content: post.support },
+      ...buildRelatedReadsBody(relatedReads),
+      ...buildClusterSoftCtaBody(post.slug),
       ...buildFaqBody(faq),
     ],
   };

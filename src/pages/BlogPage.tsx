@@ -15,37 +15,46 @@ const SORT_OPTIONS = ['Newest', 'Most Popular', 'Most Read'] as const;
 
 const SEARCH_INTENT_LANES = [
   {
-    label: 'What is phonics and how do I teach it at home?',
-    helper: 'Evidence-backed parent guide for decoding, blending, and calm daily practice.',
-    to: '/blog/phonics-for-parents-guide',
+    label: 'What is Jolly Phonics and is it best for my child?',
+    helper: 'Understand synthetic phonics, compare methods, and see how Tiny Steps uses it in practice.',
+    to: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading',
+    accent: 'from-[#eef6ff] to-[#fff5ea]',
+  },
+  {
+    label: 'What is synthetic phonics and how is it different?',
+    helper: 'Get a parent-friendly synthetic phonics explainer with method comparison.',
+    to: '/blog/synthetic-phonics-vs-traditional-reading',
     accent: 'from-[#fff0df] to-[#eef6ff]',
   },
   {
     label: 'My child knows letters but still cannot read words',
-    helper: 'Start with the SATPIN launch plan and a realistic first-week phonics routine.',
-    to: '/blog/week-1-phonics-satpin-launch',
+    helper: 'Understand why ABC knowledge is not decoding and what to do next at home.',
+    to: '/blog/child-knows-abc-but-cannot-read',
     accent: 'from-[#eef6ff] to-[#fff7eb]',
   },
   {
-    label: 'My child speaks well but struggles to write clearly',
-    helper: 'Use the grammar roadmap to move from nouns to short paragraphs without pressure.',
-    to: '/blog/week-7-grammar-nouns-to-paragraphs',
+    label: 'What is the right age to start phonics?',
+    helper: 'Use readiness signs and age guidance for early or catch-up readers.',
+    to: '/blog/what-age-to-start-phonics',
     accent: 'from-[#f4f9f0] to-[#eef6ff]',
   },
   {
-    label: 'My child is shy or hesitant to speak in class',
-    helper: 'Use the speaking-confidence roadmap with safe repetition and parent scripts.',
-    to: '/blog/week-12-speaking-confidence-seeds',
+    label: 'Online vs offline/school phonics classes: what works better?',
+    helper: 'Compare class formats and pick the right support model for your child.',
+    to: '/blog/online-phonics-classes-vs-school',
     accent: 'from-[#fff3eb] to-[#f2f6ff]',
   },
 ];
 
 const START_HERE_LINKS = [
-  { label: 'Phonics foundations roadmap', to: '/blog/week-1-phonics-satpin-launch' },
-  { label: 'Phonics for parents guide', to: '/blog/phonics-for-parents-guide' },
-  { label: 'Grammar basics roadmap', to: '/blog/week-7-grammar-nouns-to-paragraphs' },
-  { label: 'Speaking confidence roadmap', to: '/blog/week-12-speaking-confidence-seeds' },
-  { label: 'Back-to-school parent plan', to: '/blog/week-25-back-to-school-plan' },
+  { label: 'What is Jolly Phonics guide', to: '/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading' },
+  { label: 'What is synthetic phonics?', to: '/blog/synthetic-phonics-vs-traditional-reading' },
+  { label: 'Child knows ABC but cannot read', to: '/blog/child-knows-abc-but-cannot-read' },
+  { label: 'Right age to start phonics', to: '/blog/what-age-to-start-phonics' },
+  { label: 'Phonics vs sight words/traditional reading', to: '/blog/science-of-phonics-learning' },
+  { label: 'Why kids struggle with reading', to: '/blog/how-phonics-classes-help-kids-read' },
+  { label: 'How to teach phonics at home', to: '/blog/phonics-activities-for-kids-at-home' },
+  { label: 'Online vs offline/school phonics', to: '/blog/online-phonics-classes-vs-school' },
   { label: 'Parents Help Hub', to: '/parents' },
 ];
 
@@ -75,10 +84,10 @@ const BLOG_FAQS = [
 ];
 
 const FEATURED_GUIDE_SLUGS = [
-  'phonics-for-parents-guide',
-  'week-1-phonics-satpin-launch',
-  'week-7-grammar-nouns-to-paragraphs',
-  'week-12-speaking-confidence-seeds',
+  'synthetic-phonics-vs-traditional-reading',
+  'child-knows-abc-but-cannot-read',
+  'what-age-to-start-phonics',
+  'online-phonics-classes-vs-school',
 ];
 
 const CATEGORY_THEME = {

@@ -16,7 +16,7 @@ const faqItems = [
   {
     question: 'How do I choose the right phonics plan for my child?',
     answer:
-      'Start with a level assessment and identify whether your child needs beginner decoding support or faster fluency growth. Choose a plan based on required support intensity, not price alone.',
+      'Start with a level assessment and identify whether your child needs beginner decoding support or faster fluency growth. Choose a plan based on required support intensity, not price alone, especially if your child needs structured synthetic phonics support.',
   },
 ];
 
@@ -49,7 +49,7 @@ export default function PhonicsFeesIndiaPage() {
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
         <h2 className="mb-2 text-lg font-bold text-slate-900">How much do phonics classes cost in India?</h2>
         <p className="text-slate-700">
-          Phonics class fees in India depend on class format, learning frequency, and support depth. Tiny Steps offers live online phonics support with structured progression so parents can choose a fee-to-outcome plan that matches their child’s reading stage.
+          Phonics class fees in India depend on class format, learning frequency, and support depth. Tiny Steps offers live online phonics support with a structured synthetic phonics progression so parents can choose a fee-to-outcome plan that matches their child’s reading stage.
         </p>
       </section>
 
@@ -67,7 +67,8 @@ export default function PhonicsFeesIndiaPage() {
         <h2 className="mb-4 text-2xl font-bold text-slate-900">How Tiny Steps positions value</h2>
         <ul className="space-y-2 text-slate-700">
           <li>• Live classes focused on reading outcomes, not passive screen time.</li>
-          <li>• Structured phonics progression from sounds to fluent reading confidence.</li>
+          <li>• Structured synthetic phonics progression from sounds to fluent reading confidence.</li>
+          <li>• Includes techniques used in methods such as Jolly Phonics where helpful.</li>
           <li>• Age-appropriate teaching with active teacher involvement.</li>
           <li>• Parent updates and practical guidance to support progress at home.</li>
         </ul>

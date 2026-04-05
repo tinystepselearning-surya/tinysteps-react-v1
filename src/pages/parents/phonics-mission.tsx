@@ -14,7 +14,7 @@ const trustPoints = [
 
 const principleCards = [
   {
-    title: 'Systematic phonics works best',
+    title: 'Structured synthetic phonics works best',
     detail:
       'Children make faster progress when letter-sound patterns are taught clearly, reviewed often, and used immediately in blending and reading.',
     action: 'Keep practice predictable: review yesterday, teach one small new step, then read.',

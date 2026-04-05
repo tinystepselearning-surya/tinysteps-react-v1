@@ -11,8 +11,67 @@ import { CollapsibleCard } from '../components/common/CollapsibleCard';
 import SmartCard from '../components/ui/SmartCard';
 import IBAlignmentSection from '../components/curriculum/IBAlignmentSection';
 import { useSearchParams, Link } from 'react-router-dom';
+import { createFAQPageSchema, createWebPageSchema } from '../lib/schemas';
 
 type Tab = 'phonics' | 'grammar' | 'speaking';
+
+const curriculumFaqItems = [
+  {
+    question: 'What age is this curriculum designed for?',
+    answer:
+      'The Tiny Steps curriculum is designed as a structured English pathway for children ages 3–12, with level placement based on current skill, not just age.',
+  },
+  {
+    question: 'How do you decide where my child starts?',
+    answer:
+      'We use a free assessment to identify your child’s current stage in reading, grammar, and speaking, then recommend the most suitable starting point.',
+  },
+  {
+    question: 'What is Jolly Phonics and do you use it?',
+    answer:
+      'Jolly Phonics is a popular synthetic phonics method. We use a structured synthetic phonics approach inspired by Jolly Phonics, including similar sound-to-letter and blending techniques.',
+  },
+  {
+    question: 'What is synthetic phonics?',
+    answer:
+      'Synthetic phonics teaches children to read by joining individual sounds into words. This builds stronger decoding and phonics-based reading habits step by step.',
+  },
+  {
+    question: 'My child knows letters but cannot read. Can this help?',
+    answer:
+      'Yes. This is a common starting point, and our phonics pathway is designed for it. We move from sound recognition to blending and early reading confidence in a guided way.',
+  },
+  {
+    question: 'How is this different from school English teaching?',
+    answer:
+      'School English often follows class pace for everyone. Tiny Steps follows stage-by-stage mastery with live feedback, so your child progresses with clarity and support.',
+  },
+  {
+    question: 'Will this help with spelling mistakes?',
+    answer:
+      'Yes. As children learn sound patterns, blending, and word families, spelling accuracy improves naturally. We reinforce this through guided practice and correction routines.',
+  },
+  {
+    question: 'Do you teach CBSE / ICSE / IB students?',
+    answer:
+      'Yes. We support children across CBSE, ICSE, and IB backgrounds. The curriculum focuses on core English skills that transfer well across school systems.',
+  },
+  {
+    question: 'How do parents track progress?',
+    answer:
+      'Parents receive clear progress updates with what is mastered, what needs reinforcement, and what comes next. This keeps learning transparent and easy to support at home.',
+  },
+  {
+    question: 'Do you give homework or practice activities?',
+    answer:
+      'Yes. We provide practical home reinforcement between classes. Families can also use our phonics games for daily practice in a low-pressure routine.',
+  },
+  {
+    question: 'What if my child is slow or lacks confidence?',
+    answer:
+      'That is common, and we handle it with care. We teach at the child’s current level, use supportive routines, and build confidence through small, visible wins.',
+  },
+];
 
 const VALID_TABS = ['phonics', 'grammar', 'speaking'] as const;
 type ValidTab = (typeof VALID_TABS)[number];
@@ -66,14 +125,29 @@ function safeCourse(value: string | null): string | null {
   }, []);
 
   useEffect(() => {
+    const pageUrl = 'https://tinystepslearning.com/curriculum';
     const breadcrumb = {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
         { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://tinystepslearning.com/' },
-        { '@type': 'ListItem', position: 2, name: 'Curriculum', item: 'https://tinystepslearning.com/curriculum' },
+        { '@type': 'ListItem', position: 2, name: 'Curriculum', item: pageUrl },
       ],
     };
+
+    const faqSchema = createFAQPageSchema(
+      curriculumFaqItems.map((item) => ({
+        question: item.question,
+        answer: item.answer,
+      }))
+    );
+
+    const webpageSchema = createWebPageSchema({
+      name: 'Tiny Steps Curriculum (Ages 3–12)',
+      description:
+        'Tiny Steps Curriculum is a structured English learning pathway for children ages 3–12 that builds phonics, reading, grammar, writing, and speaking step by step through live teacher-led classes.',
+      url: pageUrl,
+    });
 
     applySeo({
       title: "English Curriculum & Syllabus | Phonics, Grammar & Public Speaking Roadmap (Ages 3–12) | Tiny Steps",
@@ -81,7 +155,7 @@ function safeCourse(value: string | null): string | null {
         "A clear, lesson-by-lesson English curriculum for ages 3–12 covering phonics, blending, reading, spelling patterns and grammar with parent-friendly milestones.",
       canonicalPath: "/curriculum",
       ogType: "website",
-      jsonLd: [breadcrumb],
+      jsonLd: [breadcrumb, webpageSchema, faqSchema],
     });
   }, []);
 
@@ -165,11 +239,11 @@ function safeCourse(value: string | null): string | null {
 
       <div className="mx-auto max-w-6xl px-6 pt-8 pb-10">
         <div className="glass-panel soft-grid overflow-hidden px-6 py-10 text-center">
-          <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3-15</div>
+          <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3–12</div>
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
           <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive lesson-by-lesson details so parents know exactly what’s next.</p>
           <p className="mt-2 text-sm text-gray-600">
-            For daily home reinforcement, see our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics learning games</Link> with tracing, sound practice, and a 3-day free trial.
+            For daily home reinforcement, explore our <Link to="/phonics-learning-games" className="font-semibold text-primary-600">phonics games</Link> with tracing, sound practice, and a 3-day free trial.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-3 text-sm text-gray-600">
             <span className="rounded-full bg-white/80 px-4 py-1">Phonics mastery</span>
@@ -179,45 +253,96 @@ function safeCourse(value: string | null): string | null {
         </div>
       </div>
 
+      <section className="mx-auto max-w-6xl px-6 pb-6">
+        <div className="glass-panel p-6 md:p-7">
+          <h2 className="text-2xl font-semibold text-gray-900">What Tiny Steps Curriculum is</h2>
+          <p className="mt-3 text-sm text-gray-700 md:text-base">
+            Tiny Steps Curriculum is a structured English learning pathway for children aged 3–12 that builds phonics, reading, grammar, writing, and speaking step by step through live teacher-led classes.
+          </p>
+          <div className="mt-4">
+            <p className="text-sm font-semibold text-gray-900">Curriculum includes:</p>
+            <ul className="mt-2 grid gap-2 text-sm text-gray-700 md:grid-cols-3">
+              <li className="rounded-full bg-white/80 px-4 py-2">Phonics and reading foundations</li>
+              <li className="rounded-full bg-white/80 px-4 py-2">Grammar and sentence building</li>
+              <li className="rounded-full bg-white/80 px-4 py-2">Speaking and communication confidence</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-10">
+        <h2 className="text-2xl font-semibold text-gray-900">What this curriculum helps your child achieve</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {[
+            'Starts reading with confidence, not guessing',
+            'Builds from sounds to words, sentences, and expression',
+            'Learns grammar in a way children can actually use',
+            'Grows into clear, confident communication',
+          ].map((item) => (
+            <div key={item} className="rounded-2xl border border-gray-200 bg-white/80 px-5 py-4 shadow-sm">
+              <p className="text-sm font-medium text-gray-800 md:text-base">{item}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section aria-labelledby="programs-heading" className="mx-auto max-w-6xl px-6 py-12">
         <h2 id="programs-heading" className="text-3xl font-semibold text-center">Our Programs</h2>
-        <p className="mt-2 text-center text-gray-700">Live 1-on-1 classes in phonics, grammar and public speaking—tailored to your child's level.</p>
+        <p className="mt-2 text-center text-gray-700">Live 1-on-1 classes in the <Link to="/phonics" className="font-semibold text-primary-600">phonics program</Link>, <Link to="/grammar" className="font-semibold text-primary-600">grammar program</Link>, and <Link to="/speaking" className="font-semibold text-primary-600">speaking program</Link>—tailored to your child’s level.</p>
 
         <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-3">
           <article className="rounded-lg border p-6 shadow-sm">
-            <h3 className="text-xl font-medium">Phonics (Ages 3–7)</h3>
+            <h3 className="text-xl font-medium">Phonics Pathway (Ages 3–12)</h3>
+            <p className="mt-2 text-sm text-gray-600">Best for early learners and children building synthetic phonics and phonics-based reading confidence.</p>
+            <details className="mt-3 rounded-lg border border-gray-200 bg-white/80 p-3 text-left">
+              <summary className="text-sm font-semibold text-gray-900">▶ What is Jolly Phonics? (and how we use it)</summary>
+              <p className="mt-2 text-sm text-gray-700">
+                Jolly Phonics is a popular synthetic phonics method that teaches children to read by connecting sounds with letters and blending them into words.
+              </p>
+              <p className="mt-2 text-sm text-gray-700">
+                Our phonics program is based on synthetic phonics principles, including techniques used in Jolly Phonics.
+              </p>
+              <p className="mt-2 text-sm text-gray-700">
+                Tiny Steps uses a structured synthetic phonics approach inspired by Jolly Phonics to help children read confidently.
+              </p>
+            </details>
             <ul className="mt-4 space-y-2 text-sm text-gray-700">
               <li>• Alphabet & letter sounds</li>
               <li>• Blending & digraphs</li>
               <li>• Early reading fluency</li>
               <li>• Fun games & songs</li>
             </ul>
+            <p className="mt-3 text-sm font-medium text-gray-800">Outcome: Your child reads with better accuracy and confidence.</p>
             <div className="mt-4">
               <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
 
           <article className="rounded-lg border p-6 shadow-sm">
-            <h3 className="text-xl font-medium">Grammar (Ages 6–12)</h3>
+            <h3 className="text-xl font-medium">Grammar Pathway (Ages 3–12)</h3>
+            <p className="mt-2 text-sm text-gray-600">Best for children who can read but need stronger sentence control.</p>
             <ul className="mt-4 space-y-2 text-sm text-gray-700">
               <li>• Parts of speech & sentence building</li>
               <li>• Tenses & punctuation</li>
               <li>• Creative writing practice</li>
               <li>• School-aligned reinforcement</li>
             </ul>
+            <p className="mt-3 text-sm font-medium text-gray-800">Outcome: Your child builds correct, usable grammar in daily writing and speech.</p>
             <div className="mt-4">
               <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
           </article>
 
           <article className="rounded-lg border p-6 shadow-sm">
-            <h3 className="text-xl font-medium">Public Speaking (Ages 8–12)</h3>
+            <h3 className="text-xl font-medium">Speaking Pathway (Ages 3–12)</h3>
+            <p className="mt-2 text-sm text-gray-600">Best for children ready to improve confidence and expression.</p>
             <ul className="mt-4 space-y-2 text-sm text-gray-700">
               <li>• Storytelling & speech structure</li>
               <li>• Voice, clarity & projection</li>
               <li>• Presentation practice & Q&A</li>
               <li>• Confidence-building activities</li>
             </ul>
+            <p className="mt-3 text-sm font-medium text-gray-800">Outcome: Your child speaks with more clarity, structure, and confidence.</p>
             <div className="mt-4">
               <Link to="/?book=1" className="inline-block rounded bg-primary-500 px-4 py-2 text-white">Book Free Assessment Class</Link>
             </div>
@@ -225,28 +350,65 @@ function safeCourse(value: string | null): string | null {
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-6 pb-6 grid gap-4 md:grid-cols-3">
-        <SmartCard title="Phonics pathways" description="Early, Advanced, and Foundations" badge="Ages 3-12">
+      <div className="mx-auto max-w-6xl px-6 pb-6">
+        <p className="mb-4 text-sm text-gray-700">How your child progresses step by step inside each program</p>
+        <div className="grid gap-4 md:grid-cols-3">
+        <SmartCard title="Phonics learning journey" description="Early, Advanced, and Foundations" badge="Ages 3–12">
           <ul className="list-disc pl-5 text-sm text-gray-600">
             <li>SATPIN → vowel teams → multisyllabic strategies</li>
-            <li>Lesson mastery checks + decodable reading</li>
+            <li>Progression from sound recognition to fluent decoding routines</li>
           </ul>
         </SmartCard>
-        <SmartCard title="Grammar roadmap" description="Basic + Advanced modules" badge="Ages 5-15">
+        <SmartCard title="Grammar learning journey" description="Basic + Advanced modules" badge="Ages 3–12">
           <ul className="list-disc pl-5 text-sm text-gray-600">
             <li>Parts of speech → complex tenses</li>
-            <li>Paragraphs, editing drills, rubric-based outputs</li>
+            <li>Progression from sentence basics to structured writing control</li>
           </ul>
         </SmartCard>
-        <SmartCard title="Speaking journey" description="Confidence to commanding stage" badge="Ages 4-15">
+        <SmartCard title="Speaking learning journey" description="Confidence to commanding stage" badge="Ages 3–12">
           <ul className="list-disc pl-5 text-sm text-gray-600">
             <li>S.P.E.A.K. habits, debates, visual aids</li>
-            <li>Recorded feedback + capstone speeches</li>
+            <li>Progression from guided speaking to independent presentation skills</li>
           </ul>
         </SmartCard>
+        </div>
       </div>
 
+      <section className="mx-auto max-w-6xl px-6 pb-8" aria-labelledby="difference-heading">
+        <h2 id="difference-heading" className="text-2xl font-semibold text-gray-900">Why Tiny Steps curriculum feels different</h2>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {[
+            {
+              title: 'Structured progression',
+              text: 'Children move through a clear pathway instead of random topic jumps.',
+            },
+            {
+              title: 'Live teacher guidance',
+              text: 'Real-time feedback helps children apply learning, not just watch lessons.',
+            },
+            {
+              title: 'Stage-by-stage mastery',
+              text: 'Advancement is based on readiness and confidence, not guesswork.',
+            },
+            {
+              title: 'Parent visibility',
+              text: 'You get clear updates on progress, next targets, and support areas.',
+            },
+          ].map((item) => (
+            <article key={item.title} className="rounded-2xl border border-gray-200 bg-white/80 p-5 shadow-sm">
+              <h3 className="text-base font-semibold text-gray-900">{item.title}</h3>
+              <p className="mt-2 text-sm text-gray-700">{item.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
       <IBAlignmentSection />
+      <div className="mx-auto max-w-6xl px-6 pb-8">
+        <p className="rounded-2xl border border-gray-100 bg-white/75 px-5 py-4 text-sm text-gray-700">
+          In simple terms, children do not just learn English content — they also learn to think clearly, express ideas, reflect, and communicate with confidence.
+        </p>
+      </div>
 
       <div className="sticky top-28 z-20 border-y border-white/40 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-3 flex flex-wrap gap-3">
@@ -265,14 +427,14 @@ function safeCourse(value: string | null): string | null {
       <div className="mx-auto max-w-6xl px-6 py-10 space-y-12">
         {tab === 'phonics' && (
           <div key="phonics" className="space-y-10">
-            <CollapsibleCard icon={<span>📚</span>} title="Phonics: From Sounds to Fluent Reading" subtext="Cambridge-aligned | Ages 3-12 | Lesson-based tracks" className="glass-panel">
+            <CollapsibleCard icon={<span>📚</span>} title="Phonics: From Sounds to Fluent Reading" subtext="Cambridge-aligned | Ages 3–12 | Lesson-based tracks" className="glass-panel">
               <div className="grid gap-4 md:grid-cols-3">
                 <div>
                   <div className="font-semibold">PHONICS FOUNDATIONS (30 lessons)</div>
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Letter sounds + short vowels</li>
                     <li>Build sound confidence and early blending</li>
-                    <li>Perfect for ages 3-7 with no reading base</li>
+                    <li>Perfect for ages 3–7 with no reading base</li>
                   </ul>
                 </div>
                 <div>
@@ -280,7 +442,7 @@ function safeCourse(value: string | null): string | null {
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Sound sets → digraphs → vowel teams</li>
                     <li>Magic E + longer word rules</li>
-                    <li>Great for ages 4-8 building reading fluency</li>
+                    <li>Great for ages 4–8 building reading fluency</li>
                   </ul>
                 </div>
                 <div>
@@ -288,7 +450,7 @@ function safeCourse(value: string | null): string | null {
                   <ul className="list-disc pl-5 text-sm text-gray-700">
                     <li>Diphthongs → Bossy R → alternate vowels</li>
                     <li>Endings + fluency practice</li>
-                    <li>Perfect for ages 6-12 with reading base</li>
+                    <li>Perfect for ages 6–12 with reading base</li>
                   </ul>
                 </div>
               </div>
@@ -398,25 +560,39 @@ function safeCourse(value: string | null): string | null {
         <div className="max-w-4xl mx-auto">
           <h2 id="curriculum-breakdown" className="text-2xl font-semibold">Curriculum Breakdown</h2>
           <ul className="mt-4 space-y-3 text-gray-700">
-            <li><strong>Phonics (3–7):</strong> Letter recognition, phonemic awareness, blends & digraphs, early decoding.</li>
-            <li><strong>Grammar (6–12):</strong> Word types, grammar rules, sentence building, punctuation, tenses, and guided writing.</li>
-            <li><strong>Public Speaking (8–12):</strong> Story structure, voice control, audience engagement, presentation skills.</li>
+            <li><strong>Phonics pathway (Ages 3–12):</strong> Letter recognition, phonemic awareness, blends & digraphs, and decoding that supports confident reading.</li>
+            <li><strong>Grammar pathway (Ages 3–12):</strong> Word types, sentence building, punctuation, tenses, and guided writing children can apply in school and beyond.</li>
+            <li><strong>Speaking pathway (Ages 3–12):</strong> Story structure, voice control, audience engagement, and presentation confidence built step by step.</li>
           </ul>
-          <p className="mt-3 text-sm text-gray-500">Aligned to foundational literacy goals and supporting school curricula.</p>
+          <p className="mt-3 text-sm text-gray-500">Aligned to foundational literacy goals and designed to support school expectations with clearer communication outcomes.</p>
         </div>
+      </section>
+
+      <section className="max-w-4xl mx-auto px-4 py-10" aria-labelledby="who-for-heading">
+        <h2 id="who-for-heading" className="text-2xl font-semibold">Who this curriculum is designed for</h2>
+        <ul className="mt-5 space-y-3 text-gray-700">
+          <li>• Your child knows letters but cannot blend words yet.</li>
+          <li>• Your child reads a little but lacks fluency and confidence.</li>
+          <li>• Your child struggles to build sentences correctly.</li>
+          <li>• Your child feels shy while speaking or presenting.</li>
+          <li>• You want structured progression, not random worksheets.</li>
+        </ul>
+        <p className="mt-4 text-sm text-gray-700">
+          If this sounds familiar, start with a free assessment and we will place your child at the right stage.
+          {' '}
+          <Link to="/?book=1" className="font-semibold text-primary-600">Book Free Assessment Class</Link>
+        </p>
       </section>
 
       <section className="max-w-4xl mx-auto px-4 py-10" aria-labelledby="faq-heading">
         <h2 id="faq-heading" className="text-2xl font-semibold">Frequently asked questions</h2>
         <div className="mt-6 space-y-4">
-          <details className="p-4 border rounded">
-            <summary className="font-medium">Do you offer a free trial class?</summary>
-            <div className="mt-2 text-gray-700">Yes — book one free 1-on-1 trial to evaluate fit and teacher interaction.</div>
-          </details>
-          <details className="p-4 border rounded">
-            <summary className="font-medium">What age groups do you teach?</summary>
-            <div className="mt-2 text-gray-700">We teach ages 3–12, with program tracks tuned to developmental milestones in each range.</div>
-          </details>
+          {curriculumFaqItems.map((item) => (
+            <details key={item.question} className="p-4 border rounded bg-white/80">
+              <summary className="font-medium">{item.question}</summary>
+              <div className="mt-2 text-gray-700">{item.answer}</div>
+            </details>
+          ))}
         </div>
       </section>
 

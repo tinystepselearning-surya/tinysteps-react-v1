@@ -18,9 +18,6 @@ const TICKER_VERSION = '2026-03-06';
 const DISMISS_KEY = `ts_ticker_dismissed_${TICKER_VERSION}`;
 const TICKER_ITEMS = [
   'Summer Camp 2026 • New batches starting weekly',
-  'Ages 4–10 • 35–40 min live classes',
-  'Phonics + Reading + Speaking • Daily practice',
-  'Parents get weekly progress updates',
 ];
 const TICKER_MARQUEE_ITEMS = [...TICKER_ITEMS, ...TICKER_ITEMS];
 
@@ -51,25 +48,25 @@ const PublicAnnouncementTicker = memo(function PublicAnnouncementTicker({ isLogg
   if (isLoggedIn || isDismissed || isMobileViewport) return null;
 
   return (
-    <div className="hidden border-b border-slate-200 bg-white/80 text-slate-700 backdrop-blur sm:block">
+    <div className="hidden border-b border-slate-200/80 bg-white/65 text-slate-600 backdrop-blur sm:block">
       <style>{`
         @keyframes tsMarquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-        .ts-marquee { animation: tsMarquee 34s linear infinite; will-change: transform; }
+        .ts-marquee { animation: tsMarquee 52s linear infinite; will-change: transform; }
         .group:hover .ts-marquee { animation-play-state: paused; }
         @media (prefers-reduced-motion: reduce) { .ts-marquee { animation: none; transform: none; } }
       `}</style>
-      <div className="group relative overflow-hidden px-4 py-1.5">
-        <div className="ts-marquee flex w-max items-center gap-8 whitespace-nowrap pr-10 text-xs font-medium">
+      <div className="group relative overflow-hidden px-4 py-1">
+        <div className="ts-marquee flex w-max items-center gap-12 whitespace-nowrap pr-12 text-[11px] font-medium">
           {TICKER_MARQUEE_ITEMS.map((item, index) => (
-            <span key={`${item}-${index}`} className="inline-flex items-center gap-2">
-              <span className="h-1 w-1 rounded-full bg-slate-400" />
+            <span key={`${item}-${index}`} className="inline-flex items-center gap-2.5">
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
               {item}
             </span>
           ))}
         </div>
         <button
           type="button"
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-500 transition hover:text-slate-800"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:text-slate-600"
           aria-label="Dismiss announcement"
           onClick={() => {
             if (typeof window !== 'undefined') {

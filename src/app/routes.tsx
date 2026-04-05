@@ -25,6 +25,7 @@ const PhonicsForParentsResearchPage = lazy(() => import('../pages/blog/PhonicsFo
 const Week1SatpinLaunchPage = lazy(() => import('../pages/blog/Week1SatpinLaunchPage'));
 const Week7GrammarNounsToParagraphsPage = lazy(() => import('../pages/blog/Week7GrammarNounsToParagraphsPage'));
 const Week12SpeakingConfidenceSeedsPage = lazy(() => import('../pages/blog/Week12SpeakingConfidenceSeedsPage'));
+const WhatIsJollyPhonicsBestWayPage = lazy(() => import('../pages/blog/WhatIsJollyPhonicsBestWayPage'));
 const PricingPage = lazy(() => import('../pages/PricingPage'));
 const SitemapPage = lazy(() => import('../pages/SitemapPage'));
 const ChristmasTreeDecoratePublic = lazy(() => import('../pages/public/seasonal/ChristmasTreeDecoratePublic'));
@@ -394,6 +395,7 @@ const router = createBrowserRouter(
         { path: 'blog/week-1-phonics-satpin-launch', element: <Week1SatpinLaunchPage /> },
         { path: 'blog/week-7-grammar-nouns-to-paragraphs', element: <Week7GrammarNounsToParagraphsPage /> },
         { path: 'blog/week-12-speaking-confidence-seeds', element: <Week12SpeakingConfidenceSeedsPage /> },
+        { path: 'blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading', element: <WhatIsJollyPhonicsBestWayPage /> },
         { path: 'blog/:slug', element: <BlogPostPage /> },
         { path: 'pricing', element: <PricingPage /> },
         { path: 'sitemap', element: <SitemapPage /> },

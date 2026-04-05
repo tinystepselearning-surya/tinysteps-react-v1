@@ -16,7 +16,7 @@ const faqItems = [
   {
     question: 'Can phonics help if my child guesses words?',
     answer:
-      'Yes. Guessing usually means decoding habits are not yet stable. Systematic phonics and guided reading practice improve word accuracy and reading flow.',
+      'Yes. Guessing usually means decoding habits are not yet stable. Structured synthetic phonics and guided reading practice improve word accuracy and reading flow.',
   },
 ];
 

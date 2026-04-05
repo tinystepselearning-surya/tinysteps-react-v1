@@ -15,7 +15,7 @@ const trustPoints = [
 const evidenceBlocks = [
   {
     title: 'Phonics + decoding first',
-    detail: 'Systematic phonics helps early readers decode unfamiliar words more reliably than guessing from pictures. Home reading should reinforce taught sound patterns.',
+    detail: 'Structured synthetic phonics helps early readers decode unfamiliar words more reliably than guessing from pictures. Home reading should reinforce taught sound patterns.',
     action: 'Choose texts that use sounds your child has already learned in class.',
   },
   {

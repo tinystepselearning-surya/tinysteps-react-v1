@@ -10,13 +10,18 @@ const ARTICLE_SLUG = 'phonics-for-parents-guide';
 const ARTICLE_PATH = `/blog/${ARTICLE_SLUG}`;
 const ARTICLE_TITLE = 'Phonics for Parents: What It Is, Why It Matters, and How to Teach It at Home';
 const ARTICLE_DESCRIPTION =
-  'A practical, evidence-backed Tiny Steps guide for parents searching what phonics is, why phonics is important, and how to teach phonics at home in 10 calm minutes a day.';
+  'A practical, evidence-backed Tiny Steps guide for parents searching what phonics is, why phonics is important, and how to teach phonics at home in 10 calm minutes a day, with clear structured synthetic phonics guidance inspired by methods such as Jolly Phonics.';
 const ARTICLE_DATE = '2026-04-03';
 const ARTICLE_READ_TIME = '12 min read';
 const ARTICLE_HERO = '/blog/hero-research.jpg';
 const ARTICLE_KEYWORDS = [
   'phonics for parents',
   'what is phonics for kids',
+  'synthetic phonics',
+  'structured phonics',
+  'Jolly Phonics',
+  'phonics-based reading',
+  'blending sounds into words',
   'why is phonics important',
   'how to teach phonics at home',
   'how to help my child read',
@@ -30,8 +35,8 @@ const ARTICLE_KEYWORDS = [
 const HERO_POINTS = [
   {
     label: 'What the evidence supports',
-    value: 'Explicit, systematic phonics',
-    detail: 'Phonics works best when children learn the code in a clear sequence and use it in real reading and spelling.',
+    value: 'Explicit, structured synthetic phonics',
+    detail: 'Phonics works best when children learn the code in a clear sequence and use it in real reading and spelling, including techniques used in methods such as Jolly Phonics.',
   },
   {
     label: 'What most families need',
