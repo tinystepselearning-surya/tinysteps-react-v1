@@ -223,14 +223,14 @@ function CoursesPage() {
                   ))}
                 </ul>
                 <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">Outcome: {card.outcome}</p>
-                <div className="mt-5 flex items-center justify-between gap-3">
+                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
                   <a
                     href={BOOK_ASSESSMENT_HREF}
-                    className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
                     Book Free Assessment
                   </a>
-                  <Link to="/curriculum" className="text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700">
+                  <Link to="/curriculum" className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View Full Curriculum
                   </Link>
                 </div>
@@ -261,14 +261,14 @@ function CoursesPage() {
                   ))}
                 </ul>
                 <p className="mt-4 rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900">Outcome: {card.outcome}</p>
-                <div className="mt-5 flex items-center justify-between gap-3">
+                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
                   <a
                     href={BOOK_ASSESSMENT_HREF}
-                    className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
                     Book Free Assessment
                   </a>
-                  <Link to="/curriculum" className="text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700">
+                  <Link to="/curriculum" className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View Full Curriculum
                   </Link>
                 </div>
@@ -299,14 +299,14 @@ function CoursesPage() {
                   ))}
                 </ul>
                 <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Outcome: {card.outcome}</p>
-                <div className="mt-5 flex items-center justify-between gap-3">
+                <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
                   <a
                     href={BOOK_ASSESSMENT_HREF}
-                    className="inline-flex items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+                    className="inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
                   >
                     Book Free Assessment
                   </a>
-                  <Link to="/curriculum" className="text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700">
+                  <Link to="/curriculum" className="w-full text-center text-[11px] font-medium text-slate-500 underline decoration-slate-300/80 underline-offset-2 transition hover:text-slate-700 sm:w-auto sm:text-left">
                     View Full Curriculum
                   </Link>
                 </div>

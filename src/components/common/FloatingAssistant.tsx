@@ -71,7 +71,7 @@ export default function FloatingAssistant() {
   const content = (
     <div
       data-floating-assistant="1"
-      className="pointer-events-auto fixed bottom-3 right-3 z-[99999] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4"
+      className="pointer-events-auto fixed bottom-[5.25rem] right-3 z-[99999] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4"
     >
       <AnimatePresence mode="wait" initial={false}>
         {isExpanded ? (

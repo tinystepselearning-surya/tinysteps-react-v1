@@ -15,7 +15,7 @@ type HeroAction = {
 
 type ResearchArticleHeroProps = {
   eyebrowPrimary: string;
-  eyebrowSecondary: string;
+  eyebrowSecondary?: string;
   title: string;
   description: string;
   authorLabel?: string;
@@ -44,20 +44,24 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
       <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" />
       <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" />
 
-      <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-28 sm:pb-20 sm:pt-32">
+      <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-24 sm:px-6 sm:pb-20 sm:pt-32">
         <div className="grid gap-12 lg:grid-cols-[minmax(0,1.2fr)_360px] lg:items-end">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">
               {eyebrowPrimary}
-              <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a3d]" />
-              {eyebrowSecondary}
+              {eyebrowSecondary ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a3d]" />
+                  {eyebrowSecondary}
+                </>
+              ) : null}
             </div>
 
-            <h1 className="mt-6 max-w-4xl text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="mt-6 max-w-4xl text-3xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl">
               {title}
             </h1>
 
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">{description}</p>
+            <p className="mt-6 max-w-3xl text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">{description}</p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-slate-200">
               <span className="rounded-full border border-white/15 bg-white/8 px-4 py-2">{authorLabel}</span>
@@ -72,8 +76,8 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
                   to={action.to}
                   className={
                     action.variant === 'secondary'
-                      ? 'inline-flex items-center rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10'
-                      : 'inline-flex items-center rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-slate-100'
+                      ? 'inline-flex max-w-full items-center justify-center rounded-full border border-white/20 px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-white/10'
+                      : 'inline-flex max-w-full items-center justify-center rounded-full bg-white px-5 py-3 text-center text-sm font-semibold text-slate-950 transition hover:bg-slate-100'
                   }
                 >
                   {action.label}
@@ -82,7 +86,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/12 bg-white/8 p-6 backdrop-blur">
+          <div className="rounded-[32px] border border-white/12 bg-white/8 p-5 sm:p-6 backdrop-blur">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-300">Parents often search</p>
             <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-100">
               {searchPainPoints.map((item) => (

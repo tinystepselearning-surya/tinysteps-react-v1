@@ -397,7 +397,7 @@ const BlogPage: FC = () => {
       <section className="relative overflow-hidden border-b border-slate-800 bg-[linear-gradient(135deg,#0f172a_0%,#16233c_48%,#1d2942_100%)] text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(242,187,104,0.16),transparent_26%),radial-gradient(circle_at_82%_18%,rgba(103,152,224,0.2),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,0.44))]" />
-        <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 sm:pt-20">
+        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-16 sm:px-6 sm:pb-16 sm:pt-20">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_390px] lg:items-end">
             <div className="max-w-4xl">
               <div className="inline-flex items-center rounded-full border border-white/14 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-100 backdrop-blur">
@@ -505,7 +505,7 @@ const BlogPage: FC = () => {
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-6 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
         <section className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
           <div className="rounded-[2rem] border border-slate-200/80 bg-[linear-gradient(135deg,#121a2d,#1a2946)] p-6 text-white shadow-[0_24px_60px_rgba(15,23,42,0.16)]">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-100">Start here</p>
@@ -550,8 +550,8 @@ const BlogPage: FC = () => {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] border border-slate-200/80 bg-white/86 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.06)] backdrop-blur lg:sticky lg:top-20 lg:z-20">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <section className="mt-3 rounded-[1.8rem] border border-slate-200/80 bg-white/86 p-2.5 shadow-[0_12px_30px_rgba(15,23,42,0.06)] backdrop-blur lg:sticky lg:top-20 lg:z-20">
+          <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex flex-wrap gap-2">
               {TOPIC_OPTIONS.map((option) => (
                 <button
@@ -569,7 +569,7 @@ const BlogPage: FC = () => {
               ))}
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
               <label htmlFor="blog-search" className="sr-only">
                 Search blog topics
               </label>
@@ -582,12 +582,12 @@ const BlogPage: FC = () => {
                   startTransition(() => setSearchQuery(value));
                 }}
                 placeholder="Search phonics, grammar, speaking, SATPIN, writing..."
-                className="w-full min-w-[260px] rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-primary-400"
+                className="w-full rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus:border-primary-400 sm:w-[280px]"
               />
               <select
                 value={sort}
                 onChange={(event) => setSort(event.target.value as (typeof SORT_OPTIONS)[number])}
-                className="rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-primary-400"
+                className="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 outline-none transition focus:border-primary-400"
               >
                 {SORT_OPTIONS.map((option) => (
                   <option key={option}>{option}</option>
@@ -596,7 +596,7 @@ const BlogPage: FC = () => {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+          <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm text-slate-600">
             <span>
               Showing <span className="font-semibold text-slate-900">{sortedPosts.length}</span> article
               {sortedPosts.length === 1 ? '' : 's'}
@@ -612,80 +612,89 @@ const BlogPage: FC = () => {
         </section>
 
         {leadPost ? (
-          <section className="mt-8 grid gap-8 xl:grid-cols-[minmax(0,1.05fr)_340px]">
-            <Link
-              to={`/blog/${leadPost.slug}`}
-              className="grid overflow-hidden rounded-[2.2rem] border border-slate-200 bg-white shadow-[0_30px_70px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_36px_90px_rgba(15,23,42,0.1)] md:grid-cols-[minmax(0,1fr)_420px]"
-            >
-              <div className="p-6 sm:p-8">
-                <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getCategoryTheme(leadPost.category).chip}`}>
-                  {leadPost.category}
+          <section className="mt-2 grid gap-3 xl:grid-cols-[minmax(0,1fr)_240px] xl:items-start">
+            <div className="min-w-0 space-y-2.5">
+              <Link
+                to={`/blog/${leadPost.slug}`}
+                className="flex min-w-0 items-center overflow-hidden rounded-[1.4rem] border border-slate-200 bg-white shadow-[0_10px_26px_rgba(15,23,42,0.08)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_32px_rgba(15,23,42,0.1)]"
+              >
+                <div className="min-w-0 flex-1 p-3">
+                  <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getCategoryTheme(leadPost.category).chip}`}>
+                    {leadPost.category}
+                  </div>
+                  <h2 className="mt-1.5 text-[16px] font-black leading-5 tracking-tight text-slate-950 line-clamp-2">
+                    {leadPost.title}
+                  </h2>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">
+                    by {leadPost.author} • {leadPost.readTime} • {formatBlogDate(leadPost.date)}
+                  </p>
+                  <p className="mt-1 text-sm leading-5 text-slate-700 line-clamp-2">
+                    {leadPost.metaDescription || leadPost.excerpt}
+                  </p>
+                  <div className="mt-2 inline-flex items-center rounded-full bg-slate-950 px-2.5 py-1 text-[10px] font-semibold text-white">
+                    Read article
+                  </div>
                 </div>
-                <h2 className="mt-4 max-w-2xl text-3xl font-black tracking-tight text-slate-950">
-                  {leadPost.title}
-                </h2>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  by {leadPost.author} • {leadPost.readTime} • {formatBlogDate(leadPost.date)}
-                </p>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-slate-700">
-                  {leadPost.metaDescription || leadPost.excerpt}
-                </p>
-                <div className="mt-6 inline-flex items-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white">
-                  Read article
+
+                {leadPost.hero ? (
+                  <div className="hidden shrink-0 md:block w-[160px] pr-3">
+                    <div
+                      className="h-[96px] w-full rounded-xl bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
+                      style={{ backgroundImage: `url(${leadPost.hero})` }}
+                    />
+                  </div>
+                ) : (
+                  <div className="hidden shrink-0 md:block w-[160px] pr-3">
+                    <div className="h-[96px] w-full rounded-xl bg-[linear-gradient(135deg,#eef6ff,#fff5ea)]" />
+                  </div>
+                )}
+              </Link>
+
+              <div className="rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(135deg,#fff4df,#eef6ff)] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Top topic lanes</p>
+                  <span className="text-xs text-slate-500">Jump to the right shelf</span>
                 </div>
-              </div>
-
-              {leadPost.hero ? (
-                <div
-                  className="min-h-[280px] bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
-                  style={{ backgroundImage: `url(${leadPost.hero})` }}
-                />
-              ) : (
-                <div className="min-h-[280px] bg-[linear-gradient(135deg,#eef6ff,#fff5ea)]" />
-              )}
-            </Link>
-
-            <div className="space-y-4">
-              <div className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Why this page is easier to use</p>
-                <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
-                    <span>Use topic chips to narrow by phonics, grammar, speaking, parent routines, or research.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
-                    <span>Search like a parent would: “phonics for parents”, “SATPIN”, “shy child”, or “grammar writing”.</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
-                    <span>Load only what you need instead of scrolling through the entire archive in one pass.</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div className="rounded-[1.8rem] border border-slate-200 bg-[linear-gradient(135deg,#fff4df,#eef6ff)] p-5">
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Top topic lanes</p>
-                <div className="mt-4 space-y-3">
+                <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
                   {TOPIC_OPTIONS.filter((item) => item !== 'All').map((category) => (
                     <button
                       key={category}
                       type="button"
                       onClick={() => setTopic(category)}
-                      className="flex w-full items-center justify-between rounded-[1.25rem] border border-white/80 bg-white/85 px-4 py-3 text-left transition hover:border-slate-300"
+                      className="flex w-full items-center justify-between rounded-[0.95rem] border border-white/80 bg-white/85 px-3 py-1.5 text-left transition hover:border-slate-300"
                     >
                       <span className="text-sm font-semibold text-slate-900">{category}</span>
-                      <span className="text-xs text-slate-500">{topicCounts.get(category) || 0} posts</span>
+                      <span className="text-xs text-slate-500">{topicCounts.get(category) || 0}</span>
                     </button>
                   ))}
                 </div>
+              </div>
+            </div>
+
+            <div className="space-y-2.5">
+              <div className="rounded-[1.5rem] border border-slate-200 bg-white p-3 shadow-[0_10px_28px_rgba(15,23,42,0.05)]">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Why this page is easier to use</p>
+                <ul className="mt-2 space-y-1.5 text-sm leading-5 text-slate-600">
+                  <li className="flex gap-2.5">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                    <span>Use topic chips to narrow by phonics, grammar, speaking, parent routines, or research.</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                    <span>Search like a parent would: “phonics for parents”, “SATPIN”, “shy child”, or “grammar writing”.</span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="mt-2 h-2 w-2 rounded-full bg-primary-500" />
+                    <span>Load only what you need instead of scrolling through the entire archive in one pass.</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </section>
         ) : null}
 
         {spotlightPosts.length > 1 ? (
-          <section className="mt-10">
+          <section className="mt-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Spotlight</p>
@@ -696,29 +705,29 @@ const BlogPage: FC = () => {
               </Link>
             </div>
 
-            <div className="mt-5 grid gap-5 md:grid-cols-3">
+            <div className="mt-2.5 grid gap-2.5 md:grid-cols-3">
               {spotlightPosts.slice(1, 4).map((post) => {
                 const theme = getCategoryTheme(post.category);
                 return (
                   <Link
                     key={post.slug}
                     to={`/blog/${post.slug}`}
-                    className="overflow-hidden rounded-[1.9rem] border border-slate-200 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_60px_rgba(15,23,42,0.08)]"
+                    className="overflow-hidden rounded-[1.35rem] border border-slate-200 bg-white shadow-[0_7px_18px_rgba(15,23,42,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
                   >
                     {post.hero ? (
                       <div
-                        className="aspect-[1.55/1] bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
+                        className="aspect-[2.8/1] bg-slate-100 bg-cover bg-center transition duration-500 hover:scale-[1.03]"
                         style={{ backgroundImage: `url(${post.hero})` }}
                       />
                     ) : (
-                      <div className={`aspect-[1.55/1] bg-gradient-to-br ${theme.panel}`} />
+                      <div className={`aspect-[2.8/1] bg-gradient-to-br ${theme.panel}`} />
                     )}
-                    <div className="p-5">
+                    <div className="p-2.5">
                       <div className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${theme.chip}`}>
                         {post.category}
                       </div>
-                      <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-900">{post.title}</h3>
-                      <p className="mt-2 text-sm leading-7 text-slate-600 line-clamp-3">
+                      <h3 className="mt-1.5 text-sm font-semibold leading-5 text-slate-900 line-clamp-2">{post.title}</h3>
+                      <p className="mt-0.5 text-sm leading-5 text-slate-600 line-clamp-2">
                         {post.metaDescription || post.excerpt}
                       </p>
                     </div>
@@ -729,7 +738,7 @@ const BlogPage: FC = () => {
           </section>
         ) : null}
 
-        <section className="mt-10">
+        <section className="mt-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Library</p>
@@ -768,33 +777,33 @@ const BlogPage: FC = () => {
             </div>
           ) : (
             <>
-              <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+              <div className="mt-2.5 grid gap-2.5 md:grid-cols-2 xl:grid-cols-3">
                 {visiblePosts.map((post) => {
                   const theme = getCategoryTheme(post.category);
                   return (
                     <Link
                       key={post.slug}
                       to={`/blog/${post.slug}`}
-                      className="group overflow-hidden rounded-[1.8rem] border border-slate-200/90 bg-white shadow-[0_18px_50px_rgba(15,23,42,0.05)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(15,23,42,0.08)]"
+                      className="group overflow-hidden rounded-[1.35rem] border border-slate-200/90 bg-white shadow-[0_7px_18px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
                     >
                       {post.hero ? (
                         <div
-                          className="aspect-[1.55/1] bg-slate-100 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]"
+                          className="aspect-[2.8/1] bg-slate-100 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]"
                           style={{ backgroundImage: `url(${post.hero})` }}
                         />
                       ) : (
-                        <div className={`aspect-[1.55/1] bg-gradient-to-br ${theme.panel}`} />
+                        <div className={`aspect-[2.8/1] bg-gradient-to-br ${theme.panel}`} />
                       )}
-                      <div className="p-5">
+                      <div className="p-2.5">
                         <div className="flex items-center justify-between gap-3">
                           <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${theme.chip}`}>
                             {post.category}
                           </span>
                           <span className="text-xs text-slate-500">{post.readTime}</span>
                         </div>
-                        <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-900">{post.title}</h3>
-                        <p className="mt-2 text-sm text-slate-500">{formatBlogDate(post.date)}</p>
-                        <p className="mt-3 text-sm leading-7 text-slate-600 line-clamp-3">
+                        <h3 className="mt-1 text-sm font-semibold leading-5 text-slate-900 line-clamp-2">{post.title}</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">{formatBlogDate(post.date)}</p>
+                        <p className="mt-0.5 text-sm leading-5 text-slate-600 line-clamp-2">
                           {post.metaDescription || post.excerpt}
                         </p>
                       </div>

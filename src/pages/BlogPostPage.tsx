@@ -222,6 +222,28 @@ function buildHeadingMeta(blocks: Array<{ type: string; content: string }> = [])
     });
 }
 
+function normalizeEyebrowLabel(value: string) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function deriveEyebrowSecondaryLabel(title: string, category: string, isWeekRoadmap: boolean) {
+  const safeTitle = String(title || '');
+  const safeCategory = String(category || 'Parent Guide');
+
+  if (/parent\s+guide/i.test(safeTitle)) return 'Parent Guide';
+  if (/readiness/i.test(safeTitle)) return 'Reading Readiness';
+  if (/method\s+comparison|comparison|vs\.?/i.test(safeTitle)) return 'Method Comparison';
+  if (/checklist/i.test(safeTitle)) return 'Checklist';
+  if (/faq/i.test(safeTitle)) return 'FAQ';
+  if (/research/i.test(safeTitle) || /research/i.test(safeCategory)) return 'Research Guide';
+
+  if (isWeekRoadmap) return safeCategory;
+  return '';
+}
+
 const BlogPostPage: FC = () => {
   const { slug } = useParams();
   const post = useMemo(() => blogPosts.find((p) => p.slug === slug), [slug]);
@@ -388,7 +410,15 @@ function buildMetaDescription(src: any) {
   const categoryConfig = CATEGORY_ARTICLE_CONFIG[metaSource.category] || CATEGORY_ARTICLE_CONFIG['Parent Tips'];
   const weekMatch = String(metaSource.title || '').match(/^Week\s+(\d+)/i);
   const eyebrowPrimary = weekMatch ? `Week ${weekMatch[1]} Roadmap` : metaSource.category || 'Parent Guide';
-  const eyebrowSecondary = (metaSource.category || 'Parent Guide').replace(/\s+/g, ' ');
+  const rawEyebrowSecondary = deriveEyebrowSecondaryLabel(
+    String(metaSource.title || ''),
+    String(metaSource.category || 'Parent Guide'),
+    Boolean(weekMatch),
+  );
+  const eyebrowSecondary =
+    normalizeEyebrowLabel(rawEyebrowSecondary) === normalizeEyebrowLabel(eyebrowPrimary)
+      ? ''
+      : rawEyebrowSecondary;
   const heroSearchPainPoints =
     Array.isArray(post?.faq) && post.faq.length > 0
       ? post.faq.slice(0, 4).map((item) => item.question)
@@ -475,7 +505,7 @@ function buildMetaDescription(src: any) {
         heroPoints={categoryConfig.heroPoints}
       />
 
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-6">
           <Link to="/blog" className="inline-flex items-center text-sm font-semibold text-primary-700">← Back to Blogs</Link>
         </div>
@@ -519,7 +549,7 @@ function buildMetaDescription(src: any) {
           <div className="min-w-0 space-y-8">
             <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Quick answer</p>
-              <h2 className="ts-blog-hero-title mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+              <h2 className="ts-blog-hero-title mt-3 text-2xl font-black tracking-tight text-slate-950 sm:text-4xl">
                 {metaSource.title}
               </h2>
               <p className="mt-4 max-w-4xl text-lg leading-8 text-slate-700">
@@ -528,7 +558,7 @@ function buildMetaDescription(src: any) {
             </section>
 
             <article className="rounded-[2rem] border border-slate-200 bg-white px-6 py-8 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:px-8">
-              <div className="prose prose-slate prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tight prose-h2:mt-14 prose-h2:text-4xl prose-h2:text-slate-950 prose-h3:mt-8 prose-h3:text-2xl prose-h3:text-slate-900 prose-p:text-[1.04rem] prose-p:leading-8 prose-p:text-slate-700 prose-ul:my-6 prose-li:my-2 prose-li:text-slate-700">
+              <div className="prose prose-slate prose-lg max-w-none prose-headings:font-black prose-headings:tracking-tight prose-h2:mt-14 prose-h2:text-3xl sm:prose-h2:text-4xl prose-h2:text-slate-950 prose-h3:mt-8 prose-h3:text-2xl prose-h3:text-slate-900 prose-p:text-[1.04rem] prose-p:leading-8 prose-p:text-slate-700 prose-ul:my-6 prose-li:my-2 prose-li:text-slate-700">
                 {articleNodes}
               </div>
             </article>

@@ -176,11 +176,11 @@ export default function PublicAssessmentForm({
   };
 
   return (
-    <GlassCard className="border-slate-200 p-8 shadow-[0_26px_70px_rgba(15,23,42,0.18)]">
+    <GlassCard className="border-slate-200 p-5 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8">
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
-      <div className="relative mb-7">
-        <h2 className="text-2xl font-bold text-slate-900">Book Assessment</h2>
+      <div className="relative mb-6 sm:mb-7">
+        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">Book Assessment</h2>
         <p className="mt-2 text-sm text-slate-700">Share a few details and we will confirm available slots on WhatsApp.</p>
       </div>
 
@@ -321,7 +321,7 @@ export default function PublicAssessmentForm({
 
         <Button
           type="submit"
-          className="mt-6 w-full rounded-2xl py-6 text-base font-bold shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80"
+          className="mt-6 w-full rounded-2xl py-4 text-base font-bold shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 sm:py-6"
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}

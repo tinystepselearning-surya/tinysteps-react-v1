@@ -219,7 +219,7 @@ export default function PhonicsPage({
       />
 
       {/* Answer Block for AEO */}
-      <div className="max-w-4xl mx-auto my-8 rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-6 shadow-sm">
+      <div className="mx-4 my-8 max-w-4xl rounded-2xl border border-sky-100 bg-gradient-to-r from-slate-50 to-sky-50 p-5 shadow-sm sm:mx-auto sm:p-6">
         <h2 className="text-lg font-semibold text-gray-900">What is synthetic phonics?</h2>
         <p className="mt-2 text-base text-gray-800">{syntheticPhonicsDefinition}</p>
         <p className="mt-2 text-base text-gray-800">
@@ -230,7 +230,7 @@ export default function PhonicsPage({
         </p>
       </div>
 
-      <section className="max-w-4xl mx-auto my-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="mx-4 my-6 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mx-auto">
         <h2 className="text-xl font-bold text-slate-900">How children learn to read</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {[
@@ -249,7 +249,7 @@ export default function PhonicsPage({
         </p>
       </section>
 
-      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mx-auto sm:p-6">
         <h2 className="text-xl font-bold text-slate-900">Do you use Jolly Phonics methods?</h2>
         <p className="mt-3 text-slate-700">
           Our phonics program is based on structured synthetic phonics principles and includes techniques used in methods such as Jolly Phonics.
@@ -259,7 +259,7 @@ export default function PhonicsPage({
         </p>
       </section>
 
-      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-slate-50 p-5 shadow-sm sm:mx-auto sm:p-6">
         <h2 className="text-xl font-bold text-slate-900">Why structured phonics works</h2>
         <ul className="mt-4 space-y-2 text-sm text-slate-700">
           <li>• Builds strong reading foundation</li>
@@ -298,7 +298,7 @@ export default function PhonicsPage({
       />
 
       {/* Buyer Guide Section */}
-      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-6 py-12 shadow-sm">
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-5 py-10 shadow-sm sm:mx-auto sm:px-6 sm:py-12">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Choosing the best online phonics classes in India</h2>
         <p className="text-gray-700 mb-4">
           Evaluating online phonics programs can be overwhelming. Our comprehensive buyer guide helps parents compare options using a 10-point checklist covering curriculum quality, teacher credentials, class formats (1:1 vs group), trial policies, and pricing transparency.
@@ -346,7 +346,7 @@ export default function PhonicsPage({
         </Link>
       </section>
 
-      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8ed_0%,#ffffff_48%,#eef7ff_100%)] px-6 py-12 shadow-sm">
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8ed_0%,#ffffff_48%,#eef7ff_100%)] px-5 py-10 shadow-sm sm:mx-auto sm:px-6 sm:py-12">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents doing their research</p>
         <h2 className="mt-3 text-2xl font-bold text-slate-900">What phonics is, why it matters, and how to teach it at home</h2>
         <p className="mt-4 text-gray-700">
@@ -435,7 +435,7 @@ export default function PhonicsPage({
         ]}
       />
 
-      <section className="max-w-4xl mx-auto my-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="mx-4 my-8 max-w-4xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:mx-auto sm:p-6">
         <h2 className="text-xl font-bold text-slate-900">Related reading for parents</h2>
         <p className="mt-2 text-sm text-slate-700">Simple guides to help you understand how children learn to read</p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -472,10 +472,10 @@ export default function PhonicsPage({
       </section>
 
       {/* FAQ Section */}
-      <section className="max-w-4xl mx-auto px-6 py-12">
+      <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-3xl font-bold text-slate-900">Frequently Asked Questions</h2>
-          <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Frequently Asked Questions</h2>
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={expandAllFaq}
@@ -503,7 +503,7 @@ export default function PhonicsPage({
                 <button
                   type="button"
                   onClick={() => toggleFaq(index)}
-                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50"
+                  className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left transition hover:bg-slate-50 sm:px-5"
                   aria-expanded={isOpen}
                 >
                   <span className="text-base font-semibold text-slate-900">{item.question}</span>
@@ -526,12 +526,12 @@ export default function PhonicsPage({
       <ParentReassurance programName="our phonics program" />
 
       {/* Book Assessment CTA Section */}
-      <section className="max-w-4xl mx-auto px-6 py-12">
-        <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-[#263e6d] p-8 text-center text-white">
+      <section className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
+        <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-[#1f2a44] to-[#263e6d] p-6 text-center text-white sm:p-8">
           <p className="mb-4 inline-flex rounded-full border border-emerald-300/40 bg-emerald-300/10 px-3 py-1 text-xs font-semibold tracking-[0.14em] text-emerald-100">
             TRUSTED BY PARENTS
           </p>
-          <h2 className="mb-4 text-3xl font-bold text-white">Ready to Start Your Phonics Journey?</h2>
+          <h2 className="mb-4 text-2xl font-bold text-white sm:text-3xl">Ready to Start Your Phonics Journey?</h2>
           <p className="mx-auto mb-6 max-w-2xl text-lg text-slate-100">
             Book a free 35-minute assessment session with our mentors to understand your child's current level and get a personalized phonics learning plan.
           </p>

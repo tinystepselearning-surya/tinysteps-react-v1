@@ -247,12 +247,14 @@ export default function Header() {
   return (
     <nav
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
-        isSticky ? 'bg-white/88 shadow-[0_15px_35px_rgba(8,15,40,0.12)] backdrop-blur-lg' : 'bg-transparent'
+        isSticky
+          ? 'border-b border-slate-200/90 bg-white/95 shadow-[0_14px_34px_rgba(8,15,40,0.14)] backdrop-blur-xl'
+          : 'border-b border-white/45 bg-white/72 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
       }`}
     >
       <PublicAnnouncementTicker isLoggedIn={!!user} />
 
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-3.5 sm:px-4 sm:py-4">
         <button
           type="button"
           className="flex items-center gap-2 text-left"
@@ -270,17 +272,17 @@ export default function Header() {
           />
           <div>
             <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
-            <div className="text-[11px] uppercase tracking-[0.3em] text-gray-500">Foundations Forever</div>
+            <div className="text-[11px] uppercase tracking-[0.24em] text-gray-500 max-[360px]:hidden">Foundations Forever</div>
           </div>
         </button>
 
         {desktopHeaderContent}
 
-        <div className="flex items-center gap-3 lg:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <button
             type="button"
             onClick={handleBookAssessment}
-            className="rounded-full border border-slate-900 bg-slate-900 px-4 py-2 text-xs font-semibold text-white"
+            className="rounded-full border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white max-[380px]:px-3 max-[380px]:text-[11px]"
           >
             Book Free Assessment
           </button>
@@ -312,7 +314,7 @@ export default function Header() {
 
       <div
         id="mobile-nav-menu"
-        className={`overflow-hidden bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
+        className={`overflow-hidden border-t border-slate-200/80 bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
           isOpen ? "max-h-[520px]" : "max-h-0"
         }`}
       >

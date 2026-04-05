@@ -237,8 +237,8 @@ function safeCourse(value: string | null): string | null {
         canonical="https://tinystepslearning.com/curriculum"
       />
 
-      <div className="mx-auto max-w-6xl px-6 pt-8 pb-10">
-        <div className="glass-panel soft-grid overflow-hidden px-6 py-10 text-center">
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-10 sm:px-6">
+        <div className="glass-panel soft-grid overflow-hidden px-5 py-8 text-center sm:px-6 sm:py-10">
           <div className="gradient-chip mx-auto mb-4 w-max">Cambridge-aligned • Ages 3–12</div>
           <h1 className="font-heading text-3xl md:text-4xl">Tiny Steps Curriculum (Ages 3–12)</h1>
           <p className="mt-3 text-base text-gray-700">Scannable tabs, IB Approaches to Learning call-outs, and immersive lesson-by-lesson details so parents know exactly what’s next.</p>
@@ -253,7 +253,7 @@ function safeCourse(value: string | null): string | null {
         </div>
       </div>
 
-      <section className="mx-auto max-w-6xl px-6 pb-6">
+      <section className="mx-auto max-w-6xl px-4 pb-6 sm:px-6">
         <div className="glass-panel p-6 md:p-7">
           <h2 className="text-2xl font-semibold text-gray-900">What Tiny Steps Curriculum is</h2>
           <p className="mt-3 text-sm text-gray-700 md:text-base">
@@ -270,7 +270,7 @@ function safeCourse(value: string | null): string | null {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-10">
+      <section className="mx-auto max-w-6xl px-4 pb-10 sm:px-6">
         <h2 className="text-2xl font-semibold text-gray-900">What this curriculum helps your child achieve</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           {[
@@ -286,8 +286,8 @@ function safeCourse(value: string | null): string | null {
         </div>
       </section>
 
-      <section aria-labelledby="programs-heading" className="mx-auto max-w-6xl px-6 py-12">
-        <h2 id="programs-heading" className="text-3xl font-semibold text-center">Our Programs</h2>
+      <section aria-labelledby="programs-heading" className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <h2 id="programs-heading" className="text-2xl font-semibold text-center sm:text-3xl">Our Programs</h2>
         <p className="mt-2 text-center text-gray-700">Live 1-on-1 classes in the <Link to="/phonics" className="font-semibold text-primary-600">phonics program</Link>, <Link to="/grammar" className="font-semibold text-primary-600">grammar program</Link>, and <Link to="/speaking" className="font-semibold text-primary-600">speaking program</Link>—tailored to your child’s level.</p>
 
         <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-3">
@@ -350,7 +350,7 @@ function safeCourse(value: string | null): string | null {
         </div>
       </section>
 
-      <div className="mx-auto max-w-6xl px-6 pb-6">
+      <div className="mx-auto max-w-6xl px-4 pb-6 sm:px-6">
         <p className="mb-4 text-sm text-gray-700">How your child progresses step by step inside each program</p>
         <div className="grid gap-4 md:grid-cols-3">
         <SmartCard title="Phonics learning journey" description="Early, Advanced, and Foundations" badge="Ages 3–12">
@@ -374,7 +374,7 @@ function safeCourse(value: string | null): string | null {
         </div>
       </div>
 
-      <section className="mx-auto max-w-6xl px-6 pb-8" aria-labelledby="difference-heading">
+      <section className="mx-auto max-w-6xl px-4 pb-8 sm:px-6" aria-labelledby="difference-heading">
         <h2 id="difference-heading" className="text-2xl font-semibold text-gray-900">Why Tiny Steps curriculum feels different</h2>
         <div className="mt-5 grid gap-4 md:grid-cols-2">
           {[
@@ -404,14 +404,14 @@ function safeCourse(value: string | null): string | null {
       </section>
 
       <IBAlignmentSection />
-      <div className="mx-auto max-w-6xl px-6 pb-8">
+      <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-6">
         <p className="rounded-2xl border border-gray-100 bg-white/75 px-5 py-4 text-sm text-gray-700">
           In simple terms, children do not just learn English content — they also learn to think clearly, express ideas, reflect, and communicate with confidence.
         </p>
       </div>
 
       <div className="sticky top-28 z-20 border-y border-white/40 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-3 flex flex-wrap gap-3">
+        <div className="mx-auto flex max-w-6xl flex-wrap gap-2.5 px-4 py-3 sm:gap-3 sm:px-6">
           {(['phonics','grammar','speaking'] as Tab[]).map((t) => (
             <button
               key={t}
@@ -424,7 +424,7 @@ function safeCourse(value: string | null): string | null {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-6 py-10 space-y-12">
+      <div className="mx-auto max-w-6xl space-y-12 px-4 py-10 sm:px-6">
         {tab === 'phonics' && (
           <div key="phonics" className="space-y-10">
             <CollapsibleCard icon={<span>📚</span>} title="Phonics: From Sounds to Fluent Reading" subtext="Cambridge-aligned | Ages 3–12 | Lesson-based tracks" className="glass-panel">
