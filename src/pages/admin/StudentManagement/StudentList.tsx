@@ -1306,10 +1306,18 @@ type EnrollmentLite = {
 };
 
 type ScheduleWeeklySlot = {
+  slotId: string;
   weekday: number;
   time: string;
   durationMinutes: number;
 };
+
+function createScheduleSlotId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return `slot_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+}
 
 const WEEKDAY_OPTIONS: Array<{ d: number; label: string }> = [
   { d: 0, label: 'Sun' },
@@ -1359,7 +1367,7 @@ function normalizeScheduleWeeklySlots(
           fallbackDuration,
         );
         if (!isValidWeekday(weekday) || !isValidTimeHHmm(time)) return null;
-        return { weekday, time, durationMinutes };
+        return { slotId: createScheduleSlotId(), weekday, time, durationMinutes };
       })
       .filter((slot): slot is ScheduleWeeklySlot => Boolean(slot))
     : [];
@@ -1376,6 +1384,7 @@ function normalizeScheduleWeeklySlots(
   if (legacyWeekdays.length > 0 && isValidTimeHHmm(legacyTime)) {
     return sortWeeklySlots(
       legacyWeekdays.map((weekday) => ({
+        slotId: createScheduleSlotId(),
         weekday,
         time: legacyTime,
         durationMinutes: legacyDuration,
@@ -1605,8 +1614,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [enrollmentStartDate, setEnrollmentStartDate] = useState<string>(toISODate(new Date()));
   const [classesStartDate, setClassesStartDate] = useState<string>(toISODate(new Date()));
   const [weeklySlots, setWeeklySlots] = useState<ScheduleWeeklySlot[]>([
-    { weekday: 1, time: '18:00', durationMinutes: 35 },
+    { slotId: createScheduleSlotId(), weekday: 1, time: '18:00', durationMinutes: 35 },
   ]);
+  const [editingWeeklySlotId, setEditingWeeklySlotId] = useState<string | null>(null);
   const [durationMins, setDurationMins] = useState<number>(35);
   const [feePerClass, setFeePerClass] = useState<number>(0);
   const [generateWeeks, setGenerateWeeks] = useState<number>(8);
@@ -1650,7 +1660,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     setWeeklySlots(
       normalizedSlots.length > 0
         ? normalizedSlots
-        : [{ weekday: 1, time: '18:00', durationMinutes: baseDuration }],
+        : [{ slotId: createScheduleSlotId(), weekday: 1, time: '18:00', durationMinutes: baseDuration }],
     );
     setDurationMins(normalizedSlots[0]?.durationMinutes ?? baseDuration);
     setGenerateWeeks(safeNumber(enrollment.schedule?.weeksAhead, 8));
@@ -1662,6 +1672,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     );
     setFeePerClass(safeNumber(enrollment.feePerClass, 0));
     setMeetingLink(enrollment.joinUrl || '');
+    setEditingWeeklySlotId(null);
   };
 
   const weeklySlotsSummary = useMemo(
@@ -2109,6 +2120,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
     const normalizedSlots = sortWeeklySlots(
       weeklySlots.map((slot) => ({
+        slotId: slot.slotId,
         weekday: Number(slot.weekday),
         time: String(slot.time || '').trim(),
         durationMinutes: Number(slot.durationMinutes),
@@ -2129,9 +2141,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
         return;
       }
 
-      const duplicateKey = `${slot.weekday}_${slot.time}`;
+      const duplicateKey = `${slot.weekday}_${slot.time}_${clampDurationMinutes(slot.durationMinutes, durationMins)}`;
       if (duplicateKeys.has(duplicateKey)) {
-        toast({ title: 'Duplicate slot found', description: 'Remove duplicate weekday + time entries.', variant: 'destructive' });
+        toast({ title: 'Duplicate slot found', description: 'Remove duplicate weekday + time + duration entries.', variant: 'destructive' });
         return;
       }
       duplicateKeys.add(duplicateKey);
@@ -2521,10 +2533,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     }
   }
 
-  function updateWeeklySlot(index: number, patch: Partial<ScheduleWeeklySlot>) {
+  function updateWeeklySlot(slotId: string, patch: Partial<ScheduleWeeklySlot>) {
     setWeeklySlots((prev) => {
-      const next = prev.map((slot, i) => (i === index ? { ...slot, ...patch } : slot));
-      return sortWeeklySlots(next);
+      return prev.map((slot) => (slot.slotId === slotId ? { ...slot, ...patch } : slot));
     });
   }
 
@@ -2533,21 +2544,27 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     const nextWeekday = WEEKDAY_OPTIONS.find((option) => !usedWeekdays.has(option.d))?.d ?? 1;
     const nextTime = weeklySlots[weeklySlots.length - 1]?.time || '18:00';
     const defaultDuration = clampDurationMinutes(durationMins, 35);
-    setWeeklySlots((prev) => sortWeeklySlots([
+    const newSlotId = createScheduleSlotId();
+    setWeeklySlots((prev) => [
       ...prev,
       {
+        slotId: newSlotId,
         weekday: nextWeekday,
         time: nextTime,
         durationMinutes: defaultDuration,
       },
-    ]));
+    ]);
+    setEditingWeeklySlotId(newSlotId);
   }
 
-  function removeWeeklySlot(index: number) {
+  function removeWeeklySlot(slotId: string) {
     setWeeklySlots((prev) => {
       if (prev.length <= 1) return prev;
-      return prev.filter((_, i) => i !== index);
+      return prev.filter((slot) => slot.slotId !== slotId);
     });
+    if (editingWeeklySlotId === slotId) {
+      setEditingWeeklySlotId(null);
+    }
   }
 
   const canManageStudent = (student: Student) =>
@@ -3257,11 +3274,16 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   </div>
                   <div className="space-y-2">
                     {weeklySlots.map((slot, index) => (
-                      <div key={`weekly-slot-${index}`} className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                      <div key={slot.slotId} className="grid grid-cols-1 md:grid-cols-12 gap-2">
+                        {(() => {
+                          const isEditing = editingWeeklySlotId === slot.slotId;
+                          return (
+                            <>
                         <div className="md:col-span-4">
                           <Select
                             value={String(slot.weekday)}
-                            onValueChange={(value) => updateWeeklySlot(index, { weekday: Number(value) })}
+                            onValueChange={(value) => updateWeeklySlot(slot.slotId, { weekday: Number(value) })}
+                            disabled={!isEditing}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Weekday" />
@@ -3279,7 +3301,8 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                           <Input
                             type="time"
                             value={slot.time}
-                            onChange={(e) => updateWeeklySlot(index, { time: e.target.value })}
+                            onChange={(e) => updateWeeklySlot(slot.slotId, { time: e.target.value })}
+                            disabled={!isEditing}
                           />
                         </div>
                         <div className="md:col-span-3">
@@ -3288,25 +3311,44 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                             min={1}
                             max={180}
                             value={slot.durationMinutes}
+                            disabled={!isEditing}
                             onChange={(e) => {
                               const nextDuration = safeNumber(e.target.value, durationMins);
-                              updateWeeklySlot(index, { durationMinutes: nextDuration });
+                              updateWeeklySlot(slot.slotId, { durationMinutes: nextDuration });
                               if (nextDuration > 0) setDurationMins(nextDuration);
                             }}
                           />
                         </div>
-                        <div className="md:col-span-2">
+                        <div className="md:col-span-2 grid grid-cols-2 gap-1">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setEditingWeeklySlotId(isEditing ? null : slot.slotId)}
+                          >
+                            {isEditing ? 'Done' : 'Edit'}
+                          </Button>
                           <Button
                             type="button"
                             size="sm"
                             variant="outline"
                             className="w-full"
                             disabled={weeklySlots.length <= 1}
-                            onClick={() => removeWeeklySlot(index)}
+                            onClick={() => {
+                              const confirmed = window.confirm(
+                                'Delete this weekly slot? Eligible future sessions for this slot will be cleaned on save.',
+                              );
+                              if (!confirmed) return;
+                              removeWeeklySlot(slot.slotId);
+                            }}
                           >
-                            Remove
+                            Delete
                           </Button>
                         </div>
+                            </>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>

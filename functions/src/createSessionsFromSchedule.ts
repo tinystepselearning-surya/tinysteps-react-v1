@@ -357,6 +357,36 @@ function defaultFinancialLinkState(): SessionFinancialLinkState {
   };
 }
 
+function resolveSessionSignature(args: {
+  raw: Record<string, unknown>;
+  fallbackTeacherId: string | null;
+}): string | null {
+  const {raw, fallbackTeacherId} = args;
+  const ymd = resolveSessionYmd(raw);
+  if (!ymd) return null;
+
+  let timeHHmm = typeof raw.startTime === "string" ? raw.startTime.trim() : "";
+  if (!TIME_HHMM_RE.test(timeHHmm)) {
+    const startAt = toDateMaybe(raw.startAt);
+    if (startAt) {
+      const contextMs = startAt.getTime() + IST_OFFSET_MINUTES * 60 * 1000;
+      timeHHmm = formatHHmmFromContextMs(contextMs);
+    }
+  }
+  if (!TIME_HHMM_RE.test(timeHHmm)) return null;
+
+  const durationRaw = Number(raw.durationMinutes ?? raw.durationMins);
+  if (!Number.isFinite(durationRaw) || durationRaw <= 0) return null;
+  const durationMinutes = normalizeDurationMinutes(durationRaw);
+
+  const teacherIdRaw =
+    typeof raw.teacherId === "string" && raw.teacherId.trim() ?
+      raw.teacherId.trim() :
+      (fallbackTeacherId || "");
+
+  return `${ymd}|${timeHHmm}|${durationMinutes}|${teacherIdRaw}`;
+}
+
 function isValidWeekday(value: unknown): value is number {
   return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 6;
 }
@@ -407,7 +437,9 @@ function normalizeScheduleSlotsOrThrow(schedule: ScheduleConfig | undefined): No
         throw new HttpsError("invalid-argument", "Invalid schedule.weeklySlots duration");
       }
 
-      const dedupeKey = `${weekday}_${parsedTime.timeHHmm}`;
+      const normalizedDuration = normalizeDurationMinutes(durationRaw, 35);
+
+      const dedupeKey = `${weekday}_${parsedTime.timeHHmm}_${normalizedDuration}`;
       if (seenKeys.has(dedupeKey)) {
         throw new HttpsError("invalid-argument", "Duplicate schedule.weeklySlots entries");
       }
@@ -418,7 +450,7 @@ function normalizeScheduleSlotsOrThrow(schedule: ScheduleConfig | undefined): No
         timeHHmm: parsedTime.timeHHmm,
         hour: parsedTime.hour,
         minute: parsedTime.minute,
-        durationMinutes: normalizeDurationMinutes(durationRaw, 35),
+        durationMinutes: normalizedDuration,
       });
     }
 
@@ -550,11 +582,38 @@ async function generateSessionsFromScheduleInternal(
   const currency = enrollment.currency || "INR";
   const joinUrl = enrollment.joinUrl || null;
 
+  const existingSnap = await db.collection("classSessions")
+    .where("enrollmentId", "==", enrollmentId)
+    .get();
+
+  const configuredSessionSignatures = new Set<string>();
+  for (
+    let d = new Date(rangeStartDate.getTime());
+    d.getTime() <= rangeEndDate.getTime();
+    d.setUTCDate(d.getUTCDate() + 1)
+  ) {
+    const dayOfWeek = d.getUTCDay();
+    const daySlots = slotsByWeekday.get(dayOfWeek);
+    if (!daySlots || daySlots.length === 0) continue;
+
+    const ymd = toYmdFromContextDate(d);
+    for (const slot of daySlots) {
+      configuredSessionSignatures.add(`${ymd}|${slot.timeHHmm}|${slot.durationMinutes}|${teacherId || ""}`);
+    }
+  }
+
+  const sessionSignatureCounts = new Map<string, number>();
+  for (const sessionDoc of existingSnap.docs) {
+    const raw = sessionDoc.data() as Record<string, unknown>;
+    const signature = resolveSessionSignature({raw, fallbackTeacherId: teacherId});
+    if (!signature) continue;
+    const [sessionYmd] = signature.split("|");
+    if (sessionYmd < rangeStartYmd || sessionYmd > rangeEndYmd) continue;
+    sessionSignatureCounts.set(signature, (sessionSignatureCounts.get(signature) || 0) + 1);
+  }
+
   let replaced = 0;
   if (replaceFuture) {
-    const existingSnap = await db.collection("classSessions")
-      .where("enrollmentId", "==", enrollmentId)
-      .get();
     const nowMs = Date.now();
     const financialBySessionId = new Map<string, SessionFinancialLinkState>();
 
@@ -601,16 +660,29 @@ async function generateSessionsFromScheduleInternal(
     for (const sessionDoc of existingSnap.docs) {
       const raw = sessionDoc.data() as Record<string, unknown>;
       const financial = financialBySessionId.get(sessionDoc.id);
+      const signature = resolveSessionSignature({raw, fallbackTeacherId: teacherId});
+      const sessionYmd = resolveSessionYmd(raw);
 
-      if (requestedEndYmd) {
-        const sessionYmd = resolveSessionYmd(raw);
-        if (!sessionYmd || sessionYmd > rangeEndYmd) continue;
-      }
+      if (!sessionYmd || sessionYmd < rangeStartYmd || sessionYmd > rangeEndYmd) continue;
+
       if (!isSessionReplaceable({raw, financial, nowMs})) continue;
+
+      const isRemovedOrChangedSignature = !signature || !configuredSessionSignatures.has(signature);
+      const isDuplicateUpcomingSignature = signature ? (sessionSignatureCounts.get(signature) || 0) > 1 : false;
+      if (!isRemovedOrChangedSignature && !isDuplicateUpcomingSignature) continue;
 
       deleteBatch.delete(sessionDoc.ref);
       deleteOps += 1;
       replaced += 1;
+
+      if (signature) {
+        const current = sessionSignatureCounts.get(signature) || 0;
+        if (current <= 1) {
+          sessionSignatureCounts.delete(signature);
+        } else {
+          sessionSignatureCounts.set(signature, current - 1);
+        }
+      }
 
       if (deleteOps >= MAX_BATCH) {
         await deleteBatch.commit();
@@ -688,6 +760,13 @@ async function generateSessionsFromScheduleInternal(
     }
     plannedSessionsGenerated += 1;
 
+    const candidateYmd = toYmdFromContextDate(candidate.sessionDate);
+    const candidateSignature = `${candidateYmd}|${candidate.startTime}|${candidate.durationMinutes}|${teacherId || ""}`;
+    if ((sessionSignatureCounts.get(candidateSignature) || 0) > 0) {
+      skipped += 1;
+      continue;
+    }
+
     const classSessionRef = db.collection("classSessions").doc(candidate.sessionId);
     const existing = await classSessionRef.get();
     if (existing.exists) {
@@ -705,7 +784,7 @@ async function generateSessionsFromScheduleInternal(
       courseId,
       startAt: admin.firestore.Timestamp.fromDate(candidate.startAtDate),
       endAt: admin.firestore.Timestamp.fromDate(candidate.endAtDate),
-      date: toYmdFromContextDate(candidate.sessionDate),
+      date: candidateYmd,
       startTime: candidate.startTime,
       endTime: candidate.endTime,
       durationMins: candidate.durationMinutes,
@@ -725,6 +804,7 @@ async function generateSessionsFromScheduleInternal(
     writeBatch.set(classSessionRef, payload);
     created += 1;
     writeOps += 1;
+    sessionSignatureCounts.set(candidateSignature, (sessionSignatureCounts.get(candidateSignature) || 0) + 1);
 
     if (writeOps >= MAX_BATCH) {
       await writeBatch.commit();
