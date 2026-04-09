@@ -152,35 +152,33 @@ async function discoverBlogRoutes(page) {
  */
 function injectSeoMetadata(html, route) {
   const config = ROUTE_SEO_CONFIG[route];
-  if (!config) {
-    // No config for this route; return HTML as-is
-    return html;
-  }
-
-  const canonicalUrl = config.canonicalPath === '/' 
-    ? 'https://tinystepslearning.com/' 
-    : `https://tinystepslearning.com${config.canonicalPath}`;
-  const ogImageUrl = config.ogImage
+  const canonicalPath = config?.canonicalPath || route;
+  const canonicalUrl = canonicalPath === '/'
+    ? 'https://tinystepslearning.com/'
+    : `https://tinystepslearning.com${canonicalPath}`;
+  const ogImageUrl = config?.ogImage
     ? (config.ogImage.startsWith('http') ? config.ogImage : `https://tinystepslearning.com${config.ogImage}`)
     : 'https://tinystepslearning.com/og-default.jpg';
-  const ogType = config.ogType || 'website';
+  const ogType = config?.ogType || 'website';
 
   let result = html;
 
-  // Inject/replace <title>
-  const titleTag = `<title>${escapeHtml(config.title)}</title>`;
-  result = result.replace(/<title>.*?<\/title>/i, titleTag) || result.replace('</head>', `${titleTag}</head>`);
+  if (config) {
+    // Inject/replace <title>
+    const titleTag = `<title>${escapeHtml(config.title)}</title>`;
+    result = result.replace(/<title>.*?<\/title>/i, titleTag) || result.replace('</head>', `${titleTag}</head>`);
 
-  // Inject/replace <meta name="description">
-  const descMeta = `<meta name="description" content="${escapeHtml(config.description)}">`;
-  result = result.replace(/<meta name="description"[^>]*>/i, descMeta) || result.replace('</head>', `${descMeta}</head>`);
+    // Inject/replace <meta name="description">
+    const descMeta = `<meta name="description" content="${escapeHtml(config.description)}">`;
+    result = result.replace(/<meta name="description"[^>]*>/i, descMeta) || result.replace('</head>', `${descMeta}</head>`);
 
-  // Inject/replace optional <meta name="keywords">
-  if (config.keywords) {
-    const keywordsMeta = `<meta name="keywords" content="${escapeHtml(config.keywords)}">`;
-    result = result.replace(/<meta name="keywords"[^>]*>/i, keywordsMeta) || result.replace('</head>', `${keywordsMeta}</head>`);
-  } else {
-    result = result.replace(/<meta name="keywords"[^>]*>\s*/i, '');
+    // Inject/replace optional <meta name="keywords">
+    if (config.keywords) {
+      const keywordsMeta = `<meta name="keywords" content="${escapeHtml(config.keywords)}">`;
+      result = result.replace(/<meta name="keywords"[^>]*>/i, keywordsMeta) || result.replace('</head>', `${keywordsMeta}</head>`);
+    } else {
+      result = result.replace(/<meta name="keywords"[^>]*>\s*/i, '');
+    }
   }
 
   // Remove invalid locale alternates until the site has real locale-variant URLs.
@@ -191,7 +189,7 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<link rel="canonical"[^>]*>/i, canonicalLink) || result.replace('</head>', `${canonicalLink}</head>`);
 
   // Inject/replace <meta name="robots">
-  const robotsContent = config.robots || DEFAULT_INDEXABLE_ROBOTS;
+  const robotsContent = config?.robots || DEFAULT_INDEXABLE_ROBOTS;
   const robotsMeta = `<meta name="robots" content="${robotsContent}">`;
   result = result.replace(/<meta name="robots"[^>]*>/i, robotsMeta) || result.replace('</head>', `${robotsMeta}</head>`);
   const googlebotMeta = `<meta name="googlebot" content="${robotsContent}">`;
@@ -202,8 +200,9 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<meta name="author"[^>]*>/i, authorMeta) || result.replace('</head>', `${authorMeta}</head>`);
 
   // Inject/replace OpenGraph + Twitter share metadata for messaging previews
-  const ogTitleMeta = `<meta property="og:title" content="${escapeHtml(config.title)}">`;
-  const ogDescriptionMeta = `<meta property="og:description" content="${escapeHtml(config.description)}">`;
+  if (config) {
+    const ogTitleMeta = `<meta property="og:title" content="${escapeHtml(config.title)}">`;
+    const ogDescriptionMeta = `<meta property="og:description" content="${escapeHtml(config.description)}">`;
   const ogUrlMeta = `<meta property="og:url" content="${canonicalUrl}">`;
   const ogTypeMeta = `<meta property="og:type" content="${ogType}">`;
   const ogSiteNameMeta = `<meta property="og:site_name" content="Tiny Steps Learning">`;
@@ -233,6 +232,13 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<meta name="twitter:url"[^>]*>/i, twitterUrlMeta) || result.replace('</head>', `${twitterUrlMeta}</head>`);
   result = result.replace(/<meta name="twitter:image"[^>]*>/i, twitterImageMeta) || result.replace('</head>', `${twitterImageMeta}</head>`);
   result = result.replace(/<meta name="twitter:image:alt"[^>]*>/i, twitterImageAltMeta) || result.replace('</head>', `${twitterImageAltMeta}</head>`);
+  } else {
+    // For routes not explicitly present in ROUTE_SEO_CONFIG, still enforce canonical URL.
+    const ogUrlMeta = `<meta property="og:url" content="${canonicalUrl}">`;
+    const twitterUrlMeta = `<meta name="twitter:url" content="${canonicalUrl}">`;
+    result = result.replace(/<meta property="og:url"[^>]*>/i, ogUrlMeta) || result.replace('</head>', `${ogUrlMeta}</head>`);
+    result = result.replace(/<meta name="twitter:url"[^>]*>/i, twitterUrlMeta) || result.replace('</head>', `${twitterUrlMeta}</head>`);
+  }
 
   // Ensure at least one JSON-LD block exists in prerendered HTML for downstream SEO smoke checks.
   // Some routes can render body content before runtime SEO effects append schema.
@@ -240,7 +246,7 @@ function injectSeoMetadata(html, route) {
     const fallbackSchema = {
       '@context': 'https://schema.org',
       '@type': route === '/' ? 'WebSite' : 'WebPage',
-      name: config.title,
+      name: config?.title || 'Tiny Steps Learning',
       url: canonicalUrl,
     };
     const fallbackJson = JSON.stringify(fallbackSchema).replace(/<\/script/gi, '<\\/script');
@@ -310,13 +316,21 @@ async function renderRouteWithRetry(page, route, maxRetries = 2) {
       let readinessError = null;
       try {
         await page.waitForFunction(
-          () => {
+          (currentRoute) => {
             const root = document.getElementById('root');
             if (!root) return false;
             const textLength = root.innerText?.length || 0;
             const hasHeading = root.querySelector('h1, h2') !== null;
-            return textLength > 200 || hasHeading;
+            const hasLoadingText = /\bloading\b/i.test(root.innerText || '');
+
+            if (typeof currentRoute === 'string' && currentRoute.startsWith('/blog/')) {
+              const hasBlogArticle = root.querySelector('article') !== null || root.querySelector('.ts-blog-hero-title') !== null;
+              return !hasLoadingText && hasBlogArticle && textLength > 600;
+            }
+
+            return !hasLoadingText && (textLength > 200 || hasHeading);
           },
+          route,
           { timeout: 10000 }
         );
       } catch (error) {
@@ -326,8 +340,12 @@ async function renderRouteWithRetry(page, route, maxRetries = 2) {
       const html = await page.content();
 
       if (readinessError) {
-        const hasMeaningfulMarkup =
-          html.length > 1500 && /<(main|article|h1|h2)\b/i.test(html);
+        const hasMeaningfulMarkup = (() => {
+          if (route.startsWith('/blog/')) {
+            return html.length > 2500 && /<(article|h1|h2)\b/i.test(html);
+          }
+          return html.length > 1500 && /<(main|article|h1|h2)\b/i.test(html);
+        })();
         if (!hasMeaningfulMarkup) {
           throw readinessError;
         }
