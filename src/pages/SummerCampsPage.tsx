@@ -235,7 +235,7 @@ const FAQS = [
   {
     question: 'What is included in Tiny Steps Summer Camp 2026?',
     answer:
-      `The program runs as a summer camp season from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, live teacher-led online classes, worksheets, class recordings, and a quick level check before placement. Families can choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track based on the child’s current need.`,
+      `The program runs as a summer camp season from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, live teacher-led online classes, worksheets, class recordings, and a quick level check before placement. Families choose one separate track-specific batch: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.`,
   },
   {
     question: 'When does Tiny Steps Summer Camp 2026 start?',
@@ -780,7 +780,7 @@ function SummerCampLeadForm() {
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
-      `Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Phonics, grammar, reading, and communication in a structured, child-friendly format.`;
+      `Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one track-specific ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.`;
 
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -854,7 +854,7 @@ export default function SummerCampsPage() {
       '@id': 'https://tinystepslearning.com/summer-camps#service',
       name: 'Tiny Steps Summer Camp Fast Track Pack',
       serviceType: 'Online summer camp for kids',
-      description: `Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students. Limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
+      description: `Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one track-specific ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students. Choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track. Limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
       areaServed: [
         {
           '@type': 'Country',
@@ -990,7 +990,7 @@ export default function SummerCampsPage() {
                   Tiny Steps Summer Camp 2026
                 </h1>
                 <p className="mt-4 max-w-3xl text-base text-slate-700 sm:text-lg">
-                  A focused summer learning season for children ages 4–12. Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one {SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with live teacher guidance in phonics, grammar, reading, and communication.
+                  A focused summer learning season for children ages 4–12. Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Parents choose one separate focus track for each child: Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track.
                 </p>
                 
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm shadow-sm">
@@ -1040,7 +1040,7 @@ export default function SummerCampsPage() {
                   <p>{SUMMER_CAMP_SCHEDULE_LABEL}</p>
                   <p>{SUMMER_CAMP_HOLIDAY_LABEL}</p>
                   <p>50–60 minute live classes</p>
-                  <p>Phonics + grammar + reading + communication support</p>
+                  <p>Choose one focus track: phonics, grammar, or speaking</p>
                   <p>Effective worksheets + class recordings</p>
                 </div>
                 <div id="whatsapp-enroll" className="mt-5 flex scroll-mt-24 flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -1512,7 +1512,7 @@ export default function SummerCampsPage() {
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
               <p className="mt-2 text-sm text-gray-700">
-                Tiny Steps Summer Camp is a premium small-group online program, capped at {SUMMER_CAMP_BATCH_CAP} students per batch. The summer season runs from {SUMMER_CAMP_SEASON_START_LABEL} to {SUMMER_CAMP_SEASON_END_LABEL}, and each child joins one clear 4-week learning path inside that season.
+                Tiny Steps Summer Camp is a premium small-group online program, capped at {SUMMER_CAMP_BATCH_CAP} students per batch. The summer season runs from {SUMMER_CAMP_SEASON_START_LABEL} to {SUMMER_CAMP_SEASON_END_LABEL}, and each child joins one clear 4-week track-specific batch in phonics, grammar, or speaking.
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">

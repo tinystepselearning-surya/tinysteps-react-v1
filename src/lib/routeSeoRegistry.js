@@ -107,6 +107,13 @@ export const ROUTE_SEO_REGISTRY = {
     keywords:
       'online phonics classes,english classes for kids,real class samples,what Tiny Steps classes look like,online reading classes for kids,grammar classes for children',
   },
+  '/testimonials': {
+    title: 'Parent Reviews | Tiny Steps Learning',
+    description:
+      'Read moderation-approved parent reviews and star ratings for Tiny Steps phonics, grammar, and public speaking programs.',
+    canonicalPath: '/testimonials',
+    ogType: 'website',
+  },
   '/for-schools': {
     title: 'English Program for Schools | Tiny Steps Learning',
     description:
@@ -237,7 +244,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/summer-camps': {
     title: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
     description:
-      'Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: 27 April to 13 June 2026. Each child joins one 24 live-class batch in 4 weeks with Monday to Saturday batches, Sunday holiday, and limited start dates on 27 April, 4 May, 11 May and 18 May 2026.',
+      'Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: 27 April to 13 June 2026. Each child joins one track-specific 24 live-class batch in 4 weeks. Choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track, with Monday to Saturday batches, Sunday holiday, and limited start dates on 27 April, 4 May, 11 May and 18 May 2026.',
     canonicalPath: '/summer-camps',
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',

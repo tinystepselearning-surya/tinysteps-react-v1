@@ -27,6 +27,7 @@ import EnrollmentsList from './EnrollmentManagement/EnrollmentsList';
 import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
 import ClassSamplesManagement from './ClassSamplesManagement';
+import TestimonialsManagement from './TestimonialsManagement';
 import LeadsInquiriesWorkspace, { type LeadsWorkspaceView } from './LeadsInquiriesWorkspace';
 import TodaysNotifications from './TodaysNotifications';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -292,6 +293,7 @@ export default function AdminDashboard() {
       'lessons',
       'class-recordings',
       'class-samples',
+      'testimonials',
       'analytics',
       'holidays',
       'teacher-payments',
@@ -423,6 +425,10 @@ export default function AdminDashboard() {
 
             <TabsContent value="class-samples" className="mt-0">
               <ClassSamplesManagement />
+            </TabsContent>
+
+            <TabsContent value="testimonials" className="mt-0">
+              <TestimonialsManagement />
             </TabsContent>
 
             <TabsContent value="analytics" className="mt-0">

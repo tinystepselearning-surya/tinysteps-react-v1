@@ -3,6 +3,8 @@ import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
+import TestimonialsSection from "../components/seo/TestimonialsSection";
+import TestimonialSubmissionForm from "../components/seo/TestimonialSubmissionForm";
 
 type Item = {
   title: string;
@@ -504,6 +506,23 @@ const WhyTinyStepsPage: FC = () => {
         </div>
       </section>
 
+      <TestimonialsSection
+        title="Parent trust, in their own words"
+        subtitle="Approved testimonials from families who experienced Tiny Steps classes."
+        pageTag="why-tiny-steps"
+        limit={6}
+        viewAllHref="/testimonials"
+      />
+
+      <div id="share-feedback" className="scroll-mt-28">
+        <TestimonialSubmissionForm
+          pageTag="why-tiny-steps"
+          title="Share your Tiny Steps experience"
+          description="We review every submission before publishing. Your feedback helps other families choose confidently."
+          compact
+        />
+      </div>
+
       {/* FOUNDER STORY SNIPPET */}
       <section className="mx-auto max-w-6xl px-4 py-8">
         <div className="rounded-3xl border bg-white p-6 md:p-8 shadow-sm">
@@ -513,6 +532,28 @@ const WhyTinyStepsPage: FC = () => {
                 OUR STORY
               </div>
               <h2 className="mt-3 text-2xl font-extrabold">Why Tiny Steps exists</h2>
+
+              <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/priya-founder-tiny-steps-learning.webp"
+                    alt="Priya, Founder of Tiny Steps Learning"
+                    width={72}
+                    height={72}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-[72px] w-[72px] rounded-xl border border-slate-200 object-cover object-center"
+                  />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Founder</p>
+                    <p className="text-lg font-extrabold text-slate-900">Priya</p>
+                  </div>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-slate-700">
+                  With 10+ years in early childhood English education, Priya built Tiny Steps to help children ages
+                  3-12 strengthen phonics, grammar, writing, and speaking with calm, structured teaching.
+                </p>
+              </div>
             </div>
 
             <div className="md:col-span-2 space-y-4 text-slate-700 leading-relaxed">

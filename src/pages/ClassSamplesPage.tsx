@@ -12,6 +12,8 @@ import {
   type ClassSampleItem,
 } from '../lib/classSamples';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
+import TestimonialsSection from '../components/seo/TestimonialsSection';
+import TestimonialSubmissionForm from '../components/seo/TestimonialSubmissionForm';
 
 type FilterCategory = 'all' | ClassSampleCategory;
 
@@ -572,6 +574,22 @@ export default function ClassSamplesPage() {
           </div>
         </div>
       </section>
+
+      <TestimonialsSection
+        title="What parents noticed in real classes"
+        subtitle="Reviews focused on class quality, teacher attention, and child engagement."
+        pageTag="class-samples"
+        limit={4}
+        compact
+        viewAllHref="/testimonials"
+      />
+
+      <TestimonialSubmissionForm
+        pageTag="class-samples"
+        title="Share feedback after watching class samples"
+        description="If these samples helped you evaluate class quality, share your experience. Submissions are moderation-first and never auto-published."
+        compact
+      />
 
       <section className="mx-auto max-w-6xl px-4 pb-16 pt-10 lg:px-6">
         <div className="rounded-[32px] bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.18),_transparent_30%),radial-gradient(circle_at_bottom_right,_rgba(125,211,252,0.2),_transparent_32%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] px-6 py-10 ring-1 ring-slate-200 sm:px-8">

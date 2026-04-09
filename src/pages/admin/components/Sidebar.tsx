@@ -17,6 +17,7 @@ import {
   Users,
   Wallet,
   CalendarDays,
+  MessageSquareQuote,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +40,7 @@ export default function Sidebar({ selectedTab, onTabChange, className, onNavigat
     { id: 'lessons', label: 'Lesson Library', icon: BookOpen },
     { id: 'class-recordings', label: 'Class Recordings', icon: Users },
     { id: 'class-samples', label: 'Class Samples', icon: Users },
+    { id: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote },
     { id: 'parent-worksheets', label: 'Parent Worksheets', icon: FileText },
     { id: 'analytics', label: 'Analytics', icon: LineChart },
     { id: 'settings', label: 'Settings', icon: Settings },

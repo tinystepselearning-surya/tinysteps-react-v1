@@ -567,6 +567,79 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // TESTIMONIALS
+    // ----------------------------
+    match /testimonials/{testimonialId} {
+      // Public site can read approved testimonials only.
+      allow read: if (resource.data.status == 'approved') || isAdmin();
+      // Public write path: create pending submissions only with strict shape validation.
+      allow create: if isAdmin() || (
+        request.resource.data.keys().hasOnly([
+          'status',
+          'isFeatured',
+          'source',
+          'reviewerType',
+          'parentName',
+          'childName',
+          'childAge',
+          'city',
+          'reviewText',
+          'rating',
+          'consentToPublishName',
+          'consentToPublishChildName',
+          'courseTags',
+          'pageTags',
+          'classFormat',
+          'attendedCourse',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'status',
+          'isFeatured',
+          'source',
+          'reviewerType',
+          'parentName',
+          'rating',
+          'consentToPublishName',
+          'consentToPublishChildName',
+          'courseTags',
+          'pageTags',
+          'createdAt',
+          'updatedAt'
+        ])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.isFeatured == false
+        && request.resource.data.source == 'public_form'
+        && request.resource.data.reviewerType == 'parent'
+        && request.resource.data.parentName is string
+        && request.resource.data.parentName.size() >= 2
+        && request.resource.data.parentName.size() <= 80
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5
+        && request.resource.data.rating % 1 == 0
+        && (!('reviewText' in request.resource.data) || (request.resource.data.reviewText is string && request.resource.data.reviewText.size() <= 2000))
+        && request.resource.data.consentToPublishName == true
+        && request.resource.data.consentToPublishChildName == false
+        && request.resource.data.courseTags is list
+        && request.resource.data.courseTags.size() <= 6
+        && request.resource.data.courseTags.hasOnly(['phonics', 'grammar', 'speaking'])
+        && request.resource.data.pageTags is list
+        && request.resource.data.pageTags.size() <= 6
+        && request.resource.data.pageTags.hasOnly(['home', 'why-tiny-steps', 'class-samples', 'courses'])
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && (!('childName' in request.resource.data) || (request.resource.data.childName is string && request.resource.data.childName.size() <= 80))
+        && (!('childAge' in request.resource.data) || (request.resource.data.childAge is number && request.resource.data.childAge >= 2 && request.resource.data.childAge <= 18 && request.resource.data.childAge % 1 == 0))
+        && (!('city' in request.resource.data) || (request.resource.data.city is string && request.resource.data.city.size() <= 80))
+        && (!('classFormat' in request.resource.data) || request.resource.data.classFormat in ['1:1', 'small_group'])
+        && (!('attendedCourse' in request.resource.data) || (request.resource.data.attendedCourse is string && request.resource.data.attendedCourse.size() <= 120))
+      );
+      allow update, delete: if isAdmin();
+    }
+
+    // ----------------------------
     // PARENT WORKSHEET LIBRARY
     // ----------------------------
     match /parentWorksheetLibrary/{worksheetId} {

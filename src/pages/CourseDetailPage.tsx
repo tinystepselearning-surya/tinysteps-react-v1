@@ -8,6 +8,13 @@ import Meta from '../components/common/Meta';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import { applySeo } from '../lib/seo';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
+import TestimonialsSection from '../components/seo/TestimonialsSection';
+import {
+  computeTestimonialAggregate,
+  fetchApprovedTestimonialsCatalog,
+  filterApprovedTestimonialsByCourse,
+  getCourseTagFromSlug,
+} from '../lib/testimonials';
 
 const CourseDetailPage: FC = () => {
   const params = useParams();
@@ -23,7 +30,15 @@ const CourseDetailPage: FC = () => {
     return lower;
   };
   const slug = normalizeSlug(rawSlug);
+  const courseTag = getCourseTagFromSlug(slug);
+  const courseTrack = useMemo(() => {
+    if (slug.includes('grammar')) return 'grammar';
+    if (slug.includes('speaking') || slug.includes('communication')) return 'speaking';
+    return 'phonics';
+  }, [slug]);
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
+  const [courseRatingCount, setCourseRatingCount] = useState(0);
+  const [courseAverageRating, setCourseAverageRating] = useState(0);
   const usedHrefs = useMemo(() => new Set<string>(), [slug]);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
@@ -53,6 +68,27 @@ const CourseDetailPage: FC = () => {
   useEffect(() => {
     if (course) document.title = `${course.name} | Tiny Steps`;
   }, [course, slug]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const approved = await fetchApprovedTestimonialsCatalog(800);
+        if (cancelled) return;
+        const filtered = filterApprovedTestimonialsByCourse(approved, courseTrack);
+        const aggregate = computeTestimonialAggregate(filtered);
+        setCourseRatingCount(aggregate.ratingCount);
+        setCourseAverageRating(aggregate.averageRating);
+      } catch {
+        if (cancelled) return;
+        setCourseRatingCount(0);
+        setCourseAverageRating(0);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [courseTrack]);
 
   useEffect(() => {
     if (course) return;
@@ -125,6 +161,28 @@ const CourseDetailPage: FC = () => {
             </ul>
           </div>
         </div>
+
+        <div className="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Track Parent Rating</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {courseRatingCount ? courseAverageRating.toFixed(1) : '0.0'}
+            <span className="ml-1 text-lg font-semibold text-slate-500">/ 5</span>
+          </p>
+          <p className="mt-1 text-sm text-slate-600">
+            {courseRatingCount} {courseRatingCount === 1 ? 'approved rating' : 'approved ratings'} for this learning track
+          </p>
+        </div>
+
+        <TestimonialsSection
+          title="Parent feedback for this learning track"
+          subtitle="Approved reviews from families in the same course pathway."
+          courseTag={courseTag}
+          limit={3}
+          compact
+          className="px-0"
+          viewAllHref={`/testimonials?course=${courseTrack}`}
+          viewAllLabel="View all program reviews"
+        />
 
         <div className="mt-10">
           <h2 className="font-heading text-2xl font-bold">Detailed Curriculum</h2>

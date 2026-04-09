@@ -37,6 +37,7 @@ const TeamPage = lazy(() => import('../pages/TeamPage'));
 const SummerCampsPage = lazy(() => import('../pages/SummerCampsPage'));
 const SummerCampProgramPage = lazy(() => import('../pages/SummerCampProgramPage'));
 const ClassSamplesPage = lazy(() => import('../pages/ClassSamplesPage'));
+const TestimonialsPage = lazy(() => import('../pages/TestimonialsPage'));
 
 // Course Pages
 const PhonicsPage = lazy(() => import('../pages/phonics'));
@@ -462,6 +463,7 @@ const router = createBrowserRouter(
         { path: 'learning-partner', element: <LearningPartnerPage /> },
         { path: 'team', element: <TeamPage /> },
         { path: 'class-samples', element: <ClassSamplesPage /> },
+        { path: 'testimonials', element: <TestimonialsPage /> },
         { path: 'careers', element: <CareersPage /> },
         { path: 'courses', element: <CoursesPage /> },
         { path: 'courses/:slug', element: <CourseDetailPage /> },
@@ -576,6 +578,7 @@ const router = createBrowserRouter(
             { path: 'demo-sessions', element: <Navigate to="/surya?tab=leads&leadView=demos" replace /> },
             { path: 'leads', element: <Navigate to="/surya?tab=leads" replace /> },
             { path: 'class-samples', element: <Navigate to="/surya?tab=class-samples" replace /> },
+            { path: 'testimonials', element: <Navigate to="/surya?tab=testimonials" replace /> },
           ],
         },
         { path: 'admin', element: <Navigate to="/surya/login" replace /> },

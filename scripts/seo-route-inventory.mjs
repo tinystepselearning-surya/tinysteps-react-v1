@@ -8,6 +8,7 @@ export const STATIC_MARKETING_ROUTES = [
   '/learning-partner',
   '/team',
   '/class-samples',
+  '/testimonials',
   '/careers',
   '/courses',
   '/curriculum',
