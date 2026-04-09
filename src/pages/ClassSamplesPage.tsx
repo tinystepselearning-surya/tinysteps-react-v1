@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
 import Meta from '../components/common/Meta';
 import { db } from '../lib/firebaseConfig';
 import {
@@ -216,7 +216,12 @@ export default function ClassSamplesPage() {
       setLoadError(null);
 
       try {
-        const ref = query(collection(db, 'classSamples'), orderBy('sortOrder', 'asc'), limit(200));
+        const ref = query(
+          collection(db, 'classSamples'),
+          where('active', '==', true),
+          orderBy('sortOrder', 'asc'),
+          limit(200),
+        );
         const snap = await getDocs(ref);
         const nextVideos = snap.docs.map((entry) => toClassSampleItem(entry.id, entry.data()));
         if (!cancelled) setVideos(nextVideos);
