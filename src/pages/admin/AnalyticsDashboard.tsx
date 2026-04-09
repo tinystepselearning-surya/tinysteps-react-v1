@@ -11,6 +11,18 @@ const monthKeyFromDate = (date: Date) => {
   return `${year}-${month}`;
 };
 
+const monthRangeFromKey = (monthKey: string): { startYmd: string; endYmd: string } | null => {
+  const parts = String(monthKey || '').split('-');
+  if (parts.length !== 2) return null;
+  const year = Number(parts[0]);
+  const month = Number(parts[1]);
+  if (!Number.isInteger(year) || !Number.isInteger(month) || month < 1 || month > 12) return null;
+  const startYmd = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-01`;
+  const lastDate = new Date(year, month, 0).getDate();
+  const endYmd = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(lastDate).padStart(2, '0')}`;
+  return { startYmd, endYmd };
+};
+
 const formatMoney = (value: any) => {
   const num = Number(value);
   if (!Number.isFinite(num)) return '₹0';
@@ -68,6 +80,111 @@ const normalizeEnrollmentStatus = (enrollment: any): string => {
   if (raw === 'canceled') return 'cancelled';
   if (raw === 'inactive') return 'archived';
   return raw;
+};
+
+const ACTIVE_LIKE_ENROLLMENT_STATUSES = new Set([
+  'trial',
+  'active',
+  'paused',
+  'pending_teacher',
+  'pending_payment',
+  'enrolled',
+  'current',
+  'ongoing',
+]);
+
+const LEGACY_PAST_ENROLLMENT_STATUSES = new Set([
+  'completed',
+  'discontinued',
+  'expired',
+  'cancelled',
+  'canceled',
+  'archived',
+]);
+
+const parseYmd = (value: any): Date | null => {
+  const raw = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const [y, m, d] = raw.split('-').map(Number);
+  const dt = new Date(y, m - 1, d);
+  if (
+    Number.isNaN(dt.getTime()) ||
+    dt.getFullYear() !== y ||
+    dt.getMonth() !== m - 1 ||
+    dt.getDate() !== d
+  ) {
+    return null;
+  }
+  return dt;
+};
+
+const toDateMaybe = (value: any): Date | null => {
+  if (!value) return null;
+  if (typeof value?.toDate === 'function') {
+    const d = value.toDate();
+    return Number.isFinite(d?.getTime?.()) ? d : null;
+  }
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value : null;
+  }
+  if (typeof value === 'string') {
+    const ymd = parseYmd(value);
+    if (ymd) return ymd;
+  }
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : null;
+};
+
+const normalizeTimeHHmm = (value: any): string | null => {
+  const raw = String(value || '').trim();
+  const match = raw.match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (!Number.isInteger(hh) || !Number.isInteger(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) return null;
+  return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+};
+
+const normalizeWeekday = (value: any): number | null => {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > 6) return null;
+  return n;
+};
+
+const extractWeeklyScheduleSlots = (schedule: any): Array<{ weekday: number; timeHHmm: string }> => {
+  const slots: Array<{ weekday: number; timeHHmm: string }> = [];
+  const seen = new Set<string>();
+
+  const weeklySlots = Array.isArray(schedule?.weeklySlots) ? schedule.weeklySlots : [];
+  weeklySlots.forEach((slot: any) => {
+    const weekday = normalizeWeekday(slot?.weekday);
+    const timeHHmm = normalizeTimeHHmm(slot?.time || slot?.timeHHmm);
+    if (weekday === null || !timeHHmm) return;
+    const key = `${weekday}_${timeHHmm}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    slots.push({ weekday, timeHHmm });
+  });
+  if (slots.length > 0) return slots;
+
+  const legacyWeekdays = Array.isArray(schedule?.weekdays) ? schedule.weekdays : [];
+  const legacyTime = normalizeTimeHHmm(schedule?.timeHHmm || schedule?.time) || '18:00';
+  legacyWeekdays.forEach((day: any) => {
+    const weekday = normalizeWeekday(day);
+    if (weekday === null) return;
+    const key = `${weekday}_${legacyTime}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    slots.push({ weekday, timeHHmm: legacyTime });
+  });
+  return slots;
+};
+
+const dayCountInclusive = (start: Date, end: Date): number => {
+  const s = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+  const e = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+  if (s > e) return 0;
+  return Math.floor((e - s) / (24 * 60 * 60 * 1000)) + 1;
 };
 
 const MetricCard = ({
@@ -223,31 +340,101 @@ export default function AnalyticsDashboard(): JSX.Element {
   const outstandingRevenue = revenueTotals.dueTotal;
   const completedSessionsMonth = revenueTotals.chargesCount;
 
+  const plannedProjection = useMemo(() => {
+    const monthRange = monthRangeFromKey(selectedMonth);
+    if (!monthRange) {
+      return {
+        plannedSessions: 0,
+        scheduleDrivenEnrollments: 0,
+        projectedRevenue: 0,
+        avgProjectedRevenuePerSession: 0,
+        missingFeeSessions: 0,
+      };
+    }
+
+    const monthStart = parseYmd(monthRange.startYmd);
+    const monthEnd = parseYmd(monthRange.endYmd);
+    if (!monthStart || !monthEnd) {
+      return {
+        plannedSessions: 0,
+        scheduleDrivenEnrollments: 0,
+        projectedRevenue: 0,
+        avgProjectedRevenuePerSession: 0,
+        missingFeeSessions: 0,
+      };
+    }
+
+    const observedAvgCompletedRevenue =
+      completedSessionsMonth > 0 ? expectedRevenue / completedSessionsMonth : 0;
+
+    let plannedSessions = 0;
+    let scheduleDrivenEnrollments = 0;
+    let projectedRevenue = 0;
+    let missingFeeSessions = 0;
+
+    enrollments.forEach((enrollment) => {
+      const status = normalizeEnrollmentStatus(enrollment);
+      if (!ACTIVE_LIKE_ENROLLMENT_STATUSES.has(status)) return;
+
+      const slots = extractWeeklyScheduleSlots(enrollment?.schedule);
+      if (slots.length === 0) return;
+
+      const scheduleStart =
+        parseYmd(enrollment?.classesStartDateYmd) ||
+        toDateMaybe(enrollment?.classesStartDate) ||
+        parseYmd(enrollment?.startDateYmd) ||
+        toDateMaybe(enrollment?.startDate);
+      const scheduleEnd =
+        parseYmd(enrollment?.schedule?.endDateYmd) ||
+        parseYmd(enrollment?.endDateYmd) ||
+        toDateMaybe(enrollment?.endDate);
+
+      const effectiveStart = scheduleStart && scheduleStart > monthStart ? scheduleStart : monthStart;
+      const effectiveEnd = scheduleEnd && scheduleEnd < monthEnd ? scheduleEnd : monthEnd;
+      if (effectiveStart > effectiveEnd) return;
+
+      let enrollmentPlannedSessions = 0;
+      const days = dayCountInclusive(effectiveStart, effectiveEnd);
+      for (let i = 0; i < days; i += 1) {
+        const day = new Date(effectiveStart);
+        day.setDate(effectiveStart.getDate() + i);
+        const weekday = day.getDay();
+        enrollmentPlannedSessions += slots.filter((slot) => slot.weekday === weekday).length;
+      }
+      if (enrollmentPlannedSessions <= 0) return;
+
+      scheduleDrivenEnrollments += 1;
+      plannedSessions += enrollmentPlannedSessions;
+
+      const feeRaw = Number(enrollment?.feePerClass ?? NaN);
+      const feePerClass = Number.isFinite(feeRaw) && feeRaw > 0 ? feeRaw : 0;
+      if (feePerClass > 0) {
+        projectedRevenue += enrollmentPlannedSessions * feePerClass;
+      } else {
+        missingFeeSessions += enrollmentPlannedSessions;
+      }
+    });
+
+    if (missingFeeSessions > 0 && observedAvgCompletedRevenue > 0) {
+      projectedRevenue += missingFeeSessions * observedAvgCompletedRevenue;
+    }
+
+    return {
+      plannedSessions,
+      scheduleDrivenEnrollments,
+      projectedRevenue,
+      avgProjectedRevenuePerSession: plannedSessions > 0 ? projectedRevenue / plannedSessions : 0,
+      missingFeeSessions,
+    };
+  }, [completedSessionsMonth, enrollments, expectedRevenue, selectedMonth]);
+
   const enrollmentBuckets = useMemo(() => {
-    const activeLike = new Set([
-      'trial',
-      'active',
-      'paused',
-      'pending_teacher',
-      'pending_payment',
-      'enrolled',
-      'current',
-      'ongoing',
-    ]);
-    const past = new Set([
-      'completed',
-      'discontinued',
-      'expired',
-      'cancelled',
-      'canceled',
-      'archived',
-    ]);
     const counts = { activeLike: 0, past: 0, other: 0 };
 
     enrollments.forEach((e) => {
       const status = normalizeEnrollmentStatus(e);
-      if (activeLike.has(status)) counts.activeLike += 1;
-      else if (past.has(status)) counts.past += 1;
+      if (ACTIVE_LIKE_ENROLLMENT_STATUSES.has(status)) counts.activeLike += 1;
+      else if (LEGACY_PAST_ENROLLMENT_STATUSES.has(status)) counts.past += 1;
       else counts.other += 1;
     });
 
@@ -392,6 +579,12 @@ export default function AnalyticsDashboard(): JSX.Element {
     };
   }, [teacherEarnings]);
 
+  const avgSessionPayout =
+    teacherEarningsSummary.totalSessionCount > 0
+      ? teacherEarningsSummary.totalSessionEarned / teacherEarningsSummary.totalSessionCount
+      : 0;
+  const projectedTeacherPayout = plannedProjection.plannedSessions * avgSessionPayout;
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -422,10 +615,36 @@ export default function AnalyticsDashboard(): JSX.Element {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <MetricCard label="Expected (month)" value={formatMoney(expectedRevenue)} />
+        <MetricCard
+          label="Expected (month)"
+          value={formatMoney(expectedRevenue)}
+          sub="Current billed expectation (completed sessions)"
+        />
         <MetricCard label="Earned (month)" value={formatMoney(earnedRevenue)} />
         <MetricCard label="Outstanding" value={formatMoney(outstandingRevenue)} />
-        <MetricCard label="Completed sessions" value={completedSessionsMonth} />
+        <MetricCard label="Completed sessions (billed)" value={completedSessionsMonth} />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <MetricCard
+          label="Planned sessions (month)"
+          value={plannedProjection.plannedSessions}
+          sub={`${plannedProjection.scheduleDrivenEnrollments} active enrollments with schedule`}
+        />
+        <MetricCard
+          label="Projected revenue (if all planned complete)"
+          value={formatMoney(plannedProjection.projectedRevenue)}
+          sub={
+            plannedProjection.missingFeeSessions > 0
+              ? `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)} • ${plannedProjection.missingFeeSessions} sessions estimated by avg`
+              : `Avg/session ${formatMoney(plannedProjection.avgProjectedRevenuePerSession)}`
+          }
+        />
+        <MetricCard
+          label="Projected teacher payout (planned)"
+          value={formatMoney(projectedTeacherPayout)}
+          sub={`Avg payout/session ${formatMoney(avgSessionPayout)}`}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
