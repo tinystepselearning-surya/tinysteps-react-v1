@@ -283,8 +283,12 @@ async function writeRouteHtml(route, html) {
  */
 async function renderRouteWithRetry(page, route, maxRetries = 2) {
   const url = `${HOST}${route}`;
+  const shouldUseDomContentLoaded =
+    route === "/class-samples" ||
+    route.startsWith("/courses/") ||
+    route === "/testimonials";
   const navigationStrategy =
-    route === "/class-samples"
+    shouldUseDomContentLoaded
       ? { waitUntil: "domcontentloaded", timeout: 60000 }
       : { waitUntil: "networkidle", timeout: 60000 };
   
