@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { collection, getDocs, limit, query, where } from 'firebase/firestore';
 import Meta from '../components/common/Meta';
 import { db } from '../lib/firebaseConfig';
 import {
@@ -219,7 +219,6 @@ export default function ClassSamplesPage() {
         const ref = query(
           collection(db, 'classSamples'),
           where('active', '==', true),
-          orderBy('sortOrder', 'asc'),
           limit(200),
         );
         const snap = await getDocs(ref);
