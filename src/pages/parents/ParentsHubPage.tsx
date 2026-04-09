@@ -4,6 +4,7 @@ import { applySeo } from '../../lib/seo';
 import parentsMeta from '../../content/parentsMeta';
 import AboutAuthor from '../../components/AboutAuthor';
 import Meta from '../../components/common/Meta';
+import AutoLinkedText from '../../components/seo/AutoLinkedText';
 
 const heroSignals = [
   'Practical guides for ages 3-12',
@@ -425,7 +426,9 @@ const ParentsHubPage: React.FC = () => {
                   <summary className="cursor-pointer list-none text-base font-semibold leading-7 text-slate-900">
                     {item.question}
                   </summary>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{item.answer}</p>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">
+                    <AutoLinkedText text={item.answer} />
+                  </p>
                 </details>
               ))}
             </div>

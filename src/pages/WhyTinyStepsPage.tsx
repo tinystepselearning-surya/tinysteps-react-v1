@@ -2,6 +2,7 @@ import type { FC } from "react";
 import React, { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
+import AutoLinkedText from "../components/seo/AutoLinkedText";
 
 type Item = {
   title: string;
@@ -221,7 +222,7 @@ const WhyTinyStepsPage: FC = () => {
             </h1>
 
             <p className="mt-4 text-lg md:text-xl text-slate-600">
-              Live 1:1 and small-group classes with trained mentors, structured curriculum you can understand, and transparent progress tracking parents trust.
+              <AutoLinkedText text="Live 1:1 and small-group classes with trained mentors, structured curriculum you can understand, and transparent progress tracking parents trust." />
             </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -283,7 +284,7 @@ const WhyTinyStepsPage: FC = () => {
 
         <div className="mt-8 grid gap-3 md:grid-cols-4">
           {methodSteps.map((it, idx) => (
-            <PremiumTile key={it.title} {...it} step={idx + 1} />
+            <PremiumTile key={it.title} {...it} step={idx + 1} desc={<AutoLinkedText text={it.desc} />} />
           ))}
         </div>
       </section>
@@ -410,7 +411,7 @@ const WhyTinyStepsPage: FC = () => {
             </div>
             <div className="mt-4 text-lg font-extrabold">Experienced educators</div>
             <div className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Mentors trained in phonics instruction, child development, and confidence-building correction techniques.
+              <AutoLinkedText text="Mentors trained in phonics instruction, child development, and confidence-building correction techniques." />
             </div>
           </div>
 
@@ -420,7 +421,7 @@ const WhyTinyStepsPage: FC = () => {
             </div>
             <div className="mt-4 text-lg font-extrabold">Assessment-first placement</div>
             <div className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Free assessment to identify the right starting level—so your child's progress feels steady and motivating, never frustrating.
+              <AutoLinkedText text="Free assessment to identify the right starting level—so your child's progress feels steady and motivating, never frustrating." />
             </div>
           </div>
 
@@ -430,7 +431,7 @@ const WhyTinyStepsPage: FC = () => {
             </div>
             <div className="mt-4 text-lg font-extrabold">Transparent updates</div>
             <div className="mt-2 text-sm text-slate-600 leading-relaxed">
-              Clear progress notes after each session: what was practiced, what improved, and simple next steps—no jargon, just clarity.
+              <AutoLinkedText text="Clear progress notes after each session: what was practiced, what improved, and simple next steps—no jargon, just clarity." />
             </div>
           </div>
         </div>
@@ -497,7 +498,7 @@ const WhyTinyStepsPage: FC = () => {
             </div>
 
             <div className="mt-6 rounded-xl border border-sky-200 bg-sky-50/50 px-4 py-3 text-sm text-slate-700">
-              <strong>Our commitment:</strong> You'll always know what your child is learning, how they're progressing, and what comes next. No confusing tracks, no surprise charges, no pressure to upgrade.
+              <strong>Our commitment:</strong> <AutoLinkedText text="You'll always know what your child is learning, how they're progressing, and what comes next. No confusing tracks, no surprise charges, no pressure to upgrade." />
             </div>
           </div>
         </div>
@@ -732,7 +733,11 @@ function PremiumTile({
   icon,
   step,
   accent,
-}: Item & { step: number; accent: Outcome["accent"] }) {
+}: Omit<Item, "desc"> & {
+  desc: React.ReactNode;
+  step: number;
+  accent: Outcome["accent"];
+}) {
   return (
     <div
       className={[

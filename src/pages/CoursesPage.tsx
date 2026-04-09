@@ -1,9 +1,10 @@
 // @ts-nocheck
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import { catalogs } from '../content/courses';
 import { createCourseListSchema } from '../lib/schemas';
+import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const coursesSeo = getRouteConfig('/courses');
 const coursesCanonicalPath = coursesSeo?.canonicalPath ?? '/courses';
@@ -81,6 +82,10 @@ const speakingCards = [
 ];
 
 function CoursesPage() {
+  const phonicsUsedHrefs = useMemo(() => new Set<string>(), []);
+  const grammarUsedHrefs = useMemo(() => new Set<string>(), []);
+  const speakingUsedHrefs = useMemo(() => new Set<string>(), []);
+
   useEffect(() => {
     const breadcrumb = {
       '@context': 'https://schema.org',
@@ -128,7 +133,7 @@ function CoursesPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">Trusted by families across 15+ countries</p>
             <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">A Complete English Learning Journey for Your Child</h1>
             <p className="mt-4 max-w-3xl text-sm text-white/85 sm:text-base">
-              Phonics, grammar, and confident speaking — taught step by step with clarity, care, and proven results.
+              <AutoLinkedText text="Phonics, grammar, and confident speaking — taught step by step with clarity, care, and proven results." />
             </p>
 
             <div className="mt-7 flex flex-wrap gap-3 sm:gap-3.5">
@@ -161,7 +166,7 @@ function CoursesPage() {
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Journey overview</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Choose the Right Starting Point</h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm text-slate-600 sm:text-base">
-              Every child starts at a different level. We guide them step by step to confident English.
+              <AutoLinkedText text="Every child starts at a different level. We guide them step by step to confident English." />
             </p>
           </div>
 
@@ -202,10 +207,10 @@ function CoursesPage() {
         <div className="mx-auto max-w-6xl">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Phonics Program — From Sounds to Reading Confidence</h2>
           <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
-            Your child learns to read naturally — not by memorizing, but by understanding sounds.
+            <AutoLinkedText text="Your child learns to read naturally — not by memorizing, but by understanding sounds." />
           </p>
           <p className="mt-2 max-w-3xl text-sm text-slate-700 sm:text-base">
-            Our phonics track follows a structured synthetic phonics approach inspired by methods such as Jolly Phonics.
+            <AutoLinkedText text="Our phonics track follows a structured synthetic phonics approach inspired by methods such as Jolly Phonics." />
           </p>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -218,11 +223,11 @@ function CoursesPage() {
                   {card.focus.map((point) => (
                     <li key={point} className="flex items-start gap-2">
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                      <span>{point}</span>
+                      <span><AutoLinkedText text={point} usedHrefs={phonicsUsedHrefs} /></span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">Outcome: {card.outcome}</p>
+                <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={phonicsUsedHrefs} /></p>
                 <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
                   <a
                     href={BOOK_ASSESSMENT_HREF}
@@ -244,7 +249,7 @@ function CoursesPage() {
         <div className="mx-auto max-w-6xl rounded-[28px] border border-sky-100/90 bg-gradient-to-r from-sky-50/45 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Grammar Program — From Words to Clear Sentences</h2>
           <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
-            Structured progression from sentence basics to fluent writing and expression.
+            <AutoLinkedText text="Structured progression from sentence basics to fluent writing and expression." />
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -256,11 +261,11 @@ function CoursesPage() {
                   {card.focus.map((point) => (
                     <li key={point} className="flex items-start gap-2">
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-sky-500" />
-                      <span>{point}</span>
+                      <span><AutoLinkedText text={point} usedHrefs={grammarUsedHrefs} /></span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900">Outcome: {card.outcome}</p>
+                <p className="mt-4 rounded-xl bg-sky-50 px-3 py-2 text-sm font-medium text-sky-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={grammarUsedHrefs} /></p>
                 <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
                   <a
                     href={BOOK_ASSESSMENT_HREF}
@@ -282,7 +287,7 @@ function CoursesPage() {
         <div className="mx-auto max-w-6xl rounded-[28px] border border-amber-100/80 bg-gradient-to-r from-amber-50/40 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Speaking Program — From Confidence to Expression</h2>
           <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
-            Your child learns to communicate clearly, confidently, and naturally in real-life situations.
+            <AutoLinkedText text="Your child learns to communicate clearly, confidently, and naturally in real-life situations." />
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -294,11 +299,11 @@ function CoursesPage() {
                   {card.focus.map((point) => (
                     <li key={point} className="flex items-start gap-2">
                       <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                      <span>{point}</span>
+                      <span><AutoLinkedText text={point} usedHrefs={speakingUsedHrefs} /></span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Outcome: {card.outcome}</p>
+                <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={speakingUsedHrefs} /></p>
                 <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:justify-between sm:gap-3">
                   <a
                     href={BOOK_ASSESSMENT_HREF}

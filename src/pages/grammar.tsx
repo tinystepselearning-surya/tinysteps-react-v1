@@ -6,10 +6,12 @@ import ProgramFacts from '../components/programs/ProgramFacts';
 import ProgramProof from '../components/programs/ProgramProof';
 import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
+import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
 import { Link } from 'react-router-dom';
+import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const levels = [
   {
@@ -19,7 +21,8 @@ const levels = [
       'Sentence building + punctuation',
       'Lesson-by-lesson editing practice',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/basic-grammar'
   },
   {
     name: 'Advanced Grammar',
@@ -28,7 +31,8 @@ const levels = [
       'Paragraph writing with feedback',
       'Capstone writing showcase',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/advanced-grammar-writing'
   }
 ];
 
@@ -169,10 +173,35 @@ export default function GrammarPage() {
         ]}
       />
 
+      <TopicClusterLinks
+        title="Learn More About Grammar & Writing"
+        links={[
+          { label: 'English Grammar & Writing Classes', href: '/english-grammar-writing-classes' },
+          { label: 'Writing Classes for Kids', href: '/writing-classes-for-kids' },
+          { label: 'From Nouns to Paragraphs', href: '/blog/week-7-grammar-nouns-to-paragraphs' },
+          { label: 'Tenses for Kids', href: '/blog/week-8-grammar-tenses' },
+          { label: 'Using Conjunctions Effectively', href: '/blog/week-9-grammar-conjunctions' },
+          { label: 'Subject-Verb Agreement', href: '/blog/week-10-grammar-subject-verb' },
+          { label: 'English Foundation Program', href: '/english-foundation-program' }
+        ]}
+      />
+
       {/* Next Steps Links */}
       <NextStepsLinks
         title="Explore Tiny Steps Grammar & Writing"
         links={[
+          { 
+            label: 'All Courses', 
+            href: '/courses', 
+            description: 'Compare all phonics, grammar & speaking courses',
+            icon: '🏫'
+          },
+          { 
+            label: 'Grammar Nouns Guide', 
+            href: '/blog/week-7-grammar-nouns-to-paragraphs', 
+            description: 'Help your child build better sentences',
+            icon: '📝'
+          },
           { 
             label: 'Full Curriculum', 
             href: '/curriculum', 
@@ -285,7 +314,7 @@ export default function GrammarPage() {
                   isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}>
                   <div className="overflow-hidden px-5 pb-5 text-slate-700">
-                    {item.answer}
+                    <AutoLinkedText text={item.answer} />
                   </div>
                 </div>
               </article>

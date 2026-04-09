@@ -585,16 +585,26 @@ function buildMetaDescription(src: any) {
             <AboutAuthor variant={metaSource.category === 'Research' ? 'research' : 'standard'} />
 
             <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Parents Help Hub</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Need the step-by-step version for home?</h2>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Recommended Next for Parents</p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Looking for more structured support?</h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Use the Parents Help Hub when you want a routine, a practical weekly plan, or a calmer next step matched to your child&apos;s current blocker.
+                Explore our main programs, related guides, or compare courses directly.
               </p>
               <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
-                <Link to="/parents" className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">View all parent guides</Link>
-                <Link to="/parents/getting-started" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 transition hover:bg-slate-50">Getting started with phonics</Link>
-                <Link to="/parents/reading-at-home" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 transition hover:bg-slate-50">10-minute reading routine</Link>
-                <Link to="/parents/phonics-mission" className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 transition hover:bg-slate-50">Phonics Mission plan</Link>
+                {categoryConfig.primaryAction && (
+                  <Link to={categoryConfig.primaryAction.to} className="inline-flex items-center rounded-full bg-slate-950 px-5 py-3 text-white transition hover:bg-slate-800">
+                    {categoryConfig.primaryAction.label}
+                  </Link>
+                )}
+                {blogPosts
+                  .filter(p => p.category === metaSource.category && p.slug !== slug && !p.hideFromList)
+                  .slice(0, 3)
+                  .map(related => (
+                    <Link key={related.slug} to={`/blog/${related.slug}`} className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-3 text-slate-900 shadow-sm transition hover:bg-slate-50">
+                      {related.title}
+                    </Link>
+                  ))}
+                <Link to="/courses" className="inline-flex items-center rounded-full border border-slate-200 bg-[#f4f8fc] px-5 py-3 text-slate-900 transition hover:bg-[#e8f1f8]">Explore all courses</Link>
               </div>
             </section>
           </div>

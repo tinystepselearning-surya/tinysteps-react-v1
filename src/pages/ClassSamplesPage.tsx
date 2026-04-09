@@ -11,6 +11,7 @@ import {
   type ClassSampleCategory,
   type ClassSampleItem,
 } from '../lib/classSamples';
+import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 type FilterCategory = 'all' | ClassSampleCategory;
 
@@ -134,7 +135,7 @@ function VideoSurface({ video, priority = false }: { video: ClassSampleItem; pri
             decoding="async"
             className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08),rgba(15,23,42,0.5))]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.08),_rgba(15,23,42,0.5))]" />
           <div className="absolute inset-x-0 top-0 flex items-center justify-between p-4">
             <span className="rounded-full border border-white/20 bg-slate-950/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-white/85">
               Click to play
@@ -252,6 +253,10 @@ export default function ClassSamplesPage() {
     return activeVideos.filter((video) => video.category === activeFilter);
   }, [activeFilter, activeVideos]);
 
+  const galleryUsedHrefs = useMemo(() => new Set<string>(), [activeFilter]);
+  const parentNoticeUsedHrefs = useMemo(() => new Set<string>(), []);
+  const classExpectationsUsedHrefs = useMemo(() => new Set<string>(), []);
+
   const itemListSchema = useMemo(
     () => ({
       '@context': 'https://schema.org',
@@ -312,10 +317,10 @@ export default function ClassSamplesPage() {
               See how Tiny Steps classes actually feel
             </h1>
             <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">
-              Watch real class sample videos from Tiny Steps phonics, reading, grammar, and communication lessons before enrolling. These parent-consented clips are calm, clear, and close to what families actually experience in our online English classes for kids.
+              <AutoLinkedText text="Watch real class sample videos from Tiny Steps phonics, reading, grammar, and communication lessons before enrolling. These parent-consented clips are calm, clear, and close to what families actually experience in our online English classes for kids." />
             </p>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-500">
-              If you are comparing online phonics classes, reading support, or English classes for kids with visible progress, this page gives you a direct feel for the teaching quality, pace, and child participation Tiny Steps is known for.
+              <AutoLinkedText text="If you are comparing online phonics classes, reading support, or English classes for kids with visible progress, this page gives you a direct feel for the teaching quality, pace, and child participation Tiny Steps is known for." />
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -427,7 +432,7 @@ export default function ClassSamplesPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Browse By Focus</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Class sample gallery</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-              Filter by phonics, reading, grammar, communication, or confidence to explore the class moments most relevant to your child.
+              <AutoLinkedText text="Filter by phonics, reading, grammar, communication, or confidence to explore the class moments most relevant to your child." />
             </p>
           </div>
           <div className="text-sm text-slate-500">Start with the learning area you care about most, then explore how Tiny Steps teaching feels in practice.</div>
@@ -496,51 +501,45 @@ export default function ClassSamplesPage() {
                 </div>
 
                 <h3 className="mt-4 text-xl font-semibold tracking-tight text-slate-950">{video.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{video.description}</p>
+                <p className="mt-3 text-sm leading-6 text-slate-600"><AutoLinkedText text={video.description} usedHrefs={galleryUsedHrefs} /></p>
               </article>
             ))}
           </div>
         )}
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-8 lg:px-6">
-        <div className="rounded-[32px] bg-slate-950 px-6 py-8 text-white shadow-[0_26px_80px_rgba(15,23,42,0.18)] sm:px-8">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-white/60">What Parents Notice</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">The details that build trust quickly</h2>
-            <p className="mt-3 text-sm leading-6 text-white/72 sm:text-base">
-              Most families are not just looking for content coverage. They are looking for warmth, structure, correction quality, and proof that their child is genuinely participating.
-            </p>
+      <section className="mx-auto max-w-6xl px-4 pb-10 pt-8 lg:px-6">
+        <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">What to notice</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">Signs of real learning progress</h2>
           </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {parentNoticeItems.map((item) => (
-              <div key={item.title} className="rounded-[24px] border border-white/10 bg-white/5 p-5">
-                <h3 className="text-lg font-semibold">{item.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-white/72">{item.description}</p>
+              <div key={item.title} className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600"><AutoLinkedText text={item.description} usedHrefs={parentNoticeUsedHrefs} /></p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-12 lg:px-6">
-        <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Class Structure</p>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">What to expect in a class</h2>
-          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
-            Tiny Steps classes stay calm because every lesson follows a clear rhythm. That consistency is what helps children settle, participate, and improve.
-          </p>
-        </div>
-
-        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {classExpectations.map((item) => (
-            <div key={item.step} className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.06)]">
-              <span className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">{item.step}</span>
-              <h3 className="mt-4 text-xl font-semibold text-slate-950">{item.title}</h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{item.description}</p>
-            </div>
-          ))}
+      <section className="mx-auto max-w-6xl px-4 pb-12 pt-4 lg:px-6">
+        <div className="rounded-[28px] border border-white/80 bg-white/82 p-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] sm:p-8">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">How classes feel</p>
+            <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">The Tiny Steps teaching rhythm</h2>
+          </div>
+          <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {classExpectations.map((item) => (
+              <div key={item.title} className="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-5 shadow-sm">
+                <p className="text-xs font-bold text-slate-400">{item.step}</p>
+                <h3 className="mt-2 text-lg font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600"><AutoLinkedText text={item.description} usedHrefs={classExpectationsUsedHrefs} /></p>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -560,14 +559,14 @@ export default function ClassSamplesPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Founder Reassurance</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Families should be able to see the teaching before they decide</h2>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              These class samples are here because parent trust matters. We want families to hear the pacing, notice the teacher attention, and understand the standard of care we aim for in every Tiny Steps class.
+              <AutoLinkedText text="These class samples are here because parent trust matters. We want families to hear the pacing, notice the teacher attention, and understand the standard of care we aim for in every Tiny Steps class." />
             </p>
             <p className="mt-4 text-base leading-7 text-slate-600">
-              Every clip on this page is shared with parent consent, and every sample is chosen to reflect the calm, structured experience we believe children need in live online learning.
+              <AutoLinkedText text="Every clip on this page is shared with parent consent, and every sample is chosen to reflect the calm, structured experience we believe children need in live online learning." />
             </p>
 
             <div className="mt-8 border-t border-slate-200 pt-5">
-              <div className="text-lg font-semibold text-slate-950">Priya, Founder</div>
+              <div className="text-lg font-semibold text-slate-900">Priya, Founder</div>
               <p className="mt-1 text-sm text-slate-500">Tiny Steps Learning</p>
             </div>
           </div>
@@ -580,7 +579,7 @@ export default function ClassSamplesPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Next Step</p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Ready to see which class track fits your child best?</h2>
             <p className="mt-4 text-sm leading-6 text-slate-600 sm:text-base">
-              Book a free demo to get a level check, course recommendation, and a clearer plan for phonics, reading, grammar, or communication support.
+              <AutoLinkedText text="Book a free demo to get a level check, course recommendation, and a clearer plan for phonics, reading, grammar, or communication support." />
             </p>
           </div>
 
@@ -599,6 +598,17 @@ export default function ClassSamplesPage() {
             >
               Talk on WhatsApp
             </a>
+          </div>
+
+          <div className="mt-12 w-full max-w-4xl rounded-2xl bg-white/60 p-6 backdrop-blur-md">
+            <h3 className="font-semibold text-slate-900">Explore Programs</h3>
+            <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
+              <Link to="/courses" className="text-slate-600 hover:text-slate-900 transition">All Courses →</Link>
+              <Link to="/phonics" className="text-slate-600 hover:text-slate-900 transition">Phonics Classes →</Link>
+              <Link to="/grammar" className="text-slate-600 hover:text-slate-900 transition">Grammar Classes →</Link>
+              <Link to="/speaking" className="text-slate-600 hover:text-slate-900 transition">Public Speaking →</Link>
+              <Link to="/why-tiny-steps" className="text-slate-600 hover:text-slate-900 transition">Why Tiny Steps →</Link>
+            </div>
           </div>
         </div>
       </section>

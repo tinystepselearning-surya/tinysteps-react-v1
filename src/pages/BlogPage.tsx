@@ -397,8 +397,8 @@ const BlogPage: FC = () => {
       <section className="relative overflow-hidden border-b border-slate-800 bg-[linear-gradient(135deg,#0f172a_0%,#16233c_48%,#1d2942_100%)] text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(242,187,104,0.16),transparent_26%),radial-gradient(circle_at_82%_18%,rgba(103,152,224,0.2),transparent_24%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-[linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,0.44))]" />
-        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-16 sm:px-6 sm:pb-16 sm:pt-20">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_390px] lg:items-end">
+        <div className="relative mx-auto max-w-7xl px-4 pb-14 pt-7 sm:px-6 sm:pb-16 sm:pt-9">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.08fr)_390px] lg:items-start">
             <div className="max-w-4xl">
               <div className="inline-flex items-center rounded-full border border-white/14 bg-white/8 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-100 backdrop-blur">
                 Tiny Steps Parent Desk

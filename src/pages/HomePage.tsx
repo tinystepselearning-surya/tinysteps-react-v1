@@ -6,6 +6,7 @@ import { localBusinessSchema, websiteSchema } from "../lib/schemas";
 import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
+import AutoLinkedText from "../components/seo/AutoLinkedText";
 const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
@@ -113,8 +114,9 @@ export default function HomePage() {
               or{' '}
               <Link to="/english-classes-for-5-year-old" className="font-medium underline underline-offset-2 hover:text-slate-900">
                 support for 5-year-old children
-              </Link>
-              .
+              </Link>.
+              <br className="hidden sm:block" />
+              Not sure where to begin? See <Link to="/class-samples" className="font-medium underline underline-offset-2 hover:text-slate-900">live class samples</Link>, discover <Link to="/why-tiny-steps" className="font-medium underline underline-offset-2 hover:text-slate-900">why parents choose us</Link>, or browse <Link to="/courses" className="font-medium underline underline-offset-2 hover:text-slate-900">all online courses</Link>.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -230,7 +232,7 @@ export default function HomePage() {
                 Master reading, writing & speaking step by step
               </p>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
-                Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking.
+                <AutoLinkedText text="Give your child meaningful daily practice through guided English learning games that build strong foundations in letters & sounds, spelling, vocabulary, sentence making, reading, grammar, and confident speaking." />
               </p>
             </div>
             <Link
@@ -289,7 +291,7 @@ export default function HomePage() {
                   <div className="max-w-2xl">
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-primary-700">For parents</p>
                     <h2 className="mt-2 text-2xl font-semibold text-slate-900 sm:text-3xl">Parents Help Hub</h2>
-                    <p className="mt-3 text-gray-700 sm:text-base">Clear, step-by-step guides for parents asking what phonics is, why it matters, how to teach it at home, and how to make daily reading support feel manageable.</p>
+                    <p className="mt-3 text-gray-700 sm:text-base"><AutoLinkedText text="Clear, step-by-step guides for parents asking what phonics is, why it matters, how to teach it at home, and how to make daily reading support feel manageable." /></p>
                   </div>
                   <div className="grid gap-2 sm:grid-cols-3 lg:w-[360px] lg:grid-cols-1">
                     {PARENT_HELP_POINTS.map((item) => (
@@ -355,7 +357,7 @@ export default function HomePage() {
             <div className="mx-auto max-w-6xl">
               <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-br from-white via-white to-sky-50 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.06)] sm:p-8">
                 <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">English classes for kids worldwide</h2>
-                <p className="mt-3 max-w-3xl text-gray-700">Tiny Steps now supports admissions from 15+ countries. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more.</p>
+                <p className="mt-3 max-w-3xl text-gray-700"><AutoLinkedText text="Tiny Steps now supports admissions from 15+ countries. Families join us from India, the UAE, Vietnam, Singapore, Malaysia, the UK, Canada, the USA, Sweden, Germany, Australia, Sri Lanka, Pakistan, and more." /></p>
 
                 <div className="mt-5 flex flex-wrap gap-2">
                   {WORLDWIDE_COUNTRIES.map((c) => (

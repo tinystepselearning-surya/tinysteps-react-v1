@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
+import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 
 const faqItems = [
   {
@@ -115,6 +116,8 @@ export default function SlowReaderChildHelpPage() {
           Book Free Assessment Class
         </Link>
       </section>
+
+      <ClusterSeoNav cluster="phonics" />
     </div>
   );
 }

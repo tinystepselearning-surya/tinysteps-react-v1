@@ -21,6 +21,8 @@ const exploreLinks = [
   { label: 'Class Samples', href: '/class-samples' },
   { label: 'Curriculum', href: '/curriculum' },
   { label: 'Pricing', href: '/pricing' },
+  { label: 'Team', href: '/team' },
+  { label: 'Careers', href: '/careers' },
   { label: 'Blog', href: '/blog' },
   { label: 'Summer Camp', href: '/summer-camps' },
   { label: 'Contact', href: '/contact' },

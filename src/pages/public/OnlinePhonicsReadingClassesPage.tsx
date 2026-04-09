@@ -1,32 +1,53 @@
 import { useEffect } from 'react';
+import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 
 const FAQ_ITEMS = [
   {
     question: 'My child knows letters but cannot read words. Will this help?',
-    answer:
-      'Yes. This usually means blending is not yet stable. Tiny Steps uses live guided structured synthetic phonics and decoding practice to help children move from letter knowledge to accurate word reading.',
+    answer: (
+      <>
+        Yes. This usually means blending is not yet stable. Tiny Steps uses live guided{' '}
+        <Link to="/phonics" className="text-[#2d5016] underline hover:text-[#4a7c2c]">structured synthetic phonics</Link> and decoding practice to help children move from letter knowledge to accurate word reading.
+      </>
+    ),
   },
   {
     question: 'Are online phonics and reading classes effective for ages 3-8?',
-    answer:
-      'Yes. Live online classes are effective when sessions are structured, interactive, and level-based. With regular practice, many children show early gains in blending and reading confidence.',
+    answer: (
+      <>
+        Yes. Live <Link to="/courses" className="text-[#2d5016] underline hover:text-[#4a7c2c]">online classes</Link> are effective when sessions are structured, interactive, and level-based. With regular practice, many children show early gains in blending and reading confidence.
+      </>
+    ),
   },
   {
     question: 'What age is best to start phonics and early reading support?',
-    answer:
-      'Most children can begin from ages 3-4 with sound awareness and blending support. Early starters and struggling readers both benefit when classes match their current level.',
+    answer: (
+      <>
+        Most children can begin from ages 3-4 with sound awareness and blending support. Early starters and struggling readers both benefit when classes match their current level. See our{' '}
+        <Link to="/english-classes-for-4-year-old" className="text-[#2d5016] underline hover:text-[#4a7c2c]">classes for 4-year-olds</Link>.
+      </>
+    ),
   },
   {
     question: 'How many live classes per week are ideal?',
-    answer:
-      'Two to three live classes per week plus short home practice is a strong routine for most beginners. Consistency matters more than long study hours.',
+    answer: (
+      <>
+        Two to three live classes per week plus short home practice is a strong routine for most beginners. Consistency matters more than long study hours. You can see our{' '}
+        <Link to="/pricing" className="text-[#2d5016] underline hover:text-[#4a7c2c]">pricing and packages here</Link>.
+      </>
+    ),
   },
   {
     question: 'Does Tiny Steps use Jolly Phonics?',
-    answer:
-      'Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics. We focus on sound-to-letter mapping, blending sounds into words, and phonics-based reading confidence.',
+    answer: (
+      <>
+        Tiny Steps uses a structured synthetic phonics approach inspired by methods such as{' '}
+        <Link to="/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading" className="text-[#2d5016] underline hover:text-[#4a7c2c]">Jolly Phonics</Link>. 
+        We focus on sound-to-letter mapping, blending sounds into words, and phonics-based reading confidence.
+      </>
+    ),
   },
 ];
 
@@ -380,6 +401,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           </Link>
         </div>
       </section>
+      <ClusterSeoNav cluster="phonics" />
     </div>
   );
 }

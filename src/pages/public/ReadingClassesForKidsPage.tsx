@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 
@@ -127,6 +128,7 @@ export default function ReadingClassesForKidsPage() {
         </Link>
         <p className="mt-2 text-sm text-slate-300">Takes 30 seconds • No commitment</p>
       </section>
+      <ClusterSeoNav cluster="phonics" />
     </div>
   );
 }

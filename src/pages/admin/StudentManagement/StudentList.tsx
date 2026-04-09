@@ -2017,6 +2017,27 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const paged = filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
   const pagedStudentIds = paged.map(s => s.id);
 
+  const studentStatusSummary = useMemo(() => {
+    let active = 0;
+    let inactive = 0;
+
+    filtered.forEach((student) => {
+      const status = String((student as any).status || '').trim().toLowerCase();
+      if (status === 'active' || status === '') {
+        active += 1;
+      } else {
+        inactive += 1;
+      }
+    });
+
+    return {
+      total: filtered.length,
+      active,
+      inactive,
+      showing: paged.length,
+    };
+  }, [filtered, paged.length]);
+
   const enrollmentsQuery = useEnrollmentsForStudents(pagedStudentIds);
 
   const enrollmentsByStudent = useMemo(() => {
@@ -2721,6 +2742,21 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           ) : null}
         </div>
       </Card>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+          Total Students: {studentStatusSummary.total}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700">
+          Active: {studentStatusSummary.active}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+          Inactive: {studentStatusSummary.inactive}
+        </span>
+        <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600">
+          Showing: {studentStatusSummary.showing}
+        </span>
+      </div>
 
       {isAdmin ? (
         <Card className="overflow-hidden">

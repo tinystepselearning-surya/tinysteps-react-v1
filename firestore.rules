@@ -556,6 +556,17 @@ service cloud.firestore {
     }
 
     // ----------------------------
+    // CLASS SAMPLES
+    // ----------------------------
+    match /classSamples/{sampleId} {
+      // Admins have full control
+      allow create, update, delete: if isAdmin();
+
+      // Public can read active samples, Admins can read all
+      allow read: if resource.data.active == true || isAdmin();
+    }
+
+    // ----------------------------
     // PARENT WORKSHEET LIBRARY
     // ----------------------------
     match /parentWorksheetLibrary/{worksheetId} {

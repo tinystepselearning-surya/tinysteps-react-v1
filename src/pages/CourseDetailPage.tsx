@@ -7,6 +7,7 @@ import { getCourseWeeksOverride } from '../content/curriculumLoader';
 import Meta from '../components/common/Meta';
 import { WeekAccordion } from '../components/curriculum/WeekAccordion';
 import { applySeo } from '../lib/seo';
+import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const CourseDetailPage: FC = () => {
   const params = useParams();
@@ -23,6 +24,7 @@ const CourseDetailPage: FC = () => {
   };
   const slug = normalizeSlug(rawSlug);
   const course = useMemo(() => catalogs.find((c) => c.slug === slug), [slug]);
+  const usedHrefs = useMemo(() => new Set<string>(), [slug]);
   const base = curriculumBySlug[slug || ''] || curriculumBySlug[rawSlug || ''] || {};
   const weeks = useMemo(() => base?.weeks ?? [], [base?.weeks]);
   const [weeksState, setWeeks] = useState(weeks);
@@ -113,13 +115,13 @@ const CourseDetailPage: FC = () => {
           <div>
             <h2 className="font-semibold">Quick Overview</h2>
             <ul className="mt-2 list-disc pl-5 text-sm text-gray-800">
-              {course.overview.map((o) => <li key={o}>{o}</li>)}
+              {course.overview.map((o) => <li key={o}><AutoLinkedText text={o} usedHrefs={usedHrefs} /></li>)}
             </ul>
           </div>
           <div>
             <h2 className="font-semibold">Learning Outcomes</h2>
             <ul className="mt-2 list-disc pl-5 text-sm text-gray-800">
-              {course.outcomes.map((o) => <li key={o}>{o}</li>)}
+              {course.outcomes.map((o) => <li key={o}><AutoLinkedText text={o} usedHrefs={usedHrefs} /></li>)}
             </ul>
           </div>
         </div>
@@ -135,9 +137,20 @@ const CourseDetailPage: FC = () => {
           )}
         </div>
 
-        <div className="mt-10 text-sm text-gray-700">
-          <Link className="text-primary-600" to="/courses">← Back to all courses</Link>
+        <div className="mt-12 rounded-2xl bg-slate-50 p-6">
+          <h3 className="font-heading text-lg font-bold text-slate-900">Next Steps</h3>
+          <p className="mt-1 text-sm text-slate-600">Continue exploring or contact us for a personalized plan.</p>
+          <div className="mt-4 flex flex-wrap gap-4 text-sm font-medium">
+            <Link to="/courses" className="text-primary-700 hover:underline">← All Courses</Link>
+            {slug.includes('phonic') && <Link to="/phonics" className="text-primary-700 hover:underline">View Phonics Track</Link>}
+            {slug.includes('grammar') && <Link to="/grammar" className="text-primary-700 hover:underline">View Grammar Track</Link>}
+            {(slug.includes('speaking') || slug.includes('communication')) && <Link to="/speaking" className="text-primary-700 hover:underline">View Speaking Track</Link>}
+            <Link to="/why-tiny-steps" className="text-primary-700 hover:underline">Why Choose Us?</Link>
+            <Link to="/class-samples" className="text-primary-700 hover:underline">See Class Samples</Link>
+            <Link to="/contact?book=1" className="inline-flex items-center rounded-full bg-primary-600 px-4 py-1.5 text-white transition hover:bg-primary-700">Book Free Assessment</Link>
+          </div>
         </div>
+
       </div>
     </div>
   );

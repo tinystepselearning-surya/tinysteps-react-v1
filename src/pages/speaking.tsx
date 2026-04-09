@@ -7,9 +7,11 @@ import ProgramFacts from '../components/programs/ProgramFacts';
 import ProgramProof from '../components/programs/ProgramProof';
 import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
+import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 import Meta from '../components/common/Meta';
 import { createCourseSchema } from '../lib/schemas';
 import { getRouteConfig } from '../lib/seo';
+import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const levels = [
   {
@@ -19,7 +21,8 @@ const levels = [
       'Voice, face & body language warmups',
       'Confidence routines + practice prompts',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/basic-public-speaking-early-speakers'
   },
   {
     name: 'Public Speaking (Advanced)',
@@ -28,7 +31,8 @@ const levels = [
       'Persuasion + debate foundations',
       'Capstone presentation showcase',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/advanced-public-speaking-young-leaders'
   }
 ];
 
@@ -162,10 +166,29 @@ export default function SpeakingPage() {
         ]}
       />
 
+      <TopicClusterLinks
+        title="Learn More About Public Speaking for Kids"
+        links={[
+          { label: 'Public Speaking & Communication', href: '/public-speaking-communication-kids' },
+          { label: 'Spoken English Classes', href: '/spoken-english-classes-for-kids' },
+          { label: 'Helping a Shy Child Speak', href: '/shy-child-speaking-confidence' },
+          { label: 'Confidence Building Programs', href: '/confidence-building-program-kids' },
+          { label: 'Confidence Seeds (Parents Guide)', href: '/blog/week-12-speaking-confidence-seeds' },
+          { label: 'Structuring a Speech', href: '/blog/week-13-speaking-structure' },
+          { label: 'Visual Aids & Expression', href: '/blog/week-14-speaking-visual-aids' }
+        ]}
+      />
+
       {/* Next Steps Links */}
       <NextStepsLinks
         title="Explore Tiny Steps Public Speaking"
         links={[
+          { 
+            label: 'All Courses', 
+            href: '/courses', 
+            description: 'Compare all phonics, grammar & speaking courses',
+            icon: '🏫'
+          },
           { 
             label: 'Full Curriculum', 
             href: '/curriculum', 
@@ -284,7 +307,7 @@ export default function SpeakingPage() {
                   isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}>
                   <div className="overflow-hidden px-5 pb-5 text-slate-700">
-                    {item.answer}
+                    <AutoLinkedText text={item.answer} />
                   </div>
                 </div>
               </article>

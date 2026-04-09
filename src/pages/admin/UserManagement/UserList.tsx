@@ -4,13 +4,9 @@ import {
   getDocs,
   query,
   orderBy,
-  limit,
-  startAfter,
   deleteDoc,
   doc,
   Timestamp,
-  QueryDocumentSnapshot,
-  DocumentData,
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -66,6 +62,7 @@ interface UserTableProps {
 }
 
 interface UserRoleCounts {
+  all: number;
   admin: number;
   teacher: number;
   parent: number;
@@ -74,6 +71,7 @@ interface UserRoleCounts {
 
 type UserSortField = 'email' | 'name' | 'role' | 'status' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
+type UserPageSize = 'all' | 25 | 50 | 100;
 
 function UserTable({
   users,
@@ -213,27 +211,25 @@ function UserTable({
   );
 }
 
-// ---------- Pagination ----------
-const PAGE_SIZE = 10;
-
 // ---------- Main ----------
 export function UserList() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [draftSearchTerm, setDraftSearchTerm] = useState('');
+  const [draftRoleFilter, setDraftRoleFilter] = useState<string>('all');
+  const [draftStatusFilter, setDraftStatusFilter] = useState<string>('all');
 
-  const [lastVisible, setLastVisible] =
-    useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState('');
+  const [appliedRoleFilter, setAppliedRoleFilter] = useState<string>('all');
+  const [appliedStatusFilter, setAppliedStatusFilter] = useState<string>('all');
 
   const [users, setUsers] = useState<User[]>([]);
   const [roleCounts, setRoleCounts] = useState<UserRoleCounts>({
+    all: 0,
     admin: 0,
     teacher: 0,
     parent: 0,
     students: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
 
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
@@ -246,20 +242,27 @@ export function UserList() {
   const [isResetPasswordSaving, setIsResetPasswordSaving] = useState(false);
   const [sortField, setSortField] = useState<UserSortField | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [pageSize, setPageSize] = useState<UserPageSize>('all');
+
+  const normalizeRole = (role?: string) => String(role || '').trim().toLowerCase();
+  const normalizeStatus = (status?: string) => String(status || '').trim().toLowerCase();
+  const normalizeRoleFilter = (role: string) => String(role || '').trim().toLowerCase();
+  const normalizeStatusFilter = (status: string) => String(status || '').trim().toLowerCase();
+
+  const isStudentRole = (role?: string) => {
+    const normalizedRole = normalizeRole(role);
+    return normalizedRole === 'student' || normalizedRole === 'students' || normalizedRole === 'kid';
+  };
 
   // ---------------- Fetch Users ----------------
-  const fetchUsers = async (reset = false) => {
+  const fetchUsers = async () => {
     setIsLoading(true);
     try {
-      let q = query(
+      const q = query(
         collection(db, 'users'),
-        orderBy('createdAt', 'desc'),
-        limit(PAGE_SIZE)
+        orderBy('createdAt', 'desc')
       );
 
-      if (!reset && lastVisible) {
-        q = query(q, startAfter(lastVisible));
-      }
 
       const snapshot = await getDocs(q);
 
@@ -283,9 +286,7 @@ export function UserList() {
         } as User;
       });
 
-      setUsers((prev) => (reset ? newUsers : [...prev, ...newUsers]));
-      setLastVisible(snapshot.docs[snapshot.docs.length - 1] || null);
-      setHasMore(snapshot.docs.length === PAGE_SIZE);
+      setUsers(newUsers);
     } catch (error: any) {
       console.error('Error fetching users:', error);
 
@@ -309,59 +310,56 @@ export function UserList() {
     }
   };
 
-  const fetchRoleCounts = async () => {
-    try {
-      const [usersSnap, kidsSnap] = await Promise.all([
-        getDocs(collection(db, 'users')),
-        getDocs(collection(db, 'kids')),
-      ]);
-
-      let admin = 0;
-      let teacher = 0;
-      let parent = 0;
-
-      usersSnap.forEach((userDoc) => {
-        const role = userDoc.data()?.role;
-        if (role === 'admin') admin += 1;
-        if (role === 'teacher') teacher += 1;
-        if (role === 'parent') parent += 1;
-      });
-
-      setRoleCounts({
-        admin,
-        teacher,
-        parent,
-        students: kidsSnap.size,
-      });
-    } catch (error) {
-      console.error('Error fetching role counts:', error);
-    }
-  };
-
-  const filteredUsers = useMemo(() => {
-    const search = searchTerm.trim().toLowerCase();
+  const baseFilteredForCounts = useMemo(() => {
+    const normalizedAppliedStatus = normalizeStatusFilter(appliedStatusFilter);
+    const appliedSearch = appliedSearchTerm.trim().toLowerCase();
 
     return users.filter((user) => {
-      const normalizedRole = String(user.role || '').toLowerCase();
-      const normalizedStatus = String(user.status || '').toLowerCase();
-      const normalizedRoleFilter = String(roleFilter).toLowerCase();
-      const matchesRole =
-        normalizedRoleFilter === 'all'
-          ? true
-          : normalizedRoleFilter === 'students'
-            ? normalizedRole === 'kid' || normalizedRole === 'student'
-            : normalizedRole === normalizedRoleFilter;
       const matchesStatus =
-        statusFilter === 'all' || normalizedStatus === String(statusFilter).toLowerCase();
+        normalizedAppliedStatus === 'all' || normalizeStatus(user.status) === normalizedAppliedStatus;
 
       const matchesSearch =
-        search.length === 0 ||
-        user.name?.toLowerCase().includes(search) ||
-        user.email?.toLowerCase().includes(search);
+        appliedSearch.length === 0 ||
+        user.name?.toLowerCase().includes(appliedSearch) ||
+        user.email?.toLowerCase().includes(appliedSearch);
 
-      return matchesRole && matchesStatus && matchesSearch;
+      return matchesStatus && matchesSearch;
     });
-  }, [users, roleFilter, statusFilter, searchTerm]);
+  }, [users, appliedStatusFilter, appliedSearchTerm]);
+
+  useEffect(() => {
+    let admin = 0;
+    let teacher = 0;
+    let parent = 0;
+    let students = 0;
+
+    for (const user of baseFilteredForCounts) {
+      const role = normalizeRole(user.role);
+      if (role === 'admin') admin += 1;
+      if (role === 'teacher') teacher += 1;
+      if (role === 'parent') parent += 1;
+      if (isStudentRole(role)) students += 1;
+    }
+
+    setRoleCounts({
+      all: baseFilteredForCounts.length,
+      admin,
+      teacher,
+      parent,
+      students,
+    });
+  }, [baseFilteredForCounts]);
+
+  const filteredUsers = useMemo(() => {
+    const normalizedRoleFilter = normalizeRoleFilter(appliedRoleFilter);
+
+    return baseFilteredForCounts.filter((user) => {
+      const userRole = normalizeRole(user.role);
+      if (normalizedRoleFilter === 'all') return true;
+      if (normalizedRoleFilter === 'students') return isStudentRole(userRole);
+      return userRole === normalizedRoleFilter;
+    });
+  }, [baseFilteredForCounts, appliedRoleFilter]);
 
   const sortedUsers = useMemo(() => {
     if (!sortField) return filteredUsers;
@@ -387,6 +385,11 @@ export function UserList() {
     return list;
   }, [filteredUsers, sortField, sortDirection]);
 
+  const visibleUsers = useMemo(() => {
+    if (pageSize === 'all') return sortedUsers;
+    return sortedUsers.slice(0, pageSize);
+  }, [sortedUsers, pageSize]);
+
   const handleSort = (field: UserSortField) => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === 'asc' ? 'desc' : 'asc'));
@@ -397,12 +400,11 @@ export function UserList() {
   };
 
   const roleTabs = useMemo(() => {
-    const total = roleCounts.admin + roleCounts.teacher + roleCounts.parent + roleCounts.students;
     return [
       {
         key: 'all',
         label: 'Overall List',
-        count: total,
+        count: roleCounts.all,
         activeClass: 'from-slate-700 to-slate-500',
       },
       {
@@ -430,14 +432,12 @@ export function UserList() {
         activeClass: 'from-emerald-500 to-teal-500',
       },
     ] as const;
-  }, [roleCounts.admin, roleCounts.teacher, roleCounts.parent, roleCounts.students]);
+  }, [roleCounts.all, roleCounts.admin, roleCounts.teacher, roleCounts.parent, roleCounts.students]);
 
   // Initial fetch
   useEffect(() => {
-    setLastVisible(null);
     setUsers([]);
-    fetchUsers(true);
-    fetchRoleCounts();
+    fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -450,7 +450,7 @@ export function UserList() {
       const createdUserId = params.get('createdUserId');
       if (createdUserId) {
         (async () => {
-          await fetchUsers(true);
+          await fetchUsers();
           try {
             toast({ title: 'User created', description: `User ${createdUserId} created.` });
           } catch (e) {
@@ -475,22 +475,27 @@ export function UserList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLoadMore = () => {
-    if (hasMore && !isLoading) fetchUsers(false);
+  const handleFiltersChange = () => {
+    setAppliedSearchTerm(draftSearchTerm);
+    setAppliedRoleFilter(draftRoleFilter);
+    setAppliedStatusFilter(draftStatusFilter);
   };
 
-  const handleFiltersChange = () => {
-    setSearchTerm('');
-    setRoleFilter('all');
-    setStatusFilter('all');
+  const handleClearFilters = () => {
+    setDraftSearchTerm('');
+    setDraftRoleFilter('all');
+    setDraftStatusFilter('all');
+
+    setAppliedSearchTerm('');
+    setAppliedRoleFilter('all');
+    setAppliedStatusFilter('all');
   };
 
   // After CreateUserForm success
   const handleUserCreated = async (user?: User) => {
     setIsCreateDialogOpen(false);
     setTimeout(async () => {
-      await fetchUsers(true);
-      await fetchRoleCounts();
+      await fetchUsers();
       toast({
         title: 'User created',
         description: `${user?.name || user?.email || 'User'} created successfully`,
@@ -499,8 +504,7 @@ export function UserList() {
   };
 
   const handleUserUpdated = async () => {
-    await fetchUsers(true);
-    await fetchRoleCounts();
+    await fetchUsers();
     setEditingUser(null);
   };
 
@@ -518,8 +522,7 @@ export function UserList() {
       });
 
       toast({ title: 'Archived', description: 'User archived successfully.' });
-      await fetchUsers(true);
-      await fetchRoleCounts();
+      await fetchUsers();
     } catch (error: any) {
       console.error('Archive failed:', error);
       toast({
@@ -557,8 +560,7 @@ export function UserList() {
       }
 
       toast({ title: 'Deleted', description: 'User deleted successfully.' });
-      await fetchUsers(true);
-      await fetchRoleCounts();
+      await fetchUsers();
     } catch (error: any) {
       console.error('Delete failed:', error);
       toast({
@@ -676,13 +678,13 @@ export function UserList() {
       {/* Role Tabs */}
       <div className="flex flex-wrap gap-2">
         {roleTabs.map((tab) => {
-          const isActive = roleFilter === tab.key;
+          const isActive = draftRoleFilter === tab.key;
           return (
             <Button
               key={tab.key}
               type="button"
               size="sm"
-              onClick={() => setRoleFilter(tab.key)}
+              onClick={() => setDraftRoleFilter(tab.key)}
               className={`h-8 rounded-full px-3 text-xs font-semibold transition ${
                 isActive
                   ? `bg-gradient-to-r ${tab.activeClass} text-white shadow-sm`
@@ -697,19 +699,54 @@ export function UserList() {
       </div>
 
       <UserFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        roleFilter={roleFilter}
-        setRoleFilter={setRoleFilter}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        onFiltersChange={handleFiltersChange}
+        searchTerm={draftSearchTerm}
+        setSearchTerm={setDraftSearchTerm}
+        roleFilter={draftRoleFilter}
+        setRoleFilter={setDraftRoleFilter}
+        statusFilter={draftStatusFilter}
+        setStatusFilter={setDraftStatusFilter}
+        onApplyFilters={handleFiltersChange}
+        onClearFilters={handleClearFilters}
       />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <label htmlFor="user-rows-per-page" className="text-sm font-medium text-slate-700">
+            Rows per page
+          </label>
+          <select
+            id="user-rows-per-page"
+            value={String(pageSize)}
+            onChange={(event) => {
+              const value = event.target.value;
+              if (value === 'all') {
+                setPageSize('all');
+                return;
+              }
+              const parsed = Number(value);
+              if (parsed === 25 || parsed === 50 || parsed === 100) {
+                setPageSize(parsed as 25 | 50 | 100);
+              }
+            }}
+            className="h-9 rounded-md border border-slate-300 bg-white px-2.5 text-sm text-slate-700"
+          >
+            <option value="all">All</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select>
+        </div>
+
+        <p className="text-sm text-slate-600">
+          {pageSize === 'all'
+            ? `Showing all ${sortedUsers.length} results`
+            : `Showing ${visibleUsers.length} of ${sortedUsers.length} results`}
+        </p>
+      </div>
 
       {/* Table */}
       <Card className="overflow-x-auto">
         <UserTable
-          users={sortedUsers}
+          users={visibleUsers}
           onEdit={(u) => setEditingUser(u)}
           onDelete={handleDeleteUser}
           onArchive={handleArchiveUser}
@@ -721,16 +758,8 @@ export function UserList() {
 
         {isLoading && <div className="text-center py-4">Loading…</div>}
 
-        {!isLoading && sortedUsers.length === 0 && (
+        {!isLoading && visibleUsers.length === 0 && (
           <div className="text-center py-8 text-gray-500">No users found.</div>
-        )}
-
-        {hasMore && (
-          <div className="text-center py-4">
-            <Button onClick={handleLoadMore} disabled={isLoading}>
-              Load More
-            </Button>
-          </div>
         )}
       </Card>
 

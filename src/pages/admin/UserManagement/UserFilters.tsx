@@ -10,7 +10,8 @@ interface UserFiltersProps {
   setRoleFilter: (value: string) => void;
   statusFilter: string;
   setStatusFilter: (value: string) => void;
-  onFiltersChange: () => void; // Added this property
+  onApplyFilters: () => void;
+  onClearFilters: () => void;
 }
 
 export const UserFilters: React.FC<UserFiltersProps> = ({
@@ -20,7 +21,8 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
   setRoleFilter,
   statusFilter,
   setStatusFilter,
-  onFiltersChange,
+  onApplyFilters,
+  onClearFilters,
 }) => {
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -60,15 +62,11 @@ export const UserFilters: React.FC<UserFiltersProps> = ({
       </Select>
       <Button
         variant="outline"
-        onClick={() => {
-          setSearchTerm('');
-          setRoleFilter('all');
-          setStatusFilter('all');
-          onFiltersChange();
-        }}
+        onClick={onClearFilters}
       >
         Clear Filters
       </Button>
+      <Button onClick={onApplyFilters}>Apply Filters</Button>
     </div>
   );
 };

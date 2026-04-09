@@ -9,6 +9,7 @@ import ProgramFacts from '../components/programs/ProgramFacts';
 import ProgramProof from '../components/programs/ProgramProof';
 import ParentReassurance from '../components/programs/ParentReassurance';
 import NextStepsLinks from '../components/programs/NextStepsLinks';
+import TopicClusterLinks from '../components/programs/TopicClusterLinks';
 
 const levels = [
   {
@@ -18,7 +19,8 @@ const levels = [
       'Short vowels + early CVC words',
       'Lesson-by-lesson practice prompts',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/phonics-foundations'
   },
   {
     name: 'Early Phonics',
@@ -27,7 +29,8 @@ const levels = [
       'Magic E + long vowel patterns',
       'Stage check-ins for fluency',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/early-phonics'
   },
   {
     name: 'Advanced Phonics',
@@ -36,7 +39,8 @@ const levels = [
       'Multisyllabic decoding + spelling rules',
       'Fluency + comprehension practice',
     ],
-    pdf: '/curriculum'
+    pdf: '/curriculum',
+    courseHref: '/courses/advanced-phonics'
   }
 ];
 
@@ -45,6 +49,8 @@ const stages = [
   { title: 'Stage 2 • Rules & teams', duration: 'Lessons 11–24', description: 'Digraphs, magic-e, vowel teams, tricky patterns.' },
   { title: 'Stage 3 • Fluency & writing', duration: 'Lessons 25–36+', description: 'Reading passages with expression, spelling, and short paragraphs.' }
 ];
+
+import AutoLinkedText from '../components/seo/AutoLinkedText';
 
 const faqItems = [
   {
@@ -368,10 +374,30 @@ export default function PhonicsPage({
 
       {afterContent}
 
+      <TopicClusterLinks
+        title="Learn More About Phonics"
+        links={[
+          { label: 'What is Phonics for Kids?', href: '/blog/what-is-phonics-for-kids' },
+          { label: 'Synthetic Phonics vs Traditional', href: '/blog/synthetic-phonics-vs-traditional-reading' },
+          { label: 'Why Child is Not Reading Properly', href: '/child-not-reading-properly' },
+          { label: 'Phonics Blending Explained', href: '/blog/phonics-blending-activities' },
+          { label: 'CVC Words Guide', href: '/blog/cvc-words-explained-for-parents' },
+          { label: 'How Kids Learn Blending', href: '/blog/how-kids-learn-blending' },
+          { label: 'Online Phonics Reading Classes', href: '/online-phonics-reading-classes' },
+          { label: 'Phonics Games for Preschoolers', href: '/phonics-games-for-preschoolers' }
+        ]}
+      />
+
       {/* Next Steps Links */}
       <NextStepsLinks
         title="Explore Tiny Steps Phonics"
         links={[
+          { 
+            label: 'All Courses', 
+            href: '/courses', 
+            description: 'Compare all phonics, grammar & speaking courses',
+            icon: '🏫'
+          },
           { 
             label: 'Full Curriculum', 
             href: '/curriculum', 
@@ -513,7 +539,7 @@ export default function PhonicsPage({
                 </button>
                 <div className={`grid transition-all duration-300 ease-in-out ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
                   <div className="overflow-hidden px-5 pb-5 text-slate-700">
-                    {item.answer}
+                    <AutoLinkedText text={item.answer} />
                   </div>
                 </div>
               </article>

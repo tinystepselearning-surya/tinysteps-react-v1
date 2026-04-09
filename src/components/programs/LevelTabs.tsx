@@ -25,10 +25,18 @@ const LevelTabs = ({ levels }: any) => {
               <li key={item} className="flex items-start gap-2"><span>✅</span>{item}</li>
             ))}
           </ul>
-          <div className="rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-600">
-            <div className="font-semibold text-gray-900">Download curriculum</div>
-            <p>Get the full lesson-by-lesson plan for {active.name}. Includes home practice + assessments.</p>
-            <a href={active.pdf || '/curriculum'} className="mt-2 inline-flex items-center text-tiny-blue-600">Download PDF →</a>
+          <div className="flex flex-col gap-4 rounded-2xl border border-dashed border-gray-200 p-4 text-sm text-gray-600">
+            <div>
+              <div className="font-semibold text-gray-900">Download curriculum</div>
+              <p>Get the full lesson-by-lesson plan for {active.name}. Includes home practice + assessments.</p>
+              <a href={active.pdf || '/curriculum'} className="mt-2 inline-flex items-center text-tiny-blue-600 hover:text-tiny-blue-800">Download PDF →</a>
+            </div>
+            {active.courseHref && (
+              <div className="border-t border-gray-200 pt-3">
+                <div className="font-semibold text-gray-900">View Program Details</div>
+                <a href={active.courseHref} className="mt-1 inline-flex items-center text-emerald-600 hover:text-emerald-800 transition">Explore {active.name} course details →</a>
+              </div>
+            )}
           </div>
         </div>
       </div>

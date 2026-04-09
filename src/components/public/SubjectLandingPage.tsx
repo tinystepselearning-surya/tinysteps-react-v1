@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import PageHero from '../common/PageHero';
 import { getSubjectLandingData, type SubjectLandingId } from '../../content/publicSubjectLandings';
 import { applySeo } from '../../lib/seo';
+import ClusterSeoNav from '../programs/ClusterSeoNav';
 
 type SubjectLandingPageProps = {
   subject: SubjectLandingId;
@@ -434,6 +435,10 @@ export default function SubjectLandingPage({ subject }: SubjectLandingPageProps)
           </div>
         </div>
       </section>
+
+      <div className="mx-auto max-w-6xl px-6 py-12">
+        <ClusterSeoNav cluster={subject} />
+      </div>
     </div>
   );
 }

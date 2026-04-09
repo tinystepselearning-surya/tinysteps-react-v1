@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import ClusterSeoNav from '../../components/programs/ClusterSeoNav';
 import { applySeo } from '../../lib/seo';
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
@@ -751,6 +752,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
         </Link>
       </section>
       </div>
+      <ClusterSeoNav cluster="phonics" />
     </div>
   );
 }
