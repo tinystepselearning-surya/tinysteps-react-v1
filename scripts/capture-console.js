@@ -17,7 +17,7 @@ const { chromium } = require('playwright');
 
   try {
     console.log('Opening', url);
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url, { waitUntil: 'load' });
     // Games pages were removed in this deployment. Try to find any links to games
     // but don't navigate to hardcoded game routes.
     const link = await page.$(`text=/SpellBee|Spell Bee|Spellbee|Spell-bee|Games|Play/i`);

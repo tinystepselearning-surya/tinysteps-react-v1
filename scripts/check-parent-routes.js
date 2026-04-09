@@ -6,7 +6,7 @@ const BASE = process.env.BASE_URL || 'http://localhost:5174'
 async function checkRoute(page, path, expectSelector) {
   const url = `${BASE}${path}`
   console.log(`Navigating to ${url}`)
-  await page.goto(url, { waitUntil: 'networkidle' })
+  await page.goto(url, { waitUntil: 'load' })
   try {
     await page.waitForSelector(expectSelector, { timeout: 5000 })
     console.log(`✓ ${path} rendered (found ${expectSelector})`)

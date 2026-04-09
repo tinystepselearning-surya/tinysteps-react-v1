@@ -107,7 +107,7 @@ async function discoverBlogRoutes(page) {
   const blogUrl = `${HOST}/blog`;
   console.log("[prerender] Discovering blog slugs from", blogUrl);
 
-  await page.goto(blogUrl, { waitUntil: "networkidle" });
+  await page.goto(blogUrl, { waitUntil: "load" });
 
   // Try to ensure blog links render (best-effort)
   try {
@@ -283,14 +283,7 @@ async function writeRouteHtml(route, html) {
  */
 async function renderRouteWithRetry(page, route, maxRetries = 2) {
   const url = `${HOST}${route}`;
-  const shouldUseDomContentLoaded =
-    route === "/class-samples" ||
-    route.startsWith("/courses/") ||
-    route === "/testimonials";
-  const navigationStrategy =
-    shouldUseDomContentLoaded
-      ? { waitUntil: "domcontentloaded", timeout: 60000 }
-      : { waitUntil: "networkidle", timeout: 60000 };
+  const navigationStrategy = { waitUntil: "load", timeout: 60000 };
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {

@@ -44,7 +44,7 @@ async function check() {
     for (const path of PATHS) {
       const url = `${HOST}/`;
       console.log('\n---- Navigating client-side to', '/' + path, '----');
-      await page.goto(url, { waitUntil: 'networkidle' });
+      await page.goto(url, { waitUntil: 'load' });
 
       // Use history API to navigate client-side so SPA router handles the route
       await page.evaluate((p) => {

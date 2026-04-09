@@ -16,7 +16,7 @@ async function check() {
   for (const path of PATHS) {
     const url = `${HOST}/${path}`;
     console.log('\n---- Visiting', url, '----');
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url, { waitUntil: 'load' });
 
     const title = await page.title();
     const description = await page.evaluate(() => {

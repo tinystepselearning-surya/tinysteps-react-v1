@@ -43,7 +43,7 @@ async function check() {
     for (const slug of SLUGS) {
       const url = `${HOST}/blog/${slug}`;
       console.log('\n---- Visiting', url, '----');
-      await page.goto(url, { waitUntil: 'networkidle' });
+      await page.goto(url, { waitUntil: 'load' });
 
       const title = await page.title();
       const description = await page.locator('meta[name="description"]').first().getAttribute('content');
