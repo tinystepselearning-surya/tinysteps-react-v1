@@ -64,7 +64,7 @@ export const ASK_TINYSTEPS_KB: { id: string; title: string; text: string }[] = [
     id: "summer_camps",
     title: "Summer Camp Programs",
     text:
-      "Tiny Steps Summer Camp is a 10-week online small-group program for ages 4–12. Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). Fast Track Pack list fee is ₹5,000 per child. Effective price: ₹2,400 per child. Sessions are typically 50–60 minutes with worksheets and class recordings. Details: https://tinystepslearning.com/summer-camps",
+      "Tiny Steps Summer Camp 2026 runs as a structured online summer season from 27 April 2026 to 13 June 2026 for ages 4–12. Each child joins one 4-week small-group batch with 24 live classes from Monday to Saturday, with Sunday kept as a holiday. Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026. Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). Fast Track Pack list fee is ₹5,000 per child. Effective price: ₹2,400 per child. Sessions are typically 50–60 minutes with worksheets and class recordings. The final batch is designed to close before schools reopen on 15 June 2026. Details: https://tinystepslearning.com/summer-camps",
   },
 ];
 
@@ -254,9 +254,11 @@ function formatFactsForIntent(intent: Intent): { text: string; sourcesUsed: stri
   if (intent === "summer_camp") {
     return {
       text:
-        "Summer Camp is a 10-week online small-group program for ages 4–12.\n" +
+        "Summer Camp 2026 runs as a structured season from 27 April 2026 to 13 June 2026 for ages 4–12.\n" +
+        "Each child joins one 4-week batch with 24 live classes from Monday to Saturday, with Sunday kept as a holiday.\n" +
+        "Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026, and the final batch closes before schools reopen on 15 June 2026.\n" +
         "Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12).\n" +
-        "Fast Track Pack enrollment: ₹2,400 per child (70% off).\n" +
+        "Fast Track Pack list fee: ₹5,000 per child. Effective price: ₹2,400 per child.\n" +
         "Details: https://tinystepslearning.com/summer-camps\n\n" +
         `${wa}`,
       sourcesUsed: ["summer_camps"],

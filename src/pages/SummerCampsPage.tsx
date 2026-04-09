@@ -17,10 +17,30 @@ const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
 const SUMMER_CAMP_BATCH_CAP = 8;
 const SUMMER_CAMP_PLANNED_CLASS_COUNT = 24;
+const SUMMER_CAMP_SEASON_START_LABEL = '27 April 2026';
+const SUMMER_CAMP_SEASON_END_LABEL = '13 June 2026';
+const SUMMER_CAMP_SEASON_DATE_RANGE_LABEL = `${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}`;
+const SUMMER_CAMP_SEASON_DATE_RANGE_SHORT = '27 Apr–13 Jun 2026';
+const SUMMER_CAMP_BATCH_DURATION_LABEL = '4 weeks';
+const SUMMER_CAMP_VALUE_LABEL = `${SUMMER_CAMP_PLANNED_CLASS_COUNT} live classes in ${SUMMER_CAMP_BATCH_DURATION_LABEL}`;
+const SUMMER_CAMP_SCHEDULE_LABEL = 'Monday to Saturday batches';
+const SUMMER_CAMP_HOLIDAY_LABEL = 'Sunday holiday';
+const SUMMER_CAMP_BATCH_START_OPTIONS = [
+  '27 April 2026',
+  '4 May 2026',
+  '11 May 2026',
+  '18 May 2026',
+];
+const SUMMER_CAMP_BATCH_START_OPTIONS_LABEL = '27 April, 4 May, 11 May and 18 May 2026';
+const SUMMER_CAMP_BATCH_START_OPTIONS_SHORT = '27 Apr • 4 May • 11 May • 18 May';
+const SUMMER_CAMP_FINAL_BATCH_START_LABEL = '18 May 2026';
+const SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL = '13 June 2026';
+const SUMMER_CAMP_SCHOOL_REOPEN_NOTE = 'Final batch closes before schools reopen on 15 June 2026.';
 const SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE = Math.round(
   SUMMER_CAMP_ENROLLMENT_PRICE / SUMMER_CAMP_PLANNED_CLASS_COUNT
 );
-const SUMMER_CAMP_FAST_TRACK_TEXT = "Hi, I'm looking for a summer camp program, fast track pack.";
+const SUMMER_CAMP_FAST_TRACK_TEXT =
+  "Hi, I'm looking for Tiny Steps Summer Camp 2026. Please share the available batch start dates and tracks.";
 const SUMMER_CAMP_CHILD_AGE_OPTIONS = ['4-5 years', '6-7 years', '8-10 years', '10-12 years', 'Not sure yet'];
 const SUMMER_CAMP_TRACK_OPTIONS = [
   'Phonics Fast Track',
@@ -64,22 +84,22 @@ const PROGRAMS = [
     id: 'phonics-fast-track',
     title: 'Phonics Fast Track',
     ages: 'Ages 4–8',
-    duration: '10 weeks',
+    duration: SUMMER_CAMP_VALUE_LABEL,
     subjects: ['Phonics'],
-    focus: 'Fast-track course to refresh letter sounds, blending, and reading confidence',
+    focus: 'Focused 4-week track to refresh letter sounds, blending, and reading confidence',
     outcomes: [
       'Refresh core sounds + common blends',
       'Read short words and phrases with better accuracy',
-      'Build a daily 10-minute phonics routine',
+      'Build stronger reading confidence before the next school term',
     ],
   },
   {
     id: 'grammar-fast-track',
     title: 'Grammar Fast Track',
     ages: 'Ages 6–12',
-    duration: '10 weeks',
+    duration: SUMMER_CAMP_VALUE_LABEL,
     subjects: ['Grammar'],
-    focus: 'Fast-track course to strengthen sentence structure, punctuation, and writing clarity',
+    focus: 'Focused 4-week track to strengthen sentence structure, punctuation, and writing clarity',
     outcomes: [
       'Fix common grammar mistakes in daily writing',
       'Use tense, punctuation, and sentence order correctly',
@@ -90,9 +110,9 @@ const PROGRAMS = [
     id: 'speaking-fast-track',
     title: 'Speaking Fast Track',
     ages: 'Ages 6–12',
-    duration: '10 weeks',
+    duration: SUMMER_CAMP_VALUE_LABEL,
     subjects: ['Speaking'],
-    focus: 'Fast-track course for confident speaking, presentation flow, and better pronunciation',
+    focus: 'Focused 4-week track for confident communication, presentation flow, and clearer pronunciation',
     outcomes: [
       'Speak confidently in short structured talks',
       'Use intro-body-close format naturally',
@@ -103,28 +123,40 @@ const PROGRAMS = [
 
 const BATCHES = [
   {
-    id: 'phonics-fast-track/batch-apr-2026-morning-ist',
-    label: 'Phonics Fast Track',
-    dates: 'Apr 1–Jun 15, 2026',
-    duration: '10 weeks',
-    mode: 'Online',
+    id: 'summer-camp-batch-start-27-apr-2026',
+    label: 'Batch start: 27 April 2026',
+    dates: `Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_SHORT}`,
+    duration: SUMMER_CAMP_VALUE_LABEL,
+    mode: `${SUMMER_CAMP_SCHEDULE_LABEL} • ${SUMMER_CAMP_HOLIDAY_LABEL}`,
     capacity: `Capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    note: 'Available for phonics, grammar, and speaking tracks.',
   },
   {
-    id: 'grammar-fast-track/batch-apr-2026-evening-ist',
-    label: 'Grammar Fast Track',
-    dates: 'Apr 1–Jun 15, 2026',
-    duration: '10 weeks',
-    mode: 'Online',
+    id: 'summer-camp-batch-start-4-may-2026',
+    label: 'Batch start: 4 May 2026',
+    dates: `Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_SHORT}`,
+    duration: SUMMER_CAMP_VALUE_LABEL,
+    mode: `${SUMMER_CAMP_SCHEDULE_LABEL} • ${SUMMER_CAMP_HOLIDAY_LABEL}`,
     capacity: `Capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    note: 'Available for phonics, grammar, and speaking tracks.',
   },
   {
-    id: 'speaking-fast-track/batch-apr-2026-evening-ist',
-    label: 'Speaking Fast Track',
-    dates: 'Apr 1–Jun 15, 2026',
-    duration: '10 weeks',
-    mode: 'Online',
+    id: 'summer-camp-batch-start-11-may-2026',
+    label: 'Batch start: 11 May 2026',
+    dates: `Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_SHORT}`,
+    duration: SUMMER_CAMP_VALUE_LABEL,
+    mode: `${SUMMER_CAMP_SCHEDULE_LABEL} • ${SUMMER_CAMP_HOLIDAY_LABEL}`,
     capacity: `Capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    note: 'Available for phonics, grammar, and speaking tracks.',
+  },
+  {
+    id: 'summer-camp-batch-start-18-may-2026',
+    label: 'Batch start: 18 May 2026',
+    dates: `Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_SHORT}`,
+    duration: SUMMER_CAMP_VALUE_LABEL,
+    mode: `${SUMMER_CAMP_SCHEDULE_LABEL} • ${SUMMER_CAMP_HOLIDAY_LABEL}`,
+    capacity: `Capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    note: SUMMER_CAMP_SCHOOL_REOPEN_NOTE,
   },
 ];
 const STRETCH_CARDS = [
@@ -153,7 +185,7 @@ const STRETCH_CARDS = [
   {
     id: 'results',
     title: 'Outcome-Focused Plan',
-    desc: 'Clear 10-week learning path designed for measurable improvement.',
+    desc: 'Clear 4-week batch structure inside a premium summer season designed for measurable improvement.',
     cta: 'See learning path',
     href: '/summer-camps#programs',
     surfaceClass: 'from-[#efe9ff] via-[#f7f4ff] to-[#e8f2ff]',
@@ -201,9 +233,34 @@ const FAQS = [
       'Depending on the selected track, children improve in reading fluency, phonics accuracy, grammar usage, sentence formation, speaking confidence, pronunciation, and classroom participation.',
   },
   {
+    question: 'What is included in Tiny Steps Summer Camp 2026?',
+    answer:
+      `The program runs as a summer camp season from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, live teacher-led online classes, worksheets, class recordings, and a quick level check before placement. Families can choose Phonics Fast Track, Grammar Fast Track, or Speaking Fast Track based on the child’s current need.`,
+  },
+  {
+    question: 'When does Tiny Steps Summer Camp 2026 start?',
+    answer:
+      `The Summer Camp season runs from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
+  },
+  {
+    question: 'How many classes are included in the summer camp?',
+    answer:
+      `Each child gets ${SUMMER_CAMP_VALUE_LABEL} in a structured small-group format.`,
+  },
+  {
+    question: 'Is the camp held every day?',
+    answer:
+      `Classes run ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}. This gives children a steady routine during the summer break without making the program feel overwhelming.`,
+  },
+  {
+    question: 'Are classes held on Sundays?',
+    answer:
+      'No. Sunday is kept as a holiday for rest and family time.',
+  },
+  {
     question: 'What is included in the ₹2,400 Fast Track Pack fee?',
     answer:
-      `The summer camp list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. This includes entry into the 10-week group camp, 50–60 minute live online classes, phonics + grammar + speaking brush-up, effective worksheets, and class recordings. At the planned ${SUMMER_CAMP_PLANNED_CLASS_COUNT}-session schedule, this works out to about ₹${formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)} per class.`,
+      `The summer camp list fee is ₹${formatINR(SUMMER_CAMP_FULL_PRICE)} per child. Effective price: ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)} per child. This covers one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch inside the ${SUMMER_CAMP_SEASON_DATE_RANGE_SHORT} season, with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, 50–60 minute live online classes, worksheets, and class recordings. This works out to about ₹${formatINR(SUMMER_CAMP_EFFECTIVE_PER_CLASS_PRICE)} per class.`,
   },
   {
     question: 'Are the classes live or recorded?',
@@ -223,7 +280,7 @@ const FAQS = [
   {
     question: 'How do parents track progress during this group camp?',
     answer:
-      'Since this is a group camp, we follow a clear detailed 10-week learning path with outcome goals instead of individual weekly dashboards for every child.',
+      'Since this is a group camp, we follow a clear 4-week learning path with outcome goals instead of individual weekly dashboards for every child.',
   },
   {
     question: 'Is this summer camp group-only or 1:1?',
@@ -243,12 +300,12 @@ const FAQS = [
   {
     question: 'How quickly can we enroll and confirm a seat?',
     answer:
-      'Enrollment is quick. Click Enroll or WhatsApp on this page and send your request; our team will share suitable batch options and help reserve your child’s seat.',
+      'Enrollment is quick. Click Enroll or WhatsApp on this page and send your request; our team will share the limited batch start dates and help reserve your child’s seat.',
   },
   {
     question: 'Do you offer morning, evening, or weekend batch options?',
     answer:
-      'Batch timing depends on current demand and seat availability. Share your preferred schedule on WhatsApp or through the inquiry form on this page and we will guide you to the closest fit.',
+      `Batch timing depends on current demand and seat availability. The program runs ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()} with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}. Share your preferred time on WhatsApp or through the inquiry form and we will guide you to the closest fit from the limited start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
   },
   {
     question: 'Can we choose a specific focus track?',
@@ -296,29 +353,49 @@ const FAQS = [
       'These camps act as summer bridge programs—strengthening foundational skills (reading, grammar, speaking) before the new school term. Children return more confident and better prepared for classroom participation.',
   },
   {
+    question: 'Are there multiple batch start dates?',
+    answer:
+      `Yes. Limited batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch.`,
+  },
+  {
+    question: 'What is the last batch start date?',
+    answer:
+      `The last batch starts on ${SUMMER_CAMP_FINAL_BATCH_START_LABEL}.`,
+  },
+  {
+    question: 'Will the camp finish before school reopens?',
+    answer:
+      `Yes. The final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL}, before schools reopen on 15 June 2026.`,
+  },
+  {
     question: 'Is this good for summer catch-up or skill gaps?',
     answer:
-      'Yes. The 10-week focused format is designed specifically for catch-up support. Whether your child needs stronger phonics, clearer grammar, or speaking confidence, the structured path addresses gaps systematically.',
+      'Yes. The focused 4-week format is designed specifically for catch-up support. Whether your child needs stronger phonics, clearer grammar, or speaking confidence, the structured path addresses gaps systematically.',
   },
   {
     question: 'How is this different from regular Tiny Steps classes?',
     answer:
-      'Same premium curriculum and teaching quality, but condensed into a 10-week summer format with group batches instead of individualized pacing. Perfect for families wanting structured summer learning with clear outcomes.',
+      'Same premium curriculum and teaching quality, but condensed into a focused 4-week summer format with group batches instead of individualized pacing. Perfect for families wanting structured summer learning with clear outcomes.',
   },
 ];
 
 const SUMMER_CAMP_SEO_KEYWORDS = [
-  'premium summer camp for kids',
-  'best online summer camp for kids in india',
-  'online summer camp for kids in india',
+  'summer camp for kids',
+  'online summer camp for kids',
+  'summer classes for kids online',
+  'online summer camp India',
+  'summer camp for kids India',
+  'best online summer camp for kids in India',
   'small-group online summer camp',
   'small group summer camp for kids',
-  'phonics summer camp online',
+  'phonics summer camp',
+  'phonics summer camp for kids',
   'grammar summer camp for kids',
   'public speaking summer camp for kids',
-  'english summer program for children',
+  'english summer camp for kids',
+  'communication summer camp for kids',
   'summer camp with limited batch size',
-  'online english summer camp for children',
+  'online summer camp with live classes',
   'best summer camp for phonics and reading',
   'interactive summer camp for kids',
   'summer camp fees for kids',
@@ -343,7 +420,7 @@ const INDIA_PARENT_SEARCH_INTENTS = [
   {
     query: 'Best online summer camp for kids in India',
     answer:
-      `If you want a serious summer program without crowd-style teaching, this is it. We keep each batch capped at ${SUMMER_CAMP_BATCH_CAP} students with a clear 10-week plan, 50–60 minute classes, worksheets, and recordings.`,
+      `If you want a serious summer program without crowd-style teaching, this is it. We keep each batch capped at ${SUMMER_CAMP_BATCH_CAP} students with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
     cta: 'View group batches',
     href: '/summer-camps#batches',
     cardClass: 'from-[#e9f8ff] via-[#f5fcff] to-[#e8fff7] border-sky-200/70',
@@ -440,8 +517,8 @@ const PARENT_ENROLLMENT_CHECKLIST = [
     badgeClass: 'bg-violet-100 text-violet-700',
   },
   {
-    title: '10-Week Learning Path',
-    detail: 'Clear detailed learning path planned for 10 weeks with strong outcomes.',
+    title: '24 Live Classes in 4 Weeks',
+    detail: `Each child joins one 4-week batch inside the season from ${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}.`,
     cardClass: 'from-[#e8fff4] via-white to-[#e9fbff] border-emerald-200/70',
     badgeClass: 'bg-emerald-100 text-emerald-700',
   },
@@ -453,7 +530,7 @@ const PARENT_ENROLLMENT_CHECKLIST = [
   },
   {
     title: 'Fast Admission Support',
-    detail: 'One-click WhatsApp enrollment with a prefilled summer fast-track enquiry message.',
+    detail: `One-click WhatsApp enrollment with limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
     cardClass: 'from-[#edf2ff] via-white to-[#eff7ff] border-indigo-200/70',
     badgeClass: 'bg-indigo-100 text-indigo-700',
   },
@@ -703,7 +780,7 @@ function SummerCampLeadForm() {
 export default function SummerCampsPage() {
   useEffect(() => {
     const pageDescription =
-      `Premium online summer camp for kids ages 4-12 in India. 10-week phonics, grammar, and speaking fast-track courses for summer catch-up and bridge support. Small-group batches capped at ${SUMMER_CAMP_BATCH_CAP} students with 50–60 minute live classes, free level assessment, worksheets, and class recordings.`;
+      `Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Phonics, grammar, reading, and communication in a structured, child-friendly format.`;
 
     const faqSchema = {
       '@context': 'https://schema.org',
@@ -722,16 +799,16 @@ export default function SummerCampsPage() {
       '@id': 'https://tinystepslearning.com/summer-camps#courses',
       name: 'Tiny Steps Summer Camp Fast Track Courses',
       itemListElement: PROGRAMS.map((program, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        item: {
-          '@type': 'Course',
-          '@id': `https://tinystepslearning.com/summer-camps/${program.id}`,
-          name: program.title,
-          description: `${program.focus}. Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
-          inLanguage: 'en-IN',
-          courseMode: 'Online',
-          educationalLevel: program.ages,
+          '@type': 'ListItem',
+          position: index + 1,
+          item: {
+            '@type': 'Course',
+            '@id': `https://tinystepslearning.com/summer-camps/${program.id}`,
+            name: program.title,
+            description: `${program.focus}. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
+            inLanguage: 'en-IN',
+            courseMode: 'Online',
+            educationalLevel: program.ages,
           teaches: program.subjects,
           offers: {
             '@type': 'Offer',
@@ -755,7 +832,7 @@ export default function SummerCampsPage() {
       '@type': 'WebPage',
       '@id': 'https://tinystepslearning.com/summer-camps#webpage',
       url: 'https://tinystepslearning.com/summer-camps',
-      name: 'Premium Online Summer Camp for Kids in India | Tiny Steps Learning',
+      name: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
       description: pageDescription,
       inLanguage: 'en-IN',
       audience: {
@@ -777,7 +854,7 @@ export default function SummerCampsPage() {
       '@id': 'https://tinystepslearning.com/summer-camps#service',
       name: 'Tiny Steps Summer Camp Fast Track Pack',
       serviceType: 'Online summer camp for kids',
-      description: `Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students with a clear 10-week learning path.`,
+      description: `Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students. Limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
       areaServed: [
         {
           '@type': 'Country',
@@ -838,9 +915,9 @@ export default function SummerCampsPage() {
     // Event schemas for summer camp programs
     const phonicsEventSchema = createEventSchema({
       name: 'Phonics Fast Track Summer Camp 2026',
-      description: 'Fast-track course to refresh letter sounds, blending, and reading confidence. 10-week intensive program capped at 8 students.',
-      startDate: '2026-04-01',
-      endDate: '2026-06-15',
+      description: `Focused 4-week phonics program inside the Tiny Steps Summer Camp 2026 season (${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}) with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
+      startDate: '2026-04-27',
+      endDate: '2026-06-13',
       url: 'https://tinystepslearning.com/summer-camps/phonics-fast-track',
       price: SUMMER_CAMP_ENROLLMENT_PRICE,
       eventAttendanceMode: 'OnlineEventAttendanceMode'
@@ -848,9 +925,9 @@ export default function SummerCampsPage() {
 
     const grammarEventSchema = createEventSchema({
       name: 'Grammar Fast Track Summer Camp 2026',
-      description: 'Fast-track course to strengthen sentence structure, punctuation, and writing clarity. 10-week intensive program capped at 8 students.',
-      startDate: '2026-04-01',
-      endDate: '2026-06-15',
+      description: `Focused 4-week grammar program inside the Tiny Steps Summer Camp 2026 season (${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}) with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
+      startDate: '2026-04-27',
+      endDate: '2026-06-13',
       url: 'https://tinystepslearning.com/summer-camps/grammar-fast-track',
       price: SUMMER_CAMP_ENROLLMENT_PRICE,
       eventAttendanceMode: 'OnlineEventAttendanceMode'
@@ -858,16 +935,16 @@ export default function SummerCampsPage() {
 
     const speakingEventSchema = createEventSchema({
       name: 'Speaking Fast Track Summer Camp 2026',
-      description: 'Fast-track course for confident speaking, presentation flow, and better pronunciation. 10-week intensive program capped at 8 students.',
-      startDate: '2026-04-01',
-      endDate: '2026-06-15',
+      description: `Focused 4-week communication program inside the Tiny Steps Summer Camp 2026 season (${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}) with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and limited batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.`,
+      startDate: '2026-04-27',
+      endDate: '2026-06-13',
       url: 'https://tinystepslearning.com/summer-camps/speaking-fast-track',
       price: SUMMER_CAMP_ENROLLMENT_PRICE,
       eventAttendanceMode: 'OnlineEventAttendanceMode'
     });
 
     applySeo({
-      title: 'Premium Online Summer Camp for Kids in India | Tiny Steps Learning',
+      title: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
       description: pageDescription,
       keywords: SUMMER_CAMP_SEO_KEYWORDS,
       canonicalPath: '/summer-camps',
@@ -907,30 +984,30 @@ export default function SummerCampsPage() {
                   </ol>
                 </nav>
                 <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">
-                  Summer Fast Track 2026
+                  Tiny Steps Summer Camp 2026
                 </p>
                 <h1 className="mt-3 text-3xl font-black leading-tight text-slate-900 sm:text-4xl md:text-5xl">
-                  Premium Online Summer Camp for Kids Ages 4-12
+                  Tiny Steps Summer Camp 2026
                 </h1>
                 <p className="mt-4 max-w-3xl text-base text-slate-700 sm:text-lg">
-                  Unlike large-volume summer camps, Tiny Steps is intentionally capped at {SUMMER_CAMP_BATCH_CAP} students per batch.
-                  Children get more chances to speak, read, respond, and improve with live teacher attention.
+                  A focused summer learning season for children ages 4–12. Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one {SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with live teacher guidance in phonics, grammar, reading, and communication.
                 </p>
                 
                 <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm shadow-sm">
                   <span className="text-lg">⏰</span>
-                  <span className="font-semibold text-amber-900">Starting April 1, 2026</span>
-                  <span className="text-amber-700">• New batches start weekly</span>
+                  <span className="font-semibold text-amber-900">Season: {SUMMER_CAMP_SEASON_DATE_RANGE_SHORT}</span>
+                  <span className="text-amber-700">• Final batch starts {SUMMER_CAMP_FINAL_BATCH_START_LABEL}</span>
                 </div>
                 
                 <p className="mt-3 text-sm text-slate-600">
-                  Camp window: April 1–June 15, 2026 • 10 weeks • Limited batches, capped at {SUMMER_CAMP_BATCH_CAP}.
+                  Limited batch start dates available: {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL} • {SUMMER_CAMP_VALUE_LABEL} • {SUMMER_CAMP_HOLIDAY_LABEL} • {SUMMER_CAMP_SCHOOL_REOPEN_NOTE}
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3 text-sm">
-                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Ages 4–5</span>
-                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Ages 6–7</span>
-                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Ages 8–10</span>
-                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Ages 10–12</span>
+                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Ages 4–12</span>
+                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">{SUMMER_CAMP_VALUE_LABEL}</span>
+                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">{SUMMER_CAMP_SCHEDULE_LABEL}</span>
+                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">{SUMMER_CAMP_HOLIDAY_LABEL}</span>
+                  <span className="rounded-full bg-white px-4 py-1 text-slate-700 shadow-sm">Batch starts: {SUMMER_CAMP_BATCH_START_OPTIONS_SHORT}</span>
                   <span className="rounded-full bg-emerald-100 px-4 py-1 font-semibold text-emerald-800">
                     Capped at {SUMMER_CAMP_BATCH_CAP} students per batch
                   </span>
@@ -952,13 +1029,18 @@ export default function SummerCampsPage() {
                   <span>Effective price: ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}</span>
                 </p>
                 <p className="mt-2 text-sm text-slate-700">
-                  Fast Track Pack fee per child. Includes free level assessment for proper placement.
+                  Fast Track Pack fee per child. Includes free level assessment and support choosing the right batch start date.
                 </p>
                 <div className="mt-4 space-y-2 text-xs text-slate-600">
                   <p>Capped at {SUMMER_CAMP_BATCH_CAP} students per batch</p>
                   <p>Live online group batches across India</p>
+                  <p>Summer Camp Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}</p>
+                  <p>Batch start dates: {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}</p>
+                  <p>{SUMMER_CAMP_VALUE_LABEL}</p>
+                  <p>{SUMMER_CAMP_SCHEDULE_LABEL}</p>
+                  <p>{SUMMER_CAMP_HOLIDAY_LABEL}</p>
                   <p>50–60 minute live classes</p>
-                  <p>Phonics + grammar + speaking brush-up</p>
+                  <p>Phonics + grammar + reading + communication support</p>
                   <p>Effective worksheets + class recordings</p>
                 </div>
                 <div id="whatsapp-enroll" className="mt-5 flex scroll-mt-24 flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -966,9 +1048,9 @@ export default function SummerCampsPage() {
                     href={SUMMER_CAMP_WHATSAPP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-600 hover:shadow-lg"
-                  >
-                    Enroll for ₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}
+                  className="inline-flex min-h-[46px] items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-4 py-2 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-600 hover:shadow-lg"
+                >
+                    Reserve a Summer Camp Seat
                   </a>
                   <a
                     href={SUMMER_CAMP_WHATSAPP_URL}
@@ -976,7 +1058,7 @@ export default function SummerCampsPage() {
                     rel="noopener noreferrer"
                     className="inline-flex min-h-[46px] items-center justify-center rounded-full border border-emerald-500 bg-white/90 px-4 py-2 text-sm font-semibold text-emerald-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50"
                   >
-                    WhatsApp us
+                    Ask About Batches on WhatsApp
                   </a>
                 </div>
               </div>
@@ -987,9 +1069,9 @@ export default function SummerCampsPage() {
                 href={SUMMER_CAMP_WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-600 hover:shadow-lg sm:w-auto"
-              >
-                Reserve My Camp Seat
+              className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-300 hover:-translate-y-0.5 hover:from-emerald-700 hover:to-teal-600 hover:shadow-lg sm:w-auto"
+            >
+                Reserve a Summer Camp Seat
               </a>
               <a
                 href={SUMMER_CAMP_WHATSAPP_URL}
@@ -997,7 +1079,7 @@ export default function SummerCampsPage() {
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-emerald-500 bg-white/90 px-5 py-2.5 text-sm font-semibold text-emerald-700 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-600 hover:bg-emerald-50 sm:w-auto"
               >
-                Chat on WhatsApp
+                Ask About Batches on WhatsApp
               </a>
             </div>
           </div>
@@ -1011,23 +1093,23 @@ export default function SummerCampsPage() {
               <p className="mt-1 text-sm text-slate-600">Everything parents need to know</p>
             </div>
 
-            <div className="grid gap-px bg-slate-200/40 sm:grid-cols-2">
+            <div className="grid gap-px bg-slate-200/40 sm:grid-cols-2 lg:grid-cols-3">
               <div className="bg-white px-6 py-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">👶</div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-lg">🚀</div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Age Range</p>
-                    <p className="mt-1 text-base font-semibold text-slate-900">Ages 4–12 (grouped by level)</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Season Dates</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}</p>
                   </div>
                 </div>
               </div>
 
               <div className="bg-white px-6 py-4">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">💻</div>
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100 text-lg">🏁</div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Format</p>
-                    <p className="mt-1 text-base font-semibold text-slate-900">Live small-group online (capped at {SUMMER_CAMP_BATCH_CAP})</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Batch Duration</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{SUMMER_CAMP_BATCH_DURATION_LABEL}</p>
                   </div>
                 </div>
               </div>
@@ -1036,8 +1118,8 @@ export default function SummerCampsPage() {
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-lg">📅</div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Duration</p>
-                    <p className="mt-1 text-base font-semibold text-slate-900">10 weeks (April 1–June 15, 2026)</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Class Count</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{SUMMER_CAMP_VALUE_LABEL}</p>
                   </div>
                 </div>
               </div>
@@ -1046,8 +1128,28 @@ export default function SummerCampsPage() {
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-100 text-lg">⏱️</div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Class Length</p>
-                    <p className="mt-1 text-base font-semibold text-slate-900">50–60 minute live classes</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Weekly Schedule</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{SUMMER_CAMP_SCHEDULE_LABEL}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-rose-100 text-lg">🗓️</div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Start-Date Options</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{SUMMER_CAMP_BATCH_START_OPTIONS_SHORT}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white px-6 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-lg">🌿</div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Sunday</p>
+                    <p className="mt-1 text-base font-semibold text-slate-900">{SUMMER_CAMP_HOLIDAY_LABEL}</p>
                   </div>
                 </div>
               </div>
@@ -1334,7 +1436,7 @@ export default function SummerCampsPage() {
               </div>
             </div>
             <p className="mt-3 text-xs text-slate-600">
-              Session count may vary slightly by holidays and batch calendar.
+              Each enrollment covers one {SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch inside the Summer Camp Season {SUMMER_CAMP_SEASON_DATE_RANGE_SHORT}, with limited batch start dates on {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.
             </p>
           </div>
         </section>
@@ -1360,7 +1462,7 @@ export default function SummerCampsPage() {
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <h3 className="text-sm font-semibold text-slate-900">Check the learning path</h3>
                 <p className="mt-2 text-sm text-slate-700">
-                  Prefer camps with a structured week-by-week skill plan instead of random activities.
+                  Prefer camps with a structured 4-week skill plan instead of random activities.
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -1410,7 +1512,7 @@ export default function SummerCampsPage() {
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
               <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
               <p className="mt-2 text-sm text-gray-700">
-                Tiny Steps Summer Camp is a premium small-group online program, capped at {SUMMER_CAMP_BATCH_CAP} students per batch. It follows our core curriculum in phonics, grammar, reading, and speaking with a clear detailed 10-week learning path.
+                Tiny Steps Summer Camp is a premium small-group online program, capped at {SUMMER_CAMP_BATCH_CAP} students per batch. The summer season runs from {SUMMER_CAMP_SEASON_START_LABEL} to {SUMMER_CAMP_SEASON_END_LABEL}, and each child joins one clear 4-week learning path inside that season.
               </p>
             </div>
             <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:p-6">
@@ -1426,6 +1528,19 @@ export default function SummerCampsPage() {
           <h2 className="text-2xl font-semibold text-gray-900">Choose a program</h2>
           <p className="mt-2 text-sm text-gray-600">
             Pick the focus track that matches your child’s current level and goal. All tracks follow the full curriculum.
+            Need a deeper look first? Explore our{' '}
+            <Link to="/phonics" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              phonics classes
+            </Link>
+            ,{' '}
+            <Link to="/grammar" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              grammar classes
+            </Link>
+            , and{' '}
+            <Link to="/speaking" className="font-semibold text-emerald-700 hover:text-emerald-800">
+              speaking classes
+            </Link>
+            .
           </p>
           <div className="mt-6 grid gap-5 md:grid-cols-3">
             {PROGRAMS.map((program) => (
@@ -1469,9 +1584,9 @@ export default function SummerCampsPage() {
         </section>
 
         <section id="batches" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-10 sm:px-6 sm:pb-12">
-          <h2 className="text-2xl font-semibold text-gray-900">Upcoming group batches</h2>
+          <h2 className="text-2xl font-semibold text-gray-900">Limited batch start dates</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Choose a track and enroll instantly on WhatsApp.
+            The Summer Camp season runs from {SUMMER_CAMP_SEASON_START_LABEL} to {SUMMER_CAMP_SEASON_END_LABEL}. Each child joins one 4-week batch from the start dates below, and the final batch closes before schools reopen.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {BATCHES.map((batch) => (
@@ -1486,6 +1601,7 @@ export default function SummerCampsPage() {
                 <div className="mt-2 text-xs text-gray-600">
                   {batch.dates} • {batch.duration} • {batch.mode} • {batch.capacity}
                 </div>
+                <div className="mt-2 text-sm text-slate-600">{batch.note}</div>
                 <div className="mt-3 text-sm font-semibold text-emerald-700">Enroll on WhatsApp →</div>
               </a>
             ))}
@@ -1502,14 +1618,14 @@ export default function SummerCampsPage() {
                 Need the right batch, brochure, or a parent callback first?
               </h2>
               <p className="mt-3 text-sm text-slate-700">
-                Some parents want a recommendation before they enroll. Share your child&apos;s age, preferred track, and timing needs. We&apos;ll guide you to the closest-fit summer batch.
+                Some parents want a recommendation before they enroll. Share your child&apos;s age, preferred track, and timing needs. We&apos;ll guide you to the closest-fit batch from the limited start dates on {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.
               </p>
 
               <div className="mt-5 rounded-2xl border border-emerald-200/70 bg-white/90 p-4 shadow-sm">
                 <p className="text-sm font-semibold text-slate-900">What we usually reply with</p>
                 <ul className="mt-3 space-y-2 text-sm text-slate-700">
                   <li>Best-fit track: phonics, grammar, or speaking</li>
-                  <li>Next available batch based on your timing preference</li>
+                  <li>Best-fit batch start date from {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}</li>
                   <li>Free level assessment guidance before seat confirmation</li>
                   <li>Fee clarity and what is included in the camp pack</li>
                 </ul>
@@ -1547,7 +1663,7 @@ export default function SummerCampsPage() {
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Quick & Easy Enrollment</p>
                 <h2 className="mt-2 text-2xl font-bold text-slate-900 sm:text-3xl">How Summer Camp Enrollment Works</h2>
                 <p className="mx-auto mt-2 max-w-2xl text-sm text-slate-600">
-                  Simple process—no complicated forms or long waits
+                  Simple process with clear batch dates and no complicated forms
                 </p>
               </div>
 
@@ -1558,7 +1674,7 @@ export default function SummerCampsPage() {
                   </div>
                   <h3 className="mt-4 text-base font-semibold text-slate-900">1. Message on WhatsApp</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    Click "Enroll" or WhatsApp us with your child's age and track preference (Phonics, Grammar, or Speaking)
+                    Click "Enroll" or WhatsApp us with your child's age, track preference, and preferred batch start date
                   </p>
                 </div>
 
@@ -1578,7 +1694,7 @@ export default function SummerCampsPage() {
                   </div>
                   <h3 className="mt-4 text-base font-semibold text-slate-900">3. Seat Confirmed</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    After payment (₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}), we confirm your child's batch and share joining details
+                    After payment (₹{formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}), we confirm your child's batch start date and share joining details
                   </p>
                 </div>
               </div>
@@ -1591,7 +1707,7 @@ export default function SummerCampsPage() {
                     <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
                       <li className="flex items-start gap-2">
                         <span className="mt-0.5 text-emerald-600">•</span>
-                        <span>Batch confirmation with schedule details</span>
+                        <span>Chosen batch start date with schedule details</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-0.5 text-emerald-600">•</span>
@@ -1599,7 +1715,7 @@ export default function SummerCampsPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-0.5 text-emerald-600">•</span>
-                        <span>10-week learning path with clear milestones</span>
+                        <span>{SUMMER_CAMP_VALUE_LABEL} with clear milestones</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="mt-0.5 text-emerald-600">•</span>
@@ -1619,7 +1735,7 @@ export default function SummerCampsPage() {
                 >
                   Start Enrollment on WhatsApp
                 </a>
-                <p className="mt-3 text-xs text-slate-500">Quick response • Batches start weekly • Limited to {SUMMER_CAMP_BATCH_CAP} students per batch</p>
+                <p className="mt-3 text-xs text-slate-500">Quick response • {SUMMER_CAMP_SCHEDULE_LABEL} • Limited to {SUMMER_CAMP_BATCH_CAP} students per batch</p>
               </div>
             </div>
           </div>

@@ -26,7 +26,7 @@ export default function SummerSpeakingCampKidsPage() {
     applySeo({
       title: 'Summer Speaking Camp for Kids | Tiny Steps Learning',
       description:
-        'Summer speaking camp for kids focused on spoken English confidence, expressive communication, vocabulary growth, and presentation readiness through live sessions.',
+        'Summer speaking camp for kids focused on communication confidence, expressive speaking, vocabulary growth, and presentation readiness through live sessions.',
       canonicalPath: '/summer-speaking-camp-kids',
       ogType: 'website',
       jsonLd: [
@@ -64,7 +64,7 @@ export default function SummerSpeakingCampKidsPage() {
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
         <h2 className="mb-2 text-lg font-bold text-slate-900">What is a summer speaking camp for kids?</h2>
         <p className="text-slate-700">
-          Tiny Steps runs a live online summer speaking camp for kids (typically ages 6-14) to improve spoken English confidence, sentence clarity, and presentation readiness. Parents choose it to help children return to school speaking with less hesitation and stronger communication confidence.
+          Tiny Steps runs a live online summer speaking camp for kids (typically ages 6-14) to improve communication confidence, sentence clarity, and presentation readiness. Parents choose it to help children return to school speaking with less hesitation and stronger communication confidence.
         </p>
       </section>
 
@@ -107,7 +107,7 @@ export default function SummerSpeakingCampKidsPage() {
           </Link>
           {' • '}
           <Link to="/summer-camps" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            premium summer camps for kids
+            Tiny Steps Summer Camp 2026
           </Link>
         </p>
       </section>

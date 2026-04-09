@@ -1,15 +1,11 @@
-import { Link } from 'react-router-dom';
-
 export type InternalLinkRule = {
   id: string;
   href: string;
   phrases: string[];
   priority: number;
   cluster: 'phonics' | 'grammar' | 'speaking' | 'courses' | 'trust' | 'parents' | 'admissions';
-  preferredAnchor?: string;
   pageAllowlist?: string[];
   pageDenylist?: string[];
-  maxPerBlock?: number;
 };
 
 export const internalLinkMap: InternalLinkRule[] = [
@@ -28,15 +24,6 @@ export const internalLinkMap: InternalLinkRule[] = [
     priority: 90,
     cluster: 'parents',
   },
-  {
-    id: 'book-assessment',
-    href: '/?book=1',
-    phrases: ['book a free assessment', 'book an assessment', 'free level check'],
-    priority: 110,
-    cluster: 'admissions',
-    maxPerBlock: 1,
-  },
-
   // Core authority pages
   {
     id: 'phonics-page',

@@ -5,6 +5,17 @@ import { applySeo } from '../lib/seo';
 const SUMMER_CAMP_ENROLLMENT_PRICE = 2400;
 const SUMMER_CAMP_FULL_PRICE = 5000;
 const SUMMER_CAMP_BATCH_CAP = 8;
+const SUMMER_CAMP_PLANNED_CLASS_COUNT = 24;
+const SUMMER_CAMP_SEASON_START_LABEL = '27 April 2026';
+const SUMMER_CAMP_SEASON_END_LABEL = '13 June 2026';
+const SUMMER_CAMP_SEASON_DATE_RANGE_LABEL = `${SUMMER_CAMP_SEASON_START_LABEL} to ${SUMMER_CAMP_SEASON_END_LABEL}`;
+const SUMMER_CAMP_BATCH_DURATION_LABEL = '4 weeks';
+const SUMMER_CAMP_VALUE_LABEL = `${SUMMER_CAMP_PLANNED_CLASS_COUNT} live classes in ${SUMMER_CAMP_BATCH_DURATION_LABEL}`;
+const SUMMER_CAMP_SCHEDULE_LABEL = 'Monday to Saturday batches';
+const SUMMER_CAMP_HOLIDAY_LABEL = 'Sunday holiday';
+const SUMMER_CAMP_BATCH_START_OPTIONS_LABEL = '27 April, 4 May, 11 May and 18 May 2026';
+const SUMMER_CAMP_FINAL_BATCH_START_LABEL = '18 May 2026';
+const SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL = '13 June 2026';
 
 function getWhatsAppUrl(message: string) {
   return `https://wa.me/919618398383?text=${encodeURIComponent(message)}`;
@@ -39,9 +50,9 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     slug: 'phonics-fast-track',
     title: 'Phonics Fast Track',
     ages: 'Ages 4-8',
-    outcome: 'Summer Camp: 10-week phonics fast track for stronger reading confidence',
-    focus: 'Fast-track brush-up in sounds, blends, and decoding for smooth early reading',
-    format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    outcome: 'Phonics Fast Track Summer Camp 2026',
+    focus: 'A focused 4-week phonics program to refresh sounds, blends, and decoding for smoother early reading',
+    format: `Live premium small-group classes, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()} and batches capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
       'Stronger sound recognition and recall',
       'Faster blending with better word accuracy',
@@ -55,13 +66,13 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
       'Attend 50–60 minute live fast-track classes with guided practice',
-      'Follow a clear 10-week learning path with effective worksheets and class recordings',
+      `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
     ],
     faq: [
       {
         question: 'What is Phonics Fast Track?',
         answer:
-          'A focused 10-week course for children who need a quick phonics refresh before the new school term. It strengthens sound knowledge, blending, decoding, and reading flow.',
+          `A focused 4-week course with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} for children who need a phonics refresh before the new school term. It strengthens sound knowledge, blending, decoding, and reading flow.`,
       },
       {
         question: 'Who is it for?',
@@ -76,7 +87,7 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
+          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
       {
         question: 'Is there a free assessment before enrollment?',
@@ -94,9 +105,14 @@ const PROGRAMS: Record<string, ProgramConfig> = {
           'Each child receives phonics-focused worksheets for practice and access to class recordings for review at home.',
       },
       {
-        question: 'Can we join mid-program or do we need to start from week 1?',
+        question: 'Can we join after the start date or do we need to begin from day 1?',
         answer:
-          'New batches start weekly. We recommend starting from week 1 for full benefit, but message us if you want to join a running batch—we can assess fit.',
+          `Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. We recommend joining from day 1 of your selected batch for the full 4-week progression, but message us if you are joining late and we will guide you based on seat availability.`,
+      },
+      {
+        question: 'Are there multiple batch start dates for this program?',
+        answer:
+          `Yes. The Summer Camp season runs from ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.`,
       },
     ],
   },
@@ -104,9 +120,9 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     slug: 'grammar-fast-track',
     title: 'Grammar Fast Track',
     ages: 'Ages 6-12',
-    outcome: 'Summer Camp: 10-week grammar fast track for better writing quality',
-    focus: 'Fast-track brush-up in sentence structure, punctuation, tense, and grammar accuracy',
-    format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    outcome: 'Grammar Fast Track Summer Camp 2026',
+    focus: 'A focused 4-week grammar program to strengthen sentence structure, punctuation, tense, and writing accuracy',
+    format: `Live premium small-group classes, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()} and batches capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
       'Fewer common grammar mistakes in school writing',
       'Better sentence structure and punctuation control',
@@ -120,13 +136,13 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
       'Attend 50–60 minute live fast-track classes with guided practice',
-      'Follow a clear 10-week learning path with effective worksheets and class recordings',
+      `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
     ],
     faq: [
       {
         question: 'What is Grammar Fast Track?',
         answer:
-          'A focused 10-week grammar refresher designed to improve writing quality quickly through practical drills and teacher-led correction.',
+          `A focused 4-week grammar refresher with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, designed to improve writing quality quickly through practical drills and teacher-led correction.`,
       },
       {
         question: 'Who is it for?',
@@ -141,12 +157,12 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
+          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
       {
         question: 'How does the summer camp format differ from regular classes?',
         answer:
-          'The summer camp format is more intensive, with a clear 10-week outcome path and smaller batch sizes for focused learning.',
+          `The summer camp format is more focused, with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, and smaller batch sizes for stronger learning support.`,
       },
       {
         question: 'What materials are provided during the camp?',
@@ -158,15 +174,20 @@ const PROGRAMS: Record<string, ProgramConfig> = {
         answer:
           'Yes, class recordings and worksheets are provided to help students catch up on missed lessons.',
       },
+      {
+        question: 'Are there multiple batch start dates for this program?',
+        answer:
+          `Yes. The Summer Camp season runs from ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.`,
+      },
     ],
   },
   'speaking-fast-track': {
     slug: 'speaking-fast-track',
     title: 'Speaking Fast Track',
     ages: 'Ages 6-12',
-    outcome: 'Summer Camp: 10-week speaking fast track for confident communication',
-    focus: 'Fast-track brush-up in speech structure, clarity, pronunciation, and delivery confidence',
-    format: `Live premium small-group classes capped at ${SUMMER_CAMP_BATCH_CAP} students`,
+    outcome: 'Speaking Fast Track Summer Camp 2026',
+    focus: 'A focused 4-week communication program to strengthen speech structure, clarity, pronunciation, and delivery confidence',
+    format: `Live premium small-group classes, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, with ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()} and batches capped at ${SUMMER_CAMP_BATCH_CAP} students`,
     outcomes: [
       'More confidence in short structured talks',
       'Clearer voice, pace, and articulation',
@@ -180,13 +201,13 @@ const PROGRAMS: Record<string, ProgramConfig> = {
     steps: [
       'Enroll for ₹2,400 and complete a quick level check',
       'Attend 50–60 minute live fast-track classes with guided practice',
-      'Follow a clear 10-week learning path with effective worksheets and class recordings',
+      `Follow a clear 4-week learning path with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, worksheets, and class recordings`,
     ],
     faq: [
       {
         question: 'What is Speaking Fast Track?',
         answer:
-          'A focused 10-week speaking course that helps children speak more confidently, clearly, and structurally in school and activity settings.',
+          `A focused 4-week speaking course with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} that helps children speak more confidently, clearly, and structurally in school and activity settings.`,
       },
       {
         question: 'Who is it for?',
@@ -201,12 +222,12 @@ const PROGRAMS: Record<string, ProgramConfig> = {
       {
         question: 'Is this the same curriculum as regular classes?',
         answer:
-          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 10-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
+          `Yes. It uses the same Tiny Steps core method, delivered in a premium summer format with a clear 4-week outcome path and batches capped at ${SUMMER_CAMP_BATCH_CAP}.`,
       },
       {
         question: 'How does the summer camp format differ from regular classes?',
         answer:
-          'The summer camp format is more intensive, with a clear 10-week outcome path and smaller batch sizes for focused learning.',
+          `The summer camp format is more focused, with ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, and smaller batch sizes for stronger learning support.`,
       },
       {
         question: 'What materials are provided during the camp?',
@@ -217,6 +238,11 @@ const PROGRAMS: Record<string, ProgramConfig> = {
         question: 'Can my child catch up if they miss a class?',
         answer:
           'Yes, class recordings and worksheets are provided to help students catch up on missed lessons.',
+      },
+      {
+        question: 'Are there multiple batch start dates for this program?',
+        answer:
+          `Yes. The Summer Camp season runs from ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Available batch start dates are ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by ${SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.`,
       },
     ],
   },
@@ -285,7 +311,7 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           <h1 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">Batch details coming soon</h1>
           <p className="mt-3 text-gray-700">
             This batch page is a placeholder so parents never hit a dead end. Full schedule and
-            enrollment details will be published here.
+            enrollment details will be published here. Available batch start dates are {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
@@ -373,13 +399,19 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
           
           <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-sm">
             <span className="text-lg">⏰</span>
-            <span className="font-semibold text-amber-900">Starting April 1, 2026</span>
-            <span className="text-amber-700">• Limited batches, capped at {SUMMER_CAMP_BATCH_CAP} students</span>
+            <span className="font-semibold text-amber-900">Season: {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}</span>
+            <span className="text-amber-700">• Last batch starts {SUMMER_CAMP_FINAL_BATCH_START_LABEL}</span>
           </div>
+          <p className="mt-3 max-w-3xl text-sm text-slate-600">
+            Limited batch start dates available: {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Each child joins one 4-week batch, and the final batch is designed to close by {SUMMER_CAMP_FINAL_BATCH_CLOSE_LABEL} before schools reopen on 15 June 2026.
+          </p>
 
           <div className="mt-6 flex flex-wrap gap-3 text-sm">
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{program.ages}</span>
-            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">10 weeks</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{SUMMER_CAMP_VALUE_LABEL}</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{SUMMER_CAMP_SCHEDULE_LABEL}</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">{SUMMER_CAMP_HOLIDAY_LABEL}</span>
+            <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Batch starts: 27 Apr • 4 May • 11 May • 18 May</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">50–60 min classes</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Capped at {SUMMER_CAMP_BATCH_CAP}</span>
             <span className="rounded-full bg-white/80 px-4 py-1 text-gray-700">Online</span>
@@ -407,14 +439,13 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
 
       <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
-            <p className="mt-2 text-sm text-gray-700">
-              {program.title} is a 10-week online summer camp that follows our core curriculum
-              (phonics, grammar, and speaking) with extra focus on this track. Expect focused
-              group sessions capped at {SUMMER_CAMP_BATCH_CAP} students, a clear detailed learning path, effective worksheets, and class recordings.
-            </p>
-          </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+              <h2 className="text-lg font-semibold text-gray-900">What is this camp?</h2>
+              <p className="mt-2 text-sm text-gray-700">
+              {program.title} is a 4-week online summer camp that follows our core curriculum
+              with extra focus on this track. The Summer Camp season runs from {SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}, and each child joins one batch with {SUMMER_CAMP_VALUE_LABEL.toLowerCase()}, {SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, {SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, focused group sessions capped at {SUMMER_CAMP_BATCH_CAP} students, worksheets, and class recordings.
+              </p>
+            </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 className="text-lg font-semibold text-gray-900">Who is it for?</h2>
             <p className="mt-2 text-sm text-gray-700">
@@ -422,13 +453,13 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
               this camp provides structure, feedback, and daily practice that is easy to follow.
             </p>
           </div>
-          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
-            <p className="mt-2 text-sm text-gray-700">
-              Children make measurable progress through a clear 10-week learning path and teacher feedback.
-              Expect stronger skills, more confidence, and a clear next-step plan after 10 weeks.
-            </p>
-          </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
+              <h2 className="text-lg font-semibold text-gray-900">What will my child achieve?</h2>
+              <p className="mt-2 text-sm text-gray-700">
+                Children make measurable progress through a clear 4-week learning path and teacher feedback.
+              Expect stronger skills, more confidence, and a clear next-step plan by the end of the selected batch.
+              </p>
+            </div>
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
             <h2 className="text-lg font-semibold text-gray-900">Camp format</h2>
             <p className="mt-2 text-sm text-gray-700">
@@ -489,14 +520,14 @@ function ProgramPage({ program, batchSlug }: { program: ProgramConfig | null; ba
                 Next Step
               </p>
               <p className="mt-2 text-sm text-gray-700">
-                Pick a batch, enroll, and we place your child into the right level group.
+                Pick from the limited batch start dates on {SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}, enroll, and we place your child into the right level group.
               </p>
               <div className="mt-4">
                 <Link
                   to="/summer-camps#batches"
                   className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white sm:w-auto"
                 >
-                  Choose Group Batch
+                  Choose Batch Start Date
                 </Link>
               </div>
             </div>
@@ -647,9 +678,11 @@ export default function SummerCampProgramPage() {
   useEffect(() => {
     const baseTitle = program?.title || 'Summer Camp Program';
     const batchTitle = batchSlug ? `Batch ${toTitleCase(batchSlug)}` : '';
-    const title = batchSlug ? `${baseTitle} ${batchTitle} | Tiny Steps` : `${baseTitle} | Tiny Steps`;
+    const title = batchSlug
+      ? `${baseTitle} ${batchTitle} | Tiny Steps`
+      : `${baseTitle} Summer Camp 2026 | 24 Live Classes in 4 Weeks | Tiny Steps`;
     const description = program
-      ? `${program.title} summer camp for ${program.ages}. ${program.focus}. Premium small-group online summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students for summer catch-up and school readiness. 10-week structured path with free level assessment, 50–60 minute live classes, worksheets, and recordings. List fee ₹${formatINR(SUMMER_CAMP_FULL_PRICE)}. Effective price ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
+      ? `${program.title} summer camp for ${program.ages}. ${program.focus}. Summer Camp Season: ${SUMMER_CAMP_SEASON_DATE_RANGE_LABEL}. Each child joins one ${SUMMER_CAMP_VALUE_LABEL.toLowerCase()} batch with ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, and free level assessment support. Available batch start dates: ${SUMMER_CAMP_BATCH_START_OPTIONS_LABEL}. Effective price ₹${formatINR(SUMMER_CAMP_ENROLLMENT_PRICE)}.`
       : 'Summer camp program details coming soon.';
     const keywords = program
       ? [
@@ -707,7 +740,7 @@ export default function SummerCampProgramPage() {
           '@context': 'https://schema.org',
           '@type': 'Course',
           name: program.title,
-          description: `${program.focus}. Premium small-group summer camp capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
+          description: `${program.focus}. ${SUMMER_CAMP_VALUE_LABEL}, ${SUMMER_CAMP_SCHEDULE_LABEL.toLowerCase()}, ${SUMMER_CAMP_HOLIDAY_LABEL.toLowerCase()}, capped at ${SUMMER_CAMP_BATCH_CAP} students.`,
           courseMode: 'Online',
           educationalLevel: program.ages,
           provider: {

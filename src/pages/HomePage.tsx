@@ -19,7 +19,13 @@ const LearningJourneyRoadmapPPT = lazy(async () => {
   return { default: mod.LearningJourneyRoadmapPPT };
 });
 
-const SUMMER_CAMP_BADGES = ["Live small-group online", "Free assessment", "Capped batches", "April 1–June 15"];
+const SUMMER_CAMP_BADGES = [
+  "24 live classes in 4 weeks",
+  "Monday to Saturday batches",
+  "Sunday holiday",
+  "Season: 27 Apr to 13 Jun 2026",
+  "Batch starts: 27 Apr, 4 May, 11 May, 18 May",
+];
 const PARENT_HELP_POINTS = [
   "Short, practical guides",
   "Home routines that fit real schedules",
@@ -186,10 +192,10 @@ export default function HomePage() {
 
             <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp 2026 • April-June</p>
-                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">Summer Catch-Up & Bridge Camp for ages 4–12</h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-emerald-700">Summer Camp Season 2026 • 27 April to 13 June</p>
+                <h2 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">A focused 4-week summer learning program for ages 4–12</h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-700 sm:text-base">
-                  Choose from 3 fast-track programs: <strong>Phonics</strong>, <strong>Grammar</strong>, or <strong>Speaking</strong>. 10-week live online format with free placement assessment, clear routines, and progress tracking.
+                  Choose from 3 fast-track programs: <strong>Phonics</strong>, <strong>Grammar</strong>, or <strong>Speaking</strong>. {`Each child joins one 24 live-class batch in 4 weeks inside the Summer Camp Season from 27 April to 13 June 2026.`} Limited batch start dates are 27 April, 4 May, 11 May and 18 May 2026, with Sunday kept as a holiday.
                 </p>
                 <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-700 px-3 py-1 text-sm font-semibold text-white">
                   <span className="line-through text-emerald-100">₹5,000</span>
@@ -208,13 +214,13 @@ export default function HomePage() {
                   to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-800"
                 >
-                  Start Free Assessment
+                  Book Free Level Check
                 </Link>
                 <Link
                   to="/summer-camps"
                   className="inline-flex items-center justify-center rounded-full border border-emerald-700 bg-white/70 px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:-translate-y-0.5 hover:bg-emerald-50"
                 >
-                  View All 3 Programs
+                  Explore Summer Camp 2026
                 </Link>
               </div>
             </div>

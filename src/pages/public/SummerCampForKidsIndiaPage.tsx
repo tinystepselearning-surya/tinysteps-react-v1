@@ -16,7 +16,17 @@ const faqItems = [
   {
     question: 'How many summer classes per week are ideal for kids?',
     answer:
-      'Most children do well with 2-4 live sessions per week plus short guided home revision. The exact schedule depends on age, current level, and attention span.',
+      'Tiny Steps Summer Camp 2026 follows a Monday to Saturday schedule with 24 live classes in 4 weeks, and Sunday is kept as a holiday. In general, the ideal rhythm still depends on age, current level, and attention span.',
+  },
+  {
+    question: 'Are there multiple batch start dates in the current summer camp season?',
+    answer:
+      'Yes. The Summer Camp season runs from 27 April 2026 to 13 June 2026, and available batch start dates are 27 April, 4 May, 11 May and 18 May 2026. Each child joins one 4-week batch.',
+  },
+  {
+    question: 'Will the final batch finish before school reopens?',
+    answer:
+      'Yes. The final batch is designed to close by 13 June 2026, before schools reopen on 15 June 2026.',
   },
 ];
 
@@ -25,7 +35,7 @@ export default function SummerCampForKidsIndiaPage() {
     applySeo({
       title: 'Summer Camp for Kids India (Parent Planning Guide) | Tiny Steps Learning',
       description:
-        'Parent planning guide to choose the right online summer camp for kids in India by age, track, and learning outcome across reading, grammar, and speaking.',
+        'Parent planning guide to choose the right online summer camp for kids in India by age, track, and learning outcome, with the current Tiny Steps Summer Camp 2026 format clearly explained.',
       canonicalPath: '/summer-camp-for-kids-india',
       ogType: 'website',
       jsonLd: [
@@ -51,6 +61,9 @@ export default function SummerCampForKidsIndiaPage() {
         <h1 className="text-4xl font-bold text-slate-900 md:text-5xl">Summer Camp for Kids India: Parent Planning Guide</h1>
         <p className="mt-4 text-lg text-slate-700">
           Use this guide to choose the right Tiny Steps summer learning track by age, skill gap, and expected outcome before you book.
+        </p>
+        <p className="mt-3 text-sm font-medium text-slate-600">
+          Current official offer: Summer Camp Season 27 April 2026 to 13 June 2026. Each child joins one 24 live-class batch in 4 weeks, Monday to Saturday, with Sunday kept as a holiday. Batch start dates: 27 April, 4 May, 11 May and 18 May 2026.
         </p>
         <Link
           to="/book-demo"
@@ -100,7 +113,7 @@ export default function SummerCampForKidsIndiaPage() {
         <p className="mt-4 text-sm text-slate-700">
           Related pages:{' '}
           <Link to="/summer-camps" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            premium summer camps (full enrollment page)
+            Tiny Steps Summer Camp 2026
           </Link>
           {' • '}
           <Link to="/online-english-classes-for-kids-india" className="font-semibold underline underline-offset-2 hover:text-slate-900">

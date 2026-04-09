@@ -225,29 +225,29 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'article',
   },
   '/summer-english-camp-2026': {
-    title: 'Summer Camps for Kids | Tiny Steps Learning',
+    title: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
     description:
-      'Summer English Camp 2026 now lives under Tiny Steps Summer Camps. Explore online group batches in India for phonics, grammar, and speaking fast-track tracks with enrollment at Rs 2,400 (70% off).',
+      'Summer English Camp 2026 now lives under Tiny Steps Summer Camp 2026. Explore the summer season from 27 April to 13 June 2026, with 24 live online classes in 4 weeks, Monday to Saturday batches, Sunday holiday, and limited batch start dates on 27 April, 4 May, 11 May and 18 May 2026.',
     canonicalPath: '/summer-camps',
     robots: 'noindex, follow',
     ogType: 'website',
     keywords:
-      'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online,grammar classes for kids online,public speaking classes for kids online india,summer camp fees india,small batch online classes for kids,weekly progress reports for parents',
+      'summer camp for kids,online summer camp for kids,summer classes for kids online,phonics summer camp,grammar summer camp for kids,public speaking summer camp for kids,online summer camp india,english summer camp for kids',
   },
   '/summer-camps': {
-    title: 'Premium Online Summer Camp for Kids in India | Tiny Steps Learning',
+    title: 'Tiny Steps Summer Camp 2026 | 24 Live Classes for Kids | 27 Apr to 13 Jun',
     description:
-      'Join Tiny Steps Premium Summer Camp for kids in India. Small-group online classes capped at 8 students for stronger participation, teacher attention, and real progress in phonics, grammar, reading, and public speaking, with a free level assessment before placement.',
+      'Join Tiny Steps Summer Camp 2026 for children in India. Summer Camp Season: 27 April to 13 June 2026. Each child joins one 24 live-class batch in 4 weeks with Monday to Saturday batches, Sunday holiday, and limited start dates on 27 April, 4 May, 11 May and 18 May 2026.',
     canonicalPath: '/summer-camps',
     robots: 'index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1',
     ogType: 'website',
     keywords:
-      'online summer camp for kids india,summer camp for kids online india,phonics classes for kids online india,grammar classes for kids online,public speaking classes for kids online india,summer camp fees for kids,summer camp fees india,small batch online classes for kids,weekly progress reports for parents,book free trial class for kids,online phonics summer camp mumbai,grammar summer classes for kids delhi ncr,public speaking summer camp bengaluru,best online summer camp for 8 year olds,how do online summer camps work,live online summer camp with recordings,free level assessment for kids summer camp',
+      'summer camp for kids,online summer camp for kids,summer classes for kids online,online summer camp india,summer camp for kids india,phonics summer camp,grammar summer camp for kids,public speaking summer camp for kids,english summer camp for kids,online phonics summer camp mumbai,grammar summer classes for kids delhi ncr,public speaking summer camp bengaluru,best online summer camp for 8 year olds,how do online summer camps work,live online summer camp with recordings,free level assessment for kids summer camp',
   },
   '/summer-camp-for-kids-india': {
     title: 'Summer Camp for Kids India (Parent Planning Guide) | Tiny Steps Learning',
     description:
-      'Parent planning guide to choose the right online summer camp for kids in India by age, track, and learning outcome across reading, grammar, and speaking.',
+      'Parent planning guide to choose the right online summer camp for kids in India by age, track, and learning outcome, with the current Tiny Steps Summer Camp 2026 format clearly explained.',
     canonicalPath: '/summer-camp-for-kids-india',
     ogType: 'website',
   },
@@ -261,7 +261,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/summer-speaking-camp-kids': {
     title: 'Summer Speaking Camp for Kids | Tiny Steps Learning',
     description:
-      'Summer speaking camp for kids focused on spoken English confidence, expressive communication, vocabulary growth, and presentation readiness through live sessions.',
+      'Summer speaking camp for kids focused on communication confidence, expressive speaking, vocabulary growth, and presentation readiness through live sessions.',
     canonicalPath: '/summer-speaking-camp-kids',
     ogType: 'website',
   },

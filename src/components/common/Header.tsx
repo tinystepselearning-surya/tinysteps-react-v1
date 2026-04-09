@@ -14,10 +14,10 @@ const dashboardPaths: Record<string, string> = {
   learningpartner: '/learning-partner/dashboard',
 };
 
-const TICKER_VERSION = '2026-03-06';
+const TICKER_VERSION = '2026-04-09';
 const DISMISS_KEY = `ts_ticker_dismissed_${TICKER_VERSION}`;
 const TICKER_ITEMS = [
-  'Summer Camp 2026 • New batches starting weekly',
+  'Summer Camp 2026 • Season 27 Apr to 13 Jun • 24 live classes in 4 weeks • Batch starts 27 Apr, 4 May, 11 May, 18 May • Sunday holiday',
 ];
 const TICKER_MARQUEE_ITEMS = [...TICKER_ITEMS, ...TICKER_ITEMS];
 

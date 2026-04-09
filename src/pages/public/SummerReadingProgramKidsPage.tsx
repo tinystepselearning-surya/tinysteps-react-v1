@@ -107,7 +107,7 @@ export default function SummerReadingProgramKidsPage() {
           </Link>
           {' • '}
           <Link to="/summer-camps" className="font-semibold underline underline-offset-2 hover:text-slate-900">
-            premium summer camps for kids
+            Tiny Steps Summer Camp 2026
           </Link>
         </p>
       </section>

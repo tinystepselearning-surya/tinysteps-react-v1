@@ -285,9 +285,11 @@ async function retrieveSnippets(question: string): Promise<Snippet[]> {
 // ---------- No-snippet fallback ----------
 function summerCampDirectAnswer(includeWhatsapp = true): string {
   const base =
-    "Tiny Steps Summer Camp is a 10-week online small-group program (April 1–June 15, 2026) for ages 4–12. " +
+    "Tiny Steps Summer Camp 2026 runs as a structured online summer season from 27 April 2026 to 13 June 2026 for ages 4–12. " +
+    "Each child joins one 4-week small-group batch with 24 live classes from Monday to Saturday, with Sunday kept as a holiday. " +
+    "Available batch start dates are 27 April, 4 May, 11 May and 18 May 2026, and the final batch is designed to close before schools reopen on 15 June 2026. " +
     "Tracks: Phonics Fast Track (4–8), Grammar Fast Track (6–12), Speaking Fast Track (6–12). " +
-    "Fast Track Pack enrollment is ₹2,400 per child (70% off from ₹8,000), with 50–60 minute live classes, worksheets, and class recordings. " +
+    "Fast Track Pack list fee is ₹5,000 per child. Effective price is ₹2,400 per child, with 50–60 minute live classes, worksheets, and class recordings. " +
     `Source: ${SITE_ORIGIN}/summer-camps`;
   if (!includeWhatsapp) return base;
   return `${base}\n\nFor quick enrollment help, message us on WhatsApp: ${WHATSAPP_CTA}`;
@@ -433,7 +435,7 @@ FACTS (do not change):
 - Free Assessment / Demo: FREE (₹0).
 - Class duration: 35 minutes (1:1 live online).
 - Tracks: Phonics (3–10), Grammar (5–10), Public Speaking (5–12).
-- Summer Camp: 10-week online small-group program (April 1–June 15, 2026), ages 4–12, Fast Track Pack ₹2,400 per child.
+- Summer Camp: structured online summer season for ages 4–12 running 27 April 2026 to 13 June 2026. Each child joins one 4-week batch with 24 live classes from Monday to Saturday, Sunday holiday, batch start dates 27 April / 4 May / 11 May / 18 May 2026, final batch closes before schools reopen on 15 June 2026, Fast Track Pack ₹2,400 per child.
 - WhatsApp CTA: ${WHATSAPP_CTA}
 
 BEHAVIOR:
