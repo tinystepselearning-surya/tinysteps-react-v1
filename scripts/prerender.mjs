@@ -234,6 +234,20 @@ function injectSeoMetadata(html, route) {
   result = result.replace(/<meta name="twitter:image"[^>]*>/i, twitterImageMeta) || result.replace('</head>', `${twitterImageMeta}</head>`);
   result = result.replace(/<meta name="twitter:image:alt"[^>]*>/i, twitterImageAltMeta) || result.replace('</head>', `${twitterImageAltMeta}</head>`);
 
+  // Ensure at least one JSON-LD block exists in prerendered HTML for downstream SEO smoke checks.
+  // Some routes can render body content before runtime SEO effects append schema.
+  if (!/<script[^>]+type=["']application\/ld\+json["'][^>]*>/i.test(result)) {
+    const fallbackSchema = {
+      '@context': 'https://schema.org',
+      '@type': route === '/' ? 'WebSite' : 'WebPage',
+      name: config.title,
+      url: canonicalUrl,
+    };
+    const fallbackJson = JSON.stringify(fallbackSchema).replace(/<\/script/gi, '<\\/script');
+    const fallbackScript = `<script type="application/ld+json">${fallbackJson}</script>`;
+    result = result.replace('</head>', `${fallbackScript}</head>`);
+  }
+
   return result;
 }
 
