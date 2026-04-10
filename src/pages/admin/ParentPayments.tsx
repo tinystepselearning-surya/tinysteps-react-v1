@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { collection, documentId, getDocs, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, documentId, getDoc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../lib/firebaseConfig';
 import { normalizeFinanceStatus } from '../../lib/statuses';
@@ -43,9 +43,27 @@ const formatMoney = (value: any) => {
   return `₹${Math.round(num).toLocaleString('en-IN')}`;
 };
 
-const isParentUser = (user: ParentUser) => {
-  if (Array.isArray(user.roles)) return user.roles.includes('parent');
-  return String(user.role || '').toLowerCase() === 'parent';
+const resolveParentNameCandidate = (row: any): string => {
+  const candidates = [
+    row?.parentName,
+    row?.parentDisplayName,
+    row?.parentFullName,
+    row?.parent_label,
+    row?.parentEmail,
+  ];
+  for (const candidate of candidates) {
+    const text = String(candidate || '').trim();
+    if (text) return text;
+  }
+  return '';
+};
+
+const fallbackParentLabel = (parentId: string): string => {
+  const normalized = String(parentId || '').trim();
+  if (!normalized) return 'Unknown parent';
+  const shortId =
+    normalized.length > 12 ? `${normalized.slice(0, 8)}…${normalized.slice(-4)}` : normalized;
+  return `Archived parent (${shortId})`;
 };
 
 const toMillis = (value: any) => {
@@ -68,6 +86,26 @@ const createPaymentRequestKey = () => {
     return cryptoApi.randomUUID();
   }
   return `payment_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const normalizeAttendanceStatus = (entry: any): string => {
+  if (!entry) return '';
+  if (typeof entry === 'string') return entry.trim().toLowerCase();
+  if (typeof entry === 'object' && typeof entry.status === 'string') {
+    return entry.status.trim().toLowerCase();
+  }
+  return '';
+};
+
+const isSessionCurrentlyBillable = (session: any): boolean => {
+  const status = String(session?.status || '').trim().toLowerCase();
+  if (status !== 'completed') return false;
+  const attendance = session?.attendance;
+  if (!attendance || typeof attendance !== 'object' || Array.isArray(attendance)) return false;
+  return Object.values(attendance).some((entry) => {
+    const normalized = normalizeAttendanceStatus(entry);
+    return normalized === 'present' || normalized === 'late';
+  });
 };
 
 export default function ParentPayments(): JSX.Element {
@@ -133,7 +171,7 @@ export default function ParentPayments(): JSX.Element {
               parentDocs.push({ id: docSnap.id, ...(docSnap.data() as any) })
             );
           }
-          setParents(parentDocs.filter(isParentUser));
+          setParents(parentDocs);
         }
 
         if (kidIds.size === 0) {
@@ -290,13 +328,25 @@ export default function ParentPayments(): JSX.Element {
     });
 
     const parentNameById = new Map(
-      parents.map((p) => [p.id, p.displayName || p.name || p.email || p.id])
+      parents.map((p) => [p.id, p.displayName || p.name || p.email || ''])
     );
+    const parentNameFromFinance = new Map<string, string>();
+    const captureParentName = (row: any) => {
+      const parentId = String(row?.parentId || '').trim();
+      if (!parentId || parentNameFromFinance.has(parentId)) return;
+      const candidate = resolveParentNameCandidate(row);
+      if (candidate) parentNameFromFinance.set(parentId, candidate);
+    };
+    charges.forEach(captureParentName);
+    payments.forEach(captureParentName);
 
     return Array.from(parentMap.values())
       .map((entry) => ({
         ...entry,
-        parentName: parentNameById.get(entry.parentId) || entry.parentId,
+        parentName:
+          parentNameById.get(entry.parentId) ||
+          parentNameFromFinance.get(entry.parentId) ||
+          fallbackParentLabel(entry.parentId),
       }))
       .sort((a, b) => b.due - a.due);
   }, [charges, payments, parents]);
@@ -525,66 +575,30 @@ export default function ParentPayments(): JSX.Element {
     }
 
     const confirm = window.prompt(
-      `Type CORRECT to run non-destructive correction (reverse payments + void session charges) for ${parentName || parentId}.`
+      `Type CORRECT to run safe correction (void only non-billable sessions) for ${parentName || parentId}.`
     );
     if (confirm !== 'CORRECT') return;
 
-    const parentPayments = payments.filter((p) => String(p.parentId || '') === parentId);
     const parentCharges = charges.filter(
       (c) =>
         String(c.parentId || '') === parentId &&
         normalizeFinanceStatus(c.status) !== 'void'
     );
 
-    if (parentPayments.length === 0 && parentCharges.length === 0) {
-      window.alert('No payment/charge records found for correction.');
+    if (parentCharges.length === 0) {
+      window.alert('No active charges found for correction.');
       return;
     }
 
     try {
       setCorrectionSavingId(parentId);
-      const recordPaymentFn = httpsCallable(functions, 'recordPayment');
       const adminVoidSessionChargeFn = httpsCallable(functions, 'adminVoidSessionCharge');
 
-      let reversedPayments = 0;
       let voidedCharges = 0;
+      let skippedBillable = 0;
+      let skippedMissingSession = 0;
       const errors: string[] = [];
-
-      for (const payment of parentPayments) {
-        const enrollmentId = String(payment.enrollmentId || '').trim();
-        const amount = Number(payment.amount);
-        if (!enrollmentId || !Number.isFinite(amount) || amount === 0) {
-          errors.push(`Skipped payment ${payment.id || 'unknown'} (missing enrollment/amount).`);
-          continue;
-        }
-
-        const paidAtMs = toMillis(payment.paidAt || payment.createdAt);
-        const paidAt = paidAtMs
-          ? new Date(paidAtMs).toISOString().slice(0, 10)
-          : new Date().toISOString().slice(0, 10);
-
-        const methodRaw = String(payment.method || '').trim();
-        const method =
-          methodRaw === 'UPI' || methodRaw === 'bank_transfer' || methodRaw === 'online' ?
-            methodRaw :
-            'online';
-
-        try {
-          await recordPaymentFn({
-            enrollmentId,
-            amount: -Math.abs(amount),
-            paidAt,
-            method,
-            note: `Admin correction reversal (${selectedMonth}) for payment ${payment.id || 'unknown'}: ${reason}`,
-            idempotencyKey: `corr_${selectedMonth}_${parentId}_${payment.id || Date.now()}`,
-          });
-          reversedPayments += 1;
-        } catch (err: any) {
-          errors.push(
-            `Payment reversal failed for ${payment.id || 'unknown'}: ${err?.message || 'Unknown error'}`
-          );
-        }
-      }
+      const candidateCharges: any[] = [];
 
       for (const charge of parentCharges) {
         const sessionId = String(charge.sessionId || charge.id || '').trim();
@@ -592,6 +606,27 @@ export default function ParentPayments(): JSX.Element {
           errors.push(`Skipped charge ${charge.id || 'unknown'} (missing session id).`);
           continue;
         }
+        try {
+          const sessionSnap = await getDoc(doc(db, 'classSessions', sessionId));
+          if (!sessionSnap.exists()) {
+            skippedMissingSession += 1;
+            errors.push(`Skipped session ${sessionId} (session not found).`);
+            continue;
+          }
+          const session = sessionSnap.data() || {};
+          if (isSessionCurrentlyBillable(session)) {
+            skippedBillable += 1;
+            continue;
+          }
+          candidateCharges.push({ charge, sessionId });
+        } catch (err: any) {
+          errors.push(
+            `Session check failed for ${sessionId}: ${err?.message || 'Unknown error'}`
+          );
+        }
+      }
+
+      for (const { sessionId } of candidateCharges) {
         try {
           await adminVoidSessionChargeFn({
             sessionId,
@@ -607,9 +642,13 @@ export default function ParentPayments(): JSX.Element {
 
       const summary = [
         `Correction complete for ${parentName || parentId}.`,
-        `Reversed payments: ${reversedPayments}`,
-        `Voided session charges: ${voidedCharges}`,
+        `Voided non-billable sessions: ${voidedCharges}`,
+        `Skipped billable sessions: ${skippedBillable}`,
       ];
+      if (skippedMissingSession > 0) {
+        summary.push(`Skipped missing session docs: ${skippedMissingSession}`);
+      }
+      summary.push('Note: payment reversals are no longer auto-run from this action.');
       if (errors.length > 0) {
         summary.push(`Failures: ${errors.length}`);
         summary.push(errors.slice(0, 4).join('\n'));

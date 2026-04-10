@@ -35,6 +35,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 import type { DemoConversionStatus, DemoSession } from '../../types/models';
 import {
   cancelDemoSession,
+  checkDemoPhoneConflicts,
   createDemoSession,
   listenAllDemoSessions,
   listenDemoSessionPrivatePhones,
@@ -631,10 +632,37 @@ export default function LeadsInquiriesWorkspace({
 
     setCreatingDemoRowId(row.id);
     try {
+      const parentPhone =
+        normalizeText(lead.primaryPhone) || normalizeText(lead.phoneNormalized);
+      if (!parentPhone) {
+        throw new Error('Lead does not have a parent phone number.');
+      }
+      let forceCreate = false;
+      const conflictResult = await checkDemoPhoneConflicts(parentPhone);
+      if (conflictResult.hasConflicts) {
+        const warningLines = [
+          'This phone number already exists in the system.',
+          '',
+          `Demo requests: ${conflictResult.counts.demoRequests}`,
+          `Leads/Inquiries: ${conflictResult.counts.leads}`,
+          `Parent profiles: ${conflictResult.counts.parentProfiles}`,
+          `Enrollments: ${conflictResult.counts.enrollments}`,
+          '',
+          'Please double-check before creating another demo request.',
+          'Press OK to proceed, or Cancel to review existing records.',
+        ];
+        const proceed = window.confirm(warningLines.join('\n'));
+        if (!proceed) {
+          return;
+        }
+        forceCreate = true;
+      }
+
       const demoId = await createDemoSession(
         {
           parentName: normalizeText(lead.parentName) || 'Parent',
-          parentPhone: normalizeText(lead.primaryPhone) || normalizeText(lead.phoneNormalized),
+          parentPhone,
+          forceCreate,
           childName: normalizeText(lead.childName) || 'Child',
           childGrade: normalizeText(lead.childGrade) || 'Not provided',
           childAge: typeof lead.childAge === 'number' ? lead.childAge : null,

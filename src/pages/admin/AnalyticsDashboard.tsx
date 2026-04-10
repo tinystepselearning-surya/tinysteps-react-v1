@@ -63,6 +63,12 @@ const isDemoEarning = (entry: any) => {
   return source === 'demo_completed' || source === 'demo_enrolled_bonus';
 };
 
+const isSessionCharge = (entry: any) => {
+  const source = normalizeStatus(entry?.source);
+  if (source === 'session_present_completed') return true;
+  return Boolean(String(entry?.sessionId || '').trim());
+};
+
 const normalizeEnrollmentStatus = (enrollment: any): string => {
   const raw = normalizeStatus(enrollment?.status);
   if (!raw) {
@@ -286,10 +292,12 @@ export default function AnalyticsDashboard(): JSX.Element {
 
   const revenueTotals = useMemo(() => {
     let chargesTotal = 0;
+    let sessionChargesTotal = 0;
     let dueTotal = 0;
     let appliedTotal = 0;
     let unappliedTotal = 0;
     let chargesCount = 0;
+    let sessionChargesCount = 0;
 
     charges.forEach((charge) => {
       const status = String(charge.status || '').toLowerCase();
@@ -299,6 +307,10 @@ export default function AnalyticsDashboard(): JSX.Element {
       if (amount <= 0) return;
       chargesTotal += amount;
       chargesCount += 1;
+      if (isSessionCharge(charge)) {
+        sessionChargesTotal += amount;
+        sessionChargesCount += 1;
+      }
 
       const paidRaw = Number(charge.paidAmount ?? NaN);
       const paidAmount = Number.isFinite(paidRaw) ? paidRaw : status === 'paid' ? amount : 0;
@@ -332,6 +344,8 @@ export default function AnalyticsDashboard(): JSX.Element {
       appliedTotal,
       unappliedTotal,
       chargesCount,
+      sessionChargesTotal,
+      sessionChargesCount,
     };
   }, [charges, payments]);
 
@@ -584,6 +598,8 @@ export default function AnalyticsDashboard(): JSX.Element {
       ? teacherEarningsSummary.totalSessionEarned / teacherEarningsSummary.totalSessionCount
       : 0;
   const projectedTeacherPayout = plannedProjection.plannedSessions * avgSessionPayout;
+  const sessionNetEarningsMonth =
+    revenueTotals.sessionChargesTotal - teacherEarningsSummary.totalSessionEarned;
 
   return (
     <div className="space-y-4">
@@ -661,8 +677,8 @@ export default function AnalyticsDashboard(): JSX.Element {
         />
         <MetricCard 
           label="Session earnings (month)" 
-          value={formatMoney(teacherEarningsSummary.totalSessionEarned)}
-          sub={`${teacherEarningsSummary.totalSessionCount} sessions delivered`}
+          value={formatMoney(sessionNetEarningsMonth)}
+          sub={`${revenueTotals.sessionChargesCount} sessions billed • Gross ${formatMoney(revenueTotals.sessionChargesTotal)} - Teacher payout ${formatMoney(teacherEarningsSummary.totalSessionEarned)}`}
         />
         <MetricCard 
           label="Total teacher payout" 

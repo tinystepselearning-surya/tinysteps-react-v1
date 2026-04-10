@@ -41,7 +41,12 @@ import { httpsCallable } from 'firebase/functions';
 import { useToast } from '@components/hooks/use-toast';
 import { db, functions } from '../../lib/firebaseConfig';
 import { useAuthStore } from '../../store/useAuthStore';
-import { createDemoSession } from '../../services/demoSessionsService';
+import { checkDemoPhoneConflicts, createDemoSession } from '../../services/demoSessionsService';
+import {
+  DEFAULT_PHONE_COUNTRY_CODE,
+  buildPhoneFromParts,
+  splitPhoneForForm,
+} from '../../lib/phone';
 
 type LeadStatus =
   | 'new'
@@ -135,6 +140,8 @@ const LEAD_STATUSES: LeadStatus[] = [
 interface DemoCreateFormState {
   parentName: string;
   parentPhone: string;
+  parentPhoneCountryCode: string;
+  parentPhoneLocal: string;
   childName: string;
   childAge: string;
   childGrade: string;
@@ -535,6 +542,8 @@ const toDateInputToday = (): string => {
 };
 
 const buildDemoFormFromLead = (lead: LeadRecord): DemoCreateFormState => ({
+  parentPhoneCountryCode: splitPhoneForForm(lead.primaryPhone || '').countryCode,
+  parentPhoneLocal: splitPhoneForForm(lead.primaryPhone || '').phoneLocal,
   parentName: lead.parentName || '',
   parentPhone: lead.primaryPhone || '',
   childName: lead.childName || '',
@@ -1010,7 +1019,6 @@ export default function LeadsEnquiriesManagement() {
 
     if (
       !demoForm.parentName.trim() ||
-      !demoForm.parentPhone.trim() ||
       !demoForm.childName.trim() ||
       !demoForm.childGrade.trim() ||
       !demoForm.courseInterested.trim() ||
@@ -1025,10 +1033,49 @@ export default function LeadsEnquiriesManagement() {
     }
 
     const parsedChildAge = demoForm.childAge.trim() ? Number(demoForm.childAge.trim()) : null;
+    const parentPhone = buildPhoneFromParts(demoForm.parentPhoneCountryCode, demoForm.parentPhoneLocal);
     if (demoForm.childAge.trim() && Number.isNaN(parsedChildAge)) {
       toast({
         title: 'Invalid child age',
         description: 'Child age must be a valid number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!parentPhone) {
+      toast({
+        title: 'Missing parent phone',
+        description: 'Please add country code and phone number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    let forceCreate = false;
+    try {
+      const conflictResult = await checkDemoPhoneConflicts(parentPhone);
+      if (conflictResult.hasConflicts) {
+        const warningLines = [
+          'This phone number already exists in the system.',
+          '',
+          `Demo requests: ${conflictResult.counts.demoRequests}`,
+          `Leads/Inquiries: ${conflictResult.counts.leads}`,
+          `Parent profiles: ${conflictResult.counts.parentProfiles}`,
+          `Enrollments: ${conflictResult.counts.enrollments}`,
+          '',
+          'Please double-check before creating another demo request.',
+          'Press OK to proceed, or Cancel to review existing records.',
+        ];
+        const proceed = window.confirm(warningLines.join('\n'));
+        if (!proceed) {
+          return;
+        }
+        forceCreate = true;
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Unable to verify existing phone records',
+        description: error?.message || 'Please try again before creating this demo request.',
         variant: 'destructive',
       });
       return;
@@ -1039,7 +1086,8 @@ export default function LeadsEnquiriesManagement() {
       const demoId = await createDemoSession(
         {
           parentName: demoForm.parentName.trim(),
-          parentPhone: demoForm.parentPhone.trim(),
+          parentPhone,
+          forceCreate,
           childName: demoForm.childName.trim(),
           childGrade: demoForm.childGrade.trim(),
           childAge: parsedChildAge,
@@ -2340,11 +2388,30 @@ export default function LeadsEnquiriesManagement() {
               </div>
               <div>
                 <Label>Parent Phone *</Label>
-                <Input
-                  value={demoForm.parentPhone}
-                  onChange={(event) => setDemoField('parentPhone', event.target.value)}
-                  required
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="flex h-10 items-center rounded-md border bg-background">
+                    <span className="px-3 text-sm text-muted-foreground">+</span>
+                    <Input
+                      className="border-0 shadow-none focus-visible:ring-0"
+                      inputMode="numeric"
+                      placeholder="Country"
+                      value={demoForm.parentPhoneCountryCode || DEFAULT_PHONE_COUNTRY_CODE}
+                      onChange={(event) =>
+                        setDemoField('parentPhoneCountryCode', event.target.value.replace(/\D/g, ''))
+                      }
+                    />
+                  </div>
+                  <Input
+                    className="col-span-2"
+                    value={demoForm.parentPhoneLocal}
+                    onChange={(event) =>
+                      setDemoField('parentPhoneLocal', event.target.value.replace(/\D/g, ''))
+                    }
+                    placeholder="Phone number"
+                    inputMode="numeric"
+                    required
+                  />
+                </div>
               </div>
               <div>
                 <Label>Child Name *</Label>

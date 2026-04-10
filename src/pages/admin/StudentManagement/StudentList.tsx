@@ -1624,6 +1624,13 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
   const [endDate, setEndDate] = useState<string>(''); // optional
   const [meetingLink, setMeetingLink] = useState<string>(''); // optional (Zoom/Meet)
   const [savingSchedule, setSavingSchedule] = useState<boolean>(false);
+  const [adHocFor, setAdHocFor] = useState<Student | null>(null);
+  const [adHocEnrollmentId, setAdHocEnrollmentId] = useState<string>('');
+  const [adHocDate, setAdHocDate] = useState<string>(toISODate(new Date()));
+  const [adHocStartTime, setAdHocStartTime] = useState<string>('18:00');
+  const [adHocDurationMins, setAdHocDurationMins] = useState<number>(35);
+  const [adHocNote, setAdHocNote] = useState<string>('');
+  const [savingAdHoc, setSavingAdHoc] = useState<boolean>(false);
 
   const [sessionRequests, setSessionRequests] = useState<SessionRequestRow[]>([]);
   const [requestActionId, setRequestActionId] = useState<string | null>(null);
@@ -2101,6 +2108,32 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
     applyScheduleFormFromEnrollment(first);
   }
 
+  function openAdHocModal(student: Student) {
+    const activeEnrollments = (enrollmentsByStudent[student.id] || []).filter((enrollment) => {
+      const status = normalizeEnrollmentStatus(enrollment.status);
+      return !isPastEnrollmentStatus(status);
+    });
+
+    if (activeEnrollments.length === 0) {
+      toast({
+        title: 'No active enrollment found',
+        description: 'Assign an active course first, then create an ad hoc session.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const first = activeEnrollments[0];
+    const firstSlot = normalizeScheduleWeeklySlots(first.schedule, 35)[0];
+
+    setAdHocFor(student);
+    setAdHocEnrollmentId(first.id);
+    setAdHocDate(toISODate(new Date()));
+    setAdHocStartTime(firstSlot?.time || '18:00');
+    setAdHocDurationMins(firstSlot?.durationMinutes || clampDurationMinutes(first.schedule?.durationMins, 35));
+    setAdHocNote('');
+  }
+
   async function handleSaveSchedule() {
     if (!scheduleFor) return;
 
@@ -2283,6 +2316,110 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       });
     } finally {
       setSavingSchedule(false);
+    }
+  }
+
+  async function handleCreateAdHocSession() {
+    if (!adHocFor) return;
+
+    const enrollment = (enrollmentsByStudent[adHocFor.id] || []).find((e) => e.id === adHocEnrollmentId);
+    if (!enrollment) {
+      toast({ title: 'Select an active enrollment', variant: 'destructive' });
+      return;
+    }
+
+    if (!enrollment.teacherId) {
+      toast({
+        title: 'Teacher required',
+        description: 'Assign a teacher to this enrollment before creating ad hoc sessions.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const dateOnly = parseISODateOnly(adHocDate);
+    if (!dateOnly) {
+      toast({ title: 'Invalid date', variant: 'destructive' });
+      return;
+    }
+
+    if (!isValidTimeHHmm(adHocStartTime)) {
+      toast({ title: 'Invalid start time', variant: 'destructive' });
+      return;
+    }
+
+    const [hhText, mmText] = adHocStartTime.split(':');
+    const hh = Number(hhText);
+    const mm = Number(mmText);
+    const duration = clampDurationMinutes(adHocDurationMins, 35);
+
+    const startAt = new Date(dateOnly);
+    startAt.setHours(hh, mm, 0, 0);
+    const endAt = new Date(startAt);
+    endAt.setMinutes(endAt.getMinutes() + duration);
+
+    const dateStr = toISODate(startAt);
+    const startTime = formatTimeHHmm(startAt);
+    const endTime = formatTimeHHmm(endAt);
+    const sessionId = `${enrollment.id}_${formatYMDCompact(startAt)}_${startTime.replace(':', '')}`;
+
+    const student = studentById.get(adHocFor.id) || adHocFor;
+    const parentIds = (student?.parentIds || enrollment.parentIds || []).filter(Boolean);
+    const parentId = student?.primaryParentId || enrollment.parentId || parentIds[0] || null;
+    const feeAmount = safeNumber(enrollment.feePerClass, 0);
+    const currency = enrollment.currency || 'INR';
+    const joinUrl = enrollment.joinUrl || null;
+
+    setSavingAdHoc(true);
+    try {
+      const classSessionRef = doc(getClassSessionsCollection(), sessionId);
+      const existing = await getDoc(classSessionRef);
+      if (existing.exists()) {
+        throw new Error('A session already exists for this enrollment/date/time. Pick a different slot.');
+      }
+
+      await setDoc(classSessionRef, {
+        enrollmentId: enrollment.id,
+        kidId: adHocFor.id,
+        kidIds: [adHocFor.id],
+        parentId,
+        parentIds,
+        teacherId: enrollment.teacherId,
+        courseId: enrollment.courseId || null,
+        startAt: Timestamp.fromDate(startAt),
+        endAt: Timestamp.fromDate(endAt),
+        date: dateStr,
+        startTime,
+        endTime,
+        status: 'scheduled',
+        attendance: null,
+        feeAmount,
+        currency,
+        joinUrl,
+        notes: adHocNote.trim(),
+        isAdHoc: true,
+        adHocType: 'admin_one_off',
+        source: 'admin_manual_adhoc',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: user?.uid || 'admin',
+        updatedBy: user?.uid || 'admin',
+      });
+
+      toast({
+        title: 'Ad hoc session created',
+        description: `1 session added on ${dateStr} at ${startTime} without changing recurring schedule.`,
+      });
+      setAdHocFor(null);
+    } catch (err: any) {
+      console.error('Error creating ad hoc session:', err);
+      toast({
+        title: 'Unable to create ad hoc session',
+        description: err?.message || 'Please retry with a different slot.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingAdHoc(false);
     }
   }
 
@@ -3179,6 +3316,18 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                className="h-8 text-xs"
+                onClick={() => {
+                  setActionsFor(null);
+                  openAdHocModal(actionsFor);
+                }}
+                disabled={!canManageActionsFor}
+              >
+                Ad Hoc Session
+              </Button>
+              <Button
+                size="sm"
                 variant="destructive"
                 className="col-span-2 h-8 text-xs"
                 onClick={() => {
@@ -3456,6 +3605,93 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             </Button>
             <Button onClick={handleSaveSchedule} disabled={savingSchedule}>
               {savingSchedule ? 'Saving...' : 'Save Schedule'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!adHocFor} onOpenChange={(open) => !open && setAdHocFor(null)}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>
+              Add Ad Hoc Session {adHocFor?.fullName ? `— ${adHocFor.fullName}` : ''}
+            </DialogTitle>
+            <DialogDescription>
+              Create a one-time extra class without changing the recurring weekly schedule.
+            </DialogDescription>
+          </DialogHeader>
+
+          {adHocFor ? (
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm font-medium mb-1">Enrollment</div>
+                <Select
+                  value={adHocEnrollmentId}
+                  onValueChange={(value) => {
+                    setAdHocEnrollmentId(value);
+                    const selected = (enrollmentsByStudent[adHocFor.id] || []).find((e) => e.id === value);
+                    if (selected) {
+                      const firstSlot = normalizeScheduleWeeklySlots(selected.schedule, 35)[0];
+                      if (firstSlot?.time) setAdHocStartTime(firstSlot.time);
+                      setAdHocDurationMins(
+                        firstSlot?.durationMinutes || clampDurationMinutes(selected.schedule?.durationMins, 35),
+                      );
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select active enrollment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(enrollmentsByStudent[adHocFor.id] || [])
+                      .filter((enrollment) => !isPastEnrollmentStatus(normalizeEnrollmentStatus(enrollment.status)))
+                      .map((enrollment) => (
+                        <SelectItem key={enrollment.id} value={enrollment.id}>
+                          {enrollmentLabel(enrollment)}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                  <div className="text-sm font-medium mb-1">Date</div>
+                  <Input type="date" value={adHocDate} onChange={(e) => setAdHocDate(e.target.value)} />
+                </div>
+                <div>
+                  <div className="text-sm font-medium mb-1">Start time</div>
+                  <Input type="time" value={adHocStartTime} onChange={(e) => setAdHocStartTime(e.target.value)} />
+                </div>
+                <div>
+                  <div className="text-sm font-medium mb-1">Duration (mins)</div>
+                  <Input
+                    type="number"
+                    min={10}
+                    max={180}
+                    value={adHocDurationMins}
+                    onChange={(e) => setAdHocDurationMins(safeNumber(e.target.value, 35))}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-1">Note (optional)</div>
+                <Input
+                  value={adHocNote}
+                  onChange={(e) => setAdHocNote(e.target.value)}
+                  placeholder="Reason for extra class (e.g., Thursday ad hoc revision)"
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setAdHocFor(null)} disabled={savingAdHoc}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateAdHocSession} disabled={savingAdHoc}>
+              {savingAdHoc ? 'Creating...' : 'Create Ad Hoc Session'}
             </Button>
           </DialogFooter>
         </DialogContent>

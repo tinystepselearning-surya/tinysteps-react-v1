@@ -18,12 +18,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/ui/tabs';
 import { toast } from '@components/hooks/use-toast';
 import { CreateUserData, User } from '../../../types/User';
 import { auth } from '../../../lib/firebaseConfig';
+import {
+  DEFAULT_PHONE_COUNTRY_CODE,
+  buildPhoneFromParts,
+  normalizeCountryCode,
+  normalizePhoneLocal,
+} from '../../../lib/phone';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   name: z.string().min(2, 'Name must be at least 2 characters'),
   phone: z.string().optional(),
+  phoneCountryCode: z.string().optional(),
+  phoneLocal: z.string().optional(),
   role: z.enum(['admin', 'teacher', 'parent', 'learningPartner', 'kid']),
   status: z.enum(['active', 'suspended', 'archived']),
   // Role-specific fields
@@ -65,6 +73,8 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       password: '',
       name: '',
       phone: '',
+      phoneCountryCode: DEFAULT_PHONE_COUNTRY_CODE,
+      phoneLocal: '',
       role: 'parent',
       status: 'active',
       qualification: '',
@@ -122,6 +132,18 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
     setIsLoading(true);
     console.log('Debug: onSubmit called with data:', data);
     try {
+      const phoneCountryCode = normalizeCountryCode(String(data.phoneCountryCode || ''));
+      const phoneLocal = normalizePhoneLocal(String(data.phoneLocal || ''));
+      if ((phoneCountryCode && !phoneLocal) || (!phoneCountryCode && phoneLocal)) {
+        toast({
+          title: 'Phone details incomplete',
+          description: 'Please enter both country code and phone number.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      const combinedPhone = buildPhoneFromParts(phoneCountryCode, phoneLocal);
+
       // Ensure auth state is ready and refresh token
       const currentUser = await new Promise<any>((resolve) => {
         if (auth.currentUser) return resolve(auth.currentUser);
@@ -151,6 +173,9 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
 
       const submitData: Record<string, any> = {
         ...data,
+        phone: combinedPhone || null,
+        phoneCountryCode: phoneCountryCode || null,
+        phoneLocal: phoneLocal || null,
         displayName: data.name,
         role: activeRole,
         specialization: data.specialization ? data.specialization.split(',').map(s => s.trim()) : undefined,
@@ -232,6 +257,8 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
       password: form.getValues('password'),
       name: form.getValues('name'),
       phone: form.getValues('phone'),
+      phoneCountryCode: form.getValues('phoneCountryCode') || DEFAULT_PHONE_COUNTRY_CODE,
+      phoneLocal: form.getValues('phoneLocal'),
       role: value as any,
       status: 'active',
     });
@@ -314,19 +341,53 @@ export function CreateUserForm({ onUserCreated, onClose }: CreateUserFormProps) 
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+1 (555) 123-4567" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="phoneCountryCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <div className="flex h-10 items-center rounded-md border bg-background">
+                            <span className="px-3 text-sm text-muted-foreground">+</span>
+                            <Input
+                              className="border-0 shadow-none focus-visible:ring-0"
+                              placeholder="Country"
+                              inputMode="numeric"
+                              value={field.value || DEFAULT_PHONE_COUNTRY_CODE}
+                              onChange={(event) =>
+                                field.onChange(event.target.value.replace(/\D/g, ''))
+                              }
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phoneLocal"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input
+                            placeholder="Phone number"
+                            inputMode="numeric"
+                            value={field.value || ''}
+                            onChange={(event) =>
+                              field.onChange(event.target.value.replace(/\D/g, ''))
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
             </div>
 
             <FormField

@@ -73,6 +73,11 @@ type UserSortField = 'email' | 'name' | 'role' | 'status' | 'createdAt';
 type SortDirection = 'asc' | 'desc';
 type UserPageSize = 'all' | 25 | 50 | 100;
 
+const isHardDeleteProtectedRole = (role?: string) => {
+  const normalized = String(role || '').trim().toLowerCase();
+  return normalized === 'parent' || normalized === 'student' || normalized === 'kid';
+};
+
 function UserTable({
   users,
   onEdit,
@@ -181,6 +186,9 @@ function UserTable({
             </TableCell>
 
             <TableCell className="px-3 py-2 text-right whitespace-nowrap">
+              {(() => {
+                const deleteBlocked = isHardDeleteProtectedRole(user.role);
+                return (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="inline-flex items-center gap-1">
@@ -195,14 +203,22 @@ function UserTable({
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onSelect={() => onArchive(user)}>Archive</DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-red-600 focus:text-red-600"
-                    onSelect={() => onDelete(user)}
-                  >
-                    Delete
-                  </DropdownMenuItem>
+                  {deleteBlocked ? (
+                    <DropdownMenuItem disabled>
+                      Delete disabled (archive only)
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onSelect={() => onDelete(user)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
+                );
+              })()}
             </TableCell>
           </TableRow>
         ))}
@@ -538,6 +554,15 @@ export function UserList() {
   // - This expects a deployed Cloud Function: adminDeleteUser (v2 callable)
   // - Cloud Function should delete Auth user + Firestore /users/{uid} (and any mirror docs)
   const handleDeleteUser = async (user: User) => {
+    if (isHardDeleteProtectedRole(user.role)) {
+      toast({
+        title: 'Delete blocked',
+        description: 'Parent/student accounts are archive-only to protect financial history.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const ok = window.confirm(
       `Delete ${user.name || user.email || user.id}?\n\nThis will permanently remove the account (Auth + Firestore).`
     );

@@ -261,6 +261,15 @@ const normalizeTextForKey = (value: string): string =>
 
 const normalizePhoneForKey = (value: string): string => value.replace(/[^\d]/g, '');
 
+const chunkArray = <T>(items: T[], size: number): T[][] => {
+  if (size <= 0 || items.length === 0) return [];
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+};
+
 const buildDemoDedupeKey = (childName: string, parentPhone: string): string => {
   const normalizedChild = normalizeTextForKey(childName);
   const normalizedPhone = normalizePhoneForKey(parentPhone);
@@ -547,6 +556,7 @@ export const onDemoSessionEarningsWrite = onDocumentWritten(
 interface AdminUpsertDemoSessionRequest {
   demoId?: string;
   leadId?: string | null;
+  forceCreate?: boolean;
   parentName: string;
   parentPhone: string;
   childName: string;
@@ -565,6 +575,28 @@ interface AdminUpsertDemoSessionResponse {
   ok: boolean;
   demoId: string;
   status: DemoStatus;
+}
+
+interface AdminCheckDemoPhoneConflictsRequest {
+  parentPhone: string;
+}
+
+interface AdminCheckDemoPhoneConflictsResponse {
+  ok: boolean;
+  normalizedPhone: string;
+  hasConflicts: boolean;
+  counts: {
+    demoRequests: number;
+    leads: number;
+    parentProfiles: number;
+    enrollments: number;
+  };
+  samples: {
+    demoIds: string[];
+    leadIds: string[];
+    parentIds: string[];
+    enrollmentIds: string[];
+  };
 }
 
 interface AdminUpdateDemoConversionRequest {
@@ -695,6 +727,114 @@ const assertDemoUniqueAvailability = (
   );
 };
 
+export const adminCheckDemoPhoneConflicts = onCall<AdminCheckDemoPhoneConflictsRequest>(
+  { region: REGION },
+  async (request): Promise<AdminCheckDemoPhoneConflictsResponse> => {
+    const caller = await getCallerProfile(request.auth);
+    if (!caller.isAdmin) {
+      throw new HttpsError('permission-denied', 'Only admin can check demo phone conflicts');
+    }
+
+    const parentPhone = cleanRequiredText(request.data?.parentPhone, 'parentPhone', 60);
+    const normalizedPhone = normalizePhoneForKey(parentPhone);
+    if (!normalizedPhone) {
+      throw new HttpsError('invalid-argument', 'parentPhone must contain digits');
+    }
+
+    const db = admin.firestore();
+    const demoPrivateQuery = db
+      .collection('demoSessionsPrivate')
+      .where('parentPhoneKey', '==', normalizedPhone)
+      .limit(50);
+    const leadsQuery = db.collection('leads').where('phoneNormalized', '==', normalizedPhone).limit(50);
+    const usersNormalizedQuery = db.collection('users').where('normalizedPhone', '==', normalizedPhone).limit(50);
+    const usersLegacyQuery = db.collection('users').where('phoneNormalized', '==', normalizedPhone).limit(50);
+    const enrollmentsByPhoneKeyQuery = db
+      .collection('enrollments')
+      .where('parentPhoneKey', '==', normalizedPhone)
+      .limit(50);
+    const enrollmentsByPhoneNormalizedQuery = db
+      .collection('enrollments')
+      .where('parentPhoneNormalized', '==', normalizedPhone)
+      .limit(50);
+
+    const [
+      demoPrivateSnap,
+      leadsSnap,
+      usersNormalizedSnap,
+      usersLegacySnap,
+      enrollmentsByPhoneKeySnap,
+      enrollmentsByPhoneNormalizedSnap,
+    ] = await Promise.all([
+      demoPrivateQuery.get(),
+      leadsQuery.get(),
+      usersNormalizedQuery.get(),
+      usersLegacyQuery.get(),
+      enrollmentsByPhoneKeyQuery.get(),
+      enrollmentsByPhoneNormalizedQuery.get(),
+    ]);
+
+    const parentIds = new Set<string>();
+    const collectParentIds = (snap: FirebaseFirestore.QuerySnapshot) => {
+      snap.docs.forEach((docSnap) => {
+        const data = docSnap.data() as { role?: unknown };
+        if (normalizeRole(data.role) === 'parent') {
+          parentIds.add(docSnap.id);
+        }
+      });
+    };
+    collectParentIds(usersNormalizedSnap);
+    collectParentIds(usersLegacySnap);
+
+    const enrollmentIds = new Set<string>();
+    const collectEnrollmentIds = (snap: FirebaseFirestore.QuerySnapshot) => {
+      snap.docs.forEach((docSnap) => enrollmentIds.add(docSnap.id));
+    };
+    collectEnrollmentIds(enrollmentsByPhoneKeySnap);
+    collectEnrollmentIds(enrollmentsByPhoneNormalizedSnap);
+
+    const parentIdChunks = chunkArray(Array.from(parentIds), 10);
+    for (const chunk of parentIdChunks) {
+      const [byParentIdSnap, byParentIdsSnap] = await Promise.all([
+        db.collection('enrollments').where('parentId', 'in', chunk).limit(100).get(),
+        db.collection('enrollments').where('parentIds', 'array-contains-any', chunk).limit(100).get(),
+      ]);
+      collectEnrollmentIds(byParentIdSnap);
+      collectEnrollmentIds(byParentIdsSnap);
+    }
+
+    const demoIds = demoPrivateSnap.docs.map((docSnap) => docSnap.id);
+    const leadIds = leadsSnap.docs.map((docSnap) => docSnap.id);
+    const parentIdList = Array.from(parentIds);
+    const enrollmentIdList = Array.from(enrollmentIds);
+
+    const counts = {
+      demoRequests: demoIds.length,
+      leads: leadIds.length,
+      parentProfiles: parentIdList.length,
+      enrollments: enrollmentIdList.length,
+    };
+    const hasConflicts =
+      counts.demoRequests > 0 ||
+      counts.leads > 0 ||
+      counts.parentProfiles > 0 ||
+      counts.enrollments > 0;
+
+    return {
+      ok: true,
+      normalizedPhone,
+      hasConflicts,
+      counts,
+      samples: {
+        demoIds: demoIds.slice(0, 5),
+        leadIds: leadIds.slice(0, 5),
+        parentIds: parentIdList.slice(0, 5),
+        enrollmentIds: enrollmentIdList.slice(0, 5),
+      },
+    };
+  },
+);
+
 export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
   { region: REGION },
   async (request): Promise<AdminUpsertDemoSessionResponse> => {
@@ -722,6 +862,7 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
     const timezone = cleanOptionalText(request.data?.timezone, 120);
     const adminNotes = cleanOptionalText(request.data?.adminNotes, 2000);
     const leadId = cleanOptionalText(request.data?.leadId, 120);
+    const forceCreate = request.data?.forceCreate === true;
     const dedupeKey = buildDemoDedupeKey(childName, parentPhone);
 
     const db = admin.firestore();
@@ -731,7 +872,10 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
 
     await db.runTransaction(async (tx) => {
       const dedupeSnap = await tx.get(dedupeRef);
-      assertDemoUniqueAvailability(dedupeSnap, dedupeKey);
+      if (!forceCreate) {
+        assertDemoUniqueAvailability(dedupeSnap, dedupeKey);
+      }
+      const mappedDemoId = pickOptionalText(dedupeSnap.data()?.demoId, 120);
 
       tx.set(demoRef, {
         parentName,
@@ -801,16 +945,18 @@ export const adminCreateDemoSession = onCall<AdminUpsertDemoSessionRequest>(
         lastUpdatedBy: caller.uid,
       });
 
-      tx.set(dedupeRef, {
-        demoId: demoRef.id,
-        dedupeKey,
-        childNameKey: normalizeTextForKey(childName),
-        parentPhoneKey: normalizePhoneForKey(parentPhone),
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        createdBy: caller.uid,
-        lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
-        lastUpdatedBy: caller.uid,
-      });
+      if (!forceCreate || !dedupeSnap.exists || mappedDemoId === demoRef.id) {
+        tx.set(dedupeRef, {
+          demoId: demoRef.id,
+          dedupeKey,
+          childNameKey: normalizeTextForKey(childName),
+          parentPhoneKey: normalizePhoneForKey(parentPhone),
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          createdBy: caller.uid,
+          lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastUpdatedBy: caller.uid,
+        });
+      }
     });
 
     return {

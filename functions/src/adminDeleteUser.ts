@@ -51,11 +51,31 @@ export const adminDeleteUser = onCall(
 
     const userData = userSnap.data() || {};
     const role = userData.role as string | undefined;
+    const roleCandidates = new Set<string>();
+    const normalizedPrimaryRole = String(role || '').trim().toLowerCase();
+    if (normalizedPrimaryRole) roleCandidates.add(normalizedPrimaryRole);
+    if (Array.isArray(userData.roles)) {
+      for (const item of userData.roles) {
+        const normalized = String(item || '').trim().toLowerCase();
+        if (normalized) roleCandidates.add(normalized);
+      }
+    }
+
+    const isProtectedHardDeleteRole = ['parent', 'student', 'kid'].some((r) =>
+      roleCandidates.has(r)
+    );
+    if (isProtectedHardDeleteRole) {
+      throw new HttpsError(
+        'failed-precondition',
+        'Parent/student accounts cannot be permanently deleted. Archive the user instead.'
+      );
+    }
 
     logger.info('Admin deleting user', {
       adminUid: auth.uid,
       targetUid,
-      role,
+      role: normalizedPrimaryRole || null,
+      roleCandidates: Array.from(roleCandidates),
     });
 
     // ---------- Delete Firebase Auth user ----------

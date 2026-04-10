@@ -1455,6 +1455,7 @@ export const adminVoidSessionCharge = onCall(
     region: REGION,
     memory: '256MiB',
     timeoutSeconds: 60,
+    invoker: 'public',
   },
   async (request) => {
     await ensureAdmin(request.auth);

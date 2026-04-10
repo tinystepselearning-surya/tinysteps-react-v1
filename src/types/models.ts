@@ -221,6 +221,7 @@ export interface DemoSessionPrivate {
 export interface CreateDemoSessionInput {
   parentName: string;
   parentPhone: string;
+  forceCreate?: boolean;
   childName: string;
   childGrade: string;
   childAge?: number | null;

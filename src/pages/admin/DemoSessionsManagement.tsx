@@ -55,6 +55,7 @@ import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../lib/firebaseConfig';
 import {
   cancelDemoSession,
+  checkDemoPhoneConflicts,
   createDemoSession,
   deleteDemoSession,
   listenAllDemoSessions,
@@ -69,6 +70,11 @@ import {
   formatStatusLabel as formatGenericStatusLabel,
   normalizeDemoStatus,
 } from '../../lib/statuses';
+import {
+  DEFAULT_PHONE_COUNTRY_CODE,
+  buildPhoneFromParts,
+  splitPhoneForForm,
+} from '../../lib/phone';
 
 interface DemoSessionsManagementProps {
   openCreateRequestSignal?: number;
@@ -78,6 +84,8 @@ interface DemoSessionsManagementProps {
 interface DemoFormState {
   parentName: string;
   parentPhone: string;
+  parentPhoneCountryCode: string;
+  parentPhoneLocal: string;
   childName: string;
   childGrade: string;
   childAge: string;
@@ -157,6 +165,8 @@ const clampTrendStartKey = (startKey: string): string =>
 const buildInitialForm = (): DemoFormState => ({
   parentName: '',
   parentPhone: '',
+  parentPhoneCountryCode: DEFAULT_PHONE_COUNTRY_CODE,
+  parentPhoneLocal: '',
   childName: '',
   childGrade: '',
   childAge: '',
@@ -864,6 +874,7 @@ export default function DemoSessionsManagement({
 
     const normalizedAge = form.childAge.trim();
     const parsedAge = normalizedAge ? Number(normalizedAge) : null;
+    const parentPhone = buildPhoneFromParts(form.parentPhoneCountryCode, form.parentPhoneLocal);
 
     if (normalizedAge && Number.isNaN(parsedAge)) {
       toast({
@@ -876,7 +887,7 @@ export default function DemoSessionsManagement({
 
     if (
       !form.parentName.trim() ||
-      !form.parentPhone.trim() ||
+      !parentPhone ||
       !form.childName.trim() ||
       !form.childGrade.trim() ||
       !form.courseInterested.trim() ||
@@ -891,9 +902,40 @@ export default function DemoSessionsManagement({
       return;
     }
 
+    let forceCreate = false;
+    try {
+      const conflictResult = await checkDemoPhoneConflicts(parentPhone);
+      if (conflictResult.hasConflicts) {
+        const warningLines = [
+          'This phone number already exists in the system.',
+          '',
+          `Demo requests: ${conflictResult.counts.demoRequests}`,
+          `Leads/Inquiries: ${conflictResult.counts.leads}`,
+          `Parent profiles: ${conflictResult.counts.parentProfiles}`,
+          `Enrollments: ${conflictResult.counts.enrollments}`,
+          '',
+          'Please double-check before creating another demo request.',
+          'Press OK to proceed, or Cancel to review existing records.',
+        ];
+        const proceed = window.confirm(warningLines.join('\n'));
+        if (!proceed) {
+          return;
+        }
+        forceCreate = true;
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Unable to verify existing phone records',
+        description: error?.message || 'Please try again before creating this demo request.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     const payload: CreateDemoSessionInput = {
       parentName: form.parentName,
-      parentPhone: form.parentPhone,
+      parentPhone,
+      forceCreate,
       childName: form.childName,
       childGrade: form.childGrade,
       childAge: parsedAge,
@@ -937,10 +979,13 @@ export default function DemoSessionsManagement({
   };
 
   const openEditDialog = (session: DemoSession) => {
+    const { countryCode, phoneLocal } = splitPhoneForForm(phoneMap[session.id] || '');
     setEditTarget(session);
     setEditForm({
       parentName: session.parentName || '',
       parentPhone: phoneMap[session.id] || '',
+      parentPhoneCountryCode: countryCode,
+      parentPhoneLocal: phoneLocal,
       childName: session.childName || '',
       childGrade: session.childGrade || '',
       childAge: typeof session.childAge === 'number' ? String(session.childAge) : '',
@@ -1457,13 +1502,29 @@ export default function DemoSessionsManagement({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="demo-parent-phone">Parent Phone *</Label>
-                <Input
-                  id="demo-parent-phone"
-                  value={form.parentPhone}
-                  onChange={(e) => onFieldChange('parentPhone', e.target.value)}
-                  required
-                />
+                <Label>Parent Phone *</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="flex h-10 items-center rounded-md border bg-background">
+                    <span className="px-3 text-sm text-muted-foreground">+</span>
+                    <Input
+                      className="border-0 shadow-none focus-visible:ring-0"
+                      inputMode="numeric"
+                      placeholder="Country"
+                      value={form.parentPhoneCountryCode || DEFAULT_PHONE_COUNTRY_CODE}
+                      onChange={(e) =>
+                        onFieldChange('parentPhoneCountryCode', e.target.value.replace(/\D/g, ''))
+                      }
+                    />
+                  </div>
+                  <Input
+                    className="col-span-2"
+                    value={form.parentPhoneLocal}
+                    onChange={(e) => onFieldChange('parentPhoneLocal', e.target.value.replace(/\D/g, ''))}
+                    placeholder="Phone number"
+                    inputMode="numeric"
+                    required
+                  />
+                </div>
               </div>
             </div>
 

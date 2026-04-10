@@ -43,6 +43,35 @@ const toDemoSession = (id: string, data: Record<string, unknown>): DemoSession =
   ...(data as Omit<DemoSession, 'id'>),
 });
 
+export interface DemoPhoneConflictCheckResult {
+  ok: boolean;
+  normalizedPhone: string;
+  hasConflicts: boolean;
+  counts: {
+    demoRequests: number;
+    leads: number;
+    parentProfiles: number;
+    enrollments: number;
+  };
+  samples: {
+    demoIds: string[];
+    leadIds: string[];
+    parentIds: string[];
+    enrollmentIds: string[];
+  };
+}
+
+export async function checkDemoPhoneConflicts(parentPhone: string): Promise<DemoPhoneConflictCheckResult> {
+  const cleanedPhone = parentPhone.trim();
+  if (!cleanedPhone) {
+    throw new Error('Parent phone is required.');
+  }
+  return callFunction<DemoPhoneConflictCheckResult, { parentPhone: string }>(
+    'adminCheckDemoPhoneConflicts',
+    { parentPhone: cleanedPhone },
+  );
+}
+
 export async function createDemoSession(
   input: CreateDemoSessionInput & { leadId?: string | null },
   createdBy: string,
@@ -70,6 +99,7 @@ export async function createDemoSession(
     {
       parentName,
       parentPhone,
+      forceCreate: input.forceCreate === true,
       childName,
       childGrade,
       childAge: typeof input.childAge === 'number' ? input.childAge : null,

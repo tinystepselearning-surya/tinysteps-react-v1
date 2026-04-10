@@ -20,6 +20,8 @@ export interface CreateUserData {
   password: string;
   name: string;
   phone?: string;
+  phoneCountryCode?: string;
+  phoneLocal?: string;
   role: User['role'];
   status: User['status'];
   // Role-specific fields

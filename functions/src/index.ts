@@ -102,6 +102,7 @@ export {
 // Demo sessions assignment workflow
 export {
   onDemoSessionEarningsWrite,
+  adminCheckDemoPhoneConflicts,
   adminCreateDemoSession,
   adminUpdateDemoSessionDetails,
   adminUpdateDemoConversion,

@@ -55,6 +55,8 @@ interface AdminCreateUserRequest {
   displayName: string;
   password?: string;
   phone?: string;
+  phoneCountryCode?: string;
+  phoneLocal?: string;
   role: RawRole;
 
   // Teacher fields
@@ -122,6 +124,18 @@ function normalizePhoneForUniqueness(phone?: string | null): string | null {
   const trimmed = phone.trim();
   if (!trimmed) return null;
   const digits = trimmed.replace(/\D/g, "");
+  return digits || null;
+}
+
+function normalizeCountryCode(value?: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const digits = value.trim().replace(/\D/g, "");
+  return digits ? `+${digits}` : null;
+}
+
+function normalizePhoneLocal(value?: string | null): string | null {
+  if (typeof value !== "string") return null;
+  const digits = value.trim().replace(/\D/g, "");
   return digits || null;
 }
 
@@ -217,6 +231,18 @@ function validateInput(data: AdminCreateUserRequest) {
     }
   }
 
+  const countryCode = normalizeCountryCode(data.phoneCountryCode || null);
+  const phoneLocal = normalizePhoneLocal(data.phoneLocal || null);
+  if ((countryCode && !phoneLocal) || (!countryCode && phoneLocal)) {
+    throw new HttpsError("invalid-argument", "Provide both phoneCountryCode and phoneLocal");
+  }
+  if (countryCode && !/^\+\d{1,4}$/.test(countryCode)) {
+    throw new HttpsError("invalid-argument", "Invalid phoneCountryCode");
+  }
+  if (phoneLocal && !/^\d{6,15}$/.test(phoneLocal)) {
+    throw new HttpsError("invalid-argument", "Invalid phoneLocal");
+  }
+
   if (data.password && data.password.length < 6) {
     throw new HttpsError("invalid-argument", "Password must be at least 6 chars");
   }
@@ -296,7 +322,10 @@ export const adminCreateUser = onCall(
 
       const email = normalizeEmailForUniqueness(data.email);
       const displayName = data.displayName.trim();
-      const phone = typeof data.phone === "string" ? data.phone.trim() : "";
+      const phoneCountryCode = normalizeCountryCode(data.phoneCountryCode || null) || "";
+      const phoneLocal = normalizePhoneLocal(data.phoneLocal || null) || "";
+      const phoneFromParts = phoneCountryCode && phoneLocal ? `${phoneCountryCode}${phoneLocal}` : "";
+      const phone = phoneFromParts || (typeof data.phone === "string" ? data.phone.trim() : "");
       const rawRole = data.role;
       const role = normalizeRole(rawRole);
       const status: UserStatus = data.status || DEFAULT_STATUS;
@@ -355,6 +384,8 @@ export const adminCreateUser = onCall(
         displayName,
         name: displayName,
         phone: phone || null,
+        phoneCountryCode: phoneCountryCode || null,
+        phoneLocal: phoneLocal || null,
         role,              // canonical
         rawRole,           // requested
         roles: [role],     // for easy rules / checks
@@ -377,6 +408,8 @@ export const adminCreateUser = onCall(
           email,
           displayName,
           phone: phone || null,
+          phoneCountryCode: phoneCountryCode || null,
+          phoneLocal: phoneLocal || null,
           status,
           qualification: data.qualification || null,
           specialization: data.specialization || [],
@@ -396,6 +429,8 @@ export const adminCreateUser = onCall(
           email,
           displayName,
           phone: phone || null,
+          phoneCountryCode: phoneCountryCode || null,
+          phoneLocal: phoneLocal || null,
           status,
           address: data.address || null,
           city: data.city || null,
@@ -434,6 +469,8 @@ export const adminCreateUser = onCall(
           email,
           displayName,
           phone: phone || null,
+          phoneCountryCode: phoneCountryCode || null,
+          phoneLocal: phoneLocal || null,
           status,
           region: data.region || null,
           qualification: data.qualification || null,
@@ -460,6 +497,8 @@ export const adminCreateUser = onCall(
           email,
           displayName,
           phone: phone || null,
+          phoneCountryCode: phoneCountryCode || null,
+          phoneLocal: phoneLocal || null,
           status,
           createdAt: ts,
           updatedAt: ts,
