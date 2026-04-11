@@ -4,36 +4,12 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { trackEvent } from '../../lib/analytics';
 import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
+import { normalizePathname, shouldShowPublicSupportWidgets } from '../../utils/publicRouteGuards';
 import { AskTinyStepsModal } from './AskTinyStepsModal';
 
 const WHATSAPP_URL =
   'https://wa.me/919618398383?text=Hi%20Tiny%20Steps!%20I%20have%20a%20question%20about%20your%20programs.';
 const EXPAND_COLLAPSE_INTERVAL_MS = 10000;
-const APP_ROUTE_PREFIXES = [
-  '/surya',
-  '/teacher',
-  '/parent',
-  '/kids',
-  '/learning-partner/dashboard',
-  '/learningpartner/dashboard',
-  '/admin',
-];
-const AUTH_ENTRY_ROUTES = new Set([
-  '/login',
-  '/surya/login',
-  '/admin/login',
-  '/teacher/login',
-  '/parent/login',
-  '/learning-partner/login',
-  '/learningpartner/login',
-  '/kid/login',
-]);
-
-const normalizePathname = (pathname: string): string => {
-  const lower = pathname.toLowerCase();
-  if (lower !== '/' && lower.endsWith('/')) return lower.replace(/\/+$/, '');
-  return lower;
-};
 
 export default function FloatingAssistant() {
   const [askOpen, setAskOpen] = useState(false);
@@ -48,10 +24,7 @@ export default function FloatingAssistant() {
   }, [askOpen]);
 
   const pathname = typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '';
-  const isAppRoute = APP_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-  const isAuthEntryRoute = AUTH_ENTRY_ROUTES.has(pathname);
-
-  if (isAppRoute || isAuthEntryRoute) return null;
+  if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
   const openWhatsApp = () => {
     trackConversionEvent('whatsapp_click', {

@@ -85,6 +85,22 @@ describe('FloatingAssistant', () => {
     expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
   })
 
+  it('does not render on protected alias routes', async () => {
+    window.history.pushState({}, '', '/admin')
+    await renderAnonymousWidget()
+
+    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
+  })
+
+  it('does not render on learning partner dashboard routes', async () => {
+    window.history.pushState({}, '', '/learning-partner/dashboard')
+    await renderAnonymousWidget()
+
+    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
+  })
+
   it('does not render on login routes', async () => {
     window.history.pushState({}, '', '/teacher/login')
     await renderAnonymousWidget()

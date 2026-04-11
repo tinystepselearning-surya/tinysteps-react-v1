@@ -346,6 +346,7 @@ const formatHistoryAction = (action?: string) => {
   if (!action) return 'Updated';
   if (action === 'created') return 'Created';
   if (action === 'claimed') return 'Claimed';
+  if (action === 'assigned') return 'Assigned';
   if (action === 'schedule_updated') return 'Schedule Updated';
   if (action === 'completed') return 'Completed';
   if (action === 'reschedule_created') return 'Reschedule Follow-up Created';

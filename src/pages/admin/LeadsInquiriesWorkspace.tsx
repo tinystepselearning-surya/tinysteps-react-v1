@@ -1,17 +1,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  addDoc,
   collection,
   doc,
   onSnapshot,
   orderBy,
   query,
+  serverTimestamp,
   Timestamp,
   updateDoc,
+  where,
 } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { Input } from '@components/ui/input';
 import { Label } from '@components/ui/label';
+import { Textarea } from '@components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -19,6 +24,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@components/ui/dropdown-menu';
 import {
   Table,
   TableBody,
@@ -28,27 +47,40 @@ import {
   TableRow,
 } from '@components/ui/table';
 import { Badge } from '@components/ui/badge';
+import { cn } from '@components/lib/utils';
+import { MoreHorizontal } from 'lucide-react';
 import { useToast } from '@components/hooks/use-toast';
-import { db } from '../../lib/firebaseConfig';
+import { db, functions } from '../../lib/firebaseConfig';
+import {
+  DEFAULT_PHONE_COUNTRY_CODE,
+  buildPhoneFromParts,
+  splitPhoneForForm,
+} from '../../lib/phone';
 import { normalizeDemoStatus } from '../../lib/statuses';
 import { useAuthStore } from '../../store/useAuthStore';
-import type { DemoConversionStatus, DemoSession } from '../../types/models';
+import type {
+  DemoClassType,
+  DemoConversionStatus,
+  DemoFollowUpCallStatus,
+  DemoSession,
+} from '../../types/models';
 import {
   cancelDemoSession,
   checkDemoPhoneConflicts,
   createDemoSession,
+  deleteDemoSession,
   listenAllDemoSessions,
   listenDemoSessionPrivatePhones,
+  reassignDemoSession,
   releaseDemoSession,
   reopenDemoSession,
+  updateDemoSessionAdminDetails,
   updateDemoConversion,
 } from '../../services/demoSessionsService';
-import LeadsEnquiriesManagement from './LeadsEnquiriesManagement';
 import DemoSessionsManagement from './DemoSessionsManagement';
 
 export type LeadsWorkspaceView = 'leads' | 'demos';
 
-type LegacyPanel = 'lead' | 'demo';
 type LeadStatus =
   | 'new'
   | 'attempted_contact'
@@ -64,23 +96,61 @@ type LeadStatus =
   | 'no_response'
   | 'lost';
 
+type InterestTrack = 'phonics' | 'grammar' | 'public_speaking';
+type LeadSource = 'website' | 'whatsapp' | 'instagram' | 'referral' | 'manual';
+type CommunicationType = 'message' | 'call' | 'follow_up' | 'note';
+type CommunicationDirection = 'inbound' | 'outbound' | 'internal';
+type CommunicationChannel = 'whatsapp' | 'phone' | 'instagram' | 'website' | 'manual' | 'other';
+type CommunicationStatus = 'logged' | 'pending_follow_up' | 'completed';
+type DeliveryStatus = 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
+type CommunicationHistoryFilter = 'all' | 'whatsapp' | 'failed';
+type UnmatchedInboundStatus = 'unmatched' | 'resolved' | 'ignored';
+type CommunicationPresetKey =
+  | 'whatsapp_follow_up'
+  | 'call_done'
+  | 'parent_replied'
+  | 'demo_reminder'
+  | 'admission_follow_up';
+type WhatsAppTemplateKey =
+  | 'first_response'
+  | 'follow_up_no_response'
+  | 'demo_scheduling'
+  | 'demo_reminder'
+  | 'demo_completed_followup'
+  | 'admission_followup';
+
 interface LeadRecord {
   id: string;
   parentName?: string;
   primaryPhone?: string;
   phoneNormalized?: string;
+  parentEmail?: string | null;
   childName?: string;
   childAge?: number | null;
   childGrade?: string | null;
-  interestTrack?: string | null;
-  source?: string | null;
+  interestTrack?: InterestTrack | null;
+  source?: LeadSource | null;
+  sourceDetail?: string | null;
+  country?: string | null;
   preferredTimingText?: string | null;
+  initialMessageSnippet?: string | null;
   timezone?: string | null;
   status?: LeadStatus | null;
+  ownerUserId?: string | null;
+  ownerRole?: string | null;
+  priority?: string | null;
   nextFollowUpAt?: Timestamp | null;
+  lastContactAt?: Timestamp | null;
+  lastInboundAt?: Timestamp | null;
+  lastOutboundAt?: Timestamp | null;
+  tags?: string[] | null;
+  notes?: string | null;
   demoSessionId?: string | null;
+  enrollmentId?: string | null;
   updatedAt?: Timestamp | null;
   createdAt?: Timestamp | null;
+  createdBy?: string | null;
+  updatedBy?: string | null;
 }
 
 type LifecycleStage =
@@ -93,7 +163,6 @@ type LifecycleStage =
 
 type SummaryCardFilter = 'all' | 'enquiry' | 'demo_active' | 'admission_follow_up' | 'admitted' | 'lost';
 type FocusFilter = 'all' | 'due_today' | 'overdue' | 'no_demo' | 'all_demos' | 'open' | 'assigned' | 'completed' | 'no_response';
-type OperationsMode = 'optimized' | 'legacy_full';
 
 interface UnifiedRow {
   id: string;
@@ -110,12 +179,321 @@ interface UnifiedRow {
   parentPhone: string;
 }
 
+interface TeacherOption {
+  id: string;
+  name: string;
+}
+
+interface DemoEditFormState {
+  parentName: string;
+  parentPhone: string;
+  childName: string;
+  childGrade: string;
+  childAge: string;
+  courseInterested: string;
+  source: string;
+  demoMode: string;
+  requestReceivedDate: string;
+  preferredDateTimeText: string;
+  timezone: string;
+  adminNotes: string;
+}
+
+interface DemoRequestFormState {
+  parentName: string;
+  parentPhoneCountryCode: string;
+  parentPhoneLocal: string;
+  childName: string;
+  childGrade: string;
+  childAge: string;
+  courseInterested: string;
+  source: string;
+  demoMode: string;
+  requestReceivedDate: string;
+  preferredDateTimeText: string;
+  timezone: string;
+  adminNotes: string;
+}
+
+interface LeadFormState {
+  parentName: string;
+  primaryPhone: string;
+  parentEmail: string;
+  childName: string;
+  childAge: string;
+  childGrade: string;
+  interestTrack: InterestTrack;
+  source: LeadSource;
+  sourceDetail: string;
+  country: string;
+  timezone: string;
+  preferredTimingText: string;
+  initialMessageSnippet: string;
+  status: LeadStatus;
+  priority: string;
+  nextFollowUpDate: string;
+  notes: string;
+  tagsText: string;
+}
+
+interface LeadCommunication {
+  id: string;
+  type: CommunicationType;
+  direction: CommunicationDirection;
+  channel: CommunicationChannel;
+  summary: string;
+  followUpNeeded: boolean;
+  followUpDate?: Timestamp | null;
+  templateTag?: string | null;
+  templateName?: string | null;
+  templateLanguage?: string | null;
+  status: CommunicationStatus;
+  provider?: string | null;
+  externalMessageId?: string | null;
+  deliveryStatus?: DeliveryStatus | null;
+  errorCode?: string | null;
+  errorMessage?: string | null;
+  createdAt?: Timestamp | null;
+  createdBy?: string | null;
+  updatedAt?: Timestamp | null;
+  updatedBy?: string | null;
+}
+
+interface UnmatchedInboundRecord {
+  id: string;
+  phoneNormalized?: string | null;
+  rawFrom?: string | null;
+  messageSummary?: string | null;
+  externalMessageId?: string | null;
+  provider?: string | null;
+  status: UnmatchedInboundStatus;
+  receivedAt?: Timestamp | null;
+  resolvedLeadId?: string | null;
+  createdAt?: Timestamp | null;
+  updatedAt?: Timestamp | null;
+}
+
+interface CommunicationFormState {
+  type: CommunicationType;
+  direction: CommunicationDirection;
+  channel: CommunicationChannel;
+  summary: string;
+  followUpNeeded: 'yes' | 'no';
+  followUpDate: string;
+  templateTag: string;
+  status: CommunicationStatus;
+}
+
 interface LeadsInquiriesWorkspaceProps {
   view?: LeadsWorkspaceView;
   onViewChange?: (nextView: LeadsWorkspaceView) => void;
 }
 
 const LEADS_COLLECTION = 'leads';
+const LEAD_COMMUNICATIONS_COLLECTION = 'communications';
+const WHATSAPP_UNMATCHED_COLLECTION = 'whatsappInboundUnmatched';
+const EMPTY_DEMO_EDIT_FORM: DemoEditFormState = {
+  parentName: '',
+  parentPhone: '',
+  childName: '',
+  childGrade: '',
+  childAge: '',
+  courseInterested: '',
+  source: '',
+  demoMode: '',
+  requestReceivedDate: '',
+  preferredDateTimeText: '',
+  timezone: '',
+  adminNotes: '',
+};
+const EMPTY_DEMO_REQUEST_FORM: DemoRequestFormState = {
+  parentName: '',
+  parentPhoneCountryCode: DEFAULT_PHONE_COUNTRY_CODE,
+  parentPhoneLocal: '',
+  childName: '',
+  childGrade: '',
+  childAge: '',
+  courseInterested: '',
+  source: '',
+  demoMode: '',
+  requestReceivedDate: '',
+  preferredDateTimeText: '',
+  timezone: '',
+  adminNotes: '',
+};
+const LEAD_STATUSES: LeadStatus[] = [
+  'new',
+  'attempted_contact',
+  'contacted',
+  'qualified',
+  'demo_pending_schedule',
+  'demo_booked',
+  'demo_completed',
+  'admission_follow_up',
+  'admitted_confirmed',
+  'not_interested',
+  'wrong_fit',
+  'no_response',
+  'lost',
+];
+const LEAD_TRACK_OPTIONS: InterestTrack[] = ['phonics', 'grammar', 'public_speaking'];
+const LEAD_SOURCE_OPTIONS: LeadSource[] = ['website', 'whatsapp', 'instagram', 'referral', 'manual'];
+const PRIORITY_OPTIONS = ['low', 'normal', 'high'] as const;
+const COMMUNICATION_TYPE_OPTIONS: CommunicationType[] = ['message', 'call', 'follow_up', 'note'];
+const COMMUNICATION_DIRECTION_OPTIONS: CommunicationDirection[] = ['inbound', 'outbound', 'internal'];
+const COMMUNICATION_CHANNEL_OPTIONS: CommunicationChannel[] = [
+  'whatsapp',
+  'phone',
+  'instagram',
+  'website',
+  'manual',
+  'other',
+];
+const COMMUNICATION_STATUS_OPTIONS: CommunicationStatus[] = ['logged', 'pending_follow_up', 'completed'];
+const WHATSAPP_TEMPLATE_OPTIONS: WhatsAppTemplateKey[] = [
+  'first_response',
+  'follow_up_no_response',
+  'demo_scheduling',
+  'demo_reminder',
+  'demo_completed_followup',
+  'admission_followup',
+];
+const WHATSAPP_API_TEMPLATE_KEYS = new Set<WhatsAppTemplateKey>(WHATSAPP_TEMPLATE_OPTIONS);
+const COMMUNICATION_PRESETS: Record<
+  CommunicationPresetKey,
+  { label: string; form: CommunicationFormState }
+> = {
+  whatsapp_follow_up: {
+    label: 'WhatsApp Follow-up',
+    form: {
+      type: 'message',
+      direction: 'outbound',
+      channel: 'whatsapp',
+      summary: 'Followed up with parent on WhatsApp regarding Tiny Steps enquiry.',
+      followUpNeeded: 'yes',
+      followUpDate: '',
+      templateTag: '',
+      status: 'pending_follow_up',
+    },
+  },
+  call_done: {
+    label: 'Call Done',
+    form: {
+      type: 'call',
+      direction: 'outbound',
+      channel: 'phone',
+      summary: 'Spoke with parent over phone regarding enquiry.',
+      followUpNeeded: 'no',
+      followUpDate: '',
+      templateTag: '',
+      status: 'completed',
+    },
+  },
+  parent_replied: {
+    label: 'Parent Replied',
+    form: {
+      type: 'message',
+      direction: 'inbound',
+      channel: 'whatsapp',
+      summary: 'Parent replied on WhatsApp.',
+      followUpNeeded: 'no',
+      followUpDate: '',
+      templateTag: '',
+      status: 'logged',
+    },
+  },
+  demo_reminder: {
+    label: 'Demo Reminder',
+    form: {
+      type: 'follow_up',
+      direction: 'outbound',
+      channel: 'whatsapp',
+      summary: 'Sent demo reminder to parent.',
+      followUpNeeded: 'yes',
+      followUpDate: '',
+      templateTag: 'demo_reminder',
+      status: 'pending_follow_up',
+    },
+  },
+  admission_follow_up: {
+    label: 'Admission Follow-up',
+    form: {
+      type: 'follow_up',
+      direction: 'outbound',
+      channel: 'whatsapp',
+      summary: 'Followed up with parent regarding admission confirmation.',
+      followUpNeeded: 'yes',
+      followUpDate: '',
+      templateTag: 'admission_followup',
+      status: 'pending_follow_up',
+    },
+  },
+};
+
+const COURSE_OPTIONS = [
+  'Phonics',
+  'Grammar',
+  'Public Speaking',
+  'Reading',
+  'Writing',
+  'Combo',
+  'Not Sure Yet',
+] as const;
+
+const SOURCE_OPTIONS = [
+  'WhatsApp',
+  'Website',
+  'Referral',
+  'Instagram',
+  'Facebook',
+  'Existing Parent',
+  'Other',
+] as const;
+
+const DEMO_MODE_OPTIONS = [
+  'Zoom',
+  'Google Meet',
+  'Microsoft Teams',
+  'Phone Call',
+  'WhatsApp Call',
+] as const;
+
+const TIMEZONE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: 'IST', label: 'IST (UTC+05:30) - India Standard Time' },
+  { value: 'PST', label: 'PST (UTC-08:00) - Pacific Standard Time' },
+  { value: 'CST', label: 'CST (UTC-06:00) - Central Standard Time' },
+  { value: 'EST', label: 'EST (UTC-05:00) - Eastern Standard Time' },
+  { value: 'UAE', label: 'UAE (UTC+04:00) - Gulf Standard Time' },
+  { value: 'Asia/Kolkata', label: 'Asia/Kolkata (UTC+05:30)' },
+  { value: 'Asia/Dubai', label: 'Asia/Dubai (UTC+04:00)' },
+  { value: 'Asia/Singapore', label: 'Asia/Singapore (UTC+08:00)' },
+  { value: 'Asia/Hong_Kong', label: 'Asia/Hong_Kong (UTC+08:00)' },
+  { value: 'Asia/Tokyo', label: 'Asia/Tokyo (UTC+09:00)' },
+  { value: 'Asia/Shanghai', label: 'Asia/Shanghai (UTC+08:00)' },
+  { value: 'Europe/London', label: 'Europe/London (UTC+00:00)' },
+  { value: 'Europe/Amsterdam', label: 'Europe/Amsterdam (UTC+01:00)' },
+  { value: 'Europe/Paris', label: 'Europe/Paris (UTC+01:00)' },
+  { value: 'Europe/Berlin', label: 'Europe/Berlin (UTC+01:00)' },
+  { value: 'America/New_York', label: 'America/New_York (UTC-05:00)' },
+  { value: 'America/Chicago', label: 'America/Chicago (UTC-06:00)' },
+  { value: 'America/Los_Angeles', label: 'America/Los_Angeles (UTC-08:00)' },
+  { value: 'America/Denver', label: 'America/Denver (UTC-07:00)' },
+  { value: 'America/Toronto', label: 'America/Toronto (UTC-05:00)' },
+  { value: 'America/Vancouver', label: 'America/Vancouver (UTC-08:00)' },
+  { value: 'America/Sao_Paulo', label: 'America/Sao_Paulo (UTC-03:00)' },
+  { value: 'Australia/Sydney', label: 'Australia/Sydney (UTC+10:00)' },
+  { value: 'Africa/Johannesburg', label: 'Africa/Johannesburg (UTC+02:00)' },
+  { value: 'Other', label: 'Other' },
+];
+
+const CONVERSION_OPTIONS: Array<{ value: DemoConversionStatus; label: string }> = [
+  { value: 'interested', label: 'Interested' },
+  { value: 'enrolled', label: 'Enrolled' },
+  { value: 'not_interested', label: 'Not Interested' },
+  { value: 'follow_up_later', label: 'Follow Up Later' },
+  { value: 'wrong_fit', label: 'Wrong Fit' },
+  { value: 'no_response', label: 'No Response' },
+];
 const TODAY_DATE_INPUT = (() => {
   const now = new Date();
   const yyyy = now.getFullYear();
@@ -130,6 +508,12 @@ const TERMINAL_DEMO_BLOCK_LEAD_STATUSES = new Set<LeadStatus>([
   'wrong_fit',
   'lost',
   'admitted_confirmed',
+]);
+const FOLLOW_UP_TERMINAL_STATUSES = new Set<LeadStatus>([
+  'admitted_confirmed',
+  'not_interested',
+  'wrong_fit',
+  'lost',
 ]);
 
 const toMs = (value: unknown): number => {
@@ -167,7 +551,26 @@ const formatTs = (value: unknown): string => {
   }).format(d);
 };
 
+const toDateInput = (value: unknown): string => {
+  const ms = toMs(value);
+  if (!ms) return '';
+  const date = new Date(ms);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const dateInputToTimestamp = (value: string): Timestamp | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = new Date(`${trimmed}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return Timestamp.fromDate(parsed);
+};
+
 const normalizeText = (value: unknown): string => String(value || '').trim();
+const normalizePhone = (value: string): string => value.replace(/[^\d]/g, '');
 
 const formatLabel = (value: string): string => {
   if (!value) return '—';
@@ -193,6 +596,154 @@ const leadSourceToDemoSource = (source: string): string => {
   if (normalized === 'instagram') return 'Instagram';
   if (normalized === 'referral') return 'Referral';
   return formatLabel(normalized) || 'Manual';
+};
+
+const buildInitialLeadForm = (): LeadFormState => ({
+  parentName: '',
+  primaryPhone: '',
+  parentEmail: '',
+  childName: '',
+  childAge: '',
+  childGrade: '',
+  interestTrack: 'phonics',
+  source: 'manual',
+  sourceDetail: '',
+  country: '',
+  timezone: '',
+  preferredTimingText: '',
+  initialMessageSnippet: '',
+  status: 'new',
+  priority: 'normal',
+  nextFollowUpDate: '',
+  notes: '',
+  tagsText: '',
+});
+
+const buildInitialCommunicationForm = (): CommunicationFormState => ({
+  type: 'message',
+  direction: 'outbound',
+  channel: 'whatsapp',
+  summary: '',
+  followUpNeeded: 'no',
+  followUpDate: '',
+  templateTag: '',
+  status: 'logged',
+});
+
+const buildCommunicationFormFromPreset = (preset: CommunicationPresetKey): CommunicationFormState => ({
+  ...COMMUNICATION_PRESETS[preset].form,
+});
+
+const buildInitialDemoRequestForm = (): DemoRequestFormState => ({
+  ...EMPTY_DEMO_REQUEST_FORM,
+  requestReceivedDate: TODAY_DATE_INPUT,
+});
+
+const buildDemoRequestFormFromLead = (lead: LeadRecord): DemoRequestFormState => {
+  const phone = splitPhoneForForm(lead.primaryPhone || '');
+  return {
+    parentName: lead.parentName || '',
+    parentPhoneCountryCode: phone.countryCode,
+    parentPhoneLocal: phone.phoneLocal,
+    childName: lead.childName || '',
+    childGrade: lead.childGrade || '',
+    childAge: typeof lead.childAge === 'number' ? String(lead.childAge) : '',
+    courseInterested: interestTrackToCourse(lead.interestTrack || 'phonics'),
+    source: leadSourceToDemoSource(lead.source || 'manual'),
+    demoMode: '',
+    requestReceivedDate: TODAY_DATE_INPUT,
+    preferredDateTimeText: lead.preferredTimingText || '',
+    timezone: lead.timezone || '',
+    adminNotes: [lead.notes || '', lead.initialMessageSnippet || '']
+      .filter(Boolean)
+      .join('\n')
+      .trim(),
+  };
+};
+
+const canCreateDemoFromLead = (lead: LeadRecord): boolean => {
+  if (lead.demoSessionId) return false;
+  if (TERMINAL_DEMO_BLOCK_LEAD_STATUSES.has((lead.status || 'new') as LeadStatus)) return false;
+  return true;
+};
+
+const buildWhatsAppUrl = (phone: string, message: string): string =>
+  `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+const getWhatsAppPhone = (lead: LeadRecord): string => {
+  const normalized = normalizeText(lead.phoneNormalized);
+  if (normalized) return normalizePhone(normalized);
+  return normalizePhone(lead.primaryPhone || '');
+};
+
+const deliveryBadgeVariant = (status?: DeliveryStatus | null): 'default' | 'secondary' | 'outline' => {
+  if (!status) return 'outline';
+  if (status === 'failed') return 'secondary';
+  if (status === 'read') return 'default';
+  return 'outline';
+};
+
+const getCommunicationOriginLabel = (item: LeadCommunication): string | null => {
+  if (item.channel !== 'whatsapp') return null;
+  if (item.direction === 'inbound') return 'Inbound WhatsApp';
+  if (item.provider === 'meta_whatsapp_cloud') return 'API Template';
+  if (item.direction === 'outbound') return 'Manual WhatsApp';
+  return 'WhatsApp';
+};
+
+const buildTimelineRows = (session: DemoSession): string[] =>
+  [
+    `Created: ${formatTs(session.createdAt)}`,
+    `Request Received Date: ${session.requestReceivedDate || '—'}`,
+    `Assigned: ${formatTs(session.assignedAt)}`,
+    `Confirmed For: ${`${session.teacherConfirmedDate || '—'} ${session.teacherConfirmedTime || ''}`.trim()}`,
+    `Completed: ${formatTs(session.completedAt)}`,
+    `Released: ${formatTs(session.releasedAt)}`,
+    `Reopened: ${formatTs(session.reopenedAt)}`,
+    session.rescheduledFromDemoId ? `Rescheduled From: ${session.rescheduledFromDemoId}` : null,
+    session.rescheduledToDemoId ? `Rescheduled To: ${session.rescheduledToDemoId}` : null,
+    `Last Updated: ${formatTs(session.lastUpdatedAt || session.createdAt)}`,
+  ].filter((value): value is string => Boolean(value));
+
+const formatHistoryAction = (action?: string): string => {
+  if (!action) return 'Updated';
+  if (action === 'created') return 'Created';
+  if (action === 'claimed') return 'Claimed';
+  if (action === 'assigned') return 'Assigned';
+  if (action === 'schedule_updated') return 'Schedule Updated';
+  if (action === 'completed') return 'Completed';
+  if (action === 'reschedule_created') return 'Reschedule Follow-up Created';
+  if (action === 'reassigned') return 'Reassigned';
+  if (action === 'cancelled') return 'Cancelled';
+  if (action === 'released') return 'Released';
+  if (action === 'reopened') return 'Reopened';
+  if (action === 'admin_details_updated') return 'Details Updated';
+  if (action === 'follow_up_updated') return 'Follow-up Updated';
+  return formatLabel(action);
+};
+
+const buildWhatsAppTemplateMessage = (lead: LeadRecord, template: WhatsAppTemplateKey): string => {
+  const parentName = lead.parentName || 'Parent';
+  const childName = lead.childName || 'your child';
+  const track = formatLabel(lead.interestTrack || 'phonics').toLowerCase();
+  const preferredTime = lead.preferredTimingText || 'a suitable time';
+
+  if (template === 'first_response') {
+    return `Hi ${parentName}, thank you for reaching out to Tiny Steps. We would be happy to support ${childName} with ${track}. Please share your preferred time to continue.`;
+  }
+  if (template === 'follow_up_no_response') {
+    return `Hi ${parentName}, just following up from Tiny Steps regarding ${childName}'s learning plan. Please let us know if you would like us to continue with the next step.`;
+  }
+  if (template === 'demo_scheduling') {
+    return `Hi ${parentName}, we can schedule a free assessment demo for ${childName}. We have noted your preferred timing as ${preferredTime}. Please confirm what works best.`;
+  }
+  if (template === 'demo_reminder') {
+    return `Hi ${parentName}, this is a gentle reminder from Tiny Steps about ${childName}'s assessment demo. Please confirm your availability for the planned slot.`;
+  }
+  if (template === 'demo_completed_followup') {
+    return `Hi ${parentName}, thank you for joining the demo today. It was lovely working with ${childName}. We can now share the best next-step plan for ${track}.`;
+  }
+  return `Hi ${parentName}, sharing a quick follow-up from Tiny Steps for ${childName}. We are ready to help you continue with admissions and next steps whenever you are ready.`;
 };
 
 const lifecycleLabel = (stage: LifecycleStage): string => {
@@ -277,9 +828,126 @@ function nextFollowUpLabel(lead: LeadRecord | null, demo: DemoSession | null): s
   return '—';
 }
 
+const formatConversionStatus = (status?: DemoConversionStatus | null): string => {
+  if (!status) return '—';
+  return status
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+};
+
+const formatFollowUpCallStatus = (status?: DemoFollowUpCallStatus | null): string => {
+  if (!status) return '—';
+  if (status === 'not_reachable') return 'Not Reachable';
+  if (status === 'not_required') return 'Not Required';
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
+
+const sanitizePhoneForWhatsApp = (value: string): string => value.replace(/[^\d]/g, '');
+
+const copyText = async (value: string): Promise<void> => {
+  if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  if (typeof document !== 'undefined') {
+    const input = document.createElement('textarea');
+    input.value = value;
+    input.style.position = 'fixed';
+    input.style.opacity = '0';
+    document.body.appendChild(input);
+    input.focus();
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    return;
+  }
+
+  throw new Error('Clipboard is not available');
+};
+
+const buildDemoEditForm = (session: DemoSession, parentPhone: string): DemoEditFormState => ({
+  parentName: session.parentName || '',
+  parentPhone: parentPhone || '',
+  childName: session.childName || '',
+  childGrade: session.childGrade || '',
+  childAge: typeof session.childAge === 'number' ? String(session.childAge) : '',
+  courseInterested: session.courseInterested || '',
+  source: session.source || '',
+  demoMode: session.demoMode || '',
+  requestReceivedDate: session.requestReceivedDate || TODAY_DATE_INPUT,
+  preferredDateTimeText: session.preferredDateTimeText || '',
+  timezone: session.timezone || '',
+  adminNotes: session.adminNotes || '',
+});
+
+const buildDemoSummary = (session: DemoSession, parentPhone: string): string =>
+  [
+    `Parent: ${session.parentName}`,
+    `Phone: ${parentPhone || '—'}`,
+    `Child: ${session.childName} (Grade ${session.childGrade}${typeof session.childAge === 'number' ? `, Age ${session.childAge}` : ''})`,
+    `Course: ${session.courseInterested}`,
+    `Request received date: ${session.requestReceivedDate || '—'}`,
+    `Preferred slot: ${session.preferredDateTimeText}`,
+    `Timezone: ${session.timezone || '—'}`,
+    `Status: ${formatLabel(normalizeDemoStatus(session.status) || session.status)}`,
+    `Assigned teacher: ${session.assignedTeacherName || '—'}`,
+  ].join('\n');
+
+const buildWhatsappMessage = (session: DemoSession): string =>
+  [
+    `Hi ${session.parentName},`,
+    `This is Tiny Steps regarding ${session.childName}'s ${session.courseInterested} demo.`,
+    `We noted your preferred slot: ${session.preferredDateTimeText}${session.timezone ? ` (${session.timezone})` : ''}.`,
+    'Please confirm if this works for you, or share a suitable time.',
+    'Thank you.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+const buildFollowUpMessage = (session: DemoSession): string =>
+  [
+    `Hi ${session.parentName},`,
+    `Following up on ${session.childName}'s demo class.`,
+    session.recommendedCourse ? `Recommended course: ${session.recommendedCourse}.` : '',
+    session.recommendedClassType
+      ? `Suggested format: ${session.recommendedClassType === 'one_to_one' ? '1:1' : 'Group'}.`
+      : '',
+    session.recommendedFrequency ? `Suggested frequency: ${session.recommendedFrequency}.` : '',
+    session.followUpDate ? `Next follow-up date: ${session.followUpDate}.` : '',
+    session.followUpCallStatus ? `Call status: ${formatFollowUpCallStatus(session.followUpCallStatus)}.` : '',
+    session.admissionNotConfirmedReason
+      ? `If not confirmed yet, reason noted: ${session.admissionNotConfirmedReason}.`
+      : '',
+    'Please let us know your preferred next step.',
+    'Thank you.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+const mapConversionToLeadStatus = (status: DemoConversionStatus | null): LeadStatus | null => {
+  if (status === 'enrolled') return 'admitted_confirmed';
+  if (status === 'interested' || status === 'follow_up_later') return 'admission_follow_up';
+  if (status === 'not_interested') return 'not_interested';
+  if (status === 'wrong_fit') return 'wrong_fit';
+  if (status === 'no_response') return 'no_response';
+  return null;
+};
+
+const getRowHighlightClass = (row: UnifiedRow): string => {
+  if (isTerminalLifecycleStage(row.lifecycleStage)) {
+    return row.lifecycleStage === 'admitted' ? 'bg-emerald-50/40' : 'bg-slate-50/70';
+  }
+  const { startMs, endMs } = dayRangeBounds();
+  const followUpMs = getRowFollowUpMs(row);
+  if (followUpMs && followUpMs < startMs) return 'bg-rose-50/40';
+  if (followUpMs && followUpMs < endMs) return 'bg-amber-50/40';
+  return '';
+};
+
 export default function LeadsInquiriesWorkspace({
   view = 'leads',
-  onViewChange,
 }: LeadsInquiriesWorkspaceProps) {
   const { toast } = useToast();
   const { user } = useAuthStore();
@@ -293,15 +961,60 @@ export default function LeadsInquiriesWorkspace({
   const [teacherFilter, setTeacherFilter] = useState<string>('all');
   const [summaryCardFilter, setSummaryCardFilter] = useState<SummaryCardFilter>('all');
   const [focusFilter, setFocusFilter] = useState<FocusFilter>(view === 'demos' ? 'all_demos' : 'all');
-  const [creatingDemoRowId, setCreatingDemoRowId] = useState<string | null>(null);
   const [savingConversionRowId, setSavingConversionRowId] = useState<string | null>(null);
   const [rowActionBusyKey, setRowActionBusyKey] = useState<string | null>(null);
-  const [openDemoCreateSignal, setOpenDemoCreateSignal] = useState(0);
-  const [legacyPanel, setLegacyPanel] = useState<LegacyPanel>(view === 'demos' ? 'demo' : 'lead');
-  const [operationsMode, setOperationsMode] = useState<OperationsMode>('optimized');
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [leadDialogOpen, setLeadDialogOpen] = useState(false);
+  const [leadEditTarget, setLeadEditTarget] = useState<LeadRecord | null>(null);
+  const [leadForm, setLeadForm] = useState<LeadFormState>(buildInitialLeadForm());
+  const [leadSaving, setLeadSaving] = useState(false);
+  const [communicationsOpen, setCommunicationsOpen] = useState(false);
+  const [communicationsTarget, setCommunicationsTarget] = useState<LeadRecord | null>(null);
+  const [communications, setCommunications] = useState<LeadCommunication[]>([]);
+  const [communicationsHistoryFilter, setCommunicationsHistoryFilter] =
+    useState<CommunicationHistoryFilter>('all');
+  const [communicationForm, setCommunicationForm] = useState<CommunicationFormState>(
+    buildInitialCommunicationForm(),
+  );
+  const [communicationEditTarget, setCommunicationEditTarget] = useState<LeadCommunication | null>(null);
+  const [savingCommunication, setSavingCommunication] = useState(false);
+  const [whatsAppOpen, setWhatsAppOpen] = useState(false);
+  const [whatsAppTarget, setWhatsAppTarget] = useState<LeadRecord | null>(null);
+  const [whatsAppTemplate, setWhatsAppTemplate] = useState<WhatsAppTemplateKey>('first_response');
+  const [whatsAppMessage, setWhatsAppMessage] = useState('');
+  const [loggingWhatsApp, setLoggingWhatsApp] = useState(false);
+  const [sendingWhatsAppApi, setSendingWhatsAppApi] = useState(false);
+  const [unmatchedItems, setUnmatchedItems] = useState<UnmatchedInboundRecord[]>([]);
+  const [unmatchedStatusFilter, setUnmatchedStatusFilter] = useState<'all' | UnmatchedInboundStatus>(
+    'unmatched',
+  );
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkTarget, setLinkTarget] = useState<UnmatchedInboundRecord | null>(null);
+  const [linkLeadSearch, setLinkLeadSearch] = useState('');
+  const [linkLeadId, setLinkLeadId] = useState('');
+  const [processingUnmatchedId, setProcessingUnmatchedId] = useState<string | null>(null);
+  const [demoRequestDialogOpen, setDemoRequestDialogOpen] = useState(false);
+  const [demoRequestLeadId, setDemoRequestLeadId] = useState<string | null>(null);
+  const [demoRequestForm, setDemoRequestForm] = useState<DemoRequestFormState>(buildInitialDemoRequestForm());
+  const [creatingDemoRequest, setCreatingDemoRequest] = useState(false);
+  const [editTarget, setEditTarget] = useState<UnifiedRow | null>(null);
+  const [editForm, setEditForm] = useState<DemoEditFormState>(EMPTY_DEMO_EDIT_FORM);
+  const [conversionTarget, setConversionTarget] = useState<UnifiedRow | null>(null);
+  const [conversionStatus, setConversionStatus] = useState<string>('none');
+  const [recommendedCourse, setRecommendedCourse] = useState('');
+  const [recommendedClassType, setRecommendedClassType] = useState<string>('none');
+  const [recommendedFrequency, setRecommendedFrequency] = useState('');
+  const [feeDiscussed, setFeeDiscussed] = useState('');
+  const [followUpDate, setFollowUpDate] = useState('');
+  const [followUpCallStatus, setFollowUpCallStatus] = useState<string>('none');
+  const [followUpCallCompletedAt, setFollowUpCallCompletedAt] = useState('');
+  const [admissionNotConfirmedReason, setAdmissionNotConfirmedReason] = useState('');
+  const [reassignTarget, setReassignTarget] = useState<UnifiedRow | null>(null);
+  const [reassignTeacherId, setReassignTeacherId] = useState('');
+  const [timelineViewTarget, setTimelineViewTarget] = useState<DemoSession | null>(null);
+  const [dialogSavingAction, setDialogSavingAction] = useState<string | null>(null);
 
   useEffect(() => {
-    setLegacyPanel(view === 'demos' ? 'demo' : 'lead');
     setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
   }, [view]);
 
@@ -329,6 +1042,67 @@ export default function LeadsInquiriesWorkspace({
   }, [toast]);
 
   useEffect(() => {
+    const unmatchedQuery = query(
+      collection(db, WHATSAPP_UNMATCHED_COLLECTION),
+      orderBy('receivedAt', 'desc'),
+    );
+    const unsubscribe = onSnapshot(
+      unmatchedQuery,
+      (snap) => {
+        const next = snap.docs.map((docSnap) => {
+          const data = docSnap.data() as Omit<UnmatchedInboundRecord, 'id' | 'status'> & {
+            status?: UnmatchedInboundStatus;
+          };
+          return {
+            id: docSnap.id,
+            ...data,
+            status: data.status || 'unmatched',
+          };
+        });
+        setUnmatchedItems(next);
+      },
+      (error) => {
+        toast({
+          title: 'Failed to load unmatched WhatsApp inbox',
+          description: error?.message || 'Please refresh.',
+          variant: 'destructive',
+        });
+      },
+    );
+    return () => unsubscribe();
+  }, [toast]);
+
+  useEffect(() => {
+    if (!communicationsOpen || !communicationsTarget?.id) {
+      setCommunications([]);
+      return;
+    }
+
+    const communicationsQuery = query(
+      collection(db, LEADS_COLLECTION, communicationsTarget.id, LEAD_COMMUNICATIONS_COLLECTION),
+      orderBy('createdAt', 'desc'),
+    );
+    const unsubscribe = onSnapshot(
+      communicationsQuery,
+      (snap) => {
+        const next = snap.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Omit<LeadCommunication, 'id'>),
+        }));
+        setCommunications(next);
+      },
+      (error) => {
+        toast({
+          title: 'Failed to load communications',
+          description: error?.message || 'Please refresh.',
+          variant: 'destructive',
+        });
+      },
+    );
+    return () => unsubscribe();
+  }, [communicationsOpen, communicationsTarget?.id, toast]);
+
+  useEffect(() => {
     const unsubDemos = listenAllDemoSessions(
       (rows) => setDemos(rows),
       (error) => {
@@ -350,6 +1124,45 @@ export default function LeadsInquiriesWorkspace({
       unsubDemos();
       unsubPhones();
     };
+  }, [toast]);
+
+  useEffect(() => {
+    const teachersQuery = query(collection(db, 'users'), where('role', '==', 'teacher'));
+    const unsubscribe = onSnapshot(
+      teachersQuery,
+      (teachersSnap) => {
+        const options = teachersSnap.docs
+          .map((docSnap) => {
+            const data = docSnap.data() as {
+              name?: string;
+              displayName?: string;
+              email?: string;
+              status?: string;
+              isDeleted?: boolean;
+              archivedAt?: unknown;
+              deletedAt?: unknown;
+            };
+            const status = normalizeText(data.status).toLowerCase();
+            const isArchived = status === 'archived' || Boolean(data.archivedAt);
+            const isDeleted = Boolean(data.isDeleted) || Boolean(data.deletedAt);
+            if (isArchived || isDeleted) return null;
+            const name = data.name || data.displayName || data.email || 'Teacher';
+            return { id: docSnap.id, name };
+          })
+          .filter((option): option is TeacherOption => Boolean(option))
+          .sort((a, b) => a.name.localeCompare(b.name));
+        setTeachers(options);
+      },
+      (error: any) => {
+        toast({
+          title: 'Failed to load teachers',
+          description: error?.message || 'Please refresh.',
+          variant: 'destructive',
+        });
+      },
+    );
+
+    return unsubscribe;
   }, [toast]);
 
   const mergedRows = useMemo<UnifiedRow[]>(() => {
@@ -374,18 +1187,19 @@ export default function LeadsInquiriesWorkspace({
       const linkedDemo =
         demoByLeadId.get(lead.id) ||
         (lead.demoSessionId ? demos.find((demo) => demo.id === lead.demoSessionId) || null : null);
-      const parentName = normalizeText(lead.parentName) || normalizeText(linkedDemo?.parentName) || '—';
-      const childName = normalizeText(lead.childName) || normalizeText(linkedDemo?.childName) || '—';
+      const parentName = normalizeText(linkedDemo?.parentName) || normalizeText(lead.parentName) || '—';
+      const childName = normalizeText(linkedDemo?.childName) || normalizeText(lead.childName) || '—';
       const parentPhone =
+        normalizeText(linkedDemo?.id ? demoPhoneMap[linkedDemo.id] : '') ||
         normalizeText(lead.primaryPhone) ||
         normalizeText(lead.phoneNormalized) ||
-        normalizeText(linkedDemo?.id ? demoPhoneMap[linkedDemo.id] : '') ||
         '—';
-      const source = normalizeText(lead.source) || normalizeText(linkedDemo?.source) || 'manual';
+      const source = normalizeText(linkedDemo?.source) || normalizeText(lead.source) || 'manual';
       const courseLabel =
-        normalizeText(lead.interestTrack)
+        normalizeText(linkedDemo?.courseInterested) ||
+        (normalizeText(lead.interestTrack)
           ? interestTrackToCourse(normalizeText(lead.interestTrack))
-          : normalizeText(linkedDemo?.courseInterested) || '—';
+          : '—');
       const teacherName =
         normalizeText(linkedDemo?.assignedTeacherName) ||
         (normalizeText(linkedDemo?.assignedTeacherId) ? 'Assigned' : '—');
@@ -460,6 +1274,39 @@ export default function LeadsInquiriesWorkspace({
       ).sort((a, b) => a.localeCompare(b)),
     [mergedRows],
   );
+
+  const filteredUnmatchedItems = useMemo(() => {
+    if (unmatchedStatusFilter === 'all') return unmatchedItems;
+    return unmatchedItems.filter((item) => item.status === unmatchedStatusFilter);
+  }, [unmatchedItems, unmatchedStatusFilter]);
+
+  const unmatchedOpenCount = useMemo(
+    () => unmatchedItems.filter((item) => item.status === 'unmatched').length,
+    [unmatchedItems],
+  );
+
+  const filteredCommunicationsHistory = useMemo(() => {
+    if (communicationsHistoryFilter === 'all') return communications;
+    if (communicationsHistoryFilter === 'whatsapp') {
+      return communications.filter((item) => item.channel === 'whatsapp');
+    }
+    return communications.filter((item) => item.deliveryStatus === 'failed');
+  }, [communications, communicationsHistoryFilter]);
+
+  const linkLeadOptions = useMemo(() => {
+    const queryText = linkLeadSearch.trim().toLowerCase();
+    if (!queryText) return leads.slice(0, 50);
+
+    return leads
+      .filter((lead) => {
+        const haystack = [lead.parentName, lead.primaryPhone, lead.phoneNormalized, lead.childName]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(queryText);
+      })
+      .slice(0, 50);
+  }, [leads, linkLeadSearch]);
 
   const filteredRows = useMemo(() => {
     const search = normalizeText(searchQuery).toLowerCase();
@@ -597,47 +1444,639 @@ export default function LeadsInquiriesWorkspace({
     { key: 'no_response', label: 'No Response' },
   ];
 
-  const setPanel = (next: LegacyPanel) => {
-    setLegacyPanel(next);
-    onViewChange?.(next === 'demo' ? 'demos' : 'leads');
-  };
-
   const toggleSummaryCard = (next: SummaryCardFilter) => {
     setSummaryCardFilter((current) => (current === next || next === 'all' ? 'all' : next));
   };
 
-  const openToolset = (next: LegacyPanel) => {
-    setOperationsMode('legacy_full');
-    setPanel(next);
-    const element = document.getElementById('full-operations-toolset');
-    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
   const handleCreateDemoRequest = () => {
-    if (operationsMode === 'legacy_full') setPanel('demo');
-    setOpenDemoCreateSignal((current) => current + 1);
-    const element = document.getElementById('full-operations-toolset');
-    if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setDemoRequestLeadId(null);
+    setDemoRequestForm(buildInitialDemoRequestForm());
+    setDemoRequestDialogOpen(true);
   };
 
-  const isBusyFor = (row: UnifiedRow, action: string) => rowActionBusyKey === `${action}:${row.id}`;
+  const openLeadDialog = (lead?: LeadRecord | null) => {
+    if (lead) {
+      setLeadEditTarget(lead);
+      setLeadForm({
+        parentName: lead.parentName || '',
+        primaryPhone: lead.primaryPhone || '',
+        parentEmail: lead.parentEmail || '',
+        childName: lead.childName || '',
+        childAge: typeof lead.childAge === 'number' ? String(lead.childAge) : '',
+        childGrade: lead.childGrade || '',
+        interestTrack: lead.interestTrack || 'phonics',
+        source: lead.source || 'manual',
+        sourceDetail: lead.sourceDetail || '',
+        country: lead.country || '',
+        timezone: lead.timezone || '',
+        preferredTimingText: lead.preferredTimingText || '',
+        initialMessageSnippet: lead.initialMessageSnippet || '',
+        status: lead.status || 'new',
+        priority: lead.priority || 'normal',
+        nextFollowUpDate: toDateInput(lead.nextFollowUpAt),
+        notes: lead.notes || '',
+        tagsText: Array.isArray(lead.tags) ? lead.tags.join(', ') : '',
+      });
+    } else {
+      setLeadEditTarget(null);
+      setLeadForm(buildInitialLeadForm());
+    }
+    setLeadDialogOpen(true);
+  };
 
-  const handleQuickCreateDemo = async (row: UnifiedRow) => {
-    if (!user?.uid || !row.lead || row.demo) return;
-    const lead = row.lead;
-    const confirmed = window.confirm(
-      `Create demo for ${normalizeText(lead.parentName) || 'this lead'} / ${normalizeText(lead.childName) || 'child'}?`,
-    );
-    if (!confirmed) return;
+  const setLeadField = <K extends keyof LeadFormState>(field: K, value: LeadFormState[K]) => {
+    setLeadForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-    setCreatingDemoRowId(row.id);
+  const buildLeadPayload = () => {
+    const parsedChildAge = leadForm.childAge.trim() ? Number(leadForm.childAge.trim()) : null;
+    if (leadForm.childAge.trim() && Number.isNaN(parsedChildAge)) {
+      throw new Error('Child age must be a valid number');
+    }
+
+    const tags = leadForm.tagsText
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    return {
+      parentName: leadForm.parentName.trim(),
+      primaryPhone: leadForm.primaryPhone.trim(),
+      phoneNormalized: normalizePhone(leadForm.primaryPhone),
+      parentEmail: leadForm.parentEmail.trim() || null,
+      childName: leadForm.childName.trim() || null,
+      childAge: parsedChildAge,
+      childGrade: leadForm.childGrade.trim() || null,
+      interestTrack: leadForm.interestTrack,
+      source: leadForm.source,
+      sourceDetail: leadForm.sourceDetail.trim() || null,
+      country: leadForm.country.trim() || null,
+      timezone: leadForm.timezone.trim() || null,
+      preferredTimingText: leadForm.preferredTimingText.trim() || null,
+      initialMessageSnippet: leadForm.initialMessageSnippet.trim() || null,
+      status: leadForm.status,
+      ownerUserId: user?.uid || null,
+      ownerRole: user?.role || 'admin',
+      priority: leadForm.priority.trim() || 'normal',
+      nextFollowUpAt: dateInputToTimestamp(leadForm.nextFollowUpDate),
+      notes: leadForm.notes.trim() || null,
+      tags: tags.length ? tags : [],
+      demoSessionId: leadEditTarget?.demoSessionId || null,
+      enrollmentId: leadEditTarget?.enrollmentId || null,
+      updatedAt: serverTimestamp(),
+      updatedBy: user?.uid || null,
+    };
+  };
+
+  const handleSaveLead = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user?.uid) {
+      toast({ title: 'Admin session required', variant: 'destructive' });
+      return;
+    }
+    if (!leadForm.parentName.trim() || !leadForm.primaryPhone.trim()) {
+      toast({
+        title: 'Missing required fields',
+        description: 'Parent name and primary phone are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLeadSaving(true);
     try {
-      const parentPhone =
-        normalizeText(lead.primaryPhone) || normalizeText(lead.phoneNormalized);
-      if (!parentPhone) {
-        throw new Error('Lead does not have a parent phone number.');
+      const payload = buildLeadPayload();
+      if (leadEditTarget) {
+        await updateDoc(doc(db, LEADS_COLLECTION, leadEditTarget.id), payload);
+        toast({ title: 'Lead updated' });
+      } else {
+        await addDoc(collection(db, LEADS_COLLECTION), {
+          ...payload,
+          createdAt: serverTimestamp(),
+          createdBy: user.uid,
+        });
+        toast({ title: 'Lead created' });
       }
-      let forceCreate = false;
+      setLeadDialogOpen(false);
+      setLeadEditTarget(null);
+      setLeadForm(buildInitialLeadForm());
+    } catch (error: any) {
+      toast({
+        title: 'Unable to save lead',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLeadSaving(false);
+    }
+  };
+
+  const openCommunicationsDialog = (lead: LeadRecord, preset?: CommunicationPresetKey) => {
+    setCommunicationsTarget(lead);
+    setCommunicationsOpen(true);
+    setCommunicationsHistoryFilter('all');
+    setCommunicationEditTarget(null);
+    setCommunicationForm(preset ? buildCommunicationFormFromPreset(preset) : buildInitialCommunicationForm());
+  };
+
+  const applyCommunicationPreset = (preset: CommunicationPresetKey) => {
+    setCommunicationEditTarget(null);
+    setCommunicationForm(buildCommunicationFormFromPreset(preset));
+  };
+
+  const setCommunicationField = <K extends keyof CommunicationFormState>(
+    field: K,
+    value: CommunicationFormState[K],
+  ) => {
+    setCommunicationForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const openEditCommunication = (item: LeadCommunication) => {
+    setCommunicationEditTarget(item);
+    setCommunicationForm({
+      type: item.type,
+      direction: item.direction,
+      channel: item.channel,
+      summary: item.summary || '',
+      followUpNeeded: item.followUpNeeded ? 'yes' : 'no',
+      followUpDate: toDateInput(item.followUpDate),
+      templateTag: item.templateTag || '',
+      status: item.status,
+    });
+  };
+
+  const handleSaveCommunication = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user?.uid || !communicationsTarget?.id) {
+      toast({ title: 'Admin session required', variant: 'destructive' });
+      return;
+    }
+    if (!communicationForm.summary.trim()) {
+      toast({
+        title: 'Summary is required',
+        description: 'Add a short communication summary before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const followUpNeeded = communicationForm.followUpNeeded === 'yes';
+    const followUpDate =
+      followUpNeeded && communicationForm.followUpDate
+        ? dateInputToTimestamp(communicationForm.followUpDate)
+        : null;
+
+    setSavingCommunication(true);
+    try {
+      const basePayload = {
+        type: communicationForm.type,
+        direction: communicationForm.direction,
+        channel: communicationForm.channel,
+        summary: communicationForm.summary.trim(),
+        followUpNeeded,
+        followUpDate,
+        templateTag: communicationForm.templateTag.trim() || null,
+        status: communicationForm.status,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      };
+
+      if (communicationEditTarget) {
+        await updateDoc(
+          doc(
+            db,
+            LEADS_COLLECTION,
+            communicationsTarget.id,
+            LEAD_COMMUNICATIONS_COLLECTION,
+            communicationEditTarget.id,
+          ),
+          basePayload,
+        );
+      } else {
+        await addDoc(collection(db, LEADS_COLLECTION, communicationsTarget.id, LEAD_COMMUNICATIONS_COLLECTION), {
+          ...basePayload,
+          createdAt: serverTimestamp(),
+          createdBy: user.uid,
+        });
+      }
+
+      const leadUpdatePayload: Record<string, unknown> = {
+        lastContactAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      };
+      if (communicationForm.direction === 'inbound') {
+        leadUpdatePayload.lastInboundAt = serverTimestamp();
+      }
+      if (communicationForm.direction === 'outbound') {
+        leadUpdatePayload.lastOutboundAt = serverTimestamp();
+      }
+      if (followUpDate) {
+        leadUpdatePayload.nextFollowUpAt = followUpDate;
+      }
+
+      await updateDoc(doc(db, LEADS_COLLECTION, communicationsTarget.id), leadUpdatePayload);
+      setCommunicationEditTarget(null);
+      setCommunicationForm(buildInitialCommunicationForm());
+      toast({ title: communicationEditTarget ? 'Communication updated' : 'Communication logged' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to save communication',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingCommunication(false);
+    }
+  };
+
+  const openWhatsAppHelper = (lead: LeadRecord, template: WhatsAppTemplateKey = 'first_response') => {
+    setWhatsAppTarget(lead);
+    setWhatsAppTemplate(template);
+    setWhatsAppMessage(buildWhatsAppTemplateMessage(lead, template));
+    setSendingWhatsAppApi(false);
+    setWhatsAppOpen(true);
+  };
+
+  const handleWhatsAppTemplateChange = (template: WhatsAppTemplateKey) => {
+    setWhatsAppTemplate(template);
+    if (!whatsAppTarget) return;
+    setWhatsAppMessage(buildWhatsAppTemplateMessage(whatsAppTarget, template));
+  };
+
+  const handleOpenWhatsAppOnly = () => {
+    if (!whatsAppTarget) return;
+
+    const phone = getWhatsAppPhone(whatsAppTarget);
+    const message = whatsAppMessage.trim();
+    if (!phone) {
+      toast({
+        title: 'Phone number unavailable',
+        description: 'Add a valid phone number for this lead first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!message) {
+      toast({
+        title: 'Message is empty',
+        description: 'Generate or type a message first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    window.open(buildWhatsAppUrl(phone, message), '_blank', 'noopener,noreferrer');
+  };
+
+  const handleOpenWhatsAppAndLog = async () => {
+    if (!user?.uid || !whatsAppTarget) {
+      toast({ title: 'Admin session required', variant: 'destructive' });
+      return;
+    }
+    const phone = getWhatsAppPhone(whatsAppTarget);
+    const message = whatsAppMessage.trim();
+    if (!phone || !message) {
+      toast({
+        title: 'Message or phone missing',
+        description: 'Make sure both phone and message are available.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoggingWhatsApp(true);
+    try {
+      await addDoc(collection(db, LEADS_COLLECTION, whatsAppTarget.id, LEAD_COMMUNICATIONS_COLLECTION), {
+        type: 'message',
+        direction: 'outbound',
+        channel: 'whatsapp',
+        summary: message,
+        followUpNeeded: false,
+        followUpDate: null,
+        templateTag: whatsAppTemplate,
+        status: 'logged',
+        createdAt: serverTimestamp(),
+        createdBy: user.uid,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      });
+
+      await updateDoc(doc(db, LEADS_COLLECTION, whatsAppTarget.id), {
+        lastContactAt: serverTimestamp(),
+        lastOutboundAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      });
+
+      window.open(buildWhatsAppUrl(phone, message), '_blank', 'noopener,noreferrer');
+      toast({ title: 'WhatsApp log saved' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to log WhatsApp message',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoggingWhatsApp(false);
+    }
+  };
+
+  const handleSendViaWhatsAppApi = async () => {
+    if (!whatsAppTarget?.id) {
+      toast({
+        title: 'Lead is required',
+        description: 'Open the helper from a valid lead row and try again.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!WHATSAPP_API_TEMPLATE_KEYS.has(whatsAppTemplate)) {
+      toast({
+        title: 'Unsupported template for API send',
+        description: 'Please choose one of the approved WhatsApp templates.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSendingWhatsAppApi(true);
+    try {
+      const sendTemplate = httpsCallable<
+        { leadId: string; templateKey: WhatsAppTemplateKey },
+        { ok?: boolean; deliveryStatus?: string }
+      >(functions, 'sendWhatsAppTemplateMessage');
+
+      await sendTemplate({ leadId: whatsAppTarget.id, templateKey: whatsAppTemplate });
+      toast({ title: 'WhatsApp template sent via API' });
+    } catch (error: any) {
+      const message = String(error?.message || '').toLowerCase();
+      const isConfigError =
+        message.includes('not configured') ||
+        message.includes('failed-precondition') ||
+        message.includes('secret');
+
+      toast({
+        title: isConfigError ? 'WhatsApp API not configured' : 'Failed to send WhatsApp template',
+        description: isConfigError
+          ? 'WhatsApp API is not configured yet. You can still use the manual WhatsApp options.'
+          : error?.message || 'Please try again. Manual WhatsApp options are still available.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingWhatsAppApi(false);
+    }
+  };
+
+  const buildInboundCommunicationPayload = (item: UnmatchedInboundRecord) => ({
+    type: 'message',
+    direction: 'inbound',
+    channel: 'whatsapp',
+    summary: normalizeText(item.messageSummary) || 'Inbound WhatsApp message',
+    followUpNeeded: false,
+    followUpDate: null,
+    templateTag: null,
+    status: 'logged',
+    provider: item.provider || 'meta_whatsapp_cloud',
+    externalMessageId: item.externalMessageId || null,
+    deliveryStatus: 'sent',
+    errorCode: null,
+    errorMessage: null,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    createdBy: user?.uid || null,
+    updatedBy: user?.uid || null,
+  });
+
+  const openLinkLeadDialog = (item: UnmatchedInboundRecord) => {
+    setLinkTarget(item);
+    setLinkLeadSearch('');
+    setLinkLeadId('');
+    setLinkDialogOpen(true);
+  };
+
+  const markUnmatchedRecord = async (item: UnmatchedInboundRecord, status: UnmatchedInboundStatus) => {
+    if (!user?.uid) {
+      toast({ title: 'Admin session required', variant: 'destructive' });
+      return;
+    }
+
+    setProcessingUnmatchedId(item.id);
+    try {
+      await updateDoc(doc(db, WHATSAPP_UNMATCHED_COLLECTION, item.id), {
+        status,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+        resolvedAt: status === 'resolved' ? serverTimestamp() : null,
+        resolvedBy: status === 'resolved' ? user.uid : null,
+      });
+      toast({ title: status === 'ignored' ? 'Marked ignored' : 'Status updated' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to update inbox record',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingUnmatchedId(null);
+    }
+  };
+
+  const handleResolveByLinkingLead = async () => {
+    if (!user?.uid || !linkTarget?.id || !linkLeadId) {
+      toast({
+        title: 'Lead selection required',
+        description: 'Choose a lead before resolving this message.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setProcessingUnmatchedId(linkTarget.id);
+    try {
+      await addDoc(collection(db, LEADS_COLLECTION, linkLeadId, LEAD_COMMUNICATIONS_COLLECTION), {
+        ...buildInboundCommunicationPayload(linkTarget),
+      });
+      await updateDoc(doc(db, LEADS_COLLECTION, linkLeadId), {
+        lastInboundAt: serverTimestamp(),
+        lastContactAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      });
+      await updateDoc(doc(db, WHATSAPP_UNMATCHED_COLLECTION, linkTarget.id), {
+        status: 'resolved',
+        resolvedLeadId: linkLeadId,
+        resolvedAt: serverTimestamp(),
+        resolvedBy: user.uid,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      });
+      setLinkDialogOpen(false);
+      setLinkTarget(null);
+      setLinkLeadId('');
+      toast({ title: 'Unmatched message linked to lead' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to link message to lead',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingUnmatchedId(null);
+    }
+  };
+
+  const handleCreateLeadFromUnmatched = async (item: UnmatchedInboundRecord) => {
+    if (!user?.uid) {
+      toast({ title: 'Admin session required', variant: 'destructive' });
+      return;
+    }
+
+    const normalizedPhone = normalizePhone(item.phoneNormalized || item.rawFrom || '');
+    if (!normalizedPhone) {
+      toast({
+        title: 'Phone unavailable',
+        description: 'This unmatched message has no usable phone number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setProcessingUnmatchedId(item.id);
+    try {
+      const leadRef = await addDoc(collection(db, LEADS_COLLECTION), {
+        parentName: '',
+        primaryPhone: normalizeText(item.rawFrom) || normalizedPhone,
+        phoneNormalized: normalizedPhone,
+        parentEmail: null,
+        childName: '',
+        childAge: null,
+        childGrade: null,
+        interestTrack: 'phonics',
+        source: 'whatsapp',
+        sourceDetail: null,
+        country: null,
+        timezone: null,
+        preferredTimingText: null,
+        initialMessageSnippet: normalizeText(item.messageSummary) || null,
+        status: 'new',
+        ownerUserId: user.uid,
+        ownerRole: 'admin',
+        priority: 'normal',
+        nextFollowUpAt: null,
+        lastContactAt: serverTimestamp(),
+        lastInboundAt: serverTimestamp(),
+        lastOutboundAt: null,
+        tags: null,
+        notes: null,
+        demoSessionId: null,
+        enrollmentId: null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdBy: user.uid,
+        updatedBy: user.uid,
+      });
+
+      await addDoc(collection(db, LEADS_COLLECTION, leadRef.id, LEAD_COMMUNICATIONS_COLLECTION), {
+        ...buildInboundCommunicationPayload(item),
+      });
+      await updateDoc(doc(db, WHATSAPP_UNMATCHED_COLLECTION, item.id), {
+        status: 'resolved',
+        resolvedLeadId: leadRef.id,
+        resolvedAt: serverTimestamp(),
+        resolvedBy: user.uid,
+        updatedAt: serverTimestamp(),
+        updatedBy: user.uid,
+      });
+      toast({ title: 'New lead created from unmatched message' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to create lead',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setProcessingUnmatchedId(null);
+    }
+  };
+
+  const openResolvedLead = (leadId: string) => {
+    const lead = leads.find((item) => item.id === leadId);
+    if (!lead) {
+      toast({
+        title: 'Lead not found in current list',
+        description: `Lead ID: ${leadId}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+    openLeadDialog(lead);
+  };
+
+  const setDemoRequestField = <K extends keyof DemoRequestFormState>(
+    field: K,
+    value: DemoRequestFormState[K],
+  ) => {
+    setDemoRequestForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const openCreateDemoFromLead = (lead: LeadRecord) => {
+    if (!canCreateDemoFromLead(lead)) {
+      toast({
+        title: 'Demo creation blocked',
+        description: lead.demoSessionId
+          ? 'This lead is already linked to a demo.'
+          : 'This lead status is not eligible for demo creation.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setDemoRequestLeadId(lead.id);
+    setDemoRequestForm(buildDemoRequestFormFromLead(lead));
+    setDemoRequestDialogOpen(true);
+  };
+
+  const handleCreateDemoRequestSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user?.uid) {
+      toast({ title: 'Admin session required', variant: 'destructive' });
+      return;
+    }
+
+    const parsedChildAge = demoRequestForm.childAge.trim()
+      ? Number(demoRequestForm.childAge.trim())
+      : null;
+    const parentPhone = buildPhoneFromParts(
+      demoRequestForm.parentPhoneCountryCode,
+      demoRequestForm.parentPhoneLocal,
+    );
+
+    if (demoRequestForm.childAge.trim() && Number.isNaN(parsedChildAge)) {
+      toast({
+        title: 'Invalid child age',
+        description: 'Child age must be a valid number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (
+      !demoRequestForm.parentName.trim() ||
+      !parentPhone ||
+      !demoRequestForm.childName.trim() ||
+      !demoRequestForm.childGrade.trim() ||
+      !demoRequestForm.courseInterested.trim() ||
+      !demoRequestForm.preferredDateTimeText.trim()
+    ) {
+      toast({
+        title: 'Missing required fields',
+        description: 'Please fill all required demo request fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    let forceCreate = false;
+    try {
       const conflictResult = await checkDemoPhoneConflicts(parentPhone);
       if (conflictResult.hasConflicts) {
         const warningLines = [
@@ -652,57 +2091,222 @@ export default function LeadsInquiriesWorkspace({
           'Press OK to proceed, or Cancel to review existing records.',
         ];
         const proceed = window.confirm(warningLines.join('\n'));
-        if (!proceed) {
-          return;
-        }
+        if (!proceed) return;
         forceCreate = true;
       }
+    } catch (error: any) {
+      toast({
+        title: 'Unable to verify existing phone records',
+        description: error?.message || 'Please try again before creating this demo request.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
+    setCreatingDemoRequest(true);
+    try {
       const demoId = await createDemoSession(
         {
-          parentName: normalizeText(lead.parentName) || 'Parent',
+          parentName: demoRequestForm.parentName.trim(),
           parentPhone,
           forceCreate,
-          childName: normalizeText(lead.childName) || 'Child',
-          childGrade: normalizeText(lead.childGrade) || 'Not provided',
-          childAge: typeof lead.childAge === 'number' ? lead.childAge : null,
-          courseInterested: interestTrackToCourse(normalizeText(lead.interestTrack) || 'phonics'),
-          source: leadSourceToDemoSource(normalizeText(lead.source) || 'manual'),
-          preferredDateTimeText: normalizeText(lead.preferredTimingText) || 'To be confirmed with parent',
-          requestReceivedDate: TODAY_DATE_INPUT,
-          timezone: normalizeText(lead.timezone) || 'Asia/Kolkata',
-          adminNotes: `Created from unified workflow (lead ${lead.id}).`,
-          leadId: lead.id,
+          childName: demoRequestForm.childName.trim(),
+          childGrade: demoRequestForm.childGrade.trim(),
+          childAge: parsedChildAge,
+          courseInterested: demoRequestForm.courseInterested.trim(),
+          source: demoRequestForm.source.trim() || null,
+          demoMode: demoRequestForm.demoMode.trim() || null,
+          preferredDateTimeText: demoRequestForm.preferredDateTimeText.trim(),
+          requestReceivedDate: demoRequestForm.requestReceivedDate.trim() || null,
+          timezone: demoRequestForm.timezone.trim() || null,
+          adminNotes: demoRequestForm.adminNotes.trim() || null,
+          leadId: demoRequestLeadId,
         },
         user.uid,
       );
 
-      const leadStatus = normalizeText(lead.status).toLowerCase() as LeadStatus;
-      const nextLeadStatus: LeadStatus = TERMINAL_DEMO_BLOCK_LEAD_STATUSES.has(leadStatus)
-        ? leadStatus
-        : 'demo_booked';
+      if (demoRequestLeadId) {
+        const linkedLead = leads.find((lead) => lead.id === demoRequestLeadId);
+        const linkedLeadStatus = normalizeText(linkedLead?.status).toLowerCase() as LeadStatus;
+        const nextLeadStatus: LeadStatus = TERMINAL_DEMO_BLOCK_LEAD_STATUSES.has(linkedLeadStatus)
+          ? linkedLeadStatus
+          : 'demo_booked';
+        await updateDoc(doc(db, LEADS_COLLECTION, demoRequestLeadId), {
+          demoSessionId: demoId,
+          status: nextLeadStatus,
+          updatedAt: serverTimestamp(),
+          updatedBy: user.uid,
+        });
+      }
 
-      await updateDoc(doc(db, LEADS_COLLECTION, lead.id), {
-        demoSessionId: demoId,
-        status: nextLeadStatus,
-        updatedAt: Timestamp.now(),
-        updatedBy: user.uid,
-      });
-
-      toast({
-        title: 'Demo created',
-        description: `Lead linked to demo ${demoId}.`,
-      });
-      setPanel('demo');
+      setDemoRequestDialogOpen(false);
+      setDemoRequestLeadId(null);
+      setDemoRequestForm(buildInitialDemoRequestForm());
+      toast({ title: 'Demo request created' });
     } catch (error: any) {
       toast({
-        title: 'Unable to create demo',
+        title: 'Failed to create demo request',
         description: error?.message || 'Please try again.',
         variant: 'destructive',
       });
     } finally {
-      setCreatingDemoRowId(null);
+      setCreatingDemoRequest(false);
     }
+  };
+
+  const resetFilters = () => {
+    setSearchQuery('');
+    setStageFilter('all');
+    setSourceFilter('all');
+    setCourseFilter('all');
+    setTeacherFilter('all');
+    setSummaryCardFilter('all');
+    setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
+  };
+
+  const openEditDialog = (row: UnifiedRow) => {
+    if (!row.demo) return;
+    setEditTarget(row);
+    setEditForm(buildDemoEditForm(row.demo, row.parentPhone));
+  };
+
+  const openConversionDialog = (row: UnifiedRow) => {
+    if (!row.demo) return;
+    setConversionTarget(row);
+    setConversionStatus(row.demo.conversionStatus || 'none');
+    setRecommendedCourse(row.demo.recommendedCourse || '');
+    setRecommendedClassType(row.demo.recommendedClassType || 'none');
+    setRecommendedFrequency(row.demo.recommendedFrequency || '');
+    setFeeDiscussed(row.demo.feeDiscussed || '');
+    setFollowUpDate(row.demo.followUpDate || '');
+    setFollowUpCallStatus(row.demo.followUpCallStatus || 'none');
+    setFollowUpCallCompletedAt(row.demo.followUpCallCompletedAt || '');
+    setAdmissionNotConfirmedReason(row.demo.admissionNotConfirmedReason || '');
+  };
+
+  const openReassignDialog = (row: UnifiedRow) => {
+    if (!row.demo) return;
+    setReassignTarget(row);
+    setReassignTeacherId(row.demo.assignedTeacherId || '');
+  };
+
+  const handleCopyPhone = async (row: UnifiedRow) => {
+    const parentPhone = normalizeText(row.parentPhone);
+    if (!parentPhone || parentPhone === '—') {
+      toast({
+        title: 'Phone not available',
+        description: 'No parent phone is stored for this record.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await copyText(parentPhone);
+      toast({ title: 'Phone copied' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to copy phone',
+        description: error?.message || 'Please copy manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCopySummary = async (row: UnifiedRow) => {
+    if (!row.demo) return;
+    try {
+      await copyText(buildDemoSummary(row.demo, row.parentPhone));
+      toast({ title: 'Demo summary copied' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to copy summary',
+        description: error?.message || 'Please copy manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCopyFollowUpMessage = async (row: UnifiedRow) => {
+    if (!row.demo) return;
+    try {
+      await copyText(buildFollowUpMessage(row.demo));
+      toast({ title: 'Follow-up message copied' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to copy follow-up message',
+        description: error?.message || 'Please copy manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleOpenWhatsApp = (row: UnifiedRow) => {
+    const cleanedPhone = sanitizePhoneForWhatsApp(row.parentPhone);
+    if (!cleanedPhone) {
+      toast({
+        title: 'Invalid phone number',
+        description: 'Unable to open WhatsApp for this phone number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const url = row.demo
+      ? `https://wa.me/${cleanedPhone}?text=${encodeURIComponent(buildWhatsappMessage(row.demo))}`
+      : `https://wa.me/${cleanedPhone}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleCopyWhatsAppMessage = async () => {
+    const message = whatsAppMessage.trim();
+    if (!message) {
+      toast({
+        title: 'Message is empty',
+        description: 'Generate or type a message first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    try {
+      await copyText(message);
+      toast({ title: 'Message copied' });
+    } catch (error: any) {
+      toast({
+        title: 'Copy failed',
+        description: error?.message || 'Please copy manually.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteDemo = async (row: UnifiedRow) => {
+    if (!row.demo) return;
+    const shouldDelete = window.confirm(
+      `Delete demo for ${row.childName} (${row.parentName})? This permanently removes demo data and linked teacher demo earnings.`,
+    );
+    if (!shouldDelete) return;
+
+    setRowActionBusyKey(`delete:${row.id}`);
+    try {
+      await deleteDemoSession({ demoId: row.demo.id });
+      toast({ title: 'Demo deleted' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to delete demo',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRowActionBusyKey(null);
+    }
+  };
+
+  const isBusyFor = (row: UnifiedRow, action: string) => rowActionBusyKey === `${action}:${row.id}`;
+
+  const handleQuickCreateDemo = (row: UnifiedRow) => {
+    if (!row.lead || row.demo) return;
+    openCreateDemoFromLead(row.lead);
   };
 
   const handleMarkEnrolled = async (row: UnifiedRow) => {
@@ -852,6 +2456,153 @@ export default function LeadsInquiriesWorkspace({
     }
   };
 
+  const handleSaveEdit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!editTarget?.demo) return;
+
+    const normalizedAge = editForm.childAge.trim();
+    const parsedAge = normalizedAge ? Number(normalizedAge) : null;
+    if (normalizedAge && Number.isNaN(parsedAge)) {
+      toast({
+        title: 'Invalid child age',
+        description: 'Child age must be a number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (
+      !editForm.parentName.trim() ||
+      !editForm.parentPhone.trim() ||
+      !editForm.childName.trim() ||
+      !editForm.childGrade.trim() ||
+      !editForm.courseInterested.trim() ||
+      !editForm.requestReceivedDate.trim() ||
+      !editForm.preferredDateTimeText.trim()
+    ) {
+      toast({
+        title: 'Missing required fields',
+        description: 'Please fill all required fields before saving.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setDialogSavingAction(`edit:${editTarget.demo.id}`);
+    try {
+      await updateDemoSessionAdminDetails({
+        demoId: editTarget.demo.id,
+        parentName: editForm.parentName.trim(),
+        parentPhone: editForm.parentPhone.trim(),
+        childName: editForm.childName.trim(),
+        childGrade: editForm.childGrade.trim(),
+        childAge: parsedAge,
+        courseInterested: editForm.courseInterested.trim(),
+        source: editForm.source.trim() || null,
+        demoMode: editForm.demoMode.trim() || null,
+        requestReceivedDate: editForm.requestReceivedDate.trim() || null,
+        preferredDateTimeText: editForm.preferredDateTimeText.trim(),
+        timezone: editForm.timezone.trim() || null,
+        adminNotes: editForm.adminNotes.trim() || null,
+      });
+      setEditTarget(null);
+      toast({ title: 'Demo details updated' });
+    } catch (error: any) {
+      const isDuplicate =
+        error?.code === 'already-exists' || String(error?.message || '').includes('already exists');
+      toast({
+        title: isDuplicate ? 'Duplicate demo detected' : 'Failed to update demo details',
+        description:
+          error?.message ||
+          (isDuplicate
+            ? 'A demo with the same child name and parent phone already exists.'
+            : 'Please try again.'),
+        variant: 'destructive',
+      });
+    } finally {
+      setDialogSavingAction(null);
+    }
+  };
+
+  const handleSaveConversion = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!conversionTarget?.demo) return;
+
+    const nextConversionStatus =
+      conversionStatus === 'none' ? null : (conversionStatus as DemoConversionStatus);
+
+    setDialogSavingAction(`conversion:${conversionTarget.demo.id}`);
+    try {
+      await updateDemoConversion({
+        demoId: conversionTarget.demo.id,
+        conversionStatus: nextConversionStatus,
+        recommendedCourse: recommendedCourse.trim() || null,
+        recommendedClassType:
+          recommendedClassType === 'none' ? null : (recommendedClassType as DemoClassType),
+        recommendedFrequency: recommendedFrequency.trim() || null,
+        feeDiscussed: feeDiscussed.trim() || null,
+        followUpDate: followUpDate || null,
+        followUpCallStatus:
+          followUpCallStatus === 'none' ? null : (followUpCallStatus as DemoFollowUpCallStatus),
+        followUpCallCompletedAt: followUpCallCompletedAt || null,
+        admissionNotConfirmedReason: admissionNotConfirmedReason.trim() || null,
+      });
+
+      const mappedLeadStatus = mapConversionToLeadStatus(nextConversionStatus);
+      if (mappedLeadStatus && conversionTarget.lead?.id && user?.uid) {
+        await updateDoc(doc(db, LEADS_COLLECTION, conversionTarget.lead.id), {
+          status: mappedLeadStatus,
+          updatedAt: Timestamp.now(),
+          updatedBy: user.uid,
+        });
+      }
+
+      setConversionTarget(null);
+      toast({ title: 'Follow-up updated' });
+    } catch (error: any) {
+      toast({
+        title: 'Failed to update follow-up',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDialogSavingAction(null);
+    }
+  };
+
+  const handleReassign = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!reassignTarget?.demo || !reassignTeacherId) {
+      toast({
+        title: 'Select a teacher',
+        description: 'Please choose a teacher for reassignment.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const selectedTeacher = teachers.find((teacher) => teacher.id === reassignTeacherId);
+    const isAssigningOpenDemo = normalizeDemoStatus(reassignTarget.demo.status) === 'open';
+    setDialogSavingAction(`reassign:${reassignTarget.demo.id}`);
+    try {
+      await reassignDemoSession({
+        demoId: reassignTarget.demo.id,
+        assignedTeacherId: reassignTeacherId,
+        assignedTeacherName: selectedTeacher?.name,
+      });
+      setReassignTarget(null);
+      toast({ title: isAssigningOpenDemo ? 'Demo assigned' : 'Demo reassigned' });
+    } catch (error: any) {
+      toast({
+        title: isAssigningOpenDemo ? 'Failed to assign demo' : 'Failed to reassign demo',
+        description: error?.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDialogSavingAction(null);
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Card className="p-4">
@@ -863,6 +2614,9 @@ export default function LeadsInquiriesWorkspace({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => openLeadDialog()}>
+              Add Lead
+            </Button>
             <Button type="button" size="sm" onClick={handleCreateDemoRequest}>
               Create Demo Request
             </Button>
@@ -1055,22 +2809,140 @@ export default function LeadsInquiriesWorkspace({
             type="button"
             size="sm"
             variant="ghost"
-            onClick={() => {
-              setSearchQuery('');
-              setStageFilter('all');
-              setSourceFilter('all');
-              setCourseFilter('all');
-              setTeacherFilter('all');
-              setSummaryCardFilter('all');
-              setFocusFilter(view === 'demos' ? 'all_demos' : 'all');
-            }}
+            onClick={resetFilters}
           >
             Clear filters
           </Button>
         </div>
       </Card>
 
+      <Card className="p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-base font-semibold">Unmatched WhatsApp Messages</h4>
+              <Badge variant="outline">Open: {unmatchedOpenCount}</Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Inbound WhatsApp messages that could not be auto-matched to an existing lead.
+            </p>
+          </div>
+          <div className="w-[220px]">
+            <Select
+              value={unmatchedStatusFilter}
+              onValueChange={(value) => setUnmatchedStatusFilter(value as 'all' | UnmatchedInboundStatus)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filter status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="unmatched">Unmatched</SelectItem>
+                <SelectItem value="resolved">Resolved</SelectItem>
+                <SelectItem value="ignored">Ignored</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {filteredUnmatchedItems.length === 0 ? (
+          <div className="mt-4 rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+            No inbox records for the selected filter.
+          </div>
+        ) : (
+          <div className="mt-4 space-y-2">
+            {filteredUnmatchedItems.map((item) => (
+              <div key={item.id} className="rounded-md border p-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="outline">{formatLabel(item.status || 'unmatched')}</Badge>
+                  <Badge variant="outline">{item.provider || 'meta_whatsapp_cloud'}</Badge>
+                  <span className="text-xs text-muted-foreground">Received: {formatTs(item.receivedAt)}</span>
+                </div>
+                <div className="mt-2 grid gap-2 text-sm md:grid-cols-2">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Phone</div>
+                    <div className="font-medium">{item.phoneNormalized || item.rawFrom || '—'}</div>
+                    {item.rawFrom && item.rawFrom !== item.phoneNormalized ? (
+                      <div className="text-xs text-muted-foreground">Raw: {item.rawFrom}</div>
+                    ) : null}
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Message</div>
+                    <div>{item.messageSummary || '—'}</div>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openLinkLeadDialog(item)}
+                    disabled={item.status !== 'unmatched' || processingUnmatchedId === item.id}
+                  >
+                    Link to Lead
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void handleCreateLeadFromUnmatched(item)}
+                    disabled={item.status !== 'unmatched' || processingUnmatchedId === item.id}
+                  >
+                    {processingUnmatchedId === item.id ? 'Processing...' : 'Create Lead'}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void markUnmatchedRecord(item, item.status === 'ignored' ? 'unmatched' : 'ignored')}
+                    disabled={processingUnmatchedId === item.id}
+                  >
+                    {item.status === 'ignored' ? 'Mark Unmatched' : 'Mark Ignored'}
+                  </Button>
+                  {item.status !== 'resolved' ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => void markUnmatchedRecord(item, 'resolved')}
+                      disabled={processingUnmatchedId === item.id}
+                    >
+                      Mark Resolved
+                    </Button>
+                  ) : null}
+                  {item.resolvedLeadId ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => openResolvedLead(item.resolvedLeadId as string)}
+                    >
+                      Open Resolved Lead
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
       <Card className="overflow-hidden">
+        <div className="border-b bg-slate-50/70 px-4 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-sm font-semibold text-slate-900">Live workflow records</div>
+              <div className="text-xs text-muted-foreground">
+                {filteredRows.length} of {mergedRows.length} records visible with current filters.
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="outline">Open demos {demoSnapshot.open}</Badge>
+              <Badge variant="outline">Assigned {demoSnapshot.assigned}</Badge>
+              <Badge variant="outline">Completed {demoSnapshot.completed}</Badge>
+            </div>
+          </div>
+        </div>
         {filteredRows.length === 0 ? (
           <div className="p-8 text-center text-sm text-muted-foreground">
             No workflow records found for current filters.
@@ -1099,7 +2971,7 @@ export default function LeadsInquiriesWorkspace({
                   const isCompletedDemo = demoStatus === 'completed';
                   const isCancelledDemo = demoStatus === 'cancelled';
                   return (
-                    <TableRow key={row.id}>
+                    <TableRow key={row.id} className={cn('transition-colors hover:bg-slate-50/70', getRowHighlightClass(row))}>
                       <TableCell>
                         <div className="font-medium">{row.parentName}</div>
                         <div className="text-xs text-muted-foreground">{row.parentPhone}</div>
@@ -1114,13 +2986,37 @@ export default function LeadsInquiriesWorkspace({
                       </TableCell>
                       <TableCell>
                         {row.demo ? (
-                          <Badge variant="outline">{formatLabel(demoStatus || row.demo.status)}</Badge>
+                          <div className="space-y-1">
+                            <Badge variant="outline">{formatLabel(demoStatus || row.demo.status)}</Badge>
+                            <div className="text-xs text-muted-foreground">
+                              {formatConversionStatus(row.demo.conversionStatus)}
+                            </div>
+                          </div>
                         ) : (
                           <Badge variant="outline">Not Created</Badge>
                         )}
                       </TableCell>
-                      <TableCell>{row.teacherName || '—'}</TableCell>
-                      <TableCell>{row.nextFollowUpLabel}</TableCell>
+                      <TableCell>
+                        <div>{row.teacherName || '—'}</div>
+                        {row.demo?.teacherConfirmedDate || row.demo?.teacherConfirmedTime ? (
+                          <div className="text-xs text-muted-foreground">
+                            {`${row.demo.teacherConfirmedDate || '—'} ${row.demo.teacherConfirmedTime || ''}`.trim()}
+                          </div>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <div>{row.nextFollowUpLabel}</div>
+                        {row.demo?.followUpCallStatus || row.demo?.admissionNotConfirmedReason ? (
+                          <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                            {row.demo.followUpCallStatus ? (
+                              <div>Call: {formatFollowUpCallStatus(row.demo.followUpCallStatus)}</div>
+                            ) : null}
+                            {row.demo.admissionNotConfirmedReason ? (
+                              <div>Note: {row.demo.admissionNotConfirmedReason}</div>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </TableCell>
                       <TableCell>{formatTs(row.updatedAtMs)}</TableCell>
                       <TableCell>
                         <div className="flex flex-wrap justify-end gap-2">
@@ -1129,94 +3025,157 @@ export default function LeadsInquiriesWorkspace({
                               type="button"
                               size="sm"
                               variant="outline"
-                              disabled={creatingDemoRowId === row.id}
                               onClick={() => void handleQuickCreateDemo(row)}
                             >
-                              {creatingDemoRowId === row.id ? 'Creating…' : 'Create Demo'}
+                              Create Demo
                             </Button>
                           ) : null}
-                          {row.demo && demoWorkflowState === 'open' ? (
+                          {row.demo ? (
                             <Button
                               type="button"
                               size="sm"
-                              variant="outline"
-                              disabled={isBusyFor(row, 'cancel')}
-                              onClick={() => void handleCancelDemo(row)}
+                              variant={demoWorkflowState === 'completed' ? 'default' : 'outline'}
+                              onClick={() =>
+                                demoWorkflowState === 'completed'
+                                  ? openConversionDialog(row)
+                                  : demoWorkflowState === 'open'
+                                    ? openReassignDialog(row)
+                                    : openEditDialog(row)
+                              }
                             >
-                              {isBusyFor(row, 'cancel') ? 'Saving…' : 'Cancel Demo'}
+                              {demoWorkflowState === 'completed'
+                                ? 'Follow-up'
+                                : demoWorkflowState === 'open'
+                                  ? 'Assign Demo'
+                                  : 'Edit Demo'}
                             </Button>
                           ) : null}
-                          {row.demo && demoWorkflowState === 'assigned' ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isBusyFor(row, 'release')}
-                              onClick={() => void handleReleaseDemo(row)}
-                            >
-                              {isBusyFor(row, 'release') ? 'Saving…' : 'Release Demo'}
-                            </Button>
-                          ) : null}
-                          {row.demo && isCompletedDemo ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={savingConversionRowId === row.id}
-                              onClick={() => void handleMarkEnrolled(row)}
-                            >
-                              {savingConversionRowId === row.id ? 'Saving…' : 'Mark Enrolled'}
-                            </Button>
-                          ) : null}
-                          {row.demo && isCompletedDemo ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isBusyFor(row, 'follow_up')}
-                              onClick={() => void handleSetFollowUp(row)}
-                            >
-                              {isBusyFor(row, 'follow_up') ? 'Saving…' : 'Move Follow-up'}
-                            </Button>
-                          ) : null}
-                          {row.demo && isCompletedDemo ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isBusyFor(row, 'lost')}
-                              onClick={() => void handleMarkLost(row)}
-                            >
-                              {isBusyFor(row, 'lost') ? 'Saving…' : 'Mark Lost'}
-                            </Button>
-                          ) : null}
-                          {row.demo && isCancelledDemo ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              disabled={isBusyFor(row, 'reopen')}
-                              onClick={() => void handleReopenDemo(row)}
-                            >
-                              {isBusyFor(row, 'reopen') ? 'Saving…' : 'Reopen Demo'}
-                            </Button>
-                          ) : null}
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openToolset(row.demo ? 'demo' : 'lead')}
-                          >
-                            {row.demo
-                              ? demoWorkflowState === 'open'
-                                ? 'Assign / Edit Demo'
-                                : demoWorkflowState === 'assigned'
-                                ? 'Reassign / Reschedule'
-                                : demoStatus === 'cancelled'
-                                ? 'Reopen / Details'
-                                : 'Demo Details'
-                              : 'Open Lead Toolset'}
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button type="button" size="icon" variant="ghost" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                              {row.lead ? (
+                                <>
+                                  <DropdownMenuItem onSelect={() => openLeadDialog(row.lead)}>
+                                    Edit lead
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => openCommunicationsDialog(row.lead!)}>
+                                    Communications
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => openWhatsAppHelper(row.lead!)}>
+                                    WhatsApp helper
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              ) : null}
+                              {row.demo ? (
+                                <>
+                                  <DropdownMenuItem onSelect={() => openEditDialog(row)}>
+                                    Edit details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => openConversionDialog(row)}>
+                                    Follow-up / conversion
+                                  </DropdownMenuItem>
+                                  {demoWorkflowState === 'open' ? (
+                                    <DropdownMenuItem onSelect={() => openReassignDialog(row)}>
+                                      Assign demo
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  {demoWorkflowState === 'assigned' ? (
+                                    <DropdownMenuItem onSelect={() => openReassignDialog(row)}>
+                                      Reassign demo
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  {demoWorkflowState === 'assigned' ? (
+                                    <DropdownMenuItem
+                                      disabled={isBusyFor(row, 'release')}
+                                      onSelect={() => void handleReleaseDemo(row)}
+                                    >
+                                      {isBusyFor(row, 'release') ? 'Saving…' : 'Release demo'}
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  {!isCancelledDemo ? (
+                                    <DropdownMenuItem
+                                      disabled={isBusyFor(row, 'cancel')}
+                                      onSelect={() => void handleCancelDemo(row)}
+                                    >
+                                      {isBusyFor(row, 'cancel') ? 'Saving…' : 'Cancel demo'}
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  {(isCancelledDemo || isCompletedDemo) ? (
+                                    <DropdownMenuItem
+                                      disabled={isBusyFor(row, 'reopen')}
+                                      onSelect={() => void handleReopenDemo(row)}
+                                    >
+                                      {isBusyFor(row, 'reopen') ? 'Saving…' : 'Reopen demo'}
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  {isCompletedDemo ? (
+                                    <>
+                                      <DropdownMenuItem
+                                        disabled={savingConversionRowId === row.id}
+                                        onSelect={() => void handleMarkEnrolled(row)}
+                                      >
+                                        {savingConversionRowId === row.id ? 'Saving…' : 'Mark enrolled'}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        disabled={isBusyFor(row, 'follow_up')}
+                                        onSelect={() => void handleSetFollowUp(row)}
+                                      >
+                                        {isBusyFor(row, 'follow_up') ? 'Saving…' : 'Move to follow-up'}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        disabled={isBusyFor(row, 'lost')}
+                                        onSelect={() => void handleMarkLost(row)}
+                                      >
+                                        {isBusyFor(row, 'lost') ? 'Saving…' : 'Mark lost'}
+                                      </DropdownMenuItem>
+                                    </>
+                                  ) : null}
+                                  <DropdownMenuItem onSelect={() => setTimelineViewTarget(row.demo)}>
+                                    View timeline
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    disabled={isBusyFor(row, 'delete')}
+                                    onSelect={() => void handleDeleteDemo(row)}
+                                    className="text-red-600 focus:text-red-600"
+                                  >
+                                    {isBusyFor(row, 'delete') ? 'Deleting…' : 'Delete demo'}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onSelect={() => void handleCopyPhone(row)}>
+                                    Copy phone
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => handleOpenWhatsApp(row)}>
+                                    Open WhatsApp
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => void handleCopySummary(row)}>
+                                    Copy summary
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => void handleCopyFollowUpMessage(row)}>
+                                    Copy follow-up
+                                  </DropdownMenuItem>
+                                </>
+                              ) : (
+                                <>
+                                  {row.lead ? (
+                                    <DropdownMenuItem onSelect={() => void handleQuickCreateDemo(row)}>
+                                      Create demo
+                                    </DropdownMenuItem>
+                                  ) : null}
+                                  <DropdownMenuItem onSelect={() => void handleCopyPhone(row)}>
+                                    Copy phone
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => handleOpenWhatsApp(row)}>
+                                    Open WhatsApp
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -1228,60 +3187,995 @@ export default function LeadsInquiriesWorkspace({
         )}
       </Card>
 
-      <div id="full-operations-toolset" className="space-y-3">
-        {operationsMode === 'optimized' ? (
-          <>
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-slate-50/60 px-3 py-2">
-              <div className="text-xs text-muted-foreground">
-                Trend stays in this unified view. Open legacy toolsets only for detailed lead/demo operations.
+      <Dialog open={leadDialogOpen} onOpenChange={setLeadDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{leadEditTarget ? 'Edit Lead' : 'Add Lead'}</DialogTitle>
+            <DialogDescription className="sr-only">
+              Manage lead details, enquiry fields, and follow-up metadata.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-5" onSubmit={handleSaveLead}>
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">Parent details</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label>Parent Name *</Label>
+                  <Input value={leadForm.parentName} onChange={(event) => setLeadField('parentName', event.target.value)} required />
+                </div>
+                <div>
+                  <Label>Primary Phone *</Label>
+                  <Input value={leadForm.primaryPhone} onChange={(event) => setLeadField('primaryPhone', event.target.value)} required />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Parent Email</Label>
+                  <Input type="email" value={leadForm.parentEmail} onChange={(event) => setLeadField('parentEmail', event.target.value)} />
+                </div>
               </div>
-              <Button type="button" size="sm" onClick={() => setOperationsMode('legacy_full')}>
-                Open Full Legacy Toolsets
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">Child details</h4>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div>
+                  <Label>Child Name</Label>
+                  <Input value={leadForm.childName} onChange={(event) => setLeadField('childName', event.target.value)} />
+                </div>
+                <div>
+                  <Label>Child Age</Label>
+                  <Input value={leadForm.childAge} onChange={(event) => setLeadField('childAge', event.target.value)} inputMode="numeric" />
+                </div>
+                <div>
+                  <Label>Child Grade</Label>
+                  <Input value={leadForm.childGrade} onChange={(event) => setLeadField('childGrade', event.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">Enquiry details</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label>Interest Track</Label>
+                  <Select value={leadForm.interestTrack} onValueChange={(value) => setLeadField('interestTrack', value as InterestTrack)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {LEAD_TRACK_OPTIONS.map((track) => (
+                        <SelectItem key={track} value={track}>{formatLabel(track)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Source</Label>
+                  <Select value={leadForm.source} onValueChange={(value) => setLeadField('source', value as LeadSource)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {LEAD_SOURCE_OPTIONS.map((source) => (
+                        <SelectItem key={source} value={source}>{formatLabel(source)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Source Detail</Label>
+                  <Input value={leadForm.sourceDetail} onChange={(event) => setLeadField('sourceDetail', event.target.value)} />
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={leadForm.status} onValueChange={(value) => setLeadField('status', value as LeadStatus)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {LEAD_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>{formatLabel(status)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Country</Label>
+                  <Input value={leadForm.country} onChange={(event) => setLeadField('country', event.target.value)} />
+                </div>
+                <div>
+                  <Label>Timezone</Label>
+                  <Input value={leadForm.timezone} onChange={(event) => setLeadField('timezone', event.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Preferred Timing</Label>
+                  <Input value={leadForm.preferredTimingText} onChange={(event) => setLeadField('preferredTimingText', event.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Initial Message Snippet</Label>
+                  <Textarea rows={3} value={leadForm.initialMessageSnippet} onChange={(event) => setLeadField('initialMessageSnippet', event.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold">Operations</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <Label>Priority</Label>
+                  <Select value={leadForm.priority} onValueChange={(value) => setLeadField('priority', value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PRIORITY_OPTIONS.map((priority) => (
+                        <SelectItem key={priority} value={priority}>{formatLabel(priority)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Next Follow-up Date</Label>
+                  <Input type="date" value={leadForm.nextFollowUpDate} onChange={(event) => setLeadField('nextFollowUpDate', event.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Tags (comma separated)</Label>
+                  <Input value={leadForm.tagsText} onChange={(event) => setLeadField('tagsText', event.target.value)} />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label>Notes</Label>
+                  <Textarea rows={4} value={leadForm.notes} onChange={(event) => setLeadField('notes', event.target.value)} />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setLeadDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={leadSaving}>
+                {leadSaving ? 'Saving...' : leadEditTarget ? 'Save Changes' : 'Create Lead'}
               </Button>
             </div>
-            <DemoSessionsManagement mode="trend_only" openCreateRequestSignal={openDemoCreateSignal} />
-          </>
-        ) : (
-          <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Link Unmatched Message to Existing Lead</DialogTitle>
+            <DialogDescription className="sr-only">
+              Search and select a lead to resolve an unmatched inbound WhatsApp message.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="rounded-md border p-3 text-sm">
+              <div className="text-xs text-muted-foreground">Inbound message</div>
+              <div className="mt-1">{linkTarget?.messageSummary || '—'}</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Phone: {linkTarget?.phoneNormalized || linkTarget?.rawFrom || '—'}
+              </div>
+            </div>
+            <div>
+              <Label>Search Lead</Label>
+              <Input placeholder="Parent, child, phone" value={linkLeadSearch} onChange={(event) => setLinkLeadSearch(event.target.value)} />
+            </div>
+            <div>
+              <Label>Select Lead</Label>
+              <Select value={linkLeadId} onValueChange={setLinkLeadId}>
+                <SelectTrigger><SelectValue placeholder="Choose lead" /></SelectTrigger>
+                <SelectContent>
+                  {linkLeadOptions.map((lead) => (
+                    <SelectItem key={lead.id} value={lead.id}>
+                      {(lead.parentName || 'Unnamed Lead').trim() || 'Unnamed Lead'} • {lead.primaryPhone || '—'}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setLinkDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={() => void handleResolveByLinkingLead()} disabled={!linkLeadId || !!processingUnmatchedId}>
+                {processingUnmatchedId ? 'Linking...' : 'Link and Resolve'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={demoRequestDialogOpen} onOpenChange={setDemoRequestDialogOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Create Demo Request</DialogTitle>
+            <DialogDescription className="sr-only">
+              Capture parent, child, and scheduling inputs to create a demo request.
+            </DialogDescription>
+          </DialogHeader>
+          <form className="grid gap-4" onSubmit={handleCreateDemoRequestSubmit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Parent Name *</Label>
+                <Input value={demoRequestForm.parentName} onChange={(event) => setDemoRequestField('parentName', event.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Parent Phone *</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="flex h-10 items-center rounded-md border bg-background">
+                    <span className="px-3 text-sm text-muted-foreground">+</span>
+                    <Input
+                      className="border-0 shadow-none focus-visible:ring-0"
+                      inputMode="numeric"
+                      placeholder="Country"
+                      value={demoRequestForm.parentPhoneCountryCode || DEFAULT_PHONE_COUNTRY_CODE}
+                      onChange={(event) => setDemoRequestField('parentPhoneCountryCode', event.target.value.replace(/\D/g, ''))}
+                    />
+                  </div>
+                  <Input
+                    className="col-span-2"
+                    inputMode="numeric"
+                    placeholder="Phone number"
+                    value={demoRequestForm.parentPhoneLocal}
+                    onChange={(event) => setDemoRequestField('parentPhoneLocal', event.target.value.replace(/\D/g, ''))}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Child Name *</Label>
+                <Input value={demoRequestForm.childName} onChange={(event) => setDemoRequestField('childName', event.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Child Grade *</Label>
+                <Input value={demoRequestForm.childGrade} onChange={(event) => setDemoRequestField('childGrade', event.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Child Age</Label>
+                <Input type="number" min={0} value={demoRequestForm.childAge} onChange={(event) => setDemoRequestField('childAge', event.target.value)} />
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Course Interested *</Label>
+                <Select
+                  value={demoRequestForm.courseInterested || 'not_set'}
+                  onValueChange={(value) =>
+                    setDemoRequestField('courseInterested', value === 'not_set' ? '' : value)
+                  }
+                >
+                  <SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {COURSE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Timezone</Label>
+                <Select
+                  value={demoRequestForm.timezone || 'not_set'}
+                  onValueChange={(value) => setDemoRequestField('timezone', value === 'not_set' ? '' : value)}
+                >
+                  <SelectTrigger><SelectValue placeholder="Select timezone" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {TIMEZONE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label>Source</Label>
+                <Select value={demoRequestForm.source || 'not_set'} onValueChange={(value) => setDemoRequestField('source', value === 'not_set' ? '' : value)}>
+                  <SelectTrigger><SelectValue placeholder="Select source" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {SOURCE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Demo Mode</Label>
+                <Select value={demoRequestForm.demoMode || 'not_set'} onValueChange={(value) => setDemoRequestField('demoMode', value === 'not_set' ? '' : value)}>
+                  <SelectTrigger><SelectValue placeholder="Select demo mode" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {DEMO_MODE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Request Received Date *</Label>
+                <Input type="date" value={demoRequestForm.requestReceivedDate} onChange={(event) => setDemoRequestField('requestReceivedDate', event.target.value)} required />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Parent Preferred Date/Time *</Label>
+              <Textarea rows={3} value={demoRequestForm.preferredDateTimeText} onChange={(event) => setDemoRequestField('preferredDateTimeText', event.target.value)} required />
+            </div>
+            <div className="space-y-2">
+              <Label>Notes for Teacher</Label>
+              <Textarea rows={3} value={demoRequestForm.adminNotes} onChange={(event) => setDemoRequestField('adminNotes', event.target.value)} />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setDemoRequestDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={creatingDemoRequest}>
+                {creatingDemoRequest ? 'Creating...' : 'Create Demo Request'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={whatsAppOpen} onOpenChange={setWhatsAppOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              WhatsApp Helper{whatsAppTarget?.parentName ? ` - ${whatsAppTarget.parentName}` : ''}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Draft and send WhatsApp follow-up messages for the selected lead.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  Advanced Operations (Legacy)
-                </div>
-                <div className="text-xs text-slate-500">
-                  Use these detailed modules only when you need deep lead or demo controls.
+                <Label>Template</Label>
+                <Select value={whatsAppTemplate} onValueChange={(value) => handleWhatsAppTemplateChange(value as WhatsAppTemplateKey)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {WHATSAPP_TEMPLATE_OPTIONS.map((template) => (
+                      <SelectItem key={template} value={template}>{formatLabel(template)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Recipient Phone</Label>
+                <Input value={whatsAppTarget ? getWhatsAppPhone(whatsAppTarget) : ''} readOnly placeholder="No phone available" />
+              </div>
+            </div>
+            <div>
+              <Label>Message Draft</Label>
+              <Textarea rows={8} value={whatsAppMessage} onChange={(event) => setWhatsAppMessage(event.target.value)} />
+              <div className="mt-1 text-xs text-muted-foreground">{whatsAppMessage.trim().length} characters</div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                Manual WhatsApp uses custom edited text. API send uses approved WhatsApp templates only.
+              </div>
+            </div>
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => void handleCopyWhatsAppMessage()}>
+                Copy Message
+              </Button>
+              <Button type="button" variant="outline" onClick={handleOpenWhatsAppOnly}>
+                Open WhatsApp
+              </Button>
+              <Button type="button" variant="outline" onClick={() => void handleSendViaWhatsAppApi()} disabled={sendingWhatsAppApi || !WHATSAPP_API_TEMPLATE_KEYS.has(whatsAppTemplate)}>
+                {sendingWhatsAppApi ? 'Sending...' : 'Send via WhatsApp API'}
+              </Button>
+              <Button type="button" onClick={() => void handleOpenWhatsAppAndLog()} disabled={loggingWhatsApp}>
+                {loggingWhatsApp ? 'Opening...' : 'Open WhatsApp + Log Communication'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={communicationsOpen} onOpenChange={setCommunicationsOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              Communications{communicationsTarget?.parentName ? ` - ${communicationsTarget.parentName}` : ''}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Review communication history and add or edit communication entries.
+            </DialogDescription>
+          </DialogHeader>
+          {communicationsTarget ? (
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" onClick={() => openWhatsAppHelper(communicationsTarget)}>
+                WhatsApp Helper
+              </Button>
+            </div>
+          ) : null}
+          <div className="space-y-4">
+            <Card className="p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm font-semibold">History</div>
+                <div className="w-[170px]">
+                  <Select value={communicationsHistoryFilter} onValueChange={(value) => setCommunicationsHistoryFilter(value as CommunicationHistoryFilter)}>
+                    <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp only</SelectItem>
+                      <SelectItem value="failed">Failed only</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <Button type="button" size="sm" variant="outline" onClick={() => setOperationsMode('optimized')}>
-                Back To Optimized View
+              {filteredCommunicationsHistory.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No communication logs yet.</div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredCommunicationsHistory.map((item) => (
+                    <div key={item.id} className="rounded-md border p-3">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <Badge variant="outline">{formatLabel(item.type)}</Badge>
+                        <Badge variant="outline">{formatLabel(item.channel)}</Badge>
+                        <Badge variant="outline">{formatLabel(item.direction)}</Badge>
+                        <Badge variant="secondary">{formatLabel(item.status)}</Badge>
+                        {getCommunicationOriginLabel(item) ? (
+                          <Badge variant="outline">{getCommunicationOriginLabel(item) as string}</Badge>
+                        ) : null}
+                        {item.provider ? <Badge variant="outline">{formatLabel(item.provider)}</Badge> : null}
+                        {item.templateName || item.templateTag ? (
+                          <Badge variant="outline">Template: {item.templateName || item.templateTag}</Badge>
+                        ) : null}
+                        {item.deliveryStatus ? (
+                          <Badge variant={deliveryBadgeVariant(item.deliveryStatus)}>
+                            {formatLabel(item.deliveryStatus)}
+                          </Badge>
+                        ) : null}
+                      </div>
+                      <div className="text-sm">{item.summary}</div>
+                      {item.externalMessageId ? (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          Message ID: {item.externalMessageId.slice(0, 28)}
+                          {item.externalMessageId.length > 28 ? '…' : ''}
+                        </div>
+                      ) : null}
+                      {item.deliveryStatus === 'failed' && (item.errorMessage || item.errorCode) ? (
+                        <div className="mt-1 text-xs text-muted-foreground">Failed: {item.errorMessage || item.errorCode}</div>
+                      ) : null}
+                      <div className="mt-1 text-xs text-muted-foreground">Follow-up: {formatTs(item.followUpDate)}</div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Created: {formatTs(item.createdAt)} • By: {item.createdBy || '—'}
+                      </div>
+                      <div className="mt-2">
+                        <Button size="sm" variant="outline" onClick={() => openEditCommunication(item)}>
+                          Edit
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            <Card className="p-3">
+              <div className="mb-2 text-sm font-semibold">
+                {communicationEditTarget ? 'Edit communication' : 'Add communication'}
+              </div>
+              {!communicationEditTarget ? (
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {(Object.keys(COMMUNICATION_PRESETS) as CommunicationPresetKey[]).map((preset) => (
+                    <Button key={preset} type="button" size="sm" variant="outline" onClick={() => applyCommunicationPreset(preset)}>
+                      {COMMUNICATION_PRESETS[preset].label}
+                    </Button>
+                  ))}
+                </div>
+              ) : null}
+              <form className="space-y-3" onSubmit={handleSaveCommunication}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <Label>Type</Label>
+                    <Select value={communicationForm.type} onValueChange={(value) => setCommunicationField('type', value as CommunicationType)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNICATION_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>{formatLabel(option)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Direction</Label>
+                    <Select value={communicationForm.direction} onValueChange={(value) => setCommunicationField('direction', value as CommunicationDirection)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNICATION_DIRECTION_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>{formatLabel(option)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Channel</Label>
+                    <Select value={communicationForm.channel} onValueChange={(value) => setCommunicationField('channel', value as CommunicationChannel)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNICATION_CHANNEL_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>{formatLabel(option)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Status</Label>
+                    <Select value={communicationForm.status} onValueChange={(value) => setCommunicationField('status', value as CommunicationStatus)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {COMMUNICATION_STATUS_OPTIONS.map((option) => (
+                          <SelectItem key={option} value={option}>{formatLabel(option)}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Follow-up Needed</Label>
+                    <Select value={communicationForm.followUpNeeded} onValueChange={(value) => setCommunicationField('followUpNeeded', value as 'yes' | 'no')}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yes">Yes</SelectItem>
+                        <SelectItem value="no">No</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Follow-up Date</Label>
+                    <Input type="date" value={communicationForm.followUpDate} onChange={(event) => setCommunicationField('followUpDate', event.target.value)} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Template Tag</Label>
+                    <Input value={communicationForm.templateTag} onChange={(event) => setCommunicationField('templateTag', event.target.value)} placeholder="Optional" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label>Summary *</Label>
+                    <Textarea rows={3} value={communicationForm.summary} onChange={(event) => setCommunicationField('summary', event.target.value)} required />
+                  </div>
+                </div>
+                <div className="flex justify-end gap-2">
+                  {communicationEditTarget ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setCommunicationEditTarget(null);
+                        setCommunicationForm(buildInitialCommunicationForm());
+                      }}
+                    >
+                      Cancel Edit
+                    </Button>
+                  ) : null}
+                  <Button type="submit" disabled={savingCommunication}>
+                    {savingCommunication ? 'Saving...' : communicationEditTarget ? 'Save Communication' : 'Add Communication'}
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(timelineViewTarget)} onOpenChange={(open) => !open && setTimelineViewTarget(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Timeline Details</DialogTitle>
+            <DialogDescription className="sr-only">
+              View session timeline and recent activity history.
+            </DialogDescription>
+          </DialogHeader>
+          {timelineViewTarget ? (
+            <div className="space-y-4 text-sm">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="font-medium text-foreground">
+                  {timelineViewTarget.childName} · {timelineViewTarget.parentName}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  Status: {formatLabel(normalizeDemoStatus(timelineViewTarget.status))} · Course: {timelineViewTarget.courseInterested}
+                </div>
+              </div>
+              <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-3 text-xs text-muted-foreground">
+                <div className="font-medium text-foreground">Timeline</div>
+                {buildTimelineRows(timelineViewTarget).map((line, index) => (
+                  <div key={`${timelineViewTarget.id}-timeline-${index}`}>{line}</div>
+                ))}
+              </div>
+              <div className="space-y-1 rounded-lg border border-slate-200 bg-white p-3 text-xs text-muted-foreground">
+                <div className="font-medium text-foreground">Recent Activity</div>
+                {Array.isArray(timelineViewTarget.history) && timelineViewTarget.history.length > 0 ? (
+                  [...timelineViewTarget.history].reverse().map((entry, index) => (
+                    <div key={`${timelineViewTarget.id}-history-${entry.atMs}-${index}`}>
+                      {formatHistoryAction(entry.action)}: {formatTs(new Date(entry.atMs))}
+                      {entry.actorName ? ` by ${entry.actorName}` : ''}
+                      {entry.note ? ` (${entry.note})` : ''}
+                    </div>
+                  ))
+                ) : (
+                  <div>—</div>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(editTarget)} onOpenChange={(open) => !open && setEditTarget(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Edit Demo Details</DialogTitle>
+            <DialogDescription className="sr-only">
+              Update demo request and participant details for this session.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="grid gap-4" onSubmit={handleSaveEdit}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-parent-name">Parent Name *</Label>
+                <Input
+                  id="workspace-edit-parent-name"
+                  value={editForm.parentName}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, parentName: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-parent-phone">Parent Phone *</Label>
+                <Input
+                  id="workspace-edit-parent-phone"
+                  value={editForm.parentPhone}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, parentPhone: event.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-child-name">Child Name *</Label>
+                <Input
+                  id="workspace-edit-child-name"
+                  value={editForm.childName}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, childName: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-child-grade">Child Grade *</Label>
+                <Input
+                  id="workspace-edit-child-grade"
+                  value={editForm.childGrade}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, childGrade: event.target.value }))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-child-age">Child Age</Label>
+                <Input
+                  id="workspace-edit-child-age"
+                  type="number"
+                  min={0}
+                  value={editForm.childAge}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, childAge: event.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-course">Course Interested *</Label>
+                <Select
+                  value={editForm.courseInterested || 'not_set'}
+                  onValueChange={(value) =>
+                    setEditForm((prev) => ({
+                      ...prev,
+                      courseInterested: value === 'not_set' ? '' : value,
+                    }))
+                  }
+                >
+                  <SelectTrigger id="workspace-edit-course">
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {COURSE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-timezone">Timezone</Label>
+                <Select
+                  value={editForm.timezone || 'not_set'}
+                  onValueChange={(value) =>
+                    setEditForm((prev) => ({ ...prev, timezone: value === 'not_set' ? '' : value }))
+                  }
+                >
+                  <SelectTrigger id="workspace-edit-timezone">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {TIMEZONE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-source">Source</Label>
+                <Select
+                  value={editForm.source || 'not_set'}
+                  onValueChange={(value) =>
+                    setEditForm((prev) => ({ ...prev, source: value === 'not_set' ? '' : value }))
+                  }
+                >
+                  <SelectTrigger id="workspace-edit-source">
+                    <SelectValue placeholder="Select source" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {SOURCE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-demo-mode">Demo Mode</Label>
+                <Select
+                  value={editForm.demoMode || 'not_set'}
+                  onValueChange={(value) =>
+                    setEditForm((prev) => ({ ...prev, demoMode: value === 'not_set' ? '' : value }))
+                  }
+                >
+                  <SelectTrigger id="workspace-edit-demo-mode">
+                    <SelectValue placeholder="Select demo mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="not_set">Not set</SelectItem>
+                    {DEMO_MODE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-edit-request-date">Request Received Date *</Label>
+                <Input
+                  id="workspace-edit-request-date"
+                  type="date"
+                  value={editForm.requestReceivedDate}
+                  onChange={(event) =>
+                    setEditForm((prev) => ({ ...prev, requestReceivedDate: event.target.value }))
+                  }
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workspace-edit-preferred-slot">Parent Preferred Date/Time *</Label>
+              <Textarea
+                id="workspace-edit-preferred-slot"
+                value={editForm.preferredDateTimeText}
+                onChange={(event) =>
+                  setEditForm((prev) => ({ ...prev, preferredDateTimeText: event.target.value }))
+                }
+                rows={3}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workspace-edit-admin-notes">Notes for Teacher</Label>
+              <Textarea
+                id="workspace-edit-admin-notes"
+                value={editForm.adminNotes}
+                onChange={(event) => setEditForm((prev) => ({ ...prev, adminNotes: event.target.value }))}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setEditTarget(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!!dialogSavingAction}>
+                {dialogSavingAction?.startsWith('edit:') ? 'Saving...' : 'Save Details'}
               </Button>
             </div>
-            <div className="mb-3 flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                variant={legacyPanel === 'lead' ? 'default' : 'outline'}
-                onClick={() => setPanel('lead')}
-              >
-                Lead Operations
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(conversionTarget)} onOpenChange={(open) => !open && setConversionTarget(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Demo Follow-up</DialogTitle>
+            <DialogDescription className="sr-only">
+              Record conversion status and follow-up details after a demo session.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-4" onSubmit={handleSaveConversion}>
+            <div className="space-y-2">
+              <Label>Conversion Status</Label>
+              <Select value={conversionStatus} onValueChange={setConversionStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select conversion status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not set</SelectItem>
+                  {CONVERSION_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-followup-course">Recommended Course</Label>
+                <Input
+                  id="workspace-followup-course"
+                  value={recommendedCourse}
+                  onChange={(event) => setRecommendedCourse(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Recommended Class Type</Label>
+                <Select value={recommendedClassType} onValueChange={setRecommendedClassType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select class type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Not set</SelectItem>
+                    <SelectItem value="one_to_one">1:1</SelectItem>
+                    <SelectItem value="group">Group</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-followup-frequency">Recommended Frequency</Label>
+                <Input
+                  id="workspace-followup-frequency"
+                  value={recommendedFrequency}
+                  onChange={(event) => setRecommendedFrequency(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-followup-fee">Fee Discussed</Label>
+                <Input
+                  id="workspace-followup-fee"
+                  value={feeDiscussed}
+                  onChange={(event) => setFeeDiscussed(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="workspace-followup-date">Follow-up Date</Label>
+                <Input
+                  id="workspace-followup-date"
+                  type="date"
+                  value={followUpDate}
+                  onChange={(event) => setFollowUpDate(event.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Follow-up Call Status</Label>
+                <Select value={followUpCallStatus} onValueChange={setFollowUpCallStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select call status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Not set</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="not_reachable">Not Reachable</SelectItem>
+                    <SelectItem value="not_required">Not Required</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="workspace-followup-completed-at">Call Completed At</Label>
+                <Input
+                  id="workspace-followup-completed-at"
+                  type="datetime-local"
+                  value={followUpCallCompletedAt}
+                  onChange={(event) => setFollowUpCallCompletedAt(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="workspace-followup-reason">Admission Not Confirmed Reason</Label>
+              <Textarea
+                id="workspace-followup-reason"
+                value={admissionNotConfirmedReason}
+                onChange={(event) => setAdmissionNotConfirmedReason(event.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setConversionTarget(null)}>
+                Cancel
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant={legacyPanel === 'demo' ? 'default' : 'outline'}
-                onClick={() => setPanel('demo')}
-              >
-                Demo Operations
+              <Button type="submit" disabled={!!dialogSavingAction}>
+                {dialogSavingAction?.startsWith('conversion:') ? 'Saving...' : 'Save Follow-up'}
               </Button>
             </div>
-            {legacyPanel === 'lead' ? (
-              <LeadsEnquiriesManagement />
-            ) : (
-              <DemoSessionsManagement openCreateRequestSignal={openDemoCreateSignal} />
-            )}
-          </Card>
-        )}
-      </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(reassignTarget)} onOpenChange={(open) => !open && setReassignTarget(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {normalizeDemoStatus(reassignTarget?.demo?.status) === 'open' ? 'Assign Demo' : 'Reassign Demo'}
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Choose a teacher to assign or reassign this demo session.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-4" onSubmit={handleReassign}>
+            <div className="space-y-2">
+              <Label>Teacher</Label>
+              <Select
+                value={reassignTeacherId || 'not_set'}
+                onValueChange={(value) => setReassignTeacherId(value === 'not_set' ? '' : value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select teacher" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="not_set">Not set</SelectItem>
+                  {teachers.map((teacher) => (
+                    <SelectItem key={teacher.id} value={teacher.id}>
+                      {teacher.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setReassignTarget(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!!dialogSavingAction}>
+                {dialogSavingAction?.startsWith('reassign:')
+                  ? 'Saving...'
+                  : normalizeDemoStatus(reassignTarget?.demo?.status) === 'open'
+                    ? 'Assign Demo'
+                    : 'Reassign Demo'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <DemoSessionsManagement mode="trend_only" />
     </div>
   );
 }

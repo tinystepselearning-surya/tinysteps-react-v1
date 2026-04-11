@@ -140,6 +140,7 @@ export type DemoRecommendedNextStep =
 export type DemoHistoryAction =
   | 'created'
   | 'claimed'
+  | 'assigned'
   | 'schedule_updated'
   | 'completed'
   | 'reschedule_created'
@@ -147,6 +148,7 @@ export type DemoHistoryAction =
   | 'cancelled'
   | 'released'
   | 'reopened'
+  | 'admin_details_updated'
   | 'follow_up_updated';
 
 export interface DemoSessionHistoryEntry {
@@ -159,6 +161,7 @@ export interface DemoSessionHistoryEntry {
 
 export interface DemoSession {
   id: string;
+  leadId?: string | null;
   parentName: string;
   childName: string;
   childGrade: string;

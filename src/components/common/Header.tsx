@@ -38,14 +38,34 @@ const LOGIN_LINKS: LinkItem[] = [
 
 const PublicAnnouncementTicker = memo(function PublicAnnouncementTicker({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isDesktopTickerEligible, setIsDesktopTickerEligible] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setIsDismissed(window.localStorage.getItem(DISMISS_KEY) === '1');
   }, []);
 
-  const isMobileViewport = typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches;
-  if (isLoggedIn || isDismissed || isMobileViewport) return null;
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const evaluateViewport = () => {
+      setIsDesktopTickerEligible(window.matchMedia('(min-width: 640px)').matches);
+    };
+
+    const win = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    };
+
+    window.requestAnimationFrame(() => {
+      if (typeof win.requestIdleCallback === 'function') {
+        win.requestIdleCallback(evaluateViewport, { timeout: 1200 });
+      } else {
+        window.setTimeout(evaluateViewport, 200);
+      }
+    });
+  }, []);
+
+  if (isLoggedIn || isDismissed || !isDesktopTickerEligible) return null;
 
   return (
     <div className="hidden border-b border-slate-200/80 bg-white/65 text-slate-600 backdrop-blur sm:block">

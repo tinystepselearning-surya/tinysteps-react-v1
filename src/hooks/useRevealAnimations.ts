@@ -1,30 +1,12 @@
 import { useEffect } from 'react';
-
-const APP_ROUTE_PREFIXES = ['/surya', '/teacher', '/parent', '/kids', '/learning-partner/dashboard', '/learningpartner/dashboard'];
-const AUTH_ENTRY_ROUTES = new Set([
-  '/login',
-  '/surya/login',
-  '/admin/login',
-  '/teacher/login',
-  '/parent/login',
-  '/learning-partner/login',
-  '/learningpartner/login',
-  '/kid/login',
-]);
-
-const normalizePathname = (pathname: string): string => {
-  const lower = pathname.toLowerCase();
-  if (lower !== '/' && lower.endsWith('/')) return lower.replace(/\/+$/, '');
-  return lower;
-};
+import { normalizePathname, shouldShowPublicSupportWidgets } from '../utils/publicRouteGuards';
 
 const useRevealAnimations = () => {
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
     const pathname = normalizePathname(window.location.pathname);
-    const isAppRoute = APP_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-    if (isAppRoute || AUTH_ENTRY_ROUTES.has(pathname)) return;
+    if (!shouldShowPublicSupportWidgets(pathname)) return;
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
 
     const win = window as Window & {

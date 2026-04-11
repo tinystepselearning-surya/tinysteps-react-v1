@@ -4,7 +4,24 @@ import { Tabs, TabsContent } from '@components/ui/tabs';
 import { Card } from '@components/ui/card';
 import { Button } from '@components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@components/ui/dialog';
-import { ClipboardList, GraduationCap, LineChart, Users2, Wallet } from 'lucide-react';
+import {
+  BellDot,
+  BookCopy,
+  BookOpen,
+  CalendarDays,
+  ClipboardList,
+  ContactRound,
+  CreditCard,
+  FileText,
+  GraduationCap,
+  Handshake,
+  LineChart,
+  MessageSquareQuote,
+  Settings,
+  UserCog,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { doc, getDoc } from 'firebase/firestore';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -51,11 +68,23 @@ const ROLE_SHORTCUTS = [
 ];
 
 const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
-  { id: 'users', label: 'Users', icon: Users2 },
+  { id: 'users', label: 'Users', icon: UserCog },
   { id: 'students', label: 'Students', icon: GraduationCap },
-  { id: 'leads', label: 'Leads', icon: ClipboardList },
+  { id: 'leads', label: 'Leads', icon: ContactRound },
+  { id: 'enrollments', label: 'Enroll', icon: ClipboardList },
+  { id: 'relationships', label: 'Relations', icon: Handshake },
+  { id: 'courses', label: 'Courses', icon: BookCopy },
+  { id: 'today-notifications', label: 'Sessions', icon: BellDot },
+  { id: 'lessons', label: 'Lessons', icon: BookOpen },
+  { id: 'class-recordings', label: 'Recordings', icon: Users },
+  { id: 'class-samples', label: 'Samples', icon: Users },
+  { id: 'testimonials', label: 'Reviews', icon: MessageSquareQuote },
+  { id: 'parent-worksheets', label: 'Worksheets', icon: FileText },
   { id: 'analytics', label: 'Analytics', icon: LineChart },
-  { id: 'teacher-payments', label: 'Payments', icon: Wallet },
+  { id: 'holidays', label: 'Holidays', icon: CalendarDays },
+  { id: 'teacher-payments', label: 'Teacher Pay', icon: Wallet },
+  { id: 'parent-payments', label: 'Parent Pay', icon: CreditCard },
+  { id: 'settings', label: 'Settings', icon: Settings },
 ];
 
 const AccessMessage = ({ children }: { children: React.ReactNode }) => (
@@ -288,7 +317,6 @@ export default function AdminDashboard() {
       'enrollments',
       'relationships',
       'courses',
-      'demo-sessions',
       'today-notifications',
       'lessons',
       'class-recordings',
@@ -300,16 +328,6 @@ export default function AdminDashboard() {
       'parent-payments',
       'settings',
     ]);
-
-    if (tabFromUrl === 'demo-sessions') {
-      setSelectedTab('leads');
-      setLeadsWorkspaceView('demos');
-      const nextParams = new URLSearchParams(location.search);
-      nextParams.set('tab', 'leads');
-      nextParams.set('leadView', 'demos');
-      navigate(`/surya?${nextParams.toString()}`, { replace: true });
-      return;
-    }
 
     if (tabFromUrl === 'leads') {
       setLeadsWorkspaceView(params.get('leadView') === 'demos' ? 'demos' : 'leads');

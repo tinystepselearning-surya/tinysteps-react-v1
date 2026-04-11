@@ -72,6 +72,8 @@ const VALID_FOLLOW_UP_CALL_STATUSES = new Set([
 
 type DemoStatus = 'open' | 'assigned' | 'completed' | 'cancelled';
 type DemoTrack = 'phonics' | 'grammar' | 'speaking';
+type LeadInterestTrack = 'phonics' | 'grammar' | 'public_speaking';
+type LeadSource = 'website' | 'whatsapp' | 'instagram' | 'referral' | 'manual';
 const MAX_HISTORY_ENTRIES = 40;
 
 interface DemoHistoryEntry {
@@ -295,6 +297,28 @@ const normalizeTrack = (value: string): DemoTrack | null => {
     return 'speaking';
   }
   return null;
+};
+
+const mapCourseInterestedToLeadTrack = (value: string): LeadInterestTrack => {
+  const normalized = value.trim().toLowerCase();
+  if (normalized.includes('grammar') || normalized.includes('writing')) return 'grammar';
+  if (
+    normalized.includes('public speaking') ||
+    normalized.includes('speaking') ||
+    normalized.includes('communication')
+  ) {
+    return 'public_speaking';
+  }
+  return 'phonics';
+};
+
+const mapDemoSourceToLeadSource = (value: string | null): LeadSource => {
+  const normalized = (value || '').trim().toLowerCase();
+  if (normalized === 'website') return 'website';
+  if (normalized === 'whatsapp') return 'whatsapp';
+  if (normalized === 'instagram') return 'instagram';
+  if (normalized === 'referral') return 'referral';
+  return 'manual';
 };
 
 const toStringArray = (value: unknown): string[] => {
@@ -1013,8 +1037,13 @@ export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionReques
         childName?: string | null;
         dedupeKey?: string | null;
         history?: unknown;
+        leadId?: string | null;
       };
       currentStatus = normalizeDemoStatus(demo.status || 'open') as DemoStatus;
+      const linkedLeadId = pickOptionalText(demo.leadId, 120);
+
+      const linkedLeadRef = linkedLeadId ? db.collection('leads').doc(linkedLeadId) : null;
+      const linkedLeadSnap = linkedLeadRef ? await tx.get(linkedLeadRef) : null;
 
       const existingPhone = pickOptionalText(privateSnap.data()?.parentPhone, 60);
       const existingChild = pickOptionalText(demo.childName, 120);
@@ -1026,6 +1055,11 @@ export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionReques
       const nextDedupeRef = uniqueKeyRef(db, newDedupeKey);
       const nextDedupeSnap = await tx.get(nextDedupeRef);
       assertDemoUniqueAvailability(nextDedupeSnap, newDedupeKey, demoId);
+      const previousDedupeRef =
+        previousDedupeKey && previousDedupeKey !== newDedupeKey
+          ? uniqueKeyRef(db, previousDedupeKey)
+          : null;
+      const previousDedupeSnap = previousDedupeRef ? await tx.get(previousDedupeRef) : null;
 
       tx.update(demoRef, {
         parentName,
@@ -1073,9 +1107,25 @@ export const adminUpdateDemoSessionDetails = onCall<AdminUpsertDemoSessionReques
       }
       tx.set(nextDedupeRef, dedupePayload, { merge: true });
 
-      if (previousDedupeKey && previousDedupeKey !== newDedupeKey) {
-        const previousDedupeRef = uniqueKeyRef(db, previousDedupeKey);
-        const previousDedupeSnap = await tx.get(previousDedupeRef);
+      if (linkedLeadRef && linkedLeadSnap?.exists) {
+        tx.update(linkedLeadRef, {
+          parentName,
+          primaryPhone: parentPhone,
+          phoneNormalized: normalizePhoneForKey(parentPhone),
+          childName,
+          childGrade,
+          childAge,
+          interestTrack: mapCourseInterestedToLeadTrack(courseInterested),
+          source: mapDemoSourceToLeadSource(source),
+          preferredTimingText: preferredDateTimeText,
+          timezone,
+          demoSessionId: demoId,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedBy: caller.uid,
+        });
+      }
+
+      if (previousDedupeRef && previousDedupeSnap) {
         const previousMappedDemoId = pickOptionalText(previousDedupeSnap.data()?.demoId, 120);
         if (previousMappedDemoId === demoId) {
           tx.delete(previousDedupeRef);
@@ -1591,17 +1641,28 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
       }
 
       const demo = snap.data() as { status?: string; history?: unknown };
-      if (normalizeDemoStatus(demo.status) !== 'assigned') {
-        throw new HttpsError('failed-precondition', 'Only assigned demos can be reassigned');
+      const currentStatus = normalizeDemoStatus(demo.status);
+      if (currentStatus !== 'open' && currentStatus !== 'assigned') {
+        throw new HttpsError(
+          'failed-precondition',
+          'Only open or assigned demos can be assigned',
+        );
       }
 
+      const historyAction = currentStatus === 'open' ? 'assigned' : 'reassigned';
+      const historyNote =
+        currentStatus === 'open'
+          ? `Assigned to ${nextTeacherName}`
+          : `Reassigned to ${nextTeacherName}`;
+
       tx.update(demoRef, {
+        status: 'assigned',
         assignedTeacherId,
         assignedTeacherName: nextTeacherName,
         assignedAt: admin.firestore.FieldValue.serverTimestamp(),
         history: appendHistoryEntry(
           demo.history,
-          makeHistoryEntry('reassigned', caller, `Reassigned to ${nextTeacherName}`),
+          makeHistoryEntry(historyAction, caller, historyNote),
         ),
         lastUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUpdatedBy: caller.uid,

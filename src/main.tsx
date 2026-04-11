@@ -1,3 +1,4 @@
+import React, { type ErrorInfo, type ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './app';
@@ -6,9 +7,36 @@ import { queryClient } from './lib/queryClient';
 // firebase is initialized lazily by protected-route logic to keep
 // the public marketing pages lightweight. Avoid importing it here.
 import { initSentry } from './lib/sentry';
-import * as Sentry from '@sentry/react';
 import { ErrorFallback } from './components/ErrorFallback';
 import { initAnalytics } from './lib/analytics';
+
+class RootErrorBoundary extends React.Component<
+  { children: ReactNode },
+  { error: Error | null; componentStack: string }
+> {
+  state = { error: null as Error | null, componentStack: '' };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error, componentStack: '' };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.setState({ componentStack: errorInfo.componentStack || '' });
+    console.error('[TS_DEBUG] RootErrorBoundary caught error');
+    console.error('[TS_DEBUG] Error:', error);
+    console.error('[TS_DEBUG] Message:', error?.message);
+    console.error('[TS_DEBUG] Component stack:', errorInfo.componentStack);
+    console.error('[TS_DEBUG] Last JS URL:', (window as any).__ts_last_js_url);
+    console.error('[TS_DEBUG] Location:', window.location.href);
+  }
+
+  render() {
+    if (this.state.error) {
+      return <ErrorFallback error={this.state.error} componentStack={this.state.componentStack} />;
+    }
+    return this.props.children;
+  }
+}
 
 const shouldEnableLazyDebug =
   import.meta.env.DEV &&
@@ -70,23 +98,36 @@ if (shouldEnableLazyDebug) {
   }
 }
 
-initSentry();
-initAnalytics();
+const scheduleNonCriticalBoot = () => {
+  const boot = () => {
+    void initSentry();
+    initAnalytics();
+  };
+
+  if (typeof window === 'undefined') {
+    boot();
+    return;
+  }
+
+  const win = window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  };
+
+  window.requestAnimationFrame(() => {
+    if (typeof win.requestIdleCallback === 'function') {
+      win.requestIdleCallback(boot, { timeout: 2500 });
+    } else {
+      window.setTimeout(boot, 1200);
+    }
+  });
+};
+
+scheduleNonCriticalBoot();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
-    <Sentry.ErrorBoundary 
-      fallback={(props) => <ErrorFallback error={props.error as Error} componentStack={props.componentStack} />}
-      onError={(error, componentStack) => {
-        console.error('[TS_DEBUG] Sentry ErrorBoundary caught error');
-        console.error('[TS_DEBUG] Error:', error);
-        console.error('[TS_DEBUG] Message:', (error as Error)?.message);
-        console.error('[TS_DEBUG] Component stack:', componentStack);
-        console.error('[TS_DEBUG] Last JS URL:', (window as any).__ts_last_js_url);
-        console.error('[TS_DEBUG] Location:', window.location.href);
-      }}
-    >
+    <RootErrorBoundary>
       <App />
-    </Sentry.ErrorBoundary>
+    </RootErrorBoundary>
   </QueryClientProvider>
 );

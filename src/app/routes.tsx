@@ -153,37 +153,9 @@ import {
   sanitizeLabel,
   trackConversionEvent,
 } from '../lib/conversionTracking';
+import { isProtectedAppRoute, normalizePathname, shouldShowPublicSupportWidgets } from '../utils/publicRouteGuards';
 const FloatingAssistant = lazy(() => import('../components/common/FloatingAssistant'));
 const routeLoaderFallback = <div className="px-6 py-10 text-sm text-gray-600">Loading…</div>;
-
-const APP_ROUTE_PREFIXES = [
-  '/surya',
-  '/teacher',
-  '/parent',
-  '/kids',
-  '/learning-partner/dashboard',
-  '/learningpartner/dashboard',
-];
-
-const AUTH_ENTRY_ROUTES = new Set([
-  '/login',
-  '/surya/login',
-  '/admin/login',
-  '/teacher/login',
-  '/parent/login',
-  '/learning-partner/login',
-  '/learningpartner/login',
-  '/kid/login',
-]);
-
-const matchesRoutePrefix = (pathname: string, prefix: string) =>
-  pathname === prefix || pathname.startsWith(`${prefix}/`);
-
-const normalizePathname = (pathname: string): string => {
-  const lower = pathname.toLowerCase();
-  if (lower !== '/' && lower.endsWith('/')) return lower.replace(/\/+$/, '');
-  return lower;
-};
 
 const ENGLISH_EXCELLENCE_SHELL_PATH = '/kids/games/english-excellence';
 
@@ -249,8 +221,8 @@ const Layout: FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const normalizedPath = normalizePathname(location.pathname);
-  const hideMarketingChrome = APP_ROUTE_PREFIXES.some((prefix) => matchesRoutePrefix(normalizedPath, prefix));
-  const hideSupportWidgets = hideMarketingChrome || AUTH_ENTRY_ROUTES.has(normalizedPath);
+  const hideMarketingChrome = isProtectedAppRoute(normalizedPath);
+  const hideSupportWidgets = !shouldShowPublicSupportWidgets(normalizedPath);
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
@@ -402,7 +374,7 @@ const Layout: FC = () => {
       {!hideMarketingChrome ? (
         <Suspense fallback={null}>
           <AnalyticsTracker />
-          <ConversionTracker />
+          {showDeferredChrome ? <ConversionTracker /> : null}
         </Suspense>
       ) : null}
       <ScrollToTop />
@@ -575,7 +547,6 @@ const router = createBrowserRouter(
           children: [
             { index: true, element: <AdminDashboard /> },
             { path: 'analytics', element: <AdminDashboard /> },
-            { path: 'demo-sessions', element: <Navigate to="/surya?tab=leads&leadView=demos" replace /> },
             { path: 'leads', element: <Navigate to="/surya?tab=leads" replace /> },
             { path: 'class-samples', element: <Navigate to="/surya?tab=class-samples" replace /> },
             { path: 'testimonials', element: <Navigate to="/surya?tab=testimonials" replace /> },
