@@ -123,6 +123,18 @@ export default defineConfig({
           if (id.includes('/src/components/Home/LearningJourneyRoadmapPPT')) return 'home-journey-roadmap';
           if (id.includes('/src/pages/KidsEnglishExcellence')) return 'kids-english';
 
+          // Public marketing routes -> explicit async chunks to avoid a single heavy public bundle
+          if (id.includes('/src/pages/HomePage')) return 'public-home';
+          if (id.includes('/src/pages/CoursesPage') || id.includes('/src/pages/CourseDetailPage')) return 'public-courses';
+          if (id.includes('/src/pages/CurriculumPage')) return 'public-curriculum';
+          if (id.includes('/src/pages/BlogPage') || id.includes('/src/pages/BlogPostPage') || id.includes('/src/pages/blog/')) return 'public-blog';
+          if (id.includes('/src/pages/PricingPage')) return 'public-pricing';
+          if (id.includes('/src/pages/SummerCampsPage') || id.includes('/src/pages/SummerCampProgramPage')) return 'public-summer-camps';
+          if (id.includes('/src/pages/ClassSamplesPage')) return 'public-class-samples';
+          if (id.includes('/src/pages/WhyTinyStepsPage')) return 'public-why';
+          if (id.includes('/src/pages/public/')) return 'public-marketing-longtail';
+          if (id.includes('/src/pages/parents/')) return 'public-parents-hub';
+
           // Large app areas -> separate per-portal bundles
           if (id.includes('/src/pages/admin/')) return 'admin';
           if (id.includes('/src/pages/teacher/')) return 'teacher';

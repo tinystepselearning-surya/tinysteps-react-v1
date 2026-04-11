@@ -108,15 +108,64 @@ Disallow: /debug-lessons
 Disallow: /private/
 Disallow: /email/
 
-# Block training crawlers by default. This preserves search/discovery access
-# through the global group while keeping training policy explicit.
-# Google-Extended is intentionally left unblocked so Gemini grounding can use
-# publicly indexable pages.
+# Explicit LLM crawler rules: allow public pages while keeping private routes
+# blocked, matching the global protection policy above.
 User-agent: GPTBot
-Disallow: /
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
 
 User-agent: ClaudeBot
-Disallow: /
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
 
 User-agent: CCBot
-Disallow: /
+Allow: /
+Disallow: /admin/
+Disallow: /surya/
+Disallow: /teacher/
+Disallow: /parent/
+Disallow: /kids/
+Disallow: /learning-partner/dashboard
+Disallow: /learning-partner/dashboard/
+Disallow: /learning-partner/login
+Disallow: /learning-partner/login/
+Disallow: /learningpartner/dashboard
+Disallow: /learningpartner/dashboard/
+Disallow: /learningpartner/login
+Disallow: /learningpartner/login/
+Disallow: /dev/
+Disallow: /debug-lessons
+Disallow: /private/
+Disallow: /email/
