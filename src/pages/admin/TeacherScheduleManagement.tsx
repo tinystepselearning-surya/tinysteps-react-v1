@@ -41,7 +41,7 @@ import {
   WEEKDAY_OPTIONS,
 } from '../../lib/teacherAvailability';
 
-type CalendarViewMode = 'day' | 'week' | 'month';
+type CalendarViewMode = 'day' | 'week' | 'workweek' | 'month';
 
 type TeacherOption = {
   id: string;
@@ -99,6 +99,13 @@ function formatTeacherWeekSummary(config: TeacherAvailabilityConfig | null | und
     .join(' • ');
 }
 
+function formatBookingGuardrails(config: TeacherAvailabilityConfig | null | undefined): string {
+  const normalized = normalizeTeacherAvailabilityConfig(config || {});
+  const notice = normalized.minimumNoticeMinutes || 0;
+  const buffer = normalized.bufferBetweenSessionsMinutes || 0;
+  return `Min notice: ${notice}m • Buffer: ${buffer}m`;
+}
+
 function MetricCard({
   label,
   value,
@@ -140,8 +147,17 @@ function DayIntervals({
       <div className="mt-2 space-y-2">
         {intervals.map((interval) => (
           <div key={interval.id} className={`rounded-xl px-3 py-2 text-sm ${tone}`}>
-            <div className="font-medium">{formatIntervalLabel(interval.startAt, interval.endAt)}</div>
-            <div className="mt-1 text-xs opacity-80">{interval.label}</div>
+            {(() => {
+              const timeLabel = formatIntervalLabel(interval.startAt, interval.endAt);
+              const detailLabel = String(interval.label || '').trim();
+              const shouldShowDetail = detailLabel.length > 0 && detailLabel !== timeLabel;
+              return (
+                <>
+                  <div className="font-medium">{timeLabel}</div>
+                  {shouldShowDetail ? <div className="mt-1 text-xs opacity-80">{detailLabel}</div> : null}
+                </>
+              );
+            })()}
           </div>
         ))}
       </div>
@@ -211,6 +227,18 @@ function buildRangeMeta(view: CalendarViewMode, focusDate: Date): {
       days: differenceInCalendarDays(endDate, startDate) + 1,
       title: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM yyyy')}`,
       subtitle: 'Week view',
+    };
+  }
+
+  if (view === 'workweek') {
+    const startDate = startOfWeek(focusDate, { weekStartsOn: 1 });
+    const endDate = addDays(startDate, 4);
+    return {
+      startDate,
+      endDate,
+      days: differenceInCalendarDays(endDate, startDate) + 1,
+      title: `${format(startDate, 'd MMM')} - ${format(endDate, 'd MMM yyyy')}`,
+      subtitle: 'Work week view',
     };
   }
 
@@ -591,13 +619,13 @@ export default function TeacherScheduleManagement(): React.ReactElement {
 
   const handlePrev = () => {
     if (calendarView === 'day') setFocusDate((current) => addDays(current, -1));
-    else if (calendarView === 'week') setFocusDate((current) => subWeeks(current, 1));
+    else if (calendarView === 'week' || calendarView === 'workweek') setFocusDate((current) => subWeeks(current, 1));
     else setFocusDate((current) => subMonths(current, 1));
   };
 
   const handleNext = () => {
     if (calendarView === 'day') setFocusDate((current) => addDays(current, 1));
-    else if (calendarView === 'week') setFocusDate((current) => addWeeks(current, 1));
+    else if (calendarView === 'week' || calendarView === 'workweek') setFocusDate((current) => addWeeks(current, 1));
     else setFocusDate((current) => addMonths(current, 1));
   };
 
@@ -676,6 +704,9 @@ export default function TeacherScheduleManagement(): React.ReactElement {
               Weekly pattern: {formatTeacherWeekSummary(selectedAvailability)}
             </div>
             <div className="text-sm text-muted-foreground">
+              Booking guardrails: {formatBookingGuardrails(selectedAvailability)}
+            </div>
+            <div className="text-sm text-muted-foreground">
               {rangeMeta.subtitle}: {rangeMeta.title}
             </div>
           </div>
@@ -686,9 +717,10 @@ export default function TeacherScheduleManagement(): React.ReactElement {
               onValueChange={(value) => setCalendarView(value as CalendarViewMode)}
               className="w-full"
             >
-              <TabsList className="grid h-auto grid-cols-3 rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <TabsList className="grid h-auto grid-cols-4 rounded-xl border border-slate-200 bg-slate-50 p-1">
                 <TabsTrigger value="day">Day</TabsTrigger>
                 <TabsTrigger value="week">Week</TabsTrigger>
+                <TabsTrigger value="workweek">Work week</TabsTrigger>
                 <TabsTrigger value="month">Month</TabsTrigger>
               </TabsList>
             </Tabs>

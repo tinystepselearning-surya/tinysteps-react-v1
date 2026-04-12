@@ -169,7 +169,7 @@ const completeSessionViaBackend = async (
 export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const { user } = useAuthStore();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<'month' | 'week' | 'day'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('month');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [blockedSlots, setBlockedSlots] = useState<BlockedSlot[]>([]);
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
@@ -232,6 +232,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const { rangeStart, rangeEnd } = useMemo(() => {
     if (view === 'month') {
       return { rangeStart: startOfMonth(currentDate), rangeEnd: endOfMonth(currentDate) };
+    } else if (view === 'workweek') {
+      const mondayStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+      return { rangeStart: mondayStart, rangeEnd: addDays(mondayStart, 4) };
     } else if (view === 'week') {
       return { rangeStart: startOfWeek(currentDate, { weekStartsOn: 0 }), rangeEnd: endOfWeek(currentDate, { weekStartsOn: 0 }) };
     } else {
@@ -888,7 +891,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const handlePrev = () => {
     if (view === 'month') {
       setCurrentDate(subMonths(currentDate, 1));
-    } else if (view === 'week') {
+    } else if (view === 'week' || view === 'workweek') {
       setCurrentDate(subWeeks(currentDate, 1));
     } else {
       setCurrentDate(subDays(currentDate, 1));
@@ -898,16 +901,22 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
   const handleNext = () => {
     if (view === 'month') {
       setCurrentDate(addMonths(currentDate, 1));
-    } else if (view === 'week') {
+    } else if (view === 'week' || view === 'workweek') {
       setCurrentDate(addWeeks(currentDate, 1));
     } else {
       setCurrentDate(addDays(currentDate, 1));
     }
   };
 
+  const handleToday = () => {
+    setCurrentDate(new Date());
+  };
+
   const getTitle = () => {
     if (view === 'month') {
       return format(currentDate, 'MMMM yyyy');
+    } else if (view === 'workweek') {
+      return `Work week ${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy')}`;
     } else if (view === 'week') {
       return `Week of ${format(rangeStart, 'MMM d')} - ${format(rangeEnd, 'MMM d, yyyy')}`;
     } else {
@@ -951,6 +960,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePrev}>Prev</Button>
+          <Button variant="outline" size="sm" onClick={handleToday}>Today</Button>
           <h2 className="text-2xl font-bold">
             {getTitle()}
           </h2>
@@ -958,6 +968,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         </div>
         <div className="flex gap-2">
           <Button variant={view === 'month' ? 'default' : 'outline'} onClick={() => setView('month')}>Month</Button>
+          <Button variant={view === 'workweek' ? 'default' : 'outline'} onClick={() => setView('workweek')}>Work Week</Button>
           <Button variant={view === 'week' ? 'default' : 'outline'} onClick={() => setView('week')}>Week</Button>
           <Button variant={view === 'day' ? 'default' : 'outline'} onClick={() => setView('day')}>Day</Button>
           <Button variant="outline" onClick={openScheduleModal}>Create Makeup Session</Button>
@@ -1156,9 +1167,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         </Card>
       )}
 
-      {view === 'week' && (
+      {(view === 'week' || view === 'workweek') && (
         <Card className="p-6">
-          <div className="grid grid-cols-7 gap-2">
+          <div
+            className="grid gap-2"
+            style={{ gridTemplateColumns: `repeat(${Math.max(days.length, 1)}, minmax(0, 1fr))` }}
+          >
             {days.map(day => {
               const dateStr = format(day, 'yyyy-MM-dd');
               const daySessions = sessionsByDate[dateStr] || [];

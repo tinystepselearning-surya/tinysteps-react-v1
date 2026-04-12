@@ -14,6 +14,8 @@ export interface TeacherAvailabilityWindow {
 export interface TeacherAvailabilityConfig {
   timezone: string;
   slotIntervalMinutes: number;
+  minimumNoticeMinutes: number;
+  bufferBetweenSessionsMinutes: number;
   weeklyWindows: TeacherAvailabilityWindow[];
   updatedAt?: unknown;
   updatedBy?: string | null;
@@ -61,6 +63,8 @@ export interface ScheduleGridCell {
 
 export const DEFAULT_SLOT_INTERVAL_MINUTES = 30;
 export const DEFAULT_DEMO_DURATION_MINUTES = 35;
+export const DEFAULT_MINIMUM_NOTICE_MINUTES = 0;
+export const DEFAULT_BUFFER_BETWEEN_SESSIONS_MINUTES = 0;
 
 export const WEEKDAY_OPTIONS: Array<{ value: number; label: string; shortLabel: string }> = [
   { value: 1, label: 'Monday', shortLabel: 'Mon' },
@@ -215,6 +219,8 @@ export function normalizeTeacherAvailabilityConfig(raw: unknown): TeacherAvailab
     });
 
   const slotIntervalMinutes = Number(source.slotIntervalMinutes);
+  const minimumNoticeMinutes = Number(source.minimumNoticeMinutes);
+  const bufferBetweenSessionsMinutes = Number(source.bufferBetweenSessionsMinutes);
   const timezone = String(
     source.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
   );
@@ -225,6 +231,14 @@ export function normalizeTeacherAvailabilityConfig(raw: unknown): TeacherAvailab
       Number.isFinite(slotIntervalMinutes) && slotIntervalMinutes >= 15 && slotIntervalMinutes <= 120
         ? Math.round(slotIntervalMinutes)
         : DEFAULT_SLOT_INTERVAL_MINUTES,
+    minimumNoticeMinutes:
+      Number.isFinite(minimumNoticeMinutes) && minimumNoticeMinutes >= 0 && minimumNoticeMinutes <= 1440
+        ? Math.round(minimumNoticeMinutes)
+        : DEFAULT_MINIMUM_NOTICE_MINUTES,
+    bufferBetweenSessionsMinutes:
+      Number.isFinite(bufferBetweenSessionsMinutes) && bufferBetweenSessionsMinutes >= 0 && bufferBetweenSessionsMinutes <= 180
+        ? Math.round(bufferBetweenSessionsMinutes)
+        : DEFAULT_BUFFER_BETWEEN_SESSIONS_MINUTES,
     weeklyWindows,
     updatedAt: source.updatedAt,
     updatedBy: typeof source.updatedBy === 'string' ? source.updatedBy : null,
@@ -237,6 +251,8 @@ export function validateTeacherAvailabilityWindows(
   const normalized = normalizeTeacherAvailabilityConfig({
     weeklyWindows: windows,
     slotIntervalMinutes: DEFAULT_SLOT_INTERVAL_MINUTES,
+    minimumNoticeMinutes: DEFAULT_MINIMUM_NOTICE_MINUTES,
+    bufferBetweenSessionsMinutes: DEFAULT_BUFFER_BETWEEN_SESSIONS_MINUTES,
     timezone: 'Asia/Kolkata',
   }).weeklyWindows;
 
@@ -397,6 +413,7 @@ export function buildDayScheduleSnapshot(input: {
   demos?: DemoSession[];
   blockedSlots?: TeacherBlockedSlotLite[];
   demoDurationMinutes?: number;
+  now?: Date;
 }): ScheduleDaySnapshot {
   const {
     date,
@@ -405,6 +422,7 @@ export function buildDayScheduleSnapshot(input: {
     demos = [],
     blockedSlots = [],
     demoDurationMinutes = DEFAULT_DEMO_DURATION_MINUTES,
+    now = new Date(),
   } = input;
 
   const config = normalizeTeacherAvailabilityConfig(availabilityConfig || {});
@@ -454,10 +472,39 @@ export function buildDayScheduleSnapshot(input: {
     label: slot.reason?.trim() || formatIntervalLabel(slot.startAt, slot.endAt),
   }));
 
+  const bufferMinutes = Math.max(0, config.bufferBetweenSessionsMinutes || 0);
+  const bufferedSessionIntervals =
+    bufferMinutes > 0
+      ? [...classIntervals, ...demoIntervals]
+          .map((interval) => {
+            const startAt = new Date(
+              Math.max(dayStart.getTime(), interval.startAt.getTime() - bufferMinutes * 60 * 1000),
+            );
+            const endAt = new Date(
+              Math.min(dayEnd.getTime(), interval.endAt.getTime() + bufferMinutes * 60 * 1000),
+            );
+            if (!(endAt > startAt)) return null;
+            return { startAt, endAt };
+          })
+          .filter((interval): interval is { startAt: Date; endAt: Date } => Boolean(interval))
+      : [];
+
+  const minimumNoticeMinutes = Math.max(0, config.minimumNoticeMinutes || 0);
+  const noticeCutoff = new Date(now.getTime() + minimumNoticeMinutes * 60 * 1000);
+  const noticeIntervals: Array<{ startAt: Date; endAt: Date }> = [];
+  if (minimumNoticeMinutes > 0 && noticeCutoff > dayStart) {
+    const endAt = noticeCutoff < dayEnd ? noticeCutoff : dayEnd;
+    if (endAt > dayStart) {
+      noticeIntervals.push({ startAt: dayStart, endAt });
+    }
+  }
+
   const occupiedUnion = mergeIntervals([
     ...classIntervals,
     ...demoIntervals,
     ...normalizedBlockedIntervals,
+    ...bufferedSessionIntervals,
+    ...noticeIntervals,
   ]);
 
   const openIntervals = availabilityIntervals.flatMap((interval, index) =>
@@ -490,8 +537,9 @@ export function buildScheduleRangeSnapshots(input: {
   demos?: DemoSession[];
   blockedSlots?: TeacherBlockedSlotLite[];
   demoDurationMinutes?: number;
+  now?: Date;
 }): ScheduleDaySnapshot[] {
-  const { startDate, days, availabilityConfig, sessions, demos, blockedSlots, demoDurationMinutes } = input;
+  const { startDate, days, availabilityConfig, sessions, demos, blockedSlots, demoDurationMinutes, now } = input;
   const start = startOfDay(startDate);
   return Array.from({ length: Math.max(0, days) }, (_, index) =>
     buildDayScheduleSnapshot({
@@ -501,6 +549,7 @@ export function buildScheduleRangeSnapshots(input: {
       demos,
       blockedSlots,
       demoDurationMinutes,
+      now,
     }),
   );
 }
@@ -541,6 +590,9 @@ export function buildDayGridCells(input: {
     );
 
     const hasAvailability = overlapsAvailability.length > 0;
+    const hasOpen = day.openIntervals.some((interval) =>
+      overlaps(slotStart, slotEnd, interval.startAt, interval.endAt),
+    );
     const hasClass = overlapsClasses.length > 0;
     const hasDemo = overlapsDemos.length > 0;
     const hasBlocked = overlapsBlocked.length > 0;
@@ -556,7 +608,7 @@ export function buildDayGridCells(input: {
     else if (hasBlocked) status = 'blocked';
     else if (hasClass) status = 'class';
     else if (hasDemo) status = 'demo';
-    else if (hasAvailability) status = 'available';
+    else if (hasAvailability && hasOpen) status = 'available';
 
     const labels = [
       ...overlapsClasses.map((interval) => interval.label),

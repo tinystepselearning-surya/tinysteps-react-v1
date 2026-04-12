@@ -172,4 +172,55 @@ describe('teacherAvailability helpers', () => {
     expect(counts.available).toBe(3);
     expect(flattenOpenIntervals(days)).toHaveLength(2);
   });
+
+  it('applies minimum notice and buffer constraints to bookable open slots', () => {
+    const monday = dateKeyToDate('2026-04-13');
+    expect(monday).toBeTruthy();
+    if (!monday) return;
+
+    const availabilityConfig = normalizeTeacherAvailabilityConfig({
+      timezone: 'Asia/Kolkata',
+      slotIntervalMinutes: 30,
+      minimumNoticeMinutes: 60,
+      bufferBetweenSessionsMinutes: 15,
+      weeklyWindows: [createAvailabilityWindow(1, '17:00', '21:00')],
+    });
+
+    const sessions: TeacherSession[] = [
+      {
+        id: 'class_buffered',
+        teacherId: 'teacher_1',
+        courseId: 'phonics',
+        date: '2026-04-13',
+        startTime: '18:00',
+        endTime: '18:30',
+        kidIds: ['kid_1'],
+        status: 'scheduled',
+      },
+    ];
+
+    const snapshot = buildDayScheduleSnapshot({
+      date: monday,
+      availabilityConfig,
+      sessions,
+      now: new Date(2026, 3, 13, 16, 30, 0, 0), // 4:30 PM; minimum notice => open starts at 5:30 PM
+    });
+
+    const labels = snapshot.openIntervals.map((interval) => formatIntervalLabel(interval.startAt, interval.endAt));
+    expect(labels).toEqual(['5:30 PM - 5:45 PM', '6:45 PM - 9:00 PM']);
+
+    const cells = buildDayGridCells({
+      day: snapshot,
+      slotIntervalMinutes: 30,
+      startMinutes: 17 * 60,
+      endMinutes: 21 * 60,
+    });
+
+    // 5:00 PM slot should be unavailable due to minimum notice.
+    expect(cells[0].status).toBe('unavailable');
+    // 6:00 PM slot remains class.
+    expect(cells[2].status).toBe('class');
+    // 7:00 PM slot is bookable again after buffer window.
+    expect(cells[4].status).toBe('available');
+  });
 });

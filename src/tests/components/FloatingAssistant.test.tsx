@@ -2,6 +2,7 @@ import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { act } from 'react'
 import { vi } from 'vitest'
+import { MemoryRouter } from 'react-router-dom'
 import FloatingAssistant from '../../components/common/FloatingAssistant'
 import useAuthStore from '../../store/useAuthStore'
 
@@ -25,9 +26,13 @@ describe('FloatingAssistant', () => {
     global.requestAnimationFrame = rafBackup
   })
 
-  const renderAnonymousWidget = async () => {
-    act(() => useAuthStore.setState({ user: null }))
-    const utils = render(<FloatingAssistant />)
+  const renderWidget = async (path = '/', user: any = null) => {
+    act(() => useAuthStore.setState({ user }))
+    const utils = render(
+      <MemoryRouter initialEntries={[path]}>
+        <FloatingAssistant />
+      </MemoryRouter>
+    )
     await act(async () => {
       await Promise.resolve()
     })
@@ -35,7 +40,7 @@ describe('FloatingAssistant', () => {
   }
 
   it('shows the compact dock by default with exactly one widget mount', async () => {
-    await renderAnonymousWidget()
+    await renderWidget()
 
     expect(document.querySelectorAll('[data-floating-assistant="1"]').length).toBe(1)
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
@@ -44,7 +49,7 @@ describe('FloatingAssistant', () => {
   })
 
   it('auto-collapses and auto-expands every 10 seconds', async () => {
-    await renderAnonymousWidget()
+    await renderWidget()
 
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
 
@@ -60,50 +65,41 @@ describe('FloatingAssistant', () => {
   })
 
   it('opens the AI modal from the bubble button', async () => {
-    await renderAnonymousWidget()
+    await renderWidget()
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
     expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
   })
 
-  it('renders on public routes even when a user is present in auth store', async () => {
-    act(() => useAuthStore.setState({ user: { uid: 'u1', email: 'test@example.com', displayName: 'Test', role: 'parent' } }))
-    act(() => render(<FloatingAssistant />))
-    await act(async () => {
-      await Promise.resolve()
-    })
-
-    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
+  it('does not render when a user is authenticated, even on public routes', async () => {
+    await renderWidget('/', { uid: 'u1', email: 'test@example.com', displayName: 'Test', role: 'parent' })
+    expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
   })
 
   it('does not render on protected app routes even if auth store user is null', async () => {
-    window.history.pushState({}, '', '/surya')
-    await renderAnonymousWidget()
+    await renderWidget('/surya')
 
     expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
   })
 
   it('does not render on protected alias routes', async () => {
-    window.history.pushState({}, '', '/admin')
-    await renderAnonymousWidget()
+    await renderWidget('/admin')
 
     expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
   })
 
   it('does not render on learning partner dashboard routes', async () => {
-    window.history.pushState({}, '', '/learning-partner/dashboard')
-    await renderAnonymousWidget()
+    await renderWidget('/learning-partner/dashboard')
 
     expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()
   })
 
   it('does not render on login routes', async () => {
-    window.history.pushState({}, '', '/teacher/login')
-    await renderAnonymousWidget()
+    await renderWidget('/teacher/login')
 
     expect(screen.queryByRole('button', { name: 'Ask TinySteps AI' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Chat on WhatsApp' })).toBeNull()

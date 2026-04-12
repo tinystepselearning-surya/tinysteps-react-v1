@@ -24,6 +24,8 @@ import {
   buildDayGridCells,
   buildScheduleRangeSnapshots,
   createAvailabilityWindow,
+  DEFAULT_BUFFER_BETWEEN_SESSIONS_MINUTES,
+  DEFAULT_MINIMUM_NOTICE_MINUTES,
   DEFAULT_DEMO_DURATION_MINUTES,
   formatMinutesAsTimeHHmm,
   formatTimeLabel,
@@ -44,6 +46,8 @@ interface TeacherAvailabilityEditorProps {
 const EMPTY_CONFIG: TeacherAvailabilityConfig = normalizeTeacherAvailabilityConfig({
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata',
   slotIntervalMinutes: 30,
+  minimumNoticeMinutes: DEFAULT_MINIMUM_NOTICE_MINUTES,
+  bufferBetweenSessionsMinutes: DEFAULT_BUFFER_BETWEEN_SESSIONS_MINUTES,
   weeklyWindows: [],
 });
 
@@ -65,6 +69,15 @@ const STATUS_LABELS: Record<SlotStatus, string> = {
   conflict: 'Conflict',
 };
 
+const STATUS_COUNT_TONES: Record<SlotStatus, string> = {
+  unavailable: 'text-slate-500',
+  available: 'text-emerald-700',
+  class: 'text-sky-700',
+  demo: 'text-amber-700',
+  blocked: 'text-rose-700',
+  conflict: 'text-fuchsia-700',
+};
+
 function sortWindows(windows: TeacherAvailabilityWindow[]): TeacherAvailabilityWindow[] {
   return [...windows].sort((a, b) => {
     if (a.weekday !== b.weekday) return a.weekday - b.weekday;
@@ -76,6 +89,8 @@ function serializeConfig(config: TeacherAvailabilityConfig): string {
   return JSON.stringify({
     timezone: config.timezone,
     slotIntervalMinutes: config.slotIntervalMinutes,
+    minimumNoticeMinutes: config.minimumNoticeMinutes,
+    bufferBetweenSessionsMinutes: config.bufferBetweenSessionsMinutes,
     weeklyWindows: sortWindows(config.weeklyWindows).map((window) => ({
       weekday: window.weekday,
       startTime: window.startTime,
@@ -93,6 +108,7 @@ export function TeacherAvailabilityEditor({
   const [draft, setDraft] = useState<TeacherAvailabilityConfig>(EMPTY_CONFIG);
   const [savedConfig, setSavedConfig] = useState<TeacherAvailabilityConfig>(EMPTY_CONFIG);
   const [previewDays, setPreviewDays] = useState<7 | 14>(7);
+  const [previewExpanded, setPreviewExpanded] = useState(false);
   const [previewBlockedSlots, setPreviewBlockedSlots] = useState<TeacherBlockedSlotLite[]>([]);
   const [previewDemos, setPreviewDemos] = useState<DemoSession[]>([]);
   const [selectedPreviewCellKey, setSelectedPreviewCellKey] = useState<string>('');
@@ -303,6 +319,23 @@ export function TeacherAvailabilityEditor({
     [previewCellsByDate, previewSnapshots],
   );
 
+  const previewStatusCounts = useMemo(() => {
+    const counts: Record<SlotStatus, number> = {
+      unavailable: 0,
+      available: 0,
+      class: 0,
+      demo: 0,
+      blocked: 0,
+      conflict: 0,
+    };
+    previewGridByDay.forEach((rows) => {
+      rows.forEach((cell) => {
+        counts[cell.status] += 1;
+      });
+    });
+    return counts;
+  }, [previewGridByDay]);
+
   const selectedPreviewCell = useMemo(() => {
     if (!selectedPreviewCellKey) return null;
     const [dateKey, minuteText] = selectedPreviewCellKey.split('|');
@@ -324,6 +357,12 @@ export function TeacherAvailabilityEditor({
     if (!selectedPreviewCellKey) return;
     if (!selectedPreviewCell) setSelectedPreviewCellKey('');
   }, [selectedPreviewCell, selectedPreviewCellKey]);
+
+  useEffect(() => {
+    if (!previewExpanded && selectedPreviewCellKey) {
+      setSelectedPreviewCellKey('');
+    }
+  }, [previewExpanded, selectedPreviewCellKey]);
 
   const handleWindowChange = (
     windowId: string,
@@ -366,6 +405,26 @@ export function TeacherAvailabilityEditor({
 
   const clearAllWindows = () => {
     setDraft((current) => ({ ...current, weeklyWindows: [] }));
+  };
+
+  const handleNoticeChange = (value: string) => {
+    const parsed = Number(value);
+    setDraft((current) => ({
+      ...current,
+      minimumNoticeMinutes: Number.isFinite(parsed)
+        ? Math.max(0, Math.min(1440, Math.round(parsed)))
+        : DEFAULT_MINIMUM_NOTICE_MINUTES,
+    }));
+  };
+
+  const handleBufferChange = (value: string) => {
+    const parsed = Number(value);
+    setDraft((current) => ({
+      ...current,
+      bufferBetweenSessionsMinutes: Number.isFinite(parsed)
+        ? Math.max(0, Math.min(180, Math.round(parsed)))
+        : DEFAULT_BUFFER_BETWEEN_SESSIONS_MINUTES,
+    }));
   };
 
   const clearWeekdayWindows = (weekday: number) => {
@@ -411,6 +470,8 @@ export function TeacherAvailabilityEditor({
         {
           timezone: normalized.timezone,
           slotIntervalMinutes: normalized.slotIntervalMinutes,
+          minimumNoticeMinutes: normalized.minimumNoticeMinutes,
+          bufferBetweenSessionsMinutes: normalized.bufferBetweenSessionsMinutes,
           weeklyWindows: normalized.weeklyWindows,
           updatedAt: serverTimestamp(),
           updatedBy: teacherId,
@@ -519,6 +580,44 @@ export function TeacherAvailabilityEditor({
         </div>
       </div>
 
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Minimum notice (minutes)
+          </div>
+          <Input
+            type="number"
+            min={0}
+            max={1440}
+            step={5}
+            value={draft.minimumNoticeMinutes}
+            onChange={(event) => handleNoticeChange(event.target.value)}
+            className="mt-2 w-full"
+          />
+          <div className="mt-2 text-xs text-slate-500">
+            New bookings are allowed only after this lead time from now.
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            Buffer between sessions (minutes)
+          </div>
+          <Input
+            type="number"
+            min={0}
+            max={180}
+            step={5}
+            value={draft.bufferBetweenSessionsMinutes}
+            onChange={(event) => handleBufferChange(event.target.value)}
+            className="mt-2 w-full"
+          />
+          <div className="mt-2 text-xs text-slate-500">
+            Leaves protected time before and after classes/demos.
+          </div>
+        </div>
+      </div>
+
       <div className="mt-4 space-y-3">
         {WEEKDAY_OPTIONS.map((day) => {
           const dayWindows = windowsByWeekday.get(day.value) || [];
@@ -606,7 +705,7 @@ export function TeacherAvailabilityEditor({
               This uses your draft availability plus existing classes, demos, and manual blocks.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               size="sm"
@@ -623,124 +722,146 @@ export function TeacherAvailabilityEditor({
             >
               Next 14 days
             </Button>
+            <Button type="button" size="sm" variant="outline" onClick={() => setPreviewExpanded((current) => !current)}>
+              {previewExpanded ? 'Collapse preview' : 'Expand preview'}
+            </Button>
           </div>
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-2 text-xs">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {(['available', 'class', 'demo', 'blocked', 'conflict'] as SlotStatus[]).map((status) => (
-            <span
-              key={status}
-              className={`inline-flex items-center rounded-full px-3 py-1 font-medium ${STATUS_STYLES[status]}`}
-            >
-              {STATUS_LABELS[status]}
-            </span>
+            <div key={status} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+              <div className="text-[11px] uppercase tracking-[0.14em] text-slate-500">{STATUS_LABELS[status]}</div>
+              <div className={`mt-1 text-lg font-semibold ${STATUS_COUNT_TONES[status]}`}>
+                {previewStatusCounts[status]}
+              </div>
+            </div>
           ))}
         </div>
 
-        <div className="mt-4 max-h-[420px] overflow-auto rounded-xl border border-slate-200 bg-white p-2">
-          <table className="min-w-max border-separate border-spacing-1">
-            <thead>
-              <tr>
-                <th className="sticky left-0 top-0 z-30 min-w-[95px] rounded-lg bg-white px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 shadow-sm">
-                  Time
-                </th>
-                {previewSnapshots.map((day) => (
-                  <th
-                    key={day.dateKey}
-                    className="sticky top-0 z-20 min-w-[104px] rounded-lg bg-slate-100 px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600"
-                  >
-                    <div>{format(day.date, 'EEE')}</div>
-                    <div className="mt-1 text-[10px] font-medium text-slate-500">{format(day.date, 'd MMM')}</div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {previewTimeRows.map((minutes, rowIndex) => (
-                <tr key={minutes}>
-                  <td className="sticky left-0 z-10 rounded-lg bg-white px-2 py-2 text-xs font-medium text-slate-500 shadow-sm">
-                    {formatTimeLabel(formatMinutesAsTimeHHmm(minutes))}
-                  </td>
-                  {previewGridByDay.map((cells, dayIndex) => {
-                    const cell = cells[rowIndex];
-                    const key = `${previewSnapshots[dayIndex].dateKey}|${minutes}`;
-                    const isSelected = selectedPreviewCellKey === key;
-                    const isClickable = Boolean(cell && cell.status !== 'unavailable');
-                    return (
-                      <td
-                        key={key}
-                        title={(cell?.labels || []).join('\n')}
-                        className={`h-[40px] min-w-[104px] rounded-lg px-2 py-1 text-center text-[11px] font-medium ${
-                          STATUS_STYLES[cell?.status || 'unavailable']
-                        } ${isClickable ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-sky-400 ring-offset-1' : ''}`}
-                        onClick={() => {
-                          if (!isClickable) return;
-                          setSelectedPreviewCellKey(key);
-                        }}
-                      >
-                        {STATUS_LABELS[cell?.status || 'unavailable']}
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {selectedPreviewCell ? (
-          <Card className="mt-4 border-slate-200 bg-slate-50/70 p-3 shadow-none">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-sm font-semibold text-slate-900">
-                {format(selectedPreviewCell.day.date, 'EEE, d MMM')} ·{' '}
-                {formatTimeLabel(formatMinutesAsTimeHHmm(selectedPreviewCell.minutes))} -{' '}
-                {formatTimeLabel(
-                  formatMinutesAsTimeHHmm(selectedPreviewCell.minutes + previewSlotIntervalMinutes),
-                )}
-              </div>
-              <Badge className={STATUS_STYLES[selectedPreviewCell.cell.status]}>
-                {STATUS_LABELS[selectedPreviewCell.cell.status] || 'Unavailable'}
-              </Badge>
-            </div>
-
-            {selectedPreviewCell.cell.conflictReasons.length > 0 ? (
-              <div className="mt-3">
-                <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Why conflict
-                </div>
-                <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                  {selectedPreviewCell.cell.conflictReasons.map((reason, index) => (
-                    <li key={`${reason}_${index}`}>• {reason}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
-
-            <div className="mt-3">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Overlapping Sources
-              </div>
-              <div className="mt-2 space-y-2">
-                {selectedPreviewCell.cell.sources.length === 0 ? (
-                  <div className="text-sm text-slate-500">No overlapping source records for this slot.</div>
-                ) : (
-                  selectedPreviewCell.cell.sources.map((source) => (
-                    <div key={`${source.kind}_${source.id}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
-                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                        {source.kind}
-                      </div>
-                      <div className="mt-1 text-sm font-medium text-slate-800">{source.label}</div>
-                      <div className="mt-1 text-xs text-slate-500">Source ID: {source.sourceId || source.id}</div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </Card>
-        ) : (
-          <div className="mt-3 text-sm text-slate-500">
-            Click any non-empty slot in the preview to inspect source records and conflict reasons.
+        {!previewExpanded ? (
+          <div className="mt-3 rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-600">
+            Preview is collapsed to keep the planner compact. Expand preview to inspect cell-level open/conflict details.
           </div>
+        ) : (
+          <>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              {(['available', 'class', 'demo', 'blocked', 'conflict'] as SlotStatus[]).map((status) => (
+                <span
+                  key={status}
+                  className={`inline-flex items-center rounded-full px-3 py-1 font-medium ${STATUS_STYLES[status]}`}
+                >
+                  {STATUS_LABELS[status]}
+                </span>
+              ))}
+            </div>
+
+            <div className="mt-4 max-h-[420px] overflow-auto rounded-xl border border-slate-200 bg-white p-2">
+              <table className="min-w-max border-separate border-spacing-1">
+                <thead>
+                  <tr>
+                    <th className="sticky left-0 top-0 z-30 min-w-[95px] rounded-lg bg-white px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 shadow-sm">
+                      Time
+                    </th>
+                    {previewSnapshots.map((day) => (
+                      <th
+                        key={day.dateKey}
+                        className="sticky top-0 z-20 min-w-[104px] rounded-lg bg-slate-100 px-2 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600"
+                      >
+                        <div>{format(day.date, 'EEE')}</div>
+                        <div className="mt-1 text-[10px] font-medium text-slate-500">{format(day.date, 'd MMM')}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {previewTimeRows.map((minutes, rowIndex) => (
+                    <tr key={minutes}>
+                      <td className="sticky left-0 z-10 rounded-lg bg-white px-2 py-2 text-xs font-medium text-slate-500 shadow-sm">
+                        {formatTimeLabel(formatMinutesAsTimeHHmm(minutes))}
+                      </td>
+                      {previewGridByDay.map((cells, dayIndex) => {
+                        const cell = cells[rowIndex];
+                        const key = `${previewSnapshots[dayIndex].dateKey}|${minutes}`;
+                        const isSelected = selectedPreviewCellKey === key;
+                        const isClickable = Boolean(cell && cell.status !== 'unavailable');
+                        return (
+                          <td
+                            key={key}
+                            title={(cell?.labels || []).join('\n')}
+                            className={`h-[40px] min-w-[104px] rounded-lg px-2 py-1 text-center text-[11px] font-medium ${
+                              STATUS_STYLES[cell?.status || 'unavailable']
+                            } ${isClickable ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-sky-400 ring-offset-1' : ''}`}
+                            onClick={() => {
+                              if (!isClickable) return;
+                              setSelectedPreviewCellKey(key);
+                            }}
+                          >
+                            {STATUS_LABELS[cell?.status || 'unavailable']}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {selectedPreviewCell ? (
+              <Card className="mt-4 border-slate-200 bg-slate-50/70 p-3 shadow-none">
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-sm font-semibold text-slate-900">
+                    {format(selectedPreviewCell.day.date, 'EEE, d MMM')} ·{' '}
+                    {formatTimeLabel(formatMinutesAsTimeHHmm(selectedPreviewCell.minutes))} -{' '}
+                    {formatTimeLabel(
+                      formatMinutesAsTimeHHmm(selectedPreviewCell.minutes + previewSlotIntervalMinutes),
+                    )}
+                  </div>
+                  <Badge className={STATUS_STYLES[selectedPreviewCell.cell.status]}>
+                    {STATUS_LABELS[selectedPreviewCell.cell.status] || 'Unavailable'}
+                  </Badge>
+                </div>
+
+                {selectedPreviewCell.cell.conflictReasons.length > 0 ? (
+                  <div className="mt-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      Why conflict
+                    </div>
+                    <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                      {selectedPreviewCell.cell.conflictReasons.map((reason, index) => (
+                        <li key={`${reason}_${index}`}>• {reason}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+
+                <div className="mt-3">
+                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Overlapping Sources
+                  </div>
+                  <div className="mt-2 space-y-2">
+                    {selectedPreviewCell.cell.sources.length === 0 ? (
+                      <div className="text-sm text-slate-500">No overlapping source records for this slot.</div>
+                    ) : (
+                      selectedPreviewCell.cell.sources.map((source) => (
+                        <div key={`${source.kind}_${source.id}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                            {source.kind}
+                          </div>
+                          <div className="mt-1 text-sm font-medium text-slate-800">{source.label}</div>
+                          <div className="mt-1 text-xs text-slate-500">Source ID: {source.sourceId || source.id}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <div className="mt-3 text-sm text-slate-500">
+                Click any non-empty slot in the preview to inspect source records and conflict reasons.
+              </div>
+            )}
+          </>
         )}
       </div>
     </Card>
