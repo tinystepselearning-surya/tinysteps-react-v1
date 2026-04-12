@@ -273,7 +273,13 @@ service cloud.firestore {
     }
 
     match /teachers/{teacherId}/blockedSlots/{blockId} {
-      allow read, create, update, delete: if isSignedIn() && request.auth.uid == teacherId;
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == teacherId);
+      allow create, update, delete: if isSignedIn() && request.auth.uid == teacherId;
+    }
+
+    match /teachers/{teacherId}/availability/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == teacherId);
+      allow create, update, delete: if isSignedIn() && request.auth.uid == teacherId;
     }
 
     match /teachers/{teacherId}/earnings/{docId} {

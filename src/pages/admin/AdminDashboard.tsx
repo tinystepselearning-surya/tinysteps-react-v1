@@ -8,6 +8,7 @@ import {
   BellDot,
   BookCopy,
   BookOpen,
+  CalendarClock,
   CalendarDays,
   ClipboardList,
   ContactRound,
@@ -51,6 +52,7 @@ import AnalyticsDashboard from './AnalyticsDashboard';
 import TeacherPayments from './TeacherPayments';
 import ParentPayments from './ParentPayments';
 import ParentWorksheetLibraryManagement from './ParentWorksheetLibraryManagement';
+import TeacherScheduleManagement from './TeacherScheduleManagement';
 import FinanceReconciliationRunsCard from './FinanceReconciliationRunsCard';
 import EnrollmentCanonicalMigrationCard from './EnrollmentCanonicalMigrationCard';
 import { isSuperUserEmail } from '../../constants/accessControl';
@@ -81,6 +83,7 @@ const ADMIN_MOBILE_TABS: MobileTabBarItem[] = [
   { id: 'testimonials', label: 'Reviews', icon: MessageSquareQuote },
   { id: 'parent-worksheets', label: 'Worksheets', icon: FileText },
   { id: 'analytics', label: 'Analytics', icon: LineChart },
+  { id: 'teacher-schedule', label: 'Schedules', icon: CalendarClock },
   { id: 'holidays', label: 'Holidays', icon: CalendarDays },
   { id: 'teacher-payments', label: 'Teacher Pay', icon: Wallet },
   { id: 'parent-payments', label: 'Parent Pay', icon: CreditCard },
@@ -322,7 +325,9 @@ export default function AdminDashboard() {
       'class-recordings',
       'class-samples',
       'testimonials',
+      'parent-worksheets',
       'analytics',
+      'teacher-schedule',
       'holidays',
       'teacher-payments',
       'parent-payments',
@@ -454,6 +459,10 @@ export default function AdminDashboard() {
                 <AdminOverviewCard />
                 <AnalyticsDashboard />
               </div>
+            </TabsContent>
+
+            <TabsContent value="teacher-schedule" className="mt-0">
+              <TeacherScheduleManagement />
             </TabsContent>
 
             <TabsContent value="holidays" className="mt-0">

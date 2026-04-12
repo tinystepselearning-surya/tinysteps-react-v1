@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTeacherSessions } from '../../hooks/useTeacherSessions';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { AttendanceForm } from '../today-sessions/AttendanceForm';
+import { TeacherAvailabilityEditor } from './TeacherAvailabilityEditor';
 import { TeacherSession, AttendanceStatus } from '../../../../types/Teacher';
 import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, Timestamp, where } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
@@ -944,6 +945,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           </p>
         </Card>
       )}
+
+      <TeacherAvailabilityEditor teacherId={effectiveTeacherId} />
+
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handlePrev}>Prev</Button>
