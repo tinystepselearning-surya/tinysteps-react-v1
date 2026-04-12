@@ -127,6 +127,10 @@ describe('teacherAvailability helpers', () => {
     });
 
     expect(cells.map((cell) => cell.status)).toEqual(['available', 'available', 'conflict', 'conflict']);
+    expect(cells[2].conflictReasons).toContain('Demo is outside published availability.');
+    expect(
+      cells[2].sources.some((source) => source.kind === 'demo' && (source.sourceId || source.id) === 'demo_conflict'),
+    ).toBe(true);
   });
 
   it('summarizes open and occupied slots across a date range', () => {

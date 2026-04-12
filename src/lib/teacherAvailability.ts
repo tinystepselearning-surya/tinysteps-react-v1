@@ -50,6 +50,13 @@ export interface ScheduleGridCell {
   slotEnd: Date;
   status: SlotStatus;
   labels: string[];
+  conflictReasons: string[];
+  sources: Array<{
+    kind: 'availability' | 'class' | 'demo' | 'blocked';
+    id: string;
+    label: string;
+    sourceId?: string;
+  }>;
 }
 
 export const DEFAULT_SLOT_INTERVAL_MINUTES = 30;
@@ -557,11 +564,47 @@ export function buildDayGridCells(input: {
       ...overlapsBlocked.map((interval) => interval.label),
     ];
 
+    const conflictReasons: string[] = [];
+    if (hasClass && hasDemo) conflictReasons.push('Class overlaps a demo.');
+    if (hasClass && hasBlocked) conflictReasons.push('Class overlaps a manual block.');
+    if (hasDemo && hasBlocked) conflictReasons.push('Demo overlaps a manual block.');
+    if (hasClass && !hasAvailability) conflictReasons.push('Class is outside published availability.');
+    if (hasDemo && !hasAvailability) conflictReasons.push('Demo is outside published availability.');
+
+    const sources = [
+      ...overlapsAvailability.map((interval) => ({
+        kind: 'availability' as const,
+        id: interval.id,
+        label: interval.label,
+        sourceId: interval.sourceId,
+      })),
+      ...overlapsClasses.map((interval) => ({
+        kind: 'class' as const,
+        id: interval.id,
+        label: interval.label,
+        sourceId: interval.sourceId,
+      })),
+      ...overlapsDemos.map((interval) => ({
+        kind: 'demo' as const,
+        id: interval.id,
+        label: interval.label,
+        sourceId: interval.sourceId,
+      })),
+      ...overlapsBlocked.map((interval) => ({
+        kind: 'blocked' as const,
+        id: interval.id,
+        label: interval.label,
+        sourceId: interval.sourceId,
+      })),
+    ];
+
     cells.push({
       slotStart,
       slotEnd,
       status,
       labels,
+      conflictReasons,
+      sources,
     });
   }
 

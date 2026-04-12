@@ -36,6 +36,7 @@ import {
   type SlotStatus,
   type TeacherAvailabilityConfig,
   type TeacherBlockedSlotLite,
+  type ScheduleGridCell,
   type ScheduleDaySnapshot,
   WEEKDAY_OPTIONS,
 } from '../../lib/teacherAvailability';
@@ -49,6 +50,7 @@ type TeacherOption = {
 };
 
 type SectionKey = 'suggestions' | 'canvas' | 'details';
+type FilterableStatus = 'available' | 'class' | 'demo' | 'blocked' | 'conflict';
 
 const STATUS_STYLES: Record<SlotStatus, string> = {
   unavailable: 'bg-slate-100 text-slate-400',
@@ -69,6 +71,7 @@ const STATUS_LABELS: Record<SlotStatus, string> = {
 };
 
 const MONTH_WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+const FILTERABLE_STATUSES: FilterableStatus[] = ['available', 'class', 'demo', 'blocked', 'conflict'];
 
 function toHours(count: number, slotIntervalMinutes: number): string {
   return `${((count * slotIntervalMinutes) / 60).toFixed(1)}h`;
@@ -237,6 +240,14 @@ export default function TeacherScheduleManagement(): React.ReactElement {
     canvas: true,
     details: true,
   });
+  const [visibleStatuses, setVisibleStatuses] = useState<Record<FilterableStatus, boolean>>({
+    available: true,
+    class: true,
+    demo: true,
+    blocked: true,
+    conflict: true,
+  });
+  const [selectedTimelineCellKey, setSelectedTimelineCellKey] = useState<string>('');
 
   const rangeMeta = useMemo(() => buildRangeMeta(calendarView, focusDate), [calendarView, focusDate]);
   const startDate = rangeMeta.startDate;
@@ -536,8 +547,46 @@ export default function TeacherScheduleManagement(): React.ReactElement {
     [dayCellsByDate, selectedTimeGridDays],
   );
 
+  const selectedTimelineCell = useMemo(() => {
+    if (!selectedTimelineCellKey) return null;
+    const [dateKey, minuteText] = selectedTimelineCellKey.split('|');
+    const minutes = Number(minuteText);
+    if (!dateKey || !Number.isFinite(minutes)) return null;
+    const dayIndex = selectedTimeGridDays.findIndex((day) => day.dateKey === dateKey);
+    const rowIndex = timeRows.findIndex((value) => value === minutes);
+    if (dayIndex < 0 || rowIndex < 0) return null;
+    const cell = selectedTimeGrid[dayIndex]?.[rowIndex] as ScheduleGridCell | undefined;
+    if (!cell) return null;
+    return {
+      day: selectedTimeGridDays[dayIndex],
+      minutes,
+      cell,
+    };
+  }, [selectedTimeGrid, selectedTimeGridDays, selectedTimelineCellKey, timeRows]);
+
+  useEffect(() => {
+    if (!selectedTimelineCellKey) return;
+    if (!selectedTimelineCell) setSelectedTimelineCellKey('');
+  }, [selectedTimelineCell, selectedTimelineCellKey]);
+
+  useEffect(() => {
+    if (!selectedTimelineCell) return;
+    const status = selectedTimelineCell.cell.status;
+    if (status === 'unavailable') {
+      setSelectedTimelineCellKey('');
+      return;
+    }
+    if (!visibleStatuses[status as FilterableStatus]) {
+      setSelectedTimelineCellKey('');
+    }
+  }, [selectedTimelineCell, visibleStatuses]);
+
   const toggleSection = (key: SectionKey) => {
     setExpandedSections((current) => ({ ...current, [key]: !current[key] }));
+  };
+
+  const toggleStatusVisibility = (status: FilterableStatus) => {
+    setVisibleStatuses((current) => ({ ...current, [status]: !current[status] }));
   };
 
   const handlePrev = () => {
@@ -782,48 +831,132 @@ export default function TeacherScheduleManagement(): React.ReactElement {
                     </div>
                   </div>
                 ) : (
-                  <div className="mt-4 max-h-[500px] overflow-auto">
-                    <table className="min-w-max border-separate border-spacing-1">
-                      <thead>
-                        <tr>
-                          <th className="sticky left-0 top-0 z-40 min-w-[100px] rounded-xl bg-white px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 shadow-sm">
-                            Time
-                          </th>
-                          {selectedTimeGridDays.map((day) => (
-                            <th
-                              key={day.dateKey}
-                              className="sticky top-0 z-20 min-w-[110px] rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-600"
-                            >
-                              <div>{format(day.date, 'EEE')}</div>
-                              <div className="mt-1 text-[11px] font-medium text-slate-500">{format(day.date, 'd MMM')}</div>
+                  <div className="mt-4">
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Show</span>
+                      {FILTERABLE_STATUSES.map((status) => {
+                        const isOn = visibleStatuses[status];
+                        return (
+                          <Button
+                            key={status}
+                            type="button"
+                            size="sm"
+                            variant={isOn ? 'default' : 'outline'}
+                            className="h-7 px-2 text-xs"
+                            onClick={() => toggleStatusVisibility(status)}
+                          >
+                            {STATUS_LABELS[status]}
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="max-h-[500px] overflow-auto">
+                      <table className="min-w-max border-separate border-spacing-1">
+                        <thead>
+                          <tr>
+                            <th className="sticky left-0 top-0 z-40 min-w-[100px] rounded-xl bg-white px-3 py-2 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 shadow-sm">
+                              Time
                             </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {timeRows.map((minutes, rowIndex) => (
-                          <tr key={minutes}>
-                            <td className="sticky left-0 z-10 rounded-xl bg-white px-3 py-2 text-xs font-medium text-slate-500 shadow-sm">
-                              {formatTimeLabel(format(new Date(2026, 0, 1, Math.floor(minutes / 60), minutes % 60), 'HH:mm'))}
-                            </td>
-                            {selectedTimeGrid.map((cells, dayIndex) => {
-                              const cell = cells[rowIndex];
-                              return (
-                                <td
-                                  key={`${selectedTimeGridDays[dayIndex].dateKey}_${minutes}`}
-                                  title={cell?.labels.join('\n') || ''}
-                                  className={`h-[42px] min-w-[110px] rounded-xl px-2 py-1 text-center text-[11px] font-medium ${
-                                    STATUS_STYLES[cell?.status || 'unavailable']
-                                  }`}
-                                >
-                                  {STATUS_LABELS[cell?.status || 'unavailable']}
-                                </td>
-                              );
-                            })}
+                            {selectedTimeGridDays.map((day) => (
+                              <th
+                                key={day.dateKey}
+                                className="sticky top-0 z-20 min-w-[110px] rounded-xl bg-slate-100 px-3 py-2 text-center text-xs font-semibold uppercase tracking-[0.12em] text-slate-600"
+                              >
+                                <div>{format(day.date, 'EEE')}</div>
+                                <div className="mt-1 text-[11px] font-medium text-slate-500">{format(day.date, 'd MMM')}</div>
+                              </th>
+                            ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {timeRows.map((minutes, rowIndex) => (
+                            <tr key={minutes}>
+                              <td className="sticky left-0 z-10 rounded-xl bg-white px-3 py-2 text-xs font-medium text-slate-500 shadow-sm">
+                                {formatTimeLabel(format(new Date(2026, 0, 1, Math.floor(minutes / 60), minutes % 60), 'HH:mm'))}
+                              </td>
+                              {selectedTimeGrid.map((cells, dayIndex) => {
+                                const cell = cells[rowIndex];
+                                const status = (cell?.status || 'unavailable') as SlotStatus;
+                                const shouldShow =
+                                  status === 'unavailable' ? false : visibleStatuses[status as FilterableStatus];
+                                const visibleStatus = shouldShow ? status : 'unavailable';
+                                const cellKey = `${selectedTimeGridDays[dayIndex].dateKey}|${minutes}`;
+                                const isSelected = selectedTimelineCellKey === cellKey;
+                                return (
+                                  <td
+                                    key={cellKey}
+                                    title={shouldShow ? cell?.labels.join('\n') || '' : ''}
+                                    className={`h-[42px] min-w-[110px] rounded-xl px-2 py-1 text-center text-[11px] font-medium ${
+                                      STATUS_STYLES[visibleStatus]
+                                    } ${shouldShow ? 'cursor-pointer' : ''} ${isSelected ? 'ring-2 ring-sky-400 ring-offset-1' : ''}`}
+                                    onClick={() => {
+                                      if (!shouldShow) return;
+                                      setSelectedTimelineCellKey(cellKey);
+                                    }}
+                                  >
+                                    {STATUS_LABELS[visibleStatus]}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {selectedTimelineCell ? (
+                      <Card className="mt-4 border-slate-200 bg-slate-50/70 p-3 shadow-none">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="text-sm font-semibold text-slate-900">
+                            {format(selectedTimelineCell.day.date, 'EEE, d MMM')} ·{' '}
+                            {formatTimeLabel(format(new Date(2026, 0, 1, Math.floor(selectedTimelineCell.minutes / 60), selectedTimelineCell.minutes % 60), 'HH:mm'))} -{' '}
+                            {formatTimeLabel(format(new Date(2026, 0, 1, Math.floor((selectedTimelineCell.minutes + slotIntervalMinutes) / 60), (selectedTimelineCell.minutes + slotIntervalMinutes) % 60), 'HH:mm'))}
+                          </div>
+                          <Badge className={STATUS_STYLES[selectedTimelineCell.cell.status]}>
+                            {STATUS_LABELS[selectedTimelineCell.cell.status] || 'Unavailable'}
+                          </Badge>
+                        </div>
+
+                        {selectedTimelineCell.cell.conflictReasons.length > 0 ? (
+                          <div className="mt-3">
+                            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                              Why conflict
+                            </div>
+                            <div className="mt-2 space-y-1 text-sm text-slate-700">
+                              {selectedTimelineCell.cell.conflictReasons.map((reason, index) => (
+                                <div key={`${reason}_${index}`}>• {reason}</div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : null}
+
+                        <div className="mt-3">
+                          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                            Overlapping Sources
+                          </div>
+                          <div className="mt-2 space-y-2">
+                            {selectedTimelineCell.cell.sources.length === 0 ? (
+                              <div className="text-sm text-slate-500">No overlapping source records for this slot.</div>
+                            ) : (
+                              selectedTimelineCell.cell.sources.map((source) => (
+                                <div key={`${source.kind}_${source.id}`} className="rounded-lg border border-slate-200 bg-white px-3 py-2">
+                                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                                    {source.kind}
+                                  </div>
+                                  <div className="mt-1 text-sm font-medium text-slate-800">{source.label}</div>
+                                  <div className="mt-1 text-xs text-slate-500">Source ID: {source.sourceId || source.id}</div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </Card>
+                    ) : (
+                      <div className="mt-3 text-sm text-slate-500">
+                        Click any colored cell to inspect exact source records and conflict reasons.
+                      </div>
+                    )}
                   </div>
                 )
               ) : null}
