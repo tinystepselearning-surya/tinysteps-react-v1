@@ -111,7 +111,7 @@ export default function ShyChildSpeakingConfidencePage() {
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">What to start doing</h2>
         <ul className="space-y-2 text-slate-700">
-          <li>• Use a daily 8-10 minute speaking ladder: one-word answer -> short sentence -> two-sentence share.</li>
+          <li>• Use a daily 8-10 minute speaking ladder: one-word answer -&gt; short sentence -&gt; two-sentence share.</li>
           <li>• Give sentence starters like “I think… because…” or “My idea is…”.</li>
           <li>• Keep speaking topics familiar first, then introduce new topics gradually.</li>
           <li>• End each session with one clear speaking win your child can repeat tomorrow.</li>

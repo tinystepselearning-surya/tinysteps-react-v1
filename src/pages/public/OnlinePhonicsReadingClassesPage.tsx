@@ -168,7 +168,7 @@ export default function OnlinePhonicsReadingClassesPage() {
         <h2 className="text-3xl font-bold text-[#2d5016] mb-6">When to choose this page vs nearby pages</h2>
         <ul className="space-y-2 text-gray-700">
           <li>
-            • Use this page if your child is in the early bridge stage (letters -> words -> first sentences).
+            • Use this page if your child is in the early bridge stage (letters -&gt; words -&gt; first sentences).
           </li>
           <li>
             • Use{' '}
