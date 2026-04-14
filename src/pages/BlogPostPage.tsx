@@ -462,9 +462,21 @@ function buildMetaDescription(src: any) {
         const ulKey = `ul-${slug || (post && post.slug) || i}-${i}`;
         nodes.push(
           <ul key={ulKey}>
-            {items.map((txt, k) => (
-              <li key={`${ulKey}-li-${k}`}>{txt}</li>
-            ))}
+            {items.map((txt, k) => {
+              const internalPathMatch = txt.match(/^(.+?):\s(\/[a-z0-9][a-z0-9\-\/]*)$/i);
+              if (internalPathMatch) {
+                const [, label, path] = internalPathMatch;
+                return (
+                  <li key={`${ulKey}-li-${k}`}>
+                    <span>{label}: </span>
+                    <Link to={path} className="text-slate-900 underline hover:text-sky-700">
+                      {path}
+                    </Link>
+                  </li>
+                );
+              }
+              return <li key={`${ulKey}-li-${k}`}>{txt}</li>;
+            })}
           </ul>,
         );
         i = j - 1;
