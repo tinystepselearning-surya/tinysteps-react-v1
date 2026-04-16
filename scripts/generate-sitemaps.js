@@ -37,6 +37,47 @@ function listMdxSlugs(dir) {
   } catch (e) { return []; }
 }
 
+function listFilesRecursive(dir, ext = '.ts') {
+  try {
+    const out = [];
+    const stack = [dir];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+        const fullPath = path.join(current, entry.name);
+        if (entry.isDirectory()) {
+          stack.push(fullPath);
+        } else if (entry.isFile() && entry.name.endsWith(ext)) {
+          out.push(fullPath);
+        }
+      }
+    }
+    return out.sort();
+  } catch (e) {
+    return [];
+  }
+}
+
+function extractBlogEntriesFromPostFiles(postsDir) {
+  const entries = [];
+  for (const filePath of listFilesRecursive(postsDir, '.ts')) {
+    try {
+      const src = fs.readFileSync(filePath, 'utf-8');
+      const slugMatch = src.match(/slug\s*:\s*['"`]([^'"`]+)['"`]/);
+      if (!slugMatch) continue;
+      const dateMatch = src.match(/date\s*:\s*['"`]([0-9]{4}-[0-9]{2}-[0-9]{2})['"`]/);
+      entries.push({
+        slug: slugMatch[1],
+        date: dateMatch ? dateMatch[1] : null,
+        sourcePath: filePath,
+      });
+    } catch (e) {
+      // ignore malformed files and continue scanning
+    }
+  }
+  return entries;
+}
+
 function writeXml(file, xml) {
   fs.writeFileSync(file, xml.trim() + '\n', 'utf-8');
 }
@@ -67,9 +108,13 @@ const SUPPORTING_LONG_TAIL = new Set([
   const parentsMetaTs = path.join(root, 'src', 'content', 'parentsMeta.ts');
   const appRoutesTs = path.join(root, 'src', 'app', 'routes.tsx');
   const mdxDir = path.join(root, 'src', 'content', 'blog');
+  const blogPostsDir = path.join(root, 'src', 'content', 'blog', 'posts');
 
   const blogSlugs = extractSlugsFromFile(blogTs, 'slug');
   const blogSlugDateMap = extractBlogSlugDateMap(blogTs);
+  const blogPostEntries = extractBlogEntriesFromPostFiles(blogPostsDir);
+  const blogPostSlugDateMap = new Map(blogPostEntries.filter((entry) => entry.date).map((entry) => [entry.slug, entry.date]));
+  const blogPostSlugPathMap = new Map(blogPostEntries.map((entry) => [entry.slug, entry.sourcePath]));
   const mdxSlugs = listMdxSlugs(mdxDir);
   const courseSlugs = extractSlugsFromFile(coursesTs, 'slug');
 
@@ -118,12 +163,25 @@ const SUPPORTING_LONG_TAIL = new Set([
 
   // sitemap-blog.xml
   let blogXml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`;
-  for (const slug of uniqueRoutes([...blogSlugs, ...mdxSlugs])) {
-    const mappedDate = blogSlugDateMap.get(slug);
-    if (mappedDate && mappedDate > today) continue;
-    const mdxPath = path.join(mdxDir, `${slug}.mdx`);
-    const last = mappedDate || (fs.existsSync(mdxPath) ? lastmodFrom(mdxPath) : lastmodFrom(blogTs));
-    blogXml += toUrl(`https://tinystepslearning.com/blog/${slug}`, last, '0.8', 'weekly');
+  const blogRoutes = uniqueRoutes([...blogSlugs, ...blogPostEntries.map((entry) => entry.slug), ...mdxSlugs]).filter(Boolean).sort();
+  if (blogRoutes.length === 0) {
+    // Guardrail: never ship an empty blog sitemap (Google flags it as a missing <url> tag issue).
+    blogXml += toUrl('https://tinystepslearning.com/blog', lastmodFrom(blogTs), '0.8', 'daily');
+    console.warn('[sitemap] No blog slugs detected; wrote /blog fallback URL.');
+  } else {
+    for (const slug of blogRoutes) {
+      const mappedDate = blogSlugDateMap.get(slug) || blogPostSlugDateMap.get(slug);
+      if (mappedDate && mappedDate > today) continue;
+      const mdxPath = path.join(mdxDir, `${slug}.mdx`);
+      const postTsPath = blogPostSlugPathMap.get(slug);
+      const last = mappedDate
+        || (fs.existsSync(mdxPath)
+          ? lastmodFrom(mdxPath)
+          : postTsPath
+            ? lastmodFrom(postTsPath)
+            : lastmodFrom(blogTs));
+      blogXml += toUrl(`https://tinystepslearning.com/blog/${slug}`, last, '0.8', 'weekly');
+    }
   }
   blogXml += `\n</urlset>`;
   writeXml(path.join(publicDir, 'sitemap-blog.xml'), blogXml);
