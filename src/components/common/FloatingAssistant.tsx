@@ -31,14 +31,25 @@ export default function FloatingAssistant() {
   if (user) return null;
   if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
+  const trackSafely = (fn: () => void) => {
+    try {
+      fn();
+    } catch (error) {
+      console.warn('FloatingAssistant tracking skipped:', error);
+    }
+  };
+
   const openWhatsApp = () => {
-    trackWhatsappClick('floating_button');
-    trackEvent('floating_whatsapp_click', { source: 'floating_assistant' });
-    window.open(WHATSAPP_URL, '_blank', 'noopener,noreferrer');
+    trackSafely(() => {
+      trackWhatsappClick('floating_button');
+      trackEvent('floating_whatsapp_click', { source: 'floating_assistant' });
+    });
   };
 
   const openAskTinySteps = () => {
-    trackEvent('floating_ask_tinysteps_click', { source: 'floating_assistant_dock' });
+    trackSafely(() => {
+      trackEvent('floating_ask_tinysteps_click', { source: 'floating_assistant_dock' });
+    });
     setAskOpen(true);
   };
 
@@ -116,8 +127,10 @@ export default function FloatingAssistant() {
         )}
       </AnimatePresence>
 
-      <motion.button
-        type="button"
+      <motion.a
+        href={WHATSAPP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
         className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg"
         whileHover={{ scale: 1.05 }}
         onClick={openWhatsApp}
@@ -127,7 +140,7 @@ export default function FloatingAssistant() {
         <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current" aria-hidden="true">
           <path d="M19.11 4.89A9.93 9.93 0 0 0 12.04 2C6.56 2 2.08 6.47 2.08 11.96c0 1.75.46 3.47 1.33 4.99L2 22l5.2-1.36a9.9 9.9 0 0 0 4.84 1.23h.01c5.48 0 9.95-4.47 9.95-9.95a9.9 9.9 0 0 0-2.89-7.03Zm-7.06 15.3h-.01a8.28 8.28 0 0 1-4.22-1.15l-.3-.18-3.09.81.82-3.01-.2-.31a8.24 8.24 0 0 1-1.27-4.39c0-4.56 3.71-8.27 8.28-8.27a8.2 8.2 0 0 1 5.85 2.42 8.22 8.22 0 0 1 2.42 5.85c0 4.57-3.72 8.28-8.28 8.28Zm4.54-6.2c-.25-.12-1.49-.73-1.72-.82-.23-.08-.4-.12-.57.13-.16.25-.65.81-.79.98-.15.17-.29.18-.54.06-.25-.12-1.04-.38-1.99-1.21-.74-.66-1.25-1.47-1.39-1.72-.15-.25-.02-.38.11-.5.11-.11.25-.29.37-.43.12-.15.16-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.57-1.37-.78-1.88-.21-.5-.42-.43-.57-.43l-.49-.01c-.16 0-.43.06-.65.31-.23.25-.86.84-.86 2.05 0 1.21.88 2.38 1 2.54.12.17 1.72 2.62 4.16 3.68.58.25 1.04.4 1.39.51.58.18 1.11.15 1.53.09.47-.07 1.49-.61 1.7-1.2.21-.59.21-1.1.14-1.2-.06-.1-.23-.16-.48-.29Z" />
         </svg>
-      </motion.button>
+      </motion.a>
 
       <AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />
     </div>

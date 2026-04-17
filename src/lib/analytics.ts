@@ -127,9 +127,23 @@ export const trackPageView = (path: string) => {
   window.gtag('event', 'page_view', { page_path: path });
 };
 
-export const trackEvent = (eventName: string, params?: Record<string, any>) => {
-  if (!shouldRunAnalytics()) return;
-  if (!ensureInit()) return;
+export function trackEvent(name: string, params?: Record<string, any>) {
+  try {
+    if (typeof window === 'undefined') return;
 
-  window.gtag('event', eventName, params || {});
-};
+    if (!window.gtag) {
+      console.warn('[GA] gtag not available');
+      return;
+    }
+
+    window.gtag('event', name, {
+      ...params,
+      debug_mode: true,
+      send_to: 'G-5RMQVF1HGD', // IMPORTANT: ensure correct measurement ID
+    });
+
+    console.log('[GA EVENT]', name, params);
+  } catch (err) {
+    console.error('[GA ERROR]', err);
+  }
+}

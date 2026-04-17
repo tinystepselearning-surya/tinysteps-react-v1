@@ -315,6 +315,7 @@ const Layout: FC = () => {
       const node = target.closest('a,button') as HTMLElement | null;
       if (!node) return;
       if (node.getAttribute('data-no-booking-intercept') === '1') return;
+      if (node.closest('[data-floating-assistant="1"]')) return;
       if (node.closest('form')) return;
 
       const label = sanitizeLabel(node.getAttribute('data-cta-label') || node.getAttribute('aria-label') || node.textContent || '');

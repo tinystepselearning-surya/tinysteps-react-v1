@@ -5,6 +5,7 @@ import { vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import FloatingAssistant from '../../components/common/FloatingAssistant'
 import useAuthStore from '../../store/useAuthStore'
+import * as analytics from '../../lib/analytics'
 
 describe('FloatingAssistant', () => {
   const rafBackup = global.requestAnimationFrame
@@ -44,7 +45,7 @@ describe('FloatingAssistant', () => {
 
     expect(document.querySelectorAll('[data-floating-assistant="1"]').length).toBe(1)
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
   })
 
@@ -69,6 +70,19 @@ describe('FloatingAssistant', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
     expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
+  })
+
+  it('still opens the AI modal when analytics tracking throws', async () => {
+    const trackEventSpy = vi.spyOn(analytics, 'trackEvent').mockImplementation(() => {
+      throw new Error('tracking failed')
+    })
+
+    await renderWidget()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
+    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
+
+    trackEventSpy.mockRestore()
   })
 
   it('does not render when a user is authenticated, even on public routes', async () => {
