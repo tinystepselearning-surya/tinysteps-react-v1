@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
 import { trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
 
@@ -28,10 +28,16 @@ export default function AdvisorContactForm({
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasTrackedFormStartRef = useRef(false);
 
-  useEffect(() => {
-    trackLeadFormStart();
-  }, []);
+  const trackFormStartOnce = () => {
+    if (hasTrackedFormStartRef.current) return;
+    hasTrackedFormStartRef.current = true;
+    trackLeadFormStart({
+      form_name: 'advisor_contact_form',
+      source_context: topic,
+    });
+  };
 
   const handleChange = (field: keyof typeof initialValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
@@ -60,7 +66,10 @@ export default function AdvisorContactForm({
         throw new Error('Unable to submit contact form');
       }
 
-      trackLeadFormSubmit();
+      trackLeadFormSubmit({
+        form_name: 'advisor_contact_form',
+        source_context: topic,
+      });
 
       setSubmitted(true);
       setValues(initialValues);
@@ -85,7 +94,7 @@ export default function AdvisorContactForm({
         <p className="mt-1 text-sm text-slate-600">{description}</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="mt-4 space-y-3">
         <input
           type="text"
           value={values.name}

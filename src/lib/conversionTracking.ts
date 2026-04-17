@@ -11,6 +11,23 @@ export type PageCluster =
   | 'parent_hub'
   | 'other';
 
+export type FunnelProgram = 'phonics' | 'grammar' | 'speaking' | 'summer_camp' | 'general';
+
+const WEBSITE_LEAD_FUNNEL_NAME = 'website_lead_funnel';
+const FUNNEL_LANDING_PATHS = new Set([
+  '/',
+  '/phonics',
+  '/grammar',
+  '/speaking',
+  '/summer-camps',
+  '/pricing',
+  '/book-demo',
+  '/class-samples',
+  '/courses',
+  '/curriculum',
+  '/contact',
+]);
+
 export const HIGH_INTENT_ROUTE_CLUSTER: Record<string, Exclude<PageCluster, 'blog' | 'parent_hub' | 'other'>> = {
   '/phonics': 'authority',
   '/grammar': 'authority',
@@ -69,6 +86,79 @@ export function getPageType(pathname: string): string {
 
 export function isHighIntentPath(pathname: string): boolean {
   return Boolean(HIGH_INTENT_ROUTE_CLUSTER[normalizePath(pathname)]);
+}
+
+export function inferProgramFromPath(pathname: string): FunnelProgram {
+  const path = normalizePath(pathname);
+  if (path === '/phonics' || path.includes('phonics')) return 'phonics';
+  if (path === '/grammar' || path.includes('grammar')) return 'grammar';
+  if (path === '/speaking' || path.includes('speaking')) return 'speaking';
+  if (path === '/summer-camps' || path.includes('summer')) return 'summer_camp';
+  return 'general';
+}
+
+export function isFunnelLandingPath(pathname: string): boolean {
+  const path = normalizePath(pathname);
+  return FUNNEL_LANDING_PATHS.has(path) || isHighIntentPath(path);
+}
+
+function resolvePagePath(pathname?: string): string {
+  if (pathname) return normalizePath(pathname);
+  if (typeof window !== 'undefined') return normalizePath(window.location.pathname);
+  return '/';
+}
+
+function resolveProgram(program: FunnelProgram | undefined, pagePath: string): FunnelProgram {
+  if (program) return program;
+  return inferProgramFromPath(pagePath);
+}
+
+type FunnelBaseParams = {
+  page_path?: string;
+  funnel_name?: string;
+  program?: FunnelProgram;
+  source_context?: string;
+};
+
+type FunnelLandingParams = FunnelBaseParams & {
+  page_title?: string;
+};
+
+type FunnelCtaParams = FunnelBaseParams & {
+  cta_label: string;
+  cta_location: string;
+  destination_path?: string;
+};
+
+type FunnelLeadFormParams = FunnelBaseParams & {
+  form_name?: string;
+};
+
+type FunnelDemoBookingCompleteParams = FunnelBaseParams & {
+  booking_type: string;
+};
+
+export function trackLandingPageView(params: FunnelLandingParams) {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('funnel_landing_page_view', {
+    page_path: pagePath,
+    page_title: params.page_title || (typeof document !== 'undefined' ? document.title : ''),
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'route_tracker',
+  });
+}
+
+export function trackCtaClick(params: FunnelCtaParams) {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('funnel_cta_click', {
+    page_path: pagePath,
+    cta_label: sanitizeLabel(params.cta_label),
+    cta_location: params.cta_location,
+    destination_path: params.destination_path,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+  });
 }
 
 export function sanitizeLabel(label: string): string {
@@ -136,20 +226,56 @@ export const trackWhatsappClick = (location: string) => {
   });
 };
 
-export const trackLeadFormStart = () => {
+export const trackLeadFormStart = (params: FunnelLeadFormParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
   trackEvent('lead_form_start', {
-    page: window.location.pathname,
+    page: pagePath,
+  });
+  trackEvent('funnel_form_start', {
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'unknown',
   });
 };
 
-export const trackLeadFormSubmit = () => {
+export const trackLeadFormSubmit = (params: FunnelLeadFormParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
   trackEvent('lead_form_submit', {
-    page: window.location.pathname,
+    page: pagePath,
+  });
+  trackEvent('funnel_form_submit', {
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'unknown',
   });
 };
+
+export function trackDemoBookingComplete(params: FunnelDemoBookingCompleteParams) {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('funnel_demo_booking_complete', {
+    page_path: pagePath,
+    booking_type: params.booking_type,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'unknown',
+  });
+}
 
 export function trackConversionEvent(
-  eventName: 'book_demo_click' | 'whatsapp_click' | 'lead_form_submit' | 'high_intent_page_cta_click',
+  eventName:
+    | 'book_demo_click'
+    | 'whatsapp_click'
+    | 'lead_form_submit'
+    | 'high_intent_page_cta_click'
+    | 'funnel_landing_page_view'
+    | 'funnel_cta_click'
+    | 'funnel_form_start'
+    | 'funnel_form_submit'
+    | 'funnel_demo_booking_complete',
   params: Record<string, unknown>
 ) {
   trackEvent(eventName, params);

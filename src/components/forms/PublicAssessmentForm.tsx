@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../Button/Button';
-import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
+import { trackDemoBookingComplete, trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
 
 const WHATSAPP_NUMBER = '919618398383';
 const SUN_ORANGE = '#ff6a00';
@@ -54,6 +54,7 @@ export default function PublicAssessmentForm({
   const [lastOpenedWaLink, setLastOpenedWaLink] = useState('');
   const [errors, setErrors] = useState<{ parentName?: string; whatsapp?: string; childAge?: string; interest?: string }>({});
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
+  const hasTrackedFormStartRef = useRef(false);
 
   useEffect(() => {
     try {
@@ -91,9 +92,14 @@ export default function PublicAssessmentForm({
     return () => window.clearTimeout(timer);
   }, [autoFocusFirstField]);
 
-  useEffect(() => {
-    trackLeadFormStart();
-  }, []);
+  const trackFormStartOnce = () => {
+    if (hasTrackedFormStartRef.current) return;
+    hasTrackedFormStartRef.current = true;
+    trackLeadFormStart({
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+    });
+  };
 
   const waLink = useMemo(() => {
     const lines = [
@@ -146,7 +152,14 @@ export default function PublicAssessmentForm({
 
     if (!validate()) return;
 
-    trackLeadFormSubmit();
+    trackLeadFormSubmit({
+      form_name: 'public_assessment_form',
+      source_context: source || 'public_assessment_form',
+    });
+    trackDemoBookingComplete({
+      booking_type: 'whatsapp_assessment_request',
+      source_context: source || 'public_assessment_form',
+    });
     trackWhatsappClick('public_assessment_form');
 
     const popup = window.open(waLink, '_blank', 'noopener,noreferrer');
@@ -175,7 +188,7 @@ export default function PublicAssessmentForm({
         <p className="mt-2 text-sm text-slate-700">Share a few details and we will confirm available slots on WhatsApp.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="relative space-y-4">
+      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="relative space-y-4">
         <div className="group space-y-1">
           <label htmlFor="assessment-parent-name" className="text-[11px] font-bold uppercase text-slate-700 transition-colors group-focus-within:text-orange-700">
             Parent Name *

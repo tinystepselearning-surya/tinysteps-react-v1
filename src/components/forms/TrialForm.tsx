@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useEffect } from 'react';
+import React, { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,10 +25,16 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
     reset,
   } = useForm<FormData>({ resolver: zodResolver(schema) });
   const { user } = useAuthStore();
+  const hasTrackedFormStartRef = useRef(false);
 
-  useEffect(() => {
-    trackLeadFormStart();
-  }, []);
+  const trackFormStartOnce = () => {
+    if (hasTrackedFormStartRef.current) return;
+    hasTrackedFormStartRef.current = true;
+    trackLeadFormStart({
+      form_name: 'trial_form',
+      source_context: context,
+    });
+  };
 
   const onSubmit = async (data: FormData) => {
     try {
@@ -39,7 +45,10 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
       const submitLead = httpsCallable(functions as any, 'subscribeNewsletter');
       await submitLead({ email: data.email, parentName: data.parentName, phone: data.phone, childAge: data.childAge, source: 'trial' });
       trackEvent('trial_form_submit', { context, childAge: data.childAge });
-      trackLeadFormSubmit();
+      trackLeadFormSubmit({
+        form_name: 'trial_form',
+        source_context: context,
+      });
       reset();
     } catch (e) {
       // swallow for now; UI shows generic state
@@ -47,7 +56,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
+    <form onSubmit={handleSubmit(onSubmit)} onFocusCapture={trackFormStartOnce} className="space-y-3">
       <div>
         <input className="interactive-input" placeholder="Parent name" {...register('parentName')} />
         {errors.parentName && <p className="mt-1 text-xs text-red-600">{errors.parentName.message as any}</p>}

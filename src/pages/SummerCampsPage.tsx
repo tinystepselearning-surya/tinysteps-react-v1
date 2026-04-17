@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { createEventSchema } from '../lib/schemas';
@@ -621,10 +621,17 @@ function SummerCampLeadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const hasTrackedFormStartRef = useRef(false);
 
-  useEffect(() => {
-    trackLeadFormStart();
-  }, []);
+  const trackFormStartOnce = () => {
+    if (hasTrackedFormStartRef.current) return;
+    hasTrackedFormStartRef.current = true;
+    trackLeadFormStart({
+      form_name: 'summer_camp_lead_form',
+      program: 'summer_camp',
+      source_context: 'summer_camps_page',
+    });
+  };
 
   const updateField = <K extends keyof SummerCampLeadFormState>(field: K, value: SummerCampLeadFormState[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -671,7 +678,11 @@ function SummerCampLeadForm() {
         throw new Error('Unable to submit inquiry');
       }
 
-      trackLeadFormSubmit();
+      trackLeadFormSubmit({
+        form_name: 'summer_camp_lead_form',
+        program: 'summer_camp',
+        source_context: 'summer_camps_page',
+      });
       setSubmitted(true);
       setForm(SUMMER_CAMP_LEAD_INITIAL_STATE);
     } catch {
@@ -682,7 +693,7 @@ function SummerCampLeadForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2">
         <input
           type="text"

@@ -1,17 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   buildBaseConversionParams,
   extractDestinationPathFromHref,
+  inferProgramFromPath,
   isBookDemoDestination,
   isBookDemoLabel,
+  isFunnelLandingPath,
   isHighIntentCtaLabel,
   isHighIntentPath,
   isMarketingPath,
   isWhatsAppDestination,
   sanitizeLabel,
   trackBookDemoClick,
+  trackCtaClick,
   trackConversionEvent,
+  trackLandingPageView,
   trackWhatsappClick,
 } from '../../lib/conversionTracking';
 
@@ -28,12 +32,34 @@ function findTrackableNode(target: EventTarget | null): HTMLElement | null {
   return target.closest('a,button');
 }
 
+function inferCtaLocation(node: HTMLElement): string {
+  const explicit = node.getAttribute('data-cta-location');
+  if (explicit) return sanitizeLabel(explicit).toLowerCase();
+  if (node.closest('header')) return 'header';
+  if (node.closest('footer')) return 'footer';
+  if (node.closest('form')) return 'form';
+  if (node.closest('.sticky')) return 'sticky';
+  return 'card';
+}
+
 export default function ConversionTracker() {
   const location = useLocation();
+  const lastTrackedLandingPathRef = useRef<string>('');
 
   useEffect(() => {
     const pagePath = location.pathname;
     if (!isMarketingPath(pagePath)) return;
+
+    if (isFunnelLandingPath(pagePath) && lastTrackedLandingPathRef.current !== pagePath) {
+      trackLandingPageView({
+        page_path: pagePath,
+        page_title: typeof document !== 'undefined' ? document.title : '',
+        funnel_name: 'website_lead_funnel',
+        program: inferProgramFromPath(pagePath),
+        source_context: 'conversion_tracker',
+      });
+      lastTrackedLandingPathRef.current = pagePath;
+    }
 
     const clickHandler = (event: MouseEvent) => {
       const node = findTrackableNode(event.target);
@@ -46,13 +72,27 @@ export default function ConversionTracker() {
       const href = node instanceof HTMLAnchorElement ? node.getAttribute('href') || undefined : undefined;
       const destinationPath = extractDestinationPathFromHref(href || '');
       const baseParams = buildBaseConversionParams(pagePath);
+      const ctaLocation = inferCtaLocation(node);
+      const isWhatsApp = isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp');
+      const isBookDemo = isBookDemoDestination(destinationPath) || isBookDemoLabel(label);
+      const isHighIntentFunnelCta = isHighIntentPath(pagePath) && destinationPath && isHighIntentCtaLabel(label);
 
-      if (isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp')) {
+      if (isWhatsApp || isBookDemo || isHighIntentFunnelCta) {
+        trackCtaClick({
+          page_path: pagePath,
+          cta_label: label,
+          cta_location: ctaLocation,
+          destination_path: destinationPath,
+          funnel_name: 'website_lead_funnel',
+          program: inferProgramFromPath(pagePath),
+        });
+      }
+
+      if (isWhatsApp) {
         trackWhatsappClick(`${pagePath}:${label}`);
         return;
       }
 
-      const isBookDemo = isBookDemoDestination(destinationPath) || isBookDemoLabel(label);
       if (isBookDemo && destinationPath) {
         trackBookDemoClick(`${pagePath}:${label}`);
         return;

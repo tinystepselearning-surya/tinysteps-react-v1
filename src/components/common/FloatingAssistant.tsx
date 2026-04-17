@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { trackEvent } from '../../lib/analytics';
-import { trackWhatsappClick } from '../../lib/conversionTracking';
+import { inferProgramFromPath, trackCtaClick, trackWhatsappClick } from '../../lib/conversionTracking';
 import { normalizePathname, shouldShowPublicSupportWidgets } from '../../utils/publicRouteGuards';
 import { AskTinyStepsModal } from './AskTinyStepsModal';
 import useAuthStore from '../../store/useAuthStore';
@@ -41,6 +41,14 @@ export default function FloatingAssistant() {
 
   const openWhatsApp = () => {
     trackSafely(() => {
+      trackCtaClick({
+        page_path: pathname,
+        cta_label: 'Chat on WhatsApp',
+        cta_location: 'floating',
+        destination_path: WHATSAPP_URL,
+        funnel_name: 'website_lead_funnel',
+        program: inferProgramFromPath(pathname),
+      });
       trackWhatsappClick('floating_button');
       trackEvent('floating_whatsapp_click', { source: 'floating_assistant' });
     });
@@ -48,6 +56,14 @@ export default function FloatingAssistant() {
 
   const openAskTinySteps = () => {
     trackSafely(() => {
+      trackCtaClick({
+        page_path: pathname,
+        cta_label: 'Ask TinySteps AI',
+        cta_location: 'floating',
+        destination_path: '/ask-tinysteps',
+        funnel_name: 'website_lead_funnel',
+        program: inferProgramFromPath(pathname),
+      });
       trackEvent('floating_ask_tinysteps_click', { source: 'floating_assistant_dock' });
     });
     setAskOpen(true);
