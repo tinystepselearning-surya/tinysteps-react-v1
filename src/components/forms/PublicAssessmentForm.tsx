@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Button from '../Button/Button';
-import { buildBaseConversionParams, trackConversionEvent } from '../../lib/conversionTracking';
+import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
 
 const WHATSAPP_NUMBER = '919618398383';
 const SUN_ORANGE = '#ff6a00';
@@ -91,6 +91,10 @@ export default function PublicAssessmentForm({
     return () => window.clearTimeout(timer);
   }, [autoFocusFirstField]);
 
+  useEffect(() => {
+    trackLeadFormStart();
+  }, []);
+
   const waLink = useMemo(() => {
     const lines = [
       'Hello Tiny Steps,',
@@ -142,21 +146,8 @@ export default function PublicAssessmentForm({
 
     if (!validate()) return;
 
-    const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
-    const baseParams = buildBaseConversionParams(pagePath);
-
-    trackConversionEvent('lead_form_submit', {
-      ...baseParams,
-      form_type: 'public_assessment_form',
-      source: source || 'public_assessment',
-    });
-
-    trackConversionEvent('whatsapp_click', {
-      ...baseParams,
-      cta_label: 'Get Free Assessment on WhatsApp',
-      destination_path: '/whatsapp',
-      source: source || 'public_assessment',
-    });
+    trackLeadFormSubmit();
+    trackWhatsappClick('public_assessment_form');
 
     const popup = window.open(waLink, '_blank', 'noopener,noreferrer');
     if (!popup) {

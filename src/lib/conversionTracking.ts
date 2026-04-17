@@ -122,6 +122,32 @@ export function isHighIntentCtaLabel(label: string): boolean {
   );
 }
 
+export const trackBookDemoClick = (location: string) => {
+  trackEvent('book_demo_click', {
+    location,
+    page: window.location.pathname,
+  });
+};
+
+export const trackWhatsappClick = (location: string) => {
+  trackEvent('whatsapp_click', {
+    location,
+    page: window.location.pathname,
+  });
+};
+
+export const trackLeadFormStart = () => {
+  trackEvent('lead_form_start', {
+    page: window.location.pathname,
+  });
+};
+
+export const trackLeadFormSubmit = () => {
+  trackEvent('lead_form_submit', {
+    page: window.location.pathname,
+  });
+};
+
 export function trackConversionEvent(
   eventName: 'book_demo_click' | 'whatsapp_click' | 'lead_form_submit' | 'high_intent_page_cta_click',
   params: Record<string, unknown>

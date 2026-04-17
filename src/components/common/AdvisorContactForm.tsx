@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { PUBLIC_CONTACT_EMAIL } from '../../constants/publicContact';
-import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
+import { trackLeadFormStart, trackLeadFormSubmit } from '../../lib/conversionTracking';
 
 type AdvisorContactFormProps = {
   topic?: string;
@@ -29,6 +29,10 @@ export default function AdvisorContactForm({
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    trackLeadFormStart();
+  }, []);
+
   const handleChange = (field: keyof typeof initialValues, value: string) => {
     setValues((current) => ({ ...current, [field]: value }));
   };
@@ -56,12 +60,7 @@ export default function AdvisorContactForm({
         throw new Error('Unable to submit contact form');
       }
 
-      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
-      trackConversionEvent('lead_form_submit', {
-        ...buildBaseConversionParams(pagePath),
-        form_type: 'advisor_contact_form',
-        topic,
-      });
+      trackLeadFormSubmit();
 
       setSubmitted(true);
       setValues(initialValues);

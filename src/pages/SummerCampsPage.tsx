@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../lib/seo';
 import { createEventSchema } from '../lib/schemas';
+import { trackLeadFormStart, trackLeadFormSubmit } from '../lib/conversionTracking';
 
 type SummerCampLeadFormState = {
   name: string;
@@ -621,6 +622,10 @@ function SummerCampLeadForm() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    trackLeadFormStart();
+  }, []);
+
   const updateField = <K extends keyof SummerCampLeadFormState>(field: K, value: SummerCampLeadFormState[K]) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
@@ -666,6 +671,7 @@ function SummerCampLeadForm() {
         throw new Error('Unable to submit inquiry');
       }
 
+      trackLeadFormSubmit();
       setSubmitted(true);
       setForm(SUMMER_CAMP_LEAD_INITIAL_STATE);
     } catch {

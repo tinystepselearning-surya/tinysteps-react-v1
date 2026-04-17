@@ -10,7 +10,9 @@ import {
   isMarketingPath,
   isWhatsAppDestination,
   sanitizeLabel,
+  trackBookDemoClick,
   trackConversionEvent,
+  trackWhatsappClick,
 } from '../../lib/conversionTracking';
 
 function getCtaLabelFromElement(element: HTMLElement): string {
@@ -46,21 +48,13 @@ export default function ConversionTracker() {
       const baseParams = buildBaseConversionParams(pagePath);
 
       if (isWhatsAppDestination(href) || label.toLowerCase().includes('whatsapp')) {
-        trackConversionEvent('whatsapp_click', {
-          ...baseParams,
-          cta_label: label,
-          destination_path: destinationPath || href || '',
-        });
+        trackWhatsappClick(`${pagePath}:${label}`);
         return;
       }
 
       const isBookDemo = isBookDemoDestination(destinationPath) || isBookDemoLabel(label);
       if (isBookDemo && destinationPath) {
-        trackConversionEvent('book_demo_click', {
-          ...baseParams,
-          cta_label: label,
-          destination_path: destinationPath,
-        });
+        trackBookDemoClick(`${pagePath}:${label}`);
         return;
       }
 

@@ -151,6 +151,7 @@ import {
   isHighIntentCtaLabel,
   isHighIntentPath,
   sanitizeLabel,
+  trackBookDemoClick,
   trackConversionEvent,
 } from '../lib/conversionTracking';
 import { isProtectedAppRoute, normalizePathname, shouldShowPublicSupportWidgets } from '../utils/publicRouteGuards';
@@ -334,11 +335,7 @@ const Layout: FC = () => {
       if (!href && bookingByLabel) {
         const baseParams = buildBaseConversionParams(location.pathname);
 
-        trackConversionEvent('book_demo_click', {
-          ...baseParams,
-          cta_label: label || 'Book assessment',
-          destination_path: '/book-demo',
-        });
+        trackBookDemoClick(label || 'book_assessment');
 
         if (isHighIntentPath(location.pathname) && isHighIntentCtaLabel(label || '')) {
           trackConversionEvent('high_intent_page_cta_click', {

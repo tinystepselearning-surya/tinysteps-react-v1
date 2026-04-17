@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
-const TestimonialsSection = lazy(() => import("../components/seo/TestimonialsSection"));
 const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
@@ -254,18 +253,6 @@ export default function HomePage() {
 
       {showDeferredSections ? (
         <>
-          <Suspense fallback={null}>
-            <TestimonialsSection
-              title="Families trust Tiny Steps for visible progress"
-              subtitle="A few parent voices from phonics, grammar, and speaking journeys."
-              pageTag="home"
-              featuredOnly
-              limit={4}
-              compact
-              viewAllHref="/testimonials"
-            />
-          </Suspense>
-
           {/* ✅ Restored sections */}
           <Suspense fallback={null}>
             <GlobalImpactSection />

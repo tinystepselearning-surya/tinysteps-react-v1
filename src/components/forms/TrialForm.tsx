@@ -1,10 +1,10 @@
 // @ts-nocheck
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { trackEvent } from '../../lib/analytics';
-import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
+import { trackLeadFormStart, trackLeadFormSubmit, trackWhatsappClick } from '../../lib/conversionTracking';
 import { useAuthStore } from '../../store/useAuthStore';
 
 const schema = z.object({
@@ -26,6 +26,10 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
   } = useForm<FormData>({ resolver: zodResolver(schema) });
   const { user } = useAuthStore();
 
+  useEffect(() => {
+    trackLeadFormStart();
+  }, []);
+
   const onSubmit = async (data: FormData) => {
     try {
       // store a simple Firestore record via callable (reuse newsletter if needed or extend later)
@@ -35,11 +39,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
       const submitLead = httpsCallable(functions as any, 'subscribeNewsletter');
       await submitLead({ email: data.email, parentName: data.parentName, phone: data.phone, childAge: data.childAge, source: 'trial' });
       trackEvent('trial_form_submit', { context, childAge: data.childAge });
-      const pagePath = typeof window !== 'undefined' ? window.location.pathname : '/';
-      trackConversionEvent('lead_form_submit', {
-        ...buildBaseConversionParams(pagePath),
-        form_type: context || 'trial_form',
-      });
+      trackLeadFormSubmit();
       reset();
     } catch (e) {
       // swallow for now; UI shows generic state
@@ -73,6 +73,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
             href="https://wa.me/919618398383"
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackWhatsappClick('trial_form')}
             className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800 sm:flex-1"
           >
             Chat on WhatsApp - opens new window

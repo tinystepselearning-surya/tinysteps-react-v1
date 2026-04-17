@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { trackEvent } from '../../lib/analytics';
-import { trackConversionEvent, buildBaseConversionParams } from '../../lib/conversionTracking';
+import { trackWhatsappClick } from '../../lib/conversionTracking';
 import { normalizePathname, shouldShowPublicSupportWidgets } from '../../utils/publicRouteGuards';
 import { AskTinyStepsModal } from './AskTinyStepsModal';
 import useAuthStore from '../../store/useAuthStore';
@@ -32,11 +32,7 @@ export default function FloatingAssistant() {
   if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
   const openWhatsApp = () => {
-    trackConversionEvent('whatsapp_click', {
-      ...buildBaseConversionParams(pathname || '/'),
-      cta_label: 'Chat on WhatsApp',
-      destination_path: WHATSAPP_URL,
-    });
+    trackWhatsappClick('floating_button');
     trackEvent('floating_whatsapp_click', { source: 'floating_assistant' });
     window.open(WHATSAPP_URL, '_blank', 'noopener,noreferrer');
   };

@@ -5,6 +5,7 @@ import {
   computeTestimonialAggregate,
   fetchApprovedTestimonialsCatalog,
   filterApprovedTestimonialsByCourse,
+  getFallbackTestimonials,
   type Testimonial,
 } from '../lib/testimonials';
 
@@ -101,9 +102,11 @@ export default function TestimonialsPage() {
       setIsLoading(true);
       try {
         const all = await fetchApprovedTestimonialsCatalog(800);
-        if (!cancelled) setItems(all);
+        if (!cancelled) {
+          setItems(all.length ? all : getFallbackTestimonials({ limit: 800 }));
+        }
       } catch {
-        if (!cancelled) setItems([]);
+        if (!cancelled) setItems(getFallbackTestimonials({ limit: 800 }));
       } finally {
         if (!cancelled) setIsLoading(false);
       }
