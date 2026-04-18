@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import Meta from "../components/common/Meta";
 import ConversionHero from "../components/Home/ConversionHero";
 import AutoLinkedText from "../components/seo/AutoLinkedText";
-import { computeTestimonialAggregate, fetchApprovedTestimonialsCatalog } from "../lib/testimonials";
 const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
 const GlobalImpactSection = lazy(() => import("../components/Home/GlobalImpactSection"));
 const DemoShowcase = lazy(() => import("../components/Home/StatsProofSection"));
@@ -104,6 +103,7 @@ export default function HomePage() {
     let cancelled = false;
     const loadRatings = async () => {
       try {
+        const { fetchApprovedTestimonialsCatalog, computeTestimonialAggregate } = await import("../lib/testimonials");
         const approved = await fetchApprovedTestimonialsCatalog(800);
         if (cancelled) return;
         const aggregate = computeTestimonialAggregate(approved);
